@@ -15,7 +15,7 @@ import {
   type Plan,
 } from "./crafts.ts";
 import { sizeReceipts } from "./enemy-size.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
+import { svgText } from "./svg-text.ts";
 import { mergeSidecars } from "./manifest.ts";
 import { ENEMY_HEADINGS, json, projectAt, rotate, round, vector } from "./projection.ts";
 
@@ -293,7 +293,7 @@ async function main() {
     await writeJson(`${output}${craft.name}-shards.json`, shards(craft));
   }
   await writeJson(`${output}destruction.json`, spec());
-  writeFileSync(`${output}destruction-flash.svg`, svgText(flash(), SVG_DECIMALS.enemies));
+  writeFileSync(`${output}destruction-flash.svg`, svgText(flash()));
   // The coral shards; enemies.ts and heavies.ts write these crafts' other sidecars.
   const names = new Set(crafts.map(({ name }) => name));
   mergeSidecars(

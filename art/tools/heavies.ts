@@ -46,7 +46,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
+import { svgText } from "./svg-text.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
   mergeEntries,
@@ -1731,7 +1731,7 @@ async function main() {
       const text = file.endsWith(".json")
         ? await format(content, { ...(await resolveConfig(path)), filepath: path })
         : file.endsWith(".svg")
-          ? svgText(content, SVG_DECIMALS.enemies)
+          ? svgText(content)
           : content;
       files.set(file, text);
     }

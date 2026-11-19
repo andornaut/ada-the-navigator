@@ -31,8 +31,6 @@ const GEOMETRY = new Set([
 export const SVG_DECIMALS = {
   /** The app icon's 4-decimal hull paths, 512 px from a 96 frame. */
   appIcon: 2,
-  /** Every enemy family's frames, hardpoint sprites and hostile station, and the destruction flash. */
-  enemies: 2,
   /** The job landmarks, whose beacon arcs are authored to 3 decimals. */
   landmarks: 3,
   /** The start screen nav glyphs, authored to 3 decimals on a 20 px grid. */

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 import { recolour, recolourJets } from "./claim-jumpers.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
+import { svgText } from "./svg-text.ts";
 import { recolourGarnet, recolourGarnetJets } from "./garnet-drones.ts";
 import { build, place } from "./heavies.ts";
 import { hostileStation } from "./hostile-station.ts";
@@ -76,7 +76,7 @@ async function main() {
         file.endsWith(".json")
           ? await format(text, { ...(await resolveConfig(path)), filepath: path })
           : file.endsWith(".svg")
-            ? svgText(text, SVG_DECIMALS.enemies)
+            ? svgText(text)
             : text,
       );
     }

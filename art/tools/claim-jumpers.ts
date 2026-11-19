@@ -29,7 +29,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
+import { svgText } from "./svg-text.ts";
 import { jets, silhouettes, svg } from "./enemies.ts";
 import {
   ADA_WIDTH,
@@ -435,7 +435,7 @@ async function main() {
       file.endsWith(".json")
         ? await format(text, { ...(await resolveConfig(path)), filepath: path })
         : file.endsWith(".svg")
-          ? svgText(text, SVG_DECIMALS.enemies)
+          ? svgText(text)
           : text,
     );
   }

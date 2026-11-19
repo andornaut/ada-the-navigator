@@ -153,16 +153,15 @@ more than 2 levels (of 255) at the 99th percentile of frame pixels at display
 size, or a visible shift along a whole edge. `SVG_DECIMALS` in the same file
 names each exception:
 
-| Set                                                                                          | Decimals | Reason at one decimal                                                |
-| -------------------------------------------------------------------------------------------- | -------: | -------------------------------------------------------------------- |
-| Enemy frames, hardpoint sprites and hostile stations (every family), `destruction-flash.svg` |        2 | 99th percentile 3 levels at display size, 3 to 4 at 2x               |
-| Ada's ship and thrust frames                                                                 |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
-| Core station frames                                                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
-| Outposts                                                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
-| Upgrade pickup chevron                                                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
-| App icon                                                                                     |        2 | 99th percentile 3 levels at display size                             |
-| Job landmarks                                                                                |        3 | The beacon arcs, authored to 3 decimals, shift along their length    |
-| Start screen nav glyphs (`achievements`, `exit`, `settings`)                                 |        3 | The trophy handles, authored to 3 decimals, shift along their length |
+| Set                                                          | Decimals | Reason at one decimal                                                |
+| ------------------------------------------------------------ | -------: | -------------------------------------------------------------------- |
+| Ada's ship and thrust frames                                 |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
+| Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
+| Outposts                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
+| Upgrade pickup chevron                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
+| App icon                                                     |        2 | 99th percentile 3 levels at display size                             |
+| Job landmarks                                                |        3 | The beacon arcs, authored to 3 decimals, shift along their length    |
+| Start screen nav glyphs (`achievements`, `exit`, `settings`) |        3 | The trophy handles, authored to 3 decimals, shift along their length |
 
 Hand-authored SVGs that no generator writes (the Pause poses, `shield.svg` and
 `weapon-scattershot.svg`) keep their own text.
