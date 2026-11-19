@@ -71,8 +71,8 @@ select a family. Rendering projects the contact and direction once.
 coefficients. The existing renderer consumes their `EffectShape` records and light-field
 edges. There is no second effect-data file or duplicated weapon tuning.
 
-Enemy Lance and Phaser hooks use the actual drawn beam endpoint and its incoming
-vector. Their existing hit-window age is normalized into the shared effect phase; the
+Enemy Lance hooks use the actual drawn beam endpoint and its incoming vector;
+enemy Phaser hooks use the fire-time contact point and incoming vector. Their existing hit-window age is normalized into the shared effect phase; the
 mine pop uses its existing normal or reduced-motion duration. Firing tells, damage,
 collision, arming, radius and expiry remain unchanged. Reduced motion removes expansion
 and moving sparks while retaining the family silhouette and fade; the Mine keeps both
@@ -166,6 +166,11 @@ half-height 260 at the 720 x 360 base view, scaled with the actual game area.
 The shape and the player's centre are captured when firing. Levels change
 neither this envelope nor the one-second fire interval.
 
+The drawn beam stays attached to the firing ship's nose and turns with its aim
+for the whole flash, at the length `L` fixed when firing. Coverage and the hit
+are fire-time: turning after firing never extends, shortens or retargets the
+beam.
+
 Keyframes for width factor `w` and alpha `a`, linear between keys: 0 ms `w`
 0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0. The
 flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
@@ -188,8 +193,9 @@ hard at the contact. Over the beam, a muzzle bloom at `u = 0`: discs of radius
 
 A successful Phaser contact uses `compactBright`: the same rays, central core
 and flecks as Laser and Multi-Laser, at greater brightness and a longer visual
-lifetime. A miss has no contact effect. The spark is centred on the actual
-contact and aligned with the incoming beam; source coefficients live in
+lifetime. A miss has no contact effect. The spark stays at the fire-time
+contact point, aligned with the beam's fire-time direction, while the beam turns
+with the nose: it marks where the hit landed; source coefficients live in
 `IMPACT_STYLE` and `spark`, rather than a separate Phaser spark recipe.
 
 ### Reduced motion
@@ -218,7 +224,9 @@ for Ada's beam) or to the first obstacle on it. It stays where it started.
   white core of radius 0.5 to 1.1.
 
 Beam: Ada's [Phaser beam](#phaser-beam) geometry, width and alpha keys (150 ms),
-miss fade over the last 28 px. Its beam layers are coral:
+miss fade over the last 28 px. The beam stays attached to the turret's muzzle
+and turns with its aim for the flash, at its fire-time length; the aim line
+before it stays where it started. Its beam layers are coral:
 
 | Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
 | ----- | ---------- | ------------------------------------ | -------- |
@@ -228,7 +236,7 @@ miss fade over the last 28 px. Its beam layers are coral:
 
 Muzzle bloom: discs of radius `5 w` coral `0.3 a`, `2.9 w` coral `0.9 a` and
 `1.6 w` white `a`. A hit uses the shared `compactBright` contact family at
-the drawn endpoint, independently of the coral beam body.
+the fire-time contact point, independently of the coral beam body.
 
 Light field: the glow is ink, width 6.5 to 4 times `w`, alpha `0.9 a`; the
 bloom's outer disc is ink at `0.6 a`. The aim line follows the
