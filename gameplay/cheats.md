@@ -50,7 +50,8 @@ play ends it.
 These are not cheats and start no cheat session.
 
 - **Show tips again** clears the record of first-flight lessons Ada has seen in
-  the save, so each plays again under its normal trigger.
+  the save, so each plays again under its normal trigger. Used during a cheat session, it
+  still clears that record in the stored save, as well as in the session.
 - **FPS counter** toggles a frames-per-second readout, Off by default. When On,
   it shows in the bottom-right corner of the device viewport, inset from the
   safe area and drawn above everything, letterbox bands included, so on a wide
