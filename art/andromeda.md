@@ -248,33 +248,39 @@ the open. Sunflower keeps the coral originals and Cartwheel the
   `family` `garnet`. No garnet id matches `enemy-{archetype}-{index}`, so the
   coral heading sets stay complete.
 
-Contrast is WCAG against Andromeda's field `#232641`.
+Contrast is WCAG against Andromeda's field `#9298B5`, a light field. The
+garnet drones, frigate and capital take the 1 px ink
+[light-field keyline](galaxies.md#light-fields), 6.33:1 on the field, which
+carries each silhouette; the fills below are their own figures.
 
 | Role                   | Coral                           | Garnet    | Contrast |
 | ---------------------- | ------------------------------- | --------- | -------: |
-| Hull top               | `#d68b72`                       | `#e47485` |   5.01:1 |
-| Hull side              | `#a8654f`                       | `#b0495b` |   2.77:1 |
-| Hull rear              | `#7f4b3d`                       | `#823643` |   1.79:1 |
-| Plates                 | `#e6a890`                       | `#deb7b6` |   8.11:1 |
-| Turret top             | `#c27a62`                       | `#c65c6d` |   3.62:1 |
-| Scorch top             | `#5c3a31`                       | `#583237` |   1.35:1 |
-| Scorch side            | `#42291f`                       | `#3f2125` |   1.02:1 |
-| Burn (deck paint)      | `#6e4436`                       | `#6b3a41` |   1.62:1 |
-| Guns, lights, disc     | `#f0bd68`                       | unchanged |   8.55:1 |
+| Hull top               | `#d68b72`                       | `#e47485` |   1.03:1 |
+| Hull side              | `#a8654f`                       | `#b0495b` |   1.87:1 |
+| Hull rear              | `#7f4b3d`                       | `#823643` |   2.89:1 |
+| Plates                 | `#e6a890`                       | `#deb7b6` |   1.57:1 |
+| Turret top             | `#c27a62`                       | `#c65c6d` |   1.43:1 |
+| Scorch top             | `#5c3a31`                       | `#583237` |   3.83:1 |
+| Scorch side            | `#42291f`                       | `#3f2125` |   5.07:1 |
+| Burn (deck paint)      | `#6e4436`                       | `#6b3a41` |   3.20:1 |
+| Guns, lights, disc     | `#f0bd68`                       | unchanged |   1.65:1 |
 | Visor, claw ink, ember | `#2a2433`, `#181425`, `#f0a07c` | unchanged |          |
 
 Garnet is Oklab hue 12: 27 degrees from coral, 38 from claim rust and 34 from
-the holodisk magenta `#E868C8`, at a higher chroma than coral. The hull top
-keeps the space palette's 5:1. Claw ink is 6.12:1 on the garnet hull; scorch
-is 3.70:1 on it, so deck wrecks read; the wreck ember is 5.20:1 on garnet
-scorch and 7.03:1 on the field.
+the holodisk magenta `#E868C8`, at a higher chroma than coral. Claw ink is
+6.12:1 on the garnet hull; scorch is 3.70:1 on it, so deck wrecks read; the
+wreck ember is 5.20:1 on garnet scorch and 1.36:1 on the field.
 
 Speed jets ramp slow to fast, in place of Gadget's jet colours:
 
 | Layer | Gadget                 | Garnet                 | Contrast, slow and fast |
 | ----- | ---------------------- | ---------------------- | ----------------------: |
-| Outer | `#b8644c` to `#f0a07c` | `#c1445c` to `#fb8898` |          2.98:1, 6.37:1 |
-| Core  | `#d68b72` to `#ffe2c8` | `#e47485` to `#ffe0e0` |         5.01:1, 11.92:1 |
+| Outer | `#b8644c` to `#f0a07c` | `#c1445c` to `#fb8898` |          1.74:1, 1.23:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#e47485` to `#ffe0e0` |          1.03:1, 2.30:1 |
+
+On Andromeda's light field `lightField.jets.enemy` replaces these layers
+([Light fields](galaxies.md#light-fields)): outer `#7f4b3d` 2.48:1, core
+`#a8654f` to `#d68b72` 1.59:1 to 1.06:1.
 
 ## Portraits
 
@@ -336,8 +342,11 @@ in frame px.
 
 | Craft                | Job subject          | Manifest ids                         | Frame | Display | Frames per heading       | Hull top on field |
 | -------------------- | -------------------- | ------------------------------------ | ----: | ------: | ------------------------ | ----------------: |
-| `stranded-courier`   | a lost courier       | `craft-stranded-courier-{k}`         |    80 |      35 | one                      | `#e4e2ef` 11.53:1 |
-| `stranded-lamp-buoy` | a drifting lamp buoy | `craft-stranded-lamp-buoy-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms | `#e4e2ef` 11.53:1 |
+| `stranded-courier`   | a lost courier       | `craft-stranded-courier-{k}`         |    80 |      35 | one                      |  `#e4e2ef` 2.23:1 |
+| `stranded-lamp-buoy` | a drifting lamp buoy | `craft-stranded-lamp-buoy-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#e4e2ef` 2.23:1 |
+
+Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
+6.33:1 on the field, which carries its silhouette.
 
 - Lost courier: a pearl mail capsule with a slate-blue roof stripe and a rack of
   cream and periwinkle mail crates on its back, one crate drifted loose; dark
@@ -352,32 +361,35 @@ in frame px.
 
 ## Palette
 
-Contrast is WCAG against Andromeda's field background `#232641`; the table
-lists top colours, which carry each silhouette. The dark beacon's glass reads
-against its pearl tower and cream gallery, not the field.
+Contrast is WCAG against Andromeda's field background `#9298B5`, a light
+field; the table lists top colours. The station and the dark beacon, dented and
+relit, take the 2 px ink [light-field keyline](galaxies.md#light-fields),
+6.33:1 on the field, which carries their silhouettes; the lit chain beacons and
+Pip take none. The dark beacon's glass reads against its pearl tower and cream
+gallery, not the field.
 
 | Asset   | Role                | Colour    | Contrast |
 | ------- | ------------------- | --------- | -------: |
-| Station | Pearl structure     | `#e4e2ef` |  11.53:1 |
-| Station | Pearl side          | `#a9a6c2` |   6.26:1 |
-| Station | Cream walls, collar | `#efe4cf` |  11.70:1 |
-| Station | Slate-blue roofs    | `#8d94c4` |   5.03:1 |
-| Station | Lighthouse band     | `#6f78b8` |   3.55:1 |
-| Station | Lantern, frame A    | `#b8c1ff` |   8.50:1 |
-| Station | Lantern, frame B    | `#8f9cf0` |   5.74:1 |
-| Station | Tanks               | `#8d9bb0` |   5.23:1 |
-| Beacons | Lantern, frame A    | `#b8c1ff` |   8.50:1 |
-| Beacons | Lantern, frame B    | `#8f9cf0` |   5.74:1 |
-| Beacons | Dark glass          | `#2a2d48` |   1.10:1 |
-| Beacons | Dent crease         | `#7d7a9c` |   3.60:1 |
-| Beacons | Scrape              | `#cfcde0` |   9.45:1 |
-| Pip     | Cream hull          | `#efe4cf` |  11.70:1 |
-| Pip     | Periwinkle panniers | `#8f9cf0` |   5.74:1 |
-| Pip     | Courier lamp        | `#b8c1ff` |   8.50:1 |
-| Pip     | Engines             | `#6e7482` |   3.15:1 |
-| Pip     | Jet outer, fast     | `#ffe9b8` |  12.35:1 |
-| All     | Warm windows        | `#ffe9b8` |  12.35:1 |
-| All     | Blue lights         | `#70ace8` |   6.14:1 |
+| Station | Pearl structure     | `#e4e2ef` |   2.23:1 |
+| Station | Pearl side          | `#a9a6c2` |   1.21:1 |
+| Station | Cream walls, collar | `#efe4cf` |   2.26:1 |
+| Station | Slate-blue roofs    | `#8d94c4` |   1.03:1 |
+| Station | Lighthouse band     | `#6f78b8` |   1.46:1 |
+| Station | Lantern, frame A    | `#b8c1ff` |   1.64:1 |
+| Station | Lantern, frame B    | `#8f9cf0` |   1.11:1 |
+| Station | Tanks               | `#8d9bb0` |   1.01:1 |
+| Beacons | Lantern, frame A    | `#b8c1ff` |   1.64:1 |
+| Beacons | Lantern, frame B    | `#8f9cf0` |   1.11:1 |
+| Beacons | Dark glass          | `#2a2d48` |   4.71:1 |
+| Beacons | Dent crease         | `#7d7a9c` |   1.44:1 |
+| Beacons | Scrape              | `#cfcde0` |   1.82:1 |
+| Pip     | Cream hull          | `#efe4cf` |   2.26:1 |
+| Pip     | Periwinkle panniers | `#8f9cf0` |   1.11:1 |
+| Pip     | Courier lamp        | `#b8c1ff` |   1.64:1 |
+| Pip     | Engines             | `#6e7482` |   1.65:1 |
+| Pip     | Jet outer, fast     | `#ffe9b8` |   2.38:1 |
+| All     | Warm windows        | `#ffe9b8` |   2.38:1 |
+| All     | Blue lights         | `#70ace8` |   1.19:1 |
 
 The lantern takes the galaxy's marker `#b8c1ff`
 ([Markers](galaxies.md#markers)), the field's own hue at Oklab L 0.83, so

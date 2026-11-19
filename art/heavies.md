@@ -458,36 +458,44 @@ platform. Sunflower keeps the coral originals. Andromeda's
 
 ### Claim palette
 
-Contrast is WCAG against Cartwheel's field `#39221E`.
+Contrast is WCAG against Cartwheel's field `#BC9D90`, a light field. The claim
+drones, frigate and capital take the 1 px ink
+[light-field keyline](galaxies.md#light-fields), 7.18:1 on the field, which
+carries each silhouette; the fills below are their own figures. The turret
+platform takes no keyline.
 
 | Role                  | Coral                | Claim     | Contrast |
 | --------------------- | -------------------- | --------- | -------: |
-| Hull top              | `#d68b72`            | `#bd7042` |   3.91:1 |
-| Hull side             | `#a8654f`            | `#924e28` |   2.35:1 |
-| Hull rear             | `#7f4b3d`            | `#703921` |   1.62:1 |
-| Plates                | `#e6a890`            | `#b5a998` |   6.40:1 |
-| Guns, lights, disc    | `#f0bd68`            | `#fa6d38` |   5.14:1 |
-| Gun side              | `#b98a40`            | `#bc4524` |   2.82:1 |
-| Turret top            | `#c27a62`            | `#a95e30` |   3.05:1 |
-| Visor, hatch          | `#2a2433`            | `#2b1d1c` |   1.10:1 |
-| Visor side, breach    | `#1e1a26`            | `#1f1514` |   1.21:1 |
-| Scorch top            | `#5c3a31`            | `#452f28` |   1.19:1 |
-| Scorch side           | `#42291f`            | `#33211b` |   1.03:1 |
-| Burn (deck paint)     | `#6e4436`            | `#613e30` |   1.58:1 |
+| Hull top              | `#d68b72`            | `#bd7042` |   1.50:1 |
+| Hull side             | `#a8654f`            | `#924e28` |   2.50:1 |
+| Hull rear             | `#7f4b3d`            | `#703921` |   3.64:1 |
+| Plates                | `#e6a890`            | `#b5a998` |   1.09:1 |
+| Guns, lights, disc    | `#f0bd68`            | `#fa6d38` |   1.14:1 |
+| Gun side              | `#b98a40`            | `#bc4524` |   2.08:1 |
+| Turret top            | `#c27a62`            | `#a95e30` |   1.93:1 |
+| Visor, hatch          | `#2a2433`            | `#2b1d1c` |   6.46:1 |
+| Visor side, breach    | `#1e1a26`            | `#1f1514` |   7.11:1 |
+| Scorch top            | `#5c3a31`            | `#452f28` |   4.95:1 |
+| Scorch side           | `#42291f`            | `#33211b` |   6.09:1 |
+| Burn (deck paint)     | `#6e4436`            | `#613e30` |   3.73:1 |
 | Claw ink, wreck ember | `#181425`, `#f0a07c` | unchanged |          |
 
 Speed jets ramp slow to fast, in place of Gadget's jet colours:
 
 | Layer | Gadget                 | Claim                  | Contrast, slow and fast |
 | ----- | ---------------------- | ---------------------- | ----------------------: |
-| Outer | `#b8644c` to `#f0a07c` | `#bc4524` to `#fa6d38` |          2.82:1, 5.14:1 |
-| Core  | `#d68b72` to `#ffe2c8` | `#fa6d38` to `#ffebda` |         5.14:1, 12.77:1 |
+| Outer | `#b8644c` to `#f0a07c` | `#bc4524` to `#fa6d38` |          2.08:1, 1.14:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#fa6d38` to `#ffebda` |          1.14:1, 2.17:1 |
+
+On Cartwheel's light field `lightField.jets.enemy` replaces these layers
+([Light fields](galaxies.md#light-fields)): outer `#7f4b3d` 2.81:1, core
+`#a8654f` to `#d68b72` 1.80:1 to 1.07:1.
 
 The outer tail is the ember side; the hot core end is a warm near-white (OKLab
 L 0.95, C 0.03).
 
-The platform adds deep rust `#7d4427` (painted spokes, 1.92:1) and steel side
-`#85786a` (3.44:1). Claim scorch is 3.29:1 on rust, so wrecks read on the hull;
+The platform adds deep rust `#7d4427` (painted spokes, 3.07:1) and steel side
+`#85786a` (1.71:1). Claim scorch is 3.29:1 on rust, so wrecks read on the hull;
 the wreck ember is 5.93:1 on claim scorch. Steel turret heads are 3.96:1 on the
 platform's rail track `#703921`.
 

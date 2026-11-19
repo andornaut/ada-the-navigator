@@ -20,8 +20,12 @@ palette are in [art/tools/needle-common.ts](tools/needle-common.ts).
   values (pivots, docks, berths, anchors) scale by `displayWidth / width` to
   display px.
 - Nothing is labelled: no text, signs or letters on or beside any asset.
-- Contrast is WCAG against Needle's background `#26221F`. Needle is a dark
-  field: no light-field keyline applies.
+- Contrast is WCAG against Needle's background `#C6BBA6`, a light field. The
+  [light-field keyline](galaxies.md#light-fields) in ink `#181425`, 9.49:1 on
+  the field, carries the station (2 px), the drones, frigate and capital and
+  the stranded craft (1 px); the gates, channel stitch and lamps, debris, band
+  and saucer take none. Edge medians and the build's floors and caps are
+  measured on `FIELD` in `art/tools/needle-common.ts`, `#26221F`.
 
 ## Weavers' station
 
@@ -75,15 +79,15 @@ open Needle's manifest.
 
 | Role                   | Colour    | Contrast |
 | ---------------------- | --------- | -------: |
-| Pearl structure        | `#e9e3da` |  12.37:1 |
-| Pearl side             | `#b3aba1` |   6.95:1 |
-| Silver threads, cap    | `#cfc5bd` |   9.30:1 |
-| Lavender thread, roof  | `#c4afcc` |   7.78:1 |
-| Lavender side          | `#8f7c9c` |   4.16:1 |
-| Rose thread            | `#e3b7c0` |   8.87:1 |
-| Warm windows, lanterns | `#ffe9b8` |  13.22:1 |
-| Lamp dim               | `#8c7c60` |   3.88:1 |
-| Blue lights            | `#70ace8` |   6.58:1 |
+| Pearl structure        | `#e9e3da` |   1.49:1 |
+| Pearl side             | `#b3aba1` |   1.19:1 |
+| Silver threads, cap    | `#cfc5bd` |   1.12:1 |
+| Lavender thread, roof  | `#c4afcc` |   1.07:1 |
+| Lavender side          | `#8f7c9c` |   2.00:1 |
+| Rose thread            | `#e3b7c0` |   1.07:1 |
+| Warm windows, lanterns | `#ffe9b8` |   1.59:1 |
+| Lamp dim               | `#8c7c60` |   2.14:1 |
+| Blue lights            | `#70ace8` |   1.26:1 |
 
 The silhouette's edge median is 5.65:1, with 95% of edge pixels at 3:1 or more.
 
@@ -142,7 +146,7 @@ like scenery.
 
 - The dark ramp is a dimmed silver lifted in Oklab L (0.11) until the worst
   drawn orientation's edge median reaches 3:1 at display size; the build fails
-  if either state falls under 3:1. Lamps lit are 13.22:1.
+  if either state falls under 3:1. Lamps lit are 1.59:1.
 - A gate lights when Gameplay counts Ada's pass: the lit pair fades in over the
   dark pair in 240 ms, `cubicOut` (`light`). Reduced motion cuts. A too-fast pass leaves existing lit gates unchanged. Guidance returns to the last
   lit gate, or the first when none is lit; the ship is never teleported or reset.
@@ -166,7 +170,7 @@ the world plane through the view projection.
 
 | Part   | Rule                                                                                                                        |
 | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Colour | `#CFC5BD` (`color`, Needle's marker) at alpha 0.38 (`alpha`): `#66605B`, 2.55:1                                             |
+| Colour | `#CFC5BD` (`color`, Needle's marker) at alpha 0.38 (`alpha`): `#C9BFAF`, 1.04:1                                             |
 | Dashes | 6 on, 4 off (`dash`), logical px measured along the projected edge from the channel's start                                 |
 | Stroke | 1 px (`width`), scaled by `s` like every other space stroke, butt caps                                                      |
 | Inset  | 0 (`inset`): on the edge itself                                                                                             |
@@ -188,7 +192,7 @@ coral dashes (`cue` `asteroid`).
   tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion
   shows frame 0; drift still happens.
 - Body, lit to shadow: `#B2AAA0`, `#9D968C`, `#8A8179`, `#787068`, `#686058`
-  (`body`; 6.87 to 2.56:1). It is the play stone ramp lifted in Oklab L by the
+  (`body`; 1.21 to 3.25:1). It is the play stone ramp lifted in Oklab L by the
   least step (0.13) that puts each piece's edge median at display size at 3:1
   or more (3.02:1); the build fails under 3:1. Faces are flat-shaded from the
   world light, with a 1.2 frame px seam stroke in their own fill.
@@ -219,7 +223,7 @@ the Eye's entry; Gameplay places it in the galaxy.
 ## Space look
 
 Needle's field is in [galaxies.json](../public/art/galaxies.json) (`needle`)
-and its backdrop rock tints in `asteroids.json` (`#48423D` lit, `#3A3531`
+and its backdrop rock tints in `asteroids.json` (`#B8AD98` lit, `#938A7A`
 side). Rebuild the band with `node art/tools/needle-sky.ts`; it writes
 [band.json](../public/art/needle/band.json), linked as `needleBand`.
 
@@ -239,7 +243,7 @@ haze's half-resolution texture and sigma 20 blur. Needle has no haze.
 | Seed    | Speck and star positions come from one fixed seed, so the band looks the same on every flight                                                                             |
 
 - The line stays within the backdrop rocks' 1.8:1 cap: its peak (alpha 0.24)
-  is `#4F4945`, 1.78:1, and 7 px out 1.24:1. The build fails over 1.8:1. That
+  is `#C8BDAC`, 1.02:1, and 7 px out 1.01:1. The build fails over 1.8:1. That
   peak is Needle's brightest backdrop tone, and the
   [backdrop caps](backdrop.md#contrast-caps) hold every other layer at or
   under it.
@@ -247,8 +251,8 @@ haze's half-resolution texture and sigma 20 blur. Needle has no haze.
   parallel to the band, sliding along it at parallax 0.15 and screening it
   lighter or multiplying it darker as they pass; its dust streaks run along it
   too. A graphite crescent is its one planet.
-- Specks and stars are point stars, not the line: specks run 1.83 to 6.44:1
-  and the pearl stars 13.43:1, as small and sparse as the field's dust specks.
+- Specks and stars are point stars, not the line: specks run 1.03 to 1.09:1
+  and the pearl stars 1.62:1, as small and sparse as the field's dust specks.
 - Reduced motion: the band is static, so it is unchanged. The
   [selector preview](galaxies.md#selector-preview) capture includes it.
 
@@ -298,11 +302,11 @@ white and blue, and no Gadget insignia.
 
 | Role           | Colour    | Contrast |
 | -------------- | --------- | -------: |
-| Pearl hull     | `#e9e3da` |  12.37:1 |
-| Pearl side     | `#b3aba1` |   6.95:1 |
-| Lavender bands | `#c4afcc` |   7.78:1 |
-| Bridge dome    | `#6f6688` |   2.95:1 |
-| Lamps          | `#70ace8` |   6.58:1 |
+| Pearl hull     | `#e9e3da` |   1.49:1 |
+| Pearl side     | `#b3aba1` |   1.19:1 |
+| Lavender bands | `#c4afcc` |   1.07:1 |
+| Bridge dome    | `#6f6688` |   2.81:1 |
+| Lamps          | `#70ace8` |   1.26:1 |
 
 The silhouette's edge median is 4.55:1 to 6.63:1 over the headings.
 
@@ -382,16 +386,16 @@ platform.
 
 | Role                   | Coral                           | Needle    | Contrast |
 | ---------------------- | ------------------------------- | --------- | -------: |
-| Hull top               | `#d68b72`                       | `#d65b6c` |   4.19:1 |
-| Hull side              | `#a8654f`                       | `#a14350` |   2.58:1 |
-| Hull rear              | `#7f4b3d`                       | `#75313a` |   1.70:1 |
-| Plates                 | `#e6a890`                       | `#d7cfc9` |  10.26:1 |
-| Turret top             | `#c27a62`                       | `#b44858` |   3.01:1 |
-| Scorch top             | `#5c3a31`                       | `#452a2c` |   1.22:1 |
-| Scorch side            | `#42291f`                       | `#2e1d1e` |   1.02:1 |
-| Burn (deck paint)      | `#6e4436`                       | `#58302f` |   1.41:1 |
-| Guns, lights, disc     | `#f0bd68`                       | unchanged |   9.15:1 |
-| Gun side               | `#b98a40`                       | unchanged |   5.09:1 |
+| Hull top               | `#d68b72`                       | `#d65b6c` |   1.98:1 |
+| Hull side              | `#a8654f`                       | `#a14350` |   3.22:1 |
+| Hull rear              | `#7f4b3d`                       | `#75313a` |   4.90:1 |
+| Plates                 | `#e6a890`                       | `#d7cfc9` |   1.23:1 |
+| Turret top             | `#c27a62`                       | `#b44858` |   2.76:1 |
+| Scorch top             | `#5c3a31`                       | `#452a2c` |   6.82:1 |
+| Scorch side            | `#42291f`                       | `#2e1d1e` |   8.44:1 |
+| Burn (deck paint)      | `#6e4436`                       | `#58302f` |   5.89:1 |
+| Guns, lights, disc     | `#f0bd68`                       | unchanged |   1.10:1 |
+| Gun side               | `#b98a40`                       | unchanged |   1.63:1 |
 | Visor, claw ink, ember | `#2a2433`, `#181425`, `#f0a07c` | unchanged |          |
 
 Needle scorch is 3.44:1 on the crimson top and burn 2.97:1, so wrecks read on
@@ -400,8 +404,12 @@ the hull; the wreck ember is 6.19:1 on scorch. The fighter's edge median is
 
 | Layer | Gadget                 | Needle                 | Contrast, slow and fast |
 | ----- | ---------------------- | ---------------------- | ----------------------: |
-| Outer | `#b8644c` to `#f0a07c` | `#993847` to `#ed7477` |          2.26:1, 5.53:1 |
-| Core  | `#d68b72` to `#ffe2c8` | `#d65b6c` to `#ffe7e9` |         4.19:1, 13.42:1 |
+| Outer | `#b8644c` to `#f0a07c` | `#993847` to `#ed7477` |          3.67:1, 1.50:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#d65b6c` to `#ffe7e9` |          1.98:1, 1.61:1 |
+
+On Needle's light field `lightField.jets.enemy` replaces these layers
+([Light fields](galaxies.md#light-fields)): outer `#7f4b3d` 3.72:1, core
+`#a8654f` to `#d68b72` 2.38:1 to 1.42:1.
 
 ## World changes
 
@@ -430,7 +438,7 @@ lamp frames and replaces its `needle-lamp-` entries, and writes the
 { start, spacing, inset, sides, phase } }`, with anchor `i` at arc length
   `start + i * spacing` on the centre line, offset `side * (width / 2 - inset)`
   along its left normal (`1` left of the line's direction, `-1` right).
-- Lamp `#ffe9b8` 13.22:1, dim `#8c7c60` 3.88:1, pearl float 12.37:1.
+- Lamp `#ffe9b8` 1.59:1, dim `#8c7c60` 2.14:1, pearl float 1.49:1.
 
 ### Loom hall
 
@@ -452,8 +460,11 @@ in frame px.
 
 | Craft                 | Job subject    | Manifest ids                          | Frame | Display | Frames per heading       | Hull top on field |
 | --------------------- | -------------- | ------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
-| `stranded-glider`     | a stuck glider | `craft-stranded-glider-{k}`           |   112 |      49 | one                      |  `#cfc5bd` 9.30:1 |
-| `stranded-needle-pod` | a pod          | `craft-stranded-needle-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms | `#e9e3da` 12.37:1 |
+| `stranded-glider`     | a stuck glider | `craft-stranded-glider-{k}`           |   112 |      49 | one                      |  `#cfc5bd` 1.12:1 |
+| `stranded-needle-pod` | a pod          | `craft-stranded-needle-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#e9e3da` 1.49:1 |
+
+Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
+9.49:1 on the field, which carries its silhouette.
 
 - Stuck glider: a silver Weaver hull pointed at both ends like a loom shuttle,
   carrying an upright rose thread bobbin, snagged in loose lavender thread that

@@ -427,43 +427,46 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 ### Contrast per field
 
 WCAG ratios of each mark against each galaxy's `background`
-([Galaxies](galaxies.md)), truncated to two decimals. Sunflower is the light
-farm-yellow field `#D8C994`; the others are dark.
+([Galaxies](galaxies.md)), truncated to two decimals. Sunflower, Cartwheel and
+Whirlpool are light fields (`tint.light`); Phantom is dark.
 
-| Mark                      | Colour    | Sunflower `#D8C994` | Cartwheel `#39221E` | Whirlpool `#132D33` | Phantom `#241827` |
+| Mark                      | Colour    | Sunflower `#D8C994` | Cartwheel `#BC9D90` | Whirlpool `#B8CEC4` | Phantom `#514955` |
 | ------------------------- | --------- | ------------------- | ------------------- | ------------------- | ----------------- |
-| Station face              | `#C4AFCC` | 1.22                | 7.28                | 7.13                | 8.38              |
-| Growers face              | `#9CCC5A` | 1.13                | 7.87                | 7.71                | 9.06              |
-| Workshop face             | `#F2D15A` | 1.10                | 9.87                | 9.67                | 11.37             |
-| Salvagers face            | `#8F9CF0` | 1.55                | 5.75                | 5.63                | 6.62              |
-| Destination face          | `#65C9BF` | 1.19                | 7.49                | 7.34                | 8.63              |
-| Holodisk face             | `#E868C8` | 1.75                | 5.09                | 4.99                | 5.86              |
-| Landmark face             | `#EAD4AA` | 1.14                | 10.19               | 9.99                | 11.73             |
-| Job face                  | `#FEAE34` | 1.12                | 7.96                | 7.80                | 9.16              |
-| Search area dash          | `#FEAE34` | 1.12                | 7.96                | 7.80                | 9.16              |
-| Ada hull                  | `#ffffff` | 1.65                | 14.77               | 14.47               | 17.00             |
-| Objective stroke          | `#C4AFCC` | 1.22                | 7.28                | 7.13                | 8.38              |
-| Ring band                 | `#ead4aa` | 1.14                | 10.19               | 9.99                | 11.73             |
-| Ink edge, keyline, fringe | `#181425` | 10.89               | 1.21                | 1.24                | 1.05              |
-| Tool disc face            | `#262b44` | 8.40                | 1.06                | 1.04                | 1.22              |
+| Station face              | `#C4AFCC` | 1.22                | 1.23                | 1.22                | 4.25              |
+| Growers face              | `#9CCC5A` | 1.13                | 1.33                | 1.13                | 4.60              |
+| Workshop face             | `#F2D15A` | 1.10                | 1.67                | 1.10                | 5.76              |
+| Salvagers face            | `#8F9CF0` | 1.55                | 1.02                | 1.54                | 3.36              |
+| Destination face          | `#65C9BF` | 1.19                | 1.27                | 1.18                | 4.37              |
+| Holodisk face             | `#E868C8` | 1.75                | 1.15                | 1.74                | 2.97              |
+| Landmark face             | `#EAD4AA` | 1.14                | 1.73                | 1.14                | 5.95              |
+| Job face                  | `#FEAE34` | 1.12                | 1.35                | 1.11                | 4.64              |
+| Search area dash          | `#FEAE34` | 1.12                | 1.35                | 1.11                | 4.64              |
+| Ada hull                  | `#ffffff` | 1.65                | 2.51                | 1.65                | 8.62              |
+| Objective stroke          | `#C4AFCC` | 1.22                | 1.23                | 1.22                | 4.25              |
+| Ring band                 | `#ead4aa` | 1.14                | 1.73                | 1.14                | 5.95              |
+| Ink edge, keyline, fringe | `#181425` | 10.89               | 7.17                | 10.86               | 2.08              |
+| Tool disc face            | `#262b44` | 8.40                | 5.53                | 8.37                | 1.61              |
 
-- Light-field keyline rule: on a light field (`tint.light`, Sunflower) every
-  face, the hull, the stroke and the band fall below 2:1, so the ink parts
-  carry each mark at 10.89:1: the chip's edge, Ada's keyline, the indicator's
-  ink stroke and the ring's fringes. On a dark field the colours carry it (4.99:1
-  or more) and the ink parts are outlines. Every mark draws its ink parts on
+- Light-field keyline rule: on a light field (`tint.light`) every face, the
+  stroke and the band fall below 2:1, and Ada's hull is 2.51:1 or less, so the
+  ink parts carry each mark at 7.17:1 or more (Cartwheel; 10.89:1 on
+  Sunflower): the chip's edge, Ada's keyline, the indicator's ink stroke and
+  the ring's fringes. On Phantom the colours carry it (2.97:1 or more) and the
+  ink parts are outlines. Every mark draws its ink parts on
   every field, so a mark has one look across galaxies; a map mark with no ink
   edge is not allowed.
-- The search area's ink dash carries it on Sunflower, 10.89:1 on the field and
-  8.62:1 on the fog; its orange dash carries it on the dark fields.
+- The search area's ink dash carries it on the light fields, 7.17:1 or more on
+  the field and 4.93:1 or more on the fog (Cartwheel); its orange dash carries
+  it on Phantom, 4.64:1 on the field and 3.18:1 on the fog.
 - Glyphs are ink on the face: 6.21:1 (holodisk) to 12.43:1 (landmarks);
   9.71:1 on the job face.
 - Tool glyphs on the navy disc: supporting 6.83:1, as in flight.
-  On dark fields the disc is 1.04 to 1.22:1 and its glyph carries it.
-- Header, ink at 0.65 over the field: cream text 5.20:1 on Sunflower (composite
-  `#5B534C`) and 11.65:1 or more on the dark fields; the white name 7.53:1 and
-  16.89:1 or more; the uncharted pip ring `#b8b3c9` 3.70:1 and 8.30:1 or more.
-  Over fog: cream 5.80:1 on Sunflower, 10.84:1 or more on the dark fields.
+  On Phantom the disc is 1.61:1 and its glyph carries it.
+- Header, ink at 0.65 over the field: on the light fields cream text 5.17:1 or
+  more (Whirlpool, composite `#50555D`; Sunflower 5.20:1, `#5B534C`), the white
+  name 7.50:1 or more and the uncharted pip ring `#b8b3c9` 3.69:1 or more; on
+  Phantom 9.99:1, 14.47:1 and 7.12:1. Over fog: cream 5.80:1 or more on the
+  light fields, 8.88:1 on Phantom.
   The divider is decorative.
 - Panel: the card face `#3b3850`; cream name 7.76:1, supporting type line, job
   line and reason 5.53:1, Travel here as the secondary button.
@@ -483,16 +486,16 @@ discovered place for the reveal, so a hunt's search area is never fogged.
 | `MAP_SCREEN.fog.minFeather` | 3     | Sigma never below 3 logical px                                                   |
 
 - Colour: the sRGB channel mean of the galaxy's `environment` and
-  `environmentDetail`, rounded half up. It steps darker than the field on
-  Sunflower and lighter on the dark fields, at 1.24 to 1.30:1: quiet, and
-  never the only carrier of meaning.
+  `environmentDetail`, rounded half up. It steps darker than the field on the
+  light fields and lighter on Phantom, at 1.26 to 1.46:1: quiet, and never the
+  only carrier of meaning.
 
 | Galaxy    | Fog       | Against the field |
 | --------- | --------- | ----------------- |
 | Sunflower | `#C2B37F` | 1.26              |
-| Cartwheel | `#4C3430` | 1.29              |
-| Whirlpool | `#254046` | 1.30              |
-| Phantom   | `#362939` | 1.24              |
+| Cartwheel | `#9F7F73` | 1.45              |
+| Whirlpool | `#9CB4AA` | 1.32              |
+| Phantom   | `#6C6072` | 1.46              |
 
 - A world circle of radius `reveal` projects to an axis-aligned ellipse with
   radii `reveal * sqrt(2) * scale` across and half that down. Draw the fog
@@ -501,8 +504,9 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   `sigma = max(minFeather, feather * rx)`.
 - The explored record (explored chunk ids) persists per galaxy across flights
   and clears on Restart.
-- Marks on fog: on Sunflower the ink edge is 8.62:1 on the fog; on the dark
-  fields the faces are 3.81:1 (holodisk on Whirlpool) or more.
+- Marks on fog: on the light fields the ink edge is 4.93:1 (Cartwheel) or more
+  on the fog; on Phantom the faces are 2.03:1 (holodisk) or more and the ink
+  edge 3.04:1.
 - Fallback: with no explored record, draw the plain field and no fog. Places,
   Ada and the header then carry all the information.
 

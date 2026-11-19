@@ -203,29 +203,31 @@ band takes ore's solid tones (`ORE_SOLID` in `art/tools/ore.ts`): lit tops
 `#774667`, so everything that means ore reads as the
 [ore nugget](cartwheel-props.md#ore-nugget).
 
-Contrast is WCAG against Cartwheel's field background `#39221E`; the table
-lists top colours, which carry each silhouette.
+Contrast is WCAG against Cartwheel's field background `#BC9D90`, a light field;
+the table lists top colours. The hub takes the 2 px ink
+[light-field keyline](galaxies.md#light-fields), 7.18:1 on the field, which
+carries its silhouette; the mooring buoy and the story craft take none.
 
 | Asset     | Role                 | Colour    | Contrast |
 | --------- | -------------------- | --------- | -------: |
-| Hub, buoy | Cream structure      | `#efe4cf` |  11.73:1 |
-| Hub       | Slate tower, collars | `#9aaccb` |   6.43:1 |
-| Hub       | Slate cap            | `#c3cfe2` |   9.39:1 |
-| Hub       | Ore, lit tops        | `#e798cd` |   6.87:1 |
-| Hub       | Ore tops, bands      | `#d481b9` |   5.37:1 |
-| Hub       | Worn patch plate     | `#b3a68a` |   6.15:1 |
-| Hub       | Worn rust streak     | `#9a5f48` |   2.89:1 |
-| Hub       | Worn scorch          | `#a39784` |   5.15:1 |
-| All       | Blue lights          | `#70ace8` |   6.16:1 |
-| All       | Warm windows         | `#ffe9b8` |  12.38:1 |
-| Miner     | Sand hull            | `#dcc49a` |   8.73:1 |
-| Miner     | Bins, beams, engines | `#6e7482` |   3.15:1 |
-| Miner     | Drill                | `#b8bfc9` |   7.97:1 |
-| Visitor 1 | Sage hull            | `#a7c49a` |   7.74:1 |
-| Visitor 2 | Periwinkle hull      | `#aab0e6` |   7.08:1 |
-| Blocker   | Chartreuse hull      | `#b6dd30` |   9.41:1 |
-| Blocker   | Graphite pods, ram   | `#7d7a92` |   3.57:1 |
-| Blocker   | High beams           | `#fffbea` |  14.24:1 |
+| Hub, buoy | Cream structure      | `#efe4cf` |   1.99:1 |
+| Hub       | Slate tower, collars | `#9aaccb` |   1.09:1 |
+| Hub       | Slate cap            | `#c3cfe2` |   1.60:1 |
+| Hub       | Ore, lit tops        | `#e798cd` |   1.17:1 |
+| Hub       | Ore tops, bands      | `#d481b9` |   1.09:1 |
+| Hub       | Worn patch plate     | `#b3a68a` |   1.04:1 |
+| Hub       | Worn rust streak     | `#9a5f48` |   2.04:1 |
+| Hub       | Worn scorch          | `#a39784` |   1.14:1 |
+| All       | Blue lights          | `#70ace8` |   1.05:1 |
+| All       | Warm windows         | `#ffe9b8` |   2.10:1 |
+| Miner     | Sand hull            | `#dcc49a` |   1.48:1 |
+| Miner     | Bins, beams, engines | `#6e7482` |   1.87:1 |
+| Miner     | Drill                | `#b8bfc9` |   1.36:1 |
+| Visitor 1 | Sage hull            | `#a7c49a` |   1.32:1 |
+| Visitor 2 | Periwinkle hull      | `#aab0e6` |   1.20:1 |
+| Blocker   | Chartreuse hull      | `#b6dd30` |   1.60:1 |
+| Blocker   | Graphite pods, ram   | `#7d7a92` |   1.65:1 |
+| Blocker   | High beams           | `#fffbea` |   2.42:1 |
 
 Sides use the darker partner of each top: slate `#6a7c9e`, sand `#a8916a`
 (rear `#8a7656`), sage `#728f66` (rear `#5a7351`), periwinkle `#7379b4` (rear

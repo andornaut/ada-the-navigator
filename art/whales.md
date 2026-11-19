@@ -20,14 +20,17 @@ short upturned smile face Ada. The indigo-violet hull sits between Ada's sky
 blue and the point-of-interest lavender, clear of coral drones, mint and
 amber signals.
 
-| Role       | Whale and smaller adult   | Calves                    | Contrast on `#132D33` |
+| Role       | Whale and smaller adult   | Calves                    | Contrast on `#B8CEC4` |
 | ---------- | ------------------------- | ------------------------- | --------------------- |
-| Hull ramp  | `#aaa5e6` to `#544d91`    | `#bfbaef` to `#6b64a6`    | 6.36 to 1.96 (adult)  |
-| Throat     | `#e6e0f8` to `#7c72a4`    | `#eeeafb` to `#8a80b0`    | 11.29 (lit adult)     |
-| Fins       | `#9d97dd` to `#4c4585`    | `#afa9e6` to `#504a87`    | 5.45 (lit adult)      |
-| Glow       | `#cbb8ee`, core `#f7f2ff` | `#d8c9f4`, core `#fbf8ff` | 8.02, 13.16 (adult)   |
+| Hull ramp  | `#aaa5e6` to `#544d91`    | `#bfbaef` to `#6b64a6`    | 1.37 to 4.45 (adult)  |
+| Throat     | `#e6e0f8` to `#7c72a4`    | `#eeeafb` to `#8a80b0`    | 1.29 (lit adult)      |
+| Fins       | `#9d97dd` to `#4c4585`    | `#afa9e6` to `#504a87`    | 1.60 (lit adult)      |
+| Glow       | `#cbb8ee`, core `#f7f2ff` | `#d8c9f4`, core `#fbf8ff` | 1.09, 1.51 (adult)    |
 | Eye, glint | `#181425`, `#ffffff`      | same                      |                       |
 | Smile      | `#2c2660`                 | same                      |                       |
+
+Whales take no [light-field keyline](galaxies.md#light-fields), so the ramp
+and spots read on Whirlpool's field by their own tones.
 
 Faces are flat polygons shaded from the world light `(-0.25, 0.45, 1)` into the
 five ramp tones (thresholds 0.9, 0.78, 0.6 and 0.3), as for the asteroids. Body

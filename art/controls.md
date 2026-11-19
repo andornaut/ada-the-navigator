@@ -232,9 +232,9 @@ sits on open space.
 | -------------- | --------- | ------------------------------------------ | -------- |
 | Line           | `#ead4aa` | Panel over the base field `#292734`        | 11.64:1  |
 | Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 5.20:1   |
-| Line           | `#ead4aa` | Panel over Cartwheel `#39221E`             | 11.71:1  |
-| Line           | `#ead4aa` | Panel over Whirlpool `#132D33`             | 11.66:1  |
-| Line           | `#ead4aa` | Panel over Phantom `#241827`               | 12.24:1  |
+| Line           | `#ead4aa` | Panel over Cartwheel `#BC9D90`             | 6.37:1   |
+| Line           | `#ead4aa` | Panel over Whirlpool `#B8CEC4`             | 5.18:1   |
+| Line           | `#ead4aa` | Panel over Phantom `#514955`               | 9.99:1   |
 | Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
 | Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
 | Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
@@ -583,11 +583,10 @@ no pip at level 1, two at level 2 and three at level 3.
   by selected, idle or empty state.
 - Reduced motion: nothing animates.
 
-| Mark | Against                  | Orange | Purple | Lavender pip |
-| ---- | ------------------------ | -----: | -----: | -----------: |
-| Edge | Darkest field, Whirlpool | 6.34:1 | 4.25:1 |            - |
-| Edge | Phantom `#241827`        | 7.45:1 | 4.99:1 |            - |
-| Pip  | Its ink outline          | 7.89:1 | 5.29:1 |       8.86:1 |
+| Mark | Against                           | Orange | Purple | Lavender pip |
+| ---- | --------------------------------- | -----: | -----: | -----------: |
+| Edge | Phantom `#514955`, the dark field | 3.78:1 | 2.53:1 |            - |
+| Pip  | Its ink outline                   | 7.89:1 | 5.29:1 |       8.86:1 |
 
 The lavender pip uses the idle glyph colour at full opacity.
 
