@@ -118,6 +118,8 @@ const LIGHT_FIELD = {
     "nebulaStars",
     "huntGlint",
     "strandedCraft",
+    // Cartwheel's traveling debris and Whirlpool's river debris, moving hazards like the drones.
+    "debris",
   ],
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
   // Places Ada visits take a wider keyline, so they read at a glance on a light field

@@ -44,7 +44,8 @@
       "beacon",
       "nebulaStars",
       "huntGlint",
-      "strandedCraft"
+      "strandedCraft",
+      "debris"
     ],
     "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
     "destinationKeyline": {

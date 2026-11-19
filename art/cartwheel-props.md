@@ -42,6 +42,10 @@ tilted axis.
 - A 1.5 px coral (`obstacle`, `#D68B72`) contour outside the silhouette (`contour`):
   1.07:1 on Cartwheel's background, and 1.05 to 1.38:1 on the body tones (1.05:1
   on the middle one). Coral means damage.
+- On Cartwheel's light field the piece draws over the 1 px ink keyline of the
+  [light-field rule](galaxies.md#light-fields) (`debris`): the silhouette,
+  contour included, at alpha 0.5, grown by 1 px in all eight directions. Ink
+  `#181425` is 7.18:1 on the field and 4.85 to 9.15:1 against the body tones.
 - `radius`: 56.35 frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame px,
   `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
