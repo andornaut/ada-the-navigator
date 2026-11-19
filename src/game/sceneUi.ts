@@ -1175,26 +1175,39 @@ const coveredScenePaint = new WeakMap<
   }
 >();
 
-// The network-play notice per scene once the launch reports it, with when its showing ends.
-const networkPlays = new WeakMap<object, { reason: NetworkPlayNotice["reason"]; ends?: number }>();
+// The network-play notice per scene once the launch reports it: the time it still has to show,
+// set at the first flight, and the frame time it last showed at.
+const networkPlays = new WeakMap<
+  object,
+  { reason: NetworkPlayNotice["reason"]; remaining?: number; shownAt?: number | undefined }
+>();
 
 /**
- * Whether the network-play notice shows: once per launch, for a line's time from the first flight
- * while the game plays from the network, in the save status slot with no control.
+ * Whether the network-play notice wants the save status slot: once per launch from the first
+ * flight while the game plays from the network, for a line's time, which runs only while it
+ * shows (slotFree: no line or game notice holds the slot). It shows with no control.
  */
-export function showNetworkPlay(scene: Pick<UiContext, "model" | "shell" | "time">): boolean {
+export function showNetworkPlay(
+  scene: Pick<UiContext, "model" | "shell" | "time">,
+  slotFree: boolean,
+): boolean {
   const notice = networkPlays.get(scene);
   if (!notice) {
     return false;
   }
   const { flight, mode } = scene.model.state;
-  if (notice.ends === undefined && mode === "space" && flight) {
+  const now = scene.time.now;
+  if (notice.remaining === undefined && mode === "space" && flight) {
     const label = notice.reason === "quota" ? "networkPlayQuota" : "networkPlayUnsupported";
-    notice.ends = scene.time.now + lineDuration(CONTENT.labels[label] ?? "") * 1000;
+    notice.remaining = lineDuration(CONTENT.labels[label] ?? "") * 1000;
   }
-  const showing = notice.ends !== undefined && scene.time.now < notice.ends;
-  scene.shell.setNetworkPlay(showing ? notice.reason : undefined);
-  return showing;
+  if (notice.shownAt !== undefined && notice.remaining !== undefined) {
+    notice.remaining -= now - notice.shownAt;
+  }
+  const wanted = notice.remaining !== undefined && notice.remaining > 0;
+  notice.shownAt = wanted && slotFree ? now : undefined;
+  scene.shell.setNetworkPlay(wanted ? notice.reason : undefined);
+  return wanted;
 }
 
 /** The conversation box, in the desktop wording without a coarse pointer. */
@@ -1219,10 +1232,12 @@ export function renderConversation(scene: UiContext): void {
     null;
   scene.conversationBox.render(line, !coarsePointer(window), scene.reducedMotion);
   // UI covers retain the scene box beneath their scrim; actual interaction replaces it.
-  const networkPlay = showNetworkPlay(scene);
+  const showsLine = line !== null && !sceneCovered;
+  const showsNotice = notice !== "" && !sceneCovered;
+  const networkPlay = showNetworkPlay(scene, !showsLine && !showsNotice);
   const occupant = boxOccupant({
-    line: line !== null && !sceneCovered,
-    notice: notice !== "" && !sceneCovered,
+    line: showsLine,
+    notice: showsNotice,
     saveStatus: scene.savingUnavailable || networkPlay,
   });
   // Written only on a change: an attribute write restyles the whole play area.

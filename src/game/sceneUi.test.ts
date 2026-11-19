@@ -285,8 +285,8 @@ describe("conversation exposure under covering cards", () => {
 });
 
 describe("network-play notice", () => {
-  it("shows once per launch for a line's time from the first flight, then returns the slot", () => {
-    const networkPlays = new WeakMap<object, { reason: string; ends?: number }>();
+  it("shows once per launch for a line's time from the first flight, timed only while shown", () => {
+    const networkPlays = new WeakMap<object, { reason: string; remaining?: number }>();
     const show = runInContext(
       callback("showNetworkPlay"),
       createContext({
@@ -294,32 +294,36 @@ describe("network-play notice", () => {
         lineDuration: (text: string) => 5 + text.length * 0.05,
         networkPlays,
       }),
-    ) as (value: typeof scene) => boolean;
+    ) as (value: typeof scene, slotFree: boolean) => boolean;
     const scene = {
       model: { state: { flight: null as object | null, mode: "home" } },
       shell: { setNetworkPlay: vi.fn() },
       time: { now: 1000 },
     };
-    expect(show(scene)).toBe(false);
+    expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).not.toHaveBeenCalled();
     networkPlays.set(scene, { reason: "quota" });
     // Not before the first flight.
-    expect(show(scene)).toBe(false);
+    expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
     scene.model.state = { flight: {}, mode: "space" };
-    expect(show(scene)).toBe(true);
+    const duration = (5 + CONTENT.labels.networkPlayQuota!.length * 0.05) * 1000;
+    // A game notice holds the slot first: its time does not run meanwhile.
+    expect(show(scene, false)).toBe(true);
+    scene.time.now += 4000;
+    expect(show(scene, false)).toBe(true);
     expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith("quota");
-    const shown = (5 + CONTENT.labels.networkPlayQuota!.length * 0.05) * 1000;
-    scene.time.now += shown - 1;
-    expect(show(scene)).toBe(true);
+    expect(show(scene, true)).toBe(true);
+    scene.time.now += duration - 1;
+    expect(show(scene, true)).toBe(true);
     scene.time.now += 1;
-    expect(show(scene)).toBe(false);
+    expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
     // A later flight in the same launch does not show it again.
     scene.model.state = { flight: null, mode: "home" };
-    show(scene);
+    show(scene, true);
     scene.model.state = { flight: {}, mode: "space" };
-    expect(show(scene)).toBe(false);
+    expect(show(scene, true)).toBe(false);
   });
 
   it("holds Gameplay's copy for each reason", () => {
