@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
-import { encodeLossyWebp } from "@andornaut/art-kit/build/webp";
+import { decodeWebp, encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 
 import { placeEntries } from "./manifest.ts";
 import { rgb, type Rgb } from "./oklab.ts";
@@ -62,6 +62,8 @@ export const GUARD = {
   // Highest WCAG relative luminance behind a mark: 6.5:1 for the #B8B3C9 dashes and "..."
   // labels, and the marks' own floors on their ink backings.
   cap: 0.028,
+  // The lowest pre-encode target the WebP headroom search tries.
+  floor: 0.024,
 } as const;
 
 /* Float sRGB buffers */
@@ -394,9 +396,9 @@ function blurChannel(values: Float32Array, width: number, height: number, sigma:
   return out;
 }
 
-// Caps the sky's luminance at GUARD.cap inside the footprint, feathered by a Gaussian, then
-// fails if any footprint pixel is still above the cap.
-function guard(sky: Buffer) {
+// Caps the sky's luminance at `target` (at most GUARD.cap) inside the footprint, feathered by a
+// Gaussian, then fails if any footprint pixel is still above the cap.
+function guard(sky: Buffer, target: number) {
   const { width, height, density } = sky;
   // The cap feathers out from a footprint grown by two sigmas, so it is whole on the marks.
   const mask = footprint(width, height, density);
@@ -411,8 +413,8 @@ function guard(sky: Buffer) {
     if (m <= 0) continue;
     const [r, g, b] = [sky.data[i * 3]!, sky.data[i * 3 + 1]!, sky.data[i * 3 + 2]!];
     const L = luminance(r, g, b);
-    if (L <= GUARD.cap) continue;
-    const scale = GUARD.cap / L;
+    if (L <= target) continue;
+    const scale = target / L;
     for (let k = 0; k < 3; k++) {
       const v = sky.data[i * 3 + k]!;
       sky.data[i * 3 + k] = v * (1 - m) + srgb(linear(v) * scale) * m;
@@ -430,7 +432,8 @@ function guard(sky: Buffer) {
   }
 }
 
-export function routeSky(): RgbaImage {
+// The sky before the guard.
+function unguardedSky(): Buffer {
   const sky = new Buffer(SKY.width * SKY.density, SKY.height * SKY.density, SKY.density);
   const [top, bottom] = [rgb(SKY_TOP), rgb(SKY_BOTTOM)].map((c) => c.map((v) => v / 255));
   for (let py = 0; py < sky.height; py++) {
@@ -452,8 +455,55 @@ export function routeSky(): RgbaImage {
   sky.over(SKY_TOP, (x, y) => Math.exp(-0.5 * ((y - line(x) - 6) / 7) ** 2) * 0.55 * band(x, y));
   stars(sky);
   phenomena(sky);
-  guard(sky);
+  return sky;
+}
+
+// The sky guarded at `target`.
+function guardedSky(unguarded: Buffer, target: number): RgbaImage {
+  const sky = new Buffer(unguarded.width, unguarded.height, unguarded.density);
+  sky.data.set(unguarded.data);
+  guard(sky, target);
   return sky.toImage();
+}
+
+// Footprint pixels of a decoded sky above the cap's 2% allowance, at native size and in the 2x2
+// boxes that touch the footprint (display size).
+function decodedGuardFailures({ data, width, height }: RgbaImage, mask: Float32Array) {
+  const at = (i: number) =>
+    luminance(data[i * 4]! / 255, data[i * 4 + 1]! / 255, data[i * 4 + 2]! / 255);
+  const limit = GUARD.cap * 1.02;
+  let native = 0;
+  let display = 0;
+  for (let i = 0; i < width * height; i++) if (mask[i] && at(i) > limit) native++;
+  for (let y = 0; y + 1 < height; y += 2) {
+    for (let x = 0; x + 1 < width; x += 2) {
+      const box = [y * width + x, y * width + x + 1, (y + 1) * width + x, (y + 1) * width + x + 1];
+      if (!box.some((i) => mask[i])) continue;
+      if (box.reduce((sum, i) => sum + at(i), 0) / 4 > limit) display++;
+    }
+  }
+  return { native, display };
+}
+
+const SKY_WEBP = { quality: 90, method: 6, alphaQuality: 100, exact: false } as const;
+
+// The opaque sky as lossy WebP at quality 90, guarded at the first pre-encode target from
+// GUARD.cap down to GUARD.floor (0.001 steps) whose decoded footprint holds the cap.
+export async function routeSkyWebp(): Promise<{
+  image: RgbaImage;
+  bytes: Uint8Array;
+  target: number;
+}> {
+  const unguarded = unguardedSky();
+  const mask = footprint(unguarded.width, unguarded.height, unguarded.density);
+  for (let step = Math.round(GUARD.cap * 1000); step >= Math.round(GUARD.floor * 1000); step--) {
+    const target = step / 1000;
+    const image = guardedSky(unguarded, target);
+    const bytes = await encodeLossyWebp(SKY_WEBP, image);
+    const failures = decodedGuardFailures(await decodeWebp(bytes), mask);
+    if (failures.native === 0 && failures.display === 0) return { image, bytes, target };
+  }
+  throw new Error(`route-sky: no guard target down to ${GUARD.floor} holds the decoded cap`);
 }
 
 /* The ground */
@@ -517,9 +567,6 @@ export function routeGround(): RgbaImage {
   return ground.toImage(alpha);
 }
 
-// The opaque sky as lossy WebP at quality 90.
-const SKY_WEBP = { quality: 90, method: 6, alphaQuality: 100, exact: false } as const;
-
 const entry = (
   id: string,
   extension: "png" | "webp",
@@ -538,9 +585,10 @@ const entry = (
 });
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const sky = routeSky();
+  const { image: sky, bytes, target } = await routeSkyWebp();
   const ground = routeGround();
-  writeFileSync(`${art}route-sky.webp`, await encodeLossyWebp(SKY_WEBP, sky));
+  writeFileSync(`${art}route-sky.webp`, bytes);
+  console.log(`route-sky: guard target ${target}, ${bytes.length} bytes`);
   writePng(`${art}route-ground.png`, ground);
   placeEntries("core", "route-", [
     entry("route-sky", "webp", sky, SKY.density, { x: 0.5, y: 0 }),

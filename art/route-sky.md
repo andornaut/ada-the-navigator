@@ -84,10 +84,14 @@ whole view. Its footprint, in play view px (`GUARD` in the tool):
 - the close X's corner: play view x 600 to the sky's right edge, y 0 to 56.
 
 Inside the footprint the sky's WCAG relative luminance is scaled down to at
-most 0.028 (its linear RGB times `0.028 / L`), feathered outward by a
-Gaussian of sigma 3 over the footprint grown by 6, at gain 1.6. The build
-fails if any footprint pixel of the rendered sky, before WebP encoding, is
-above the cap by more than 2% (byte rounding).
+most a target `T` (its linear RGB times `T / L`), feathered outward by a
+Gaussian of sigma 3 over the footprint grown by 6, at gain 1.6. The cap is
+0.028 with a 2% allowance (byte rounding), checked on the rendered sky and on
+the decoded WebP, at native size and in every 2x2 box that touches the
+footprint (display size). The build fails on any pixel or box above it.
+Lossy encoding brightens some guarded pixels, so `T` is the first of 0.028,
+0.027 and so on down to 0.024 (`GUARD.floor`) whose decoded sky holds the cap.
+The current target is 0.024: the decoded footprint peaks at 0.0282.
 The field itself is 0.013 to 0.022, so the guard shows only where a star,
 the band or a phenomenon crosses a mark.
 
