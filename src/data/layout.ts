@@ -344,7 +344,8 @@ export const STATUS_PILL_LAYOUT = {
   y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
-// The shield pill's independent drawn bottom above the view's bottom, inside the bottom safe inset.
+// The bottom controls line (playView.ts controlsBottom): this far above the view's bottom, inside
+// the bottom safe inset. The shield pill sits on the HUD rect's bottom edge instead.
 export const CONTROLS_BOTTOM = 40;
 
 // The least gap from each stick's drawn ring and the shield pill to the game

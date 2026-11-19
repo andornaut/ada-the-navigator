@@ -28,6 +28,7 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { STORY_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
 import { HUD_ROW, STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import {
   STORY_BACKGROUND,
@@ -853,9 +854,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       previous.style.width = "max-content";
       next.style.width = "max-content";
       layout = storyControlsLayout(
-        controls.getBoundingClientRect().width / unit,
-        previous.getBoundingClientRect().width / unit,
-        next.getBoundingClientRect().width / unit,
+        frameSize(controls).width / unit,
+        frameSize(previous).width / unit,
+        frameSize(next).width / unit,
       );
       previous.style.width = "";
       next.style.width = "";
@@ -866,8 +867,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     // A page past Gameplay's limits scrolls its choices, the page controls fixed below: one whose
     // page controls fall below the choice column at the panel's top cap.
     choices.classList.remove("ada-story-scrolls");
-    const overflows =
-      controls.getBoundingClientRect().bottom > column.getBoundingClientRect().bottom + 0.5;
+    const bottom = (element: Element) => {
+      const box = frameBoxIn(layer, element);
+      return box.y + box.height;
+    };
+    const overflows = bottom(controls) > bottom(column) + 0.5;
     const previousInHud = storyChoicePreviousInHud(overflows, page);
     if (previousInHud) {
       layer.append(previous);
@@ -898,8 +902,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       width: background.clientWidth / unit,
     };
   };
-  const panelTop = (unit: number) =>
-    (panel.getBoundingClientRect().top - layer.getBoundingClientRect().top) / unit;
+  const panelTop = (unit: number) => frameBoxIn(layer, panel).y / unit;
   const placePanelContent = () => {
     if (rendered && !rendered.sleep) {
       const padding = storyContentPadding(viewSize());

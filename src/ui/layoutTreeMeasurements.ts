@@ -11,6 +11,8 @@ import type {
   MountedLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { frameRect, type PageBox, turnOf } from "./layout/frameBox.ts";
+
 interface PhysicalNode {
   readonly element: HTMLElement;
   readonly path: LayoutPath;
@@ -52,8 +54,12 @@ export function measurePhysicalLayout(
   if (!win || !doc.createRange || !doc.createTreeWalker) {
     return null;
   }
-  const bounds = element.getBoundingClientRect();
+  const turn = turnOf(host);
   const origin = host.getBoundingClientRect();
+  // Every box in the frame's own axes, CSS px from the host's top-left corner, so a quarter turn
+  // of the page frame neither swaps sizes nor moves boxes.
+  const inFrame = (box: PageBox) => frameRect(turn, origin, box);
+  const bounds = inFrame(element.getBoundingClientRect());
   const style = win.getComputedStyle(element);
   if (
     !bounds.width ||
@@ -63,11 +69,11 @@ export function measurePhysicalLayout(
   ) {
     return null;
   }
-  const logical = (rect: { left: number; top: number; width: number; height: number }): Rect => ({
+  const logical = (rect: Rect): Rect => ({
     height: rect.height / unit,
     width: rect.width / unit,
-    x: (rect.left - origin.left) / unit,
-    y: (rect.top - origin.top) / unit,
+    x: rect.x / unit,
+    y: rect.y / unit,
   });
   const drawn = logical(bounds);
   let clipBounds = view.viewport;
@@ -82,7 +88,7 @@ export function measurePhysicalLayout(
     if (!xClip && !yClip) {
       continue;
     }
-    const box = parent.getBoundingClientRect();
+    const box = inFrame(parent.getBoundingClientRect());
     const borderLeft = Number.parseFloat(css.borderLeftWidth) || 0;
     const borderRight = Number.parseFloat(css.borderRightWidth) || 0;
     const borderTop = Number.parseFloat(css.borderTopWidth) || 0;
@@ -91,9 +97,9 @@ export function measurePhysicalLayout(
     const gutterY = parent.offsetHeight - parent.clientHeight - borderTop - borderBottom;
     const clip = logical({
       height: Math.max(0, box.height - borderTop - borderBottom - (gutterY > 1 ? gutterY : 0)),
-      left: box.left + borderLeft,
-      top: box.top + borderTop,
       width: Math.max(0, box.width - borderLeft - borderRight - (gutterX > 1 ? gutterX : 0)),
+      x: box.x + borderLeft,
+      y: box.y + borderTop,
     });
     const constrained = {
       height: yClip ? clip.height : clipBounds.height,
@@ -125,7 +131,7 @@ export function measurePhysicalLayout(
       if (!line.width || !line.height) {
         continue;
       }
-      const rect = logical(line);
+      const rect = logical(inFrame(line));
       wrappedLines.push(rect);
       required.width = Math.max(right(required), right(rect)) - Math.min(required.x, rect.x);
       required.height = Math.max(bottom(required), bottom(rect)) - Math.min(required.y, rect.y);
@@ -138,7 +144,7 @@ export function measurePhysicalLayout(
   if (element.classList?.contains("ada-card-frame")) {
     const modal = element.closest<HTMLElement>(".ada-modal");
     if (modal) {
-      const modalBox = modal.getBoundingClientRect();
+      const modalBox = inFrame(modal.getBoundingClientRect());
       const modalStyle = win.getComputedStyle(modal);
       const left = Number.parseFloat(modalStyle.paddingLeft) || 0;
       const right = Number.parseFloat(modalStyle.paddingRight) || 0;
@@ -146,9 +152,9 @@ export function measurePhysicalLayout(
       const bottom = Number.parseFloat(modalStyle.paddingBottom) || 0;
       allocation = logical({
         height: Math.max(0, modal.clientHeight - top - bottom),
-        left: modalBox.left + modal.clientLeft + left,
-        top: modalBox.top + modal.clientTop + top,
         width: Math.max(0, modal.clientWidth - left - right),
+        x: modalBox.x + modal.clientLeft + left,
+        y: modalBox.y + modal.clientTop + top,
       });
     }
   }
@@ -172,7 +178,7 @@ export function measurePhysicalLayout(
       if (otherStyle.display === "none" || otherStyle.visibility === "hidden") {
         return false;
       }
-      return intersects(drawn, logical(other.element.getBoundingClientRect()));
+      return intersects(drawn, logical(inFrame(other.element.getBoundingClientRect())));
     })
     .map(({ path }) => [...path]);
   return { available, clipped, overlaps, required, wrappedLines };

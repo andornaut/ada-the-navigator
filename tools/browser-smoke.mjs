@@ -5699,6 +5699,107 @@ try {
     "Ada's Phaser beam stays on her nose while she thrusts and turns, at fire, mid and late flash",
   );
 
+  // The scan receipt in a turned frame (ada-0318): on a portrait phone the page frame turns a
+  // quarter turn, and the receipt measures its panel in the frame's axes, so it stays a horizontal
+  // strip. A fresh page at the reported phone's 396x744 CSS and devicePixelRatio 30/11 scans a
+  // landmark Ada sits on.
+  async function proveTurnedScanNotice() {
+    const [{ flightLandmarkSites }, { LANDMARK_SCAN_COPY }] = await Promise.all([
+      import(new URL("../src/model/landmarks.ts", import.meta.url)),
+      import(new URL("../src/data/landmarkScanCopy.ts", import.meta.url)),
+    ]);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    playOpening(model);
+    const flight = model.state.flight;
+    assert.ok(flight, "The turned scan proof requires galaxy one's flight");
+    Object.assign(model.state.progress[1], { introduced: true });
+    model.state.dialogue = null;
+    model.state.prologueSeen = true;
+    model.state.seenConversations.push("lesson:move", "lesson:aim", "lesson:scan");
+    flight.objects = [];
+    flight.shots = [];
+    flight.velocity = { x: 0, y: 0 };
+    const site = flightLandmarkSites(flight).find(
+      ({ id }) => !model.state.progress[1].charted.includes(id),
+    );
+    assert.ok(site, "Galaxy one has an uncharted landmark to scan");
+    flight.player = { x: site.x, y: site.y };
+    const serialized = model.save();
+    const check = relaunch(CONTENT, serialized);
+    check.interact();
+    assert.equal(check.drainScanOutcomes().length, 1, "Use at the landmark scans it");
+    const left = await leaveFixture();
+    const opened = await browser.newContext({
+      deviceScaleFactor: 30 / 11,
+      hasTouch: true,
+      isMobile: true,
+      viewport: { height: 744, width: 396 },
+    });
+    await opened.addInitScript(reportViolations);
+    await opened.route("**/*", previewOnly);
+    await opened.addInitScript(
+      ({ key, value }) => {
+        if (!sessionStorage.getItem("ada-browser.turned-scan.v1")) {
+          localStorage.setItem(key, value);
+          sessionStorage.setItem("ada-browser.turned-scan.v1", "1");
+        }
+      },
+      { key: storageKey, value: serialized },
+    );
+    const proof = await opened.newPage();
+    proof.setDefaultTimeout(15000);
+    observe(proof);
+    await proof.goto("http://ada-preview:4173/play/");
+    await proof.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+    await proof.locator('.ada-start-actions > [data-action="continue"]').click();
+    await proof.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    await proof.waitForFunction(
+      () => document.documentElement.getAttribute("data-frame-turn") === "90",
+    );
+    const use = proof.getByRole("button", { exact: true, name: LANDMARK_SCAN_COPY.action });
+    await use.waitFor({ state: "visible" });
+    const box = await use.boundingBox();
+    await proof.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    const notice = proof.locator(".ada-scan-feedback");
+    await notice.waitFor({ state: "visible" });
+    await proof.waitForTimeout(250);
+    const measured = await notice.evaluate((node) => {
+      const page = node.getBoundingClientRect();
+      return {
+        layout: { height: node.offsetHeight, width: node.offsetWidth },
+        page: { height: page.height, width: page.width },
+        text: node.textContent,
+      };
+    });
+    await proof.screenshot({ path: `${output}/scan-notice-turned.png` });
+    await opened.close();
+    const resumed = left.stored.find(([name]) => name === storageKey)[1];
+    const back = await openFixture(left, resumed, "ada-browser.turned-scan-return.v1");
+    context = back.context;
+    page = back.page;
+    await page.goto(back.url);
+    if (JSON.parse(resumed).mode === "space") {
+      await continueFlight();
+    }
+    save("scan-notice-turned.json", {
+      scope: "A landmark scan's receipt in the turned 396x744 CSS frame at devicePixelRatio 30/11",
+      ...measured,
+    });
+    // In the frame the receipt is wider than tall; on the turned page its box is taller than wide,
+    // its layout size the page box turned back.
+    assert.ok(
+      measured.layout.width > 2 * measured.layout.height &&
+        Math.abs(measured.page.height - measured.layout.width) < 1.5 &&
+        Math.abs(measured.page.width - measured.layout.height) < 1.5,
+      `The turned scan receipt stays a horizontal strip: ${JSON.stringify(measured)}`,
+    );
+  }
+  await proveTurnedScanNotice();
+  events.checks.push(
+    "A scan receipt in the turned 396x744 frame stays a horizontal strip, measured in the frame",
+  );
+
   // At 844x390 the Settings card fits the view with every row's note: the Move and Aim controls
   // rows carry the same note element as Sound's.
   const settingsViewport = page.viewportSize();

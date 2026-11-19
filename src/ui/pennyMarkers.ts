@@ -6,7 +6,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { frameDeviceOrigin, frameRect, readFrameTurn } from "./layout/frameBox.ts";
+import { frameDeviceOrigin, frameRect, turnOf } from "./layout/frameBox.ts";
 import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { layoutTargetMarkers, type TargetMarkerExtent } from "./layout/targetMarkers.ts";
@@ -216,7 +216,7 @@ export function createPennyMarkerLayer(
       const layerStyle = getComputedStyle(layer);
       const areaLeft = parseFloat(layerStyle.getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;
       const areaTop = parseFloat(layerStyle.getPropertyValue(VIEW_PROPERTIES.areaTop)) || 0;
-      const turn = readFrameTurn(layer.ownerDocument?.documentElement);
+      const turn = turnOf(layer);
       const grid = frameDeviceOrigin(turn, layer.getBoundingClientRect(), dpr);
       const extents = new Map<string, TargetMarkerExtent>();
       const paintSizes = new Map<

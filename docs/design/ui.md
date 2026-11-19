@@ -61,3 +61,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0309 | Fix scan receipt timing, order and placement                                    | [ada-0309.md](../work/ada-0309.md) |
 | ada-0310 | Centre the bands and anchor the shield to the game area                         | [ada-0310.md](../work/ada-0310.md) |
 | ada-0300 | Order Pause and Menu by label and show Exit only in a closable installed app    | [ada-0300.md](../work/ada-0300.md) |
+| ada-0318 | Measure DOM boxes in the turned frame's own axes                                | [ada-0318.md](../work/ada-0318.md) |

@@ -18,6 +18,7 @@ import { cardPages } from "./layout/cardPages.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
+import { frameSize } from "./layout/frameBox.ts";
 import {
   CONFIRM_ITEM,
   shopColumns,
@@ -595,16 +596,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const unit = readViewUnit(group);
     for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row")) {
       const name = row.querySelector<HTMLElement>(".ada-shop-name")!;
-      row.style.height = units(shopRowHeight(name.getBoundingClientRect().height / unit));
+      row.style.height = units(shopRowHeight(frameSize(name).height / unit));
     }
-    const heights = chunks.map((chunk) => chunk.getBoundingClientRect().height / unit);
+    const heights = chunks.map((chunk) => frameSize(chunk).height / unit);
     const room = () => {
       const children = [...parts.body.children].filter(
         (child) => child instanceof HTMLElement && !child.hidden,
       );
       const others = children
         .filter((child) => child !== group)
-        .reduce((total, child) => total + child.getBoundingClientRect().height / unit, 0);
+        .reduce((total, child) => total + frameSize(child).height / unit, 0);
       const end = parseFloat(getComputedStyle(parts.body, "::after").height) / unit;
       return (
         parts.body.clientHeight / unit -
@@ -903,7 +904,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       Math.max(
         0,
         ...[...measure.querySelectorAll<HTMLElement>(selector)].map(
-          (node) => node.getBoundingClientRect().width / unit,
+          (node) => frameSize(node).width / unit,
         ),
       );
     const pill = Math.ceil(widest(".ada-price"));
@@ -1062,12 +1063,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const action = Math.max(
       0,
       ...[...measure.querySelectorAll<HTMLElement>(".ada-job-action")].map(
-        (node) => node.getBoundingClientRect().width / unit,
+        (node) => frameSize(node).width / unit,
       ),
     );
     jobList.style.setProperty("--job-action-width", units(action));
     measure.style.setProperty("--job-action-width", units(action));
-    const natural = Math.max(0, ...rows.map((node) => node.getBoundingClientRect().width / unit));
+    const natural = Math.max(0, ...rows.map((node) => frameSize(node).width / unit));
     // Fit the natural list before bounding rows, so a previous card width cannot narrow names.
     jobList.style.width = units(natural + 2 * FOCUS_RING.outset);
     jobsCard.fit();

@@ -19,6 +19,7 @@ import { cardPages } from "./layout/cardPages.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
+import { frameSize } from "./layout/frameBox.ts";
 import * as shopCardLayout from "./layout/shopCard.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -808,6 +809,7 @@ function constructedStation(
     createStationItemIcon: () => new Node("span", false),
     document: doc,
     focusTarget: (node: InstanceType<typeof Node>) => node.focus(),
+    frameSize,
     getComputedStyle,
     inCurrentView,
     isTap,

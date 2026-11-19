@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { NOTICE_TIMING } from "./itemNotice.ts";
-import { VIEW_PROPERTIES } from "./layout/css.ts";
+import { units, VIEW_PROPERTIES } from "./layout/css.ts";
 import {
   createScanFeedbackView,
   scanFeedbackDialogue,
@@ -68,6 +68,31 @@ function setup() {
 }
 afterEach(() => vi.unstubAllGlobals());
 describe("native scan receipt view", () => {
+  it("measures its panel in the frame's axes, so a turned frame keeps it a horizontal strip", () => {
+    const { panel, view } = setup();
+    const before = { height: 0, width: 0 };
+    view.enqueue([receipt()]);
+    view.render(context, 0);
+    before.height = Number.parseFloat(panel.style.height!.replace(/.*\* /u, ""));
+    before.width = Number.parseFloat(panel.style.width!.replace(/.*\* /u, ""));
+    view.reset();
+    // Turned by 90, the same 200x40 panel measures 40 across and 200 down on the page.
+    const turned = Object.assign(doc, {
+      documentElement: {
+        getAttribute: (name: string) => (name === "data-frame-turn" ? "90" : null),
+      },
+    });
+    panel.getBoundingClientRect = () => ({ height: 200, width: 40 });
+    try {
+      view.enqueue([receipt()]);
+      view.render(context, 0);
+      expect(panel.style.width).toBe(units(before.width));
+      expect(panel.style.height).toBe(units(before.height));
+      expect(before.width).toBeGreaterThan(before.height);
+    } finally {
+      delete (turned as { documentElement?: unknown }).documentElement;
+    }
+  });
   it("renders neutral actual target identity and canonical glyph, never a quest completion", () => {
     const { panel, view } = setup();
     view.enqueue([receipt()]);

@@ -1,7 +1,16 @@
 import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import { describe, expect, it } from "vitest";
 
-import { frameDeviceOrigin, frameRect, readFrameTurn } from "./frameBox.ts";
+import {
+  frameBoxIn,
+  frameDeviceOrigin,
+  frameGridOrigin,
+  framePoint,
+  frameRect,
+  frameSize,
+  readFrameTurn,
+  turnOf,
+} from "./frameBox.ts";
 
 // A 744x396 frame turned onto a 396x744 page box below a 121 CSS px toolbar.
 const HOST = { height: 744, left: 0, top: 121, width: 396 };
@@ -86,4 +95,67 @@ describe("frame device grid", () => {
       }
     },
   );
+});
+
+// An element on a page whose root carries turn, with its page box.
+function element(
+  turn: string | null,
+  box: { height: number; left: number; top: number; width: number },
+) {
+  return {
+    getBoundingClientRect: () => ({
+      ...box,
+      bottom: box.top + box.height,
+      right: box.left + box.width,
+    }),
+    ownerDocument: { documentElement: root(turn) },
+  } as unknown as Element;
+}
+
+describe("frame measurements", () => {
+  it("turns a turned element's page size back into its frame's width and height", () => {
+    // A 180x28 notice, turned onto the page as a 28x180 box.
+    expect(frameSize(element("90", { height: 180, left: 20, top: 300, width: 28 }))).toEqual({
+      height: 28,
+      width: 180,
+    });
+    expect(frameSize(element("-90", { height: 180, left: 20, top: 300, width: 28 }))).toEqual({
+      height: 28,
+      width: 180,
+    });
+    expect(frameSize(element(null, { height: 28, left: 20, top: 300, width: 180 }))).toEqual({
+      height: 28,
+      width: 180,
+    });
+    expect(turnOf(element("90", { height: 0, left: 0, top: 0, width: 0 }))).toBe(90);
+  });
+
+  it("measures an element in its host's frame from the host's top-left corner", () => {
+    const host = element("90", HOST);
+    const child = element("90", { height: 30, left: 40, top: 300, width: 28 });
+    expect(frameBoxIn(host, child)).toEqual(frameRect(90, HOST, child.getBoundingClientRect()));
+    expect(frameBoxIn(host, child)).toEqual({ height: 28, width: 30, x: 179, y: 328 });
+  });
+
+  it.each([0, 90, -90] as const)("maps a client point as pageToGame does at turn %s", (turn) => {
+    const client = { x: 101.5, y: 433.25 };
+    const box = turn === 0 ? { height: 396, left: 0, top: 121, width: 744 } : HOST;
+    const size = { height: 396, width: 744 };
+    expect(framePoint(turn, box, client)).toEqual(
+      pageToGame(
+        turn,
+        { height: box.height, width: box.width, x: box.left, y: box.top },
+        size,
+        client,
+      ),
+    );
+  });
+
+  it("gives the CSS px grid origin of the frame's axes, frameDeviceOrigin at a ratio of 1", () => {
+    const box = { height: 744.08, left: 0.37, top: 121.21, width: 396.04 };
+    for (const turn of ["90", "-90", null] as const) {
+      const value = turn === null ? 0 : (Number(turn) as 90 | -90);
+      expect(frameGridOrigin(element(turn, box))).toEqual(frameDeviceOrigin(value, box, 1));
+    }
+  });
 });

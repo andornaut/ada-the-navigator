@@ -357,7 +357,7 @@ describe("status pill count", () => {
     parent?: FakeNode;
     readonly animations: { finish: () => void; frames: unknown; options: unknown }[] = [];
     getBoundingClientRect() {
-      return { x: 0, y: 0 };
+      return { height: 0, left: 0, top: 0, width: 0, x: 0, y: 0 };
     }
     animate(frames?: unknown, options?: unknown): { cancel: () => void; finished: Promise<void> } {
       let finish!: () => void;

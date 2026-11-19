@@ -60,3 +60,44 @@ export function frameDeviceOrigin(turn: FrameTurn, host: PageBox, devicePixelRat
   }
   return { x: along(host.left), y: along(host.top) };
 }
+
+/** The turn the frame showing element has: its document's (readFrameTurn). */
+export function turnOf(element: Element): FrameTurn {
+  return readFrameTurn(element.ownerDocument?.documentElement);
+}
+
+/**
+ * element's laid-out size in its frame's axes, in CSS px: its page box, whose sides a quarter turn
+ * swaps, turned back. Use it, not getBoundingClientRect's width and height, to measure layout.
+ */
+export function frameSize(element: Element): { readonly height: number; readonly width: number } {
+  const box = element.getBoundingClientRect();
+  return turnOf(element) === 0
+    ? { height: box.height, width: box.width }
+    : { height: box.width, width: box.height };
+}
+
+/** element's box in host's frame axes, in CSS px from host's top-left corner (frameRect). */
+export function frameBoxIn(host: Element, element: Element): Rect {
+  return frameRect(turnOf(host), host.getBoundingClientRect(), element.getBoundingClientRect());
+}
+
+/** A client point, measured on the page, in host's frame CSS px from host's top-left corner. */
+export function framePoint(turn: FrameTurn, host: PageBox, client: Point): Point {
+  if (turn === 90) {
+    return { x: client.y - host.top, y: host.left + host.width - client.x };
+  }
+  if (turn === -90) {
+    return { x: host.top + host.height - client.y, y: client.x - host.left };
+  }
+  return { x: client.x - host.left, y: client.y - host.top };
+}
+
+/**
+ * The CSS px grid origin of element's frame axes: a frame offset v from element's top-left corner
+ * lies on a device pixel edge where (origin + v) * devicePixelRatio is whole (frameDeviceOrigin at
+ * a ratio of 1), on each axis.
+ */
+export function frameGridOrigin(element: Element): Point {
+  return frameDeviceOrigin(turnOf(element), element.getBoundingClientRect(), 1);
+}

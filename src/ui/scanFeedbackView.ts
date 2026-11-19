@@ -3,6 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
+import { frameSize } from "./layout/frameBox.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -116,7 +117,7 @@ export function createScanFeedbackView(parent: HTMLElement) {
     panel.style.width = "max-content";
     panel.style.maxWidth = units(area.width);
     panel.style.height = "auto";
-    const bounds = panel.getBoundingClientRect();
+    const bounds = frameSize(panel);
     const unit = readViewUnit(parent);
     return { height: bounds.height / unit, width: bounds.width / unit };
   };

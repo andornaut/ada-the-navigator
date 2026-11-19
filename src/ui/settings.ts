@@ -23,6 +23,7 @@ import { UI_FONT_FACE } from "./layout/cardFrame.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, pixels, units, viewStyle } from "./layout/css.ts";
+import { frameGridOrigin, frameSize } from "./layout/frameBox.ts";
 import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
 import {
   SETTINGS_OUTER_PADDING,
@@ -548,7 +549,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     const stackWidth = Math.max(
       CONTROL_ROW.switch.width,
-      ...stacks.map((stack) => stack.getBoundingClientRect().width / unit),
+      ...stacks.map((stack) => frameSize(stack).width / unit),
     );
     for (const stack of stacks) {
       stack.style.width = units(stackWidth);
@@ -559,12 +560,12 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       const caption = text.firstElementChild as HTMLElement;
       const previous = caption.style.width;
       caption.style.width = "max-content";
-      const label = caption.getBoundingClientRect().width;
+      const label = frameSize(caption).width;
       caption.style.width = previous;
       const parts = [...row.children].filter((part) => part !== text);
       return (
         label +
-        parts.reduce((sum, part) => sum + part.getBoundingClientRect().width, 0) +
+        parts.reduce((sum, part) => sum + frameSize(part).width, 0) +
         parseFloat(getComputedStyle(row).columnGap) * parts.length
       );
     });
@@ -598,7 +599,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
         inkAscent: ink.actualBoundingBoxAscent / unit,
         lineHeight: parseFloat(style.lineHeight) / unit,
       });
-      const top = row.getBoundingClientRect().top;
+      // The row's top along the frame's vertical axis, on the CSS px grid whose device pixel
+      // edges lie where (top + v) * ratio is whole.
+      const top = frameGridOrigin(row).y;
       const ratio = window.devicePixelRatio || 1;
       // Align the visible sprite to the title's device-pixel ink row after the card has fitted.
       const snapped = Math.floor((top + inkTop * unit) * ratio) / ratio;

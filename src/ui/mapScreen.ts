@@ -17,6 +17,7 @@ import type { Vec } from "../model/types.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { framePoint, frameSize, turnOf } from "./layout/frameBox.ts";
 import {
   chipRect,
   clampView,
@@ -1146,7 +1147,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const measureInk = (box: HTMLElement, ink: HTMLElement) => {
       const measure = (textMeasure ??= document.createElement("canvas").getContext("2d"));
       if (!measure) {
-        return ink.getBoundingClientRect().width / unit;
+        return frameSize(ink).width / unit;
       }
       const style = getComputedStyle(box);
       const text = ink.textContent ?? "";
@@ -1413,12 +1414,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   let press: { readonly at: Point; moved: boolean } | null = null;
   let pinch: { distance: number; mid: Point } | null = null;
   const local = (event: PointerEvent | WheelEvent): Point => {
-    const box = screen.getBoundingClientRect();
     const unit = readViewUnit(screen);
-    return {
-      x: (event.clientX - box.left) / unit,
-      y: (event.clientY - box.top) / unit,
-    };
+    const at = framePoint(turnOf(screen), screen.getBoundingClientRect(), {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    return { x: at.x / unit, y: at.y / unit };
   };
   const onChrome = (event: Event) =>
     event.target instanceof Element &&

@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { VIEW_PROPERTIES } from "./layout/css.ts";
-import { frameRect, readFrameTurn } from "./layout/frameBox.ts";
+import { frameRect, turnOf } from "./layout/frameBox.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
 const MARKER_SELECTORS = [
@@ -35,7 +35,7 @@ export function markerFootprints(
     return [];
   }
   const origin = host.getBoundingClientRect();
-  const turn = readFrameTurn(host.ownerDocument?.documentElement);
+  const turn = turnOf(host);
   const unit = readViewUnit(host);
   const hostStyle = getComputedStyle(host);
   const left = parseFloat(hostStyle.getPropertyValue(VIEW_PROPERTIES.areaLeft)) || 0;

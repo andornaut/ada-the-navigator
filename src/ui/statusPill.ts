@@ -2,6 +2,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
+import { frameGridOrigin } from "./layout/frameBox.ts";
 import {
   countSlot,
   SHIELD_PILL,
@@ -843,7 +844,7 @@ export function createStatusPill(
         raster = shieldRasterGeometry(
           readViewUnit(shieldRoot),
           density,
-          shieldRoot.getBoundingClientRect(),
+          frameGridOrigin(shieldRoot),
           Number(level),
         );
         rasterLevel = level;
