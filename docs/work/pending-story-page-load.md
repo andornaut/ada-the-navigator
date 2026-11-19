@@ -1,7 +1,7 @@
 ---
 id: TBD
 title: Investigate the story-page main-thread load
-status: approved
+status: done
 approved: user, 2026-11-18, structured prompt to Tech, investigate the story-page main-thread load
 design: runtime
 related: [ada-0298]
@@ -19,3 +19,11 @@ Investigate. With 4x CPU throttle on the holodisk story page, the game's `reques
 ## Decisions
 
 ## Outcome
+
+The flight scene kept rendering every frame behind the opaque storybook. The flight model was
+paused by the holodisk moment's dialogue marker, but `GameScene.update` still ran `refreshScene`,
+`draw` and `renderConversation`, Phaser rendered the full flight frame and the browser presented
+the WebGL canvas. At 4x throttle on the holodisk page that was about 13 ms of script (6.6 ms
+Phaser render, 5.9 ms scene update) plus about 21 ms of canvas present per frame, so frames
+landed every 33 ms. `refreshScene` also closed the restart card every frame, rebuilding its
+layout with style reads. The user approved fixing both, as separate work items.
