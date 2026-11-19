@@ -2280,15 +2280,35 @@ try {
     );
     return pauseGrid;
   };
-  save("pause-flight-proof.json", {
-    1280: await pauseGridAt("1280", { height: 720, width: 1280 }, {}),
-    "720-insets": await pauseGridAt(
-      "720-insets",
-      { height: 360, width: 720 },
-      { bottom: 19, left: 43, right: 43, top: 0 },
-    ),
-  });
-  await pauseGridAt("1280-restored", { height: 720, width: 1280 }, {});
+  const pauseFlightProof = { 1280: await pauseGridAt("1280", { height: 720, width: 1280 }, {}) };
+  // The 720x360 proof opens its own fresh page fixture at that size, so the long-lived page is
+  // not resized; the flow then resumes on a fresh 1280x720 fixture of the same flight.
+  const pauseGridFixture = await openFixture(
+    { ...(await leaveFixture()), viewport: { height: 360, width: 720 } },
+    dangerInput.save(),
+    "ada-browser.pause-grid-720.v1",
+  );
+  context = pauseGridFixture.context;
+  page = pauseGridFixture.page;
+  await page.goto(pauseGridFixture.url);
+  await continueFlight();
+  await openPause();
+  pauseFlightProof["720-insets"] = await pauseGridAt(
+    "720-insets",
+    { height: 360, width: 720 },
+    { bottom: 19, left: 43, right: 43, top: 0 },
+  );
+  save("pause-flight-proof.json", pauseFlightProof);
+  const resumedFixture = await openFixture(
+    { ...(await leaveFixture()), viewport: { height: 720, width: 1280 } },
+    dangerInput.save(),
+    "ada-browser.danger-context-resumed.v1",
+  );
+  context = resumedFixture.context;
+  page = resumedFixture.page;
+  await page.goto(resumedFixture.url);
+  await continueFlight();
+  await openPause();
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
   // Ship opens its card in the Paused card's place, focus on its Back; Escape and the X return to
   // the Paused card on its Ship button.
