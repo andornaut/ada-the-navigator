@@ -6623,10 +6623,10 @@ try {
   // container memory it records.
   await browser.close();
   browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
-  // Resizing in flight keeps its textures flat: ten resizes between 1280x720 and 720x360 in a
-  // fresh tab leave live WebGL textures and canvases made where they settled after the first, as a
-  // phone rotated again and again would. Container memory, without and after a collection, is
-  // recorded in resize-memory.json for ada-0323, which asserts it once its fix lands.
+  // Resizing in flight keeps what it holds flat: ten resizes between 1280x720 and 720x360 in a
+  // fresh tab, then ten more each followed by a collection, leave live WebGL textures, canvases
+  // made and container memory where they settled after the first, as a phone rotated again and
+  // again would.
   {
     const probe = await browser.newContext({
       hasTouch: true,
@@ -6676,9 +6676,10 @@ try {
         return null;
       }
     };
-    // Each resize waits for the one before it.
-    const samples = await Array.from({ length: 10 }, (_, index) => index + 1).reduce(
-      async (earlier, step) => {
+    // Ten resizes, each waiting for the one before it; with collect, memory is read after a
+    // collection too, so it shows what each resize keeps rather than garbage still waiting.
+    const resizes = (collect) =>
+      Array.from({ length: 10 }, (_, index) => index + 1).reduce(async (earlier, step) => {
         const taken = await earlier;
         await tab.setViewportSize(
           step % 2 ? { height: 360, width: 720 } : { height: 720, width: 1280 },
@@ -6686,27 +6687,64 @@ try {
         await tab.waitForTimeout(1500);
         const counts = await tab.evaluate(() => ({ ...window.adaResizeProbe }));
         const memory = containerMemory();
-        // Memory again after a collection: what each resize keeps, not garbage still waiting.
+        if (!collect) {
+          return [...taken, { ...counts, memory, step }];
+        }
         await devtools.send("HeapProfiler.collectGarbage");
         await tab.waitForTimeout(1000);
         return [...taken, { ...counts, memory, memoryAfterCollection: containerMemory(), step }];
-      },
-      Promise.resolve([]),
-    );
+      }, Promise.resolve([]));
+    const uncollected = await resizes(false);
+    const collected = await resizes(true);
+    // The view after twenty resizes at each scale, then a fresh tab at each for comparison: every
+    // texture on screen is drawn at the current scale, neither stale nor blurred.
+    await tab.screenshot({ path: `${output}/resize-after-1280x720.png` });
+    await tab.setViewportSize({ height: 360, width: 720 });
+    await tab.waitForTimeout(2500);
+    await tab.screenshot({ path: `${output}/resize-after-720x360.png` });
+    const freshView = async (viewport) => {
+      const fresh = await probe.newPage();
+      await fresh.setViewportSize(viewport);
+      await fresh.goto("http://ada-preview:4173/play/");
+      await fresh.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+      await fresh.locator('.ada-start-actions > [data-action="continue"]').click();
+      await fresh.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+      await fresh.waitForTimeout(2500);
+      await fresh.screenshot({
+        path: `${output}/resize-fresh-${viewport.width}x${viewport.height}.png`,
+      });
+      await fresh.close();
+    };
+    await freshView({ height: 720, width: 1280 });
+    await freshView({ height: 360, width: 720 });
     await probe.close();
-    save("resize-memory.json", samples);
-    const [settled] = samples.slice(1);
-    const last = samples.at(-1);
-    assert.ok(
-      last.textures - settled.textures <= 12,
-      `Live WebGL textures stay flat over ten resizes: ${JSON.stringify(samples)}`,
-    );
-    assert.ok(
-      last.canvases - settled.canvases <= 12,
-      `Canvases made stay flat over ten resizes: ${JSON.stringify(samples)}`,
+    save("resize-memory.json", { collected, uncollected });
+    const flat = (samples, field, bound, what) => {
+      const [settled] = samples.slice(1);
+      const last = samples.at(-1);
+      if (settled[field] === null || last[field] === null) {
+        return;
+      }
+      assert.ok(
+        last[field] - settled[field] <= bound,
+        `${what} stays flat over ten resizes: ${JSON.stringify(samples)}`,
+      );
+    };
+    for (const samples of [uncollected, collected]) {
+      flat(samples, "textures", 12, "Live WebGL textures");
+      flat(samples, "canvases", 12, "Canvases made");
+    }
+    // A resize used to keep about 60 MiB even after a collection and 200 MiB without one.
+    flat(uncollected, "memory", 128 * 1024 * 1024, "Container memory without a collection");
+    flat(
+      collected,
+      "memoryAfterCollection",
+      128 * 1024 * 1024,
+      "Container memory after a collection",
     );
     events.checks.push(
-      "Ten resizes in flight keep live WebGL textures and canvases flat; memory is recorded",
+      "Ten resizes in flight keep live WebGL textures, canvases and container memory flat, " +
+        "with and without a collection, and draw each texture at the current scale",
     );
   }
   save("result.json", { passed: true, checks: events.checks });
