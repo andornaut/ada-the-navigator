@@ -1,0 +1,22 @@
+---
+id: TBD
+title: Ship the Garden Party chapter art
+status: approved
+approved: user, 2026-11-12, Garden Party picks (inferred from handoff history)
+design: art
+related: [ada-0251]
+---
+
+## Scope
+
+The Garden Party chapter art on branch art-garden-party-main (a8ccc307), taken whole: the open-rain scene by the shed, the night bed variant, and the lunch page with the same four children.
+
+## Criteria
+
+- The branch lands whole, with its rendered pages reviewed at 1280x720 and 720x360 with insets.
+
+## Decisions
+
+- The user holds this branch for the next release, so it lands with that release rather than under fix-forward.
+
+## Outcome
