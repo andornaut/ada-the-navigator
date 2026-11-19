@@ -1334,6 +1334,12 @@ beacon light. Welcome!"
   internet to update Ada the Navigator.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
+- Playing online, a game notice when the first offline download fails and the
+  game plays from the network, shown once per launch at the first flight:
+  - `networkPlayUnsupported`: Playing online. This browser can't download the
+    game for offline play.
+  - `networkPlayQuota`: Playing online. Storage is full, so the game can't
+    download for offline play.
 - Completed story, the notice when a chapter completes: Chapter complete. You
   can keep exploring.
 
