@@ -944,7 +944,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 16 degrees, 3 at
     level 1 (-8, 0 and 8 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.7 times Laser damage;
     levels add only bolts. Its bolts are slower than Laser's at the same level.
-  - Rapid Missile: quick straight missiles with a small blast (30) and a fixed
+  - Rapid Missile: quick straight missiles with a small blast (radius 30) and a fixed
     1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 60),
@@ -974,8 +974,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   direct damage once; the blast does not apply the same damage to it again.
 - Projectile impact feedback and missile blast origins use the drawn contact
   edge on the facing side of the target. Whole-object destruction bursts remain
-  at the object's pivot. A friendly blast damages enemies within its radius, never Ada. An enemy
-  missile's blast damages Ada, never enemies.
+  at the object's pivot. A blast is a circle on screen, radius 30 for Rapid
+  Missile and 60 for Heavy Missile in the same units as the drawn ships. Every
+  target whose drawn shape, hull or turrets, overlaps the circle, at its edge or
+  inside, takes the missile's full damage; where a turret is in reach, the
+  nearest turret takes it, as with other hits. Mines inside the circle are
+  destroyed. A friendly blast damages enemies, never Ada. An enemy missile's
+  blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
   Laser shot deals 1 damage. Enemies fire the same six weapons at their
   equipped weapon level, with that level's damage, blast, spread and reach,
