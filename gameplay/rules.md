@@ -165,10 +165,10 @@ The current Earth action restores Earth rather than replaying boarding: a flight
 return processes pending new Earth scenes before the room; Stay on Earth does
 not board. Welcome back, Navigator follows the rock/boarding action. Story
 choices retain the current material-choice guards and Previous/Next focus.
-Optional room chapter replay remains approved design only, not new runtime
-authority: preserve progress, saved choices and rewards without duplication,
-return to the room on Skip, and do not consume pending mandatory story.
-Replay feasibility, implementation and acceptance remain pending.
+From Ada's room, the player can replay an Earth chapter already finished. A
+choice made in a replay replaces the saved choice and its outcome, and rewards
+follow the new choice without ever being paid twice. Skip returns to the room,
+and a replay never consumes pending mandatory story.
 
 ### Aboard and the galaxy map
 
