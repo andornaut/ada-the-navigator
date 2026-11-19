@@ -58,6 +58,26 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "...##########...",
     ".....######.....",
   ],
+  // A frame-rate readout: a 16 by 14 frame (rows 1 to 14, as icon-sound) with its outer corners
+  // clear, around three 2-wide frame-time bars 2 apart on a shared baseline, 1 clear of the frame.
+  "icon-fps-counter": [
+    "................",
+    ".##############.",
+    "################",
+    "##............##",
+    "##............##",
+    "##.....##.....##",
+    "##.....##.....##",
+    "##.....##..##.##",
+    "##.##..##..##.##",
+    "##.##..##..##.##",
+    "##.##..##..##.##",
+    "##.##..##..##.##",
+    "##............##",
+    "################",
+    ".##############.",
+    "................",
+  ],
   // The move stick at icon size: the aim stick's ring and knob with the move ring's left and right
   // chevrons, 1 pixel wide, between them.
   "icon-move-controls": [

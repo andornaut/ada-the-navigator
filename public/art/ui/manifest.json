@@ -37,6 +37,12 @@
       "once": []
     },
     {
+      "key": "icon-fps-counter",
+      "png": "sprites/icon-fps-counter.png",
+      "json": "sprites/icon-fps-counter.json",
+      "once": []
+    },
+    {
       "key": "icon-holodisk",
       "png": "sprites/icon-holodisk.png",
       "json": "sprites/icon-holodisk.json",

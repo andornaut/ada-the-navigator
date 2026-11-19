@@ -12,6 +12,10 @@ its `on` and `off` tags. Row layout follows [Controls](controls.md).
 | Sound          | `icon-sound`          | Authored for Ada  |
 | Reduced motion | `icon-reduced-motion` | Authored for Ada  |
 | Install        | `icon-install`        | Chibi, recoloured |
+| FPS counter    | `icon-fps-counter`    | Authored for Ada  |
+
+The FPS counter row is in the [Cheats card](layout.md#cheats-card), drawn as
+a Settings switch row with `icon-fps-counter`.
 
 `icon-use-control` is not a Settings row: it is the Use disc's
 [inline drawing](#inline-controls), authored with the other grids.
@@ -64,6 +68,7 @@ exactly). The grids emit cream directly. Rebuild with
 | `icon-use-control.png`    | `f91554dcbebd881d32b181d32bb40685d3396468956a7b8813d9f8476b4fb91f` |
 | `icon-sound.png`          | `39581b60d8fb7a6fd3954a64a38909384da42126381c86bf46c2061b1a858b91` |
 | `icon-reduced-motion.png` | `3b45c9a4e7325cc703ebffd8917417581ef329b5a9fdeeb422d157a875c1a8d5` |
+| `icon-fps-counter.png`    | `b2a318e4297fd772f3c5aa83dc15e59a101a3acf3e4a78998589597c221137ab` |
 
 - `icon-move-controls`: the move stick, the aim stick's ring and knob with a
   1-pixel chevron each side between them, as the move ring's chevrons.
@@ -76,6 +81,10 @@ exactly). The grids emit cream directly. Rebuild with
 - `icon-sound`: a filled speaker with two concentric sound waves.
 - `icon-reduced-motion`: a wave over a down chevron over a flat line, read as
   motion settling.
+- `icon-fps-counter`: a frame-rate readout, a 16 by 14 frame (rows 1 to 14,
+  as `icon-sound`) with its outer corners clear around three 2-wide
+  frame-time bars, 2 apart on a shared baseline and 1 clear of the frame. Its
+  ink starts 1 below the frame top, as `icon-sound`'s.
 
 The three control icons span the whole frame and mirror on both axes, so their
 drawn bounds centre on the frame exactly. Each draws from the live control's
