@@ -15,12 +15,12 @@ import { createControls } from "../input/controls.ts";
 import { requiredLoading, requiredReady } from "../loading/required.ts";
 import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
-import { GameModel } from "../model/game.ts";
+import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { fill, itemAbout, itemName, type ShopItem, weaponName } from "../model/shop.ts";
-import type { FlightState } from "../model/types.ts";
+import type { FlightState, GameSave } from "../model/types.ts";
 import {
   coverStartScreen,
   exitGame,
@@ -551,7 +551,7 @@ export function buildScene(scene: UiContext): void {
           available: () => !scene.cheatSession.ending,
           id: "showTipsAgain",
           label: CHEAT_COPY.showTipsAgain,
-          run: () => apply(() => scene.model.showTipsAgain()),
+          run: () => apply(() => showTipsAgain(scene)),
         },
         {
           id: "fpsCounter",
@@ -1529,12 +1529,40 @@ function replaceModel(model: GameModel, scene: UiContext): void {
 }
 
 /**
+ * Show tips again (gameplay/cheats.md "Other actions") is not a cheat: in a cheat session it also
+ * clears the seen first-flight lessons in the stored pre-cheat save, written past flushScene's
+ * suspended seam, and in the session's own pre-cheat copy. Outside a session flushScene saves it.
+ */
+export function showTipsAgain(scene: UiContext): void {
+  scene.model.showTipsAgain();
+  const session = scene.cheatSession;
+  if (!session.active || session.ending) {
+    return;
+  }
+  const written = (session.written ?? Promise.resolve())
+    .then(async () => {
+      const loaded = await saves.load();
+      if (loaded.status === "loaded") {
+        await saves.save(withoutSeenLessons(loaded.save));
+      }
+    })
+    .catch(() => undefined);
+  const before =
+    session.before === null
+      ? null
+      : JSON.stringify(withoutSeenLessons(JSON.parse(session.before) as GameSave));
+  scene.cheatSession = { ...session, before, written };
+}
+
+/**
  * Ends the cheat session back on the start screen: the pre-cheat save loads in place of the
- * session's play, so Continue resumes it. Saving and actions wait until it has loaded.
+ * session's play, so Continue resumes it. Saving and actions wait until it has loaded, and the
+ * load waits for any Show tips again write to that save.
  */
 export async function endCheatSession(scene: UiContext): Promise<void> {
-  const before = scene.cheatSession.before;
+  const { before, written } = scene.cheatSession;
   scene.cheatSession = { ...scene.cheatSession, ending: true };
+  await written;
   restoreBeforeCheats(before, await saves.load(), scene);
 }
 

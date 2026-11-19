@@ -439,6 +439,19 @@ export interface AchievementView {
 
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
+/** Seen conversation IDs without the first-flight lessons, which Show tips again clears. */
+function withoutLessons(seen: readonly string[]): string[] {
+  const lessons = new Set(
+    CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(({ id }) => id),
+  );
+  return seen.filter((id) => !lessons.has(id));
+}
+
+/** A save with its seen first-flight lessons cleared (Show tips again) and nothing else changed. */
+export function withoutSeenLessons(save: GameSave): GameSave {
+  return { ...save, seenConversations: withoutLessons(save.seenConversations) };
+}
+
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
   private scannedLandmarks: string[] = [];
@@ -2048,12 +2061,9 @@ export class GameModel {
   }
   /** Show tips again: clears the seen first-flight lessons, so each plays under its trigger. */
   showTipsAgain(): void {
-    const lessons = new Set(
-      CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(({ id }) => id),
-    );
     // In place: the conversation director extends this same list.
     const seen = this.state.seenConversations;
-    seen.splice(0, seen.length, ...seen.filter((id) => !lessons.has(id)));
+    seen.splice(0, seen.length, ...withoutLessons(seen));
   }
   /** Jumps to an unlocked galaxy's flight. */
   startGalaxy(id: GalaxyNumber): void {

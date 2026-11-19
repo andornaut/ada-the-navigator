@@ -11,6 +11,8 @@ export interface CheatSession {
   readonly ending: boolean;
   /** Play as it was at the first cheat, in case the store cannot read it back. */
   readonly before: string | null;
+  /** Show tips again's write to the stored pre-cheat save, which ending the session waits for. */
+  readonly written?: Promise<void> | undefined;
 }
 
 export const NO_CHEAT_SESSION: CheatSession = { active: false, before: null, ending: false };

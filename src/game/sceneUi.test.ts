@@ -6,12 +6,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
-import { GameModel } from "../model/game.ts";
+import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import type { GameSave } from "../model/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
@@ -707,6 +708,7 @@ function cheatScene(model: GameModel) {
     saves: createAdaSaves(port),
     scene,
     scheduleCheatGalaxies: vi.fn(),
+    withoutSeenLessons,
   });
   for (const name of [
     "flushScene",
@@ -715,6 +717,7 @@ function cheatScene(model: GameModel) {
     "replaceModel",
     "resetSave",
     "restoreBeforeCheats",
+    "showTipsAgain",
   ]) {
     context[name] = runInContext(callback(name), context);
   }
@@ -734,6 +737,10 @@ function cheatScene(model: GameModel) {
     port,
     scene,
     settle,
+    showTips: () =>
+      (context.apply as (action: () => void) => void)(() =>
+        (context.showTipsAgain as (value: typeof scene) => void)(scene),
+      ),
     stored,
     values,
   };
@@ -812,7 +819,54 @@ describe("cheat session", () => {
     expect(f.values.get("ada-the-navigator.sound")).toBe("off");
   });
 
-  it("has one save write, in flushScene, so the session suspends every save path", () => {
+  // Show tips again is not a cheat: in a session it clears the lessons in the stored save too.
+  const LESSONS = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(
+    ({ id }) => id,
+  );
+
+  it("clears the seen lessons in the stored pre-cheat save when Show tips again runs in a session", async () => {
+    const model = flight();
+    model.state.seenConversations.push(...LESSONS, "meeting:4:avi");
+    const f = cheatScene(model);
+    await f.flush();
+    f.cheat("addStardust").run();
+    await f.settle();
+    expect(f.stored().seenConversations).toEqual(expect.arrayContaining(LESSONS));
+    f.showTips();
+    await f.settle();
+    expect(f.scene.cheatSession.active).toBe(true);
+    expect(f.scene.model.state.seenConversations).not.toEqual(expect.arrayContaining([LESSONS[0]]));
+    expect(f.stored().seenConversations).toEqual(["meeting:4:avi"]);
+    // The session's own pre-cheat copy is cleared too.
+    expect((JSON.parse(f.scene.cheatSession.before!) as GameSave).seenConversations).toEqual([
+      "meeting:4:avi",
+    ]);
+  });
+
+  it("restores the pre-cheat save with only its lessons cleared after Back to title", async () => {
+    const model = flight();
+    model.state.seenConversations.push(...LESSONS, "meeting:4:avi");
+    const f = cheatScene(model);
+    await f.flush();
+    const before = f.stored();
+    f.cheat("addStardust").run();
+    f.cheat("unlockAllWeapons").run();
+    await f.settle();
+    f.showTips();
+    f.apply(() => f.scene.model.backToTitle());
+    await f.settle();
+    await f.settle();
+    expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION);
+    const restored = JSON.parse(f.scene.model.save()) as GameSave;
+    expect(restored.seenConversations).toEqual(["meeting:4:avi"]);
+    expect({ ...restored, seenConversations: [] }).toEqual({
+      ...JSON.parse(new GameModel(CONTENT, before).save()),
+      seenConversations: [],
+    });
+    expect(f.stored()).toEqual({ ...before, seenConversations: ["meeting:4:avi"] });
+  });
+
+  it("keeps the session's suspended save path, writing only Show tips again past it", () => {
     const writes = readdirSync(new URL("..", import.meta.url), { recursive: true })
       .map(String)
       .filter((path) => path.endsWith(".ts") && !path.endsWith(".test.ts"))
@@ -823,8 +877,9 @@ describe("cheat session", () => {
           ),
         ].map(() => path),
       );
-    expect(writes).toEqual(["game/sceneUi.ts"]);
+    expect(writes).toEqual(["game/sceneUi.ts", "game/sceneUi.ts"]);
     expect(callback("flushScene")).toContain("saves.save(");
+    expect(callback("showTipsAgain")).toContain("saves.save(withoutSeenLessons(");
   });
 });
 
