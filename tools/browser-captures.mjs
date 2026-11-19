@@ -10,6 +10,7 @@ import {
   logicalSize,
   observe,
   output,
+  pauseClock,
   previewOnly,
   previewOrigin,
   reportViolations,
@@ -119,7 +120,7 @@ async function openFixture(
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   // Continue takes effect only on a showing page, so it runs on the paused clock and the frames
   // it takes are stepped one at a time; the flight is then held hidden while its art loads.
-  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+  await pauseClock(page);
   await page.locator('.ada-start-actions > [data-action="continue"]').click();
   const space = page.locator('#game-status[data-mode="space"]');
   async function goLive(frames) {
@@ -137,7 +138,7 @@ async function openFixture(
   await page.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
   await page.locator('#game-status[data-asteroids="art"]').waitFor({ state: "attached" });
   await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
-  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+  await pauseClock(page);
 }
 /** Lets the flight run again from the paused clock. */
 const release = () =>

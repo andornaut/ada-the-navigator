@@ -38,6 +38,20 @@ export async function hideOverCanvas(target) {
     }, selector);
 }
 
+// Pauses target's page clock just ahead of the page's time. Under load the page can pass a fixed
+// lead before the pause lands, which the clock refuses as a fast-forward to the past, so each
+// retry reads the page's time again and doubles the lead.
+export async function pauseClock(target, lead = 100, attempt = 0) {
+  try {
+    await target.clock.pauseAt((await target.evaluate(() => Date.now())) + lead * 2 ** attempt);
+  } catch (error) {
+    if (attempt >= 5 || !String(error).includes("fast-forward to the past")) {
+      throw error;
+    }
+    await pauseClock(target, lead, attempt + 1);
+  }
+}
+
 // A CSP violation in any page logs a console error, which the run's error check fails on.
 export function reportViolations() {
   document.addEventListener("securitypolicyviolation", (event) => {

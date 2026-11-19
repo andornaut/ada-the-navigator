@@ -11,6 +11,7 @@ import {
   logicalSize,
   observe as observeEvents,
   output,
+  pauseClock,
   previewOnly,
   reportViolations,
   reseedFlight,
@@ -5499,7 +5500,7 @@ try {
     await proof.clock.install();
     await proof.goto("http://ada-preview:4173/play/");
     await proof.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
-    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await pauseClock(proof);
     await proof.locator('.ada-start-actions > [data-action="continue"]').click();
     const space = proof.locator('#game-status[data-mode="space"]');
     // Each 16 ms frame may step the flight once Continue has run.
@@ -5516,7 +5517,7 @@ try {
     await proof.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
     const canvas = proof.locator("#game-canvas > canvas");
     await canvas.waitFor({ state: "visible" });
-    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await pauseClock(proof);
     await proof.evaluate(() => {
       window.adaSmokeFrozen = false;
     });
@@ -5774,7 +5775,7 @@ try {
     await proof.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
     const canvas = proof.locator("#game-canvas > canvas");
     await canvas.waitFor({ state: "visible" });
-    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await pauseClock(proof);
     await proof.keyboard.down("KeyW");
     await proof.keyboard.down("KeyD");
     await proof.keyboard.down("Space");
