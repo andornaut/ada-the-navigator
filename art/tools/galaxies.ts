@@ -131,12 +131,11 @@ const LIGHT_FIELD = {
     // Non-hostile story craft: Pip, the miner, the visitors, the blocker and Elder Loom's saucer.
     "storyCraft",
     // Scenery and props that are not backdrop: Andromeda's guide beacons, Cartwheel's mooring
-    // buoy, the ore pickup, the holodisk's waypoint beacon, Needle's ring gates and channel
-    // lamps, and the whales.
+    // buoy, the ore pickup, Needle's ring gates and channel lamps, and the whales. The holodisk's
+    // waypoint beacon keeps its own rule (`holodiskBeacon`) and takes no keyline.
     "guideBeacon",
     "mooringBuoy",
     "orePickup",
-    "holodiskBeacon",
     "needleGate",
     "needleLamp",
     "whale",
