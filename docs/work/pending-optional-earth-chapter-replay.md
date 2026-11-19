@@ -1,0 +1,28 @@
+---
+id: TBD
+title: Replay finished Earth chapters from Ada's room
+status: proposed
+approved: unrecorded (proposed in Gameplay docs, 2026-11-15)
+design: flight-rules
+related: []
+---
+
+## Scope
+
+From Ada's room, the player can replay an Earth chapter already finished, without
+changing progress, saved choices or rewards.
+
+## Criteria
+
+- Replay preserves progress, saved choices and rewards without duplicating them.
+- Skip returns to the room.
+- Replay never consumes pending mandatory story.
+
+## Decisions
+
+- `gameplay/rules.md` records this as approved design only (6c695306), but no
+  user approval is recorded; it stays proposed until the user approves or
+  declines it.
+- Feasibility and implementation are not assessed.
+
+## Outcome
