@@ -285,6 +285,24 @@ export function outlineContact(
 }
 
 /**
+ * A screen circle of `radius` px at world point `center` against a drawn outline, its screen
+ * parts from world point `origin`, on the screen: the normal points from the outline toward the
+ * circle's centre, and the depth is in screen px.
+ */
+export function screenOutlineContact(
+  outline: Parts,
+  origin: Vec,
+  center: Vec,
+  radius: number,
+): Contact | null {
+  const offset = toScreen({ x: center.x - origin.x, y: center.y - origin.y });
+  if (Math.hypot(offset.x, offset.y) >= partsReach(outline) + radius) {
+    return null;
+  }
+  return unionContact(outline, offset, radius);
+}
+
+/**
  * A drawn body, its screen parts from `position`, against a drawn obstacle from `origin`, on the
  * world plane, within `margin` world units: the contact pushes the body.
  */

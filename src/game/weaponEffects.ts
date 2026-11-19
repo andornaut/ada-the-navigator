@@ -274,17 +274,19 @@ export const BLASTS = {
 /** How long a blast draws, the longer of its full and reduced effects. */
 export const BLAST_SECONDS = Math.max(BLASTS.heavy.totalMs, BLASTS.heavy.reduced.ms) / 1000;
 
-// A ground-plane circle of world radius r draws as this ellipse about the blast point.
+// A ground-plane circle of world radius r draws as this ellipse about the impact point.
 const ground = (at: Vec, r: number) => ({
   at,
   halfHeight: r * Math.SQRT1_2,
   halfWidth: r * Math.SQRT2,
 });
+// A missile blast is a circle on screen of radius r px about the blast point.
+const circle = (at: Vec, r: number) => ({ at, halfHeight: r, halfWidth: r });
 
 /**
- * A missile blast `t` ms after detonation at screen point `at`, world radius `R`: tint, ring,
- * inner line, debris (Heavy) and one flash, played once; under reduced motion, a static ring
- * and tint at `R`, fading.
+ * A missile blast `t` ms after detonation at screen point `at`, an on-screen circle of radius
+ * `R` px: tint, ring, inner line, debris (Heavy) and one flash, all circular, played once; under
+ * reduced motion, a static circular ring and tint at `R`, fading.
  */
 export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number): EffectShape[] {
   return blastWithRecipe(BLASTS[missileKind(radius)], at, radius, reducedMotion, t);
@@ -304,9 +306,9 @@ function blastWithRecipe(
     }
     const a = 1 - t / spec.reduced.ms;
     return [
-      { ...ground(at, radius), alpha: 0.15 * a, colour: amber, kind: "ellipse" },
+      { ...circle(at, radius), alpha: 0.15 * a, colour: amber, kind: "ellipse" },
       {
-        ...ground(at, radius),
+        ...circle(at, radius),
         alpha: 0.9 * a,
         colour: amber,
         kind: "ellipse",
@@ -323,13 +325,13 @@ function blastWithRecipe(
   const a = t <= spec.growMs ? 1 : 1 - (t - spec.growMs) / (spec.totalMs - spec.growMs);
   const shapes: EffectShape[] = [
     {
-      ...ground(at, r),
+      ...circle(at, r),
       alpha: spec.tint * (1 - t / spec.totalMs) ** 2,
       colour: amber,
       kind: "ellipse",
     },
     {
-      ...ground(at, r),
+      ...circle(at, r),
       alpha: a,
       colour: amber,
       kind: "ellipse",
@@ -339,7 +341,7 @@ function blastWithRecipe(
   ];
   if (r > 6) {
     shapes.push({
-      ...ground(at, r - 2.2),
+      ...circle(at, r - 2.2),
       alpha: 0.8 * a,
       colour: cream,
       kind: "ellipse",
@@ -350,10 +352,8 @@ function blastWithRecipe(
   if (spec.debris && t < debrisMs) {
     for (let i = 0; i < spec.debris; i++) {
       const th = (2 * Math.PI * i) / spec.debris + 0.3;
-      const e = { x: Math.SQRT2 * Math.cos(th), y: Math.SQRT1_2 * Math.sin(th) };
-      const length = Math.hypot(e.x, e.y);
-      const n = { x: e.x / length, y: e.y / length };
-      const from = { x: at.x + r * e.x + 3 * n.x, y: at.y + r * e.y + 3 * n.y };
+      const n = { x: Math.cos(th), y: Math.sin(th) };
+      const from = { x: at.x + (r + 3) * n.x, y: at.y + (r + 3) * n.y };
       shapes.push({
         alpha: 1 - t / debrisMs,
         colour: cream,
@@ -375,7 +375,7 @@ function blastWithRecipe(
       [0.36, white, 1],
     ] as const) {
       shapes.push({
-        ...ground(at, fr * scale),
+        ...circle(at, fr * scale),
         alpha: alpha * step.q,
         colour,
         kind: "ellipse",

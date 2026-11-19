@@ -161,6 +161,8 @@ import {
   outlinesContact,
   type Parts,
   partsReach,
+  screenOutlineContact,
+  toScreen,
   worldParts,
 } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
@@ -194,7 +196,13 @@ import { impactEntry, impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
-import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
+import {
+  shipBody,
+  shipCircleContact,
+  shipNearSegment,
+  shipTouches,
+  shipTouchesScreenCircle,
+} from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import {
   groupReach,
@@ -516,6 +524,21 @@ function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
     worldPoint(flightWorldContext(flight), flight.player, point),
     radius,
   );
+}
+/** Whether a blast circle of screen radius `radius` at `point` overlaps Ada as drawn. */
+function blastCoversAda(flight: FlightState, point: Vec, radius: number): boolean {
+  return shipTouchesScreenCircle(
+    flight.facing,
+    flight.player,
+    worldPoint(flightWorldContext(flight), flight.player, point),
+    radius,
+  );
+}
+/** Screen px between world points `from` and `to`, through the nearest world image of `to`. */
+function screenGap(flight: FlightState, from: Vec, to: Vec): number {
+  const local = worldPoint(flightWorldContext(flight), from, to);
+  const screen = toScreen({ x: local.x - from.x, y: local.y - from.y });
+  return Math.hypot(screen.x, screen.y);
 }
 function canonicalPosition(flight: FlightState, point: Vec): void {
   if (flight.topology) {
@@ -3974,7 +3997,7 @@ function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: 
     blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
     blastFlashes.set(flight, blasts);
   }
-  if (struck || (shot.blast !== undefined && touchesAda(flight, shot, shot.blast))) {
+  if (struck || (shot.blast !== undefined && blastCoversAda(flight, shot, shot.blast))) {
     damage(content, shot.damage, flight);
   }
 }
@@ -4316,10 +4339,12 @@ function pushAmmoPack(content: GameContent, at: Vec, flight: FlightState): void 
 }
 
 /**
- * A missile's blast damages every other live enemy within its radius of the impact, and never
- * Ada; a multipart ship takes it at its nearest live hardpoint in reach. The blast shows one
- * flash, which stands in for the destruction flash of every enemy the impact destroys, the
- * struck one included. `struck` is null for a missile that exploded at the end of its reach.
+ * A missile's blast is a circle on screen of radius `radius` about the impact (gameplay/rules.md
+ * "Missiles"): it deals full damage to every other live enemy whose drawn hull or hardpoints
+ * overlap it, and never to Ada; a multipart ship takes it at the live hardpoint it covers
+ * deepest. Armed mines whose centre it covers pop. The blast shows one flash, which stands in for
+ * the destruction flash of every enemy the impact destroys, the struck one included. `struck`,
+ * damaged directly by its hit, is null for a missile that exploded at the end of its reach.
  */
 function blast(
   content: GameContent,
@@ -4334,7 +4359,7 @@ function blast(
   blasts.push({ age: 0, radius, x: at.x, y: at.y });
   blastFlashes.set(flight, blasts);
   for (const mine of flight.mines) {
-    if (armed(mine) && worldDistance(flightWorldContext(flight), mine, at) <= radius) {
+    if (armed(mine) && screenGap(flight, at, mine) <= radius) {
       mine.end = { age: 0, kind: "pop" };
     }
   }
@@ -4342,17 +4367,60 @@ function blast(
     if (object === struck || object.kind !== "enemy" || object.hp <= 0 || object.enemy?.salvaged) {
       continue;
     }
-    const position = ROUTE_POSITION[flight.galaxy];
-    const part = hitPart(content, flight, radius + partReach(content), radius, at, object);
-    if (part === null && !enemyTouched(flight, position, object, at, radius)) {
+    const covered = blastCover(content, flight, radius, at, object);
+    if (covered === null) {
       continue;
     }
-    hit(content, amount, part, object, flight, events);
+    hit(content, amount, covered.part, object, flight, events);
     markBlasted(object, flight);
   }
   if (struck) {
     markBlasted(struck, flight);
   }
+}
+
+/**
+ * What a blast circle of screen radius `radius` at `at` covers of an enemy as drawn: the live
+ * hardpoint it overlaps deepest (one without Art's outline when its anchor is within the radius
+ * and a hardpoint's reach on screen), else its hull, or null when it covers neither.
+ */
+function blastCover(
+  content: GameContent,
+  flight: FlightState,
+  radius: number,
+  at: Vec,
+  object: SpaceObject,
+): { part: string | null } | null {
+  const enemy = object.enemy;
+  if (!enemy) {
+    return null;
+  }
+  const position = ROUTE_POSITION[flight.galaxy];
+  const local = worldPoint(flightWorldContext(flight), object, at);
+  let nearest: { gap: number; id: string } | undefined;
+  for (const part of liveParts(content, flight.galaxy, object)) {
+    const outline = enemyPartOutline(position, enemy, part.id);
+    const contact = outline && screenOutlineContact(outline, object, local, radius);
+    const gap = outline ? (contact ? -contact.depth : Infinity) : screenGap(flight, part, local);
+    if (
+      (outline ? contact !== null : gap <= radius + partReach(content)) &&
+      (!nearest || gap < nearest.gap)
+    ) {
+      nearest = { gap, id: part.id };
+    }
+  }
+  if (nearest) {
+    return { part: nearest.id };
+  }
+  const hull = enemyHull(enemy);
+  const covered = hull
+    ? screenOutlineContact(hull, object, local, radius) !== null ||
+      enemy.hardpoints.some((part) => {
+        const outline = enemyPartOutline(position, enemy, part.id);
+        return outline !== null && screenOutlineContact(outline, object, local, radius) !== null;
+      })
+    : screenGap(flight, object, local) <= object.radius + radius;
+  return covered ? { part: null } : null;
 }
 
 /** Marks a destroyed enemy's wreck as destroyed by a blast. */

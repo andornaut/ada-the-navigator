@@ -2,6 +2,7 @@ import {
   type Contact,
   type Parts,
   partsReach,
+  screenOutlineContact,
   segmentNearParts,
   unionContact,
   worldParts,
@@ -42,6 +43,16 @@ export function shipCircleContact(
   return (
     contact && { depth: contact.depth, normal: { x: -contact.normal.x, y: -contact.normal.y } }
   );
+}
+
+/** Whether Ada's drawn ship, as she shows on screen, touches a screen circle of `radius` px. */
+export function shipTouchesScreenCircle(
+  facing: Vec,
+  player: Vec,
+  center: Vec,
+  radius: number,
+): boolean {
+  return screenOutlineContact(shipBody(facing), player, center, radius) !== null;
 }
 
 /** Whether Ada's drawn ship touches a world circle. */

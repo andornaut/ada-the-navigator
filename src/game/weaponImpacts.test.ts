@@ -25,8 +25,9 @@ describe("weapon impact families", () => {
     expect(small.map((shape) => shape.kind)).toEqual(large.map((shape) => shape.kind));
     const ring = (shapes: ReturnType<typeof render>) =>
       shapes.find((shape) => shape.kind === "ellipse" && shape.part === "ring");
-    expect(ring(small)).toMatchObject({ halfWidth: 30 * Math.SQRT2 });
-    expect(ring(large)).toMatchObject({ halfWidth: 60 * Math.SQRT2 });
+    // Each blast is a circle on screen of the event's radius.
+    expect(ring(small)).toMatchObject({ halfHeight: 30, halfWidth: 30 });
+    expect(ring(large)).toMatchObject({ halfHeight: 60, halfWidth: 60 });
     expect(impactEffect(context, { ...contact, family: "missile" })).toEqual([]);
   });
 

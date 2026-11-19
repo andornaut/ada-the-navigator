@@ -11,7 +11,7 @@ export interface WeaponDefinition {
   /** Weapon-relative world range before expiry; null for the base lifetime. */
   rangeWorld: number | null;
   fadeStartFraction: number | null;
-  /** World radius of a missile's blast, which damages every enemy in it; null without one. */
+  /** A missile's blast radius on screen in px; it damages every enemy it covers. Null without. */
   blastRadius: number | null;
   /** World range of a hitscan beam; null for projectile weapons. */
   beamRange: number | null;
@@ -52,7 +52,7 @@ const BOLT_REACH = 370;
 const RAPID_DAMAGE = 1.5;
 /** Rapid and Heavy Missiles reach 220 world units at every level and speed. */
 const MISSILE_REACH = 220;
-/** Heavy Missile's blast radius in world units, the same at every level. */
+/** Heavy Missile's blast radius in screen px, the same at every level. */
 const HEAVY_BLAST = 60;
 /** Enemy Phaser catalog range; Ada uses her snapshotted rounded coverage. */
 const PHASER_RANGE = 370;
