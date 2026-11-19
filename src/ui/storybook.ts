@@ -186,6 +186,38 @@ export const STORY_TAB_COLOURS: Readonly<Record<string, string>> = {
   Mom: "#9fd98a",
 };
 
+/** Decoded story images, held for the storybook's life, and each one's decode. */
+export interface StoryImagePreload {
+  readonly images: readonly HTMLImageElement[];
+  /** Resolves once every listed image has decoded or failed to; an unlisted URL is ready. */
+  ready(urls: readonly string[]): Promise<void>;
+}
+
+/**
+ * Fetches and decodes each URL once and keeps the Image, so a frame swap, such as the holodisk's
+ * four overlays, paints from a decoded image instead of decoding on first show.
+ */
+export function preloadStoryImages(
+  urls: Iterable<string>,
+  createImage: () => HTMLImageElement = () => new Image(),
+): StoryImagePreload {
+  const images: HTMLImageElement[] = [];
+  const decoded = new Map<string, Promise<void>>();
+  for (const url of new Set(urls)) {
+    const image = createImage();
+    image.src = url;
+    images.push(image);
+    decoded.set(
+      url,
+      image.decode().catch(() => undefined),
+    );
+  }
+  return {
+    images,
+    ready: (wanted) => Promise.all(wanted.map((url) => decoded.get(url))).then(() => undefined),
+  };
+}
+
 /** The speaker's name tab fill: their story, cast or conversation tab, or the neutral one. */
 export function storyTabColour(name: string): string {
   const family = familyPortrait(name);
@@ -684,6 +716,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   // above it. Its style follows the shared card styles it refines (src/ui/stylesheet.ts).
   root.prepend(layer);
   let disposed = false;
+  let preload: StoryImagePreload = preloadStoryImages([]);
+  // Bumped as each page shows, so a holodisk start that waited on its decodes plays only if its
+  // page still shows.
+  let showing = 0;
   const bindStoryAction = (button: HTMLButtonElement, run: () => void) =>
     bindAdaAction(
       {
@@ -1074,7 +1110,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
         node.hidden = false;
         node.style.opacity = "0";
       }
-      playNight(overnightSteps(holodisk, options.reducedMotion()));
+      // The frames swap without fades, so they play once all four have decoded.
+      const shown = showing;
+      void preload.ready(holodisk.overlays.map((overlay) => overlay.url)).then(() => {
+        if (!disposed && shown === showing) {
+          playNight(overnightSteps(holodisk, options.reducedMotion()));
+        }
+      });
       return;
     }
     if (!exit || holodisk.exitFadeMs <= 0) {
@@ -1224,6 +1266,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
+    showing += 1;
     sleepAction?.dispose();
     sleepAction = undefined;
     const from = lastPage;
@@ -1251,12 +1294,14 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   void loadStoryArt().then((loaded) => {
     art = loaded;
-    // Preloads every image, so a page or transition frame draws without a blank.
+    // Fetches every image, so a page or transition frame draws without a blank. The holodisk
+    // frames swap with no fade, so they are also decoded and held for the storybook's life.
+    const frames = art.holodisk?.overlays.map((overlay) => overlay.url) ?? [];
+    preload = preloadStoryImages(frames);
     for (const url of new Set([
       ...Object.values(art.backgrounds),
       ...Object.values(art.composites).flatMap((shown) => shown.map((overlay) => overlay.url)),
       ...(art.overnight?.overlays.map((overlay) => overlay.url) ?? []),
-      ...(art.holodisk?.overlays.map((overlay) => overlay.url) ?? []),
       ...art.transitions.flatMap(({ reducedMotion, steps }) =>
         [...steps, ...reducedMotion].flatMap((step) => [
           step.url,
@@ -1264,7 +1309,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
         ]),
       ),
     ])) {
-      new Image().src = url;
+      if (!frames.includes(url)) {
+        new Image().src = url;
+      }
     }
     if (rendered) {
       // The bases arrive with the art: the run is measured again on them.

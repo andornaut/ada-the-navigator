@@ -20,6 +20,7 @@ import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { MODAL_STYLE } from "./modal.ts";
 import {
+  preloadStoryImages,
   STORY_PORTRAITS,
   STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
@@ -435,3 +436,49 @@ it.each([true, false])(
     expect(document.activeElement).toBe(focusPrevious ? previous : outside);
   },
 );
+
+describe("holodisk frame preload", () => {
+  // An Image stand-in whose decode settles when the test says.
+  function fakeImages() {
+    const made: { decode: () => Promise<void>; settle: (ok: boolean) => void; src: string }[] = [];
+    const create = () => {
+      let settle!: (ok: boolean) => void;
+      const decoded = new Promise<void>((resolve, reject) => {
+        settle = (ok) => (ok ? resolve() : reject(new Error("decode failed")));
+      });
+      const image = { decode: () => decoded, settle, src: "" };
+      made.push(image);
+      return image as unknown as HTMLImageElement;
+    };
+    return { create, made };
+  }
+  const frames = ["/art/aboard-holodisk-0.svg", "/art/aboard-holodisk-1.svg"];
+
+  it("fetches and decodes each frame once and holds its Image", () => {
+    const { create, made } = fakeImages();
+    const preload = preloadStoryImages([...frames, frames[0]!], create);
+    expect(made.map((image) => image.src)).toEqual(frames);
+    expect(preload.images).toEqual(made);
+  });
+
+  it("is ready only once every listed frame has decoded, a failed decode included", async () => {
+    const { create, made } = fakeImages();
+    const preload = preloadStoryImages(frames, create);
+    let ready = false;
+    void preload.ready(frames).then(() => {
+      ready = true;
+    });
+    made[0]!.settle(true);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(ready).toBe(false);
+    made[1]!.settle(false);
+    await preload.ready(frames);
+    expect(ready).toBe(true);
+  });
+
+  it("treats a URL it never preloaded as ready", async () => {
+    const preload = preloadStoryImages([], fakeImages().create);
+    await expect(preload.ready(["/art/other.svg"])).resolves.toBeUndefined();
+  });
+});
