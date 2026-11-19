@@ -1,6 +1,6 @@
 import type { LayoutColumnSizing } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { capTop } from "./cardFrame.ts";
+import { capTop, lineInkTop } from "./cardFrame.ts";
 import { CARD_CONTENT, CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { PAGE_DIVIDER_STYLE } from "./controlPresentation.ts";
 import { CONTROL_ROW } from "./controls.ts";
@@ -19,12 +19,7 @@ export function settingsTitleInkTop(metrics: {
   readonly inkAscent: number;
   readonly lineHeight: number;
 }): number {
-  return (
-    CONTROL_ROW.textInset +
-    (metrics.lineHeight - metrics.ascent - metrics.descent) / 2 +
-    metrics.ascent -
-    metrics.inkAscent
-  );
+  return CONTROL_ROW.textInset + lineInkTop(metrics);
 }
 
 /** Pair controls whenever their labels fit the clamped large card; footer width is independent. */

@@ -70,3 +70,15 @@ export function cardHeaderLayout(
   const bodyTop = Math.ceil(Math.max(balanced, closeClearance) - MEASURE_SLACK);
   return { bodyTop, titleTop: (bodyTop + firstInkTop + frameBorder - titleHeight) / 2 };
 }
+
+/** A line of text's visible ink top below its line box's top, from the loaded font's metrics. */
+export function lineInkTop(metrics: {
+  readonly ascent: number;
+  readonly descent: number;
+  readonly inkAscent: number;
+  readonly lineHeight: number;
+}): number {
+  return (
+    (metrics.lineHeight - metrics.ascent - metrics.descent) / 2 + metrics.ascent - metrics.inkAscent
+  );
+}

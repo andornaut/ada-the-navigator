@@ -1,8 +1,6 @@
-import { UI_FONT_FACE } from "./layout/cardFrame.ts";
-import { CONTROL_ROW } from "./layout/controls.ts";
+import { lineInkTop, UI_FONT_FACE } from "./layout/cardFrame.ts";
 import { pixels } from "./layout/css.ts";
 import { frameBoxIn, frameGridOrigin } from "./layout/frameBox.ts";
-import { settingsTitleInkTop } from "./layout/settings.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
 /** The canvas text measure switch rows read their label ink from, or undefined without canvas. */
@@ -35,13 +33,12 @@ export function alignSwitchRowIcons(
     // The row's top along the frame's vertical axis, on the CSS px grid whose device pixel edges
     // lie where (top + v) * ratio is whole.
     const top = frameGridOrigin(row).y;
-    // settingsTitleInkTop measures from a label set CONTROL_ROW.textInset below the row's top; the
-    // label's line box top is read in the row's frame axes.
+    // The label's line box top in the row's frame axes, wherever the row places it, then its ink
+    // inside that line.
     const captionTop = frameBoxIn(row, caption).y / unit;
     const inkTop =
-      captionTop -
-      CONTROL_ROW.textInset +
-      settingsTitleInkTop({
+      captionTop +
+      lineInkTop({
         ascent: UI_FONT_FACE.ascent * size,
         descent: UI_FONT_FACE.descent * size,
         inkAscent: ink.actualBoundingBoxAscent / unit,
