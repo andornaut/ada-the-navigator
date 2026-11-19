@@ -571,25 +571,31 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
   effect when the battle begins, and jump out when the flagship is salvaged or
   the flight ends. At most 8 allies are on screen at once. The rest rotate in: at the
   start of each later wave and of the flagship fight, allies that have not yet
-  flown jump in and replace ones that have, so every ally takes part.
+  flown jump in and replace ones that have, so every ally takes part. Those that
+  have flown longest leave first; Marlo never rotates out, so the song never
+  stops.
 - **Look:** allies show thrust jets like every ship and get no edge markers,
   like other friendly objects Ada flies through.
 - **Safety:** drones never target allies, allies take no damage, and Ada and shots
   pass through them, with Ada drawn in front.
 - **Fire:** an ally that fires uses level 2 Laser every 1.4 seconds at the drone
   its behaviour picks.
-- **`escort`:** escorts share a ring around Ada, at least 60 world units beyond
-  her drawn ship and wider as more escorts join, so neighbouring escorts' drawn
+- **`escort`:** escorts share a ring around Ada, their slot centres at least 60
+  world units beyond her drawn ship and wider as more escorts join, so neighbouring escorts' drawn
   ships stay at least 16 world units apart. Their slots sit at equal angles
   starting behind her and turn with her heading. Each escort leaves its slot to
   intercept a drone within 600 of her and returns to it.
 - **`chase` against turrets:** chases the nearest heavy and aims at its weapon
-  hardpoints.
-- **Whale:** a whale never fires and follows 250 world units behind Ada, side by
-  side with any other whale, moving like the calf.
+  hardpoints. With no heavy present, it takes an escort slot and fights as an
+  escort.
+- **Whale:** a whale never fires and follows 150 world units behind Ada, moving
+  like the calf. Two whales fly side by side, their centres 80 world units
+  apart.
 - **Song:** drones within 300 world units of Marlo move at three quarters of
-  their top speed. A faint rim marks the song's reach, and a slowed drone shows
-  a ring beneath it; both hold steady under reduced motion.
+  their top speed; while the nursery whale flies, the reach is half again as
+  far, 450. A faint rim marks the song's reach, and a slowed drone shows a ring
+  beneath it, sized to the drone's drawn reach plus 4; both hold steady under
+  reduced motion.
 
 ## Presentation
 
