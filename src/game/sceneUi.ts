@@ -1251,11 +1251,20 @@ export function renderConversation(scene: UiContext): void {
       elapsed,
     );
   }
-  pennyLayers.get(scene)?.place(
+  const penny = pennyLayers.get(scene);
+  if (!penny) {
+    return;
+  }
+  const markers = paint.markers(flight, scene.settingsOpen, !sceneCovered && !emergency, () =>
+    scene.model.targetMarkers(area, scene.litCaches),
+  );
+  penny.place(
     flight?.player ?? { x: 0, y: 0 },
     area,
     {
-      blocked: markerFootprints(document, document.getElementById(VIEW_HOST_ID)),
+      // The HUD footprints, a DOM measurement, matter only for markers to place.
+      blocked:
+        markers.length > 0 ? markerFootprints(document, document.getElementById(VIEW_HOST_ID)) : [],
       color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
       ...(scene.edgeInk === undefined
         ? {}
@@ -1263,9 +1272,7 @@ export function renderConversation(scene: UiContext): void {
       light: scene.light,
       threat: `#${scene.palette.threat.toString(16).padStart(6, "0")}`,
     },
-    paint.markers(flight, scene.settingsOpen, !sceneCovered && !emergency, () =>
-      scene.model.targetMarkers(area, scene.litCaches),
-    ),
+    markers,
   );
 }
 

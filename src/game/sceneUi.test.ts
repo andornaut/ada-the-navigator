@@ -176,6 +176,8 @@ describe("conversation exposure under covering cards", () => {
       settingsOpen: kind === "settings",
     };
     const pennyLayers = new WeakMap([[scene, { place }]]);
+    const hud = { height: 30, width: 100, x: 0, y: 0 };
+    const footprints = vi.fn(() => [hud]);
     const context = createContext({
       BOX_OCCUPANT,
       VIEW_HOST_ID,
@@ -184,7 +186,7 @@ describe("conversation exposure under covering cards", () => {
       coveredScenePaint: new WeakMap(),
       createCoveredPaint,
       document: { getElementById: () => null },
-      markerFootprints: () => [],
+      markerFootprints: footprints,
       pennyLayers,
       safeGameArea,
       scanViews: new WeakMap(),
@@ -195,6 +197,8 @@ describe("conversation exposure under covering cards", () => {
     ) => void;
     return {
       acknowledge,
+      footprints,
+      hud,
       line,
       marker,
       markers,
@@ -234,6 +238,19 @@ describe("conversation exposure under covering cards", () => {
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
+
+  it("measures the HUD footprints only for markers to place", () => {
+    const ui = covered("docked", false);
+    ui.update();
+    expect(ui.place.mock.lastCall?.at(-1)).toEqual([]);
+    expect(ui.place.mock.lastCall?.[2].blocked).toEqual([]);
+    expect(ui.footprints).not.toHaveBeenCalled();
+    ui.model.state.docked = null;
+    ui.update();
+    expect(ui.place.mock.lastCall?.at(-1)).toEqual([ui.marker]);
+    expect(ui.footprints).toHaveBeenCalledOnce();
+    expect(ui.place.mock.lastCall?.[2].blocked).toEqual([ui.hud]);
+  });
 
   it("retains already painted chatter and markers under UI without advancing knowledge", () => {
     const ui = covered("settings", false);
