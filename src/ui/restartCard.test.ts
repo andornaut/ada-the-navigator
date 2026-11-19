@@ -189,6 +189,26 @@ vi.mock("./buttonPresentation.ts", () => ({
     };
   },
 }));
+// The controls overlay's shared modal layer, recorded: the confirm must take the top over Cheats.
+const published = vi.hoisted(() => ({
+  dispose: vi.fn(),
+  leave: vi.fn(),
+  open: vi.fn(),
+  roots: [] as unknown[],
+}));
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
+  createModalLayer: (root: unknown) => {
+    published.roots.push(root);
+    return {
+      back: () => false,
+      dispose: published.dispose,
+      open: (options: unknown, dialog: unknown) => {
+        published.open(options, dialog);
+        return published.leave;
+      },
+    };
+  },
+}));
 vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
   focusTarget: (element: Element) => element.focus(),
 }));
@@ -245,6 +265,25 @@ function fixture() {
 }
 
 describe("Restart's configured production binding", () => {
+  it("opens on top of the controls overlay's shared modal layer, focused on Cancel", () => {
+    published.roots.length = 0;
+    const f = fixture(),
+      cancel = f.action("restart-cancel"),
+      frame = f.modal.querySelector('[role="dialog"]')!;
+    // One layer shared by every modal in the overlay, Cheats and Settings included.
+    expect(published.roots).toEqual([f.root]);
+    f.card.open();
+    expect(published.open).toHaveBeenCalledOnce();
+    expect(published.open.mock.calls[0]![1]).toBe(frame);
+    expect(published.open.mock.calls[0]![0]).toMatchObject({ focus: cancel });
+    f.card.open();
+    expect(published.open).toHaveBeenCalledOnce();
+    cancel.click();
+    expect(published.leave).toHaveBeenCalledOnce();
+    f.card.dispose();
+    expect(published.dispose).toHaveBeenCalledOnce();
+  });
+
   it("retains the native dialog, hidden empty body, keyed controls and Cancel focus across reopen", async () => {
     const f = fixture(),
       cancel = f.action("restart-cancel"),

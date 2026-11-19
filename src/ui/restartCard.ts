@@ -2,7 +2,8 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 
 import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
 import { mountAdaLayout } from "./layoutTree.ts";
-import { enterPressView, inCurrentView } from "./pressScope.ts";
+import { createModalLayer } from "./modalLayer.ts";
+import { inCurrentView } from "./pressScope.ts";
 import { type ConfirmAction, type ConfirmKind, restartTree } from "./restartTree.ts";
 
 export interface RestartLabels {
@@ -36,6 +37,9 @@ export function createRestartCard(
   modal.hidden = true;
   root.append(modal);
   applyAdaControlTheme(modal);
+  // The confirm joins the controls overlay's shared modal layer, so it takes the top over Cheats
+  // or Settings: the card under it turns inert and the confirm alone takes presses and focus.
+  const layer = createModalLayer(modal);
   let disposed = false;
   let leaveView: (() => void) | undefined;
   const setOpen = (open: boolean) => {
@@ -45,10 +49,7 @@ export function createRestartCard(
     modal.hidden = !open;
     root.classList.toggle(`ada-${kind}-open`, open);
     if (open) {
-      leaveView ??= enterPressView(root, frame, [], {
-        backdrop: modal,
-        close: () => setOpen(false),
-      });
+      leaveView ??= layer.open({ close: () => setOpen(false), focus: cancel }, frame);
     } else {
       leaveView?.();
       leaveView = undefined;
@@ -92,6 +93,7 @@ export function createRestartCard(
       disposed = true;
       leaveView?.();
       leaveView = undefined;
+      layer.dispose();
       layout.dispose();
       root.classList.remove(`ada-${kind}-open`);
       modal.remove();
