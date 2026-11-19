@@ -34,13 +34,13 @@ tilted axis.
   rotation. Frame `k` shows the plate turned `45k` degrees; show frame
   `floor(angle / 45) mod 8` and pick a tumble rate in `tumble.degPerSecond`
   (60 to 120) per piece. Reduced motion shows frame 0.
-- Body, lit to shadow: `#926F68`, `#83605A`, `#74524C`, `#684742` and
-  `#603F3A` (`body`): Cartwheel's `environmentDetail` lightness plus 0.2, 0.15,
+- Body, lit to shadow: `#D9B09F`, `#C9A190`, `#B99181`, `#AC8575` and
+  `#A37C6C` (`body`), 1.07 to 1.48:1 on Cartwheel's light background: Cartwheel's `environmentDetail` lightness plus 0.2, 0.15,
   0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. The rib sits
   one tone deeper. Muted field matter, never the neutral stone of harmless
   rocks.
 - A 1.5 px coral (`obstacle`, `#D68B72`) contour outside the silhouette (`contour`):
-  5.48:1 on Cartwheel's background, and 1.66 to 3.43:1 on the body tones (2.55:1
+  1.07:1 on Cartwheel's background, and 1.05 to 1.38:1 on the body tones (1.05:1
   on the middle one). Coral means damage.
 - `radius`: 56.35 frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame px,

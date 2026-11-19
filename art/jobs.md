@@ -56,9 +56,9 @@ Tints, one rule (`tintRule`), in sRGB channels rounded half up:
 | ----------- | ------------- | ------------ | -------------- | ------------- | ------------------- |
 | `base`      | `#555161`     | `#6d6578`    | 1.90:1         | 2.63:1        | Lavender 7.21:1     |
 | `sunflower` | `#baab77`     | `#9d9068`    | 1.38:1         | 1.91:1        | Ink keyline 10.89:1 |
-| `cartwheel` | `#644d4e`     | `#796269`    | 1.90:1         | 2.64:1        | Lavender 7.28:1     |
-| `whirlpool` | `#435760`     | `#5f6a78`    | 1.90:1         | 2.63:1        | Lavender 7.13:1     |
-| `phantom`   | `#524356`     | `#6a5a6f`    | 1.86:1         | 2.68:1        | Lavender 8.38:1     |
+| `cartwheel` | `#957569`     | `#7f645d`    | 1.66:1         | 2.15:1        | Ink keyline 7.18:1  |
+| `whirlpool` | `#92aba1`     | `#7c908b`    | 1.48:1         | 2.04:1        | Ink keyline 10.86:1 |
+| `phantom`   | `#827388`     | `#907f97`    | 1.95:1         | 2.33:1        | Lavender 4.25:1     |
 
 The masses stay under 3:1, field paint rather than signal; the stars carry
 the landmark.
