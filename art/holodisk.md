@@ -1,8 +1,8 @@
 # Holodisk
 
 - Rebuild with `node art/tools/holodisk.ts`. It writes the item icons as UI
-  subset sheets in `public/art/ui/sprites/`, the pickup and beacon sheets in
-  `public/art/`, their Aseprite data, and their entries in the
+  subset sheets with their Aseprite data in `public/art/ui/sprites/`, the
+  pickup and beacon sheets (PNG only) in `public/art/`, and their entries in the
   [UI manifest](../public/art/ui/manifest.json) and the root
   [manifest](../public/art/manifest.json).
 - Icons, pickup and beacon are pixel art: every pixel opaque or clear, drawn

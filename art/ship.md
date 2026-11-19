@@ -420,8 +420,8 @@ forward motion and reduced-motion behavior retain their contracts. Forward
 roots share the physical rear-wall midpoint above the skirt and collinear base edge,
 with no geometry trimming.
 
-`ship-retro-jets-yellow.json` is a static archive and is not rewritten by the
-active producer. It is not a Settings toggle.
+`art/sources/ship-retro-jets-yellow.json` is a static archive, not shipped and
+not rewritten by the active producer. It is not a Settings toggle.
 
 ## Nose
 

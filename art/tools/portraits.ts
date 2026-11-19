@@ -8,10 +8,12 @@ import type { Tag } from "@andornaut/art-kit/build/raster";
 import { crop } from "./bust.ts";
 import { gadget, grandma, GRANDMA_CROP } from "./core-busts.ts";
 import { editManifest } from "./manifest.ts";
-import { prettify, writeSprites } from "./sprite-sheet.ts";
+import { writeSheet } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}portraits/`;
+// The reused sheets' Aseprite data, for their tags and durations.
+const reused = fileURLToPath(new URL("../sources/portraits/", import.meta.url));
 
 // Portrait sheets: 32 px frames for the storybook panel and 22 px compact frames that the
 // conversation box draws at 2x. Ada and Penny compact frames are crops of their reused sheets;
@@ -282,7 +284,7 @@ interface AsepriteData {
 // keeping the source tags and durations. Pixels are copied exactly.
 function cropTags(key: string, [ox, oy]: Point): Tag[] {
   const image = decodePng(readFileSync(`${output}${key}.png`));
-  const data = JSON.parse(readFileSync(`${output}${key}.json`, "utf8")) as AsepriteData;
+  const data = JSON.parse(readFileSync(`${reused}${key}.json`, "utf8")) as AsepriteData;
   const sources = Object.values(data.frames);
   const frames = sources.map(({ frame: { x, y } }): Frame =>
     Array.from({ length: COMPACT }, (_, row) =>
@@ -345,8 +347,7 @@ const sheets: Sheet[] = [
 ];
 
 for (const { key, tags } of sheets) {
-  await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, tags);
-  await prettify(`${output}${key}.json`);
+  writeSheet(`${output}${key}.png`, { key }, tags);
 }
 
 // Frame names: one per frame, `{tag}` for single-frame tags and `{tag}-{n}` within a loop.

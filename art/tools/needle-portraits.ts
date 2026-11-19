@@ -4,13 +4,11 @@
 // station keepers Sedge, Willow and Marsh: one neutral frame each.
 // Contract: art/needle.md (Elder Loom's portrait) and art/conversation.md (Cast portraits).
 // Usage: node art/tools/needle-portraits.ts
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import type { Tag } from "@andornaut/art-kit/build/raster";
-import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import {
   blank,
@@ -40,6 +38,7 @@ import {
 } from "./bust.ts";
 import { writePortraits } from "./bust-sheets.ts";
 import { replaceEntries } from "./manifest.ts";
+import { writeSheet } from "./sprite-sheet.ts";
 
 const output = fileURLToPath(new URL("../../public/art/needle/portraits/", import.meta.url));
 
@@ -159,16 +158,7 @@ mkdirSync(output, { recursive: true });
 const entries = [];
 for (const { key, make, size } of sheets) {
   const tags: Tag[] = FRAMES.map((name) => [name, [make(name)], [MS]]);
-  await writeSpriteSheet(
-    { data: `${output}${key}.json`, sheet: `${output}${key}.png` },
-    { key },
-    tags,
-  );
-  const path = `${output}${key}.json`;
-  writeFileSync(
-    path,
-    await format(readFileSync(path, "utf8"), { ...(await resolveConfig(path)), filepath: path }),
-  );
+  writeSheet(`${output}${key}.png`, { key }, tags);
   entries.push({
     id: size === FULL ? "loom-portrait" : "loom-portrait-compact",
     path: `/art/needle/portraits/${key}.png`,

@@ -309,7 +309,7 @@ The silhouette's edge median is 4.55:1 to 6.63:1 over the headings.
 ## Elder Loom's portrait
 
 Rebuild with `node art/tools/needle-portraits.ts`. It writes `loom.png` and
-`loom-compact.png` with their Aseprite data to `public/art/needle/portraits/`
+`loom-compact.png` to `public/art/needle/portraits/`
 and replaces the `loom-portrait` entries in Needle's manifest.
 
 - An Avi heron, drawn in the chibi bust style of the set: silver feathers

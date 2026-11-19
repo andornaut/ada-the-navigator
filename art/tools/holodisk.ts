@@ -6,7 +6,7 @@ import type { Frame } from "@andornaut/art-kit/build/grid";
 import { placeEntries } from "./manifest.ts";
 import { INK } from "./palette.ts";
 import { roundHalfEven } from "./random.ts";
-import { prettify, writeSprites } from "./sprite-sheet.ts";
+import { prettify, writeSheet, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -100,18 +100,12 @@ for (const [key, n] of ICONS) {
   await prettify(`${sprites}${key}.json`);
 }
 
-await writeSprites(
-  { data: `${art}holodisk.json`, sheet: `${art}holodisk.png` },
-  { key: "holodisk" },
-  [["turn", TURN.map(([, squash], i) => holodisk(PICKUP, squash, i)), TURN.map(([, , ms]) => ms)]],
-);
-await prettify(`${art}holodisk.json`);
-await writeSprites(
-  { data: `${art}holodisk-beacon.json`, sheet: `${art}holodisk-beacon.png` },
-  { key: "holodisk-beacon" },
-  [["pulse", PULSE.map(([, colour]) => beacon(colour)), PULSE.map(([, , ms]) => ms)]],
-);
-await prettify(`${art}holodisk-beacon.json`);
+writeSheet(`${art}holodisk.png`, { key: "holodisk" }, [
+  ["turn", TURN.map(([, squash], i) => holodisk(PICKUP, squash, i)), TURN.map(([, , ms]) => ms)],
+]);
+writeSheet(`${art}holodisk-beacon.png`, { key: "holodisk-beacon" }, [
+  ["pulse", PULSE.map(([, colour]) => beacon(colour)), PULSE.map(([, , ms]) => ms)],
+]);
 
 // The pickup and beacon load as root manifest sprite sheets.
 const sheetEntry = (

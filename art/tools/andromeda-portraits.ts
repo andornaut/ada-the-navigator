@@ -4,13 +4,11 @@
 // bobble hat, and the station keepers Lumen, Dial and Cog, one neutral frame each.
 // Contract: art/andromeda.md (Portraits) and art/conversation.md (Cast portraits).
 // Usage: node art/tools/andromeda-portraits.ts
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import type { Tag } from "@andornaut/art-kit/build/raster";
-import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import {
   above,
@@ -37,6 +35,7 @@ import {
 } from "./bust.ts";
 import { writePortraits } from "./bust-sheets.ts";
 import { replaceEntries } from "./manifest.ts";
+import { writeSheet } from "./sprite-sheet.ts";
 
 const output = fileURLToPath(new URL("../../public/art/andromeda/portraits/", import.meta.url));
 
@@ -235,12 +234,6 @@ const PORTRAITS = [
   { id: "settler-portrait", key: "settler", role: "settler" },
 ] as const;
 
-// Sprite data goes through the project's Prettier settings so the files stay Prettier-clean.
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
 function entry(id: string, key: string, size: number) {
   return {
     id,
@@ -265,12 +258,7 @@ for (const { id, key, role } of PORTRAITS) {
     [`${key}-compact`, COMPACT, frames.map((frame) => crop(frame, CROP))],
   ] as const) {
     const tags: Tag[] = MOODS.map((name, i) => [name, [list[i]!], FRAME_MS]);
-    await writeSpriteSheet(
-      { data: `${output}${sheet}.json`, sheet: `${output}${sheet}.png` },
-      { key: sheet },
-      tags,
-    );
-    await prettify(`${output}${sheet}.json`);
+    writeSheet(`${output}${sheet}.png`, { key: sheet }, tags);
     entries.push(entry(size === FULL ? id : `${id}-compact`, sheet, size));
   }
 }

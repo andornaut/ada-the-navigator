@@ -39,21 +39,21 @@ test("all ten officer frames retain the 32px and 22px reveal ordering", () => {
         for (let y = 0; y < 22; y++)
           for (let x = 0; x < 22; x++) assert.equal(compact[y]![x], full[y + 1]![x + 5]);
     }
-  for (const key of ["gadget", "gadget-compact"]) {
-    const data = JSON.parse(file(`../../public/art/portraits/${key}.json`).toString());
-    assert.equal(Object.keys(data.frames).length, 10);
+  // The sheets' frames and loops as the manifest publishes them; no runtime reads their sprite data.
+  const { assets } = JSON.parse(file("../../public/art/manifest.json").toString());
+  for (const id of ["gadget-portrait", "gadget-portrait-compact"]) {
+    const entry = assets.find((asset: { id: string }) => asset.id === id);
+    assert.equal(Object.keys(entry.frames).length, 10);
+    assert.equal(entry.frames["unknown-idle"], 0);
+    assert.equal(entry.frames["named-idle"], 5);
     assert.deepEqual(
-      data.meta.frameTags.map(({ name, from, to }: { name: string; from: number; to: number }) => [
-        name,
-        from,
-        to,
-      ]),
-      [
-        ["unknown-idle", 0, 0],
-        ["unknown-speaking", 1, 4],
-        ["named-idle", 5, 5],
-        ["named-speaking", 6, 9],
-      ],
+      Object.fromEntries(
+        Object.entries(entry.loops as Record<string, { frame: number }[]>).map(([name, loop]) => [
+          name,
+          loop.map(({ frame }) => frame),
+        ]),
+      ),
+      { "unknown-speaking": [1, 2, 3, 4], "named-speaking": [6, 7, 8, 9] },
     );
   }
 });

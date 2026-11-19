@@ -428,7 +428,9 @@ test("the active player package publishes one complete 64-heading contract witho
       Array.from({ length: SHIP_HEADINGS }, (_, index) => index),
     );
   }
-  const archive = JSON.parse(readFileSync(new URL("ship-retro-jets-yellow.json", assets), "utf8"));
+  const archive = JSON.parse(
+    readFileSync(new URL("../sources/ship-retro-jets-yellow.json", import.meta.url), "utf8"),
+  );
   assert.equal(archive.version, 1);
   assert.equal(archive.headings.length, 32);
 });

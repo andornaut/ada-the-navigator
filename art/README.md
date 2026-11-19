@@ -159,7 +159,6 @@ names each exception:
 | Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
 | Outposts                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
 | Upgrade pickup chevron                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
-| App icon                                                     |        2 | 99th percentile 3 levels at display size                             |
 | Job landmarks                                                |        3 | The beacon arcs, authored to 3 decimals, shift along their length    |
 | Start screen nav glyphs (`achievements`, `exit`, `settings`) |        3 | The trophy handles, authored to 3 decimals, shift along their length |
 
@@ -214,8 +213,8 @@ collision parts, for [the ship](ship.md#collision), the
 the pickups ([Stardust](stardust.md#pickup), the
 [discovery cache](outposts.md#discovery-cache),
 [ore nugget](cartwheel-props.md#ore-nugget), [the upgrade pickup](weapons.md#pickups))
-and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
-and their sprite metadata changes only the local image filename.
+and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports.
+Portrait and holodisk sheets ship as PNG only: the manifest gives their frames and loops.
 `art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, `needle-portraits.ts`
 Needle's Avi portraits, `phantom-portraits.ts` Phantom's Blurb portraits, and
 `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and

@@ -11,21 +11,18 @@ background; the maskable export draws the same artwork scaled to its safe zone.
 Paths are relative to `public/art/app-icon/`; browser URLs start at
 `/art/app-icon/`.
 
-| File                    | Actual dimensions | Purpose                         |
-| ----------------------- | ----------------- | ------------------------------- |
-| `icon.svg`              | 512 × 512         | Vector master and scalable icon |
-| `icon-192.png`          | 192 × 192         | Manifest icon, `any`            |
-| `icon-512.png`          | 512 × 512         | Manifest icon, `any`            |
-| `icon-maskable-512.png` | 512 × 512         | Manifest icon, `maskable`       |
-| `apple-touch-icon.png`  | 180 × 180         | Apple touch icon                |
-| `favicon-16.png`        | 16 × 16           | Small browser favicon           |
-| `favicon-32.png`        | 32 × 32           | Browser favicon                 |
-| `favicon.ico`           | 16 × 16, 32 × 32  | Multi-size browser favicon      |
-| `contact-sheet.png`     | 576 × 192         | Review only                     |
+| File                    | Actual dimensions | Purpose                    |
+| ----------------------- | ----------------- | -------------------------- |
+| `icon-192.png`          | 192 × 192         | Manifest icon, `any`       |
+| `icon-512.png`          | 512 × 512         | Manifest icon, `any`       |
+| `icon-maskable-512.png` | 512 × 512         | Manifest icon, `maskable`  |
+| `apple-touch-icon.png`  | 180 × 180         | Apple touch icon           |
+| `favicon-16.png`        | 16 × 16           | Small browser favicon      |
+| `favicon-32.png`        | 32 × 32           | Browser favicon            |
+| `favicon.ico`           | 16 × 16, 32 × 32  | Multi-size browser favicon |
 
-`icon.svg` carries two-decimal coordinates ([SVG output](README.md#svg-output)).
-
-Contact sheet, left to right: 192 px icon, 16 px favicon enlarged with nearest
+The review contact sheet, `art/review/app-icon-contact-sheet.png` (576 × 192),
+is not shipped. Left to right: 192 px icon, 16 px favicon enlarged with nearest
 neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 
 ## Palette and maskable safe zone
@@ -46,14 +43,14 @@ rounding.
 
 ## Export and integration
 
-Rebuild the vector master with `node art/tools/app-icon.ts`. It draws the
-nose-up pose (heading 20) from the shared [ship model](ship.md), the polygons
-of `ship.svg` in order, inside one group with
-`translate(-22.4 -3.2) scale(5.8)`, which centres the frame's bounding box on
-the canvas and fits it inside radius 185 px. Adjacent equal fills share compound vector paths, with no added stroke or
-keyline growth. Reruns are byte-identical while the model is unchanged.
+Rebuild with `node art/tools/app-icon.ts`. It draws the nose-up pose
+(heading 20) from the shared [ship model](ship.md), the polygons of `ship.svg`
+in order, scaled by 5.8 and offset by (-22.4, -3.2), which centres the frame's
+bounding box on the canvas and fits it inside radius 185 px, with no added
+stroke or keyline growth. Reruns are byte-identical while the model is
+unchanged.
 
-The same command writes every PNG, the two-size ICO and the contact sheet. The
+The command writes every PNG, the two-size ICO and the contact sheet. The
 maskable PNG is rendered from its own scaled master.
 Raster exports sample the shared projected geometry at 4x the 512px master
 before reduction. The ICO embeds the exact 16px and 32px PNG payloads. No

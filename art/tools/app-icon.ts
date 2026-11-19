@@ -1,35 +1,19 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { filled, over, resize, rgba, writePng } from "./paint.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { SPACE_BG } from "./palette.ts";
 import { classic, drawn, FRAME, UP } from "./ship-model.ts";
 import { paintShip } from "./ship-raster.ts";
-import { svgPaths } from "./ship-paths.ts";
 
 const output = fileURLToPath(new URL("../../public/art/app-icon/", import.meta.url));
+// Review imagery stays out of the shipped art.
+const review = fileURLToPath(new URL("../review/", import.meta.url));
 const SIZE = 512;
 const SCALE = 5.8;
 const OFFSET = [-22.4, -3.2] as const;
 const polygons = drawn(FRAME / 2, classic.paint, { yaw: UP });
 const background = rgba(`#${SPACE_BG}`);
-
-writeFileSync(
-  `${output}icon.svg`,
-  svgText(
-    [
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">`,
-      `  <path fill="#${SPACE_BG}" d="M0 0H${SIZE}V${SIZE}H0Z"/>`,
-      `  <g transform="translate(${OFFSET.join(" ")}) scale(${SCALE})">`,
-      ...svgPaths(polygons).map(({ color, path }) => `    <path fill="${color}" d="${path}"/>`),
-      "  </g>",
-      "</svg>",
-      "",
-    ].join("\n"),
-    SVG_DECIMALS.appIcon,
-  ),
-);
 
 // Raster exports sample the same projected geometry without an external SVG delegate. `fit`
 // scales the composition about the canvas centre.
@@ -102,4 +86,5 @@ for (const [column, size] of [
       contact.data.set(source.data.subarray(i, i + 4), (y * 576 + column * 192 + x) * 4);
     }
 }
-writePng(`${output}contact-sheet.png`, contact, true);
+mkdirSync(review, { recursive: true });
+writePng(`${review}app-icon-contact-sheet.png`, contact, true);
