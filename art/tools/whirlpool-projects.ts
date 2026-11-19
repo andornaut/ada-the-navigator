@@ -5,6 +5,7 @@
 import { writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
+import { svgText } from "./svg-text.ts";
 import { depth, facesViewer, type Point } from "./projection.ts";
 
 // World light from above and screen-left of the viewer, stepped into five tones as the whales.
@@ -414,7 +415,10 @@ export function exportProject(
   const [width, height] = spec.frame;
   return (["a", "b"] as const).map((frame) => {
     const file = `${spec.id}-${frame}.svg`;
-    writeFileSync(`${dir}${file}`, svg(spec, frame, polygons(spec.model(frame), spec.scale)));
+    writeFileSync(
+      `${dir}${file}`,
+      svgText(svg(spec, frame, polygons(spec.model(frame), spec.scale))),
+    );
     return {
       id: `${spec.id}-${frame}`,
       path: `${publicDir}${file}`,

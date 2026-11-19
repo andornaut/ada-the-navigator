@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 
 // Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear frame: 16 by 16
 // for Settings rows, 24 by 24 for the top-right HUD settings button. The 20 by 20 nav glyphs
@@ -212,7 +213,7 @@ for (const [name, shapes] of Object.entries(NAV_GLYPHS)) {
     "</svg>",
     "",
   ];
-  writeFileSync(`${ui}icons/${name}.svg`, svg.join("\n"));
+  writeFileSync(`${ui}icons/${name}.svg`, svgText(svg.join("\n"), SVG_DECIMALS.navGlyphs));
 }
 
 // The UI manifest's entries for these sheets, in the existing sprite schema, sorted by key.

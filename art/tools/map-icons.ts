@@ -2,6 +2,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { CLOSE_GLYPH } from "./close-glyph.ts";
+import { svgText } from "./svg-text.ts";
 import { JOB_GLYPHS } from "./job-glyphs.ts";
 
 // Map glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per map symbol
@@ -353,10 +354,10 @@ for (const [id, rows] of Object.entries({ ...SYMBOLS, ...JOB_SYMBOLS })) {
   if (reach(rows) > FACE_RADIUS) {
     throw new Error(`${id}: a pixel reaches ${reach(rows).toFixed(2)} past the chip face`);
   }
-  writeFileSync(`${icons}map-${id}.svg`, svg(rows, INK));
+  writeFileSync(`${icons}map-${id}.svg`, svgText(svg(rows, INK)));
 }
 
 for (const [id, rows] of Object.entries(TOOLS)) {
   check(id, rows);
-  writeFileSync(`${icons}map-${id}.svg`, svg(rows, CREAM));
+  writeFileSync(`${icons}map-${id}.svg`, svgText(svg(rows, CREAM)));
 }

@@ -6,6 +6,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { editManifest, replaceEntries } from "./manifest.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { hex, rgb } from "./oklab.ts";
 import { json } from "./projection.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
@@ -353,12 +354,12 @@ function beacon(frame: keyof typeof ARCS): string {
   ].join("\n");
 }
 
-writeFileSync(`${dir}nebula-outer.svg`, mass(OUTER, 10));
-writeFileSync(`${dir}nebula-core.svg`, mass(CORE, 7));
-writeFileSync(`${dir}nebula-stars.svg`, stars());
-writeFileSync(`${dir}wreck.svg`, wreck());
-writeFileSync(`${dir}beacon-a.svg`, beacon("a"));
-writeFileSync(`${dir}beacon-b.svg`, beacon("b"));
+writeFileSync(`${dir}nebula-outer.svg`, svgText(mass(OUTER, 10), SVG_DECIMALS.landmarks));
+writeFileSync(`${dir}nebula-core.svg`, svgText(mass(CORE, 7), SVG_DECIMALS.landmarks));
+writeFileSync(`${dir}nebula-stars.svg`, svgText(stars(), SVG_DECIMALS.landmarks));
+writeFileSync(`${dir}wreck.svg`, svgText(wreck(), SVG_DECIMALS.landmarks));
+writeFileSync(`${dir}beacon-a.svg`, svgText(beacon("a"), SVG_DECIMALS.landmarks));
+writeFileSync(`${dir}beacon-b.svg`, svgText(beacon("b"), SVG_DECIMALS.landmarks));
 
 // The lost item's glint: a 15 x 15 sparkle, lavender rays and shade around a white core, on
 // Stardust's loop. "W" white, "L" lavender, "D" shade, "." clear.

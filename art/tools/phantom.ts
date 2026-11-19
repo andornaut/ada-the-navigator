@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import * as m from "./phantom-models.ts";
+import { svgText } from "./svg-text.ts";
 import { replaceEntries } from "./manifest.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import {
@@ -102,7 +103,7 @@ const entries = settlements.flatMap(({ build, title, variant }) => {
   const frame = layout(items.flatMap(({ faces }) => faces));
   const dock = dockAt(frame, m.SETTLEMENT_DOCK.face, m.SETTLEMENT_DOCK.mouth);
   return items.map((item) => {
-    writeFileSync(`${output}${item.file}.svg`, svgFile(item.title, frame, item.faces));
+    writeFileSync(`${output}${item.file}.svg`, svgText(svgFile(item.title, frame, item.faces)));
     return {
       id: item.id,
       path: `${PATH}${item.file}.svg`,

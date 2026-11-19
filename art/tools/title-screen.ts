@@ -8,6 +8,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { filled, rgba, type RgbaImage, writePng } from "./paint.ts";
+import { svgText } from "./svg-text.ts";
 import { INK, IN_BETWEEN, SPACE_BG } from "./palette.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import { json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
@@ -248,7 +249,7 @@ function field(): RgbaImage {
 }
 
 const mark = wordmark();
-writeFileSync(`${art}ui/title-wordmark.svg`, mark.svg);
+writeFileSync(`${art}ui/title-wordmark.svg`, svgText(mark.svg));
 writePng(`${art}title-field.png`, field(), true);
 writeFileSync(
   `${art}title-screen.json`,

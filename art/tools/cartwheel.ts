@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
+import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
 import { cube, hcyl, part, scaleGroups } from "./hull-shapes.ts";
 import { mergeSidecars, replaceEntries, sidecarsIn, writeOnce } from "./manifest.ts";
@@ -467,13 +468,15 @@ function writeFixed(dir: string, frame: Layout, item: Fixed) {
   for (const letter of ["a", "b"] as const) {
     writeFileSync(
       `${dir}${item.path}-${letter}.svg`,
-      svgFile(
-        `${item.title} ${letter.toUpperCase()}`,
-        frame.width,
-        frame.height,
-        item.frames[letter],
-        (point) => frameXY(frame, point),
-        item.scale,
+      svgText(
+        svgFile(
+          `${item.title} ${letter.toUpperCase()}`,
+          frame.width,
+          frame.height,
+          item.frames[letter],
+          (point) => frameXY(frame, point),
+          item.scale,
+        ),
       ),
     );
   }
@@ -857,8 +860,10 @@ function writeCraft(dir: string, craft: Craft) {
   for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
     writeFileSync(
       `${dir}${craft.name}-${yaw}.svg`,
-      svgFile(`${craft.title} ${yaw}`, frame, frame, headingFaces(craft, yaw), (point) =>
-        projectAt(centre, centre, point),
+      svgText(
+        svgFile(`${craft.title} ${yaw}`, frame, frame, headingFaces(craft, yaw), (point) =>
+          projectAt(centre, centre, point),
+        ),
       ),
     );
   }

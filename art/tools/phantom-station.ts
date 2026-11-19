@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { blurb } from "./phantom-models.ts";
+import { svgText } from "./svg-text.ts";
 import { unit } from "./debris.ts";
 import { replaceEntries } from "./manifest.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
@@ -245,13 +246,15 @@ const entries = frames.map((faces, k) => {
   });
   writeFileSync(
     `${output}station-${k}.svg`,
-    [
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * scale)}" height="${round(frame.height * scale)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
-      `  <title>Phantom station ${k}</title>`,
-      ...shapes,
-      "</svg>",
-      "",
-    ].join("\n"),
+    svgText(
+      [
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * scale)}" height="${round(frame.height * scale)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
+        `  <title>Phantom station ${k}</title>`,
+        ...shapes,
+        "</svg>",
+        "",
+      ].join("\n"),
+    ),
   );
   return {
     id: `phantom-station-${k}`,

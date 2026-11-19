@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import * as m from "./andromeda-models.ts";
+import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
 import { mergeSidecars, replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
@@ -105,7 +106,7 @@ type Fixed = { id: string; file: string; title: string; faces: readonly Face[] }
 function writeFixed(frame: Layout, item: Fixed) {
   writeFileSync(
     `${output}${item.file}.svg`,
-    svgFile(item.title, frame, item.faces, DESTINATION_SCALE),
+    svgText(svgFile(item.title, frame, item.faces, DESTINATION_SCALE)),
   );
 }
 
@@ -264,7 +265,7 @@ function writeCraft(craft: m.StoryCraft) {
   for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
     writeFileSync(
       `${output}${craft.name}-${yaw}.svg`,
-      svgFile(`${craft.title} ${yaw}`, square, headingFaces(craft, yaw)),
+      svgText(svgFile(`${craft.title} ${yaw}`, square, headingFaces(craft, yaw))),
     );
   }
   const half = craft.mouthWidth / 2;

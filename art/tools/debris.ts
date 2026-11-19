@@ -4,6 +4,7 @@
 import { writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
+import { svgText } from "./svg-text.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, type Point, projectAt } from "./projection.ts";
 import { TOLERANCES, traceFills, type V2 } from "./silhouette.ts";
@@ -263,14 +264,16 @@ export function exportDebris(
     // rasterizes at the size it is drawn.
     writeFileSync(
       `${dir}${file}.svg`,
-      [
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${w * DISPLAY_SCALE}" height="${h * DISPLAY_SCALE}" viewBox="0 0 ${w} ${h}">`,
-        `  <title>${title} ${k}</title>`,
-        ...under,
-        ...faceSvg,
-        "</svg>",
-        "",
-      ].join("\n"),
+      svgText(
+        [
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${w * DISPLAY_SCALE}" height="${h * DISPLAY_SCALE}" viewBox="0 0 ${w} ${h}">`,
+          `  <title>${title} ${k}</title>`,
+          ...under,
+          ...faceSvg,
+          "</svg>",
+          "",
+        ].join("\n"),
+      ),
     );
     // The contour is the outermost stroke: the drawing is the faces grown by its half-width.
     const traced = traceFills(

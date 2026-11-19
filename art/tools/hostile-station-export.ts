@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 import { recolour, recolourJets } from "./claim-jumpers.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { recolourGarnet, recolourGarnetJets } from "./garnet-drones.ts";
 import { build, place } from "./heavies.ts";
 import { hostileStation } from "./hostile-station.ts";
@@ -57,7 +58,7 @@ async function main() {
   const result = iconOnly ? undefined : build(craft, place({ version: 1, archetypes: {} }, craft));
   const iconDirectory = `${root}ui/icons/`;
   mkdirSync(iconDirectory, { recursive: true });
-  writeFileSync(`${iconDirectory}map-hostile-station.svg`, hostileStationIcon(craft));
+  writeFileSync(`${iconDirectory}map-hostile-station.svg`, svgText(hostileStationIcon(craft)));
   if (!result) return;
   for (const family of families) {
     const directory = `${root}${family.directory}/`;
@@ -74,7 +75,9 @@ async function main() {
         file,
         file.endsWith(".json")
           ? await format(text, { ...(await resolveConfig(path)), filepath: path })
-          : text,
+          : file.endsWith(".svg")
+            ? svgText(text, SVG_DECIMALS.enemies)
+            : text,
       );
     }
     // The layout carries no colour: the recoloured families use the coral family's copy,

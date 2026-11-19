@@ -406,23 +406,23 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 
 | SVG                    | Glyph                                                             | SHA-256                                                            |
 | ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `map-station.svg`      | Mast and dome over an elliptical ring                             | `c2a127db459dc3ee1d48a4b8a6560ac59b41c35921d4f345fca0cc1e941c6bb1` |
-| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals                         | `39afebe5011328317255fefb81f6a1f2ad869d4ef3514aeb034e78f208e9eb6a` |
-| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right                      | `8128bbfe49ad653c57a232531f9418068704f52920c8f4a37e5f8c245c7d152c` |
-| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips                    | `cb6121dfddb4782d78fd18f61cb550fb31243736fdc5f57717b988dd9af00ba8` |
-| `map-destination.svg`  | Swallowtail flag on a footed pole                                 | `9869982e9c42b3d88bc60e10c09fc75ef02b01253d6d5084b37b6474d2c4a922` |
-| `map-holodisk.svg`     | Disc band around a spindle hole                                   | `8d40d73ea39fb43e51db27fe34a7596714b12f2e331654067313906ed3e15fd6` |
-| `map-nebula.svg`       | Cloud with two stars                                              | `ea5ba9ecbcb0e0ba937cf9881b8658fb2c3d7505ca69b2708ad2951824b38594` |
-| `map-wreck.svg`        | Hull split in two with debris                                     | `ce77a498d883397da78ab728e2aa8b0745744857738b2d6131bff19e3624519c` |
-| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs                     | `3666df581a95d05be737af27b8b327fd9a8b386af3c1e0591bce9b21b4e04810` |
-| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout                     | `96af3a92c85b64992f8366d56ac8acd62c95aa6c99748b29111f67aa7f8518d8` |
-| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label                       | `87af099b17421f9bfc05899288bab445c7eae71f86add2a46e087254f070431e` |
-| `map-job-rescue.svg`   | Tow hook hanging from its eye                                     | `8d0f32e66855226136d6f518613755b480fb34b1d3706dd13e7755def0f09903` |
-| `map-job-hunt.svg`     | Magnifier with a glint in the lens                                | `87b6a33ba4f42714c233f7e7eeaf67ba924a7de70c44ce024a1b3fd8e83d22d0` |
-| `map-close.svg`        | X, 2 to 3 px strokes; the shared close grid, not drawn on the Map | `dfa06d6c874628b4d8234d834349f9d084329bf797483a8941cb8743a3858835` |
-| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                                            | `2941643dfb9821cddf4f9211799ce06a831d4f734dee00b761525faed2185d49` |
-| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                                           | `4f12cd67b7dec154e9b555609d22d9a5e92fe74b55f26b70ce64bf7c239fe2c7` |
-| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks                        | `e37051fd500afbb0613a0844f27e96f69011dfcb283e6554ea4fc23c21c723e4` |
+| `map-station.svg`      | Mast and dome over an elliptical ring                             | `c37da99f168077a262e22d3ba864339700e46d7f55bf205ae0afa843a6256c24` |
+| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals                         | `d45d65444064a7ef623af615da73a389305ed3c55ba4071ac0058da8c6d7db6e` |
+| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right                      | `44ebde453e4c2cc37b16cfb93fae76349f6ca5342e1e940293c87f22858a19a3` |
+| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips                    | `349287b87d73a3abc8850ac6f80472614631e30d0607679ca88f19e734d78a67` |
+| `map-destination.svg`  | Swallowtail flag on a footed pole                                 | `c08853609fb79bbd8b90a9412e68de255ea8950892b3b74eede63d1edec67a25` |
+| `map-holodisk.svg`     | Disc band around a spindle hole                                   | `a0af8690c6897e9fe24b0b647cc6fc9d270a74a7c664f2ff102a6374b0eac937` |
+| `map-nebula.svg`       | Cloud with two stars                                              | `17c2a676c16744df28415ebb8fce0efd91a79f3897fab95651bf3f7d963d943a` |
+| `map-wreck.svg`        | Hull split in two with debris                                     | `0fa939e4cfbb6ad474d28972101070547ed7e87bee94777f1f73cf41dbf5c8ec` |
+| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs                     | `7b1ca89be87881ef4d8688f85af658f55cd5e8739a8319aadf2f074a6484ec75` |
+| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout                     | `81ba78498f06a6383717a203580d3595ea6d4f0c27dcc826bce93378c7dc13a3` |
+| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label                       | `6f3d862fd0088bce3a1b2fbfb4f37386b6024a58bc0d27b2ba17643acc9a8bfa` |
+| `map-job-rescue.svg`   | Tow hook hanging from its eye                                     | `fb0eec4f96a028185496048e3af6e655b0b2c4037369bcdef07e70d64c7258ce` |
+| `map-job-hunt.svg`     | Magnifier with a glint in the lens                                | `9845ae0486b601b2c0394508a35cccf22d8127170137603306505ab339cb6470` |
+| `map-close.svg`        | X, 2 to 3 px strokes; the shared close grid, not drawn on the Map | `a4299a5cdebef05021315beac332491023d5497befd2dc62878b305bc1f05b59` |
+| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                                            | `21d936df7e0d21089102108780dbf64cf53009e5d507ca6d0beda4e1dd918600` |
+| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                                           | `e95563bb5c3a9bb3526205298f32c890881fa14fdf79f602dd68d800223f34ca` |
+| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks                        | `e50643fe1cd9b792a6f4ab3d56b288a29f356dc205a2ebe294332d6d2a6b2014` |
 
 ### Contrast per field
 

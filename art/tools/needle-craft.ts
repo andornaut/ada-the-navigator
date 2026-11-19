@@ -4,6 +4,7 @@
 import { writeFileSync } from "node:fs";
 
 import { jetsFile, type JetColors } from "./crafts.ts";
+import { svgText } from "./svg-text.ts";
 import { mergeSidecars, replaceEntries } from "./manifest.ts";
 import { OUT, placed, PUBLIC, squareFrame, svgFile } from "./needle-common.ts";
 import { noses } from "./nose.ts";
@@ -54,7 +55,7 @@ const display = round(frame * DISPLAY_SCALE);
 const entries = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
   writeFileSync(
     `${OUT}${NAME}-${yaw}.svg`,
-    svgFile(`${TITLE} ${yaw}`, frame, frame, placed(centre, centre, headingFaces(yaw))),
+    svgText(svgFile(`${TITLE} ${yaw}`, frame, frame, placed(centre, centre, headingFaces(yaw)))),
   );
   return {
     id: `craft-${NAME}-${yaw}`,

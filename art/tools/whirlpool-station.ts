@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { replaceEntries } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 import { layout, placed, svgFile } from "./needle-common.ts";
 import { round } from "./projection.ts";
 import {
@@ -171,12 +172,14 @@ mkdirSync(OUT, { recursive: true });
 const entries = frames.map((faces, k) => {
   writeFileSync(
     `${OUT}station-${k}.svg`,
-    svgFile(
-      `Whirlpool station ${k}`,
-      frame.width,
-      frame.height,
-      placed(frame.halfWidth, frame.above, faces),
-      DESTINATION_SCALE,
+    svgText(
+      svgFile(
+        `Whirlpool station ${k}`,
+        frame.width,
+        frame.height,
+        placed(frame.halfWidth, frame.above, faces),
+        DESTINATION_SCALE,
+      ),
     ),
   );
   return {

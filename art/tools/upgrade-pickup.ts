@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { replaceEntries } from "./manifest.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 
 const dir = fileURLToPath(new URL("../../public/art/pickups/", import.meta.url));
 const ID = "upgrade-chevron";
@@ -48,11 +49,14 @@ for (const [x = 0, y = 0] of points) {
   }
 }
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}" viewBox="0 0 ${FRAME_W} ${FRAME_H}">
+const svg = svgText(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}" viewBox="0 0 ${FRAME_W} ${FRAME_H}">
   <title>Upgrade pickup chevron</title>
   <polygon fill="#ffffff" points="${points.map((p) => p.join(",")).join(" ")}"/>
 </svg>
-`;
+`,
+  SVG_DECIMALS.upgradePickup,
+);
 
 mkdirSync(dir, { recursive: true });
 const path = `${dir}${FILE}`;

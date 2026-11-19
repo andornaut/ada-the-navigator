@@ -413,7 +413,8 @@ leave its amber signal unchanged.
   `pickupRadius` (10, so 20 px across).
 - Chevrons: two copies of the generic upgrade chevron, the core manifest mask
   `upgrade-chevron` (`public/art/pickups/upgrade-chevron.svg`, 12 by 8 px, pivot
-  at the centre, rebuilt by `node art/tools/upgrade-pickup.ts`), tinted amber
+  at the centre, rebuilt by `node art/tools/upgrade-pickup.ts`, with two-decimal
+  coordinates per [SVG output](README.md#svg-output)), tinted amber
   and centred at `(0, 2.4)` (lower) and `(0, -2.4)` (upper) from the pickup's
   point, 4.8 px apart. Each is a 2.2 px
   stroke with butt caps and a mitred apex along a centreline from

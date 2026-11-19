@@ -29,6 +29,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { jets, silhouettes, svg } from "./enemies.ts";
 import {
   ADA_WIDTH,
@@ -433,7 +434,9 @@ async function main() {
       file,
       file.endsWith(".json")
         ? await format(text, { ...(await resolveConfig(path)), filepath: path })
-        : text,
+        : file.endsWith(".svg")
+          ? svgText(text, SVG_DECIMALS.enemies)
+          : text,
     );
   }
   // The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like

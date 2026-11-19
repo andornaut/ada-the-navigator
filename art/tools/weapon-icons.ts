@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { json } from "./projection.ts";
+import { svgText } from "./svg-text.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Weapon and ammunition glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per
@@ -307,7 +308,7 @@ for (const [id, rows] of Object.entries(GLYPHS)) {
   check(id, rows);
   const file = `${ui}icons/weapon-${id}.svg`;
   if (!HAND_AUTHORED.has(id)) {
-    writeFileSync(file, svg(rows));
+    writeFileSync(file, svgText(svg(rows)));
   } else if (rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")) {
     throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
   }
@@ -316,7 +317,7 @@ for (const [id, rows] of Object.entries(GLYPHS)) {
 
 for (const [kind, rows] of Object.entries(AMMO)) {
   check(`ammo ${kind}`, rows);
-  writeFileSync(`${ui}icons/ammo-${kind}.svg`, svg(rows));
+  writeFileSync(`${ui}icons/ammo-${kind}.svg`, svgText(svg(rows)));
   await writeSheet(`icon-shop-ammo-${kind}`, rows);
 }
 

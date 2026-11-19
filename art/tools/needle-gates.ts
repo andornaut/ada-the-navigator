@@ -5,6 +5,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { unit } from "./debris.ts";
+import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import {
   edgeContrast,
@@ -206,7 +207,9 @@ for (const state of ["dark", "lit"] as const) {
       const name = `gate-${state}-${o}-${layer}`;
       writeFileSync(
         `${OUT}${name}.svg`,
-        svgFile(`Ring gate ${state} ${o} ${layer}`, frame, frame, draw(quads, centre, layer)),
+        svgText(
+          svgFile(`Ring gate ${state} ${o} ${layer}`, frame, frame, draw(quads, centre, layer)),
+        ),
       );
       entries.push({
         id: `needle-${name}`,

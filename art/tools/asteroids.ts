@@ -11,6 +11,7 @@ import { contrast } from "@andornaut/art-kit/build/colour";
 import { format, resolveConfig } from "prettier";
 
 import { linkData } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 import { ORE_RAMP } from "./ore.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, json, type Point, projectAt } from "./projection.ts";
@@ -545,7 +546,10 @@ function build(
       fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
       pts: pts.map(([x, y]) => [r2(x), r2(y)] as V2),
     }));
-    writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared, filled));
+    writeFileSync(
+      `${svgDir}${file}`,
+      svgText(svgFrame(`${id} ${k}`, w, h, fills, declared, filled)),
+    );
     check(`${id} ${k}`, collision, union(drawn, rasterize(tips, w, h)));
     return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!) };
   });

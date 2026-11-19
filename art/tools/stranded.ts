@@ -5,6 +5,7 @@
 import { writeFileSync } from "node:fs";
 
 import type { Facing, Part, Plan } from "./cartwheel-craft.ts";
+import { svgText } from "./svg-text.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
   depth,
@@ -161,7 +162,7 @@ export function exportStranded(spec: CraftSpec, dir: string, path: string) {
       );
       writeFileSync(
         `${dir}${file}.svg`,
-        svg(`${spec.title} ${yaw}${name ? ` ${name}` : ""}`, size, size, polygons),
+        svgText(svg(`${spec.title} ${yaw}${name ? ` ${name}` : ""}`, size, size, polygons)),
       );
       entries.push({
         id: `craft-${file}`,

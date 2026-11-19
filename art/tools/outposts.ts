@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { replaceEntries } from "./manifest.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { writeProjects } from "./projects.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 
@@ -801,13 +802,16 @@ function writeFrames(
     });
     writeFileSync(
       `${output}${name}-${frame}.svg`,
-      [
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-        `  <title>${title} ${frame.toUpperCase()}</title>`,
-        ...shapes,
-        "</svg>",
-        "",
-      ].join("\n"),
+      svgText(
+        [
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+          `  <title>${title} ${frame.toUpperCase()}</title>`,
+          ...shapes,
+          "</svg>",
+          "",
+        ].join("\n"),
+        SVG_DECIMALS.outposts,
+      ),
     );
   }
   return { above, halfWidth, height, local, width };

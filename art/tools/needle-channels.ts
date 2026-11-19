@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { bentPlate, brokenGirder, type Solid, unit } from "./debris.ts";
+import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import {
   edgeContrast,
@@ -144,7 +145,7 @@ const pieceData = frames.map(({ frame, piece, sets }) => {
       /<polygon fill="(#[0-9A-Fa-f]{6})"/g,
       `<polygon fill="$1" stroke="$1" stroke-width="${SEAM}" stroke-linejoin="round"`,
     );
-    writeFileSync(`${OUT}${file}.svg`, svg);
+    writeFileSync(`${OUT}${file}.svg`, svgText(svg));
     const pts = polygons.flatMap(({ points }) => points);
     const xs = pts.map(([x]) => x);
     const ys = pts.map(([, y]) => y);

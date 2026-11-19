@@ -31,14 +31,14 @@ Rebuild with `node art/tools/weapon-icons.ts`.
 
 | SVG                       | SHA-256                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
-| `ammo-energy.svg`         | `e6708a0245b46f5a0b30861f8e7563fcd7da2f24cdf60e0fd8a12bbe47740701` |
-| `ammo-missile.svg`        | `4b206ed8131c1699b460d8a6eae65f53f2a49a3490d03a4f00f489494928e836` |
-| `ammo-shell.svg`          | `14108bd554451ee974486a4a053a6e2525ac8afc8c3820ab520947c5e886f16c` |
-| `weapon-laser.svg`        | `94d4d1eae303b381f8d76baeba70e1cd0622a0d9c6fab3bb5998aacd60da6907` |
-| `weapon-heavyMissile.svg` | `2ad7a6243bba7c6adea5f73c012fd1def43f4b5560f5f7532a42f8685408c829` |
-| `weapon-multiLaser.svg`   | `1075f62fb2856d21b711c9d78f2c048b1c5a513302b6921e3cabe26dc198e247` |
-| `weapon-phaser.svg`       | `688ed92c17cc1a6414bb4ba515b52420c1d005f70e85bcc57edafee3388f9838` |
-| `weapon-rapidMissile.svg` | `9ec61fa0a35c711877e64fce082ed87f267bc2328e295c585d9d6122fd0dda24` |
+| `ammo-energy.svg`         | `6266a54397ac19f829fee0b1dbe57095815ce5400537d9f17dad5d0a3e143c33` |
+| `ammo-missile.svg`        | `3f0091ae0affb1bdf98023513f28e6910b696518a05243a21dc457530fcf3e22` |
+| `ammo-shell.svg`          | `5cfe832ed7a152f1ab5457625d78d0c168fe03f4893b4d8b37c4512a43f5acd1` |
+| `weapon-laser.svg`        | `fcc831f563cccad2bf12512f32ee757c58cad3cabd4c4b9e9a95cba6df754a34` |
+| `weapon-heavyMissile.svg` | `e43fe516d9e3f7503504f83502ed51564fbb17bfcd167e59d7b535e9c3ac6509` |
+| `weapon-multiLaser.svg`   | `154d7be25169bb8e3619dd7d331cfb3a3e6be93941a4f4695666b93b5cc42318` |
+| `weapon-phaser.svg`       | `fcf71d5cff54072faa7d5ed9d69d8c4470f6dc16c648a5ab71f025dd5841d5fe` |
+| `weapon-rapidMissile.svg` | `88121e0f40abae9d1048c6b32d306e5e01cc0788046a40ebc93753f62ca2cab2` |
 | `weapon-scattershot.svg`  | `e580a47402045f782c4d43b51060d8c096186455f45f5cd8312dea4d694920fd` |
 
 ## Ammunition icons

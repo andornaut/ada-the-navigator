@@ -5,6 +5,7 @@
 import { writeFileSync } from "node:fs";
 
 import { replaceEntries } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 import {
   lamp,
   layout,
@@ -72,7 +73,7 @@ const lamps = (["a", "b"] as const).map((letter) => {
   ];
   writeFileSync(
     `${OUT}lamp-${letter}.svg`,
-    svgFile(`Channel light ${letter.toUpperCase()}`, frame.width, frame.height, shapes),
+    svgText(svgFile(`Channel light ${letter.toUpperCase()}`, frame.width, frame.height, shapes)),
   );
   return {
     id: `needle-lamp-${letter}`,

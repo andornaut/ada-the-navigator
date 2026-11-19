@@ -11,6 +11,7 @@ import {
   jetsFile,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { mergeEntries, mergeSidecars, sidecarsIn, storedAt, writeOnce } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
 import { type Fill, type V2 } from "./silhouette.ts";
@@ -91,7 +92,10 @@ function main() {
       jets(craft, (yaw) => traced[yaw]!.collision),
     );
     for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-      files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
+      files.set(
+        `${craft.name}-${yaw}.svg`,
+        svgText(svg(craft, yaw, traced[yaw]!.tips), SVG_DECIMALS.enemies),
+      );
     }
   }
   // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.

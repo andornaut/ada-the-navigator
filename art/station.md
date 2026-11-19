@@ -2,7 +2,8 @@
 
 - Rebuild with `node art/tools/station.ts`. It writes `public/art/station-a.svg`
   and `public/art/station-b.svg` and replaces the `station-*` manifest entries,
-  which sit before the `enemy-*` entries.
+  which sit before the `enemy-*` entries. The frames carry two-decimal
+  coordinates ([SVG output](README.md#svg-output)).
 - Solid model in the [ship geometry](ship.md) projection and culling, with a
   fixed orientation: no headings and no screen rotation.
 - The shared station for every galaxy without its own station art. Cartwheel's

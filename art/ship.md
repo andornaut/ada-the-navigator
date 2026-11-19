@@ -154,7 +154,8 @@
   overlap for ordinary, rolled and stretched poses. Raster generators sample
   the same ordered fragments at pixel centres before supersampling reduction.
 - SVG exports contain vector paths, with no embedded raster image, filter or
-  screen rotation. The shared source also generates the aboard and icon PNGs.
+  screen rotation. The frames' coordinates carry two decimals
+  ([SVG output](README.md#svg-output)); the shared path table keeps four. The shared source also generates the aboard and icon PNGs.
 
 ## Paint schemes
 

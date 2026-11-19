@@ -23,6 +23,8 @@ Paths are relative to `public/art/app-icon/`; browser URLs start at
 | `favicon.ico`           | 16 × 16, 32 × 32  | Multi-size browser favicon      |
 | `contact-sheet.png`     | 576 × 192         | Review only                     |
 
+`icon.svg` carries two-decimal coordinates ([SVG output](README.md#svg-output)).
+
 Contact sheet, left to right: 192 px icon, 16 px favicon enlarged with nearest
 neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 

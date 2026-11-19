@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { type ManifestFile, replaceEntries } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 
 type GalaxyId = Exclude<ManifestFile, "core">;
 
@@ -70,7 +71,10 @@ export function writeDecorations(
   const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
   const entries = decorationRecipe(galaxy).sprites.map((sprite, variant) => {
     const path = `/art/${galaxy}/decoration-${variant + 1}.svg`;
-    writeFileSync(`${art}${path.slice("/art/".length)}`, decorationSvg(colours, galaxy, variant));
+    writeFileSync(
+      `${art}${path.slice("/art/".length)}`,
+      svgText(decorationSvg(colours, galaxy, variant)),
+    );
     return {
       id: sprite.asset,
       path,

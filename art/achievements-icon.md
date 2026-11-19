@@ -45,7 +45,8 @@ duration 100 ms, at `/art/ui/sprites/icon-achievements.png` and matching
 | PNG  | `05c1de65a6c98639e95ce7a83228197e2041dd47b5a6dc5978633782e8ac1711` |
 
 `art/tools/settings-icons.ts` writes the sheet, `achievements.svg` and
-`settings.svg`, and the sheet's UI manifest entry. Rebuild with
+`settings.svg` (three-decimal coordinates, the authored handle values, per
+[SVG output](README.md#svg-output)), and the sheet's UI manifest entry. Rebuild with
 `node art/tools/settings-icons.ts`, then run Prettier on the written JSON.
 
 ## States

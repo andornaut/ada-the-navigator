@@ -7,7 +7,8 @@ the row icons in [Shop icons](shop-icons.md#job-icons) and the Map marks in
 [Map](map.md#symbols).
 
 - Rebuild with `node art/tools/job-art.ts`. It writes
-  `public/art/landmarks/*.svg`, the glint sheet `public/art/hunt-glint.png` with
+  `public/art/landmarks/*.svg` (three-decimal coordinates for the authored
+  beacon arcs, per [SVG output](README.md#svg-output)), the glint sheet `public/art/hunt-glint.png` with
   its Aseprite data `hunt-glint.json`, and [jobs.json](../public/art/jobs.json),
   and replaces its `landmark-*` and `hunt-glint` entries in the core manifest,
   after the discovery cache and ore nugget and before the `enemy-*` entries,
@@ -135,10 +136,10 @@ Reduced motion draws no ping.
 
 | File                                    | SHA-256                                                            |
 | --------------------------------------- | ------------------------------------------------------------------ |
-| `public/art/landmarks/nebula-outer.svg` | `09e84f49d019d4928909eaada1399975907093c62ea36b8fb0bd1355bab75c8f` |
-| `public/art/landmarks/nebula-core.svg`  | `b9f4368ae954e4ffe3587f7f50b395c6971d61e2ced6bd5479ca639d07fc499e` |
-| `public/art/landmarks/nebula-stars.svg` | `196cbd59363b6b06f160d4bf819a8882c0d67b1aa984cf0de7dd82c114aba975` |
-| `public/art/landmarks/wreck.svg`        | `8d027a10449d22af4972cef7caf476c60b28d03ddc814c8043c460b92350655f` |
-| `public/art/landmarks/beacon-a.svg`     | `17bacf5f373f48fb6bc857d4badcf009178d09068437917e294a8a317d3fc9a5` |
-| `public/art/landmarks/beacon-b.svg`     | `47b79d57037fe4501a3eddf47987651a2b4c8b54280d1416ea994fd47a15978a` |
+| `public/art/landmarks/nebula-outer.svg` | `ff297647e639780e5ccd34bb68fc7d771973d672778c0e9def9778fe816ce31c` |
+| `public/art/landmarks/nebula-core.svg`  | `d63fed89f279d3e5a7f451c030ebdd305b75452f50ef9326b2b50a3c171aa2af` |
+| `public/art/landmarks/nebula-stars.svg` | `a1b9a52d9c6027867b72311ddd335cc2637e54ce757ead12fe7725f9dbaeb880` |
+| `public/art/landmarks/wreck.svg`        | `fe8a0761873babdaab096ca0291adbd32df448062168f87d4114c6e4b8dd5e74` |
+| `public/art/landmarks/beacon-a.svg`     | `16e01794fd22c36727a4c2ed4b1ee396c6c93e7591dd90c0e093cbcd55346f77` |
+| `public/art/landmarks/beacon-b.svg`     | `2133e34ab92986f3f5f7e3b03864856d62cfbacba6652ec23e08d42af5ef295b` |
 | `public/art/hunt-glint.png`             | `4d6e5783bb68d1f8e76cd68d8dfdf96a5dd8c33346e1162afaec0906617828cc` |

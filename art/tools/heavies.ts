@@ -46,6 +46,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
   mergeEntries,
@@ -1725,10 +1726,13 @@ async function main() {
   for (const result of results) {
     for (const [file, content] of result.files) {
       const path = `${dir}${file}`;
-      // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
+      // JSON goes through the project's Prettier settings so the files stay Prettier-clean, and SVG
+      // through svgText.
       const text = file.endsWith(".json")
         ? await format(content, { ...(await resolveConfig(path)), filepath: path })
-        : content;
+        : file.endsWith(".svg")
+          ? svgText(content, SVG_DECIMALS.enemies)
+          : content;
       files.set(file, text);
     }
     entries.push(...result.entries);

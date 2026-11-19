@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import {
   classic,
@@ -131,7 +132,7 @@ if (!jetsOnly)
 
 if (jetsOnly) {
   for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    writeFileSync(`${output}ship-thrust-${yaw}.svg`, svg(yaw, true));
+    writeFileSync(`${output}ship-thrust-${yaw}.svg`, svgText(svg(yaw, true), SVG_DECIMALS.ship));
   }
 }
 
@@ -140,7 +141,10 @@ if (!jetsOnly && !process.argv.includes("--data-only")) {
     writeFileSync(`${output}ship-nose.json`, noses());
     for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
       for (const thrust of [false, true]) {
-        writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
+        writeFileSync(
+          `${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`,
+          svgText(svg(yaw, thrust), SVG_DECIMALS.ship),
+        );
       }
     }
   }

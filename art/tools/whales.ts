@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { linkData, placeEntries, replaceEntries } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -556,7 +557,7 @@ const kinds = KINDS.map(({ idleMs, kind, model, stationaryHeading, swimMs, title
         .replace("{frame}", `${f}`);
       writeFileSync(
         `${art}${path.slice(5)}`,
-        svgFrame(`${title} ${yaw} frame ${f}`, canvas, polys),
+        svgText(svgFrame(`${title} ${yaw} frame ${f}`, canvas, polys)),
       );
       return path;
     });

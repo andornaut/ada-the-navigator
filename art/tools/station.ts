@@ -2,6 +2,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { projectAt, round } from "./projection.ts";
 import {
   BLINK_MS,
@@ -182,7 +183,7 @@ const entries = (["a", "b"] as const).map((frame) => ({
 }));
 
 for (const frame of ["a", "b"] as const) {
-  writeFileSync(`${art}station-${frame}.svg`, svg(frame));
+  writeFileSync(`${art}station-${frame}.svg`, svgText(svg(frame), SVG_DECIMALS.station));
 }
 
 // Station entries sit before the discovery cache and the enemy entries.

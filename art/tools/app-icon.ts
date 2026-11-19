@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { filled, over, resize, rgba, writePng } from "./paint.ts";
+import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { SPACE_BG } from "./palette.ts";
 import { classic, drawn, FRAME, UP } from "./ship-model.ts";
 import { paintShip } from "./ship-raster.ts";
@@ -16,15 +17,18 @@ const background = rgba(`#${SPACE_BG}`);
 
 writeFileSync(
   `${output}icon.svg`,
-  [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">`,
-    `  <path fill="#${SPACE_BG}" d="M0 0H${SIZE}V${SIZE}H0Z"/>`,
-    `  <g transform="translate(${OFFSET.join(" ")}) scale(${SCALE})">`,
-    ...svgPaths(polygons).map(({ color, path }) => `    <path fill="${color}" d="${path}"/>`),
-    "  </g>",
-    "</svg>",
-    "",
-  ].join("\n"),
+  svgText(
+    [
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">`,
+      `  <path fill="#${SPACE_BG}" d="M0 0H${SIZE}V${SIZE}H0Z"/>`,
+      `  <g transform="translate(${OFFSET.join(" ")}) scale(${SCALE})">`,
+      ...svgPaths(polygons).map(({ color, path }) => `    <path fill="${color}" d="${path}"/>`),
+      "  </g>",
+      "</svg>",
+      "",
+    ].join("\n"),
+    SVG_DECIMALS.appIcon,
+  ),
 );
 
 // Raster exports sample the same projected geometry without an external SVG delegate. `fit`

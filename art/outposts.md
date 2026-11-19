@@ -4,7 +4,8 @@
   `public/art/outposts/<outpost>-a.svg` and `<outpost>-b.svg`, the
   [community project](projects.md) frames and overlays beside them and
   `public/art/projects.json`, and replaces its own outpost and project entries
-  in [Sunflower's manifest](../public/art/sunflower/manifest.json).
+  in [Sunflower's manifest](../public/art/sunflower/manifest.json). The outpost
+  frames carry two-decimal coordinates ([SVG output](README.md#svg-output)).
 - Rebuild the cache with `node art/tools/discovery-cache.ts`. It writes
   `public/art/discovery-cache.png` with its Aseprite data
   `discovery-cache.json` and replaces the `discovery-cache` core manifest

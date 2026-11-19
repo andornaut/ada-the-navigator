@@ -5,6 +5,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { replaceEntries } from "./manifest.ts";
+import { svgText } from "./svg-text.ts";
 import {
   blueDimSide,
   blueSide,
@@ -266,12 +267,14 @@ const entries = Object.entries(variants).flatMap(([variant, hall]) => {
     const title = `Weavers' station${hall ? ", Loom hall" : ""} ${letter.toUpperCase()}`;
     writeFileSync(
       `${OUT}${name}-${letter}.svg`,
-      svgFile(
-        title,
-        frame.width,
-        frame.height,
-        placed(frame.halfWidth, frame.above, faces),
-        DESTINATION_SCALE,
+      svgText(
+        svgFile(
+          title,
+          frame.width,
+          frame.height,
+          placed(frame.halfWidth, frame.above, faces),
+          DESTINATION_SCALE,
+        ),
       ),
     );
     return {

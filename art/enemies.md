@@ -13,7 +13,8 @@
 - The frigate and the capital follow the [heavies](heavies.md)
   contract.
 - Exports per archetype: `{archetype}-{0..15}.svg` idle frames and
-  `{archetype}-jets.json`. Manifest ids are `enemy-{archetype}-{index}` with
+  `{archetype}-jets.json`. Every family's frames carry two-decimal coordinates
+  ([SVG output](README.md#svg-output)). Manifest ids are `enemy-{archetype}-{index}` with
   `archetype`, `directionIndex` and `facing` `world-{index}`.
 
 ## Family style
