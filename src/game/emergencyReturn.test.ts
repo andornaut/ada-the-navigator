@@ -15,6 +15,7 @@ import { relaunch } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import { sceneFit, viewShift } from "./playCamera.ts";
+import { storyCoversScene } from "./storyPresentation.ts";
 // Execute the actual scene frame loop against the real model without booting Phaser's renderer.
 const source = ts.createSourceFile(
   "scene.ts",
@@ -91,6 +92,9 @@ function setup(quantum = true) {
   const flushScene = vi.fn();
   const snapshotSource = vi.fn(() => ({ ...jumpSource, heading: null }));
   const compromisedShield = vi.fn();
+  const refreshScene = vi.fn();
+  const renderConversation = vi.fn();
+  const setRendering = vi.fn();
   const context = createContext({
     OVERNIGHT_SLEEP: { seconds: 1 },
     SCREEN,
@@ -104,16 +108,18 @@ function setup(quantum = true) {
     flushScene,
     jumpScene: () => ({ ...jumpSource, heading: null }),
     observeFeedback: vi.fn(),
-    refreshScene: vi.fn(),
-    renderConversation: vi.fn(),
+    refreshScene,
+    renderConversation,
     requiredReady,
     returnedOnDepletion,
     sceneFit,
     screenToWorld: (v: unknown) => v,
+    setRendering,
     shipHeading,
     spaceJumpScene: snapshotSource,
     startRockBreaks: vi.fn(),
     startZips: vi.fn(),
+    storyCoversScene,
     viewShift,
   });
   Object.assign(scene, {
@@ -132,7 +138,10 @@ function setup(quantum = true) {
       frame.call(scene, time, ms);
     },
     model,
+    refreshScene,
+    renderConversation,
     scene,
+    setRendering,
     snapshotSource,
   };
 }
@@ -365,4 +374,54 @@ describe("failure visual rendering clock", () => {
       });
     },
   );
+});
+
+describe("storybook pages over the flight", () => {
+  type Page = { readonly background: string; readonly holodisk?: boolean };
+  // Shows a page over the paused flight, as the holodisk moment does, or none.
+  const show = (model: GameModel, page: Page | null) =>
+    Object.defineProperty(model, "storyView", {
+      configurable: true,
+      get: () => (page ? { page } : null),
+    });
+  // The flight without the fixture's depleting shot, so no emergency return starts.
+  const calm = () => {
+    const fixture = setup();
+    fixture.flight.shots = [];
+    fixture.flight.shield = fixture.model.shieldMax;
+    return fixture;
+  };
+
+  it("neither draws nor renders the scene under a covering page and resumes once it closes", () => {
+    const { flushScene, frame, model, refreshScene, renderConversation, scene, setRendering } =
+      calm();
+    const storyTick = vi.spyOn(model, "storyTick");
+    show(model, { background: "aboard", holodisk: true });
+    frame();
+    frame();
+    expect(scene.draw).not.toHaveBeenCalled();
+    // The box settles once as the page covers it, then is left under the page.
+    expect(renderConversation).toHaveBeenCalledOnce();
+    expect(setRendering).toHaveBeenLastCalledWith(undefined, false);
+    // The page itself, its story clock and the save keep running; the hidden HUD does not.
+    expect(refreshScene).toHaveBeenCalledTimes(2);
+    expect(refreshScene).toHaveBeenLastCalledWith(scene, true);
+    expect(storyTick).toHaveBeenCalledTimes(2);
+    expect(flushScene).toHaveBeenCalled();
+    show(model, null);
+    frame();
+    expect(scene.draw).toHaveBeenCalledOnce();
+    expect(renderConversation).toHaveBeenCalledTimes(2);
+    expect(setRendering).toHaveBeenLastCalledWith(undefined, true);
+    expect(refreshScene).toHaveBeenLastCalledWith(scene, false);
+  });
+
+  it("keeps drawing and rendering under an ordinary ABOARD page, which shows the backdrop", () => {
+    const { frame, model, renderConversation, scene, setRendering } = calm();
+    show(model, { background: "aboard" });
+    frame();
+    expect(scene.draw).toHaveBeenCalledOnce();
+    expect(renderConversation).toHaveBeenCalledOnce();
+    expect(setRendering).toHaveBeenLastCalledWith(undefined, true);
+  });
 });

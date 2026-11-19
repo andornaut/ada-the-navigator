@@ -18,3 +18,14 @@ export function aboardGalaxy(
 ): GalaxyNumber | null {
   return page?.background === "aboard" && !page.holodisk ? lastPlayedGalaxy(state) : null;
 }
+
+/**
+ * A storybook page covers the game area: every page does except an ordinary ABOARD page, which
+ * shows the galaxy backdrop through its art. The scene neither draws nor renders under a cover.
+ */
+export function storyCoversScene(
+  state: LaunchHistory,
+  page: { readonly background: string; readonly holodisk?: boolean } | null | undefined,
+): boolean {
+  return page !== null && page !== undefined && aboardGalaxy(state, page) === null;
+}

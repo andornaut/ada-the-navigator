@@ -93,6 +93,7 @@ import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightFie
 import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
+import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
   filterTexture,
@@ -148,7 +149,7 @@ import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
 import { type StardustArt } from "./stardustArt.ts";
 import { type GalaxyStationArt, type StationArt } from "./stationArt.ts";
-import { aboardGalaxy } from "./storyPresentation.ts";
+import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
 import { fileFilter } from "./textures.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
@@ -247,6 +248,8 @@ export class GameScene extends Scene {
   // station card or a dialogue neither starts a reveal under it nor plays one out.
   projectArt: ProjectArtSet<Asset> | undefined;
   flightLive = false;
+  /** Last frame's storybook cover, so the conversation box settles once as a page covers it. */
+  storyCovered = false;
   flightClock = 0;
   reveals = new Map<string, number>();
   revealGroups = new Map<string, GameObjects.RenderTexture>();
@@ -803,12 +806,23 @@ export class GameScene extends Scene {
         }
       }
     }
+    // A storybook page that covers the game area hides the flight scene: it is neither drawn nor
+    // rendered, so the canvas is not presented again until the page closes. The story clock above
+    // and the save below keep running, and refreshScene keeps showing the page and navigation.
+    const covered = !this.jumping && storyCoversScene(this.model.state, this.model.storyView?.page);
+    setRendering(this.game, !covered);
     if (!this.holdSource) {
-      refreshScene(this);
-      this.draw();
+      refreshScene(this, covered);
+      if (!covered) {
+        this.draw();
+      }
     }
-    // The box follows the model even while a jump holds its source frame.
-    renderConversation(this);
+    // The box follows the model even while a jump holds its source frame. As a page covers it, it
+    // settles once (a finished return's line clears) and is not laid out again under the page.
+    if (!covered || !this.storyCovered) {
+      renderConversation(this);
+    }
+    this.storyCovered = covered;
     const durable = JSON.stringify([
       state.mode,
       state.selectedGalaxy,
@@ -859,7 +873,8 @@ export class GameScene extends Scene {
   }
 
   private draw(): void {
-    const flight = this.model.state.flight;
+    // A storybook page over the flight, such as an ordinary ABOARD page, shows only the backdrop.
+    const flight = this.model.storyView ? null : this.model.state.flight;
     const galaxy = this.model.state.mode === "space" ? flight?.galaxy : undefined;
     this.fieldLight = lightGalaxy(this.lightGalaxies, galaxy);
     const edge = foregroundEdge(this.lightGalaxies, this.foregroundEdges, galaxy);

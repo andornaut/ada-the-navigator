@@ -82,8 +82,9 @@ function controlArgument(name: string): string {
     compilerOptions: { target: ts.ScriptTarget.ES2023 },
   }).outputText;
 }
-function pauseView(model: GameModel, screen: string = model.screen): PauseState {
+function pauseView(model: GameModel, screen: string = model.screen, covered = false): PauseState {
   const context = createContext({
+    covered,
     document: { hidden: false },
     mapField: () => null,
     navigationEntry,
@@ -332,6 +333,12 @@ describe("universal pause caller", () => {
     expect(pauseView(model).canMap).toBe(true);
     Object.defineProperty(model, "pauseMapAvailable", { configurable: true, value: false });
     expect(pauseView(model).canMap).toBe(false);
+  });
+
+  it("leaves the local map unbuilt under a covering story page and builds it in flight", () => {
+    const model = flight();
+    expect(pauseView(model).map).not.toBeNull();
+    expect(pauseView(model, model.screen, true).map).toBeNull();
   });
 
   it("offers Menu on each Earth story page without advancing or answering its choice", () => {

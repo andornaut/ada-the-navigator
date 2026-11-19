@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { aboardGalaxy, lastPlayedGalaxy } from "./storyPresentation.ts";
+import { aboardGalaxy, lastPlayedGalaxy, storyCoversScene } from "./storyPresentation.ts";
 
 describe("ABOARD galaxy presentation", () => {
   it("uses Sunflower before launch, durable last launch after return, and an active flight first", () => {
@@ -18,5 +18,15 @@ describe("ABOARD galaxy presentation", () => {
     expect(aboardGalaxy(state, { background: "room" })).toBeNull();
     expect(aboardGalaxy(state, null)).toBeNull();
     expect(JSON.stringify(state)).toBe(before);
+  });
+
+  it("covers the scene with every story page but an ordinary ABOARD page", () => {
+    const state = { flight: { galaxy: 2 }, selectedGalaxy: 2, started: true } as const;
+    expect(storyCoversScene(state, { background: "aboard", holodisk: true })).toBe(true);
+    expect(storyCoversScene(state, { background: "room" })).toBe(true);
+    expect(storyCoversScene(state, { background: "aboardEmergency" })).toBe(true);
+    expect(storyCoversScene(state, { background: "aboard" })).toBe(false);
+    expect(storyCoversScene(state, null)).toBe(false);
+    expect(storyCoversScene(state, undefined)).toBe(false);
   });
 });

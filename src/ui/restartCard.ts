@@ -43,7 +43,9 @@ export function createRestartCard(
   let disposed = false;
   let leaveView: (() => void) | undefined;
   const setOpen = (open: boolean) => {
-    if (disposed) {
+    // Closing a closed card changes nothing, so it is not laid out again: the scene closes it
+    // every frame off the start screen.
+    if (disposed || (!open && modal.hidden)) {
       return;
     }
     modal.hidden = !open;

@@ -144,7 +144,12 @@ class Element extends EventTarget {
   }
 }
 
-const native = vi.hoisted(() => ({ dispose: vi.fn(), fit: vi.fn(), tap: vi.fn() }));
+const native = vi.hoisted(() => ({
+  dispose: vi.fn(),
+  fit: vi.fn(),
+  present: vi.fn(),
+  tap: vi.fn(),
+}));
 vi.mock("./modal.ts", () => ({
   createActions: () => new Element(),
   createButton: (label: string) => {
@@ -185,7 +190,7 @@ vi.mock("./buttonPresentation.ts", () => ({
       },
       element: root,
       reason,
-      update() {},
+      update: native.present,
     };
   },
 }));
@@ -303,6 +308,24 @@ describe("Restart's configured production binding", () => {
     expect(f.action("restart-cancel")).toBe(cancel);
     expect(f.modal.querySelector('[role="dialog"]')).toBe(frame);
     expect(doc.activeElement).toBe(cancel);
+    f.card.dispose();
+  });
+
+  it("lays out a closed card again only when it opens, not on each close", () => {
+    const f = fixture();
+    f.card.open();
+    f.card.close();
+    native.present.mockClear();
+    for (let frame = 0; frame < 3; frame++) {
+      f.card.close();
+    }
+    expect(native.present).not.toHaveBeenCalled();
+    expect(f.card.isOpen()).toBe(false);
+    f.card.open();
+    expect(native.present).toHaveBeenCalled();
+    expect(f.card.isOpen()).toBe(true);
+    f.card.close();
+    expect(f.card.isOpen()).toBe(false);
     f.card.dispose();
   });
 

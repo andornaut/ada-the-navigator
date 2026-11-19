@@ -1351,7 +1351,12 @@ export function renderStatus(scene: UiContext): void {
   });
 }
 
-export function refreshScene(scene: UiContext): void {
+/**
+ * The interface for this frame. Under a storybook page that covers the game area (`covered`), the
+ * flight HUD and the Pause card's local map, which the page hides, are left as they are; the page
+ * itself, the shell and navigation still update.
+ */
+export function refreshScene(scene: UiContext, covered = false): void {
   const state = scene.model.state;
   // The warp ship loads the paint in use, again on a paint change.
   if (scene.quantum && scene.warpPaint && state.economy.paint !== scene.warpScheme) {
@@ -1364,18 +1369,20 @@ export function refreshScene(scene: UiContext): void {
     scene.controls.setEnabled(enabled);
     scene.controls.reset();
   }
-  const action = enabled ? scene.model.contextAction : undefined;
-  const questIcon = enabled && !action ? questContextIcon(scene.model.contextQuestDetails) : null;
-  scene.controls.setContext(
-    action
-      ? { action, label: scene.model.contextLabel ?? "" }
-      : questIcon
-        ? { action: "use", label: CONTENT.labels.quests ?? "", questIcon }
-        : undefined,
-  );
-  scene.controls.setWeapons(scene.model.weapons());
-  noticeGains(scene);
-  renderStatus(scene);
+  if (!covered) {
+    const action = enabled ? scene.model.contextAction : undefined;
+    const questIcon = enabled && !action ? questContextIcon(scene.model.contextQuestDetails) : null;
+    scene.controls.setContext(
+      action
+        ? { action, label: scene.model.contextLabel ?? "" }
+        : questIcon
+          ? { action: "use", label: CONTENT.labels.quests ?? "", questIcon }
+          : undefined,
+    );
+    scene.controls.setWeapons(scene.model.weapons());
+    noticeGains(scene);
+    renderStatus(scene);
+  }
   scene.station.setOpen(state.mode === "space" && Boolean(state.docked));
   // Each arrival at the start screen shows the offer there, which checks for a new version.
   const screen = scene.model.screen;
@@ -1412,7 +1419,7 @@ export function refreshScene(scene: UiContext): void {
     ...(state.mode === "space" && state.flight ? { galaxy: state.flight.galaxy } : {}),
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
-    map: scene.model.map,
+    map: covered ? null : scene.model.map,
     menuContext: start ? "start" : "nonplay",
     navigation: entry,
     place: entry === "pause" ? "flight" : null,
