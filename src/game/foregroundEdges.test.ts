@@ -75,10 +75,13 @@ describe("data-selected foreground boundaries", () => {
     expect([...pixels.get(dark)!].slice(0, 4)).toEqual([24, 20, 37, 255]);
     scene.edgeInk = 0xffffff;
     expect(draw(scene, sprite)).toBe(white);
-    scene.silhouettes.sweep(
-      (key) => key === white,
-      (key) => pixels.delete(key),
-    );
+    // A frame later, the silhouette nothing drew since goes; the one still drawn stays.
+    for (let frame = 0; frame < 2; frame++) {
+      scene.silhouettes.sweep(
+        (key) => key === white,
+        (key) => pixels.delete(key),
+      );
+    }
     expect([...pixels.keys()]).toEqual([white]);
   });
 

@@ -6356,6 +6356,92 @@ try {
       "the shield pill on its own line",
   );
   await phoneContext.close();
+  // Resizing in flight keeps GPU memory flat: ten resizes between 1280x720 and 720x360 in a fresh
+  // tab leave live WebGL textures, canvases made and this container's memory where they settled
+  // after the first, as a phone rotated again and again would.
+  {
+    const probe = await browser.newContext({
+      hasTouch: true,
+      viewport: { height: 720, width: 1280 },
+    });
+    await probe.route("**/*", previewOnly);
+    await probe.addInitScript(
+      ({ key, serialized }) => {
+        localStorage.setItem(key, serialized);
+        const counts = { canvases: 0, textures: 0 };
+        window.adaResizeProbe = counts;
+        for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+          const create = proto.createTexture;
+          const remove = proto.deleteTexture;
+          proto.createTexture = function (...args) {
+            counts.textures++;
+            return create.apply(this, args);
+          };
+          proto.deleteTexture = function (...args) {
+            counts.textures--;
+            return remove.apply(this, args);
+          };
+        }
+        const createElement = Document.prototype.createElement;
+        Document.prototype.createElement = function (tag, ...rest) {
+          if (String(tag).toLowerCase() === "canvas") {
+            counts.canvases++;
+          }
+          return createElement.call(this, tag, ...rest);
+        };
+      },
+      { key: storageKey, serialized: safeSerialized },
+    );
+    const tab = await probe.newPage();
+    tab.setDefaultTimeout(15000);
+    await tab.goto("http://ada-preview:4173/play/");
+    await tab.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+    await tab.locator('.ada-start-actions > [data-action="continue"]').click();
+    await tab.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    await tab.waitForTimeout(2000);
+    // This container's memory, the browser's included (cgroup v2), or null where it does not read.
+    const containerMemory = () => {
+      try {
+        return Number(readFileSync("/sys/fs/cgroup/memory.current", "utf8"));
+      } catch {
+        return null;
+      }
+    };
+    // Each resize waits for the one before it.
+    const samples = await Array.from({ length: 10 }, (_, index) => index + 1).reduce(
+      async (earlier, step) => {
+        const taken = await earlier;
+        await tab.setViewportSize(
+          step % 2 ? { height: 360, width: 720 } : { height: 720, width: 1280 },
+        );
+        await tab.waitForTimeout(1500);
+        const counts = await tab.evaluate(() => ({ ...window.adaResizeProbe }));
+        return [...taken, { ...counts, memory: containerMemory(), step }];
+      },
+      Promise.resolve([]),
+    );
+    await probe.close();
+    save("resize-memory.json", samples);
+    const [settled] = samples.slice(1);
+    const last = samples.at(-1);
+    assert.ok(
+      last.textures - settled.textures <= 12,
+      `Live WebGL textures stay flat over ten resizes: ${JSON.stringify(samples)}`,
+    );
+    assert.ok(
+      last.canvases - settled.canvases <= 12,
+      `Canvases made stay flat over ten resizes: ${JSON.stringify(samples)}`,
+    );
+    if (settled.memory !== null && last.memory !== null) {
+      assert.ok(
+        last.memory - settled.memory <= 192 * 1024 * 1024,
+        `Container memory stays flat over ten resizes: ${JSON.stringify(samples)}`,
+      );
+    }
+    events.checks.push(
+      "Ten resizes in flight keep live WebGL textures, canvases and container memory flat",
+    );
+  }
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in
   // the dev details, and the last save kept through the page hiding. The thrown error is the point
   // here, so only this page's CSP violations count as errors.

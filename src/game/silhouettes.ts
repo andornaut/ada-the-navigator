@@ -1,27 +1,31 @@
-// Keyline silhouette textures by the frame they trace. A frame rasterised again gets a new
-// silhouette key (its raster size is part of it); the key it replaces is stale, and sweep removes
-// a stale texture once nothing draws it, so repeated re-rasters keep one silhouette per frame.
+// Keyline silhouette textures, freed by what is drawn. Every caller that draws a silhouette marks
+// it through use, whichever caller it is: keyline copies, groups stamped from it and any later
+// keyline. Each sweep removes every silhouette nothing marked since the sweep before and nothing
+// still draws, so a frame rasterised again, or one no longer on screen, leaves no texture behind.
 export class Silhouettes {
-  private readonly current = new Map<string, string>();
-  private readonly stale = new Set<string>();
+  private readonly held = new Set<string>();
+  private readonly marked = new Set<string>();
 
-  // Records key as frame's silhouette; the key it replaces becomes stale.
-  use(frame: string, key: string): void {
-    const previous = this.current.get(frame);
-    if (previous !== undefined && previous !== key) {
-      this.stale.add(previous);
-    }
-    this.current.set(frame, key);
-    this.stale.delete(key);
+  // Records that key is drawn in this frame.
+  use(key: string): void {
+    this.held.add(key);
+    this.marked.add(key);
   }
 
-  // Removes each stale key that inUse no longer reports, through remove.
+  // Removes each held key not marked since the last sweep that inUse no longer reports, through
+  // remove; called once a frame, so a key marked anywhere in a frame survives that frame's sweep.
   sweep(inUse: (key: string) => boolean, remove: (key: string) => void): void {
-    for (const key of this.stale) {
-      if (!inUse(key)) {
+    for (const key of this.held) {
+      if (!this.marked.has(key) && !inUse(key)) {
         remove(key);
-        this.stale.delete(key);
+        this.held.delete(key);
       }
     }
+    this.marked.clear();
+  }
+
+  // The silhouettes held now.
+  get size(): number {
+    return this.held.size;
   }
 }

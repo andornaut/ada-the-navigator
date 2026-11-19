@@ -338,7 +338,7 @@ export function drawKeylines(
     }
   }
   scene.craftJetsDrawn.clear();
-  // Every copy now draws its frame's current silhouette; replaced ones nothing draws go.
+  // Silhouettes no caller drew this frame, and no copy still draws, go.
   scene.silhouettes.sweep(
     (key) =>
       scene.children.list.some(
@@ -357,12 +357,12 @@ export function keylineSilhouette(
   sprite: { frame: Textures.Frame },
 ): string | undefined {
   const frame = sprite.frame;
-  // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette and
-  // the old one is swept once nothing draws it (silhouettes.ts).
+  // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette; any
+  // silhouette not drawn in a frame is swept (silhouettes.ts).
   const traced = `${frame.texture.key}#${String(frame.name)}`;
   const ink = scene.edgeInk ?? LIGHT_FIELD.ink;
   const key = `keyline:${traced}@${frame.cutWidth}:${ink.toString(16)}`;
-  scene.silhouettes.use(traced, key);
+  scene.silhouettes.use(key);
   if (scene.textures.exists(key)) {
     return key;
   }
