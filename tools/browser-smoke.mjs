@@ -2027,7 +2027,32 @@ try {
   const resetConfirm = page.locator('[data-dialog="reset-save"]');
   await resetConfirm.waitFor({ state: "visible" });
   await proofsAt("cheats-reset-confirm");
-  await page.locator('[data-action="reset-save-cancel"]').click();
+  // What takes a press at Cancel's centre once the proofs restore the view, recorded for review.
+  save(
+    "cheats-reset-hit.json",
+    await page.evaluate(() => {
+      const cancel = document.querySelector('[data-action="reset-save-cancel"]');
+      const rect = cancel.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      const chain = [];
+      for (let node = cancel; node && node !== document.body; node = node.parentElement) {
+        chain.push([node.className, getComputedStyle(node).pointerEvents, node.inert]);
+      }
+      return {
+        active: document.activeElement?.dataset.action ?? null,
+        chain,
+        hit: hit?.dataset.action ?? hit?.dataset.cheat ?? hit?.className ?? null,
+        modals: [...document.querySelectorAll(".ada-modal")].map((modal) => [
+          modal.querySelector("[data-dialog]")?.dataset.dialog ?? null,
+          modal.hidden,
+          getComputedStyle(modal).zIndex,
+        ]),
+        viewport: [innerWidth, innerHeight],
+      };
+    }),
+  );
+  // Escape cancels the confirm, as back does, back to Cheats.
+  await page.keyboard.press("Escape");
   await resetConfirm.waitFor({ state: "hidden" });
   await cheatsProof().waitFor({ state: "visible" });
   await cheatsProof().locator('[data-action="dismiss-cheats"]').click();
