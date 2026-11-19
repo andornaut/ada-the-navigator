@@ -790,6 +790,28 @@ export function rasterAgain(scene: AssetsContext, requests: readonly SvgRequest[
   scene.load.start();
 }
 
+/**
+ * Rasterises again, at the current scale, each stale SVG the scene draws this frame: a visible
+ * display object's texture, or one stamped into a group (SvgRasters.mark). Stale SVGs nothing
+ * draws keep their old raster until their first draw.
+ */
+export function rasterDrawn(scene: AssetsContext): void {
+  if (!scene.rasters.pending) {
+    return;
+  }
+  const shown = new Set<string>();
+  for (const child of scene.children.list) {
+    const texture = (child as Partial<GameObjects.Image>).texture;
+    if (texture && (child as Partial<GameObjects.Image>).visible !== false) {
+      shown.add(texture.key);
+    }
+  }
+  rasterAgain(
+    scene,
+    scene.rasters.due((key) => shown.has(key)),
+  );
+}
+
 /** Puts the image of texture from into texture key, keeping every user's display size. */
 export function replaceImage(scene: AssetsContext, key: string, from: string): void {
   const texture = scene.textures.get(key);

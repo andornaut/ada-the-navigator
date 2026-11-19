@@ -91,7 +91,6 @@ import {
   materialShipSwatch,
   materialWarpPoses,
   paintInUse,
-  rasterAgain,
   readEnemyArt,
 } from "./sceneAssets.ts";
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
@@ -298,12 +297,10 @@ export function buildScene(scene: UiContext): void {
     scene.cameras.main,
     () => aboardGalaxy(scene.model.state, scene.model.storyView?.page) !== null,
   );
-  // SVGs, and the touch chrome on RASTER_SCALE_EVENT, rasterise again once a resize moves the
-  // camera's zoom far enough (svgRasters.ts).
+  // SVGs (as each is next drawn, rasterDrawn), and the touch chrome on RASTER_SCALE_EVENT,
+  // rasterise again once a resize moves the camera's zoom far enough (svgRasters.ts).
   const followZoom = (): void => {
-    const before = scene.rasters.scale;
-    rasterAgain(scene, scene.rasters.resize(sceneFit(scene).zoom));
-    if (scene.rasters.scale !== before) {
+    if (scene.rasters.resize(sceneFit(scene).zoom)) {
       scene.events.emit(RASTER_SCALE_EVENT, scene.rasters.scale);
     }
   };

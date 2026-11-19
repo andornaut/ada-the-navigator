@@ -106,6 +106,7 @@ import {
   queueShipMaterialSources,
   queueSvg,
   rasterAgain,
+  rasterDrawn,
   startRockLoads,
 } from "./sceneAssets.ts";
 import { drawBackdrop, drawBackdropLayer, drawBackdropLayers } from "./sceneBackdrop.ts";
@@ -817,6 +818,7 @@ export class GameScene extends Scene {
       refreshScene(this, covered);
       if (!covered) {
         this.draw();
+        rasterDrawn(this);
       }
     }
     // The box follows the model even while a jump holds its source frame. As a page covers it, it

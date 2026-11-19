@@ -108,6 +108,7 @@ function setup(quantum = true) {
     flushScene,
     jumpScene: () => ({ ...jumpSource, heading: null }),
     observeFeedback: vi.fn(),
+    rasterDrawn: vi.fn(),
     refreshScene,
     renderConversation,
     requiredReady,

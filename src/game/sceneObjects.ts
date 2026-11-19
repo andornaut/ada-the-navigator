@@ -484,6 +484,7 @@ export function drawRevealGroup(
     }
   }
   for (const { config, frame, x, y } of stamps) {
+    scene.rasters.mark(frame.texture.key);
     group.stamp(frame.texture.key, undefined, r * x, r * y, config);
   }
   group.render();
