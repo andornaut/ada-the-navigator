@@ -774,13 +774,11 @@ function cheatScene(model: GameModel) {
     endsCheatSession,
     newer: false,
     observeFeedback: vi.fn(),
-    recordGalaxyUnlocks: vi.fn(),
     refreshScene: vi.fn(),
     requiredLoading: { state: { attempt: 1 } },
     requiredReady: () => true,
     saves: createAdaSaves(port),
     scene,
-    scheduleCheatGalaxies: vi.fn(),
     withoutSeenLessons,
   });
   for (const name of [
@@ -862,7 +860,6 @@ describe("cheat session", () => {
     f.cheat("unlockAllGalaxies").run();
     await f.settle();
     expect(f.scene.cheatSession.active).toBe(true);
-    expect(f.context.scheduleCheatGalaxies).toHaveBeenCalledOnce();
     f.apply(() => f.scene.model.continueGame());
     await f.settle();
     expect(f.scene.cheatSession.active).toBe(true);

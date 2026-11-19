@@ -428,9 +428,7 @@ export function buildScene(scene: UiContext): void {
           scene.model,
           scene.cheatSession,
         );
-        if (scene.model.cheat(id) && id === "unlockAllGalaxies") {
-          scheduleCheatGalaxies(scene);
-        }
+        scene.model.cheat(id);
       }),
   });
   scene.fpsCounter = createFpsCounter(
@@ -1643,12 +1641,4 @@ export function resetSave(scene: UiContext): void {
   scene.controls.closePause();
   replaceModel(new GameModel(CONTENT), scene);
   void flushScene(scene);
-}
-
-/**
- * Galaxies a cheat unlocks need their downloads in the session, which saves nothing to record
- * them through; recordGalaxyUnlocks otherwise follows saved unlocks only.
- */
-function scheduleCheatGalaxies(scene: UiContext): void {
-  recordGalaxyUnlocks(scene.model.state.unlocked);
 }
