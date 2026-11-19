@@ -22,11 +22,11 @@ describe("title screen art", () => {
     expect(art).not.toBeNull();
   });
 
-  it("places the 960x540 field at (-120, 0) over the space background", () => {
+  it("bleeds the 960x660 field 120 past the game area's top and sides", () => {
     expect(art.background).toBe("#292734");
     expect(art.field).toEqual({
-      at: { x: -120, y: 0 },
-      height: 540,
+      at: { x: -120, y: -120 },
+      height: 660,
       url: "/art/title-field.png",
       width: 960,
     });
