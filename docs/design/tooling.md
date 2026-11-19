@@ -40,3 +40,4 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0294 | Pin delivery-kit 6.0.0 and coordination-kit 1.2.0                         | [ada-0294.md](../work/ada-0294.md) |
 | ada-0299 | Track every user request as a work item and pin coordination-kit 1.3.0    | [ada-0299.md](../work/ada-0299.md) |
 | ada-0312 | Pin delivery-kit 6.1.1 and coordination-kit 2.0.1                         | [ada-0312.md](../work/ada-0312.md) |
+| ada-0327 | Pin art-kit 0.32.0 for the decoded WebP checks                            | [ada-0327.md](../work/ada-0327.md) |
