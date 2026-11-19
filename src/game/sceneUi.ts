@@ -47,6 +47,7 @@ import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
+import { scanFeedbackArea } from "../ui/layout/scanFeedback.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
@@ -1222,7 +1223,7 @@ export function renderConversation(scene: UiContext): void {
     scan.time = scene.time.now;
     scan.view.render(
       {
-        area,
+        area: scanFeedbackArea(insets, view),
         blocked: scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
         covered:
           covered ||

@@ -38,6 +38,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     time: { now: 20 },
   };
   const landmarkById = vi.fn().mockReturnValue(site);
+  const scanFeedbackArea = vi.fn().mockReturnValue({ height: 336, width: 696, x: 12, y: 12 });
   const host = { getBoundingClientRect: () => ({ left: 0, top: 0 }) };
   const occupied = {
     closest: () => null,
@@ -63,6 +64,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     markerFootprints: () => [{ height: 30, width: 100, x: 0, y: 0 }],
     pennyLayers: { get: () => undefined },
     safeGameArea: () => ({ height: 360, width: 720, x: 0, y: 0 }),
+    scanFeedbackArea,
     scanFeedbackDialogue,
     scanFeedbackFootprints,
     scanViews: { get: () => scan },
@@ -82,11 +84,16 @@ it("retains production scan receipts under cover and resolves only the receipt g
   expect(first[0].covered).toBe(true);
   expect(first[1]).toBe(20);
   expect(first[0].time).toBe(20);
-  // The HUD footprint, then the same node as a touch control grown by SPACING.gap.
+  // The HUD footprint, then the same node read as a touch control.
   expect(first[0].blocked).toEqual([
     { height: 30, width: 100, x: 0, y: 0 },
-    { height: 46, width: 116, x: -8, y: -8 },
+    { height: 30, width: 100, x: 0, y: 0 },
   ]);
+  expect(first[0].area).toEqual({ height: 336, width: 696, x: 12, y: 12 });
+  expect(scanFeedbackArea).toHaveBeenCalledWith(
+    scene.controls.layout().insets,
+    scene.controls.layout().view,
+  );
   expect(first[0].dialogue).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
   expect(querySelectorAll).toHaveBeenCalledWith(
     expect.stringContaining(":not(.ada-conversation, .ada-conversation *)"),

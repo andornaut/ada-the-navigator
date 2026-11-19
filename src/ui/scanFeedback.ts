@@ -3,11 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
 import type { Vec } from "../model/types.ts";
 import { EASE_OUT, NOTICE_TIMING } from "./itemNotice.ts";
-import {
-  type ScanFeedbackPath,
-  scanFeedbackPath,
-  scanFeedbackRect,
-} from "./layout/scanFeedback.ts";
+import { type ScanFeedbackPath, scanFeedbackPath, scanFeedbackTop } from "./layout/scanFeedback.ts";
 import { chipGlyph } from "./mapScreen.ts";
 export interface ScanFeedbackContent {
   readonly checkbox: boolean;
@@ -93,8 +89,13 @@ interface Pending {
   elapsed: number;
   anchor?: Vec;
   path?: ScanFeedbackPath;
-  /** The last shown top: the receipt only rises, so a box shown later never pushes it down. */
-  shownY?: number;
+  /**
+   * The rise now: from fromY at eased progress start to top. A conversation box shown or gone
+   * mid-rise starts a new segment from where the receipt is, so it never hops or moves down.
+   */
+  segment?: { readonly fromY: number; readonly start: number; readonly top: number };
+  /** The eased rise progress of the last shown frame. */
+  shownProgress?: number;
   sampledAt?: number;
   sampledElapsed?: number;
 }
@@ -164,22 +165,30 @@ export class ScanFeedbackQueue {
       }
       next.anchor = { ...anchor };
       next.path = path;
-      delete next.shownY;
+      delete next.segment;
+      delete next.shownProgress;
     }
     const path = next.path!;
-    const placed = scanFeedbackRect({
-      anchor,
-      area: context.area,
-      blocked: context.blocked,
-      dialogue: context.dialogue,
-      height: path.from.height,
-      path,
-      progress: elapsed === 0 ? 0 : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs)),
-      reducedMotion: context.reducedMotion,
-      width: path.from.width,
-    })!;
-    const rect = { ...placed, y: Math.min(placed.y, next.shownY ?? placed.y) };
-    next.shownY = rect.y;
+    const progress =
+      context.reducedMotion || elapsed === 0
+        ? 0
+        : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs));
+    const end = scanFeedbackTop(path, context.dialogue);
+    const yAt = (segment: NonNullable<Pending["segment"]>, at: number) =>
+      segment.start >= 1
+        ? segment.fromY
+        : segment.fromY +
+          (segment.top - segment.fromY) * Math.max(0, (at - segment.start) / (1 - segment.start));
+    let segment = next.segment ?? { fromY: path.from.y, start: 0, top: end };
+    if (end !== segment.top) {
+      // From where the receipt was last shown, toward the new end, never down.
+      const shown = next.shownProgress ?? 0;
+      const y = yAt(segment, shown);
+      segment = { fromY: y, start: shown, top: Math.min(end, y) };
+    }
+    next.segment = segment;
+    next.shownProgress = progress;
+    const rect = { ...path.from, y: yAt(segment, progress) };
     const fade = context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs;
     const opacity = Math.max(0, 1 - Math.max(0, elapsed - NOTICE_TIMING.holdMs) / fade);
     if (context.time !== undefined) {

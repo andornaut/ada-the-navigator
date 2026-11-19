@@ -16,15 +16,12 @@ import {
   ScanFeedbackQueue,
 } from "./scanFeedback.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
-/** The touch controls a receipt keeps SPACING.gap clear of: the sticks' targets and Use. */
+/** The touch controls a receipt keeps clear of: the sticks' targets and Use. */
 const TOUCH_CONTROLS = '.ada-use,[data-control="move-joystick"],[data-control="aim-joystick"]';
 /** The conversation box's parts: the panel, its name tab and its portrait. */
 const CONVERSATION_PARTS = ".ada-conversation,.ada-conversation-name,.ada-conversation-portrait";
 
-/**
- * Canonical HUD footprints, with each shown touch control grown by SPACING.gap; the conversation
- * paints over the receipt instead of displacing it.
- */
+/** Canonical HUD footprints and the shown touch controls; the conversation is read apart. */
 export function scanFeedbackFootprints(doc: Document, host: HTMLElement | null): Rect[] {
   const querySelectorAll = ((selectors: string) =>
     doc.querySelectorAll(
@@ -33,19 +30,13 @@ export function scanFeedbackFootprints(doc: Document, host: HTMLElement | null):
         .map((selector) => `${selector}:not(.ada-conversation, .ada-conversation *)`)
         .join(","),
     )) as Document["querySelectorAll"];
-  const gap = SPACING.gap;
   return [
     ...markerFootprints({ querySelectorAll }, host),
-    ...markerFootprints(doc, host, TOUCH_CONTROLS).map((box) => ({
-      height: box.height + 2 * gap,
-      width: box.width + 2 * gap,
-      x: box.x - gap,
-      y: box.y - gap,
-    })),
+    ...markerFootprints(doc, host, TOUCH_CONTROLS),
   ];
 }
 
-/** The shown conversation box's parts, which a rising receipt stops below. */
+/** The shown conversation box's parts, which a receipt never overlaps and stops below. */
 export function scanFeedbackDialogue(doc: Document, host: HTMLElement | null): Rect[] {
   return markerFootprints(doc, host, CONVERSATION_PARTS);
 }

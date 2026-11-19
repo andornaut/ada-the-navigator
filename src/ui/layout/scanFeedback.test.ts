@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { scanFeedbackPath, scanFeedbackRect } from "./scanFeedback.ts";
+import { hudRect, NO_INSETS, playView } from "./playView.ts";
+import {
+  SCAN_FEEDBACK,
+  scanFeedbackArea,
+  scanFeedbackPath,
+  scanFeedbackRect,
+  scanFeedbackTop,
+} from "./scanFeedback.ts";
 import { SPACING } from "./tokens.ts";
 const context = {
   anchor: { x: 360, y: 240 },
@@ -53,51 +60,98 @@ describe("scan receipt placement", () => {
       previous = box.y;
     }
   });
-  it("clamps an offscreen anchor inside the area and clear of a grown touch control", () => {
-    // The aim stick's 75 target grown by SPACING.gap, at the bottom right.
-    const stick = { height: 91, width: 91, x: 587, y: 227 };
-    const box = scanFeedbackRect({ ...context, anchor: { x: 2000, y: 2000 }, blocked: [stick] })!;
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(720);
-    expect(box.y).toBeGreaterThanOrEqual(0);
-    expect(box.y + box.height).toBeLessThanOrEqual(360);
-    expect(
-      box.x + box.width <= stick.x ||
-        box.x >= stick.x + stick.width ||
-        box.y + box.height <= stick.y ||
-        box.y >= stick.y + stick.height,
-    ).toBe(true);
+  it("ends the rise SPACING.gap under the HUD row with no conversation", () => {
+    const hud = { height: 30, width: 720, x: 0, y: 12 };
+    const path = scanFeedbackPath({ ...context, blocked: [hud] })!;
+    expect(path.top).toBe(hud.y + hud.height + SPACING.gap);
+    expect(scanFeedbackRect({ ...context, blocked: [hud], path, progress: 1 })!.y).toBe(50);
+  });
+  it("slides a clamped start along its nearest edge toward the centre until clear with room", () => {
+    // The aim stick's target at the bottom right; the target lies off the right edge.
+    const stick = { height: 75, width: 75, x: 595, y: 235 };
+    const path = scanFeedbackPath({ ...context, anchor: { x: 700, y: 2000 }, blocked: [stick] })!;
+    expect(path.from.x).toBe(520);
+    expect(path.from.y).toBe(stick.y - SPACING.gap - context.height);
+    expect(path.from.y - path.top).toBeGreaterThanOrEqual(SCAN_FEEDBACK.minRise);
+  });
+  it("slides along the bottom edge when that is the edge nearest the target", () => {
+    const stick = { height: 75, width: 75, x: 595, y: 235 };
+    const path = scanFeedbackPath({ ...context, anchor: { x: 760, y: 420 }, blocked: [stick] })!;
+    expect(path.from.y).toBe(320);
+    expect(path.from.x).toBe(stick.x - SPACING.gap - context.width);
+  });
+  it("takes the nearest place with room on the bottom edge when its own edge has none", () => {
+    // A control just above the bottom-centred start leaves it less than minRise.
+    const control = { height: 30, width: 60, x: 240, y: 240 };
+    const path = scanFeedbackPath({ ...context, anchor: { x: 360, y: 2000 }, blocked: [control] })!;
+    expect(path.from).toEqual({ height: 40, width: 200, x: 308, y: 320 });
+    expect(path.from.y - path.top).toBeGreaterThanOrEqual(SCAN_FEEDBACK.minRise);
+  });
+  it("keeps every start SPACING.gap clear of each control", () => {
+    const controls = [
+      { height: 75, width: 75, x: 50, y: 235 },
+      { height: 75, width: 75, x: 595, y: 235 },
+      { height: 75, width: 75, x: 518, y: 135 },
+    ];
+    for (const anchor of [
+      { x: 2000, y: 2000 },
+      { x: -500, y: 800 },
+      { x: 560, y: 180 },
+    ]) {
+      const box = scanFeedbackPath({ ...context, anchor, blocked: controls })!.from;
+      for (const control of controls) {
+        expect(
+          box.x + box.width <= control.x - SPACING.gap ||
+            box.x >= control.x + control.width + SPACING.gap ||
+            box.y + box.height <= control.y - SPACING.gap ||
+            box.y >= control.y + control.height + SPACING.gap,
+        ).toBe(true);
+      }
+    }
+  });
+  it("moves a start that would overlap the conversation box SPACING.gap below it", () => {
+    const panel = { height: 60, width: 480, x: 120, y: 200 };
+    const path = scanFeedbackPath({ ...context, dialogue: [panel] })!;
+    expect(path.from.y).toBe(panel.y + panel.height + SPACING.gap);
+    expect(scanFeedbackTop(path, [panel])).toBe(path.from.y);
   });
   it("ends the rise SPACING.gap below a conversation box above the start, and only then", () => {
     const panel = { height: 60, width: 480, x: 120, y: 66 };
     const dialogue = [panel];
     const path = scanFeedbackPath({ ...context, dialogue })!;
-    expect(path.top).toBe(panel.y + panel.height + SPACING.gap);
+    expect(scanFeedbackTop(path, dialogue)).toBe(panel.y + panel.height + SPACING.gap);
     for (let index = 0; index <= 20; index++) {
       const box = scanFeedbackRect({ ...context, dialogue, path, progress: index / 20 })!;
       expect(box.y).toBeGreaterThanOrEqual(panel.y + panel.height + SPACING.gap);
     }
     // Outside the column, or below the start, a box leaves the rise as it is.
     const aside = [{ height: 60, width: 100, x: 0, y: 66 }];
-    expect(scanFeedbackPath({ ...context, dialogue: aside })!.top).toBe(0);
+    expect(scanFeedbackTop(scanFeedbackPath({ ...context, dialogue: aside })!, aside)).toBe(0);
     const below = [{ height: 40, width: 480, x: 120, y: 300 }];
-    expect(scanFeedbackPath({ ...context, dialogue: below })!.top).toBe(0);
+    expect(scanFeedbackTop(scanFeedbackPath({ ...context, dialogue: below })!, below)).toBe(0);
   });
   it("stops below a name tab above the start when the box itself is not above it", () => {
     const tab = { height: 20, width: 220, x: 260, y: 150 };
-    const panel = { height: 60, width: 480, x: 120, y: 170 };
+    const panel = { height: 30, width: 130, x: 120, y: 170 };
     const path = scanFeedbackPath({ ...context, dialogue: [tab, panel] })!;
     expect(path.from.y).toBe(220);
-    expect(path.top).toBe(tab.y + tab.height + SPACING.gap);
+    expect(scanFeedbackTop(path, [tab, panel])).toBe(tab.y + tab.height + SPACING.gap);
   });
-  it("stops below a conversation box shown after the path was chosen", () => {
-    const path = scanFeedbackPath(context)!;
-    expect(path.top).toBe(0);
-    const dialogue = [{ height: 60, width: 480, x: 120, y: 66 }];
-    expect(scanFeedbackRect({ ...context, dialogue, path, progress: 1 })!.y).toBe(
-      66 + 60 + SPACING.gap,
-    );
-    expect(scanFeedbackRect({ ...context, path, progress: 1 })!.y).toBe(0);
+  it("places receipts in the HUD controls' rect, measured from the game area", () => {
+    for (const view of [
+      { height: 360, width: 720 },
+      { height: 405, width: 720 },
+      { height: 360, width: 800 },
+    ]) {
+      const hud = hudRect(NO_INSETS, view);
+      expect(scanFeedbackArea(NO_INSETS, view)).toEqual({ ...hud, x: hud.x - playView(view).x });
+    }
+    expect(scanFeedbackArea(NO_INSETS, { height: 360, width: 800 })).toEqual({
+      height: 336,
+      width: 696,
+      x: 12,
+      y: 12,
+    });
   });
   it("retains a receipt when the entire viewport is covered or text cannot fit", () => {
     expect(scanFeedbackRect({ ...context, blocked: [context.area] })).toBeNull();

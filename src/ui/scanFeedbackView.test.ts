@@ -200,7 +200,7 @@ describe("native scan receipt view", () => {
     expect(selector).toContain(".ada-shield:not(.ada-conversation, .ada-conversation *)");
     expect(selector).toContain(".ada-conversation:not(.ada-conversation, .ada-conversation *)");
   });
-  it("grows each shown touch control by SPACING.gap and reads the conversation box's parts", () => {
+  it("reads the shown touch controls with the HUD and the conversation box's parts apart", () => {
     vi.stubGlobal("getComputedStyle", () => ({
       display: "block",
       getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "1" : "0"),
@@ -222,8 +222,8 @@ describe("native scan receipt view", () => {
     const doc = { querySelectorAll } as unknown as Document;
     expect(scanFeedbackFootprints(doc, host)).toEqual([
       { height: 30, width: 100, x: 10, y: 10 },
-      { height: 91, width: 91, x: 587, y: 227 },
-      { height: 91, width: 91, x: 510, y: 127 },
+      { height: 75, width: 75, x: 595, y: 235 },
+      { height: 75, width: 75, x: 518, y: 135 },
     ]);
     expect(scanFeedbackDialogue(doc, host)).toEqual([{ height: 60, width: 480, x: 120, y: 66 }]);
   });

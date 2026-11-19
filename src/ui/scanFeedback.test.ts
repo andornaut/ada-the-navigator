@@ -151,6 +151,18 @@ describe("authoritative scan presentation receipts", () => {
     stopped.frame(context, NOTICE_TIMING.holdMs);
     expect(stopped.frame({ ...context, dialogue }, 0)!.rect.y).toBe(134);
   });
+  it("rises on from where it is when the conversation box goes mid-rise, without a hop", () => {
+    const queue = new ScanFeedbackQueue();
+    queue.enqueue([receipt()]);
+    const dialogue = [{ height: 60, width: 480, x: 120, y: 66 }];
+    expect(queue.frame({ ...context, dialogue }, NOTICE_TIMING.holdMs / 2)!.rect.y).toBe(220);
+    const held = queue.frame({ ...context, dialogue }, 0)!.rect.y;
+    expect(held).toBeGreaterThan(134);
+    expect(held).toBeLessThan(220);
+    expect(queue.frame(context, 0)!.rect.y).toBeCloseTo(held);
+    queue.frame(context, NOTICE_TIMING.holdMs / 2);
+    expect(queue.frame(context, 0)!.rect.y).toBe(0);
+  });
   it("does not advance on repeated native refreshes at the same scene time", () => {
     const queue = new ScanFeedbackQueue();
     queue.enqueue([receipt()]);
