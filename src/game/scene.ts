@@ -6,6 +6,7 @@ import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { HIT_SHAKE } from "../data/layout.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -90,7 +91,7 @@ import {
 } from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
 import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
-import { parentFit, sceneFit, viewShift } from "./playCamera.ts";
+import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
 import { setRendering } from "./renderLoop.ts";
@@ -146,6 +147,7 @@ import {
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
+import { SPECK_RADIUS, speckField } from "./speckField.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
 import { type StardustArt } from "./stardustArt.ts";
 import { type GalaxyStationArt, type StationArt } from "./stationArt.ts";
@@ -948,29 +950,21 @@ export class GameScene extends Scene {
     }
     drawBackdrop(this, flight);
     // Dust specks, the debris layer's motion cue at its parallax and cell, in the galaxy's
-    // backdropSide; projected as projectLayer does, keeping a point only for a speck in view.
+    // backdropSide. Only specks the camera can show are drawn, its view grown past a hit shake's
+    // reach (about HIT_SHAKE.offset).
     this.specks = [];
     const specks = this.backdropRules?.specks;
     if (specks) {
-      const { cell, parallax } = specks;
-      const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
-      const gx = Math.floor((flight.player.x * parallax) / cell);
-      const gy = Math.floor((flight.player.y * parallax) / cell);
-      const ox = flight.player.x * parallax;
-      const oy = flight.player.y * parallax;
+      const field = speckField(
+        specks,
+        flight.player,
+        cameraWorldView(this.cameras.main, 2 * HIT_SHAKE.offset),
+      );
+      this.specks = field.inScreen;
       const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.galaxy).backdropSide);
       this.ink.fillStyle(speckColor, specks.alpha);
-      for (let x = gx - span; x <= gx + span; x++) {
-        for (let y = gy - span; y <= gy + span; y++) {
-          const u = x * cell + ((y * 37) % 83) - ox;
-          const v = y * cell + ((x * 53) % 79) - oy;
-          const px = SCREEN.width / 2 + u - v;
-          const py = SCREEN.height / 2 + (u + v) / 2;
-          if (px >= 0 && py >= 0 && px <= SCREEN.width && py <= SCREEN.height) {
-            this.specks.push({ x: px, y: py });
-          }
-          this.ink.fillCircle(px, py, 1);
-        }
+      for (const speck of field.drawn) {
+        this.ink.fillCircle(speck.x, speck.y, SPECK_RADIUS);
       }
     }
     loadGalaxyArt(this, flight.galaxy);

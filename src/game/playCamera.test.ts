@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { logicalView, playView, viewScale } from "../ui/layout/playView.ts";
 import {
+  cameraWorldView,
   canvasSize,
   fitCanvasCamera,
   fitPlayCamera,
@@ -141,6 +142,14 @@ describe("render fit", () => {
         }
       }
     }
+  });
+});
+
+describe("camera world view", () => {
+  it("is the scrolled view at the camera's zoom, grown by the margin", () => {
+    const camera = { height: 720, scrollX: -40, scrollY: 0, width: 1440, zoom: 2 };
+    expect(cameraWorldView(camera, 0)).toEqual({ height: 360, width: 720, x: -40, y: 0 });
+    expect(cameraWorldView(camera, 4)).toEqual({ height: 368, width: 728, x: -44, y: -4 });
   });
 });
 

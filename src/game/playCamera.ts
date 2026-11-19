@@ -64,6 +64,20 @@ export function viewShift(fit: RenderFit): Point {
   return { x: x / fit.zoom, y: y / fit.zoom };
 }
 
+// The world rectangle a camera fitted here shows, its origin at the top-left, grown by margin
+// logical px on every side.
+export function cameraWorldView(
+  camera: Pick<Cameras.Scene2D.Camera, "height" | "scrollX" | "scrollY" | "width" | "zoom">,
+  margin: number,
+): Rect {
+  return {
+    height: camera.height / camera.zoom + 2 * margin,
+    width: camera.width / camera.zoom + 2 * margin,
+    x: camera.scrollX - margin,
+    y: camera.scrollY - margin,
+  };
+}
+
 // The intensity to pass a camera at zoom so its shake moves the view by intensity of the logical
 // view's size. Phaser's shake offset is the intensity times the viewport's device-pixel size
 // times the zoom, applied inside the zoomed matrix, so it grows with the cube of the zoom.
