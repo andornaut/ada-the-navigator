@@ -6128,6 +6128,9 @@ try {
           requestClose() {}
         };
       }
+      // A fresh app launch: the window's history holds only the game's entry, as an installed app
+      // opened from its icon does, where a new automated page may count its initial blank entry.
+      Object.defineProperty(History.prototype, "length", { configurable: true, get: () => 1 });
       window.adaClosed = 0;
       window.close = () => {
         window.adaClosed += 1;
@@ -6139,8 +6142,24 @@ try {
     observe(page);
     assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
     const exitDisc = page.locator('[data-action="exit"]');
-    await exitDisc.waitFor({ state: "visible" });
     await menuDisc().waitFor({ state: "visible" });
+    const exitShown = await exitDisc.waitFor({ state: "visible" }).then(
+      () => true,
+      () => false,
+    );
+    const emulation = await page.evaluate(() => ({
+      closeWatcher: typeof window.CloseWatcher,
+      exitMade: Boolean(document.querySelector('[data-action="exit"]')),
+      history: history.length,
+      installed: window.matchMedia(
+        "(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)",
+      ).matches,
+      userAgent: navigator.userAgent,
+    }));
+    assert.ok(
+      exitShown,
+      `${name}: an installed app window shows Exit: ${JSON.stringify(emulation)}`,
+    );
     await page.evaluate((logical) => {
       const unit = Number(
         getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
