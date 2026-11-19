@@ -51,8 +51,9 @@ the value currently lives, in CSS px.
     resolution itself.
   - Line widths, keylines and outlines stay in logical px at every ratio.
 - The logical width varies with aspect (720 at 2:1 or narrower, 779 on an
-  844x390 phone), as `Scale.EXPAND` did. The game area is the centred 2:1 play
-  view; wider or taller screens show bands outside it. The top controls (pause,
+  844x390 phone), as `Scale.EXPAND` did. The game area is the 2:1 play view,
+  centred on both axes, so the bands that wider or taller screens show outside
+  it split evenly. The top controls (pause,
   the status pill, weapons, Skip and Settings) are placed relative to the game
   area through `hudRect`, clamped by the safe insets; both sides use the left
   game-area gap and the larger side inset, so the HUD mirrors exactly, notches
@@ -235,66 +236,71 @@ button shows. Each side is `ceil(max(left game-area gap + offset, max(inset
 left, inset right)))` from its view edge (`mirroredSide`), so a one-sided notch
 moves both sides in alike and the HUD mirrors exactly.
 
-| Token      | Value                                                                                                                                                             | Rule                                                                                                                                                                            | Constant                                                                                      |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                                                                                    | The game area: the base view centred across the logical view, at its top; bands outside it                                                                                      | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)                              |
-| HUD rect   | Sides `mirroredSide(insets, HUD_EDGE, view)` in from each view edge; top `ceil(max(12, inset top))`; bottom `min(348, view bottom - ceil(max(12, inset bottom)))` | The lines the top controls' drawn art meets (its top corners); the sticks and Use follow their own rule                                                                         | `hudRect(insets, view)`, `HUD_EDGE`, `playView.ts` (Chibi `topShift`)                         |
-| HUD button | Target 48, disc 33, common weapon annulus 4, glyph 20, gap 9; pitch 57                                                                                            | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; small, so discs sit `SMALL_BUTTON_GAP` (24) apart face to face: gap = 24 - 15 = 9 between targets; pitch = target + gap | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
-| HUD row    | Targets reach 7.5 (the disc inset) past the HUD rect's top and right; centre line HUD rect top + 16.5; targets' bottom HUD rect top + 40.5                        | The outermost disc's drawn edge and every disc's drawn top sit on the rect; the pause disc, the discs, the pill and Skip share the centre line                                  | `HUD_ROW` = `{ reach, centre, bottom }`, `playView.ts`                                        |
-| Count pill | 14 high, radius 4, padding 4, top 42 below the target top, clearance 5                                                                                            | Opaque navy pill with a 1 px inset ink rim on the disc's lower edge; the conversation box top sits the clearance below its bottom                                               | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
+| Token      | Value                                                                                                                                                                                         | Rule                                                                                                                                                                             | Constant                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = floor((floor(view.height) - 360) / 2)`                                                                                            | The game area: the base view centred in the logical view on both axes, on whole logical px; the bands outside it split evenly (one 1 wider where the spare is odd or fractional) | `playView(view)`, `playView.ts` (Chibi `playView`)                                            |
+| HUD rect   | Sides `mirroredSide(insets, HUD_EDGE, view)` in from each view edge; top `ceil(max(play view y + 12, inset top))`; bottom `min(play view y + 348, view bottom - ceil(max(12, inset bottom)))` | The lines the HUD's drawn art meets: the top controls at its top corners, the shield pill's drawn bottom on its bottom edge; the sticks and Use follow their own rule            | `hudRect(insets, view)`, `HUD_EDGE`, `playView.ts` (Chibi `topShift`)                         |
+| HUD button | Target 48, disc 33, common weapon annulus 4, glyph 20, gap 9; pitch 57                                                                                                                        | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; small, so discs sit `SMALL_BUTTON_GAP` (24) apart face to face: gap = 24 - 15 = 9 between targets; pitch = target + gap  | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
+| HUD row    | Targets reach 7.5 (the disc inset) past the HUD rect's top and right; centre line HUD rect top + 16.5; targets' bottom HUD rect top + 40.5                                                    | The outermost disc's drawn edge and every disc's drawn top sit on the rect; the pause disc, the discs, the pill and Skip share the centre line                                   | `HUD_ROW` = `{ reach, centre, bottom }`, `playView.ts`                                        |
+| Count pill | 14 high, radius 4, padding 4, top 42 below the target top, clearance 5                                                                                                                        | Opaque navy pill with a 1 px inset ink rim on the disc's lower edge; the conversation box top sits the clearance below its bottom                                                | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
 
-| Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
-| -------------- | ----------------- | ------------ | ----------- | ------------------------- |
-| 720x360        | None              | 720x360      | 0           | 12, 708, 12               |
-| 720x360        | Left and right 43 | 720x360      | 0           | 43, 677, 12               |
-| 844x390        | None              | 779x360      | 29          | 41, 738.08, 12            |
-| 844x390        | Left and right 43 | 779x360      | 29          | 43, 736.08, 12            |
-| 844x390        | Left 47, right 0  | 779x360      | 29          | 47, 732.08, 12            |
-| 1280x720       | None              | 720x405      | 0           | 12, 708, 12               |
-| 1920x1080      | None              | 720x405      | 0           | 12, 708, 12               |
+| Screen, CSS px | Insets, logical   | Logical view | Play view x | Play view y | HUD rect left, right, top, bottom |
+| -------------- | ----------------- | ------------ | ----------- | ----------- | --------------------------------- |
+| 720x360        | None              | 720x360      | 0           | 0           | 12, 708, 12, 348                  |
+| 720x360        | Left and right 43 | 720x360      | 0           | 0           | 43, 677, 12, 348                  |
+| 744x396        | None              | 720x383.23   | 0           | 11          | 12, 708, 23, 359                  |
+| 844x390        | None              | 779x360      | 29          | 0           | 41, 738.08, 12, 348               |
+| 844x390        | Left and right 43 | 779x360      | 29          | 0           | 43, 736.08, 12, 348               |
+| 844x390        | Left 47, right 0  | 779x360      | 29          | 0           | 47, 732.08, 12, 348               |
+| 1280x720       | None              | 720x405      | 0           | 22          | 12, 708, 34, 370                  |
+| 1920x1080      | None              | 720x405      | 0           | 22          | 12, 708, 34, 370                  |
 
 The right side is measured from the exact view width (779.08 at 844x390), so
 the right edge sits as far from the view's right as the left edge from its
 left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
-(749) because the right band is 30.08 and the left 29.
+(749) because the right band is 30.08 and the left 29. Down, the bands are
+22 above and 23 below the game area at 1280x720, and 11 above and 12.23 below
+at 744x396.
 
-| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Constant                                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Pause        | Touch only (desktop pauses with Escape): 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it), so the disc spans 12 to 45 on both axes at the 720 base; vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5, HUD rect left and top - 9.75 to + 42.75                                                                                                                                                                                                                                                                                                                                  | `PAUSE_BUTTON`, `playView.ts`                                                                                               |
-| Weapons      | One `HUD_ROW` of `HUD_BUTTON` targets, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right + 7.5 - 48 - 57 * i`, `y = top - 7.5`; disc and glyph centred in it (disc at 7.5, glyph at 14), so the rightmost disc's drawn right edge and every disc's drawn top sit on the HUD rect (disc 675 to 708, 12 to 45 at the 720 base); the target is the press area (48, `HIT_RULE.minTarget`), 4.5 to 52.5 at a top of 12; each non-Laser weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                                                                       |
-| Status pill  | One `PILL` always holding the Stardust and ore counts, including zero, followed by any carried job or story item or towed craft: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5). Parts and states in [Status pill](#status-pill)                                                                      | `STATUS_PILL`, `playView.ts`, to implement                                                                                  |
-| Shield pill  | Bottom centre: one `PILL` with the shield icon and a bar whose length follows Shield level (120, 180 or 240, so the pill is 156, 216 or 276 wide), centred on the HUD rect (the view's centre), its drawn bottom 14.5 above the viewport bottom, mirroring the status pill's drawn top (see [Shield pill](#shield-pill)), independent of the sticks and safe insets: x 282 to 438, 252 to 468 or 222 to 498 and y 317.5 to 345.5 at the 720 base and with phone insets, y 362.5 to 390.5 at 1280x720. The same place on touch and desktop; [Touch controls by view](#touch-controls-by-view) lists every view. See [Shield pill](#shield-pill)    | `SHIELD_PILL`, `playView.ts`, to implement                                                                                  |
-| Item notice  | A 24-high chip under the status pill, top HUD rect top + 34.5 (46.5), centred under where the gain lands and clamped between the pill's left edge and `SPACING.pageInset` left of the leftmost weapon target; draws over the conversation box and under the HUD controls; takes no input. See [Item notice](#item-notice)                                                                                                                                                                                                                                                                                                                         | `ITEM_NOTICE`, `itemNotice.ts`, to implement                                                                                |
-| Sticks       | Drawn ring edges 50 logical px from each outer screen side and 50 above the screen bottom, ignoring safe insets, moved inward only to stay at least 8 inside the game area. Both sticks use canonical TOUCH_STICK; Use retains its (-77, -100) offset from aim.                                                                                                                                                                                                                                                                                                                                                                                   | `TOUCH_STICK`, `touchControls.ts`, to implement, now `sticks.ts`; `STICK_AREA_MARGIN` and `controlsBottom()`, `playView.ts` |
-| Use          | Touch only: Chibi's touch disc (`USE_DISC`), a 75 frame with an open ring 73 across and the action's symbol, at the sticks' 85% opacity ([Controls](controls.md#use-disc)); its centre the aim stick's rest centre plus `USE_DISC.fromAim` (-77, -100), as Chibi places Use from Jump: (556, 173) at the 720 base and (615, 173) at 844x390, the same with phone insets because the sticks ignore them; press shape a circle of radius 100 (`TOUCH_CIRCLE_RADIUS` 63 plus the 37 hint radius) about the centre, cut on the line midway to the aim stick's centre; shown only while an interaction is available, on a touch screen, outside modals | `USE_DISC`, `touchControls.ts`, to implement; replaces `USE_BUTTON`                                                         |
-| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                                                       | `HUD_BUTTON`, `playView.ts`                                                                                                 |
-| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)` (`hudButtonTarget(2)` while Exit shows), one pitch (57) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen                                         |
-| Exit         | Start screen only, and only where the platform can close the app: the same `HUD_BUTTON` with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, the rightmost disc, so Settings and Achievements each move one pitch left. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`, to implement on the start screen                                         |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                            | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`                                                |
-| Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 53.5 (65.5 at a top of 12), name tab top 10 higher (55.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                      | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                                                                      |
+| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Constant                                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Pause        | Touch only (desktop pauses with Escape): 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it), so the disc spans 12 to 45 on both axes at the 720 base; vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5, HUD rect left and top - 9.75 to + 42.75                                                                                                                                                                                                                                                                                                                                                                       | `PAUSE_BUTTON`, `playView.ts`                                                                                               |
+| Weapons      | One `HUD_ROW` of `HUD_BUTTON` targets, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right + 7.5 - 48 - 57 * i`, `y = top - 7.5`; disc and glyph centred in it (disc at 7.5, glyph at 14), so the rightmost disc's drawn right edge and every disc's drawn top sit on the HUD rect (disc 675 to 708, 12 to 45 at the 720 base); the target is the press area (48, `HIT_RULE.minTarget`), 4.5 to 52.5 at a top of 12; each non-Laser weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                                                     | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                                                                       |
+| Status pill  | One `PILL` always holding the Stardust and ore counts, including zero, followed by any carried job or story item or towed craft: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5). Parts and states in [Status pill](#status-pill)                                                                                                           | `STATUS_PILL`, `playView.ts`, to implement                                                                                  |
+| Shield pill  | Bottom centre: one `PILL` with the shield icon and a bar whose length follows Shield level (120, 180 or 240, so the pill is 156, 216 or 276 wide), centred on the HUD rect (the view's centre), its drawn bottom on the HUD rect's bottom edge, `HUD_EDGE` (12) above the game area's bottom as the pause disc's drawn top sits 12 below its top (see [Shield pill](#shield-pill)), independent of the sticks: x 282 to 438, 252 to 468 or 222 to 498 and y 320 to 348 at the 720 base, 313 to 341 with phone insets, 342 to 370 at 1280x720. The same place on touch and desktop; [Touch controls by view](#touch-controls-by-view) lists every view. See [Shield pill](#shield-pill) | `SHIELD_PILL`, `playView.ts`, to implement                                                                                  |
+| Item notice  | A 24-high chip under the status pill, top HUD rect top + 34.5 (46.5), centred under where the gain lands and clamped between the pill's left edge and `SPACING.pageInset` left of the leftmost weapon target; draws over the conversation box and under the HUD controls; takes no input. See [Item notice](#item-notice)                                                                                                                                                                                                                                                                                                                                                              | `ITEM_NOTICE`, `itemNotice.ts`, to implement                                                                                |
+| Sticks       | Drawn ring edges 50 logical px from each outer screen side and 50 above the screen bottom, ignoring safe insets, moved inward only to stay at least 8 inside the game area. Both sticks use canonical TOUCH_STICK; Use retains its (-77, -100) offset from aim.                                                                                                                                                                                                                                                                                                                                                                                                                        | `TOUCH_STICK`, `touchControls.ts`, to implement, now `sticks.ts`; `STICK_AREA_MARGIN` and `controlsBottom()`, `playView.ts` |
+| Use          | Touch only: Chibi's touch disc (`USE_DISC`), a 75 frame with an open ring 73 across and the action's symbol, at the sticks' 85% opacity ([Controls](controls.md#use-disc)); its centre the aim stick's rest centre plus `USE_DISC.fromAim` (-77, -100), as Chibi places Use from Jump: (556, 173) at the 720 base and (615, 173) at 844x390, the same with phone insets because the sticks ignore them; press shape a circle of radius 100 (`TOUCH_CIRCLE_RADIUS` 63 plus the 37 hint radius) about the centre, cut on the line midway to the aim stick's centre; shown only while an interaction is available, on a touch screen, outside modals                                      | `USE_DISC`, `touchControls.ts`, to implement; replaces `USE_BUTTON`                                                         |
+| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                                                                                            | `HUD_BUTTON`, `playView.ts`                                                                                                 |
+| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)` (`hudButtonTarget(2)` while Exit shows), one pitch (57) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                   | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen                                         |
+| Exit         | Start screen only, and only where the platform can close the app: the same `HUD_BUTTON` with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, the rightmost disc, so Settings and Achievements each move one pitch left. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                   | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`, to implement on the start screen                                         |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                 | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`                                                |
+| Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 53.5 (65.5 at a top of 12), name tab top 10 higher (55.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                           | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                                                                      |
 
 ### Touch controls by view
 
 Rings are drawn edges and centres are rest centres. Both sticks ignore safe
 insets: each ring's drawn edge sits 50 from its outer screen side and 50 above
 the screen bottom, moved inward only as far as needed to stay at least 8 inside
-the game area. The shield is independent, centred on the HUD rect with its
-drawn bottom 14.5 above the viewport bottom. Phone insets in this table are
+the game area. The shield is independent of them: centred on the HUD rect, its
+drawn bottom on that rect's bottom edge, 12 above the game area's bottom, or
+`ceil(max(12, inset bottom))` above the view's bottom where that is higher.
+Phone insets in this table are
 left 43, right 43, top 0 and bottom 19 logical px.
 
-| Screen, insets              | Logical view, play view x | Move ring, x and y | Aim ring, x and y | Rest centres           | Shield pill x at levels 1, 2, 3; y                       | Use centre |
-| --------------------------- | ------------------------- | ------------------ | ----------------- | ---------------------- | -------------------------------------------------------- | ---------- |
-| 720x360                     | 720x360, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 317.5-345.5                   | (556, 173) |
-| 720x360, phone insets       | 720x360, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 317.5-345.5                   | (556, 173) |
-| 844x390                     | 779.08x360, 29            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 317.5-345.5 | (615, 173) |
-| 844x390, phone insets       | 779.08x360, 29            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 317.5-345.5 | (615, 173) |
-| 844x390, bottom 19          | 779.08x360, 29            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 317.5-345.5 | (615, 173) |
-| 720x360, left 43, bottom 19 | 720x360, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 317.5-345.5                   | (556, 173) |
-| 844x390, left 47            | 779.08x360, 29            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 317.5-345.5 | (615, 173) |
-| 1280x720                    | 720x405, 0                | 50-123, 279-352    | 597-670, 279-352  | (86, 315), (633, 315)  | 282-438, 252-468, 222-498; 362.5-390.5                   | (556, 215) |
-| 2400x1080                   | 800x360, 40               | 50-123, 237-310    | 677-750, 237-310  | (86, 273), (713, 273)  | 322-478, 292-508, 262-538; 317.5-345.5                   | (636, 173) |
-| 2404x1080 at dpr 2.5        | 801.33x360, 40            | 50-123, 237-310    | 678-751, 237-310  | (86, 273), (714, 273)  | 322.67-478.67, 292.67-508.67, 262.67-538.67; 317.5-345.5 | (637, 173) |
-| 2560x1080                   | 853.33x360, 66            | 74-147, 237-310    | 705-778, 237-310  | (110, 273), (741, 273) | 348.67-504.67, 318.67-534.67, 288.67-564.67; 317.5-345.5 | (664, 173) |
+| Screen, insets              | Logical view, play view x, y | Move ring, x and y | Aim ring, x and y | Rest centres           | Shield pill x at levels 1, 2, 3; y                   | Use centre |
+| --------------------------- | ---------------------------- | ------------------ | ----------------- | ---------------------- | ---------------------------------------------------- | ---------- |
+| 720x360                     | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 320-348                   | (556, 173) |
+| 720x360, phone insets       | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 313-341                   | (556, 173) |
+| 844x390                     | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (615, 173) |
+| 844x390, phone insets       | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (615, 173) |
+| 844x390, bottom 19          | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (615, 173) |
+| 720x360, left 43, bottom 19 | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 313-341                   | (556, 173) |
+| 844x390, left 47            | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (615, 173) |
+| 1280x720                    | 720x405, 0, 22               | 50-123, 282-355    | 597-670, 282-355  | (86, 318), (633, 318)  | 282-438, 252-468, 222-498; 342-370                   | (556, 218) |
+| 2400x1080                   | 800x360, 40, 0               | 50-123, 237-310    | 677-750, 237-310  | (86, 273), (713, 273)  | 322-478, 292-508, 262-538; 320-348                   | (636, 173) |
+| 2404x1080 at dpr 2.5        | 801.33x360, 40, 0            | 50-123, 237-310    | 678-751, 237-310  | (86, 273), (714, 273)  | 322.67-478.67, 292.67-508.67, 262.67-538.67; 320-348 | (637, 173) |
+| 2560x1080                   | 853.33x360, 66, 0            | 74-147, 237-310    | 705-778, 237-310  | (110, 273), (741, 273) | 348.67-504.67, 318.67-534.67, 288.67-564.67; 320-348 | (664, 173) |
 
 The joystick ring offsets are independent of the shield's bottom margin.
 `USE_DISC.fromAim` (-77, -100) is unchanged, so Use follows the aim stick's
@@ -492,12 +498,15 @@ with fractional widths.
 | Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                         | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                  |
 | Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                   | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge  |
 
-The shield pill's drawn bottom margin matches the resource pill's drawn top
-margin: `HUD_EDGE + STATUS_PILL.y` (12 + 2.5 = 14.5 logical px). Both use the
-full viewport without safe insets, at every Shield level on desktop and touch.
-CSS derives the shield bottom from `fromHudEdge("top", STATUS_PILL.y)`; layout
-geometry uses `view.height - (hudRect(NO_INSETS, view).y + STATUS_PILL.y)`.
-This anchor is independent of the sticks' drawn edges and clamp.
+The shield pill's drawn bottom sits on the HUD rect's bottom edge, `HUD_EDGE`
+(12) above the game area's bottom, as the pause disc's drawn top sits
+`HUD_EDGE` below its top, at every Shield level on desktop and touch. Where
+`ceil(max(12, inset bottom))` above the view's bottom is higher, the rect's
+bottom, and the pill with it, sits there instead, clear of the inset. CSS anchors the pill's bottom
+with `fromHudEdge("bottom")`; layout geometry uses
+`shieldPillRect(insets, view, level)`, whose bottom is the bottom of
+`hudRect(insets, view)`. This anchor is independent of the sticks' drawn edges
+and clamp.
 
 Delay strip (`SHIELD_PILL.delayStrip`), Gameplay's recharge timer:
 
@@ -589,7 +598,7 @@ Destinations, at HUD rect top + 16.5 (the HUD row's centre line) on the y axis:
 | New weapon, a weapon's ammo                    | That weapon's disc: its target's left + 24                                                                                                                                                     |
 | Holodisk                                       | None; the chip centres on the pill and fades in place                                                                                                                                          |
 | Weapon level                                   | That weapon's disc: its target's left + 24                                                                                                                                                     |
-| Shield level                                   | The shield pill's shield icon: the shield pill's left + 15 (the icon box's centre), on the pill's centre line (y 306 at the 720 base, 287 with phone insets, 338 at 1280x720), not the HUD row |
+| Shield level                                   | The shield pill's shield icon: the shield pill's left + 15 (the icon box's centre), on the pill's centre line (y 334 at the 720 base, 327 with phone insets, 356 at 1280x720), not the HUD row |
 | Engine level, Tractor beam level, paint scheme | None; the chip centres on the pill and fades in place, as a holodisk's                                                                                                                         |
 
 A Shield level's fly runs the same curve to the bottom centre: across under
@@ -707,9 +716,11 @@ marker's centre is where the ray from the view's centre toward its object meets
 the marker rect: the game area intersected with
 `safeRect(insets, SAFE_MARGIN.edge, view)`, moved in on every side by
 `edgeMarkerInset`, the glyph's half extent plus the light-field outline (1 on
-a light field, 0 on a dark one) plus `EDGE_MARKERS.gap` 1. So every marker's
-outermost drawn pixel sits 1 inside the safe game area, never under a notch,
-a curved corner or the home bar.
+a light field, 0 on a dark one) plus `EDGE_MARKERS.gap` 1. Each edge of the
+marker rect then moves inward to the nearest device pixel edge along the
+frame's axes (a turned frame's own axes). Every marker's outermost drawn pixel
+therefore sits 1 inside the safe game area, moved inward by less than one
+device pixel, never under a notch, a curved corner or the home bar.
 
 | Kind                     | Half extent | Inset, dark | Inset, light |
 | ------------------------ | ----------: | ----------: | -----------: |
@@ -721,7 +732,8 @@ field each line moves 1 further in, and an enemy's lines sit 2 further out):
 
 | View                  | Safe game area, x and y | Left, right centres | Top, bottom centres | Corners                                        |
 | --------------------- | ----------------------- | ------------------- | ------------------- | ---------------------------------------------- |
-| 720x360, 1280x720     | 0 to 720, 0 to 360      | 6, 714              | 6, 354              | (6, 6), (714, 6), (6, 354), (714, 354)         |
+| 720x360               | 0 to 720, 0 to 360      | 6, 714              | 6, 354              | (6, 6), (714, 6), (6, 354), (714, 354)         |
+| 1280x720              | 0 to 720, 22 to 382     | 6, 714              | 28, 376             | (6, 28), (714, 28), (6, 376), (714, 376)       |
 | 720x360, phone insets | 43 to 677, 0 to 341     | 49, 671             | 6, 335              | (49, 6), (671, 6), (49, 335), (671, 335)       |
 | 844x390               | 29 to 749, 0 to 360     | 35, 743             | 6, 354              | (35, 6), (743, 6), (35, 354), (743, 354)       |
 | 844x390, insets 43    | 43 to 736.08, 0 to 341  | 49, 730.08          | 6, 335              | (49, 6), (730.08, 6), (49, 335), (730.08, 335) |
@@ -732,12 +744,13 @@ each edge's own inset, so a one-sided notch moves only its side.
 Clearance along the edges, from the band the 10-across markers can occupy
 (dark field; a light field's band is 2 deeper):
 
-| Edge and control                                 | 720x360 | Phone insets | 844x390 | 844x390, insets 43 |
-| ------------------------------------------------ | ------: | -----------: | ------: | -----------------: |
-| Top band to the pause and weapon discs           |       1 |            1 |       1 |                  1 |
-| Side band to the pause and weapon discs          |       1 |      11 over |       1 |            11 over |
-| Side band to the stick rings                     |      29 |      11 over |      29 |                 15 |
-| Bottom band to the sticks and shield pill bottom |      29 |           29 |      29 |                 29 |
+| Edge and control                        | 720x360 | Phone insets | 844x390 | 844x390, insets 43 |
+| --------------------------------------- | ------: | -----------: | ------: | -----------------: |
+| Top band to the pause and weapon discs  |       1 |            1 |       1 |                  1 |
+| Side band to the pause and weapon discs |       1 |      11 over |       1 |            11 over |
+| Side band to the stick rings            |      29 |      11 over |      29 |                 15 |
+| Bottom band to the stick rings          |      39 |           20 |      39 |                 20 |
+| Bottom band to the shield pill bottom   |       1 |      11 over |       1 |            11 over |
 
 - Markers draw under the sticks (`STICK_DEPTHS`) and the HTML HUD, so an
   overlap hides part of a marker and never covers a control.
@@ -748,7 +761,12 @@ Clearance along the edges, from the band the 10-across markers can occupy
   the same 43 inset: a side marker in the HUD row's span (12 to 60.5, count
   pills included) sits under that disc. At 720x360 with phone insets the stick
   rings start at the 43 inset too, so a side marker in the rings' span (228 to 301) sits under the open ring's band, and shows through its clear centre.
-- The shield pill and the Use disc sit 29 or more from every band.
+- Bottom markers draw under the shield pill like other controls: they keep
+  their place on the edge. Without a bottom inset the dark band clears the
+  pill's drawn bottom by 1 and a light band reaches 1 under it; with the 19
+  inset the pill's bottom (341) is the safe bottom, so the band lies under the
+  pill across its width.
+- The Use disc sits more than 70 from every band.
 
 ### Loading bar
 
@@ -874,7 +892,7 @@ Constants: `ACHIEVEMENTS_CARD`, `achievements-card.ts`.
 | 720x360               | 688x328    | 688x318, x 16 |    320 |    3 |       21 |
 | 720x360, phone insets | 634x325    | 634x318, x 43 |    293 |    3 |     19.5 |
 | 844x390, insets 43    | 693.08x325 | 688x318       |    320 |    3 |     19.5 |
-| 1280x720 (720x405)    | 688x373    | 688x318, x 16 |    320 |    3 |     43.5 |
+| 1280x720 (720x405)    | 688x328    | 688x318, x 16 |    320 |    3 |       43 |
 
 Card height at three rows: `50 + 3 * 60 + 2 * 8 + 8 + 48 + 16` = 318, inside
 every available height, so the card never scrolls.
@@ -976,8 +994,8 @@ app, Exit takes `hudButtonTarget(0)` and the other two move one pitch left, to
 state except the action row's contents.
 
 Every part except the field and the nav discs is placed in play-view px, from
-`playView(view)`'s top-left (`x0`, 0), so it stays centred on the game area at
-every aspect.
+`playView(view)`'s top-left (`x0`, `y0`), so it stays centred on the game area
+at every aspect.
 
 | Token             | Value                                               | Rule                                                                                                                | Constant                                    |
 | ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
@@ -996,8 +1014,11 @@ every aspect.
   face box is its press area (at least 48 per axis); the 16 gap separates
   Restart and Continue.
 - Draw order: field, jets, ship frame, wordmark, actions, note, nav discs.
-- Taller views (1280x720 is 720x405) keep every part at its play-view place
-  from the top and show more field below; the field covers to 540.
+- Taller views (1280x720 is 720x405, `y0` 22) keep every part at its
+  play-view place, so the parts move down with the centred game area, and show
+  more field below. The field's top-left is also from (`x0`, `y0`): at
+  1280x720 it spans view y 22 to 562, and the space background fills the 22
+  band above it.
 
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
@@ -1134,7 +1155,7 @@ top is its bottom minus its height.
 | 720x360  | 720x360      | 43, 43, 19 | 43..677 (634), 341       | 59..408 (349)       | 420    | 433..661 (228)          | 644..677 x 12..45; 636.5..684.5 x 4.5..52.5         | 548..620 x 14.5..42.5       |
 | 844x390  | 779.08x360   | 43, 43, 19 | 43..736.08 (693.08), 341 | 59..453.37 (394.37) | 465.37 | 478.37..720.08 (241.71) | 703.08..736.08 x 12..45; 695.58..743.58 x 4.5..52.5 | 607.08..679.08 x 14.5..42.5 |
 | 844x390  | 779.08x360   | None       | 16..763.08 (747.08), 344 | 32..459.85 (427.85) | 471.85 | 484.85..747.08 (262.23) | 705.08..738.08 x 12..45; 697.58..745.58 x 4.5..52.5 | 609.08..681.08 x 14.5..42.5 |
-| 1280x720 | 720x405      | None       | 16..704 (688), 389       | 32..423.22 (391.22) | 435.22 | 448.22..688 (239.78)    | 675..708 x 12..45; 667.5..715.5 x 4.5..52.5         | 579..651 x 14.5..42.5       |
+| 1280x720 | 720x405      | None       | 16..704 (688), 389       | 32..423.22 (391.22) | 435.22 | 448.22..688 (239.78)    | 675..708 x 34..67; 667.5..715.5 x 26.5..74.5        | 579..651 x 36.5..64.5       |
 
 Panel height and top by page:
 
@@ -1175,7 +1196,7 @@ one's resolution at 206 characters, a 228 panel at all four screens. Gameplay's 
 heading and two wrapped choices it is six lines in the 349 column and five in
 the wider ones, a 192 or 166 text column beside the 196 choice column (176 at
 844x390 without insets), so panels of 228, 228, 208 and 228 at the four screens
-above, under their caps of 280.5, 280.5, 283.5 and 328.5.
+above, under their caps of 280.5, 280.5, 283.5 and 306.5.
 
 The limits give, not the layout. A wrapped label adds 20 to its face (56). At
 720x360 with insets the cap is 341 - 60.5 = 280.5, so the choice column may
@@ -1293,11 +1314,12 @@ and the name tab overhangs it by 10.
   480), and the name tab keeps the left end. Story pages treat those speakers
   alike: no portrait, and the text fills the inner width.
 - Clearance at the 360-high view: the box spans 65.5 to 125.5. The ship's
-  pivot sits at the view centre (180) with a 42 display frame; its highest
+  pivot sits at the play view's centre (180) with a 42 display frame; its highest
   drawn hull point across the 32 headings is 168.17 (heading 4, the apex),
   42.67 below the box. The rule is at least 24.
-- At the 1280x720 view (720x405 logical) the box bottom is still 125.5 and the
-  hull top 190.67, 65.17 below.
+- At the 1280x720 view (720x405 logical) the HUD rect and the ship's pivot
+  move down 22 with the game area: the box spans 87.5 to 147.5 and the hull top
+  is 190.17, 42.67 below, as at the 360-high view.
 
 #### Tab clearance
 
@@ -1334,7 +1356,8 @@ inside the arc, a panel for the chosen destination, and one destination action
 below it. There is no close X or Back button.
 Constants: `GALAXY_MAP`, `GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS` and `GALAXY_MAP_MOVE`,
 `src/ui/layout/galaxyMap.ts`. Positions are logical px from the play view's
-top-left (add `playView.x`, 29 at 779 wide); "insets" means the phone insets 43
+top-left (add `playView.x` and `playView.y`: 29 and 0 at 779 wide, 0 and 22
+at 720x405); "insets" means the phone insets 43
 left and right and 19 bottom at 720x360. Route order, numbers, names and
 flavour lines are Gameplay's; marker colours and previews are in
 [Galaxies](galaxies.md#markers).
@@ -1390,8 +1413,8 @@ mark. Across the
 a resting hull ends 23.2 or more above its marker's centre, clear of the
 selected ring (radius 18) and the focus ring (22). Resting and in flight, the
 hull keeps 23.5 from every label pill, 18.8 from every leg's stroke and 6.1
-from the view's top. At markers 3 and 4 the resting hull starts at 10.3 and
-7.8, over the rules at 16 and 19, which draw under it.
+from the play view's top. At markers 3 and 4 the resting hull starts at 10.3 and
+7.8 at 360-high views, over the rules at 16 and 19, which draw under it.
 
 Marker faces:
 
@@ -1555,8 +1578,9 @@ Tests:
   720x360 and phone insets, the widest pill (205.64) keeps `SPACING.pageInset`
   from the leftmost weapon target.
 - `SHIELD_PILL` is 156, 216 or 276 wide by Shield level, centred on the HUD
-  rect, its bottom level with the sticks' drawn bottom, at least 45 from both
-  ring frames and clear of the bottom inset.
+  rect, its drawn bottom on the HUD rect's bottom edge (`HUD_EDGE` above the
+  game area's bottom, clear of the bottom inset), at least 45 across from both
+  ring frames.
 - `USE_DISC`'s centre is the aim stick's rest centre plus (-77, -100); its
   press circle never takes a press inside the conversation box; the sticks
   and Use are absent on desktop and under modals.
