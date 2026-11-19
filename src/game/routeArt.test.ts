@@ -54,7 +54,7 @@ describe("route map art", () => {
       ],
       ground: "/art/route-ground.png",
       locked: "#8B8B8B",
-      sky: "/art/route-sky.png",
+      sky: "/art/route-sky.webp",
     });
     expect(art?.homePreview).toBeUndefined();
     expect(art?.homeScene).toBeUndefined();

@@ -1317,7 +1317,7 @@ try {
     await selector()
       .locator(".ada-route-sky")
       .evaluate((sky) => sky.style.backgroundImage),
-    'url("/art/route-sky.png")',
+    'url("/art/route-sky.webp")',
     "Galaxy selection is the route map over the route sky",
   );
   assert.equal(await selector().locator(".ada-route-figure").count(), 2);
