@@ -63,3 +63,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0300 | Order Pause and Menu by label and show Exit only in a closable installed app    | [ada-0300.md](../work/ada-0300.md) |
 | ada-0318 | Measure DOM boxes in the turned frame's own axes                                | [ada-0318.md](../work/ada-0318.md) |
 | ada-0321 | Place scan receipts by Art's start and rise rules                               | [ada-0321.md](../work/ada-0321.md) |
+| ada-0326 | Show the final ore cost tick when shield recharge stops                         | [ada-0326.md](../work/ada-0326.md) |
