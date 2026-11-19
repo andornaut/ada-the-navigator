@@ -84,6 +84,10 @@ const [
   { ASTEROID_ART },
   asteroidArt,
   { orbitMotion },
+  { ensureDestination },
+  { enemyActorAvailable },
+  { enemyActorDefinition },
+  { createEnemy },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
   import(new URL("../src/data/content.ts", import.meta.url)),
@@ -92,6 +96,10 @@ const [
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
   import(new URL("../src/model/asteroids.ts", import.meta.url)),
+  import(new URL("../src/model/flight.ts", import.meta.url)),
+  import(new URL("../src/data/enemyActors.ts", import.meta.url)),
+  import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
+  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
 ]);
 
 // The play view's projection of a world offset from Ada to logical screen px, and back.
@@ -191,6 +199,87 @@ function emptyFlight(rockArt, debris, galaxy, unlocked) {
   flight.shots = [];
   reseedFlight(model, backdropSeed(rockArt, debris, flight.player));
   return model;
+}
+
+// The light-field keyline proof (art/galaxies.md "Light fields"): galaxy `galaxy`'s flight with a
+// held frigate and interceptor under way so their jets show, two traveling debris pieces and an
+// ore pickup beside Ada, who starts beside Cartwheel's hub, Needle's practice course or
+// Andromeda's Pip so their story craft, buoys, gates and beacons show too. Each enemy takes its
+// galaxy's own equipment, as canonical saves carry it.
+const KEYLINE_SITES = { 2: "hub", 4: "needlePractice", 5: "pip" };
+export function keylineFixture(galaxy) {
+  const model = new GameModel(CONTENT);
+  model.state.unlocked = [1, 2, 3, 4, 5, 6];
+  model.startGalaxy(galaxy);
+  playOpening(model);
+  const flight = model.state.flight;
+  assert.ok(flight, `The keyline proof requires galaxy ${galaxy}'s flight`);
+  model.state.progress[galaxy].introduced = true;
+  model.state.dialogue = null;
+  const site = KEYLINE_SITES[galaxy];
+  if (site) {
+    const place = ensureDestination(CONTENT, site, flight);
+    const beside = toWorld({ x: -150, y: 40 });
+    flight.player = { x: place.x + beside.x, y: place.y + beside.y };
+  }
+  flight.velocity = { x: 0, y: 0 };
+  flight.shots = [];
+  const at = (screen) => {
+    const offset = toWorld(screen);
+    return { x: flight.player.x + offset.x, y: flight.player.y + offset.y };
+  };
+  for (const [archetype, screen] of [
+    ["frigate", { x: -170, y: -90 }],
+    ["interceptor", { x: 120, y: 110 }],
+  ]) {
+    assert.ok(enemyActorAvailable(galaxy, archetype), `${archetype} flies in galaxy ${galaxy}`);
+    const id = `browser-keyline:${archetype}`;
+    const definition = enemyActorDefinition(galaxy, archetype, id, 1);
+    const position = at(screen);
+    const enemy = createEnemy(
+      definition,
+      { archetype, id, packId: null, phase: 0, weaponLevel: 1 },
+      position,
+    );
+    enemy.primaryCooldown = 999;
+    for (const part of enemy.hardpoints) {
+      part.cooldown = 999;
+    }
+    enemy.velocity = { x: 30, y: -30 };
+    flight.objects.push({
+      ...position,
+      enemy,
+      hp: enemy.hp,
+      id,
+      kind: "enemy",
+      persistent: false,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+    });
+  }
+  for (const [index, screen] of [
+    { x: -60, y: 120 },
+    { x: 170, y: -40 },
+  ].entries()) {
+    flight.objects.push({
+      ...at(screen),
+      hp: 3,
+      id: `ballistic:0,0:9${index}`,
+      kind: "debris",
+      radius: 18,
+      velocity: { x: 12, y: -4 },
+    });
+  }
+  flight.objects.push({
+    ...at({ x: 60, y: -100 }),
+    hp: 1,
+    id: "browser-keyline:ore",
+    kind: "pickup",
+    radius: 7,
+    role: "cargo",
+  });
+  const serialized = model.save();
+  assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts the proof");
+  return serialized;
 }
 
 // The backdrop proof: galaxy `galaxy`'s backdrop layers and both rock depths with no play objects.

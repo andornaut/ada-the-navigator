@@ -6,6 +6,7 @@ import { SCREEN } from "../src/data/screen.ts";
 import {
   asteroidFixture,
   hideOverCanvas,
+  keylineFixture,
   logicalSize,
   observe,
   output,
@@ -22,7 +23,7 @@ import {
 // canonical fixtures for Art to review, outside the gating smoke. A run fails only on a page
 // error, a failed request or a fixture that never draws Art's frames.
 const events = { errors: [], failedRequests: [], badResponses: [], captures: [] };
-const CAPTURE_LIMIT_SECONDS = 120;
+const CAPTURE_LIMIT_SECONDS = 300;
 const watchdog = setTimeout(() => {
   save("events.json", events);
   save("result.json", {
@@ -43,6 +44,8 @@ const [
   { readAsteroidCatalog },
   asteroidArt,
   { DEVICE_STORAGE_KEYS },
+  viewScale,
+  { GALAXY_ID },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
   import(new URL("../src/data/content.ts", import.meta.url)),
@@ -54,6 +57,8 @@ const [
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
   import(new URL("../src/ui/deviceSettings.ts", import.meta.url)),
+  import(new URL("../src/ui/layout/viewScale.ts", import.meta.url)),
+  import(new URL("../src/data/galaxies.ts", import.meta.url)),
 ]);
 
 /**
@@ -80,12 +85,12 @@ let page;
 async function closeFixture() {
   await context?.close();
 }
-async function openFixture(serialized, { frozen = true, reducedMotion = false } = {}) {
+async function openFixture(
+  serialized,
+  { frozen = true, reducedMotion = false, viewport = { width: 1280, height: 720 } } = {},
+) {
   await closeFixture();
-  const opened = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-    hasTouch: true,
-  });
+  const opened = await browser.newContext({ viewport, hasTouch: true });
   context = opened;
   await opened.addInitScript(reportViolations);
   await opened.addInitScript(freezable);
@@ -112,12 +117,23 @@ async function openFixture(serialized, { frozen = true, reducedMotion = false } 
   await page.clock.install();
   await page.goto(`${previewOrigin}/play/`);
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
-  // Held from the start screen, so the game boots as a showing page and the flight never steps.
+  // Continue takes effect only on a showing page, so it runs on the paused clock and the frames
+  // it takes are stepped one at a time; the flight is then held hidden while its art loads.
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+  await page.locator('.ada-start-actions > [data-action="continue"]').click();
+  const space = page.locator('#game-status[data-mode="space"]');
+  async function goLive(frames) {
+    assert.ok(frames < 20, "Continue reaches the flight within 20 frames");
+    await page.clock.runFor(16);
+    if ((await space.count()) === 0) {
+      await goLive(frames + 1);
+    }
+  }
+  await goLive(0);
   await page.evaluate((held) => {
     window.adaCaptureFrozen = held;
   }, frozen);
-  await page.locator('.ada-start-actions > [data-action="continue"]').click();
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page.clock.resume();
   await page.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
   await page.locator('#game-status[data-asteroids="art"]').waitFor({ state: "attached" });
   await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
@@ -393,12 +409,64 @@ async function captureRocks() {
   });
 }
 
+// Phone insets in logical px (art/layout.md): 43 left and right, 19 bottom.
+const PHONE_INSETS = { bottom: 19, left: 43, right: 43, top: 0 };
+/**
+ * Publishes the view properties the view scale bridge would for the phone insets on the open
+ * fixture's canvas size, then steps the held flight a frame so the scene lays out with them.
+ */
+async function phoneInsets() {
+  const size = await page.evaluate(() => {
+    const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
+    return { height: canvas.height, width: canvas.width };
+  });
+  const plain = viewScale.playLayout(size);
+  const cssInsets = Object.fromEntries(
+    Object.entries(PHONE_INSETS).map(([side, value]) => [side, value * plain.s]),
+  );
+  await page.evaluate(
+    ({ entries, event }) => {
+      const app = document.querySelector("#app");
+      for (const [name, value] of entries) {
+        app.style.setProperty(name, value);
+      }
+      window.dispatchEvent(new Event(event));
+    },
+    {
+      entries: viewScale.viewProperties({ ...plain, cssInsets, insets: { ...PHONE_INSETS } }),
+      event: viewScale.VIEW_SCALE_EVENT,
+    },
+  );
+  await page.clock.runFor(100);
+}
+
+/**
+ * Light-field keylines (art/galaxies.md "Light fields"): each light galaxy's held flight with its
+ * keylined play objects, debris and enemy jets, at 1280x720 and at 720x360 with the phone insets.
+ */
+async function captureKeylines([galaxy, ...rest] = [1, 2, 3, 4, 5]) {
+  if (galaxy === undefined) {
+    return;
+  }
+  const serialized = keylineFixture(galaxy);
+  const name = GALAXY_ID[galaxy];
+  fixtureFile(`keylines-${name}`, "Light-field keyline proof flight for Art review", serialized);
+  // Each size opens its own page, one renderer at a time.
+  await openFixture(serialized);
+  await shot(`keylines-${name}-1280x720.png`);
+  await openFixture(serialized, { viewport: { width: 720, height: 360 } });
+  await phoneInsets();
+  await shot(`keylines-${name}-720x360-insets.png`);
+  await captureKeylines(rest);
+}
+
 try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
   browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
   await captureHeavies();
   await captureRocks();
+  await captureKeylines();
   await closeFixture();
   assert.deepEqual(events.errors, [], "Captured pages must report no errors");
   assert.deepEqual(events.failedRequests, [], "Captured pages must load every request");
