@@ -1,7 +1,7 @@
 ---
 id: TBD
 title: Fix scan receipt timing, order and placement
-status: approved
+status: done
 approved: Art review, 2026-11-18, under the user's scan-feedback contract
 design: ui
 related: [ada-0127]
@@ -39,3 +39,9 @@ the touch controls. The rise stops below the conversation box.
   rises, so a box shown after it passed never pushes it down.
 
 ## Outcome
+
+The receipt line shows on the rectangle's first frame in every capture state at 1280x720 and
+720x360 with phone insets. At Old Seed Barge the drones' warning shows through the rise and the
+receipt follows it. A centred target rises 28 logical px, to 8 below the conversation box. The
+remembered start at 1280x720 sits left of the aim stick and rises 58 to 4 below the Use disc's
+grown rect. At 720x360 it sits under the aim stick, clear of it, with no room to rise.
