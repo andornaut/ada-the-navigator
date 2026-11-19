@@ -9,7 +9,7 @@ import { bentPlate, brokenGirder, type Solid, unit } from "./debris.ts";
 import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import {
-  edgeContrast,
+  floorEdge,
   lift,
   MARKER,
   OUT,
@@ -123,8 +123,8 @@ const frames = PIECES.map((piece) => {
 const edgeOf = (body: readonly string[]) =>
   Math.min(
     ...frames.map(({ frame, sets }) => {
-      const medians = sets.map(
-        (facets) => edgeContrast(frame, frame, drawFrame(body, facets, frame / 2)).median,
+      const medians = sets.map((facets) =>
+        floorEdge(frame, frame, drawFrame(body, facets, frame / 2)),
       );
       return medians.toSorted((a, b) => a - b)[Math.floor(medians.length / 2)]!;
     }),

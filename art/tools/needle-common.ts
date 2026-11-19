@@ -1,17 +1,28 @@
 // Shared parts of the Needle generators: the Weaver palette, frame layout, SVG output and dock
 // points in the station family's schema. Contract: art/needle.md.
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { fillPolygon, rgba } from "./paint.ts";
+import { floorColour } from "./palette.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import { DISPLAY_SCALE, type Face } from "./solid.ts";
 
 export const OUT = fileURLToPath(new URL("../../public/art/needle/", import.meta.url));
 export const PUBLIC = "/art/needle/";
 
-// Needle's field (public/art/galaxies.json `needle`), for the contrast checks.
-export const FIELD = "#26221F";
+// Needle's field (public/art/galaxies.json `needle`), for the contrast checks, and whether it is
+// a light field (`tint.light`).
+const needle = (
+  JSON.parse(
+    readFileSync(fileURLToPath(new URL("../../public/art/galaxies.json", import.meta.url)), "utf8"),
+  ) as {
+    galaxies: Record<string, { colors: Record<string, string>; tint: { light?: boolean } }>;
+  }
+).galaxies.needle!;
+export const FIELD = needle.colors.background!;
+export const LIGHT = Boolean(needle.tint.light);
 export const MARKER = "#CFC5BD";
 
 // Weaver palette.
@@ -220,6 +231,15 @@ export function edgeContrast(
     median: values[Math.floor(values.length / 2)] ?? 0,
     share: values.filter((v) => v >= 3).length / Math.max(1, values.length),
   };
+}
+
+// The edge contrast that must meet a floor on Needle's field. On a light field Tech draws the ink
+// keyline under the sprite, so the keyline meets the floor (`floorColour`, art/tools/palette.ts)
+// and the fills stay as drawn; on a dark field the sprite's own edge median must.
+export function floorEdge(width: number, height: number, polygons: readonly Polygon[]): number {
+  return LIGHT
+    ? contrast(floorColour(true, FIELD), FIELD)
+    : edgeContrast(width, height, polygons).median;
 }
 
 // A colour ramp lifted by `dl` in Oklab L, hue and chroma kept.

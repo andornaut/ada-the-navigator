@@ -8,7 +8,7 @@ import { unit } from "./debris.ts";
 import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import {
-  edgeContrast,
+  floorEdge,
   lamp,
   lift,
   OUT,
@@ -32,12 +32,12 @@ const LAMP_EVERY = 4;
 export const ORIENTATIONS = 8;
 // Gates sit at least this far off screen horizontal (Gameplay).
 const MIN_SCREEN_ANGLE = 30;
-// Edge floors at display size on the field.
+// Edge floors at display size on the field, met by the ink keyline on a light field (floorEdge).
 const LIT_FLOOR = 3;
 const DARK_FLOOR = 3;
 
 const LIT = ["#F3EDE6", "#DED5CC", "#C4BAB0", "#A69C93", "#8A8178"];
-// The dark ramp before its lift: a dimmed silver; lifted in Oklab L until its edge clears 3:1.
+// The dark ramp before its lift: a dimmed silver; lifted in Oklab L until its floor edge clears 3:1.
 const DARK_BASE = ["#A0988F", "#8B837B", "#766F68", "#625C56", "#524C47"];
 const LAMP_DARK = "#4d4640";
 const VEIL_ALPHA = 0.16;
@@ -186,7 +186,7 @@ const centre = frame / 2;
 
 // The least lift (0.01 steps) that puts every dark orientation's full silhouette over the floor.
 const worst = (ramp: readonly string[], lit: boolean) =>
-  Math.min(...USED.map((o) => edgeContrast(frame, frame, draw(hoop(o, lit, ramp), centre)).median));
+  Math.min(...USED.map((o) => floorEdge(frame, frame, draw(hoop(o, lit, ramp), centre))));
 let darkLift = 0;
 while (worst(lift(DARK_BASE, darkLift), false) < DARK_FLOOR) {
   darkLift = round(darkLift + 0.01);
