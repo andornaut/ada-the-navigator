@@ -898,19 +898,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Ada starts offline from a known complete cached build. A first visit without a
   complete cache may bootstrap from the network; ordinary cached launches never
   wait for a mandatory new-version download.
-  Version checks run on launch, every Back to title (from the pause card or Ada's
-  room page) and resuming the app while the start screen shows. Closing a card
-  on the start screen is not an arrival. A complete waiting build is offered only
-  on the uncovered start screen, in a
-  compact modal titled "Update available", with secondary "Cancel" on the left,
-  primary "Update now" on the right, the ordinary close X and no body text.
-  Update now activates it and reloads once. Cancel, the close X, an outside tap,
-  Escape and back keep the running version and dismiss the offer until the next
-  arrival, when a fresh check offers it again. A complete waiting build also
-  activates automatically only on a fresh document launch/restart, before game
-  construction and save access, never on Back to title or a visibility resume in
-  the same document. Settings and install steps covering the start screen suppress
-  the offer. Ada retains the [canonical newer-save recovery exception](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates).
+  Updates download in the background and stage apart from the running build.
+  At launch, a complete staged build activates silently, before game
+  construction and save access, with no prompt. During a session, once staging
+  completes, a compact modal titled "Update available" shows wherever the player
+  is and pauses play, with secondary "Cancel", primary "Update now", the
+  ordinary close X and no body text. Update now saves, then switches to the new
+  build and reloads once. Cancel, the close X, an outside tap, Escape and back
+  dismiss it and continue play on the running build; the next launch activates
+  the staged build silently. A session never switches builds without Update now,
+  including on Back to title or a visibility resume. Ada retains the [canonical newer-save recovery exception](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates).
   Start, incompatible save loading and all save writes stay fenced until the new
   document rechecks compatibility. The save remains untouched while recovery is
   pending.

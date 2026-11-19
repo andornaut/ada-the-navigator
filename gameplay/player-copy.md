@@ -1277,7 +1277,8 @@ beacon light. Welcome!"
   only where it closes the installed app.
   Menu uses the same entry position as Pause; Settings has no standalone
   icon. Closing Menu or its children preserves the exact underlying context.
-- Update offer: title "Update available", with Cancel and Update now.
+- Update offer, shown in session once an update is staged: title "Update
+  available", with Cancel and Update now.
 - Settings rows, each with its note:
   - Move controls: "Touch still works when hidden"
   - Aim controls: "Touch still works when hidden"
