@@ -82,3 +82,4 @@ Reference: [Architecture](../../src/README.md#architecture),
 | ada-0322 | Stop each resize from leaking WebGL textures and canvases                | [ada-0322.md](../work/ada-0322.md) |
 | ada-0323 | Re-rasterise only the SVGs in use on resize                              | [ada-0323.md](../work/ada-0323.md) |
 | ada-0325 | Profile the main screens and cut measured per-frame waste                | [ada-0325.md](../work/ada-0325.md) |
+| ada-0329 | Make enemies avoid scenery from farther away with fewer steers           | [ada-0329.md](../work/ada-0329.md) |
