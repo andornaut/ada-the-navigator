@@ -1225,7 +1225,7 @@ export function renderConversation(scene: UiContext): void {
     scan.view.render(
       {
         area: scanFeedbackArea(insets, view),
-        blocked: scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
+        blocked: () => scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
         covered:
           covered ||
           Boolean(emergency) ||
@@ -1236,8 +1236,8 @@ export function renderConversation(scene: UiContext): void {
           document.hidden ||
           scene.model.state.mode !== "space" ||
           !flight,
-        dialogue: scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
-        hudRow: scanFeedbackHudRow(document, document.getElementById(VIEW_HOST_ID)),
+        dialogue: () => scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
+        hudRow: () => scanFeedbackHudRow(document, document.getElementById(VIEW_HOST_ID)),
         reducedMotion: scene.reducedMotion,
         resolveAnchor: (outcome) => {
           if (flight?.galaxy !== outcome.galaxy) {

@@ -53,10 +53,10 @@ const receipt = (
   });
 const context = {
   area: { height: 360, width: 720, x: 0, y: 0 },
-  blocked: [],
+  blocked: () => [],
   covered: false,
-  dialogue: [],
-  hudRow: [],
+  dialogue: () => [],
+  hudRow: () => [],
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 220 }),
 };
@@ -141,7 +141,7 @@ describe("native scan receipt view", () => {
     view.render({ ...context, covered: true }, 10000);
     expect(panel.hidden).toBe(true);
     expect(panel.style.display).toBe("none");
-    view.render({ ...context, blocked: [context.area] }, 10000);
+    view.render({ ...context, blocked: () => [context.area] }, 10000);
     expect(panel.hidden).toBe(true);
     expect(panel.style.display).toBe("none");
     view.render(context, NOTICE_TIMING.holdMs);
@@ -183,7 +183,7 @@ describe("native scan receipt view", () => {
       [{ height: 200, width: 500, x: 100, y: 60 }],
       [],
     ]) {
-      view.render({ ...context, blocked }, 100);
+      view.render({ ...context, blocked: () => blocked }, 100);
       expect(panel.style.left).toBe(left);
       expect(panel.style.top).not.toBe(top);
       expect(panel.style.zIndex).toBe("1");

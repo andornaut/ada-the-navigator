@@ -67,15 +67,19 @@ export interface ScanFeedbackFrame {
   readonly opacity: number;
   readonly rect: Rect;
 }
+/**
+ * The footprints are read through functions, each a DOM measurement, so a frame with no receipt
+ * to show measures nothing.
+ */
 export interface ScanFeedbackContext {
   readonly area: Rect;
-  readonly blocked: readonly Rect[];
+  readonly blocked: () => readonly Rect[];
   /** Covered includes paused, dialog, settings, unavailable renderer and loading states. */
   readonly covered: boolean;
   /** The shown conversation box's parts, which the rise stops below. */
-  readonly dialogue: readonly Rect[];
+  readonly dialogue: () => readonly Rect[];
   /** The shown HUD row's controls along the top, which every rise ends under. */
-  readonly hudRow: readonly Rect[];
+  readonly hudRow: () => readonly Rect[];
   readonly measure: (content: ScanFeedbackContent) => {
     readonly height: number;
     readonly width: number;
@@ -145,6 +149,7 @@ export class ScanFeedbackQueue {
     if (!anchor) {
       return null;
     }
+    const dialogue = context.dialogue();
     const retained = next.path?.area;
     if (
       !retained ||
@@ -156,9 +161,9 @@ export class ScanFeedbackQueue {
       const path = scanFeedbackPath({
         anchor,
         area: context.area,
-        blocked: context.blocked,
-        dialogue: context.dialogue,
-        hudRow: context.hudRow,
+        blocked: context.blocked(),
+        dialogue,
+        hudRow: context.hudRow(),
         ...context.measure(next.content),
         progress: 0,
         reducedMotion: context.reducedMotion,
@@ -176,7 +181,7 @@ export class ScanFeedbackQueue {
       context.reducedMotion || elapsed === 0
         ? 0
         : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs));
-    const end = scanFeedbackTop(path, context.dialogue);
+    const end = scanFeedbackTop(path, dialogue);
     const yAt = (segment: NonNullable<Pending["segment"]>, at: number) =>
       segment.start >= 1
         ? segment.fromY

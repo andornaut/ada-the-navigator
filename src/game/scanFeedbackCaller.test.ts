@@ -83,6 +83,8 @@ it("retains production scan receipts under cover and resolves only the receipt g
   );
   const render = context.renderConversation as (scene: unknown) => void;
   render(scene);
+  // The view reads the footprints when it places a receipt; the caller measures nothing itself.
+  expect(querySelectorAll).not.toHaveBeenCalled();
   expect(drain).toHaveBeenCalledOnce();
   expect(view.enqueue).toHaveBeenCalledWith([receipt]);
   const first = view.render.mock.calls[0]!;
@@ -90,7 +92,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
   expect(first[1]).toBe(20);
   expect(first[0].time).toBe(20);
   // The HUD footprint, then the same node read as a touch control.
-  expect(first[0].blocked).toEqual([
+  expect(first[0].blocked()).toEqual([
     { height: 30, width: 100, x: 0, y: 0 },
     { height: 30, width: 100, x: 0, y: 0 },
   ]);
@@ -99,8 +101,8 @@ it("retains production scan receipts under cover and resolves only the receipt g
     scene.controls.layout().insets,
     scene.controls.layout().view,
   );
-  expect(first[0].dialogue).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
-  expect(first[0].hudRow).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
+  expect(first[0].dialogue()).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
+  expect(first[0].hudRow()).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
   expect(querySelectorAll).toHaveBeenCalledWith(
     expect.stringContaining(":not(.ada-conversation, .ada-conversation *)"),
   );

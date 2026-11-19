@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { NOTICE_TIMING } from "./itemNotice.ts";
@@ -23,10 +23,10 @@ const receipt = (completions: ScanOutcome["completions"] = []): ScanOutcome =>
   });
 const context: ScanFeedbackContext = {
   area: { height: 360, width: 720, x: 0, y: 0 },
-  blocked: [],
+  blocked: () => [],
   covered: false,
-  dialogue: [],
-  hudRow: [],
+  dialogue: () => [],
+  hudRow: () => [],
   measure: () => ({ height: 40, width: 200 }),
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 240 }),
@@ -95,7 +95,7 @@ describe("authoritative scan presentation receipts", () => {
     const queue = new ScanFeedbackQueue();
     queue.enqueue([receipt()]);
     expect(queue.frame({ ...context, resolveAnchor: () => undefined }, 100000)).toBeNull();
-    expect(queue.frame({ ...context, blocked: [context.area] }, 100000)).toBeNull();
+    expect(queue.frame({ ...context, blocked: () => [context.area] }, 100000)).toBeNull();
     expect(queue.frame(context, 0)?.opacity).toBe(1);
   });
   it("rises normally, fades in place under reduced motion, and only consumes displayed entries", () => {
@@ -123,7 +123,7 @@ describe("authoritative scan presentation receipts", () => {
     const first = queue.frame(context, 100)!;
     const changed = {
       ...context,
-      blocked: [{ height: 140, width: 400, x: 160, y: 100 }],
+      blocked: () => [{ height: 140, width: 400, x: 160, y: 100 }],
       resolveAnchor: () => ({ x: 500, y: 300 }),
     };
     const second = queue.frame(changed, 100)!;
@@ -146,18 +146,20 @@ describe("authoritative scan presentation receipts", () => {
     expect(start.rect.y).toBe(220);
     const top = queue.frame(context, 0)!;
     expect(top.rect.y).toBe(0);
-    expect(queue.frame({ ...context, dialogue }, 0)!.rect.y).toBe(0);
+    expect(queue.frame({ ...context, dialogue: () => dialogue }, 0)!.rect.y).toBe(0);
     const stopped = new ScanFeedbackQueue();
     stopped.enqueue([receipt()]);
     stopped.frame(context, NOTICE_TIMING.holdMs);
-    expect(stopped.frame({ ...context, dialogue }, 0)!.rect.y).toBe(134);
+    expect(stopped.frame({ ...context, dialogue: () => dialogue }, 0)!.rect.y).toBe(134);
   });
   it("rises on from where it is when the conversation box goes mid-rise, without a hop", () => {
     const queue = new ScanFeedbackQueue();
     queue.enqueue([receipt()]);
     const dialogue = [{ height: 60, width: 480, x: 120, y: 66 }];
-    expect(queue.frame({ ...context, dialogue }, NOTICE_TIMING.holdMs / 2)!.rect.y).toBe(220);
-    const held = queue.frame({ ...context, dialogue }, 0)!.rect.y;
+    expect(
+      queue.frame({ ...context, dialogue: () => dialogue }, NOTICE_TIMING.holdMs / 2)!.rect.y,
+    ).toBe(220);
+    const held = queue.frame({ ...context, dialogue: () => dialogue }, 0)!.rect.y;
     expect(held).toBeGreaterThan(134);
     expect(held).toBeLessThan(220);
     expect(queue.frame(context, 0)!.rect.y).toBeCloseTo(held);
@@ -183,6 +185,26 @@ describe("authoritative scan presentation receipts", () => {
     expect(frame.rect.x + frame.rect.width).toBeLessThanOrEqual(300);
     expect(frame.rect.y).toBeGreaterThanOrEqual(0);
     expect(frame.rect.y + frame.rect.height).toBeLessThanOrEqual(240);
+  });
+  it("measures no footprint while nothing shows, the HUD once per placement, dialogue per frame", () => {
+    const readers = {
+      blocked: vi.fn(() => []),
+      dialogue: vi.fn(() => []),
+      hudRow: vi.fn(() => []),
+    };
+    const measured = { ...context, ...readers };
+    const queue = new ScanFeedbackQueue();
+    expect(queue.frame(measured, 16)).toBeNull();
+    queue.enqueue([receipt()]);
+    expect(queue.frame({ ...measured, covered: true }, 16)).toBeNull();
+    expect(readers.blocked).not.toHaveBeenCalled();
+    expect(readers.dialogue).not.toHaveBeenCalled();
+    expect(readers.hudRow).not.toHaveBeenCalled();
+    queue.frame(measured, 16);
+    queue.frame(measured, 16);
+    expect(readers.blocked).toHaveBeenCalledOnce();
+    expect(readers.hudRow).toHaveBeenCalledOnce();
+    expect(readers.dialogue).toHaveBeenCalledTimes(2);
   });
   it("starts an actual new/loaded model presentation empty without reconstructing remembered completion", () => {
     const queue = new ScanFeedbackQueue();
