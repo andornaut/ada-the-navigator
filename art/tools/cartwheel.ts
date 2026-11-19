@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
 import { jetsFile } from "./crafts.ts";
 import { cube, hcyl, part, scaleGroups } from "./hull-shapes.ts";
-import { mergeSidecars, replaceEntries } from "./manifest.ts";
+import { mergeSidecars, replaceEntries, sidecarsIn, writeOnce } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { ORE_SOLID } from "./ore.ts";
 import {
@@ -832,6 +832,25 @@ const cartwheelJets = {
   core: ["#efe4cf", "#ffffff"] as [string, string],
 };
 
+// A craft's jets file: mouths, colours and nose per heading.
+function craftJets(craft: Craft): string {
+  const frame = craftFrame(craft);
+  const centre = frame / 2;
+  const half = craft.mouthWidth / 2;
+  return jetsFile(
+    frame,
+    (yaw) =>
+      craft.mouths.map(([u, v, z]) => ({
+        anchor: anchor(ENEMY_HEADINGS, centre, yaw, [...uv(u, v), z]),
+        axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
+        half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
+      })),
+    cartwheelJets,
+    { nose: noses((yaw) => headingFaces(craft, yaw), frame, craft) },
+  );
+}
+
+// Writes a craft's frames and returns their entries.
 function writeCraft(dir: string, craft: Craft) {
   const frame = craftFrame(craft);
   const centre = frame / 2;
@@ -843,21 +862,6 @@ function writeCraft(dir: string, craft: Craft) {
       ),
     );
   }
-  const half = craft.mouthWidth / 2;
-  writeFileSync(
-    `${dir}${craft.name}-jets.json`,
-    jetsFile(
-      frame,
-      (yaw) =>
-        craft.mouths.map(([u, v, z]) => ({
-          anchor: anchor(ENEMY_HEADINGS, centre, yaw, [...uv(u, v), z]),
-          axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
-          half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
-        })),
-      cartwheelJets,
-      { nose: noses((yaw) => headingFaces(craft, yaw), frame, craft) },
-    ),
-  );
   const display = round(frame * DISPLAY_SCALE);
   return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
     id: `craft-${craft.name}-${yaw}`,
@@ -937,19 +941,29 @@ replaceEntries(
   (id) => id.startsWith("cartwheel-debris-") || id.startsWith("craft-stranded-"),
 );
 replaceEntries("core", (id) => craftIds(SHARED).test(id), craftEntries.filter(isShared));
-// Each craft's jets sit beside its frames and are listed with them.
+// Each craft's jets sit beside its frames; crafts with the same jets (the visitors are one
+// shuttle in two colours) use the first one's file.
 const ownsCraft = (craft: string) => crafts.some(({ name }) => name === craft);
-const craftJets = (names: readonly string[]) =>
-  Object.fromEntries(names.map((name) => [name, { jets: `/art/cartwheel/${name}-jets.json` }]));
+const jets = writeOnce(
+  "/art/cartwheel/",
+  new Map(),
+  new Map(crafts.map((craft) => [`${craft.name}-jets.json`, craftJets(craft)])),
+);
+const sidecars = sidecarsIn(jets);
+const only = (names: readonly string[]) =>
+  Object.fromEntries(Object.entries(sidecars).filter(([name]) => names.includes(name)));
 const names = crafts.map(({ name }) => name);
-mergeSidecars("cartwheel", ownsCraft, craftJets(names.filter((name) => !SHARED.includes(name))));
-mergeSidecars("core", ownsCraft, craftJets(SHARED));
+mergeSidecars("cartwheel", ownsCraft, only(names.filter((name) => !SHARED.includes(name))));
+mergeSidecars("core", ownsCraft, only(SHARED));
 
 const flag = process.argv.indexOf("--alternates");
 if (flag !== -1) {
   const dir = `${process.argv[flag + 1] ?? "alternates"}/`;
   mkdirSync(dir, { recursive: true });
   const alternates = [visitor3, { ...blockerPlough, name: "blocker-plough" }];
-  const entries = alternates.flatMap((craft) => writeCraft(dir, craft));
+  const entries = alternates.flatMap((craft) => {
+    writeFileSync(`${dir}${craft.name}-jets.json`, craftJets(craft));
+    return writeCraft(dir, craft);
+  });
   writeFileSync(`${dir}alternates.json`, json(entries));
 }

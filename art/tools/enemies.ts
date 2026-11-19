@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -11,7 +11,7 @@ import {
   jetsFile,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
-import { mergeEntries, mergeSidecars } from "./manifest.ts";
+import { mergeEntries, mergeSidecars, sidecarsIn, storedAt, writeOnce } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
 import { type Fill, type V2 } from "./silhouette.ts";
 
@@ -83,16 +83,19 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
 
 function main() {
   mkdirSync(output, { recursive: true });
+  const files = new Map<string, string>();
   for (const craft of crafts) {
     const traced = silhouettes(craft);
-    writeFileSync(
-      `${output}${craft.name}-jets.json`,
+    files.set(
+      `${craft.name}-jets.json`,
       jets(craft, (yaw) => traced[yaw]!.collision),
     );
     for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-      writeFileSync(`${output}${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
+      files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
     }
   }
+  // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
+  const paths = writeOnce("/art/enemies/", new Map(), files);
 
   // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
   const names = crafts.map(({ name }) => name).join("|");
@@ -100,16 +103,16 @@ function main() {
   mergeEntries(
     "core",
     (id) => hull.test(id),
-    crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
+    crafts.flatMap(({ frame, name }) =>
+      hullEntries(name, frame).map((entry) => storedAt(paths, entry)),
+    ),
   );
   // These crafts' jets; heavies.ts writes the hardpoints and destruction.ts the shards.
   const jetCrafts = new Set(crafts.map(({ name }) => name));
   mergeSidecars(
     "core",
     (craft, kind) => kind === "jets" && jetCrafts.has(craft),
-    Object.fromEntries(
-      crafts.map(({ name }) => [name, { jets: `/art/enemies/${name}-jets.json` }]),
-    ),
+    sidecarsIn(paths),
   );
 }
 

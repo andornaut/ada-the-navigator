@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { json } from "./projection.ts";
@@ -185,16 +185,89 @@ export type Sidecars = Record<string, Partial<Record<SidecarKind, string>>>;
 
 const SIDECAR_FILE = /^([a-zA-Z0-9]+)-(jets|hardpoints|shards)\.json$/;
 
-/** The sidecars among `files` (file names written to the public folder `dir`). */
-export function sidecarsIn(dir: string, files: Iterable<string>): Sidecars {
+/** The sidecars among `paths` (each file name a generator produced, to the public path holding it). */
+export function sidecarsIn(paths: ReadonlyMap<string, string>): Sidecars {
   const sidecars: Sidecars = {};
-  for (const file of files) {
+  for (const [file, path] of paths) {
     const match = SIDECAR_FILE.exec(file);
     if (match) {
-      (sidecars[match[1]!] ??= {})[match[2] as SidecarKind] = `${dir}${file}`;
+      (sidecars[match[1]!] ??= {})[match[2] as SidecarKind] = path;
     }
   }
   return sidecars;
+}
+
+const publicFile = (path: string) => `${art}${path.slice("/art/".length)}`;
+
+// Writes each of `files` (file name to text) to the public folder `dir` once per distinct text,
+// so shared art ships one copy. A file whose text equals an earlier file's is not written, and
+// `elsewhere` maps file names to the public path of a copy another generator writes, which
+// must already hold the same text. A copy of either left in `dir` is removed. Returns the
+// public path holding each file, for its manifest entries and sidecars.
+export function writeOnce(
+  dir: string,
+  elsewhere: ReadonlyMap<string, string>,
+  files: ReadonlyMap<string, string>,
+): Map<string, string> {
+  const paths = new Map<string, string>();
+  const first = new Map<string, string>();
+  for (const [file, text] of files) {
+    const shared = elsewhere.get(file);
+    if (shared !== undefined) {
+      const path = publicFile(shared);
+      if (!existsSync(path) || readFileSync(path, "utf8") !== text) {
+        throw new Error(
+          `${dir}${file} differs from ${shared}; run the generator of ${shared} first`,
+        );
+      }
+      if (!first.has(text)) {
+        first.set(text, shared);
+      }
+    }
+    const copy = first.get(text);
+    if (copy === undefined) {
+      first.set(text, `${dir}${file}`);
+      paths.set(file, `${dir}${file}`);
+      writeFileSync(publicFile(`${dir}${file}`), text);
+    } else {
+      paths.set(file, copy);
+      if (copy !== `${dir}${file}`) {
+        rmSync(publicFile(`${dir}${file}`), { force: true });
+      }
+    }
+  }
+  return paths;
+}
+
+/** `entry` with its path at the copy `paths` names for its file. */
+export function storedAt<T extends { id: string; path?: unknown }>(
+  paths: ReadonlyMap<string, string>,
+  entry: T,
+): T {
+  const file = typeof entry.path === "string" ? entry.path.split("/").at(-1)! : "";
+  const path = paths.get(file);
+  if (path === undefined) {
+    throw new Error(`${entry.id}: ${String(entry.path)} was not written`);
+  }
+  return { ...entry, path };
+}
+
+/** The `kind` sidecar `file`'s manifest maps for each of `crafts`, by its file name. */
+export function sidecarCopies(
+  file: ManifestFile,
+  kind: SidecarKind,
+  crafts: Iterable<string>,
+): Map<string, string> {
+  const sidecars = (readManifest(file).sidecars ?? {}) as Sidecars;
+  return new Map(
+    [...crafts].map((craft) => {
+      const path = sidecars[craft]?.[kind];
+      if (path === undefined) {
+        throw new Error(`${manifestUrl(file)} has no ${craft}.${kind}; run its generator first`);
+      }
+      return [`${craft}-${kind}.json`, path];
+    }),
+  );
 }
 
 // Sets the sidecar paths `owns` selects by craft and kind and keeps every other one, so each
@@ -216,7 +289,7 @@ export function mergeSidecars(
       `${manifestUrl(file)}: sidecars ${names.join(", ")} not owned by its generator`,
     );
   }
-  const missing = written.filter(({ path }) => !existsSync(`${art}${path.slice("/art/".length)}`));
+  const missing = written.filter(({ path }) => !existsSync(publicFile(path)));
   if (missing.length > 0) {
     throw new Error(`${manifestUrl(file)}: ${missing.map(({ path }) => path).join(", ")} missing`);
   }

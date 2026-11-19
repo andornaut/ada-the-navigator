@@ -15515,7 +15515,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-0",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-0.svg",
+      "path": "/art/needle/enemies/retaliator-0.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15531,7 +15531,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-1",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-1.svg",
+      "path": "/art/needle/enemies/retaliator-1.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15547,7 +15547,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-2",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-2.svg",
+      "path": "/art/needle/enemies/retaliator-2.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15563,7 +15563,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-3",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-3.svg",
+      "path": "/art/needle/enemies/retaliator-3.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15579,7 +15579,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-4",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-4.svg",
+      "path": "/art/needle/enemies/retaliator-4.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15595,7 +15595,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-5",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-5.svg",
+      "path": "/art/needle/enemies/retaliator-5.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15611,7 +15611,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-6",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-6.svg",
+      "path": "/art/needle/enemies/retaliator-6.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15627,7 +15627,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-7",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-7.svg",
+      "path": "/art/needle/enemies/retaliator-7.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15643,7 +15643,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-8",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-8.svg",
+      "path": "/art/needle/enemies/retaliator-8.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15659,7 +15659,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-9",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-9.svg",
+      "path": "/art/needle/enemies/retaliator-9.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15675,7 +15675,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-10",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-10.svg",
+      "path": "/art/needle/enemies/retaliator-10.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15691,7 +15691,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-11",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-11.svg",
+      "path": "/art/needle/enemies/retaliator-11.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15707,7 +15707,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-12",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-12.svg",
+      "path": "/art/needle/enemies/retaliator-12.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15723,7 +15723,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-13",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-13.svg",
+      "path": "/art/needle/enemies/retaliator-13.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15739,7 +15739,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-14",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-14.svg",
+      "path": "/art/needle/enemies/retaliator-14.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15755,7 +15755,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-15",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-15.svg",
+      "path": "/art/needle/enemies/retaliator-15.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -16859,7 +16859,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-0",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-0.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-0.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16877,7 +16877,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-1",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-1.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-1.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16895,7 +16895,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-2",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-2.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-2.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16913,7 +16913,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-3",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-3.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-3.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16931,7 +16931,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-4",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-4.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-4.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16949,7 +16949,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-5",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-5.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-5.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16967,7 +16967,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-6",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-6.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-6.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -16985,7 +16985,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-7",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-7.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-7.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17003,7 +17003,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-8",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-8.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-8.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17021,7 +17021,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-9",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-9.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-9.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17039,7 +17039,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-10",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-10.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-10.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17057,7 +17057,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-11",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-11.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-11.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17075,7 +17075,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-12",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-12.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-12.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17093,7 +17093,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-13",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-13.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-13.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17111,7 +17111,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-14",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-14.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-14.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17129,7 +17129,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-intact-15",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-intact-15.svg",
+      "path": "/art/needle/enemies/retaliator-turret-intact-15.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -17147,7 +17147,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-0",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-0.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-0.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17164,7 +17164,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-1",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-1.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-1.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17181,7 +17181,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-2",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-2.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-2.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17198,7 +17198,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-3",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-3.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-3.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17215,7 +17215,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-4",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-4.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-4.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17232,7 +17232,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-5",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-5.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-5.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17249,7 +17249,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-6",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-6.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-6.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17266,7 +17266,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-7",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-7.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-7.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17283,7 +17283,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-8",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-8.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-8.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17300,7 +17300,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-9",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-9.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-9.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17317,7 +17317,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-10",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-10.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-10.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17334,7 +17334,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-11",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-11.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-11.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17351,7 +17351,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-12",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-12.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-12.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17368,7 +17368,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-13",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-13.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-13.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17385,7 +17385,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-14",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-14.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-14.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17402,7 +17402,7 @@
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-turret-top-15",
-      "path": "/art/needle/enemies/retaliatorCargoHauler-turret-top-15.svg",
+      "path": "/art/needle/enemies/retaliator-turret-top-15.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -17987,7 +17987,7 @@
   "sidecars": {
     "capital": {
       "jets": "/art/needle/enemies/capital-jets.json",
-      "hardpoints": "/art/needle/enemies/capital-hardpoints.json"
+      "hardpoints": "/art/enemies/capital-hardpoints.json"
     },
     "fighter": {
       "jets": "/art/needle/enemies/fighter-jets.json",
@@ -17995,7 +17995,7 @@
     },
     "frigate": {
       "jets": "/art/needle/enemies/frigate-jets.json",
-      "hardpoints": "/art/needle/enemies/frigate-hardpoints.json"
+      "hardpoints": "/art/enemies/frigate-hardpoints.json"
     },
     "glider": {
       "jets": "/art/needle/glider-jets.json"
@@ -18006,17 +18006,17 @@
     },
     "retaliator": {
       "jets": "/art/needle/enemies/retaliator-jets.json",
-      "hardpoints": "/art/needle/enemies/retaliator-hardpoints.json",
+      "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/needle/enemies/retaliator-shards.json"
     },
     "retaliatorCargoHauler": {
-      "jets": "/art/needle/enemies/retaliatorCargoHauler-jets.json",
-      "hardpoints": "/art/needle/enemies/retaliatorCargoHauler-hardpoints.json",
+      "jets": "/art/needle/enemies/retaliator-jets.json",
+      "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/needle/enemies/retaliatorCargoHauler-shards.json"
     },
     "retaliatorMiningFreighter": {
       "jets": "/art/needle/enemies/retaliatorMiningFreighter-jets.json",
-      "hardpoints": "/art/needle/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "hardpoints": "/art/enemies/retaliatorMiningFreighter-hardpoints.json",
       "shards": "/art/needle/enemies/retaliatorMiningFreighter-shards.json"
     },
     "swarm": {

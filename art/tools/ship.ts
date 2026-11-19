@@ -133,7 +133,6 @@ if (jetsOnly) {
   for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
     writeFileSync(`${output}ship-thrust-${yaw}.svg`, svg(yaw, true));
   }
-  writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
 }
 
 if (!jetsOnly && !process.argv.includes("--data-only")) {
@@ -144,7 +143,6 @@ if (!jetsOnly && !process.argv.includes("--data-only")) {
         writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
       }
     }
-    writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
   }
 
   // Paid hulls use the shared material geometry; retain their logical manifest entries.
@@ -166,7 +164,8 @@ if (!jetsOnly && !process.argv.includes("--data-only")) {
   const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
   const entries = [
     entry("ship", "/art/ship.svg", UP),
-    entry("ship-thrust", "/art/ship-thrust.svg", UP),
+    // The up thrust alias is the up heading's thrust frame.
+    entry("ship-thrust", `/art/ship-thrust-${UP}.svg`, UP),
     ...yaws.flatMap((yaw) => [
       entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
       entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),

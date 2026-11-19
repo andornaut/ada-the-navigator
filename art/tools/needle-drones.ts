@@ -2,7 +2,7 @@
 // plates and Gadget's amber guns, as the claim jumpers are for Cartwheel. Contract: art/needle.md
 // (Needle drones) and art/heavies.md.
 // Usage: node art/tools/needle-drones.ts [--offsets <file.json>]
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { format, resolveConfig } from "prettier";
@@ -36,7 +36,15 @@ import {
   scorch,
   scorchSide,
 } from "./heavies.ts";
-import { craftIds, mergeEntries, mergeSidecars, sidecarsIn } from "./manifest.ts";
+import {
+  craftIds,
+  mergeEntries,
+  mergeSidecars,
+  sidecarCopies,
+  sidecarsIn,
+  storedAt,
+  writeOnce,
+} from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // Crimson lacquer at Oklab hue 14, redder than coral (39) and the claim jumpers' rust (50), with
@@ -145,6 +153,7 @@ for (const craft of [...heavies, ...industrialHeavies]) {
 
 const dir = `${root}public/art/needle/enemies/`;
 mkdirSync(dir, { recursive: true });
+const texts = new Map<string, string>();
 for (const [file, content] of files) {
   const path = `${dir}${file}`;
   // Hardpoint layouts carry no colour.
@@ -154,13 +163,17 @@ for (const [file, content] of files) {
     : drawn
       ? swapColours(swap, family, file, content)
       : content;
-  writeFileSync(
-    path,
+  texts.set(
+    file,
     file.endsWith(".json")
       ? await format(text, { ...(await resolveConfig(path)), filepath: path })
       : text,
   );
 }
+// The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like
+// another (the cargo hauler is the retaliator) uses that craft's files.
+const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
+const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
 // In Needle's manifest after the gates and debris, before the story craft.
 // Only these crafts' ids, not the whole `enemy-needle-` family prefix.
 mergeEntries(
@@ -169,9 +182,9 @@ mergeEntries(
     PREFIX,
     [...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name),
   ),
-  entries,
+  entries.map((entry) => storedAt(paths, entry)),
   (id) => id.startsWith("craft-"),
 );
 const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));
-mergeSidecars("needle", (craft) => names.has(craft), sidecarsIn(PATH, files.keys()));
+mergeSidecars("needle", (craft) => names.has(craft), sidecarsIn(paths));
 console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);

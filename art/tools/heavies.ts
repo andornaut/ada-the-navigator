@@ -47,7 +47,14 @@ import {
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
-import { mergeEntries, mergeSidecars, type SidecarKind, sidecarsIn } from "./manifest.ts";
+import {
+  mergeEntries,
+  mergeSidecars,
+  type SidecarKind,
+  sidecarsIn,
+  storedAt,
+  writeOnce,
+} from "./manifest.ts";
 import {
   anchor,
   depth,
@@ -1713,6 +1720,7 @@ async function main() {
     results[drawn.findIndex((craft) => craft.name === name)]!.files.get(`${name}-hardpoints.json`)!;
   checkGadget(layoutOf("capital"), layoutOf("gadget"));
   mkdirSync(dir, { recursive: true });
+  const files = new Map<string, string>();
   const entries: Entry[] = [];
   for (const result of results) {
     for (const [file, content] of result.files) {
@@ -1721,15 +1729,23 @@ async function main() {
       const text = file.endsWith(".json")
         ? await format(content, { ...(await resolveConfig(path)), filepath: path })
         : content;
-      writeFileSync(path, text);
+      files.set(file, text);
     }
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    mergeEntries("core", owns, entries);
-    const files = results.flatMap((result) => [...result.files.keys()]);
-    mergeSidecars("core", ownsSidecar, sidecarsIn("/art/enemies/", files));
+    // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
+    const paths = writeOnce("/art/enemies/", new Map(), files);
+    mergeEntries(
+      "core",
+      owns,
+      entries.map((entry) => storedAt(paths, entry)),
+    );
+    mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
   } else {
+    for (const [file, text] of files) {
+      writeFileSync(`${dir}${file}`, text);
+    }
     writeFileSync(`${dir}manifest-entries.json`, json(entries));
   }
 }

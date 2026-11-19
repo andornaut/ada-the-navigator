@@ -13,7 +13,10 @@ import {
   type ManifestFile,
   mergeEntries,
   mergeSidecars,
+  sidecarCopies,
   sidecarsIn,
+  storedAt,
+  writeOnce,
 } from "./manifest.ts";
 
 type Entry = { id: string; path?: string } & Record<string, unknown>;
@@ -59,6 +62,7 @@ async function main() {
   for (const family of families) {
     const directory = `${root}${family.directory}/`;
     mkdirSync(directory, { recursive: true });
+    const texts = new Map<string, string>();
     for (const [file, content] of result.files) {
       const path = directory + file;
       const text = file.endsWith("-jets.json")
@@ -66,25 +70,29 @@ async function main() {
         : file.endsWith(".svg")
           ? family.colour(file, content)
           : content;
-      writeFileSync(
-        path,
+      texts.set(
+        file,
         file.endsWith(".json")
           ? await format(text, { ...(await resolveConfig(path)), filepath: path })
           : text,
       );
     }
-    const entries = result.entries.map((entry): Entry => ({
-      ...entry,
-      id: family.prefix + entry.id.slice("enemy-".length),
-      path: `/art/${family.directory}/${String(entry.path).split("/").at(-1)}`,
-      ...(family.family ? { family: family.family } : {}),
-    }));
-    mergeEntries(family.manifest, craftIds(family.prefix, [craft.name]), entries);
-    mergeSidecars(
-      family.manifest,
-      (name) => name === craft.name,
-      sidecarsIn(`/art/${family.directory}/`, result.files.keys()),
+    // The layout carries no colour: the recoloured families use the coral family's copy,
+    // which the first family writes.
+    const shared =
+      family.manifest === "core"
+        ? new Map<string, string>()
+        : sidecarCopies("core", "hardpoints", [craft.name]);
+    const paths = writeOnce(`/art/${family.directory}/`, shared, texts);
+    const entries = result.entries.map((entry): Entry =>
+      storedAt(paths, {
+        ...entry,
+        id: family.prefix + entry.id.slice("enemy-".length),
+        ...(family.family ? { family: family.family } : {}),
+      }),
     );
+    mergeEntries(family.manifest, craftIds(family.prefix, [craft.name]), entries);
+    mergeSidecars(family.manifest, (name) => name === craft.name, sidecarsIn(paths));
   }
   console.log(
     `${craft.name}: three existing families, ${result.files.size} native files per family`,

@@ -17108,7 +17108,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-0",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-0.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17124,7 +17124,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-1",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-1.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17140,7 +17140,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-2",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-2.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17156,7 +17156,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-3",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-3.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17172,7 +17172,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-4",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-4.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17188,7 +17188,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-5",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-5.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17204,7 +17204,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-6",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-6.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17220,7 +17220,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-7",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-7.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17236,7 +17236,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-8",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-8.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17252,7 +17252,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-9",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-9.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17268,7 +17268,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-10",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-10.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17284,7 +17284,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-11",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-11.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17300,7 +17300,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-12",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-12.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17316,7 +17316,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-13",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-13.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17332,7 +17332,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-14",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-14.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -17348,7 +17348,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-15",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-15.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18452,7 +18452,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-0",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-0.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18470,7 +18470,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-1",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-1.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18488,7 +18488,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-2",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-2.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18506,7 +18506,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-3",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-3.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18524,7 +18524,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-4",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-4.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18542,7 +18542,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-5",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-5.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18560,7 +18560,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-6",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-6.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18578,7 +18578,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-7",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-7.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18596,7 +18596,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-8",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-8.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18614,7 +18614,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-9",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-9.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18632,7 +18632,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-10",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-10.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18650,7 +18650,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-11",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-11.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18668,7 +18668,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-12",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-12.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18686,7 +18686,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-13",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-13.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18704,7 +18704,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-14",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-14.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18722,7 +18722,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-15",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-intact-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-15.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18740,7 +18740,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-0",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-0.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18757,7 +18757,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-1",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-1.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18774,7 +18774,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-2",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-2.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18791,7 +18791,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-3",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-3.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18808,7 +18808,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-4",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-4.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18825,7 +18825,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-5",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-5.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18842,7 +18842,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-6",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-6.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18859,7 +18859,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-7",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-7.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18876,7 +18876,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-8",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-8.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18893,7 +18893,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-9",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-9.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18910,7 +18910,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-10",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-10.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18927,7 +18927,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-11",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-11.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18944,7 +18944,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-12",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-12.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18961,7 +18961,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-13",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-13.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18978,7 +18978,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-14",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-14.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -18995,7 +18995,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-15",
-      "path": "/art/cartwheel/enemies/retaliatorCargoHauler-turret-top-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-15.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -28733,7 +28733,7 @@
     },
     "capital": {
       "jets": "/art/cartwheel/enemies/capital-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/capital-hardpoints.json"
+      "hardpoints": "/art/enemies/capital-hardpoints.json"
     },
     "fighter": {
       "jets": "/art/cartwheel/enemies/fighter-jets.json",
@@ -28741,11 +28741,11 @@
     },
     "frigate": {
       "jets": "/art/cartwheel/enemies/frigate-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/frigate-hardpoints.json"
+      "hardpoints": "/art/enemies/frigate-hardpoints.json"
     },
     "hostileStation": {
       "jets": "/art/cartwheel/enemies/hostileStation-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/hostileStation-hardpoints.json"
+      "hardpoints": "/art/enemies/hostileStation-hardpoints.json"
     },
     "interceptor": {
       "jets": "/art/cartwheel/enemies/interceptor-jets.json",
@@ -28756,17 +28756,17 @@
     },
     "retaliator": {
       "jets": "/art/cartwheel/enemies/retaliator-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/retaliator-hardpoints.json",
+      "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/cartwheel/enemies/retaliator-shards.json"
     },
     "retaliatorCargoHauler": {
-      "jets": "/art/cartwheel/enemies/retaliatorCargoHauler-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/retaliatorCargoHauler-hardpoints.json",
+      "jets": "/art/cartwheel/enemies/retaliator-jets.json",
+      "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/cartwheel/enemies/retaliatorCargoHauler-shards.json"
     },
     "retaliatorMiningFreighter": {
       "jets": "/art/cartwheel/enemies/retaliatorMiningFreighter-jets.json",
-      "hardpoints": "/art/cartwheel/enemies/retaliatorMiningFreighter-hardpoints.json",
+      "hardpoints": "/art/enemies/retaliatorMiningFreighter-hardpoints.json",
       "shards": "/art/cartwheel/enemies/retaliatorMiningFreighter-shards.json"
     },
     "swarm": {
@@ -28777,7 +28777,7 @@
       "jets": "/art/cartwheel/visitor1-jets.json"
     },
     "visitor2": {
-      "jets": "/art/cartwheel/visitor2-jets.json"
+      "jets": "/art/cartwheel/visitor1-jets.json"
     }
   }
 }

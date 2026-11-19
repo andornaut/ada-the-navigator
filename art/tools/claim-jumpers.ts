@@ -2,7 +2,7 @@
 // ember, plus the turret platform, a fixed wheel deck in the heavies export. Contract:
 // art/heavies.md (Cartwheel claim jumpers).
 // Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { format, resolveConfig } from "prettier";
@@ -50,7 +50,15 @@ import {
   wreck,
 } from "./heavies.ts";
 import { normalizeHeavy } from "./enemy-size.ts";
-import { craftIds, mergeEntries, mergeSidecars, sidecarsIn } from "./manifest.ts";
+import {
+  craftIds,
+  mergeEntries,
+  mergeSidecars,
+  sidecarCopies,
+  sidecarsIn,
+  storedAt,
+  writeOnce,
+} from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 // ---------------------------------------------------------------- palette
@@ -410,6 +418,7 @@ async function main() {
 
   const dir = `${root}public/art/cartwheel/enemies/`;
   mkdirSync(dir, { recursive: true });
+  const texts = new Map<string, string>();
   for (const [file, content] of files) {
     const path = `${dir}${file}`;
     // Hardpoint layouts carry no colour.
@@ -420,13 +429,17 @@ async function main() {
         ? recolour(file, content)
         : content;
     // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
-    writeFileSync(
-      path,
+    texts.set(
+      file,
       file.endsWith(".json")
         ? await format(text, { ...(await resolveConfig(path)), filepath: path })
         : text,
     );
   }
+  // The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like
+  // another (the cargo hauler is the retaliator) uses that craft's files.
+  const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
+  const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
   mergeEntries(
@@ -435,13 +448,13 @@ async function main() {
       PREFIX,
       [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
     ),
-    entries,
+    entries.map((entry) => storedAt(paths, entry)),
     (id) => id.startsWith("craft-"),
   );
   const names = new Set(
     [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
   );
-  mergeSidecars("cartwheel", (craft) => names.has(craft), sidecarsIn(PATH, files.keys()));
+  mergeSidecars("cartwheel", (craft) => names.has(craft), sidecarsIn(paths));
   console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
 }
 

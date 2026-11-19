@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { readMuzzleArt } from "../../src/data/enemyMuzzles.ts";
 import { INDUSTRIAL_STEMS, exportCrafts } from "./crafts.ts";
 import { jets } from "./enemies.ts";
+import { readManifest, type SidecarKind, type Sidecars } from "./manifest.ts";
 import { strictlyConvex } from "./silhouette.ts";
 
 type Parts = [number, number][][];
@@ -20,21 +21,27 @@ type File = Omit<Parameters<typeof readMuzzleArt>[0], "hardpoints"> & {
   tops: Record<string, { index: number; collision: Parts; muzzles: number[][] }[]>;
 };
 
-const families = ["", "andromeda/", "cartwheel/", "needle/"];
+// Each family's manifest and the sidecars map the runtime reads its files from.
+const families = ["core", "andromeda", "cartwheel", "needle"] as const;
+const sidecars = new Map(
+  families.map((family) => [family, (readManifest(family).sidecars ?? {}) as Sidecars]),
+);
+const installed = (family: (typeof families)[number], craft: string, kind: SidecarKind) => {
+  const path = sidecars.get(family)![craft]?.[kind];
+  assert.ok(path, `${family} sidecars has no ${craft}.${kind}`);
+  return `public${path}`;
+};
 const stems = ["frigate", "capital", "retaliator", ...Object.values(INDUSTRIAL_STEMS)];
 const files = families.flatMap((family) =>
   [
     ...stems,
-    ...(family === "" ? ["gadget"] : []),
-    ...(family === "cartwheel/" ? ["platform"] : []),
-    ...(family !== "needle/" ? ["hostileStation"] : []),
-  ].map((stem) => ({
-    path: `public/art/${family}enemies/${stem}-hardpoints.json`,
-    stem,
-    file: JSON.parse(
-      readFileSync(`public/art/${family}enemies/${stem}-hardpoints.json`, "utf8"),
-    ) as File,
-  })),
+    ...(family === "core" ? ["gadget"] : []),
+    ...(family === "cartwheel" ? ["platform"] : []),
+    ...(family !== "needle" ? ["hostileStation"] : []),
+  ].map((stem) => {
+    const path = installed(family, stem, "hardpoints");
+    return { path, stem, file: JSON.parse(readFileSync(path, "utf8")) as File };
+  }),
 );
 
 test("installed v1 metadata keeps every physical state and independently aimed top within its raw frame", () => {
@@ -105,7 +112,7 @@ test("installed jet mouths inherit each intact source transform in every family"
   for (const family of families) {
     for (const craft of exportCrafts) {
       const expected = JSON.parse(jets(craft)) as { headings: { mouths: unknown }[] };
-      const path = `public/art/${family}enemies/${craft.name}-jets.json`;
+      const path = installed(family, craft.name, "jets");
       const actual = JSON.parse(readFileSync(path, "utf8")) as { headings: { mouths: unknown }[] };
       assert.deepEqual(
         actual.headings.map(({ mouths }) => mouths),
