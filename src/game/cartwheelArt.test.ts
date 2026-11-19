@@ -27,6 +27,10 @@ import { enemyJetsPath, readSidecars } from "./enemyArt.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
+// A story craft's jets file, from Cartwheel's sidecars map or the core one (the miner's).
+const cartwheelJets = (craft: string) =>
+  (enemyJetsPath(GALAXY_MANIFESTS.get(2)!.sidecars, craft) ??
+    enemyJetsPath(readSidecars(CORE_MANIFEST.sidecars)!, craft))!;
 const manifest = ART_MANIFEST as unknown as {
   assets: CartwheelAsset[];
   resourceRocks: string;
@@ -250,7 +254,7 @@ describe("Cartwheel art", () => {
 
   it("read each story craft's nose by heading, its distance following Art's projection rule", () => {
     for (const craft of new Set(Object.values(STORY_SHIP_CRAFT))) {
-      const nose = readCraftNose(json(`/art/cartwheel/${craft}-jets.json`))!;
+      const nose = readCraftNose(json(cartwheelJets(craft)))!;
       expect(nose, craft).toHaveLength(16);
       // distance = 0.4375 * reach * sqrt(7/8 + sin(2a) / 8) at a = k * 22.5 degrees, so each
       // heading's distance over heading 0's is that root over sqrt(7/8).
@@ -260,7 +264,7 @@ describe("Cartwheel art", () => {
         expect(Number.isFinite(tip.x) && Number.isFinite(tip.y)).toBe(true);
       });
     }
-    const noses = storyNoses((craft) => json(`/art/cartwheel/${craft}-jets.json`));
+    const noses = storyNoses((craft) => json(cartwheelJets(craft)));
     expect(noses["visitor-1"]).toEqual(noses["visitor-2"]);
     expect(noses.miner![10]).toBeGreaterThan(noses["visitor-1"]![10]!);
     // A file without a full, well-formed nose array reads as none.

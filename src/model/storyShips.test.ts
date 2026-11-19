@@ -12,16 +12,19 @@ import {
   STORY_VIEW,
 } from "../data/storyShips.ts";
 import { storyNoses } from "../game/cartwheelArt.ts";
+import { enemyJetsPath, readSidecars } from "../game/enemyArt.ts";
 import { shipDirection } from "../game/shipArt.ts";
-import { ART_MANIFEST } from "../testing/publicArt.ts";
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { dockedSpot, drawnHeading, hubBay, hubWorn, storyShips } from "./storyShips.ts";
 import type { Vec } from "./types.ts";
 
-// Each craft's nose by heading, from Art's jets files.
+// Each craft's nose by heading, from the jets file Cartwheel's sidecars map names, or the core
+// map (the miner's).
+const jetsPath = (craft: string) =>
+  (enemyJetsPath(GALAXY_MANIFESTS.get(2)!.sidecars, craft) ??
+    enemyJetsPath(readSidecars(CORE_MANIFEST.sidecars)!, craft))!;
 const NOSES = storyNoses((craft) =>
-  JSON.parse(
-    readFileSync(new URL(`../../public/art/cartwheel/${craft}-jets.json`, import.meta.url), "utf8"),
-  ),
+  JSON.parse(readFileSync(new URL(`../../public${jetsPath(craft)}`, import.meta.url), "utf8")),
 );
 // No bay and no nose data: each pivot on its dock point.
 const UNDOCKED = { bay: false, noses: {} };

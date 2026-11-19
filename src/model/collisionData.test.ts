@@ -59,9 +59,10 @@ describe("Art's collision data", () => {
     },
   );
 
+  // The claim frigate and capital share the coral hardpoints files.
   it.each([
-    ["frigate", ["enemies", "cartwheel/enemies"]],
-    ["capital", ["enemies", "cartwheel/enemies"]],
+    ["frigate", ["enemies"]],
+    ["capital", ["enemies"]],
     ["gadget", ["enemies"]],
     ["platform", ["cartwheel/enemies"]],
   ] as const)("gives the %s its hull, hardpoint and top silhouettes", (archetype, families) => {

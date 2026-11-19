@@ -59,7 +59,9 @@ describe("claim jumper art loading", () => {
       expect(due, body).toHaveLength(count);
       for (const part of due) {
         expect(part.id.startsWith(`enemy-claim-${body}-`), part.id).toBe(true);
-        expect(part.path.startsWith(`/art/cartwheel/enemies/${body}-`), part.path).toBe(true);
+        // The cargo hauler's parts are the retaliator's files.
+        const files = body === "retaliatorCargoHauler" ? "retaliator" : body;
+        expect(part.path.startsWith(`/art/cartwheel/enemies/${files}-`), part.path).toBe(true);
         expect(present(part.path), part.path).toBe(true);
         allDue.push(part.id);
       }

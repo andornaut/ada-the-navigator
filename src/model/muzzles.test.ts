@@ -186,7 +186,8 @@ describe("drawn muzzles", () => {
   });
 
   it("reads every hardpoints file Art exports, at Art's enemy display scale", () => {
-    // The claim family shares the coral hardpoints files and adds the platform's.
+    // The claim family shares the coral hardpoints files and adds the platform's; the cargo
+    // hauler reads the retaliator's.
     const files = ["../../public/art/enemies/", "../../public/art/cartwheel/enemies/"].flatMap(
       (dir) =>
         readdirSync(new URL(dir, import.meta.url)).filter((name) =>
@@ -194,7 +195,12 @@ describe("drawn muzzles", () => {
         ),
     );
     expect(Object.keys(MUZZLE_ART).sort()).toEqual(
-      [...new Set(files.map((name) => name.replace("-hardpoints.json", "")))].sort(),
+      [
+        ...new Set([
+          ...files.map((name) => name.replace("-hardpoints.json", "")),
+          "retaliatorCargoHauler",
+        ]),
+      ].sort(),
     );
     expect(Object.keys(MUZZLE_ART)).toContain("gadget");
     const manifest = ART_MANIFEST as unknown as {

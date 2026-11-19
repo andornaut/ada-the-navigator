@@ -13,8 +13,9 @@ import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
-import { ART_MANIFEST as manifest, CORE_MANIFEST } from "../testing/publicArt.ts";
+import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   aimIndex,
   CLAIM,
@@ -45,12 +46,20 @@ import {
 import { jetLength } from "./shipJets.ts";
 
 const assets = manifest.assets as EnemyFrame[];
-const json = (path: string): unknown => {
-  const url = new URL(`../../public${path}`, import.meta.url);
-  return existsSync(url) ? JSON.parse(readFileSync(url, "utf8")) : undefined;
+const json = (path: string | undefined): unknown => {
+  const url = path && new URL(`../../public${path}`, import.meta.url);
+  return url && existsSync(url) ? JSON.parse(readFileSync(url, "utf8")) : undefined;
 };
+// Each manifest's sidecars map, which names the jets and hardpoints files its crafts load.
+const coreSidecars = readSidecars(CORE_MANIFEST.sidecars)!;
+const galaxySidecars = new Map(
+  [...GALAXY_MANIFESTS].map(([galaxy, { sidecars }]) => [GALAXY_ID[galaxy], sidecars]),
+);
+// The sidecars of the manifest whose entries sit in an art directory: a galaxy's or the core's.
+const sidecarsAt = (directory: string) =>
+  galaxySidecars.get(/^\/art\/([a-z]+)\//u.exec(directory)?.[1] ?? "") ?? coreSidecars;
 function nativePartFrames(directory: string, archetype: string): number {
-  const file = json(`${directory + archetype}-hardpoints.json`) as {
+  const file = json(enemyHardpointsPath(sidecarsAt(directory), archetype)) as {
     hardpoints: { capped?: boolean; states: string[]; top: string | null }[];
     weaponTops?: Record<string, { top: string }>;
   };
@@ -80,10 +89,10 @@ const layouts: Record<string, unknown> = {
 };
 const build = (
   frames: readonly EnemyFrame[],
-  layout = (name: string) => layouts[name] ?? json(`/art/enemies/${name}-hardpoints.json`),
+  layout = (name: string) => layouts[name] ?? json(enemyHardpointsPath(coreSidecars, name)),
 ) =>
   enemyArt(
-    (archetype) => files[archetype] ?? json(`/art/enemies/${archetype}-jets.json`),
+    (archetype) => files[archetype] ?? json(enemyJetsPath(coreSidecars, archetype)),
     layout,
     composedArchetypes(assets),
     frames,
@@ -681,8 +690,8 @@ describe("enemy SVGs", () => {
 describe("claim jumper art", () => {
   const sets = enemyFrameSets(assets, CLAIM);
   const claim = enemyArt(
-    (archetype) => json(`/art/cartwheel/enemies/${archetype}-jets.json`),
-    (archetype) => json(`/art/cartwheel/enemies/${archetype}-hardpoints.json`),
+    (archetype) => json(enemyJetsPath(galaxySidecars.get("cartwheel")!, archetype)),
+    (archetype) => json(enemyHardpointsPath(galaxySidecars.get("cartwheel")!, archetype)),
     composedArchetypes(assets.filter((asset) => asset.family === "claim")),
     assets,
     sets,
