@@ -114,6 +114,11 @@ class Element extends EventTarget {
   readonly dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | undefined;
+  readonly properties = new Map<string, string>();
+  readonly style = {
+    backgroundImage: "",
+    setProperty: (name: string, value: string) => this.properties.set(name, value),
+  };
   textContent = "";
   append(...nodes: Element[]) {
     for (const node of nodes) {
@@ -329,6 +334,10 @@ it("lists one scrolling column in order, runs each press once and disables an ex
   addButton!.dispatchEvent(new Event("click"));
   expect(add.run).toHaveBeenCalledTimes(2);
   expect(addButton!.disabled).toBe(false);
+  // The FPS counter's switch row shows its setting icon, keyed outside the device settings.
+  const icon = fpsRow!.children.find((node) => node.className === "ada-icon")!;
+  expect(icon.dataset.icon).toBe("icon-fps-counter");
+  expect(icon.style.backgroundImage).toBe("url('/art/ui/sprites/icon-fps-counter.png')");
   expect(fpsRow!.getAttribute("aria-checked")).toBe("false");
   fpsRow!.dispatchEvent(new Event("click"));
   expect(set).toHaveBeenCalledExactlyOnceWith(true);

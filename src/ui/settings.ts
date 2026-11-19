@@ -231,7 +231,9 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
   white-space:nowrap;
   text-align:center
 }
-.ada-controls [data-dialog=settings] .ada-setting-toggle{
+/* Every switch row, in Settings and Cheats: the switch over its On or Off state, and the row icon
+   level with the label's ink. */
+.ada-controls .ada-setting-toggle{
   display:flex;
   flex:none;
   flex-direction:column;
@@ -240,7 +242,8 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
   gap:${units(SPACING.rowGap)};
   align-self:center
 }
-.ada-controls [data-dialog=settings] .ada-row > .ada-icon{
+.ada-controls [data-dialog=settings] .ada-row > .ada-icon,
+.ada-controls .ada-row[role=switch] > .ada-icon{
   align-self:flex-start;
   margin-top:calc(
     var(--setting-title-ink-top,${units(SETTINGS_TITLE_INK_TOP)}) - var(--setting-icon-ink-top,0px)

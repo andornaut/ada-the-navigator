@@ -21,6 +21,7 @@ import {
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { settingsIcon } from "./settingsIcons.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -171,12 +172,10 @@ export function createCheats(
         switch: {
           create(data) {
             const toggle = rows.get(data.id) as CheatSwitch;
-            const icon = document.createElement("span");
-            icon.className = "ada-icon";
-            icon.setAttribute("aria-hidden", "true");
             const { row, show } = createSwitchRow({
               align: "center",
-              icon,
+              // The FPS counter is a display toggle, not a DeviceSetting, so its icon is keyed here.
+              icon: settingsIcon("icon-fps-counter"),
               id: data.id,
               label: data.label,
             });

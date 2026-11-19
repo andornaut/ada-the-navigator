@@ -166,6 +166,22 @@ describe("modal buttons", () => {
     expect(rule(`${UI_SCOPE} .ada-button`)).toContain("justify-content:center");
   });
 
+  it("counts the frame in the end pad of a card with a scroll group, as in every card", () => {
+    expect(MODAL_STYLE).not.toContain(`${UI_SCOPE} .ada-card-body.ada-has-scroll::after`);
+    expect(rule(`${UI_SCOPE} .ada-card-body::after`)).toContain(
+      `height:calc(${units(SPACING.panelPadding - 8)} - ${slice(2)})`,
+    );
+  });
+
+  it("keeps a focused cheat row's ring inside the column and reserves the scrollbar while it scrolls", () => {
+    expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain(`padding:${units(FOCUS_RING.outset)}`);
+    expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain("box-sizing:border-box");
+    // The scroll group's scrollbar is the 14 reserve (SCROLL.gap 6 + SCROLL.track 8): 368 inner,
+    // 360 rows inside the ring padding, 346 while the column scrolls.
+    const scrollbar = `${UI_SCOPE} .ada-scroll::-webkit-scrollbar{\n  width:${units(14)}`;
+    expect(MODAL_STYLE).toContain(scrollbar);
+  });
+
   it("keeps the end pad below the last control when a card scrolls to its end", () => {
     // Chibi's 16 padding includes the 2 frame; the trailing spacer follows the last group's gap.
     expect(rule(`${UI_SCOPE} .ada-card`)).toContain(`padding:0 calc(${units(16)} - ${slice(2)})`);

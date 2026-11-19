@@ -324,6 +324,12 @@ describe("Settings current-state labels", () => {
     settings.dispose();
   });
 
+  it("shares the switch-row icon and state styles with every switch row, Cheats included", () => {
+    expect(SETTINGS_STYLE).toContain(".ada-controls .ada-setting-toggle{");
+    expect(SETTINGS_STYLE).not.toContain("[data-dialog=settings] .ada-setting-toggle");
+    expect(SETTINGS_STYLE).toContain(".ada-controls .ada-row[role=switch] > .ada-icon{");
+  });
+
   it("provides one canonical Back in its own centered footer without changing the close action", () => {
     const { settings } = setup();
     const actions = settings.actions as unknown as Element;

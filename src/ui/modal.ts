@@ -248,14 +248,10 @@ ${UI_SCOPE} .ada-card-body > *{
   max-width:100%
 }
 
-/* A card with a named scroll group scrolls only that group; its other groups stay in view. The
-   group clips the end pad above the frame's inner edge, so its last control scrolls into view
-   above that padding. */
+/* A card with a named scroll group scrolls only that group; its other groups stay in view, and
+   the body's end pad below its last group counts the frame, as in every card. */
 ${UI_SCOPE} .ada-card-body.ada-has-scroll{
   overflow-y:hidden
-}
-${UI_SCOPE} .ada-card-body.ada-has-scroll::after{
-  height:${units(SCROLL.endPad - CARD_CONTENT.gap)}
 }
 ${UI_SCOPE} .ada-card-body > .ada-scroll{
   flex:0 1 auto;
@@ -583,12 +579,16 @@ ${UI_SCOPE} .ada-steps{
   margin:0
 }
 
-/* Cheats: per scope a heading, its persistence, then items a gap apart, each a button with its
-   description a row gap below. */
+/* Cheats: one column of full-width rows a gap apart, the card's scroll group. Its padding keeps
+   a focused row's ring inside the column's clip at the sides and the scroll ends, as the job list;
+   while it scrolls, its scrollbar (.ada-scroll, SCROLL.gap + SCROLL.track) takes the right
+   reserve from the rows. */
 ${UI_SCOPE} .ada-cheat-items{
+  box-sizing:border-box;
   display:flex;
   flex-direction:column;
   gap:${units(CARD_CONTENT.gap)};
+  padding:${units(FOCUS_RING.outset)};
   align-self:stretch
 }
 ${UI_SCOPE} .ada-cheat-items>*{
