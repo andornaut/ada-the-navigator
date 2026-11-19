@@ -25,6 +25,7 @@ const kit = vi.hoisted(() => {
           }) => void;
           onUpdateState: (state: unknown) => void;
           serviceWorkerUrl: string;
+          soundFormat: string | undefined;
         },
       ) => {
         void value;
@@ -164,8 +165,11 @@ describe("launch", () => {
       "onUpdateReady",
       "onUpdateState",
       "serviceWorkerUrl",
+      "soundFormat",
     ]);
     expect(options().serviceWorkerUrl).toBe("/sw.js");
+    // A game without sound files passes no format.
+    expect(options()).toHaveProperty("soundFormat", undefined);
   });
 
   it("returns reloading from the kit so the game never starts", async () => {

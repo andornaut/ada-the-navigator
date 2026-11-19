@@ -128,6 +128,9 @@ function createPhoneLaunch(): Launch | undefined {
     onUpdateReady: updateOffer.offer,
     onUpdateState: updateStateActivity,
     serviceWorkerUrl: SERVICE_WORKER_URL,
+    // Ada makes its sounds at runtime and ships no sound files, so the build's sounds map is
+    // empty; undefined is the kit's value for a game without sounds.
+    soundFormat: undefined,
   });
   // The boot preload's settled share completes the launch's one progress value.
   reportBoot((value) => created.bootProgress(value, 1));
