@@ -27,6 +27,7 @@ import {
   ENEMY_HEADINGS,
   projectAt,
   rotate,
+  round,
   SHIP_HEADINGS,
   SHIP_HEADING_CONTRACT,
 } from "./projection.ts";
@@ -161,20 +162,48 @@ const contains = (points: readonly (readonly number[])[], [x, y]: readonly numbe
   return inside;
 };
 
-test("title jet anchors land inside the actual visible rear mouth regions", () => {
+// Distance from `point` to the segment from `a` to `b`.
+const segmentDistance = (
+  [x, y]: readonly number[],
+  [ax, ay]: readonly number[],
+  [bx, by]: readonly number[],
+) => {
+  const [dx, dy] = [bx! - ax!, by! - ay!];
+  const t = Math.max(0, Math.min(1, ((x! - ax!) * dx + (y! - ay!) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(x! - ax! - t * dx, y! - ay! - t * dy);
+};
+
+// A point on an outline's edge counts as on it within 1e-6; one farther outside does not.
+const onOrInside = (points: readonly (readonly number[])[], point: readonly number[]) =>
+  contains(points, point) ||
+  points.some((a, i) => segmentDistance(point, a, points[(i + 1) % points.length]!) <= 1e-6);
+
+test("title jet anchors are the rear root midpoints on the actual visible rear mouths", () => {
   const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
     frame: number;
     headings: { index: number; mouths: { anchor: number[]; occluders?: number[][][] }[] }[];
   };
   assert.equal(jets.frame, FRAME);
   assert.equal(jets.headings.length, SHIP_HEADINGS);
-  const mouths = drawn(48, classic.paint, { yaw: worldView(292.5) }).filter(
+  const yaw = worldView(292.5);
+  const mouths = drawn(48, classic.paint, { yaw }).filter(
     ({ color }) => color === classic.paint.engineOpening,
   );
-  for (const mouth of jets.headings.find(({ index }) => index === worldView(292.5))!.mouths) {
+  const published = jets.headings.find(({ index }) => index === yaw)!.mouths;
+  assert.equal(published.length, 2);
+  for (const [index, mouth] of published.entries()) {
+    // The anchor is the midpoint of the rear root segment's projected, rounded ends.
+    const ends = normalJetStation({ yaw }, index === 0 ? -1 : 1).root.map((point) =>
+      projectAt(48, 48, rotate(SHIP_HEADINGS, yaw, point)),
+    );
+    const midpoint = [0, 1].map((axis) => (ends[0]![axis]! + ends[1]![axis]!) / 2);
+    const rounded = [0, 1].map((axis) => (round(ends[0]![axis]!) + round(ends[1]![axis]!)) / 2);
+    for (const axis of [0, 1]) {
+      assert(Math.abs(mouth.anchor[axis]! - rounded[axis]!) <= 1e-9, "anchor is the root midpoint");
+    }
     assert(
-      mouths.some(({ outline }) => contains(outline, mouth.anchor)),
-      "anchor must originate on an actual cyan engine opening",
+      mouths.some(({ outline }) => onOrInside(outline, midpoint)),
+      "the root midpoint must lie on an actual cyan engine opening",
     );
     assert(Array.isArray(mouth.occluders));
     for (const polygon of mouth.occluders!)
