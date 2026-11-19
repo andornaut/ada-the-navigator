@@ -1,7 +1,7 @@
 {
   "version": 1,
   "displayScale": 0.4375,
-  "body": ["#5B8089", "#4C717A", "#3E636C", "#335860", "#2B4F58"],
+  "body": ["#CFECDF", "#BFDCCF", "#AFCCBF", "#A2BFB2", "#99B5A9"],
   "contour": {
     "color": "#D68B72",
     "width": 1.5

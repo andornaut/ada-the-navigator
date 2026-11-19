@@ -24,6 +24,7 @@ import {
   unit,
 } from "./debris.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
+import { floorColour } from "./palette.ts";
 import { json } from "./projection.ts";
 import {
   BUOY,
@@ -49,7 +50,7 @@ const whirlpool = (
   JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
     galaxies: Record<
       string,
-      { tint: { chroma: number; hue: number }; colors: Record<string, string> }
+      { tint: { chroma: number; hue: number; light?: boolean }; colors: Record<string, string> }
     >;
   }
 ).galaxies.whirlpool!;
@@ -129,13 +130,16 @@ const projectEntries = [
 ];
 
 // The lit beacon glass and buoy lamp read as signals on the field; the cream body stays clear.
+// On a light field their ink keyline carries the floor and the fills stay as drawn.
 const MIN_LIGHT_ON_FIELD = 5;
-for (const [name, colour] of [
+const LIGHT = Boolean(whirlpool.tint.light);
+for (const [name, fill] of [
   ["beacon glass A", GLASS.a[2]!],
   ["beacon glass B", GLASS.b[2]!],
   ["buoy lamp A", LAMP.a[3]!],
   ["cream body", CREAM[1]!],
 ] as const) {
+  const colour = floorColour(LIGHT, fill);
   const value = ratio(colour, BACKGROUND);
   if (value < MIN_LIGHT_ON_FIELD) {
     throw new Error(

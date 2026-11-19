@@ -9,7 +9,11 @@
   `whirlpoolProjects`. Each generator replaces its own entries in place.
 - The build fails if the whale's lit hull (`hull[0]` in `whales.json`) falls
   below 3:1 over the streak colour, or if the beacon glass, the lit buoy lamp
-  or the cream body falls below 5:1 on the field.
+  or the cream body falls below 5:1 on the field. Whirlpool's field is light
+  (`tint.light`), so its ink keyline carries that floor: `floorColour` in
+  [art/tools/palette.ts](tools/palette.ts) checks ink `#181425` (10.86:1 on
+  `#B8CEC4`) in place of each fill, and the fills stay as drawn. A dark field
+  checks the fills.
 - The debris model is shared in [art/tools/debris.ts](tools/debris.ts); the
   project models are in [art/tools/whirlpool-projects.ts](tools/whirlpool-projects.ts).
 
@@ -64,25 +68,26 @@ Use, the Dock action; it has no dock, mouth or approach lights.
 
 | Role                  | Colour    | On the field |
 | --------------------- | --------- | -----------: |
-| Tower                 | `#dff6fa` |      12.89:1 |
-| Ramp                  | `#c8eef5` |      11.72:1 |
-| Tower side            | `#a9cfd8` |       8.69:1 |
-| Ramp side             | `#7aa4ae` |       5.34:1 |
-| Ramp rear             | `#6d8f97` |       4.15:1 |
-| Cap, collar           | `#efe4cf` |      11.49:1 |
-| Cap side, collar side | `#bfae94` |       6.68:1 |
-| Chevron lit           | `#f7f2ff` |      13.16:1 |
-| Chevron unlit, plates | `#5b8089` |       3.37:1 |
-| Plate side            | `#3e636c` |       2.21:1 |
-| Windows               | `#ffe9b8` |      12.13:1 |
-| Windows dim           | `#a08f78` |       4.61:1 |
-| Beacon                | `#70ace8` |       6.03:1 |
+| Tower                 | `#dff6fa` |       1.48:1 |
+| Ramp                  | `#c8eef5` |       1.34:1 |
+| Tower side            | `#a9cfd8` |       1.00:1 |
+| Ramp side             | `#7aa4ae` |       1.63:1 |
+| Ramp rear             | `#6d8f97` |       2.10:1 |
+| Cap, collar           | `#efe4cf` |       1.32:1 |
+| Cap side, collar side | `#bfae94` |       1.31:1 |
+| Chevron lit           | `#f7f2ff` |       1.51:1 |
+| Chevron unlit, plates | `#5b8089` |       2.59:1 |
+| Plate side            | `#3e636c` |       3.95:1 |
+| Windows               | `#ffe9b8` |       1.39:1 |
+| Windows dim           | `#a08f78` |       1.89:1 |
+| Beacon                | `#70ace8` |       1.45:1 |
 
 - The build fails if the tower, ramp, cap, lit chevron, windows or beacon falls
-  below 5:1 on the field, Whirlpool's floor for bodies and lamps.
-- The silhouette's edge median is 5.34:1, with 92.2% of edge pixels at 3:1 or
-  more (librsvg at 1x over the field), above the station edge bar of a 5:1
-  median and 90% at 3:1.
+  below 5:1 on the field, Whirlpool's floor for bodies and lamps. On the light
+  field the station draws over the 2 px destination keyline
+  ([Destinations](destinations.md#light-field-keyline)), whose ink is
+  10.86:1 on the field, so the check takes the ink (`floorColour`) and the
+  fills stay as drawn.
 - The ramp's teal stays pale, clear of the mint `active` (`#65C9BF`) of ore
   and Stardust, and the station takes no coral `obstacle`.
 
@@ -114,21 +119,22 @@ space stroke.
 | Depth   | On the field, above specks and backdrop rocks and below every play object, pickup and effect                                                                                                                                                                                                                                                    |
 
 Marks keep their lane speed through the end fades, so their spacing stays
-even while `f` shrinks and fades them out. Currents are Whirlpool's, a dark
-field: no light-field keyline applies.
+even while `f` shrinks and fades them out. Streaks take no light-field
+keyline.
 
-Contrast (WCAG) on Whirlpool's `#132D33`:
+Contrast (WCAG) on Whirlpool's `#B8CEC4`:
 
-| Pair                              |  Ratio |
-| --------------------------------- | -----: |
-| Streak on field                   | 2.11:1 |
-| Whale top `#AAA5E6` over a streak | 3.02:1 |
-| Whale top on field                | 6.36:1 |
-| Debris contour `#D68B72` on field | 5.37:1 |
-| Debris contour over a full streak | 2.55:1 |
+| Pair                              |   Ratio |
+| --------------------------------- | ------: |
+| Streak on field                   |  4.14:1 |
+| Whale top `#AAA5E6` over a streak |  3.02:1 |
+| Whale top on field                |  1.37:1 |
+| Debris contour `#D68B72` on field |  1.62:1 |
+| Debris contour over a full streak |  2.55:1 |
+| Debris ink keyline on field       | 10.86:1 |
 
-The streak stays below the signals, a quiet field-level mark, and clear of
-the mint `active` (`#65C9BF`) of ore and Stardust.
+The streak stays a field-level mark under every play object, clear of the
+mint `active` (`#65C9BF`) of ore and Stardust.
 
 ## River debris
 
@@ -146,13 +152,18 @@ each:
   tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion
   shows frame 0; travel still happens. Choose the piece per river rock from
   its seed.
-- Body, lit to shadow: `#5B8089`, `#4C717A`, `#3E636C`, `#335860` and
-  `#2B4F58` (`body`): Whirlpool's `environmentDetail` lightness plus 0.2,
+- Body, lit to shadow: `#CFECDF`, `#BFDCCF`, `#AFCCBF`, `#A2BFB2` and
+  `#99B5A9` (`body`): Whirlpool's `environmentDetail` lightness plus 0.2,
   0.15, 0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. The rib
   and the girder web sit one tone deeper. Muted field matter, never the
-  neutral stone of harmless rocks; 3.37 to 1.63:1 on the field.
+  neutral stone of harmless rocks; 1.04 to 1.33:1 on the field.
 - A 1.5 px coral (`obstacle`, `#D68B72`) contour outside the silhouette
-  (`contour`): 5.37:1 on the field and 1.59 to 3.30:1 on the body tones.
+  (`contour`): 1.62:1 on the field and 1.22 to 2.14:1 on the body tones.
+- On the light field each piece draws over the 1 px ink keyline of the
+  [light-field rule](galaxies.md#light-fields) (`debris`): the silhouette,
+  contour included, at alpha 0.5, grown by 1 px in all eight directions. Ink
+  `#181425` is 10.86:1 on the field, 6.69:1 against the contour and 8.18 to
+  14.34:1 against the body tones.
 - `radius`: frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame
   px, `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
@@ -213,19 +224,21 @@ frame projection, 1 frame px own-fill seams on body faces and unstroked decals.
 Frames are multiples of 16 px; each SVG's intrinsic size is its display size
 (`frame * 0.4375`) and its `viewBox` the frame. The pivot is the float's centre
 on the world plane: place it at the world position and sort by its screen y.
-Whirlpool is a dark field, so no keyline applies.
+On Whirlpool's light field both draw over the 1 px ink keyline of the
+[light-field rule](galaxies.md#light-fields) (`nurseryBeacon`, `currentBuoy`),
+10.86:1 on the field, which carries the glass and lamp floor.
 
 | Change            | Ids                                                        | Frame px | Display  | Pivot        |
 | ----------------- | ---------------------------------------------------------- | -------- | -------- | ------------ |
 | Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 80, 112  | 35 by 49 | `(0.5, 0.8)` |
 | Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 48, 64   | 21 by 28 | `(0.5, 0.8)` |
 
-| Part            | Colour                                                      | On `#132D33`  |
-| --------------- | ----------------------------------------------------------- | ------------- |
-| Cream body      | `#f7f0e2` to `#9f8f78`, the station family's cream and side | 12.76 to 4.60 |
-| Beacon glass    | `#ffe9b8` (A, white core), `#ecc98a` (B, core `#fff6dc`)    | 12.13, 9.16   |
-| Buoy lamp, band | Whale glow `#cbb8ee`, core `#f7f2ff` (A); `#4c4585` (B)     | 8.02, 1.72    |
-| Light pool      | `#ffe9b8`, four rings                                       | 1.20 to 2.06  |
+| Part            | Colour                                                      | On `#B8CEC4` |
+| --------------- | ----------------------------------------------------------- | ------------ |
+| Cream body      | `#f7f0e2` to `#9f8f78`, the station family's cream and side | 1.46 to 1.90 |
+| Beacon glass    | `#ffe9b8` (A, white core), `#ecc98a` (B, core `#fff6dc`)    | 1.39, 1.05   |
+| Buoy lamp, band | Whale glow `#cbb8ee`, core `#f7f2ff` (A); `#4c4585` (B)     | 1.09, 5.07   |
+| Light pool      | `#ffe9b8`, four rings                                       | 1.02 to 1.09 |
 
 ### Nursery beacon
 
@@ -279,8 +292,8 @@ in frame px.
 
 | Craft                      | Job subject       | Manifest ids                             | Frame | Display | Frames per heading       | Hull top on field |
 | -------------------------- | ----------------- | ---------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
-| `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 6.36:1 |
-| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 6.36:1 |
+| `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 1.37:1 |
+| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 1.37:1 |
 
 - Current skimmer: a low lilac lens hull with a whale-glow band `#cbb8ee`, a
   dark bubble canopy, two cream spindle floats on struts and dead twin nozzles

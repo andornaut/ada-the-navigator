@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { replaceEntries } from "./manifest.ts";
+import { floorColour } from "./palette.ts";
 import { svgText } from "./svg-text.ts";
 import { layout, placed, svgFile } from "./needle-common.ts";
 import { round } from "./projection.ts";
@@ -151,15 +152,18 @@ function eddy(frame: number): Part[][] {
   return groups;
 }
 
-// Whirlpool's floor: the body and every lit lamp at 5:1 or more on the field.
-const field = (
+// Whirlpool's floor: the body and every lit lamp at 5:1 or more on the field. On a light field
+// the station's ink keyline carries the floor and the fills stay as drawn.
+const galaxy = (
   JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-    galaxies: Record<string, { colors: Record<string, string> }>;
+    galaxies: Record<string, { colors: Record<string, string>; tint: { light?: boolean } }>;
   }
-).galaxies.whirlpool!.colors.background!;
+).galaxies.whirlpool!;
+const field = galaxy.colors.background!;
 const ratio = (colour: string) => contrast(colour.slice(1), field.slice(1));
 const FLOOR = { ramp: C.ramp, tower: C.tower, cream, chevron: C.chevron, warm, blue };
-for (const [role, colour] of Object.entries(FLOOR)) {
+for (const [role, fill] of Object.entries(FLOOR)) {
+  const colour = floorColour(Boolean(galaxy.tint.light), fill);
   if (ratio(colour) < 5) {
     throw new Error(`whirlpool station ${role} ${colour} is ${ratio(colour).toFixed(2)}:1`);
   }

@@ -45,7 +45,9 @@
       "nebulaStars",
       "huntGlint",
       "strandedCraft",
-      "debris"
+      "debris",
+      "nurseryBeacon",
+      "currentBuoy"
     ],
     "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
     "destinationKeyline": {

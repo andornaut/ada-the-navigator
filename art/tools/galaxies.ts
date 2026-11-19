@@ -120,6 +120,9 @@ const LIGHT_FIELD = {
     "strandedCraft",
     // Cartwheel's traveling debris and Whirlpool's river debris, moving hazards like the drones.
     "debris",
+    // Whirlpool's project world changes, whose lamps meet Whirlpool's floor through the keyline.
+    "nurseryBeacon",
+    "currentBuoy",
   ],
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
   // Places Ada visits take a wider keyline, so they read at a glance on a light field

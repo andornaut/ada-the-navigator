@@ -11,6 +11,12 @@ const space = JSON.parse(
 const hex = (colour: string) => colour.slice(1).toLowerCase();
 
 export const INK = "181425";
+
+// The colour that must meet a signal's contrast floor on a field. On a light field (`tint.light`)
+// Tech draws the ink keyline under every keylined object and destination, so the keyline meets
+// the floor and the fill stays as drawn (art/galaxies.md "Light fields"); on a dark field the
+// fill itself must.
+export const floorColour = (light: boolean, fill: string): string => (light ? `#${INK}` : fill);
 export const SPACE_BG = hex(space.colors.background!);
 // The in-between dimension, darkest to lightest, and its cool sparkle.
 export const IN_BETWEEN = space.inBetween.ramp.map(hex) as [string, string, string, string, string];
