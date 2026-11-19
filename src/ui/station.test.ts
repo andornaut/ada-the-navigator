@@ -789,6 +789,7 @@ function constructedStation(
     FOCUS_RING,
     HTMLElement: Node,
     SCROLL,
+    SCROLL_RESERVE_CLASS: "ada-scroll-reserve",
     SPACING,
     SPRITES: "/art/",
     VIEW_SCALE_EVENT,

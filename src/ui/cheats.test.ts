@@ -168,9 +168,13 @@ vi.mock("./modal.ts", () => ({
     }
     return { body, card, close, dispose: vi.fn(), fit: vi.fn(), frame };
   },
-  createSwitchRow: (options: { readonly id: string; readonly label: string }) => {
+  createSwitchRow: (options: {
+    readonly icon: Element;
+    readonly id: string;
+    readonly label: string;
+  }) => {
     const row = Object.assign(new Element("button"), { textContent: options.label });
-    row.append(new Element(), new Element(), new Element());
+    row.append(options.icon, new Element(), new Element());
     return {
       row,
       show: (on: boolean) => row.setAttribute("aria-checked", String(on)),
