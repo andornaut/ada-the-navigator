@@ -6,6 +6,7 @@ import { SCREEN } from "../src/data/screen.ts";
 import {
   asteroidFixture,
   hideOverCanvas,
+  hubFixture,
   keylineFixture,
   logicalSize,
   observe,
@@ -461,6 +462,33 @@ async function captureKeylines([galaxy, ...rest] = [1, 2, 3, 4, 5]) {
   await captureKeylines(rest);
 }
 
+/**
+ * Holds the open fixture until its galaxy's own art draws: the clock runs until the loading
+ * bar's measured galaxy load ends, then steps the frames that draw that art. A fixture without
+ * enemies passes openFixture's enemy art wait before that load ends.
+ */
+async function awaitGalaxyArt() {
+  await page.clock.resume();
+  await page
+    .locator('.ada-loading [role="progressbar"]:not([data-state="determinate"])')
+    .waitFor({ state: "attached" });
+  await pauseClock(page);
+  await page.clock.runFor(100);
+}
+
+/** Cartwheel's hub, its story craft and its mooring buoys over their keylines, at both sizes. */
+async function captureHub() {
+  const serialized = hubFixture();
+  fixtureFile("keylines-cartwheel-hub", "Cartwheel hub keyline view for Art review", serialized);
+  await openFixture(serialized);
+  await awaitGalaxyArt();
+  await shot("keylines-cartwheel-hub-1280x720.png");
+  await openFixture(serialized, { viewport: { width: 720, height: 360 } });
+  await awaitGalaxyArt();
+  await phoneInsets();
+  await shot("keylines-cartwheel-hub-720x360-insets.png");
+}
+
 try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
@@ -468,6 +496,7 @@ try {
   await captureHeavies();
   await captureRocks();
   await captureKeylines();
+  await captureHub();
   await closeFixture();
   assert.deepEqual(events.errors, [], "Captured pages must report no errors");
   assert.deepEqual(events.failedRequests, [], "Captured pages must load every request");

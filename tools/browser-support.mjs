@@ -296,6 +296,40 @@ export function keylineFixture(galaxy) {
   return serialized;
 }
 
+// Cartwheel's hub with its story craft and mooring buoys in view, for the keyline review: the
+// story resolved, as the hub station fixture holds it, so the world places the hub and the miner
+// and visitors stand docked or moored beside it; Ada just below it, with no enemies near.
+export function hubFixture() {
+  const model = new GameModel(CONTENT);
+  model.state.unlocked = [1, 2];
+  Object.assign(model.state.progress[2], {
+    introduced: true,
+    questComplete: true,
+    resolved: true,
+    stage: 5,
+  });
+  model.startGalaxy(2);
+  playOpening(model);
+  model.state.dialogue = null;
+  Object.assign(model.state.progress[2], { known: ["hub"], stations: ["hub"] });
+  const flight = model.state.flight;
+  assert.ok(flight, "The hub fixture requires Cartwheel's flight");
+  delete flight.storyScene;
+  flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
+  flight.shots = [];
+  const hub = ensureDestination(CONTENT, "hub", flight);
+  assert.ok(
+    flight.objects.some((object) => object.kind === "destination" && object.id === "hub"),
+    "The resolved story places the hub",
+  );
+  const below = toWorld({ x: 0, y: 90 });
+  flight.player = { x: hub.x + below.x, y: hub.y + below.y };
+  flight.velocity = { x: 0, y: 0 };
+  const serialized = model.save();
+  assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts the hub");
+  return serialized;
+}
+
 // The backdrop proof: galaxy `galaxy`'s backdrop layers and both rock depths with no play objects.
 export function backdropFixture(rockArt, debris, galaxy) {
   const model = emptyFlight(rockArt, debris, galaxy, [1, 2, 3, 4, 5, 6]);
