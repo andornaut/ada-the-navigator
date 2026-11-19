@@ -1970,7 +1970,35 @@ try {
       listWidth,
       ...geometry,
     };
+    // The FPS counter row's icon ink top meets its label's ink top, as in every switch row: the
+    // label's ink from the loaded font's metrics, the icon's 1 transparent row above its ink.
+    shot.fpsInk = await cheatsProof().evaluate((dialog) => {
+      const row = dialog.querySelector('[data-cheat="fpsCounter"]');
+      const caption = row.querySelector(".ada-setting-text").firstElementChild;
+      const icon = row.querySelector(".ada-icon");
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      const style = getComputedStyle(caption);
+      const measure = document.createElement("canvas").getContext("2d");
+      measure.font = style.font;
+      const metrics = measure.measureText(caption.textContent);
+      const box = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+      const baseline =
+        caption.getBoundingClientRect().top +
+        (parseFloat(style.lineHeight) - box) / 2 +
+        metrics.fontBoundingBoxAscent;
+      return {
+        // icon-fps-counter's ink starts 1 below its frame top (art/settings-icons.md).
+        icon: icon.getBoundingClientRect().top / unit + 1,
+        label: (baseline - metrics.actualBoundingBoxAscent) / unit,
+      };
+    });
     cheatsEnd[name] = shot;
+    assert.ok(
+      Math.abs(shot.fpsInk.icon - shot.fpsInk.label) <= 1,
+      `${name}: the FPS counter icon's ink top meets its label's ink top: ${JSON.stringify(shot.fpsInk)}`,
+    );
     assert.ok(
       Math.abs(shot.closeBottomInset - SPACING_TOKENS.panelPadding) <= 0.3,
       `${name}: Close's lip sits 16 above the card's bottom edge, frame included: ${JSON.stringify(shot)}`,
