@@ -2,10 +2,11 @@
 // behind the chart, and a ground strip with the afterglow and the grass Ada and Penny stand on.
 // The sky is dimmed behind every chart mark (the guard), and the build fails if a mark's ground
 // is brighter than the guard's cap. art/tools/storybook.ts draws Ada and Penny's sprites.
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
+import { encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 
 import { placeEntries } from "./manifest.ts";
 import { rgb, type Rgb } from "./oklab.ts";
@@ -516,9 +517,18 @@ export function routeGround(): RgbaImage {
   return ground.toImage(alpha);
 }
 
-const entry = (id: string, image: RgbaImage, density: number, pivot: { x: number; y: number }) => ({
+// The opaque sky as lossy WebP at quality 90.
+const SKY_WEBP = { quality: 90, method: 6, alphaQuality: 100, exact: false } as const;
+
+const entry = (
+  id: string,
+  extension: "png" | "webp",
+  image: RgbaImage,
+  density: number,
+  pivot: { x: number; y: number },
+) => ({
   id,
-  path: `/art/${id}.png`,
+  path: `/art/${id}.${extension}`,
   width: image.width,
   height: image.height,
   displayWidth: image.width / density,
@@ -530,12 +540,12 @@ const entry = (id: string, image: RgbaImage, density: number, pivot: { x: number
 if (import.meta.url === `file://${process.argv[1]}`) {
   const sky = routeSky();
   const ground = routeGround();
-  writePng(`${art}route-sky.png`, sky, true);
+  writeFileSync(`${art}route-sky.webp`, await encodeLossyWebp(SKY_WEBP, sky));
   writePng(`${art}route-ground.png`, ground);
   placeEntries("core", "route-", [
-    entry("route-sky", sky, SKY.density, { x: 0.5, y: 0 }),
+    entry("route-sky", "webp", sky, SKY.density, { x: 0.5, y: 0 }),
     {
-      ...entry("route-ground", ground, GROUND.density, { x: 0.5, y: 1 }),
+      ...entry("route-ground", "png", ground, GROUND.density, { x: 0.5, y: 1 }),
       overlays: ["story-ada-skywatch", "story-penny-sitting"],
     },
   ]);

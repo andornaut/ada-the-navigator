@@ -1,7 +1,8 @@
 # Route sky
 
 - Rebuild with `node art/tools/route-sky.ts` (about 2 s). It writes
-  `public/art/route-sky.png` and `route-ground.png` and their `route-` entries
+  `public/art/route-sky.webp` (opaque, lossy WebP at quality 90),
+  `route-ground.png` (soft alpha) and their `route-` entries
   in the root [manifest](../public/art/manifest.json). It reads each galaxy's
   marker from [galaxies.json](../public/art/galaxies.json), so rebuild it after
   `node art/tools/galaxies.ts` changes a marker.
@@ -85,7 +86,8 @@ whole view. Its footprint, in play view px (`GUARD` in the tool):
 Inside the footprint the sky's WCAG relative luminance is scaled down to at
 most 0.028 (its linear RGB times `0.028 / L`), feathered outward by a
 Gaussian of sigma 3 over the footprint grown by 6, at gain 1.6. The build
-fails if any footprint pixel is above the cap by more than 2% (byte rounding).
+fails if any footprint pixel of the rendered sky, before WebP encoding, is
+above the cap by more than 2% (byte rounding).
 The field itself is 0.013 to 0.022, so the guard shows only where a star,
 the band or a phenomenon crosses a mark.
 
