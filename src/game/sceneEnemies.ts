@@ -36,7 +36,7 @@ import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavySta
 import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";
-import { keylineSilhouette, keylineSprite } from "./sceneHud.ts";
+import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { type Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
@@ -64,6 +64,8 @@ export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "drawnTops"
     | "edgeMarkerInk"
     | "enemyArt"
+    | "craftJets"
+    | "craftJetsDrawn"
     | "enemyJets"
     | "enemyPlaceholders"
     | "enemySprites"
@@ -318,6 +320,7 @@ export function drawEnemySprite(
   if (banner) {
     scene.banners.push({ at: { x: point.x + banner.x, y: point.y + banner.y }, id });
   }
+  const depth = playDepth(point.y);
   sprites.forEach((part, index) => {
     const key = part.hardpoint === null ? id : `${id}#${part.layer}:${part.hardpoint}`;
     const sprite = objectSprite(scene, key, part.frame.id)
@@ -325,8 +328,9 @@ export function drawEnemySprite(
       .setOrigin(part.frame.pivot.x, part.frame.pivot.y)
       .setPosition(point.x + part.offset.x, point.y + part.offset.y)
       // Parts keep the heading's layer order within the hull's screen depth.
-      .setDepth(playDepth(point.y) + index * 1e-7);
-    keylineSprite(scene, enemy.archetype, key, sprite);
+      .setDepth(depth + index * 1e-7);
+    // Every part's keyline shares one slot beneath the whole craft, so they join as one shape.
+    keylineSprite(scene, enemy.archetype, key, sprite, depth - 2e-6);
     const hp = part.hardpoint === null ? undefined : state(part.hardpoint)?.hp;
     if (
       hp !== undefined &&
@@ -344,17 +348,14 @@ export function drawEnemySprite(
     (scene.fieldLight ?? scene.light) && art.jets
       ? { ...art, jets: { ...art.jets, layers: LIGHT_FIELD.jets.enemy } }
       : art;
-  for (const { alpha, color, points } of enemyJetTriangles(jets, frame, speed, pose.intact)) {
-    scene.enemyJets.fillStyle(color, alpha);
-    scene.enemyJets.fillTriangle(
-      point.x + points[0].x,
-      point.y + points[0].y,
-      point.x + points[1].x,
-      point.y + points[1].y,
-      point.x + points[2].x,
-      point.y + points[2].y,
-    );
-  }
+  drawCraftJets(
+    scene,
+    enemy.archetype,
+    id,
+    point,
+    depth,
+    enemyJetTriangles(jets, frame, speed, pose.intact),
+  );
 }
 
 /**

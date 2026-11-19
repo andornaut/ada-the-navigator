@@ -17,6 +17,11 @@ export interface LightField {
   readonly hudOutline: number;
   readonly indicatorStroke: number;
   readonly ink: number;
+  /**
+   * Whether a keylined craft's drawn jets join its keyline silhouette, and the kinds whose jets
+   * stay outside it (Ada's ship).
+   */
+  readonly jetKeyline: { readonly exempt: readonly string[]; readonly join: boolean };
   readonly jets: {
     readonly enemy: readonly JetLayer[];
     /** Ada's layers by Engine level, index 0 for level 1 (`shipLevels`). */
@@ -53,6 +58,7 @@ export function readLightField(value: unknown): LightField | undefined {
   const jets = fields(rule?.jets);
   const outline = fields(rule?.hudOutline);
   const destination = fields(rule?.destinationKeyline);
+  const jetKeyline = fields(rule?.jetKeyline);
   const ink = colour(rule?.ink);
   const enemy = readJetLayers(jets?.enemy);
   const shipLevels = readLevelLayers(jets?.shipLevels);
@@ -69,6 +75,8 @@ export function readLightField(value: unknown): LightField | undefined {
     !positive(outline?.width) ||
     !positive(destination?.width) ||
     !names(destination?.kinds) ||
+    typeof jetKeyline?.join !== "boolean" ||
+    !names(jetKeyline.exempt) ||
     !names(rule.keylined) ||
     !names(rule.effects) ||
     typeof rule.holodiskBeacon !== "string" ||
@@ -88,6 +96,7 @@ export function readLightField(value: unknown): LightField | undefined {
     hudOutline: outline.width,
     indicatorStroke: rule.indicatorStroke,
     ink,
+    jetKeyline: { exempt: jetKeyline.exempt, join: jetKeyline.join },
     jets: { enemy, shipLevels },
     keyline: rule.keyline,
     keylined: rule.keylined,
@@ -125,6 +134,13 @@ export function alphaTopRow(
 }
 
 /** Destinations use their wider outline; Ada uses half the ordinary silhouette growth. */
+/** Whether a keylined kind's drawn jets join its keyline silhouette (`jetKeyline`). */
+export function joinsJets(rule: LightField, kind: string): boolean {
+  return (
+    rule.jetKeyline.join && rule.keylined.includes(kind) && !rule.jetKeyline.exempt.includes(kind)
+  );
+}
+
 export function keylineWidth(rule: LightField, kind: string): number {
   if (kind === "ship") {
     return rule.keyline / 2;

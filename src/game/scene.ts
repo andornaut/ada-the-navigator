@@ -225,6 +225,9 @@ export class GameScene extends Scene {
     width: number;
   }[] = [];
   keylines = new Map<string, GameObjects.Image[]>();
+  /** Craft whose jets join their keyline: each one's jets in its own depth slot, by key. */
+  craftJets = new Map<string, GameObjects.Graphics>();
+  craftJetsDrawn = new Set<string>();
   // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
   // (drawOrder.ts), and the tow craft's pivot depth while its line is drawn.
   private passable: PassableDraw[] = [];
@@ -655,6 +658,7 @@ export class GameScene extends Scene {
         return chipColor();
       },
       ink: this.ink,
+      keyline: (kind, key, image) => keylineSprite(this, kind, key, image as GameObjects.Image),
       project: (point) => this.project(point),
       textures: this.textures,
       viewport: SCREEN,
@@ -680,6 +684,7 @@ export class GameScene extends Scene {
       this.plateInk = null;
       this.streakInk = null;
       this.backdropSprites.clear();
+      this.craftJets.clear();
       this.backdropItems.clear();
       this.starImages = [];
     };

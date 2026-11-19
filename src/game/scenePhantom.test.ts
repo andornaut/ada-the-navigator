@@ -17,6 +17,7 @@ vi.mock("./sceneObjects.ts", () => ({ drawOutpost: calls.outpost, drawWhale: vi.
 vi.mock("./sceneEnemies.ts", () => ({ drawEnemySprite: calls.enemy }));
 vi.mock("./sceneAssets.ts", () => ({ familyArt: calls.family, loadEnemyParts: calls.parts }));
 vi.mock("./sceneSprites.ts", () => ({ objectSprite: vi.fn() }));
+vi.mock("./sceneHud.ts", () => ({ drawCraftJets: vi.fn(), keylineSprite: vi.fn() }));
 function scene(complete = false): ObjectsContext {
   return {
     model: { state: { flight: { galaxy: 6 }, progress: { 6: { questComplete: complete } } } },

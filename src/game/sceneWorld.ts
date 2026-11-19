@@ -23,7 +23,7 @@ import {
 import { LIGHT_FIELD } from "./lightField.ts";
 import { boundsOnScreen, revealAlpha } from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";
-import { keylineSprite } from "./sceneHud.ts";
+import { drawCraftJets, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
@@ -69,6 +69,8 @@ export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "drawnTops"
     | "edgeMarkerInk"
     | "enemyArt"
+    | "craftJets"
+    | "craftJetsDrawn"
     | "enemyJets"
     | "enemySprites"
     | "familyArts"
@@ -155,13 +157,14 @@ export function drawStoryShips(scene: WorldContext, flight: FlightState): void {
       const at = { x: hub.x + offset.x, y: hub.y + offset.y };
       const point = scene.project(at);
       const frame = stationFrame(scene.buoyArt, scene.reducedMotion, scene.time.now);
-      scene.passes(
-        objectSprite(scene, hubBuoyKey(hub.id, group), frame.id)
-          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-          .setOrigin(frame.pivot.x, frame.pivot.y)
-          .setPosition(point.x, point.y)
-          .setDepth(playDepth(point.y)),
-      );
+      const key = hubBuoyKey(hub.id, group);
+      const sprite = objectSprite(scene, key, frame.id)
+        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+        .setOrigin(frame.pivot.x, frame.pivot.y)
+        .setPosition(point.x, point.y)
+        .setDepth(playDepth(point.y));
+      keylineSprite(scene, "mooringBuoy", key, sprite);
+      scene.passes(sprite);
     }
   }
   const progress = scene.model.state.progress[flight.galaxy];
@@ -176,24 +179,23 @@ export function drawStoryShips(scene: WorldContext, flight: FlightState): void {
     const art = scene.craftArt.get(STORY_SHIP_CRAFT[ship.id]);
     if (art) {
       const frame = selectEnemyFrame(art, ship.heading);
-      scene.passes(
-        objectSprite(scene, hubStoryKey(hub.id, ship.id), frame.id)
-          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-          .setOrigin(frame.pivot.x, frame.pivot.y)
-          .setPosition(point.x, point.y)
-          .setDepth(playDepth(point.y)),
+      const key = hubStoryKey(hub.id, ship.id);
+      const depth = playDepth(point.y);
+      const sprite = objectSprite(scene, key, frame.id)
+        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+        .setOrigin(frame.pivot.x, frame.pivot.y)
+        .setPosition(point.x, point.y)
+        .setDepth(depth);
+      keylineSprite(scene, "storyCraft", key, sprite, depth - 2e-6);
+      scene.passes(sprite);
+      drawCraftJets(
+        scene,
+        "storyCraft",
+        key,
+        point,
+        depth,
+        enemyJetTriangles(art, frame, ship.thrust ? 1 : 0),
       );
-      for (const { alpha, color, points } of enemyJetTriangles(art, frame, ship.thrust ? 1 : 0)) {
-        scene.enemyJets.fillStyle(color, alpha);
-        scene.enemyJets.fillTriangle(
-          point.x + points[0].x,
-          point.y + points[0].y,
-          point.x + points[1].x,
-          point.y + points[1].y,
-          point.x + points[2].x,
-          point.y + points[2].y,
-        );
-      }
       continue;
     }
     const heading = drawnHeading(ship.heading);
@@ -335,12 +337,14 @@ export function drawWhirlpoolProjects(scene: WorldContext, flight: FlightState):
           Math.SQRT2 * ring.radius,
         );
       }
-      const sprite = objectSprite(scene, partKey(family.id, "nurseryBeacon"), frame.id)
+      const key = partKey(family.id, "nurseryBeacon");
+      const sprite = objectSprite(scene, key, frame.id)
         .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
         .setOrigin(frame.pivot.x, frame.pivot.y)
         .setPosition(point.x, point.y)
         .setDepth(playDepth(point.y))
         .setAlpha(alpha);
+      keylineSprite(scene, "nurseryBeacon", key, sprite);
       scene.passes(sprite);
     }
   }
@@ -384,6 +388,7 @@ export function drawWhirlpoolProjects(scene: WorldContext, flight: FlightState):
         .setDepth(playDepth(screen.y))
         .setAlpha(alpha!)
         .setVisible(true);
+      keylineSprite(scene, "currentBuoy", `current-buoy:${key}`, sprite);
       scene.passes(sprite);
     }
   }

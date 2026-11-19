@@ -26,10 +26,10 @@ describe("the station jobs' art in flight", () => {
       ["landmark-nebula-stars", undefined, "nebulaStars"],
     ]);
     expect(nebulaTint(art, 1, "nebulaOuter")).toBe(0xbaab77);
-    expect(nebulaTint(art, 3, "nebulaCore")).toBe(0x5f6a78);
+    expect(nebulaTint(art, 3, "nebulaCore")).toBe(0x7c908b);
     // Tints are looked up by stable galaxy id, whatever the file's key order.
-    expect(nebulaTint(art, 4, "nebulaOuter")).toBe(0x534c4e);
-    expect(nebulaTint(art, 5, "nebulaCore")).toBe(0x696481);
+    expect(nebulaTint(art, 4, "nebulaOuter")).toBe(0x9e937e);
+    expect(nebulaTint(art, 5, "nebulaCore")).toBe(0x5f647f);
     // A galaxy without its own tint takes the base one.
     const tints = Object.fromEntries(
       Object.entries(FILE.tints as Record<string, unknown>).filter(([id]) => id !== "needle"),

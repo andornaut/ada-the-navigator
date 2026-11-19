@@ -103,6 +103,8 @@ export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "drawnTops"
     | "edgeMarkerInk"
     | "enemyArt"
+    | "craftJets"
+    | "craftJetsDrawn"
     | "enemyJets"
     | "enemyPlaceholders"
     | "enemySprites"
@@ -217,11 +219,13 @@ export function drawTravelingDebris(
       point.y + dash.to.y,
     );
   }
-  objectSprite(scene, object.id, `${piece.id}-${frame}`)
+  const sprite = objectSprite(scene, object.id, `${piece.id}-${frame}`)
     .setDisplaySize(piece.display.width, piece.display.height)
     .setOrigin(piece.pivot.x, piece.pivot.y)
     .setPosition(point.x, point.y)
     .setDepth(playDepth(point.y));
+  // The keyline follows the drawn frame, its coral contour included.
+  keylineSprite(scene, "debris", object.id, sprite);
   return true;
 }
 
@@ -417,10 +421,18 @@ export function drawOutpostParts(
       .setOrigin(part.frame.pivot.x, part.frame.pivot.y)
       .setPosition(point.x + part.offset.x, point.y + part.offset.y)
       .setDepth(depth + part.order * 1e-7);
-    keylineSprite(scene, "outpost", key, sprite, keylineDepth);
+    // A guide beacon overlay keylines 1 px in its own slot; the rest join the outpost's 2 px.
+    if (GUIDE_BEACON_FRAME.test(part.frame.id)) {
+      keylineSprite(scene, "guideBeacon", key, sprite);
+    } else {
+      keylineSprite(scene, "outpost", key, sprite, keylineDepth);
+    }
     scene.passes(sprite);
   }
 }
+
+/** Andromeda's lit and spare guide beacon frames (art/andromeda.md, Guide beacon). */
+const GUIDE_BEACON_FRAME = /^beacon-guide-(?:lit|spare)-/u;
 
 /**
  * The after state drawn into one texture at the raster scale, its keyline beneath its
@@ -630,13 +642,14 @@ export function drawWhale(
   }
   const point = scene.project(at);
   const key = id.includes("#") || !id.includes(":") ? id : `${id.split(":")[0]}#${kind}`;
-  scene.passes(
-    objectSprite(scene, key, frame.id)
-      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-      .setOrigin(frame.pivot.x, frame.pivot.y)
-      .setPosition(point.x, point.y)
-      .setDepth(playDepth(point.y)),
-  );
+  const sprite = objectSprite(scene, key, frame.id)
+    .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+    .setOrigin(frame.pivot.x, frame.pivot.y)
+    .setPosition(point.x, point.y)
+    .setDepth(playDepth(point.y));
+  // Each whale, calf and family member keylines in its own slot.
+  keylineSprite(scene, "whale", key, sprite);
+  scene.passes(sprite);
   return true;
 }
 
@@ -959,11 +972,16 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
       if (object.role === "cargo" && scene.textures.exists("ore-nugget")) {
         // Five ore uses the shared larger footprint, with the same nearest-filtered rest frame.
         const size = orePickupSize(object.amount);
-        objectSprite(scene, object.id, "ore-nugget", 0)
-          .setDisplaySize(size, size)
-          .setOrigin(0.5)
-          .setPosition(point.x, point.y)
-          .setDepth(playDepth(point.y));
+        keylineSprite(
+          scene,
+          "orePickup",
+          object.id,
+          objectSprite(scene, object.id, "ore-nugget", 0)
+            .setDisplaySize(size, size)
+            .setOrigin(0.5)
+            .setPosition(point.x, point.y)
+            .setDepth(playDepth(point.y)),
+        );
         break;
       }
       scene.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);

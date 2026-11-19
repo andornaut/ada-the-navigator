@@ -12,6 +12,7 @@ import { type FeedbackPulse } from "./feedback.ts";
 import {
   alphaTopRow,
   inkEdges,
+  joinsJets,
   KEYLINE_ALPHA,
   keylineOffsets,
   keylineWidth,
@@ -20,6 +21,7 @@ import {
 } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { filterTexture } from "./sceneAssets.ts";
+import type { JetTriangle } from "./shipJets.ts";
 import { createUseCallout } from "./touchChrome.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
@@ -222,13 +224,77 @@ export function keylineSprite(
   }
 }
 
+/** The scene state a craft's jets draw with. */
+export type CraftJetsContext = Partial<Pick<GameScene, "edgeInk">> &
+  Pick<GameScene, "add" | "craftJets" | "craftJetsDrawn" | "enemyJets" | "light">;
+
+/**
+ * A craft's drawn jets at screen `point`. On a light field, a keylined kind whose jets join its
+ * keyline (`lightField.jetKeyline`) draws them in its own depth slot, between its keyline at
+ * `depth` - 2e-6 and its hull at `depth`, over ink grown by the keyline width in all eight
+ * directions around every triangle of alpha 0.5 or more, so craft and jets keyline as one
+ * shape. Otherwise they draw on the shared jets layer.
+ */
+export function drawCraftJets(
+  scene: CraftJetsContext,
+  kind: string,
+  key: string,
+  point: Vec,
+  depth: number,
+  triangles: readonly JetTriangle[],
+): void {
+  const fill = (graphics: GameObjects.Graphics, triangle: JetTriangle, offset: Vec) => {
+    const [a, b, c] = triangle.points;
+    graphics.fillTriangle(
+      point.x + a.x + offset.x,
+      point.y + a.y + offset.y,
+      point.x + b.x + offset.x,
+      point.y + b.y + offset.y,
+      point.x + c.x + offset.x,
+      point.y + c.y + offset.y,
+    );
+  };
+  const still = { x: 0, y: 0 };
+  if (!scene.light || !joinsJets(LIGHT_FIELD, kind)) {
+    for (const triangle of triangles) {
+      scene.enemyJets.fillStyle(triangle.color, triangle.alpha);
+      fill(scene.enemyJets, triangle, still);
+    }
+    return;
+  }
+  let graphics = scene.craftJets.get(key);
+  if (!graphics) {
+    graphics = scene.add.graphics();
+    scene.craftJets.set(key, graphics);
+  }
+  scene.craftJetsDrawn.add(key);
+  graphics
+    .clear()
+    .setDepth(depth - 1e-6)
+    .setVisible(true);
+  graphics.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
+  for (const offset of keylineOffsets(keylineWidth(LIGHT_FIELD, kind))) {
+    for (const triangle of triangles) {
+      if (triangle.alpha >= KEYLINE_ALPHA) {
+        fill(graphics, triangle, offset);
+      }
+    }
+  }
+  for (const triangle of triangles) {
+    graphics.fillStyle(triangle.color, triangle.alpha);
+    fill(graphics, triangle, still);
+  }
+}
+
 /**
  * Each keylined sprite's ink keyline: eight copies of its frame's ink silhouette offset by
  * its kind's keyline width in every direction (a square kernel), just beneath it in its depth
  * slot (or at its group's keyline depth), at its alpha. Keylines not drawn this frame are
  * destroyed.
  */
-export function drawKeylines(scene: HudContext): void {
+export function drawKeylines(
+  scene: HudContext & Pick<GameScene, "craftJets" | "craftJetsDrawn">,
+): void {
   const used = new Set<string>();
   for (const { depth, key, sprite, width } of scene.keyed) {
     const offsets = keylineOffsets(width);
@@ -264,6 +330,14 @@ export function drawKeylines(scene: HudContext): void {
       scene.keylines.delete(key);
     }
   }
+  // Craft jets drawn in their own slot this frame stay; the rest go.
+  for (const [key, graphics] of scene.craftJets) {
+    if (!scene.craftJetsDrawn.has(key)) {
+      graphics.destroy();
+      scene.craftJets.delete(key);
+    }
+  }
+  scene.craftJetsDrawn.clear();
   // Every copy now draws its frame's current silhouette; replaced ones nothing draws go.
   scene.silhouettes.sweep(
     (key) =>

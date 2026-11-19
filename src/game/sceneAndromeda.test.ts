@@ -14,6 +14,7 @@ vi.mock("./sceneObjects.ts", () => ({
   placeStationFrame: calls.single,
 }));
 vi.mock("./sceneSprites.ts", () => ({ objectSprite: calls.sprite }));
+vi.mock("./sceneHud.ts", () => ({ drawCraftJets: vi.fn(), keylineSprite: vi.fn() }));
 
 const frames = core.assets.filter(({ id }) => /^craft-pip-\d+$/u.test(id)) as unknown as Asset[];
 const craft = { frames, jets: undefined };

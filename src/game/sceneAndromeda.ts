@@ -2,6 +2,7 @@ import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
+import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
@@ -60,13 +61,13 @@ export function drawAndromeda(scene: ObjectsContext, object: SpaceObject): boole
     if (!scene.textures.exists(frame.id)) {
       return false;
     }
-    scene.passes(
-      objectSprite(scene, object.id, frame.id)
-        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-        .setOrigin(frame.pivot.x, frame.pivot.y)
-        .setPosition(point.x, point.y)
-        .setDepth(playDepth(point.y)),
-    );
+    const sprite = objectSprite(scene, object.id, frame.id)
+      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(playDepth(point.y));
+    keylineSprite(scene, "storyCraft", object.id, sprite);
+    scene.passes(sprite);
     return true;
   }
   const art = artFor(scene.shipAssets);

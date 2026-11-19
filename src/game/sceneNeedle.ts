@@ -82,6 +82,11 @@ export interface NeedleRenderContext {
     lineBetween(x1: number, y1: number, x2: number, y2: number): unknown;
     lineStyle(width: number, color: number, alpha: number): unknown;
   };
+  /**
+   * Records a drawn image of a keylined kind for this frame's light-field keyline; each gate
+   * layer and channel debris piece keylines in its own depth slot.
+   */
+  readonly keyline?: (kind: "debris" | "needleGate", key: string, image: NeedleImage) => void;
   /** The caller supplies one coherent world image for each course, including at a seam. */
   readonly project: (position: Vec) => Vec;
   readonly textures: { exists(key: string): boolean };
@@ -231,6 +236,7 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
           .setOrigin(pivot.x, pivot.y)
           .setDepth(depth)
           .setAlpha(alpha);
+        return image;
       };
       for (const course of frame.courses) {
         const stitch = NEEDLE.channels.stitch;
@@ -293,16 +299,9 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
               const depth = threading
                 ? frame.playerDepth + (layer === "front" ? 1e-6 : -5e-6)
                 : playDepth(at.y) + (layer === "front" ? 1e-7 : -1e-7);
-              place(
-                `gate:${key}:${state}:${layer}`,
-                texture,
-                at,
-                size,
-                size,
-                { x: 0.5, y: 0.5 },
-                depth,
-                opacity,
-              );
+              const id = `gate:${key}:${state}:${layer}`;
+              const image = place(id, texture, at, size, size, { x: 0.5, y: 0.5 }, depth, opacity);
+              context.keyline?.("needleGate", `needle:${id}`, image);
             }
           }
         });
@@ -347,7 +346,7 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
               );
             }
           }
-          place(
+          const image = place(
             `debris:${object.id}`,
             texture,
             at,
@@ -357,6 +356,7 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
             playDepth(at.y),
             1,
           );
+          context.keyline?.("debris", `needle:debris:${object.id}`, image);
         }
       }
       for (const [key, image] of images) {

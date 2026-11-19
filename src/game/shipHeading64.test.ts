@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import yellowArchive from "../../art/sources/ship-retro-jets-yellow.json";
 import { anchor } from "../../art/tools/projection.ts";
 import { nose } from "../../art/tools/ship-model.ts";
 import manifest from "../../public/art/manifest.json";
@@ -9,7 +10,6 @@ import quantum from "../../public/art/quantum-jump.json";
 import mainData from "../../public/art/ship-jets.json";
 import noseData from "../../public/art/ship-nose.json";
 import retroData from "../../public/art/ship-retro-jets.json";
-import yellowArchive from "../../public/art/ship-retro-jets-yellow.json";
 import title from "../../public/art/title-screen.json";
 import { ECONOMY } from "../data/economy.ts";
 import { fromScreen } from "../model/convex.ts";

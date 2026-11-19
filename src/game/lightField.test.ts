@@ -8,6 +8,7 @@ import {
   blastEdges,
   foregroundEdge,
   inkEdges,
+  joinsJets,
   KEYLINE_ALPHA,
   keylineOffsets,
   keylineWidth,
@@ -192,8 +193,23 @@ describe("light-field rule", () => {
     expect(
       readLightField({ lightField: { ...rule, destinationKeyline: { kinds: [], width: 0 } } }),
     ).toBeUndefined();
+    expect(
+      readLightField({ lightField: { ...rule, jetKeyline: { exempt: ["ship"] } } }),
+    ).toBeUndefined();
     expect(readLightField(null)).toBeUndefined();
     expect(readLightGalaxies(null).size).toBe(0);
+  });
+
+  it("joins every keylined craft's jets to its keyline but Ada's", () => {
+    expect(LIGHT_FIELD.jetKeyline).toEqual({ exempt: ["ship"], join: true });
+    for (const kind of ["fighter", "frigate", "capital", "gadget", "platform", "storyCraft"]) {
+      expect(joinsJets(LIGHT_FIELD, kind), kind).toBe(true);
+    }
+    expect(joinsJets(LIGHT_FIELD, "ship")).toBe(false);
+    expect(joinsJets(LIGHT_FIELD, "holodiskBeacon")).toBe(false);
+    expect(joinsJets({ ...LIGHT_FIELD, jetKeyline: { exempt: [], join: false } }, "fighter")).toBe(
+      false,
+    );
   });
 
   it("grows a keyline by a square kernel: eight unit offsets", () => {

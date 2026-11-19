@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { classic, DISPLAY, drawn, FRAME } from "../../../art/tools/ship-model.ts";
+import { SVG_DECIMALS, svgNumber } from "../../../art/tools/svg-text.ts";
 import { CONVERSATIONS } from "../../data/conversations.ts";
 import { SHIP_HEADINGS } from "../../model/nose.ts";
 import { PILL } from "./controls.ts";
@@ -136,8 +137,9 @@ describe("conversation box", () => {
       const ys = drawn(FRAME / 2, classic.paint, { yaw }).flatMap(({ outline }) =>
         outline.map(([, y]) => y),
       );
-      // Art's svgPaths serializes frame-coordinate vertices to four decimal places.
-      const top = Number(Math.min(...ys).toFixed(4));
+      // Art's svgPaths writes frame-coordinate vertices to four places, then the SVG output step
+      // rounds them to the ship set's decimals.
+      const top = Number(svgNumber(SVG_DECIMALS.ship, Number(Math.min(...ys).toFixed(4))));
       return ((FRAME / 2 - top) * DISPLAY) / FRAME;
     });
     expect(rises).toEqual(expectedRises);

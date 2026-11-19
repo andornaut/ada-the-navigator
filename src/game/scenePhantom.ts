@@ -9,6 +9,7 @@ import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
 import { jumpStepAt, readQuantumJump } from "./quantumJump.ts";
 import { familyArt, loadEnemyParts } from "./sceneAssets.ts";
 import { drawEnemySprite } from "./sceneEnemies.ts";
+import { drawCraftJets, keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, drawWhale, type ObjectsContext } from "./sceneObjects.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { shipDirection } from "./shipArt.ts";
@@ -156,28 +157,22 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
       const art = craft ? scene.craftArt.get(craft) : undefined;
       if (art) {
         const frame = selectEnemyFrame(art, ally.facing);
-        scene.passes(
-          objectSprite(scene, id, frame.id)
-            .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-            .setOrigin(frame.pivot.x, frame.pivot.y)
-            .setPosition(point.x, point.y)
-            .setDepth(Math.min(playDepth(point.y), adaDepth - 0.00001)),
+        const depth = Math.min(playDepth(point.y), adaDepth - 0.00001);
+        const sprite = objectSprite(scene, id, frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setDepth(depth);
+        keylineSprite(scene, "storyCraft", id, sprite, depth - 2e-6);
+        scene.passes(sprite);
+        drawCraftJets(
+          scene,
+          "storyCraft",
+          id,
+          point,
+          depth,
+          enemyJetTriangles(art, frame, Math.min(1, speed / CONTENT.tuning.physics.maxSpeed)),
         );
-        for (const jet of enemyJetTriangles(
-          art,
-          frame,
-          Math.min(1, speed / CONTENT.tuning.physics.maxSpeed),
-        )) {
-          scene.enemyJets.fillStyle(jet.color, jet.alpha);
-          scene.enemyJets.fillTriangle(
-            point.x + jet.points[0].x,
-            point.y + jet.points[0].y,
-            point.x + jet.points[1].x,
-            point.y + jet.points[1].y,
-            point.x + jet.points[2].x,
-            point.y + jet.points[2].y,
-          );
-        }
       }
     }
     drawAllyJump(scene, id, ally.jumpAge, point);
