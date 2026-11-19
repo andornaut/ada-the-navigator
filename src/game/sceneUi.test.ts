@@ -921,7 +921,6 @@ describe("canonical save caller", () => {
       sys: { isActive: () => true },
     };
     const context = createContext({
-      recordGalaxyUnlocks: vi.fn(),
       requiredLoading: { state: { attempt: 1 } },
       requiredReady: () => true,
       saves: { save },
@@ -933,14 +932,10 @@ describe("canonical save caller", () => {
     expect(save.mock.calls[0]![0].mode).toBe("space");
     expect(save.mock.calls[0]![0].flight).toEqual(model.state.flight);
     expect(scene.savingUnavailable).toBe(true);
-    expect(context.recordGalaxyUnlocks).not.toHaveBeenCalled();
     expect(scene.shell.setSavingAvailable).toHaveBeenLastCalledWith(false);
     await flush(scene);
     expect(scene.savingUnavailable).toBe(false);
     expect(scene.shell.setSavingAvailable).toHaveBeenLastCalledWith(true);
-    expect(context.recordGalaxyUnlocks).toHaveBeenCalledExactlyOnceWith(
-      held.saveDocument().unlocked,
-    );
   });
 
   it.each([true, false])(
@@ -1079,7 +1074,6 @@ describe("required entry save admission", () => {
     const flush = runInContext(
       callback("flushScene"),
       createContext({
-        recordGalaxyUnlocks: vi.fn(),
         requiredLoading,
         requiredReady: () => ready,
         saves: { save },

@@ -36,10 +36,10 @@ describe("the build label", () => {
     );
     expect(devPrecache?.apply).toBe("build");
     const production = await pending({ command: "build", mode: "production" });
-    const grouped = (production.plugins as { name: string; apply?: unknown }[]).find(
+    const precache = (production.plugins as { name: string; apply?: unknown }[]).find(
       (plugin) => plugin.name === "game-kit-precache",
     );
-    expect(typeof grouped?.apply).toBe("function");
+    expect(precache?.apply).toBe("build");
     expect(config.define).toMatchObject({
       __APP_VERSION__: JSON.stringify(version),
       __BUILD_ID__: "undefined",

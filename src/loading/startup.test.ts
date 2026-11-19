@@ -264,7 +264,8 @@ it("shows a failed first install while the game waits and resumes it on Retry", 
   const installed = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const stop = await startLoading(
+  // Startup resolves once the game module loads, which waits for the install.
+  const started = startLoading(
     required,
     { stopGameOnCrash: vi.fn() },
     async () => {
@@ -284,6 +285,7 @@ it("shows a failed first install while the game waits and resumes it on Retry", 
   expect(view.update.mock.calls.at(-1)![0].attempt).toBeGreaterThan(priorRevision);
   await view.retry!();
   expect(retry).toHaveBeenCalledOnce();
+  const stop = await started;
   await settle();
   expect(view.update.mock.calls.at(-1)![0].kind).not.toBe("failed");
   expect(entry.load).toHaveBeenCalledOnce();

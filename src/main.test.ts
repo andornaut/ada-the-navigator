@@ -25,12 +25,10 @@ const boot = vi.hoisted(() => ({
   launch: vi.fn(),
   load: vi.fn(),
   manifest: {} as unknown,
-  recordUnlocked: vi.fn(),
   requireNewer: vi.fn(),
   reveal: { collect: vi.fn(), commit: vi.fn(), dispose: vi.fn() },
   scene: vi.fn(),
   ship: true,
-  shown: vi.fn(),
   startup: { crashed: false },
   stopFrame: vi.fn(),
   stopVisibility: vi.fn(),
@@ -118,9 +116,7 @@ vi.mock("phaser", () => ({
   WEBGL: 2,
 }));
 vi.mock("./pwa/index.ts", () => ({
-  gameShown: boot.shown,
   launchPhoneApp: boot.launch,
-  recordGalaxyUnlocks: boot.recordUnlocked,
   requireNewerVersion: boot.requireNewer,
   setupPhoneApp: vi.fn(),
 }));
@@ -194,7 +190,6 @@ it("keeps launch before storage and passes the complete save result to the scene
   release(result);
   await pending;
   expect(boot.scene).toHaveBeenCalledWith(result);
-  expect(boot.recordUnlocked).toHaveBeenCalledExactlyOnceWith([1, 3]);
   expect(attempt.state.kind).toBe("ready");
   expect(boot.reveal.commit).toHaveBeenCalledOnce();
 });
@@ -301,7 +296,6 @@ it("starts a newer-save update while required artwork is blocked, without constr
   });
   await prepare.start();
   expect(boot.requireNewer).toHaveBeenCalledOnce();
-  expect(boot.recordUnlocked).not.toHaveBeenCalled();
   expect(boot.game).not.toHaveBeenCalled();
   expect(boot.blockWrites).not.toHaveBeenCalled();
   expect(requiredLoading.state.kind).toBe("failed");
