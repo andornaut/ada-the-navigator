@@ -150,6 +150,8 @@ export interface FireIntent {
   /** A beam is a Phaser or lance shot, fired after its tell; a mine is laid where it starts. */
   projectile: FireProfile["projectile"];
   speed: number;
+  /** The volley's index, which picks the drawn barrel a turret with several fires from. */
+  volley: number;
   weapon: FireProfile["weapon"];
 }
 export interface EnemyEffects {
@@ -273,6 +275,41 @@ export function hardpointOffset(
   }
   const width = definition.sizeRatio * adaWidth;
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
+}
+
+/**
+ * A weapon's fire line for the ship as it is now: from the drawn barrel tip `volley` picks when
+ * its art defines muzzles, else from the hardpoint's (or the hull's) model origin, along the
+ * weapon's current aim as a unit heading. Null for a weapon that has not aimed or is not fitted.
+ */
+export function enemyFireLine(
+  definition: EnemyDefinition,
+  adaWidth: number,
+  hardpointId: string | null,
+  volley: number,
+  state: EnemyState,
+): { aim: Point; origin: Point } | null {
+  const part =
+    hardpointId === null ? null : definition.hardpoints.find((entry) => entry.id === hardpointId);
+  const aim =
+    hardpointId === null
+      ? state.aim
+      : (state.hardpoints.find((entry) => entry.id === hardpointId)?.aim ?? null);
+  if (!aim || !magnitude(aim) || part === undefined) {
+    return null;
+  }
+  const layout = muzzleLayout(
+    definition,
+    muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype],
+  );
+  const tip = muzzleOffset(layout, hardpointId, state.facing, aim, volley);
+  const offset = tip ?? (part ? hardpointOffset(definition, adaWidth, state.facing, part) : null);
+  return {
+    aim: unit(aim),
+    origin: offset
+      ? { x: state.position.x + offset.x, y: state.position.y + offset.y }
+      : { ...state.position },
+  };
 }
 
 /** Whether an enemy is destroyed: its hull at 0 HP, whatever its hardpoints. */
@@ -1087,6 +1124,7 @@ export function stepEnemy(
         level: profile.level,
         projectile: profile.projectile,
         speed: profile.projectileSpeed,
+        volley,
         weapon: profile.weapon,
       };
       if (profile.weapon === "ringBurst") {

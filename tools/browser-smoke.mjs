@@ -5138,6 +5138,155 @@ try {
     "Every galaxy's flight draws its muted near backdrop rocks at 1280x720 and 720x360",
   );
 
+  // Phaser proof (gameplay/rules.md, Phaser): Ada fires at a held retaliator while thrusting and
+  // turning right, so her beam stays on her nose and turns with her aim while its spark stays
+  // where it hit. The page clock is paused, so the frames fall at fire, mid-flash and late flash.
+  async function provePhaserFollow() {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    playOpening(model);
+    const flight = model.state.flight;
+    assert.ok(flight, "The Phaser proof requires galaxy one's flight");
+    model.state.progress[1].introduced = true;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.shots = [];
+    flight.velocity = { x: 0, y: 0 };
+    flight.facing = { x: 1, y: 0 };
+    flight.ownedWeapons = [...new Set([...flight.ownedWeapons, "phaser"])];
+    flight.weapon = "phaser";
+    flight.ammo.phaser = Math.max(flight.ammo.phaser, 5);
+    flight.fireCooldown = 0;
+    const definition = enemyCatalog.retaliator;
+    const at = { x: flight.player.x + 110, y: flight.player.y };
+    const enemy = createEnemy(
+      definition,
+      { archetype: "retaliator", id: "browser-phaser:target", packId: null, phase: 0 },
+      at,
+    );
+    enemy.primaryCooldown = 999;
+    for (const part of enemy.hardpoints) {
+      part.cooldown = 999;
+    }
+    flight.objects.push({
+      ...at,
+      enemy,
+      hp: enemy.hp,
+      id: enemy.id,
+      kind: "enemy",
+      persistent: false,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+    });
+    const serialized = model.save();
+    assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts the proof");
+    save("phaser-follow-fixture.json", {
+      scope: "Real-model save fixture for the Phaser follow proof, not natural combat",
+      state: JSON.parse(serialized),
+    });
+    // One renderer at a time: the run's page closes for the proof and reopens after it.
+    const left = await leaveFixture();
+    const opened = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
+      hasTouch: true,
+    });
+    await opened.addInitScript(reportViolations);
+    await opened.route("**/*", previewOnly);
+    await opened.addInitScript(
+      ({ key, value }) => {
+        if (!sessionStorage.getItem("ada-browser.phaser-follow.v1")) {
+          localStorage.setItem(key, value);
+          sessionStorage.setItem("ada-browser.phaser-follow.v1", "1");
+        }
+      },
+      { key: storageKey, value: serialized },
+    );
+    const proof = await opened.newPage();
+    proof.setDefaultTimeout(15000);
+    observe(proof);
+    await proof.clock.install();
+    await proof.goto("http://ada-preview:4173/play/");
+    await proof.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+    await proof.locator('.ada-start-actions > [data-action="continue"]').click();
+    await proof.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    await proof.locator('#game-status[data-enemies="art"]').waitFor({ state: "attached" });
+    const canvas = proof.locator("#game-canvas > canvas");
+    await canvas.waitFor({ state: "visible" });
+    await proof.clock.pauseAt((await proof.evaluate(() => Date.now())) + 100);
+    await proof.keyboard.down("KeyW");
+    await proof.keyboard.down("KeyD");
+    await proof.keyboard.down("Space");
+    await proof.clock.runFor(20);
+    await proof.keyboard.up("Space");
+    const frames = [];
+    async function frame(name, after) {
+      await proof.clock.runFor(after);
+      const showOverCanvas = await hideOverCanvas(proof);
+      const image = await canvas.screenshot({ path: `${output}/${name}` });
+      await showOverCanvas();
+      frames.push({ image, name });
+    }
+    await frame("phaser-follow-fire.png", 0);
+    await frame("phaser-follow-mid.png", 55);
+    await frame("phaser-follow-late.png", 55);
+    await proof.keyboard.up("KeyW");
+    await proof.keyboard.up("KeyD");
+    // Ada moves and turns between the frames, so each differs from the last.
+    const changed = await proof.evaluate(
+      async (encoded) => {
+        const decode = async (data) => {
+          const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
+          const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+          const sample = document.createElement("canvas");
+          sample.width = bitmap.width;
+          sample.height = bitmap.height;
+          const drawing = sample.getContext("2d");
+          drawing.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          return drawing.getImageData(0, 0, sample.width, sample.height).data;
+        };
+        const images = await Promise.all(encoded.map(decode));
+        return images.slice(1).map((image, index) => {
+          let count = 0;
+          for (let offset = 0; offset < image.length; offset += 4) {
+            if (
+              [0, 1, 2].some(
+                (channel) =>
+                  Math.abs(image[offset + channel] - images[index][offset + channel]) > 8,
+              )
+            ) {
+              count++;
+            }
+          }
+          return count;
+        });
+      },
+      frames.map(({ image }) => image.toString("base64")),
+    );
+    await opened.close();
+    const resumed = left.stored.find(([name]) => name === storageKey)[1];
+    const back = await openFixture(left, resumed, "ada-browser.phaser-follow-return.v1");
+    context = back.context;
+    page = back.page;
+    await page.goto(back.url);
+    if (JSON.parse(resumed).mode === "space") {
+      await continueFlight();
+    }
+    assert.ok(
+      changed.every((count) => count > 200),
+      `Phaser proof frames change as Ada moves and turns: ${changed.join(", ")}`,
+    );
+    save("phaser-follow-proof.json", {
+      changedPixels: changed,
+      frames: frames.map(({ name }) => name),
+      scope:
+        "Ada fires a Phaser while thrusting and turning right; frames at fire, 55 ms and 110 ms",
+    });
+  }
+  await provePhaserFollow();
+  events.checks.push(
+    "Ada's Phaser beam stays on her nose while she thrusts and turns, at fire, mid and late flash",
+  );
+
   // At 844x390 the Settings card fits the view with every row's note: the Move and Aim controls
   // rows carry the same note element as Sound's.
   const settingsViewport = page.viewportSize();

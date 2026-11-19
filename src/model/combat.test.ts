@@ -27,8 +27,9 @@ import { weaponAt } from "../data/weaponCatalog.ts";
 import { sceneryBodyContact } from "./asteroids.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activeBlastFlashes,
   activeEnemyBeams,
@@ -606,6 +607,54 @@ describe("integrated combat", () => {
     stepFlight(CONTENT, 0.45, idle, dodged);
     expect(activeEnemyBeams(dodged)[0]).toMatchObject({ fired: true, stopped: false });
     expect(dodged.shield).toBe(CONTENT.tuning.shieldMax);
+  });
+
+  it("keeps a fired enemy Phaser's beam on its ship's muzzle and aim, its hit at fire time", () => {
+    const flight = createFlight(CONTENT, 6, 173, progress);
+    flight.objects = [];
+    flight.player = { x: 0, y: 0 };
+    const target = ship(
+      "interceptor",
+      { x: 220, y: 0 },
+      enemyDefinition(6, "interceptor", "phaser-proof"),
+      "phaser-proof",
+    );
+    flight.objects.push(target);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+    const [beam] = activeEnemyBeams(flight);
+    const aimLine = { end: { ...beam!.end }, muzzle: { ...beam!.muzzle } };
+    stepFlight(CONTENT, 0.3, idle, flight);
+    // The aim line stays where it started.
+    expect(beam).toMatchObject({ drawn: null, fired: false, muzzle: aimLine.muzzle });
+    stepFlight(CONTENT, 0.15, idle, flight);
+    expect(beam).toMatchObject({ fired: true, stopped: true });
+    const hit = { end: { ...beam!.end }, muzzle: { ...beam!.muzzle } };
+    const reach = Math.hypot(hit.end.x - hit.muzzle.x, hit.end.y - hit.muzzle.y);
+    const shield = flight.shield;
+    expect(shield).toBeLessThan(CONTENT.tuning.shieldMax);
+    // The ship is knocked aside and Ada slips away while the beam still shows.
+    target.x += 30;
+    target.y += 20;
+    flight.player = { x: -20, y: 60 };
+    stepFlight(CONTENT, 1 / 30, idle, flight);
+    expect(activeEnemyBeams(flight)).toContain(beam);
+    const line = enemyFireLine(
+      enemyEquipmentDefinition(6, target.enemy!),
+      CONTENT.tuning.flight.shipRadius * 2,
+      beam!.hardpointId,
+      beam!.volley,
+      target.enemy!,
+    )!;
+    const drawn = beam!.drawn!;
+    expect(drawn.from).toEqual(line.origin);
+    expect(Math.hypot(drawn.from.x - hit.muzzle.x, drawn.from.y - hit.muzzle.y)).toBeGreaterThan(
+      20,
+    );
+    expect(drawn.to.x).toBeCloseTo(line.origin.x + line.aim.x * reach, 9);
+    expect(drawn.to.y).toBeCloseTo(line.origin.y + line.aim.y * reach, 9);
+    // The hit stays where it landed and lands once.
+    expect(beam).toMatchObject({ end: hit.end, muzzle: hit.muzzle, stopped: true });
+    expect(flight.shield).toBe(shield);
   });
 
   it("stops an enemy Phaser's aim line and beam at the first obstacle", () => {

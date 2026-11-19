@@ -41,6 +41,26 @@ describe("shared enemy hit hooks", () => {
     expect(enemyPhaser(art, view, false, true).edged).toHaveLength(1);
   });
 
+  it("draws a fired Phaser on its ship's current line and keeps the hit at the fire-time contact", () => {
+    const fireTime = {
+      ageMs: art.phaser.aimMs + 40,
+      end: { x: 100, y: 60 },
+      muzzle: { x: 0, y: 60 },
+      stopped: true,
+    };
+    const beam = { from: { x: 20, y: 90 }, to: { x: 110, y: 130 } };
+    const drawn = enemyPhaser(art, { ...fireTime, beam }, false, false);
+    const tapers = drawn.shapes.flatMap((shape) => (shape.kind === "taper" ? [shape] : []));
+    expect(tapers.length).toBeGreaterThan(0);
+    for (const taper of tapers) {
+      expect(taper.tail.at.x).toBeCloseTo(20, 9);
+      expect(taper.tail.at.y).toBeCloseTo(90, 9);
+    }
+    // The spark is the same as on the fire-time line: where the hit landed, along its direction.
+    const still = enemyPhaser(art, fireTime, false, false);
+    expect(drawn.edged).toEqual(still.edged);
+  });
+
   it("routes mine pops to one expanding shockwave and preserves normal and reduced end times", () => {
     const at = { x: 20, y: 30 };
     const pop = (ageMs: number, reduced = false) =>

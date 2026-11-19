@@ -8,7 +8,13 @@ import { playOpening, relaunch } from "../testing/launch.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { activeBeamFlashes, activeBlastFlashes, stepFlight } from "./flight.ts";
+import {
+  activeBeamFlashes,
+  activeBlastFlashes,
+  activeWeaponImpacts,
+  drawnBeamFlash,
+  stepFlight,
+} from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
@@ -173,6 +179,45 @@ describe("Phaser hitscan beam", () => {
     expect(activeBeamFlashes(miss)).toHaveLength(1);
     stepFlight(CONTENT, 2 / 60, idle, miss);
     expect(activeBeamFlashes(miss)).toHaveLength(0);
+  });
+
+  it("keeps the visible beam on Ada's nose and aim as she moves and turns, the hit where it landed", () => {
+    const flight = beam([sturdy("enemy", 100, nose.y)]);
+    const flash = activeBeamFlashes(flight)[0]!;
+    const fired = structuredClone(flash);
+    const reach = Math.hypot(fired.to.x - fired.from.x, fired.to.y - fired.from.y);
+    const spark = structuredClone(activeWeaponImpacts(flight));
+    expect(spark).toHaveLength(1);
+    // At fire the beam runs along the aim to its length; the contact sits on the hull surface.
+    const atFire = drawnBeamFlash(flight, flash);
+    expect(atFire.from).toEqual(fired.from);
+    expect(Math.hypot(atFire.to.x - fired.to.x, atFire.to.y - fired.to.y)).toBeLessThan(1);
+    // Mid-flash, Ada flies down and turns toward it without firing again.
+    flight.fireCooldown = 100;
+    const turn = { ...idle, aim: { x: 0, y: 1 }, fire: false, move: { x: 0, y: 1 } };
+    for (let slice = 0; slice < 5; slice++) {
+      stepFlight(CONTENT, 1 / 60, turn, flight);
+    }
+    expect(activeBeamFlashes(flight)).toEqual([flash]);
+    expect(flash).toMatchObject({ from: fired.from, hit: true, to: fired.to });
+    expect(flight.player.y).toBeGreaterThan(0);
+    expect(flight.facing.y).toBeGreaterThan(0.05);
+    const drawn = drawnBeamFlash(flight, flash);
+    const facing = Math.hypot(flight.facing.x, flight.facing.y);
+    expect(drawn.from).toEqual(nosePoint(flight.facing, flight.player));
+    expect(Math.hypot(drawn.to.x - drawn.from.x, drawn.to.y - drawn.from.y)).toBeCloseTo(reach, 9);
+    expect((drawn.to.x - drawn.from.x) / reach).toBeCloseTo(flight.facing.x / facing, 9);
+    expect((drawn.to.y - drawn.from.y) / reach).toBeCloseTo(flight.facing.y / facing, 9);
+    // The hit, its damage and its spark stay at fire time.
+    expect(hp(flight, "enemy")).toBe(STURDY - 13 / 3);
+    expect(
+      activeWeaponImpacts(flight).map(({ direction, family, x, y }) => ({
+        direction,
+        family,
+        x,
+        y,
+      })),
+    ).toEqual(spark.map(({ direction, family, x, y }) => ({ direction, family, x, y })));
   });
 
   it("strikes an obstacle at the nose at once", () => {

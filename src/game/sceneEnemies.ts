@@ -476,6 +476,7 @@ export function enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
       .filter((beam) => beam.kind === kind)
       .map((beam) => ({
         ageMs: beam.age * 1000,
+        ...(beam.drawn ? { beam: beam.drawn } : {}),
         end: beam.end,
         muzzle: beam.muzzle,
         stopped: beam.stopped,
@@ -531,6 +532,9 @@ export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView):
     }
     const screen = (tell: EnemyWeaponsView["lances"][number]) => ({
       ...tell,
+      ...(tell.beam
+        ? { beam: { from: scene.project(tell.beam.from), to: scene.project(tell.beam.to) } }
+        : {}),
       end: scene.project(tell.end),
       muzzle: scene.project(tell.muzzle),
     });

@@ -931,6 +931,11 @@ function charge(
  */
 export interface TellView {
   readonly ageMs: number;
+  /**
+   * A fired Phaser's visible beam where its ship holds it now; `muzzle` and `end` stay the
+   * fire-time line, which the aim line and the hit use. Absent, the beam draws on that line.
+   */
+  readonly beam?: { readonly from: Vec; readonly to: Vec };
   readonly end: Vec;
   readonly muzzle: Vec;
   readonly stopped: boolean;
@@ -1091,7 +1096,17 @@ export function enemyPhaser(
   }
   const beamMs = t - spec.aimMs;
   const fade = view.stopped ? 0 : spec.missFade;
-  const shapes = enemyBeam(art, spec, muzzle, end, fade, light, reducedMotion, beamMs);
+  // The beam stays on the turret's muzzle and aim; its hit stays at the fire-time contact.
+  const shapes = enemyBeam(
+    art,
+    spec,
+    view.beam?.from ?? muzzle,
+    view.beam?.to ?? end,
+    fade,
+    light,
+    reducedMotion,
+    beamMs,
+  );
   if (!view.stopped) {
     return { edged: [], shapes };
   }
@@ -1115,6 +1130,7 @@ export function enemyPhaser(
 /** A charged lance or enemy Phaser tell in world units, its `end` already stopped as drawn. */
 export interface WorldTell {
   readonly ageMs: number;
+  readonly beam?: { readonly from: Vec; readonly to: Vec };
   readonly end: Vec;
   readonly muzzle: Vec;
   readonly stopped: boolean;

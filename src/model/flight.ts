@@ -71,6 +71,7 @@ import {
   createEnemy,
   damageEnemy,
   enemyDefeated,
+  enemyFireLine,
   type FireIntent,
   hardpointOffset,
   stepDebris,
@@ -4365,12 +4366,35 @@ function markBlasted(object: SpaceObject, flight: FlightState): void {
   }
 }
 
-/** A hitscan beam's visible flash, view-only and never saved; a hit also shows a spark at `to`. */
+/**
+ * A hitscan beam's visible flash, view-only and never saved: `from` and `to` are the fire-time
+ * line, where the hit landed; a hit also shows a spark at `to`.
+ */
 export interface BeamFlash {
   from: Vec;
   to: Vec;
   hit: boolean;
   age: number;
+}
+
+/**
+ * Ada's beam as drawn now: it stays on her nose and turns with her aim, at the length it fired
+ * with (gameplay/rules.md, Phaser).
+ */
+export function drawnBeamFlash(flight: FlightState, flash: BeamFlash): { from: Vec; to: Vec } {
+  const span = length(flight.facing);
+  const reach = length({ x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y });
+  if (!span) {
+    return { from: flash.from, to: flash.to };
+  }
+  const from = nosePoint(flight.facing, flight.player);
+  return {
+    from,
+    to: {
+      x: from.x + (flight.facing.x / span) * reach,
+      y: from.y + (flight.facing.y / span) * reach,
+    },
+  };
 }
 const beamFlashes = new WeakMap<FlightState, BeamFlash[]>();
 
@@ -4694,6 +4718,12 @@ export interface EnemyBeam {
   age: number;
   damage: number;
   direction: Vec;
+  /**
+   * A fired Phaser's visible beam this step: from its ship's current muzzle along the weapon's
+   * current aim at the length it fired with. `muzzle` and `end` keep the fire-time line, where
+   * the hit landed. Null before it fires, and always for a lance.
+   */
+  drawn: { from: Vec; to: Vec } | null;
   end: Vec;
   fired: boolean;
   hardpointId: string | null;
@@ -4705,6 +4735,8 @@ export interface EnemyBeam {
   range: number;
   /** Whether an obstacle, or Ada on firing, stopped the line short of its range. */
   stopped: boolean;
+  /** The volley that picked the drawn barrel it fired from. */
+  volley: number;
 }
 /** When each beam fires after its tell begins, and how long its beam then shows. */
 const BEAM_TIMING = {
@@ -4762,7 +4794,7 @@ function chargeEnemyBeam(
   damage: number,
   range: number,
   ship: Vec,
-  fire: Pick<FireIntent, "aim" | "delay" | "hardpointId" | "origin" | "weapon">,
+  fire: Pick<FireIntent, "aim" | "delay" | "hardpointId" | "origin" | "volley" | "weapon">,
   ownerId: string,
   flight: FlightState,
 ): void {
@@ -4776,6 +4808,7 @@ function chargeEnemyBeam(
     age: -fire.delay,
     damage,
     direction: { x: fire.aim.x / span, y: fire.aim.y / span },
+    drawn: null,
     end: { ...fire.origin },
     fired: false,
     hardpointId: fire.hardpointId,
@@ -4785,8 +4818,35 @@ function chargeEnemyBeam(
     ownerId,
     range,
     stopped: false,
+    volley: fire.volley,
   });
   enemyBeams.set(flight, beams);
+}
+
+/**
+ * Moves a fired Phaser's visible beam onto its ship's current muzzle and aim at its fire-time
+ * length; the beam holds where it last was once its ship or weapon can no longer aim.
+ */
+function followEnemyBeam(content: GameContent, flight: FlightState, beam: EnemyBeam): void {
+  const owner = flight.objects.find((object) => object.id === beam.ownerId);
+  const line =
+    owner?.enemy && owner.hp > 0
+      ? enemyFireLine(
+          enemyEquipmentDefinition(flight.galaxy, owner.enemy),
+          content.tuning.flight.shipRadius * 2,
+          beam.hardpointId,
+          beam.volley,
+          owner.enemy,
+        )
+      : null;
+  if (!line) {
+    return;
+  }
+  const reach = length({ x: beam.end.x - beam.muzzle.x, y: beam.end.y - beam.muzzle.y });
+  beam.drawn = {
+    from: line.origin,
+    to: { x: line.origin.x + line.aim.x * reach, y: line.origin.y + line.aim.y * reach },
+  };
 }
 
 /** Whether a lance's ship and mount can still fire it: alive, armed and powered. */
@@ -4824,6 +4884,9 @@ function stepEnemyBeams(
   for (const beam of beams) {
     beam.age += dt;
     if (beam.fired) {
+      if (beam.kind === "phaser") {
+        followEnemyBeam(content, flight, beam);
+      }
       continue;
     }
     if (beam.kind === "lance") {
@@ -4875,6 +4938,9 @@ function stepEnemyBeams(
       x: beam.muzzle.x + beam.direction.x * reach,
       y: beam.muzzle.y + beam.direction.y * reach,
     };
+    if (beam.fired && beam.kind === "phaser") {
+      beam.drawn = { from: { ...beam.muzzle }, to: { ...beam.end } };
+    }
   }
   enemyBeams.set(
     flight,

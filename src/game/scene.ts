@@ -16,7 +16,12 @@ import { requiredReady } from "../loading/required.ts";
 import { requiredSceneFile } from "../loading/requiredFiles.ts";
 import { heldActivity } from "../model/activities.ts";
 import { type Current } from "../model/currents.ts";
-import { activeBeamFlashes, activeWeaponImpacts, shipSpeedFraction } from "../model/flight.ts";
+import {
+  activeBeamFlashes,
+  activeWeaponImpacts,
+  drawnBeamFlash,
+  shipSpeedFraction,
+} from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
 import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
@@ -1003,10 +1008,11 @@ export class GameScene extends Scene {
           : keylineEdges(this, ["hitSpark"], shapes);
       drawEffect(this, shapes, edges);
     }
-    // Preserve the Phaser body; its contact now uses the family dispatcher above.
+    // The Phaser body stays on Ada's nose and aim; its contact uses the family dispatcher above.
     for (const flash of activeBeamFlashes(flight)) {
-      const from = this.project(flash.from);
-      const to = this.project(flash.to);
+      const drawn = drawnBeamFlash(flight, flash);
+      const from = this.project(drawn.from);
+      const to = this.project(drawn.to);
       const glow = this.light ? { ...LIGHT_FIELD.phaser, colour: this.edgeInk } : AMBER_BEAM_GLOW;
       drawEffect(
         this,
