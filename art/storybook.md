@@ -22,10 +22,11 @@
 ## Shared scene package
 
 `node art/tools/story-compositions.ts <candidate-directory>` builds the additive
-lossless WebP package from the authored PNG references. It does not activate the
-root manifest or remove reference images. The package contains eleven full bases
-across nine locations, a polished-rock patch, recorder and invitation four-state
-sheets, three shared glow patches, two garden-state patches and the sleep-glow
+WebP package from the authored PNG references, lossy at quality 80 (method 6,
+alpha quality 100, so the patches' binary alpha stays exact). It does not
+activate the root manifest or remove reference images. The package contains
+eleven full bases across nine locations, a polished-rock patch, recorder and
+invitation four-state sheets, three shared glow patches, two garden-state patches and the sleep-glow
 overlay. The two existing galaxy-map character images remain unchanged: twenty
 new physical images and two reused images in total.
 
@@ -42,7 +43,16 @@ source-over layers. `atLogical` and subject bands use logical pixels; optional
 equal to half the selected rectangle. Base and layers share one camera and clip.
 Recorder and invitation cells have transparent padding and independent source
 rectangles. The producer checks exact native RGBA reconstruction of every
-resolved scene and preserves the original subject bands and aliases.
+resolved scene from the lossless pieces before encoding, then rebuilds each
+scene from the decoded WebP pieces and fails if it differs from the authored
+scene at display size (2x2 box means, per RGB channel byte) by a mean above 1,
+a 99th percentile above 6 or a max above 48. It preserves the original subject
+bands and aliases. `story-compositions-report.json` records both checks:
+`nativeRgbaExact` for the source and `decoded` for each scene's figures.
+
+Activate a candidate by copying its `story-composed/*.webp` over
+`public/art/story-composed/` and its `story-compositions.json` over
+`public/art/story-compositions.json`; the report stays with the candidate.
 
 The paired consumer retains every logical scene row in the root manifest and
 points its path to the physical base. It links the composition document through

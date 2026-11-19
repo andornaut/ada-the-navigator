@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { decodePng } from "@andornaut/art-kit/build/png";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
-import { encodeLosslessWebp } from "@andornaut/art-kit/build/webp";
+import { decodeWebp, encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 
 interface Asset {
   id: string;
@@ -28,6 +28,11 @@ interface Layer {
 }
 
 const source = fileURLToPath(new URL("../../public/art/", import.meta.url));
+// Lossy WebP at quality 80; alphaQuality 100 keeps the patches' binary alpha exact.
+const STORY_WEBP = { quality: 80, method: 6, alphaQuality: 100, exact: false } as const;
+// The most each decoded scene may differ from its authored scene at display size (2x2 box
+// means), per RGB channel byte.
+const DECODED_LIMITS = { mean: 1, p99: 6, max: 48 } as const;
 const references = fileURLToPath(new URL("../sources/story/", import.meta.url));
 const manifest = JSON.parse(
   readFileSync(new URL("../sources/story-reference.json", import.meta.url), "utf8"),
@@ -88,6 +93,53 @@ function difference(base: RgbaImage, target: RgbaImage): { image: RgbaImage; rec
   return { image, rect };
 }
 
+/** Source-over of a scene's layers on its base, from one set of pieces. */
+function compose(
+  pieces: ReadonlyMap<string, RgbaImage>,
+  scene: { base: string; layers: readonly Layer[] },
+): Uint8Array {
+  const base = pieces.get(scene.base)!;
+  const data = new Uint8Array(base.data);
+  for (const layer of scene.layers) {
+    const image = pieces.get(layer.asset)!;
+    const rect = layer.sourceRect ?? { x: 0, y: 0, width: image.width, height: image.height };
+    for (let y = 0; y < rect.height; y++)
+      for (let x = 0; x < rect.width; x++) {
+        const at = ((rect.y + y) * image.width + rect.x + x) * 4;
+        const alpha = image.data[at + 3]!;
+        assert(alpha === 0 || alpha === 255, "Difference patches must be binary alpha");
+        if (alpha)
+          data.set(
+            image.data.subarray(at, at + 4),
+            ((layer.atLogical.y * 2 + y) * base.width + layer.atLogical.x * 2 + x) * 4,
+          );
+      }
+  }
+  return data;
+}
+
+/** Mean, 99th percentile and max RGB byte difference of two opaque 2x images at display size. */
+function displayDifference(width: number, height: number, a: Uint8Array, b: Uint8Array) {
+  const counts = new Array<number>(256).fill(0);
+  let sum = 0;
+  let n = 0;
+  for (let y = 0; y + 1 < height; y += 2)
+    for (let x = 0; x + 1 < width; x += 2) {
+      const box = [y * width + x, y * width + x + 1, (y + 1) * width + x, (y + 1) * width + x + 1];
+      for (let c = 0; c < 3; c++) {
+        const mean = (data: Uint8Array) =>
+          Math.round(box.reduce((total, i) => total + data[i * 4 + c]!, 0) / 4);
+        const d = Math.abs(mean(a) - mean(b));
+        counts[d]!++;
+        sum += d;
+        n++;
+      }
+    }
+  let p99 = 0;
+  for (let seen = 0; p99 < 255 && (seen += counts[p99]!) <= 0.99 * n;) p99++;
+  return { mean: Number((sum / n).toFixed(3)), p99, max: counts.findLastIndex((v) => v > 0) };
+}
+
 /** Generate additive candidates only; the consumer owns activation and offline closure. */
 export async function buildStoryCompositions(output: string) {
   const directory = resolve(output);
@@ -105,12 +157,14 @@ export async function buildStoryCompositions(output: string) {
   }[] = [];
   const scenes: Record<string, { base: string; layers: Layer[]; subject: Asset["subject"] }> = {};
   const generated = new Map<string, RgbaImage>();
+  const decoded = new Map<string, RgbaImage>();
   const bytes: Record<string, number> = {};
   const publish = async (id: string, image: RgbaImage) => {
     const path = `/art/story-composed/${id}.webp`;
-    const encoded = await encodeLosslessWebp(image);
+    const encoded = await encodeLossyWebp(STORY_WEBP, image);
     writeFileSync(`${directory}${path.slice(4)}`, encoded);
     generated.set(id, image);
+    decoded.set(id, await decodeWebp(encoded));
     bytes[path] = encoded.length;
     assets.push({
       id,
@@ -214,31 +268,30 @@ export async function buildStoryCompositions(output: string) {
     );
     if (canonical) addScene(asset.id, scenes[canonical.id]!.base, scenes[canonical.id]!.layers);
   }
+  // The lossless pieces rebuild every authored scene exactly; then the decoded WebP pieces
+  // stay within DECODED_LIMITS of it at display size.
   const reconstructed: string[] = [];
+  const decodedScenes: Record<string, ReturnType<typeof displayDifference>> = {};
   for (const [id, scene] of Object.entries(scenes)) {
-    const base = generated.get(scene.base)!;
-    const data = new Uint8Array(base.data);
-    for (const layer of scene.layers) {
-      const image = generated.get(layer.asset)!;
-      const rect = layer.sourceRect ?? { x: 0, y: 0, width: image.width, height: image.height };
-      for (let y = 0; y < rect.height; y++)
-        for (let x = 0; x < rect.width; x++) {
-          const at = ((rect.y + y) * image.width + rect.x + x) * 4;
-          const alpha = image.data[at + 3]!;
-          assert(alpha === 0 || alpha === 255, "Difference patches must be binary alpha");
-          if (alpha)
-            data.set(
-              image.data.subarray(at, at + 4),
-              ((layer.atLogical.y * 2 + y) * base.width + layer.atLogical.x * 2 + x) * 4,
-            );
-        }
-    }
+    const authored = original(id);
     assert.deepEqual(
-      data,
-      new Uint8Array(original(id).data),
+      compose(generated, scene),
+      new Uint8Array(authored.data),
       `Exact source-over reconstruction: ${id}`,
     );
     reconstructed.push(id);
+    const difference = displayDifference(
+      authored.width,
+      authored.height,
+      compose(decoded, scene),
+      new Uint8Array(authored.data),
+    );
+    for (const key of ["mean", "p99", "max"] as const)
+      assert(
+        difference[key] <= DECODED_LIMITS[key],
+        `Decoded ${id} ${key} difference ${difference[key]} exceeds ${DECODED_LIMITS[key]}`,
+      );
+    decodedScenes[id] = difference;
   }
   const document = { version: 1, canvas: { width: 960, height: 540 }, assets, scenes };
   writeFileSync(`${directory}/story-compositions.json`, `${JSON.stringify(document, null, 2)}\n`);
@@ -246,7 +299,7 @@ export async function buildStoryCompositions(output: string) {
     `${directory}/story-compositions-report.json`,
     `${JSON.stringify(
       {
-        codec: "Published ArtKit lossless WebP, no downsample or lossy change",
+        codec: "Published ArtKit lossy WebP quality 80, method 6, alpha quality 100",
         baseCount: baseIds.length,
         generatedPaths: assets.length,
         retainedPaths: ["/art/story/ada-skywatch.png", "/art/story/penny-sitting.png"],
@@ -255,6 +308,15 @@ export async function buildStoryCompositions(output: string) {
         decodedBytes: assets.reduce((sum, image) => sum + image.width * image.height * 4, 0),
         reconstructed,
         nativeRgbaExact: true,
+        decoded: {
+          limits: DECODED_LIMITS,
+          worst: {
+            mean: Math.max(...Object.values(decodedScenes).map(({ mean }) => mean)),
+            p99: Math.max(...Object.values(decodedScenes).map(({ p99 }) => p99)),
+            max: Math.max(...Object.values(decodedScenes).map(({ max }) => max)),
+          },
+          scenes: decodedScenes,
+        },
       },
       null,
       2,
