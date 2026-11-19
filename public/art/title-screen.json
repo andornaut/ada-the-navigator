@@ -7,7 +7,7 @@
   "background": "#292734",
   "field": {
     "id": "title-field",
-    "at": [-120, 0]
+    "at": [-120, -120]
   },
   "ship": {
     "frame": 52,

@@ -150,10 +150,11 @@ function wordmark(): { svg: string; width: number; height: number } {
   return { svg, width, height };
 }
 
-// The field covers play-view logical px x -120 to 840 and y 0 to 540 (960 by 540 at 2 image px
-// per logical px), so it fills every logical view up to 960 wide and 540 tall from the play
-// view's top-left; the camera's space background fills beyond it.
-const FIELD = { x: -120, y: 0, width: 960, height: 540, density: 2 } as const;
+// The field covers play-view logical px x -120 to 840 and y -120 to 540 (960 by 660 at 2 image px
+// per logical px): the 720 by 360 game area with 120 of bleed above and at each side and 180
+// below, placed from the game area's top-left, so it covers every letterbox band up to 120 deep;
+// the camera's space background fills beyond it.
+const FIELD = { x: -120, y: -120, width: 960, height: 660, density: 2 } as const;
 const ENVIRONMENT = "34333f";
 const ENVIRONMENT_DETAIL = "403f4d";
 // Soft masses: centre and radius in play-view px, colour and peak alpha, falling linearly to 0.
@@ -162,10 +163,14 @@ const MASSES = [
   { at: [600, 80], r: 220, colour: ENVIRONMENT_DETAIL, alpha: 0.8 },
   { at: [520, 250], r: 160, colour: IN_BETWEEN[2], alpha: 0.16 },
 ] as const;
-// Sparse stars: one-px dust in two quiet tones, and a few two-px lavender points at 0.7.
+// Sparse stars: one-px dust in two quiet tones, and a few two-px lavender points at 0.7. Each
+// band of play-view y draws from its own seeded stream at 270 per 960 by 540 (one per 1920 square px),
+// and a star stays inside its band.
 const STARS = {
-  seed: 7,
-  count: 270,
+  bands: [
+    { seed: 7, count: 270, y: 0, height: 540 },
+    { seed: 8, count: 60, y: -120, height: 120 },
+  ],
   bright: { share: 0.12, size: 2, colour: "c4afcc", alpha: 0.7 },
   dust: { size: 1, colours: [ENVIRONMENT_DETAIL, "57536e"] },
 } as const;
@@ -201,29 +206,32 @@ function field(): RgbaImage {
       }
     }
   }
-  const random = new Random(STARS.seed);
   const clear = (x: number, y: number, size: number) =>
     STAR_CLEAR.some(
       (r) => x + size > r.x && x < r.x + r.width && y + size > r.y && y < r.y + r.height,
     );
-  for (let n = 0; n < STARS.count; n++) {
-    const x = Math.floor(random.uniform(0, FIELD.width));
-    const y = Math.floor(random.uniform(0, FIELD.height));
-    const bright = random.random() < STARS.bright.share;
-    const tone = random.random() < 0.5 ? 0 : 1;
-    const size = bright ? STARS.bright.size : STARS.dust.size;
-    if (
-      clear(FIELD.x + x, FIELD.y + y, size) ||
-      x + size > FIELD.width ||
-      y + size > FIELD.height
-    ) {
-      continue;
-    }
-    const colour = rgba(bright ? STARS.bright.colour : STARS.dust.colours[tone]!);
-    const alpha = bright ? STARS.bright.alpha : 1;
-    for (let py = y * d; py < (y + size) * d; py++) {
-      for (let px = x * d; px < (x + size) * d; px++) {
-        mix(image, py * image.width + px, colour, alpha);
+  for (const band of STARS.bands) {
+    const random = new Random(band.seed);
+    const top = band.y - FIELD.y;
+    for (let n = 0; n < band.count; n++) {
+      const x = Math.floor(random.uniform(0, FIELD.width));
+      const y = Math.floor(random.uniform(0, band.height));
+      const bright = random.random() < STARS.bright.share;
+      const tone = random.random() < 0.5 ? 0 : 1;
+      const size = bright ? STARS.bright.size : STARS.dust.size;
+      if (
+        clear(FIELD.x + x, band.y + y, size) ||
+        x + size > FIELD.width ||
+        y + size > band.height
+      ) {
+        continue;
+      }
+      const colour = rgba(bright ? STARS.bright.colour : STARS.dust.colours[tone]!);
+      const alpha = bright ? STARS.bright.alpha : 1;
+      for (let py = (top + y) * d; py < (top + y + size) * d; py++) {
+        for (let px = x * d; px < (x + size) * d; px++) {
+          mix(image, py * image.width + px, colour, alpha);
+        }
       }
     }
   }

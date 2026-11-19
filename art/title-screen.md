@@ -50,25 +50,28 @@ The title ship is the in-game ship art, not a separate drawing.
 
 ## Field
 
-`title-field.png` is 1920 by 1080, opaque, at 2 image px per logical px
-(960 by 540). Its top-left sits at play-view (-120, 0) (`title-screen.json`
-`field.at`), so it fills every logical view up to 960 wide and 540 tall; the
-camera's space background `#292734` fills beyond it.
+`title-field.png` is 1920 by 1320, opaque, at 2 image px per logical px
+(960 by 660). Its top-left sits at play-view (-120, -120) (`title-screen.json`
+`field.at`, from the game area's top-left), so it covers the 720 by 360 game
+area with 120 of bleed above and at each side and 180 below, and fills every
+letterbox band up to 120 deep; the camera's space background `#292734` fills
+beyond it.
 
-| Part        | Rule                                                                                         |
-| ----------- | -------------------------------------------------------------------------------------------- |
-| Ground      | Space background `#292734`                                                                   |
-| Mass 1      | Environment `#34333f`, centre (150, 290), radius 240, alpha 1 falling linearly to 0          |
-| Mass 2      | Environment detail `#403f4d`, centre (600, 80), radius 220, alpha 0.8 to 0                   |
-| Mass 3      | In-between `#5f4fa3`, centre (520, 250), radius 160, alpha 0.16 to 0                         |
-| Dust        | 1 px squares, `#403f4d` or `#57536e`, opaque                                                 |
-| Points      | 2 px squares, `#c4afcc` at 0.7, 12% of the stars                                             |
-| Star layout | Seed 7, 270 drawn over the canvas; none in (215, 142, 290x114) or (220, 312, 280x34)         |
-| Shade       | Ink `#181425` from alpha 0 at y 290 to 0.45 at y 360, held below, under the actions and note |
+| Part        | Rule                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| Ground      | Space background `#292734`                                                                                  |
+| Mass 1      | Environment `#34333f`, centre (150, 290), radius 240, alpha 1 falling linearly to 0                         |
+| Mass 2      | Environment detail `#403f4d`, centre (600, 80), radius 220, alpha 0.8 to 0                                  |
+| Mass 3      | In-between `#5f4fa3`, centre (520, 250), radius 160, alpha 0.16 to 0                                        |
+| Dust        | 1 px squares, `#403f4d` or `#57536e`, opaque                                                                |
+| Points      | 2 px squares, `#c4afcc` at 0.7, 12% of the stars                                                            |
+| Star layout | Seed 7, 270 over y 0 to 540; seed 8, 60 over y -120 to 0; none in (215, 142, 290x114) or (220, 312, 280x34) |
+| Shade       | Ink `#181425` from alpha 0 at y 290 to 0.45 at y 360, held below, under the actions and note                |
 
 Centres and rects are play-view px. Every mass fades out inside the canvas, so
-no edge shows at any view size. The star-free rects hold the wordmark and the
-note with a margin.
+no edge shows at any view size. Each star band draws from its own stream at
+the same density (one star per 1920 square px), and a star stays inside its band.
+The star-free rects hold the wordmark and the note with a margin.
 
 ## Contrast
 

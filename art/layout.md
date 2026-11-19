@@ -1006,7 +1006,7 @@ at every aspect.
 
 | Token             | Value                                               | Rule                                                                                                                | Constant                                    |
 | ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Field             | `title-field`, 960x540, top-left (-120, 0)          | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
+| Field             | `title-field`, 960x660, top-left (-120, -120)       | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
 | Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-52` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`       |
 | Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`   |
 | Action row        | Top 264, buttons 192 wide, `TEXT_BUTTON.height`     | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`    |
@@ -1024,10 +1024,8 @@ at every aspect.
 - Taller views (1280x720 is 720x405, `y0` 22) keep every part at its
   play-view place, so the parts move down with the centred game area, and show
   more field below. The field's top-left is also from (`x0`, `y0`): at
-  1280x720 it spans view y 22 to 562, so it covers the game area and the band
-  below it. The 22 band above it is the letterbox band above the game area,
-  plain space background as on every other screen; the field does not extend
-  into it.
+  1280x720 it spans view y -98 to 562, so it covers the game area and the
+  bands above and below it.
 
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
@@ -1036,7 +1034,7 @@ the logical view is 779.08x360 and `x0` is 29.
 | ---------------- | ---------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
 | HUD rect         | 12 to 708, top 12            | 43 to 677, top 12             | 41 to 738.08, top 12          | 43 to 736.08, top 12          |
 | Available rect   | 16 to 704, 16 to 344         | 43 to 677, 16 to 341          | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
-| Field            | -120 to 840, 0 to 540        | -120 to 840, 0 to 540         | -91 to 869, 0 to 540          | -91 to 869, 0 to 540          |
+| Field            | -120 to 840, -120 to 540     | -120 to 840, -120 to 540      | -91 to 869, -120 to 540       | -91 to 869, -120 to 540       |
 | Ship frame       | 238 to 518, -56 to 224       | 238 to 518, -56 to 224        | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
 | Ship ink         | 226.3 to 484, 48 to 141      | 226.3 to 484, 48 to 141       | 255.3 to 513, 48 to 141       | 255.3 to 513, 48 to 141       |
 | Wordmark         | 225 to 495, 148 to 250       | 225 to 495, 148 to 250        | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
