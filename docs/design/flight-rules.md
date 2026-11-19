@@ -54,3 +54,4 @@ Reference: [rules](../../gameplay/rules.md), [unified target markers](../../game
 | ada-0274 | Adopt the shared modal widths and the 500 ms detail-card hold                                              | [ada-0274.md](../work/ada-0274.md) |
 | ada-0304 | Replay finished Earth chapters from Ada's room                                                             | [ada-0304.md](../work/ada-0304.md) |
 | ada-0307 | Keep every visible Phaser beam on its firing ship's nose or muzzle and aim                                 | [ada-0307.md](../work/ada-0307.md) |
+| ada-0308 | Draw and hit-test every missile blast as an on-screen circle                                               | [ada-0308.md](../work/ada-0308.md) |
