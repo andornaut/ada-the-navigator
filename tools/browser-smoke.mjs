@@ -1891,8 +1891,8 @@ try {
     };
     await proofsAt("cheats", checkCheatsCard);
     // Art's proofs at the scroll end: Show tips again, the FPS counter and Reset save, with Close
-    // 16 above the card's bottom edge, frame included, and the column's FOCUS_RING.outset padding
-    // around the rows, so a focused row's ring stays inside its clip.
+    // 16 above the card's bottom edge, frame included, the column's FOCUS_RING.outset padding
+    // around the rows, so a focused row's ring stays inside its clip, and the 14 scroll reserve.
     const { FOCUS_RING: FOCUS_RING_TOKENS, SPACING: SPACING_TOKENS } = await import(
       new URL("../src/data/layout.ts", import.meta.url)
     );
@@ -1915,9 +1915,10 @@ try {
       const [, listTop, listWidth, listHeight] = await logicalBox(
         '[role="dialog"] .ada-cheat-items',
       );
-      const [, lastTop, lastWidth, lastHeight] = await logicalBox(
+      const [lastLeft, lastTop, lastWidth, lastHeight] = await logicalBox(
         '[role="dialog"] .ada-cheat-items > :last-child',
       );
+      const [listLeft] = await logicalBox('[role="dialog"] .ada-cheat-items');
       const geometry = await cheatDialog.evaluate((dialog) => {
         const list = dialog.querySelector(".ada-cheat-items");
         const style = getComputedStyle(list);
@@ -1931,6 +1932,7 @@ try {
         cardWidth,
         closeAfterList: Math.round((closeTop - (listTop + listHeight)) * 100) / 100,
         lastRowEndInset: Math.round((listTop + listHeight - (lastTop + lastHeight)) * 100) / 100,
+        lastRowLeftInset: Math.round((lastLeft - listLeft) * 100) / 100,
         lastRowWidth: lastWidth,
         listTopFromCard: Math.round((listTop - cardTop) * 100) / 100,
         listWidth,
@@ -1945,9 +1947,13 @@ try {
         Math.abs(shot.lastRowEndInset - FOCUS_RING_TOKENS.outset) <= 0.3,
         `${name}: at the scroll end the last row keeps the ring's 4 inside the clip: ${JSON.stringify(shot)}`,
       );
+      // While the column scrolls it keeps the 14 reserve as padding, whatever the scrollbar takes,
+      // so rows are 368 - 2 * 4 - 14 = 346 in every browser.
       assert.ok(
-        Math.abs(listWidth - lastWidth - 2 * FOCUS_RING_TOKENS.outset) <= 0.3,
-        `${name}: the rows sit 4 inside the column at each side: ${JSON.stringify(shot)}`,
+        shot.scrolls &&
+          Math.abs(shot.lastRowLeftInset - FOCUS_RING_TOKENS.outset) <= 0.3 &&
+          Math.abs(lastWidth - 346) <= 0.3,
+        `${name}: the scrolling column's rows are 346, 4 inside its left: ${JSON.stringify(shot)}`,
       );
     });
     save("cheats-end-proof.json", cheatsEnd);
