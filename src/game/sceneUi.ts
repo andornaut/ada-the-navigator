@@ -61,6 +61,7 @@ import {
   createScanFeedbackView,
   scanFeedbackDialogue,
   scanFeedbackFootprints,
+  scanFeedbackHudRow,
 } from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
@@ -1236,6 +1237,7 @@ export function renderConversation(scene: UiContext): void {
           scene.model.state.mode !== "space" ||
           !flight,
         dialogue: scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
+        hudRow: scanFeedbackHudRow(document, document.getElementById(VIEW_HOST_ID)),
         reducedMotion: scene.reducedMotion,
         resolveAnchor: (outcome) => {
           if (flight?.galaxy !== outcome.galaxy) {

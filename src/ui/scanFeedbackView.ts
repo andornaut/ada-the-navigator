@@ -18,6 +18,9 @@ import {
 import { STATUS_COLOURS } from "./statusPill.ts";
 /** The touch controls a receipt keeps clear of: the sticks' targets and Use. */
 const TOUCH_CONTROLS = '.ada-use,[data-control="move-joystick"],[data-control="aim-joystick"]';
+/** The HUD row's controls along the top: pause, the status pill, weapons and their counts. */
+const HUD_ROW =
+  ".ada-pause,.ada-settings-open,.ada-status,.ada-status-tick,.ada-weapon-selector,.ada-ammo,.ada-pips,.ada-ammo-gain";
 /** The conversation box's parts: the panel, its name tab and its portrait. */
 const CONVERSATION_PARTS = ".ada-conversation,.ada-conversation-name,.ada-conversation-portrait";
 
@@ -34,6 +37,11 @@ export function scanFeedbackFootprints(doc: Document, host: HTMLElement | null):
     ...markerFootprints({ querySelectorAll }, host),
     ...markerFootprints(doc, host, TOUCH_CONTROLS),
   ];
+}
+
+/** The shown HUD row's controls, which every rise ends SPACING.gap under. */
+export function scanFeedbackHudRow(doc: Document, host: HTMLElement | null): Rect[] {
+  return markerFootprints(doc, host, HUD_ROW);
 }
 
 /** The shown conversation box's parts, which a receipt never overlaps and stops below. */

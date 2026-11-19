@@ -15,6 +15,8 @@ export interface ScanFeedbackLayout {
   /** The shown conversation box's parts: the receipt never overlaps one, and stops below it. */
   readonly dialogue: readonly Rect[];
   readonly height: number;
+  /** The shown HUD row's controls along the top: every rise ends SPACING.gap under the row. */
+  readonly hudRow: readonly Rect[];
   readonly path?: ScanFeedbackPath;
   readonly progress: number;
   readonly reducedMotion: boolean;
@@ -92,7 +94,16 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
     box.y <= maxY &&
     !controls.some((control) => overlaps(box, control)) &&
     !dialogue.some((part) => overlaps(box, part));
-  const top = (from: Rect) => Math.min(from.y, Math.max(area.y, below(context.blocked, from)));
+  // Under the HUD row across the view, and under any other control above the start's column.
+  const row = (from: Rect) =>
+    Math.max(
+      -Infinity,
+      ...context.hudRow
+        .filter((box) => box.y + box.height <= from.y)
+        .map((box) => box.y + box.height + gap),
+    );
+  const top = (from: Rect) =>
+    Math.min(from.y, Math.max(area.y, row(from), below(context.blocked, from)));
   const rise = (from: Rect) => from.y - Math.max(top(from), below(dialogue, from));
   const path = (from: Rect): ScanFeedbackPath => ({ area: { ...area }, from, top: top(from) });
   const centred = at(anchor.x - width / 2, anchor.y - height / 2);

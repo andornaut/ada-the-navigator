@@ -6,7 +6,11 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
-import { scanFeedbackDialogue, scanFeedbackFootprints } from "../ui/scanFeedbackView.ts";
+import {
+  scanFeedbackDialogue,
+  scanFeedbackFootprints,
+  scanFeedbackHudRow,
+} from "../ui/scanFeedbackView.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 it("retains production scan receipts under cover and resolves only the receipt galaxy's actual target", () => {
@@ -67,6 +71,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     scanFeedbackArea,
     scanFeedbackDialogue,
     scanFeedbackFootprints,
+    scanFeedbackHudRow,
     scanViews: { get: () => scan },
     window: {},
   });
@@ -95,6 +100,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     scene.controls.layout().view,
   );
   expect(first[0].dialogue).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
+  expect(first[0].hudRow).toEqual([{ height: 30, width: 100, x: 0, y: 0 }]);
   expect(querySelectorAll).toHaveBeenCalledWith(
     expect.stringContaining(":not(.ada-conversation, .ada-conversation *)"),
   );

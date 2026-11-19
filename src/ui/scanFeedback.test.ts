@@ -26,6 +26,7 @@ const context: ScanFeedbackContext = {
   blocked: [],
   covered: false,
   dialogue: [],
+  hudRow: [],
   measure: () => ({ height: 40, width: 200 }),
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 240 }),

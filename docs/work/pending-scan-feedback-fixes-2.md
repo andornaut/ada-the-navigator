@@ -30,8 +30,10 @@ receipt is placed in the HUD controls' rect.
 
 ## Decisions
 
-- Every shown HUD and touch control is grown by `SPACING.gap` for clearance; the rise ends
-  `SPACING.gap` below the lowest of them, or of the conversation box's parts, above its column.
+- Every shown HUD and touch control is grown by `SPACING.gap` for clearance.
+- The HUD row (pause, the status pill, weapons and their counts) is a band across the view: every
+  rise ends at least `SPACING.gap` under its lowest part, in any column. Any other control or
+  conversation part above the start's column also ends the rise `SPACING.gap` below it.
 - A conversation box shown or gone mid-rise starts a new rise segment from where the receipt
   is, so it never hops or moves down.
 

@@ -15,6 +15,7 @@ const context = {
   blocked: [],
   dialogue: [],
   height: 40,
+  hudRow: [],
   progress: 0,
   reducedMotion: false,
   width: 200,
@@ -60,11 +61,15 @@ describe("scan receipt placement", () => {
       previous = box.y;
     }
   });
-  it("ends the rise SPACING.gap under the HUD row with no conversation", () => {
-    const hud = { height: 30, width: 720, x: 0, y: 12 };
-    const path = scanFeedbackPath({ ...context, blocked: [hud] })!;
-    expect(path.top).toBe(hud.y + hud.height + SPACING.gap);
-    expect(scanFeedbackRect({ ...context, blocked: [hud], path, progress: 1 })!.y).toBe(50);
+  it("ends the rise SPACING.gap under the HUD row with no conversation, in any column", () => {
+    // Pause at the left end and a weapon count at the right: neither is in the start's column.
+    const hudRow = [
+      { height: 32, width: 32, x: 12, y: 12 },
+      { height: 14, width: 40, x: 660, y: 40 },
+    ];
+    const path = scanFeedbackPath({ ...context, hudRow })!;
+    expect(path.top).toBe(54 + SPACING.gap);
+    expect(scanFeedbackRect({ ...context, hudRow, path, progress: 1 })!.y).toBe(62);
   });
   it("slides a clamped start along its nearest edge toward the centre until clear with room", () => {
     // The aim stick's target at the bottom right; the target lies off the right edge.

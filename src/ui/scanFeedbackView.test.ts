@@ -56,6 +56,7 @@ const context = {
   blocked: [],
   covered: false,
   dialogue: [],
+  hudRow: [],
   reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 220 }),
 };

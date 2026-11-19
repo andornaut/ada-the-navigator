@@ -74,6 +74,8 @@ export interface ScanFeedbackContext {
   readonly covered: boolean;
   /** The shown conversation box's parts, which the rise stops below. */
   readonly dialogue: readonly Rect[];
+  /** The shown HUD row's controls along the top, which every rise ends under. */
+  readonly hudRow: readonly Rect[];
   readonly measure: (content: ScanFeedbackContent) => {
     readonly height: number;
     readonly width: number;
@@ -156,6 +158,7 @@ export class ScanFeedbackQueue {
         area: context.area,
         blocked: context.blocked,
         dialogue: context.dialogue,
+        hudRow: context.hudRow,
         ...context.measure(next.content),
         progress: 0,
         reducedMotion: context.reducedMotion,
