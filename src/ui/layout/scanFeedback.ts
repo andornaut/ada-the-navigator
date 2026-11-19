@@ -32,7 +32,8 @@ export interface ScanFeedbackPath {
 /** The HUD controls' rect, the game area clamped by the safe rect, in game-area px. */
 export function scanFeedbackArea(insets: Insets, view: Size): Rect {
   const hud = hudRect(insets, view);
-  return { ...hud, x: hud.x - playView(view).x };
+  const play = playView(view);
+  return { ...hud, x: hud.x - play.x, y: hud.y - play.y };
 }
 
 const overlaps = (a: Rect, b: Rect): boolean =>

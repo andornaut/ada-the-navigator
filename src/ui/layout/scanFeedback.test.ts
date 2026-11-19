@@ -149,7 +149,12 @@ describe("scan receipt placement", () => {
       { height: 360, width: 800 },
     ]) {
       const hud = hudRect(NO_INSETS, view);
-      expect(scanFeedbackArea(NO_INSETS, view)).toEqual({ ...hud, x: hud.x - playView(view).x });
+      const play = playView(view);
+      expect(scanFeedbackArea(NO_INSETS, view)).toEqual({
+        ...hud,
+        x: hud.x - play.x,
+        y: hud.y - play.y,
+      });
     }
     expect(scanFeedbackArea(NO_INSETS, { height: 360, width: 800 })).toEqual({
       height: 336,
