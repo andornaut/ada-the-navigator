@@ -66,21 +66,21 @@ Use, the Dock action; it has no dock, mouth or approach lights.
 
 ### Palette
 
-| Role                  | Colour    | On the field |
-| --------------------- | --------- | -----------: |
-| Tower                 | `#dff6fa` |       1.48:1 |
-| Ramp                  | `#c8eef5` |       1.34:1 |
-| Tower side            | `#a9cfd8` |       1.00:1 |
-| Ramp side             | `#7aa4ae` |       1.63:1 |
-| Ramp rear             | `#6d8f97` |       2.10:1 |
-| Cap, collar           | `#efe4cf` |       1.32:1 |
-| Cap side, collar side | `#bfae94` |       1.31:1 |
-| Chevron lit           | `#f7f2ff` |       1.51:1 |
-| Chevron unlit, plates | `#5b8089` |       2.59:1 |
-| Plate side            | `#3e636c` |       3.95:1 |
-| Windows               | `#ffe9b8` |       1.39:1 |
-| Windows dim           | `#a08f78` |       1.89:1 |
-| Beacon                | `#70ace8` |       1.45:1 |
+| Role                  | Colour    | On the field | Keyline |
+| --------------------- | --------- | -----------: | ------: |
+| Tower                 | `#dff6fa` |       1.48:1 | 10.86:1 |
+| Ramp                  | `#c8eef5` |       1.34:1 | 10.86:1 |
+| Tower side            | `#a9cfd8` |       1.00:1 | 10.86:1 |
+| Ramp side             | `#7aa4ae` |       1.63:1 | 10.86:1 |
+| Ramp rear             | `#6d8f97` |       2.10:1 | 10.86:1 |
+| Cap, collar           | `#efe4cf` |       1.32:1 | 10.86:1 |
+| Cap side, collar side | `#bfae94` |       1.31:1 | 10.86:1 |
+| Chevron lit           | `#f7f2ff` |       1.51:1 | 10.86:1 |
+| Chevron unlit, plates | `#5b8089` |       2.59:1 | 10.86:1 |
+| Plate side            | `#3e636c` |       3.95:1 | 10.86:1 |
+| Windows               | `#ffe9b8` |       1.39:1 | 10.86:1 |
+| Windows dim           | `#a08f78` |       1.89:1 | 10.86:1 |
+| Beacon                | `#70ace8` |       1.45:1 | 10.86:1 |
 
 - The build fails if the tower, ramp, cap, lit chevron, windows or beacon falls
   below 5:1 on the field, Whirlpool's floor for bodies and lamps. On the light
@@ -129,6 +129,7 @@ Contrast (WCAG) on Whirlpool's `#B8CEC4`:
 | Streak on field                   |  4.14:1 |
 | Whale top `#AAA5E6` over a streak |  3.02:1 |
 | Whale top on field                |  1.37:1 |
+| Whale ink keyline on field        | 10.86:1 |
 | Debris contour `#D68B72` on field |  1.62:1 |
 | Debris contour over a full streak |  2.55:1 |
 | Debris ink keyline on field       | 10.86:1 |
@@ -290,10 +291,10 @@ sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 `frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
 in frame px.
 
-| Craft                      | Job subject       | Manifest ids                             | Frame | Display | Frames per heading       | Hull top on field |
-| -------------------------- | ----------------- | ---------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
-| `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 1.37:1 |
-| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 1.37:1 |
+| Craft                      | Job subject       | Manifest ids                             | Frame | Display | Frames per heading       | Hull top on field | Keyline |
+| -------------------------- | ----------------- | ---------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ------: |
+| `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 1.37:1 | 10.86:1 |
+| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 1.37:1 | 10.86:1 |
 
 - Current skimmer: a low lilac lens hull with a whale-glow band `#cbb8ee`, a
   dark bubble canopy, two cream spindle floats on struts and dead twin nozzles

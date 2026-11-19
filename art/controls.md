@@ -332,26 +332,26 @@ The normal panel is ink at 0.65 over the field. The track is its own ink layer a
 field, so it composites to `#1a1627` over the base field and
 `#2f2a33` over Sunflower.
 
-| Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
-| ---------------- | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
-| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 | 12.24:1 |    3.88:1 |
-| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |  7.39:1 |    2.34:1 |
-| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |  4.87:1 |    1.54:1 |
-| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |  7.77:1 |    2.46:1 |
-| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |  6.20:1 |    1.96:1 |
-| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |  2.42:1 |    1.30:1 |
-| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |  1.05:1 |    5.62:1 |
+| Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Andromeda | Needle | Phantom | `#ffffff` |
+| ---------------- | --------- | ------: | --------: | --------: | --------: | --------: | -----: | ------: | --------: |
+| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |    6.37:1 |    5.18:1 |    6.73:1 | 5.58:1 |  9.99:1 |    3.88:1 |
+| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    3.85:1 |    3.13:1 |    4.06:1 | 3.37:1 |  6.04:1 |    2.34:1 |
+| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    2.54:1 |    2.06:1 |    2.68:1 | 2.22:1 |  3.98:1 |    1.54:1 |
+| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    4.04:1 |    3.29:1 |    4.27:1 | 3.54:1 |  6.34:1 |    2.46:1 |
+| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    3.23:1 |    2.62:1 |    3.41:1 | 2.83:1 |  5.06:1 |    1.96:1 |
+| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    1.26:1 |    1.02:1 |    1.33:1 | 1.10:1 |  1.98:1 |    1.30:1 |
+| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    3.68:1 |    4.53:1 |    3.42:1 | 4.26:1 |  1.68:1 |    5.62:1 |
 
 Marks on the panel, against the field under it.
 
-| Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
-| --------------- | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
-| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |  7.50:1 |    5.28:1 |
-| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |  4.00:1 |    2.81:1 |
-| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |  4.94:1 |    3.48:1 |
-| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 | 17.98:1 |   12.66:1 |
-| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |  6.28:1 |    4.42:1 |
-| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |  4.94:1 |    3.48:1 |
+| Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Andromeda |  Needle | Phantom | `#ffffff` |
+| --------------- | --------- | ------: | --------: | --------: | --------: | --------: | ------: | ------: | --------: |
+| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    6.18:1 |    5.79:1 |    6.29:1 |  5.97:1 |  7.00:1 |    5.28:1 |
+| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.29:1 |    3.09:1 |    3.35:1 |  3.18:1 |  3.73:1 |    2.81:1 |
+| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.07:1 |    3.82:1 |    4.15:1 |  3.94:1 |  4.62:1 |    3.48:1 |
+| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   14.81:1 |   13.89:1 |   15.09:1 | 14.32:1 | 16.80:1 |   12.66:1 |
+| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    5.18:1 |    4.86:1 |    5.27:1 |  5.01:1 |  5.87:1 |    4.42:1 |
+| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.07:1 |    3.82:1 |    4.15:1 |  3.94:1 |  4.62:1 |    3.48:1 |
 
 Bar palette colours against the track and field. Delay and hit-flash ranges
 are clipped to the remaining fill: the emptied portion always exposes the
@@ -361,22 +361,25 @@ existing pulse. The flash is 2.40:1 against the filled shield.
 
 - The count meets 4.5:1 over every galaxy field; over a white object under the
   pill it is 3.88:1, accepted as for the conversation line.
-- On the dark fields every mark meets 3:1 against the panel. The divider is
-  decorative.
-- On a light field (Sunflower) the shield icon and the shield bar each draw
+- On the base field and Phantom every mark meets 3:1 against the panel. The
+  divider is decorative.
+- On a light field (Sunflower, Cartwheel, Whirlpool, Andromeda and Needle) the
+  shield icon and the shield bar each draw
   inside a 1 px ink outline (`lightField.hudOutline`), as on the `+N` tick: the
   icon's mask grown by 1 px in ink behind it, and a 1 px ink line outside the
   bar's rim. Against that ink the low icon and rim are 4.95:1, the normal rim
   6.30:1, the shield icon 7.51:1 and the low pulse peak 7.89:1, where the
-  panel alone gives 2.07:1, 2.63:1, 3.14:1 and 3.30:1. The rim's inner edge
-  holds 3:1 against the track (4.89:1).
+  panel alone gives 2.06:1, 2.62:1, 3.13:1 and 3.29:1 on Whirlpool, the
+  lightest composite. The rim's inner edge holds 3:1 against the track (4.86:1
+  or more).
 - The delay and hit-flash layers never paint the emptied portion of the
   track. Their state and timing remain independent of their clipped bounds.
 - The `+N` labels sit on the field, not the panel: Stardust gold is 10.56:1
   on `#292734` and 1.19:1 on Sunflower's `#D8C994`, ore rust 7.12:1 and
-  1.24:1, where the ink outline (10.90:1 on the field) carries them; the
-  outline (12.99:1 against gold, 8.76:1 against rust) keeps them legible over
-  bright objects. The rust tick is 7.04:1 or more on every dark field.
+  1.24:1, where the ink outline (10.90:1 on Sunflower, 6.33:1 or more on every
+  light field) carries them; the outline (12.99:1 against gold, 8.76:1 against
+  rust) keeps them legible over bright objects. On Phantom the gold tick is
+  6.22:1 and the rust tick 4.20:1.
 - The recharge timer sits inside the existing pill, separate from the main
   shield bar: a 1 px cream fill inside a complete 1 px ink rectangle, including
   both end caps, with a 1 px gap below the main bar. Its dark empty track
@@ -402,14 +405,14 @@ edge `#181425`, so on a light field it needs no added outline.
 | `icon-cargo-20` | A strapped crate, any carried item      | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
 | `icon-tow-20`   | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                |
 
-| Mark          | Colour    | Base, on the panel | Dark fields, on the panel | Sunflower, on the panel | On its ink edge |
-| ------------- | --------- | -----------------: | ------------------------: | ----------------------: | --------------: |
-| Stardust body | `#f4d98a` |            12.16:1 |           12.18:1 or more |                  5.43:1 |         12.99:1 |
-| Ore rim shade | `#d481b9` |             6.15:1 |            6.15:1 or more |                  2.73:1 |          6.55:1 |
-| Cargo orange  | `#feae34` |             9.09:1 |            9.10:1 or more |                  4.06:1 |          9.71:1 |
-| Tow steel     | `#b8bfc9` |             9.10:1 |            9.12:1 or more |                  4.07:1 |          9.72:1 |
+| Mark          | Colour    | Base, on the panel | Phantom, on the panel | Sunflower, on the panel | On its ink edge |
+| ------------- | --------- | -----------------: | --------------------: | ----------------------: | --------------: |
+| Stardust body | `#f4d98a` |            12.16:1 |               10.44:1 |                  5.43:1 |         12.99:1 |
+| Ore rim shade | `#d481b9` |             6.15:1 |                5.27:1 |                  2.73:1 |          6.55:1 |
+| Cargo orange  | `#feae34` |             9.09:1 |                7.80:1 |                  4.06:1 |          9.71:1 |
+| Tow steel     | `#b8bfc9` |             9.10:1 |                7.81:1 |                  4.07:1 |          9.72:1 |
 
-On Sunflower the ore, cargo and tow icons read against their own ink edges,
+On the light fields the ore, cargo and tow icons read against their own ink edges,
 as the shield icon does against its outline.
 
 `public/art/ui/icons/shield.svg` is the HUD shield glyph: a 20x20 single-colour
@@ -458,20 +461,20 @@ shop's 24 by 24 upgrade composite (glyph plus badge) does not fit the chip's
 level. Pixel icons draw nearest
 neighbour; the weapon glyph is the HUD disc's mask with smooth sampling.
 
-| Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
-| ------------ | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
-| Panel        | `#181425` |  1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |  1.04:1 |   18.02:1 |
-| Cargo rim    | `#feae34` |  7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |  9.35:1 |    1.86:1 |
-| Tow rim      | `#b8bfc9` |  7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |  9.36:1 |    1.85:1 |
-| Weapon rim   | `#bfa06f` |  5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |  7.00:1 |    2.48:1 |
-| Holodisk rim | `#e868c8` |  5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |  5.98:1 |    2.90:1 |
-| Level 2 rim  | `#ff8f1f` |  6.42:1 |    1.38:1 |    6.47:1 |    6.34:1 |  7.60:1 |    2.28:1 |
-| Level 3 rim  | `#a66bff` |  4.30:1 |    2.06:1 |    4.34:1 |    4.25:1 |  5.10:1 |    3.40:1 |
-| Cobalt rim   | `#6f9ff0` |  5.50:1 |    1.61:1 |    5.55:1 |    5.44:1 |  6.52:1 |    2.66:1 |
-| Seafoam rim  | `#d4f6ea` | 12.67:1 |    1.43:1 |   12.78:1 |   12.52:1 | 15.01:1 |    1.16:1 |
-| Graphite rim | `#aab2c4` |  6.89:1 |    1.29:1 |    6.95:1 |    6.81:1 |  8.16:1 |    2.13:1 |
-| Iris rim     | `#d9ccff` |  9.78:1 |    1.10:1 |    9.87:1 |    9.67:1 | 11.59:1 |    1.50:1 |
-| Classic rim  | `#ffffff` | 14.64:1 |    1.65:1 |   14.77:1 |   14.47:1 | 17.35:1 |    1.00:1 |
+| Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Andromeda | Needle | Phantom | `#ffffff` |
+| ------------ | --------- | ------: | --------: | --------: | --------: | --------: | -----: | ------: | --------: |
+| Panel        | `#181425` |  1.23:1 |   10.90:1 |    7.18:1 |   10.86:1 |    6.33:1 | 9.49:1 |  2.09:1 |   18.02:1 |
+| Cargo rim    | `#feae34` |  7.89:1 |    1.12:1 |    1.35:1 |    1.12:1 |    1.53:1 | 1.02:1 |  4.65:1 |    1.86:1 |
+| Tow rim      | `#b8bfc9` |  7.90:1 |    1.12:1 |    1.36:1 |    1.12:1 |    1.54:1 | 1.02:1 |  4.66:1 |    1.85:1 |
+| Weapon rim   | `#bfa06f` |  5.91:1 |    1.50:1 |    1.01:1 |    1.49:1 |    1.15:1 | 1.31:1 |  3.48:1 |    2.48:1 |
+| Holodisk rim | `#e868c8` |  5.05:1 |    1.75:1 |    1.15:1 |    1.75:1 |    1.02:1 | 1.53:1 |  2.98:1 |    2.90:1 |
+| Level 2 rim  | `#ff8f1f` |  6.42:1 |    1.38:1 |    1.10:1 |    1.38:1 |    1.25:1 | 1.20:1 |  3.78:1 |    2.28:1 |
+| Level 3 rim  | `#a66bff` |  4.30:1 |    2.06:1 |    1.36:1 |    2.05:1 |    1.20:1 | 1.79:1 |  2.53:1 |    3.40:1 |
+| Cobalt rim   | `#6f9ff0` |  5.50:1 |    1.61:1 |    1.06:1 |    1.60:1 |    1.07:1 | 1.40:1 |  3.24:1 |    2.66:1 |
+| Seafoam rim  | `#d4f6ea` | 12.67:1 |    1.43:1 |    2.17:1 |    1.43:1 |    2.46:1 | 1.64:1 |  7.46:1 |    1.16:1 |
+| Graphite rim | `#aab2c4` |  6.89:1 |    1.29:1 |    1.18:1 |    1.28:1 |    1.34:1 | 1.12:1 |  4.06:1 |    2.13:1 |
+| Iris rim     | `#d9ccff` |  9.78:1 |    1.10:1 |    1.68:1 |    1.11:1 |    1.90:1 | 1.27:1 |  5.76:1 |    1.50:1 |
+| Classic rim  | `#ffffff` | 14.64:1 |    1.65:1 |    2.51:1 |    1.66:1 |    2.85:1 | 1.90:1 |  8.63:1 |    1.00:1 |
 
 Parts against the field under the chip.
 
@@ -491,10 +494,12 @@ Parts against the field under the chip.
 | Classic "+"       | `#ffffff` |  18.02:1 |
 
 - The panel is opaque, so the label reads the same on every field and over
-  bright objects. On the dark fields the rim outlines the chip (4.25:1 or
-  more, the level 3 purple on Whirlpool, above the 3:1 a graphic needs; every
-  "+" holds 4.5:1 on the ink); on Sunflower the ink panel outlines it (10.90:1) and the rim is an
-  accent only.
+  bright objects. On the base field the rim outlines the chip (4.30:1 or more,
+  the level 3 purple, above the 3:1 a graphic needs; every "+" holds 4.5:1 on
+  the ink). On Phantom the rim outlines it at 3.24:1 or more, except the
+  holodisk rim (2.98:1) and the level 3 purple (2.53:1). On the light fields
+  the ink panel outlines it (6.33:1 or more, Andromeda; 10.90:1 on Sunflower)
+  and the rim is an accent only.
 - The "+" colour repeats the rim's; the label and icon carry the meaning, so
   the accent never stands alone.
 - The chip takes no input (`pointer-events: none`) and draws under the HUD
@@ -523,9 +528,9 @@ Inactive weapons use these distinct opaque dark faces:
 | ------------- | -------------------- |
 | Laser         | Navy `#262b44`       |
 | Rapid Missile | Base field `#292734` |
-| Multi-Laser   | Phantom `#241827`    |
+| Multi-Laser   | Dark plum `#241827`  |
 | Heavy Missile | Sunflower `#332712`  |
-| Scattershot   | Whirlpool `#132d33`  |
+| Scattershot   | Dark teal `#132d33`  |
 | Phaser        | Ink `#181425`        |
 
 | Weapon state | Ring inside the 33 disc             | Glyph, all fields                  | Minimum glyph contrast on its face |

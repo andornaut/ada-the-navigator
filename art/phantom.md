@@ -74,22 +74,23 @@ Use, the Dock action; it has no dock, mouth or approach lights.
 
 ### Palette
 
-| Role           | Colour    | On the field |
-| -------------- | --------- | -----------: |
-| Gloss          | `#f4eafc` |       7.40:1 |
-| Goo            | `#d4b8ee` |       4.88:1 |
-| Goo mid        | `#bba0d8` |       3.75:1 |
-| Goo side       | `#a283c2` |       2.70:1 |
-| Set goo, lit   | `#a58bc3` |       2.91:1 |
-| Set goo        | `#9c82ba` |       2.59:1 |
-| Set goo shadow | `#8a6fa8` |       2.02:1 |
-| Set goo deep   | `#715a94` |       1.48:1 |
-| Windows, lamp  | `#ffe9b8` |       7.23:1 |
-| Lamp dim       | `#8a7a5c` |       2.06:1 |
+| Role           | Colour    | On the field | White edge |
+| -------------- | --------- | -----------: | ---------: |
+| Gloss          | `#f4eafc` |       7.40:1 |     8.63:1 |
+| Goo            | `#d4b8ee` |       4.88:1 |     8.63:1 |
+| Goo mid        | `#bba0d8` |       3.75:1 |     8.63:1 |
+| Goo side       | `#a283c2` |       2.70:1 |     8.63:1 |
+| Set goo, lit   | `#a58bc3` |       2.91:1 |     8.63:1 |
+| Set goo        | `#9c82ba` |       2.59:1 |     8.63:1 |
+| Set goo shadow | `#8a6fa8` |       2.02:1 |     8.63:1 |
+| Set goo deep   | `#715a94` |       1.48:1 |     8.63:1 |
+| Windows, lamp  | `#ffe9b8` |       7.23:1 |     8.63:1 |
+| Lamp dim       | `#8a7a5c` |       2.06:1 |     8.63:1 |
 
 The goo and set goo stay in the field's own hue, lighter, as the settlements'
-do, and take no signal band. The silhouette's edge median is 3.49:1, with 63%
-of edge pixels at 3:1 or more.
+do, and take no signal band. The 2 px white edge carries the silhouette at
+8.63:1; unkeylined, its edge median would be 1.98:1, with 23% of edge pixels at
+3:1 or more.
 
 ## Settlements
 
@@ -153,16 +154,16 @@ px in the station's dock schema.
 
 ### Palette
 
-| Role           | Colour    | On the field |
-| -------------- | --------- | -----------: |
-| Goo            | `#d4b8ee` |       4.88:1 |
-| Goo side       | `#a283c2` |       2.70:1 |
-| Gloss          | `#f4eafc` |       7.40:1 |
-| Float          | `#8a6fa8` |       2.02:1 |
-| Float side     | `#614b7e` |       1.16:1 |
-| Float inset    | `#9c82ba` |       2.59:1 |
-| Windows, lamps | `#ffe9b8` |       7.23:1 |
-| Lamp dim       | `#8a7a5c` |       2.06:1 |
+| Role           | Colour    | On the field | White edge |
+| -------------- | --------- | -----------: | ---------: |
+| Goo            | `#d4b8ee` |       4.88:1 |     8.63:1 |
+| Goo side       | `#a283c2` |       2.70:1 |     8.63:1 |
+| Gloss          | `#f4eafc` |       7.40:1 |     8.63:1 |
+| Float          | `#8a6fa8` |       2.02:1 |     8.63:1 |
+| Float side     | `#614b7e` |       1.16:1 |     8.63:1 |
+| Float inset    | `#9c82ba` |       2.59:1 |     8.63:1 |
+| Windows, lamps | `#ffe9b8` |       7.23:1 |     8.63:1 |
+| Lamp dim       | `#8a7a5c` |       2.06:1 |     8.63:1 |
 
 Lilac goo sits in the field's own hue, lighter, so the Blurbs read as folk of
 the violet rim and take no signal band; the station family's cream collar,
@@ -180,9 +181,9 @@ sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 `frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
 in frame px.
 
-| Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field |
-| ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
-| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |
+| Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field | White edge |
+| ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ---------: |
+| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |     8.63:1 |
 
 - Traveler's pod: a pale mauve capsule with a mauve band `#a77fb2`, dim warm
   portholes, two tan luggage bundles strapped on its back and a pale lilac
