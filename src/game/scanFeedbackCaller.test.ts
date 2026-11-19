@@ -73,6 +73,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
     scanFeedbackFootprints,
     scanFeedbackHudRow,
     scanViews: { get: () => scan },
+    showNetworkPlay: () => false,
     window: {},
   });
   runInContext(
