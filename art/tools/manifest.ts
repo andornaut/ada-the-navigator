@@ -84,7 +84,8 @@ export function editManifest(file: ManifestFile, edit: (manifest: Manifest) => v
 }
 
 // Manifest groups after the ship and portraits, in order. A generator replaces its own group
-// in place, so each group stays contiguous and independent of the others.
+// at the position of its first entry, so each group stays contiguous and independent of the
+// others; a new group goes before the first entry of a later group, or last.
 const GROUPS = [
   "aboard",
   "route-",
@@ -103,10 +104,11 @@ export function placeEntries(
   entries: readonly { id: string }[],
 ) {
   editManifest(file, (manifest) => {
+    const first = manifest.assets.findIndex(({ id }) => id.startsWith(group));
     const kept = manifest.assets.filter(({ id }) => !id.startsWith(group));
     const later = GROUPS.slice(GROUPS.indexOf(group) + 1);
     const next = kept.findIndex(({ id }) => later.some((prefix) => id.startsWith(prefix)));
-    const at = next === -1 ? kept.length : next;
+    const at = first !== -1 ? first : next !== -1 ? next : kept.length;
     manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
   });
 }

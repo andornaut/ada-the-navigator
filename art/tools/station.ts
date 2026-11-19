@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { editManifest } from "./manifest.ts";
+import { replaceEntries } from "./manifest.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { projectAt, round } from "./projection.ts";
 import {
@@ -186,10 +186,11 @@ for (const frame of ["a", "b"] as const) {
   writeFileSync(`${art}station-${frame}.svg`, svgText(svg(frame), SVG_DECIMALS.station));
 }
 
-// Station entries sit before the discovery cache and the enemy entries.
-editManifest("core", (manifest) => {
-  const kept = manifest.assets.filter(({ id }) => !id.startsWith("station-"));
-  const later = kept.findIndex(({ id }) => id === "discovery-cache" || id.startsWith("enemy-"));
-  const insert = later === -1 ? kept.length : later;
-  manifest.assets = [...kept.slice(0, insert), ...entries, ...kept.slice(insert)];
-});
+// Station entries keep their place; without any, they go before the discovery cache and the
+// enemy entries.
+replaceEntries(
+  "core",
+  (id) => id.startsWith("station-"),
+  entries,
+  (id) => id === "discovery-cache" || id.startsWith("enemy-"),
+);
