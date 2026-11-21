@@ -76,6 +76,7 @@ export interface StoryPageView {
   readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
+  readonly previousAction?: string;
   /**
    * Whether Skip shows: only where it passes a page Next or the named action would show, so
    * not on the story run's end, the page before it or the sleep scene.
@@ -104,16 +105,17 @@ export function storyPageView(
   return {
     background: page.background,
     canGoBack,
-    canSkip: canSkip && !page.choices?.length,
+    canSkip: canSkip && (page.replay === true || !page.choices?.length),
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
     ...(page.speaker ? { speaker: page.speaker } : {}),
     ...(choices.length ? { choices: choices.map(({ label }) => ({ label })) } : {}),
     ...(page.action ? { action: page.action } : {}),
+    ...(page.previousAction ? { previousAction: page.previousAction } : {}),
     ...(page.id === "room" ? { room: true } : {}),
     ...(page.sleep ? { sleep: true } : {}),
     ...(page.holodisk ? { holodisk: true } : {}),
-    next: !page.choices && choices.length === 0,
+    next: page.showActionWithChoices === true || (!page.choices && choices.length === 0),
   };
 }
 
@@ -837,6 +839,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     choices.replaceChildren(...buttons);
     choices.hidden = buttons.length === 0;
     previous.hidden = !page.canGoBack;
+    previous.textContent = page.previousAction ?? labels.previous;
     controls.hidden = !page.canGoBack && !page.next;
     controls.classList.toggle("ada-story-no-previous", !page.canGoBack);
     controls.classList.toggle("ada-story-no-next", !page.next);
@@ -1185,6 +1188,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     focusFirst: boolean,
     exit: StoryOverlay | null = null,
   ) => {
+    const returningToRoom = rendered?.previousAction !== undefined && page?.room;
     rendered = page;
     sleepAction?.dispose();
     sleepAction = page?.sleep
@@ -1227,13 +1231,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     panel.hidden = page.sleep === true;
     const buttons = fill(page);
+    if (page.previousAction) {
+      choices.scrollTop = 0;
+    }
     setBackground(bedroomBackground(page.run?.pages, page.background), true);
     startNight(page);
     startHolodisk(page, exit);
     playPortrait(page);
     // Focus starts on the first choice, the default; otherwise on Next or the named action.
     if (focusFirst || buttons.length > 0) {
-      focusTarget(buttons[0] ?? next);
+      focusTarget(page.room && !returningToRoom ? next : (buttons[0] ?? next));
     }
   };
   // A new view size or font re-measures the run and re-lays the page, keeping focus.

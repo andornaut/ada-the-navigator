@@ -27,6 +27,9 @@ export interface StoryPage {
   readonly next?: string;
   /** A named action shown in Next's place, such as "Pick up the rock.". */
   readonly action?: string;
+  readonly showActionWithChoices?: true;
+  /** Named return action for a picker opened from another page. */
+  readonly previousAction?: string;
   /** Showing this page uses up the once-only new galaxy announcement. */
   readonly announces?: boolean;
   /**
@@ -34,6 +37,7 @@ export interface StoryPage {
    * seconds, or at a tap once its skip delay has passed.
    */
   readonly sleep?: boolean;
+  readonly replay?: true;
   /** The holodisk's insertion into Astra's drive, where Art's holodisk sequence plays. */
   readonly holodisk?: boolean;
 }
@@ -45,7 +49,7 @@ export type SceneEffect =
  * What follows a scene: more Earth scenes (`visit` arrives home as any visit does, waiting scenes
  * first), boarding aboard, galaxy selection, or the flight the scene paused.
  */
-export type SceneLead = "home" | "board" | "flight" | "select" | "visit";
+export type SceneLead = "home" | "board" | "flight" | "select" | "visit" | "replay";
 export interface Scene {
   readonly id: string;
   /** In reading order; the first page opens the scene. */
@@ -55,6 +59,7 @@ export interface Scene {
   /** Applied when the scene ends. */
   readonly effect?: SceneEffect;
   readonly lead: SceneLead;
+  readonly replayGalaxy?: GalaxyNumber;
   /**
    * The story run ends on this scene's last page, where play resumes (Ada's room with its named
    * action): Skip stops there and hides on it, and the scene it leads to starts a new run.
@@ -356,6 +361,27 @@ export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Sce
   };
 }
 
+/** Optional Earth chapter run without mandatory scene effects. */
+export function replayChapterScene(content: GameContent, galaxy: GalaxyNumber): Scene {
+  const opening = openingScene(content, galaxy);
+  const resolution = resolutionScene(content, galaxy);
+  const next = resolution.pages[0]!.id;
+  return {
+    id: `replay:${galaxy}`,
+    last: resolution.last,
+    lead: "replay",
+    pages: [
+      ...opening.pages.map((page) => ({
+        ...page,
+        replay: true as const,
+        ...(!page.next && !page.choices ? { next } : {}),
+      })),
+      ...resolution.pages.map((page) => ({ ...page, replay: true as const })),
+    ],
+    replayGalaxy: galaxy,
+  };
+}
+
 /**
  * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
  * then aboard, where Astra's optional questions return to their list until Continue.
@@ -467,6 +493,7 @@ export function roomScene(
         action: labels.pickUpRock,
         background,
         id: "room",
+        showActionWithChoices: true,
         text: empty ? content.premise.emptyHome : content.premise.roomRock,
       },
     ],

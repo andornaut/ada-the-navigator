@@ -37,7 +37,7 @@ import { pendingPhantomEncounterUnshared } from "./phantomRequiredPlans.ts";
 import { requiredPlanConsistent, requiredPlanObjects } from "./requiredEncounterPlans.ts";
 import { requiredRolePlanConsistent } from "./requiredRolePlans.ts";
 import { namesStation, stationById } from "./stations.ts";
-import { currentPage } from "./storybook.ts";
+import { currentPage, openingScene, resolutionScene } from "./storybook.ts";
 import { readStoryCursor } from "./storyCursor.ts";
 import { resolveStoryScene } from "./storyScenes.ts";
 import type {
@@ -56,6 +56,37 @@ import type {
 import { shipTuning } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
+
+export function canReplayEarthChapter(
+  content: GameContent,
+  state: GameState,
+  galaxy: GalaxyNumber,
+): boolean {
+  return state.prologueSeen && Boolean(content.chapters[galaxy]) && state.progress[galaxy].resolved;
+}
+
+function validEarthChoices(content: GameContent, galaxy: GalaxyNumber, value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (!record(value) || !content.chapters[galaxy]) {
+    return false;
+  }
+  return Reflect.ownKeys(value).every((key) => {
+    if (key !== "opening" && key !== "resolution") {
+      return false;
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    const scene =
+      key === "opening" ? openingScene(content, galaxy) : resolutionScene(content, galaxy);
+    const branch: unknown = descriptor?.value;
+    return (
+      descriptor?.enumerable === true &&
+      typeof branch === "string" &&
+      scene.pages.find(({ id }) => id === key)?.choices?.some(({ next }) => next === branch)
+    );
+  });
+}
 
 /** The save format this build writes and reads. */
 export const SAVE_VERSION: GameState["version"] = 13;
@@ -649,6 +680,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         (record(p.hostileSites) &&
           Object.keys(p.hostileSites).length > 0 &&
           (!record(p.geography) || p.geography.seed === null || p.geography.seed === undefined)) ||
+        !validEarthChoices(content, id, p.earthChoices) ||
         (p.markerKnowledge !== undefined && !validTargetKnowledge(p.markerKnowledge)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
@@ -1038,6 +1070,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           resolve: (reference) =>
             resolveStoryScene(
               {
+                canReplay: (galaxy) => canReplayEarthChapter(content, state, galaxy),
                 content,
                 holodisks: holodisksHeld(state.progress),
                 labels: {
@@ -1051,6 +1084,21 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         pending.cursor,
       );
       if (!position || (!currentPage(position).sleep && pending.slept !== 0)) {
+        return null;
+      }
+      const firstReplay = position.trail.findIndex(({ scene }) => scene.lead === "replay");
+      if (position.scene.lead === "replay") {
+        const start = firstReplay === -1 ? position.trail.length : firstReplay;
+        const room = position.trail[start - 1];
+        if (
+          state.mode !== "home" ||
+          state.flight !== null ||
+          room?.page !== "room" ||
+          position.trail.slice(start).some(({ scene }) => scene !== position.scene)
+        ) {
+          return null;
+        }
+      } else if (firstReplay !== -1) {
         return null;
       }
     }

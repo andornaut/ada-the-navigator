@@ -70,8 +70,8 @@ story page nor a saved flight, Continue opens Ada's room page, after any waiting
 "Welcome back, Navigator." and the galaxy map, with the farthest unlocked galaxy
 selected. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
-shows one short repeatable line and "Pick up the rock."; old scenes never replay,
-and new ones unlock with progress.
+shows one short repeatable line and "Pick up the rock."; finished chapters can be
+replayed from the room, and new scenes unlock with progress.
 
 Player-visible labels use "Earth" for travel to Ada's room and "title" for the
 start screen; story dialogue may still call Ada's house home. Every arrival on
@@ -167,14 +167,15 @@ content under the existing save compatibility guards.
 
 ### Earth return and replay status
 
-The current Earth action restores Earth rather than replaying boarding: a flight
-return processes pending new Earth scenes before the room; Stay on Earth does
-not board. Welcome back, Navigator follows the rock/boarding action. Story
-choices retain the current material-choice guards and Previous/Next focus.
-From Ada's room, the player can replay an Earth chapter already finished. A
-choice made in a replay replaces the saved choice and its outcome, and rewards
-follow the new choice without ever being paid twice. Skip returns to the room,
-and a replay never consumes pending mandatory story.
+Pending new Earth scenes play before Ada's room. Stay on Earth returns to the
+room. "Pick up the rock." boards the ship. Once the first-launch prologue has
+played and an authored Earth chapter is resolved, "Replay chapter" in Ada's room
+opens the finished-chapter picker. Replay runs the chapter's authored opening
+and resolution, including their choices. Selecting an answer immediately
+replaces the saved choice for that scene and shows its branch. An absent legacy
+choice remains unset until answered. Finishing or skipping replay returns to
+the room. Skip leaves unanswered choices unset or unchanged, and replay
+preserves pending mandatory scenes and existing rewards.
 
 ### Aboard and the galaxy map
 

@@ -268,8 +268,10 @@ export interface GalaxyProgress {
   greetings: Record<string, number>;
   /** The galaxy's holodisk is recovered and inserted into Astra's drive. */
   holodisk: boolean;
-  /** The chapter's home opening has played; old scenes never replay. */
+  /** The chapter's mandatory home opening has played. */
   opened: boolean;
+  /** Selected authored branch pages. Missing entries represent unknown legacy choices. */
+  earthChoices?: { opening?: string; resolution?: string };
   /** Stardust paid toward each of the galaxy's community projects, by project id. */
   donated: Record<string, number>;
   /** Charted landmark ids (model/landmarks.ts). */

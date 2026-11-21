@@ -186,7 +186,7 @@ import {
 } from "./projects.ts";
 import { questDetails, type QuestEntry } from "./questDetails.ts";
 import { type ContextQuestDetails, questsForObject } from "./questObjectLinks.ts";
-import { restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
+import { canReplayEarthChapter, restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
 import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
@@ -224,6 +224,7 @@ import {
   jumpHomeScene,
   openingScene,
   prologueScene,
+  replayChapterScene,
   resolutionScene,
   roomBackground,
   roomScene,
@@ -490,6 +491,7 @@ export class GameModel {
   private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
     null;
   private story: StoryPosition | null = null;
+  private choosingReplay = false;
   private heldStory: { position: StoryPosition; slept: number } | null = null;
   private readonly emergencyReferences = new WeakMap<Scene, StorySceneReference>();
   private queuedNeedleTalk = false;
@@ -895,6 +897,7 @@ export class GameModel {
   }
   private get storySceneContext() {
     return {
+      canReplay: (galaxy: GalaxyNumber) => canReplayEarthChapter(this.content, this.state, galaxy),
       content: this.content,
       holodisks: holodisksHeld(this.state.progress),
       labels: this.storyLabels,
@@ -935,21 +938,54 @@ export class GameModel {
     }
     return this.selection === null ? "story" : "selector";
   }
+  private get replayChapters(): readonly GalaxyNumber[] {
+    return ROUTE.filter((galaxy) => canReplayEarthChapter(this.content, this.state, galaxy));
+  }
   /** The storybook page on show, with whether Previous can act. */
   get storyView(): StoryView | null {
-    return this.story && this.screen === "story"
-      ? {
-          canGoBack: canGoBack(this.story),
-          canSkip: !currentPage(this.story).sleep && !currentPage(this.story).choices?.length,
-          choices: shownChoices(this.story),
-          page: currentPage(this.story),
-          run: this.run,
-        }
-      : null;
+    const position = this.story;
+    if (!position || this.screen !== "story") {
+      return null;
+    }
+    const page = currentPage(position);
+    if (this.choosingReplay) {
+      const choices = this.replayChapters.map((galaxy) => ({
+        label: this.content.chapters[galaxy]!.name,
+      }));
+      return {
+        canGoBack: true,
+        canSkip: false,
+        choices,
+        page: {
+          background: page.background,
+          choices,
+          heading: this.label("replayChapter"),
+          id: "replay-menu",
+          previousAction: this.label("questBack"),
+          text: "",
+        },
+        run: this.run,
+      };
+    }
+    return {
+      canGoBack: canGoBack(position),
+      canSkip: page.replay === true || (!page.sleep && !page.choices?.length),
+      choices:
+        this.roomPage && this.replayChapters.length > 0
+          ? [{ label: this.label("replayChapter") }]
+          : shownChoices(position),
+      page,
+      run: this.run,
+    };
   }
-  /** Ada's room page, with "Pick up the rock": back and Escape open its Menu, not Previous. */
+  /** Ada's room page, where Back opens Menu unless chapter selection is open. */
   get roomPage(): boolean {
-    return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
+    return (
+      !this.choosingReplay &&
+      this.story !== null &&
+      this.screen === "story" &&
+      currentPage(this.story).id === "room"
+    );
   }
   /**
    * Whether the Paused card shows Map: in flight only, separate from Pause visibility, and never
@@ -2157,6 +2193,7 @@ export class GameModel {
       return;
     }
     this.story = null;
+    this.choosingReplay = false;
     this.closeSelection();
     this.startShown = true;
   }
@@ -3920,6 +3957,7 @@ export class GameModel {
     this.heldStory = null;
     this.unlockFlight = null;
     this.story = null;
+    this.choosingReplay = false;
     this.closeSelection();
     this.startShown = true;
   }
@@ -3928,18 +3966,61 @@ export class GameModel {
     if (this.sleeping && this.slept < OVERNIGHT_SLEEP.skipAfterSeconds) {
       return;
     }
-    if (this.story && this.screen === "story" && !currentPage(this.story).choices) {
+    if (
+      this.story &&
+      this.screen === "story" &&
+      !this.choosingReplay &&
+      !currentPage(this.story).choices
+    ) {
       this.moveStory(advance(this.story));
     }
   }
   /** A choice page's choice, by its index. */
   storyChoose(index: number): void {
-    const choices = this.story && this.screen === "story" ? shownChoices(this.story) : [];
-    if (this.story && index >= 0 && index < choices.length) {
-      this.moveStory(advance(this.story, index));
+    const position = this.story;
+    if (!position || this.screen !== "story" || !Number.isInteger(index) || index < 0) {
+      return;
     }
+    if (this.choosingReplay) {
+      const galaxy = this.replayChapters[index];
+      if (galaxy !== undefined) {
+        this.choosingReplay = false;
+        this.showScene(
+          replayChapterScene(this.content, galaxy),
+          [...position.trail, stepOf(position)],
+          true,
+        );
+      }
+      return;
+    }
+    if (this.roomPage) {
+      if (index === 0 && this.replayChapters.length > 0) {
+        this.choosingReplay = true;
+      }
+      return;
+    }
+    const choice = shownChoices(position)[index];
+    if (!choice) {
+      return;
+    }
+    const { effect, replayGalaxy } = position.scene;
+    const galaxy =
+      replayGalaxy ?? (effect && effect.kind !== "prologue" ? effect.galaxy : undefined);
+    if (
+      galaxy !== undefined &&
+      choice.next &&
+      (position.page === "opening" || position.page === "resolution")
+    ) {
+      const progress = this.state.progress[galaxy];
+      progress.earthChoices = { ...progress.earthChoices, [position.page]: choice.next };
+    }
+    this.moveStory(advance(position, index));
   }
   storyPrevious(): void {
+    if (this.choosingReplay) {
+      this.choosingReplay = false;
+      return;
+    }
     if (this.story && this.screen === "story" && canGoBack(this.story)) {
       if (currentPage(this.story).sleep) {
         this.playedInterludes.add(this.story.scene);
@@ -3948,7 +4029,9 @@ export class GameModel {
       while (currentPage(previous).sleep && canGoBack(previous)) {
         previous = goBack(previous);
       }
-      if (!currentPage(previous).sleep) {
+      if (this.story.scene.replayGalaxy !== undefined && previous.page === "room") {
+        this.finishReplay(this.story);
+      } else if (!currentPage(previous).sleep) {
         this.story = previous;
         this.showPage();
       }
@@ -3957,7 +4040,11 @@ export class GameModel {
   /** Skip follows Next through scene boundaries, stopping for an explicit unresolved choice. */
   storySkip(): void {
     const from = this.story;
-    if (!from || this.screen !== "story" || this.sleeping) {
+    if (!from || this.screen !== "story" || this.sleeping || this.choosingReplay) {
+      return;
+    }
+    if (from.scene.replayGalaxy !== undefined) {
+      this.finishReplay(from);
       return;
     }
     const visited = new Set<string>();
@@ -4177,6 +4264,9 @@ export class GameModel {
    * each scene's end applies its effect to a copy of the state, which picks the next.
    */
   private chainedScenes(scene: Scene): readonly Scene[] {
+    if (scene.replayGalaxy !== undefined) {
+      return [scene];
+    }
     const copy = new GameModel(this.content, JSON.stringify(this.state));
     copy.simulating = true;
     copy.depletionContinuation = this.depletionContinuation;
@@ -4239,6 +4329,10 @@ export class GameModel {
     if (!position) {
       return;
     }
+    if (position.scene.replayGalaxy !== undefined) {
+      this.finishReplay(position);
+      return;
+    }
     const ended = position.scene;
     const trail = this.depletionContinuation
       ? [...position.trail, stepOf(position)]
@@ -4273,6 +4367,13 @@ export class GameModel {
       }
     } else {
       this.openSelection(position);
+    }
+  }
+  private finishReplay(position: StoryPosition): void {
+    const index = position.trail.findLastIndex(({ page }) => page === "room");
+    const room = position.trail[index];
+    if (room) {
+      this.showScene(room.scene, position.trail.slice(0, index), true);
     }
   }
   private applyEffect(scene: Scene): void {

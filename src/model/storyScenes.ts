@@ -7,6 +7,7 @@ import {
   jumpHomeScene,
   openingScene,
   prologueScene,
+  replayChapterScene,
   resolutionScene,
   roomScene,
   type Scene,
@@ -18,6 +19,7 @@ export interface StorySceneContext {
   readonly content: GameContent;
   readonly holodisks: number;
   readonly labels: StoryLabels;
+  readonly canReplay?: (galaxy: GalaxyNumber) => boolean;
 }
 
 /** References select existing authored factories without saving their text or applying effects. */
@@ -61,6 +63,13 @@ export function resolveStoryScene(
           holodiskInsertion(holodisks, content.premise.holodisk.inserted),
           content.premise.holodisk.memories[holodisks - 1] ?? "",
         )
+      : null;
+  }
+  const replay = /^replay:([1-6])$/u.exec(id);
+  if (replay) {
+    const galaxy = Number(replay[1]) as GalaxyNumber;
+    return variant === undefined && context.canReplay?.(galaxy)
+      ? replayChapterScene(content, galaxy)
       : null;
   }
   const chapter = /^(opening|resolution):([1-6])$/u.exec(id);

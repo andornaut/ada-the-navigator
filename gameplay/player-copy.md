@@ -89,7 +89,9 @@ Penny stand or sit. They stand from their arrival through the optional questions
 from "Ada sits in the pilot's chair and buckles Penny in
 beside her." onward they are seated. Boarding in later chapters, Continue and
 the galaxy map always show them seated.
-A replayed chapter one opening uses the boarding panels instead.
+Sunflower replay includes the authored home opening and resolution. The Glowing
+Rock plays only on the first launch. On replay, the ordinary boarding panels
+appear when the player chooses "Pick up the rock." from Ada's room.
 
 First launch only, before chapter one's opening, in Grandma's garden:
 
@@ -1287,6 +1289,9 @@ beacon light. Welcome!"
   - Install: "Full screen, offline", with an Install button
 - Storybook pages: Previous, Next, Skip. Ada's room page, before boarding:
   Narration: "Ada's rock glows softly on her desk." then Pick up the rock.
+  When at least one Earth chapter is finished, Ada's room also offers "Replay
+  chapter". The chapter picker uses the same title and shows finished chapters
+  by name.
 - Galaxy map: Galaxy {number}; Earth (marker label); one destination action
   reading Jump to {galaxy}, Stay in {galaxy} (on the galaxy Ada is flying in),
   Jump to Earth, or Stay on Earth (at boarding). A locked selection action reads
