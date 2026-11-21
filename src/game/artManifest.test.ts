@@ -54,9 +54,13 @@ describe("split art manifest", () => {
       whirlpoolProjects: "/art/whirlpool/projects.json",
     });
     expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({ backdrop: "/art/sunflower/backdrop.json" });
-    // Phantom holds its Blurb settlements, smoke banks and portraits, and its backdrop link.
+    // Phantom also links the finale ally data and the shared whale metadata.
     const phantom = GALAXY_MANIFESTS.get(6)!;
-    expect(phantom.links).toEqual({ backdrop: "/art/phantom/backdrop.json" });
+    expect(phantom.links).toEqual({
+      allies: "/art/phantom/allies.json",
+      backdrop: "/art/phantom/backdrop.json",
+      whales: "/art/whales.json",
+    });
     expect(phantom.assets.map(({ id }) => id)).toEqual(
       expect.arrayContaining([
         "outpost-homes-mended-a",

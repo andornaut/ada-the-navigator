@@ -189,7 +189,15 @@ describe("light-field keyline kinds", () => {
       ["mooringBuoy", "./sceneWorld.ts", /keylineSprite\(scene, "mooringBuoy"/u],
       ["storyCraft", "./sceneWorld.ts", /keylineSprite\(scene, "storyCraft"/u],
       ["storyCraft", "./sceneAndromeda.ts", /keylineSprite\(scene, "storyCraft"/u],
-      ["storyCraft", "./scenePhantom.ts", /keylineSprite\(scene, "storyCraft"/u],
+      [
+        "whale and storyCraft",
+        "./scenePhantom.ts",
+        new RegExp(
+          String.raw`keylineSprite\(\s*scene,\s*ally\.behavior === "whale" \? "whale" : "storyCraft",` +
+            String.raw`\s*key,\s*sprite,\s*depth - 2e-6,\s*\)`,
+          "u",
+        ),
+      ],
       ["guideBeacon", "./sceneObjects.ts", /keylineSprite\(scene, "guideBeacon"/u],
       ["orePickup", "./sceneObjects.ts", /"orePickup",/u],
       ["whale", "./sceneObjects.ts", /keylineSprite\(scene, "whale"/u],

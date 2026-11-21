@@ -47,7 +47,7 @@ describe("sidecars map", () => {
   it("gives a galaxy manifest without the map no sidecars, and rejects one with a malformed map", () => {
     expect(readGalaxyManifest({ assets: [], version: 1 })!.sidecars).toEqual(new Map());
     expect(readGalaxyManifest({ assets: [], sidecars: [], version: 1 })).toBeUndefined();
-    for (const galaxy of [1, 3, 6] as const) {
+    for (const galaxy of [1, 3] as const) {
       expect(publicJson(`/art/${GALAXY_ID[galaxy]}/manifest.json`)).not.toHaveProperty("sidecars");
       expect(GALAXY_MANIFESTS.get(galaxy)!.sidecars.size, GALAXY_ID[galaxy]).toBe(0);
     }
@@ -55,6 +55,26 @@ describe("sidecars map", () => {
     expect(enemyJetsPath(sidecars, "fighter")).toBeUndefined();
     expect(enemyHardpointsPath(sidecars, "capital")).toBeUndefined();
     expect(enemyShardsPath(sidecars, "fighter")).toBeUndefined();
+  });
+
+  it("links exactly the authored Phantom story craft jet sidecars", () => {
+    const craft = [
+      "barge",
+      "beacontender",
+      "buoytender",
+      "crane",
+      "driller",
+      "grower",
+      "loomship",
+      "reed",
+      "salvager",
+      "student",
+      "trainee",
+      "tug",
+    ];
+    expect(GALAXY_MANIFESTS.get(6)!.sidecars).toEqual(
+      new Map(craft.map((id) => [id, { jets: `/art/phantom/${id}-jets.json` }])),
+    );
   });
 
   it("names only files that exist", () => {
