@@ -47,6 +47,7 @@ import {
   mergeEnemyAssets,
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
+import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
@@ -65,7 +66,7 @@ import { type SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
-import { readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
+import { readMarloArt, readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
 import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 interface MaterialCache {
@@ -388,6 +389,10 @@ function queueGalaxyAssets(
       );
     }
   }
+  const allies = manifest.links.allies;
+  if (galaxy === 6 && !familySubset && allies && !scene.cache.json.exists(PHANTOM_ALLIES_ART)) {
+    scene.load.json(PHANTOM_ALLIES_ART, allies);
+  }
   const assets = familySubset
     ? manifest.assets.filter(
         (asset) =>
@@ -624,10 +629,13 @@ export function readGalaxyArt(scene: AssetsContext): void {
   scene.resourceFiles = new Set(
     (rocks?.rocks ?? []).flatMap((rock) => rock.frames.map((frame) => frame.file)),
   );
-  scene.whaleArt = readWhaleArt(
-    scene.cache.json.get("whales"),
-    scene.manifest.assets.filter(whaleFrameAsset),
-  );
+  const whaleData: unknown = scene.cache.json.get("whales");
+  const whaleFrames = scene.manifest.assets.filter(whaleFrameAsset);
+  const linkedPhantom =
+    scene.model.state.flight?.galaxy === 6 && scene.galaxyManifests.get(6)?.links.whales;
+  scene.whaleArt =
+    readWhaleArt(whaleData, whaleFrames) ??
+    (linkedPhantom ? readMarloArt(whaleData, whaleFrames) : undefined);
 }
 
 interface RockSheetFrame {

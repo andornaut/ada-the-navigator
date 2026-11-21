@@ -392,11 +392,21 @@ describe("Phantom allies", () => {
     context.flight.player = { ...state(context).waypoint };
     beforeStepPhantom(withAllies);
     expect(state(context).allies).toHaveLength(1);
-    const departure = { x: state(context).allies[0]!.x, y: state(context).allies[0]!.y };
+    const ally = state(context).allies[0]!;
+    ally.facing = { x: 0.6, y: -0.8 };
+    const departure = { age: 0, id: "clover", x: ally.x, y: ally.y };
     disable(context, state(context).enemyIds);
     afterStepPhantom(withAllies);
-    expect(state(context).departures).toEqual([{ age: 0, id: "clover", ...departure }]);
+    expect(state(context).departures).toEqual([{ ...departure, facing: { x: 0.6, y: -0.8 } }]);
+    expect(state(context).departures?.[0]?.facing).not.toBe(ally.facing);
     expect(validPhantomFlight(state(context))).toBe(true);
+    expect(validPhantomFlight({ ...state(context), departures: [departure] })).toBe(true);
+    expect(
+      validPhantomFlight({
+        ...state(context),
+        departures: [{ ...departure, facing: { x: Infinity, y: -0.8 } }],
+      }),
+    ).toBe(false);
     context.progress.questComplete = true;
     beforeStepPhantom(withAllies, 0.5);
     expect(state(context).departures).toHaveLength(1);

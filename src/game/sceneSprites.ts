@@ -1,6 +1,6 @@
 // Sprite and primitive helpers the object and enemy drawing share.
 // Functions over the scene's SpritesContext.
-import { GameObjects } from "phaser";
+import { GameObjects, TintModes } from "phaser";
 
 import type { GameScene } from "./scene.ts";
 import { type TaperShape } from "./weaponEffects.ts";
@@ -21,6 +21,10 @@ export function objectSprite(
     scene.enemySprites.set(id, sprite);
   }
   return sprite.setTexture(texture, frame).setAlpha(1).clearTint().setRotation(0).setVisible(true);
+}
+
+export function whiteSilhouette(sprite: GameObjects.Image, alpha: number): void {
+  sprite.setTint(0xffffff).setTintMode(TintModes.FILL).setAlpha(alpha);
 }
 
 /** A taper as two triangles whose vertex alphas run linearly from tail to head. */

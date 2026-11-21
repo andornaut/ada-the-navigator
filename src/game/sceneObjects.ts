@@ -619,7 +619,11 @@ export function drawWhale(
   kind: WhaleKind,
   id: string,
   at: Vec,
-  motion?: { readonly heading: number; readonly moving: boolean },
+  motion?: {
+    readonly heading: number;
+    readonly moving: boolean;
+    readonly present?: (frame: Asset) => boolean;
+  },
 ): boolean {
   const art = scene.whaleArt?.kinds.get(kind);
   if (!art || !scene.whaleArt) {
@@ -641,6 +645,9 @@ export function drawWhale(
   const frame = ready[frames.indexOf(wanted)] ? wanted : ready[0] ? frames[0]! : undefined;
   if (!frame) {
     return false;
+  }
+  if (motion?.present?.(frame)) {
+    return true;
   }
   const point = scene.project(at);
   const key = id.includes("#") || !id.includes(":") ? id : `${id.split(":")[0]}#${kind}`;

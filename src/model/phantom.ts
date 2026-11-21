@@ -43,6 +43,7 @@ export type PhantomChatter = "battleAllies" | "battleAlone" | "flagshipAttack" |
 export interface PhantomDeparture extends Vec {
   id: string;
   age: number;
+  facing?: Vec;
 }
 export interface PhantomFlight {
   pendingEncounter?: PendingPhantomEncounter;
@@ -233,7 +234,13 @@ function departAllies(state: PhantomFlight): void {
   const leaving = new Set(state.allies.map((ally) => ally.id));
   state.departures = [
     ...(state.departures ?? []).filter((ally) => !leaving.has(ally.id)),
-    ...state.allies.map((ally) => ({ age: 0, id: ally.id, x: ally.x, y: ally.y })),
+    ...state.allies.map((ally) => ({
+      age: 0,
+      facing: { ...ally.facing },
+      id: ally.id,
+      x: ally.x,
+      y: ally.y,
+    })),
   ].slice(-T.allies * 4);
 }
 /** Only the next phase is constructed; the original per-wave stream and draw order are unchanged. */
@@ -634,6 +641,7 @@ export function validPhantomFlight(value: unknown): value is PhantomFlight {
         state.departures.every(
           (ally) =>
             point(ally) &&
+            (ally.facing === undefined || point(ally.facing)) &&
             typeof ally.id === "string" &&
             ally.id.length > 0 &&
             ally.id.length <= 100 &&

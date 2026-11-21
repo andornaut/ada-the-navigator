@@ -1,16 +1,36 @@
 import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
 import { CONTENT } from "../data/content.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
-import type { PhantomFlight } from "../model/phantom.ts";
-import { type PhantomAllySpec, phantomSongSpeed } from "../model/phantomAllies.ts";
+import type { PhantomDeparture, PhantomFlight } from "../model/phantom.ts";
+import {
+  type PhantomAlly,
+  type PhantomAllySpec,
+  phantomSongSpeed,
+} from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
+import {
+  finaleAllyCraft,
+  PHANTOM_ALLIES_ART,
+  type PhantomAllyArt,
+  readPhantomAllyArt,
+} from "./phantomAllyArt.ts";
 import { jumpStepAt, readQuantumJump } from "./quantumJump.ts";
 import { familyArt, loadEnemyParts } from "./sceneAssets.ts";
 import { drawEnemySprite } from "./sceneEnemies.ts";
 import { drawCraftJets, keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, drawWhale, type ObjectsContext } from "./sceneObjects.ts";
+import {
+  allyJumpDuration,
+  type AllyPresentation,
+  allyPresentation,
+  drawStretchedAlly,
+  paintAllyJump,
+} from "./scenePhantomJump.ts";
+import { drawPhantomSong } from "./scenePhantomSong.ts";
+import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { shipDirection } from "./shipArt.ts";
 const jump = readQuantumJump(jumpData)!;
@@ -20,6 +40,18 @@ const stateOf = (flight: FlightState) =>
       phantom?: PhantomFlight;
     }
   ).phantom;
+const allyArt = new WeakMap<object, PhantomAllyArt | undefined>();
+function readAllyArt(scene: ObjectsContext): PhantomAllyArt | undefined {
+  const value: unknown = scene.cache.json.get(PHANTOM_ALLIES_ART);
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  if (!allyArt.has(value)) {
+    allyArt.set(value, readPhantomAllyArt(value));
+  }
+  return allyArt.get(value);
+}
+
 /** Friendly frames remain in their authored species and retain their published craft ids. */
 export function phantomAllyCraft(ally: Pick<PhantomAllySpec, "galaxy" | "id">): string | undefined {
   if (ally.id === "reed" || ally.id === "project:4:channelLights") {
@@ -124,6 +156,127 @@ function drawAllyJump(scene: ObjectsContext, id: string, age: number, point: Vec
     );
   }
 }
+const questAllies = { clover: 1, marlo: 3, mica: 2, pip: 5, reed: 4 } as const;
+function departureGalaxy(id: string): PhantomAllySpec["galaxy"] | undefined {
+  if (id.startsWith("project:")) {
+    const number = Number(id.split(":")[1]);
+    return GALAXY_NUMBERS.find((galaxy) => galaxy === number);
+  }
+  return Object.hasOwn(questAllies, id) ? questAllies[id as keyof typeof questAllies] : undefined;
+}
+
+function drawAuthoredDeparture(
+  scene: ObjectsContext,
+  art: PhantomAllyArt & { jump: NonNullable<PhantomAllyArt["jump"]> },
+  ally: PhantomDeparture,
+  depthLimit: number,
+): void {
+  const id = `phantomAlly:${ally.id}#departure`;
+  const at = scene.project(ally);
+  const facing = ally.facing;
+  if (!facing) {
+    // Older snapshots retain the existing local cue without guessing an absent body heading.
+    if (!scene.reducedMotion) {
+      drawAllyJump(scene, id, ally.age, at);
+    }
+    return;
+  }
+  const view = allyPresentation(art.jump, "out", ally.age * 1000, scene.reducedMotion);
+  if (!view) {
+    return;
+  }
+  const depth = Math.min(playDepth(at.y), depthLimit);
+  const present = (frame: Asset): boolean => {
+    paintAllyJump(scene, art.jump, view, at, id, frame, depth);
+    if (view.step?.stretch) {
+      drawStretchedAlly(scene, view, { at, depth, facing, id }, frame);
+    } else {
+      objectSprite(scene, id, frame.id)
+        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+        .setOrigin(frame.pivot.x, frame.pivot.y)
+        .setPosition(at.x, at.y)
+        .setDepth(depth)
+        .setAlpha(view.opacity);
+    }
+    return true;
+  };
+  if (ally.id === "marlo") {
+    drawWhale(scene, "whale", id, ally, {
+      heading: shipDirection(16, facing),
+      moving: false,
+      present,
+    });
+    return;
+  }
+  const galaxy = departureGalaxy(ally.id);
+  const craft = galaxy === undefined ? undefined : finaleAllyCraft(art, { galaxy, id: ally.id });
+  const frames = craft ? scene.craftArt.get(craft) : undefined;
+  if (frames) {
+    present(selectEnemyFrame(frames, facing));
+  }
+}
+
+function drawAllyBody(
+  scene: ObjectsContext,
+  ally: PhantomAlly,
+  authored: PhantomAllyArt | undefined,
+  visual: AllyPresentation,
+  depthLimit: number,
+): void {
+  const id = `phantomAlly:${ally.id}`;
+  const point = scene.project(ally);
+  const speed = Math.hypot(ally.velocity.x, ally.velocity.y);
+  const depth = Math.min(playDepth(point.y), depthLimit);
+  const spriteFor = (key: string, frame: Asset): void => {
+    const sprite = objectSprite(scene, key, frame.id)
+      .setDisplaySize(frame.displayWidth! * visual.zoom, frame.displayHeight! * visual.zoom)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(depth)
+      .setAlpha(visual.opacity);
+    keylineSprite(
+      scene,
+      ally.behavior === "whale" ? "whale" : "storyCraft",
+      key,
+      sprite,
+      depth - 2e-6,
+    );
+    scene.passes(sprite);
+    if (authored?.jump) {
+      paintAllyJump(scene, authored.jump, visual, point, key, frame, depth);
+    }
+  };
+  if (ally.behavior === "whale") {
+    const key = `${id}#whale`;
+    drawWhale(scene, "whale", key, ally, {
+      heading: shipDirection(16, ally.facing),
+      moving: speed > 1,
+      present: (frame) => {
+        spriteFor(key, frame);
+        return true;
+      },
+    });
+  } else {
+    const craft = finaleAllyCraft(authored, ally) ?? phantomAllyCraft(ally);
+    const art = craft ? scene.craftArt.get(craft) : undefined;
+    if (art) {
+      const frame = selectEnemyFrame(art, ally.facing);
+      spriteFor(id, frame);
+      drawCraftJets(
+        scene,
+        "storyCraft",
+        id,
+        point,
+        depth,
+        enemyJetTriangles(art, frame, Math.min(1, speed / CONTENT.tuning.physics.maxSpeed)),
+      );
+    }
+  }
+  if (!authored?.jump) {
+    drawAllyJump(scene, id, ally.jumpAge, point);
+  }
+}
+
 /** Drawn friendlies do not enter the collision, damage, indicator or enemy targeting lists. */
 export function drawPhantomAllies(scene: ObjectsContext): void {
   const flight = scene.model.state.flight;
@@ -134,54 +287,36 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
   if (!state) {
     return;
   }
+  const authored = readAllyArt(scene);
+  const depthLimit = playDepth(scene.project(flight.player).y) - 0.00001;
+  const jump = authored?.jump;
   for (const ally of state.departures ?? []) {
-    drawAllyJump(scene, `phantomAlly:${ally.id}#departure`, ally.age, scene.project(ally));
-  }
-  const adaDepth = playDepth(scene.project(flight.player).y);
-  for (const ally of state.allies) {
-    const id = `phantomAlly:${ally.id}`;
-    const point = scene.project(ally);
-    const speed = Math.hypot(ally.velocity.x, ally.velocity.y);
-    if (ally.behavior === "whale") {
-      drawWhale(scene, "whale", `${id}#whale`, ally, {
-        heading: shipDirection(16, ally.facing),
-        moving: speed > 1,
-      });
-      for (const [key, sprite] of scene.enemySprites) {
-        if (key.startsWith(id)) {
-          sprite.setDepth(Math.min(playDepth(point.y), adaDepth - 0.00001));
-        }
-      }
+    if (jump && authored) {
+      drawAuthoredDeparture(scene, { ...authored, jump }, ally, depthLimit);
     } else {
-      const craft = phantomAllyCraft(ally);
-      const art = craft ? scene.craftArt.get(craft) : undefined;
-      if (art) {
-        const frame = selectEnemyFrame(art, ally.facing);
-        const depth = Math.min(playDepth(point.y), adaDepth - 0.00001);
-        const sprite = objectSprite(scene, id, frame.id)
-          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-          .setOrigin(frame.pivot.x, frame.pivot.y)
-          .setPosition(point.x, point.y)
-          .setDepth(depth);
-        keylineSprite(scene, "storyCraft", id, sprite, depth - 2e-6);
-        scene.passes(sprite);
-        drawCraftJets(
-          scene,
-          "storyCraft",
-          id,
-          point,
-          depth,
-          enemyJetTriangles(art, frame, Math.min(1, speed / CONTENT.tuning.physics.maxSpeed)),
-        );
-      }
+      drawAllyJump(scene, `phantomAlly:${ally.id}#departure`, ally.age, scene.project(ally));
     }
-    drawAllyJump(scene, id, ally.jumpAge, point);
-    if (ally.song) {
+  }
+  const delay =
+    jump && state.allyTurn > 0 && state.departures?.length
+      ? allyJumpDuration(jump, scene.reducedMotion)
+      : 0;
+  for (const ally of state.allies) {
+    const visual = jump
+      ? allyPresentation(jump, "in", ally.jumpAge * 1000 - delay, scene.reducedMotion)
+      : { opacity: 1, zoom: 1 };
+    if (visual) {
+      drawAllyBody(scene, ally, authored, visual, depthLimit);
+    }
+    if (ally.song && ally.id === "marlo" && authored?.song) {
+      drawPhantomSong(scene, authored.song, flight, ally);
+    } else if (ally.song && !authored?.song) {
       rim(scene, ally, T.songRadius);
     }
   }
   for (const object of flight.objects) {
     if (
+      !authored?.song &&
       object.kind === "enemy" &&
       object.enemy &&
       !object.enemy.disabled &&

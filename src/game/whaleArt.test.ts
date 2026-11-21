@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import core from "../../public/art/manifest.json";
 import whales from "../../public/art/whales.json";
 import { CONTENT } from "../data/content.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { ART_MANIFEST as manifest } from "../testing/publicArt.ts";
 import {
   familyMembers,
+  readMarloArt,
   readWhaleArt,
   type WhaleFrame,
   whaleFrameAsset,
@@ -93,6 +95,28 @@ describe("whale art", () => {
         assets.filter((asset) => asset.id !== "whale-calf-3-5"),
       ),
     ).toBeUndefined();
+  });
+
+  it("reads Marlo from the fresh Phantom core and preserves Whirlpool's full-family requirement", () => {
+    const frames = core.assets.filter(whaleFrameAsset) as WhaleFrame[];
+    expect(readWhaleArt(whales, frames)).toBeUndefined();
+    const marlo = readMarloArt(whales, frames);
+    expect([...marlo!.kinds.keys()]).toEqual(["whale"]);
+    expect(marlo?.family).toEqual([]);
+    expect(marlo?.kinds.get("whale")).toEqual(art.kinds.get("whale"));
+    expect(
+      readMarloArt(
+        whales,
+        frames.filter(({ id }) => id !== "whale-whale-4-0"),
+      ),
+    ).toBeUndefined();
+    const malformed = {
+      ...whales,
+      kinds: whales.kinds.map((entry) =>
+        entry.kind === "whale" ? { ...entry, loop: { ...entry.loop, frames: 0 } } : entry,
+      ),
+    };
+    expect(readMarloArt(malformed, frames)).toBeUndefined();
   });
 
   it("omits the family's calf while it is guided, keeping the others, and restores it on return", () => {

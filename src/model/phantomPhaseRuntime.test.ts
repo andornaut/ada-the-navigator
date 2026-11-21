@@ -15,6 +15,7 @@ import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS, worldActivateFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
+import { restoreSave } from "./save.ts";
 import { shipTuning } from "./upgrades.ts";
 import { worldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
@@ -27,10 +28,13 @@ afterEach(() => {
   }
 });
 
-function launched() {
+function launched(withAlly = false) {
   (BUILT as Set<GalaxyNumber>).add(6);
   const model = new GameModel(CONTENT);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
+  if (withAlly) {
+    model.state.progress[1].activityCompleted = true;
+  }
   model.state.progress[6].opened = true;
   model.startGalaxy(6);
   return model;
@@ -120,6 +124,29 @@ it("prepares one full next batch before optional generation and retains it uncha
   expect(model.state).toEqual(before);
   const resumed = relaunch(CONTENT, model.save());
   expect(resumed.state.flight).toEqual(flight);
+});
+
+it("saves the actual departing ally heading and restores older departures without it", () => {
+  const model = launched(true);
+  const flight = model.state.flight!;
+  freeSettlements(model);
+  flight.player = { ...flight.phantom!.waypoint };
+  const input = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  model.step(0.001, input);
+  const state = flight.phantom!;
+  const ally = state.allies.find(({ id }) => id === "clover")!;
+  ally.facing = { x: 0.6, y: -0.8 };
+  ally.velocity = { x: 0, y: 0 };
+  disablePrimary(model, state.enemyIds);
+  model.step(0.000001, input);
+  const current = state.departures?.find(({ id }) => id === ally.id);
+  if (!current) {
+    throw new Error("Clover did not depart at the wave boundary");
+  }
+  expect(current.facing).toEqual({ x: 0.6, y: -0.8 });
+  expect(restoreSave(model.save())?.flight?.phantom?.departures).toEqual(state.departures);
+  delete current.facing;
+  expect(restoreSave(model.save())?.flight?.phantom?.departures).toEqual(state.departures);
 });
 
 it("transfers actual phases and clears fixed-waypoint blockers only through canonical salvage and paging", () => {

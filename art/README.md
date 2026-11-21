@@ -26,6 +26,8 @@ Loom's saucer and portrait and the crimson drones, Phantom's
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
 and the lost item's glint), the job board's row icons and Map marks.
+The [finale allies](allies.md) draw the Phantom battle's allies, Marlo's song
+and the ally jump.
 [Destinations](destinations.md) set the scale, light-field keyline and Use
 callout of every place Ada visits. [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy,
@@ -79,7 +81,8 @@ drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
 Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
 Channel lights, Elder Loom's saucer and portrait, the crimson drones and the
 `needleGates`, `needleChannels`, `needleEye` and `needleBand` links;
-Phantom its station, the Blurb settlements and its smoke-bank nebulae.
+Phantom its station, the Blurb settlements, its smoke-bank nebulae, the finale
+ally craft and the `allies` link.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every
@@ -199,7 +202,8 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `art/tools/garnet-drones.ts` and the [hostile station](heavies.md#hostile-station)
 in every family from `art/tools/hostile-station-export.ts`. Needle's art comes from `art/tools/needle-station.ts`,
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
-`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. Every
+`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`, and the finale
+allies from `art/tools/allies.ts`. Every
 galaxy's stranded craft but Cartwheel's come from `art/tools/stranded-craft.ts`. The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
 Phantom come from `art/tools/backdrop.ts`, and the upgrade pickup's chevron mask from

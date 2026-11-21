@@ -36,6 +36,8 @@ export interface CoreManifest<T> {
 
 /** A galaxy manifest's data links, by the names the scene loads them under. */
 export interface GalaxyLinks {
+  /** Phantom ally presentation metadata. */
+  readonly allies?: string;
   /** The galaxy's backdrop layers: its tones and recipes (backdrop.json). */
   readonly backdrop?: string;
   /** The galaxy's backdrop haze placement (haze.json). */
@@ -63,6 +65,7 @@ export interface GalaxyManifest<T> {
 }
 
 const LINKS: readonly (keyof GalaxyLinks)[] = [
+  "allies",
   "backdrop",
   "backdropHaze",
   "cartwheelDebris",

@@ -127,6 +127,8 @@ import { coverShip, endJump, jumpScene, spaceJumpScene } from "./sceneJump.ts";
 import { createNeedleRenderer, needleRenderFrame } from "./sceneNeedle.ts";
 import { drawGuidedCalf, drawObject } from "./sceneObjects.ts";
 import { drawPhantomAllies, drawPhantomFlagship, drawPhantomSettlement } from "./scenePhantom.ts";
+import { clearPhantomJump } from "./scenePhantomJump.ts";
+import { clearPhantomSong } from "./scenePhantomSong.ts";
 import { type Asset, DESTRUCTION_PATH, screenToWorld, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { acknowledgeTargetDraws } from "./sceneTargetMarkers.ts";
 import {
@@ -905,6 +907,8 @@ export class GameScene extends Scene {
       this.needleFlight = flight ?? undefined;
     }
     this.ink.clear();
+    clearPhantomSong(this);
+    clearPhantomJump(this);
     this.jets.clear();
     this.normalTail?.image.setVisible(false);
     this.normalTail?.shape.clear();

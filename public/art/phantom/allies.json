@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "roster": {
+    "projects": {
+      "greenhouseRing": {
+        "craft": "grower"
+      },
+      "workshopCrane": {
+        "craft": "crane"
+      },
+      "salvageBeacons": {
+        "craft": "salvager"
+      },
+      "nurseryBeacon": {
+        "whale": "adult"
+      },
+      "currentBuoys": {
+        "craft": "buoytender"
+      },
+      "channelLights": {
+        "craft": "student"
+      },
+      "loomHall": {
+        "craft": "loomship"
+      },
+      "courierSchool": {
+        "craft": "trainee"
+      },
+      "spareBeacon": {
+        "craft": "beacontender"
+      },
+      "dockingBay": {
+        "craft": "driller"
+      },
+      "hubRepairs": {
+        "craft": "tug"
+      }
+    },
+    "quests": {
+      "sunflower": {
+        "craft": "barge"
+      },
+      "whirlpool": {
+        "whale": "whale"
+      },
+      "needle": {
+        "craft": "reed"
+      },
+      "andromeda": {
+        "craft": "pip"
+      },
+      "cartwheel": {
+        "craft": "miner"
+      }
+    }
+  },
+  "song": {
+    "quest": "whirlpool",
+    "reach": {
+      "base": 300,
+      "nurseryBeacon": 450
+    },
+    "color": "#cbb8ee",
+    "field": {
+      "alpha": 0.08
+    },
+    "rim": {
+      "alpha": 0.78,
+      "width": 2
+    },
+    "ripples": {
+      "alpha": 0.3,
+      "width": 2,
+      "count": 2,
+      "periodMs": 2400
+    },
+    "droneRing": {
+      "alpha": 1,
+      "width": 2,
+      "margin": 4
+    }
+  },
+  "jump": {
+    "glowReference": 42,
+    "out": [
+      {
+        "ms": 50,
+        "glow": "full"
+      },
+      {
+        "ms": 50,
+        "glow": "full"
+      },
+      {
+        "ms": 50,
+        "glow": "full"
+      },
+      {
+        "ms": 80,
+        "glow": "full",
+        "stretch": 3.2,
+        "white": 0.7,
+        "star": true
+      }
+    ],
+    "in": [
+      {
+        "ms": 50,
+        "glow": "mid",
+        "scale": 1.2,
+        "iris": 0.5
+      },
+      {
+        "ms": 50,
+        "glow": "mid",
+        "scale": 1.1,
+        "iris": 0.75
+      },
+      {
+        "ms": 50,
+        "glow": "low",
+        "scale": 1.05,
+        "iris": 1
+      },
+      {
+        "ms": 50,
+        "glow": "low",
+        "scale": 1,
+        "iris": 1.25
+      },
+      {
+        "ms": 50,
+        "scale": 1,
+        "iris": 1.5
+      },
+      {
+        "ms": 50,
+        "scale": 1,
+        "iris": 1.75
+      }
+    ],
+    "reducedMotion": {
+      "fadeMs": 200
+    }
+  }
+}

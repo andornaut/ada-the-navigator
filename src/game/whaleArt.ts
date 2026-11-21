@@ -53,6 +53,22 @@ export function readWhaleArt<T extends WhaleFrame>(
   data: unknown,
   assets: readonly T[],
 ): WhaleArt<T> | undefined {
+  return readWhaleKinds(KINDS, data, assets);
+}
+
+/** Phantom uses Marlo's core frames and the shared metadata, without Whirlpool's family frames. */
+export function readMarloArt<T extends WhaleFrame>(
+  data: unknown,
+  assets: readonly T[],
+): WhaleArt<T> | undefined {
+  return readWhaleKinds(["whale"], data, assets);
+}
+
+function readWhaleKinds<T extends WhaleFrame>(
+  required: readonly WhaleKind[],
+  data: unknown,
+  assets: readonly T[],
+): WhaleArt<T> | undefined {
   const root = fields(data);
   if (root?.version !== 1 || !Array.isArray(root.kinds) || !Array.isArray(root.family)) {
     return undefined;
@@ -60,10 +76,15 @@ export function readWhaleArt<T extends WhaleFrame>(
   const kinds = new Map<WhaleKind, WhaleKindArt<T>>();
   for (const entry of root.kinds as unknown[]) {
     const kind = fields(entry);
+    if (!isKind(kind?.kind)) {
+      return undefined;
+    }
+    if (!required.includes(kind.kind)) {
+      continue;
+    }
     const loop = fields(kind?.loop);
     const headings = Array.isArray(kind?.headings) ? (kind.headings as unknown[]) : [];
     if (
-      !isKind(kind?.kind) ||
       !loop ||
       !Number.isInteger(loop.frames) ||
       !positive(loop.frames) ||
@@ -127,10 +148,15 @@ export function readWhaleArt<T extends WhaleFrame>(
     ) {
       return undefined;
     }
-    family.push({ kind: member.kind, offset: { x: offset[0] as number, y: offset[1] as number } });
+    if (required.includes(member.kind)) {
+      family.push({
+        kind: member.kind,
+        offset: { x: offset[0] as number, y: offset[1] as number },
+      });
+    }
   }
   const reduced = fields(root.reducedMotion)?.frame;
-  if (KINDS.some((kind) => !kinds.has(kind)) || !Number.isInteger(reduced)) {
+  if (required.some((kind) => !kinds.has(kind)) || !Number.isInteger(reduced)) {
     return undefined;
   }
   return { family, kinds, reducedFrame: reduced as number };
