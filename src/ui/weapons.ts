@@ -196,6 +196,8 @@ ${button} ${disc}::before{
 // rect's top-right corner so the outermost disc's drawn edge and the discs' drawn tops sit on it. Each
 // glyph is a mask over currentColor, so a state's colour, and the refusal cue's red text colour,
 // tint it; selection, lock and refusal never resize the disc or glyph.
+const rapidDiscInkOffset = units(EXPANDED_RAPID_DISC_INK_OFFSET);
+
 export const WEAPON_STYLE = `
 .ada-controls .ada-weapon-selector{
   position:absolute;
@@ -207,7 +209,7 @@ export const WEAPON_STYLE = `
 ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 /* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
 @media ${EXPANDED_VIEWPORT}{
-  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${units(EXPANDED_RAPID_DISC_INK_OFFSET)} 0}
+  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${rapidDiscInkOffset} 0}
 }
 .ada-controls .ada-weapon{
   position:relative
