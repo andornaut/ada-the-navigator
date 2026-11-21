@@ -25,11 +25,11 @@ so they stay quiet yet findable. Landmarks have no collision: Ada flies
 through them. They draw on the ground layer, under play objects. Gameplay
 defines no change when a landmark is charted, so the art has one state.
 
-| Kind   | Manifest ids                                                             | Display, logical px | Pivot                                      |
-| ------ | ------------------------------------------------------------------------ | ------------------- | ------------------------------------------ |
-| Nebula | `landmark-nebula-outer`, `landmark-nebula-core`, `landmark-nebula-stars` | 380 x 180, layered  | (0.5, 0.5)                                 |
-| Wreck  | `landmark-wreck`                                                         | 140 x 84            | (0.5, 0.5)                                 |
-| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 45 x 60             | (0.5, 0.825), the float on the world plane |
+| Kind   | Manifest ids                                                             | Display, logical px | Pivot                              |
+| ------ | ------------------------------------------------------------------------ | ------------------- | ---------------------------------- |
+| Nebula | `landmark-nebula-outer`, `landmark-nebula-core`, `landmark-nebula-stars` | 380 x 180, layered  | (0.5, 0.5)                         |
+| Wreck  | `landmark-wreck`                                                         | 140 x 84            | (0.5, 0.5)                         |
+| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 60 x 45             | (0.5, 0.5), the transmitter centre |
 
 All are `facing: fixed`: no headings and no screen rotation, like the station.
 
@@ -73,12 +73,16 @@ apart and tilts, with its fin; three debris flakes float by.
 
 ### Beacon
 
-A float, a mast with a crossbar, a lavender lamp with a white core and one
-pair of signal arcs, 1.5 wide with round caps: inner (radius 7.5) in frame A,
-outer (radius 12) in frame B. The frames alternate every 700 ms (`frameMs`),
-like the station's blink; reduced motion holds frame A (`reducedMotion`).
-Lavender `#c4afcc` lamp and float top, shade `#8f7c9c`, mast `#b5a2c0`,
-crossbar `#6f5f7d`.
+A horizontal satellite with a lavender transmitter and white core between two
+mirrored solar panels. Each panel has a lavender frame and a three-column,
+four-row cell grid. The panel faces are `#6f5f7d`, the beam and grids
+`#b5a2c0`, and the transmitter, panel frames and arcs `#c4afcc`.
+
+The SVG uses a 40 x 30 view box and displays at 60 x 45 logical px, centred
+on the transmitter. One pair of signal arcs sits above and below the body,
+1.5 units wide with round caps. Frame A uses radius 7.5 and frame B uses
+radius 12. The frames alternate every 700 ms (`frameMs`), and reduced motion
+holds frame A (`reducedMotion`).
 
 ### Light field
 
@@ -140,6 +144,6 @@ Reduced motion draws no ping.
 | `public/art/landmarks/nebula-core.svg`  | `d63fed89f279d3e5a7f451c030ebdd305b75452f50ef9326b2b50a3c171aa2af` |
 | `public/art/landmarks/nebula-stars.svg` | `a1b9a52d9c6027867b72311ddd335cc2637e54ce757ead12fe7725f9dbaeb880` |
 | `public/art/landmarks/wreck.svg`        | `fe8a0761873babdaab096ca0291adbd32df448062168f87d4114c6e4b8dd5e74` |
-| `public/art/landmarks/beacon-a.svg`     | `16e01794fd22c36727a4c2ed4b1ee396c6c93e7591dd90c0e093cbcd55346f77` |
-| `public/art/landmarks/beacon-b.svg`     | `2133e34ab92986f3f5f7e3b03864856d62cfbacba6652ec23e08d42af5ef295b` |
+| `public/art/landmarks/beacon-a.svg`     | `2e7b641b8809827cfdbd06349e3892258e7b72f2e0584ac0315d3350f0249ee8` |
+| `public/art/landmarks/beacon-b.svg`     | `9c380d4e98d34a62d1a43a8e2a5fccea1ca79abd500c7f894a11898a574ebdd7` |
 | `public/art/hunt-glint.png`             | `4d6e5783bb68d1f8e76cd68d8dfdf96a5dd8c33346e1162afaec0906617828cc` |

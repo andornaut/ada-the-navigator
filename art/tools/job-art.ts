@@ -27,13 +27,10 @@ const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
 };
 const POI = space.colors.pointOfInterest!.toLowerCase();
 const POI_SIDE = "#8f7c9c";
-const POI_DARK = "#6f5f7d";
-const MAST = "#b5a2c0";
+const PANEL_FACE = "#6f5f7d";
+const PANEL_GRID = "#b5a2c0";
 const WHITE = "#ffffff";
 const INK = "#181425";
-
-// Round to three decimals, dropping a trailing zero.
-const r3 = (value: number) => Math.round(value * 1000) / 1000 + 0;
 
 // Written files go through the project's Prettier settings so they stay Prettier-clean.
 async function prettify(file: string): Promise<void> {
@@ -316,39 +313,38 @@ function wreck(): string {
   ].join("\n");
 }
 
-// Beacon: a float, a mast with a crossbar, a lavender lamp with a white core and a pair of signal
-// arcs, inner (frame a) or outer (frame b), in a 30 x 40 box drawn at 45 x 60. The pivot is the
-// float's centre on the world plane.
+// Beacon: a horizontal satellite with mirrored solar panels and a lavender transmitter at the
+// world anchor. Its paired signal arcs pulse above and below the body.
 const BEACON = {
-  width: 30,
-  height: 40,
-  displayWidth: 45,
-  displayHeight: 60,
-  lamp: [15, 9],
-  float: [15, 33],
+  width: 40,
+  height: 30,
+  displayWidth: 60,
+  displayHeight: 45,
+  transmitter: [20, 15],
 } as const;
 const ARCS = { a: 7.5, b: 12 } as const;
 const BLINK_MS = 700;
 
 function arc(radius: number, from: number, to: number): string {
-  const [cx, cy] = BEACON.lamp;
+  const [cx, cy] = BEACON.transmitter;
   const point = (angle: number) =>
-    `${r3(cx + radius * Math.cos(angle))} ${r3(cy + radius * Math.sin(angle))}`;
+    `${cx + radius * Math.cos(angle)} ${cy + radius * Math.sin(angle)}`;
   return `M${point(from)}A${radius} ${radius} 0 0 1 ${point(to)}`;
 }
 
 function beacon(frame: keyof typeof ARCS): string {
-  const [lx, ly] = BEACON.lamp;
+  const [lx, ly] = BEACON.transmitter;
   const radius = ARCS[frame];
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${BEACON.displayWidth}" height="${BEACON.displayHeight}" viewBox="0 0 ${BEACON.width} ${BEACON.height}">`,
-    `  <ellipse cx="15" cy="34" rx="8" ry="4" fill="${POI_SIDE}" />`,
-    `  <ellipse cx="15" cy="32" rx="8" ry="4" fill="${POI}" />`,
-    `  <rect x="14" y="10" width="2" height="22" fill="${MAST}" />`,
-    `  <rect x="11" y="18" width="8" height="2" fill="${POI_DARK}" />`,
+    `  <rect x="11" y="14" width="18" height="2" fill="${PANEL_GRID}" />`,
+    ...[2, 28].flatMap((x) => [
+      `  <rect x="${x}" y="7" width="10" height="16" fill="${PANEL_FACE}" stroke="${POI}" />`,
+      `  <path d="M${x + 10 / 3} 7V23M${x + 20 / 3} 7V23M${x} 11H${x + 10}M${x} 15H${x + 10}M${x} 19H${x + 10}" fill="none" stroke="${PANEL_GRID}" stroke-width="0.6" />`,
+    ]),
     `  <circle cx="${lx}" cy="${ly}" r="4" fill="${POI}" />`,
     `  <circle cx="${lx}" cy="${ly}" r="2" fill="${WHITE}" />`,
-    `  <path d="${arc(radius, Math.PI * 0.78, Math.PI * 1.22)}${arc(radius, -Math.PI * 0.22, Math.PI * 0.22)}" fill="none" stroke="${POI}" stroke-width="1.5" stroke-linecap="round" />`,
+    `  <path d="${arc(radius, Math.PI * 0.28, Math.PI * 0.72)}${arc(radius, Math.PI * 1.28, Math.PI * 1.72)}" fill="none" stroke="${POI}" stroke-width="1.5" stroke-linecap="round" />`,
     "</svg>",
     "",
   ].join("\n");
@@ -461,7 +457,6 @@ const svgEntry = (
   height: number,
   displayWidth: number,
   displayHeight: number,
-  pivotY = 0.5,
 ) => ({
   id,
   path: `/art/landmarks/${file}`,
@@ -470,9 +465,7 @@ const svgEntry = (
   displayWidth,
   displayHeight,
   ...fixed,
-  pivot: { x: 0.5, y: pivotY },
 });
-const beaconPivot = r3(BEACON.float[1] / BEACON.height);
 const entries = [
   svgEntry(
     "landmark-nebula-outer",
@@ -514,7 +507,6 @@ const entries = [
       BEACON.displayHeight,
       BEACON.displayWidth,
       BEACON.displayHeight,
-      beaconPivot,
     ),
     frameMs: BLINK_MS,
   },
@@ -526,7 +518,6 @@ const entries = [
       BEACON.displayHeight,
       BEACON.displayWidth,
       BEACON.displayHeight,
-      beaconPivot,
     ),
     frameMs: BLINK_MS,
   },

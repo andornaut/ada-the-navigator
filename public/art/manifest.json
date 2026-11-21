@@ -8045,28 +8045,28 @@
     {
       "id": "landmark-beacon-a",
       "path": "/art/landmarks/beacon-a.svg",
-      "width": 45,
-      "height": 60,
-      "displayWidth": 45,
-      "displayHeight": 60,
+      "width": 60,
+      "height": 45,
+      "displayWidth": 60,
+      "displayHeight": 45,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.825
+        "y": 0.5
       },
       "frameMs": 700
     },
     {
       "id": "landmark-beacon-b",
       "path": "/art/landmarks/beacon-b.svg",
-      "width": 45,
-      "height": 60,
-      "displayWidth": 45,
-      "displayHeight": 60,
+      "width": 60,
+      "height": 45,
+      "displayWidth": 60,
+      "displayHeight": 45,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.825
+        "y": 0.5
       },
       "frameMs": 700
     },
