@@ -1,10 +1,14 @@
 import { HUD_EDGE } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import { NO_INSETS, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
 // size is a logical value through these helpers, never raw CSS px.
 export const VIEW_HOST_ID = "app";
+
+export const COMPACT_VIEWPORT = `(max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px)`;
+export const EXPANDED_VIEWPORT = `(width > ${SCREEN.width}px) and (height > ${SCREEN.height}px)`;
 
 // The HUD rect's edges the controls anchor to: the top controls to its top and sides, the shield
 // pill to its bottom.

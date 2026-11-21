@@ -14,7 +14,15 @@ import {
 } from "./galaxyPanelTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
-import { font, fromAreaLeft, fromAreaTop, safeEdge, slice, units } from "./layout/css.ts";
+import {
+  COMPACT_VIEWPORT,
+  font,
+  fromAreaLeft,
+  fromAreaTop,
+  safeEdge,
+  slice,
+  units,
+} from "./layout/css.ts";
 import {
   easeInOutSine,
   GALAXY_MAP,
@@ -307,7 +315,7 @@ export const GALAXY_MAP_STYLE = `
   line-height:${units(label.height - 2 * label.lockedInkLift + 1)};
   color:${colors.grey}
 }
-@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+@media ${COMPACT_VIEWPORT}{
   .ada-controls .ada-route-label:not([data-locked]){line-height:${units(label.height + 2)}}
   .ada-controls .ada-route-label[data-locked]{line-height:${units(label.height - 2 * label.lockedInkLift)}}
 }

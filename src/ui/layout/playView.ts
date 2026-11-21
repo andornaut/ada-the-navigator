@@ -40,6 +40,9 @@ export {
 // view at device pixels (src/game/playCamera.ts); the DOM overlay carries the same scale s as
 // --ada-unit (viewScale.ts).
 
+export const COMPACT_DISABLED_BANNER = { sideInsetReduction: 0.75, top: 2 } as const;
+export const EXPANDED_RAPID_DISC_INK_OFFSET = 0.75;
+
 export interface Size {
   readonly height: number;
   readonly width: number;

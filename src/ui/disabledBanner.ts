@@ -1,6 +1,7 @@
 import { SCREEN } from "../data/screen.ts";
 import type { Vec } from "../model/types.ts";
-import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
+import { COMPACT_VIEWPORT, font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
+import { COMPACT_DISABLED_BANNER } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 
 // The Disabled banner over each disabled heavy (art/heavies.md "Disabled banner"): an HTML
@@ -44,8 +45,10 @@ export const DISABLED_BANNER_STYLE = `
   white-space:nowrap;
   transform:translate(-50%,-50%)
 }
-@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
-  .ada-disabled-banner{padding:${units(2)} ${units(inset - border - 0.75)} 0}
+@media ${COMPACT_VIEWPORT}{
+  .ada-disabled-banner{padding:${units(COMPACT_DISABLED_BANNER.top)} ${units(
+    inset - border - COMPACT_DISABLED_BANNER.sideInsetReduction,
+  )} 0}
 }
 `;
 

@@ -21,6 +21,8 @@ export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
 // the projection, fit, zoom and pan that place them. Projected units are the flight's projection
 // of world units; a view's scale is logical px per projected unit.
 
+export const COMPACT_MAP_HEADER_TOP = 1;
+
 const HUD_ACTION_WIDTH = Math.max(...Object.values(MAP_HUD_LABEL_WIDTHS)) + 2 * TEXT_BUTTON.inset;
 
 export const MAP_SCREEN = {

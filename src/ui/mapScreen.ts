@@ -10,18 +10,26 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
-import { SCREEN } from "../data/screen.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
-import { font, pixels, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import {
+  COMPACT_VIEWPORT,
+  font,
+  pixels,
+  safeEdge,
+  slice,
+  units,
+  VIEW_PROPERTIES,
+} from "./layout/css.ts";
 import { framePoint, frameSize, turnOf } from "./layout/frameBox.ts";
 import {
   chipRect,
   clampView,
+  COMPACT_MAP_HEADER_TOP,
   filledPips,
   fitRegion,
   innerRegion,
@@ -472,10 +480,10 @@ export const MAP_SCREEN_STYLE = `
   white-space:nowrap;
   z-index:2
 }
-@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+@media ${COMPACT_VIEWPORT}{
   .ada-controls .ada-map-header{
-    padding-top:${units(1)};
-    padding-bottom:${units(SPACING.gap - 1)}
+    padding-top:${units(COMPACT_MAP_HEADER_TOP)};
+    padding-bottom:${units(SPACING.gap - COMPACT_MAP_HEADER_TOP)}
   }
 }
 .ada-controls .ada-map-header-row{

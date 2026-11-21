@@ -1,4 +1,3 @@
-import { SCREEN } from "../data/screen.ts";
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
@@ -7,8 +6,14 @@ import { bindAdaAction } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
-import { font, fromHudEdge, units } from "./layout/css.ts";
-import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW, HUD_WEAPON_LEVEL } from "./layout/playView.ts";
+import { EXPANDED_VIEWPORT, font, fromHudEdge, units } from "./layout/css.ts";
+import {
+  EXPANDED_RAPID_DISC_INK_OFFSET,
+  HUD_AMMO_COUNT,
+  HUD_BUTTON,
+  HUD_ROW,
+  HUD_WEAPON_LEVEL,
+} from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { invalidatePressScope } from "./pressScope.ts";
@@ -201,8 +206,8 @@ export const WEAPON_STYLE = `
 }
 ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 /* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
-@media (width > ${SCREEN.width}px) and (height > ${SCREEN.height}px){
-  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${units(0.75)} 0}
+@media ${EXPANDED_VIEWPORT}{
+  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${units(EXPANDED_RAPID_DISC_INK_OFFSET)} 0}
 }
 .ada-controls .ada-weapon{
   position:relative
