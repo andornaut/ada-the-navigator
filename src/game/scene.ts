@@ -103,6 +103,7 @@ import {
   loadSvg,
   materialShipHeading,
   paintInUse,
+  queueCoreSvgSheets,
   queueShipMaterialSources,
   queueSvg,
   rasterAgain,
@@ -573,11 +574,24 @@ export class GameScene extends Scene {
         }
         coreSidecars = sidecars;
         queueShards();
+        queueCoreSvgSheets(
+          this,
+          () => this.entryCurrent(),
+          (error) => {
+            if (this.entryFailure) {
+              this.entryFailure(error);
+            } else {
+              throw error;
+            }
+          },
+          manifest.assets,
+        );
         for (const asset of manifest.assets) {
           // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
           // a heavy's part frames when that craft first appears and whale frames for a whale. A
           // galaxy's own art is in its galaxy manifest, not here.
           if (
+            asset.svgSheet ||
             loadsOnDemand(asset) ||
             !galaxyLoadsAtOnce(asset) ||
             (materialFrames && materialShipHeading(asset) !== undefined)

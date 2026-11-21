@@ -8386,7 +8386,8 @@
     },
     {
       "id": "enemy-fighter-0",
-      "path": "/art/enemies/fighter-0.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8401,7 +8402,8 @@
     },
     {
       "id": "enemy-fighter-1",
-      "path": "/art/enemies/fighter-1.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8416,7 +8418,8 @@
     },
     {
       "id": "enemy-fighter-2",
-      "path": "/art/enemies/fighter-2.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8431,7 +8434,8 @@
     },
     {
       "id": "enemy-fighter-3",
-      "path": "/art/enemies/fighter-3.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8446,7 +8450,8 @@
     },
     {
       "id": "enemy-fighter-4",
-      "path": "/art/enemies/fighter-4.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8461,7 +8466,8 @@
     },
     {
       "id": "enemy-fighter-5",
-      "path": "/art/enemies/fighter-5.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8476,7 +8482,8 @@
     },
     {
       "id": "enemy-fighter-6",
-      "path": "/art/enemies/fighter-6.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8491,7 +8498,8 @@
     },
     {
       "id": "enemy-fighter-7",
-      "path": "/art/enemies/fighter-7.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8506,7 +8514,8 @@
     },
     {
       "id": "enemy-fighter-8",
-      "path": "/art/enemies/fighter-8.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8521,7 +8530,8 @@
     },
     {
       "id": "enemy-fighter-9",
-      "path": "/art/enemies/fighter-9.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8536,7 +8546,8 @@
     },
     {
       "id": "enemy-fighter-10",
-      "path": "/art/enemies/fighter-10.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8551,7 +8562,8 @@
     },
     {
       "id": "enemy-fighter-11",
-      "path": "/art/enemies/fighter-11.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8566,7 +8578,8 @@
     },
     {
       "id": "enemy-fighter-12",
-      "path": "/art/enemies/fighter-12.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8581,7 +8594,8 @@
     },
     {
       "id": "enemy-fighter-13",
-      "path": "/art/enemies/fighter-13.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8596,7 +8610,8 @@
     },
     {
       "id": "enemy-fighter-14",
-      "path": "/art/enemies/fighter-14.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -8611,7 +8626,8 @@
     },
     {
       "id": "enemy-fighter-15",
-      "path": "/art/enemies/fighter-15.svg",
+      "path": "/art/enemies/fighter-sheet.svg",
+      "svgSheet": true,
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,

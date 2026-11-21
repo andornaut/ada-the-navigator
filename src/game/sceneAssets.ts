@@ -140,6 +140,66 @@ export function queueShipMaterialSources(
   return true;
 }
 
+/** Load a core vector sheet once, keeping the scale and lifetime of each named texture. */
+export function queueCoreSvgSheets(
+  scene: AssetsContext,
+  current: () => boolean,
+  fail: (error: unknown) => void,
+  assets: readonly Asset[],
+): void {
+  const sheets = new Map<string, Asset[]>();
+  for (const asset of assets) {
+    if (asset.svgSheet) {
+      const frames = sheets.get(asset.path) ?? [];
+      frames.push(asset);
+      sheets.set(asset.path, frames);
+    }
+  }
+  for (const [path, frames] of sheets) {
+    const key = `vector-sheet:${path}`;
+    scene.load.once(`filecomplete-xml-${key}`, () => {
+      if (!current()) {
+        return;
+      }
+      try {
+        const xml = scene.cache.xml.get(key) as Document | undefined;
+        const root = xml?.documentElement;
+        if (root?.localName !== "svg" || root.namespaceURI !== "http://www.w3.org/2000/svg") {
+          throw new Error(`Invalid vector sheet: ${path}`);
+        }
+        const children = Array.from(root.children);
+        const serializer = new XMLSerializer();
+        const sources = frames.map((asset): Asset => {
+          const matches = children.filter((child) => child.id === asset.id);
+          const frame = matches[0];
+          if (
+            matches.length !== 1 ||
+            frame?.localName !== "svg" ||
+            frame.namespaceURI !== root.namespaceURI ||
+            !frame.hasAttribute("viewBox") ||
+            Number(frame.getAttribute("width")) !== asset.width ||
+            Number(frame.getAttribute("height")) !== asset.height
+          ) {
+            throw new Error(`Invalid frame ${asset.id} in vector sheet: ${path}`);
+          }
+          const standalone = frame.cloneNode(true) as Element;
+          for (const attribute of ["id", "x", "y"]) {
+            standalone.removeAttribute(attribute);
+          }
+          const encoded = btoa(serializer.serializeToString(standalone));
+          return { ...asset, path: `data:image/svg+xml;base64,${encoded}` };
+        });
+        for (const asset of sources) {
+          loadSvg(scene, asset);
+        }
+      } catch (error) {
+        fail(error);
+      }
+    });
+    scene.load.xml(key, path);
+  }
+}
+
 /** Stable material-generated source URLs for the selected paint, including the route map. */
 export function materialShipFrames(
   scene: object,
