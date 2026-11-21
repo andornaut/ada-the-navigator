@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { TEXT_BUTTON } from "../data/layout.ts";
+import { BUTTON_SLICE } from "../data/layout.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { slice, units } from "./layout/css.ts";
 import { MAP_SCREEN } from "./layout/mapScreen.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
@@ -317,7 +318,7 @@ it("left-aligns a quest line button's chip and label from the button's inset", (
   expect(rule).toContain("text-align:left");
 });
 
-it("starts a quest line's label on the 50 text column, its disc centred in the 28 slot", () => {
+it("starts a quest line's label on the 42 text column, its disc centred in the 28 slot", () => {
   // art/map.md "Quests modal": the 28 chip slot from the face's inset, markGap, then the text.
   const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   // A declaration's logical length, from the ruleset whose whole selector is the one given.
@@ -328,10 +329,17 @@ it("starts a quest line's label on the 50 text column, its disc centred in the 2
   };
   const list = ".ada-controls .ada-quest-list .ada-button";
   const gap = length(QUESTS_SCREEN_STYLE, list, "gap");
-  const margin = length(QUESTS_SCREEN_STYLE, `${list}>.ada-quest-icon`, "margin");
+  const icon = `${list}>.ada-quest-icon`;
+  const iconRule = QUESTS_SCREEN_STYLE.match(new RegExp(`${escape(icon)}\\{([^}]+)\\}`, "u"))?.[1];
+  const margin = 2;
+  expect(iconRule).toContain(`margin:${units(-2)} ${units(margin)}`);
+  const questLine = ".ada-controls .ada-quests-screen .ada-quest-list .ada-button[data-quest-id]";
+  expect(QUESTS_SCREEN_STYLE).toContain(
+    `${questLine}{\n  padding-inline:calc(${units(8)} - ${slice(BUTTON_SLICE.left)})}`,
+  );
   expect({
     gap,
-    mapped: TEXT_BUTTON.inset + margin + QUEST_ICON + margin + gap,
+    mapped: MAP_SCREEN.quests.inset + margin + QUEST_ICON + margin + gap,
     slot: margin + QUEST_ICON + margin,
     visibleGap: margin + gap,
   }).toEqual({
@@ -340,5 +348,5 @@ it("starts a quest line's label on the 50 text column, its disc centred in the 2
     slot: MAP_SCREEN.quests.chip,
     visibleGap: 8,
   });
-  expect(MAP_SCREEN.quests.textColumn).toBe(50);
+  expect(MAP_SCREEN.quests.textColumn).toBe(42);
 });

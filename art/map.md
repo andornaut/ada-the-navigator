@@ -235,70 +235,25 @@ unavailable.
 
 ### Quests modal
 
-The galaxy's current quests fill the available card area
-([Layout](layout.md#modals)) titled "Quests", with the close X, over the map
-under the modal dim. The dim covers the field, the header, the tools, the
-footer and the panel. The header and page controls stay fixed; measured pages
-retain every quest entry, description, source and destination icon and label,
-reward and action without scrolling or reducing the text size. Long prose
-continues on subsequent pages. Previous is hidden on the first page; Next
-shows only when another page follows. The close X, an outside tap, back and
-Escape close it, leaving the map's view and selection unchanged. Focus starts
-on the first visible location button, or on the close X without one. The
-existing `openQuests` and `closeQuests` map routes remain unchanged.
-Constants: `MAP_SCREEN.quests`.
+The Map footer opens the shared Quests list in `src/ui/questsScreen.ts`.
+It opens over the dimmed Map and dismissal returns to the Map's view and
+selection. The list groups story quests before station jobs and shows
+`QUEST_LIST_PAGE_SIZE` (2) entries per page. Selecting a quest opens its
+detail in the shared card.
 
-| Token                          | Value | Rule                                                                                   |
-| ------------------------------ | ----- | -------------------------------------------------------------------------------------- |
-| `MAP_SCREEN.quests.lineGap`    | 8     | Between lines (`SPACING.gap`), the same as `STACK_BUTTON_GAP` between two line buttons |
-| `MAP_SCREEN.quests.chip`       | 28    | A line button's chip (`MAP_SYMBOL.chip`)                                               |
-| `MAP_SCREEN.quests.overhang`   | 4     | The chip past the label's 20 line box, above and below, in the 44 face                 |
-| `MAP_SCREEN.quests.markGap`    | 6     | Chip to label (`SPACING.markGap`)                                                      |
-| `MAP_SCREEN.quests.textColumn` | 50    | Text start from the inner edge: `TEXT_BUTTON.inset + chip + markGap`                   |
-| `MAP_SCREEN.quests.ring`       | 1     | The unmapped ring's width, `#b8b3c9`                                                   |
+The following geometry applies to shared list rows from every opener.
+Measure from the row's left edge in logical px. The horizontal inset uses
+the standard 44 px button face as its reference.
 
-Lines, in Gameplay's order: the story objective, or "Story complete." once the
-chapter is resolved; the held job or activity as "Job: {objective}"; with no
-job held and a station discovered, "Station job boards have more to do.".
-With no lines, the card holds the empty note "Explore to find something to
-do.".
+| Part                           | Value | Rule                                                                                                  |
+| ------------------------------ | ----- | ----------------------------------------------------------------------------------------------------- |
+| Chip slot inset                | 8     | Half the difference between the 44 px reference face and the 28 px slot                               |
+| `MAP_SCREEN.quests.chip`       | 28    | Slot for the centred 24 px `QUEST_ICON` disc, whose drawn left edge is 10 px from the row's left edge |
+| `MAP_SCREEN.quests.markGap`    | 6     | Gap from the slot to the label                                                                        |
+| `MAP_SCREEN.quests.textColumn` | 42    | The 8 px inset, 28 px slot and 6 px gap added together                                                |
 
-1. Mapped line, its target a place on the map: a secondary `TEXT_BUTTON`
-   filling the inner width, content left-aligned: the target's chip (as in the
-   place panel, without the ring or indicator), `markGap`, then the line in
-   `TYPE.label` as the button label. The chip overhangs the label's line box by
-   4 above and below, so a one-line button is 48; each wrapped line adds 20.
-2. Plain line: `TYPE.body`, supporting `#b8b3c9`, starting on the text column,
-   20 per line, wrapping as prose. A line whose
-   target is not yet mapped carries a 28 hollow ring in the chip slot, the
-   uncharted pip's look, centred on the text and overhanging it by 4 each way.
-   "Story complete." and the job-board line carry no ring. The ring is
-   decorative: the line reads as its text.
-3. Empty note: one centred `TYPE.body` supporting line.
-
-- Width: the Large family, 688 capped at the available width (634 with phone
-  insets, 688 at the 720 base); a button wider than the inner width wraps.
-- Height: `58 + lines + gaps + 16`. Every state fits the 325 available.
-
-| State at 720x360, phone insets                    | Lines                           | Card      |
-| ------------------------------------------------- | ------------------------------- | --------- |
-| Story target mapped, no job, a station discovered | Button 48, plain 20             | 634 x 150 |
-| Story and job targets mapped                      | Two buttons, 48 each            | 634 x 178 |
-| Story target unmapped, job target mapped          | Ringed plain, button            | 634 x 150 |
-| A job line wider than the 602 inner width         | Button 48, button wrapped to 68 | 634 x 198 |
-| Story complete, no job, a station discovered      | Two plain lines                 | 634 x 122 |
-| No lines                                          | Empty note                      | 634 x 94  |
-
-- Press: a mapped line closes the modal, pans so its chip sits at the fit
-  region's centre at the current scale (clamped by the pan limit), applies the
-  keep-clear rule, then selects the chip; the place panel shows as for any
-  selection. At 720x360 with phone insets the centre is (360, 186.5) and the
-  ring's bottom 205.5: it clears the 80, 100 and 108 panels (tops 261, 241
-  and 233) by at least `SPACING.gap`, and keep-clear lifts it 0.5, to
-  `SPACING.gap` above the 128 panel (top 213).
-- Plain lines and the empty note take no input.
-- In danger the modal is unchanged: Quests and every line button stay
-  available, and a selection is never refused.
+Quest labels wrap from the text column. Corresponding plain rows align to
+that same column.
 
 ## Symbols
 

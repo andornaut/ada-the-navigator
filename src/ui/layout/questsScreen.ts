@@ -1,5 +1,5 @@
-import { MAP_SCREEN_LAYOUT } from "../../data/layout.ts";
-import { units } from "./css.ts";
+import { BUTTON_SLICE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
+import { slice, units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
 /** Approved quest card geometry, in logical pixels. */
@@ -14,7 +14,7 @@ export const QUEST_LIST_PAGE_SIZE = 2;
 /** A quest icon's drawn disc. */
 export const QUEST_ICON = 24;
 
-const { chip, markGap } = MAP_SCREEN_LAYOUT.quests;
+const { chip, inset, markGap } = MAP_SCREEN_LAYOUT.quests;
 
 export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-content{position:relative;
@@ -109,8 +109,11 @@ export const QUESTS_SCREEN_STYLE = `
   white-space:normal;
   text-align:left;
   flex:none}
-/* The disc centred in the chip slot, so the label starts on the text column. */
-.ada-controls .ada-quest-list .ada-button>.ada-quest-icon{margin:0 ${units((chip - QUEST_ICON) / 2)}}
+.ada-controls .ada-quests-screen .ada-quest-list .ada-button[data-quest-id]{
+  padding-inline:calc(${units(inset)} - ${slice(BUTTON_SLICE.left)})}
+/* The disc fits the chip slot and contributes one label line to the row height. */
+.ada-controls .ada-quest-list .ada-button>.ada-quest-icon{
+  margin:${units((TYPE.label.lineHeight - QUEST_ICON) / 2)} ${units((chip - QUEST_ICON) / 2)}}
 .ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${units(6)};margin-top:${units(4)}}
 .ada-controls .ada-quest-requirement>span:not(.ada-completion){min-width:0;overflow-wrap:anywhere}
 .ada-controls .ada-quest-requirement>strong{margin-left:auto;white-space:nowrap}

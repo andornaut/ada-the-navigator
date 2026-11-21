@@ -604,6 +604,9 @@ export const MAP_SYMBOL = {
   },
 } as const;
 
+const QUEST_LINE_CHIP = 28;
+const QUEST_LINE_INSET = (TEXT_BUTTON.height - TEXT_BUTTON.lipHeight - QUEST_LINE_CHIP) / 2;
+
 // MAP_SCREEN's authored parts; src/ui/layout/mapScreen.ts adds chartRadius, hudRow.
 export const MAP_SCREEN_LAYOUT = {
   /** Movement past this pans and never selects (SCROLL.dragThreshold). */
@@ -655,9 +658,10 @@ export const MAP_SCREEN_LAYOUT = {
    * (MAP_SYMBOL.chip) from the face's inset, markGap, then the label on textColumn.
    */
   quests: {
-    chip: 28,
+    chip: QUEST_LINE_CHIP,
+    inset: QUEST_LINE_INSET,
     markGap: SPACING.markGap,
-    textColumn: TEXT_BUTTON.inset + 28 + SPACING.markGap,
+    textColumn: QUEST_LINE_INSET + QUEST_LINE_CHIP + SPACING.markGap,
   },
   tools: {
     /** Tool targets top to top: HUD_BUTTON.target + HUD_BUTTON.gap, so the small discs keep
