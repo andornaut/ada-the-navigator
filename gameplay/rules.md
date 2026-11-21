@@ -1038,6 +1038,17 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Sunflower's roster is in
   [Ships](ships.md).
+- Enemy scenery avoidance scales its look-ahead time and corresponding query
+  reach by 1.25, up from 1. The unscaled time is the greater of the turn and
+  acceleration times plus the braking time. The steering grid changes from 16
+  to 12 directions. At each clearance, avoidance checks up to five courses
+  (straight and 30 or 60 degrees to either side), down from seven. Quest guard
+  home placement keeps its 16-direction grid. Prediction takes 12 samples,
+  starting with the actual first physics step and spacing the rest evenly across
+  the remaining horizon. Previously the count was at least six, increased to
+  cover the horizon at 60 Hz, with an extra sample for a shorter first step.
+  Clearances remain 80 world units for normal steering and 40 for passages.
+  Physical contact uses the existing collision rules.
 - Admiral Archie's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.

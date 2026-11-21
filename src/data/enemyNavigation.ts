@@ -11,8 +11,10 @@ export const ENEMY_STRAFE = {
 export const ENEMY_AVOIDANCE = {
   clearance: 80,
   directions: 16,
+  lookAheadScale: 1.25,
   passageClearance: 40,
-  predictionSteps: 6,
+  predictionSamples: 12,
+  steeringDirections: 12,
 } as const;
 
 /** Existing steering thresholds and frequency, independent of catalog speed and amplitude. */

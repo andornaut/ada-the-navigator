@@ -1,7 +1,6 @@
 import type { Point } from "../../data/enemyCatalog.ts";
 import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS, type ShipPhysics } from "../../data/shipPhysics.ts";
-import { SIMULATION_STEP_SECONDS } from "../../data/simulation.ts";
 import type { EnemyState } from "../enemyAi.ts";
 import { direction, stepShipMotion, turnToward } from "../shipPhysics.ts";
 import { magnitude, rotate } from "./course.ts";
@@ -31,10 +30,7 @@ export function avoidObstacles(
   }
   const desired = direction(request);
   const firstStep = Math.min(horizon, stepSeconds);
-  // A tiny valid runtime slice adds its exact first pose, not inverse-dt horizon work.
-  const samples =
-    Math.max(ENEMY_AVOIDANCE.predictionSteps, Math.ceil(horizon / SIMULATION_STEP_SECONDS)) +
-    (firstStep < SIMULATION_STEP_SECONDS ? 1 : 0);
+  const samples = ENEMY_AVOIDANCE.predictionSamples;
   const predictionStep = (horizon - firstStep) / (samples - 1);
   const safe = (course: Point, clearance: number): boolean => {
     let position = { ...state.position };
@@ -77,8 +73,8 @@ export function avoidObstacles(
       return { x: desired.x * share, y: desired.y * share };
     }
     // A local detour must still make forward progress toward the existing navigation request.
-    for (let step = 1; step < ENEMY_AVOIDANCE.directions / 4; step++) {
-      const angle = (step * Math.PI * 2) / ENEMY_AVOIDANCE.directions;
+    for (let step = 1; step < ENEMY_AVOIDANCE.steeringDirections / 4; step++) {
+      const angle = (step * Math.PI * 2) / ENEMY_AVOIDANCE.steeringDirections;
       for (const sign of [side, -side]) {
         const course = rotate(desired, angle * sign);
         if (safe(course, clearance)) {
