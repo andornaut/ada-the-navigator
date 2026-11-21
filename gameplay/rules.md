@@ -433,7 +433,10 @@ like Sunflower's outposts rather than docking, and the courier run, deliveries
 and tows can end at one. Their sentence names are "the settlers' station" and
 "the settlement". The guide beacons are story objects, separate from the
 galaxy's beacon landmarks: the dark beacon is a story place, and the
-rest of the chain is scenery, not Map places.
+rest of the chain is scenery, not Map places. The chain links neighbouring
+settlements: a lit guide beacon stands every 2000 world units along the
+straight line between two settlements, alternating its two looks, and the dark
+beacon is one of them, dented until Ada and Pip relight it.
 
 ### Galaxy five, Cartwheel: mining hub
 

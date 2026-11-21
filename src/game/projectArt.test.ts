@@ -47,6 +47,23 @@ describe("project world-change art", () => {
     }
   });
 
+  it("reads the spare overlay without an outpost and the Needle practice path with its own pair", () => {
+    expect(art.world.get("spareBeacon")).toMatchObject({
+      frame: { id: "beacon-guide-spare-a" },
+      kind: "overlay",
+    });
+    expect(art.world.get("channelLights")).toMatchObject({
+      frames: [{ id: "needle-lamp-a" }, { id: "needle-lamp-b" }],
+      kind: "path",
+    });
+    const projects = structuredClone(PROJECTS_FILE.projects);
+    projects.channelLights!.path = "eye";
+    projects.spareBeacon!.state = "dented";
+    expect(
+      readProjectArt(manifest.assets, outposts, { ...PROJECTS_FILE, projects })!.world.size,
+    ).toBe(0);
+  });
+
   it("keeps the growers' dock entrance at the same world point under the ring", () => {
     const ring = change("greenhouseRing");
     const growers = outposts.get("growers")!;

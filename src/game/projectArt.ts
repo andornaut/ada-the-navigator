@@ -26,7 +26,12 @@ export type ProjectArt<T extends StationFrame = StationFrame> =
       readonly outpost: string;
     };
 
+export type WorldProjectArt<T extends StationFrame> =
+  | { readonly kind: "overlay"; readonly frame: T }
+  | { readonly kind: "path"; readonly frames: readonly [T, T] };
+
 export interface ProjectArtSet<T extends StationFrame = StationFrame> {
+  readonly world: ReadonlyMap<string, WorldProjectArt<T>>;
   readonly projects: ReadonlyMap<string, ProjectArt<T>>;
   /** The reveal's fade length; its easing is cubicOut. */
   readonly revealMs: number;
@@ -123,13 +128,37 @@ export function readProjectArt<T extends StationFrame>(
     return undefined;
   }
   const art = new Map<string, ProjectArt<T>>();
+  const world = new Map<string, WorldProjectArt<T>>();
   for (const [id, entry] of Object.entries(projects)) {
+    const spec = fields(entry);
+    const frames = framePair(assets, spec?.frames);
+    if (
+      id === "spareBeacon" &&
+      spec?.kind === "overlay" &&
+      spec.outpost === undefined &&
+      spec.beacon === "guide" &&
+      spec.state === "relit" &&
+      frames?.[0].id === "beacon-guide-spare-a"
+    ) {
+      world.set(id, { frame: frames[0], kind: "overlay" });
+      continue;
+    }
+    if (
+      id === "channelLights" &&
+      spec?.kind === "path" &&
+      spec.galaxy === "needle" &&
+      spec.path === "practice" &&
+      frames
+    ) {
+      world.set(id, { frames, kind: "path" });
+      continue;
+    }
     const project = readProject(assets, outposts, entry);
     if (project) {
       art.set(id, project);
     }
   }
-  return { projects: art, revealMs: reveal.durationMs };
+  return { projects: art, revealMs: reveal.durationMs, world };
 }
 
 /**

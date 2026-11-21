@@ -129,6 +129,7 @@ export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "jobArt"
     | "keyed"
     | "keylines"
+    | "galaxyManifests"
     | "light"
     | "litCaches"
     | "litFlight"

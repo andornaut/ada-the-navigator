@@ -459,7 +459,11 @@ one, and the local map shows none of them. The nursery beacon's calves are the
 family's calves in their usual idle, gathered in its light. The current-map
 buoys line both edges of the whales' current (see
 [Whirlpool](rules.md#galaxy-two-whirlpool-whale-family)), one every 128 world
-units along it, 20 world units outside each edge.
+units along it, 20 world units outside each edge. The spare guide beacon stands 96 world
+units beside the relit beacon, on the side away from the chain. The channel
+lamps line both edges of Needle's practice channel the same way, one every 128
+world units along it, 20 world units outside each edge, alternating their two
+looks.
 
 | Project            | Id               | Effect line                 | Description                                             |
 | ------------------ | ---------------- | --------------------------- | ------------------------------------------------------- |

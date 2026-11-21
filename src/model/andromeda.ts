@@ -16,6 +16,7 @@ import {
 } from "./andromedaPlaces.ts";
 import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, ensureStation } from "./flight.ts";
+import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
 import { stationById } from "./stations.ts";
 import type { DialogueState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
@@ -84,7 +85,23 @@ export function ensureAndromedaWorld(context: ChapterContext): void {
   if (flight.galaxy !== 5) {
     return;
   }
-  ensureDestination(content, ANDROMEDA_PLACES.beacon, flight);
+  const beaconId = ANDROMEDA_PLACES.beacon;
+  const existing = flight.objects.find(
+    (object) => object.kind === "destination" && object.id === beaconId,
+  );
+  const retained = progress.requiredSites?.[beaconId];
+  const slot =
+    (retained && guideBeaconSlotAt(retained)) ??
+    (existing && guideBeaconSlotAt(existing)) ??
+    storyGuideBeaconSlot(content.tuning.chunkSize);
+  const point = slot.point;
+  if (retained?.x !== point.x || retained.y !== point.y) {
+    (progress.requiredSites ??= {})[beaconId] = { ...point };
+  }
+  if (existing && (existing.x !== point.x || existing.y !== point.y)) {
+    flight.objects.splice(flight.objects.indexOf(existing), 1);
+  }
+  ensureDestinationAt(content, beaconId, point, flight);
   ensureDestination(content, ANDROMEDA_PLACES.pip, flight);
   const target = memory(progress);
   if (target?.station) {

@@ -112,6 +112,7 @@ import {
 import { drawBackdrop, drawBackdropLayer, drawBackdropLayers } from "./sceneBackdrop.ts";
 import { drawRockBreaks, drawZips, startRockBreaks, startZips } from "./sceneEffects.ts";
 import { drawEffect, drawEnemyWeapons, enemyWeaponsView } from "./sceneEnemies.ts";
+import { createGuideLights } from "./sceneGuideLights.ts";
 import {
   drawCompromisedShield,
   drawFeedback,
@@ -378,6 +379,7 @@ export class GameScene extends Scene {
   jumping = false;
   readonly emergencyReturn = new EmergencyReturn();
   private holdSource = false;
+  private readonly drawGuideLights = createGuideLights();
   private needleFlight: FlightState | undefined;
   private needleRenderer: ReturnType<typeof createNeedleRenderer> | undefined;
   warpCover = false;
@@ -972,6 +974,7 @@ export class GameScene extends Scene {
     loadGalaxyArt(this, flight.galaxy);
     drawCurrents(this, flight);
     drawWhirlpoolProjects(this, flight);
+    const guideLights = this.drawGuideLights(this, flight);
     drawJobs(this);
     for (const [key, sprite] of this.landmarkSprites) {
       if (!this.landmarksDrawn.has(key)) {
@@ -1203,7 +1206,7 @@ export class GameScene extends Scene {
     if (tailRegions.length) {
       this.drawNormalTail(tailRegions);
     }
-    const activeIds = new Set(flight.objects.map((object) => object.id));
+    const activeIds = new Set([...flight.objects.map((object) => object.id), ...guideLights]);
     for (const ally of flight.phantom?.allies ?? []) {
       activeIds.add(`phantomAlly:${ally.id}`);
     }

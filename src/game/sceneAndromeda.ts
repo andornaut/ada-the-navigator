@@ -70,7 +70,11 @@ export function drawAndromeda(scene: ObjectsContext, object: SpaceObject): boole
     scene.passes(sprite);
     return true;
   }
-  const art = artFor(scene.shipAssets);
+  const assets = scene.galaxyManifests.get(5)?.assets;
+  if (!assets) {
+    return false;
+  }
+  const art = artFor(assets);
   if (object.id === ANDROMEDA_PLACES.beacon) {
     if (scene.model.state.progress[5].questComplete) {
       if (!art.relit || !art.relit.frames.every((frame) => scene.textures.exists(frame.id))) {

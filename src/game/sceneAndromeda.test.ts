@@ -21,6 +21,7 @@ const craft = { frames, jets: undefined };
 function scene(complete = false, ready = true): ObjectsContext {
   return {
     craftArt: new Map([["pip", craft]]),
+    galaxyManifests: new Map([[5, manifest]]),
     model: {
       state: {
         flight: { galaxy: 5, player: { x: 100, y: 0 } },
@@ -29,7 +30,7 @@ function scene(complete = false, ready = true): ObjectsContext {
     },
     passes: vi.fn(),
     project: (point: { x: number; y: number }) => point,
-    shipAssets: manifest.assets,
+    shipAssets: [],
     textures: { exists: () => ready },
   } as unknown as ObjectsContext;
 }
