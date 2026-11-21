@@ -8146,7 +8146,8 @@
     },
     {
       "id": "enemy-swarm-0",
-      "path": "/art/enemies/swarm-0.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8161,7 +8162,8 @@
     },
     {
       "id": "enemy-swarm-1",
-      "path": "/art/enemies/swarm-1.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8176,7 +8178,8 @@
     },
     {
       "id": "enemy-swarm-2",
-      "path": "/art/enemies/swarm-2.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8191,7 +8194,8 @@
     },
     {
       "id": "enemy-swarm-3",
-      "path": "/art/enemies/swarm-3.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8206,7 +8210,8 @@
     },
     {
       "id": "enemy-swarm-4",
-      "path": "/art/enemies/swarm-4.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8221,7 +8226,8 @@
     },
     {
       "id": "enemy-swarm-5",
-      "path": "/art/enemies/swarm-5.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8236,7 +8242,8 @@
     },
     {
       "id": "enemy-swarm-6",
-      "path": "/art/enemies/swarm-6.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8251,7 +8258,8 @@
     },
     {
       "id": "enemy-swarm-7",
-      "path": "/art/enemies/swarm-7.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8266,7 +8274,8 @@
     },
     {
       "id": "enemy-swarm-8",
-      "path": "/art/enemies/swarm-8.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8281,7 +8290,8 @@
     },
     {
       "id": "enemy-swarm-9",
-      "path": "/art/enemies/swarm-9.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8296,7 +8306,8 @@
     },
     {
       "id": "enemy-swarm-10",
-      "path": "/art/enemies/swarm-10.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8311,7 +8322,8 @@
     },
     {
       "id": "enemy-swarm-11",
-      "path": "/art/enemies/swarm-11.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8326,7 +8338,8 @@
     },
     {
       "id": "enemy-swarm-12",
-      "path": "/art/enemies/swarm-12.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8341,7 +8354,8 @@
     },
     {
       "id": "enemy-swarm-13",
-      "path": "/art/enemies/swarm-13.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8356,7 +8370,8 @@
     },
     {
       "id": "enemy-swarm-14",
-      "path": "/art/enemies/swarm-14.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8371,7 +8386,8 @@
     },
     {
       "id": "enemy-swarm-15",
-      "path": "/art/enemies/swarm-15.svg",
+      "path": "/art/enemies/swarm-sheet.svg",
+      "svgSheet": true,
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -8642,7 +8658,8 @@
     },
     {
       "id": "enemy-interceptor-0",
-      "path": "/art/enemies/interceptor-0.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8657,7 +8674,8 @@
     },
     {
       "id": "enemy-interceptor-1",
-      "path": "/art/enemies/interceptor-1.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8672,7 +8690,8 @@
     },
     {
       "id": "enemy-interceptor-2",
-      "path": "/art/enemies/interceptor-2.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8687,7 +8706,8 @@
     },
     {
       "id": "enemy-interceptor-3",
-      "path": "/art/enemies/interceptor-3.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8702,7 +8722,8 @@
     },
     {
       "id": "enemy-interceptor-4",
-      "path": "/art/enemies/interceptor-4.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8717,7 +8738,8 @@
     },
     {
       "id": "enemy-interceptor-5",
-      "path": "/art/enemies/interceptor-5.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8732,7 +8754,8 @@
     },
     {
       "id": "enemy-interceptor-6",
-      "path": "/art/enemies/interceptor-6.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8747,7 +8770,8 @@
     },
     {
       "id": "enemy-interceptor-7",
-      "path": "/art/enemies/interceptor-7.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8762,7 +8786,8 @@
     },
     {
       "id": "enemy-interceptor-8",
-      "path": "/art/enemies/interceptor-8.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8777,7 +8802,8 @@
     },
     {
       "id": "enemy-interceptor-9",
-      "path": "/art/enemies/interceptor-9.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8792,7 +8818,8 @@
     },
     {
       "id": "enemy-interceptor-10",
-      "path": "/art/enemies/interceptor-10.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8807,7 +8834,8 @@
     },
     {
       "id": "enemy-interceptor-11",
-      "path": "/art/enemies/interceptor-11.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8822,7 +8850,8 @@
     },
     {
       "id": "enemy-interceptor-12",
-      "path": "/art/enemies/interceptor-12.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8837,7 +8866,8 @@
     },
     {
       "id": "enemy-interceptor-13",
-      "path": "/art/enemies/interceptor-13.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8852,7 +8882,8 @@
     },
     {
       "id": "enemy-interceptor-14",
-      "path": "/art/enemies/interceptor-14.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -8867,7 +8898,8 @@
     },
     {
       "id": "enemy-interceptor-15",
-      "path": "/art/enemies/interceptor-15.svg",
+      "path": "/art/enemies/interceptor-sheet.svg",
+      "svgSheet": true,
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,

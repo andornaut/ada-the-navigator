@@ -13,6 +13,7 @@ import {
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { svgText } from "./svg-text.ts";
 import {
+  GALAXIES,
   mergeEntries,
   mergeSidecars,
   readManifest,
@@ -25,9 +26,9 @@ import { type Fill, type V2 } from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
-const FIGHTER_COLUMNS = 4;
-const FIGHTER_SHEET = "fighter-sheet.svg";
-const FIGHTER_PATH = `/art/enemies/${FIGHTER_SHEET}`;
+const SHEET_COLUMNS = 4;
+const SHEET_HULLS = ["fighter", "interceptor", "swarm"] as const;
+const sheetFile = (craft: Craft) => `${craft.name}-sheet.svg`;
 // Douglas-Peucker tolerance for the hull silhouettes, in frame px. At 0.5 the small swarm and
 // interceptor frames fall below the intersection-over-union floor.
 const SILHOUETTE_TOLERANCE = 0.4;
@@ -92,80 +93,94 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
   );
 }
 
-function fighterSheet(craft: Craft, traced: ReturnType<typeof silhouettes>) {
+function hullSheet(craft: Craft, traced: ReturnType<typeof silhouettes>) {
   const rows = hullEntries(craft.name, craft.frame);
-  const size = craft.frame * FIGHTER_COLUMNS;
+  const size = craft.frame * SHEET_COLUMNS;
   const roots = rows.map(({ id, directionIndex: heading }) => {
     const standalone = svgText(svg(craft, heading, traced[heading]!.tips));
-    const x = (heading % FIGHTER_COLUMNS) * craft.frame;
-    const y = Math.floor(heading / FIGHTER_COLUMNS) * craft.frame;
+    const x = (heading % SHEET_COLUMNS) * craft.frame;
+    const y = Math.floor(heading / SHEET_COLUMNS) * craft.frame;
     return `<svg id="${id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
   });
   return {
     text: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${roots.join("")}</svg>\n`,
     entries: rows.map(({ id, path, ...metadata }) => ({
       id,
-      path: path.replace(/fighter-\d+\.svg$/u, FIGHTER_SHEET),
+      path: path.replace(/[^/]+$/u, sheetFile(craft)),
       svgSheet: true,
       ...metadata,
     })),
   };
 }
 
-function removeStandaloneFighters(fighter: Craft) {
-  for (const { directionIndex } of hullEntries(fighter.name, fighter.frame)) {
-    rmSync(`${output}fighter-${directionIndex}.svg`, { force: true });
+function removeStandaloneHulls(craft: Craft) {
+  for (const { directionIndex } of hullEntries(craft.name, craft.frame)) {
+    rmSync(`${output}${craft.name}-${directionIndex}.svg`, { force: true });
   }
+}
+
+type CoreAssets = ReturnType<typeof readManifest>["assets"];
+
+function sheetInstalled(core: CoreAssets, selecting: boolean, craft: Craft): boolean {
+  const standalone = new Map(
+    hullEntries(craft.name, craft.frame).map(({ id, path }) => [id, path]),
+  );
+  const rows = core.filter(({ id }) => standalone.has(id));
+  const sheets = rows.filter((row) => "svgSheet" in row && row.svgSheet === true);
+  if (!selecting && sheets.length === 0) return false;
+
+  const installed = sheets.length === standalone.size;
+  const sheetPath = `/art/enemies/${sheetFile(craft)}`;
+  if (
+    rows.length !== standalone.size ||
+    (!installed && sheets.length > 0) ||
+    rows.some(
+      (row) => !("path" in row) || row.path !== (installed ? sheetPath : standalone.get(row.id)),
+    )
+  ) {
+    throw new Error(
+      `The core ${craft.name} set must own its 16 standalone frames or share one sheet`,
+    );
+  }
+  const ownedPaths = new Set([...standalone.values(), sheetPath]);
+  const otherRows = [
+    ...core.filter(({ id }) => !standalone.has(id)),
+    ...GALAXIES.flatMap((galaxy) => readManifest(galaxy).assets),
+  ];
+  const referrer = otherRows.find(
+    (row) => "path" in row && typeof row.path === "string" && ownedPaths.has(row.path),
+  );
+  if (referrer) {
+    throw new Error(`The core ${craft.name} sheet would change the art owned by ${referrer.id}`);
+  }
+  return installed;
 }
 
 function main() {
   const args = process.argv.slice(2);
-  const selected = args[0] === "--fighter-sheet";
-  if (args.length !== (selected ? 1 : 0)) {
-    throw new Error("Usage: node art/tools/enemies.ts [--fighter-sheet]");
+  const selectedName = SHEET_HULLS.find((name) => args[0] === `--${name}-sheet`);
+  if (args.length !== (selectedName ? 1 : 0)) {
+    throw new Error(
+      "Usage: node art/tools/enemies.ts [--fighter-sheet|--interceptor-sheet|--swarm-sheet]",
+    );
   }
-  const fighter = crafts.find(({ name }) => name === "fighter")!;
-  const standalone = new Map(
-    hullEntries(fighter.name, fighter.frame).map(({ id, path }) => [id, path]),
-  );
-  const fighterId = (id: string) => standalone.has(id);
   const core = readManifest("core").assets;
-  const rows = core.filter(({ id }) => fighterId(id));
-  const sheets = rows.filter((row) => "svgSheet" in row && row.svgSheet === true);
-  const installed = sheets.length === standalone.size;
-  if (selected || sheets.length > 0) {
-    const legacyPaths = new Set(standalone.values());
-    if (
-      rows.length !== standalone.size ||
-      (!installed && sheets.length > 0) ||
-      rows.some(
-        (row) =>
-          !("path" in row) || row.path !== (installed ? FIGHTER_PATH : standalone.get(row.id)),
-      ) ||
-      core.some(
-        (row) =>
-          !fighterId(row.id) &&
-          "path" in row &&
-          typeof row.path === "string" &&
-          legacyPaths.has(row.path),
-      )
-    ) {
-      throw new Error(
-        "The core fighter set must own its 16 standalone frames or share one fighter sheet",
-      );
-    }
-  }
-  if (selected) {
-    const { text, entries } = fighterSheet(fighter, silhouettes(fighter));
-    const target = output + FIGHTER_SHEET;
+  const sheetCrafts = SHEET_HULLS.map((name) => crafts.find((craft) => craft.name === name)!);
+  if (selectedName) {
+    const craft = sheetCrafts.find(({ name }) => name === selectedName)!;
+    sheetInstalled(core, true, craft);
+    const { text, entries } = hullSheet(craft, silhouettes(craft));
+    const target = output + sheetFile(craft);
     if (!existsSync(target) || readFileSync(target, "utf8") !== text) {
       writeFileSync(target, text);
     }
-    mergeEntries("core", fighterId, entries);
-    removeStandaloneFighters(fighter);
+    const ids = new Set(entries.map(({ id }) => id));
+    mergeEntries("core", (id) => ids.has(id), entries);
+    removeStandaloneHulls(craft);
     return;
   }
 
+  const installed = new Set(sheetCrafts.filter((craft) => sheetInstalled(core, false, craft)));
   mkdirSync(output, { recursive: true });
   const files = new Map<string, string>();
   const entries = [];
@@ -175,9 +190,9 @@ function main() {
       `${craft.name}-jets.json`,
       jets(craft, (yaw) => traced[yaw]!.collision),
     );
-    if (installed && craft === fighter) {
-      const sheet = fighterSheet(fighter, traced);
-      files.set(FIGHTER_SHEET, sheet.text);
+    if (installed.has(craft)) {
+      const sheet = hullSheet(craft, traced);
+      files.set(sheetFile(craft), sheet.text);
       entries.push(...sheet.entries);
     } else {
       for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
@@ -197,7 +212,7 @@ function main() {
     (id) => hull.test(id),
     entries.map((entry) => storedAt(paths, entry)),
   );
-  if (installed) removeStandaloneFighters(fighter);
+  for (const craft of installed) removeStandaloneHulls(craft);
   // These crafts' jets; heavies.ts writes the hardpoints and destruction.ts the shards.
   const jetCrafts = new Set(crafts.map(({ name }) => name));
   mergeSidecars(
