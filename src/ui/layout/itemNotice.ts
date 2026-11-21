@@ -1,9 +1,16 @@
 import { ITEM_NOTICE } from "../../data/layout.ts";
 export { ITEM_NOTICE } from "../../data/layout.ts";
 
-/** The chip's width for a label: padding, the icon and its mark gap, the label and padding. */
-export function chipWidth(label: number): number {
-  return 2 * ITEM_NOTICE.padding + ITEM_NOTICE.icon + ITEM_NOTICE.markGap + label;
+/** Positions measured from the left panel edge, including the icon's transparent margins. */
+export function noticeIconLayout(
+  bearings: { readonly left: number; readonly right: number } = {
+    left: 0,
+    right: 0,
+  },
+) {
+  const iconLeft = ITEM_NOTICE.padding - bearings.left;
+  const labelLeft = iconLeft + ITEM_NOTICE.icon + ITEM_NOTICE.markGap - bearings.right;
+  return { fixedWidth: labelLeft + ITEM_NOTICE.padding, iconLeft, labelLeft };
 }
 
 /**

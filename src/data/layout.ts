@@ -636,7 +636,7 @@ export const MAP_SCREEN_LAYOUT = {
     labelTop: 14,
     /** The name's 28 line box top. */
     nameTop: 10,
-    padding: 16,
+    padding: 8,
     /** Pip diameter. */
     pip: 6,
     /** Pip centre to centre. */
@@ -768,8 +768,8 @@ export const GALAXY_MAP_MOVE = {
 // GALAXY_MAP's authored parts; src/ui/layout/galaxyMap.ts adds centres.
 export const GALAXY_MAP_LAYOUT = {
   colors: { cream: GALAXY_MAP_CREAM, grey: GALAXY_MAP_GREY, ink: GALAXY_MAP_INK },
-  // Each name on an ink pill: 20 high, the label plus 12 wide, its top 19 below the centre.
-  label: { alpha: 0.85, height: 20, padding: 6, radius: 4, top: 19 },
+  // Each name on an ink pill: 20 high, the label plus 8 wide, its top 19 below the centre.
+  label: { alpha: 0.85, height: 20, lockedInkLift: 4.4, padding: 4, radius: 4, top: 19 },
   // The 36 frame: a radius 12 disc with a 1.5 ink edge over an ink backing disc, radius 15 at
   // 0.85; the cream selected ring at radius 17 (band 16 to 18).
   marker: {

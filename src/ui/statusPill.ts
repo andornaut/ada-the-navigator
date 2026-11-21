@@ -1,3 +1,4 @@
+import type { StatusAboardKind } from "../data/hudIconBearings.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -10,6 +11,7 @@ import {
   shieldFillWidth,
   shieldPillWidth,
   STATUS_PILL,
+  statusEndPadding,
 } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -289,6 +291,12 @@ export const STATUS_PILL_STYLE = `
   white-space:nowrap;
   pointer-events:none
 }
+.ada-controls .ada-status:has(.ada-status-aboard[data-kind=carrying]:not([hidden])){
+  padding-right:${units(statusEndPadding("carrying"))}
+}
+.ada-controls .ada-status:has(.ada-status-aboard[data-kind=towing]:not([hidden])){
+  padding-right:${units(statusEndPadding("towing"))}
+}
 .ada-controls .ada-status .ada-resource-target{pointer-events:auto;cursor:pointer}
 .ada-controls .ada-status [role=button]:focus-visible{${FOCUS_STYLE}}
 /* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
@@ -468,7 +476,7 @@ ${SHIELD_PILL.bars
 
 export interface StatusView {
   /** What Ada carries or tows and its spoken label, such as "Carrying: a crate", or null. */
-  readonly aboard: { readonly kind: "carrying" | "towing"; readonly label: string } | null;
+  readonly aboard: { readonly kind: StatusAboardKind; readonly label: string } | null;
   readonly capacity: number;
   /** Shield level, 1 to 3, which sets the shield bar's length. */
   readonly level: number;

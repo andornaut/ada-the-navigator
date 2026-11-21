@@ -10,6 +10,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { SCREEN } from "../data/screen.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -470,6 +471,12 @@ export const MAP_SCREEN_STYLE = `
   pointer-events:none;
   white-space:nowrap;
   z-index:2
+}
+@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+  .ada-controls .ada-map-header{
+    padding-top:${units(1)};
+    padding-bottom:${units(SPACING.gap - 1)}
+  }
 }
 .ada-controls .ada-map-header-row{
   display:flex;

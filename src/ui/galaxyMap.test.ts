@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
+import { units } from "./layout/css.ts";
 
 it("leaves the galaxy selector unframed while retaining the information panel frame", () => {
   const outer = GALAXY_MAP_STYLE.match(/\.ada-controls \.ada-route-rules\{([^}]+)\}/u)?.[1];
@@ -12,6 +13,19 @@ it("leaves the galaxy selector unframed while retaining the information panel fr
   expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-rules::after");
   expect(panel).toContain("border:");
   expect(panel).toContain("border-image:");
+});
+
+it("fits the route name pills and centres only the locked ellipsis ink", () => {
+  const name = GALAXY_MAP_STYLE.match(/\.ada-controls \.ada-route-label\{([^}]+)\}/u)?.[1];
+  const locked = GALAXY_MAP_STYLE.match(
+    /\.ada-controls \.ada-route-label\[data-locked\]\{([^}]+)\}/u,
+  )?.[1];
+  expect(name).toContain(`height:${units(20)}`);
+  expect(name).toContain(`padding:0 ${units(4)}`);
+  expect(locked).toContain(`line-height:${units(12.2)}`);
+  expect(GALAXY_MAP_STYLE).toContain(`[data-locked]{line-height:${units(11.2)}}`);
+  expect(GALAXY_MAP_STYLE).toContain(`:not([data-locked]){line-height:${units(22)}}`);
+  expect(locked).not.toMatch(/(?:^|[;\s])(?:height|top|transform|padding):/u);
 });
 
 // The destination actions as the scene reads them from content.

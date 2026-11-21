@@ -1,3 +1,4 @@
+import { SCREEN } from "../../data/screen.ts";
 import { UI_SCOPE } from "../modal.ts";
 import { CARD_CONTENT, SCROLL } from "./contentCard.ts";
 import { slice, units } from "./css.ts";
@@ -16,6 +17,9 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   width:auto
 }
 ${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1}
+@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+  ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
+}
 ${UI_SCOPE} .ada-ship-back{
   display:flex;
   justify-content:flex-end;

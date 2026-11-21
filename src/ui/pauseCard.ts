@@ -197,6 +197,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
           create(initial) {
             const button = createButton(initial.label, initial.role);
             button.dataset.action = `pause-${initial.id}`;
+            if (initial.id === "map" || initial.id === "resume") {
+              const label = document.createElement("span");
+              label.className = "ada-pause-cap-label";
+              label.textContent = initial.label;
+              button.replaceChildren(label);
+            }
             button.classList.toggle("ada-pause-full", PAUSE_FULL_WIDTH.includes(initial.id));
             buttons.set(initial.id, button);
             const update = (data: PauseTreeAction) => {

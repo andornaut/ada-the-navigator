@@ -302,8 +302,14 @@ export const GALAXY_MAP_STYLE = `
   color:${colors.cream};
   white-space:nowrap
 }
+/* The ellipsis has no cap band. Centre its ink within the unchanged pill. */
 .ada-controls .ada-route-label[data-locked]{
+  line-height:${units(label.height - 2 * label.lockedInkLift + 1)};
   color:${colors.grey}
+}
+@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+  .ada-controls .ada-route-label:not([data-locked]){line-height:${units(label.height + 2)}}
+  .ada-controls .ada-route-label[data-locked]{line-height:${units(label.height - 2 * label.lockedInkLift)}}
 }
 .ada-controls .ada-route-ship{
   position:absolute;

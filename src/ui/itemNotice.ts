@@ -1,11 +1,12 @@
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
+import { HUD_ICON_BEARINGS } from "../data/hudIconBearings.ts";
 import { tierColour } from "../data/upgradeTiers.ts";
 import { weaponGlyphPath, weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
-import { chipWidth, ITEM_NOTICE } from "./layout/itemNotice.ts";
-import { STATUS_CARGO_INSET } from "./layout/playView.ts";
+import { ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
+import { statusCargoInset } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
@@ -144,6 +145,26 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     label: label(item),
     target: { kind: "weapon", weapon: gain.weapon },
   };
+}
+
+/** Horizontal spacing follows the displayed frame and its contrast against the chip. */
+export function noticeIconBearings(icon: Notice["icon"]) {
+  if ("sprite" in icon) {
+    switch (icon.sprite) {
+      case "icon-cargo-20":
+      case "icon-tow-20": {
+        const { left, right } =
+          HUD_ICON_BEARINGS[icon.sprite === "icon-cargo-20" ? "carrying" : "towing"];
+        // The outer ink matches the chip, and the label begins with a bearing before the plus.
+        return { left: left + 1, right: right + 1 };
+      }
+      case "icon-shop-weapon-rapidMissile":
+        return HUD_ICON_BEARINGS.rapidMissile;
+    }
+  } else if (icon.mask === weaponGlyphPath("rapidMissile")) {
+    return HUD_ICON_BEARINGS.rapidMissile;
+  }
+  return undefined;
 }
 
 /** A notice's label with its merged count: " ×{n}" after repeats. */
@@ -351,7 +372,6 @@ export const ITEM_NOTICE_STYLE = `
 .ada-controls .ada-item-notice-label{
   position:absolute;
   top:${units((ITEM_NOTICE.height - TYPE.label.lineHeight) / 2)};
-  left:${units(ITEM_NOTICE.padding + ITEM_NOTICE.icon + ITEM_NOTICE.markGap)};
   font:${font(TYPE.label)};
   line-height:${units(TYPE.label.lineHeight)};
   color:${STATUS_COLOURS.count}
@@ -393,7 +413,7 @@ export interface NoticePlaces {
 export function noticeDestination(places: NoticePlaces, target: NoticeTarget): number {
   const pillCentre = places.pill.left + places.pill.width / 2;
   if (target.kind === "cargo") {
-    return places.cargo ?? places.pill.left + places.pill.width - STATUS_CARGO_INSET;
+    return places.cargo ?? places.pill.left + places.pill.width - statusCargoInset(null);
   }
   if (target.kind === "weapon") {
     return places.weapons.get(target.weapon) ?? pillCentre;
@@ -519,10 +539,13 @@ export function createItemNotices(
         }
         return;
       }
-      const width = chipWidth(showNotice(frame, places.right - chipWidth(0)));
+      const { fixedWidth, iconLeft, labelLeft } = noticeIconLayout(
+        noticeIconBearings(frame.notice.icon),
+      );
+      const width = fixedWidth + showNotice(frame, places.right - fixedWidth);
       const left = centredNoticeLeft(places.right, width);
-      const iconLeft = ITEM_NOTICE.padding;
       icon.style.left = units(iconLeft);
+      label.style.left = units(labelLeft);
       let opacity = 1;
       const panelOpacity = 1;
       const labelOpacity = 1;

@@ -44,7 +44,7 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 | `MAP_SCREEN.header.height`   | 64    | The name row (`rowHeight` 36: the 28 heading line plus `2 * SPACING.rowGap`), a 20 line, `SPACING.gap` |
 | `MAP_SCREEN.header.radius`   | 4     | As `PILL`                                                                                              |
 | `MAP_SCREEN.header.alpha`    | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
-| `MAP_SCREEN.header.padding`  | 16    | The note's inset at each end                                                                           |
+| `MAP_SCREEN.header.padding`  | 8     | The survey note's inset at each side                                                                   |
 | `MAP_SCREEN.header.divider`  | 1x16  | Supporting `#b8b3c9`, centred on the row                                                               |
 | `MAP_SCREEN.header.pip`      | 6     | Pip diameter                                                                                           |
 | `MAP_SCREEN.header.pipPitch` | 8     | Pip centre to centre (2 apart)                                                                         |
@@ -58,9 +58,12 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
   5 gaps (`mapHeaderGeometry`). `g` is at least
   `SPACING.gap` and grows so the header is at least the note plus
   `2 * padding` wide. Measure ink, not line boxes.
-- Note: one line, starting `padding` in from the header's left. It never
-  passes the header's right inset: at about 346 wide it sets the header to
-  about 378.
+- Note: one line, with 8 logical px at each side. Its width plus these
+  insets sets the minimum header width, about 363 logical px before gap
+  rounding.
+- At a viewport width of 720 CSS px or less or a height of 360 CSS px or
+  less, move the header contents down 1 logical px. Top padding is 1 and
+  bottom padding is 7 within the fixed 64 logical px panel.
 - Each pip stands for one tenth of the survey. The first
   `floor(percent / 10)` pips are filled cream `#ead4aa` discs, where `percent`
   is the header's displayed whole percent; the rest are 1 px `#b8b3c9` rings of
@@ -72,7 +75,7 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
   always ends `SPACING.gap` left of the tools and clears the pause disc. The
   pips always draw at full size, never scaled: the widest header, the longest
   galaxy name with "100% mapped" and the 78 pip row, stays under 413.25, and
-  the note sets its minimum width (about 378).
+  the note sets its minimum width (about 363 before gap rounding).
 - The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.

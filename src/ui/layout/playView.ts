@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { HIT_RULE, hitAround } from "@andornaut/game-kit/runtime/ui/hitAreas";
 
+import { HUD_ICON_BEARINGS, type StatusAboardKind } from "../../data/hudIconBearings.ts";
 import {
   CONTROLS_BOTTOM,
   COUNT_ADVANCE,
@@ -236,18 +237,25 @@ const ORE_LEAD = DIVIDED + STATUS_PILL.iconGap;
 // The pill's width for the counts and segments shown: the padding, the Stardust icon, its icon gap
 // and count slot; ore adds a divider with its gaps, the ore icon, an icon gap and its count slot,
 // and something aboard a divider with its gaps and its icon.
-export function statusPillWidth(counts: StatusCounts, aboard: boolean): number {
+export function statusPillWidth(counts: StatusCounts, aboard: StatusAboardKind | null): number {
   return (
     STARDUST_LEAD +
     countSlot(counts.stardust) +
-    STATUS_PILL.padding +
+    statusEndPadding(aboard) +
     (counts.ore === null ? 0 : ORE_LEAD + countSlot(counts.ore)) +
     (aboard ? DIVIDED : 0)
   );
 }
 
-/** The cargo icon's centre in from the pill's right edge: the right padding and half the icon. */
-export const STATUS_CARGO_INSET = STATUS_PILL.padding + STATUS_PILL.cargoIcon / 2;
+/** Leave six logical pixels to the final icon's drawn edge. */
+export function statusEndPadding(aboard: StatusAboardKind | null): number {
+  return STATUS_PILL.padding - (aboard ? HUD_ICON_BEARINGS[aboard].right : 0);
+}
+
+/** The last icon box's centre in from the pill's right edge. */
+export function statusCargoInset(aboard: StatusAboardKind | null): number {
+  return statusEndPadding(aboard) + STATUS_PILL.cargoIcon / 2;
+}
 
 /** Each shown count's +N tick centre across, from the pill's left edge. */
 export function statusTickCentres(counts: StatusCounts): { ore: number | null; stardust: number } {

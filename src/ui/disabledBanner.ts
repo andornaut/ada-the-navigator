@@ -7,13 +7,13 @@ import { TYPE } from "./layout/tokens.ts";
 // element in the overlay layer over the canvas, placed each frame on the heavy's projected banner
 // point in game-area logical px. It is visual status, hidden from assistive technology.
 
-/** Art's banner: a threat-red face with a 1 px ink border, 8 px insets and an ink label. */
+/** Art's banner: a threat-red face with a 1 px ink border, 6 px insets and an ink label. */
 export const DISABLED_BANNER = {
   border: 1,
   face: "#FF6B6B",
   height: 24,
   ink: "#181425",
-  inset: 8,
+  inset: 6,
   label: TYPE.label,
   radius: 4,
 } as const;
@@ -43,6 +43,9 @@ export const DISABLED_BANNER_STYLE = `
   font:${font(label)};
   white-space:nowrap;
   transform:translate(-50%,-50%)
+}
+@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
+  .ada-disabled-banner{padding:${units(2)} ${units(inset - border - 0.75)} 0}
 }
 `;
 

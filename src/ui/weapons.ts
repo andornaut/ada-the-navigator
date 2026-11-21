@@ -1,3 +1,4 @@
+import { SCREEN } from "../data/screen.ts";
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
@@ -199,6 +200,10 @@ export const WEAPON_STYLE = `
   gap:${units(HUD_BUTTON.gap)}
 }
 ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
+/* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
+@media (width > ${SCREEN.width}px) and (height > ${SCREEN.height}px){
+  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${units(0.75)} 0}
+}
 .ada-controls .ada-weapon{
   position:relative
 }

@@ -64,7 +64,7 @@ describe("map screen tokens", () => {
         height: 64,
         labelTop: 14,
         nameTop: 10,
-        padding: 16,
+        padding: 8,
         pip: 6,
         pipPitch: 8,
         radius: 4,
@@ -152,29 +152,29 @@ describe("map projection and fit", () => {
 
   it("draws ten 6 pips at an 8 pitch in a fixed 78 row", () => {
     expect(MAP_SCREEN.header).toMatchObject({ pip: 6, pipPitch: 8, pipRow: 78, pips: 10 });
-    // The row's width counts in every header, whatever the percent: the note sets 378 with ink to
+    // The row's width counts in every header, whatever the percent: the note sets 363 with ink to
     // spare, and a wide name and percent add their ink to the 78 row and five 8 gaps.
     expect(mapHeaderWidth(200, 100)).toBe(200 + 1 + 100 + 78 + 5 * 8);
   });
 
   it("uses one equal ink gap for title, divider, percent, pips and both outer edges", () => {
-    // Synthetic measured ink widths: 100 + 1 + 64 + 78 = 243 plus five equal 27 gaps fills the
-    // note's 346 plus 2 * 16 padding.
-    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 27, width: 378 });
-    expect(mapHeaderWidth(100, 64, 346)).toBe(378);
-    // At 2 device px per logical px the row snaps to 156 device px and the header still to 378.
-    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 27, width: 378 });
-    expect(mapHeaderWidth(100, 64, 601)).toBe(633);
+    // Synthetic measured ink widths: 100 + 1 + 64 + 78 = 243 plus five equal 24 gaps fits the
+    // note's 346 plus 2 * 8 padding after snapping.
+    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 24, width: 363 });
+    expect(mapHeaderWidth(100, 64, 346)).toBe(363);
+    // At 2 device px per logical px the row snaps to 156 device px and the header still to 363.
+    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 24, width: 363 });
+    expect(mapHeaderWidth(100, 64, 601)).toBe(618);
   });
 
-  it("keeps the widest header inside the phone cap and the note's minimum at about 378", () => {
+  it("keeps the widest header inside the phone cap and the note's minimum at about 363", () => {
     const phone = { bottom: 19, left: 43, right: 43, top: 0 };
     // Ink widths the browser smoke measures at 720x360 (map-header-proof.json): the longest galaxy
     // name, "Andromeda", in TYPE.heading, "100% mapped" in TYPE.label and the note in TYPE.body.
     const ink = { name: 133, note: 345, percent: 105 };
     const minimum = mapHeaderWidth(0, 0, ink.note);
-    expect(minimum).toBeGreaterThanOrEqual(374);
-    expect(minimum).toBeLessThanOrEqual(382);
+    expect(minimum).toBeGreaterThanOrEqual(361);
+    expect(minimum).toBeLessThanOrEqual(365);
     expect(mapHeaderWidth(ink.name, ink.percent, ink.note)).toBeLessThanOrEqual(
       mapHeaderCap(phone, BASE),
     );

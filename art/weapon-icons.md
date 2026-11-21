@@ -2,7 +2,9 @@
 
 Native SVG source, 20 × 20 px, `viewBox="0 0 20 20"`, transparent background.
 Warm cream (`#ead4aa`) paths follow Chibi's compact navigation icon style, with
-at least 2 px padding; Rapid Missile's lower trail dash runs to the left edge.
+at least 2 px padding except for Rapid Missile, whose lower trail dash starts
+1 px from the left edge. Its two darts span columns 1 through 17 and rows 3
+through 16, zero-indexed.
 Laser strokes and scatter dots are 2 px thick.
 
 ## Current roster
@@ -38,7 +40,7 @@ Rebuild with `node art/tools/weapon-icons.ts`.
 | `weapon-heavyMissile.svg` | `e43fe516d9e3f7503504f83502ed51564fbb17bfcd167e59d7b535e9c3ac6509` |
 | `weapon-multiLaser.svg`   | `154d7be25169bb8e3619dd7d331cfb3a3e6be93941a4f4695666b93b5cc42318` |
 | `weapon-phaser.svg`       | `fcf71d5cff54072faa7d5ed9d69d8c4470f6dc16c648a5ab71f025dd5841d5fe` |
-| `weapon-rapidMissile.svg` | `88121e0f40abae9d1048c6b32d306e5e01cc0788046a40ebc93753f62ca2cab2` |
+| `weapon-rapidMissile.svg` | `b93e057f1757b37d5892f1f384f3aff741dd1ec38d553fa9ab826dbcf1710d71` |
 | `weapon-scattershot.svg`  | `e580a47402045f782c4d43b51060d8c096186455f45f5cd8312dea4d694920fd` |
 
 ## Ammunition icons

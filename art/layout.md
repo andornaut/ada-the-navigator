@@ -378,13 +378,13 @@ Quests closes back to the paused map through its existing navigation.
 
 | Part          | Geometry                                                                                                                                                                                                                                                 |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel         | `PILL`'s 28 height and radius 4, with `STATUS_PILL.padding` 6 at each end, tighter than `PILL.padding`; ink at 0.65, as the conversation panel                                                                                                           |
+| Panel         | `PILL`'s 28 height and radius 4, with `STATUS_PILL.padding` 6 at the left and a 6 logical px end inset adjusted for the final icon's right bearing; ink at 0.65, as the conversation panel                                                               |
 | Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                                                                    |
 | Icon gap      | `STATUS_PILL.iconGap` 4 (`SPACING.rowGap`), from each icon to its count                                                                                                                                                                                  |
 | Count         | Gameplay's count, at most five characters ("9999", "44.4k", "100k" to "9999k", "10m" and up), in `TYPE.label` on its 20 line with tabular figures, in a slot as wide as the count's own rendered width, at least one digit (`STATUS_PILL.minCount` 8.90) |
 | Ore segment   | Always visible, including zero: a divider (`STATUS_PILL.dividerGap` 6, a 1x16 divider, 6), `icon-ore-20`, `STATUS_PILL.iconGap`, the ore count in its own slot                                                                                           |
-| Cargo segment | While she carries a job or story item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                                                              |
-| Width         | 36 plus the Stardust slot (6 + 20 + 4, the slot, 6); the ore segment adds 37 plus its slot (13 + 20 + 4), the cargo segment 33 (13 + 20). The left edge stays put and the right edge moves with the content                                              |
+| Cargo segment | A divider and `icon-cargo-20` or `icon-tow-20`. `statusEndPadding` is 6 less the icon's right bearing, leaving 4 to the cargo box (bearing 2) or 1 to the tow box (bearing 5) and targeting 6 to the drawn edge.                                         |
+| Width         | `statusPillWidth`: 36 plus the Stardust slot (6 + 20 + 4, the slot, 6); add 37 plus the ore slot when shown (13 + 20 + 4), then 31 for cargo or 28 for tow (13 + 20 less the right bearing). The left edge stays put.                                    |
 
 | State  | Trigger                      | Draw                                                                                                           | Timing                                                                                                                                                                            |
 | ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -588,8 +588,8 @@ gain but Stardust and ore shows one, queued one at a time.
 | Part     | Geometry                                                                                                                                                                 |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Chip     | `ITEM_NOTICE.height` 24, radius 4, opaque ink, a 1 rim inside the edge                                                                                                   |
-| Contents | `PILL.padding` 8, the 20 icon centred on the chip's row (2 above and below), `SPACING.markGap` 6, the label, 8                                                           |
-| Label    | `TYPE.label` on its 20 line, one line; width = 42 + the label                                                                                                            |
+| Contents | 8 to the visible 20 px icon, then 6 from its visible right edge to the first glyph. The icon stays centred vertically. Leave 8 after the label.                          |
+| Label    | `TYPE.label` on its 20 line. Chip width is label width + 42 less the two effective horizontal icon bearings.                                                             |
 | Top      | `ITEM_NOTICE.top`: HUD rect top + 34.5 (46.5), `SPACING.rowGap` (4) below the pill's bottom; bottom + 58.5 (70.5)                                                        |
 | Across   | Centred on the destination's centre x, then clamped: left edge at least the pill's left edge, right edge at most the leftmost weapon target's left - `SPACING.pageInset` |
 | Layer    | Over the field and the conversation box, under the pause button, the pill, the `+N` labels and the weapon buttons; `pointer-events: none`                                |
@@ -839,8 +839,12 @@ token above; strings are Gameplay's.
 The Paused card shows no objective or job lines. Its grid actions sort
 alphabetically by label: Map and Quests, then Settings and Ship. Back to title
 sits full width directly above the full-width primary Resume. Map is hidden
-when its canonical permission is false, and opens the local map. All button
-sizes remain unchanged. The Start screen and Ada's room open the Menu card
+when its canonical permission is false, and opens the local map. The Map
+and Resume buttons have a 44 logical px face over a 4 px lip. At viewport
+widths of 720 CSS px or less or heights of 360 CSS px or less, their labels
+move down 1 logical px to centre the cap bands on those faces.
+
+The Start screen and Ada's room open the Menu card
 instead: Achievements, Exit (Start screen, when shown) and Settings,
 alphabetically, then Back to title away from the Start screen, then primary
 Close.
@@ -1401,12 +1405,19 @@ Chart (`GALAXY_MAP`):
 | Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the marker whose panel shows, Earth's included (`marker.ring`)                                                                                                                                                                                                                                                                      |
 | Route line     | The arc itself between consecutive markers, each leg 111.34 of arc; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                                                                                                                                     |
 | Line looks     | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                                                                                                                 |
-| Label          | Name in `TYPE.label` centred on an ink pill at 0.85: 20 high, label + 12 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                |
+| Label          | Name in `TYPE.label` on an ink pill at 0.85: 20 high, label + 8 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                         |
 | Ship           | Selected ship frame (`ship-N`) at 42 display, the game area's in-flight size, pivot at (centre x, centre y - 33) (`ship`)                                                                                                                                                                                                                                                                     |
 | Ship heading   | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the arc's tangent at the marker, toward the next galaxy; at galaxy 6, the incoming leg's at its end. Rest headings 24, 25, 27, 29, 31 and 0 for galaxies 1 to 6                                                                                                                                                    |
 | Earth marker   | A seventh marker centred at (360, 122), midway between markers 1 and 6, inside the arc: the galaxy marker's frame, backing and ring, its disc blue `#65AEDD` with two green `#8AB86B` patches and no number; label "Earth" on the same pill, top at 141                                                                                                                                       |
 | Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); galaxy centres are 111.1 apart and Earth's is 91.64 or more from each (markers 3 and 4), so press areas never overlap                                                                                                                                                                                                                    |
 | Focus ring     | `ui-focus`, 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side)                                                                                                                                                                                                                                                                                                             |
+
+At viewport widths of 720 CSS px or less or heights of 360 CSS px or less,
+named destination labels, including Earth, use a 22 logical px line height
+to lower their cap bands by 1 within the 20 px pill. Locked labels centre
+the visible dots optically within the same 20 px height. Their line height
+is 12.2 logical px by default and 11.2 under the same viewport rule,
+derived from `GALAXY_MAP_LAYOUT.label.lockedInkLift` (4.4).
 
 Route order runs left to right on screen, so Left and Right follow screen
 order.

@@ -35,8 +35,8 @@ import {
   shieldPillWidth,
   type Size,
   startNavOrder,
-  STATUS_CARGO_INSET,
   STATUS_PILL,
+  statusCargoInset,
   statusPillWidth,
   statusTickCentres,
   STICK_AREA_MARGIN,
@@ -322,12 +322,12 @@ describe("HUD anchors", () => {
 
   it.each([
     // Art's widths (art/layout.md "Status pill"): 36 plus the Stardust slot, ore 37 plus its slot,
-    // cargo or tow 33.
-    ["0", null, false, 44.9],
-    ["44.4k", null, false, 76.04],
-    ["42", "18", false, 108.59],
-    ["9999", "18", true, 159.39],
-    ["9999m", "9999m", true, 205.64],
+    // cargo 31 or tow 28.
+    ["0", null, null, 44.9],
+    ["44.4k", null, null, 76.04],
+    ["42", "18", null, 108.59],
+    ["9999", "18", "carrying", 157.39],
+    ["9999m", "9999m", "carrying", 203.64],
   ] as const)(
     "size the pill to Stardust %s, ore %s, cargo %s: %d",
     (stardust, ore, aboard, width) => {
@@ -437,28 +437,36 @@ describe("HUD anchors", () => {
     }
   });
 
-  it("add 33 for the cargo segment and 37 plus its slot for the ore segment", () => {
+  it("add 31 for cargo, 28 for tow and 37 plus its slot for the ore segment", () => {
     expect(STATUS_PILL.cargoIcon).toBe(20);
-    const alone = statusPillWidth({ ore: null, stardust: "42" }, false);
-    expect(statusPillWidth({ ore: null, stardust: "42" }, true) - alone).toBeCloseTo(33, 9);
-    // An item notice for cargo lands on its icon's centre, 16 in from the pill's right edge.
-    expect(STATUS_CARGO_INSET).toBe(16);
-    expect(statusPillWidth({ ore: "9999m", stardust: "42" }, false) - alone).toBeCloseTo(
+    const alone = statusPillWidth({ ore: null, stardust: "42" }, null);
+    expect(statusPillWidth({ ore: null, stardust: "42" }, "carrying") - alone).toBeCloseTo(31, 9);
+    expect(statusPillWidth({ ore: null, stardust: "42" }, "towing") - alone).toBeCloseTo(28, 9);
+    // An item notice for cargo lands on its own icon box's centre.
+    expect(statusCargoInset("carrying")).toBe(14);
+    expect(statusCargoInset("towing")).toBe(11);
+    expect(statusCargoInset(null)).toBe(16);
+    const counts = { ore: "18", stardust: "42" };
+    expect(statusPillWidth(counts, "carrying") - statusCargoInset("carrying")).toBeCloseTo(
+      statusPillWidth(counts, "towing") - statusCargoInset("towing"),
+      9,
+    );
+    expect(statusPillWidth({ ore: "9999m", stardust: "42" }, null) - alone).toBeCloseTo(
       37 + countWidth("9999m"),
       9,
     );
   });
 
   it.each([
-    ["720x360", { height: 360, width: 720 }, NO_INSETS, 62.75, 382.5, 98.11],
-    ["720x360 with phone insets", { height: 360, width: 720 }, PHONE, 93.75, 351.5, 36.11],
+    ["720x360", { height: 360, width: 720 }, NO_INSETS, 62.75, 382.5, 100.11],
+    ["720x360 with phone insets", { height: 360, width: 720 }, PHONE, 93.75, 351.5, 38.11],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       PHONE,
       93.75,
       410.58,
-      95.19,
+      97.19,
     ],
   ] as const)(
     "keep the widest pill a page inset clear of six weapons at %s",
@@ -468,8 +476,8 @@ describe("HUD anchors", () => {
       const first = hud.x + hud.width + hudButtonTarget(5).x;
       expect(pillLeft).toBeCloseTo(left, 2);
       expect(first).toBeCloseTo(leftmost, 2);
-      const widest = statusPillWidth({ ore: "9999m", stardust: "9999m" }, true);
-      expect(widest).toBeCloseTo(205.64, 2);
+      const widest = statusPillWidth({ ore: "9999m", stardust: "9999m" }, "carrying");
+      expect(widest).toBeCloseTo(203.64, 2);
       expect(first - SPACING.pageInset - pillLeft - widest).toBeCloseTo(clearance, 2);
     },
   );
@@ -527,7 +535,7 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }))).toBe(true);
       const pill = {
         height: 28,
-        width: statusPillWidth({ ore: "9999m", stardust: "9999m" }, true),
+        width: statusPillWidth({ ore: "9999m", stardust: "9999m" }, "carrying"),
         x: STATUS_PILL.x,
         y: STATUS_PILL.y,
       };

@@ -50,8 +50,8 @@ import {
   hudButtonTarget,
   hudRect,
   shieldIconCentre,
-  STATUS_CARGO_INSET,
   STATUS_PILL,
+  statusCargoInset,
   statusPillWidth,
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
@@ -737,7 +737,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const hud = hudRect(layout.insets, view);
     const left = pauseButton.hidden ? STATUS_PILL.xAlone : STATUS_PILL.x;
     const ore = statusView?.ore ?? 0;
-    const aboard = Boolean(statusView?.aboard);
+    const aboard = statusView?.aboard?.kind ?? null;
     // The pill's width as it draws now, from the counts it shows.
     const width = statusPillWidth(
       { ore: pillCount(ore), stardust: pillCount(statusView?.stardust ?? 0) },
@@ -746,7 +746,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const count = weaponIds.length;
     const target = (index: number) => hud.width + hudButtonTarget(count - 1 - index).x;
     return {
-      cargo: aboard ? left + width - STATUS_CARGO_INSET : null,
+      cargo: aboard ? left + width - statusCargoInset(aboard) : null,
       leftmostTarget: count > 0 ? target(0) : null,
       pill: { left, width },
       right: hud.width,

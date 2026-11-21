@@ -292,8 +292,13 @@ straight after it.
 Procedural, drawn by Tech over the disabled heavy: no sprite.
 
 - Face: `threat` `#FF6B6B` ([space palette](space-palette.md)), 24 logical px
-  high, radius 4, a 1 px ink `#181425` border, 8 px insets either side of the
-  label.
+  high, radius 4, with a 1 px ink `#181425` border. The side inset targets
+  6 logical px from the outer edge, including the border.
+- The banner's default horizontal padding is 5 logical px inside the
+  border. At viewport widths of 720 CSS px or less or heights of 360 CSS
+  px or less, `DISABLED_BANNER_STYLE` uses 4.25 horizontal padding and 2
+  top padding with zero bottom padding to centre this label's cap band
+  and account for its side bearings.
 - Label: Gameplay's "Disabled" string in `TYPE.label` (16 bold on 20,
   [layout](layout.md)) in ink, centred in the face. Ink on threat is 6.86:1;
   the border carries the edge on a light field, where bare threat is 1.75:1.

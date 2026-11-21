@@ -12,10 +12,11 @@ import {
   gainNotice,
   NOTICE_ACCENTS,
   noticeDestination,
+  noticeIconBearings,
   noticeLanding,
   NoticeQueue,
 } from "./itemNotice.ts";
-import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.ts";
+import { chipLeft, flyPoint, ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
 
 const LABELS = CONTENT.labels;
 const notice = (gain: Parameters<typeof gainNotice>[1]) => gainNotice(LABELS, gain);
@@ -255,8 +256,20 @@ describe("item notice timeline", () => {
 describe("item notice geometry", () => {
   it("makes the chip 24 high at HUD rect top + 34.5, 42 plus its label wide", () => {
     expect(ITEM_NOTICE).toMatchObject({ height: 24, top: 34.5 });
-    expect(chipWidth(0)).toBe(42);
-    expect(chipWidth(100)).toBe(142);
+    expect(noticeIconLayout()).toEqual({ fixedWidth: 42, iconLeft: 8, labelLeft: 34 });
+  });
+
+  it.each([
+    [{ sprite: "icon-cargo-20" }, 5, 3],
+    [{ sprite: "icon-tow-20" }, 3, 0],
+    [{ frames: 2, sprite: "icon-shop-weapon-rapidMissile" }, 7, 4],
+    [{ mask: "/art/ui/icons/weapon-rapidMissile.svg" }, 7, 4],
+    [{ sprite: "icon-holodisk-20" }, 8, 6],
+  ] as const)("fits a notice around the displayed asset %j", (icon, left, gap) => {
+    const layout = noticeIconLayout(noticeIconBearings(icon));
+    expect(layout.iconLeft).toBe(left);
+    expect(layout.labelLeft - layout.iconLeft - ITEM_NOTICE.icon).toBe(gap);
+    expect(layout.fixedWidth).toBe(layout.labelLeft + ITEM_NOTICE.padding);
   });
 
   it("centres the chip on its destination, clamped to the pill's left and the weapons' inset", () => {

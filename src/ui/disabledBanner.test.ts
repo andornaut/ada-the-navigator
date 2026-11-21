@@ -39,11 +39,12 @@ const fakeDocument = () => {
 };
 
 describe("disabled banner", () => {
-  it("styles Art's threat-red face 24 high, radius 4, 1 px ink border and 8 px insets", () => {
+  it("styles Art's threat-red face 24 high, radius 4, 1 px ink border and 6 px insets", () => {
     const rule = /\.ada-disabled-banner\{([^}]*)\}/u.exec(DISABLED_BANNER_STYLE)![1]!;
     expect(rule).toContain(`height:${units(24)}`);
-    // The 1 px border sits inside the face, so the label is 8 px in from the face's edge.
-    expect(rule).toContain(`padding:0 ${units(7)}`);
+    // The 1 px border sits inside the face, so the label is 6 px in from the face's edge.
+    expect(rule).toContain(`padding:0 ${units(5)}`);
+    expect(DISABLED_BANNER_STYLE).toContain(`padding:${units(2)} ${units(4.25)} 0`);
     expect(rule).toContain(`border:${units(1)} solid #181425`);
     expect(rule).toContain(`border-radius:${units(4)}`);
     expect(rule).toContain("background:#FF6B6B");

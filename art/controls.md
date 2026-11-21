@@ -399,6 +399,10 @@ The pill's segment icons and the [Ship card](layout.md#ship-card)'s cargo rows:
 rebuild with `node art/tools/cargo-icons.ts`, each inside its own 1 px ink
 edge `#181425`, so on a light field it needs no added outline.
 
+The tow hook, including its ink edge, spans columns 4 through 14 and rows 1
+through 18 of its 20 px frame, zero-indexed. Its left and right bearings are
+4 and 5 px.
+
 | Key             | Shows                                   | Colours                                                                                         |
 | --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#e798cd`, shade `#d481b9` |

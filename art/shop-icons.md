@@ -130,7 +130,7 @@ run Prettier on the written JSON.
 | `icon-shop-weapon-heavyMissile.png` | `65cd8c674398fba99112d3cbb768d6da1e2dbc296a13981ac51b266517c696e5` |
 | `icon-shop-weapon-multiLaser.png`   | `b18e753142fa429b19cdda8161bdbe759508ca50f2c2bc015e4b80d588867f69` |
 | `icon-shop-weapon-phaser.png`       | `7b6f8a8023f34e8a5b6a51273aa4a1cb2adcb0bcab4c41fc32b0670e60183d01` |
-| `icon-shop-weapon-rapidMissile.png` | `75635f189837c64915f64e422d3bb083373c4832bc1383898153fb44b2eb0439` |
+| `icon-shop-weapon-rapidMissile.png` | `20bac149a5ca5e1f4b8fd1f74894f9afc571b931f73bd58dfe7757c9f82e97fe` |
 | `icon-shop-weapon-scattershot.png`  | `c9a03fc49da03bed20e21eb493694d9eca461e4351f7ebfc64af652a9a6ebf37` |
 | `icon-shop-weapon-upgrade.png`      | `bbb8df92ae714b76ccc4e144b9e67ab752f8d71579ad24fa8f95d7b25d4496aa` |
 
