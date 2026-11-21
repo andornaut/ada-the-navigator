@@ -63,20 +63,25 @@ export function phantomAllyRoster(
 export function rotatePhantomAllies(
   roster: readonly PhantomAllySpec[],
   turn: number,
-  player: Vec,
+  flight: Pick<FlightState, "player" | "facing">,
 ): PhantomAlly[] {
   if (!roster.length) {
     return [];
   }
   const count = Math.min(T.allies, roster.length);
-  return Array.from({ length: count }, (_, index) => ({
+  const allies: PhantomAlly[] = Array.from({ length: count }, (_, index) => ({
     ...roster[(turn * T.allies + index) % roster.length]!,
-    ...player,
+    ...flight.player,
     facing: { x: 0, y: -1 },
     fireIn: 0,
     jumpAge: 0,
     velocity: { x: 0, y: 0 },
   }));
+  const restingSlot = phantomAllyFormation(flight, allies);
+  for (const ally of allies) {
+    Object.assign(ally, restingSlot(ally));
+  }
+  return allies;
 }
 /** Equal slots start behind Ada and expand for actual drawn neighbour footprints. */
 export function phantomEscortSlot(
@@ -94,6 +99,26 @@ export function phantomEscortSlot(
   const angle =
     Math.atan2(heading.y, heading.x) + Math.PI + (index * Math.PI * 2) / Math.max(1, allies.length);
   return { x: player.x + Math.cos(angle) * ring, y: player.y + Math.sin(angle) * ring };
+}
+/** The same role slots place arriving allies and receive them when they have no target. */
+function phantomAllyFormation(
+  flight: Pick<FlightState, "player" | "facing">,
+  allies: readonly PhantomAlly[],
+): (ally: PhantomAlly) => Vec {
+  const escorts = allies.filter((ally) => ally.behavior !== "whale");
+  const whales = allies.filter((ally) => ally.behavior === "whale");
+  const heading = Math.hypot(flight.facing.x, flight.facing.y) ? flight.facing : { x: 0, y: -1 };
+  return (ally) => {
+    if (ally.behavior !== "whale") {
+      return phantomEscortSlot(flight.player, heading, ally.radius, escorts, escorts.indexOf(ally));
+    }
+    const offset =
+      (whales.indexOf(ally) - (whales.length - 1) / 2) * (2 * ally.radius + T.neighborGap);
+    return {
+      x: flight.player.x - heading.x * T.whaleFollow - heading.y * offset,
+      y: flight.player.y - heading.y * T.whaleFollow + heading.x * offset,
+    };
+  };
 }
 function liveEnemy(object: SpaceObject): boolean {
   return (
@@ -145,26 +170,12 @@ export function stepPhantomAllies(
   allies: PhantomAlly[],
 ): AllyFire[] {
   const shots: AllyFire[] = [];
-  const escorts = allies.filter((ally) => ally.behavior !== "whale");
-  const whales = allies.filter((ally) => ally.behavior === "whale");
-  const heading = Math.hypot(flight.facing.x, flight.facing.y) ? flight.facing : { x: 0, y: -1 };
+  const restingSlot = phantomAllyFormation(flight, allies);
   for (const ally of allies) {
     ally.jumpAge += dt;
     ally.fireIn = Math.max(0, ally.fireIn - dt);
     const target = ally.behavior === "whale" ? undefined : targetFor(ally, flight);
-    let destination: Vec;
-    if (ally.behavior === "whale") {
-      const offset =
-        (whales.indexOf(ally) - (whales.length - 1) / 2) * (2 * ally.radius + T.neighborGap);
-      destination = {
-        x: flight.player.x - heading.x * T.whaleFollow - heading.y * offset,
-        y: flight.player.y - heading.y * T.whaleFollow + heading.x * offset,
-      };
-    } else {
-      destination =
-        target ??
-        phantomEscortSlot(flight.player, heading, ally.radius, escorts, escorts.indexOf(ally));
-    }
+    const destination = target ?? restingSlot(ally);
     const distance = gap(ally, destination);
     const cap = ship.maxSpeed * (ally.behavior === "whale" ? CALF.speedFraction : 1);
     const speed = Math.min(cap, distance);

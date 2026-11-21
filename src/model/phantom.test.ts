@@ -384,6 +384,54 @@ describe("Phantom chapter", () => {
   });
 });
 describe("Phantom allies", () => {
+  it("arrives in the resting role slots on the first wave and after rotation", () => {
+    const context = fixture();
+    const roster = phantomAllyRoster(
+      [1, 2, 3, 4, 5].map((galaxy) => ({
+        activityCompleted: true,
+        galaxy: galaxy as 1 | 2 | 3 | 4 | 5,
+        projects: [{ ally: "escort", project: "friend" }],
+      })),
+      21,
+    );
+    const withAllies = { ...context, allies: roster };
+    freeSettlements(withAllies);
+    context.flight.player = { ...state(context).waypoint };
+    context.flight.facing = { x: 1, y: 0 };
+    beforeStepPhantom(withAllies);
+    expect(state(context).wave).toBe(1);
+
+    function checkEntry() {
+      const allies = state(context).allies;
+      const escorts = allies.filter(({ behavior }) => behavior !== "whale");
+      const { facing, player } = context.flight;
+      const positions = allies.map(({ x, y }) => ({ x, y }));
+      expect(new Set(positions.map((point) => JSON.stringify(point))).size).toBe(allies.length);
+      for (const [index, { radius, x, y }] of escorts.entries()) {
+        expect({ x, y }).toEqual(phantomEscortSlot(player, facing, radius, escorts, index));
+      }
+      const marlo = allies.find(({ id }) => id === "marlo")!;
+      expect({ x: marlo.x, y: marlo.y }).toEqual({
+        x: player.x - PHANTOM_TUNING.whaleFollow,
+        y: player.y,
+      });
+      expect(
+        allies.every(({ jumpAge, velocity }) => jumpAge === 0 && !velocity.x && !velocity.y),
+      ).toBe(true);
+      // Hold a separate target-free flight to compare the existing idle step against the entry.
+      expect(
+        stepPhantomAllies(CONTENT.tuning.physics, 0.1, { ...context.flight, objects: [] }, allies),
+      ).toEqual([]);
+      expect(allies.map(({ x, y }) => ({ x, y }))).toEqual(positions);
+      return allies.map(({ id }) => id);
+    }
+
+    const first = checkEntry();
+    disable(context, state(context).enemyIds);
+    afterStepPhantom(withAllies);
+    expect(state(context).wave).toBe(2);
+    expect(checkEntry()).not.toEqual(first);
+  });
   it("retains only bounded departure effects through the published jump duration, including after completion", () => {
     const context = fixture();
     const roster = phantomAllyRoster([{ activityCompleted: true, galaxy: 1, projects: [] }], 21);
@@ -429,7 +477,10 @@ describe("Phantom allies", () => {
     expect(roster).toHaveLength(15);
     const seen = new Set<string>();
     for (let turn = 0; turn < 4; turn++) {
-      const active = rotatePhantomAllies(roster, turn, { x: 0, y: 0 });
+      const active = rotatePhantomAllies(roster, turn, {
+        facing: { x: 0, y: -1 },
+        player: { x: 0, y: 0 },
+      });
       expect(active).toHaveLength(8);
       active.forEach((ally) => seen.add(ally.id));
     }
@@ -445,7 +496,10 @@ describe("Phantom allies", () => {
       id: `escort:${i}`,
       radius: 21,
     }));
-    const allies = rotatePhantomAllies(roster, 0, { x: 0, y: 0 });
+    const allies = rotatePhantomAllies(roster, 0, {
+      facing: { x: 0, y: -1 },
+      player: { x: 0, y: 0 },
+    });
     const slots = allies.map((_, index) =>
       phantomEscortSlot({ x: 0, y: 0 }, { x: 0, y: -1 }, 21, allies, index),
     );
@@ -474,7 +528,7 @@ describe("Phantom allies", () => {
       ],
       21,
     );
-    const allies = rotatePhantomAllies(roster, 0, context.flight.player);
+    const allies = rotatePhantomAllies(roster, 0, context.flight);
     expect(stepPhantomAllies(CONTENT.tuning.physics, 0.1, context.flight, allies)).toEqual([]);
     const marlo = allies.find((ally) => ally.id === "marlo")!;
     expect(phantomSongSpeed(allies, { x: marlo.x + 300, y: marlo.y })).toBe(0.75);

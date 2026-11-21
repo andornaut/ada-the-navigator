@@ -70,7 +70,7 @@ describe("actual projectile launch integration", () => {
       allies: rotatePhantomAllies(
         [{ behavior: "escort", galaxy: 1, id: "clover", radius: 20 }],
         0,
-        { x: 150, y: 100 },
+        { facing: flight.facing, player: { x: 150, y: 100 } },
       ),
       allyTurn: 0,
       blockades: {},

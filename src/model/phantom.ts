@@ -393,7 +393,7 @@ function activateNextPhantomEncounter(context: PhantomContext): boolean {
     state.phase = "flagship";
   }
   state.enemyIds = [...batch.enemyIds];
-  state.allies = rotatePhantomAllies(context.allies ?? [], state.allyTurn, context.flight.player);
+  state.allies = rotatePhantomAllies(context.allies ?? [], state.allyTurn, context.flight);
   syncFlightRegion(context.content, context.flight);
   prepareNextPhantomEncounter(context);
   return true;
