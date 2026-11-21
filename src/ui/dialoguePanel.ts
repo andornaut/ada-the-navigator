@@ -9,8 +9,10 @@ import {
 } from "./dialoguePanelTree.ts";
 import { storySpeakerName } from "./dialoguePortraits.ts";
 import { font, safeEdge, units } from "./layout/css.ts";
+import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createButton } from "./modal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
@@ -24,9 +26,23 @@ export const DIALOGUE_PANEL_STYLE = `
   top:${safeEdge("top", SPACING.pageInset)};
   right:${safeEdge("right", SPACING.pageInset)}
 }
+.ada-controls .ada-dialogue-panel .ada-story-choice-column{
+  min-width:0
+}
+.ada-controls .ada-dialogue-frame .ada-dialogue-panel .ada-story-text > .ada-story-frame{
+  margin-bottom:0
+}
+.ada-controls .ada-station-frame .ada-story-choices{
+  gap:${units(SPACING.gap)}
+}
 .ada-controls .ada-dialogue-panel .ada-dialogue-controls{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr))
+  grid-template-columns:var(--ada-dialogue-row, minmax(0,1fr));
+  grid-template-areas:none
+}
+.ada-controls .ada-dialogue-panel .ada-dialogue-controls[hidden],
+.ada-controls .ada-dialogue-panel .ada-story-choices[hidden]{
+  display:none
 }
 .ada-controls .ada-dialogue-panel .ada-story-controls > .ada-button{
   width:100%
@@ -40,6 +56,23 @@ export const DIALOGUE_PANEL_STYLE = `
   font:${font(TYPE.label)}
 }
 `;
+
+/** Widths in logical pixels, in the semantic order of the visible buttons. */
+export function dialogueControlWidths(
+  column: number,
+  widths: readonly [number] | readonly [number, number],
+): { readonly stacked: boolean; readonly widths: readonly number[] } {
+  const [left, right] = widths;
+  const half = (column - SMALL_BUTTON_GAP) / 2;
+  if (right === undefined) {
+    return { stacked: false, widths: [Math.min(column, Math.max(half, left))] };
+  }
+  if (left + SMALL_BUTTON_GAP + right > column) {
+    return { stacked: true, widths: [Math.min(column, Math.max(half, left)), column] };
+  }
+  const secondary = Math.min(column - SMALL_BUTTON_GAP - right, Math.max(half, left));
+  return { stacked: false, widths: [secondary, column - SMALL_BUTTON_GAP - secondary] };
+}
 
 export type DialogueSpeaker =
   | string
@@ -131,18 +164,60 @@ export function createDialoguePanel(options: {
     },
     dialoguePanelTree(),
   );
+  let disposed = false;
+  const fit = (): void => {
+    if (disposed || !frame.isConnected) {
+      return;
+    }
+    const buttons = (Array.from(controls.children) as HTMLButtonElement[]).filter(
+      (button) => !button.hidden,
+    );
+    controls.hidden = buttons.length === 0;
+    choices.hidden = !Array.from(choices.children).some((child) => !(child as HTMLElement).hidden);
+    const width = frameSize(controls).width;
+    const first = buttons[0];
+    if (first && width > 0) {
+      const second = buttons[1];
+      const unit = readViewUnit(controls);
+      const column = width / unit;
+      const ownWidth = (button: HTMLButtonElement): number => {
+        button.style.width = "max-content";
+        const own = frameSize(button).width / unit;
+        button.style.width = "";
+        return own;
+      };
+      const left = ownWidth(first);
+      const layout = dialogueControlWidths(column, second ? [left, ownWidth(second)] : [left]);
+      controls.style.setProperty(
+        "--ada-dialogue-row",
+        second && !layout.stacked ? layout.widths.map(units).join(" ") : "minmax(0,1fr)",
+      );
+      if (second) {
+        second.style.width = "";
+        second.style.justifySelf = "";
+      }
+      first.style.width = layout.stacked || !second ? units(layout.widths[0]!) : "";
+      first.style.justifySelf = !second && first.classList.contains("ada-primary") ? "end" : "";
+    }
+    const scrolls = copy.scrollHeight > copy.clientHeight + 1;
+    copy.classList.toggle("ada-story-scrolls", scrolls);
+    copy.tabIndex = scrolls ? 0 : -1;
+  };
+  const view = frame.ownerDocument.defaultView;
+  view?.addEventListener(VIEW_SCALE_EVENT, fit);
+  void frame.ownerDocument.fonts?.ready.then(fit);
   return {
     body,
     card,
     choices,
     close,
     controls,
-    dispose: () => arrangement.dispose(),
-    fit(): void {
-      const scrolls = copy.scrollHeight > copy.clientHeight + 1;
-      copy.classList.toggle("ada-story-scrolls", scrolls);
-      copy.tabIndex = scrolls ? 0 : -1;
+    dispose(): void {
+      disposed = true;
+      view?.removeEventListener(VIEW_SCALE_EVENT, fit);
+      arrangement.dispose();
     },
+    fit,
     frame,
     showLine(name: DialogueSpeaker | undefined, text: string): void {
       const displayName =

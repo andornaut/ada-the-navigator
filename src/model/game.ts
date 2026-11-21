@@ -38,7 +38,7 @@ import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { questReward } from "../data/questRewards.ts";
 import { SCREEN } from "../data/screen.ts";
-import { KEEPER_NAME_PARTS, STATION_KEEPER_COPY } from "../data/stationCopy.ts";
+import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
@@ -149,6 +149,7 @@ import {
   greetingLines,
   type KeeperKey,
   type StationGreeting,
+  stationKeeperPersonalName,
   worldStationKeeper,
 } from "./keepers.ts";
 import { flightLandmarkSites, landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
@@ -1755,14 +1756,8 @@ export class GameModel {
       GALAXY_ID[galaxy][0]!.toUpperCase() + GALAXY_ID[galaxy].slice(1),
       id,
     );
-    const [given, family] = KEEPER_NAME_PARTS[galaxy];
-    const nameSeed = Array.from(id).reduce<number>(
-      (seed, character) => (Math.imul(seed, 31) + character.charCodeAt(0)) >>> 0,
-      galaxy,
-    );
-    const givenName = given[nameSeed % given.length];
-    const familyName = family[Math.floor(nameSeed / given.length) % family.length];
-    const displayName = id === HUB_STATION ? "Quartz" : `${givenName} ${familyName} of ${station}`;
+    const name = stationKeeperPersonalName(galaxy, id);
+    const displayName = id === HUB_STATION ? name : `${name} of ${station}`;
     const format = (text: string) =>
       text.replaceAll("{station}", station).replaceAll("{keeper}", displayName);
     const lines =
@@ -1793,6 +1788,14 @@ export class GameModel {
           line: greeting.lines[greeting.index]!,
         }
       : null;
+  }
+  /** The compact Dock tab uses the personal name without changing the greeting text. */
+  dockGreeting(): StationGreeting | null {
+    const greeting = this.stationGreeting;
+    const { docked, flight } = this.state;
+    return greeting && docked && flight
+      ? { ...greeting, displayName: stationKeeperPersonalName(flight.galaxy, docked) }
+      : greeting;
   }
   /** A tap on the keeper block: the greeting's next line, the last staying on show. */
   advanceGreeting(): void {

@@ -966,6 +966,7 @@ export class InteractionConversation {
   private answer: readonly import("../data/conversations.ts").InteractionLine[] | null = null;
   private answerIndex = 0;
   private topicsShown = false;
+  private readonly asked = new Set<number>();
 
   show(
     copy: import("../data/conversations.ts").InteractionCopy,
@@ -980,6 +981,7 @@ export class InteractionConversation {
     this.answer = null;
     this.answerIndex = 0;
     this.topicsShown = false;
+    this.asked.clear();
   }
 
   get line(): import("../data/conversations.ts").InteractionLine | null {
@@ -996,7 +998,7 @@ export class InteractionConversation {
   }
 
   get topics() {
-    return this.topicsShown && !this.answer ? (this.copy?.topics ?? []) : [];
+    return this.topicsShown ? this.remainingTopics : [];
   }
 
   get choices() {
@@ -1013,35 +1015,51 @@ export class InteractionConversation {
     return this.copy?.party ?? "Astra";
   }
 
+  private get remainingTopics() {
+    return (this.copy?.topics ?? []).filter((_, index) => !this.asked.has(index));
+  }
+
   get hasTopics(): boolean {
-    return (this.copy?.topics.length ?? 0) > 0;
+    return !this.answer && this.remainingTopics.length > 0;
+  }
+
+  get choosingTopic(): boolean {
+    return this.topicsShown;
   }
 
   ask(): void {
-    if (this.hasTopics && !this.answer) {
+    if (this.hasTopics) {
       this.topicsShown = true;
     }
   }
 
   topic(index: number): void {
-    const topic = this.copy?.topics[index];
-    if (!topic || !this.topicsShown || topic.lines.length === 0) {
+    const topic = this.topics[index];
+    if (!topic || !this.copy || topic.lines.length === 0) {
       return;
     }
     this.topicsShown = false;
+    this.asked.add(this.copy.topics.indexOf(topic));
     this.answer = topic.lines;
     this.answerIndex = 0;
   }
 
-  /** An answered topic returns to its essential page; visible options require selection. */
-  advance(): void {
+  /** Advance one page. Leaving topics at an outcome can request its sole Continue. */
+  advance(): "continue" | undefined {
     if (this.answer) {
       if (++this.answerIndex >= this.answer.length) {
         this.answer = null;
       }
-    } else if (this.copy && !this.topicsShown && !this.atOutcome) {
-      this.index++;
+      return undefined;
     }
+    const fromTopics = this.topicsShown;
+    this.topicsShown = false;
+    if (this.copy && !this.atOutcome) {
+      this.index++;
+    } else if (fromTopics && this.choices.length === 1 && this.choices[0]?.id === "continue") {
+      return "continue";
+    }
+    return undefined;
   }
 
   /** Pending choices remain visible and must be explicitly answered. */
@@ -1061,6 +1079,7 @@ export class InteractionConversation {
     this.answerIndex = 0;
     this.index = 0;
     this.topicsShown = false;
+    this.asked.clear();
   }
 }
 

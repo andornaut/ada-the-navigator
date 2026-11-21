@@ -9,8 +9,7 @@ Choices converge. The choice column scrolls if needed. Previous is hidden when t
 also offers Skip. Skip follows the whole continuation across scene boundaries
 and stops for an unresolved choice.
 
-Space Use interactions open a modal conversation, except Dock, which opens the
-station card. The conversation's PARTY heading names the person or group Ada is
+Every space Use interaction, Dock included, opens the conversation card. The conversation's PARTY heading names the person or group Ada is
 addressing. Each line has its own speaker name and portrait, including Ada,
 Astra and Penny when they speak. A PARTY heading never attributes every line to
 that party. Narration remains unattributed. Continue advances essential lines;
@@ -690,7 +689,7 @@ Space dialogue, in story order:
 ### 2.hub: PARTY Quartz
 
 The hub arrival conversation uses Quartz's name and portrait. Repeated ore
-Deposit uses Astra's short brief below; Dock still opens the station card.
+Deposit uses Astra's short brief below.
 
 - Quartz: "Welcome. Independent miners bring ore here for transport."
 - Ada: "Where do I find ore?"
@@ -896,8 +895,7 @@ name and portrait as guide, never a new NPC or an object portrait. Ada and Penny
 keep their own speaker names and portraits if they have a line. These short
 exchanges describe existing actions; they add no quest stage, reward or choice.
 Skip dialogue reaches the same existing action outcome once and leaves any
-pending choice for the player. Named-person deliveries use that person's PARTY;
-Dock always opens its station card.
+pending choice for the player. Named-person deliveries use that person's PARTY.
 
 ### Salvage: PARTY Astra
 
@@ -915,6 +913,15 @@ Ask more, optional for the relevant salvage:
 
 - "What can we collect?" Astra: "Parts from this disabled ship." For the flagship's last holodisk: Astra: "The last piece of my memory."
 - "Is it disabled?" Astra: "Yes. Its weapons are down."
+
+### Tow: PARTY Astra
+
+Stranded craft:
+
+- Astra: "Its engine has stopped. I can tow it to safety, but we'll fly slower."
+- Ada: "Then let's get it somewhere safe."
+
+Tow keeps its existing attach and rescue outcome.
 
 ### Ore Deposit: PARTY Astra
 
@@ -1137,8 +1144,10 @@ Phantom:
 
 ## Greeters
 
-On a first docking the greeting is one button that shows the next line on each
-tap; its accessible name is "Next line".
+On a first docking each greeting line is a page of the conversation card,
+advanced with Continue. Skip opens the last page when more than one advance remains. The last page shows
+the keeper's last line, the Stardust icon with the balance, as in the shop, then
+Jobs (at a station with jobs), Undock and Shop.
 
 Station keepers, first docking (three lines), then later dockings (one line, in
 turn):
@@ -1223,7 +1232,8 @@ beacon light. Welcome!"
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
-- Conversation buttons: Continue, Ask more.
+- Conversation buttons: Continue on every page that advances, Dock's greeting
+  pages and topic lists included; Ask more.
 - Shop ammunition lock reason: key `requiresWeapon`, exact text
   "Requires {weapon}". Substitute the canonical current weapon display name for
   `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.

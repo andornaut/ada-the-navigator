@@ -1112,30 +1112,36 @@ describe("Use conversation paging", () => {
     expect(run.choices).toEqual(panel.choices);
   });
 
-  it("does not let Next bypass visible topic options, including at the outcome", () => {
+  it("leaves the topic list on Continue without choosing any material outcome", () => {
     for (const atOutcome of [false, true]) {
       const run = new InteractionConversation();
       run.show(copy, panel);
       if (atOutcome) {
         run.advance();
       }
-      const line = run.line;
       run.ask();
-      for (let press = 0; press < 3; press++) {
-        run.advance();
-        run.topic(-1);
-        expect(run.line).toBe(line);
-        expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
-        expect(run.choices).toEqual([]);
-        expect(run.atOutcome).toBe(false);
-      }
-      run.topic(0);
-      expect(run.line?.text).toBe("Answer");
-      run.advance();
-      expect(run.line).toBe(line);
+      run.topic(-1);
+      expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
+      expect(run.advance()).toBeUndefined();
+      expect(run.line?.text).toBe("Last");
       expect(run.topics).toEqual([]);
-      expect(run.atOutcome).toBe(atOutcome);
+      expect(run.choices).toEqual(panel.choices);
     }
+  });
+
+  it("offers only remaining topics and forwards a sole outcome Continue", () => {
+    const run = new InteractionConversation();
+    run.show(
+      { ...copy, topics: [...copy.topics, { ...copy.topics[0]!, label: "Other question" }] },
+      { ...panel, choices: [{ id: "continue", label: "Continue" }] },
+    );
+    run.advance();
+    run.ask();
+    run.topic(0);
+    run.advance();
+    run.ask();
+    expect(run.topics.map(({ label }) => label)).toEqual(["Other question"]);
+    expect(run.advance()).toBe("continue");
   });
 
   it("plays every selected branch line once before resuming its current essential page", () => {

@@ -116,12 +116,14 @@ export function interactionHudRow(): {
 const INTERACTION_ROW = interactionHudRow();
 
 export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
+.ada-controls [data-station] .ada-dialogue-frame > .ada-close,
 .ada-controls .ada-interaction-modal .ada-dialogue-frame > .ada-close{
   top:${fromHudEdge("top", INTERACTION_ROW.close.y)};
   right:${fromHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
   width:${units(INTERACTION_ROW.close.width)};
   height:${units(INTERACTION_ROW.close.height)}
 }
+.ada-controls [data-station] .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip,
 .ada-controls .ada-interaction-modal .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
   right:${fromHudEdge("right", INTERACTION_ROW.skipRight)}
 }
@@ -413,9 +415,19 @@ export function createInteractionCard(
     for (const [index, topic] of state.topics.entries()) {
       add(topic.label, () => state.topic(index), true);
     }
-    if (!state.atOutcome && state.topics.length === 0) {
-      add(CONTENT.labels.next ?? "", () => state.advance(), false, true);
-    } else if (state.topics.length === 0) {
+    if (!state.atOutcome) {
+      add(
+        CONTENT.labels.continue ?? "",
+        () => {
+          const action = state.advance();
+          if (action) {
+            options.choose(action);
+          }
+        },
+        false,
+        true,
+      );
+    } else {
       for (const choice of state.choices) {
         add(
           choice.label,
@@ -431,7 +443,7 @@ export function createInteractionCard(
         );
       }
     }
-    if (state.hasTopics && state.topics.length === 0) {
+    if (state.hasTopics && !state.choosingTopic && !state.atChoice) {
       add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
     }
     card.skip.hidden = state.atChoice;

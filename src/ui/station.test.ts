@@ -569,6 +569,7 @@ function constructedStation(
   connected = true,
   owned = true,
   permits: () => boolean = () => true,
+  greetingIndex = 2,
 ) {
   const f = strictStation();
   const { Node } = f;
@@ -576,7 +577,7 @@ function constructedStation(
   if (owned) {
     strictCleanup.push(registerAdaActionRoot({ permits }, parent as unknown as HTMLElement));
   }
-  const state = { corruptConfirmation: false, corruptRow: "", greetingIndex: 0 };
+  const state = { corruptConfirmation: false, corruptRow: "", greetingIndex };
   const measurements: { ids: string[]; registered: boolean[] }[] = [];
   const native = new Map<string, ReturnType<typeof parts>>();
   const button = (label: string) =>
@@ -626,7 +627,7 @@ function constructedStation(
     frame.append(card, close);
     if (options.closeAction === "station-back") {
       card.append(choices, controls);
-      controls.append(skip);
+      frame.append(skip);
     }
     if (fault === options.closeAction) {
       frame.append(unbound());
@@ -696,7 +697,7 @@ function constructedStation(
       "jobDropCancel",
       "jobDropTitle",
       "jobs",
-      "nextLine",
+      "continue",
       "owned",
       "projectFunded",
       "projects",
@@ -970,18 +971,55 @@ it("audits rebuilt purchase confirmation before strict-dialog focus", () => {
   );
 });
 
-it("does not rescan completed Station controls for greeting text changes", () => {
-  const f = constructedStation();
+it("does not rescan completed Station controls for greeting changes", () => {
+  const f = constructedStation("", true, true, undefined, 0);
   f.station.setOpen(true);
   const frame = f.native.get("station-back")!.frame;
   const queries = vi.spyOn(frame, "querySelectorAll");
   const next = frame
     .querySelectorAll("button")
-    .find((node) => node.textContent === f.labels.nextLine)!;
+    .find((node) => node.textContent === f.labels.continue)!;
   queries.mockClear();
   f.activate(next);
   expect(f.state.greetingIndex).toBe(1);
   expect(queries).not.toHaveBeenCalled();
+});
+
+it("shows only Continue before the final greeting and gives the completed row to Shop", () => {
+  const f = constructedStation("", true, true, undefined, 0);
+  f.station.setOpen(true);
+  const parts = f.native.get("station-back")!;
+  const finish = parts.controls.children.find((node) => node.textContent === f.labels.continue)!;
+  expect(parts.controls.children.filter((node) => !node.hidden)).toEqual([finish]);
+  expect(parts.choices.children.every((node) => node.hidden)).toBe(true);
+  expect(f.doc.activeElement).toBe(finish);
+  expect(parts.skip.hidden).toBe(false);
+  f.activate(parts.skip);
+  expect(f.state.greetingIndex).toBe(2);
+  expect(parts.controls.children.filter((node) => !node.hidden)).toEqual([
+    f.action("undock"),
+    f.action("open-shop"),
+  ]);
+  expect(parts.choices.children.every((node) => !node.hidden)).toBe(true);
+  expect(parts.skip.hidden).toBe(true);
+  expect(f.doc.activeElement).toBe(f.action("open-shop"));
+});
+
+it("hides redundant Skip when Continue alone reaches the final greeting", () => {
+  const f = constructedStation("", true, true, undefined, 0);
+  f.station.setOpen(true);
+  const parts = f.native.get("station-back")!;
+  const advance = parts.controls.children.find((node) => node.textContent === f.labels.continue)!;
+  expect(parts.skip.hidden).toBe(false);
+  f.activate(advance);
+  expect(f.state.greetingIndex).toBe(1);
+  expect(parts.skip.hidden).toBe(true);
+  expect(advance.hidden).toBe(false);
+  expect(f.doc.activeElement).toBe(advance);
+  f.activate(advance);
+  expect(f.state.greetingIndex).toBe(2);
+  expect(parts.skip.hidden).toBe(true);
+  expect(f.doc.activeElement).toBe(f.action("open-shop"));
 });
 
 it("audits the completed welcome view before strict focus on reopening", () => {

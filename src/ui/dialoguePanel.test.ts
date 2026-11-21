@@ -9,13 +9,23 @@ import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
-import { createDialoguePanel } from "./dialoguePanel.ts";
+import { createDialoguePanel, dialogueControlWidths } from "./dialoguePanel.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { currentView, enterPressView, rootPressGuard } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
+it("applies the approved stack, measured split, and lone primary widths", () => {
+  expect(dialogueControlWidths(228, [105, 101])).toEqual({ stacked: true, widths: [105, 228] });
+  expect(dialogueControlWidths(232, [105, 101])).toEqual({ stacked: false, widths: [105, 103] });
+  expect(dialogueControlWidths(240, [105, 101])).toEqual({ stacked: false, widths: [108, 108] });
+  expect(dialogueControlWidths(228, [101])).toEqual({ stacked: false, widths: [102] });
+});
+
 class Element {
+  getBoundingClientRect() {
+    return { height: 0, width: 0 };
+  }
   get isConnected(): boolean {
     return this === (document.body as unknown as Element) || (this.parent?.isConnected ?? false);
   }
@@ -410,7 +420,7 @@ describe("shared Earth and space dialogue presentation", () => {
       skip: vi.fn(),
     });
     interaction.show(1, {
-      choices: [{ id: "continue", label: CONTENT.labels.next! }],
+      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
       context: "deliveryComplete",
       text: "",
       title: "Rivet",
@@ -428,9 +438,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
     expect(choices.children.length).toBeGreaterThan(0);
     expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
-    expect(navigation.children.some((node) => node.textContent === CONTENT.labels.next)).toBe(
-      false,
-    );
+    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.continue]);
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ada-compact");
     expect(skip.className).toContain("ada-story-skip");
@@ -457,7 +465,7 @@ describe("shared Earth and space dialogue presentation", () => {
       skip: vi.fn(),
     });
     interaction.show(1, {
-      choices: [{ id: "continue", label: CONTENT.labels.next! }],
+      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
       context: "deliveryComplete",
       text: "",
       title: "Rivet",
@@ -468,7 +476,7 @@ describe("shared Earth and space dialogue presentation", () => {
     // Ask more, secondary, shares the row on the left; the primary is rightmost.
     expect(navigation.children.map((node) => node.textContent)).toEqual([
       "Ask more",
-      CONTENT.labels.next,
+      CONTENT.labels.continue,
     ]);
     const primary = navigation.children.at(-1)!;
     expect(primary.className.split(" ")).toContain("ada-primary");
@@ -504,7 +512,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(
       parent
         .all()
-        .filter((node) => node.tag === "button" && node.textContent === CONTENT.labels.next),
+        .filter((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue),
     ).toHaveLength(0);
     parent
       .all()
@@ -524,7 +532,7 @@ describe("shared Earth and space dialogue presentation", () => {
       skip: vi.fn(),
     });
     interaction.show(1, {
-      choices: [{ id: "continue", label: CONTENT.labels.next! }],
+      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
       context: "deliveryComplete",
       text: "",
       title: "Rivet",
@@ -541,13 +549,13 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(paragraph()).not.toBe(initial);
     parent
       .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue)!
       .click();
     expect(paragraph()).toBe(initial);
     expect(topics.children).toHaveLength(0);
     parent
       .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue)!
       .click();
     expect(paragraph()).not.toBe(initial);
     interaction.dispose();
@@ -658,7 +666,7 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
     skip,
   });
   interaction.show(1, {
-    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    choices: [{ id: "continue", label: CONTENT.labels.continue! }],
     context: "deliveryComplete",
     text: "",
     title: "Rivet",
@@ -834,7 +842,7 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   const resolve = (node: Element) =>
     resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
   interaction.show(1, {
-    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    choices: [{ id: "continue", label: CONTENT.labels.continue! }],
     context: "deliveryComplete",
     text: "",
     title: "Rivet",
@@ -854,7 +862,7 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   captured.activate();
   expect(closeCallback).not.toHaveBeenCalled();
   interaction.show(1, {
-    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    choices: [{ id: "continue", label: CONTENT.labels.continue! }],
     context: "deliveryComplete",
     text: "",
     title: "Rivet",
@@ -1087,7 +1095,7 @@ it("enters strict Interaction focus after drawing and restores its opener across
   const callbacks = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
   const interaction = createInteractionCard(parent as unknown as HTMLElement, callbacks);
   const panel = {
-    choices: [{ id: "continue", label: CONTENT.labels.next! }],
+    choices: [{ id: "continue", label: CONTENT.labels.continue! }],
     context: "deliveryComplete",
     text: "",
     title: "Rivet",

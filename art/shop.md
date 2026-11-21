@@ -1,8 +1,8 @@
 # Station and shop
 
-The station card, the shop, the buy confirm and the job board: their groups,
-states and art. Each is a modal on its width family's card in [Layout](layout.md#modals),
-and every distance and size, including the item row's, is in
+The station pages, shop, buy confirm and job board have distinct groups and
+states. The shop, buy confirm and job board use their width family's modal
+card in [Layout](layout.md#modals). Item-row geometry is in
 [Layout](layout.md#shop-item-row). Gameplay owns the strings, prices, item
 order and behaviour; the keys below are Gameplay's player string keys.
 
@@ -26,24 +26,23 @@ second line and Owned take row supporting `#c0bbd0` and an unaffordable or
 busy row's text takes row disabled `#a6a2b8`, so every row's text is 5:1 or
 more. A balance's amount is cream.
 
-## Station card
+## Station pages
 
-Opens on docking. The close X, an outside tap, back and Escape all act as Undock.
+Dock opens the [conversation card](layout.md#conversation-card). The keeper's
+name tab, portrait and current greeting share the text column. Continue
+advances one greeting line. Skip opens the final page and shows only when
+it advances farther than Continue.
 
-The welcome uses the same two-column dialogue panel as Earth pages: the actual
-keeper's portrait, name tab and current greeting on the text side; balance, Jobs
-and Shop choices on the action side. Next line and Undock are separate secondary
-navigation controls. The generated station's keeper supplies the speaker; a
-station without an authored keeper shows the station title and menu without
-speech, a portrait or a name tab. Jobs is neutral; Shop is the only primary
-action. Skip uses the shared Earth top position while more greeting lines
-remain, advances only those lines, and never selects a menu action.
-The overlay has one close X and no duplicate Close button.
+The final page shows the balance and Jobs where offered. The page-control
+row holds Undock and, where offered, Shop. Jobs is neutral and Shop
+is the only primary. A station without a keeper opens on the final page
+with the station title and its available actions. The close X, an outside
+tap, back and Escape act as Undock.
 
 ## Shop
 
 1. Header: `shop`. The close X, an outside tap, back and Escape return to the
-   station card; only the station card's exits undock.
+   station's final page.
 2. Balance: the amount alone, without the word Stardust.
 3. Tabs: one action group, Weapons (`shopWeapons`), Ship (`shopShip`) and,
    once the galaxy's projects are offered, Projects (`projects`), left to
@@ -166,8 +165,8 @@ the weapon rows, so the repeat purchase shows without scrolling.
 ## Job board
 
 Gameplay's job board (`gameplay/quests.md` "Job board"), opened by Jobs on
-the station card, on the shop's card pattern. The close X, an outside tap,
-back and Escape return to the station card. Geometry is in
+the station's final page, on the shop's card pattern. The close X, an outside
+tap, back and Escape return to that page. Geometry is in
 [Layout](layout.md#job-board-row).
 
 1. Header: `jobBoard`.
@@ -200,8 +199,9 @@ Row states:
   compact face. Activating accepts at once, with no confirm.
 - **Held**: the held job or active activity, at the top of every board in its
   galaxy, with the cream selection ring, Active, and Drop on the secondary
-  compact face. Activating opens Gameplay's Drop confirm (`jobDropTitle` or
-  `activityDrop`, Cancel and Drop).
+  compact face. Activating opens the job-board Drop confirm (`jobDropTitle` or
+  `activityDrop`, Cancel and Drop). The non-Dock `activityDrop` model
+  confirmation uses the [Interaction material-choice path](layout.md#conversation-card).
 - **Busy**: an offer while the galaxy's task slot is taken: the tile's flat
   disabled frame, the well `#2f2d3d`, the glyph's `disabled` frame, the title,
   detail, reward and Accept in row disabled `#a6a2b8`, and the compact

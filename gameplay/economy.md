@@ -215,20 +215,20 @@ remain findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the fullscreen station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and the station's supported services. Every station offers Exchange;
+Use offers Dock again at once. Docking opens the conversation card on the keeper's greeting (see [Species and greeters](rules.md#species-and-greeters)). Its last page shows the Stardust balance, Jobs at a station that offers jobs, Undock and primary Shop. Every station offers Exchange;
 equipment, weapons with ammunition, and jobs are seeded specialties. Reachable
 stations in each galaxy collectively offer all three categories, with no
 encounter-order gating or new unlock rules. Jobs opens a board only at stations
 that offer jobs (see [Quests](quests.md)). Every station has its own keeper
 identity and short station-specific flavor dialogue, including those without
 jobs. Portrait reuse does not merge keeper identities.
-Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
-undock.
+The card's close X, an outside tap, back and Escape all undock.
 
 ## Shop
 
-Shop, Jobs and Projects use fullscreen views, as do buy and donation confirms
-and detail cards. Their existing contents, actions and dismissal rules apply.
+Shop, Jobs and Projects use Large cards; buy and donation confirms and detail
+cards are Small cards over their parent. Their existing contents, actions and
+dismissal rules apply.
 Pause, Settings and the Map keep their layout.
 
 ### Weapon unlocks
@@ -291,7 +291,7 @@ current weapon name. Prices, unlocks, rates and quantities do not change.
 
 The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
-outside tap, back and Escape return to the station card. An item Ada cannot
+outside tap, back and Escape return to the station's last page. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
 and refuses with Archie's shared
 refusal feedback; reduced motion shows the red tint without shaking. A levelled
@@ -451,7 +451,7 @@ and, when part stays unpaid, the amount still needed after. The donation pays
 `min(balance, remaining)`, so a short balance makes a part payment that
 persists across flights. A row is unaffordable only at a balance of 0, and then
 refuses with the shared refusal feedback. Funding the last part closes the card
-and plays the thank-you line as a fullscreen conversation. A world change is Art's
+and plays the thank-you line in the conversation card. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
 funding changes nothing in the world. World changes are passable decoration:
 they never block Ada or shots, Ada is drawn in front of them while she overlaps

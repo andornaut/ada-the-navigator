@@ -49,8 +49,9 @@ bands split evenly. Backgrounds may bleed
 across the phone display. Intersect the actual game area with device-safe insets
 for the common UI rectangle. Modal windows use the shared width families with
 a 16 logical pixel screen margin: Large 688, Medium 500 and Small 400; height
-follows content and fonts stay full size. Full-screen views are not modal
-windows. Preserve existing padding and reflow. Do not mask or clip text or buttons to conceal overflow.
+follows content and fonts stay full size. Shop and Jobs are Large cards;
+confirms and details are Small cards. The local and galaxy maps are full-screen
+space views. Earth uses its own storybook page. Preserve existing padding and reflow. Do not mask or clip text or buttons to conceal overflow.
 
 ## Start, Home and Space
 
@@ -266,13 +267,15 @@ resolved, and its stations, shops, jobs, activities and any unfinished quests
 stay available. Completing a quest invites a return to Earth without forcing
 immediate exit from space.
 
-Every Use interaction in space (Talk, Deliver, Tow, Salvage, Deposit and the
-rest) opens the conversation view, except Dock, which opens the station card.
-The conversation view is full screen and pauses play, as cards do (the station
-card, shop, pause card and the rest). The other party's portrait and name show
-at the top; an interaction with no person to address shows Astra's. Each line
-names its speaker, and Ada's, Astra's and Penny's lines show their own
-portraits. The view offers Continue, choice buttons, Ask more, Close and Skip.
+Every Use interaction in space (Talk, Deliver, Tow, Salvage, Deposit, Dock and
+the rest) opens the conversation card: the storybook's story panel over the
+paused, dimmed space view. Each line shows its actual speaker's name tab and
+portrait; an interaction with no person to address uses Astra. A page offers
+Continue, choice buttons and Ask more, and the card has a close X and Skip; the
+close X is its only Close control. Dock opens the card on the keeper's greeting,
+and its last page shows the Stardust balance, Jobs at a station with the jobs
+specialty, Undock and primary Shop; its close X, an outside tap, back and Escape
+undock.
 All dialogue is skippable: Skip jumps to the exchange's outcome, and a pending
 choice still asks. Conversations use brief essential exchanges with optional
 questions about character and culture (see [Player copy](player-copy.md)).
@@ -280,9 +283,8 @@ In-flight chatter, drone warnings and the Admiral's broadcasts stay in the small
 in-flight box, and that box and notices never pause play (see
 [Astra and Penny in flight](#astra-and-penny-in-flight)).
 
-The station card with Shop, Jobs and Projects, their buy and donation confirms,
-detail cards and the conversation view are full screen. Pause, Settings and the
-Map keep their layout.
+Shop and Jobs open from the station's last page and return to it. Pause,
+Settings and the Map keep their layout.
 
 The first mandatory
 introductory encounter occurs after a set distance of fresh exploration,
@@ -638,15 +640,19 @@ identities. The generic station contract does not change their story dialogue.
 
 Each station's keeper has short station-specific introduction and return lines,
 including at stations without jobs. The mining hub's lines still mention the
-hub. The name tab shows the keeper's own display name. A bounded name-part and
-flavor pool uses the approved station-name and service templates above without
-inventing individual NPC histories. Portrait assignments use the finite existing
+hub. In the compact Dock card, the generated keeper's name tab shows
+"{givenName} {familyName}" on one line. The full unique name, including
+"of {station}", stays in the greeting templates that use it. Keeper identity
+remains station-derived. Authored keeper labels, including Quartz, retain their
+authored names. A bounded name-part and flavor pool uses the approved
+station-name and service templates above without inventing individual NPC
+histories. Portrait assignments use the finite existing
 assets separately from the named story identities. Story destinations keep their
 story characters' arrival lines; landmarks have no greeter. The first time Ada
-docks at a station, its keeper's portrait and full greeting (three lines) show
-in the station card's welcome line, a tap on the line advancing it while Undock,
-Shop and supported services stay live. Each later docking shows a short return
-line from that station's keeper. The first time Ada comes within Talk range of a settlement, its
+docks at a station, each of its keeper's three greeting lines is a page of the
+conversation card, advanced with Continue. Skip opens the last page when more than one advance remains. Each later
+docking opens on the last page with a short return line from that station's
+keeper. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
 saved per place, and Restart clears them. Phantom also follows the distinct
 station-keeper contract; Admiral Archie's named finale identity, dialogue and
@@ -916,7 +922,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   document rechecks compatibility. The save remains untouched while recovery is
   pending.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
-  the cheats card, the station card or shop) or cancels the update offer; during
+  the cheats card, the conversation card or shop) or cancels the update offer; during
   flight with nothing open it opens the pause card, and with the pause card open it
   resumes.
   On the start screen with nothing open, and where the browser cannot hand back to

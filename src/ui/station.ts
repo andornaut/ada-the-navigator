@@ -88,7 +88,7 @@ export interface StationLabels {
   readonly jobDropTitle: string;
   readonly jobs: string;
   /** The keeper block's name while it shows the next line. */
-  readonly nextLine: string;
+  readonly continue: string;
   readonly owned: string;
   readonly projectFunded: string;
   readonly projects: string;
@@ -200,7 +200,7 @@ export function stationWelcome(
   };
 }
 
-/** Skip is distinct from Next only when it advances past more than one remaining line. */
+/** Skip is distinct from Continue only when its destination is more than one advance away. */
 export function stationGreetingCanSkip(greeting: StationGreeting | null): boolean {
   return greeting !== null && greeting.count - greeting.index - 1 > 1;
 }
@@ -397,15 +397,28 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.showLine(welcome.speaker, welcome.text);
       nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
       stationCard.skip.hidden = !stationGreetingCanSkip(greeting);
+      const final = nextGreeting.hidden;
+      stationBalance.hidden = !final;
+      openJobs.hidden = !final || !stationJobsShown(options.services());
+      undock.hidden = !final;
+      openShop.hidden = !final || shownTabs().length === 0;
       stationCard.fit();
     },
+  };
+  const focusWelcome = (): void => {
+    const target = !nextGreeting.hidden
+      ? nextGreeting
+      : !openShop.hidden
+        ? openShop
+        : !openJobs.hidden
+          ? openJobs
+          : undock;
+    focusTarget(target);
   };
   register(nextGreeting, () => {
     options.advanceGreeting();
     keeper.render(options.greeting());
-    if (nextGreeting.hidden) {
-      focusTarget(openShop);
-    }
+    focusWelcome();
   });
   register(stationCard.skip, () => {
     const initial = options.greeting();
@@ -424,9 +437,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       }
     }
     keeper.render(options.greeting());
-    if (stationCard.skip.hidden) {
-      focusTarget(openShop);
-    }
+    focusWelcome();
   });
 
   const shopCard = createCard({
@@ -1130,14 +1141,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const render = (): void => {
-    openShop.hidden = shownTabs().length === 0;
-    openJobs.hidden = !stationJobsShown(options.services());
+    keeper.render(options.greeting());
     if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
       closeConfirm();
       view = "card";
     }
     renderBalances();
-    keeper.render(options.greeting());
     stationCard.frame.hidden = view !== "card";
     shopCard.frame.hidden = view !== "shop";
     jobsCard.frame.hidden = view !== "jobs";
@@ -1471,7 +1480,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       closeConfirm();
       if (open) {
         render();
-        focusTarget(openShop.hidden ? (openJobs.hidden ? undock : openJobs) : openShop);
+        focusWelcome();
       }
     },
     settleDetails: () => dropDetails?.settle() ?? Promise.resolve(),

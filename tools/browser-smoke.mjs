@@ -3361,6 +3361,11 @@ try {
   await interactionCard().waitFor({ state: "visible" });
   await leaveInteraction();
   await tapUse(CONTENT.labels.dock);
+  const hubGreetingContinue = page
+    .locator('[data-dialog="station"]')
+    .getByRole("button", { exact: true, name: CONTENT.labels.continue });
+  await hubGreetingContinue.click();
+  await hubGreetingContinue.click();
   await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
   await page.locator('[data-action="open-shop"]').click();
   await page.locator('[data-tab="ship"]').click();
@@ -3508,10 +3513,8 @@ try {
       "map ends the flight, the rescue still held with its craft where it was stranded",
   );
   // Station keepers (gameplay/rules.md "Generic station keeper interface and copy", art/layout.md
-  // "Station card"): the station card is the story panel with the keeper's name tab, portrait and
-  // greeting line, Jobs, the single primary Shop, Next line and Undock. The first docking's three
-  // introduction lines step on with Next line, which then goes with Shop focused; a later docking
-  // shows one return line without Next line. The model supplies the name and every line.
+  // "Station card"): the keeper's introduction advances with Continue. The last page and return
+  // visits show the service actions, with Shop as the primary when offered.
   const keeperInput = relaunch(CONTENT, roomInput.save());
   const keeperFlight = keeperInput.state.flight;
   const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
@@ -3544,7 +3547,7 @@ try {
     }
   };
   readGreeting();
-  const keeperName = modelDock.stationGreeting?.displayName;
+  const keeperName = modelDock.dockGreeting()?.displayName;
   modelDock.undock();
   modelDock.interact();
   const laterLine = modelDock.stationGreeting?.line;
@@ -3555,7 +3558,10 @@ try {
   await seedOnce(keeperInput.save(), "ada-browser.keeper.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const stationCard = page.locator('[data-dialog="station"]');
-  const nextLine = stationCard.getByRole("button", { name: CONTENT.labels.nextLine, exact: true });
+  const greetingContinue = stationCard.getByRole("button", {
+    name: CONTENT.labels.continue,
+    exact: true,
+  });
   // Docks with the keyboard's Use. E switches flight to the desktop controls, which hide the Use
   // disc, so the offer is read from the disc's action rather than its visibility.
   const dockHere = async () => {
@@ -3568,24 +3574,24 @@ try {
     ...(await stationCard.evaluate((card) => ({
       focused: document.activeElement?.dataset.action ?? null,
       line: card.querySelector(".ada-story-paragraph")?.textContent ?? "",
-      primaries: [...card.querySelectorAll("button.ada-primary")].map(
+      primaries: [...card.querySelectorAll("button.ada-primary:not([hidden])")].map(
         (button) => button.dataset.action ?? "",
       ),
       tab: card.querySelector(".ada-story-tab")?.textContent ?? "",
     }))),
-    next: await nextLine.isVisible(),
+    next: await greetingContinue.isVisible(),
   });
   await dockHere();
   await page.screenshot({ path: `${output}/station-keeper.png` });
   const first = await keeperShown();
   assert.deepEqual(
     { line: first.line, next: first.next, primaries: first.primaries, tab: first.tab },
-    { line: firstGreeting[0], next: true, primaries: ["open-shop"], tab: keeperName },
-    "The first docking shows the keeper's name and first line, Next line, and Shop as the primary",
+    { line: firstGreeting[0], next: true, primaries: [""], tab: keeperName },
+    "The first docking shows the keeper's name and first line, Continue as the single primary",
   );
-  await nextLine.click();
+  await greetingContinue.click();
   const second = await keeperShown();
-  await nextLine.focus();
+  await greetingContinue.focus();
   await page.keyboard.press("Enter");
   const third = await keeperShown();
   assert.deepEqual(
@@ -3594,9 +3600,9 @@ try {
       { line: firstGreeting[1], next: true },
       { line: firstGreeting[2], next: false },
     ],
-    "A tap or Enter on Next line shows the next line; after the third it goes",
+    "A tap or Enter on Continue shows the next line; after the third it goes",
   );
-  assert.equal(third.focused, "open-shop", "Focus moves to Shop once Next line goes");
+  assert.equal(third.focused, "open-shop", "Focus moves to Shop once Continue goes");
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   await dockHere();
@@ -3604,13 +3610,13 @@ try {
   assert.deepEqual(
     { line: later.line, next: later.next, tab: later.tab },
     { line: laterLine, next: false, tab: keeperName },
-    "A later docking shows one return line without Next line",
+    "A later docking shows one return line without Continue",
   );
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   events.checks.push(
     "The station card shows the keeper's name, portrait and greeting with Shop as its primary; " +
-      "the first docking's three lines step on with Next line, which then goes with Shop " +
+      "the first docking's three lines step on with Continue, which then goes with Shop " +
       "focused, and a later docking shows one return line",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");

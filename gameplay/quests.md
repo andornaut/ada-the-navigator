@@ -14,12 +14,11 @@ targets keep 1000 world units clear of retained frigates, capitals and platforms
 
 ### Job board
 
-At a station with the jobs specialty, the station card offers Jobs alongside
-its Stardust balance, keeper welcome, Undock and Shop. Other stations still offer
+At a station with the jobs specialty, the station's last page in the
+conversation card offers Jobs alongside the Stardust balance, Undock and Shop. Other stations still offer
 Exchange and their own keeper dialogue, without new job offers. Active task
-details and Drop remain available at any station. Jobs opens the fullscreen job
-board, which follows the shop's card pattern; its close
-X, an outside tap, back and Escape return to the station card.
+details and Drop remain available at any station. Jobs opens the job board as a Large card, which follows the shop's card pattern; its close
+X, an outside tap, back and Escape return to the station's last page.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
   station's seed, with no two of the same type while the pool allows. Short and

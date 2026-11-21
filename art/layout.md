@@ -830,7 +830,7 @@ token above; strings are Gameplay's.
 | Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Exit (Start screen, when shown), Settings; then Back to title (not on the Start screen); then primary Close          | None         |
 | Paused        | Header, close. Control grid, two columns, alphabetical: Map when permitted and Quests, then Settings and Ship. Then Back to title, full width, directly above primary Resume, full width | None         |
 | Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                              | None         |
-| Station card  | Keeper portrait, name tab and current greeting. Balance and Jobs/Shop choices. Separate Next line/Undock navigation and close X ([Station card](#station-card)).                         | None         |
+| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))       | Text column  |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                      | Item list    |
 | Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                | Job list     |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                  | None         |
@@ -878,30 +878,53 @@ cheats), then Show tips again, the FPS counter and Reset save.
 | Footer        | Close (primary), centred at its label width plus `2 * TEXT_BUTTON.inset`, outside the scroll group, its face `SPACING.gap` (8) below the row column's clip | Its lip `SPACING.panelPadding` (16) above the card's bottom edge, frame included (14 below the frame's inner edge), as the Ship card's Back     |
 | Height        | Content-fitted up to the available rect's height                                                                                                           | The nine rows take 496 with their gaps, past the 328 cap of the 720x360 game area, so the column scrolls and the header, close X and Close stay |
 
-### Station card
+### Conversation card
 
-Station welcomes use the story panel's text and choice columns, portrait frame,
-name tab, type roles and safe insets. The current station's keeper supplies its
-portrait and name for every greeting line. Jobs is a neutral choice and Shop is the single primary action;
-Next line and Undock are secondary navigation controls. Shop and job-board
-menus retain their separate list layouts. A station without an authored keeper
-shows the station title and actions without speech, portrait or name tab.
+Talk, Astra's Salvage, Deposit and Tow briefs, and Dock share the
+[storybook panel](#storybook-page)'s bottom anchor, safe insets, two columns,
+portrait frame and text roles over paused, dimmed space. Each spoken line
+shows its actual speaker and portrait. The speaker tab stays on one line.
+Narration has no portrait or tab. The close X is the only Close control. Mom and Dad keep their authored family
+addresses in text; their tabs and portraits identify Trista and Bin.
 
-Earth and space topic options use neutral story buttons in their own group,
-separate from navigation. There is at most one primary action. Skip uses the
-shared Earth top position and compact style, outside the dialogue panel.
-Unavailable Previous controls are hidden without reserving an empty slot. Next
-is absent while options are offered. Skip is absent at an unresolved material
-choice; it may omit optional background questions and never selects an answer.
-The small ambient in-flight conversation box has no separate Skip control. Each spoken line
-shows its actual speaker's existing portrait and name tab. The close X is the
-only Close control. On the Interaction card the close X takes the Settings slot of the
-story-page HUD row: its 48 press area is the Settings target
-(`hudButtonTarget(0)`) and its 24 face centres in it, on the HUD row's centre
-line. Skip keeps its place beside Settings (`STORY_SKIP.right.besideSettings`,
-57 from the HUD rect's right), so the X never covers Skip. Narration has no invented speaker or portrait. Mom and Dad
-keep their authored family addresses in text; their name tabs and existing
-portraits identify Trista and Bin.
+| Page          | Choice column                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Line          | Ask more (secondary) and Continue (primary) when topics remain. Otherwise Continue alone.                                            |
+| Topics        | Remaining topics as neutral choices above Continue alone. Continue advances without selecting a topic.                               |
+| Brief         | Continue alone when the page has no optional topics. When topics remain, use Ask more (secondary) and Continue (primary).            |
+| Dock greeting | Continue alone until the final page.                                                                                                 |
+| Dock final    | Balance, then Jobs as a neutral full-width choice where offered, then Undock (secondary) and Shop (the only primary, where offered). |
+
+The card fits the visible groups. Choices and page controls are separate
+groups with a 24 logical px gap when both show. The page-control row has at
+most one primary and fills the choice column when two controls are visible.
+Use equal halves if both labels fit with their padding. Otherwise give the
+wider control its required width and the other the remaining width. Keep 24
+between the controls and the primary on the right. If both widths plus the
+gap exceed the column, put the secondary at the left in the upper row at
+the greater of its required width or half the available button space. The
+primary fills the row below it, 24 apart. A lone primary sits at the right
+edge and takes the greater of half the available button space or its
+required width, capped at the column width. Half the available button space
+is `(column width - 24) / 2`.
+
+At 720×360 with phone insets, Ask more and Continue stack in the 228 logical
+px choice column, with both labels on one line. They sit side by side at
+844×390 with phone insets and at 1280×720. Undock and Shop sit side by side
+at all three sizes when both are offered.
+
+Talk and Dock put the close X in the Settings slot of the HUD row. Its 48
+press area is `hudButtonTarget(0)`, with the 24 face centred in it. Skip uses
+the compact style at `STORY_SKIP.right.besideSettings` (57 from the HUD rect's
+right). Dock shows Skip only when it advances farther than Continue. It
+opens the final greeting page without selecting an action. In Talk, Skip
+can omit optional background topics and leaves material decisions pending.
+
+The Interaction material-choice path includes the non-Dock `activityDrop`
+confirmation. Its Cancel and Drop choices require a selection and hide
+Skip. Station job-board drop confirmations and the existing Small
+confirmation and detail cards use their own layouts. The ambient in-flight
+[conversation box](#conversation-box) has no Skip.
 
 ### Achievements card
 
@@ -1290,7 +1313,8 @@ Behaviour:
   first frame; the rock glow and overnight sequences play their reduced-motion
   steps with the panel hidden, as in [storybook](storybook.md).
 - A space story page that pauses flight uses the same panel over the paused,
-  dimmed space view, without a background. In-flight lines use the
+  dimmed space view, without a background, as the [conversation card](#conversation-card)
+  does. In-flight lines use the
   [conversation box](#conversation-box), which neither pauses nor dims.
 
 ### Conversation box

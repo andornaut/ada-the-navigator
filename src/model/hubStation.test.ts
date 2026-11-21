@@ -74,6 +74,8 @@ describe("the mining hub as a station", () => {
     expect(model.contextAction).toBe("dock");
     model.interact();
     expect(model.state.docked).toBe(HUB_STATION);
+    expect(model.dockGreeting()?.displayName).toBe("Quartz");
+    expect(model.dockGreeting()).toEqual(model.stationGreeting);
     expect(model.state.flight!.velocity).toEqual({ x: 0, y: 0 });
   });
 

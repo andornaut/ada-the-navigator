@@ -3,7 +3,7 @@ import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import type { StationLabels } from "./station.ts";
 
 export type StationMenuButton = "jobs" | "shop" | "nextGreeting" | "undock";
-export type StationMenuLabels = Pick<StationLabels, "jobs" | "shop" | "nextLine" | "undock">;
+export type StationMenuLabels = Pick<StationLabels, "jobs" | "shop" | "continue" | "undock">;
 export type StationMenuSchema = {
   balance: { props: Record<string, never>; slots: never };
   button: {
@@ -36,25 +36,25 @@ export function stationMenuTree(
           kind: "component",
           props: { actionId: "open-jobs", id: "jobs", label: labels.jobs, role: "secondary" },
         },
-        {
-          component: "button",
-          key: "shop",
-          kind: "component",
-          props: { actionId: "open-shop", id: "shop", label: labels.shop, role: "primary" },
-        },
       ],
       controls: [
         {
           component: "button",
           key: "next-greeting",
           kind: "component",
-          props: { id: "nextGreeting", label: labels.nextLine, role: "secondary" },
+          props: { id: "nextGreeting", label: labels.continue, role: "primary" },
         },
         {
           component: "button",
           key: "undock",
           kind: "component",
           props: { actionId: "undock", id: "undock", label: labels.undock, role: "secondary" },
+        },
+        {
+          component: "button",
+          key: "shop",
+          kind: "component",
+          props: { actionId: "open-shop", id: "shop", label: labels.shop, role: "primary" },
         },
       ],
     },

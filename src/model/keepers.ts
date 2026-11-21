@@ -1,6 +1,7 @@
 import type { CastKey } from "../data/cast.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type KeeperGreetings, KEEPERS, PHANTOM_KEEPER_GREETINGS } from "../data/keepers.ts";
+import { KEEPER_NAME_PARTS } from "../data/stationCopy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { HUB_STATION, stationById, worldLegacyStationsNear } from "./stations.ts";
 
@@ -51,6 +52,21 @@ export function stationRank(
     const near = Math.hypot(other.x, other.y);
     return near < reach || (near === reach && other.id < site.id);
   }).length;
+}
+
+/** The authored hub label or the personal name selected from the station's stable seed. */
+export function stationKeeperPersonalName(galaxy: GalaxyNumber, id: string): string {
+  if (id === HUB_STATION) {
+    return "Quartz";
+  }
+  const [given, family] = KEEPER_NAME_PARTS[galaxy];
+  const nameSeed = Array.from(id).reduce<number>(
+    (seed, character) => (Math.imul(seed, 31) + character.charCodeAt(0)) >>> 0,
+    galaxy,
+  );
+  const givenName = given[nameSeed % given.length];
+  const familyName = family[Math.floor(nameSeed / given.length) % family.length];
+  return `${givenName} ${familyName}`;
 }
 
 /** A keeper at a real station, with Phantom gated by explicit completed-aftermath context. */

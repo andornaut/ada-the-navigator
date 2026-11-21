@@ -52,12 +52,12 @@ Each galaxy's stations are kept by three keepers of its people (Gameplay
 `gameplay/rules.md`): a station's keeper follows its rank by distance from
 the galaxy's origin, cycling through the three, and Cartwheel's mining hub is
 always Quartz's, its other stations cycling through Slate and Garnet. The
-station card shows the keeper in its [keeper block](layout.md#station-card).
+[conversation card](layout.md#conversation-card) shows the keeper on each greeting page.
 Phantom's stations have no keeper and keep the generic welcome.
 
-Portraits are the [conversation portraits](conversation.md)' compact sheets,
-`public/art/{galaxy}/portraits/{key}-compact.png`, manifest id
-`{key}-portrait-compact`, frame `neutral` 0. Tab colours are in
+Keeper portraits use the 32 px [conversation portrait](conversation.md) sheets,
+`public/art/{galaxy}/portraits/{key}.png`, manifest id
+`{key}-portrait`, frame `neutral` 0, drawn at 2x. Tab colours are in
 [Controls](controls.md#conversation-box).
 
 | Galaxy    | Keeper  | Key       | Tab       | Ink on tab |

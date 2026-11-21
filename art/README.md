@@ -180,7 +180,7 @@ schema, with paths relative to `/art/ui/`; it is separate from the prototype
 [Layout](layout.md) is the coordinate system, spacing and size tokens, and
 every screen's groups. [Controls](controls.md) is the button, switch, focus
 and refusal contract.
-[Station and shop](shop.md) lays out the station card, shop and buy confirm.
+[Station and shop](shop.md) lays out the station pages, shop and buy confirm.
 [Map](map.md) is the pause map: its screen, symbols and glyphs, fog and
 interaction.
 

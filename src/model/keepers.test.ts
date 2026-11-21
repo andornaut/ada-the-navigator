@@ -214,6 +214,29 @@ describe("a keeper's greeting at the station card", () => {
     expect(model.stationGreeting).toBeNull();
   });
 
+  it("shortens only the compact Dock tab and derives it again after Continue", () => {
+    const { model, station } = beside();
+    expect(model.dockGreeting()).toBeNull();
+    model.interact();
+    const saved = model.saveDocument();
+    const full = model.stationGreeting!;
+    const compact = model.dockGreeting()!;
+    expect(compact.displayName).toMatch(/^(Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb)$/);
+    expect(full.displayName).toBe(`${compact.displayName} of Sunflower Glimmer Station`);
+    expect(full.line).toContain(full.displayName);
+    expect(compact).toEqual({ ...full, displayName: compact.displayName });
+    expect(model.state.docked).toBe(station.id);
+    expect(model.saveDocument()).toEqual(saved);
+
+    const loaded = relaunch(CONTENT, model.save());
+    const afterContinue = loaded.saveDocument();
+    expect(loaded.dockGreeting()).toEqual(compact);
+    expect(loaded.stationGreeting).toEqual(full);
+    expect(loaded.state.docked).toBe(station.id);
+    expect(afterContinue.progress[1].greetings).toEqual(saved.progress[1].greetings);
+    expect(loaded.saveDocument()).toEqual(afterContinue);
+  });
+
   it("restores the actual keeper and greeting on a docked reload without counting another visit", () => {
     const { model, station } = beside();
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;

@@ -1,19 +1,20 @@
 # Conversation portraits
 
-Portraits for the in-flight [conversation box](layout.md#conversation-box) and
-the storybook panel. Rebuild with `node art/tools/portraits.ts`: it draws the
-Astra, Admiral Archie and Grandma sheets, crops the compact Ada and Penny
-sheets from their reused sheets, and replaces its own entries after the other
+Portraits for the in-flight [conversation box](layout.md#conversation-box),
+the storybook panel and the [conversation card](layout.md#conversation-card).
+Rebuild with `node art/tools/portraits.ts` to draw the
+Astra, Admiral Archie and Grandma sheets, crop the compact Ada and Penny
+sheets from their reused sheets, and replace the generator's entries after the other
 portraits in the root manifest. The [cast portraits](#cast-portraits) come
 from one generator per galaxy. Reused sources and checksums are in
 [Portraits](portraits.md).
 
 ## Sizes
 
-| Use              | Frame | Drawn                                     | Sheets               |
-| ---------------- | ----: | ----------------------------------------- | -------------------- |
-| Storybook panel  |    32 | 2x (64) in the 68 frame                   | `{name}.png`         |
-| Conversation box |    22 | 2x (44) centred in the 48 slot (52 frame) | `{name}-compact.png` |
+| Use                                   | Frame | Drawn                                     | Sheets               |
+| ------------------------------------- | ----: | ----------------------------------------- | -------------------- |
+| Storybook panel and conversation card |    32 | 2x (64) in the 68 frame                   | `{name}.png`         |
+| Conversation box                      |    22 | 2x (44) centred in the 48 slot (52 frame) | `{name}-compact.png` |
 
 - Every frame is untrimmed and square on a clear ground; the box or panel draws
   the frame (2 ink `#181425` edge, navy `#262b44` face). Always integer scale,

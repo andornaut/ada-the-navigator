@@ -761,7 +761,7 @@ export function buildScene(scene: UiContext): void {
       exchangeImmediately: (order) => confirmStationExchange(scene, order),
       preview: (order) => scene.model.previewExchange(order),
     },
-    greeting: () => scene.model.stationGreeting,
+    greeting: () => scene.model.dockGreeting(),
     jobs: () =>
       scene.model.jobBoard().map((job) => ({
         ...job,
@@ -772,6 +772,7 @@ export function buildScene(scene: UiContext): void {
       close: label("close"),
       confirmBuy: label("confirmBuy"),
       confirmCancel: label("confirmCancel"),
+      continue: label("continue"),
       inUse: label("inUse"),
       jobAccept: label("jobAccept"),
       jobActive: label("jobActive"),
@@ -782,7 +783,6 @@ export function buildScene(scene: UiContext): void {
       jobDropCancel: label("jobDropCancel"),
       jobDropTitle: label("jobDropTitle"),
       jobs: label("jobs"),
-      nextLine: label("nextLine"),
       owned: label("owned"),
       projectFunded: label("projectFunded"),
       projects: label("projects"),
