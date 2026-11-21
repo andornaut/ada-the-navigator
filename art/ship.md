@@ -336,7 +336,8 @@ animated jet frames.
   flames. The physical skirt occupies z=0 through z=1.2, below the emission
   edge; it is geometry, not a shadow. Hull, housing and opening materials stay
   unchanged. Reverse mouths do not acquire this normal-only overlay behavior.
-- Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
+- Colour is `color`, or `colors` interpolated linearly in sRGB by `f`, except
+  for the small-player middle band below. The halo
   alpha is `max(0, (f - from) / (to - from)) * max` for legacy profiles.
   The normal outer uses its opaque appearance policy; other layers are opaque.
 - `engineLevels` holds the layers for each engine level, `level` 1 to 3: draw
@@ -362,6 +363,20 @@ Light fields keep Engine 1 blue. Engine 2 uses outer `#9e3027`, core
 `#cf4935` to `#ee7960`; Engine 3 uses outer `#91620e`, core `#d49b22` to
 `#f2cf62`. Legacy mouths retain those two visible layers.
 
+### Logical-size rendering
+
+For explicit normal apertures and centered reverse profiles, derive the complete
+three-layer geometry before applying the display rule. At a maximum logical
+display dimension of 42 or less, omit only the named `core` from drawing. Keep
+the dark outer and use the canonical main level's `outer.colors[0]` for the
+remaining middle triangle: blue, red or amber according to engine level.
+Do not move roots, rescale layers or change their alpha.
+
+Larger frames, including 84 px and the enlarged title ship, retain all three
+bands and their existing interpolation. This boundary uses logical display
+dimensions, independently of camera zoom or DPR. Legacy profiles and enemies
+retain their existing rendering.
+
 ### Verification contract
 
 Check actual rendered pixels before accepting a change. Review the rear view and
@@ -385,8 +400,9 @@ same `JET_LEVELS` source as `ship-jets.json`.
 
 The root `reverseStyle: "centered-main"` selects the shared reverse-material
 adapter. Its opaque dark band derives from the main engine level's authored
-`normalColor`; medium and core interpolate the canonical main engine level on
-both light and dark fields. Paint does not define another exhaust
+`normalColor`; medium and core use the canonical main engine level on both
+light and dark fields, subject to the logical-size rendering rule above.
+Paint does not define another exhaust
 palette. Descriptor-absent recipes retain the legacy material path.
 
 `retroMouthAxis` derives each wing's half-mouth vector `(±2.75, 0, 0)`
