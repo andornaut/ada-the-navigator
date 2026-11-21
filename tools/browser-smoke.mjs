@@ -31,6 +31,44 @@ const watchdog = setTimeout(() => {
   process.exit(124);
 }, SMOKE_LIMIT_SECONDS * 1000);
 
+// Browser callback: count the same device pixels against each palette's three-channel tolerance.
+// Split the target list by red channel once, away from the per-pixel scan.
+async function countPalettePixels({ encoded, ramps }) {
+  const bitmap = await createImageBitmap(
+    new Blob([Uint8Array.fromBase64(encoded)], { type: "image/png" }),
+  );
+  const sample = document.createElement("canvas");
+  sample.width = bitmap.width;
+  sample.height = bitmap.height;
+  const drawing = sample.getContext("2d");
+  drawing.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const { data } = drawing.getImageData(0, 0, sample.width, sample.height);
+  return Object.fromEntries(
+    Object.entries(ramps).map(([name, colors]) => {
+      const targetsByRed = Array.from({ length: 256 }, () => []);
+      for (const hex of colors) {
+        const red = Number.parseInt(hex.slice(1, 3), 16);
+        const green = Number.parseInt(hex.slice(3, 5), 16);
+        const blue = Number.parseInt(hex.slice(5, 7), 16);
+        for (let channel = Math.max(0, red - 3); channel <= Math.min(255, red + 3); channel++) {
+          targetsByRed[channel].push([green, blue]);
+        }
+      }
+      let count = 0;
+      for (let offset = 0; offset < data.length; offset += 4) {
+        for (const [green, blue] of targetsByRed[data[offset]]) {
+          if (Math.abs(data[offset + 1] - green) <= 3 && Math.abs(data[offset + 2] - blue) <= 3) {
+            count++;
+            break;
+          }
+        }
+      }
+      return [name, count];
+    }),
+  );
+}
+
 // The screen wake lock as the game asks for it: held counts the sentinels not yet released.
 function fakeWakeLock() {
   const lock = { held: 0, requests: 0 };
@@ -5163,7 +5201,7 @@ try {
     });
     return page.evaluate(
       async ({ backdropBox, encoded, heavyColors, intrinsic, names, paletteColors, regions }) => {
-        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        const bytes = Uint8Array.fromBase64(encoded);
         const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
         const sample = document.createElement("canvas");
         sample.width = bitmap.width;
@@ -5212,7 +5250,8 @@ try {
                   ];
                 }),
               );
-              const counts = Object.fromEntries(Object.keys(colors).map((role) => [role, 0]));
+              const palette = Object.entries(colors);
+              const counts = Object.fromEntries(palette.map(([role]) => [role, 0]));
               counts.backdrop = 0;
               const outline = {
                 minX: Infinity,
@@ -5229,12 +5268,12 @@ try {
                 ) {
                   counts.backdrop++;
                 }
-                for (const [role, rgb] of Object.entries(colors)) {
+                for (const [role, [red, green, blue]] of palette) {
                   // Small channel tolerance permits raster rounding without accepting another palette class.
                   if (
-                    rgb.every(
-                      (channel, index) => Math.abs(image.data[offset + index] - channel) <= 3,
-                    )
+                    Math.abs(image.data[offset] - red) <= 3 &&
+                    Math.abs(image.data[offset + 1] - green) <= 3 &&
+                    Math.abs(image.data[offset + 2] - blue) <= 3
                   ) {
                     counts[role]++;
                     if (role === "obstacle") {
@@ -5321,38 +5360,7 @@ try {
   // around Ada, with a backdrop rock in view, draw in stone over the tinted backdrop field. The
   // spin frames and footprint overlay are review captures (browser-captures.mjs).
   async function stonePixels(image, ramps) {
-    return page.evaluate(
-      async ({ encoded, ramps }) => {
-        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
-        const sample = document.createElement("canvas");
-        sample.width = bitmap.width;
-        sample.height = bitmap.height;
-        const drawing = sample.getContext("2d");
-        drawing.drawImage(bitmap, 0, 0);
-        bitmap.close();
-        const data = drawing.getImageData(0, 0, sample.width, sample.height).data;
-        const rgb = (hex) =>
-          [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
-        return Object.fromEntries(
-          Object.entries(ramps).map(([name, colors]) => {
-            const targets = colors.map(rgb);
-            let count = 0;
-            for (let offset = 0; offset < data.length; offset += 4) {
-              if (
-                targets.some((target) =>
-                  target.every((channel, index) => Math.abs(data[offset + index] - channel) <= 3),
-                )
-              ) {
-                count++;
-              }
-            }
-            return [name, count];
-          }),
-        );
-      },
-      { encoded: image.toString("base64"), ramps },
-    );
+    return page.evaluate(countPalettePixels, { encoded: image.toString("base64"), ramps });
   }
   const asteroidCaptures = {};
   // A backdrop rock tone moved toward the galaxy's field background to `value` of its distance
@@ -5561,25 +5569,11 @@ try {
       const showOverCanvas = await hideOverCanvas(proof);
       const image = await canvas.screenshot();
       await showOverCanvas();
-      return proof.evaluate(async (encoded) => {
-        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
-        const sample = document.createElement("canvas");
-        sample.width = bitmap.width;
-        sample.height = bitmap.height;
-        const drawing = sample.getContext("2d");
-        drawing.drawImage(bitmap, 0, 0);
-        bitmap.close();
-        const data = drawing.getImageData(0, 0, sample.width, sample.height).data;
-        const ring = [0xf0, 0xbd, 0x68];
-        let count = 0;
-        for (let offset = 0; offset < data.length; offset += 4) {
-          if (ring.every((channel, index) => Math.abs(data[offset + index] - channel) <= 3)) {
-            count++;
-          }
-        }
-        return count;
-      }, image.toString("base64"));
+      const { amber: count } = await proof.evaluate(countPalettePixels, {
+        encoded: image.toString("base64"),
+        ramps: { amber: ["#f0bd68"] },
+      });
+      return count;
     }
     const before = await amber();
     // One 16 ms frame at a time until the blast's ring first shows.
@@ -5833,7 +5827,7 @@ try {
     const changed = await proof.evaluate(
       async (encoded) => {
         const decode = async (data) => {
-          const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
+          const bytes = Uint8Array.fromBase64(data);
           const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
           const sample = document.createElement("canvas");
           sample.width = bitmap.width;
@@ -6558,6 +6552,7 @@ try {
     assert.equal(page.url(), "http://ada-preview:4173/play/", `${name}: Exit never navigates`);
     await appContext.close();
   };
+  await page.close();
   // One at a time, in order: each owns the shared page while it runs.
   await appWindows.reduce((prior, item) => prior.then(() => appWindowAt(item)), Promise.resolve());
   save("exit-app-proof.json", appProofs);
@@ -6637,16 +6632,116 @@ try {
       ({ key, serialized }) => {
         localStorage.setItem(key, serialized);
         const counts = { canvases: 0, textures: 0 };
+        const activity = {
+          draws: 0,
+          drawsAtLastChange: 0,
+          lastChange: performance.now(),
+          pending: 0,
+          resized: { larger: 0, smaller: 0 },
+        };
+        window.adaResizeActivity = activity;
+        function markRasterActivity() {
+          activity.drawsAtLastChange = activity.draws;
+          activity.lastChange = performance.now();
+        }
+        function beginSvgWork() {
+          activity.pending++;
+          markRasterActivity();
+          return () => {
+            activity.pending--;
+            markRasterActivity();
+          };
+        }
+        // Phaser fetches SVG text, then decodes a resized SVG image before the texture upload.
+        const svgRequests = new WeakSet();
+        const open = XMLHttpRequest.prototype.open;
+        const send = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function (method, url, ...args) {
+          if (new URL(url, document.baseURI).pathname.endsWith(".svg")) {
+            svgRequests.add(this);
+          } else {
+            svgRequests.delete(this);
+          }
+          return open.call(this, method, url, ...args);
+        };
+        XMLHttpRequest.prototype.send = function (...args) {
+          if (svgRequests.has(this)) {
+            this.addEventListener("loadend", beginSvgWork(), { once: true });
+          }
+          return send.apply(this, args);
+        };
+        const svgUrls = new Set();
+        const createUrl = URL.createObjectURL;
+        const revokeUrl = URL.revokeObjectURL;
+        URL.createObjectURL = function (blob) {
+          const url = createUrl.call(this, blob);
+          if (blob instanceof Blob && blob.type.startsWith("image/svg+xml")) {
+            svgUrls.add(url);
+          }
+          return url;
+        };
+        URL.revokeObjectURL = function (url) {
+          svgUrls.delete(url);
+          return revokeUrl.call(this, url);
+        };
+        const imageSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+        const svgImages = new WeakSet();
+        Object.defineProperty(HTMLImageElement.prototype, "src", {
+          ...imageSrc,
+          set(url) {
+            if (svgUrls.has(url) || String(url).startsWith("data:image/svg+xml")) {
+              svgImages.add(this);
+              const finish = beginSvgWork();
+              const decoded = () => {
+                this.removeEventListener("load", decoded);
+                this.removeEventListener("error", decoded);
+                finish();
+              };
+              this.addEventListener("load", decoded);
+              this.addEventListener("error", decoded);
+            }
+            imageSrc.set.call(this, url);
+          },
+        });
+        const rasterSizes = new WeakMap();
         window.adaResizeProbe = counts;
         for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+          const upload = proto.texImage2D;
+          proto.texImage2D = function (...args) {
+            const image = args.at(-1);
+            const svg = image instanceof HTMLImageElement && svgImages.has(image);
+            const result = upload.apply(this, args);
+            if (svg && args[0] === this.TEXTURE_2D && args[1] === 0) {
+              const texture = this.getParameter(this.TEXTURE_BINDING_2D);
+              if (texture) {
+                const size = image.naturalWidth * image.naturalHeight;
+                const previous = rasterSizes.get(texture);
+                if (previous !== undefined && previous !== size) {
+                  activity.resized[size > previous ? "larger" : "smaller"]++;
+                }
+                rasterSizes.set(texture, size);
+                markRasterActivity();
+              }
+            }
+            return result;
+          };
           const create = proto.createTexture;
           const remove = proto.deleteTexture;
+          for (const method of ["drawArrays", "drawElements"]) {
+            const draw = proto[method];
+            proto[method] = function (...args) {
+              activity.draws++;
+              return draw.apply(this, args);
+            };
+          }
           proto.createTexture = function (...args) {
             counts.textures++;
+            markRasterActivity();
             return create.apply(this, args);
           };
           proto.deleteTexture = function (...args) {
             counts.textures--;
+            markRasterActivity();
             return remove.apply(this, args);
           };
         }
@@ -6654,6 +6749,7 @@ try {
         Document.prototype.createElement = function (tag, ...rest) {
           if (String(tag).toLowerCase() === "canvas") {
             counts.canvases++;
+            markRasterActivity();
           }
           return createElement.call(this, tag, ...rest);
         };
@@ -6667,7 +6763,44 @@ try {
     await tab.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
     await tab.locator('.ada-start-actions > [data-action="continue"]').click();
     await tab.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-    await tab.waitForTimeout(2000);
+    async function settledRaster(target, resize) {
+      const initial = await target.evaluate(() => ({
+        draws: window.adaResizeActivity.draws,
+        since: performance.now(),
+      }));
+      await target.waitForFunction(
+        ({ draws, resize, since }) => {
+          const canvas = document.querySelector("#game-canvas > canvas");
+          const activity = window.adaResizeActivity;
+          const scale = Math.min(devicePixelRatio, 2);
+          return (
+            canvas?.offsetWidth > 0 &&
+            canvas.offsetHeight > 0 &&
+            Math.abs(canvas.width - Math.round(canvas.offsetWidth * scale)) <= 1 &&
+            Math.abs(canvas.height - Math.round(canvas.offsetHeight * scale)) <= 1 &&
+            activity.draws > Math.max(draws, activity.drawsAtLastChange) &&
+            (!resize || activity.resized[resize.direction] > resize.before) &&
+            activity.pending === 0 &&
+            performance.now() - Math.max(since, activity.lastChange) >= 250
+          );
+        },
+        { ...initial, resize },
+      );
+    }
+    async function resizeFlight(viewport) {
+      // The two scales exceed SvgRasters' threshold. An SVG already in use must upload at the
+      // new size on the same GL texture, not merely leave the canvas with a new backing size.
+      const direction = viewport.width > tab.viewportSize().width ? "larger" : "smaller";
+      const before = await tab.evaluate(
+        (side) => window.adaResizeActivity.resized[side],
+        direction,
+      );
+      await tab.setViewportSize(viewport);
+      await settledRaster(tab, { before, direction });
+      const after = await tab.evaluate((side) => window.adaResizeActivity.resized[side], direction);
+      return { direction, uploads: after - before };
+    }
+    await settledRaster(tab);
     // This container's memory, the browser's included (cgroup v2), or null where it does not read.
     const containerMemory = () => {
       try {
@@ -6681,26 +6814,27 @@ try {
     const resizes = (collect) =>
       Array.from({ length: 10 }, (_, index) => index + 1).reduce(async (earlier, step) => {
         const taken = await earlier;
-        await tab.setViewportSize(
+        const raster = await resizeFlight(
           step % 2 ? { height: 360, width: 720 } : { height: 720, width: 1280 },
         );
-        await tab.waitForTimeout(1500);
         const counts = await tab.evaluate(() => ({ ...window.adaResizeProbe }));
         const memory = containerMemory();
         if (!collect) {
-          return [...taken, { ...counts, memory, step }];
+          return [...taken, { ...counts, memory, raster, step }];
         }
         await devtools.send("HeapProfiler.collectGarbage");
-        await tab.waitForTimeout(1000);
-        return [...taken, { ...counts, memory, memoryAfterCollection: containerMemory(), step }];
+        await settledRaster(tab);
+        return [
+          ...taken,
+          { ...counts, memory, memoryAfterCollection: containerMemory(), raster, step },
+        ];
       }, Promise.resolve([]));
     const uncollected = await resizes(false);
     const collected = await resizes(true);
     // The view after twenty resizes at each scale, then a fresh tab at each for comparison: every
     // texture on screen is drawn at the current scale, neither stale nor blurred.
     await tab.screenshot({ path: `${output}/resize-after-1280x720.png` });
-    await tab.setViewportSize({ height: 360, width: 720 });
-    await tab.waitForTimeout(2500);
+    await resizeFlight({ height: 360, width: 720 });
     await tab.screenshot({ path: `${output}/resize-after-720x360.png` });
     const freshView = async (viewport) => {
       const fresh = await probe.newPage();
@@ -6709,7 +6843,7 @@ try {
       await fresh.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
       await fresh.locator('.ada-start-actions > [data-action="continue"]').click();
       await fresh.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-      await fresh.waitForTimeout(2500);
+      await settledRaster(fresh);
       await fresh.screenshot({
         path: `${output}/resize-fresh-${viewport.width}x${viewport.height}.png`,
       });

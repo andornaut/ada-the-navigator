@@ -232,7 +232,7 @@ source. It prints an `ada-browser-UUID` name; collect that run with:
 node tools/browser-check.mjs collect ada-browser-UUID
 ```
 
-Exit 75 means the browser is still running. A run fails after 720 seconds
+Exit 75 means the browser is still running. A run fails after 600 seconds
 (`tools/smoke-limit.mjs`), and its preview server stops 30 seconds later.
 Collection saves browser and preview
 logs, browser evidence and `verification.json` in `.check-results/<browser-name>/`
@@ -246,7 +246,7 @@ CPUs per container and read-only source/artifact mounts. Fetch
 `mcr.microsoft.com/playwright/mcp:v0.0.83` before starting. Browser starts obey the
 same local load restriction as the source gates.
 
-The smoke has a 720 second limit.
+The smoke has a 600 second limit.
 
 ### Art review captures
 

@@ -79,14 +79,27 @@ describe("station placement", () => {
       const found = sites(galaxy);
       // Every one of the 961 cells holds a station clear of the start.
       expect(found).toHaveLength(961);
+      let minimum = Infinity;
+      let closestPair: string | undefined;
+      let nonfinitePair: string | undefined;
       for (const [index, first] of found.entries()) {
         expect(Math.hypot(first.x, first.y)).toBeGreaterThanOrEqual(
           ECONOMY.station.originClearance,
         );
         for (const second of found.slice(index + 1)) {
-          expect(distance(first, second)).toBeGreaterThanOrEqual(8000);
+          const separation = distance(first, second);
+          if (!Number.isFinite(separation)) {
+            nonfinitePair ??= `${first.id} and ${second.id} (${separation})`;
+          } else if (separation < minimum) {
+            minimum = separation;
+            closestPair = `${first.id} and ${second.id}`;
+          }
         }
       }
+      expect(nonfinitePair, `galaxy ${galaxy} has a nonfinite station distance`).toBeUndefined();
+      expect(minimum, `galaxy ${galaxy}, closest stations ${closestPair}`).toBeGreaterThanOrEqual(
+        8000,
+      );
     },
   );
 
