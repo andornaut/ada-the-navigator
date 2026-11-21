@@ -47,7 +47,14 @@ describe("Art's asteroid catalog, version 1", () => {
       ...catalog.backdrop.sprites.map((sprite) => sprite.file),
     ];
     expect(files).toHaveLength(204);
-    for (const file of files) {
+    expect(new Set(files).size).toBe(files.length);
+    const sources = [
+      ...catalog.asteroids.flatMap((rock) =>
+        rock.svgSheet ? [rock.svgSheet] : rock.frames.map((frame) => frame.file),
+      ),
+      ...catalog.backdrop.sprites.map((sprite) => sprite.file),
+    ];
+    for (const file of sources) {
       expect(existsSync(`${PUBLIC}${file}`), file).toBe(true);
     }
     // The base field and every built galaxy have a tint; each other tint names a galaxy.
@@ -60,6 +67,14 @@ describe("Art's asteroid catalog, version 1", () => {
   });
 
   const first = FILE.asteroids[0]!;
+  it("adds a physical sheet source without changing any logical frame or geometry", () => {
+    const rock = FILE.asteroids.find(({ id }) => id === "asteroid-m1")!;
+    const svgSheet = "/art/asteroids/asteroid-m1-sheet.svg";
+    const read = (entry: Record<string, unknown>) =>
+      readAsteroidCatalog({ ...FILE, asteroids: [entry] })?.asteroids[0];
+    expect(read({ ...rock, svgSheet })).toEqual({ ...read(rock), svgSheet });
+  });
+
   it.each([
     ["an unknown version", { ...FILE, version: 2 }],
     ["a duplicate id", { ...FILE, asteroids: [first, first] }],
@@ -68,6 +83,10 @@ describe("Art's asteroid catalog, version 1", () => {
       { ...FILE, asteroids: [{ ...first, collision: [[[0, 0]]], frames: undefined }] },
     ],
     ["a spin range pair", { ...FILE, asteroids: [{ ...first, spin: [8, 18] }] }],
+    [
+      "an external sheet source",
+      { ...FILE, asteroids: [{ ...first, svgSheet: "https://example.com/rock.svg" }] },
+    ],
     [
       "a rock without its footprint radius",
       { ...FILE, asteroids: [{ ...first, footprintRadius: 0 }] },

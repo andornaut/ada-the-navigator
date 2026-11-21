@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
+import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
@@ -169,6 +170,25 @@ describe("artUrls", () => {
     for (let index = 0; index < 16; index++) {
       expect(urls).toContain(`/art/enemies/retaliator-${index}.svg`);
     }
+  });
+
+  it("precaches the medium m1 sheet and keeps its logical frame keys", () => {
+    const urls = artUrls(artFiles);
+    const sheet = "/art/asteroids/asteroid-m1-sheet.svg";
+    const ids = Array.from({ length: 24 }, (_, index) => `asteroid-m1-${index}`);
+    const rock = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1");
+    const svg = readFileSync(join(publicDir, sheet), "utf8");
+    const frameIds = Array.from(
+      svg.matchAll(/<svg\b[^>]*\bid="(asteroid-m1-\d+)"/gu),
+      ([, id]) => id,
+    );
+    expect(rock?.svgSheet).toBe(sheet);
+    expect(rock?.frames.map(({ file }) => file)).toEqual(
+      ids.map((id) => `/art/asteroids/${id}.svg`),
+    );
+    expect(frameIds).toEqual(ids);
+    expect(urls.filter((url) => url === sheet)).toEqual([sheet]);
+    expect(urls.filter((url) => /^\/art\/asteroids\/asteroid-m1-\d+\.svg$/u.test(url))).toEqual([]);
   });
 
   it("leaves out the icon review sheet", () => {

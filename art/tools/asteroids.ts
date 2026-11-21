@@ -3,8 +3,9 @@
 // (frame, display, pivot, drawn collision parts, world footprints, drift and spin data, backdrop
 // tints), resource-rocks.json (the medium and large shapes with an ore crystal cluster) and
 // links both from the root manifest.
-// Usage: node art/tools/asteroids.ts
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Usage: node art/tools/asteroids.ts [--backdrop-only|--m1-sheet]
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { contrast } from "@andornaut/art-kit/build/colour";
@@ -31,6 +32,10 @@ import {
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const svgDir = `${art}asteroids/`;
+const catalogPath = `${art}asteroids.json`;
+const M1_ID = "asteroid-m1";
+const M1_SHEET = `${M1_ID}-sheet.svg`;
+const M1_SHEET_URL = `/art/asteroids/${M1_SHEET}`;
 mkdirSync(svgDir, { recursive: true });
 
 // Display px per frame px, as for Ada's ship (96 frame px at 42 display px).
@@ -123,7 +128,7 @@ const SHAPES: readonly {
   { id: "asteroid-s2", size: "small", width: 26.71, seed: 23, aspect: 1.45 },
   { id: "asteroid-s3", size: "small", width: 39.86, seed: 37, aspect: 1.0 },
   { id: "asteroid-s4", size: "small", width: 50, seed: 41, aspect: 1.3 },
-  { id: "asteroid-m1", size: "medium", width: 84, seed: 53, aspect: 1.2 },
+  { id: M1_ID, size: "medium", width: 84, seed: 53, aspect: 1.2 },
   { id: "asteroid-m2", size: "medium", width: 76.94, seed: 67, aspect: 1.6 },
   { id: "asteroid-m3", size: "medium", width: 79.11, seed: 71, aspect: 1.1 },
   { id: "asteroid-m4", size: "medium", width: 57.12, seed: 83, aspect: 1.4 },
@@ -225,7 +230,7 @@ function rockModel(
     plan.push([x * Math.cos(turn) - y * Math.sin(turn), x * Math.sin(turn) + y * Math.cos(turn)]);
   }
   const h = spec.height;
-  const ring = (scale: number, z: number, jitter: number): Point[] =>
+  const ring = (scale: number, z: number, jitter: number): [number, number, number][] =>
     plan.map(([x, y]) => {
       const k = scale * (1 + (rnd() - 0.5) * jitter);
       return [x * k, y * k, z * (1 + (rnd() - 0.5) * 0.35)];
@@ -479,6 +484,9 @@ function footprint(id: string, base: readonly Point[]): V2[][] {
   return parts;
 }
 
+type FrameWriter = (file: string, source: string) => void;
+const writeFrame: FrameWriter = (file, source) => writeFileSync(svgDir + file, source);
+
 interface Built {
   file: string;
   collision: V2[][];
@@ -497,7 +505,8 @@ function build(
   {
     drawn = model.map((face) => ({ face, ramp })),
     declared = "frame",
-  }: { drawn?: readonly Painted[]; declared?: Declared } = {},
+    write = writeFrame,
+  }: { drawn?: readonly Painted[]; declared?: Declared; write?: FrameWriter } = {},
 ) {
   // Scale so frame 0's silhouette is the target width.
   const e0 = extent(model);
@@ -546,10 +555,7 @@ function build(
       fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
       pts: pts.map(([x, y]) => [r2(x), r2(y)] as V2),
     }));
-    writeFileSync(
-      `${svgDir}${file}`,
-      svgText(svgFrame(`${id} ${k}`, w, h, fills, declared, filled)),
-    );
+    write(file, svgText(svgFrame(`${id} ${k}`, w, h, fills, declared, filled)));
     check(`${id} ${k}`, collision, union(drawn, rasterize(tips, w, h)));
     return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!) };
   });
@@ -633,10 +639,7 @@ const tints = Object.fromEntries(
 // nugget a rock releases.
 const ORE = ORE_RAMP;
 
-function rock(
-  shape: { id: string; size: SizeClass; width: number; seed: number; aspect: number },
-  resource: boolean,
-) {
+function rock(write: FrameWriter, resource: boolean, shape: (typeof SHAPES)[number]) {
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
   const frames = spec.spin?.frames ?? 1;
@@ -646,7 +649,9 @@ function rock(
     frames,
     shape.width,
     STONE,
-    resource ? { declared: "display", drawn: crystals(model.faces, spec, shape.seed, ORE) } : {},
+    resource
+      ? { declared: "display", drawn: crystals(model.faces, spec, shape.seed, ORE), write }
+      : { write },
   );
   return {
     id: shape.id,
@@ -665,55 +670,126 @@ function rock(
   };
 }
 
-const backdropOnly = process.argv.includes("--backdrop-only");
-const previous = backdropOnly
-  ? (JSON.parse(readFileSync(`${art}asteroids.json`, "utf8")) as { asteroids: unknown[] })
-  : undefined;
-const asteroids = backdropOnly ? [] : SHAPES.map((shape) => rock(shape, false));
+function m1Sheet() {
+  const frames: { file: string; source: string }[] = [];
+  const shape = SHAPES.find(({ id }) => id === M1_ID)!;
+  const entry = rock(
+    (file, source) => {
+      frames.push({ file, source });
+    },
+    false,
+    shape,
+  );
+  const { width, height } = entry.frame;
+  const columns = 4;
+  const wide = width * columns;
+  const high = height * Math.ceil(frames.length / columns);
+  const roots = frames.map(({ source }, k) => {
+    const x = (k % columns) * width;
+    const y = Math.floor(k / columns) * height;
+    return `<svg id="${M1_ID}-${k}" x="${x}" y="${y}" ${source.slice("<svg ".length)}`;
+  });
+  const text = `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${high}" viewBox="0 0 ${wide} ${high}">${roots.join("")}</svg>\n`;
+  return { entry, frames, text };
+}
 
-// A resource rock stands on its plain shape's base: the footprints must match exactly.
-const resources = (backdropOnly ? [] : RESOURCES).map((shape) => {
-  const entry = rock(shape, true);
-  const plain = asteroids.find(({ id }) => id === shape.shape)!;
-  const same =
-    entry.footprintRadius === plain.footprintRadius &&
-    entry.frames.every(
-      (frame, k) => JSON.stringify(frame.footprint) === JSON.stringify(plain.frames[k]!.footprint),
-    );
-  if (!same) throw new Error(`${shape.id} footprints differ from ${shape.shape}`);
-  return entry;
-});
+function writeChanged(path: string, text: string) {
+  if (!existsSync(path) || readFileSync(path, "utf8") !== text) {
+    writeFileSync(path, text);
+  }
+}
 
-const white = "#FFFFFF";
-const grey = [
-  white,
-  white,
-  multiply(white, (1 + BACKDROP_SIDE) / 2),
-  multiply(white, BACKDROP_SIDE),
-  multiply(white, BACKDROP_SIDE),
-];
-const sprites = BACKDROP.map((b) => {
-  const model = rockModel(CLASSES.medium, b.seed, b.aspect);
-  const { h, pivot, w } = build(b.id, model, 1, b.width, grey);
-  return {
-    id: b.id,
-    file: `/art/asteroids/${b.id}.svg`,
-    frame: { width: w, height: h },
-    display: { width: r2(w * DISPLAY), height: r2(h * DISPLAY) },
-    pivot: [r5(pivot[0] / w), r5(pivot[1] / h)],
-    tint: "backdropLit",
-  };
-});
+type Catalog = {
+  asteroids: { id: string; svgSheet?: string }[];
+};
 
-const dataPath = `${art}asteroids.json`;
-writeFileSync(
-  dataPath,
-  await format(
-    json({
+async function catalogText(data: unknown) {
+  return format(json(data), { ...(await resolveConfig(catalogPath)), filepath: catalogPath });
+}
+
+async function selectM1Sheet(catalog: Catalog) {
+  const row = catalog.asteroids.find(({ id }) => id === M1_ID);
+  if (!row || (row.svgSheet !== undefined && row.svgSheet !== M1_SHEET_URL)) {
+    throw new Error("The asteroid catalog must own the asteroid-m1 frames");
+  }
+  const { entry, frames, text } = m1Sheet();
+  const original = { ...row };
+  delete original.svgSheet;
+  if (!isDeepStrictEqual(JSON.parse(json(entry)), original)) {
+    throw new Error("The asteroid-m1 model differs from the installed catalog");
+  }
+  const standalone = frames.filter(({ file }) => existsSync(svgDir + file));
+  for (const { file, source } of standalone) {
+    if (readFileSync(svgDir + file, "utf8") !== source) {
+      throw new Error(`${file} differs from the asteroid-m1 model`);
+    }
+  }
+  row.svgSheet = M1_SHEET_URL;
+  const updated = await catalogText(catalog);
+  writeChanged(svgDir + M1_SHEET, text);
+  writeChanged(catalogPath, updated);
+  for (const { file } of standalone) {
+    rmSync(svgDir + file, { force: true });
+  }
+}
+
+async function rebuild(catalog: Catalog, backdropOnly: boolean) {
+  const selected = catalog.asteroids.some(
+    ({ id, svgSheet }) => id === M1_ID && svgSheet === M1_SHEET_URL,
+  );
+  const asteroids = backdropOnly
+    ? []
+    : SHAPES.map((shape) => {
+        if (selected && shape.id === M1_ID) {
+          const { entry, text } = m1Sheet();
+          writeChanged(svgDir + M1_SHEET, text);
+          return { ...entry, svgSheet: M1_SHEET_URL };
+        }
+        return rock(writeFrame, false, shape);
+      });
+
+  // A resource rock stands on its plain shape's base: the footprints must match exactly.
+  const resources = (backdropOnly ? [] : RESOURCES).map((shape) => {
+    const entry = rock(writeFrame, true, shape);
+    const plain = asteroids.find(({ id }) => id === shape.shape)!;
+    const same =
+      entry.footprintRadius === plain.footprintRadius &&
+      entry.frames.every(
+        (frame, k) =>
+          JSON.stringify(frame.footprint) === JSON.stringify(plain.frames[k]!.footprint),
+      );
+    if (!same) throw new Error(`${shape.id} footprints differ from ${shape.shape}`);
+    return entry;
+  });
+
+  const white = "#FFFFFF";
+  const grey = [
+    white,
+    white,
+    multiply(white, (1 + BACKDROP_SIDE) / 2),
+    multiply(white, BACKDROP_SIDE),
+    multiply(white, BACKDROP_SIDE),
+  ];
+  const sprites = BACKDROP.map((b) => {
+    const model = rockModel(CLASSES.medium, b.seed, b.aspect);
+    const { h, pivot, w } = build(b.id, model, 1, b.width, grey);
+    return {
+      id: b.id,
+      file: `/art/asteroids/${b.id}.svg`,
+      frame: { width: w, height: h },
+      display: { width: r2(w * DISPLAY), height: r2(h * DISPLAY) },
+      pivot: [r5(pivot[0] / w), r5(pivot[1] / h)],
+      tint: "backdropLit",
+    };
+  });
+
+  writeFileSync(
+    catalogPath,
+    await catalogText({
       version: 1,
       displayScale: DISPLAY,
       stone: STONE,
-      asteroids: previous?.asteroids ?? asteroids,
+      asteroids: backdropOnly ? catalog.asteroids : asteroids,
       backdrop: {
         sideScale: BACKDROP_SIDE,
         rule: { lift: BACKDROP_LIFT, chromaScale: BACKDROP_CHROMA, lightDrop: BACKDROP_LIGHT_DROP },
@@ -721,24 +797,38 @@ writeFileSync(
       },
       tints,
     }),
-    { ...(await resolveConfig(dataPath)), filepath: dataPath },
-  ),
-);
-
-// Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
-if (!backdropOnly) {
-  const resourcePath = `${art}resource-rocks.json`;
-  writeFileSync(
-    resourcePath,
-    await format(
-      json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
-      {
-        ...(await resolveConfig(resourcePath)),
-        filepath: resourcePath,
-      },
-    ),
   );
 
-  // The root manifest names the asteroid and resource rock data next to the other data files.
-  linkData("core", { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });
+  // Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
+  if (!backdropOnly) {
+    const resourcePath = `${art}resource-rocks.json`;
+    writeFileSync(
+      resourcePath,
+      await format(
+        json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
+        {
+          ...(await resolveConfig(resourcePath)),
+          filepath: resourcePath,
+        },
+      ),
+    );
+
+    // The root manifest names the asteroid and resource rock data next to the other data files.
+    linkData("core", {
+      asteroids: "/art/asteroids.json",
+      resourceRocks: "/art/resource-rocks.json",
+    });
+  }
 }
+
+const args = process.argv.slice(2);
+const backdropOnly = args.includes("--backdrop-only");
+const m1Only = args.includes("--m1-sheet");
+if (m1Only && backdropOnly) {
+  throw new Error("Choose either --m1-sheet or --backdrop-only");
+}
+const catalog =
+  m1Only || backdropOnly || existsSync(catalogPath)
+    ? (JSON.parse(readFileSync(catalogPath, "utf8")) as Catalog)
+    : { asteroids: [] };
+await (m1Only ? selectM1Sheet(catalog) : rebuild(catalog, backdropOnly));

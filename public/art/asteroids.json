@@ -4992,7 +4992,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-m1-sheet.svg"
     },
     {
       "id": "asteroid-m2",

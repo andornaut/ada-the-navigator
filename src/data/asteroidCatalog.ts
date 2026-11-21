@@ -39,6 +39,8 @@ export interface AsteroidArt {
   /** Spin range in degrees per second, or false for one still frame. */
   readonly spin: { readonly degPerSecond: readonly [number, number] } | false;
   readonly frames: readonly AsteroidArtFrame[];
+  /** Optional physical source. Frame file keys still name the textures. */
+  readonly svgSheet?: string;
 }
 /** A greyscale backdrop rock, multiplied at runtime by the galaxy's `backdropLit`. */
 export interface BackdropSprite {
@@ -161,6 +163,10 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
     !pair(drift.speed) ||
     spin === undefined ||
     (spin && !pair(spin.degPerSecond)) ||
+    (entry.svgSheet !== undefined &&
+      (!text(entry.svgSheet) ||
+        !entry.svgSheet.startsWith("/art/") ||
+        !entry.svgSheet.endsWith(".svg"))) ||
     !frames.length ||
     frames.some((at) => !at) ||
     // A still rock has one frame; a spinning one turns through several.
@@ -180,6 +186,7 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
     spin: spin
       ? { degPerSecond: [(spin.degPerSecond as number[])[0]!, (spin.degPerSecond as number[])[1]!] }
       : false,
+    ...(typeof entry.svgSheet === "string" ? { svgSheet: entry.svgSheet } : {}),
   };
 }
 

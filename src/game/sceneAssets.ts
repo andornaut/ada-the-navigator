@@ -62,6 +62,7 @@ import {
 } from "./shipMaterials.ts";
 import { readGalaxyStationArt } from "./stationArt.ts";
 import { type SvgRequest } from "./svgRasters.ts";
+import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 import { readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
@@ -156,39 +157,17 @@ export function queueCoreSvgSheets(
     }
   }
   for (const [path, frames] of sheets) {
-    const key = `vector-sheet:${path}`;
+    const key = vectorSheetKey(path);
     scene.load.once(`filecomplete-xml-${key}`, () => {
       if (!current()) {
         return;
       }
       try {
         const xml = scene.cache.xml.get(key) as Document | undefined;
-        const root = xml?.documentElement;
-        if (root?.localName !== "svg" || root.namespaceURI !== "http://www.w3.org/2000/svg") {
-          throw new Error(`Invalid vector sheet: ${path}`);
-        }
-        const children = Array.from(root.children);
-        const serializer = new XMLSerializer();
-        const sources = frames.map((asset): Asset => {
-          const matches = children.filter((child) => child.id === asset.id);
-          const frame = matches[0];
-          if (
-            matches.length !== 1 ||
-            frame?.localName !== "svg" ||
-            frame.namespaceURI !== root.namespaceURI ||
-            !frame.hasAttribute("viewBox") ||
-            Number(frame.getAttribute("width")) !== asset.width ||
-            Number(frame.getAttribute("height")) !== asset.height
-          ) {
-            throw new Error(`Invalid frame ${asset.id} in vector sheet: ${path}`);
-          }
-          const standalone = frame.cloneNode(true) as Element;
-          for (const attribute of ["id", "x", "y"]) {
-            standalone.removeAttribute(attribute);
-          }
-          const encoded = btoa(serializer.serializeToString(standalone));
-          return { ...asset, path: `data:image/svg+xml;base64,${encoded}` };
-        });
+        const sources = frames.map((asset): Asset => ({
+          ...asset,
+          path: vectorSheetSource(xml, path, asset),
+        }));
         for (const asset of sources) {
           loadSvg(scene, asset);
         }
@@ -651,6 +630,72 @@ export function readGalaxyArt(scene: AssetsContext): void {
   );
 }
 
+interface RockSheetFrame {
+  readonly path: string;
+  readonly id: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+const rockSheetFrames = new Map<string, RockSheetFrame>();
+for (const rock of ASTEROID_ART.asteroids) {
+  const path = rock.svgSheet;
+  if (path) {
+    rock.frames.forEach(({ file }, index) => {
+      rockSheetFrames.set(file, { id: `${rock.id}-${index}`, path, ...rock.frame });
+    });
+  }
+}
+
+function queueRockSvg(scene: AssetsContext, file: string, path: string): void {
+  // Resource rocks are drawn at their own size; backdrop rocks at the art's display scale.
+  const factor = scene.resourceFiles.has(file) ? 1 : scene.asteroidArt.displayScale;
+  queueSvg(scene, { key: file, path, size: (scale) => ({ scale: scale * factor }) });
+}
+
+const loadingRockSheets = new WeakMap<AssetsContext, Map<string, string[]>>();
+
+function queueRockSheetFrame(scene: AssetsContext, file: string, frame: RockSheetFrame): void {
+  const { path } = frame;
+  const key = vectorSheetKey(path);
+  const queueFrame = (logicalFile: string, xml: Document): void => {
+    try {
+      const source = vectorSheetSource(xml, path, rockSheetFrames.get(logicalFile)!);
+      queueRockSvg(scene, logicalFile, source);
+    } catch (error) {
+      // Malformed optional art keeps the same fallback as a missing individual rock frame.
+      console.warn(error);
+    }
+  };
+  const xml = scene.cache.xml.get(key) as Document | undefined;
+  if (xml) {
+    queueFrame(file, xml);
+    scene.rockQueued = true;
+    return;
+  }
+  let loading = loadingRockSheets.get(scene);
+  if (!loading) {
+    loading = new Map();
+    loadingRockSheets.set(scene, loading);
+  }
+  const pending = loading.get(path);
+  if (pending) {
+    pending.push(file);
+    return;
+  }
+  const requested = [file];
+  loading.set(path, requested);
+  // The loader's existing automatic retry repeats the XML request with the same key.
+  scene.load.once(`filecomplete-xml-${key}`, (_key: string, _type: string, source: Document) => {
+    loading.delete(path);
+    for (const logicalFile of requested) {
+      queueFrame(logicalFile, source);
+    }
+  });
+  scene.load.xml(key, path);
+  scene.rockQueued = true;
+}
+
 /** Whether a rock or backdrop SVG is ready; a missing one is queued for the next load. */
 export function rockTexture(scene: AssetsContext, file: string): boolean {
   if (scene.textures.exists(file)) {
@@ -658,10 +703,13 @@ export function rockTexture(scene: AssetsContext, file: string): boolean {
   }
   if (!scene.rockRequests.has(file) && scene.asteroidArt) {
     scene.rockRequests.add(file);
-    // Resource rocks are drawn at their own size; backdrop rocks at the art's display scale.
-    const factor = scene.resourceFiles.has(file) ? 1 : scene.asteroidArt.displayScale;
-    queueSvg(scene, { key: file, path: file, size: (scale) => ({ scale: scale * factor }) });
-    scene.rockQueued = true;
+    const frame = rockSheetFrames.get(file);
+    if (frame) {
+      queueRockSheetFrame(scene, file, frame);
+    } else {
+      queueRockSvg(scene, file, file);
+      scene.rockQueued = true;
+    }
   }
   return false;
 }
