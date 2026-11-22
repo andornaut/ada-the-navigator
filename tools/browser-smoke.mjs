@@ -5162,7 +5162,8 @@ try {
   const combatSnapshots = {};
   const pixels = {};
   const heavyColors = {
-    hull: "#d68b72",
+    // Core capital's slate armour flank, from art/tools/heavy-surface.ts.
+    hull: "#555c77",
     scorch: "#5c3a31",
     turretTop: "#c27a62",
   };
@@ -5362,7 +5363,7 @@ try {
   });
   assert.ok(
     pixels.capital.counts.hull > pixels.capital.area * 0.15,
-    "Large enemy must draw Art's coral hull",
+    "The capital must draw Art's slate armour",
   );
   assert.ok(
     pixels.capital.counts.turretTop > 20,
