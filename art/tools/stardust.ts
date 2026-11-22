@@ -55,15 +55,10 @@ writeFileSync(
   ),
 );
 await prettify(`${art}stardust.json`);
-for (const [key, size] of [
-  ["icon-stardust", 16],
-  ["icon-stardust-20", 20],
-] as const) {
-  await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
-    ["rest", [resourceIcon(STARDUST_REST, size)], 100],
-  ]);
-  await prettify(`${sprites}${key}.json`);
-}
+const key = "icon-stardust-20";
+await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
+  ["rest", [resourceIcon(STARDUST_REST, 20)], 100],
+]);
 
 // The pickup sheet loads as a root manifest sprite sheet, placed before the station and enemies.
 const entry = {
