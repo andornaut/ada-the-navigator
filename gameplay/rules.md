@@ -735,7 +735,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
   drag. Stick placement ignores the device-safe insets: each joystick's drawn
-  ring sits 50 logical pixels from the screen's outer side edge and 50 above the
+  ring sits 80 logical pixels from the screen's outer side edge and 50 above the
   screen's bottom, mirrored as in Chibi. A ring moves inward only as far as
   needed to stay at least 8 logical pixels inside the game area's edge, so it
   never appears to touch the side bars; the 8 applies only when needed. Use is

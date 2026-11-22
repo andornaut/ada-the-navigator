@@ -505,7 +505,7 @@ export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
-// frames, each ring's drawn edge side (50) in from the screen's outer left (move) or right (aim)
+// frames, each ring's drawn edge side in from the screen's outer left (move) or right (aim)
 // edge and bottom (50) above the screen's bottom, ignoring safe insets, moved inward only as far
 // as needed to stay STICK_AREA_MARGIN inside the game area; the drawn knob moves at most
 // knobReach from the ring's centre. Move input reaches full speed moveReach from the touch-down
@@ -516,7 +516,7 @@ export const TOUCH_STICK = {
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 50,
+  side: 80,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn

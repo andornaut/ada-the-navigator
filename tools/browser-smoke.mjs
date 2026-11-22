@@ -1552,7 +1552,7 @@ try {
     };
   }
   // The touch HUD's bottom controls, in logical px: each joystick ring's drawn outer side and
-  // bottom (the rings draw 1 inside their 75 frame targets) 50 in from the screen's sides and 50
+  // bottom (the rings draw 1 inside their 75 frame targets) 80 in from the screen's sides and 50
   // above its bottom, the aim ring's from the view's whole-pixel width, unless that would leave less
   // than the stick area margin (8) to the game area's edge, where the ring moves in to it; and the
   // shield pill on its own bottom line, its drawn bottom margin mirroring the status pill's drawn
@@ -1592,7 +1592,7 @@ try {
     });
     const { area, view } = hud;
     const margin = 8;
-    const side = 50;
+    const side = 80;
     const below = 50;
     const width = Math.floor(view.width);
     const expected = {
@@ -3626,10 +3626,10 @@ try {
   assert.deepEqual(
     narrowHud.clamped,
     { aim: false, bottom: false, move: false },
-    "At 844x390 the rings sit 50 from the screen's sides and 50 from its bottom, unclamped",
+    "At 844x390 the rings sit 80 from the screen's sides and 50 from its bottom, unclamped",
   );
   events.checks.push(
-    "At 844x390 the sticks' rings sit 50 in from the screen's sides and 50 from its bottom, " +
+    "At 844x390 the sticks' rings sit 80 in from the screen's sides and 50 from its bottom, " +
       "the shield pill on its own line",
   );
   // Compare observable flight response, not the implementation's stick sampling formula. Travel is
@@ -6344,15 +6344,15 @@ try {
   await continueFlight();
   const phoneHud = await touchHudProof("2404x1080");
   assert.equal(phoneHud.dpr, 2.5, "The phone context renders at device pixel ratio 2.5");
-  // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760: 50 from the sides lies at least
-  // 9 inside it, past the 8 margin.
+  // 2404x1080 at dpr 2.5 is 801x360 logical, the area 40 to 760. The requested side
+  // offset leaves both rings at least 8 inside the area.
   assert.deepEqual(
     phoneHud.clamped,
     { aim: false, bottom: false, move: false },
-    "At 2404x1080 the rings sit 50 from the screen's sides, unclamped",
+    "At 2404x1080 the rings sit 80 from the screen's sides, unclamped",
   );
   events.checks.push(
-    "At 2404x1080 dpr 2.5 the rings sit 50 from the screen's sides and 50 from its bottom, " +
+    "At 2404x1080 dpr 2.5 the rings sit 80 from the screen's sides and 50 from its bottom, " +
       "the shield pill on its own line",
   );
   await phoneContext.close();
