@@ -1312,7 +1312,6 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
     action: f.labels.jobAccept,
     kind: "confirm",
     price: 10,
-    stillNeeded: "40 Stardust still needed.",
     title: "Orchard",
   });
   f.activate(f.parent.querySelector('[data-item="project:orchard"]')!);
@@ -1322,9 +1321,7 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
     "Restore the orchard.",
   );
   expectContribution(confirmation.body, 10);
-  expect(
-    confirmation.body.querySelectorAll(".ada-confirm-left").map((line) => line.textContent),
-  ).toEqual(["40 Stardust still needed."]);
+  expect(confirmation.body.querySelectorAll(".ada-confirm-left")).toEqual([]);
   expect(f.action("confirm-buy").textContent).toBe(f.labels.jobAccept);
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("project:orchard");

@@ -830,13 +830,6 @@ export function buildScene(scene: UiContext): void {
               action: label("jobAccept"),
               kind: "confirm",
               price: donation.amount,
-              ...(donation.stillNeeded > 0
-                ? {
-                    stillNeeded: fill(label("donateStillNeeded"), {
-                      amount: amount(donation.stillNeeded),
-                    }),
-                  }
-                : {}),
               title: fill(label("donateTitle"), { name: view.name }),
             };
       }

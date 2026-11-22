@@ -442,9 +442,8 @@ lists only this galaxy's projects in table order. It shows the effect until
 Ada contributes, then `{paid} of {price}` and the remaining cost. Completed
 projects show Funded.
 
-Activating a row opens a donation confirm in the shop's buy confirm pattern: the
-project's description, the amount this donation pays, the balance left after
-and, when part stays unpaid, the amount still needed after. The donation pays
+Activating a row opens a donation confirmation with the project's description
+and the contribution amount. The donation pays
 `min(balance, remaining)`, so a short balance makes a part payment that
 persists across flights. A row is unaffordable only at a balance of 0, and then
 refuses with the shared refusal feedback. Funding the last part closes the card
@@ -529,7 +528,6 @@ The shield shop row reuses the existing `shield` label.
 | `weaponAmmoLabel`    | {weapon}, {count} left                                                    |
 | `projectProgress`    | {paid} of {price}                                                         |
 | `donateTitle`        | Donate to {name}?                                                         |
-| `donateStillNeeded`  | {amount} still needed after                                               |
 | `undock`             | Undock                                                                    |
 | `stationWelcome`     | Welcome aboard. Trade your Stardust, or take a job.                       |
 | `inUse`              | In use                                                                    |

@@ -408,7 +408,6 @@ export const CONTENT: GameContent = {
     disabledBanner: "Disabled",
     dock: "Dock",
     donate: "Donate",
-    donateStillNeeded: "{amount} still needed after",
     donateTitle: "Donate to {name}?",
     elderLoom: "Elder Loom",
     engine: "Engine",

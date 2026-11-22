@@ -141,8 +141,6 @@ export type StationRequest =
       readonly action: string;
       readonly kind: "confirm";
       readonly price: number;
-      /** A donation leaving part unpaid: "{amount} still needed after". */
-      readonly stillNeeded?: string;
       readonly title: string;
     }
   | { readonly kind: "refused" };
@@ -925,9 +923,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       price.dataset.inkTop = "0";
       price.textContent = String(request.price);
       parts.push(price);
-    }
-    if (request.stillNeeded) {
-      parts.push(prose("ada-confirm-left", request.stillNeeded));
     }
     showConfirmation(request.title, parts, request.action);
   };
