@@ -23,7 +23,8 @@
 ## Shared scene package
 
 `node art/tools/story-compositions.ts <candidate-directory>` builds the additive
-WebP package from the authored bedroom generator and other scene PNG references, lossy at quality 80 (method 6,
+WebP package from authored scene producers and retained PNG references, lossy at
+quality 80 (method 6,
 alpha quality 100, so the patches' binary alpha stays exact). It does not
 activate the root manifest or remove reference images. The package contains
 twelve full bases across nine locations, a polished-rock patch, recorder,
@@ -34,12 +35,14 @@ galaxy-map character images.
 
 `art/sources/story-reference.json` preserves the authored scene paths, subject
 bands and overlay positions independently of the activated runtime manifest.
-The producer paints bedroom plates from `art/tools/storybook.ts` and keeps the
-original PNGs in `art/sources/story/`. Other scenes read the preserved PNG
+The producer paints the bedroom plates, Grandma’s garden, community garden,
+front door and concert hall from `art/tools/storybook.ts`. It keeps the original
+PNGs in `art/sources/story/`. Other scenes read the preserved PNG
 inputs, falling back to their original public paths before cutover. Pass
 `--bedroom-only` after the output directory to build and check just the
-bedroom bases, layers and aliases. Merge those selected IDs into the complete
-composition document when pairing the candidate with the consumer. Paired retirement moves those
+bedroom bases, layers and aliases. Pass `--earth-locations-only` to build and check
+just the four other painted locations and their variants. Merge selected IDs into
+the complete composition document when pairing with the consumer. Paired retirement moves those
 authored inputs out of `public/art/story/`; it does not discard their bytes.
 
 The Garden Party closing places the original Ada-in-bed sprite over the night
@@ -160,16 +163,16 @@ and the scene's subject stays clearest above it.
 | `story-park`                     | Park: pond, bench, three trees, the dig spot and rock | `#cfe4e8` → `#dfeadb` | grass `#8cc777`, path `#e8d3a2`, pond `#8fc8de`, rock `#93877e`           |
 | `story-ada-room-unpolished`      | Ada's room, the rock on the desk as dug up            | `#d9d2e6` → `#cfc5de` | wall `#dfc9e9`, floor `#d9b98f`, blanket `#7da6e2`, rock `#93877e`        |
 | `story-ada-room`                 | Ada's room, the polished rock's faint glowing pattern | `#d9d2e6` → `#cfc5de` | as above, glow line `#53d1c2`, glow `#96ecde`                             |
-| `story-grandma-garden`           | Grandma's house, fence, raised beds in bloom, tree    | `#bfe0e8` → `#d9ecd6` | grass `#86c46f`, wall `#f0d7a8`, roof `#d06a55`, blooms `#ef7f8f`         |
+| `story-grandma-garden`           | Grandma's house, fence, raised beds in bloom, tree    | `#bfe0e8` → `#d9ecd6` | grass `#76bd5e`, wall `#f0d7a8`, roof `#d06a55`, blooms `#ef7f8f`         |
 | `story-community-garden`         | Fenced lot: shed, one sprouting and two empty beds    | `#d3dfe6` → `#dfe6dc` | ground `#cfae82`, patches `#a9c98b`, shed `#b49ad6`, bin `#6f9a7a`        |
 | `story-schoolyard`               | School, hopscotch, play structure and slide, tree     | `#cfe0ea` → `#dde6e4` | asphalt `#b6aebf`, brick `#d48f7e`, slide `#f2c95c`, bars `#ea8f84`       |
 | `story-school-hallway`           | Lockers, notice board, two doors, bench               | `#c7d3e6` → `#a9b8d2` | wall `#f1e3c6`, lockers `#5fb3a6`, floor `#d8c29c`, bench `#7d8fc0`       |
 | `story-kitchen`                  | Kitchen at home: round table set for supper, counter  | `#e9dccb` → `#e1d2c2` | wall `#f6e2b8`, cabinets `#93c2b0`, cloth `#ef9b84`, tiles `#d9b487`      |
 | `story-front-door`               | Front door, coats and lead, shoe rack, dog's bowl     | `#e6dccd` → `#dcd0c0` | door `#a98bc4`, floor `#d6b48e`, coats `#f0c95e` and `#86ade0`            |
 | `story-ada-room-recorder`        | `story-ada-room` with the recorder on a song sheet    | `#d9d2e6` → `#cfc5de` | as `story-ada-room`, recorder `#69473a`, rings `#efe4c8`                  |
-| `story-concert-hall`             | Corner stage, curtains, piano, spotlight, chair rows  | `#d8cde0` → `#cbbfd2` | wall `#efe2cf`, floor `#d7ad7c`, curtain `#c95a66`, chairs `#6f93cf`      |
-| `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#6e4a30` |
-| `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#7cc95a`, trowel `#9aa6b4`, sack `#c9a978`           |
+| `story-concert-hall`             | Corner stage, curtains, piano, spotlight, chair rows  | `#d8cde0` → `#cbbfd2` | wall `#efe2cf`, floor `#d7ad7c`, curtain `#d34263`, chairs `#6f93cf`      |
+| `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#633b28` |
+| `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#70c943`, trowel `#9aa6b4`, sack `#c9a978`           |
 | `story-ada-room-night`           | Ada's room at night: moon and stars, lamp off         | `#1d2452` → `#2a2f5e` | wall `#445487`, floor `#414c64`, blanket `#1d4484`, glass `#16245e`       |
 | `story-ada-room-morning`         | Morning: empty bed, sunlight and the rock             | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
 
@@ -186,13 +189,13 @@ Full palettes are in the generator. Colours are before treatment d.
   stays the brightest point. It closes in `story-concert-hall`, the stage seen
   from the hall, with the spotlight on the empty stage. The recorder room draws Ada's
   room at the same camera as every other bedroom variant. The concert hall
-  rises 7 rows so its subject ends by row 293.
+  rises 31 rows to clear the phone dialogue panel at the stair landing.
 - Andromeda opens, resolves and closes in Grandma's garden with a potting table
   on the lawn by the house and a green tray of eight terracotta pots on it.
   `story-grandma-garden-spilled` (the opening, its branch pages and the
   resolution) has the front-row pots pushed back crooked, three seedlings out
   (two on the table, one on the grass) and loose soil on the table and the
-  grass; `story-grandma-garden-replanted` (the closing) has every pot upright
+  table-side grass; `story-grandma-garden-replanted` (the closing) has every pot upright
   with its seedling, the soil swept up, a trowel on the table and a potting-soil
   sack beside it.
 - The new backgrounds add their props to the scenes of `story-ada-room` and
@@ -332,7 +335,7 @@ takes its base's placement. Bedroom variants share the same model scale and came
 variants add desk props without shifting the room.
 
 The aboard band under Astra's three questions spans 84 rows in a 93-row strip.
-The concert hall rises 7 rows so its subject ends by row 293. Bedroom variants
+The concert hall rises 31 rows to clear the phone dialogue panel at the stair landing. Bedroom variants
 keep one camera and use the runtime's shared bedroom placement.
 
 ## Environment aliases

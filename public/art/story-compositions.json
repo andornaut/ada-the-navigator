@@ -179,19 +179,19 @@
     {
       "id": "garden-spilled",
       "path": "/art/story-composed/garden-spilled.webp",
-      "width": 188,
-      "height": 212,
-      "displayWidth": 94,
-      "displayHeight": 106,
+      "width": 190,
+      "height": 200,
+      "displayWidth": 95,
+      "displayHeight": 100,
       "pixelRatio": 2
     },
     {
       "id": "garden-replanted",
       "path": "/art/story-composed/garden-replanted.webp",
       "width": 200,
-      "height": 200,
+      "height": 202,
       "displayWidth": 100,
-      "displayHeight": 100,
+      "displayHeight": 101,
       "pixelRatio": 2
     },
     {
@@ -1086,11 +1086,11 @@
         {
           "asset": "garden-spilled",
           "atLogical": {
-            "x": 423,
+            "x": 422,
             "y": 172
           },
-          "displayWidth": 94,
-          "displayHeight": 106
+          "displayWidth": 95,
+          "displayHeight": 100
         }
       ],
       "subject": {
@@ -1108,7 +1108,7 @@
             "y": 170
           },
           "displayWidth": 100,
-          "displayHeight": 100
+          "displayHeight": 101
         }
       ],
       "subject": {

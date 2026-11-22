@@ -68,7 +68,7 @@ function tree(s: Scene, P: Palette, x: number, y: number, h = 3.2, r = 2.2) {
 
 const GARDEN: Palette = {
   back: ["#bfe0e8", "#d9ecd6"],
-  grass: "#86c46f",
+  grass: "#76bd5e",
   earth: "#9b6b45",
   wall: "#f0d7a8",
   roof: "#d06a55",
@@ -78,11 +78,11 @@ const GARDEN: Palette = {
   fence: "#f3ecdc",
   bed: "#b07a4c",
   soil: "#7a5236",
-  plant: "#5fae55",
+  plant: "#529e45",
   bloom1: "#ef7f8f",
   bloom2: "#f6c85a",
   bloom3: "#a98ad8",
-  crown: "#6fb85e",
+  crown: "#62a951",
   trunk: "#8a5f3e",
   path: "#e2cfa4",
   can: "#7fa7d9",
@@ -92,8 +92,8 @@ const GARDEN: Palette = {
   tray: "#4f6a5a",
   pot: "#d9825b",
   potsoil: "#6a4630",
-  spill: "#6e4a30",
-  sprout: "#7cc95a",
+  spill: "#633b28",
+  sprout: "#70c943",
   sackbag: "#c9a978",
   trowel: "#9aa6b4",
   handle: "#b8553f",
@@ -221,18 +221,18 @@ function pottingTable(s: Scene, P: Palette, state: TrayState) {
     // and soil scattered on the grass below.
     s.solid(lump([8.1, 10.95], [0.38, 0.22], z, z + 0.16, 0.5), P.spill!, 2, base + 0.55);
     s.solid(lump([10.5, 10.75], [0.3, 0.22], z, z + 0.13, 0.5), P.spill!, 2, base + 0.56);
-    fallen(s, P, [8.9, 10.95, z], [0.85, 0.5], base + 0.6);
+    fallen(s, P, [8.9, 10.94, z], [0.96, -0.12], base + 0.6);
     fallen(s, P, [10.0, 10.9, z], [0.9, -0.4], base + 0.61);
     for (const [cx, cy, r, sy, rot] of [
-      [9.3, 11.95, 0.95, 0.5, 0.25],
-      [10.7, 11.7, 0.5, 0.6, 0.1],
-      [7.9, 11.75, 0.45, 0.55, 0.5],
-      [8.7, 12.6, 0.22, 0.8, 0.0],
-      [10.1, 12.55, 0.18, 0.8, 0.0],
+      [8.75, 11.85, 0.95, 0.5, 0.25],
+      [10.0, 11.66, 0.5, 0.6, 0.1],
+      [7.56, 11.67, 0.45, 0.55, 0.5],
+      [8.2, 12.1, 0.22, 0.8, 0.0],
+      [9.55, 12.04, 0.18, 0.8, 0.0],
     ] as const) {
       s.solid([flat(octagon(cx, cy, r, 0, 9, rot, sy), 0.002)], P.spill!, 1, 2.1 + cx * 0.001);
     }
-    fallen(s, P, [9.4, 12.05, 0], [0.7, 0.7], 22.6);
+    fallen(s, P, [8.75, 11.85, 0], [-0.76, 0.15], 22.6);
   } else {
     // Replanted: the trowel on the table, the potting-soil sack beside it.
     s.solid(box(9.4, 10.35, 10.82, 11.06, z, z + 0.06), P.trowel!, 2, base + 0.62);
@@ -304,8 +304,8 @@ const LOT: Palette = {
   patch: "#a9c98b",
   post: "#a3adbb",
   wire: "#bac2cd",
-  bed: "#b07a4c",
-  soil: "#7d5a3e",
+  bed: "#bb8559",
+  soil: "#6d4931",
   sprout: "#7fbf62",
   shed: "#b49ad6",
   shedroof: "#9b80c4",
@@ -439,8 +439,6 @@ interface RoomOptions {
 
 // Design px per logical canvas px (the canvas is the design frame at 360 / 390).
 const DESIGN_PER_LOGICAL = DESIGN.height / 360;
-// The concert hall rises 7 rows so the stage ends by row 293 above the story panel.
-const NEEDLE_LIFT = 7;
 
 // The doorway in the left wall of Ada's room, beside the bed's head, in model units: Dad looks
 // in through it on Needle's practice page.
@@ -963,7 +961,8 @@ const DOOR: Palette = {
   rail: "#b98d63",
   coat1: "#f0c95e",
   coat2: "#86ade0",
-  leash: "#ec8e6a",
+  leash: "#b94e51",
+  clasp: "#807783",
   rack: "#c49a6c",
   shoe1: "#93acd6",
   shoe2: "#e79a92",
@@ -1003,8 +1002,23 @@ function frontDoor(P: Palette): Scene {
   // Coats and the lead on the hooks, near the corner by the door, inside rows 175..280.
   s.solid(box(1.0, 2.2, 0, 0.5, 2.8, 4.8), P.coat1!, 2, 1.5);
   s.solid(box(2.6, 3.8, 0, 0.5, 3.0, 4.8), P.coat2!, 2, 3.0);
-  s.solid(box(4.4, 4.55, 0, 0.15, 3.4, 4.8), P.leash!, 2, 5.0);
-  s.solid(box(4.15, 4.8, 0, 0.15, 3.0, 3.4), P.leash!, 2, 5.1);
+  // A loop hangs on its own hook, with the clasp at the end of the lead.
+  const handle: Point[] = [
+    [4.46, 0.24, 4.83],
+    [4.19, 0.24, 4.62],
+    [4.14, 0.24, 4.37],
+    [4.29, 0.24, 4.13],
+    [4.52, 0.24, 4.04],
+    [4.75, 0.24, 4.21],
+    [4.79, 0.24, 4.47],
+    [4.68, 0.24, 4.7],
+  ];
+  for (const [i, point] of handle.entries()) {
+    s.solid(rod(point, handle[(i + 1) % handle.length]!, 0.085, 6), P.leash!, 2, 5.0);
+  }
+  s.solid(rod(handle[4]!, [4.73, 0.22, 3.27], 0.085, 6), P.leash!, 2, 5.01);
+  s.solid(rod([4.73, 0.22, 3.28], [4.66, 0.22, 3.02], 0.12, 6), P.clasp!, 2, 5.02);
+  s.solid(rod([4.46, 0, 4.83], handle[0]!, 0.08, 6), P.clasp!, 2, 5.03);
   // Shoe rack, plant and the dog's bowl.
   s.solid(box(1.0, 5.0, 0, 1.4, 0, 1.0), P.rack!, 2, 1.0);
   ["shoe1", "shoe2", "shoe1"].forEach((c, i) => {
@@ -1306,9 +1320,9 @@ const CONCERT: Palette = {
   stage: "#c7925e",
   stageboard: "#b98552",
   skirt: "#7c5a96",
-  curtain: "#c95a66",
-  fold: "#ad4555",
-  valance: "#a63e4f",
+  curtain: "#d34263",
+  fold: "#ad3653",
+  valance: "#a13952",
   window: "#a9d2ea",
   frame: "#f8efe0",
   door: "#9c7356",
@@ -1328,6 +1342,8 @@ const CONCERT: Palette = {
 // The hall's scale (design px per model unit), and the spotlight's centre on the stage top,
 // lighting the empty stage.
 const CONCERT_K = 19.5;
+// Lift the lower stair landing clear of the phone dialogue panel.
+const CONCERT_LIFT = 31;
 const CONCERT_SPOT: Point = [4.9, 3.3, 1.7];
 
 // Curtain pleats as alternating vertical stripes on a back wall face.
@@ -1413,7 +1429,7 @@ function concertHall(P: Palette): Scene {
   const k = CONCERT_K;
   const s = new Scene(k, [
     W / 2 - ((nx - ny) * R3 * k) / 2 + 30,
-    6 - NEEDLE_LIFT * DESIGN_PER_LOGICAL + wall * k,
+    6 - CONCERT_LIFT * DESIGN_PER_LOGICAL + wall * k,
   ]);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
   const boards: Decal[] = [];
@@ -1502,10 +1518,12 @@ function concertHall(P: Palette): Scene {
     s.solid(box(lx - 0.25, lx + 0.25, 0, 0.3, 4.6, 5.2), P.lamp!, 2, 0.6);
     s.glows.push({ at: [lx, 0.3, 4.9], colour: rgb(P.lamp!), peak: 90, radius: 1.3 });
   }
-  // Rows of chairs facing the stage.
+  // Keep the stair landing and its aisle clear through the seating rows.
   for (const [r, cy] of [10.0, 12.0, 14.0, 16.0].entries()) {
-    for (let cx = 0.8 + (r % 2) * 0.3; cx + 0.9 < sx - 0.2; cx += 1.4)
-      chair(s, P, cx, cy, "-y", cx + cy + 1);
+    const aisleEnd = r === 0 ? 5.0 : 3.5;
+    for (let cx = 0.8 + (r % 2) * 0.3; cx + 0.9 < sx - 0.2; cx += 1.4) {
+      if (cx >= aisleEnd) chair(s, P, cx, cy, "-y", cx + cy + 1);
+    }
   }
   for (const [r, cx] of [13.6, 15.6, 17.6, 19.6].entries()) {
     for (let cy = 0.8 + (r % 2) * 0.3; cy + 0.9 < sy - 0.2; cy += 1.4)

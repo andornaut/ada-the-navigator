@@ -90,6 +90,15 @@ const originals = new Map(manifest.assets.map((asset) => [asset.id, asset]));
 const bedrooms = new Map(
   BACKGROUNDS.filter(({ id }) => id.startsWith("story-ada-room")).map((scene) => [scene.id, scene]),
 );
+const earthLocations = new Map(
+  BACKGROUNDS.filter(
+    ({ id }) =>
+      id.startsWith("story-grandma-garden") ||
+      id === "story-community-garden" ||
+      id === "story-front-door" ||
+      id === "story-concert-hall",
+  ).map((scene) => [scene.id, scene]),
+);
 const images = new Map<string, RgbaImage>();
 const original = (id: string): RgbaImage => {
   if (!images.has(id)) {
@@ -119,13 +128,14 @@ const original = (id: string): RgbaImage => {
     const asset = originals.get(id);
     assert(asset, `Missing authored scene ${id}`);
     const archived = `${references}${basename(asset.path)}`;
-    const bedroom = bedrooms.get(`story-${basename(asset.path, ".png")}`);
-    if (bedroom) {
+    const sourceId = `story-${basename(asset.path, ".png")}`;
+    const artwork = bedrooms.get(sourceId) ?? earthLocations.get(sourceId);
+    if (artwork) {
       images.set(
         id,
-        id === bedroom.id
-          ? paint(bedroom.palette, bedroom.build(bedroom.palette))
-          : original(bedroom.id),
+        id === artwork.id
+          ? paint(artwork.palette, artwork.build(artwork.palette))
+          : original(artwork.id),
       );
     } else if (id === sleepGlow) {
       const { at, image } = overnightOverlays()[sleepGlow];
@@ -232,8 +242,12 @@ function displayDifference(width: number, height: number, a: Uint8Array, b: Uint
 /** Generate additive candidates only; the consumer owns activation and offline closure. */
 export async function buildStoryCompositions(
   output: string,
-  { bedroomOnly = false }: { bedroomOnly?: boolean } = {},
+  {
+    bedroomOnly = false,
+    earthLocationsOnly = false,
+  }: { bedroomOnly?: boolean; earthLocationsOnly?: boolean } = {},
 ) {
+  assert(!(bedroomOnly && earthLocationsOnly), "Select one composition scope");
   const directory = resolve(output);
   assert.notEqual(directory, resolve(source), "Use a separate candidate directory");
   mkdirSync(`${directory}/story-composed`, { recursive: true });
@@ -286,7 +300,9 @@ export async function buildStoryCompositions(
     "story-kitchen",
     "story-front-door",
     "story-concert-hall",
-  ].filter((id) => !bedroomOnly || bedrooms.has(id));
+  ].filter(
+    (id) => (!bedroomOnly || bedrooms.has(id)) && (!earthLocationsOnly || earthLocations.has(id)),
+  );
   const addScene = (id: string, base: string, layers: Layer[]) => {
     const subject = subjects.get(id) ?? originals.get(id)?.subject;
     assert(subject, `Missing original subject band ${id}`);
@@ -305,47 +321,53 @@ export async function buildStoryCompositions(
       displayHeight: rect.height / 2,
     };
   };
-  const day = scenes["story-ada-room-unpolished"]!.base;
-  const polished = await patch("prop-polished-rock", "story-ada-room-unpolished", "story-ada-room");
-  const stages: Layer[][] = [[polished]];
-  addScene("story-ada-room", day, stages[0]!);
-  for (let stage = 1; stage <= 3; stage++) {
-    const id = `story-ada-room-glow-${stage}`;
-    stages.push([polished, await patch(`glow-${stage}`, "story-ada-room", id)]);
-    addScene(id, day, stages[stage]!);
-  }
-  for (const prop of ["recorder", "invitations", "party"]) {
-    const cells = Array.from({ length: 4 }, (_, stage) => {
-      const suffix = stage === 0 ? "" : `-glow-${stage}`;
-      return difference(
-        original(`story-ada-room${suffix}`),
-        original(`story-ada-room-${prop}${suffix}`),
-      );
-    });
-    // Separate padded cells avoid cross-state sampling through the cropped overlay boxes.
-    const width = Math.max(...cells.map(({ image }) => image.width));
-    const height = Math.max(...cells.map(({ image }) => image.height));
-    const sheet = blankImage(width * 4, height);
-    for (const [index, { image }] of cells.entries()) {
-      for (let y = 0; y < image.height; y++) {
-        sheet.data.set(
-          image.data.subarray(y * image.width * 4, (y + 1) * image.width * 4),
-          (y * sheet.width + index * width) * 4,
-        );
-      }
+  const day = scenes["story-ada-room-unpolished"]?.base;
+  if (day) {
+    const polished = await patch(
+      "prop-polished-rock",
+      "story-ada-room-unpolished",
+      "story-ada-room",
+    );
+    const stages: Layer[][] = [[polished]];
+    addScene("story-ada-room", day, stages[0]!);
+    for (let stage = 1; stage <= 3; stage++) {
+      const id = `story-ada-room-glow-${stage}`;
+      stages.push([polished, await patch(`glow-${stage}`, "story-ada-room", id)]);
+      addScene(id, day, stages[stage]!);
     }
-    const asset = await publish(`prop-${prop}`, sheet);
-    for (const [stage, { image, rect }] of cells.entries()) {
-      addScene(`story-ada-room-${prop}${stage === 0 ? "" : `-glow-${stage}`}`, day, [
-        ...stages[stage]!,
-        {
-          asset,
-          atLogical: { x: rect.x / 2, y: rect.y / 2 },
-          displayWidth: image.width / 2,
-          displayHeight: image.height / 2,
-          sourceRect: { x: stage * width, y: 0, width: image.width, height: image.height },
-        },
-      ]);
+    for (const prop of ["recorder", "invitations", "party"]) {
+      const cells = Array.from({ length: 4 }, (_, stage) => {
+        const suffix = stage === 0 ? "" : `-glow-${stage}`;
+        return difference(
+          original(`story-ada-room${suffix}`),
+          original(`story-ada-room-${prop}${suffix}`),
+        );
+      });
+      // Separate padded cells avoid cross-state sampling through the cropped overlay boxes.
+      const width = Math.max(...cells.map(({ image }) => image.width));
+      const height = Math.max(...cells.map(({ image }) => image.height));
+      const sheet = blankImage(width * 4, height);
+      for (const [index, { image }] of cells.entries()) {
+        for (let y = 0; y < image.height; y++) {
+          sheet.data.set(
+            image.data.subarray(y * image.width * 4, (y + 1) * image.width * 4),
+            (y * sheet.width + index * width) * 4,
+          );
+        }
+      }
+      const asset = await publish(`prop-${prop}`, sheet);
+      for (const [stage, { image, rect }] of cells.entries()) {
+        addScene(`story-ada-room-${prop}${stage === 0 ? "" : `-glow-${stage}`}`, day, [
+          ...stages[stage]!,
+          {
+            asset,
+            atLogical: { x: rect.x / 2, y: rect.y / 2 },
+            displayWidth: image.width / 2,
+            displayHeight: image.height / 2,
+            sourceRect: { x: stage * width, y: 0, width: image.width, height: image.height },
+          },
+        ]);
+      }
     }
   }
   for (const state of bedroomOnly ? [] : ["spilled", "replanted"]) {
@@ -354,20 +376,23 @@ export async function buildStoryCompositions(
       await patch(`garden-${state}`, "story-grandma-garden", id),
     ]);
   }
-  const glow = original(sleepGlow);
-  const at = originals.get(sleepGlow)!.at!;
-  await publish(sleepGlow, glow);
-  assets.at(-1)!.at = at;
-  addScene(peakNightScene, scenes["story-ada-room-night"]!.base, [
-    {
-      asset: sleepGlow,
-      atLogical: at,
-      displayWidth: glow.width / 2,
-      displayHeight: glow.height / 2,
-    },
-  ]);
-  addScene(partyOpening, day, [...scenes[PARTY_ROOM]!.layers]);
-  if (!bedroomOnly) addScene(lunchScene, scenes["story-schoolyard"]!.base, []);
+  if (day) {
+    const glow = original(sleepGlow);
+    const at = originals.get(sleepGlow)!.at!;
+    await publish(sleepGlow, glow);
+    assets.at(-1)!.at = at;
+    addScene(peakNightScene, scenes["story-ada-room-night"]!.base, [
+      {
+        asset: sleepGlow,
+        atLogical: at,
+        displayWidth: glow.width / 2,
+        displayHeight: glow.height / 2,
+      },
+    ]);
+    addScene(partyOpening, day, [...scenes[PARTY_ROOM]!.layers]);
+  }
+  if (!bedroomOnly && !earthLocationsOnly)
+    addScene(lunchScene, scenes["story-schoolyard"]!.base, []);
   // Preserve environment-only aliases and their individual run placement bands.
   for (const asset of originals.values()) {
     if (!asset.id.startsWith("story-") || scenes[asset.id] || !asset.subject) continue;
@@ -472,6 +497,12 @@ export async function buildStoryCompositions(
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   assert(process.argv[2], "Pass a separate additive candidate output directory");
   const scope = process.argv[3];
-  assert(scope === undefined || scope === "--bedroom-only", "Unknown composition scope");
-  await buildStoryCompositions(process.argv[2], { bedroomOnly: scope === "--bedroom-only" });
+  assert(
+    scope === undefined || scope === "--bedroom-only" || scope === "--earth-locations-only",
+    "Unknown composition scope",
+  );
+  await buildStoryCompositions(process.argv[2], {
+    bedroomOnly: scope === "--bedroom-only",
+    earthLocationsOnly: scope === "--earth-locations-only",
+  });
 }
