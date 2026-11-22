@@ -449,6 +449,7 @@ function galaxyConstructionOptions(): Parameters<typeof createGalaxyMap>[1] {
   return {
     labels: {
       ...destinationLabels,
+      close: "Close",
       development: "",
       home: "Home",
       jump: "Jump",
@@ -467,7 +468,7 @@ function galaxyConstructionOptions(): Parameters<typeof createGalaxyMap>[1] {
   };
 }
 
-it.each(["1", "earth", "galaxy-jump"])(
+it.each(["1", "earth", "galaxy-jump", "galaxy-close-x"])(
   "rejects unbound Galaxy Map control %s before the hidden screen is mounted",
   (id) => {
     const fixture = dom();
@@ -484,7 +485,7 @@ it.each(["1", "earth", "galaxy-jump"])(
     expect(mount).not.toHaveBeenCalled();
     expect(fixture.host.children.length).toBe(0);
     const actions = fixture.nodes.filter((node) => node.tag === "button");
-    expect(actions).toHaveLength(8);
+    expect(actions).toHaveLength(9);
     for (const element of actions) {
       expect(element.isConnected).toBe(false);
       expect(element.listeners.get("click") ?? []).toEqual([]);
@@ -525,7 +526,7 @@ it("checks all Galaxy Map controls in the attached hidden screen without reading
     const primary = screen
       .querySelectorAll("button")
       .find((node) => node.dataset.action === "galaxy-jump")!;
-    expect(screen.querySelectorAll("button")).toHaveLength(8);
+    expect(screen.querySelectorAll("button")).toHaveLength(9);
     const view = mapView(null);
     map.show({
       ...view,
@@ -540,6 +541,37 @@ it("checks all Galaxy Map controls in the attached hidden screen without reading
   } finally {
     map.dispose();
   }
+});
+
+it("binds Galaxy X once and withholds it during the unlock and quantum jump", () => {
+  const fixture = dom();
+  const options = galaxyConstructionOptions();
+  const map = createGalaxyMap(fixture.host, options);
+  const close = fixture.nodes.find((node) => node.dataset.action === "galaxy-close-x")!;
+  const binding = resolveAdaHoldAction(fixture.host, close as unknown as HTMLElement)!;
+  expect(close.className).toBe("ada-close");
+  expect(close.attributes.get("aria-label")).toBe("Close");
+  close.click();
+  expect(options.onClose).not.toHaveBeenCalled();
+  map.show({ ...mapView({ from: 1, opened: [2], to: 2 }), panel: 1, ship: 1 });
+  expect(close.hidden).toBe(true);
+  expect(binding.available()).toBe(false);
+  close.click();
+  expect(options.onFlightEnd).not.toHaveBeenCalled();
+  expect(options.onClose).not.toHaveBeenCalled();
+  map.show(null);
+  map.show(mapView(null));
+  expect(close.hidden).toBe(false);
+  close.click();
+  expect(options.onClose).toHaveBeenCalledOnce();
+  map.jump();
+  expect(close.hidden).toBe(true);
+  expect(binding.available()).toBe(false);
+  close.click();
+  map.dispose();
+  close.click();
+  expect(options.onClose).toHaveBeenCalledOnce();
+  expect(options.onJump).not.toHaveBeenCalled();
 });
 
 it.each(["Space", "pointer"])(
@@ -595,6 +627,7 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   const options = {
     labels: {
       ...destinationLabels,
+      close: "Close",
       development: "",
       home: "",
       jump: "",
@@ -668,6 +701,7 @@ it.each([false, true])(
     const map = createGalaxyMap(fixture.host, {
       labels: {
         ...destinationLabels,
+        close: "Close",
         development: "",
         home: "Home",
         jump: "Jump",
@@ -780,6 +814,7 @@ it("registers native route actions once and releases selection callbacks on disp
   const map = createGalaxyMap(fixture.host, {
     labels: {
       ...destinationLabels,
+      close: "Close",
       development: "",
       home: "Earth",
       jump: "Jump",

@@ -931,6 +931,7 @@ export function buildScene(scene: UiContext): void {
   scene.galaxies = createGalaxyMap(scene.controls.overlay, {
     labels: {
       back: label("questBack"),
+      close: label("close"),
       development: label("galaxyInDevelopment"),
       earthDescription: label("galaxyEarthDescription"),
       earthKicker: label("galaxyEarthKicker"),

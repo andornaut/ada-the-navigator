@@ -20,6 +20,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
@@ -87,6 +88,7 @@ import {
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { createModalClose } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -560,10 +562,15 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-survey-info[hidden]{display:none}
 .ada-controls .ada-map-tools{
   position:absolute;
-  right:${safeEdge("right", SPACING.pageInset)};
+  right:calc(${safeEdge("right", SPACING.pageInset)} + ${units(CARD_CLOSE.hit.width)});
   top:${safeEdge("top", SPACING.pageInset)};
   display:flex;
   gap:${units(MAP_SCREEN.toolRow.gap)}
+}
+.ada-controls .ada-map-screen > .ada-close{
+  top:${safeEdge("top", SPACING.pageInset)};
+  right:${safeEdge("right", SPACING.pageInset)};
+  z-index:2
 }
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 
@@ -1002,6 +1009,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   galaxies.setAttribute("aria-haspopup", "dialog");
   const closeButton = createButton(options.closeLabel ?? labels.close, "primary");
   closeButton.dataset.action = "map-close";
+  const closeX = createModalClose("map-close-x", labels.close);
   const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
     column,
     header,
@@ -1050,7 +1058,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       tree,
     ),
   );
-  screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel);
+  screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, closeX, panel);
 
   let textMeasure: CanvasRenderingContext2D | null | undefined;
   const inkMeasurements = new Map<string, { offset: number; width: number }>();
@@ -1437,7 +1445,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  registerAction({ run: () => options.onClose() }, closeButton);
+  for (const button of [closeButton, closeX]) {
+    registerAction({ run: () => options.onClose() }, button);
+  }
   registerAction(
     { run: () => zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")) },
     toolButtons.get("zoomIn")!,
@@ -1525,7 +1535,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   const onChrome = (target: EventTarget | null) =>
     target instanceof Element &&
-    target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
+    target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel,.ada-close") !==
+      null;
   const pinchOf = (): { distance: number; mid: Point } | null => {
     const [a, b] = [...pointers.values()];
     return a && b
@@ -1668,6 +1679,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     const order = [
       ...tools.querySelectorAll<HTMLButtonElement>("button"),
+      closeX,
       ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
       travel,
       questsButton,

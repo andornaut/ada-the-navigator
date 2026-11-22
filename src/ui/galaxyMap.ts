@@ -50,6 +50,7 @@ import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
+import { createModalClose } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
@@ -59,13 +60,13 @@ import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.t
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth's
 // marker and the single destination action (Jump to the selected galaxy or Earth, Stay in the
-// galaxy Ada is flying in, or Stay on Earth at boarding). It has no close X or Back: back and
-// Escape go one step back.
+// galaxy Ada is flying in, or Stay on Earth at boarding). The close X and Escape go one step back.
 // The model holds the ship's galaxy, a locked galaxy viewed in the panel and the unlock flight;
 // this draws them and animates the ship between them.
 
 export interface GalaxyMapLabels {
   readonly back?: string;
+  readonly close: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
   /** The Earth panel's text. */
@@ -142,7 +143,7 @@ export interface GalaxyMapArt {
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;
-  /** Back and Escape (the scene's back layer), and Stay: where the galaxy map opened from. */
+  /** X, Back, Escape and Stay return to where the galaxy map opened from. */
   readonly onClose: () => void;
   /** Earth: Ada's room. */
   readonly onEarth: () => void;
@@ -188,6 +189,11 @@ export const GALAXY_MAP_STYLE = `
   overflow:hidden;
   background:${GALAXY_MAP_SKY.top};
   pointer-events:auto
+}
+.ada-controls .ada-route > .ada-close{
+  top:${safeEdge("top", SPACING.pageInset)};
+  right:${safeEdge("right", SPACING.pageInset)};
+  z-index:1
 }
 .ada-controls .ada-route-sky,
 .ada-controls .ada-route-ground{
@@ -606,7 +612,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   jump.dataset.action = "galaxy-jump";
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
-  screen.append(sky, rules, ground, chart);
+  const closeX = createModalClose("galaxy-close-x", labels.close);
+  screen.append(sky, rules, ground, chart, closeX);
   const panelGroups: Readonly<Record<GalaxyPanelGroup, HTMLElement>> = {
     footer: flightActions,
     panel,
@@ -866,6 +873,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     invalidatePressScope(root);
     unlock = { flight, start: performance.now() };
     screen.dataset.flight = "";
+    closeX.hidden = true;
     drawnLocked = new Set(flight.opened);
     restShip(flight.from);
     earth.toggleAttribute("data-selected", viewingEarth);
@@ -898,6 +906,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     invalidatePressScope(root);
     unlock = null;
     delete screen.dataset.flight;
+    closeX.hidden = false;
     drawnLocked = new Set();
     pulse.hidden = true;
     shipSprite.style.opacity = "1";
@@ -1002,8 +1011,9 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       refuse(jump, reduced());
     }
   });
+  register(closeX, () => options.onClose());
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
-  // then Earth and the single destination action.
+  // then Earth, the destination action and the close X when available.
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -1017,6 +1027,9 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       return;
     }
     const order = [...markers.map(({ button }) => button), earth, jump];
+    if (!closeX.hidden) {
+      order.push(closeX);
+    }
     event.preventDefault();
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;
@@ -1085,6 +1098,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     jump(): void {
       invalidatePressScope(root);
       screen.dataset.jumping = "";
+      closeX.hidden = true;
     },
     /** The sky, ground, figures and ship frames, once loaded. */
     setArt(next: GalaxyMapArt): void {
@@ -1136,6 +1150,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         unlock = null;
         delete screen.dataset.flight;
         delete screen.dataset.jumping;
+        closeX.hidden = false;
         delete screen.dataset.shipCovered;
         drawnLocked = new Set();
         move = null;

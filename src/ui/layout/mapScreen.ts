@@ -12,6 +12,7 @@ import {
 } from "../../data/layout.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
+import { CARD_CLOSE } from "./cardFrame.ts";
 import { hudRect, type Insets, safeRect, type Size, STATUS_PILL } from "./playView.ts";
 import { BUTTON_GAP, TYPE } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
@@ -149,7 +150,7 @@ export function mapRowTop(insets: Insets, view: Size): number {
 /** The left of the horizontal tool row, retained for existing geometry consumers. */
 export function toolColumnLeft(insets: Insets, view: Size): number {
   const page = safeRect(insets, SPACING.pageInset, view);
-  return page.x + page.width - MAP_SCREEN.toolRow.width;
+  return page.x + page.width - MAP_SCREEN.toolRow.width - CARD_CLOSE.hit.width;
 }
 
 export function mapCloseRect(insets: Insets, view: Size): Rect {
@@ -198,7 +199,7 @@ export function mapHeaderLeft(insets: Insets, view: Size): number {
   return hudRect(insets, view).x + STATUS_PILL.x;
 }
 
-/** The header ends SPACING.gap left of the tools: 471.25 at the 720 base, 413.25 with insets. */
+/** The header ends SPACING.gap left of the tools, which sit left of the close target. */
 export function mapHeaderCap(insets: Insets, view: Size): number {
   return Math.max(0, toolColumnLeft(insets, view) - SPACING.gap - mapHeaderLeft(insets, view));
 }

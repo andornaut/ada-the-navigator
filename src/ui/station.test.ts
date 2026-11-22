@@ -1346,6 +1346,44 @@ it("labels a guarded project contribution without authorizing its purchase", () 
   expect(f.doc.activeElement).toBe(row);
 });
 
+it.each(["shop", "job", "project", "guarded project"] as const)(
+  "cancels the %s confirmation once with its top-right X and returns focus",
+  (kind) => {
+    const project = kind === "project" || kind === "guarded project";
+    const f = constructedStation("", true, true, undefined, project);
+    f.station.setOpen(true);
+    f.activate(f.action(kind === "shop" ? "open-shop" : "open-jobs"));
+    if (kind === "guarded project") {
+      f.request.mockReturnValue({ kind: "refused" });
+    }
+    const selector =
+      kind === "shop"
+        ? '[data-item="item-0"]'
+        : project
+          ? '[data-item="project:orchard"]'
+          : '[data-job="job-1"]';
+    const row = f.parent.querySelector(selector)!;
+    f.activate(row);
+    const confirm = f.native.get("confirm-cancel-x")!;
+    const cancel = confirm.body
+      .querySelectorAll("button")
+      .filter((button) => button.dataset.action === "confirm-cancel");
+    expect(cancel).toHaveLength(1);
+    expect(confirm.frame.contains(f.action("confirm-cancel-x"))).toBe(true);
+    expect(confirm.body.contains(f.action("confirm-cancel-x"))).toBe(false);
+    if (kind === "guarded project") {
+      f.activate(f.action("confirm-buy"));
+      expect(confirm.frame.closest("[hidden]")).toBeNull();
+    }
+    f.activate(f.action("confirm-cancel-x"));
+    expect(confirm.frame.closest("[hidden]")).not.toBeNull();
+    expect(f.doc.activeElement).toBe(row);
+    expect(f.buy).not.toHaveBeenCalled();
+    expect(f.acceptJob).not.toHaveBeenCalled();
+    expect(f.undock).not.toHaveBeenCalled();
+  },
+);
+
 it("audits the completed welcome view before strict focus on reopening", () => {
   const f = constructedStation();
   const unbound = new f.Node("button", false);

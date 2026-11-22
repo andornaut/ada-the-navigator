@@ -382,15 +382,21 @@ function standaloneMap(root = mountedRoot()) {
   return { map, onClose, root };
 }
 
-it("keeps a standalone Map footer Close and invokes its direct caller once", () => {
+it.each(["map-close", "map-close-x"])("binds the standalone Map %s once", (id) => {
   const { map, onClose, root } = standaloneMap();
   const footer = root.querySelectorAll().find((node) => node.dataset.action === "map-close")!;
+  const close = root.querySelectorAll().find((node) => node.dataset.action === "map-close-x")!;
   expect(footer.textContent).toBe("Close");
+  expect(close.className).toBe("ada-close");
+  expect(close.getAttribute("aria-label")).toBe("Close");
+  const target = id === "map-close" ? footer : close;
+  target.click();
+  expect(onClose).not.toHaveBeenCalled();
   map.open();
-  footer.click();
+  target.click();
   expect(onClose).toHaveBeenCalledOnce();
   map.dispose();
-  footer.click();
+  target.click();
   expect(onClose).toHaveBeenCalledOnce();
 });
 
@@ -453,7 +459,7 @@ it.each(["map-zoomIn", "map-travel"])(
   },
 );
 
-it("publishes the hidden Local Map field and its seven chrome nodes already bound", () => {
+it("publishes the hidden Local Map field and its eight chrome nodes already bound", () => {
   const root = mountedRoot();
   const append = root.append.bind(root);
   const registered = new Set<HTMLElement>();
@@ -496,6 +502,7 @@ it("publishes the hidden Local Map field and its seven chrome nodes already boun
     expect(observed).toHaveBeenCalledExactlyOnceWith({
       controls: [
         "map-close",
+        "map-close-x",
         "map-galaxies",
         "map-quests",
         "map-recentre",
@@ -533,11 +540,11 @@ it("rejects a missing Map chrome binding before publication and releases owned b
   });
   expect(() => standaloneMap(root)).toThrow("no registered action binding");
   expect(append).not.toHaveBeenCalled();
-  expect(disposals).toHaveLength(7);
+  expect(disposals).toHaveLength(8);
   for (const dispose of disposals) {
     expect(dispose).toHaveBeenCalledOnce();
   }
-  expect(buttons).toHaveLength(6);
+  expect(buttons).toHaveLength(7);
   for (const element of buttons) {
     expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
       "no registered action binding",
@@ -724,7 +731,10 @@ describe("Paused card", () => {
       expect(controls.accepts()).toBe(false);
       const footer = root.querySelectorAll().find((entry) => entry.dataset.action === "map-close")!;
       expect(footer.textContent).toBe("Back");
-      footer.click();
+      const close = root
+        .querySelectorAll()
+        .find((entry) => entry.dataset.action === "map-close-x")!;
+      close.click();
       expect(pause.mapOpen()).toBe(false);
       expect(pause.isOpen()).toBe(true);
       expect(controls.accepts()).toBe(false);

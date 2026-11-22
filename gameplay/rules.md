@@ -255,10 +255,11 @@ jump and no new layout. Jump to another galaxy ends the current flight, with
 story progress saved, and quantum jumps into the chosen galaxy; Jump to Earth
 ends the flight and jumps Ada home to her room. At boarding Ada is on Earth, so
 Earth's action reads "Stay on Earth" and returns her to her room with no jump.
-The galaxy map has no close X
-or Back button: Ada leaves it through the destination action, or with back and
-Escape, which go one step back, to the page Ada just left: the local map in
-flight, or the "Welcome back, Navigator." page at boarding. Stay on Earth is the way home from boarding.
+The galaxy map has a top-right close X. When cancellation is available,
+X, back and Escape return one layer and restore focus: to the local map in
+flight, or to the “Welcome back, Navigator.” page at boarding. Cancellation
+never selects a destination or advances a choice. Keep the existing
+mandatory holodisk guard. Stay on Earth returns to Ada's room at boarding.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays

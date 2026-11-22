@@ -2650,7 +2650,11 @@ try {
     ["zoomOut", "zoomIn", "recentre"],
     "The map's tools are zoom out, zoom in and recentre, top to bottom",
   );
-  // No close X: the footer's primary dismisses the map, Back since it returns to the Paused card.
+  assert.equal(
+    await mapScreen.locator('.ada-close[data-action="map-close-x"]').getAttribute("aria-label"),
+    CONTENT.labels.close,
+  );
+  // The footer retains Back when the map returns to the Paused card.
   assert.deepEqual(
     await mapScreen.locator('[data-action="map-close"]').evaluate((close) => ({
       primary: close.classList.contains("ada-primary"),
@@ -2692,12 +2696,13 @@ try {
       navigation: document.querySelector(".ada-controls [data-navigation]").getBoundingClientRect(),
       quests: box('[data-action="map-quests"]'),
       tools: box(".ada-map-tools"),
+      closeX: box('[data-action="map-close-x"]'),
       unit,
     };
   });
   const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
   // The footer (art/map.md "Footer"): Quests, Galaxies, then Close, each 98 by 48 and BUTTON_GAP
-  // (16) apart face to face on one row, Close's right the tool row's right. Device-pixel snapping
+  // (16) apart face to face on one row, Back's right under the X. Device-pixel snapping
   // puts each width within 0.1 either side.
   const footer = [hudRow.quests, hudRow.galaxies, hudRow.close];
   assert.ok(
@@ -2709,15 +2714,17 @@ try {
     ) &&
       Math.abs(logical(hudRow.galaxies.left - hudRow.quests.right) - 16) <= 0.1 &&
       Math.abs(logical(hudRow.close.left - hudRow.galaxies.right) - 16) <= 0.1 &&
-      Math.abs(hudRow.close.right - hudRow.tools.right) <= 0.5,
-    `Quests, Galaxies and Close are 98 by 48, 16 apart, Close under the tools' right: ${JSON.stringify(hudRow)}`,
+      Math.abs(hudRow.close.right - hudRow.closeX.right) <= 0.5,
+    `Quests, Galaxies and Close are 98 by 48, 16 apart, Back under the X: ${JSON.stringify(hudRow)}`,
   );
-  // The tools: one row of three 48 targets, 9 apart, 162 wide, on the page rect's top-right corner.
+  // The three zoom tools keep their spacing with the X at the right edge.
   assert.ok(
     Math.abs(logical(hudRow.tools.width) - 162) <= 0.1 &&
+      Math.abs(hudRow.closeX.left - hudRow.tools.right) <= 0.5 &&
+      Math.abs(hudRow.closeX.top - hudRow.tools.top) <= 0.5 &&
       Math.abs(logical(hudRow.tools.height) - 48) <= 0.1 &&
       hudRow.tools.bottom < hudRow.close.top,
-    `The tools are one 162 by 48 row above the footer: ${JSON.stringify(hudRow)}`,
+    `The tools and X are aligned above the footer: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
     hudRow.header.right <= hudRow.tools.left - 8 * hudRow.unit + 0.5,
@@ -2801,6 +2808,7 @@ try {
     "zoomOut",
     "zoomIn",
     "recentre",
+    "map-close-x",
     ...shownPlaces,
     ...(travelShown ? ["map-travel"] : []),
     "map-quests",
@@ -3218,8 +3226,8 @@ try {
     "Continue resumes the flight from the title",
   );
   // The local map's Galaxies opens the galaxy map over the paused flight: its ship on the galaxy
-  // Ada is flying in, whose single destination action reads Stay in {galaxy}, with no close X or
-  // Back. Stay in and Escape return to the local map on the same flight; Earth lands on Ada's room
+  // Ada is flying in, whose destination action reads Stay in {galaxy}. The X, Stay in and Escape
+  // return to the local map on the same flight; Earth lands on Ada's room
   // page, whose Menu holds Achievements, Settings, Back to title and Close. With the opening and
   // prologue seen, Earth lands on the room page itself.
   const roomInput = relaunch(CONTENT, safeSerialized);
@@ -3252,11 +3260,11 @@ try {
     CONTENT.labels.galaxyNumber.replace("{number}", "1"),
     "The galaxy map opens on Sunflower, where Ada is flying",
   );
-  // No close X or Back: the single destination action, back and Escape leave the galaxy map.
+  // The destination action remains separate from the top-right X.
   assert.equal(
-    await galaxyMap.locator('[data-action="close-galaxies"], .ada-close').count(),
-    0,
-    "The galaxy map has no close X or Back",
+    await galaxyMap.locator('.ada-close[data-action="galaxy-close-x"]').getAttribute("aria-label"),
+    CONTENT.labels.close,
+    "The galaxy map has a labelled close X",
   );
   // Stay in {galaxy}: the destination action on the galaxy Ada is flying in returns to the local
   // map the galaxy map opened from, focus on its Galaxies, the same flight kept with no jump.
@@ -3279,6 +3287,11 @@ try {
   await galaxyMap.waitFor({ state: "hidden" });
   assert.ok(await localMap.isVisible(), "Escape closes the galaxy map back to the local map");
   assert.equal(await focusedAction(), "map-galaxies", "Escape returns focus to Galaxies");
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.locator('[data-action="galaxy-close-x"]').click();
+  await galaxyMap.waitFor({ state: "hidden" });
+  assert.ok(await localMap.isVisible(), "The X returns to the local map");
+  assert.equal(await focusedAction(), "map-galaxies", "The X returns focus to Galaxies");
   // Jump to another unlocked galaxy: Right moves the ship to Whirlpool, where the action reads Jump to
   // Whirlpool, and
   // the flight there begins.
@@ -3330,7 +3343,7 @@ try {
   );
   events.checks.push(
     "The local map's Galaxies opens the galaxy map on the galaxy Ada is flying in, with Stay in " +
-      "and no close X; Stay in and Escape return to the local map on the same flight with focus " +
+      "with a close X; Stay in, the X and Escape return to the local map on the same flight with focus " +
       "on Galaxies, Jump to another galaxy flies there, and Earth ends the flight home",
   );
   // Ada's room page is not pausable: its entry is the Menu at the pause button's place, holding
@@ -4859,8 +4872,8 @@ try {
       "the newly unlocked galaxy",
   );
   // The route runs left to right along one arc, so Left and Right follow screen order and skip
-  // locked galaxies; Tab runs the markers, Earth, then the single destination action and wraps,
-  // with no close X or Back, and Escape goes one step back to the story page the map opened from
+  // locked galaxies; Tab runs the markers, Earth, the destination action and close X,
+  // and Escape goes one step back to the story page the map opened from
   // (here the prologue's last, since this fixture has not seen it; a boarding from Ada's room
   // returns to "Welcome back, Navigator.").
   // The galaxy markers, in route order; the Earth marker sits apart from the route.
@@ -4874,18 +4887,24 @@ try {
     "The markers run left to right in route order",
   );
   assert.equal(
-    await selector().locator('[data-action="close-galaxies"], .ada-close').count(),
-    0,
-    "The galaxy map has no close X or Back",
+    await selector().locator('.ada-close[data-action="galaxy-close-x"]').getAttribute("aria-label"),
+    CONTENT.labels.close,
+    "The galaxy map has a labelled close X",
   );
-  // The destination action is last in Tab order: Tab from it wraps to the first marker, and
+  // Tab from the destination action reaches the X before wrapping to the first marker, and
   // Shift+Tab from it reaches Earth's marker.
   await page.locator('[data-action="galaxy-jump"]').focus();
   await page.keyboard.press("Tab");
   assert.equal(
+    await page.evaluate(() => document.activeElement?.dataset.action),
+    "galaxy-close-x",
+    "Tab reaches the close X",
+  );
+  await page.keyboard.press("Tab");
+  assert.equal(
     await page.evaluate(() => document.activeElement?.dataset.position ?? ""),
     "1",
-    "Tab after the destination action wraps to the first marker",
+    "Tab after the X wraps to the first marker",
   );
   await page.locator('[data-action="galaxy-jump"]').focus();
   await page.keyboard.press("Shift+Tab");
@@ -4971,8 +4990,8 @@ try {
     );
   assert.ok(backFocused, "Closing the galaxy map at boarding focuses the page's Next");
   events.checks.push(
-    "The galaxy map lays the markers left to right on one arc with its destination action last " +
-      "in Tab order and no close X; Left and Right follow screen order and skip locked galaxies, " +
+    "The galaxy map lays the markers left to right on one arc with its close X last " +
+      "in Tab order; Left and Right follow screen order and skip locked galaxies, " +
       "and Escape goes one step back to the page the map opened from",
   );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.

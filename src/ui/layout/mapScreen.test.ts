@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { GalaxyNumber } from "../../data/types.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
+import { CARD_CLOSE } from "./cardFrame.ts";
 import {
   adaAngle,
   chipRect,
@@ -132,7 +133,7 @@ describe("map projection and fit", () => {
     const phone = { bottom: 19, left: 43, right: 43, top: 0 };
     expect(mapCloseRect(phone, BASE)).toEqual({ height: 48, width: 98, x: 579, y: 293 });
     expect(MAP_TOOLS.map(({ id }) => id)).toEqual(["zoomOut", "zoomIn", "recentre"]);
-    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542);
+    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542 - CARD_CLOSE.hit.width);
   });
 
   it("starts the header a gap right of the pause press area and ends it a gap before the tools", () => {
@@ -140,10 +141,9 @@ describe("map projection and fit", () => {
     // The status pill's rule (art/map.md "Header"), clear of the pause disc.
     expect(mapHeaderLeft(NO_INSETS, BASE)).toBe(62.75);
     expect(mapHeaderLeft(phone, BASE)).toBe(93.75);
-    // toolColumnLeft - SPACING.gap - header left, with no half-view term: 542 - 8 - 62.75 and
-    // 515 - 8 - 93.75.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(471.25);
-    expect(mapHeaderCap(phone, BASE)).toBe(413.25);
+    // The close target reserves a fixed width to the right of the zoom tools.
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(471.25 - CARD_CLOSE.hit.width);
+    expect(mapHeaderCap(phone, BASE)).toBe(413.25 - CARD_CLOSE.hit.width);
   });
 
   it("fills one survey pip per whole tenth of the displayed percent", () => {
@@ -178,7 +178,7 @@ describe("map projection and fit", () => {
     expect(mapHeaderWidth(ink.name, ink.percent, ink.note)).toBeLessThanOrEqual(
       mapHeaderCap(phone, BASE),
     );
-    expect(mapHeaderCap(phone, BASE)).toBe(413.25);
+    expect(mapHeaderCap(phone, BASE)).toBe(413.25 - CARD_CLOSE.hit.width);
   });
 
   it("sets the Quests lines: a 28 chip slot, markGap, then text from 42", () => {
