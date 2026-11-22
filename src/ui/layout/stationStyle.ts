@@ -123,7 +123,7 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-station-panes .ada-shop-row{
   width:100%;
-  height:${units(SHOP_ROW.height - SPACING.rowGap)};
+  height:${units(SHOP_ROW.height - SPACING.gap)};
   min-height:0
 }
 .ada-controls .ada-station-panes .ada-shop-name{
@@ -438,7 +438,7 @@ export const STATION_STYLE = `
 
 .ada-controls :is(.ada-job-list,.ada-station-projects){
   display:grid;
-  gap:${units(SHOP_ROW.rowGap)}
+  gap:${units(SPACING.rowGap)}
 }
 
 /* Measuring: rows at their natural widths, off screen. */
