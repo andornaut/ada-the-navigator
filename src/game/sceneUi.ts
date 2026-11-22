@@ -749,7 +749,7 @@ export function buildScene(scene: UiContext): void {
     dropJob: () => apply(() => scene.model.dropJob()),
     exchange: {
       exchangeImmediately: (order) => confirmStationExchange(scene, order),
-      preview: (order) => scene.model.previewExchange(order),
+      preview: (order) => scene.model.previewImmediateExchange(order),
     },
     greeting: () => scene.model.dockGreeting(),
     jobs: () =>

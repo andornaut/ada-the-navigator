@@ -81,12 +81,13 @@ import { carriesStardust, dropRandom } from "./drops.ts";
 import { edgeMarkerKind } from "./edgeMarkers.ts";
 import {
   confirmExchange,
-  exchangeImmediately,
   type ExchangeOrder,
   type ExchangePreview,
   type ExchangeQuote,
   type ImmediateExchangeOrder,
+  type ImmediateExchangePreview,
   type ImmediateExchangeResult,
+  previewImmediateExchange,
   quoteExchange,
 } from "./exchange.ts";
 import {
@@ -1695,22 +1696,26 @@ export class GameModel {
     }
     return result;
   }
-  /** Fixed-quantity station exchange applies current balances synchronously with no pickup event. */
-  exchangeImmediately(order: ImmediateExchangeOrder): ImmediateExchangeResult {
+  previewImmediateExchange(order: ImmediateExchangeOrder): ImmediateExchangePreview {
     const flight = this.state.flight;
     if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
       return { kind: "refused", reason: "unavailable" };
     }
-    const result = exchangeImmediately(
-      EXCHANGE_RATES,
+    return previewImmediateExchange(
       { ore: flight.cargo, stardust: this.state.economy.stardust },
       order,
     );
-    if (result.kind === "exchanged") {
-      flight.cargo = result.after.ore;
-      this.state.economy.stardust = result.after.stardust;
+  }
+  /** Recheck live balances and apply both resource changes in one transaction. */
+  exchangeImmediately(order: ImmediateExchangeOrder): ImmediateExchangeResult {
+    const flight = this.state.flight;
+    const result = this.previewImmediateExchange(order);
+    if (!flight || result.kind === "refused") {
+      return { kind: "refused", reason: result.kind === "refused" ? result.reason : "unavailable" };
     }
-    return result;
+    flight.cargo = result.after.ore;
+    this.state.economy.stardust = result.after.stardust;
+    return { ...result, kind: "exchanged" };
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);

@@ -1,3 +1,5 @@
+import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
+
 export interface ExchangeRates {
   readonly buyOre: number;
   readonly sellOre: number;
@@ -111,22 +113,44 @@ export function confirmExchange(
 
 export const EXCHANGE_AMOUNTS = [1, 10, 100] as const;
 export type ExchangeAmount = (typeof EXCHANGE_AMOUNTS)[number];
+export type ExchangeResource = keyof ExchangeBalances;
+
 export interface ImmediateExchangeOrder {
   readonly amount: ExchangeAmount;
-  readonly direction: ExchangeOrder["direction"];
+  readonly resource: ExchangeResource;
 }
-export type ImmediateExchangeResult =
-  (Omit<ExchangeQuote, "kind"> & { readonly kind: "exchanged" }) | ExchangeRefusal;
 
-/** Recompute the current transaction once; there is no pending quote to confirm or replay. */
-export function exchangeImmediately(
-  rates: ExchangeRates,
+interface ImmediateExchangeQuote extends ImmediateExchangeOrder {
+  readonly after: ExchangeBalances;
+  readonly kind: "quote";
+  readonly totalPrice: number;
+}
+
+export type ImmediateExchangePreview = ImmediateExchangeQuote | ExchangeRefusal;
+export type ImmediateExchangeResult =
+  (Omit<ImmediateExchangeQuote, "kind"> & { readonly kind: "exchanged" }) | ExchangeRefusal;
+
+/** A fixed trade buys the requested resource with twice as much of the other resource. */
+export function previewImmediateExchange(
   balances: ExchangeBalances,
   order: ImmediateExchangeOrder,
-): ImmediateExchangeResult {
-  if (!EXCHANGE_AMOUNTS.includes(order.amount)) {
+): ImmediateExchangePreview {
+  const { amount, resource } = order;
+  if (!EXCHANGE_AMOUNTS.includes(amount) || (resource !== "ore" && resource !== "stardust")) {
     return { kind: "refused", reason: "invalidAmount" };
   }
-  const result = quoteExchange(rates, balances, order);
-  return result.kind === "refused" ? result : { ...result, kind: "exchanged" };
+  if (!whole(balances.ore) || !whole(balances.stardust)) {
+    return { kind: "refused", reason: "invalidBalances" };
+  }
+  const payment = resource === "ore" ? "stardust" : "ore";
+  const totalPrice = amount * IMMEDIATE_EXCHANGE_UNIT_COST;
+  if (balances[payment] < totalPrice) {
+    return { kind: "refused", reason: payment === "ore" ? "notEnoughOre" : "cantAfford" };
+  }
+  const received = balances[resource] + amount;
+  if (!whole(received)) {
+    return { kind: "refused", reason: "overflow" };
+  }
+  const after = { ...balances, [payment]: balances[payment] - totalPrice, [resource]: received };
+  return { after, amount, kind: "quote", resource, totalPrice };
 }

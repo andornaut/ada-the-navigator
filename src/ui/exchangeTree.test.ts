@@ -1,16 +1,16 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { expect, it } from "vitest";
 
-import { EXCHANGE_AMOUNTS } from "../model/exchange.ts";
+import { EXCHANGE_AMOUNTS, type ExchangeResource } from "../model/exchange.ts";
 import { exchangeTree } from "./exchangeTree.ts";
 it("composes caller fixed-action facts without an editor or confirmation controller", () => {
-  const actions = (direction: "buy" | "sell") =>
+  const actions = (resource: ExchangeResource) =>
     EXCHANGE_AMOUNTS.map((amount) => ({
       amount,
-      direction,
-      label: `Caller ${direction} ${amount}`,
+      label: `Caller ${resource} ${amount}`,
+      resource,
     }));
-  const tree = exchangeTree({ buy: actions("buy"), sell: actions("sell") });
+  const tree = exchangeTree({ ore: actions("ore"), stardust: actions("stardust") });
   validateLayoutTree({ action: [], container: ["content"], native: [] }, tree);
   const ids: string[] = [];
   const visit = (node: typeof tree) => {
@@ -24,15 +24,14 @@ it("composes caller fixed-action facts without an editor or confirmation control
   visit(tree);
   expect(ids).toEqual([
     "root",
-    "help",
-    "buy",
-    "buy-1",
-    "buy-10",
-    "buy-100",
-    "sell",
-    "sell-1",
-    "sell-10",
-    "sell-100",
+    "stardust",
+    "stardust-1",
+    "stardust-10",
+    "stardust-100",
+    "ore",
+    "ore-1",
+    "ore-10",
+    "ore-100",
     "result",
     "status",
   ]);

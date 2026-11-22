@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
   EXCHANGE_AMOUNTS,
-  exchangeImmediately,
   type ImmediateExchangeOrder,
-  quoteExchange,
+  previewImmediateExchange,
 } from "../model/exchange.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
@@ -184,18 +182,19 @@ function fixture(placement: "connected" | "detached" | "unowned" = "connected") 
   root.append(foreign);
   let balances = { ore: 20, stardust: 100 };
   const commit = vi.fn((order: ImmediateExchangeOrder) => {
-    const result = exchangeImmediately(EXCHANGE_RATES, balances, order);
-    if (result.kind === "exchanged") {
-      balances = { ...result.after };
+    const result = previewImmediateExchange(balances, order);
+    if (result.kind === "refused") {
+      return result;
     }
-    return result;
+    balances = result.after;
+    return { ...result, kind: "exchanged" as const };
   });
   const onChange = vi.fn();
   const view = createExchangeView(
     root as unknown as HTMLElement,
     {
       exchangeImmediately: commit,
-      preview: (order) => quoteExchange(EXCHANGE_RATES, balances, order),
+      preview: (order) => previewImmediateExchange(balances, order),
     },
     onChange,
   );
@@ -229,8 +228,8 @@ describe("immediate fixed Exchange actions", () => {
         .filter((node) => node.dataset.action)
         .map((node) => node.dataset.action),
     ).toEqual(
-      (["buy", "sell"] as const).flatMap((direction) =>
-        EXCHANGE_AMOUNTS.map((amount) => `exchange-${direction}-${amount}`),
+      (["stardust", "ore"] as const).flatMap((resource) =>
+        EXCHANGE_AMOUNTS.map((amount) => `exchange-${resource}-${amount}`),
       ),
     );
     expect(
@@ -246,43 +245,44 @@ describe("immediate fixed Exchange actions", () => {
     expect(f.view.isConfirming()).toBe(false);
     expect(f.commit).not.toHaveBeenCalled();
   });
-  it("buys and sells immediately with canonical totals, one transaction and notification per activation", () => {
+  it("buys either resource immediately with canonical totals, one transaction and notification per activation", () => {
     const f = fixture();
-    f.click("exchange-buy-10");
-    expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 10, direction: "buy" });
+    f.click("exchange-ore-10");
+    expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 10, resource: "ore" });
     expect(f.balances()).toEqual({ ore: 30, stardust: 80 });
     expect(f.onChange).toHaveBeenCalledOnce();
-    expect(f.action("exchange-buy-10").focus).toHaveBeenCalledOnce();
-    f.click("exchange-sell-10");
-    expect(f.balances()).toEqual({ ore: 20, stardust: 90 });
+    expect(f.action("exchange-ore-10").focus).toHaveBeenCalledOnce();
+    f.click("exchange-stardust-10");
+    expect(f.commit).toHaveBeenLastCalledWith({ amount: 10, resource: "stardust" });
+    expect(f.balances()).toEqual({ ore: 10, stardust: 90 });
     expect(f.onChange).toHaveBeenCalledTimes(2);
   });
   it("keeps unaffordable fixed actions visible but refuses direct disabled activation", () => {
     const f = fixture();
-    expect(f.action("exchange-buy-100").disabled).toBe(true);
-    expect(f.action("exchange-buy-100").hidden).toBe(false);
-    expect(f.action("exchange-sell-100").disabled).toBe(true);
-    f.click("exchange-buy-100");
-    f.click("exchange-sell-100");
+    expect(f.action("exchange-ore-100").disabled).toBe(true);
+    expect(f.action("exchange-ore-100").hidden).toBe(false);
+    expect(f.action("exchange-stardust-100").disabled).toBe(true);
+    f.click("exchange-ore-100");
+    f.click("exchange-stardust-100");
     expect(f.commit).not.toHaveBeenCalled();
   });
   it("revalidates live balances at the model transaction rather than spending an old preview", () => {
     const f = fixture();
     f.setBalances({ ore: 20, stardust: 0 });
-    f.click("exchange-buy-10");
+    f.click("exchange-ore-10");
     expect(f.commit.mock.results[0]!.value).toMatchObject({
       kind: "refused",
       reason: "cantAfford",
     });
     expect(f.balances()).toEqual({ ore: 20, stardust: 0 });
     expect(f.onChange).not.toHaveBeenCalled();
-    expect(f.action("exchange-buy-10").disabled).toBe(true);
+    expect(f.action("exchange-ore-10").disabled).toBe(true);
   });
   it("retains button identities and ignores hidden or disposed callbacks", () => {
     const f = fixture();
-    const retained = f.action("exchange-buy-1");
+    const retained = f.action("exchange-ore-1");
     f.view.render();
-    expect(f.action("exchange-buy-1")).toBe(retained);
+    expect(f.action("exchange-ore-1")).toBe(retained);
     f.view.root.hidden = true;
     retained.dispatchEvent(new Event("click"));
     expect(f.commit).not.toHaveBeenCalled();
@@ -321,7 +321,7 @@ it("rejects late unregistered Exchange controls before a transaction", () => {
   const activate = () =>
     resolveAdaHoldAction(
       f.root as unknown as HTMLElement,
-      f.action("exchange-buy-1") as unknown as HTMLElement,
+      f.action("exchange-ore-1") as unknown as HTMLElement,
     )!.activate();
   expect(activate).toThrow("no registered action binding");
   expect(f.commit).not.toHaveBeenCalled();
@@ -333,14 +333,14 @@ it("rejects late unregistered Exchange controls before a transaction", () => {
 it("audits newly reconciled Exchange result nodes without replaying the committed transaction", () => {
   const f = fixture();
   dom.state.corruptResult = true;
-  const button = f.action("exchange-buy-1");
+  const button = f.action("exchange-ore-1");
   const activate = () =>
     resolveAdaHoldAction(
       f.root as unknown as HTMLElement,
       button as unknown as HTMLElement,
     )!.activate();
   expect(activate).toThrow("no registered action binding");
-  expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 1, direction: "buy" });
+  expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 1, resource: "ore" });
   expect(f.onChange).toHaveBeenCalledOnce();
   expect(f.balances()).toEqual({ ore: 21, stardust: 98 });
   expect(button.focus).not.toHaveBeenCalled();
@@ -358,7 +358,7 @@ it("does not rescan unchanged Exchange node graphs during balance refresh", () =
   f.setBalances({ ore: 0, stardust: 0 });
   f.view.render();
   expect(queries).not.toHaveBeenCalled();
-  expect(f.action("exchange-buy-1").disabled).toBe(true);
-  expect(f.action("exchange-sell-1").disabled).toBe(true);
+  expect(f.action("exchange-ore-1").disabled).toBe(true);
+  expect(f.action("exchange-stardust-1").disabled).toBe(true);
   f.view.dispose();
 });

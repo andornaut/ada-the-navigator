@@ -4,8 +4,9 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import {
   EXCHANGE_AMOUNTS,
-  type ExchangePreview,
+  type ExchangeResource,
   type ImmediateExchangeOrder,
+  type ImmediateExchangePreview,
   type ImmediateExchangeResult,
 } from "../model/exchange.ts";
 import {
@@ -22,7 +23,7 @@ import { stardustCount } from "./statusPill.ts";
 
 export interface ExchangePort {
   readonly exchangeImmediately: (order: ImmediateExchangeOrder) => ImmediateExchangeResult;
-  readonly preview: (order: ImmediateExchangeOrder) => ExchangePreview;
+  readonly preview: (order: ImmediateExchangeOrder) => ImmediateExchangePreview;
 }
 
 /** Fixed actions use live model validation and a single atomic transaction per activation. */
@@ -31,18 +32,17 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   root.className = "ada-exchange";
   root.setAttribute("role", "tabpanel");
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
-  const help = document.createElement("p");
-  help.textContent = EXCHANGE_COPY.help;
   const result = document.createElement("div");
   result.dataset.exchange = "result";
   const status = document.createElement("p");
   status.setAttribute("role", "status");
-  const containers = { buy: createActions([]), root, sell: createActions([]) };
-  const parts = { help, result, status };
+  const containers = { ore: createActions([]), root, stardust: createActions([]) };
+  const parts = { result, status };
+  const label = { ore: EXCHANGE_COPY.buyOre, stardust: EXCHANGE_COPY.buyStardust };
   let disposed = false;
   const actions: { button: HTMLButtonElement; order: ImmediateExchangeOrder }[] = [];
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
-  const refusal = (value: ExchangePreview | ImmediateExchangeResult): string =>
+  const refusal = (value: ImmediateExchangePreview | ImmediateExchangeResult): string =>
     value.kind !== "refused"
       ? ""
       : value.reason === "cantAfford"
@@ -74,12 +74,11 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     audit();
     const outcome = port.exchangeImmediately(order);
     if (outcome.kind === "exchanged") {
-      const directionLabel =
-        outcome.direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre;
+      const paymentLabel = outcome.resource === "ore" ? "Stardust" : "Ore";
       result.replaceChildren(
         ...[
-          `${directionLabel}: ${stardustCount(outcome.amount)}`,
-          `${EXCHANGE_COPY.totalPrice}: ${stardustCount(outcome.totalPrice)} Stardust`,
+          `${label[outcome.resource]}: ${stardustCount(outcome.amount)}`,
+          `${EXCHANGE_COPY.totalPrice}: ${stardustCount(outcome.totalPrice)} ${paymentLabel}`,
           `${EXCHANGE_COPY.oreAfter}: ${stardustCount(outcome.after.ore)}`,
           `${EXCHANGE_COPY.stardustAfter}: ${stardustCount(outcome.after.stardust)}`,
         ].map((text) => {
@@ -95,11 +94,11 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     render();
     focusTarget(button);
   };
-  const data = (direction: "buy" | "sell"): readonly ExchangeActionData[] =>
+  const data = (resource: ExchangeResource): readonly ExchangeActionData[] =>
     EXCHANGE_AMOUNTS.map((amount) => ({
       amount,
-      direction,
-      label: `${direction === "buy" ? EXCHANGE_COPY.buyOre : EXCHANGE_COPY.sellOre} ${stardustCount(amount)}`,
+      label: `${label[resource]} ${stardustCount(amount)}`,
+      resource,
     }));
   const mounted = mountLayout<ExchangeSchema>(
     {
@@ -109,9 +108,9 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
             const button = createButton(initial.label);
             const order: ImmediateExchangeOrder = {
               amount: initial.amount,
-              direction: initial.direction,
+              resource: initial.resource,
             };
-            button.dataset.action = `exchange-${order.direction}-${order.amount}`;
+            button.dataset.action = `exchange-${order.resource}-${order.amount}`;
             const binding = bindAdaAction(
               {
                 click: {
@@ -146,7 +145,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
       },
       host: parent,
     },
-    exchangeTree({ buy: data("buy"), sell: data("sell") }),
+    exchangeTree({ ore: data("ore"), stardust: data("stardust") }),
   );
   try {
     audit();

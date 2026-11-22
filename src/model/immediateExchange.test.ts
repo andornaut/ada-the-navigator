@@ -1,10 +1,9 @@
 import { expect, it } from "vitest";
 
-import { EXCHANGE_RATES } from "../data/exchange.ts";
 import { dockedStock } from "../testing/stationStock.ts";
-import { EXCHANGE_AMOUNTS, exchangeImmediately } from "./exchange.ts";
+import { EXCHANGE_AMOUNTS, previewImmediateExchange } from "./exchange.ts";
 
-it("applies each fixed quantity once at current buy2/sell1 rates with one fungible ore balance", () => {
+it("buys each fixed quantity at double the cost in the other resource", () => {
   const model = dockedStock(1, "jobs"),
     flight = model.state.flight!;
   const progress = structuredClone(model.state.progress);
@@ -14,18 +13,29 @@ it("applies each fixed quantity once at current buy2/sell1 rates with one fungib
     weapon: flight.weapon,
   });
   for (const amount of EXCHANGE_AMOUNTS) {
-    flight.cargo = 100;
+    flight.cargo = 1000;
     model.state.economy.stardust = 1000;
-    const bought = model.exchangeImmediately({ amount, direction: "buy" });
-    expect(bought.kind).toBe("exchanged");
-    expect(flight.cargo).toBe(100 + amount);
-    expect(model.state.economy.stardust).toBe(1000 - amount * EXCHANGE_RATES.buyOre);
-    const sold = model.exchangeImmediately({ amount, direction: "sell" });
-    expect(sold.kind).toBe("exchanged");
-    expect(flight.cargo).toBe(100);
-    expect(model.state.economy.stardust).toBe(
-      1000 - amount * (EXCHANGE_RATES.buyOre - EXCHANGE_RATES.sellOre),
-    );
+    const bought = model.exchangeImmediately({ amount, resource: "ore" });
+    expect(bought).toEqual({
+      after: { ore: 1000 + amount, stardust: 1000 - 2 * amount },
+      amount,
+      kind: "exchanged",
+      resource: "ore",
+      totalPrice: 2 * amount,
+    });
+    expect(flight.cargo).toBe(1000 + amount);
+    expect(model.state.economy.stardust).toBe(1000 - 2 * amount);
+    const order = { amount, resource: "stardust" } as const;
+    expect(model.previewImmediateExchange(order)).toEqual({
+      after: { ore: 1000 - amount, stardust: 1000 - amount },
+      amount,
+      kind: "quote",
+      resource: "stardust",
+      totalPrice: 2 * amount,
+    });
+    expect(model.exchangeImmediately(order).kind).toBe("exchanged");
+    expect(flight.cargo).toBe(1000 - amount);
+    expect(model.state.economy.stardust).toBe(1000 - amount);
   }
   expect(model.state.progress).toEqual(progress);
   expect({ ammo: flight.ammo, levels: flight.levels, weapon: flight.weapon }).toEqual(loadout);
@@ -34,22 +44,22 @@ it("applies each fixed quantity once at current buy2/sell1 rates with one fungib
 });
 it("refuses invalid quantities, affordability, insufficient ore and overflow without mutation", () => {
   const balances = { ore: 0, stardust: 1 };
-  expect(
-    exchangeImmediately(EXCHANGE_RATES, balances, { amount: 2 as never, direction: "buy" }),
-  ).toEqual({ kind: "refused", reason: "invalidAmount" });
-  expect(exchangeImmediately(EXCHANGE_RATES, balances, { amount: 1, direction: "buy" })).toEqual({
+  expect(previewImmediateExchange(balances, { amount: 2 as never, resource: "ore" })).toEqual({
+    kind: "refused",
+    reason: "invalidAmount",
+  });
+  expect(previewImmediateExchange(balances, { amount: 1, resource: "ore" })).toEqual({
     kind: "refused",
     reason: "cantAfford",
   });
-  expect(exchangeImmediately(EXCHANGE_RATES, balances, { amount: 1, direction: "sell" })).toEqual({
+  expect(previewImmediateExchange(balances, { amount: 1, resource: "stardust" })).toEqual({
     kind: "refused",
     reason: "notEnoughOre",
   });
   expect(
-    exchangeImmediately(
-      EXCHANGE_RATES,
+    previewImmediateExchange(
       { ore: Number.MAX_SAFE_INTEGER, stardust: 1000 },
-      { amount: 1, direction: "buy" },
+      { amount: 1, resource: "ore" },
     ),
   ).toEqual({ kind: "refused", reason: "overflow" });
   expect(balances).toEqual({ ore: 0, stardust: 1 });
@@ -59,14 +69,27 @@ it("retains dock/dialogue guards and recomputes live balances on every immediate
     flight = model.state.flight!;
   flight.cargo = 2;
   model.state.economy.stardust = 2;
-  expect(model.exchangeImmediately({ amount: 1, direction: "buy" }).kind).toBe("exchanged");
-  expect(model.exchangeImmediately({ amount: 1, direction: "buy" })).toEqual({
+  expect(model.exchangeImmediately({ amount: 1, resource: "ore" }).kind).toBe("exchanged");
+  expect(model.exchangeImmediately({ amount: 1, resource: "ore" })).toEqual({
     kind: "refused",
     reason: "cantAfford",
   });
+  expect(model.exchangeImmediately({ amount: 1, resource: "stardust" }).kind).toBe("exchanged");
+  expect(model.previewImmediateExchange({ amount: 1, resource: "stardust" })).toEqual({
+    kind: "refused",
+    reason: "notEnoughOre",
+  });
+  expect(model.exchangeImmediately({ amount: 1, resource: "stardust" })).toEqual({
+    kind: "refused",
+    reason: "notEnoughOre",
+  });
+  expect({ ore: flight.cargo, stardust: model.state.economy.stardust }).toEqual({
+    ore: 1,
+    stardust: 1,
+  });
   const before = { ore: flight.cargo, stardust: model.state.economy.stardust };
   model.state.docked = null;
-  expect(model.exchangeImmediately({ amount: 1, direction: "sell" })).toEqual({
+  expect(model.exchangeImmediately({ amount: 1, resource: "stardust" })).toEqual({
     kind: "refused",
     reason: "unavailable",
   });

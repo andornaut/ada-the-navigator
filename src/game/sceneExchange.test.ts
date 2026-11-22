@@ -48,7 +48,7 @@ function bridge() {
   ) => { kind: string; reason?: string };
   const exchange = vi.spyOn(model, "exchangeImmediately");
   return {
-    confirm: () => confirm(scene, { amount: 10, direction: "buy" }),
+    confirm: () => confirm(scene, { amount: 10, resource: "ore" }),
     exchange,
     feedback,
     flush,
@@ -67,7 +67,7 @@ describe("station Exchange caller", () => {
     expect(scene.controls.reset).toHaveBeenCalledTimes(1);
     expect(feedback.pulses).toEqual([]);
     expect(feedback.observe(20, model.state)).toEqual([]);
-    expect(exchange).toHaveBeenCalledExactlyOnceWith({ amount: 10, direction: "buy" });
+    expect(exchange).toHaveBeenCalledExactlyOnceWith({ amount: 10, resource: "ore" });
     expect(flush).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalledTimes(1);
     model.state.flight!.cargo += 1;
