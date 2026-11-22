@@ -1124,11 +1124,13 @@ export function buildScene(scene: UiContext): void {
         return null;
       }
       hasSavedGame = available;
-      return available ? (present) => {
-        if (present && canResetSave() && scene.model === model) {
-          resetSave(scene);
-        }
-      } : null;
+      return available
+        ? (present) => {
+            if (present && canResetSave() && scene.model === model) {
+              resetSave(scene);
+            }
+          }
+        : null;
     },
   });
   partial.push(() => scene.resetSaveCard.dispose());
