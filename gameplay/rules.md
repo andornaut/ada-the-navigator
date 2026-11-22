@@ -267,15 +267,14 @@ resolved, and its stations, shops, jobs, activities and any unfinished quests
 stay available. Completing a quest invites a return to Earth without forcing
 immediate exit from space.
 
-Every Use interaction in space (Talk, Deliver, Tow, Salvage, Deposit, Dock and
-the rest) opens the conversation card: the storybook's story panel over the
+Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
+open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
 portrait; an interaction with no person to address uses Astra. A page offers
 Continue, choice buttons and Ask more, and the card has a close X and Skip; the
-close X is its only Close control. Dock opens the card on the keeper's greeting,
-and its last page shows the Stardust balance, Jobs at a station with the jobs
-specialty, Undock and primary Shop; its close X, an outside tap, back and Escape
-undock.
+close X is its only Close control. Normal Dock opens the Station welcome with
+the keeper paragraph and immediate access to available services. Its existing
+undock and dismissal guards apply.
 All dialogue is skippable: Skip jumps to the exchange's outcome, and a pending
 choice still asks. Conversations use brief essential exchanges with optional
 questions about character and culture (see [Player copy](player-copy.md)).
@@ -283,7 +282,7 @@ In-flight chatter, drone warnings and the Admiral's broadcasts stay in the small
 in-flight box, and that box and notices never pause play (see
 [Astra and Penny in flight](#astra-and-penny-in-flight)).
 
-Shop and Jobs open from the station's last page and return to it. Pause,
+Shop and Jobs open from the Station welcome and return to it. Pause,
 Settings and the Map keep their layout.
 
 The first mandatory
@@ -603,40 +602,11 @@ remain available at any station through `heldTask`; only new job offers require
 | Cartwheel | Flint, Shale, Chert   | Pebble, Copper, Ridge        |
 | Phantom   | Dew, Puddle, Wisp     | Ripple, Drift, Glow          |
 
-Generic station first-visit introductions have three lines:
-
-1. "Welcome to {station}. I'm {keeper}."
-2. The galaxy's flavor line below.
-3. One supported service line below; Exchange is the fallback.
-
-`{station}` is the station's display name and `{keeper}` the keeper's full unique
-display name. The identity and station name make the dialogue package specific
-to that station; the components add no individual NPC backstory.
-
-| Galaxy    | Flavor line                                    |
-| --------- | ---------------------------------------------- |
-| Sunflower | "{station} keeps humming."                     |
-| Whirlpool | "{station} welcomes current riders."           |
-| Needle    | "No need to rush at {station}."                |
-| Andromeda | "The lamps at {station} are lit for you."      |
-| Cartwheel | "A little dust never bothers us at {station}." |
-| Phantom   | "There is room to rest at {station}."          |
-
-Service lines, emitted only when the station offers that service:
-
-- Equipment: "{station} has equipment for your ship."
-- Weapons and ammunition: "{station} sells weapons and ammo."
-- Jobs: "There's work on the board at {station}."
-- Exchange: "You can trade ore and Stardust at {station}."
-
-Return lines cycle within the assigned station:
-
-- "Welcome back to {station}, Navigator."
-- "{keeper} here. You can trade ore and Stardust here."
-- "Back at {station}! What do you need today?"
-
-The mining hub and actual story characters retain their authored lines and
-identities. The generic station contract does not change their story dialogue.
+Use the galaxy's Station welcome pools for generic keepers. On the first
+visit, introduce the full keeper name and add a galaxy-specific arrival line.
+On later visits, use a return line from that galaxy. Only stations that offer
+Jobs add a job-board line. The mining hub and authored keeper roles have
+their own welcome variants. Existing story dialogue uses its existing scenes.
 
 Each station's keeper has short station-specific introduction and return lines,
 including at stations without jobs. The mining hub's lines still mention the
@@ -649,10 +619,11 @@ station-name and service templates above without inventing individual NPC
 histories. Portrait assignments use the finite existing
 assets separately from the named story identities. Story destinations keep their
 story characters' arrival lines; landmarks have no greeter. The first time Ada
-docks at a station, each of its keeper's three greeting lines is a page of the
-conversation card, advanced with Continue. Skip opens the last page when more than one advance remains. Each later
-docking opens on the last page with a short return line from that station's
-keeper. The first time Ada comes within Talk range of a settlement, its
+docks at a station, its keeper's greeting forms one paragraph on
+the Station welcome. Later dockings show the selected return line. Available
+actions are usable immediately, and there is no Next or Skip on a normal
+welcome. The existing ordering of mandatory interactions and guards applies
+before the welcome. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
 saved per place, and Restart clears them. Phantom also follows the distinct
 station-keeper contract; Admiral Archie's named finale identity, dialogue and

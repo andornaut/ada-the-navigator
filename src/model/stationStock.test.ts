@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ECONOMY, unlockedWeapons } from "../data/economy.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
+import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { dockedStock } from "../testing/stationStock.ts";
 import { newGameState } from "./game.ts";
 import { shopRowState, stationShopRows, stationStock, stationStocks } from "./shop.ts";
@@ -86,5 +86,15 @@ describe("inventory-independent station stock", () => {
     expect(new Set(equipment.map(({ category }) => category)).size).toBe(2);
     expect(equipment.some(({ category }) => category === "equipment")).toBe(true);
     expect(dockedStock(1, "jobs").shopGroups()).toBeUndefined();
+  });
+
+  it("keeps all three categories available across real armories and outfitters", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      const armory = dockedStock(galaxy, "weaponsAmmo").shopGroups()!;
+      const outfitter = dockedStock(galaxy, "equipment").shopGroups()!;
+      expect(new Set([...armory, ...outfitter].map(({ category }) => category))).toEqual(
+        new Set(["weapons", "equipment", "ammo"]),
+      );
+    }
   });
 });

@@ -14,19 +14,21 @@ targets keep 1000 world units clear of retained frigates, capitals and platforms
 
 ### Job board
 
-At a station with the jobs specialty, the station's last page in the
-conversation card offers Jobs alongside the Stardust balance, Undock and Shop. Other stations still offer
-Exchange and their own keeper dialogue, without new job offers. Active task
-details and Drop remain available at any station. Jobs opens the job board as a Large card, which follows the shop's card pattern; its close
-X, an outside tap, back and Escape return to the station's last page.
+The Station footer opens Jobs & Projects wherever the current station offers
+jobs, unlocked projects or an existing held-task action. Its left Jobs pane
+shows ordinary offers only where available. Community projects occupy its
+right pane, including at project-only stations. Preserve held-task details
+and Drop. Back and the permitted companion dismissals return one layer to
+the Station welcome.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
   station's seed, with no two of the same type while the pool allows. Short and
   long deliveries count as one type.
-- Each row shows the job type's icon, a title, one line of detail and the reward,
-  with Accept. Accept takes the job at once, with no confirm.
-- Ada holds at most one station job per galaxy. While she holds one, other rows' Accept stays focusable, refuses with
-  the shared refusal feedback and shows "Finish or drop your current job first."
+- The job row opens details with the job icon, title, objective, Reward with
+  its Stardust amount, Cancel and Accept. A short galaxy-specific brief
+  can add context for the actual job type. Preserve objective facts.
+- Ada holds at most one station job per galaxy. An unavailable Accept
+  preserves the refusal text “Finish or drop your current job first.”
 - The held job shows at the top of every board in its galaxy, marked Active,
   with Drop. Drop asks "Drop this job?" with Drop and Cancel. Dropping loses the
   job's progress and returns it to the board that offered it.

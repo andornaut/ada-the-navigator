@@ -215,13 +215,20 @@ remain findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the conversation card on the keeper's greeting (see [Species and greeters](rules.md#species-and-greeters)). Its last page shows the Stardust balance, Jobs at a station that offers jobs, Undock and primary Shop. Every station offers Exchange;
-equipment, weapons with ammunition, and jobs are seeded specialties. Reachable
-stations in each galaxy collectively offer all three categories, with no
-encounter-order gating or new unlock rules. Jobs opens a board only at stations
-that offer jobs (see [Quests](quests.md)). Every station has its own keeper
-identity and short station-specific flavor dialogue, including those without
-jobs. Portrait reuse does not merge keeper identities.
+Use offers Dock again at once. A normal docking opens the Station welcome with
+the keeper's paragraph and the available service actions (see
+[Species and greeters](rules.md#species-and-greeters)). Jobs is offered only at a
+station with jobs. Every station offers Exchange. Jobs-only stations retain
+Jobs & Projects and Exchange. Retail stations have two distinct stock panes
+selected from Weapons, Equipment and Ammo. Equipment includes ship upgrades
+and paint. Reachable shops in a galaxy collectively offer all three categories.
+Select offer identities from stable station identity and the galaxy catalogue,
+independently of balance, ownership, ammunition counts and visits. Each pane
+shows two to four distinct eligible offers, or all eligible offers if fewer
+than two exist. Sunflower's Ammo pane only offers Multi-Laser ammunition.
+The Cartwheel mining hub reserves one Equipment slot for its mandatory
+holodisk whenever the story allows that purchase. Every station has an
+individual keeper identity and galaxy-specific welcome variants.
 The card's close X, an outside tap, back and Escape all undock.
 
 ## Shop
@@ -281,33 +288,19 @@ matches its level 2 upgrade:
 
 Enemy speeds are fixed, so engine tuning lets Ada keep pace with the
 interceptor and outrun every other enemy at level 2, and outrun all of them at
-level 3. Stock follows canonical catalogue order and galaxy route position,
-independently of inventory. Existing specialties remain. Where offered, stock
-contains two equipment offers, two weapon identities and up to two eligible
-ammunition types. Owned weapons retain upgrade rows; maxed items remain visible
-without replacing stock. Unowned ammunition remains visible with the exact
-"Requires {weapon}" reason and existing purchase guard, using the canonical
-current weapon name. Prices, unlocks, rates and quantities do not change.
+level 3. Owned weapons retain upgrade rows, and maxed items remain visible.
+Unowned ammunition stays visible with “Requires {weapon}” and its purchase
+guard. Names, prices and unlocks follow the canonical catalogue.
 
-The shop follows Archie's Pet shop pattern: tabs, owned
-items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
-outside tap, back and Escape return to the station's last page. An item Ada cannot
-afford stays visible with a flat disabled face, stays focusable and tappable,
-and refuses with Archie's shared
-refusal feedback; reduced motion shows the red tint without shaking. A levelled
-row shows Ada's current level ("Level 1 of 3" before the first upgrade) and the
-price of the next level; a maxed row shows Owned. The buy confirm shows a weapon's
-one-line description.
-
-The mining hub's shop also lists the galaxy's holodisk as the first row of its
-Ship tab once Cartwheel's space quest is complete: "Holodisk", the detail
-"Restores part of Astra's memory." and its price. Buying it asks "Buy Holodisk?"
-and the row then shows Owned.
+Shop displays both stock panes at once. Each purchase opens a small Buy or
+Cancel confirmation with the item, icon and price. On return, restore focus
+to the same offer or the nearest available one. An unaffordable offer stays
+visible and reports refusal if activated. The Cartwheel hub's story offer
+uses “Holodisk” and “Restores part of Astra's memory.” while available.
 
 Ship paint schemes are Classic (the free white and blue default), Cobalt,
 Seafoam, Crimson, Iris and Amber. Tapping an owned scheme puts it in use at once, with
-no confirm; the scheme in use has the selection ring and shows In use instead of
-Owned. The five paid schemes cost 1500, 2000, 2500, 3000 and 3500 Stardust by
+no confirm. The current scheme shows In use instead of Owned. The five paid schemes cost 1500, 2000, 2500, 3000 and 3500 Stardust by
 purchase order, whichever scheme Ada chooses next. Classic stays free and does
 not advance that order. Paint is a shop-only endgame savings goal.
 
@@ -358,7 +351,7 @@ duration for discrete controls in every game, opens the card instead of acting; 
   play.
 - In the shop, holding a weapon row or an upgrade row (weapon upgrades, Shield,
   Engine tuning and Tractor beam) opens its card over the shop instead of the
-  buy confirm. Back and the other dismissals return to the same shop tab with
+  buy confirm. Back and the other dismissals return to the same Shop pane with
   that row focused. Ammunition, paint, holodisk and project rows have no card.
 
 A weapon card's header shows its canonical weapon glyph and existing compact
@@ -383,7 +376,7 @@ The contextual dismissal is Close or Back. A sole Close button is centered.
 Multi-action rows place the secondary action on the left and the primary action
 on the right. Close returns from flight details to flight; Back returns to the
 originating parent view. The close X, Escape and other supported dismissals return to that same
-origin, preserving the shop tab and focused row where applicable.
+origin, preserving the Shop pane and focused row where applicable.
 
 | Weapon        | Card lines                                                                                                                  |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -439,11 +432,12 @@ not subtracted.
 | Second docking bay | Cartwheel |   600 | Miner        | "A second bay. Nobody has to wait alone anymore."                                    | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets   |
 | Hub repairs        | Cartwheel |   450 | Station      | "The hub is good as new. There is room for everyone, and now it shows."              | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                     |
 
-Projects is the third shop tab, after Weapons and Ship, shown once the galaxy's
-projects are offered. It lists only that galaxy's projects, in table order, so a
-station never funds another galaxy's projects. A row shows the project name, its
-effect line until something is paid and then its progress as `{paid} of
-{price}`, and a price showing what remains; a funded row shows Funded.
+Unlocked projects appear in the right Community projects pane of
+Jobs & Projects, with Jobs on the left. The page opens at every eligible
+station, including those with projects and no ordinary jobs. The project pane
+lists only this galaxy's projects in table order. It shows the effect until
+Ada contributes, then `{paid} of {price}` and the remaining cost. Completed
+projects show Funded.
 
 Activating a row opens a donation confirm in the shop's buy confirm pattern: the
 project's description, the amount this donation pays, the balance left after
@@ -559,13 +553,11 @@ The shield shop row reuses the existing `shield` label.
 
 ## Exchange
 
-Every station shop has a separate Exchange tab with Buy ore and Sell ore.
-One ore costs 2 Stardust to buy and returns 1 Stardust when sold. Buying and
-selling the same amount therefore loses 1 Stardust per ore.
-
-Buy or sell 1, 10 or 100 ore directly, with no amount input or confirmation.
-Each action checks current balances and rates, then applies both balances
-atomically or refuses without change. There is no pending quote to replay.
+Exchange is a Station section with Buy Stardust and Buy ore. Each offers
+1, 10 and 100 units received. A purchase costs twice the received amount in
+the other resource. Each action checks the current balances and applies both
+updates atomically, or refuses without change. Exchange takes effect
+immediately and has no amount input or confirmation.
 
 Ore is one fungible balance regardless of origin. Buying ore is an exchange,
 not a pickup or mining event. All carried ore follows the existing shield-fuel,
