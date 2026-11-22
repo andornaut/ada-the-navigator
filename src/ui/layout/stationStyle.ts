@@ -48,8 +48,8 @@ export const STATION_STYLE = `
   transform:none;
   width:100%;
   max-height:100%;
-  padding:${units(SPACING.panelPadding)};
-  padding-top:${units(SPACING.panelPadding + TYPE.label.lineHeight + SPACING.gap)};
+  padding:${units(SPACING.panelPadding + TYPE.label.lineHeight + SPACING.gap)}
+    ${units(SPACING.panelPadding)} 0;
   flex-direction:column;
   gap:${units(SPACING.gap)}
 }
@@ -106,6 +106,7 @@ export const STATION_STYLE = `
   width:100%;
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:minmax(0,1fr);
   align-items:stretch;
   gap:${units(SPACING.gap)}
 }
