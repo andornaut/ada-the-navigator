@@ -526,22 +526,18 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const ring = document.createElement("span");
     ring.className = "ada-route-ring";
     button.append(backing, ring, frame, disc);
-    register(button, () => {
+    const selectGalaxy = () => {
+      if (!view || unlock || (!viewingEarth && view.panel === position)) {
+        return;
+      }
       viewingEarth = false;
       options.onView(position);
       drawPanel();
       drawChart();
-    });
-    const selectOnFocus = () => {
-      if (!unlock) {
-        viewingEarth = false;
-        options.onView(position);
-        drawPanel();
-        drawChart();
-      }
     };
-    button.addEventListener("focus", selectOnFocus);
-    leaveFocus.push(() => button.removeEventListener("focus", selectOnFocus));
+    register(button, selectGalaxy);
+    button.addEventListener("focus", selectGalaxy);
+    leaveFocus.push(() => button.removeEventListener("focus", selectGalaxy));
     const name = document.createElement("span");
     name.className = "ada-route-label";
     name.style.left = units(centre.x);

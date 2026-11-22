@@ -1,8 +1,10 @@
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import data from "../../public/art/quantum-jump.json";
 import mainData from "../../public/art/ship-jets.json";
 import { CONTENT } from "../data/content.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
 import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
@@ -649,9 +651,82 @@ it.each([false, true])(
   },
 );
 
+it.each(["mouse", "hold"])(
+  "dispatches Galaxy Map selection once for %s and preserves navigation",
+  (gesture) => {
+    const fixture = dom();
+    const initial = mapView(null);
+    let view = {
+      ...initial,
+      galaxies: initial.galaxies.map((galaxy, index) => ({
+        ...galaxy,
+        unlocked: index !== 2,
+      })),
+    };
+    const onView = vi.fn((position: RoutePosition) => {
+      // The real scene applies the selection and refreshes show() synchronously.
+      view = {
+        ...view,
+        panel: position,
+        ship: view.galaxies[position - 1]!.unlocked ? position : view.ship,
+      };
+      map.show(view);
+    });
+    const onStep = vi.fn();
+    const map = createGalaxyMap(fixture.host, { ...galaxyConstructionOptions(), onStep, onView });
+    const marker = (position: number | "earth") =>
+      fixture.nodes.find((node) => node.dataset.position === String(position))!;
+    const focus = (node: ReturnType<typeof marker>) => {
+      for (const callback of node.listeners.get("focus") ?? []) {
+        callback();
+      }
+    };
+    const currentTitle = () => fixture.nodes.find((node) => node.tag === "h2")!.textContent;
+    try {
+      map.show(view);
+      if (gesture === "mouse") {
+        focus(marker(3));
+        marker(3).click();
+      } else {
+        const hold = resolveAdaHoldAction(fixture.host, marker(3) as unknown as HTMLElement)!;
+        expect(hold.available()).toBe(true);
+        hold.activate();
+        expect(onView.mock.calls).toEqual([[3]]);
+        focus(marker(3));
+      }
+      expect(onView.mock.calls).toEqual([[3]]);
+      expect(currentTitle()).toBe("3");
+      const jump = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
+      expect(jump.attributes.get("aria-disabled")).toBe("true");
+
+      marker("earth").click();
+      expect(currentTitle()).toBe(destinationLabels.earthKicker);
+      focus(marker(3));
+      marker(3).click();
+      expect(onView.mock.calls).toEqual([[3], [3]]);
+      expect(currentTitle()).toBe("3");
+
+      const screen = fixture.nodes.find((node) => node.dataset.dialog === "galaxies")!;
+      const navigate = screen.listeners.get("keydown")!.at(-1)! as (
+        event: Pick<KeyboardEvent, "key" | "preventDefault" | "shiftKey">,
+      ) => void;
+      navigate({ key: "Tab", preventDefault() {}, shiftKey: false });
+      expect(focusTarget).toHaveBeenLastCalledWith(marker(1));
+      focus(marker(1));
+      expect(onView.mock.calls).toEqual([[3], [3], [1]]);
+      navigate({ key: "ArrowRight", preventDefault() {}, shiftKey: false });
+      expect(onStep).toHaveBeenCalledExactlyOnceWith(1);
+    } finally {
+      map.dispose();
+    }
+  },
+);
+
 it("registers native route actions once and releases selection callbacks on dispose", () => {
   const fixture = dom();
-  const onView = vi.fn(),
+  const onView = vi.fn((panel: RoutePosition) => {
+      map.show({ ...mapView(null), panel });
+    }),
     onJump = vi.fn(),
     onEarth = vi.fn(),
     onClose = vi.fn();
@@ -674,7 +749,7 @@ it("registers native route actions once and releases selection callbacks on disp
     onView,
     reducedMotion: () => true,
   });
-  map.show(mapView(null));
+  map.show({ ...mapView(null), panel: 1 });
   const marker = fixture.nodes.find((node) => node.dataset.position === "2")!;
   const primary = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
   const action = resolveAdaHoldAction(fixture.host, marker as unknown as HTMLElement)!;
@@ -685,7 +760,7 @@ it("registers native route actions once and releases selection callbacks on disp
   for (const callback of marker.listeners.get("focus") ?? []) {
     callback();
   }
-  expect(onView).toHaveBeenCalledTimes(2);
+  expect(onView).toHaveBeenCalledOnce();
   const jump = resolveAdaHoldAction(fixture.host, primary as unknown as HTMLElement)!;
   jump.activate();
   expect(onJump).toHaveBeenCalledOnce();
@@ -704,6 +779,6 @@ it("registers native route actions once and releases selection callbacks on disp
   for (const callback of marker.listeners.get("focus") ?? []) {
     callback();
   }
-  expect(onView).toHaveBeenCalledTimes(2);
+  expect(onView).toHaveBeenCalledOnce();
   expect(resolveAdaHoldAction(fixture.host, primary as unknown as HTMLElement)).toBeNull();
 });
