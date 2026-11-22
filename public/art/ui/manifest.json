@@ -193,12 +193,6 @@
       "once": []
     },
     {
-      "key": "icon-shop-check",
-      "png": "sprites/icon-shop-check.png",
-      "json": "sprites/icon-shop-check.json",
-      "once": []
-    },
-    {
       "key": "icon-shop-engine-tuning",
       "png": "sprites/icon-shop-engine-tuning.png",
       "json": "sprites/icon-shop-engine-tuning.json",
@@ -220,12 +214,6 @@
       "key": "icon-shop-tractor-beam",
       "png": "sprites/icon-shop-tractor-beam.png",
       "json": "sprites/icon-shop-tractor-beam.json",
-      "once": []
-    },
-    {
-      "key": "icon-shop-upgrade-badge",
-      "png": "sprites/icon-shop-upgrade-badge.png",
-      "json": "sprites/icon-shop-upgrade-badge.json",
       "once": []
     },
     {

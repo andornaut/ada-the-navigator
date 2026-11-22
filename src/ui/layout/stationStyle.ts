@@ -8,6 +8,7 @@ import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 export const STATION_SPRITES = "/art/ui/sprites/";
 const SPRITES = STATION_SPRITES;
+const ICONS = "/art/ui/icons/";
 const { bottom, left, right, top } = BUTTON_SLICE;
 const TILE_SLICE = `${top} ${right} ${bottom} ${left}`;
 const TILE_WIDTHS = `${slice(top)} ${slice(right)} ${slice(bottom)} ${slice(left)}`;
@@ -494,8 +495,7 @@ ${STOCK_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
 .ada-controls .ada-glyph-sprite{
   background:var(--sheet) 0 0 / 200% 100% no-repeat
 }
-.ada-controls [data-state=unaffordable] .ada-glyph-sprite,
-.ada-controls [data-state=unaffordable] .ada-glyph-badge{
+.ada-controls [data-state=unaffordable] .ada-glyph-sprite{
   background-position:100% 0
 }
 .ada-controls .ada-glyph-upgrade{
@@ -514,8 +514,11 @@ ${STOCK_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   top:0;
   width:${scaled(SHOP_ROW.upgrade.badge)};
   height:${scaled(SHOP_ROW.upgrade.badge)};
-  background:url('${SPRITES}icon-shop-upgrade-badge.png') 0 0 / 200% 100% no-repeat;
-  image-rendering:pixelated
+  background:url('${ICONS}icon-shop-upgrade-badge.svg') 0 0 / 100% 100% no-repeat;
+  image-rendering:auto
+}
+.ada-controls [data-state=unaffordable] .ada-glyph-badge{
+  background-image:url('${ICONS}icon-shop-upgrade-badge-disabled.svg')
 }
 .ada-controls .ada-glyph-swatch{
   width:${units(SHOP_ROW.glyph.swatch)};
@@ -589,8 +592,8 @@ ${STOCK_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   flex:none;
   width:${units(SHOP_ROW.check.width)};
   height:${units(SHOP_ROW.check.height)};
-  background:url('${SPRITES}icon-shop-check.png') 0 0 / 100% 100% no-repeat;
-  image-rendering:pixelated
+  background:url('${ICONS}icon-shop-check.svg') 0 0 / 100% 100% no-repeat;
+  image-rendering:auto
 }
 
 .ada-controls :is(.ada-job-list,.ada-station-projects,.ada-stock-rows){
