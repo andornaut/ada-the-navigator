@@ -32,6 +32,7 @@ import {
   ember as wreckEmber,
   heavies,
   industrialHeavies,
+  packFamilyCapitalParts,
   place,
   readOffsets,
   scorch,
@@ -240,6 +241,7 @@ async function main() {
       copies.set(file, `/art/enemies/${file}`);
     }
   }
+  const outputEntries = packFamilyCapitalParts("andromeda", texts, entries);
   const paths = writeOnce(PATH, copies, texts);
   // In Andromeda's manifest after the destinations, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-garnet-hostileStation-`.
@@ -249,7 +251,7 @@ async function main() {
       PREFIX,
       [...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name),
     ),
-    entries.map((entry) => storedAt(paths, entry)),
+    outputEntries.map((entry) => storedAt(paths, entry)),
     (id) => id.startsWith("craft-") || id.includes("portrait"),
   );
   const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));

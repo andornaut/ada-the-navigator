@@ -41,6 +41,7 @@ import {
   type HeavyPart,
   heavies,
   industrialHeavies,
+  packFamilyCapitalParts,
   type Model,
   place,
   PLATFORM_FILL,
@@ -487,6 +488,7 @@ async function main() {
   // The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like
   // another (the cargo hauler is the retaliator) uses that craft's files.
   const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
+  const outputEntries = packFamilyCapitalParts("cartwheel", texts, entries);
   const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
@@ -496,7 +498,7 @@ async function main() {
       PREFIX,
       [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
     ),
-    entries.map((entry) => storedAt(paths, entry)),
+    outputEntries.map((entry) => storedAt(paths, entry)),
     (id) => id.startsWith("craft-"),
   );
   const names = new Set(

@@ -33,6 +33,7 @@ import {
   ember as wreckEmber,
   heavies,
   industrialHeavies,
+  packFamilyCapitalParts,
   place,
   readOffsets,
   scorch,
@@ -224,6 +225,7 @@ for (const file of texts.keys()) {
     copies.set(file, `/art/enemies/${file}`);
   }
 }
+const outputEntries = packFamilyCapitalParts("needle", texts, entries);
 const paths = writeOnce(PATH, copies, texts);
 // In Needle's manifest after the gates and debris, before the story craft.
 // Only these crafts' ids, not the whole `enemy-needle-` family prefix.
@@ -233,7 +235,7 @@ mergeEntries(
     PREFIX,
     [...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name),
   ),
-  entries.map((entry) => storedAt(paths, entry)),
+  outputEntries.map((entry) => storedAt(paths, entry)),
   (id) => id.startsWith("craft-"),
 );
 const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));
