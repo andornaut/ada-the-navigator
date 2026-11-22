@@ -1391,32 +1391,46 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // A drag across a page must not activate the row where the gesture started.
   for (const group of [list, jobList]) {
-    let start: { readonly x: number; readonly y: number } | undefined;
-    let moved = false;
+    let start: { readonly pointerId: number; readonly x: number; readonly y: number } | undefined;
+    let draggedPointer: number | undefined;
+    let latestPointer: number | undefined;
     group.addEventListener("pointerdown", (event) => {
-      start = { x: event.clientX, y: event.clientY };
-      moved = false;
+      latestPointer = event.pointerId;
+      start = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+      if (draggedPointer === event.pointerId) {
+        draggedPointer = undefined;
+      }
     });
     group.addEventListener("pointermove", (event) => {
-      if (start && !isTap(readViewUnit(group), start, { x: event.clientX, y: event.clientY })) {
-        moved = true;
+      if (
+        start?.pointerId === event.pointerId &&
+        !isTap(readViewUnit(group), start, { x: event.clientX, y: event.clientY })
+      ) {
+        draggedPointer = event.pointerId;
       }
     });
     group.addEventListener(
       "click",
       (event) => {
-        if (moved) {
-          event.preventDefault();
-          event.stopPropagation();
+        // Legacy physical clicks can only be attributed to the latest pointer press.
+        const pointerId = typeof event.pointerId === "number" ? event.pointerId : latestPointer;
+        if (event.detail === 0 || draggedPointer === undefined || pointerId !== draggedPointer) {
+          return;
         }
-        moved = false;
-        start = undefined;
+        draggedPointer = undefined;
+        event.preventDefault();
+        event.stopPropagation();
       },
       true,
     );
     for (const type of ["pointerup", "pointercancel"] as const) {
-      group.addEventListener(type, () => {
-        start = undefined;
+      group.addEventListener(type, (event) => {
+        if (start?.pointerId === event.pointerId) {
+          start = undefined;
+        }
+        if (type === "pointercancel" && draggedPointer === event.pointerId) {
+          draggedPointer = undefined;
+        }
       });
     }
   }

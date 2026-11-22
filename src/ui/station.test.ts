@@ -22,7 +22,7 @@ import { units } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
 import * as shopCardLayout from "./layout/shopCard.ts";
 import { SPACING } from "./layout/tokens.ts";
-import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
@@ -818,7 +818,7 @@ function constructedStation(
     mountLayout,
     options,
     parent,
-    readViewUnit: () => 1,
+    readViewUnit,
     refuse: vi.fn(),
     setFooterAction: (intent: string, row: InstanceType<typeof Node>) => {
       row.dataset.footerAction = intent;
@@ -922,6 +922,133 @@ it("keeps inert measurement rows unregistered and registers only completed real 
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("item-0");
 });
+
+function stationList(kind: "shop" | "jobs") {
+  const f = constructedStation();
+  f.station.setOpen(true);
+  f.activate(f.action(kind === "shop" ? "open-shop" : "open-jobs"));
+  const list = f.parent.querySelector(kind === "shop" ? ".ada-shop-list" : ".ada-job-list")!;
+  const row = list.querySelector(kind === "shop" ? '[data-item="item-0"]' : '[data-job="job-1"]')!;
+  const action = resolveAdaHoldAction(
+    f.parent as unknown as HTMLElement,
+    row as unknown as HTMLElement,
+  )!;
+  const run = kind === "shop" ? f.request : f.acceptJob;
+  const id = kind === "shop" ? "item-0" : "job-1";
+  const rect = row.getBoundingClientRect();
+  const dispatch = (
+    type: string,
+    distance = 0,
+    pointerId: number | null = 7,
+    detail = 1,
+    target = row,
+  ) => {
+    const event = Object.assign(new Event(type, { cancelable: true }), {
+      clientX: rect.left + 1 + distance,
+      clientY: rect.top + 1,
+      detail,
+      ...(pointerId === null ? {} : { pointerId }),
+    });
+    list.dispatchEvent(event);
+    if (type === "click" && target !== list && !event.defaultPrevented) {
+      target.dispatchEvent(event);
+    }
+    return event;
+  };
+  return { ...f, action, dispatch, id, list, row, run };
+}
+
+it.each([
+  ["shop", "pointerup"],
+  ["shop", "pointercancel"],
+  ["jobs", "pointerup"],
+  ["jobs", "pointercancel"],
+] as const)(
+  "allows the real %s row's semantic click after drag and %s without a click",
+  (kind, end) => {
+    const f = stationList(kind);
+    expect(f.action.available()).toBe(true);
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", SCROLL.dragThreshold + 1);
+    f.dispatch(end, SCROLL.dragThreshold + 1);
+    expect(f.run).not.toHaveBeenCalled();
+    f.row.focus();
+    const keyboard = f.dispatch("click", 0, -1, 0);
+    expect({ calls: f.run.mock.calls, prevented: keyboard.defaultPrevented }).toEqual({
+      calls: [[f.id]],
+      prevented: false,
+    });
+  },
+);
+
+it.each(["shop", "jobs"] as const)(
+  "blocks a matching physical %s drag while preserving taps at the scaled bound",
+  (kind) => {
+    const f = stationList(kind);
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "2", height: "0" }));
+    const limit = 2 * SCROLL.dragThreshold;
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", limit + 1, 8);
+    expect(f.dispatch("click", 0, 7, 1, f.list).defaultPrevented).toBe(false);
+    f.dispatch("pointermove", limit + 1);
+    f.dispatch("pointerup", limit + 1, 8);
+    f.dispatch("pointerup", limit + 1);
+    expect(f.dispatch("click", 0, -1, 0, f.list).defaultPrevented).toBe(false);
+    expect(f.dispatch("click", 0, 8, 1, f.list).defaultPrevented).toBe(false);
+    expect(f.dispatch("click").defaultPrevented).toBe(true);
+    expect(f.run).not.toHaveBeenCalled();
+
+    // A physical MouseEvent without pointer identity still suppresses the release on this list.
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", limit + 1);
+    f.dispatch("pointerup", limit + 1);
+    expect(f.dispatch("click", 0, null).defaultPrevented).toBe(true);
+    expect(f.run).not.toHaveBeenCalled();
+
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", limit);
+    f.dispatch("pointerup", limit);
+    expect(f.dispatch("click", limit).defaultPrevented).toBe(false);
+    expect(f.run).toHaveBeenCalledExactlyOnceWith(f.id);
+    f.station.dispose();
+    f.action.activate();
+    expect(f.run).toHaveBeenCalledOnce();
+  },
+);
+
+it.each(["shop", "jobs"] as const)(
+  "allows a fresh pointerless %s click after another pointer drags without a click",
+  (kind) => {
+    const f = stationList(kind);
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", SCROLL.dragThreshold + 1);
+    f.dispatch("pointerup", SCROLL.dragThreshold + 1);
+    expect(f.run).not.toHaveBeenCalled();
+
+    f.dispatch("pointerdown", 0, 8);
+    f.dispatch("pointerup", 0, 8);
+    const click = f.dispatch("click", 0, null);
+    expect({ calls: f.run.mock.calls, prevented: click.defaultPrevented }).toEqual({
+      calls: [[f.id]],
+      prevented: false,
+    });
+  },
+);
+
+it.each(["shop", "jobs"] as const)(
+  "keeps the registered %s action available after a canceled drag",
+  (kind) => {
+    const f = stationList(kind);
+    f.dispatch("pointerdown");
+    f.dispatch("pointermove", SCROLL.dragThreshold + 1);
+    f.dispatch("pointercancel", SCROLL.dragThreshold + 1);
+    expect(f.dispatch("click", 0, null, 1, f.list).defaultPrevented).toBe(false);
+    expect(f.action.available()).toBe(true);
+    expect(f.action.rule.holdMs).toBe(500);
+    f.action.activate();
+    expect(f.run).toHaveBeenCalledExactlyOnceWith(f.id);
+  },
+);
 
 it("audits prepared off-page Shop rows after inert measurement has been removed", () => {
   const f = constructedStation();
