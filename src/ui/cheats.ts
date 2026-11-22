@@ -1,13 +1,14 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { type CheatAction, cheatsAllowed, runCheatAction } from "./cheatActions.ts";
+import { type CheatAction, runCheatAction } from "./cheatActions.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -17,7 +18,6 @@ import {
   createCard,
   createSwitchRow,
   setFooterAction,
-  setScrollGroup,
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -25,8 +25,8 @@ import { settingsIcon } from "./settingsIcons.ts";
 import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 
 export interface CheatLabels {
+  readonly back: string;
   readonly close: string;
-  readonly open: string;
   readonly title: string;
 }
 
@@ -39,44 +39,28 @@ export interface CheatSwitch {
 }
 
 interface CheatOptions {
-  /** The rows top to bottom: cheats, Show tips again, the FPS counter and Reset save. */
   readonly rows: readonly (CheatAction | CheatSwitch)[];
-  readonly beforeOpen: () => void;
   readonly labels: CheatLabels;
   readonly onOpenChange: (open: boolean) => void;
-  readonly restoreFocus: () => void;
 }
 
 function isSwitch(row: CheatAction | CheatSwitch): row is CheatSwitch {
   return "set" in row;
 }
 
-/**
- * The browser-tab-only Cheats modal (gameplay/cheats.md): a Small card of full-width rows whose
- * body scrolls, with Close as its bottom primary. The app-window check runs at open and at each
- * action.
- */
-export function createCheats(
-  parent: HTMLElement,
-  launcherActions: HTMLElement,
-  options: CheatOptions,
-) {
-  const allowed = () => !disposed && cheatsAllowed(window);
-  const launcher = createButton(options.labels.open);
-  launcher.dataset.action = "cheats";
-  launcher.setAttribute("aria-haspopup", "dialog");
-  launcher.setAttribute("aria-expanded", "false");
-  launcherActions.prepend(launcher);
+/** The Cheats card owns its actions. Navigation owns the entry and return focus. */
+export function createCheats(parent: HTMLElement, options: CheatOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
   const parts = createCard({
     closeAction: "close-cheats",
     closeLabel: options.labels.close,
-    size: "small",
+    size: "large",
     title: options.labels.title,
   });
   const { body, card, close, frame } = parts;
+  card.className += " ada-cheats-card";
   // The FPS counter row's icon follows its label's ink, as every switch row's does.
   const inkMeasure = createInkMeasure();
   const fit = () => {
@@ -85,10 +69,10 @@ export function createCheats(
       alignSwitchRowIcons(inkMeasure, body.querySelectorAll<HTMLElement>(".ada-row[role=switch]"));
     }
   };
-  const dismiss = createButton(options.labels.close, "primary");
+  const dismiss = createButton(options.labels.back, "primary");
   dismiss.dataset.action = "dismiss-cheats";
   const footer = createActions([{ button: dismiss, role: "primary" }]);
-  setFooterAction("close", footer);
+  setFooterAction("back", footer);
   const dismissAction = () => setOpen(false);
   const closeBindings = [close, dismiss].map((element) =>
     bindAdaAction(
@@ -126,20 +110,33 @@ export function createCheats(
         action: {
           create(data) {
             const action = rows.get(data.id) as CheatAction;
-            const button = createButton(data.label);
+            const resource =
+              action.id === "addStardust" ? "stardust" : action.id === "addOre" ? "ore" : null;
+            const button = createButton(resource ? CHEAT_COPY.amount : data.label);
             button.dataset.cheat = data.id;
             const update = (next: CheatsSchema["action"]["props"]) => {
-              button.textContent = next.label;
+              if (resource) {
+                button.setAttribute("aria-label", next.label);
+              } else {
+                button.textContent = next.label;
+              }
             };
+            if (resource) {
+              const icon = document.createElement("span");
+              icon.className = "ada-cheat-resource-icon";
+              icon.setAttribute("aria-hidden", "true");
+              icon.style.backgroundImage = `url('/art/ui/sprites/icon-${resource}-20.png')`;
+              button.append(icon);
+            }
+            update(data);
             const binding = bindRow(
               button,
               () => {
                 if (open && !button.disabled) {
-                  runCheatAction(window, action);
+                  runCheatAction(action);
                   refresh();
                 }
               },
-              // The app-window check runs in runCheatAction, at the press itself.
               () => !button.disabled,
             );
             buttons.set(button, action);
@@ -155,6 +152,20 @@ export function createCheats(
           },
           slots: [],
         },
+        column: {
+          create({ title }) {
+            const element = document.createElement("section");
+            element.className = "ada-cheat-column";
+            const heading = document.createElement("h3");
+            heading.textContent = title;
+            element.append(heading);
+            const rows = document.createElement("div");
+            rows.className = "ada-cheat-rows";
+            element.append(rows);
+            return { dispose() {}, element, slots: { rows }, update() {} };
+          },
+          slots: ["rows"],
+        },
         footer: {
           create(data) {
             const update = (next: CheatsSchema["footer"]["props"]) => {
@@ -165,18 +176,25 @@ export function createCheats(
           },
           slots: [],
         },
-        list: {
+        grants: {
+          create() {
+            const element = document.createElement("div");
+            element.className = "ada-cheat-grants";
+            return { dispose() {}, element, slots: { buttons: element }, update() {} };
+          },
+          slots: ["buttons"],
+        },
+        layout: {
           create() {
             body.append(items);
-            setScrollGroup(parts, items);
             return {
               dispose() {},
               element: body,
-              slots: { footer: body, rows: items },
+              slots: { columns: items, footer: body },
               update() {},
             };
           },
-          slots: ["rows", "footer"],
+          slots: ["columns", "footer"],
         },
         switch: {
           create(data) {
@@ -228,7 +246,7 @@ export function createCheats(
       host: card,
     },
     cheatsTree(
-      options.labels.close,
+      options.labels.back,
       options.rows.map((row): CheatRowData => ({
         id: row.id,
         kind: isSwitch(row) ? "switch" : "action",
@@ -237,35 +255,29 @@ export function createCheats(
     ),
   );
   modal.append(frame);
-  parent.append(modal);
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
   let open = false;
   let disposed = false;
-  let previousFocus: HTMLElement | null = null;
   const audit = () => {
-    for (const scope of [launcher, modal]) {
-      assertAdaActionMetadata(scope);
-      if (scope.isConnected) {
-        assertAdaActionBindings(scope);
-      }
+    assertAdaActionMetadata(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
     }
   };
   const setOpen = (value: boolean): void => {
-    if (disposed || (value && !allowed()) || value === open) {
+    if (disposed || value === open) {
       return;
     }
     if (value) {
       audit();
-      previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      options.beforeOpen();
+      refresh();
     }
     open = value;
     modal.hidden = !value;
     if (value) {
       fit();
     }
-    launcher.setAttribute("aria-expanded", String(value));
     if (!value) {
       leaveLayer?.();
       leaveLayer = undefined;
@@ -276,52 +288,28 @@ export function createCheats(
     if (value) {
       layer = createModalLayer(modal);
       leaveLayer = layer.open({ close: dismissAction, focus: close, live: [close] }, card);
-    } else if (previousFocus?.isConnected && previousFocus.getClientRects().length > 0) {
-      focusTarget(previousFocus);
-    } else {
-      options.restoreFocus();
     }
   };
   function refresh(): void {
-    const eligible = allowed();
-    launcher.hidden = !eligible;
-    if (!eligible) {
-      setOpen(false);
-    }
     for (const [button, action] of buttons) {
-      button.disabled = !eligible || !action.available();
+      button.disabled = !action.available();
     }
     for (const paint of switches) {
       paint();
     }
   }
-  const launcherBinding = bindAdaAction(
-    {
-      click: {
-        availability: () =>
-          allowed() && !launcher.hidden ? { kind: "available" } : { kind: "omitted" },
-        run: () => {
-          setOpen(true);
-          refresh();
-        },
-      },
-      current: () => !disposed && launcher.isConnected && inCurrentView(parent, launcher),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(launcher),
-    },
-    launcher,
-  );
   try {
+    audit();
+    parent.append(modal);
     audit();
   } catch (error) {
     disposed = true;
-    launcherBinding.dispose();
     for (const binding of closeBindings) {
       binding.dispose();
     }
     mounted.dispose();
     parts.dispose();
     modal.remove();
-    launcher.remove();
     throw error;
   }
   modal.addEventListener("pointerdown", (event) => {
@@ -331,12 +319,6 @@ export function createCheats(
       focusTarget(close);
     }
   });
-  const media = window.matchMedia(
-    "(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)",
-  );
-  media.addEventListener("change", refresh);
-  window.addEventListener("pageshow", refresh);
-  document.addEventListener("visibilitychange", refresh);
   window.addEventListener("resize", fit);
   window.addEventListener(VIEW_SCALE_EVENT, fit);
   refresh();
@@ -348,10 +330,6 @@ export function createCheats(
       }
       setOpen(false);
       disposed = true;
-      launcherBinding.dispose();
-      media.removeEventListener("change", refresh);
-      window.removeEventListener("pageshow", refresh);
-      document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("resize", fit);
       window.removeEventListener(VIEW_SCALE_EVENT, fit);
       layer?.dispose();
@@ -361,9 +339,9 @@ export function createCheats(
       mounted.dispose();
       parts.dispose();
       modal.remove();
-      launcher.remove();
     },
     isOpen: () => open,
+    open: () => setOpen(true),
     refresh,
   };
 }

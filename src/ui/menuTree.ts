@@ -2,11 +2,11 @@ import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { AdaCardProps, AdaLayoutSchema } from "./layoutTree.ts";
 
-export type MenuAction = "achievements" | "backToTitle" | "settings";
+export type MenuAction = "achievements" | "backToTitle" | "cheats" | "settings";
 export type MenuContext = "start" | "nonplay";
 export type MenuControlAction = `menu-${MenuAction}` | "menu-close" | "close-menu";
 
-const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "settings"];
+const MENU_ACTIONS: readonly MenuAction[] = ["achievements", "cheats", "settings"];
 const NONPLAY_ACTIONS: readonly MenuAction[] = [...MENU_ACTIONS, "backToTitle"];
 
 /** Nonplay navigation returns to title before its primary dismissal; Start omits that action. */

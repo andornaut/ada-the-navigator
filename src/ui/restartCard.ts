@@ -4,9 +4,10 @@ import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts"
 import { mountAdaLayout } from "./layoutTree.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
-import { type ConfirmAction, type ConfirmKind, restartTree } from "./restartTree.ts";
+import { type ConfirmAction, restartTree } from "./restartTree.ts";
 
 export interface RestartLabels {
+  readonly body?: string;
   readonly cancel: string;
   readonly close: string;
   readonly restart: string;
@@ -15,7 +16,7 @@ export interface RestartLabels {
 
 // A confirm covers the start screen's panel, which sits above the controls layer.
 export const RESTART_STYLE =
-  ".ada-controls.ada-restart-open,.ada-controls.ada-reset-save-open{z-index:30}";
+  ".ada-controls:is(.ada-restart-open,.ada-reset-save-open,.ada-rewind-quests-open){z-index:30}";
 
 /**
  * Restart's confirm, as Chibi's: "Restart?" with Cancel (secondary, left) and Restart (primary,
@@ -24,11 +25,18 @@ export const RESTART_STYLE =
  */
 export function createRestartCard(
   root: HTMLElement,
-  options: {
-    readonly kind?: ConfirmKind;
-    readonly labels: RestartLabels;
-    readonly onRestart: () => void;
-  },
+  options: { readonly labels: RestartLabels } & (
+    | {
+        readonly kind?: "reset-save" | "restart";
+        readonly onRestart: () => void;
+        readonly commit?: never;
+      }
+    | {
+        readonly kind: "rewind-quests";
+        readonly commit: (current: () => boolean) => Promise<((present: boolean) => void) | null>;
+        readonly onRestart?: never;
+      }
+  ),
 ) {
   const { labels } = options;
   const kind = options.kind ?? "restart";
@@ -41,6 +49,7 @@ export function createRestartCard(
   // or Settings: the card under it turns inert and the confirm alone takes presses and focus.
   const layer = createModalLayer(modal);
   let disposed = false;
+  let committing = false;
   let leaveView: (() => void) | undefined;
   const setOpen = (open: boolean) => {
     // Closing a closed card changes nothing, so it is not laid out again: the scene closes it
@@ -48,10 +57,14 @@ export function createRestartCard(
     if (disposed || (!open && modal.hidden)) {
       return;
     }
+    if (open && kind === "rewind-quests") {
+      // Cheats may have moved to the front on open. Put its child above it in paint order.
+      root.append(modal);
+    }
     modal.hidden = !open;
     root.classList.toggle(`ada-${kind}-open`, open);
     if (open) {
-      leaveView ??= layer.open({ close: () => setOpen(false), focus: cancel }, frame);
+      leaveView ??= layer.open({ close: cancelRestart, focus: cancel }, frame);
     } else {
       leaveView?.();
       leaveView = undefined;
@@ -62,23 +75,42 @@ export function createRestartCard(
       focusTarget(cancel);
     }
   };
-  const cancelRestart = () => setOpen(false);
+  const cancelRestart = () => {
+    if (!committing) {
+      setOpen(false);
+    }
+  };
+  const confirm = () => {
+    if (!options.commit) {
+      setOpen(false);
+      options.onRestart();
+      return;
+    }
+    committing = true;
+    void options
+      .commit(() => !disposed && !modal.hidden && inCurrentView(root, frame))
+      .then((handoff) => {
+        if (handoff) {
+          if (!disposed) {
+            setOpen(false);
+          }
+          handoff(!disposed);
+        }
+      })
+      .finally(() => {
+        committing = false;
+      });
+  };
   const actions: ReadonlyMap<ConfirmAction, () => void> = new Map<ConfirmAction, () => void>([
     [`close-${kind}`, cancelRestart],
     [`${kind}-cancel`, cancelRestart],
-    [
-      `${kind}-confirm`,
-      () => {
-        setOpen(false);
-        options.onRestart();
-      },
-    ],
+    [`${kind}-confirm`, confirm],
   ]);
   const layout = mountAdaLayout(
     {
       actions,
       availability: () =>
-        disposed || modal.hidden || !inCurrentView(root, frame)
+        disposed || committing || modal.hidden || !inCurrentView(root, frame)
           ? { kind: "omitted" }
           : { kind: "available" },
       presentButton: presentAdaButton,
@@ -90,7 +122,7 @@ export function createRestartCard(
   frame.querySelector<HTMLElement>(".ada-card")!.dataset.dialog = kind;
   const cancel = modal.querySelector<HTMLButtonElement>(`[data-action="${kind}-cancel"]`)!;
   return {
-    close: () => setOpen(false),
+    close: cancelRestart,
     dispose(): void {
       disposed = true;
       leaveView?.();

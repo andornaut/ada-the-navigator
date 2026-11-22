@@ -291,7 +291,12 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
-    labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
+    labels: {
+      achievements: "Achievements",
+      backToTitle: "Back to title",
+      cheats: "Cheats",
+      settings: "Settings",
+    },
     onAction,
     onOpenChange,
     title: "Menu",
@@ -349,13 +354,13 @@ describe("production Menu consumer", () => {
       menu.open(origin as unknown as HTMLElement);
       expect(rows().map((node) => node.textContent)).toEqual(
         context === "start"
-          ? ["Achievements", "Settings", "Close"]
-          : ["Achievements", "Settings", "Back to title", "Close"],
+          ? ["Achievements", "Cheats", "Settings", "Close"]
+          : ["Achievements", "Cheats", "Settings", "Back to title", "Close"],
       );
       expect(rows().map((node) => node.getAttribute("data-ui-button-role"))).toEqual(
         context === "start"
-          ? ["secondary", "secondary", "primary"]
-          : ["secondary", "secondary", "secondary", "primary"],
+          ? ["secondary", "secondary", "secondary", "primary"]
+          : ["secondary", "secondary", "secondary", "secondary", "primary"],
       );
       expect(fixture.layer.open).toHaveBeenLastCalledWith(
         expect.objectContaining({ focus: rows().at(-1) }),
@@ -372,17 +377,18 @@ describe("production Menu consumer", () => {
     menu.open();
     expect(rows().map((node) => node.textContent)).toEqual([
       "Achievements",
+      "Cheats",
       "Settings",
       "Back to title",
       "Close",
     ]);
-    rows()[1]!.dispatchEvent(new Event("click"));
+    rows()[2]!.dispatchEvent(new Event("click"));
     expect(menu.isOpen()).toBe(false);
     expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
     onAction.mock.calls[0]![1]();
     expect(menu.isOpen()).toBe(true);
     expect(fixture.layer.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ focus: rows()[1] }),
+      expect.objectContaining({ focus: rows()[2] }),
       fixture.card.frame,
     );
     menu.dispose();
@@ -405,7 +411,7 @@ it("uses one shared Settings click listener and keeps the live Ada root and disp
   try {
     const { menu, onAction, root, rows, setReady } = setup();
     menu.open();
-    const settings = rows()[1]!;
+    const settings = rows()[2]!;
     expect(
       rows().filter(({ className }) => className.split(" ").includes("ui-standard-button")),
     ).toEqual([settings]);
@@ -430,7 +436,7 @@ it("uses one shared Settings click listener and keeps the live Ada root and disp
     expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
     onAction.mock.calls[0]![1]();
     expect(fixture.layer.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ focus: rows()[1] }),
+      expect.objectContaining({ focus: rows()[2] }),
       fixture.card.frame,
     );
     expect(
@@ -468,7 +474,7 @@ it("opens the child before reporting the parent hidden so pause ownership never 
   onOpenChange.mockImplementation(() => held.push(menu.isOpen() || childOpen));
   menu.setContext("nonplay");
   menu.open();
-  rows()[1]!.dispatchEvent(new Event("click"));
+  rows()[2]!.dispatchEvent(new Event("click"));
   expect(childOpen).toBe(true);
   expect(held).toEqual([true, true]);
   expect(onAction.mock.invocationCallOrder[0]!).toBeLessThan(
@@ -479,7 +485,7 @@ it("opens the child before reporting the parent hidden so pause ownership never 
 it("routes a held Menu action through the original caller and unregisters rebuilt rows", () => {
   const { menu, onAction, root, rows } = setup();
   menu.open();
-  const stale = rows()[1]!;
+  const stale = rows()[2]!;
   const held = resolveAdaHoldAction(root as unknown as HTMLElement, stale);
   expect(held?.available()).toBe(true);
   held?.activate();
@@ -488,7 +494,7 @@ it("routes a held Menu action through the original caller and unregisters rebuil
   held?.activate();
   stale.dispatchEvent(new Event("click"));
   expect(onAction).toHaveBeenCalledTimes(1);
-  const current = rows()[1]!;
+  const current = rows()[2]!;
   menu.dispose();
   expect(resolveAdaHoldAction(root as unknown as HTMLElement, current)).toBeNull();
 });
@@ -534,6 +540,7 @@ it("forwards the actual controls callback and clears the old Menu return before 
     achievements = { open: vi.fn() };
   const context = {
     achievements,
+    cheats: { open: vi.fn() },
     options: {
       pause: {
         labels: { close: "Close", mapScreen: { questBack: "Back" } },
@@ -550,6 +557,9 @@ it("forwards the actual controls callback and clears the old Menu return before 
   const reopen = vi.fn();
   handler("settings", reopen);
   expect(settings.open).toHaveBeenCalledOnce();
+  expect(context.returnToMenu).toBe(reopen);
+  handler("cheats", reopen);
+  expect(context.cheats.open).toHaveBeenCalledOnce();
   expect(context.returnToMenu).toBe(reopen);
   handler("achievements", reopen);
   expect(achievements.open).toHaveBeenCalledOnce();
@@ -633,20 +643,26 @@ it("keeps a child-covered Menu painted but semantically closed and restores the 
   expect(modal.getAttribute("inert")).toBeNull();
 });
 
-it("rebuilds Start with only Achievements, Settings and Close", () => {
+it("rebuilds Start with its direct Cheats entry and without Back to title", () => {
   const { menu, onAction, rows } = setup();
   menu.open();
   expect(rows().map((node) => node.textContent)).toEqual([
     "Achievements",
+    "Cheats",
     "Settings",
     "Back to title",
     "Close",
   ]);
-  const stale = rows()[2]!;
+  const stale = rows().at(-2)!;
   menu.close();
   menu.setContext("start");
   menu.open();
-  expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
+  expect(rows().map((node) => node.textContent)).toEqual([
+    "Achievements",
+    "Cheats",
+    "Settings",
+    "Close",
+  ]);
   stale.dispatchEvent(new Event("click"));
   expect(onAction).not.toHaveBeenCalled();
 });
@@ -708,7 +724,12 @@ it("audits detached Menu metadata and attached ownership without probing root el
   root.connected = false;
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
-    labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
+    labels: {
+      achievements: "Achievements",
+      backToTitle: "Back to title",
+      cheats: "Cheats",
+      settings: "Settings",
+    },
     onAction: vi.fn(),
     onOpenChange: vi.fn(),
     title: "Menu",

@@ -8,6 +8,7 @@ describe("production Pause configuration", () => {
   it("arranges caller-provided actions without deriving policy", () => {
     const actions = pauseActions({
       backToTitle: "Back to title",
+      cheats: "Cheats",
       map: "Map",
       quests: "Quests",
       resume: "Resume",
@@ -28,6 +29,7 @@ describe("production Pause configuration", () => {
     }
     expect(grid.props).toEqual({});
     expect(grid.slots!.buttons!.map((node) => node.key)).toEqual([
+      "cheats",
       "map",
       "quests",
       "settings",

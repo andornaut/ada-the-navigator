@@ -3,14 +3,11 @@
 The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
 The user approved this list on 2026-11-18, with cheats that never touch the save.
 
-Cheats exist only in a browser tab, never in the installed app. Ada uses the
-published `runsInAppWindow` check both when opening cheats and when running an
-action. Settings shows Open Cheats next to its Back button there. Open Cheats
-opens the Cheats modal: a Small card (400 wide, 16 px screen margin) whose body
-is one column of full-width buttons, the cheats first, then Show tips again, the
-FPS counter toggle and Reset save. Its height follows its content and the body
-scrolls, never pages, when it is taller than the available space. Close is the
-bottom primary button.
+Choose **Cheats** directly from Menu or Pause in a browser tab or installed
+app. The modal fits two columns without scrolling. Progression actions are on
+the left. The FPS counter, resource grants, and reset rows are on the right.
+The centered primary **Back** button and top-right X return to the invoking
+Menu or Pause and restore focus to **Cheats**.
 
 ## Cheat session
 
@@ -40,7 +37,7 @@ play ends it.
   jump to any of them. Story progress, holodisks, chapters and quests are
   unchanged, and the next boarding plays the route flight to the farthest newly
   unlocked galaxy. Disabled once every galaxy is unlocked.
-- **Max weapon levels** sets every owned weapon, Laser included, to level 3.
+- **Maximize weapon levels** sets every owned weapon, Laser included, to level 3.
   Disabled once every owned weapon is at level 3.
 - **Add 1,000 ore** adds 1,000 to Ada's ore balance on every press.
 - **Add 1,000 Stardust** adds 1,000 Stardust on every press.
@@ -49,13 +46,18 @@ play ends it.
 
 These are not cheats and start no cheat session.
 
-- **Show tips again** clears the record of first-flight lessons Ada has seen in
-  the save, so each plays again under its normal trigger. Used during a cheat session, it
-  still clears that record in the stored save, as well as in the session.
 - **FPS counter** toggles a frames-per-second readout, Off by default. When On,
   it shows in the bottom-right corner of the device viewport, inset from the
   safe area and drawn above everything, letterbox bands included, so on a wide
   phone it can sit in a band. It is a display toggle, not part of the save.
+- **Reset jobs, projects & quests** asks for confirmation before rewinding the
+  stored campaign to the Earth opening of Sunflower and relocking later galaxies.
+  It clears jobs, project funding and reveals, story progress, and holodisks.
+  Ada keeps her ship, equipment, resources, map discoveries, and achievements.
+  Past contributions stay spent. Already-earned one-time rewards stay recorded,
+  and new repeatable jobs and activities still pay their usual rewards.
+  Cancel or X returns to Cheats. A failed write leaves the save and current view
+  in place. The action uses the stored save, so session-only cheats stay temporary.
 - **Reset save**, last, asks first on a card titled "Reset save?" with Reset
   and Cancel; back and Escape cancel. Reset clears the whole save, achievements
   included, ends any cheat session and returns to the start screen as on a first

@@ -94,6 +94,7 @@ export interface ControlsOptions {
   readonly achievements: AchievementsLabels;
   readonly cheats: {
     readonly labels: CheatLabels;
+    readonly onOpenChange?: (open: boolean) => void;
     readonly rows: readonly (CheatAction | CheatSwitch)[];
   };
   // The start screen's Exit where the game offers to leave (exitShown), or undefined where it
@@ -106,7 +107,7 @@ export interface ControlsOptions {
   readonly pause: {
     readonly buttonLabel: string;
     readonly menuLabel?: string;
-    readonly labels: PauseLabels;
+    readonly labels: Omit<PauseLabels, "cheats">;
     readonly shipFrame?: (heading: number) => string | undefined;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
@@ -218,7 +219,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
   let returnToMenu: (() => void) | undefined;
-  let returnFromCheats: (() => void) | undefined;
+  let returnToPause: "cheats" | "settings" | undefined;
   let returningToParent = false;
   function restoreParent(parent: () => void): void {
     returningToParent = true;
@@ -242,12 +243,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       options.onFeedbackChange?.(value);
     },
     onOpenChange(open) {
-      if (!open && returnToMenu && !cheatsOpening) {
+      if (!open && returnToMenu) {
         const reopen = returnToMenu;
         returnToMenu = undefined;
         restoreParent(reopen);
-      } else if (!open && returnToPause && !cheatsOpening) {
-        returnToPause = false;
+      } else if (!open && returnToPause === "settings") {
+        returnToPause = undefined;
         pause.restorePaused("settings");
       }
       syncModal();
@@ -277,49 +278,32 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     settings.root,
   );
-  // Settings opened from the Paused card, and the cheats card opened from that Settings, return
-  // to the Paused card when they close.
-  let returnToPause = false;
-  let cheatsOpening = false;
-  const cheats = createCheats(settings.root, settings.actions, {
+  const cheats = createCheats(settings.root, {
     ...options.cheats,
-    beforeOpen: () => {
-      const opener =
-        document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-      returnFromCheats = () => {
-        settings.open();
-        if (opener?.isConnected) {
-          focusTarget(opener);
-        }
-      };
-      cheatsOpening = true;
-      settings.close();
-      cheatsOpening = false;
-    },
-    onOpenChange: (open) => {
-      if (!open && returnFromCheats) {
-        const parent = returnFromCheats;
-        returnFromCheats = undefined;
-        restoreParent(parent);
-      } else if (!open && returnToMenu) {
+    onOpenChange(open) {
+      options.cheats.onOpenChange?.(open);
+      if (!open && returnToMenu) {
         const reopen = returnToMenu;
         returnToMenu = undefined;
         restoreParent(reopen);
-      } else if (!open && returnToPause) {
-        returnToPause = false;
-        pause.restorePaused("settings");
+      } else if (!open && returnToPause === "cheats") {
+        returnToPause = undefined;
+        pause.restorePaused("cheats");
       }
       syncModal();
     },
-    restoreFocus: () => focusTarget(settings.openButton),
   });
   const pause = createPauseCards(settings.root, {
-    labels: options.pause.labels,
+    labels: { ...options.pause.labels, cheats: options.cheats.labels.title },
     onBackToTitle: () => options.pause.onBackToTitle(),
+    onCheats: () => {
+      returnToPause = "cheats";
+      cheats.open();
+    },
     onGalaxies: () => options.pause.onGalaxies(),
     onOpenChange: () => syncModal(),
     onSettings: () => {
-      returnToPause = true;
+      returnToPause = "settings";
       settings.open();
     },
     onTravel: (destination) => options.pause.onTravel(destination),
@@ -408,6 +392,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     labels: {
       achievements: options.achievements.title,
       backToTitle: options.pause.labels.backToTitle,
+      cheats: options.cheats.labels.title,
       settings: options.pause.labels.settings,
     },
     onAction: (action, reopen) => {
@@ -417,7 +402,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         return;
       }
       returnToMenu = reopen;
-      if (action === "settings") {
+      if (action === "cheats") {
+        cheats.open();
+      } else if (action === "settings") {
         settings.open();
       } else {
         achievements.open({
@@ -453,7 +440,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   const navigationCovered = (): boolean =>
     returningToParent ||
-    Boolean(returnToMenu || returnFromCheats || returnToPause) ||
+    Boolean(returnToMenu || returnToPause) ||
     menu.isOpen() ||
     settings.isOpen() ||
     cheats.isOpen() ||
@@ -952,7 +939,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const controls: Controls = {
     closePause: () => pause.close(),
     closeSettings: () => {
-      cheats.close();
+      if (cheats.isOpen()) {
+        returnToMenu = undefined;
+        returnToPause = undefined;
+        menu.close();
+        cheats.close();
+      }
       settings.close();
     },
     dispose() {
@@ -967,8 +959,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       desktopBinding.dispose();
       state.setEnabled(false);
       returnToMenu = undefined;
-      returnFromCheats = undefined;
-      returnToPause = false;
+      returnToPause = undefined;
       returningToParent = false;
       menu.dispose();
       resource.dispose();

@@ -1,6 +1,4 @@
-import { type AppWindowHost, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
-
-/** A Cheats modal button: a cheat, Show tips again or Reset save (gameplay/cheats.md). */
+/** A Cheats modal button: a cheat or Reset save (gameplay/cheats.md). */
 export interface CheatAction {
   readonly id: string;
   readonly label: string;
@@ -9,17 +7,9 @@ export interface CheatAction {
   readonly run: () => void;
 }
 
-/** Cheats exist only in a browser tab, never in the installed app. */
-export function cheatsAllowed(host: AppWindowHost): boolean {
-  return !runsInAppWindow(host);
-}
-
-/**
- * Runs an action only in a browser tab and while it is available, checking the app window at
- * the action as well as at open; false when it did not run.
- */
-export function runCheatAction(host: AppWindowHost, action: CheatAction): boolean {
-  if (!cheatsAllowed(host) || !action.available()) {
+/** Recheck gameplay availability at activation, independently of display mode. */
+export function runCheatAction(action: CheatAction): boolean {
+  if (!action.available()) {
     return false;
   }
   action.run();

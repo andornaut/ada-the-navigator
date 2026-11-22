@@ -16,6 +16,7 @@ import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { requiredLoading, requiredReady } from "../loading/required.ts";
+import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel, withoutSeenLessons } from "../model/game.ts";
@@ -86,7 +87,7 @@ import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { type CameraShake, HIT_SHAKE_SHARE, shakeCounter, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readForegroundEdges, readLightGalaxies } from "./lightField.ts";
-import { saves } from "./persistence.ts";
+import { type CampaignSave, saves } from "./persistence.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readProjectArt } from "./projectArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
@@ -140,6 +141,9 @@ const scanViews = new WeakMap<
 const pennyLayers = new WeakMap<object, ReturnType<typeof createPennyMarkerLayer>>();
 const interactionCards = new WeakMap<object, ReturnType<typeof createInteractionCard>>();
 const titleArts = new WeakMap<object, TitleScreenArt | null>();
+
+const openCampaignRewinds = new WeakMap<UiContext, () => boolean>();
+const writingCampaignRewinds = new WeakSet<UiContext>();
 
 const shieldOreFlights = new WeakMap<object, FlightState | null>();
 
@@ -516,6 +520,20 @@ export function buildScene(scene: UiContext): void {
   scene.shell.setTitleArt(titleArt);
   // Update now saves the game before it switches builds.
   saveBeforeUpdate(() => flushScene(scene));
+  let rewindSource: CampaignSave | null = null;
+  let rewindRequest = 0;
+  const canRewind = () => !newer && campaignRewindAllowed(scene);
+  const authorizeRewind = (open: boolean) => {
+    const request = ++rewindRequest;
+    rewindSource = null;
+    if (open && canRewind()) {
+      void saves.readCampaign().then((source) => {
+        if (request === rewindRequest && canRewind()) {
+          rewindSource = source;
+        }
+      });
+    }
+  };
   scene.controls = createControls(scene, {
     aboardResource: () => {
       const aboard = scene.model.aboard;
@@ -545,20 +563,34 @@ export function buildScene(scene: UiContext): void {
     },
     cheats: {
       labels: CHEAT_COPY,
+      onOpenChange: authorizeRewind,
       rows: [
         ...CHEAT_IDS.map(cheat),
         // Not cheats: they start no session (gameplay/cheats.md "Other actions").
-        {
-          available: () => !scene.cheatSession.ending,
-          id: "showTipsAgain",
-          label: CHEAT_COPY.showTipsAgain,
-          run: () => apply(() => showTipsAgain(scene)),
-        },
         {
           id: "fpsCounter",
           isOn: () => scene.fpsCounter.shown(),
           label: CHEAT_COPY.fpsCounter,
           set: (on) => scene.fpsCounter.set(on),
+        },
+        {
+          available: () => rewindSource !== null && canRewind(),
+          id: "selectiveReset",
+          label: CHEAT_COPY.selectiveReset,
+          run: () => {
+            if (!rewindSource || !canRewind()) {
+              return;
+            }
+            const request = ++rewindRequest;
+            void saves.readCampaign().then((source) => {
+              if (request === rewindRequest && canRewind()) {
+                rewindSource = source;
+                if (source) {
+                  rewindCard.open();
+                }
+              }
+            });
+          },
         },
         {
           available: () => true,
@@ -1064,6 +1096,28 @@ export function buildScene(scene: UiContext): void {
     onRestart: () => resetSave(scene),
   });
   partial.push(() => scene.resetSaveCard.dispose());
+  const rewindCard = createRestartCard(scene.controls.overlay, {
+    commit: async (current) => {
+      const source = rewindSource;
+      if (!source || !canRewind()) {
+        return null;
+      }
+      return commitCampaignRewind(scene, source, () => !newer && current());
+    },
+    kind: "rewind-quests",
+    labels: {
+      body: CHEAT_COPY.selectiveResetBody,
+      cancel: CHEAT_COPY.cancel,
+      close: CHEAT_COPY.close,
+      restart: CHEAT_COPY.reset,
+      title: CHEAT_COPY.selectiveResetTitle,
+    },
+  });
+  openCampaignRewinds.set(scene, rewindCard.isOpen);
+  partial.push(() => {
+    openCampaignRewinds.delete(scene);
+    rewindCard.dispose();
+  });
   const homeLayers = [
     // Back on a storybook page acts as Previous, and does nothing on a scene's first page. On
     // Ada's room page, back and Escape open the Paused card instead.
@@ -1087,6 +1141,10 @@ export function buildScene(scene: UiContext): void {
     scene.controls.registerBack({
       back: () => scene.resetSaveCard.close(),
       isOpen: () => scene.resetSaveCard.isOpen(),
+    }),
+    scene.controls.registerBack({
+      back: rewindCard.close,
+      isOpen: rewindCard.isOpen,
     }),
   ];
   partial.push(() => homeLayers.forEach((unregister) => unregister()));
@@ -1556,7 +1614,13 @@ export function armBack(scene: UiContext): void {
 
 /** The one save write: suspended for a cheat session, so every save path stops at once. */
 export async function flushScene(scene: UiContext): Promise<void> {
-  if (scene.cheatSession.active || !requiredReady() || !scene.entryCurrent()) {
+  if (
+    scene.cheatSession.active ||
+    writingCampaignRewinds.has(scene) ||
+    openCampaignRewinds.get(scene)?.() ||
+    !requiredReady() ||
+    !scene.entryCurrent()
+  ) {
     return;
   }
   const admitted = scene.entryCurrent;
@@ -1585,6 +1649,70 @@ function replaceModel(model: GameModel, scene: UiContext): void {
   refreshScene(scene);
 }
 
+function campaignRewindAllowed(scene: UiContext): boolean {
+  const { screen, state } = scene.model;
+  return (
+    requiredReady() &&
+    scene.entryCurrent() &&
+    scene.sys.isActive() &&
+    !scene.savingUnavailable &&
+    !scene.cheatSession.ending &&
+    !scene.emergencyReturn.active &&
+    !scene.jumping &&
+    !scene.model.galaxyMapOpen &&
+    !state.dialogue &&
+    !state.docked &&
+    !state.flight?.storyScene &&
+    (screen === "start" || screen === "space")
+  );
+}
+
+/** Build offscreen and replace the model only after the authorized real save was committed. */
+async function commitCampaignRewind(
+  scene: UiContext,
+  source: CampaignSave,
+  current: () => boolean,
+): Promise<((present: boolean) => void) | null> {
+  const model = scene.model;
+  const generation = requiredLoading.state.attempt;
+  const authorized = () =>
+    current() &&
+    campaignRewindAllowed(scene) &&
+    scene.model === model &&
+    requiredLoading.state.attempt === generation;
+  if (!authorized() || writingCampaignRewinds.has(scene)) {
+    return null;
+  }
+  writingCampaignRewinds.add(scene);
+  let committed = false;
+  try {
+    const next = openRewoundCampaign(CONTENT, source.save);
+    const adoptGeneration = await saves.commitCampaign(source, next.saveDocument(), authorized);
+    if (!adoptGeneration) {
+      return null;
+    }
+    committed = true;
+    return (present) => {
+      try {
+        if (present && scene.entryCurrent() && scene.sys.isActive()) {
+          // Closing navigation calls onPauseChange, which can request a save of the old model.
+          scene.controls.closeSettings();
+          scene.controls.closePause();
+          scene.cheatSession = NO_CHEAT_SESSION;
+          adoptGeneration();
+          replaceModel(next, scene);
+        }
+      } finally {
+        writingCampaignRewinds.delete(scene);
+      }
+    };
+  } finally {
+    if (!committed) {
+      writingCampaignRewinds.delete(scene);
+    }
+  }
+}
+
 /**
  * Show tips again (gameplay/cheats.md "Other actions") is not a cheat: in a cheat session it also
  * clears the seen first-flight lessons in the stored pre-cheat save, written past flushScene's
@@ -1598,7 +1726,7 @@ export function showTipsAgain(scene: UiContext): void {
   }
   const written = (session.written ?? Promise.resolve())
     .then(async () => {
-      const loaded = await saves.load();
+      const loaded = await saves.load({ bindModel: false });
       if (loaded.status === "loaded") {
         await saves.save(withoutSeenLessons(loaded.save));
       }

@@ -1140,21 +1140,28 @@ try {
   );
   const startMenuBox = await menuDisc().boundingBox();
   assert.ok(startMenuBox, "The start screen's Menu has a box");
-  // The start Menu in a browser tab holds Achievements and Settings, then primary Close, each
+  // The start Menu in a browser tab holds Achievements, Cheats and Settings, then primary Close, each
   // labelled from Gameplay's strings; Exit shows only in an installed app window.
+  const { CHEAT_COPY } = await import(new URL("../src/data/cheatCopy.ts", import.meta.url));
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-close"],
-    "The start screen's Menu in a tab holds Achievements, Settings, then Close, with no Exit",
+    ["menu-achievements", "menu-cheats", "menu-settings", "menu-close"],
+    "The start screen's Menu in a tab holds Achievements, Cheats, Settings, then Close, with no Exit",
   );
   assert.deepEqual(
     await menuCard()
       .locator(".ada-actions button:not([hidden])")
       .evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim())),
-    [CONTENT.labels.achievements, CONTENT.labels.settings, CONTENT.labels.close],
+    [CONTENT.labels.achievements, CHEAT_COPY.title, CONTENT.labels.settings, CONTENT.labels.close],
     "The start screen's Menu actions read Gameplay's strings",
   );
+  const startCheats = menuCard().locator('[data-action="menu-cheats"]');
+  await startCheats.click();
+  await page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true }).waitFor();
+  await page.locator('[data-action="close-cheats"]').click();
+  await startCheats.waitFor();
+  assert.equal(await startCheats.evaluate((node) => node === document.activeElement), true);
   await menuCard().locator('[data-action="menu-achievements"]').click();
   const firstAchievements = await achievementsPage();
   assert.equal(firstAchievements.count, "1/3", "The 14 achievements page six at a time");
@@ -1199,6 +1206,7 @@ try {
     [true],
     "The open Settings modal draws above the Menu disc",
   );
+  assert.equal(await page.locator('[data-action="cheats"]').count(), 0);
   // The build line: the card's last text, right after the rows' layout-tree arrangement
   // (.ada-settings-rows), naming package.json's version and the gated revision, read with the
   // card and never focused.
@@ -1920,11 +1928,10 @@ try {
   events.checks.push(
     "Model-generated friendly-destination fixture supplies the input-check precondition",
   );
-  const { CHEAT_COPY } = await import(new URL("../src/data/cheatCopy.ts", import.meta.url));
   await page.keyboard.down("w");
   try {
-    await openSettings();
-    await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+    await openPause();
+    await page.locator('[data-action="pause-cheats"]').click();
     const cheatDialog = page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
     await cheatDialog.waitFor({ state: "visible" });
     const paused = await position();
@@ -1950,51 +1957,70 @@ try {
       await cheatDialog.evaluate((dialog) => dialog.contains(document.activeElement)),
       "Cheat modal must retain keyboard focus",
     );
-    // The Small card's one column: the cheats, Show tips again, the FPS counter and Reset save,
-    // each the list's full width, with Close below it as the bottom primary.
     const checkCheatsCard = async (_insets, _view, name) => {
-      const rows = await cheatDialog.evaluate((dialog) =>
-        [...dialog.querySelectorAll(".ada-cheat-items > *")].map((row) => ({
-          id: row.dataset.cheat,
-          width: row.getBoundingClientRect().width,
-        })),
-      );
-      assert.deepEqual(
-        rows.map(({ id }) => id),
-        [
-          "unlockAllWeapons",
-          "unlockAllEquipment",
-          "unlockAllGalaxies",
-          "maxWeaponLevels",
-          "addOre",
-          "addStardust",
-          "showTipsAgain",
-          "fpsCounter",
-          "resetSave",
-        ],
-        `${name}: the Cheats rows in order`,
-      );
-      const [, , listWidth] = await logicalBox('[role="dialog"] .ada-cheat-items');
-      const [, , cardWidth] = await logicalBox('[role="dialog"]:has(.ada-cheat-items) .ada-card');
-      assert.ok(cardWidth <= 400.5, `${name}: the Cheats card is Small: ${cardWidth}`);
-      // Every row spans the column inside its FOCUS_RING.outset padding and any scrollbar.
-      const rowSpan = await cheatDialog.evaluate((dialog) => {
+      const layout = await cheatDialog.evaluate((dialog) => {
+        const body = dialog.querySelector(".ada-card-body");
+        const card = dialog.querySelector(".ada-card").getBoundingClientRect();
         const list = dialog.querySelector(".ada-cheat-items");
-        const style = getComputedStyle(list);
-        return list.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const columns = [...list.querySelectorAll(".ada-cheat-column")];
+        const box = (element) => element.getBoundingClientRect().toJSON();
+        const close = dialog.querySelector('[data-action="dismiss-cheats"]');
+        return {
+          card,
+          close: box(close),
+          closePrimary: close.classList.contains("ada-primary"),
+          footerText: close.textContent,
+          columns: columns.map((column) => ({
+            box: box(column),
+            ids: [...column.querySelectorAll("[data-cheat]")].map((node) => node.dataset.cheat),
+          })),
+          grants: [...dialog.querySelectorAll(".ada-cheat-grants button")].map((node) => ({
+            box: box(node),
+            label: node.getAttribute("aria-label"),
+            text: node.textContent,
+          })),
+          list: box(list),
+          scrolls: body.scrollHeight > body.clientHeight + 1,
+        };
       });
-      for (const row of rows) {
-        assert.ok(
-          Math.abs(row.width - rowSpan) < 0.5,
-          `${name}: ${row.id} spans the list inside its ring padding: ${row.width} of ${rowSpan} ` +
-            `(${listWidth} wide)`,
-        );
-      }
-      const dismiss = cheatDialog.locator('[data-action="dismiss-cheats"]');
-      assert.match((await dismiss.getAttribute("class")) ?? "", /ada-primary/u);
-      const [, listTop, , listHeight] = await logicalBox('[role="dialog"] .ada-cheat-items');
-      const [, closeTop] = await logicalBox('[role="dialog"] [data-action="dismiss-cheats"]');
-      assert.ok(closeTop >= listTop + listHeight, `${name}: Close sits below the list`);
+      assert.equal(layout.footerText, "Back");
+      const [left, right] = layout.columns;
+      assert.deepEqual(left.ids, [
+        "unlockAllEquipment",
+        "unlockAllGalaxies",
+        "unlockAllWeapons",
+        "maxWeaponLevels",
+      ]);
+      assert.deepEqual(right.ids, [
+        "fpsCounter",
+        "addStardust",
+        "addOre",
+        "selectiveReset",
+        "resetSave",
+      ]);
+      assert.ok(!layout.scrolls && left.box.right < right.box.left, name);
+      assert.ok(Math.abs(left.box.width - right.box.width) < 1, name);
+      assert.deepEqual(
+        layout.grants.map(({ label }) => label),
+        [CHEAT_COPY.addStardust, CHEAT_COPY.addOre],
+      );
+      assert.ok(
+        layout.grants.every(({ text }) => text === CHEAT_COPY.amount),
+        name,
+      );
+      assert.ok(Math.abs(layout.grants[0].box.width - layout.grants[1].box.width) < 1, name);
+      assert.ok(
+        layout.closePrimary &&
+          layout.close.top >= layout.list.bottom &&
+          layout.close.bottom <= layout.card.bottom &&
+          Math.abs(layout.close.left + layout.close.right - layout.card.left - layout.card.right) <
+            1,
+        name,
+      );
+      assert.equal(
+        await cheatDialog.locator('[data-cheat="selectiveReset"]').textContent(),
+        CHEAT_COPY.selectiveReset,
+      );
     };
     await proofsAt("cheats", checkCheatsCard);
     await page.waitForTimeout(1200);
@@ -2016,73 +2042,22 @@ try {
     assert.deepEqual(afterCheat.flight.ownedWeapons ?? [], beforeCheat.flight.ownedWeapons ?? []);
     assert.deepEqual(afterCheat.achievements, beforeCheat.achievements);
     await cheatDialog.locator('[data-action="dismiss-cheats"]').click();
-    // Closing Cheats returns to Settings, its parent; closing Settings returns to the Paused card.
-    await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
-    await closeSettings();
+    await page.locator('[data-action="pause-cheats"]:focus').waitFor();
+    await resumeIfPaused();
   } finally {
     await page.keyboard.up("w");
   }
   await waitForRest(await position());
-  // The Cheats scroll-end and Reset save proofs resize the view, so they run in a fresh page
-  // fixture rather than piling resizes onto the long-lived page.
-  await seedOnce(safeSerialized, "ada-browser.cheats-proofs.v1");
-  await openSettings();
-  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
-  // Bound to the current page, which each fresh fixture replaces.
   const cheatsProof = () => page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
-  await cheatsProof().waitFor({ state: "visible" });
-  // Art's proofs at the scroll end: Show tips again, the FPS counter and Reset save, with Close
-  // 16 above the card's bottom edge, frame included, the column's FOCUS_RING.outset padding
-  // around the rows, so a focused row's ring stays inside its clip, and the 14 scroll reserve.
-  const { FOCUS_RING: FOCUS_RING_TOKENS, SPACING: SPACING_TOKENS } = await import(
-    new URL("../src/data/layout.ts", import.meta.url)
-  );
+  // Keep the FPS icon ink check independent of the retired scrolling layout.
+  await seedOnce(safeSerialized, "ada-browser.cheats-proofs.v1");
+  await openPause();
+  await page.locator('[data-action="pause-cheats"]').click();
   const { SETTING_ICON_INK_TOP } = await import(
     new URL("../src/ui/settingsIcons.ts", import.meta.url)
   );
-  const cheatsEnd = {};
-  await proofsAt("cheats-scroll", async (_insets, _view, name) => {
-    await cheatsProof().evaluate((dialog) => {
-      const list = dialog.querySelector(".ada-cheat-items");
-      list.scrollTop = list.scrollHeight;
-    });
-    await page.waitForTimeout(100);
-    await page.screenshot({
-      path: `${output}/cheats-end-${name.replace("cheats-scroll-", "")}.png`,
-    });
-    const [, cardTop, cardWidth, cardHeight] = await logicalBox(
-      '[role="dialog"]:has(.ada-cheat-items) .ada-card',
-    );
-    const [, closeTop, , closeHeight] = await logicalBox(
-      '[role="dialog"] [data-action="dismiss-cheats"]',
-    );
-    const [, listTop, listWidth, listHeight] = await logicalBox('[role="dialog"] .ada-cheat-items');
-    const [lastLeft, lastTop, lastWidth, lastHeight] = await logicalBox(
-      '[role="dialog"] .ada-cheat-items > :last-child',
-    );
-    const [listLeft] = await logicalBox('[role="dialog"] .ada-cheat-items');
-    const geometry = await cheatsProof().evaluate((dialog) => {
-      const list = dialog.querySelector(".ada-cheat-items");
-      const style = getComputedStyle(list);
-      return {
-        padding: [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft],
-        scrolls: list.scrollHeight > list.clientHeight + 1,
-      };
-    });
-    const shot = {
-      closeBottomInset: Math.round((cardTop + cardHeight - (closeTop + closeHeight)) * 100) / 100,
-      cardWidth,
-      closeAfterList: Math.round((closeTop - (listTop + listHeight)) * 100) / 100,
-      lastRowEndInset: Math.round((listTop + listHeight - (lastTop + lastHeight)) * 100) / 100,
-      lastRowLeftInset: Math.round((lastLeft - listLeft) * 100) / 100,
-      lastRowWidth: lastWidth,
-      listTopFromCard: Math.round((listTop - cardTop) * 100) / 100,
-      listWidth,
-      ...geometry,
-    };
-    // The FPS counter row's icon ink top meets its label's ink top, as in every switch row: the
-    // label's ink from the loaded font's metrics, with the vector's authored ink inset.
-    shot.fpsInk = await cheatsProof().evaluate((dialog, iconInkTop) => {
+  await proofsAt("cheats-fps-ink", async (_insets, _view, name) => {
+    const fpsInk = await cheatsProof().evaluate((dialog, iconInkTop) => {
       const row = dialog.querySelector('[data-cheat="fpsCounter"]');
       const caption = row.querySelector(".ada-setting-text").firstElementChild;
       const icon = row.querySelector(".ada-icon");
@@ -2103,34 +2078,16 @@ try {
         label: (baseline - metrics.actualBoundingBoxAscent) / unit,
       };
     }, SETTING_ICON_INK_TOP.get("icon-fps-counter"));
-    cheatsEnd[name] = shot;
     assert.ok(
-      Math.abs(shot.fpsInk.icon - shot.fpsInk.label) <= 1,
-      `${name}: the FPS counter icon's ink top meets its label's ink top: ${JSON.stringify(shot.fpsInk)}`,
-    );
-    assert.ok(
-      Math.abs(shot.closeBottomInset - SPACING_TOKENS.panelPadding) <= 0.3,
-      `${name}: Close's lip sits 16 above the card's bottom edge, frame included: ${JSON.stringify(shot)}`,
-    );
-    assert.ok(
-      Math.abs(shot.lastRowEndInset - FOCUS_RING_TOKENS.outset) <= 0.3,
-      `${name}: at the scroll end the last row keeps the ring's 4 inside the clip: ${JSON.stringify(shot)}`,
-    );
-    // While the column scrolls it keeps the 14 reserve as padding, whatever the scrollbar takes,
-    // so rows are 368 - 2 * 4 - 14 = 346 in every browser.
-    assert.ok(
-      shot.scrolls &&
-        Math.abs(shot.lastRowLeftInset - FOCUS_RING_TOKENS.outset) <= 0.3 &&
-        Math.abs(lastWidth - 346) <= 0.3,
-      `${name}: the scrolling column's rows are 346, 4 inside its left: ${JSON.stringify(shot)}`,
+      Math.abs(fpsInk.icon - fpsInk.label) <= 1,
+      `${name}: FPS icon ink aligns with the label: ${JSON.stringify(fpsInk)}`,
     );
   });
-  save("cheats-end-proof.json", cheatsEnd);
   // The Reset save confirm, over Cheats, in its own fresh fixture: Cancel and Reset, then Cancel
   // back to Cheats.
   await seedOnce(safeSerialized, "ada-browser.cheats-reset-proof.v1");
-  await openSettings();
-  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  await openPause();
+  await page.locator('[data-action="pause-cheats"]').click();
   await cheatsProof().waitFor({ state: "visible" });
   await cheatsProof().locator('[data-cheat="resetSave"]').click();
   const resetConfirm = page.locator('[data-dialog="reset-save"]');
@@ -2172,21 +2129,20 @@ try {
   await resetConfirm.waitFor({ state: "hidden" });
   await cheatsProof().waitFor({ state: "visible" });
   await cheatsProof().locator('[data-action="dismiss-cheats"]').click();
-  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
-  await closeSettings();
+  await page.locator('[data-action="pause-cheats"]:focus').waitFor();
+  await resumeIfPaused();
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
   // The FPS counter, in a fresh fixture: Off by default, then in the device viewport's
   // bottom-right corner, 8 px inside the game's safe-area insets and above every game layer.
-  await openSettings();
-  await dimProof("pause");
-  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  await openPause();
+  await page.locator('[data-action="pause-cheats"]').click();
   const fpsSwitch = page.getByRole("switch", { name: CHEAT_COPY.fpsCounter, exact: true });
   assert.equal(await fpsSwitch.getAttribute("aria-checked"), "false", "The FPS counter starts Off");
   await fpsSwitch.click();
   assert.equal(await fpsSwitch.getAttribute("aria-checked"), "true");
   await page.locator('[data-action="dismiss-cheats"]').click();
-  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
-  await closeSettings();
+  await page.locator('[data-action="pause-cheats"]:focus').waitFor();
+  await resumeIfPaused();
   const fpsCounter = page.locator("#app > .ada-fps");
   await fpsCounter.waitFor({ state: "visible" });
   assert.match((await fpsCounter.textContent()) ?? "", /^\d+ FPS$/u);
@@ -2227,53 +2183,28 @@ try {
   await fpsInsets.restore();
   await page.setViewportSize(fpsViewport);
   await page.waitForTimeout(250);
-  await seedOnce(safeSerialized, "ada-browser.before-installed-guard-fresh.v1");
-  await openSettings();
-  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
-  // Exercise the iOS installed-window signal without installing or launching a PWA.
+  await seedOnce(safeSerialized, "ada-browser.before-installed-cheats.v1");
+  // Exercise the iOS installed-window signal in this fixture without installing a PWA.
   await page.evaluate(() => {
     Object.defineProperty(navigator, "standalone", { configurable: true, value: true });
     window.dispatchEvent(new PageTransitionEvent("pageshow"));
   });
-  await page.waitForFunction(
-    () => document.querySelector('[data-action="cheats"]')?.hidden === true,
-  );
-  assert.equal(
-    await page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true }).count(),
-    0,
-    "An installed-window signal must close the cheats modal",
-  );
-  await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
+  await openPause();
+  await page.locator('[data-action="pause-cheats"]').click();
+  await cheatsProof().waitFor({ state: "visible" });
   const guardedSave = await readSave();
-  await page.locator('[data-cheat="unlockAllWeapons"]').evaluate((button) => button.click());
-  await page.evaluate(() => {
-    Reflect.deleteProperty(navigator, "standalone");
-    window.dispatchEvent(new PageTransitionEvent("pageshow"));
-  });
+  const installedGrant = cheatsProof().locator('[data-cheat="unlockAllWeapons"]');
+  await installedGrant.click();
   await page.waitForFunction(
-    () => document.querySelector('[data-action="cheats"]')?.hidden === false,
-  );
-  // Nothing was granted: the cheat still has every weapon left to grant, and nothing saved.
-  await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
-  const grantBlocked = await page
-    .locator('[data-cheat="unlockAllWeapons"]')
-    .evaluate((button) => !button.disabled);
-  assert.ok(
-    grantBlocked,
-    "Direct hidden-button dispatch in the installed-window fixture must not grant weapons",
+    () => document.querySelector('[data-cheat="unlockAllWeapons"]')?.disabled === true,
   );
   assert.deepEqual((await readSave()).economy, guardedSave.economy);
-  save("installed-window-proof.json", {
-    scope:
-      "Navigator standalone eligibility fixture and pageshow recheck, not an actual installed PWA",
-    grantBlocked,
-  });
-  await page.locator('[data-action="dismiss-cheats"]').click();
+  await cheatsProof().locator('[data-action="close-cheats"]').click();
+  await page.locator('[data-action="pause-cheats"]:focus').waitFor();
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
-    "Browser-only cheats pause input, retain focus and apply to play in a session that saves " +
-      "nothing; the FPS counter sits in the safe corner above every layer; an installed-window " +
-      "fixture closes and rejects direct dispatch",
+    "Direct Cheats actions pause input, retain focus in browser and installed-window fixtures, " +
+      "and apply to play without saving. The FPS counter sits in the safe corner above every layer.",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
@@ -2455,7 +2386,7 @@ try {
   ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card shows Map, Quests, Settings and Ship by label, then Back to title over
+  // In flight the card shows Cheats, Map, Quests, Settings and Ship by label, then Back to title over
   // Resume, every one available in danger.
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
@@ -2467,6 +2398,7 @@ try {
       ]),
     ),
     [
+      ["pause-cheats", CHEAT_COPY.title, null],
       ["pause-map", CONTENT.labels.map, null],
       ["pause-quests", CONTENT.labels.quests, null],
       ["pause-settings", CONTENT.labels.settings, null],
@@ -2474,10 +2406,10 @@ try {
       ["pause-backToTitle", CONTENT.labels.backToTitle, null],
       ["pause-resume", CONTENT.labels.resume, null],
     ],
-    "The in-flight Paused card shows Map, Quests, Settings, Ship, Back to title and Resume, all " +
+    "The in-flight Paused card shows Cheats, Map, Quests, Settings, Ship, Back to title and Resume, all " +
       "available in danger",
   );
-  // Map and Quests, then Settings and Ship share two columns; Back to title spans the grid
+  // Cheats spans the first row. Map and Quests, then Settings and Ship share two columns. Back to title spans the grid
   // directly above the full-width primary Resume. Proofs at 1280x720 and at 720x360 with phone
   // insets.
   const within = (a, b) => Math.abs(a - b) <= 0.5;
@@ -2528,14 +2460,16 @@ try {
         `Paused: ${left} and ${right} share a row across the two columns: ${detail}`,
       );
     }
-    for (const action of ["pause-backToTitle", "pause-resume"]) {
+    for (const action of ["pause-cheats", "pause-backToTitle", "pause-resume"]) {
       assert.ok(
         within(boxes[action].left, grid.left) && within(boxes[action].right, grid.right),
         `Paused: ${action} spans the grid's full width: ${detail}`,
       );
     }
     assert.ok(
-      within(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
+      within(boxes["pause-cheats"].top, grid.top) &&
+        within(boxes["pause-map"].top, boxes["pause-cheats"].bottom + rowGap) &&
+        within(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
         within(boxes["pause-resume"].top, boxes["pause-backToTitle"].bottom + rowGap),
       `Paused: Back to title sits directly above Resume, under the grid: ${detail}`,
     );
@@ -3201,7 +3135,7 @@ try {
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-close"],
+    ["menu-achievements", "menu-cheats", "menu-settings", "menu-close"],
     "The title's Menu is the start Menu, with no Exit in a browser tab",
   );
   await menuCard().locator('[data-action="menu-achievements"]').click();
@@ -3362,7 +3296,7 @@ try {
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-backToTitle", "menu-close"],
+    ["menu-achievements", "menu-cheats", "menu-settings", "menu-backToTitle", "menu-close"],
     "Ada's room page's Menu holds Achievements, Settings, Back to title, then Close",
   );
   await page.screenshot({ path: `${output}/menu-room.png` });
@@ -6403,7 +6337,7 @@ try {
   await openMenu();
   assert.deepEqual(
     await menuActionIds(),
-    ["menu-achievements", "menu-settings", "menu-close"],
+    ["menu-achievements", "menu-cheats", "menu-settings", "menu-close"],
     "A browser tab's start Menu has no Exit",
   );
   await closeMenu();
@@ -6557,8 +6491,8 @@ try {
     await openMenu();
     assert.deepEqual(
       await menuActionIds(),
-      ["menu-achievements", "menu-settings", "menu-close"],
-      `${name}: the installed app's start Menu holds Achievements, Settings, then Close`,
+      ["menu-achievements", "menu-cheats", "menu-settings", "menu-close"],
+      `${name}: the installed app's start Menu holds Achievements, Cheats, Settings, then Close`,
     );
     await page.screenshot({ path: `${output}/start-menu-app-${name}.png` });
     const closes = [];

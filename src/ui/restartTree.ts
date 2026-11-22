@@ -4,7 +4,7 @@ import type { AdaLayoutSchema } from "./layoutTree.ts";
 import type { RestartLabels } from "./restartCard.ts";
 
 /** The confirm cards: Restart on the start screen and Reset save in the Cheats modal. */
-export type ConfirmKind = "reset-save" | "restart";
+export type ConfirmKind = "reset-save" | "restart" | "rewind-quests";
 
 export type ConfirmAction<K extends ConfirmKind = ConfirmKind> =
   `close-${K}` | `${K}-cancel` | `${K}-confirm`;
@@ -21,7 +21,7 @@ export function restartTree<K extends ConfirmKind = "restart">(
     key: kind,
     kind: "component",
     props: {
-      body: false,
+      body: Boolean(labels.body),
       closeAction: `close-${kind}`,
       closeLabel: labels.close,
       footerAction: "close",
@@ -29,6 +29,13 @@ export function restartTree<K extends ConfirmKind = "restart">(
       title: labels.title,
     },
     slots: {
+      ...(labels.body
+        ? {
+            body: [
+              { component: "text", key: "body", kind: "component", props: { text: labels.body } },
+            ],
+          }
+        : {}),
       footer: [
         {
           component: "button",

@@ -31,7 +31,7 @@ describe("caller-owned Pause/Menu policy", () => {
     expect(navigationEntry({ ...active, ...facts })).toBe("menu");
   });
   it("keeps Start bounded and nonplay Back to title immediately before dismissal", () => {
-    expect(menuActions("start")).toEqual(["achievements", "settings"]);
-    expect(menuActions("nonplay")).toEqual(["achievements", "settings", "backToTitle"]);
+    expect(menuActions("start")).toEqual(["achievements", "cheats", "settings"]);
+    expect(menuActions("nonplay")).toEqual(["achievements", "cheats", "settings", "backToTitle"]);
   });
 });

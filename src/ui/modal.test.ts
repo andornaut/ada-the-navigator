@@ -241,13 +241,13 @@ describe("modal buttons", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps a focused cheat row's ring inside the column and reserves the scrollbar while it scrolls", () => {
-    expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain(`padding:${units(FOCUS_RING.outset)}`);
-    expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain("box-sizing:border-box");
-    // The drawn scrollbar is the 14 reserve (SCROLL.gap 6 + SCROLL.track 8), and reserveScrollbar
-    // pads what a thin or hidden one leaves: 368 inner, 360 rows, 346 while the column scrolls.
-    const scrollbar = `${UI_SCOPE} .ada-scroll::-webkit-scrollbar{\n  width:${units(14)}`;
-    expect(MODAL_STYLE).toContain(scrollbar);
+  it("keeps Cheats in two columns and grants in equal side-by-side tracks", () => {
+    for (const group of [".ada-cheat-items", ".ada-cheat-grants"]) {
+      expect(rule(`${UI_SCOPE} ${group}`)).toContain(
+        "grid-template-columns:repeat(2,minmax(0,1fr))",
+      );
+    }
+    expect(rule(`${UI_SCOPE} .ada-cheats-card > .ada-card-body`)).toContain("overflow:visible");
   });
 
   it("keeps the end pad below the last control when a card scrolls to its end", () => {

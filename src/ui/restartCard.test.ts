@@ -245,7 +245,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
-function fixture() {
+function fixture(rewind?: (current: () => boolean) => Promise<(() => void) | null>) {
   const root = new Element(),
     onRestart = vi.fn();
   const guard = rootPressGuard(root as unknown as HTMLElement);
@@ -260,10 +260,13 @@ function fixture() {
       root as unknown as HTMLElement,
     ).dispose,
   );
-  const card = createRestartCard(root as unknown as HTMLElement, {
-    labels: { cancel: "Cancel", close: "Close", restart: "Restart", title: "Restart?" },
-    onRestart,
-  });
+  const labels = { cancel: "Cancel", close: "Close", restart: "Restart", title: "Restart?" };
+  const card = createRestartCard(
+    root as unknown as HTMLElement,
+    rewind
+      ? { commit: rewind, kind: "rewind-quests", labels: { ...labels, body: "Confirm rewind." } }
+      : { labels, onRestart },
+  );
   const modal = root.children[0]!;
   const action = (name: string) => modal.querySelector(`[data-action="${name}"]`)!;
   return { action, card, guard, modal, onRestart, root };
@@ -420,4 +423,36 @@ describe("Restart's configured production binding", () => {
     f.card.dispose();
     expect(native.dispose).toHaveBeenCalledOnce();
   });
+});
+
+it("keeps rewind confirmation open on failed commit and accepts a successful retry only once", async () => {
+  let finish!: (handoff: (() => void) | null) => void;
+  const commit = vi.fn<(current: () => boolean) => Promise<(() => void) | null>>(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const f = fixture(commit);
+  const cheats = new Element();
+  f.root.append(cheats);
+  f.card.open();
+  expect(f.root.children.at(-1)).toBe(f.modal);
+  const reset = f.action("rewind-quests-confirm");
+  reset.dispatchEvent(new Event("click"));
+  reset.dispatchEvent(new Event("click"));
+  expect(commit).toHaveBeenCalledOnce();
+  expect(commit.mock.calls[0]![0]()).toBe(true);
+  f.card.close();
+  expect(f.card.isOpen()).toBe(true);
+  finish(null);
+  await vi.waitFor(() => {
+    reset.dispatchEvent(new Event("click"));
+    expect(commit).toHaveBeenCalledTimes(2);
+  });
+  const handoff = vi.fn(() => expect(f.card.isOpen()).toBe(false));
+  finish(handoff);
+  await vi.waitFor(() => expect(handoff).toHaveBeenCalledOnce());
+  expect(f.onRestart).not.toHaveBeenCalled();
+  f.card.dispose();
 });

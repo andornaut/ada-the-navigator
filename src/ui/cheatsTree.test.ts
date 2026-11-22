@@ -3,29 +3,45 @@ import { expect, it } from "vitest";
 
 import { cheatsTree } from "./cheatsTree.ts";
 
-it("keeps the caller's row order with stable keys, Close in its own slot", () => {
-  const rows = [
-    { id: "first", kind: "action", label: "First" },
-    { id: "fps", kind: "switch", label: "FPS counter" },
-    { id: "last", kind: "action", label: "Last" },
-  ] as const;
-  const tree = cheatsTree("Close", rows);
-  validateLayoutTree({ action: [], footer: [], list: ["rows", "footer"], switch: [] }, tree);
-  expect(tree).toEqual({
-    component: "list",
-    key: "cheats",
-    kind: "component",
-    props: {},
+it("builds separate typed slots for the equal grant pair and footer", () => {
+  const tree = cheatsTree("Back", [
+    { id: "selectiveReset", kind: "action", label: "Selective" },
+    { id: "addOre", kind: "action", label: "Add ore" },
+    { id: "fpsCounter", kind: "switch", label: "FPS counter" },
+    { id: "addStardust", kind: "action", label: "Add Stardust" },
+  ]);
+  validateLayoutTree(
+    {
+      action: [],
+      column: ["rows"],
+      footer: [],
+      grants: ["buttons"],
+      layout: ["columns", "footer"],
+      switch: [],
+    },
+    tree,
+  );
+  expect(tree).toMatchObject({
+    component: "layout",
     slots: {
-      footer: [
-        { component: "footer", key: "dismiss", kind: "component", props: { label: "Close" } },
+      columns: [
+        { component: "column", key: "progression" },
+        {
+          component: "column",
+          key: "tools",
+          slots: {
+            rows: [
+              { component: "switch", key: "fpsCounter" },
+              {
+                component: "grants",
+                slots: { buttons: [{ key: "addStardust" }, { key: "addOre" }] },
+              },
+              { component: "action", key: "selectiveReset" },
+            ],
+          },
+        },
       ],
-      rows: rows.map(({ id, kind, label }) => ({
-        component: kind,
-        key: id,
-        kind: "component",
-        props: { id, label },
-      })),
+      footer: [{ component: "footer", key: "dismiss", props: { label: "Back" } }],
     },
   });
 });

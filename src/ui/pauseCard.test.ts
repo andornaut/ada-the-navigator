@@ -251,6 +251,7 @@ class FakeImage extends FakeElement {
 
 const LABELS: PauseLabels = {
   backToTitle: "Back to title",
+  cheats: "Cheats",
   close: "Close",
   map: "Map",
   mapScreen: mapScreenLabels(CONTENT.labels),
@@ -338,6 +339,7 @@ function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
   const options = {
     labels: LABELS,
     onBackToTitle: vi.fn(),
+    onCheats: vi.fn(),
     onGalaxies: vi.fn(),
     onOpenChange: vi.fn(),
     onSettings: vi.fn(),
@@ -773,6 +775,7 @@ describe("Paused card", () => {
     expect(actions.children[0]!.children.at(-1)!.dataset.action).toBe("pause-resume");
     expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
     expect(shownActions(actions)).toEqual([
+      "pause-cheats",
       "pause-map",
       "pause-quests",
       "pause-settings",
@@ -781,6 +784,7 @@ describe("Paused card", () => {
       "pause-resume",
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
+      "Cheats",
       "Map",
       "Quests",
       "Settings",
@@ -788,12 +792,12 @@ describe("Paused card", () => {
       "Back to title",
       "Resume",
     ]);
-    // Back to title and Resume each span the grid; the four others share its two columns.
+    // Cheats keeps its existing width. Map, Quests, Settings and Ship share the two columns.
     expect(
       buttonsOf(actions)
         .filter((node) => node.classes.has("ada-pause-full"))
         .map((node) => node.dataset.action),
-    ).toEqual(["pause-backToTitle", "pause-resume"]);
+    ).toEqual(["pause-cheats", "pause-backToTitle", "pause-resume"]);
   });
 
   it("keeps every action, Back to title included, available in danger", () => {
@@ -801,6 +805,7 @@ describe("Paused card", () => {
     pause.setState(state({ inDanger: true }));
     const actions = buttonsOf(body.children[0]!);
     expect(actions.map((node) => node.getAttribute("aria-disabled"))).toEqual([
+      null,
       null,
       null,
       null,
@@ -1128,6 +1133,7 @@ it("hides Map without canonical permission and shows it once permitted", () => {
   const actions = body.children[0]!;
   pause.setState(state({ canMap: false }));
   expect(shownActions(actions)).toEqual([
+    "pause-cheats",
     "pause-quests",
     "pause-settings",
     "pause-ship",
@@ -1142,7 +1148,7 @@ it("hides Map without canonical permission and shows it once permitted", () => {
   pause.setState(withoutPermission);
   expect(shownActions(actions)).not.toContain("pause-map");
   pause.setState(state({ canMap: true }));
-  expect(shownActions(actions)[0]).toBe("pause-map");
+  expect(shownActions(actions).slice(0, 2)).toEqual(["pause-cheats", "pause-map"]);
   expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe(null);
   pause.dispose();
 });
@@ -1318,23 +1324,26 @@ it.each([
   pause.dispose();
 });
 
-it("retains the Pause ancestor through Settings until Resume", () => {
-  const { body, modal, options, pause } = cards();
-  pause.setState(state());
-  pause.open();
-  button(body.children[0]!, "pause-settings").click();
-  expect(options.onSettings).toHaveBeenCalledOnce();
-  expect(modal.hidden).toBe(true);
-  expect(pause.isOpen()).toBe(true);
-  expect(options.onOpenChange.mock.calls).toEqual([[true]]);
-  pause.restorePaused("settings");
-  expect(focused()).toBe(button(body.children[0]!, "pause-settings"));
-  expect(modal.hidden).toBe(false);
-  expect(pause.isOpen()).toBe(true);
-  button(body.children[0]!, "pause-resume").click();
-  expect(pause.isOpen()).toBe(false);
-  expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
-});
+it.each(["settings", "cheats"] as const)(
+  "retains the Pause ancestor through %s until Resume",
+  (child) => {
+    const { body, modal, options, pause } = cards();
+    pause.setState(state());
+    pause.open();
+    button(body.children[0]!, `pause-${child}`).click();
+    expect(child === "settings" ? options.onSettings : options.onCheats).toHaveBeenCalledOnce();
+    expect(modal.hidden).toBe(true);
+    expect(pause.isOpen()).toBe(true);
+    expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+    pause.restorePaused(child);
+    expect(focused()).toBe(button(body.children[0]!, `pause-${child}`));
+    expect(modal.hidden).toBe(false);
+    expect(pause.isOpen()).toBe(true);
+    button(body.children[0]!, "pause-resume").click();
+    expect(pause.isOpen()).toBe(false);
+    expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+  },
+);
 
 it.each([1, 2])(
   "returns %i contextual quests to gameplay without a hidden Map ancestor",
@@ -1552,6 +1561,7 @@ it("publishes the hidden Pause and Ship controls already bound before Map and Qu
         "close-pause",
         "close-ship",
         "pause-backToTitle",
+        "pause-cheats",
         "pause-map",
         "pause-quests",
         "pause-resume",
@@ -1589,7 +1599,7 @@ it.each(["pause-resume", "close-ship"])(
       }),
     ).toThrow("no registered action binding");
     expect(published).not.toHaveBeenCalled();
-    expect(bound).toHaveLength(8);
+    expect(bound).toHaveLength(9);
     for (const element of bound) {
       expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
         "no registered action binding",

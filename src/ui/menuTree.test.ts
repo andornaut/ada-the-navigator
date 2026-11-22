@@ -5,7 +5,12 @@ import { menuActions, menuTree } from "./menuTree.ts";
 
 const data = {
   closeLabel: "Close",
-  labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
+  labels: {
+    achievements: "Achievements",
+    backToTitle: "Back to title",
+    cheats: "Cheats",
+    settings: "Settings",
+  },
   title: "Menu",
 };
 
@@ -46,10 +51,11 @@ describe("production Menu tree", () => {
       ...data,
       closeLabel: "",
       context: "nonplay",
-      labels: { achievements: "Same", backToTitle: "", settings: "Same" },
+      labels: { achievements: "Same", backToTitle: "", cheats: "Same", settings: "Same" },
     });
     expect(tree.slots!.actions!.map((node) => node.key)).toEqual([
       "achievements",
+      "cheats",
       "settings",
       "backToTitle",
       "close",
@@ -59,11 +65,16 @@ describe("production Menu tree", () => {
 });
 
 it("sorts the actions by label, then Back to title and primary Close", () => {
-  const labels = { achievements: "Trophies", backToTitle: "Accueil", settings: "Options" };
+  const labels = {
+    achievements: "Trophies",
+    backToTitle: "Accueil",
+    cheats: "Astuces",
+    settings: "Options",
+  };
   expect(
     menuTree({ ...data, context: "nonplay", labels }).slots!.actions!.map((node) => node.key),
-  ).toEqual(["settings", "achievements", "backToTitle", "close"]);
+  ).toEqual(["cheats", "settings", "achievements", "backToTitle", "close"]);
   expect(
     menuTree({ ...data, context: "start", labels }).slots!.actions!.map((node) => node.key),
-  ).toEqual(["settings", "achievements", "close"]);
+  ).toEqual(["cheats", "settings", "achievements", "close"]);
 });

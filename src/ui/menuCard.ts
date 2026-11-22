@@ -84,6 +84,8 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     }
   };
   const close = () => {
+    releaseUnderlay?.();
+    releaseUnderlay = undefined;
     if (modal.hidden) {
       return;
     }
@@ -158,6 +160,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       ["menu-achievements", () => choose("achievements")],
       ["menu-settings", () => choose("settings")],
       ["menu-backToTitle", () => choose("backToTitle")],
+      ["menu-cheats", () => choose("cheats")],
     ]),
     availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
     presentButton: presentAdaButton,

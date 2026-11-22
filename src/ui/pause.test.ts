@@ -22,6 +22,7 @@ const json = (path: string): unknown =>
 describe("Paused card", () => {
   const LABELS = {
     backToTitle: "Back to title",
+    cheats: "Cheats",
     map: "Map",
     quests: "Quests",
     resume: "Resume",
@@ -29,8 +30,9 @@ describe("Paused card", () => {
     ship: "Ship",
   };
 
-  it("sorts Map, Quests, Settings and Ship by label, then Back to title and primary Resume", () => {
+  it("sorts Cheats, Map, Quests, Settings and Ship by label before the fixed footer", () => {
     expect(pauseActions(LABELS)).toEqual([
+      { available: true, id: "cheats", role: "secondary" },
       { available: true, id: "map", role: "secondary" },
       { available: true, id: "quests", role: "secondary" },
       { available: true, id: "settings", role: "secondary" },
@@ -38,12 +40,13 @@ describe("Paused card", () => {
       { available: true, id: "backToTitle", role: "secondary" },
       { available: true, id: "resume", role: "primary" },
     ]);
-    expect(PAUSE_FULL_WIDTH).toEqual(["backToTitle", "resume"]);
+    expect(PAUSE_FULL_WIDTH).toEqual(["cheats", "backToTitle", "resume"]);
   });
 
-  it("sorts the grid by whatever its labels read, keeping the full-width rows last", () => {
+  it("sorts by translated labels while keeping both footer rows last", () => {
     const labels = {
       ...LABELS,
+      cheats: "Triches",
       map: "Carte",
       quests: "Quêtes",
       settings: "Options",
@@ -53,6 +56,7 @@ describe("Paused card", () => {
       "map",
       "settings",
       "quests",
+      "cheats",
       "ship",
       "backToTitle",
       "resume",

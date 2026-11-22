@@ -36,6 +36,7 @@ import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 export interface PauseLabels {
   readonly backToTitle: string;
+  readonly cheats: string;
   readonly close: string;
   readonly map: string;
   /** The full-screen map's own labels. */
@@ -60,6 +61,7 @@ export interface PauseOptions {
   readonly shipFrame?: (heading: number) => string | undefined;
   readonly labels: PauseLabels;
   readonly onBackToTitle: () => void;
+  readonly onCheats: () => void;
   readonly onOpenChange: (open: boolean) => void;
   /** Return to Earth, from the Map. */
   readonly onGalaxies: () => void;
@@ -155,6 +157,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.hidden = true;
   const text: Record<PauseAction, string> = {
     backToTitle: labels.backToTitle,
+    cheats: labels.cheats,
     map: labels.map,
     quests: labels.mapScreen.quests,
     resume: labels.resume,
@@ -566,6 +569,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       openQuests("quests");
     } else if (id === "ship") {
       show("ship");
+    } else if (id === "cheats") {
+      hidePause(true);
+      options.onCheats();
     } else if (id === "settings") {
       // Settings opens in the Paused card's place; closing it returns here (reopen).
       hidePause(true);

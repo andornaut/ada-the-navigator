@@ -2,7 +2,7 @@ import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GameModel, newGameState } from "../model/game.ts";
-import { SAVE_VERSION } from "../model/save.ts";
+import { restoreSave, SAVE_VERSION } from "../model/save.ts";
 import { createAdaSaves, SAVE_KEYS } from "./persistence.ts";
 
 function fixture(raw: string | null, version = "0.0.1") {
@@ -161,4 +161,177 @@ it("retains an already-entered reset write result while keeping the crash write 
     reason: "game crashed",
     status: "unavailable",
   });
+});
+
+it("authorizes a real campaign read without repair and replaces only the exact authorized bytes", async () => {
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
+  const raw = model.save();
+  const f = fixture(raw);
+  const entered = vi.fn();
+  const store = createAdaSaves(f.port, undefined, {
+    async lock(operation) {
+      entered();
+      return operation();
+    },
+  });
+  const authorization = (await store.readCampaign())!;
+  expect(authorization.raw).toBe(raw);
+  const next = { ...newGameState(), prologueSeen: true, started: true };
+  expect(
+    await store.commitCampaign(authorization, { ...next, unlocked: [] }, () => true),
+  ).toBeNull();
+  expect(entered).toHaveBeenCalledTimes(1);
+
+  f.values.set(SAVE_KEYS.save, `${raw} `);
+  expect(await store.commitCampaign(authorization, next, () => true)).toBeNull();
+  expect(f.port.write).not.toHaveBeenCalled();
+  f.values.set(SAVE_KEYS.save, raw);
+  f.port.write.mockRejectedValueOnce(new Error("quota"));
+  expect(await store.commitCampaign(authorization, next, () => true)).toBeNull();
+  expect(f.values.get(SAVE_KEYS.save)).toBe(raw);
+
+  const panel = vi.fn().mockReturnValueOnce(true).mockReturnValue(false);
+  expect(await store.commitCampaign(authorization, next, panel)).toBeNull();
+  expect(f.values.get(SAVE_KEYS.save)).toBe(raw);
+  const adopt = await store.commitCampaign(authorization, next, () => true);
+  expect(adopt).not.toBeNull();
+  const { adaSaveStamp, ...saved } = JSON.parse(f.values.get(SAVE_KEYS.save)!);
+  expect(saved).toEqual(next);
+  expect(adaSaveStamp.generation).toEqual(expect.any(String));
+  expect(adaSaveStamp.revision).toEqual(expect.any(String));
+  expect(restoreSave(f.values.get(SAVE_KEYS.save)!)).toMatchObject(next);
+  expect(f.values.get(SAVE_KEYS.backup)).toBe("older backup");
+  expect(f.values.get("ada.preferences")).toBe("keep");
+  expect(await store.commitCampaign(authorization, next, () => true)).toBeNull();
+});
+
+it("does not make a missing, corrupt, fresh, or write-fenced save eligible for campaign rewind", async () => {
+  const f = fixture(null);
+  const store = createAdaSaves(f.port, undefined, { lock: async (operation) => operation() });
+  expect(await store.readCampaign()).toBeNull();
+  f.values.set(SAVE_KEYS.save, "{broken");
+  expect(await store.readCampaign()).toBeNull();
+  f.values.set(SAVE_KEYS.save, JSON.stringify(newGameState()));
+  expect(await store.readCampaign()).toBeNull();
+  f.values.set(SAVE_KEYS.save, JSON.stringify({ ...newGameState(), started: true }));
+  expect(await store.readCampaign()).not.toBeNull();
+  store.blockWrites("crash");
+  expect(await store.readCampaign()).toBeNull();
+  expect(f.port.write).not.toHaveBeenCalled();
+});
+
+it("honors the existing write fence while an ordinary save is waiting for the shared lock", async () => {
+  const f = fixture("previous");
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const store = createAdaSaves(f.port, undefined, {
+    async lock(operation) {
+      await held;
+      return operation();
+    },
+  });
+  const waiting = store.save(newGameState());
+  store.blockWrites("game crashed");
+  release();
+  expect(await waiting).toEqual({ reason: "game crashed", status: "unavailable" });
+  expect(f.values.get(SAVE_KEYS.save)).toBe("previous");
+  expect(f.port.write).not.toHaveBeenCalled();
+});
+
+it("refuses a changed revision when participating saves return to the exact authorized game data", async () => {
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
+  const original = model.saveDocument();
+  const f = fixture(JSON.stringify(original));
+  const campaign = { lock: async <T>(operation: () => T | Promise<T>) => operation() };
+  const confirming = createAdaSaves(f.port, undefined, campaign);
+  const other = createAdaSaves(f.port, undefined, campaign);
+  const loaded = await confirming.load();
+  expect(loaded.save).toEqual(original);
+  expect((await other.load()).save).toEqual(original);
+  expect(f.port.write).not.toHaveBeenCalled();
+  const authorization = (await confirming.readCampaign())!;
+  expect(await confirming.save(original)).toEqual({ status: "saved" });
+  expect(f.values.get(SAVE_KEYS.save)).toBe(authorization.raw);
+  expect(f.port.write).not.toHaveBeenCalled();
+
+  const changed = { ...original, economy: { ...original.economy, stardust: 219 } };
+  expect(await other.save(changed)).toEqual({ status: "saved" });
+  expect(await confirming.save(original)).toEqual({ status: "saved" });
+  const latest = f.values.get(SAVE_KEYS.save)!;
+  const { adaSaveStamp, ...save } = JSON.parse(latest);
+  expect(save).toEqual(JSON.parse(authorization.raw));
+  expect(adaSaveStamp.generation).toBeNull();
+  const next = { ...newGameState(), prologueSeen: true, started: true };
+  expect(await confirming.commitCampaign(authorization, next, () => true)).toBeNull();
+  expect(f.values.get(SAVE_KEYS.save)).toBe(latest);
+  expect(f.port.write).toHaveBeenCalledTimes(2);
+
+  expect(await other.save(original)).toEqual({ status: "saved" });
+  expect(f.values.get(SAVE_KEYS.save)).toBe(latest);
+  expect(f.port.write).toHaveBeenCalledTimes(2);
+});
+
+it("fences only pre-rewind models and binds the new generation on real handoff or reload", async () => {
+  const initial = { ...newGameState(), started: true };
+  const f = fixture(JSON.stringify(initial));
+  const campaign = { lock: async <T>(operation: () => T | Promise<T>) => operation() };
+  const confirming = createAdaSaves(f.port, undefined, campaign);
+  const stale = createAdaSaves(f.port, undefined, campaign);
+  const original = (await stale.load()).save;
+  await confirming.load();
+
+  const source = (await confirming.readCampaign())!;
+  const next = { ...initial, prologueSeen: true };
+  const adopt = await confirming.commitCampaign(source, next, () => true);
+  expect(adopt).not.toBeNull();
+  const committed = f.values.get(SAVE_KEYS.save)!;
+  const fenced = { reason: expect.stringContaining("another tab"), status: "unavailable" };
+  expect(await confirming.save(original)).toEqual(fenced);
+  expect(await stale.readCampaign()).toBeNull();
+  expect((await stale.load({ bindModel: false })).save).toEqual(next);
+  expect(await stale.save(original)).toEqual(fenced);
+  expect(f.values.get(SAVE_KEYS.save)).toBe(committed);
+  expect(f.port.write).toHaveBeenCalledExactlyOnceWith(SAVE_KEYS.save, committed);
+
+  adopt!();
+  expect(await confirming.save(next)).toEqual({ status: "saved" });
+  expect(f.values.get(SAVE_KEYS.save)).toBe(committed);
+  expect((await stale.load()).save).toEqual(next);
+  const played = { ...next, economy: { ...next.economy, stardust: 27 } };
+  expect(await stale.save(played)).toEqual({ status: "saved" });
+  const final = JSON.parse(f.values.get(SAVE_KEYS.save)!);
+  expect(final.adaSaveStamp.generation).toBe(JSON.parse(committed).adaSaveStamp.generation);
+  expect(final.adaSaveStamp.revision).not.toBe(JSON.parse(committed).adaSaveStamp.revision);
+});
+
+it.each(["0.0.1", "1.0.0"])(
+  "fences a malformed stamp without repairing game data on %s",
+  async (version) => {
+    const raw = JSON.stringify({
+      ...newGameState(),
+      adaSaveStamp: { generation: null, revision: 42 },
+    });
+    const f = fixture(raw, version);
+    expect(await f.store.load()).toMatchObject({
+      reason: "The Ada save revision is invalid",
+      status: "unavailable",
+    });
+    expect(await f.store.save(newGameState())).toMatchObject({ status: "unavailable" });
+    expect(f.values.get(SAVE_KEYS.save)).toBe(raw);
+    expect(f.values.get(SAVE_KEYS.backup)).toBe("older backup");
+    expect(f.port.write).not.toHaveBeenCalled();
+  },
+);
+
+it("leaves unknown stamps on future saves to the v1 newer-version fence", async () => {
+  const raw = JSON.stringify({ adaSaveStamp: { future: true }, version: SAVE_VERSION + 1 });
+  const f = fixture(raw, "1.0.0");
+  expect((await f.store.load()).status).toBe("newer");
+  expect((await f.store.save(newGameState())).status).toBe("unavailable");
+  expect(f.values.get(SAVE_KEYS.save)).toBe(raw);
+  expect(f.port.write).not.toHaveBeenCalled();
 });

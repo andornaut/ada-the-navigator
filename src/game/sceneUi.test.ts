@@ -11,6 +11,7 @@ import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
+import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
 import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
@@ -774,16 +775,23 @@ function cheatScene(model: GameModel) {
     endsCheatSession,
     newer: false,
     observeFeedback: vi.fn(),
+    openCampaignRewinds: new WeakMap(),
+    openRewoundCampaign,
     refreshScene: vi.fn(),
     requestUpdateCheck: vi.fn(),
     requiredLoading: { state: { attempt: 1 } },
     requiredReady: () => true,
-    saves: createAdaSaves(port),
+    saves: createAdaSaves(port, undefined, {
+      lock: async (operation) => operation(),
+    }),
     scene,
     withoutSeenLessons,
+    writingCampaignRewinds: new WeakSet(),
   });
   for (const name of [
     "flushScene",
+    "campaignRewindAllowed",
+    "commitCampaignRewind",
     "apply",
     "endCheatSession",
     "replaceModel",
@@ -800,7 +808,11 @@ function cheatScene(model: GameModel) {
       await Promise.resolve();
     }
   };
-  const stored = () => JSON.parse(values.get(SAVE_KEYS.save)!) as GameSave;
+  const stored = () => {
+    const save = JSON.parse(values.get(SAVE_KEYS.save)!) as GameSave & { adaSaveStamp?: unknown };
+    delete save.adaSaveStamp;
+    return save;
+  };
   return {
     apply: context.apply as (action: () => void) => void,
     cheat,
@@ -817,6 +829,43 @@ function cheatScene(model: GameModel) {
     values,
   };
 }
+
+it("commits the stored campaign without a live cheat balance and only then hands off", async () => {
+  const f = cheatScene(flight());
+  const emergency = f.scene.emergencyReturn;
+  f.scene.model.state.economy.stardust = 95;
+  await f.flush();
+  f.cheat("addStardust").run();
+  await f.settle();
+  const source = await f.context.saves.readCampaign();
+  expect(source.save.economy.stardust).toBe(95);
+  expect(f.scene.model.state.economy.stardust).toBe(1095);
+  const commit = () => f.context.commitCampaignRewind(f.scene, source, () => true);
+  f.port.write.mockRejectedValueOnce(new Error("storage unavailable"));
+  expect(await commit()).toBeNull();
+  expect(f.scene.model.screen).toBe("space");
+  expect(f.stored().economy.stardust).toBe(95);
+  expect(f.scene.cheatSession.active).toBe(true);
+  emergency.active = true;
+  expect(await commit()).toBeNull();
+  emergency.active = false;
+  const handoff = await commit();
+  expect(handoff).not.toBeNull();
+  expect(f.stored()).toMatchObject({ economy: { stardust: 95 }, selectedGalaxy: 1, unlocked: [1] });
+  expect(f.stored().pendingStory).toBeDefined();
+  expect(f.scene.model.screen).toBe("space");
+  // Closing the real navigation layer notifies onPauseChange, which attempts an autosave.
+  const writes = f.port.write.mock.calls.length;
+  f.scene.controls.closeSettings.mockImplementation(() => void f.flush());
+  handoff(true);
+  await f.settle();
+  expect(f.port.write).toHaveBeenCalledTimes(writes);
+  expect(f.stored().economy.stardust).toBe(95);
+  expect(f.scene.model.screen).toBe("story");
+  expect(f.scene.model.state.economy.stardust).toBe(95);
+  expect(f.scene.cheatSession.active).toBe(false);
+  expect(f.values.get("ada-the-navigator.sound")).toBe("off");
+});
 
 it("checks for an update only when scene navigation returns to Start", async () => {
   const f = cheatScene(new GameModel(CONTENT, flight().save()));
@@ -868,7 +917,12 @@ describe("cheat session", () => {
     expect(f.scene.model.state.mode).toBe("space");
     expect(f.scene.model.state.economy.stardust).toBe(start + 7);
     expect(f.scene.model.state.economy.ownedWeapons).toEqual([]);
-    expect(f.port.write.mock.calls.length).toBeGreaterThan(writes);
+    await f.settle();
+    const resumed = f.port.write.mock.calls.length;
+    f.scene.model.state.economy.stardust += 1;
+    await f.flush();
+    expect(f.port.write.mock.calls).toHaveLength(resumed + 1);
+    expect(f.stored().economy.stardust).toBe(start + 8);
   });
 
   it("applies a cheat on the start screen to the play Continue begins, and restores at title", async () => {
@@ -943,9 +997,7 @@ describe("cheat session", () => {
     await f.settle();
     f.showTips();
     f.apply(() => f.scene.model.backToTitle());
-    await f.settle();
-    await f.settle();
-    expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION);
+    await vi.waitFor(() => expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION));
     const restored = JSON.parse(f.scene.model.save()) as GameSave;
     expect(restored.seenConversations).toEqual(["meeting:4:avi"]);
     expect({ ...restored, seenConversations: [] }).toEqual({
@@ -990,9 +1042,11 @@ describe("canonical save caller", () => {
       sys: { isActive: () => true },
     };
     const context = createContext({
+      openCampaignRewinds: new WeakMap(),
       requiredLoading: { state: { attempt: 1 } },
       requiredReady: () => true,
       saves: { save },
+      writingCampaignRewinds: new WeakSet(),
     });
     const flush = runInContext(callback("flushScene"), context) as (
       value: typeof scene,
@@ -1005,6 +1059,17 @@ describe("canonical save caller", () => {
     await flush(scene);
     expect(scene.savingUnavailable).toBe(false);
     expect(scene.shell.setSavingAvailable).toHaveBeenLastCalledWith(true);
+  });
+
+  it("suspends ordinary writes while the rewind confirmation owns the scene", async () => {
+    const f = cheatScene(flight());
+    const isOpen = vi.fn().mockReturnValue(true);
+    f.context.openCampaignRewinds.set(f.scene, isOpen);
+    await f.flush();
+    expect(f.port.write).not.toHaveBeenCalled();
+    isOpen.mockReturnValue(false);
+    await f.flush();
+    expect(f.port.write).toHaveBeenCalledOnce();
   });
 
   it.each([true, false])(
@@ -1143,9 +1208,11 @@ describe("required entry save admission", () => {
     const flush = runInContext(
       callback("flushScene"),
       createContext({
+        openCampaignRewinds: new WeakMap(),
         requiredLoading,
         requiredReady: () => ready,
         saves: { save },
+        writingCampaignRewinds: new WeakSet(),
       }),
     ) as (value: typeof scene) => Promise<void>;
     await flush(scene);

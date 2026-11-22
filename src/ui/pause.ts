@@ -1,7 +1,8 @@
 // Pause stays available during active flight. Its grid actions sort by label, then Back to title,
 // then the primary Resume last.
 
-export type PauseAction = "backToTitle" | "map" | "quests" | "resume" | "settings" | "ship";
+export type PauseAction =
+  "backToTitle" | "cheats" | "map" | "quests" | "resume" | "settings" | "ship";
 
 /** Where the Paused card opens: only in flight. */
 export type PausePlace = "flight";
@@ -21,18 +22,16 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
   return !inDanger;
 }
 
-// The Paused card's actions that span the grid's full width, one per row, in this order at the
-// bottom: Back to title directly above the primary Resume.
-export const PAUSE_FULL_WIDTH: readonly PauseAction[] = ["backToTitle", "resume"];
+// Cheats keeps its full-width row. Back to title and Resume are the fixed footer rows.
+export const PAUSE_FULL_WIDTH: readonly PauseAction[] = ["cheats", "backToTitle", "resume"];
 
-// The Paused card's actions in reading order: Map, Quests, Settings and Ship in the two-column
-// grid sorted by their labels, then Back to title and the primary Resume, each full width. Back to
-// title stays available in danger; Map still opens, where Travel here and Galaxies are
+// Sort all ordinary actions by their labels, then place Back to title and the primary Resume.
+// Back to title stays available in danger; Map still opens, where Travel here and Galaxies are
 // unavailable instead.
 export function pauseActions(
   labels: Readonly<Record<PauseAction, string>>,
 ): readonly PauseActionView[] {
-  const grid = (["map", "quests", "settings", "ship"] as const)
+  const grid = (["cheats", "map", "quests", "settings", "ship"] as const)
     .map((id) => ({ available: true, id, role: "secondary" as const }))
     .sort((a, b) => labels[a.id].localeCompare(labels[b.id]));
   return [

@@ -607,20 +607,54 @@ ${UI_SCOPE} .ada-steps{
   margin:0
 }
 
-/* Cheats: one column of full-width rows a gap apart, the card's scroll group. Its padding keeps
-   a focused row's ring inside the column's clip at the sides and the scroll ends, as the job list;
-   while it scrolls, its scrollbar (.ada-scroll, SCROLL.gap + SCROLL.track) takes the right
-   reserve from the rows. */
+/* Cheats keeps the two approved columns and its Back footer in one compact card. */
+${UI_SCOPE} .ada-cheats-card > header{
+  margin-top:${units(SPACING.rowGap)}
+}
+${UI_SCOPE} .ada-cheats-card > .ada-card-body{
+  margin-top:${units(SPACING.rowGap)};
+  gap:${units(SPACING.rowGap)};
+  overflow:visible
+}
+${UI_SCOPE} .ada-cheats-card > .ada-card-body::after{
+  height:${units(SPACING.rowGap)}
+}
 ${UI_SCOPE} .ada-cheat-items{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  gap:${units(CARD_CONTENT.gap)};
-  padding:${units(FOCUS_RING.outset)};
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:${units(SPACING.columnGap * 2)};
   align-self:stretch
 }
-${UI_SCOPE} .ada-cheat-items>*{
+${UI_SCOPE} .ada-cheat-column{
+  display:grid;
+  gap:${units(SPACING.rowGap)};
+  min-width:0
+}
+${UI_SCOPE} .ada-cheat-column h3{
+  margin:0;
+  font:${font(TYPE.label)};
+  color:${TEXT_TOKENS.title}
+}
+${UI_SCOPE} .ada-cheat-rows{
+  display:grid;
+  grid-auto-rows:minmax(${units(TEXT_BUTTON.height)},auto);
+  gap:${units(SPACING.rowGap)}
+}
+${UI_SCOPE} .ada-cheat-grants{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:${units(SPACING.columnGap)}
+}
+${UI_SCOPE} .ada-cheat-rows .ada-button,
+${UI_SCOPE} .ada-cheat-rows > .ada-row{
   width:100%
+}
+${UI_SCOPE} .ada-cheat-resource-icon{
+  flex:none;
+  width:${units(20)};
+  height:${units(20)};
+  background-size:100% 100%;
+  background-repeat:no-repeat
 }
 
 ${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON})),
