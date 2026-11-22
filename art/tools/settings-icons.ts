@@ -185,6 +185,9 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
+// Archie's open door frame and outward arrow, adapted at native size.
+const EXIT_PATH = "M3 2H12V7H10V4H5V16H10V13H12V18H3ZM7 9H14V6L18.5 10L14 14V11H7Z";
+
 // The start screen's 20 by 20 vector nav glyphs (public/art/ui/icons/<name>.svg), each shape a
 // list of attributes. The runtime draws each file as a CSS mask in the HUD button's glyph colour
 // with smooth sampling, so the fill is each file's default colour only.
@@ -203,9 +206,7 @@ const NAV_GLYPHS: Readonly<Record<string, readonly (readonly string[])[]>> = {
       'd="M5 3.625H3.625Q2.625 3.625 2.625 4.625V5.25Q2.625 7.375 5 7.375M15 3.625H16.375Q17.375 3.625 17.375 4.625V5.25Q17.375 7.375 15 7.375"',
     ],
   ],
-  // A door frame open on the right, after Archie's icon-exit, with an arrow leaving through the
-  // gap: frame bars 2 wide, a shaft 2 wide and a head 8 tall.
-  exit: [[`fill="#${INK}"`, 'd="M3 2H12V7H10V4H5V16H10V13H12V18H3ZM7 9H14V6L18.5 10L14 14V11H7Z"']],
+  exit: [[`fill="#${INK}"`, `d="${EXIT_PATH}"`]],
   // The gear on icon-settings-nav's outline: a body of radius 7.5 around a hole of radius 4, four
   // orthogonal teeth 4 wide to the frame edges and four 3 by 3 diagonal teeth.
   settings: [
@@ -234,6 +235,20 @@ for (const [name, shapes] of Object.entries(NAV_GLYPHS)) {
     "",
   ];
   writeFileSync(`${ui}icons/${name}.svg`, svgText(svg.join("\n"), SVG_DECIMALS.navGlyphs));
+}
+
+// The installed-app Exit uses the existing Pause chrome for each pose. The native-size
+// door and arrow balance around the disc centre by painted area, with no pose-specific offset.
+for (const suffix of ["", "-press", "-held"]) {
+  const pause = readFileSync(`${ui}icons/pause${suffix}.svg`, "utf8");
+  const disc = pause.replace(
+    /<path fill="([^"]+)" d="[^"]+"\s*\/>/u,
+    `<path fill="$1" d="${EXIT_PATH}" transform="translate(8.6 7.5)" />`,
+  );
+  if (disc === pause) {
+    throw new Error(`Pause${suffix} is missing its disc glyph path`);
+  }
+  writeFileSync(`${ui}icons/exit-disc${suffix}.svg`, disc);
 }
 
 // The UI manifest's entries for these sheets, in the existing sprite schema, sorted by key.
