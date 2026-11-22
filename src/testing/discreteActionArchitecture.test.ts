@@ -271,6 +271,92 @@ it("does not resolve type-only or lexically shadowed event imports", () => {
   ]);
 });
 
+const canonicalRegistry = {
+  path: "src/ui/actionBinding.ts",
+  text: readFileSync(new URL("../ui/actionBinding.ts", import.meta.url), "utf8"),
+};
+
+function constructionFindings(path: string, text: string) {
+  return scanDiscreteActionProject([canonicalRegistry, { path, text }]).findings.filter(
+    (finding) => finding.path === path,
+  );
+}
+
+it("accepts the actual Ship row's pre-bind metadata and catches a native click bypass on an early return", () => {
+  const path = "src/ui/shipCard.ts";
+  const source = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
+  const metadata = 'line.type = "button"';
+  expect(constructionFindings(path, source)).toEqual([]);
+  const bypass = source.replace(
+    `${metadata};`,
+    `${metadata};
+     if (legacy()) {
+       document.body.append(line);
+       line.addEventListener("click", () => onItem(row, line));
+       return line;
+     }`,
+  );
+  expect(bypass).not.toBe(source);
+  expect(constructionFindings(path, bypass).map(({ kind, source }) => [kind, source])).toEqual([
+    ["unbound-discrete", 'document.createElement("button")'],
+    ["unbound-discrete", metadata],
+    ["raw-discrete", 'line.addEventListener("click", () => onItem(row, line))'],
+  ]);
+});
+
+function constructWith(
+  prelude = "",
+  between = "",
+  bind = "bindAdaAction({ click: { run: () => act() } }, control)",
+) {
+  return `
+    import { bindAdaAction } from "./ui/actionBinding.ts";
+    function build() {
+      ${prelude}
+      const control = document.createElement("button");
+      control.type = "button";
+      control.dataset.action = "select-row";
+      ${between}
+      const registration = ${bind};
+      return control;
+    }
+  `;
+}
+
+it("covers consecutive literal metadata on another fresh node before its canonical registration", () => {
+  expect(constructionFindings("src/otherSurface.ts", constructWith())).toEqual([]);
+});
+
+it.each([
+  ["shadowed bind", "const bindAdaAction = fake;", "", "bindAdaAction({}, control)"],
+  ["different node", "", "", "bindAdaAction({}, sibling)"],
+  ["shadowed receiver", "const document = alternate;", "", "bindAdaAction({}, control)"],
+  ["call receiver", "", "", "fake.bindAdaAction({}, control)"],
+  ["attached node", "", "root.append(control);", "bindAdaAction({}, control)"],
+  ["escaped options", "", "", "bindAdaAction({ click: expose(control) }, control)"],
+  ["conditional bind", "", "", "enabled && bindAdaAction({}, control)"],
+] as const)("keeps pre-bind metadata open for a %s", (_case, prelude, between, bind) => {
+  const result = constructionFindings("src/otherSurface.ts", constructWith(prelude, between, bind));
+  expect(result).toContainEqual(
+    expect.objectContaining({ kind: "unbound-discrete", source: 'control.type = "button"' }),
+  );
+  expect(result).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      source: 'control.dataset.action = "select-row"',
+    }),
+  );
+});
+
+it("does not extend pre-bind proof through a destructured cleanup handle", () => {
+  const source = constructWith()
+    .replace("const registration =", "const { dispose } =")
+    .replace("return control", "dispose(); return control");
+  expect(constructionFindings("src/otherSurface.ts", source)).toContainEqual(
+    expect.objectContaining({ kind: "unbound-discrete", source: 'control.type = "button"' }),
+  );
+});
+
 it("does not exempt a callback because it is named continuous, drag, or editing", () => {
   for (const callback of ["continuous", "drag", "editing"]) {
     const findings = scanDiscreteActionBindings(

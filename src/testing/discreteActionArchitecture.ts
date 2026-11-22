@@ -38,18 +38,18 @@ export interface FactoryAssociation {
 }
 
 interface ScanContext {
-  readonly eventImport?: (node: ts.Identifier) => ts.ImportSpecifier | undefined;
+  readonly lexicalDeclarations?: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
   readonly sources: ReadonlyMap<string, ts.SourceFile>;
 }
 
-function importedEventLiteral(
+function localValueImport(
   context: ScanContext,
   node: ts.Identifier,
-  item: ts.ImportSpecifier,
-): string | undefined {
-  // The binder distinguishes the actual import from names shadowed in any lexical scope.
-  if (context.eventImport?.(node) !== item) {
+): { readonly name: string; readonly target: ts.SourceFile } | undefined {
+  const declarations = context.lexicalDeclarations?.(node);
+  const item = declarations?.length === 1 ? declarations[0] : undefined;
+  if (!item || !ts.isImportSpecifier(item)) {
     return undefined;
   }
   const clause = item.parent.parent;
@@ -71,7 +71,15 @@ function importedEventLiteral(
   if (!target || target.isDeclarationFile) {
     return undefined;
   }
-  const name = item.propertyName?.text ?? item.name.text;
+  return { name: item.propertyName?.text ?? item.name.text, target };
+}
+
+function importedEventLiteral(context: ScanContext, node: ts.Identifier): string | undefined {
+  const imported = localValueImport(context, node);
+  if (!imported) {
+    return undefined;
+  }
+  const { name, target } = imported;
   for (const variable of target.statements) {
     if (
       !ts.isVariableStatement(variable) ||
@@ -95,10 +103,10 @@ function importedEventLiteral(
   return undefined;
 }
 
-/** Bind only the provided project sources. Event imports resolve through the scan's own map. */
-function localEventImports(
+/** Resolve lexical identities only within the supplied project scan. */
+function localDeclarations(
   sources: ScanContext["sources"],
-): NonNullable<ScanContext["eventImport"]> {
+): NonNullable<ScanContext["lexicalDeclarations"]> {
   let checker: ts.TypeChecker | undefined;
   return (node) => {
     checker ??= ts
@@ -118,10 +126,31 @@ function localEventImports(
         rootNames: [...sources.keys()],
       })
       .getTypeChecker();
-    const declarations = checker.getSymbolAtLocation(node)?.declarations;
-    const item = declarations?.length === 1 ? declarations[0] : undefined;
-    return item && ts.isImportSpecifier(item) ? item : undefined;
+    return checker.getSymbolAtLocation(node)?.declarations;
   };
+}
+
+/** An options literal may close over the node, but evaluating it must not publish the node. */
+function inertRegistrationOptions(node: ts.Expression): boolean {
+  if (ts.isObjectLiteralExpression(node)) {
+    return node.properties.every(
+      (property) =>
+        ts.isPropertyAssignment(property) &&
+        (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
+        property.name.text !== "__proto__" &&
+        property.name.text !== "nativeClickOwner" &&
+        inertRegistrationOptions(property.initializer),
+    );
+  }
+  return (
+    ts.isArrowFunction(node) ||
+    ts.isFunctionExpression(node) ||
+    ts.isStringLiteralLike(node) ||
+    ts.isNumericLiteral(node) ||
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword ||
+    node.kind === ts.SyntaxKind.NullKeyword
+  );
 }
 
 function scanSource(context: ScanContext, path: string, text: string) {
@@ -216,7 +245,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (ts.isIdentifier(node)) {
       const item = declaration(node);
       if (item && ts.isImportSpecifier(item)) {
-        const name = importedEventLiteral(context, node, item);
+        const name = importedEventLiteral(context, node);
         return name === undefined ? [] : [name];
       }
     }
@@ -806,6 +835,107 @@ function scanSource(context: ScanContext, path: string, text: string) {
     (bound.get(reference(node)) ?? []).some(
       (proof) => proof.owner === owner && (construction || proof.end <= position),
     );
+  const immediateButtonRegistration = (
+    metadata: ts.BinaryExpression,
+    target: ts.Expression,
+  ): boolean => {
+    if (
+      !context.lexicalDeclarations ||
+      !ts.isIdentifier(target) ||
+      !ts.isExpressionStatement(metadata.parent) ||
+      !ts.isBlock(metadata.parent.parent) ||
+      !hasBinding(target, true)
+    ) {
+      return false;
+    }
+    const declarations = context.lexicalDeclarations(target);
+    const fresh = declarations?.length === 1 ? declarations[0] : undefined;
+    if (
+      !fresh ||
+      !ts.isVariableDeclaration(fresh) ||
+      !ts.isVariableDeclarationList(fresh.parent) ||
+      !fresh.initializer
+    ) {
+      return false;
+    }
+    const { initializer, parent: list } = fresh;
+    const creation = list.parent;
+    const block = metadata.parent.parent;
+    if (
+      !ts.isVariableStatement(creation) ||
+      creation.parent !== block ||
+      !(list.flags & ts.NodeFlags.Const) ||
+      list.declarations.length !== 1 ||
+      !ts.isCallExpression(initializer) ||
+      initializer.questionDotToken ||
+      initializer.arguments.length !== 1 ||
+      !ts.isStringLiteralLike(initializer.arguments[0]!) ||
+      initializer.arguments[0]!.text !== "button" ||
+      !ts.isPropertyAccessExpression(initializer.expression) ||
+      initializer.expression.questionDotToken ||
+      initializer.expression.name.text !== "createElement" ||
+      !ts.isIdentifier(initializer.expression.expression) ||
+      initializer.expression.expression.text !== "document" ||
+      context.lexicalDeclarations(initializer.expression.expression)?.length
+    ) {
+      return false;
+    }
+    const ownNode = (node: ts.Expression): boolean =>
+      ts.isIdentifier(node) && context.lexicalDeclarations?.(node)?.[0] === fresh;
+    const isMetadata = (statement: ts.Statement): boolean => {
+      if (!ts.isExpressionStatement(statement)) {
+        return false;
+      }
+      const node = statement.expression;
+      if (
+        !ts.isBinaryExpression(node) ||
+        node.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+        !ts.isPropertyAccessExpression(node.left) ||
+        node.left.questionDotToken ||
+        !ts.isStringLiteralLike(node.right)
+      ) {
+        return false;
+      }
+      const { expression, name } = node.left;
+      return (
+        (name.text === "type" && node.right.text === "button" && ownNode(expression)) ||
+        (name.text === "action" &&
+          ts.isPropertyAccessExpression(expression) &&
+          !expression.questionDotToken &&
+          expression.name.text === "dataset" &&
+          ownNode(expression.expression))
+      );
+    };
+    const following = block.statements.slice(block.statements.indexOf(creation) + 1);
+    const code = following.findIndex((statement) => !isMetadata(statement));
+    if (code < 0 || !following.slice(0, code).includes(metadata.parent)) {
+      return false;
+    }
+    const next = following[code]!;
+    const call = ts.isExpressionStatement(next)
+      ? next.expression
+      : ts.isVariableStatement(next) &&
+          next.declarationList.flags & ts.NodeFlags.Const &&
+          next.declarationList.declarations.length === 1 &&
+          ts.isIdentifier(next.declarationList.declarations[0]!.name)
+        ? next.declarationList.declarations[0]!.initializer
+        : undefined;
+    if (
+      !call ||
+      !ts.isCallExpression(call) ||
+      call.questionDotToken ||
+      !ts.isIdentifier(call.expression) ||
+      call.arguments.length !== 2 ||
+      !ownNode(call.arguments[1]!) ||
+      !ts.isObjectLiteralExpression(call.arguments[0]!) ||
+      !inertRegistrationOptions(call.arguments[0]!) ||
+      !immediateInvocation(call)
+    ) {
+      return false;
+    }
+    const binder = localValueImport(context, call.expression);
+    return binder?.target.fileName === "src/ui/actionBinding.ts" && binder.name === "bindAdaAction";
+  };
   const inheritFactoryBindings = (node: ts.Node): void => {
     if (
       ts.isVariableDeclaration(node) &&
@@ -1399,7 +1529,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
           isActionId && ts.isPropertyAccessExpression(left.expression)
             ? left.expression.expression
             : left.expression;
-        if ((isActionType || isActionId) && !hasBinding(target)) {
+        if (
+          (isActionType || isActionId) &&
+          !hasBinding(target) &&
+          !immediateButtonRegistration(node, target)
+        ) {
           record(
             "unbound-discrete",
             node,
@@ -1438,8 +1572,8 @@ export function scanDiscreteActionProject(inputs: readonly DiscreteActionSource[
     ]),
   );
   const context: ScanContext = {
-    eventImport: localEventImports(sources),
     factories: new Map(),
+    lexicalDeclarations: localDeclarations(sources),
     sources,
   };
   for (let pass = 0; pass <= inputs.length; pass++) {
