@@ -228,8 +228,8 @@ inside the game area, clear of curved screen corners and the bands; the
 safe-rect clamp still keeps them out of every inset. The sticks are placed in
 the game area and ignore safe-area insets, since the game's layout insets are
 zero under the [full-viewport layout](../docs/work/ada-0106.md): each ring's
-drawn edge sits 50 from its outer screen side and 50 above the screen bottom,
-mirrored as Chibi places its touch controls, moved inward only to stay
+drawn edge sits 80 from its outer screen side and 50 above the screen bottom,
+moved inward only to stay
 `STICK_AREA_MARGIN` (8) inside the game area; Use follows the aim stick (see
 their rows).
 
@@ -274,8 +274,8 @@ at 744x396.
 | Status pill  | One `PILL` always holding the Stardust and ore counts, including zero, followed by any carried job or story item or towed craft: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5). Parts and states in [Status pill](#status-pill)                                                                                                           | `STATUS_PILL`, `playView.ts`, to implement                                                                                  |
 | Shield pill  | Bottom centre: one `PILL` with the shield icon and a bar whose length follows Shield level (120, 180 or 240, so the pill is 156, 216 or 276 wide), centred on the HUD rect (the view's centre), its drawn bottom on the HUD rect's bottom edge, `HUD_EDGE` (12) above the game area's bottom as the pause disc's drawn top sits 12 below its top (see [Shield pill](#shield-pill)), independent of the sticks: x 282 to 438, 252 to 468 or 222 to 498 and y 320 to 348 at the 720 base, 313 to 341 with phone insets, 342 to 370 at 1280x720. The same place on touch and desktop; [Touch controls by view](#touch-controls-by-view) lists every view. See [Shield pill](#shield-pill) | `SHIELD_PILL`, `playView.ts`, to implement                                                                                  |
 | Item notice  | A 24-high chip under the status pill, top HUD rect top + 34.5 (46.5), centred under where the gain lands and clamped between the pill's left edge and `SPACING.pageInset` left of the leftmost weapon target; draws over the conversation box and under the HUD controls; takes no input. See [Item notice](#item-notice)                                                                                                                                                                                                                                                                                                                                                              | `ITEM_NOTICE`, `itemNotice.ts`, to implement                                                                                |
-| Sticks       | Drawn ring edges 50 logical px from each outer screen side and 50 above the screen bottom, ignoring safe insets, moved inward only to stay at least 8 inside the game area. Both sticks use canonical TOUCH_STICK; Use retains its (-77, -100) offset from aim.                                                                                                                                                                                                                                                                                                                                                                                                                        | `TOUCH_STICK`, `touchControls.ts`, to implement, now `sticks.ts`; `STICK_AREA_MARGIN` and `controlsBottom()`, `playView.ts` |
-| Use          | Touch only: Chibi's touch disc (`USE_DISC`), a 75 frame with an open ring 73 across and the action's symbol, at the sticks' 85% opacity ([Controls](controls.md#use-disc)); its centre the aim stick's rest centre plus `USE_DISC.fromAim` (-77, -100), as Chibi places Use from Jump: (556, 173) at the 720 base and (615, 173) at 844x390, the same with phone insets because the sticks ignore them; press shape a circle of radius 100 (`TOUCH_CIRCLE_RADIUS` 63 plus the 37 hint radius) about the centre, cut on the line midway to the aim stick's centre; shown only while an interaction is available, on a touch screen, outside modals                                      | `USE_DISC`, `touchControls.ts`, to implement; replaces `USE_BUTTON`                                                         |
+| Sticks       | Drawn ring edges 80 logical px from each outer screen side and 50 above the screen bottom, ignoring safe insets, moved inward only to stay at least 8 inside the game area. Both sticks use canonical TOUCH_STICK; Use retains its (-77, -100) offset from aim.                                                                                                                                                                                                                                                                                                                                                                                                                        | `TOUCH_STICK`, `touchControls.ts`, to implement, now `sticks.ts`; `STICK_AREA_MARGIN` and `controlsBottom()`, `playView.ts` |
+| Use          | Touch only: Chibi's touch disc (`USE_DISC`), a 75 frame with an open ring 73 across and the action's symbol, at the sticks' 85% opacity ([Controls](controls.md#use-disc)); its centre is the aim stick's rest centre plus `USE_DISC.fromAim` (-77, -100), as Chibi places Use from Jump: (526, 173) at the 720 base and (585, 173) at 844x390, the same with phone insets because the sticks ignore them; press shape a circle of radius 100 (`TOUCH_CIRCLE_RADIUS` 63 plus the 37 hint radius) about the centre, cut on the line midway to the aim stick's centre; shown only while an interaction is available, on a touch screen, outside modals                                   | `USE_DISC`, `touchControls.ts`, to implement; replaces `USE_BUTTON`                                                         |
 | Menu         | Start screen and Ada's room: the pause button's frame, disc and press area (`PAUSE_BUTTON`) with the three-bar menu glyph (`menu.svg`, `menu-press.svg`, `menu-held.svg`); opens the Menu card. See [Cards](#cards)                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `PAUSE_BUTTON`, `navigationButton.ts`                                                                                       |
 | Exit         | Start screen only, and only in an installed app window that can close the app (Chromium on Android and desktop), never in a plain browser tab: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner. See [Start screen](#start-screen)                                                                                                                                                                                                          | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`                                                                           |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                 | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`                                                |
@@ -284,7 +284,7 @@ at 744x396.
 ### Touch controls by view
 
 Rings are drawn edges and centres are rest centres. Both sticks ignore safe
-insets: each ring's drawn edge sits 50 from its outer screen side and 50 above
+insets: each ring's drawn edge sits 80 from its outer screen side and 50 above
 the screen bottom, moved inward only as far as needed to stay at least 8 inside
 the game area. The shield is independent of them: centred on the HUD rect, its
 drawn bottom on that rect's bottom edge, 12 above the game area's bottom, or
@@ -294,21 +294,22 @@ left 43, right 43, top 0 and bottom 19 logical px.
 
 | Screen, insets              | Logical view, play view x, y | Move ring, x and y | Aim ring, x and y | Rest centres           | Shield pill x at levels 1, 2, 3; y                   | Use centre |
 | --------------------------- | ---------------------------- | ------------------ | ----------------- | ---------------------- | ---------------------------------------------------- | ---------- |
-| 720x360                     | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 320-348                   | (556, 173) |
-| 720x360, phone insets       | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 313-341                   | (556, 173) |
-| 844x390                     | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (615, 173) |
-| 844x390, phone insets       | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (615, 173) |
-| 844x390, bottom 19          | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (615, 173) |
-| 720x360, left 43, bottom 19 | 720x360, 0, 0                | 50-123, 237-310    | 597-670, 237-310  | (86, 273), (633, 273)  | 282-438, 252-468, 222-498; 313-341                   | (556, 173) |
-| 844x390, left 47            | 779.08x360, 29, 0            | 50-123, 237-310    | 656-729, 237-310  | (86, 273), (692, 273)  | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (615, 173) |
-| 1280x720                    | 720x405, 0, 22               | 50-123, 282-355    | 597-670, 282-355  | (86, 318), (633, 318)  | 282-438, 252-468, 222-498; 342-370                   | (556, 218) |
-| 2400x1080                   | 800x360, 40, 0               | 50-123, 237-310    | 677-750, 237-310  | (86, 273), (713, 273)  | 322-478, 292-508, 262-538; 320-348                   | (636, 173) |
-| 2404x1080 at dpr 2.5        | 801.33x360, 40, 0            | 50-123, 237-310    | 678-751, 237-310  | (86, 273), (714, 273)  | 322.67-478.67, 292.67-508.67, 262.67-538.67; 320-348 | (637, 173) |
-| 2560x1080                   | 853.33x360, 66, 0            | 74-147, 237-310    | 705-778, 237-310  | (110, 273), (741, 273) | 348.67-504.67, 318.67-534.67, 288.67-564.67; 320-348 | (664, 173) |
+| 720x360                     | 720x360, 0, 0                | 80-153, 237-310    | 567-640, 237-310  | (116, 273), (603, 273) | 282-438, 252-468, 222-498; 320-348                   | (526, 173) |
+| 720x360, phone insets       | 720x360, 0, 0                | 80-153, 237-310    | 567-640, 237-310  | (116, 273), (603, 273) | 282-438, 252-468, 222-498; 313-341                   | (526, 173) |
+| 844x390                     | 779.08x360, 29, 0            | 80-153, 237-310    | 626-699, 237-310  | (116, 273), (662, 273) | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (585, 173) |
+| 844x390, phone insets       | 779.08x360, 29, 0            | 80-153, 237-310    | 626-699, 237-310  | (116, 273), (662, 273) | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (585, 173) |
+| 844x390, bottom 19          | 779.08x360, 29, 0            | 80-153, 237-310    | 626-699, 237-310  | (116, 273), (662, 273) | 311.54-467.54, 281.54-497.54, 251.54-527.54; 313-341 | (585, 173) |
+| 720x360, left 43, bottom 19 | 720x360, 0, 0                | 80-153, 237-310    | 567-640, 237-310  | (116, 273), (603, 273) | 282-438, 252-468, 222-498; 313-341                   | (526, 173) |
+| 844x390, left 47            | 779.08x360, 29, 0            | 80-153, 237-310    | 626-699, 237-310  | (116, 273), (662, 273) | 311.54-467.54, 281.54-497.54, 251.54-527.54; 320-348 | (585, 173) |
+| 1280x720                    | 720x405, 0, 22               | 80-153, 282-355    | 567-640, 282-355  | (116, 318), (603, 318) | 282-438, 252-468, 222-498; 342-370                   | (526, 218) |
+| 2400x1080                   | 800x360, 40, 0               | 80-153, 237-310    | 647-720, 237-310  | (116, 273), (683, 273) | 322-478, 292-508, 262-538; 320-348                   | (606, 173) |
+| 2404x1080 at dpr 2.5        | 801.33x360, 40, 0            | 80-153, 237-310    | 648-721, 237-310  | (116, 273), (684, 273) | 322.67-478.67, 292.67-508.67, 262.67-538.67; 320-348 | (607, 173) |
+| 2560x1080                   | 853.33x360, 66, 0            | 80-153, 237-310    | 700-773, 237-310  | (116, 273), (736, 273) | 348.67-504.67, 318.67-534.67, 288.67-564.67; 320-348 | (659, 173) |
+| 3000x1080                   | 1000x360, 140, 0             | 148-221, 237-310   | 779-852, 237-310  | (184, 273), (815, 273) | 422-578, 392-608, 362-638; 320-348                   | (738, 173) |
 
 The joystick ring offsets are independent of the shield's bottom margin.
-`USE_DISC.fromAim` (-77, -100) is unchanged, so Use follows the aim stick's
-new rest centre. Its press circle remains cut away from the aim ring; the
+`USE_DISC.fromAim` (-77, -100) places Use relative to the aim stick's
+rest centre. Its press circle remains cut away from the aim ring; the
 conversation box consumes any overlapping press. Shield notice destinations
 follow the shield icon's current HUD-relative centre.
 
@@ -752,7 +753,7 @@ Clearance along the edges, from the band the 10-across markers can occupy
 | --------------------------------------- | ------: | -----------: | ------: | -----------------: |
 | Top band to the pause and weapon discs  |       1 |            1 |       1 |                  1 |
 | Side band to the pause and weapon discs |       1 |      11 over |       1 |            11 over |
-| Side band to the stick rings            |      39 |       4 over |       9 |             4 over |
+| Side band to the stick rings            |      69 |           26 |      39 |                 26 |
 | Bottom band to the stick rings          |      39 |           20 |      39 |                 20 |
 | Bottom band to the shield pill bottom   |       1 |      11 over |       1 |            11 over |
 
@@ -763,10 +764,8 @@ Clearance along the edges, from the band the 10-across markers can occupy
 - With phone insets the side bands (44 to 54, or 44 to 56 lit) share their
   columns with the pause disc and the outermost weapon disc, which start at
   the same 43 inset: a side marker in the HUD row's span (12 to 60.5, count
-  pills included) sits under that disc. At 720x360 with phone insets the side
-  bands overlap the stick rings, which sit 50 from the screen's sides whatever
-  the inset, by 4, so a side marker in the rings' span (237 to 310) sits
-  partly under the open ring's band, and shows through its clear centre.
+  pills included) sits under that disc. With these insets, the side marker
+  bands clear the stick rings by at least 24 logical px in both fields.
 - Bottom markers draw under the shield pill like other controls: they keep
   their place on the edge. Without a bottom inset the dark band clears the
   pill's drawn bottom by 1 and a light band reaches 1 under it; with the 19
@@ -1556,7 +1555,7 @@ leaves and lands standing above the markers.
 | ------------------------------------------------------------------------------------------------------------------------------                                                                                               | -----------------------------------------------------------------------------------                                           |
 | UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                                                                                                                   | CSS px at 1x, independent of the canvas                                                                                       |
 | Safe insets clamp HUD controls, cards and page content                                                                                                                                                                       | Insets not read                                                                                                               |
-| Sticks sit 50 from the outer sides and 50 above the screen bottom, ignoring safe insets, moved inward to stay `STICK_AREA_MARGIN` 8 inside the game area; Use follows the aim stick                                          | 24 from its sides, each side's own inset replacing it, and 20 above its bottom                                                |
+| Sticks sit 80 from the outer sides and 50 above the screen bottom, ignoring safe insets, moved inward to stay `STICK_AREA_MARGIN` 8 inside the game area; Use follows the aim stick                                          | 24 from its sides, each side's own inset replacing it, and 20 above its bottom                                                |
 | Every action stack fills the inner width with `STACK_BUTTON_GAP`                                                                                                                                                             | Generic stacks 4 apart                                                                                                        |
 | Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                                                                                                                                        | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons                                           |
 | Shield pill at the bottom centre: the shield icon and a 120, 180 or 240 by 12 bar by Shield level; the status pill keeps Stardust, ore and cargo                                                                             | The shield bar (96x12) in the status pill beside pause                                                                        |
@@ -1587,7 +1586,7 @@ leaves and lands standing above the markers.
 | Exception           | Reason                                                                                                                                                                    | Retained rules                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Card press areas    | DOM hit-tests element boxes                                                                                                                                               | Each control box is at least 48 per axis; close uses `hitAround`                                       |
-| Touch sticks        | Continuous input with floating origins                                                                                                                                    | `TOUCH_STICK` anchors, the safe insets, the `STICK_AREA_MARGIN` clamp, 85% opacity                     |
+| Touch sticks        | Continuous input with floating origins                                                                                                                                    | `TOUCH_STICK` anchors, the `STICK_AREA_MARGIN` clamp, 85% opacity                                      |
 | Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                          |
 | Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
 | Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
@@ -1631,7 +1630,7 @@ Tests:
   disc share one drawn top.
 - At every view in [Touch controls by view](#touch-controls-by-view) the rest
   centres, rings, shield pill and Use centre match the table: each ring
-  50 from its outer side and 50 above the screen bottom, ignoring safe
+  80 from its outer side and 50 above the screen bottom, ignoring safe
   insets, no ring nearer
   than `STICK_AREA_MARGIN` to the game area's edge, both rings at one height,
   and Use at the aim stick's rest centre plus (-77, -100).
