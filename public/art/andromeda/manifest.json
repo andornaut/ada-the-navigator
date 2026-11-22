@@ -25070,6 +25070,36 @@
       },
       "archetype": "hostileStation",
       "family": "garnet"
+    },
+    {
+      "id": "andromeda-route-exchange-a",
+      "path": "/art/andromeda/route-exchange-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 33.6,
+      "displayHeight": 33.6,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "project": "routeExchange"
+    },
+    {
+      "id": "andromeda-route-exchange-b",
+      "path": "/art/andromeda/route-exchange-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 33.6,
+      "displayHeight": 33.6,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "project": "routeExchange"
     }
   ],
   "backdropHaze": "/art/andromeda/haze.json",

@@ -271,6 +271,43 @@ export function station(lit: boolean): Part[][] {
   return body;
 }
 
+// A small leaning rack of light route notes between two slate supports.
+export function routeNoteRack(lit: boolean): Part[][] {
+  return [
+    [{ plan: box(-17, -10, 17, 10), z0: 0, z1: 3, top: andromeda.roof, side: andromeda.roofSide }],
+    [
+      ...[-13, 13].map((x) => ({
+        plan: box(x - 1.5, 1, x + 1.5, 5),
+        z0: 3,
+        z1: 19,
+        top: andromeda.roof,
+        side: andromeda.roofSide,
+      })),
+      {
+        plan: box(-15, -5, 15, 5),
+        z0: 11,
+        z1: 19,
+        top: andromeda.markerDark,
+        side: andromeda.roofSide,
+      },
+      {
+        plan: box(-16, -6, 16, 4),
+        z0: 19,
+        z1: 20.5,
+        top: andromeda.roof,
+        side: andromeda.roofSide,
+      },
+      ...[-10, 0, 10].map((x, index) => ({
+        plan: box(x - 2.6, 4.5, x + 2.6, 5.5),
+        z0: 13,
+        z1: index === 1 ? 18 : 17,
+        top: lit ? "#fff0cf" : "#ddcba9",
+        side: lit ? "#eed9ac" : "#cdb792",
+      })),
+    ],
+  ];
+}
+
 // ---------------------------------------------------------------- courier school
 
 // Beside the station at the screen left: a training pad with a classroom, a short pier toward the

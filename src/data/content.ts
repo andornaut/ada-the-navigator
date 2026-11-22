@@ -599,6 +599,11 @@ export const CONTENT: GameContent = {
     projectAboutHubRepairs: "Patches and new lights for the mining hub.",
     projectAboutLoomHall: "A teaching hall for young Avi pilots.",
     projectAboutNursery: "A soft light where whale calves can rest.",
+    projectAboutPracticeBerth:
+      "Learners can rest and watch how another pilot takes the first turn.",
+    projectAboutQuietCrossing: "Waiting lights give pilots a place to pause while families pass.",
+    projectAboutRouteExchange:
+      "A lit board for route notes, warnings and corrections from passing crews.",
     projectAboutSpareBeacon: "A spare beacon, ready if the chain ever goes dark.",
     projectContribution: "Contribution",
     projectContributions: "Contributions",
@@ -612,6 +617,9 @@ export const CONTENT: GameContent = {
     projectEffectHubRepairs: "Repairs the mining hub",
     projectEffectLoomHall: "A place to teach pilots",
     projectEffectNursery: "A light for resting calves",
+    projectEffectPracticeBerth: "A place to watch and try again",
+    projectEffectQuietCrossing: "Give the whales room to pass",
+    projectEffectRouteExchange: "Share notes between couriers",
     projectEffectSpareBeacon: "A backup guide light",
     projectFunded: "Funded",
     projectProgress: "{paid} of {price}",

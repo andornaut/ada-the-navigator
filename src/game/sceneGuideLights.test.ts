@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
+import { settlementsNear } from "../model/andromedaPlaces.ts";
 import { guideBeaconSlots } from "../model/guideBeacons.ts";
 import { needleCourses } from "../model/needle.ts";
-import type { FlightState, Vec } from "../model/types.ts";
-import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
+import type { FlightState, GalaxyProgress, Vec } from "../model/types.ts";
+import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { andromedaSettlementVariant } from "./sceneAndromeda.ts";
 import { channelLampPlaces, createGuideLights } from "./sceneGuideLights.ts";
+import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 const calls = vi.hoisted(() => ({ keyline: vi.fn(), sprite: vi.fn() }));
+vi.mock("./sceneObjects.ts", () => ({ drawOutpost: vi.fn(), placeStationFrame: vi.fn() }));
 vi.mock("./sceneHud.ts", () => ({ keylineSprite: calls.keyline }));
 vi.mock("./sceneSprites.ts", () => ({ objectSprite: calls.sprite }));
 
@@ -21,9 +26,9 @@ beforeEach(() => {
   });
 });
 
-function fixture(galaxy: 4 | 5, player: Vec) {
+function fixture(galaxy: 3 | 4 | 5, player: Vec) {
   const changes: { project: string; revealed: boolean }[] = [];
-  const progress = { questComplete: false };
+  const progress: Pick<GalaxyProgress, "questComplete" | "andromeda"> = { questComplete: false };
   const flight = {
     galaxy,
     objects: [],
@@ -36,17 +41,23 @@ function fixture(galaxy: 4 | 5, player: Vec) {
     flightLive: true,
     galaxyManifests: GALAXY_MANIFESTS,
     model: {
-      revealWorldChange: vi.fn(),
+      revealWorldChange: vi.fn(() => true),
       state: { progress: { 5: progress } },
       worldChanges: () => changes,
     },
     outpostArt: new Map(),
     passes: vi.fn(),
     project: (point: Vec) => ({ x: 360 + point.x - player.x, y: 180 + point.y - player.y }),
+    projectArt: { revealMs: 600 },
     reducedMotion: false,
     reveals: new Map(),
     shipAssets: [],
     textures: { exists: () => true },
+    time: { now: 0 },
+    whirlpoolProjects: readWhirlpoolProjects(
+      GALAXY_MANIFESTS.get(3)!.assets,
+      publicJson("/art/whirlpool/projects.json"),
+    ),
   };
   const draw = createGuideLights();
   return {
@@ -127,4 +138,78 @@ describe("project guide lights", () => {
       expect.anything(),
     );
   });
+
+  it("anchors the Whirlpool lights to family and reveals only in visible live flight", () => {
+    const f = fixture(3, { x: 100, y: -78 });
+    f.flight.objects.push({ hp: 1, id: "family", kind: "destination", radius: 40, x: 0, y: 0 });
+    expect(f.run()).toEqual([]);
+    const change = { project: "quietCrossing", revealed: false };
+    f.changes.push(change);
+    f.scene.flightLive = false;
+    expect(f.run()).toEqual([]);
+    expect(f.scene.model.revealWorldChange).not.toHaveBeenCalled();
+    f.scene.flightLive = true;
+    expect(f.run()).toEqual(["project:quietCrossing"]);
+    expect(f.scene.model.revealWorldChange).toHaveBeenCalledExactlyOnceWith(3, "quietCrossing");
+    expect(calls.sprite).toHaveBeenCalledWith(
+      f.scene,
+      "project:quietCrossing",
+      "whirlpool-quiet-crossing-a",
+    );
+    expect(calls.sprite.mock.results[0]!.value.setPosition).toHaveBeenCalledWith(360, 180);
+    expect(calls.sprite.mock.results[0]!.value.setAlpha).toHaveBeenLastCalledWith(0);
+    change.revealed = true;
+    f.scene.flightClock = 300;
+    f.scene.time.now = 1000;
+    expect(f.run()).toEqual(["project:quietCrossing"]);
+    expect(calls.sprite).toHaveBeenLastCalledWith(
+      f.scene,
+      "project:quietCrossing",
+      "whirlpool-quiet-crossing-b",
+    );
+    expect(calls.sprite.mock.results[1]!.value.setAlpha).toHaveBeenLastCalledWith(0.875);
+  });
+
+  it("places the berth off the canonical practice entrance with reduced motion holding A", () => {
+    const player = { x: 0, y: 0 };
+    const f = fixture(4, player);
+    f.flight.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
+    const entrance = needleCourses(f.flight)!.practice.path[0]!;
+    f.changes.push({ project: "practiceBerth", revealed: true });
+    expect(f.run()).not.toContain("project:practiceBerth");
+    Object.assign(player, { x: entrance.x - 106, y: entrance.y + 158 });
+    f.scene.reducedMotion = true;
+    f.scene.time.now = 700;
+    expect(f.run()).toEqual(["project:practiceBerth"]);
+    expect(calls.sprite).toHaveBeenLastCalledWith(
+      f.scene,
+      "project:practiceBerth",
+      "needle-practice-berth-a",
+    );
+    expect(calls.sprite.mock.results[0]!.value.setPosition).toHaveBeenCalledWith(360, 180);
+  });
+
+  it.each(["hamlet", "lamphouse"])(
+    "places the rack at the retained %s settlement rather than Pip",
+    (variant) => {
+      const chosen = settlementsNear(ECONOMY, 75_000, { x: 0, y: 0 }).find(
+        (site) => andromedaSettlementVariant(site.id) === variant,
+      )!;
+      expect(chosen).toBeDefined();
+      const f = fixture(5, { x: chosen.x - 110, y: chosen.y - 143 });
+      f.flight.objects.push(
+        { hp: 1, id: "pip", kind: "destination", radius: 40, x: chosen.x + 40, y: chosen.y },
+        { ...chosen, hp: 1, kind: "destination", radius: 40, role: "settlement" },
+      );
+      f.changes.push({ project: "routeExchange", revealed: true });
+      expect(f.run()).not.toContain("project:routeExchange");
+      f.progress.andromeda = { settlement: chosen.id };
+      expect(f.run()).toContain("project:routeExchange");
+      const index = calls.sprite.mock.calls.findIndex(
+        (call) => call[1] === "project:routeExchange",
+      );
+      expect(calls.sprite.mock.calls[index]?.[2]).toBe("andromeda-route-exchange-a");
+      expect(calls.sprite.mock.results[index]!.value.setPosition).toHaveBeenCalledWith(360, 180);
+    },
+  );
 });

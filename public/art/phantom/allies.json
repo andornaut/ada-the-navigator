@@ -17,17 +17,26 @@
       "currentBuoys": {
         "craft": "buoytender"
       },
+      "quietCrossing": {
+        "craft": "voronguide"
+      },
       "channelLights": {
         "craft": "student"
       },
       "loomHall": {
         "craft": "loomship"
       },
+      "practiceBerth": {
+        "craft": "avipracticeglider"
+      },
       "courierSchool": {
         "craft": "trainee"
       },
       "spareBeacon": {
         "craft": "beacontender"
+      },
+      "routeExchange": {
+        "craft": "courierrunner"
       },
       "dockingBay": {
         "craft": "driller"

@@ -11,7 +11,12 @@ import {
 import { type NeedleCourse, needleCourses } from "../model/needle.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
-import { boundsOnScreen, readProjectArt, revealAlpha } from "./projectArt.ts";
+import {
+  boundsOnScreen,
+  type PlacedProjectArt,
+  readProjectArt,
+  revealAlpha,
+} from "./projectArt.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
@@ -47,7 +52,10 @@ export function channelLampPlaces(course: Pick<NeedleCourse, "path" | "width">) 
 }
 
 type GuideScene = ObjectsContext &
-  Pick<import("./scene.ts").GameScene, "flightClock" | "flightLive" | "galaxyManifests">;
+  Pick<
+    import("./scene.ts").GameScene,
+    "flightClock" | "flightLive" | "galaxyManifests" | "whirlpoolProjects"
+  >;
 
 export function createGuideLights() {
   let assets: readonly Asset[] | undefined;
@@ -58,7 +66,7 @@ export function createGuideLights() {
   let practice: NeedleCourse | undefined;
   let lamps: ReturnType<typeof channelLampPlaces> = [];
   return (scene: GuideScene, flight: FlightState): string[] => {
-    if (flight.galaxy !== 4 && flight.galaxy !== 5) {
+    if (flight.galaxy !== 3 && flight.galaxy !== 4 && flight.galaxy !== 5) {
       return [];
     }
     const galaxyAssets = scene.galaxyManifests.get(flight.galaxy)?.assets;
@@ -75,7 +83,7 @@ export function createGuideLights() {
     const drawn: string[] = [];
     const draw = (
       key: string,
-      kind: "guideBeacon" | "needleLamp",
+      kind: "guideBeacon" | "needleLamp" | "nurseryBeacon",
       frame: Asset,
       point: Vec,
       alpha: number,
@@ -112,15 +120,60 @@ export function createGuideLights() {
         }
       }
       const start = scene.reveals.get(project);
-      const duration = worldArt!.revealMs;
+      const duration = (flight.galaxy === 3 ? scene.projectArt : worldArt)?.revealMs ?? 0;
       if (start === undefined || now - start >= duration) {
         scene.reveals.delete(project);
         return 1;
       }
       return revealAlpha(duration, now - start);
     };
+    const drawPlaced = (
+      project: string,
+      kind: Parameters<typeof draw>[1],
+      art: PlacedProjectArt<Asset> | undefined,
+      anchor: Vec | undefined,
+      reducedFrame: 0 | 1 = 0,
+    ) => {
+      if (!art || !anchor) {
+        return;
+      }
+      const index = scene.reducedMotion
+        ? reducedFrame
+        : Math.floor(scene.time.now / art.frameMs) % 2;
+      const frame = art.frames[index]!;
+      const point = scene.project({ x: anchor.x + art.offset.x, y: anchor.y + art.offset.y });
+      const alpha = changeAlpha(project, visible(frame, point));
+      if (alpha !== undefined) {
+        draw(`project:${project}`, kind, frame, point, alpha);
+      }
+    };
+
+    if (flight.galaxy === 3) {
+      const art = scene.whirlpoolProjects;
+      const family = flight.objects.find(
+        (object) => object.kind === "destination" && object.id === "family",
+      );
+      drawPlaced("quietCrossing", "nurseryBeacon", art?.quietCrossing, family, art?.reducedFrame);
+      return drawn;
+    }
 
     if (flight.galaxy === 5) {
+      const exchange = worldArt?.world.get("routeExchange");
+      const settlement = scene.model.state.progress[5].andromeda?.settlement;
+      const anchor = settlement
+        ? flight.objects.find(
+            (object) =>
+              object.kind === "destination" &&
+              object.id === settlement &&
+              object.role === ANDROMEDA_PLACES.settlement,
+          )
+        : undefined;
+      drawPlaced(
+        "routeExchange",
+        "guideBeacon",
+        exchange?.kind === "placed" ? exchange : undefined,
+        anchor,
+      );
       const beaconId = ANDROMEDA_PLACES.beacon;
       const beacon =
         flight.objects.find((object) => object.id === beaconId) ??
@@ -163,8 +216,15 @@ export function createGuideLights() {
       return drawn;
     }
 
+    const course = needleCourses(flight)?.practice;
+    const berth = worldArt?.world.get("practiceBerth");
+    drawPlaced(
+      "practiceBerth",
+      "needleLamp",
+      berth?.kind === "placed" ? berth : undefined,
+      course?.path[0],
+    );
     const art = worldArt?.world.get("channelLights");
-    const course = art?.kind === "path" ? needleCourses(flight)?.practice : undefined;
     if (art?.kind !== "path" || !course) {
       return drawn;
     }

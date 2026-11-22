@@ -2,6 +2,7 @@ import { CURRENTS } from "../data/galaxyFeatures.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { type Current, currentsNear, nearestOnCurrent, pointOnCurrent } from "../model/currents.ts";
 import type { Vec } from "../model/types.ts";
+import { type PlacedProjectArt, readPlacedProject } from "./projectArt.ts";
 
 // Whirlpool's two community-project world changes (art/whirlpool.md "Project world changes"),
 // read from public/art/whirlpool/projects.json: the nursery beacon and its light pool at the whale
@@ -46,6 +47,7 @@ export interface CurrentBuoys<T extends ProjectFrame = ProjectFrame> {
 export interface WhirlpoolProjects<T extends ProjectFrame = ProjectFrame> {
   readonly currentBuoys?: CurrentBuoys<T>;
   readonly nurseryBeacon?: NurseryBeacon<T>;
+  readonly quietCrossing?: PlacedProjectArt<T>;
   /** The frame reduced motion holds on the beacon, its pool and every buoy. */
   readonly reducedFrame: 0 | 1;
 }
@@ -167,10 +169,13 @@ export function readWhirlpoolProjects<T extends ProjectFrame>(
   }
   const nurseryBeacon = readBeacon(assets, projects.nurseryBeacon);
   const currentBuoys = readBuoys(assets, projects.currentBuoys);
+  const quiet = fields(projects.quietCrossing);
+  const quietCrossing = quiet?.site === "family" ? readPlacedProject(assets, quiet) : undefined;
   return {
     reducedFrame: frame,
     ...(nurseryBeacon ? { nurseryBeacon } : {}),
     ...(currentBuoys ? { currentBuoys } : {}),
+    ...(quietCrossing ? { quietCrossing } : {}),
   };
 }
 

@@ -59,6 +59,10 @@ describe("project world-change art", () => {
     const projects = structuredClone(PROJECTS_FILE.projects);
     projects.channelLights!.path = "eye";
     projects.spareBeacon!.state = "dented";
+    const remaining = readProjectArt(manifest.assets, outposts, { ...PROJECTS_FILE, projects })!;
+    expect([...remaining.world.keys()]).toEqual(["practiceBerth", "routeExchange"]);
+    projects.practiceBerth!.offset = [0, "bad"];
+    projects.routeExchange!.reference = "pip";
     expect(
       readProjectArt(manifest.assets, outposts, { ...PROJECTS_FILE, projects })!.world.size,
     ).toBe(0);

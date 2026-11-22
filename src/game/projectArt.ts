@@ -26,9 +26,16 @@ export type ProjectArt<T extends StationFrame = StationFrame> =
       readonly outpost: string;
     };
 
+export interface PlacedProjectArt<T> {
+  readonly frames: readonly [T, T];
+  readonly frameMs: number;
+  readonly offset: Vec;
+}
+
 export type WorldProjectArt<T extends StationFrame> =
   | { readonly kind: "overlay"; readonly frame: T }
-  | { readonly kind: "path"; readonly frames: readonly [T, T] };
+  | { readonly kind: "path"; readonly frames: readonly [T, T] }
+  | ({ readonly kind: "placed" } & PlacedProjectArt<T>);
 
 export interface ProjectArtSet<T extends StationFrame = StationFrame> {
   readonly world: ReadonlyMap<string, WorldProjectArt<T>>;
@@ -52,7 +59,7 @@ const fields = (value: unknown): Fields | undefined =>
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-function framePair<T extends StationFrame>(
+function framePair<T extends { readonly id: string; readonly displayWidth?: number }>(
   assets: readonly T[],
   ids: unknown,
 ): readonly [T, T] | undefined {
@@ -61,6 +68,31 @@ function framePair<T extends StationFrame>(
   }
   const [a, b] = ids.map((id) => assets.find((asset) => asset.id === id));
   return a && b && a.displayWidth! > 0 && b.displayWidth! > 0 ? [a, b] : undefined;
+}
+
+/** A fixed overlay's offset is in world units from its authored reference. */
+export function readPlacedProject<
+  T extends {
+    readonly id: string;
+    readonly displayWidth?: number;
+    readonly displayHeight?: number;
+  },
+>(assets: readonly T[], value: unknown): PlacedProjectArt<T> | undefined {
+  const entry = fields(value);
+  const frames = framePair(assets, entry?.frames);
+  const offset = entry?.offset;
+  if (
+    !frames?.every((frame) => finite(frame.displayHeight) && frame.displayHeight > 0) ||
+    !finite(entry?.frameMs) ||
+    entry.frameMs <= 0 ||
+    !Array.isArray(offset) ||
+    offset.length !== 2 ||
+    !finite(offset[0]) ||
+    !finite(offset[1])
+  ) {
+    return undefined;
+  }
+  return { frameMs: entry.frameMs, frames, offset: { x: offset[0], y: offset[1] } };
 }
 
 function readAnchor(value: unknown): OverlayAnchor | undefined {
@@ -131,6 +163,22 @@ export function readProjectArt<T extends StationFrame>(
   const world = new Map<string, WorldProjectArt<T>>();
   for (const [id, entry] of Object.entries(projects)) {
     const spec = fields(entry);
+    if (id === "practiceBerth" || id === "routeExchange") {
+      const matches =
+        spec?.kind === "overlay" &&
+        (id === "practiceBerth"
+          ? spec.galaxy === "needle" &&
+            spec.site === "needlePractice" &&
+            spec.reference === undefined
+          : spec.galaxy === "andromeda" &&
+            spec.site === "pip" &&
+            spec.reference === "andromeda.settlement");
+      const placed = matches && readPlacedProject(assets, entry);
+      if (placed) {
+        world.set(id, { kind: "placed", ...placed });
+      }
+      continue;
+    }
     const frames = framePair(assets, spec?.frames);
     if (
       id === "spareBeacon" &&

@@ -28,6 +28,12 @@
         "stepMs": 300,
         "steps": 4
       }
+    },
+    "quietCrossing": {
+      "site": "family",
+      "frames": ["whirlpool-quiet-crossing-a", "whirlpool-quiet-crossing-b"],
+      "frameMs": 1000,
+      "offset": [100, -78]
     }
   }
 }

@@ -108,6 +108,17 @@ export const PROJECTS: Readonly<Partial<Record<GalaxyNumber, readonly CommunityP
       speaker: "whaleFamily",
       thanks: "The buoys hum the currents back to us. No one will drift off course now.",
     },
+    {
+      ally: "escort",
+      copy: "QuietCrossing",
+      cost: 300,
+      icon: "icon-project-quiet-crossing",
+      id: "quietCrossing",
+      name: "Quiet crossing",
+      site: "family",
+      speaker: "whaleFamily",
+      thanks: "The ships wait here now. The little ones can cross without hurrying.",
+    },
   ],
   4: [
     {
@@ -132,6 +143,18 @@ export const PROJECTS: Readonly<Partial<Record<GalaxyNumber, readonly CommunityP
       speaker: "avi",
       thanks: "A hall for teaching. Every pilot here started with a wobbly first gate.",
     },
+    {
+      ally: "escort",
+      copy: "PracticeBerth",
+      cost: 350,
+      icon: "icon-project-practice-berth",
+      id: "practiceBerth",
+      name: "Practice berth",
+      site: "needlePractice",
+      speaker: "elderLoom",
+      thanks:
+        "A young pilot sat here all morning. By afternoon, they were ready to try the turn again.",
+    },
   ],
   5: [
     {
@@ -155,6 +178,18 @@ export const PROJECTS: Readonly<Partial<Record<GalaxyNumber, readonly CommunityP
       site: "darkBeacon",
       speaker: "settler",
       thanks: "If a beacon ever goes dark again, this one will light the way.",
+    },
+    {
+      ally: "escort",
+      copy: "RouteExchange",
+      cost: 400,
+      icon: "icon-project-route-exchange",
+      id: "routeExchange",
+      name: "Route exchange",
+      site: "pip",
+      speaker: "pip",
+      thanks:
+        "Someone left a note about a turn they missed. It saved the next pilot the same trip.",
     },
   ],
 };

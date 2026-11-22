@@ -215,3 +215,21 @@ unchanged.
 - A path change plays on the first frame any of its anchors is on screen; its
   sprites fade in as one group over the channel unchanged.
 - Reduced motion cuts to the after state on that first frame.
+
+### Waiting lights, practice berth and route rack
+
+These projects add passable decoration at existing destinations. Frame pairs
+use their manifest dimensions and pivot. Apply each `offset` in world units
+before projection. Frame A is the held frame under reduced motion.
+
+| Project        | Physical reference                                               | Offset         | Manifest frame IDs               | Shop glyph                    | Finale craft        |
+| -------------- | ---------------------------------------------------------------- | -------------- | -------------------------------- | ----------------------------- | ------------------- |
+| Quiet crossing | Whirlpool `family` destination                                   | `[100, -78]`   | `whirlpool-quiet-crossing-{a,b}` | `icon-project-quiet-crossing` | `voronguide`        |
+| Practice berth | Needle `needlePractice`, at the first point of the practice path | `[-106, 158]`  | `needle-practice-berth-{a,b}`    | `icon-project-practice-berth` | `avipracticeglider` |
+| Route exchange | Andromeda's saved `andromeda.settlement` destination             | `[-110, -143]` | `andromeda-route-exchange-{a,b}` | `icon-project-route-exchange` | `courierrunner`     |
+
+Quiet crossing belongs to `public/art/whirlpool/projects.json`. Practice berth
+and Route exchange belong to `public/art/projects.json`. The Route exchange
+catalog site is `pip` and the rack uses the saved settlement as its physical
+reference. The finale craft live in Phantom's manifest and use its shared
+story-craft jets sidecar.

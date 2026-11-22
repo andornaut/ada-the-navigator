@@ -417,26 +417,26 @@ the galaxy has an unlocked, nonempty project catalog. Jobs and held-task access
 follow their existing rules. A funded project visibly changes the galaxy, plays its thank-you line,
 counts toward achievements and makes one ally who joins the Phantom finale
 (see [Ships](ships.md#finale-allies)).
-Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 265 and
-225; the second's two are 450 and 375, the third's 525 and 375, the fourth's 525
-and 450, and the fifth's 600 and 450. At the typical income above, funding all
-of a galaxy's projects takes about 95 minutes after its story in Sunflower,
-about 85 in Whirlpool, about 100 in Needle and about 70 in Cartwheel, purchases
-not subtracted.
+Projects give no combat power outside the finale. Sunflower, Whirlpool,
+Needle and Andromeda each offer three projects. Cartwheel offers two.
+Phantom has none. The table lists the total cost of each individual project.
 
-| Project            | Galaxy    | Price | Speaker      | Thank-you line                                                                       | World change                                                 | Ally in the finale                           |
-| ------------------ | --------- | ----: | ------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------- |
-| Greenhouse ring    | Sunflower |   300 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."                      | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                 |
-| Workshop crane     | Sunflower |   265 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us."           | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets   |
-| Salvage beacons    | Sunflower |   225 | Salvager     | "These beacons will help us find lost things. Nothing out here stays lost for long." | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`               |
-| Nursery beacon     | Whirlpool |   450 | Whale family | "The young ones can rest by its light. Thank you for looking after them."            | A soft-light beacon by the whale family, with calves resting | Another whale, widening Marlo's song by half |
-| Current-map buoys  | Whirlpool |   375 | Whale family | "The buoys hum the currents back to us. No one will drift off course now."           | A chain of buoys along the whales' current                   | A buoy tender using `escort`                 |
-| Channel lights     | Needle    |   525 | Elder Loom   | "Young pilots can practise even in the dark now. Patience needs light."              | Soft lamps along the practice channel                        | A young Avi pilot's glider using `escort`    |
-| Loom hall          | Needle    |   375 | Avi          | "A hall for teaching. Every pilot here started with a wobbly first gate."            | A new hall on the Avi station                                | A loom ship using `chase` against turrets    |
-| Courier school     | Andromeda |   525 | Pip          | "Now every new courier learns to slow down and speak up. Thanks, Ada."               | A small training dock beside the settlers' station           | A courier ship using `escort`                |
-| Spare beacon       | Andromeda |   450 | Settler      | "If a beacon ever goes dark again, this one will light the way."                     | A spare guide beacon beside the relit one                    | A beacon tender using `escort`               |
-| Second docking bay | Cartwheel |   600 | Miner        | "A second bay. Nobody has to wait alone anymore."                                    | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets   |
-| Hub repairs        | Cartwheel |   450 | Station      | "The hub is good as new. There is room for everyone, and now it shows."              | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                     |
+| Project            | Galaxy    | Price | Speaker      | Thank-you line                                                                             | World change                                                 | Ally in the finale                           |
+| ------------------ | --------- | ----: | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------- |
+| Greenhouse ring    | Sunflower |   300 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."                            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                 |
+| Workshop crane     | Sunflower |   265 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us."                 | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets   |
+| Salvage beacons    | Sunflower |   225 | Salvager     | "These beacons will help us find lost things. Nothing out here stays lost for long."       | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`               |
+| Nursery beacon     | Whirlpool |   450 | Whale family | "The young ones can rest by its light. Thank you for looking after them."                  | A soft-light beacon by the whale family, with calves resting | Another whale, widening Marlo's song by half |
+| Current-map buoys  | Whirlpool |   375 | Whale family | "The buoys hum the currents back to us. No one will drift off course now."                 | A chain of buoys along the whales' current                   | A buoy tender using `escort`                 |
+| Quiet crossing     | Whirlpool |   300 | Whale family | "The ships wait here now. The little ones can cross without hurrying."                     | Waiting lights outside the whale family route                | Voron guide craft using `escort`             |
+| Channel lights     | Needle    |   525 | Elder Loom   | "Young pilots can practise even in the dark now. Patience needs light."                    | Soft lamps along the practice channel                        | A young Avi pilot's glider using `escort`    |
+| Loom hall          | Needle    |   375 | Avi          | "A hall for teaching. Every pilot here started with a wobbly first gate."                  | A new hall on the Avi station                                | A loom ship using `chase` against turrets    |
+| Practice berth     | Needle    |   350 | Elder Loom   | "A young pilot sat here all morning. By afternoon, they were ready to try the turn again." | Observation berth beside the practice-channel entrance       | Avi practice glider using `escort`           |
+| Courier school     | Andromeda |   525 | Pip          | "Now every new courier learns to slow down and speak up. Thanks, Ada."                     | A small training dock beside the settlers' station           | A courier ship using `escort`                |
+| Spare beacon       | Andromeda |   450 | Settler      | "If a beacon ever goes dark again, this one will light the way."                           | A spare guide beacon beside the relit one                    | A beacon tender using `escort`               |
+| Route exchange     | Andromeda |   400 | Pip          | "Someone left a note about a turn they missed. It saved the next pilot the same trip."     | Lit route-note rack at the courier settlement                | Courier runner using `escort`                |
+| Second docking bay | Cartwheel |   600 | Miner        | "A second bay. Nobody has to wait alone anymore."                                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets   |
+| Hub repairs        | Cartwheel |   450 | Station      | "The hub is good as new. There is room for everyone, and now it shows."                    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                     |
 
 Unlocked projects appear in the right Community projects pane of
 Jobs & Projects, with Jobs on the left. The page opens at every eligible
@@ -464,24 +464,28 @@ lamps line both edges of Needle's practice channel the same way, one every 128
 world units along it, 20 world units outside each edge, alternating their two
 looks.
 
-| Project            | Id               | Effect line                 | Description                                             |
-| ------------------ | ---------------- | --------------------------- | ------------------------------------------------------- |
-| Greenhouse ring    | `greenhouseRing` | Domes for more crops        | A ring of greenhouse domes around the growers.          |
-| Workshop crane     | `workshopCrane`  | A crane for heavy lifts     | A big gantry crane for the workshop.                    |
-| Salvage beacons    | `salvageBeacons` | Helps find lost things      | Bright beacons so lost things are easy to find.         |
-| Nursery beacon     | `nurseryBeacon`  | A light for resting calves  | A soft light where whale calves can rest.               |
-| Current-map buoys  | `currentBuoys`   | Marks the currents          | Humming buoys that map the whales' current.             |
-| Channel lights     | `channelLights`  | Lights the practice channel | Soft lamps so young pilots can practise any time.       |
-| Loom hall          | `loomHall`       | A place to teach pilots     | A teaching hall for young Avi pilots.                   |
-| Courier school     | `courierSchool`  | Trains careful couriers     | A training dock where new couriers learn to fly safely. |
-| Spare beacon       | `spareBeacon`    | A backup guide light        | A spare beacon, ready if the chain ever goes dark.      |
-| Second docking bay | `dockingBay`     | No miner waits alone        | A second docking bay at the mining hub.                 |
-| Hub repairs        | `hubRepairs`     | Repairs the mining hub      | Patches and new lights for the mining hub.              |
+| Project            | Id               | Effect line                    | Description                                                               |
+| ------------------ | ---------------- | ------------------------------ | ------------------------------------------------------------------------- |
+| Greenhouse ring    | `greenhouseRing` | Domes for more crops           | A ring of greenhouse domes around the growers.                            |
+| Workshop crane     | `workshopCrane`  | A crane for heavy lifts        | A big gantry crane for the workshop.                                      |
+| Salvage beacons    | `salvageBeacons` | Helps find lost things         | Bright beacons so lost things are easy to find.                           |
+| Nursery beacon     | `nurseryBeacon`  | A light for resting calves     | A soft light where whale calves can rest.                                 |
+| Current-map buoys  | `currentBuoys`   | Marks the currents             | Humming buoys that map the whales' current.                               |
+| Quiet crossing     | `quietCrossing`  | Give the whales room to pass   | Waiting lights give pilots a place to pause while families pass.          |
+| Channel lights     | `channelLights`  | Lights the practice channel    | Soft lamps so young pilots can practise any time.                         |
+| Loom hall          | `loomHall`       | A place to teach pilots        | A teaching hall for young Avi pilots.                                     |
+| Practice berth     | `practiceBerth`  | A place to watch and try again | Learners can rest and watch how another pilot takes the first turn.       |
+| Courier school     | `courierSchool`  | Trains careful couriers        | A training dock where new couriers learn to fly safely.                   |
+| Spare beacon       | `spareBeacon`    | A backup guide light           | A spare beacon, ready if the chain ever goes dark.                        |
+| Route exchange     | `routeExchange`  | Share notes between couriers   | A lit board for route notes, warnings and corrections from passing crews. |
+| Second docking bay | `dockingBay`     | No miner waits alone           | A second docking bay at the mining hub.                                   |
+| Hub repairs        | `hubRepairs`     | Repairs the mining hub         | Patches and new lights for the mining hub.                                |
 
 Effect lines use the keys `projectEffectGreenhouse`, `projectEffectCrane`,
 `projectEffectBeacons`, `projectEffectDockingBay`, `projectEffectHubRepairs`,
 `projectEffectNursery`, `projectEffectCurrentBuoys`, `projectEffectCourierSchool`,
-`projectEffectSpareBeacon`, `projectEffectChannelLights` and `projectEffectLoomHall`; descriptions use the
+`projectEffectSpareBeacon`, `projectEffectChannelLights` `projectEffectLoomHall`, `projectEffectQuietCrossing`, `projectEffectPracticeBerth` and
+`projectEffectRouteExchange`; descriptions use the
 same suffixes after `projectAbout`.
 
 ## Quantum jump home

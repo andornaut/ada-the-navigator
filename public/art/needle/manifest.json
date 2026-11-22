@@ -17976,6 +17976,36 @@
       },
       "archetype": "retaliator",
       "family": "needle"
+    },
+    {
+      "id": "needle-practice-berth-a",
+      "path": "/art/needle/practice-berth-a.svg",
+      "width": 80,
+      "height": 64,
+      "displayWidth": 35,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "project": "practiceBerth"
+    },
+    {
+      "id": "needle-practice-berth-b",
+      "path": "/art/needle/practice-berth-b.svg",
+      "width": 80,
+      "height": 64,
+      "displayWidth": 35,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "project": "practiceBerth"
     }
   ],
   "needleGates": "/art/needle/gates.json",

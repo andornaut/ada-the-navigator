@@ -36,6 +36,7 @@ import {
   NURSERY_FRAME_MS,
   POOL_COLOR,
   PROJECTS,
+  WAITING_LIGHTS,
 } from "./whirlpool-projects.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -127,6 +128,13 @@ const pieces = [
 const projectEntries = [
   ...exportProject(dir, PUBLIC_DIR, "nurseryBeacon", NURSERY, NURSERY_FRAME_MS),
   ...exportProject(dir, PUBLIC_DIR, "currentBuoys", BUOY),
+  ...exportProject(
+    dir,
+    PUBLIC_DIR,
+    "quietCrossing",
+    WAITING_LIGHTS,
+    PROJECTS.quietCrossing.frameMs,
+  ),
 ];
 
 // The lit beacon glass and buoy lamp read as signals on the field; the cream body stays clear.

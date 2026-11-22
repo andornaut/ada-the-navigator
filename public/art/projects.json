@@ -95,6 +95,23 @@
       "kind": "replace",
       "frames": ["needle-station-hall-a", "needle-station-hall-b"],
       "replaces": ["needle-station-a", "needle-station-b"]
+    },
+    "practiceBerth": {
+      "galaxy": "needle",
+      "kind": "overlay",
+      "site": "needlePractice",
+      "frames": ["needle-practice-berth-a", "needle-practice-berth-b"],
+      "offset": [-106, 158],
+      "frameMs": 700
+    },
+    "routeExchange": {
+      "galaxy": "andromeda",
+      "kind": "overlay",
+      "site": "pip",
+      "reference": "andromeda.settlement",
+      "frames": ["andromeda-route-exchange-a", "andromeda-route-exchange-b"],
+      "offset": [-110, -143],
+      "frameMs": 700
     }
   }
 }

@@ -6,7 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, SPEAKERS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
-import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
+import { galaxyProjects, PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import { playOpening } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
@@ -59,7 +59,11 @@ describe("community projects", () => {
         ]);
       }
     }
-    expect(Object.values(PROJECTS).flat()).toHaveLength(11);
+    const route = [1, 3, 4, 5, 2, 6] as const;
+    expect(route.map((galaxy) => galaxyProjects(galaxy).length)).toEqual([3, 3, 3, 3, 2, 0]);
+    expect(
+      route.map((galaxy) => galaxyProjects(galaxy).reduce((sum, project) => sum + project.cost, 0)),
+    ).toEqual([790, 1125, 1250, 1375, 1050, 0]);
   });
 
   it("uses the approved chapter speakers and Art's existing station and channel anchor semantics", () => {
@@ -67,19 +71,21 @@ describe("community projects", () => {
     expect(PROJECTS[4]!.map(({ id, site, speaker }) => ({ id, site, speaker }))).toEqual([
       { id: "channelLights", site: "needlePractice", speaker: "elderLoom" },
       { id: "loomHall", site: "station", speaker: "avi" },
+      { id: "practiceBerth", site: "needlePractice", speaker: "elderLoom" },
     ]);
     expect(PROJECTS[5]!.map(({ id, site, speaker }) => ({ id, site, speaker }))).toEqual([
       { id: "courierSchool", site: "station", speaker: "pip" },
       { id: "spareBeacon", site: "darkBeacon", speaker: "settler" },
+      { id: "routeExchange", site: "pip", speaker: "pip" },
     ]);
   });
 
-  it.each([4, 5] as const)(
+  it.each([3, 4, 5] as const)(
     "funds galaxy %i projects in parts and grants each ally exactly once",
     (galaxy) => {
       const projects = PROJECTS[galaxy]!;
       const state = progress();
-      expect(projects).toHaveLength(2);
+      expect(projects).toHaveLength(3);
       for (const project of projects) {
         expect(donate(projects, state, 100, project.id)).toEqual({
           amount: 100,
@@ -351,6 +357,41 @@ describe("donating at a station", () => {
     expect(restored.donated).toEqual({ greenhouseRing: cost("greenhouseRing") });
     expect(restored.revealed).toEqual(["greenhouseRing"]);
   });
+
+  it.each([
+    [3, "quietCrossing", 300],
+    [4, "practiceBerth", 350],
+    [5, "routeExchange", 400],
+  ] as const)(
+    "retains partial funding and one reveal on Continue in galaxy %i",
+    (galaxy, id, price) => {
+      const model = new GameModel(CONTENT);
+      model.state.unlocked.push(galaxy);
+      model.startGalaxy(galaxy);
+      const progress = model.state.progress[galaxy];
+      Object.assign(progress, { holodisk: true, questComplete: true, resolved: true });
+      model.state.docked = "station:0,0";
+      model.state.economy.stardust = price - 1;
+      expect(model.donate(id)).toEqual({ amount: price - 1, funded: false, kind: "paid" });
+      expect(model.revealWorldChange(galaxy, id)).toBe(false);
+      const resumed = new GameModel(CONTENT, model.save());
+      resumed.continueGame();
+      expect(resumed.state.progress[galaxy].donated[id]).toBe(price - 1);
+      expect(resumed.state.flight?.galaxy).toBe(galaxy);
+      resumed.state.docked = "station:0,0";
+      resumed.state.economy.stardust = 1;
+      expect(resumed.donate(id)).toEqual({ amount: 1, funded: true, kind: "paid" });
+      expect(resumed.revealWorldChange(galaxy, id)).toBe(true);
+      const revealed = new GameModel(CONTENT, resumed.save());
+      revealed.continueGame();
+      expect(revealed.worldChanges(galaxy)).toContainEqual({
+        project: id,
+        revealed: true,
+        site: galaxyProjects(galaxy).at(-1)!.site,
+      });
+      expect(revealed.revealWorldChange(galaxy, id)).toBe(false);
+    },
+  );
 
   it("rejects a save revealing a project twice, unfunded or from another galaxy", () => {
     const model = docked(1000);

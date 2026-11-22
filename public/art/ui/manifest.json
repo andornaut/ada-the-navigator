@@ -127,6 +127,24 @@
       "once": []
     },
     {
+      "key": "icon-project-practice-berth",
+      "png": "sprites/icon-project-practice-berth.png",
+      "json": "sprites/icon-project-practice-berth.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-quiet-crossing",
+      "png": "sprites/icon-project-quiet-crossing.png",
+      "json": "sprites/icon-project-quiet-crossing.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-route-exchange",
+      "png": "sprites/icon-project-route-exchange.png",
+      "json": "sprites/icon-project-route-exchange.json",
+      "once": []
+    },
+    {
       "key": "icon-project-salvage-beacons",
       "png": "sprites/icon-project-salvage-beacons.png",
       "json": "sprites/icon-project-salvage-beacons.json",

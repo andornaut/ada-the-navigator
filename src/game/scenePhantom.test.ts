@@ -4,11 +4,14 @@ import phantomAllies from "../../public/art/phantom/allies.json";
 import phantomManifest from "../../public/art/phantom/manifest.json";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { galaxyProjects } from "../data/projects.ts";
 import { toScreen } from "../model/convex.ts";
 import { createEnemy } from "../model/enemyAi.ts";
 import type { PhantomDeparture } from "../model/phantom.ts";
 import { phantomAllyRoster, rotatePhantomAllies } from "../model/phantomAllies.ts";
+import { projectAllies } from "../model/projects.ts";
 import type { SpaceObject } from "../model/types.ts";
+import { finaleAllyCraft, readPhantomAllyArt } from "./phantomAllyArt.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import {
   drawPhantomAllies,
@@ -44,6 +47,43 @@ describe("Phantom authored rendering", () => {
     expect(phantomAllyCraft({ galaxy: 2, id: "mica" })).toBe("miner");
     expect(phantomAllyCraft({ galaxy: 1, id: "clover" })).toBeUndefined();
     expect(phantomAllyCraft({ galaxy: 3, id: "project:3:currentMapBuoys" })).toBeUndefined();
+  });
+  it("rotates the three new funded escorts with real authored craft and preserves Marlo", () => {
+    const roster = phantomAllyRoster(
+      ([1, 3, 4, 5, 2] as const).map((galaxy) => {
+        const projects = galaxyProjects(galaxy);
+        return {
+          activityCompleted: true,
+          galaxy,
+          projects: projectAllies(projects, {
+            donated: Object.fromEntries(projects.map(({ cost, id }) => [id, cost])),
+            resolved: true,
+            revealed: [],
+          }),
+        };
+      }),
+      21,
+    );
+    const formation = { facing: { x: 0, y: -1 }, player: { x: 0, y: 0 } };
+    const rotations = [0, 1, 2].flatMap((turn) => rotatePhantomAllies(roster, turn, formation));
+    const art = readPhantomAllyArt(phantomAllies);
+    for (const [id, craft] of [
+      ["project:3:quietCrossing", "voronguide"],
+      ["project:4:practiceBerth", "avipracticeglider"],
+      ["project:5:routeExchange", "courierrunner"],
+    ]) {
+      expect(roster.filter((entry) => entry.id === id)).toHaveLength(1);
+      const ally = rotations.find((entry) => entry.id === id);
+      expect(ally?.behavior).toBe("escort");
+      expect(finaleAllyCraft(art, ally!)).toBe(craft);
+      expect(
+        phantomManifest.assets.filter(({ id: asset }) => asset.startsWith(`craft-${craft}-`)),
+      ).toHaveLength(16);
+    }
+    expect(rotations.find(({ id }) => id === "marlo")).toMatchObject({
+      behavior: "whale",
+      song: true,
+    });
   });
   it("uses the actual settlement's cracked frames until completion and its matching mended frames after", () => {
     for (const [index, variant] of ["homes", "harbour", "signal"].entries()) {

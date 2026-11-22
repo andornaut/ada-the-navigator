@@ -404,6 +404,33 @@ export const BUOY: Spec = {
   pivot: [0.5, 0.8],
 };
 
+// Low rectangular waiting lights make a row with room for pilots to pause beside it.
+export const WAITING_LIGHTS: Spec = {
+  id: "whirlpool-quiet-crossing",
+  title: "Quiet crossing",
+  scale: 1,
+  displayGrowth: 1.3,
+  frame: [112, 48],
+  pivot: [0.5, 0.6],
+  model: (frame) =>
+    [-24, 0, 24].flatMap((x, i) => [
+      { faces: box(x - 6, -4, 0, x + 6, 4, 3, STRUT) },
+      {
+        faces: box(
+          x - 4,
+          -2.2,
+          3,
+          x + 4,
+          2.2,
+          5.5,
+          i === 1 || frame === "a" ? "#f5e0ad" : "#ccb580",
+        ),
+      },
+    ]),
+};
+
+const WAITING_FRAME_MS = 1000;
+
 // The beacon breathes slowly between A and B: a soft light, not a signal.
 export const NURSERY_FRAME_MS = 1400;
 
@@ -461,5 +488,11 @@ export const PROJECTS = {
     // At step floor(t / stepMs), buoy k on either side shows A when (step - k) mod steps is 0,
     // otherwise B: one lit pair runs downstream.
     chase: { stepMs: 300, steps: 4 },
+  },
+  quietCrossing: {
+    site: "family",
+    frames: [`${WAITING_LIGHTS.id}-a`, `${WAITING_LIGHTS.id}-b`],
+    frameMs: WAITING_FRAME_MS,
+    offset: [100, -78],
   },
 } as const;

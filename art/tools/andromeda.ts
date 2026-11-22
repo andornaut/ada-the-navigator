@@ -436,6 +436,21 @@ replaceEntries(
   (id) => /^(enemy-|craft-|andromeda-haze)|portrait/.test(id),
 );
 
+const rack = pair(
+  "andromeda-route-exchange",
+  "route-exchange",
+  "Route exchange",
+  m.routeNoteRack,
+  [3],
+);
+const rackFrame = layout(allFaces(rack));
+const RACK_SCALE = 1.2;
+for (const item of rack) writeFixed(rackFrame, item, RACK_SCALE);
+const rackEntries = rack.map((item) =>
+  fixedEntry(rackFrame, item, { project: "routeExchange" }, true, RACK_SCALE),
+);
+replaceEntries("andromeda", (id) => /^andromeda-route-exchange-[ab]$/.test(id), rackEntries);
+
 // Both sit behind their base: their sites are farther from the viewer than the base pivot.
 writeProjects({
   courierSchool: {
@@ -450,5 +465,14 @@ writeProjects({
     kind: "overlay",
     frames: spare.map(({ id }) => id),
     anchors: [siteAnchor(m.SPARE_SITE, "behind", 0)],
+  },
+  routeExchange: {
+    galaxy: "andromeda",
+    kind: "overlay",
+    site: "pip",
+    reference: "andromeda.settlement",
+    frames: rack.map(({ id }) => id),
+    offset: [-110, -143],
+    frameMs: BLINK_MS,
   },
 });

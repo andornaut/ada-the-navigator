@@ -779,16 +779,124 @@ const tug: Craft = {
   },
 };
 
+// Voron's quiet-crossing guide has swept lilac flanks and a raised cream bridge.
+const voronGuide: Craft = {
+  name: "voronguide",
+  title: "Voron guide craft",
+  scale: SCALE,
+  levels: [7, 11],
+  mouthWidth: 3,
+  mouths: [[-16, 0, 4]],
+  build: () => [
+    [
+      part(
+        craftPlan([
+          [17, 0],
+          [4, 8],
+          [-10, 12],
+          [-15, 8],
+          [-10, 4],
+          [-16, 3],
+          [-16, -3],
+          [-10, -4],
+          [-15, -8],
+          [-10, -12],
+          [4, -8],
+        ]),
+        1,
+        7,
+        lilac,
+        lilacSide,
+        lilacRear,
+      ),
+    ],
+    [part(pill(-7, 10, 0, 4), 7, 11, cream, creamSide)],
+    [part(pill(1, 8, 0, 2.9), 11, 13, glass, glassSide)],
+    [cube(-10, -8, 7, 1.7, glow), cube(-10, 8, 7, 1.7, glow)],
+  ],
+};
+
+// Avi's practice glider has a narrow cockpit between two swept pearl wings.
+const aviPracticeGlider: Craft = {
+  name: "avipracticeglider",
+  title: "Avi practice glider",
+  scale: SCALE,
+  levels: [5.5, 8],
+  mouthWidth: 2.8,
+  mouths: [[-14, 0, 4.6]],
+  build: () => [
+    [
+      part(
+        craftPlan([
+          [12, 0],
+          [2, 4],
+          [-7, 15],
+          [-13, 13],
+          [-10, 5],
+          [-14, 2],
+          [-14, -2],
+          [-10, -5],
+          [-13, -13],
+          [-7, -15],
+          [2, -4],
+        ]),
+        2.5,
+        5.5,
+        pearl,
+        pearlSide,
+        pearlRear,
+      ),
+    ],
+    [part(pill(-10, 15, 0, 2.9), 5.5, 8, lav, lavSide, lavRear)],
+    [part(pill(1, 8, 0, 1.8), 8, 10, glass, glassSide)],
+    ...[-1, 1].map((side) => [part(craftBox(-9, side * 11.5, 4, 1.5), 5.5, 6, rose, roseSide)]),
+  ],
+};
+
+// The courier runner uses the settlement's blue roof and warm note-paper colours.
+const courierRunner: Craft = {
+  name: "courierrunner",
+  title: "Courier runner",
+  scale: SCALE,
+  levels: [6.5, 10],
+  mouthWidth: 2.8,
+  mouths: [
+    [-15, -4, 4.5],
+    [-15, 4, 4.5],
+  ],
+  build: () => [
+    ...[-1, 1].map((side) =>
+      hcyl(-15, -5, side * 4, 4.5, 2.1, {
+        top: steelDark,
+        side: steelDarkSide,
+        front: "flat",
+        back: "flat",
+      }),
+    ),
+    [part(pill(-11, 15, 0, 4.7), 2, 6.5, roofCap, a.roofSide)],
+    [part(pill(1, 12, 0, 3.2), 6.5, 10, a.roof, a.roofSide)],
+    [part(pill(4, 9, 0, 2.1), 10, 11.5, glass, glassSide)],
+    ...[-1, 1].map((side) => [
+      part(craftBox(-3, side * 6.9, 10, 4.7), 3, 7.7, cream, creamSide),
+      part(craftBox(-2, side * 6.9, 5, 0.9), 7.7, 8.1, a.marker, a.markerDark),
+    ]),
+    [cube(-9, 0, 6.5, 1.4, warm)],
+  ],
+};
+
 // Table order: the project allies in Gameplay's project order, then the quest allies.
 const CRAFTS: readonly Craft[] = [
   grower,
   crane,
   salvager,
   buoyTender,
+  voronGuide,
   student,
   loomShip,
+  aviPracticeGlider,
   trainee,
   beaconTender,
+  courierRunner,
   driller,
   tug,
   barge,
@@ -807,10 +915,13 @@ const ROSTER = {
     salvageBeacons: { craft: "salvager" },
     nurseryBeacon: { whale: "adult" },
     currentBuoys: { craft: "buoytender" },
+    quietCrossing: { craft: "voronguide" },
     channelLights: { craft: "student" },
     loomHall: { craft: "loomship" },
+    practiceBerth: { craft: "avipracticeglider" },
     courierSchool: { craft: "trainee" },
     spareBeacon: { craft: "beacontender" },
+    routeExchange: { craft: "courierrunner" },
     dockingBay: { craft: "driller" },
     hubRepairs: { craft: "tug" },
   },

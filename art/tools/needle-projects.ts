@@ -7,6 +7,7 @@ import { writeFileSync } from "node:fs";
 import { replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import {
+  glassSide,
   lamp,
   layout,
   OUT,
@@ -94,6 +95,72 @@ const lamps = (["a", "b"] as const).map((letter) => {
 });
 replaceEntries("needle", (id) => id.startsWith("needle-lamp-"), lamps);
 
+// A small deck with an open viewing edge and low lights on the two corners.
+function observationDeck(lit: boolean): Part[][] {
+  const z = 5;
+  const outer = [
+    [-21, -8],
+    [-14, -17],
+    [17, -17],
+    [22, -11],
+    [21, 13],
+    [14, 17],
+    [-17, 16],
+  ] as const;
+  return [
+    [{ plan: outer, z0: 0, z1: z, top: silver, side: silverSide }],
+    [
+      { plan: box(-13, -10, 15, 11), z0: z, z1: z + 0.8, top: pearl, side: pearlSide },
+      ...[-15, 0, 15].map((x) => ({
+        plan: box(x - 1.2, 10, x + 1.2, 13),
+        z0: z,
+        z1: z + 8,
+        top: silver,
+        side: glassSide,
+      })),
+      { plan: box(-16, 10, 16, 13), z0: z + 7, z1: z + 9, top: silverSide, side: glassSide },
+      ...[-16, 16].map((x) => ({
+        plan: box(x - 2, -13, x + 2, -9),
+        z0: z,
+        z1: z + 6,
+        top: lit ? lamp : "#bfae94",
+        side: pearlSide,
+      })),
+    ],
+  ];
+}
+
+const berthFaces = [true, false].map((lit) => polygons(observationDeck(lit), undefined, [5]));
+const berthFrame = layout(berthFaces.flat());
+const berth = (["a", "b"] as const).map((letter, index) => {
+  const id = `needle-practice-berth-${letter}`;
+  const file = `practice-berth-${letter}.svg`;
+  writeFileSync(
+    OUT + file,
+    svgText(
+      svgFile(
+        `Practice berth ${letter.toUpperCase()}`,
+        berthFrame.width,
+        berthFrame.height,
+        placed(berthFrame.halfWidth, berthFrame.above, berthFaces[index]!),
+      ),
+    ),
+  );
+  return {
+    id,
+    path: PUBLIC + file,
+    width: berthFrame.width,
+    height: berthFrame.height,
+    displayWidth: round(berthFrame.width * DISPLAY_SCALE),
+    displayHeight: round(berthFrame.height * DISPLAY_SCALE),
+    facing: "fixed",
+    pivot: { x: 0.5, y: berthFrame.above / berthFrame.height },
+    frameMs: BLINK_MS,
+    project: "practiceBerth",
+  };
+});
+replaceEntries("needle", (id) => /^needle-practice-berth-[ab]$/.test(id), berth);
+
 writeProjects({
   channelLights: {
     galaxy: "needle",
@@ -108,6 +175,14 @@ writeProjects({
     kind: "replace",
     frames: ["needle-station-hall-a", "needle-station-hall-b"],
     replaces: ["needle-station-a", "needle-station-b"],
+  },
+  practiceBerth: {
+    galaxy: "needle",
+    kind: "overlay",
+    site: "needlePractice",
+    frames: berth.map(({ id }) => id),
+    offset: [-106, 158],
+    frameMs: BLINK_MS,
   },
 });
 console.log(

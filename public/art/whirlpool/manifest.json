@@ -4460,6 +4460,36 @@
       "project": "currentBuoys"
     },
     {
+      "id": "whirlpool-quiet-crossing-a",
+      "path": "/art/whirlpool/whirlpool-quiet-crossing-a.svg",
+      "width": 112,
+      "height": 48,
+      "displayWidth": 63.7,
+      "displayHeight": 27.3,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.6
+      },
+      "frameMs": 1000,
+      "project": "quietCrossing"
+    },
+    {
+      "id": "whirlpool-quiet-crossing-b",
+      "path": "/art/whirlpool/whirlpool-quiet-crossing-b.svg",
+      "width": 112,
+      "height": 48,
+      "displayWidth": 63.7,
+      "displayHeight": 27.3,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.6
+      },
+      "frameMs": 1000,
+      "project": "quietCrossing"
+    },
+    {
       "id": "brine-portrait",
       "path": "/art/whirlpool/portraits/brine.png",
       "width": 32,

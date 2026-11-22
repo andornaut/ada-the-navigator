@@ -2040,6 +2040,246 @@
       "craft": "buoytender"
     },
     {
+      "id": "craft-voronguide-0",
+      "path": "/art/phantom/voronguide-0.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-1",
+      "path": "/art/phantom/voronguide-1.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-2",
+      "path": "/art/phantom/voronguide-2.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-3",
+      "path": "/art/phantom/voronguide-3.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-4",
+      "path": "/art/phantom/voronguide-4.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-5",
+      "path": "/art/phantom/voronguide-5.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-6",
+      "path": "/art/phantom/voronguide-6.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-7",
+      "path": "/art/phantom/voronguide-7.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-8",
+      "path": "/art/phantom/voronguide-8.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-9",
+      "path": "/art/phantom/voronguide-9.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-10",
+      "path": "/art/phantom/voronguide-10.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-11",
+      "path": "/art/phantom/voronguide-11.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-12",
+      "path": "/art/phantom/voronguide-12.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-13",
+      "path": "/art/phantom/voronguide-13.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-14",
+      "path": "/art/phantom/voronguide-14.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
+      "id": "craft-voronguide-15",
+      "path": "/art/phantom/voronguide-15.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "voronguide"
+    },
+    {
       "id": "craft-student-0",
       "path": "/art/phantom/student-0.svg",
       "width": 80,
@@ -2520,6 +2760,246 @@
       "craft": "loomship"
     },
     {
+      "id": "craft-avipracticeglider-0",
+      "path": "/art/phantom/avipracticeglider-0.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-1",
+      "path": "/art/phantom/avipracticeglider-1.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-2",
+      "path": "/art/phantom/avipracticeglider-2.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-3",
+      "path": "/art/phantom/avipracticeglider-3.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-4",
+      "path": "/art/phantom/avipracticeglider-4.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-5",
+      "path": "/art/phantom/avipracticeglider-5.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-6",
+      "path": "/art/phantom/avipracticeglider-6.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-7",
+      "path": "/art/phantom/avipracticeglider-7.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-8",
+      "path": "/art/phantom/avipracticeglider-8.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-9",
+      "path": "/art/phantom/avipracticeglider-9.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-10",
+      "path": "/art/phantom/avipracticeglider-10.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-11",
+      "path": "/art/phantom/avipracticeglider-11.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-12",
+      "path": "/art/phantom/avipracticeglider-12.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-13",
+      "path": "/art/phantom/avipracticeglider-13.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-14",
+      "path": "/art/phantom/avipracticeglider-14.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
+      "id": "craft-avipracticeglider-15",
+      "path": "/art/phantom/avipracticeglider-15.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "avipracticeglider"
+    },
+    {
       "id": "craft-trainee-0",
       "path": "/art/phantom/trainee-0.svg",
       "width": 80,
@@ -2998,6 +3478,246 @@
         "y": 0.5
       },
       "craft": "beacontender"
+    },
+    {
+      "id": "craft-courierrunner-0",
+      "path": "/art/phantom/courierrunner-0.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-1",
+      "path": "/art/phantom/courierrunner-1.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-2",
+      "path": "/art/phantom/courierrunner-2.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-3",
+      "path": "/art/phantom/courierrunner-3.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-4",
+      "path": "/art/phantom/courierrunner-4.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-5",
+      "path": "/art/phantom/courierrunner-5.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-6",
+      "path": "/art/phantom/courierrunner-6.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-7",
+      "path": "/art/phantom/courierrunner-7.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-8",
+      "path": "/art/phantom/courierrunner-8.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-9",
+      "path": "/art/phantom/courierrunner-9.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-10",
+      "path": "/art/phantom/courierrunner-10.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-11",
+      "path": "/art/phantom/courierrunner-11.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-12",
+      "path": "/art/phantom/courierrunner-12.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-13",
+      "path": "/art/phantom/courierrunner-13.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-14",
+      "path": "/art/phantom/courierrunner-14.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
+    },
+    {
+      "id": "craft-courierrunner-15",
+      "path": "/art/phantom/courierrunner-15.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "courierrunner"
     },
     {
       "id": "craft-driller-0",
@@ -3963,6 +4683,9 @@
   "backdrop": "/art/phantom/backdrop.json",
   "tow": "/art/phantom/tow.json",
   "sidecars": {
+    "avipracticeglider": {
+      "jets": "/art/phantom/story-craft-jets.json"
+    },
     "barge": {
       "jets": "/art/phantom/story-craft-jets.json"
     },
@@ -3970,6 +4693,9 @@
       "jets": "/art/phantom/story-craft-jets.json"
     },
     "buoytender": {
+      "jets": "/art/phantom/story-craft-jets.json"
+    },
+    "courierrunner": {
       "jets": "/art/phantom/story-craft-jets.json"
     },
     "crane": {
@@ -3997,6 +4723,9 @@
       "jets": "/art/phantom/story-craft-jets.json"
     },
     "tug": {
+      "jets": "/art/phantom/story-craft-jets.json"
+    },
+    "voronguide": {
       "jets": "/art/phantom/story-craft-jets.json"
     }
   },
