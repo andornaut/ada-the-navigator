@@ -130,7 +130,7 @@ const DOCKS = {
   bay: {
     ...dock(108, 194.571, [-0.612, 0.791]),
     approach: { at: 7.5, distance: 50 },
-    standOff: 8,
+    standOff: 7,
   },
   left: dock(21.374, 175.72, [-0.924, 0.382]),
   right: dock(218.626, 175.72, [0.924, 0.382]),

@@ -154,7 +154,7 @@ describe("Cartwheel story ships", () => {
         expect(distance).toBeGreaterThan(0);
         // The funded central berth keeps the measured visitor clearance. The two side berths
         // still bring their noses to the berth point.
-        const reach = distance + (bay && id === "visitor-2" ? 8 : 0);
+        const reach = distance + (bay && id === "visitor-2" ? 7 : 0);
         expect(gap(entry, { x: hub.x + dock.at.x, y: hub.y + dock.at.y })).toBeCloseTo(reach, 9);
         expect(entry.x + entry.heading.x * reach).toBeCloseTo(hub.x + dock.at.x, 9);
         expect(entry.y + entry.heading.y * reach).toBeCloseTo(hub.y + dock.at.y, 9);
