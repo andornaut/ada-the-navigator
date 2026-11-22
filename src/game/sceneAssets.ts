@@ -74,7 +74,7 @@ import { type SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
-import { readMarloArt, readWhaleArt, whaleFrameAsset } from "./whaleArt.ts";
+import { readMarloArt, readWhaleArt, whaleFrameAsset, whaleViewBox } from "./whaleArt.ts";
 import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 interface MaterialCache {
@@ -1214,15 +1214,84 @@ export function loadShipFrames(scene: AssetsContext, frames: readonly Asset[]): 
   scene.load.start();
 }
 
-/** Whether a whale frame is ready; a missing one is queued (loadSvg). */
-export function whaleTexture(scene: AssetsContext, frame: Asset): boolean {
+type WhaleTextureContext = AssetsContext & Pick<GameScene, "events">;
+
+const whaleSheets = new WeakMap<
+  WhaleTextureContext,
+  { readonly pending: Map<string, Asset[]>; readonly requested: Set<string> }
+>();
+
+function queueWhaleSheetFrame(scene: WhaleTextureContext, frame: Asset): void {
+  let loading = whaleSheets.get(scene);
+  if (!loading) {
+    loading = { pending: new Map(), requested: new Set() };
+    whaleSheets.set(scene, loading);
+    scene.events.once(Scenes.Events.SHUTDOWN, () => whaleSheets.delete(scene));
+  }
+  if (loading.requested.has(frame.id)) {
+    return;
+  }
+  loading.requested.add(frame.id);
+  const { path } = frame;
+  const { pending } = loading;
+  const key = vectorSheetKey(path);
+  const queueFrame = (asset: Asset, xml: Document): void => {
+    try {
+      const viewBox = whaleViewBox(scene.whaleArt, asset);
+      if (!viewBox) {
+        throw new Error(`Missing whale heading dimensions: ${asset.id}`);
+      }
+      loadSvg(scene, {
+        ...asset,
+        path: vectorSheetSource(xml, path, {
+          ...viewBox,
+          id: asset.id,
+          intrinsicHeight: asset.height,
+          intrinsicWidth: asset.width,
+        }),
+      });
+    } catch (error) {
+      // A malformed optional frame keeps the usual whale fallback.
+      console.warn(error);
+    }
+  };
+  const xml = scene.cache.xml.get(key) as Document | undefined;
+  if (xml) {
+    queueFrame(frame, xml);
+    scene.rockQueued = true;
+    return;
+  }
+  const requested = pending.get(path);
+  if (requested) {
+    requested.push(frame);
+    return;
+  }
+  const batch = [frame];
+  pending.set(path, batch);
+  // Keep the batch pending while the optional loader retries the same physical key.
+  scene.load.once(`filecomplete-xml-${key}`, (_key: string, _type: string, source: Document) => {
+    if (whaleSheets.get(scene) !== loading) {
+      return;
+    }
+    pending.delete(path);
+    for (const asset of batch) {
+      queueFrame(asset, source);
+    }
+  });
+  scene.load.xml(key, path);
+  scene.rockQueued = true;
+}
+
+/** Whether a whale frame is ready. Missing frames share the existing rock loader start. */
+export function whaleTexture(scene: WhaleTextureContext, frame: Asset): boolean {
   if (scene.textures.exists(frame.id)) {
     return true;
   }
-  if (!scene.whaleRequests.has(frame.id) && frame.path) {
+  if (frame.svgSheet && frame.path) {
+    queueWhaleSheetFrame(scene, frame);
+  } else if (!scene.whaleRequests.has(frame.id) && frame.path) {
     scene.whaleRequests.add(frame.id);
     loadSvg(scene, frame);
-    // Whale frames start with the next queued rock load.
     scene.rockQueued = true;
   }
   return false;

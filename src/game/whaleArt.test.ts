@@ -13,6 +13,7 @@ import {
   whaleFrameAsset,
   whaleLoopFrame,
   whalePhase,
+  whaleViewBox,
 } from "./whaleArt.ts";
 
 const assets = manifest.assets as WhaleFrame[];
@@ -29,6 +30,13 @@ describe("whale art", () => {
         );
       }
     }
+  });
+
+  it("keeps the raw viewport separate from the intrinsic size for the same heading", () => {
+    const frame = art.kinds.get("adult")!.frames[6]![0]!;
+    expect([frame.displayWidth, frame.displayHeight]).toEqual([91, 48]);
+    expect(whaleViewBox(art, frame)).toEqual({ height: 109.714, width: 208 });
+    expect(whaleViewBox(art, { ...frame, kind: "calf" })).not.toEqual(whaleViewBox(art, frame));
   });
 
   it("holds each kind's stationary heading and places the family at Art's offsets", () => {

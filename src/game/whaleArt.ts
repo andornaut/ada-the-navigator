@@ -23,6 +23,8 @@ export interface WhaleKindArt<T extends WhaleFrame = WhaleFrame> {
   /** Footprint radius per heading, world units from the pivot. */
   footprints: readonly number[];
   idleMs: number;
+  /** Raw SVG viewBox size per heading, independent of the manifest image size. */
+  viewBoxes: readonly (Readonly<{ height: number; width: number }> | undefined)[];
   stationaryHeading: number;
   swimMs: number;
 }
@@ -97,12 +99,19 @@ function readWhaleKinds<T extends WhaleFrame>(
     }
     const name = kind.kind;
     const footprints: number[] = [];
+    const viewBoxes: WhaleKindArt["viewBoxes"][number][] = [];
     for (const heading of headings) {
       const value = fields(heading);
       if (!Number.isInteger(value?.index) || !positive(value?.footprintRadius)) {
         return undefined;
       }
-      footprints[value.index as number] = value.footprintRadius as number;
+      const index = value.index as number;
+      footprints[index] = value.footprintRadius as number;
+      const frame = fields(value.frame);
+      viewBoxes[index] =
+        positive(frame?.height) && positive(frame.width)
+          ? { height: frame.height, width: frame.width }
+          : undefined;
     }
     const frames: T[][] = [];
     for (let heading = 0; heading < HEADINGS; heading++) {
@@ -134,6 +143,7 @@ function readWhaleKinds<T extends WhaleFrame>(
       idleMs: loop.idleMs as number,
       stationaryHeading: kind.stationaryHeading as number,
       swimMs: loop.swimMs as number,
+      viewBoxes,
     });
   }
   const family: WhaleArt["family"][number][] = [];
@@ -205,4 +215,11 @@ export function whaleLoopFrame(
 /** Manifest whale frames, which load on demand rather than at boot. */
 export function whaleFrameAsset(asset: { id: string; kind?: unknown }): boolean {
   return asset.id.startsWith("whale-") && typeof asset.kind === "string";
+}
+
+/** The raw viewport for a packed frame, identified by its kind and heading. */
+export function whaleViewBox(art: WhaleArt | undefined, frame: WhaleFrame) {
+  return isKind(frame.kind) && frame.directionIndex !== undefined
+    ? art?.kinds.get(frame.kind)?.viewBoxes[frame.directionIndex]
+    : undefined;
 }
