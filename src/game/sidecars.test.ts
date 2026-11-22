@@ -59,9 +59,11 @@ describe("sidecars map", () => {
 
   it("links exactly the authored Phantom story craft jet sidecars", () => {
     const craft = [
+      "avipracticeglider",
       "barge",
       "beacontender",
       "buoytender",
+      "courierrunner",
       "crane",
       "driller",
       "grower",
@@ -71,6 +73,7 @@ describe("sidecars map", () => {
       "student",
       "trainee",
       "tug",
+      "voronguide",
     ];
     const pack = "/art/phantom/story-craft-jets.json";
     const hasPack = existsSync(new URL(`../../public${pack}`, import.meta.url));

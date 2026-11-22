@@ -303,7 +303,7 @@ function phantomJetsFixture() {
 }
 
 describe("Phantom story craft jets", () => {
-  it("queues one optional pack and publishes the original payloads under all twelve cache keys", () => {
+  it("queues one optional pack and publishes the original payloads under all fifteen cache keys", () => {
     const f = phantomJetsFixture();
     f.scene.galaxyManifests.delete(6);
     f.loadWorld(f.scene, 6);
@@ -316,7 +316,7 @@ describe("Phantom story craft jets", () => {
     expect(
       f.json.mock.calls.filter(([key]) => key === phantomJetsKey || key.startsWith("craft-jets-")),
     ).toEqual([[phantomJetsKey, phantomJetsPath]]);
-    expect(f.craft).toHaveLength(12);
+    expect(f.craft).toHaveLength(15);
     expect(f.craft.some((id) => f.cache.has(`craft-jets-${id}`))).toBe(false);
     f.events.emit(phantomJetsEvent, phantomJetsKey, "json", f.records);
     for (const id of f.craft) {
