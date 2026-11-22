@@ -105,12 +105,13 @@ An upright hoop with its axis along the channel: rim radius 40 and depth 7
 model units, 32 flat-shaded segments in the world light of the debris model,
 and eight lamps on each face. The opening is 66 across, Gameplay's pass
 opening: a pass counts when Ada's centre crosses inside it, and the rim bumps
-like scenery.
+like scenery. Four detached violet-blue light bands frame the outside of the
+hoop. They mark the gate's field and have no collision.
 
 ### Frames and layers
 
 - Ids `needle-gate-{state}-{o}-{layer}`: `state` `dark` or `lit`, orientation
-  `o` 0 to 4, `layer` `back` or `front`. Frame 112 (display 49), pivot
+  `o` 0 to 4, `layer` `back` or `front`. Frame 144 (display 63), pivot
   `(0.5, 0.5)`: the hoop's centre on the world plane, the point a pass goes
   through. Entries carry `gate`, `orientation`, `layer` and `facing`
   `axis-{o}`.
@@ -128,7 +129,9 @@ like scenery.
   hoop's centre. Draw the back layer, then any ship whose centre is within
   `rim.outer` (40) world units of the pivot, then the front layer, so Ada
   visibly threads the gate. Otherwise both layers sort together with the play
-  objects at the gate's pivot.
+  objects at the gate's pivot. The guide field draws only in the back layer.
+  Its dark and lit alpha values are 0.24 and 0.30, below the keyline threshold
+  even when both states overlap.
 
 ### States
 

@@ -41,6 +41,14 @@ const LIT = ["#F3EDE6", "#DED5CC", "#C4BAB0", "#A69C93", "#8A8178"];
 const DARK_BASE = ["#A0988F", "#8B837B", "#766F68", "#625C56", "#524C47"];
 const LAMP_DARK = "#4d4640";
 const VEIL_ALPHA = 0.16;
+const FIELD_RADIUS = 51.9;
+const FIELD_HALF_WIDTH = 2.1;
+const FIELD_HALF_ARC = 0.29;
+// The two states can overlap during the fade. Even together the field stays below keyline alpha.
+const FIELD = {
+  dark: { color: "#6860a3", opacity: 0.24 },
+  lit: { color: "#657cd2", opacity: 0.3 },
+} as const;
 
 // World light and tone steps of the shared debris shading.
 const LIGHT = unit([-0.25, 0.45, 1]);
@@ -75,18 +83,37 @@ type Quad = {
 // The hoop's plan axis for orientation o: o * 22.5 degrees in the art's model plane.
 const axisAngle = (o: number) => (o * Math.PI) / ORIENTATIONS;
 
+// A point in the hoop's plane, with optional depth along the channel axis.
+function hoopPlane(angle: number) {
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  return (radius: number, around: number, depth = 0): Point => {
+    const across = radius * Math.cos(around);
+    return [-across * sin + depth * cos, across * cos + depth * sin, radius * Math.sin(around)];
+  };
+}
+
+// Short tapered bands around the four projected extrema leave the rim and its opening clear.
+function guideField(o: number): Point[][] {
+  const angle = axisAngle(o);
+  const p = hoopPlane(angle);
+  const vertical = Math.atan2(-1, (Math.cos(angle) - Math.sin(angle)) / 2);
+  return [0, Math.PI, vertical, vertical + Math.PI].map((centre) => {
+    const edge = (side: number) =>
+      Array.from({ length: 9 }, (_, i) => {
+        const u = i / 4 - 1;
+        const spread = FIELD_HALF_WIDTH * Math.cos((u * Math.PI) / 2);
+        return p(FIELD_RADIUS + side * spread, centre + u * FIELD_HALF_ARC);
+      });
+    return [...edge(1), ...edge(-1).reverse()];
+  });
+}
+
 // Hoop quads for orientation `o`. A quad is in the front layer when its centre lies toward the
 // viewer at +(1, 1, 1) from the hoop's centre, else in the back layer.
 function hoop(o: number, lit: boolean, dark: readonly string[]): Quad[] {
-  const t = axisAngle(o);
-  const ax: Point = [Math.cos(t), Math.sin(t), 0];
-  const across: Point = [-Math.sin(t), Math.cos(t), 0];
   const ramp = lit ? LIT : dark;
-  const p = (r: number, a: number, d: number): Point => [
-    r * Math.cos(a) * across[0] + d * ax[0],
-    r * Math.cos(a) * across[1] + d * ax[1],
-    r * Math.sin(a) + d * ax[2],
-  ];
+  const p = hoopPlane(axisAngle(o));
   const side = (pts: readonly Point[]): Layer => {
     const c = pts.reduce<Point>((s, q) => [s[0] + q[0], s[1] + q[1], s[2] + q[2]], [0, 0, 0]);
     return dot(c, [1, 1, 1]) > 0 ? "front" : "back";
@@ -178,9 +205,10 @@ const USED = Array.from({ length: ORIENTATIONS }, (_, o) => o).filter(
 );
 
 const frame = squareFrame(
-  USED.map((o) => hoop(o, true, DARK_BASE))
-    .flat()
-    .flatMap(({ points }) => points),
+  USED.flatMap((o) => [
+    ...hoop(o, true, DARK_BASE).flatMap(({ points }) => points),
+    ...guideField(o).flat(),
+  ]),
 );
 const centre = frame / 2;
 
@@ -203,13 +231,17 @@ const entries: Record<string, unknown>[] = [];
 for (const state of ["dark", "lit"] as const) {
   for (const o of USED) {
     const quads = hoop(o, state === "lit", DARK);
+    const field = guideField(o).map((points): Polygon => ({
+      ...FIELD[state],
+      points: points.map((point) => projectAt(centre, centre, point)),
+    }));
     for (const layer of ["back", "front"] as const) {
       const name = `gate-${state}-${o}-${layer}`;
+      const structure = draw(quads, centre, layer);
+      const art = layer === "back" ? [...field, ...structure] : structure;
       writeFileSync(
         `${OUT}${name}.svg`,
-        svgText(
-          svgFile(`Ring gate ${state} ${o} ${layer}`, frame, frame, draw(quads, centre, layer)),
-        ),
+        svgText(svgFile(`Ring gate ${state} ${o} ${layer}`, frame, frame, art)),
       );
       entries.push({
         id: `needle-${name}`,
