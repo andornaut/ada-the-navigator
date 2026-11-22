@@ -472,11 +472,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         {
           click: { availability: () => ({ kind: "available" }), run },
           current: () =>
-            !disposed &&
-            view !== null &&
-            unlock === null &&
-            !swallow &&
-            !("jumping" in screen.dataset),
+            !disposed && view !== null && unlock === null && !("jumping" in screen.dataset),
           slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
         },
         element,
@@ -635,8 +631,9 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   // The unlock under way, and the positions it opens that still draw locked.
   let unlock: { readonly flight: RouteFlight; readonly start: number } | null = null;
   let drawnLocked: ReadonlySet<number> = new Set();
-  // A press that skipped the unlock, whose click then does nothing else.
-  let swallow = false;
+  // The compatibility click from a pointer press that skipped the unlock.
+  let skippedPointer: number | null = null;
+  let skippedSpace = false;
   let animation = 0;
   let shown = "";
 
@@ -921,11 +918,13 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   screen.addEventListener(
     "pointerdown",
     (event) => {
-      swallow = unlock !== null;
       if (unlock) {
+        skippedPointer = event.pointerId;
         event.preventDefault();
         event.stopPropagation();
         endFlight();
+      } else if (skippedPointer === event.pointerId) {
+        skippedPointer = null;
       }
     },
     true,
@@ -933,12 +932,30 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   screen.addEventListener(
     "keydown",
     (event) => {
+      const space = event.key === " ";
+      if (space && !event.repeat) {
+        skippedSpace = false;
+      }
+      if (!unlock && !(space && skippedSpace)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
       if (unlock) {
-        // Space clicks on its key up; that click only skips too.
-        swallow = event.key === " ";
+        skippedSpace = space;
+        endFlight();
+      }
+    },
+    true,
+  );
+  screen.addEventListener(
+    "keyup",
+    (event) => {
+      // Space activates on keyup, even though a cancelled keydown can prevent its click.
+      if (event.key === " " && skippedSpace) {
+        skippedSpace = false;
         event.preventDefault();
         event.stopPropagation();
-        endFlight();
       }
     },
     true,
@@ -946,8 +963,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   screen.addEventListener(
     "click",
     (event) => {
-      if (swallow) {
-        swallow = false;
+      if (event.detail !== 0 && event.pointerId === skippedPointer) {
+        skippedPointer = null;
         event.preventDefault();
         event.stopPropagation();
       }
@@ -1113,6 +1130,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       screen.hidden = view === null;
       if (!view) {
         viewingEarth = false;
+        skippedPointer = null;
+        skippedSpace = false;
         stop();
         unlock = null;
         delete screen.dataset.flight;

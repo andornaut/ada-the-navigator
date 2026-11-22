@@ -1,6 +1,10 @@
 import type { StatusAboardKind } from "../data/hudIconBearings.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import { frameGridOrigin } from "./layout/frameBox.ts";
@@ -643,7 +647,7 @@ export function createStatusPill(
   let disposed = false;
   let shieldBinding: ReturnType<typeof bindAdaAction> | undefined;
   const resourceBindings: ReturnType<typeof bindAdaAction>[] = [];
-  const leaveResourceInputs: (() => void)[] = [];
+  const leaveInputs: (() => void)[] = [];
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
@@ -655,7 +659,9 @@ export function createStatusPill(
     shieldRoot.setAttribute("aria-label", options.shieldLabel);
     shieldRoot.setAttribute("aria-haspopup", "dialog");
     shieldRoot.dataset.action = "shield-details";
-    shieldRoot.addEventListener("pointerdown", (event) => event.stopPropagation());
+    const pointerdown = (event: Event) => event.stopPropagation();
+    shieldRoot.addEventListener("pointerdown", pointerdown);
+    leaveInputs.push(() => shieldRoot.removeEventListener("pointerdown", pointerdown));
     shieldBinding = bindAdaAction(
       {
         beforeClick: (event) => event.stopPropagation(),
@@ -735,7 +741,7 @@ export function createStatusPill(
         node.classList.add("ada-resource-target");
         const pointerdown = (event: PointerEvent) => event.stopPropagation();
         node.addEventListener("pointerdown", pointerdown);
-        leaveResourceInputs.push(() => node.removeEventListener("pointerdown", pointerdown));
+        leaveInputs.push(() => node.removeEventListener("pointerdown", pointerdown));
         const binding = bindAdaAction(
           {
             beforeClick: (event) => event.stopPropagation(),
@@ -758,11 +764,36 @@ export function createStatusPill(
         }
       };
       action.addEventListener("keydown", keydown);
-      leaveResourceInputs.push(() => action.removeEventListener("keydown", keydown));
+      leaveInputs.push(() => action.removeEventListener("keydown", keydown));
     }
   }
 
-  parent.append(root, shieldRoot);
+  const disposeInputs = () => {
+    disposed = true;
+    shieldBinding?.dispose();
+    for (const binding of resourceBindings) {
+      binding.dispose();
+    }
+    for (const leave of leaveInputs) {
+      leave();
+    }
+  };
+  try {
+    assertAdaActionMetadata(root);
+    assertAdaActionMetadata(shieldRoot);
+    parent.append(root, shieldRoot);
+    if (options.onResource) {
+      assertAdaActionBindings(root);
+    }
+    if (options.onShield) {
+      assertAdaActionBindings(shieldRoot);
+    }
+  } catch (error) {
+    disposeInputs();
+    root.remove();
+    shieldRoot.remove();
+    throw error;
+  }
 
   const shieldBar = new ShieldBar();
   const shieldOre = new ShieldOreSpendCounter();
@@ -797,14 +828,7 @@ export function createStatusPill(
       bump(icon);
     },
     dispose: () => {
-      disposed = true;
-      shieldBinding?.dispose();
-      for (const binding of resourceBindings) {
-        binding.dispose();
-      }
-      for (const leave of leaveResourceInputs) {
-        leave();
-      }
+      disposeInputs();
       globalThis.removeEventListener?.(VIEW_SCALE_EVENT, invalidateRaster);
       globalThis.removeEventListener?.("resize", invalidateRaster);
       ore.clearSpend();

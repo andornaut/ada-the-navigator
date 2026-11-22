@@ -542,6 +542,53 @@ it("checks all Galaxy Map controls in the attached hidden screen without reading
   }
 });
 
+it.each(["Space", "pointer"])(
+  "finishes the unlock once and admits a fresh native Enter after the %s skip",
+  (kind) => {
+    const fixture = dom();
+    const options = galaxyConstructionOptions();
+    const map = createGalaxyMap(fixture.host, options);
+    const screen = fixture.nodes.find((node) => node.dataset.dialog === "galaxies")!;
+    const jump = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
+    const capture = (type: string, properties = {}) => {
+      const event = Object.assign(new Event(type, { cancelable: true }), properties);
+      const handler = screen.listeners.get(type)![0] as (event: Event) => void;
+      handler(event);
+      return event;
+    };
+    const flight = { from: 1, opened: [2], to: 2 } as const;
+    try {
+      map.show({ ...mapView(flight), panel: 1, ship: 1 });
+      if (kind === "Space") {
+        expect(capture("keydown", { key: " ", repeat: false }).defaultPrevented).toBe(true);
+        expect(capture("keydown", { key: " ", repeat: true }).defaultPrevented).toBe(true);
+        expect(capture("keyup", { key: " " }).defaultPrevented).toBe(true);
+      } else {
+        expect(capture("pointerdown", { pointerId: 7 }).defaultPrevented).toBe(true);
+        // The ancestor action root can stop the release click before this screen sees it.
+      }
+      expect(options.onFlightEnd).toHaveBeenCalledOnce();
+      expect(options.onView).not.toHaveBeenCalled();
+      expect(options.onStep).not.toHaveBeenCalled();
+      expect(options.onJump).not.toHaveBeenCalled();
+      expect(focusTarget).toHaveBeenLastCalledWith(jump);
+      expect(capture("keydown", { key: "Enter", repeat: false }).defaultPrevented).toBe(false);
+      const click = capture("click", { detail: 0 });
+      if (!click.defaultPrevented) {
+        jump.click();
+      }
+      expect(options.onJump).toHaveBeenCalledOnce();
+      if (kind === "pointer") {
+        expect(capture("click", { detail: 1, pointerId: 8 }).defaultPrevented).toBe(false);
+        expect(capture("click", { detail: 1, pointerId: 7 }).defaultPrevented).toBe(true);
+      }
+      expect(options.onFlightEnd).toHaveBeenCalledOnce();
+    } finally {
+      map.dispose();
+    }
+  },
+);
+
 it("draws route thrust below the painted hull and hides it under reduced motion", () => {
   const fixture = dom();
   let reduced = false;

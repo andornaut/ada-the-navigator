@@ -1,27 +1,46 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import * as actionBinding from "./actionBinding.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
+import { createPauseButton } from "./pauseButton.ts";
 import { enterPressView } from "./pressScope.ts";
 class Element extends EventTarget {
   dataset: Record<string, string> = {};
   className = "";
+  readonly children: Element[] = [];
   append(child: Element) {
     child.parentElement = this;
+    this.children.push(child);
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
+  remove() {
+    if (this.parentElement) {
+      const siblings = this.parentElement.children;
+      siblings.splice(siblings.indexOf(this), 1);
+      this.parentElement = null;
+    }
   }
   parentElement: Element | null = null;
   hidden = false;
   inert = false;
   disabled = false;
-  connected = true;
+  connected = false;
   readonly attributes = new Map<string, string>();
   readonly ownerDocument: FixtureDocument;
-  constructor(ownerDocument: FixtureDocument) {
+  readonly tag: string;
+  constructor(ownerDocument: FixtureDocument, tag = "div") {
     super();
     this.ownerDocument = ownerDocument;
+    this.tag = tag;
   }
   get isConnected(): boolean {
-    return this.connected && (this.parentElement?.isConnected ?? true);
+    return this.parentElement?.isConnected ?? this.connected;
   }
   contains(target: unknown): boolean {
     return (
@@ -35,7 +54,14 @@ class Element extends EventTarget {
     return this.attributes.get(name) ?? null;
   }
   matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+    return selector.split(",").some((part) => {
+      const key = part.trim();
+      return (
+        key === this.tag ||
+        (key === ":disabled" && this.disabled) ||
+        (key === "[data-action]" && this.dataset.action !== undefined)
+      );
+    });
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
@@ -53,8 +79,8 @@ class Element extends EventTarget {
   }
 }
 class FixtureDocument extends EventTarget {
-  createElement() {
-    return new Element(this);
+  createElement(tag: string) {
+    return new Element(this, tag);
   }
   defaultView = Object.assign(new EventTarget(), {
     HTMLElement: Element,
@@ -77,16 +103,10 @@ it("holds the actual navigation button once and suppresses release click using t
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   vi.stubGlobal("fetch", () => Promise.reject(new Error("No art fetch in fixture")));
   const root = new Element(document);
+  root.connected = true;
   let pausable = true;
   const pause = vi.fn();
   const menu = vi.fn();
-  const navigation = createNavigationButton(
-    root as unknown as HTMLElement,
-    { menu: "Menu", pause: "Pause" },
-    () => activateNavigation({ mapOpen: false, menu, pausable, pause }, navigation.button),
-  );
-  const button = navigation.button as unknown as Element;
-  button.hidden = false;
   let ready = true;
   let requiredChanged = () => {};
   const attachment = bindAdaActionRoot(
@@ -100,6 +120,13 @@ it("holds the actual navigation button once and suppresses release click using t
     },
     root as unknown as HTMLElement,
   );
+  const navigation = createNavigationButton(
+    root as unknown as HTMLElement,
+    { menu: "Menu", pause: "Pause" },
+    () => activateNavigation({ mapOpen: false, menu, pausable, pause }, navigation.button),
+  );
+  const button = navigation.button as unknown as Element;
+  button.hidden = false;
   const event = (type: string) => {
     const e = new Event(type, { cancelable: true });
     for (const [key, value] of Object.entries({
@@ -168,4 +195,46 @@ it("holds the actual navigation button once and suppresses release click using t
   button.dispatchEvent(new Event("click"));
   expect(menu).toHaveBeenCalledTimes(2);
   attachment.dispose();
+});
+
+it("audits Pause binding metadata before mounting into a detached parent", () => {
+  const document = new FixtureDocument();
+  vi.stubGlobal("document", document);
+  vi.stubGlobal("fetch", () => Promise.reject(new Error("No art fetch in fixture")));
+  const parent = new Element(document);
+  const root = parent as unknown as HTMLElement;
+  const bind = actionBinding.bindAdaAction;
+  const omitBinding = vi
+    .spyOn(actionBinding, "bindAdaAction")
+    .mockImplementationOnce((options, element) => {
+      const binding = bind(options, element);
+      binding.dispose();
+      return binding;
+    });
+  try {
+    expect(() => createPauseButton(root, "Pause", () => {})).toThrow(
+      "no registered action binding",
+    );
+    expect(parent.children).toHaveLength(0);
+  } finally {
+    omitBinding.mockRestore();
+  }
+});
+
+it("rolls back a connected Pause button when the live root audit fails", () => {
+  const document = new FixtureDocument();
+  vi.stubGlobal("document", document);
+  vi.stubGlobal("fetch", () => Promise.reject(new Error("No art fetch in fixture")));
+  const parent = new Element(document);
+  parent.connected = true;
+  const append = vi.spyOn(parent, "append");
+  expect(() => createPauseButton(parent as unknown as HTMLElement, "Pause", () => {})).toThrow(
+    "no live action root",
+  );
+  const button = append.mock.calls[0]![0];
+  expect(parent.children).toEqual([]);
+  expect(button.parentElement).toBeNull();
+  expect(() => actionBinding.assertAdaActionMetadata(button as unknown as HTMLElement)).toThrow(
+    "no registered action binding",
+  );
 });

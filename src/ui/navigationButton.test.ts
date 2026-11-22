@@ -32,6 +32,23 @@ class Node extends EventTarget {
       this.parentElement = null;
     }
   }
+  readonly tag: string;
+  constructor(tag = "div") {
+    super();
+    this.tag = tag;
+  }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const key = part.trim();
+      return key === this.tag || (key === "[data-action]" && this.dataset.action !== undefined);
+    });
+  }
+  querySelectorAll(selector: string): Node[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
   }
@@ -70,7 +87,7 @@ describe("actual Pause/Menu entry", () => {
   ] as const)("routes an actual entry click for $name", ({ expected, facts }) => {
     vi.stubGlobal("document", {
       body: new Node(),
-      createElement: () => new Node(),
+      createElement: (tag: string) => new Node(tag),
       createElementNS: () => new Node(),
     });
     vi.stubGlobal("fetch", () => Promise.reject(new Error("No asset fetch in unit fixture")));

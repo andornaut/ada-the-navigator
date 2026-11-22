@@ -1,5 +1,9 @@
 import { SCROLL } from "../data/layout.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 
@@ -26,7 +30,6 @@ export function createPauseButton(
   button.setAttribute("aria-label", label);
   button.title = label;
   button.hidden = true;
-  root.append(button);
   let disposed = false;
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -51,10 +54,6 @@ export function createPauseButton(
     };
     play(0);
   };
-  button.addEventListener("pointerdown", press);
-  for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
-    button.addEventListener(type, rest);
-  }
   const action = bindAdaAction(
     {
       click: {
@@ -72,7 +71,7 @@ export function createPauseButton(
     },
     button,
   );
-  disposers.set(button, () => {
+  const dispose = () => {
     disposed = true;
     action.dispose();
     clearTimeout(timer);
@@ -81,7 +80,21 @@ export function createPauseButton(
       button.removeEventListener(type, rest);
     }
     disposers.delete(button);
-  });
+  };
+  try {
+    assertAdaActionMetadata(button);
+    root.append(button);
+    assertAdaActionBindings(button);
+  } catch (error) {
+    dispose();
+    button.remove();
+    throw error;
+  }
+  button.addEventListener("pointerdown", press);
+  for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
+    button.addEventListener(type, rest);
+  }
+  disposers.set(button, dispose);
   void fetch(`${UI_ROOT}manifest.json`)
     .then((response) => response.json() as Promise<{ sprites?: { json: string; key: string }[] }>)
     .then((manifest) => {

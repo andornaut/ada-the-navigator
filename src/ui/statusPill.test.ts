@@ -6,6 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { canRechargeShield } from "../model/shieldRecharge.ts";
 import { noLevels, shipTuning } from "../model/upgrades.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { fromHudEdge, pixels, units } from "./layout/css.ts";
@@ -332,7 +333,15 @@ describe("status pill count", () => {
     get parentElement(): FakeNode | null {
       return this.parent ?? null;
     }
-    readonly isConnected = true;
+    connected = false;
+    readonly tag: string;
+    constructor(tag = "div") {
+      super();
+      this.tag = tag;
+    }
+    get isConnected(): boolean {
+      return this.parent?.isConnected ?? this.connected;
+    }
     get ownerDocument() {
       return document;
     }
@@ -376,7 +385,24 @@ describe("status pill count", () => {
     remove(): void {
       if (this.parent) {
         this.parent.children = this.parent.children.filter((node) => node !== this);
+        delete this.parent;
       }
+    }
+    matches(selector: string): boolean {
+      return selector.split(",").some((part) => {
+        const key = part.trim();
+        return (
+          key === this.tag ||
+          (key === '[role="button"]' && this.getAttribute("role") === "button") ||
+          (key === "[data-action]" && this.dataset.action !== undefined)
+        );
+      });
+    }
+    querySelectorAll(selector: string): FakeNode[] {
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
+        ...child.querySelectorAll(selector),
+      ]);
     }
     getAttribute(name: string): string | null {
       return this.attributes.get(name) ?? null;
@@ -395,16 +421,20 @@ describe("status pill count", () => {
     reducedMotion = true,
     onResource?: (kind: "ore" | "stardust" | "aboard", origin: HTMLElement) => void,
     onShield?: (origin: HTMLElement) => void,
+    ownership: "rooted" | "unrooted" | "detached" = "rooted",
   ) => {
     vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
     vi.stubGlobal("document", {
-      createElement: () => new FakeNode(),
+      createElement: (tag: string) => new FakeNode(tag),
       createElementNS: () => new FakeNode(),
       createTextNode: () => new FakeNode(),
       defaultView: { HTMLElement: FakeNode, Node: FakeNode },
     });
     const parent = new FakeNode();
-    fixtureActionRoot(parent);
+    parent.connected = ownership !== "detached";
+    if (ownership === "rooted") {
+      fixtureActionRoot(parent);
+    }
     const status = createStatusPill(parent as unknown as HTMLElement, {
       ...(onResource ? { onResource } : {}),
       ...(onShield ? { onShield } : {}),
@@ -417,6 +447,72 @@ describe("status pill count", () => {
     const count = (kind: string) => slot(kind).children[0]!;
     return { count, parent, root, shield: parent.children[1]!, slot, status };
   };
+
+  it.each(["shield-details", "resource-ore"])("audits detached metadata for %s", (id) => {
+    const bind = actionBinding.bindAdaAction;
+    const omitBinding = vi
+      .spyOn(actionBinding, "bindAdaAction")
+      .mockImplementation((options, element) => {
+        const binding = bind(options, element);
+        if (element.dataset.action === id) {
+          binding.dispose();
+        }
+        return binding;
+      });
+    try {
+      expect(() =>
+        pill(
+          true,
+          () => {},
+          () => {},
+          "detached",
+        ),
+      ).toThrow("no registered action binding");
+    } finally {
+      omitBinding.mockRestore();
+    }
+  });
+
+  it("rolls back the connected status and Shield surfaces when the live root audit fails", () => {
+    const append = vi.spyOn(FakeNode.prototype, "append");
+    const remove = vi.spyOn(FakeNode.prototype, "removeEventListener");
+    try {
+      expect(() =>
+        pill(
+          true,
+          () => {},
+          () => {},
+          "unrooted",
+        ),
+      ).toThrow("no live action root");
+      const index = append.mock.calls.findIndex(([root]) => root?.className === "ada-status");
+      const parent = append.mock.contexts[index] as FakeNode;
+      const [root, shield] = append.mock.calls[index]!;
+      expect(parent.children).toEqual([]);
+      for (const node of [root!, shield!]) {
+        expect(node.parentElement).toBeNull();
+        expect(() => actionBinding.assertAdaActionMetadata(node as unknown as HTMLElement)).toThrow(
+          "no registered action binding",
+        );
+      }
+      expect(
+        remove.mock.calls.some(
+          ([type], i) => remove.mock.contexts[i] === shield && type === "pointerdown",
+        ),
+      ).toBe(true);
+    } finally {
+      remove.mockRestore();
+      append.mockRestore();
+    }
+  });
+
+  it("requires a live root for Shield but allows a connected passive status pill", () => {
+    expect(() => pill(true, undefined, () => {}, "unrooted")).toThrow("no live action root");
+    const { root, shield, status } = pill(true, undefined, undefined, "unrooted");
+    expect(root.querySelectorAll('[role="button"], [data-action]')).toEqual([]);
+    expect(shield.tag).toBe("div");
+    status.dispose();
+  });
 
   it("makes the whole shield a dialog button and stops its press before flight input", () => {
     const onShield = vi.fn();
