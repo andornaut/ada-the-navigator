@@ -20,7 +20,6 @@ import {
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { FOCUS_STYLE } from "./modal.ts";
 import { createShieldDrawing } from "./shieldDrawing.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
@@ -278,6 +277,10 @@ export function statusSegments(view: Pick<StatusView, "aboard" | "ore">): ("aboa
   return ["ore", ...(view.aboard ? (["aboard"] as const) : [])];
 }
 
+const HUD_ENABLED = ':where(:not(:disabled,[aria-disabled="true"]))';
+const RESOURCE_ACTION = `.ada-controls .ada-status .ada-resource-target${HUD_ENABLED}`;
+const SHIELD_ACTION = `.ada-controls button.ada-shield${HUD_ENABLED}`;
+
 export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status{
   position:absolute;
@@ -302,7 +305,11 @@ export const STATUS_PILL_STYLE = `
   padding-right:${units(statusEndPadding("towing"))}
 }
 .ada-controls .ada-status .ada-resource-target{pointer-events:auto;cursor:pointer}
-.ada-controls .ada-status [role=button]:focus-visible{${FOCUS_STYLE}}
+.ada-controls .ada-status .ada-resource-target:focus-visible,
+.ada-controls button.ada-shield:focus-visible{
+  outline:none;
+  box-shadow:none
+}
 /* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
 .ada-controls .ada-pause[hidden] ~ .ada-status{
   left:${fromHudEdge("left", STATUS_PILL.xAlone)}
@@ -335,8 +342,6 @@ export const STATUS_PILL_STYLE = `
   border:0;
   pointer-events:auto;
   cursor:pointer
-}
-.ada-controls button.ada-shield:focus-visible{${FOCUS_STYLE}
 }
 ${SHIELD_PILL.bars
   .map(
@@ -475,6 +480,35 @@ ${SHIELD_PILL.bars
 }
 .ada-controls .ada-status-tick[data-kind=ore]{
   color:${STATUS_COLOURS.oreTick}
+}
+${RESOURCE_ACTION}:is(:focus-visible,:active){
+  background-color:${STATUS_COLOURS.count};
+  color:${STATUS_COLOURS.rechargeEdge}
+}
+${RESOURCE_ACTION}:active{
+  background-color:${STATUS_COLOURS.flash}
+}
+/* Recolour only the shield icon. The bars, borders and recharge keep their own state. */
+${SHIELD_ACTION}:focus-visible .ada-status-shield{
+  background-color:${STATUS_COLOURS.count}
+}
+${SHIELD_ACTION}:active .ada-status-shield{
+  background-color:${STATUS_COLOURS.flash}
+}
+@media (forced-colors:active){
+  ${RESOURCE_ACTION}:is(:focus-visible,:active){
+    forced-color-adjust:none;
+    background-color:Highlight;
+    color:HighlightText
+  }
+  ${SHIELD_ACTION}:is(:focus-visible,:active) .ada-status-shield{
+    forced-color-adjust:none;
+    background-color:HighlightText
+  }
+  ${SHIELD_ACTION}:is(:focus-visible,:active) .ada-shield-drawing [data-part=pill]{
+    forced-color-adjust:none;
+    fill:Highlight
+  }
 }
 `;
 
