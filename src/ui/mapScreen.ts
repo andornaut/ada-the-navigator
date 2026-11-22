@@ -14,7 +14,12 @@ import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
-import { type AdaActionOptions, bindAdaAction } from "./actionBinding.ts";
+import {
+  type AdaActionOptions,
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
@@ -1254,6 +1259,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chips.delete(id);
       }
     }
+    const inserted: HTMLButtonElement[] = [];
     for (const { place, x, y } of shown) {
       let chip = chips.get(place.id);
       if (!chip) {
@@ -1289,6 +1295,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
           }
         });
         chips.set(id, chip);
+        inserted.push(chip);
       }
       dressChip(chip, place);
       chip.setAttribute("aria-label", place.label);
@@ -1308,6 +1315,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (reading.join("\n") !== order) {
       order = reading.join("\n");
       placesLayer.replaceChildren(...reading.map((id) => chips.get(id)!));
+    }
+    for (const chip of inserted) {
+      assertAdaActionBindings(chip);
     }
     // Ada.
     const at = toScreen(inner, current, state.map.player);
@@ -1647,6 +1657,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       render();
     }
   };
+  // The mounted chrome and panel are complete here, including Travel while the panel is hidden.
+  let checkedAttached = screen.isConnected;
+  if (checkedAttached) {
+    assertAdaActionBindings(screen);
+  } else {
+    assertAdaActionMetadata(screen);
+  }
+
   window.addEventListener(VIEW_SCALE_EVENT, refit);
   window.addEventListener("resize", refit);
   document.fonts.addEventListener("loadingdone", refit);
@@ -1706,6 +1724,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     /** Opens at the opening fit with nothing selected, focus on close. */
     open(): void {
+      if (!checkedAttached) {
+        assertAdaActionBindings(screen);
+        checkedAttached = true;
+      }
       cancelFieldAction();
       screen.hidden = false;
       selected = null;

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ControlState } from "../input/state.ts";
-import type { LocalMap } from "../model/map.ts";
+import type { LocalMap, MapPlace } from "../model/map.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import * as mapUI from "./mapScreen.ts";
-import { mapScreenLabels } from "./mapScreen.ts";
+import { mapScreenLabels, type MapScreenState } from "./mapScreen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 import type { ShipView } from "./shipCard.ts";
 
@@ -65,6 +65,8 @@ class FakeElement {
     }
   }
   parentElement: FakeElement | null = null;
+  readonly clientWidth = 720;
+  readonly clientHeight = 360;
   tabIndex = 0;
   tagName = "DIV";
   get isConnected(): boolean {
@@ -185,6 +187,12 @@ class FakeElement {
     PAGE.activeElement = this;
     focusLog.push(this);
     lastFocusOptions = options;
+  }
+  getBoundingClientRect() {
+    return { height: this.clientHeight, left: 0, top: 0, width: this.clientWidth, x: 0, y: 0 };
+  }
+  getContext(): null {
+    return null;
   }
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
@@ -360,18 +368,21 @@ const texts = (node: FakeElement): string[] => [
   ...node.children.flatMap(texts),
 ];
 
-it("keeps a standalone Map footer Close and invokes its direct caller once", () => {
-  const { options, pause } = cards();
-  const root = mountedRoot();
+function standaloneMap(root = mountedRoot()) {
   const onClose = vi.fn();
   const map = mapUI.createMapScreen(root as unknown as HTMLElement, {
-    labels: options.labels.mapScreen,
+    labels: LABELS.mapScreen,
     onClose,
     onGalaxies: () => {},
     onQuests: () => {},
     onTravel: () => {},
     reducedMotion: () => true,
   });
+  return { map, onClose, root };
+}
+
+it("keeps a standalone Map footer Close and invokes its direct caller once", () => {
+  const { map, onClose, root } = standaloneMap();
   const footer = root.querySelectorAll().find((node) => node.dataset.action === "map-close")!;
   expect(footer.textContent).toBe("Close");
   map.open();
@@ -380,7 +391,119 @@ it("keeps a standalone Map footer Close and invokes its direct caller once", () 
   map.dispose();
   footer.click();
   expect(onClose).toHaveBeenCalledOnce();
-  pause.dispose();
+});
+
+const STATION: MapPlace = {
+  id: "station:0,0",
+  job: false,
+  kind: "station",
+  label: "Station",
+  objective: false,
+  symbol: "station",
+  travel: true,
+  x: 400,
+  y: 600,
+};
+function mapState(places: readonly MapPlace[]): MapScreenState {
+  return {
+    carrying: false,
+    field: null,
+    inDanger: false,
+    job: null,
+    map: { ...MAP, places },
+    towing: false,
+  };
+}
+function mapMeasurement() {
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "", length: 0 }));
+  vi.stubGlobal("devicePixelRatio", 1);
+}
+
+it.each(["map-zoomIn", "map-travel"])(
+  "rejects missing %s metadata in the completed Map layout",
+  (id) => {
+    const bind = actionBinding.bindAdaAction;
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+      element.dataset.action === id
+        ? { activate: () => false, dispose() {}, update() {} }
+        : bind(options, element),
+    );
+    // The Travel leaf is mounted in the hidden panel even without a selection or an action root.
+    const root = id === "map-travel" ? new FakeElement() : mountedRoot();
+    expect(() => standaloneMap(root)).toThrow("no registered action binding");
+    expect(root.querySelector(`[data-action="${id}"]`)).not.toBeNull();
+    expect(root.querySelector(".ada-map-panel")?.hidden).toBe(true);
+  },
+);
+
+it("audits a detached Map when it first opens in an owning root", () => {
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  const { map, root } = standaloneMap(new FakeElement());
+  try {
+    expect(audit).not.toHaveBeenCalled();
+    expect(() => map.open()).toThrow("no live action root");
+    expect(map.isOpen()).toBe(false);
+    mountedRoot().append(root);
+    map.open();
+    map.close();
+    map.open();
+    expect(audit.mock.calls).toEqual([[map.element], [map.element]]);
+  } finally {
+    map.dispose();
+  }
+});
+
+it("rejects a newly mounted Map chip whose registration was bypassed", () => {
+  mapMeasurement();
+  const { map } = standaloneMap();
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation(() => ({
+    activate: () => false,
+    dispose() {},
+    update() {},
+  }));
+  map.setState(mapState([STATION]));
+  try {
+    expect(() => map.open()).toThrow("no registered action binding");
+  } finally {
+    map.dispose();
+  }
+});
+
+it("audits Map chrome once and each newly attached chip without consulting action policy", () => {
+  mapMeasurement();
+  const bind = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw new Error("construction evaluated runtime action policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
+    bind(
+      { ...options, click: { ...options.click, availability: policy }, current: policy },
+      element,
+    ),
+  );
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  const { map } = standaloneMap();
+  try {
+    map.setState(mapState([STATION]));
+    map.open();
+    const chip = map.element.querySelector(".ada-map-place");
+    expect(chip).not.toBeNull();
+    expect(audit.mock.calls).toEqual([[map.element], [chip]]);
+    map.setState(mapState([{ ...STATION, y: 900 }]));
+    map.close();
+    map.open();
+    expect(audit).toHaveBeenCalledTimes(2);
+    map.setState(mapState([]));
+    expect(chip?.isConnected).toBe(false);
+    map.setState(mapState([STATION]));
+    const added = map.element.querySelector(".ada-map-place");
+    expect(added).not.toBeNull();
+    expect(added).not.toBe(chip);
+    expect(audit.mock.calls).toEqual([[map.element], [chip], [added]]);
+    expect(policy).not.toHaveBeenCalled();
+  } finally {
+    map.dispose();
+  }
 });
 
 describe("Paused card", () => {
