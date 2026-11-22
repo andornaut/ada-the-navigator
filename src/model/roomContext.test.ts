@@ -53,19 +53,31 @@ describe("Same-visit room and boarding context", () => {
   );
 
   it.each([false, true])(
-    "persists invitation narration and exact boarding state (announce %s)",
+    "persists party narration and exact boarding state (announce %s)",
     (announce) => {
       const model = boarding(6, announce);
       const page = model.storyView?.page;
-      expect(page?.background).toBe("adaRoomInvitations");
+      expect(page?.background).toBe("adaRoomParty");
       const before = model.saveDocument();
-      expect(before.pendingStory?.cursor.current.scene.background).toBe("adaRoomInvitations");
+      expect(before.pendingStory?.cursor.current.scene.background).toBe("adaRoomParty");
       const loaded = new GameModel(CONTENT, model.save());
       loaded.continueGame();
       expect(loaded.storyView?.page).toEqual(page);
       expect(loaded.saveDocument()).toEqual(before);
     },
   );
+
+  it("restores the former invitation room reference without changing the saved cursor", () => {
+    const saved = boarding(6, false).saveDocument();
+    Object.assign(saved.pendingStory!.cursor.current.scene, { background: "adaRoomInvitations" });
+    expect(restoreSave(saved)).not.toBeNull();
+    const loaded = new GameModel(CONTENT, JSON.stringify(saved));
+    loaded.continueGame();
+    expect(loaded.storyView?.page.background).toBe("adaRoomInvitations");
+    expect(loaded.saveDocument().pendingStory?.cursor.current).toEqual(
+      saved.pendingStory?.cursor.current,
+    );
+  });
 
   it.each(["adaRoomRecorderDad", "grandmaGarden", "adaRoomInvented"])(
     "rejects %s as a persisted room context",

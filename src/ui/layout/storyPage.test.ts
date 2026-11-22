@@ -286,13 +286,15 @@ const subject = (key: Background) =>
   MANIFEST.assets.find(({ id }) => id === BACKGROUND_ART[key])!.subject!;
 
 describe("story environment aliases", () => {
-  it("keeps every alias at its base environment's placement without figure overlays", () => {
+  it("keeps every manifest alias at its base environment's placement", () => {
     expect(BASES).toEqual({
       adaRoomMorningCats: "adaRoomMorning",
+      adaRoomPartyAda: "adaRoomParty",
       adaRoomRecorderDad: "adaRoomRecorder",
       adaRoomSleep: "adaRoomNight",
       adaRoomUnpolishedCats: "adaRoomUnpolished",
       frontDoorMom: "frontDoor",
+      schoolyardFriends: "schoolyard",
     });
     for (const [alias, base] of Object.entries(BASES)) {
       expect(backgroundOverlays(MANIFEST.assets, BACKGROUND_ART[alias as Background])).toEqual([]);

@@ -433,6 +433,7 @@ interface RoomOptions {
   recorder?: boolean;
   // Phantom's blank invitation cards on the desk.
   invitations?: boolean;
+  partyCards?: boolean;
 }
 
 // Design px per logical canvas px (the canvas is the design frame at 360 / 390).
@@ -465,7 +466,7 @@ function recorder(
 
 function room(
   P: Palette,
-  { glow, invitations, moon, recorder: withRecorder }: RoomOptions = {},
+  { glow, invitations, moon, partyCards, recorder: withRecorder }: RoomOptions = {},
 ): Scene {
   const [nx, ny, wall] = [16, 12, 7];
   const s = fitted(nx, ny, wall);
@@ -556,6 +557,17 @@ function room(
   s.solid(box(5.95, 6.05, 0.85, 0.95, 2.75, 3.8), P.lamp!, 2, 6.7);
   s.solid(frustum(6.0, 0.9, 0.62, 0.32, 8, 3.6, 4.2), P.shade!, 2, 6.8);
   s.solid(box(4.0, 5.0, 1.8, 2.5, 2.6, 2.65), P.cloth!, 2, 6.4);
+  if (partyCards) {
+    for (const [i, colour] of ["#f6757a", "#fee761", "#63c74d", "#8fb2dc"].entries()) {
+      const [dx, dy, dz] = [0.04 * i, -0.05 * i, 0.05 * i];
+      s.solid(
+        box(4.2 + dx, 4.95 + dx, 1.75 + dy, 2.25 + dy, 2.6 + dz, 2.65 + dz),
+        colour,
+        2,
+        6.41 + i * 0.001,
+      );
+    }
+  }
   const [rx, ry, rz] = ROCK;
   const line: Decal[] = glow
     ? [[flat(octagon(rx, ry, 0.22, 0, 8, 0.2), rz + 0.001), P.glowline!]]
@@ -1525,6 +1537,13 @@ const rockGlow = (room = "story-ada-room") => ({
   ],
   reducedMotion: [step("aboard", 400, 0)],
 });
+export const PARTY_ROOM = "story-ada-room-party";
+export const PARTY_TRANSITION = rockGlow(PARTY_ROOM);
+export const PARTY_ROOM_STAGES = [0, ...GLOW].map((amount, stage) => ({
+  id: stage === 0 ? PARTY_ROOM : `${PARTY_ROOM}-glow-${stage}`,
+  render: () => paint(ROOM, room(ROOM, { glow: glowAmount(amount), partyCards: true })),
+}));
+
 export const TRANSITION = {
   version: 1,
   rockGlow: rockGlow(),

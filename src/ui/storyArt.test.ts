@@ -65,10 +65,12 @@ describe("storybook art", () => {
   it("places compatibility aliases as their environment base", () => {
     expect(storyBases(manifest.assets)).toEqual({
       adaRoomMorningCats: "adaRoomMorning",
+      adaRoomPartyAda: "adaRoomParty",
       adaRoomRecorderDad: "adaRoomRecorder",
       adaRoomSleep: "adaRoomNight",
       adaRoomUnpolishedCats: "adaRoomUnpolished",
       frontDoorMom: "frontDoor",
+      schoolyardFriends: "schoolyard",
     });
     // An alias draws its base's image, with its base's band.
     const subjects = storySubjects(manifest.assets);
@@ -102,11 +104,12 @@ describe("storybook art", () => {
     expect(storySubjects(broken)).not.toHaveProperty("park");
   });
 
-  // Each rock glow: Ada's ordinary, invitation and recorder rooms into aboard, each through
+  // Each rock glow: Ada's ordinary, invitation, recorder and party rooms into aboard, each through
   // its own room's three glow frames.
   const GLOWS: readonly { aboard: ArtBackground; frames: string; room: ArtBackground }[] = [
     { aboard: "aboard", frames: "story-ada-room-glow", room: "adaRoom" },
     { aboard: "aboard", frames: "story-ada-room-invitations-glow", room: "adaRoomInvitations" },
+    { aboard: "aboard", frames: "story-ada-room-party-glow", room: "adaRoomParty" },
     { aboard: "aboard", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
   ] as const;
   // A composite shares its base's image, so a page on Dad's recorder room glows as the room does.

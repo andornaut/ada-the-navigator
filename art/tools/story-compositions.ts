@@ -4,8 +4,11 @@ import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { decodePng } from "@andornaut/art-kit/build/png";
+import { composite, resizeNearest } from "@andornaut/art-kit/build/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
-import { decodeWebp, encodeLossyWebp } from "@andornaut/art-kit/build/webp";
+import { decodeWebp, encodeLosslessWebp, encodeLossyWebp } from "@andornaut/art-kit/build/webp";
+
+import { PARTY_ROOM, PARTY_ROOM_STAGES } from "./storybook.ts";
 
 interface Asset {
   id: string;
@@ -39,10 +42,71 @@ const manifest = JSON.parse(
 ) as {
   assets: Asset[];
 };
+const rainScene = "story-community-garden-rain";
+const partyOpening = "story-ada-room-party-ada";
+const lunchScene = "story-schoolyard-friends";
+const peakNightScene = "story-ada-room-night-glowing";
+const sleepGlow = "story-ada-room-sleep-glow";
+const figureScenes = {
+  // Reverse the historical party room's 74-row lift to match the shared bedroom camera.
+  [partyOpening]: [["story-ada-list", 308, 258, 2]],
+  [rainScene]: [
+    ["story-party-grandma", 379, 185, 1],
+    ["story-party-mom", 428, 187, 1],
+    ["story-party-dad", 494, 182, 1],
+    ["story-party-casey", 350, 217, 1],
+    ["story-party-ada", 408, 218, 1],
+    ["story-party-sam", 467, 216, 1],
+    ["story-party-friend", 523, 218, 1],
+    ["story-party-penny", 548, 224, 1],
+  ],
+  [peakNightScene]: [["story-ada-night", 233, 290, 2]],
+  [lunchScene]: [
+    ["story-schoolyard-casey", 501, 218, 1],
+    ["story-schoolyard-ada", 525, 222, 1],
+    ["story-schoolyard-sam", 552, 220, 1],
+    ["story-schoolyard-friend", 574, 219, 1],
+  ],
+} as const;
+const sharedFigurePaths = new Map([
+  ["story-schoolyard-casey", "story-party-casey"],
+  ["story-schoolyard-sam", "story-party-sam"],
+  ["story-schoolyard-friend", "story-party-friend"],
+]);
+const subjects = new Map([
+  ...PARTY_ROOM_STAGES.map(({ id }) => [id, { top: 255, bottom: 300 }] as const),
+  [partyOpening, { top: 255, bottom: 300 }],
+  [lunchScene, { top: 168, bottom: 278 }],
+  [rainScene, { top: 182, bottom: 274 }],
+  [peakNightScene, { top: 250, bottom: 300 }],
+]);
 const originals = new Map(manifest.assets.map((asset) => [asset.id, asset]));
 const images = new Map<string, RgbaImage>();
-const original = (id: string) => {
+const original = (id: string): RgbaImage => {
   if (!images.has(id)) {
+    if (id === rainScene) {
+      const lot = decodePng(readFileSync(`${references}community-garden-rain.png`));
+      const rain = decodePng(readFileSync(`${references}rain.png`));
+      composite({ x: 0, y: 0 }, resizeNearest(lot.width, lot.height, rain), lot);
+      images.set(id, lot);
+      return lot;
+    }
+    if (id === peakNightScene) {
+      const night = original("story-ada-room-night");
+      const peak = { ...night, data: new Uint8Array(night.data) };
+      const { x, y } = originals.get(sleepGlow)!.at!;
+      composite({ x: x * 2, y: y * 2 }, original(sleepGlow), peak);
+      images.set(id, peak);
+      return peak;
+    }
+    if (id === partyOpening) return original(PARTY_ROOM);
+    if (id === lunchScene) return original("story-schoolyard");
+    const partyStage = PARTY_ROOM_STAGES.find((stage) => stage.id === id);
+    if (partyStage) {
+      const image = partyStage.render();
+      images.set(id, image);
+      return image;
+    }
     const asset = originals.get(id);
     assert(asset, `Missing authored scene ${id}`);
     const archived = `${references}${basename(asset.path)}`;
@@ -159,12 +223,16 @@ export async function buildStoryCompositions(output: string) {
   const generated = new Map<string, RgbaImage>();
   const decoded = new Map<string, RgbaImage>();
   const bytes: Record<string, number> = {};
-  const publish = async (id: string, image: RgbaImage) => {
+  const publish = async (id: string, image: RgbaImage, lossless = false) => {
     const path = `/art/story-composed/${id}.webp`;
-    const encoded = await encodeLossyWebp(STORY_WEBP, image);
+    const encoded = lossless
+      ? await encodeLosslessWebp(image)
+      : await encodeLossyWebp(STORY_WEBP, image);
+    const restored = await decodeWebp(encoded);
+    if (lossless) assert.deepEqual(restored, image, `Exact figure pixels: ${id}`);
     writeFileSync(`${directory}${path.slice(4)}`, encoded);
     generated.set(id, image);
-    decoded.set(id, await decodeWebp(encoded));
+    decoded.set(id, restored);
     bytes[path] = encoded.length;
     assets.push({
       id,
@@ -184,6 +252,7 @@ export async function buildStoryCompositions(output: string) {
     "story-ada-room-morning",
     "story-grandma-garden",
     "story-community-garden",
+    rainScene,
     "story-schoolyard",
     "story-school-hallway",
     "story-kitchen",
@@ -191,9 +260,9 @@ export async function buildStoryCompositions(output: string) {
     "story-concert-hall",
   ];
   const addScene = (id: string, base: string, layers: Layer[]) => {
-    const asset = originals.get(id);
-    assert(asset?.subject, `Missing original subject band ${id}`);
-    scenes[id] = { base, layers, subject: asset.subject };
+    const subject = subjects.get(id) ?? originals.get(id)?.subject;
+    assert(subject, `Missing original subject band ${id}`);
+    scenes[id] = { base, layers, subject };
   };
   for (const id of baseIds) {
     const base = await publish(`base-${id.slice(6)}`, original(id));
@@ -217,7 +286,7 @@ export async function buildStoryCompositions(output: string) {
     stages.push([polished, await patch(`glow-${stage}`, "story-ada-room", id)]);
     addScene(id, day, stages[stage]!);
   }
-  for (const prop of ["recorder", "invitations"]) {
+  for (const prop of ["recorder", "invitations", "party"]) {
     const cells = Array.from({ length: 4 }, (_, stage) => {
       const suffix = stage === 0 ? "" : `-glow-${stage}`;
       return difference(
@@ -257,9 +326,20 @@ export async function buildStoryCompositions(output: string) {
       await patch(`garden-${state}`, "story-grandma-garden", id),
     ]);
   }
-  const sleepGlow = "story-ada-room-sleep-glow";
-  await publish(sleepGlow, original(sleepGlow));
-  assets.at(-1)!.at = originals.get(sleepGlow)!.at;
+  const glow = original(sleepGlow);
+  const at = originals.get(sleepGlow)!.at!;
+  await publish(sleepGlow, glow);
+  assets.at(-1)!.at = at;
+  addScene(peakNightScene, scenes["story-ada-room-night"]!.base, [
+    {
+      asset: sleepGlow,
+      atLogical: at,
+      displayWidth: glow.width / 2,
+      displayHeight: glow.height / 2,
+    },
+  ]);
+  addScene(partyOpening, day, [...scenes[PARTY_ROOM]!.layers]);
+  addScene(lunchScene, scenes["story-schoolyard"]!.base, []);
   // Preserve environment-only aliases and their individual run placement bands.
   for (const asset of originals.values()) {
     if (!asset.id.startsWith("story-") || scenes[asset.id] || !asset.subject) continue;
@@ -268,12 +348,43 @@ export async function buildStoryCompositions(output: string) {
     );
     if (canonical) addScene(asset.id, scenes[canonical.id]!.base, scenes[canonical.id]!.layers);
   }
+  const authoredFigures = new Map<string, RgbaImage>();
+  for (const [id, figures] of Object.entries(figureScenes)) {
+    const plate = original(id);
+    const authored = { ...plate, data: new Uint8Array(plate.data) };
+    for (const [name, x, y, scale] of figures) {
+      const sprite = decodePng(readFileSync(`${references}${name.slice(6)}.png`));
+      const displayWidth = sprite.width * scale;
+      const displayHeight = sprite.height * scale;
+      const image = resizeNearest(displayWidth * 2, displayHeight * 2, sprite);
+      assert(x + displayWidth <= plate.width / 2 && y + displayHeight <= plate.height / 2, name);
+      composite({ x: x * 2, y: y * 2 }, image, authored);
+      const shared = sharedFigurePaths.get(name);
+      if (shared) {
+        const asset = assets.find(({ id }) => id === shared);
+        assert(asset, `Missing shared figure asset: ${shared}`);
+        assert.deepEqual(image, generated.get(shared), `Shared figure pixels: ${name}`);
+        assets.push({ ...asset, id: name });
+        generated.set(name, image);
+        decoded.set(name, decoded.get(shared)!);
+      } else {
+        await publish(name, image, true);
+      }
+      scenes[id]!.layers.push({
+        asset: name,
+        atLogical: { x, y },
+        displayWidth,
+        displayHeight,
+      });
+    }
+    authoredFigures.set(id, authored);
+  }
   // The lossless pieces rebuild every authored scene exactly; then the decoded WebP pieces
   // stay within DECODED_LIMITS of it at display size.
   const reconstructed: string[] = [];
   const decodedScenes: Record<string, ReturnType<typeof displayDifference>> = {};
   for (const [id, scene] of Object.entries(scenes)) {
-    const authored = original(id);
+    const authored = authoredFigures.get(id) ?? original(id);
     assert.deepEqual(
       compose(generated, scene),
       new Uint8Array(authored.data),
@@ -299,13 +410,17 @@ export async function buildStoryCompositions(output: string) {
     `${directory}/story-compositions-report.json`,
     `${JSON.stringify(
       {
-        codec: "Published ArtKit lossy WebP quality 80, method 6, alpha quality 100",
+        codec:
+          "Published ArtKit WebP: lossy quality 80, method 6, alpha quality 100; lossless figures",
         baseCount: baseIds.length,
-        generatedPaths: assets.length,
+        generatedPaths: Object.keys(bytes).length,
         retainedPaths: ["/art/story/ada-skywatch.png", "/art/story/penny-sitting.png"],
         bytes,
         encodedBytes: Object.values(bytes).reduce((sum, value) => sum + value, 0),
-        decodedBytes: assets.reduce((sum, image) => sum + image.width * image.height * 4, 0),
+        decodedBytes: [...new Set(decoded.values())].reduce(
+          (sum, image) => sum + image.data.length,
+          0,
+        ),
         reconstructed,
         nativeRgbaExact: true,
         decoded: {

@@ -8,9 +8,10 @@
   `story-overnight.json`. `art/tools/diorama.ts` holds the solids, painter,
   lights and treatment. `node art/tools/route-sky.ts` writes the environment
   sky and ground and their manifest entries.
-- Story backgrounds and overlays contain no human or animal figures. The
-  galaxy map is the exception: its established Ada and Penny sprites remain
-  on the route ground, with their existing placement and scale. Established
+- Story backgrounds are environment plates. The
+  [Garden Party figure layers](#garden-party-figure-layers) are explicit scene
+  compositions. The galaxy map retains Ada and Penny on the route ground
+  at their established placement and scale. Established
   portraits appear in the story panel for the existing speakers; narration
   has no added portrait. Story copy, speaker identities and props remain
   unchanged. Astra and the rock's glow retain their existing effects.
@@ -25,10 +26,11 @@
 WebP package from the authored PNG references, lossy at quality 80 (method 6,
 alpha quality 100, so the patches' binary alpha stays exact). It does not
 activate the root manifest or remove reference images. The package contains
-eleven full bases across nine locations, a polished-rock patch, recorder and
-invitation four-state sheets, three shared glow patches, two garden-state patches and the sleep-glow
-overlay. The two existing galaxy-map character images remain unchanged: twenty
-new physical images and two reused images in total.
+twelve full bases across nine locations, a polished-rock patch, recorder,
+invitation and party-card four-state sheets, three shared glow patches, two
+garden-state patches and the sleep-glow overlay. The package encodes twenty-two
+environment images and lossless Garden Party figures, and reuses the two
+galaxy-map character images.
 
 `art/sources/story-reference.json` preserves the authored scene paths, subject
 bands and overlay positions independently of the activated runtime manifest.
@@ -36,13 +38,17 @@ The producer reads preserved PNG inputs in `art/sources/story/`, falling back
 to their original public paths before cutover. Paired retirement moves those
 authored inputs out of `public/art/story/`; it does not discard their bytes.
 
+The Garden Party closing places the original Ada-in-bed sprite over the night
+base and rock-glow layer at logical (233, 290). The shared bedroom camera and
+unoccupied overnight scenes keep their existing framing.
+
 `story-compositions.json` uses version 1 and the existing 960 by 540 logical
 canvas at pixel ratio 2. Stable scene IDs select a physical base and ordered
 source-over layers. `atLogical` and subject bands use logical pixels; optional
 `sourceRect` values use bounded integer encoded pixels, with layer display size
 equal to half the selected rectangle. Base and layers share one camera and clip.
-Recorder and invitation cells have transparent padding and independent source
-rectangles. The producer checks exact native RGBA reconstruction of every
+Recorder, invitation and party-card cells have transparent padding and
+independent source rectangles. The producer checks exact native RGBA reconstruction of every
 resolved scene from the lossless pieces before encoding, then rebuilds each
 scene from the decoded WebP pieces and fails if it differs from the authored
 scene at display size (2x2 box means, per RGB channel byte) by a mean above 1,
@@ -57,11 +63,38 @@ Activate a candidate by copying its `story-composed/*.webp` over
 The paired consumer retains every logical scene row in the root manifest and
 points its path to the physical base. It links the composition document through
 `storyCompositions`. The sleep overlay keeps its original logical position and
-dimensions. Transition IDs, fade timing, overnight steps, story copy, portraits
+dimensions. Existing transition IDs, fade timing, overnight steps, story copy, portraits
 and the galaxy-map exception remain unchanged. Reference PNG retirement and
 offline cache closure are paired with the consumer, not performed by this
 generator. Ordinary half-art placement is owned by the shared story component;
 this package does not alter its logical canvas or the bedroom/run camera math.
+
+## Garden Party environments
+
+| Scene ID                       | Composition                                          | Subject  |
+| ------------------------------ | ---------------------------------------------------- | -------- |
+| `story-ada-room-party`         | Shared bedroom and four coloured invitation cards    | 255..300 |
+| `story-ada-room-party-ada`     | Party room with Ada holding her list                 | 255..300 |
+| `story-community-garden-rain`  | Rain beside the shed, with puddles and party figures | 182..274 |
+| `story-ada-room-night-glowing` | Night room with the peak rock-glow layer             | 250..300 |
+| `story-schoolyard-friends`     | Schoolyard with four children                        | 168..278 |
+
+The party room has its own three boarding glow steps and shares the bedroom camera.
+The rain base composites the authored lot and rain sources at 2x before encoding.
+The night scene reuses the overnight glow layer at its existing placement.
+
+### Garden Party figure layers
+
+The figure source PNGs retain their authored pixels and occlusion masks.
+The composition producer expands them by nearest neighbour to the 2x canvas
+and encodes them as lossless WebP. Figure layers draw after the environment layers.
+
+Ada holds her list in the doorway in `story-ada-room-party-ada`, at (308, 258)
+on the shared bedroom canvas. The rain scene layers Grandma, Mom and Dad,
+then Casey, Ada, Sam, their friend and Penny, in that order.
+`story-schoolyard-friends` layers the same four children at the schoolyard.
+Casey, Sam and the friend each share one WebP across both scenes. Each scene
+keeps its figure IDs and placements. Ada has separate poses for each scene.
 
 ## Canvas
 

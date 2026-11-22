@@ -4,6 +4,7 @@ const ROOM_BACKGROUNDS = [
   "adaRoom",
   "adaRoomMorningCats",
   "adaRoomNight",
+  "adaRoomParty",
   "adaRoomRecorder",
   "adaRoomInvitations",
 ] as const;

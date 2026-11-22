@@ -95,5 +95,37 @@
         "holdMs": 0
       }
     ]
+  },
+  "rockGlowParty": {
+    "from": "story-ada-room-party",
+    "steps": [
+      {
+        "background": "story-ada-room-party-glow-1",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-party-glow-2",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-party-glow-3",
+        "fadeMs": 200,
+        "holdMs": 240
+      },
+      {
+        "background": "aboard",
+        "fadeMs": 0,
+        "holdMs": 0
+      }
+    ],
+    "reducedMotion": [
+      {
+        "background": "aboard",
+        "fadeMs": 400,
+        "holdMs": 0
+      }
+    ]
   }
 }

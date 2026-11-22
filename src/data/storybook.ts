@@ -17,7 +17,7 @@ export const CHAPTER_BACKGROUNDS: Readonly<
   >
 > = {
   1: { closing: "gardenLot", opening: "grandmaGarden", resolution: "gardenLot" },
-  2: { closing: "schoolyard", opening: "schoolHallway", resolution: "schoolyard" },
+  2: { closing: "schoolyardFriends", opening: "schoolHallway", resolution: "schoolyardFriends" },
   3: { closing: "park", opening: "frontDoor", resolution: "park" },
   4: { closing: "concertHall", opening: "adaRoomRecorder", resolution: "adaRoomRecorder" },
   5: {
@@ -25,7 +25,7 @@ export const CHAPTER_BACKGROUNDS: Readonly<
     opening: "grandmaGardenSpilled",
     resolution: "grandmaGardenSpilled",
   },
-  6: { closing: "adaRoomNight", opening: "adaRoomInvitations", resolution: "gardenLot" },
+  6: { closing: "adaRoomNightGlowing", opening: "adaRoomPartyAda", resolution: "gardenLotRain" },
 };
 
 /**
@@ -42,6 +42,9 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   adaRoomMorning: "story-ada-room-morning",
   adaRoomMorningCats: "story-ada-room-morning-cats",
   adaRoomNight: "story-ada-room-night",
+  adaRoomNightGlowing: "story-ada-room-night-glowing",
+  adaRoomParty: "story-ada-room-party",
+  adaRoomPartyAda: "story-ada-room-party-ada",
   adaRoomRecorder: "story-ada-room-recorder",
   adaRoomRecorderDad: "story-ada-room-recorder-dad",
   adaRoomSleep: "story-ada-room-sleep",
@@ -51,6 +54,7 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   frontDoor: "story-front-door",
   frontDoorMom: "story-front-door-mom",
   gardenLot: "story-community-garden",
+  gardenLotRain: "story-community-garden-rain",
   grandmaGarden: "story-grandma-garden",
   grandmaGardenReplanted: "story-grandma-garden-replanted",
   grandmaGardenSpilled: "story-grandma-garden-spilled",
@@ -58,6 +62,7 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   park: "story-park",
   schoolHallway: "story-school-hallway",
   schoolyard: "story-schoolyard",
+  schoolyardFriends: "story-schoolyard-friends",
 };
 
 /**

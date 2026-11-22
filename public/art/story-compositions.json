@@ -60,6 +60,15 @@
       "pixelRatio": 2
     },
     {
+      "id": "base-community-garden-rain",
+      "path": "/art/story-composed/base-community-garden-rain.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "pixelRatio": 2
+    },
+    {
       "id": "base-schoolyard",
       "path": "/art/story-composed/base-schoolyard.webp",
       "width": 1920,
@@ -159,6 +168,15 @@
       "pixelRatio": 2
     },
     {
+      "id": "prop-party",
+      "path": "/art/story-composed/prop-party.webp",
+      "width": 392,
+      "height": 70,
+      "displayWidth": 196,
+      "displayHeight": 35,
+      "pixelRatio": 2
+    },
+    {
       "id": "garden-spilled",
       "path": "/art/story-composed/garden-spilled.webp",
       "width": 188,
@@ -188,6 +206,132 @@
         "x": 361,
         "y": 194
       }
+    },
+    {
+      "id": "story-ada-list",
+      "path": "/art/story-composed/story-ada-list.webp",
+      "width": 104,
+      "height": 216,
+      "displayWidth": 52,
+      "displayHeight": 108,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-grandma",
+      "path": "/art/story-composed/story-party-grandma.webp",
+      "width": 54,
+      "height": 146,
+      "displayWidth": 27,
+      "displayHeight": 73,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-mom",
+      "path": "/art/story-composed/story-party-mom.webp",
+      "width": 70,
+      "height": 142,
+      "displayWidth": 35,
+      "displayHeight": 71,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-dad",
+      "path": "/art/story-composed/story-party-dad.webp",
+      "width": 58,
+      "height": 152,
+      "displayWidth": 29,
+      "displayHeight": 76,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-casey",
+      "path": "/art/story-composed/story-party-casey.webp",
+      "width": 48,
+      "height": 110,
+      "displayWidth": 24,
+      "displayHeight": 55,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-ada",
+      "path": "/art/story-composed/story-party-ada.webp",
+      "width": 52,
+      "height": 108,
+      "displayWidth": 26,
+      "displayHeight": 54,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-sam",
+      "path": "/art/story-composed/story-party-sam.webp",
+      "width": 54,
+      "height": 112,
+      "displayWidth": 27,
+      "displayHeight": 56,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-friend",
+      "path": "/art/story-composed/story-party-friend.webp",
+      "width": 60,
+      "height": 108,
+      "displayWidth": 30,
+      "displayHeight": 54,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-party-penny",
+      "path": "/art/story-composed/story-party-penny.webp",
+      "width": 94,
+      "height": 100,
+      "displayWidth": 47,
+      "displayHeight": 50,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-ada-night",
+      "path": "/art/story-composed/story-ada-night.webp",
+      "width": 192,
+      "height": 168,
+      "displayWidth": 96,
+      "displayHeight": 84,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-schoolyard-casey",
+      "path": "/art/story-composed/story-party-casey.webp",
+      "width": 48,
+      "height": 110,
+      "displayWidth": 24,
+      "displayHeight": 55,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-schoolyard-ada",
+      "path": "/art/story-composed/story-schoolyard-ada.webp",
+      "width": 52,
+      "height": 108,
+      "displayWidth": 26,
+      "displayHeight": 54,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-schoolyard-sam",
+      "path": "/art/story-composed/story-party-sam.webp",
+      "width": 54,
+      "height": 112,
+      "displayWidth": 27,
+      "displayHeight": 56,
+      "pixelRatio": 2
+    },
+    {
+      "id": "story-schoolyard-friend",
+      "path": "/art/story-composed/story-party-friend.webp",
+      "width": 60,
+      "height": 108,
+      "displayWidth": 30,
+      "displayHeight": 54,
+      "pixelRatio": 2
     }
   ],
   "scenes": {
@@ -237,6 +381,87 @@
       "subject": {
         "top": 180,
         "bottom": 290
+      }
+    },
+    "story-community-garden-rain": {
+      "base": "base-community-garden-rain",
+      "layers": [
+        {
+          "asset": "story-party-grandma",
+          "atLogical": {
+            "x": 379,
+            "y": 185
+          },
+          "displayWidth": 27,
+          "displayHeight": 73
+        },
+        {
+          "asset": "story-party-mom",
+          "atLogical": {
+            "x": 428,
+            "y": 187
+          },
+          "displayWidth": 35,
+          "displayHeight": 71
+        },
+        {
+          "asset": "story-party-dad",
+          "atLogical": {
+            "x": 494,
+            "y": 182
+          },
+          "displayWidth": 29,
+          "displayHeight": 76
+        },
+        {
+          "asset": "story-party-casey",
+          "atLogical": {
+            "x": 350,
+            "y": 217
+          },
+          "displayWidth": 24,
+          "displayHeight": 55
+        },
+        {
+          "asset": "story-party-ada",
+          "atLogical": {
+            "x": 408,
+            "y": 218
+          },
+          "displayWidth": 26,
+          "displayHeight": 54
+        },
+        {
+          "asset": "story-party-sam",
+          "atLogical": {
+            "x": 467,
+            "y": 216
+          },
+          "displayWidth": 27,
+          "displayHeight": 56
+        },
+        {
+          "asset": "story-party-friend",
+          "atLogical": {
+            "x": 523,
+            "y": 218
+          },
+          "displayWidth": 30,
+          "displayHeight": 54
+        },
+        {
+          "asset": "story-party-penny",
+          "atLogical": {
+            "x": 548,
+            "y": 224
+          },
+          "displayWidth": 47,
+          "displayHeight": 50
+        }
+      ],
+      "subject": {
+        "top": 182,
+        "bottom": 274
       }
     },
     "story-schoolyard": {
@@ -696,6 +921,165 @@
         "bottom": 300
       }
     },
+    "story-ada-room-party": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "prop-party",
+          "atLogical": {
+            "x": 473,
+            "y": 293
+          },
+          "displayWidth": 48,
+          "displayHeight": 34,
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 96,
+            "height": 68
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-party-glow-1": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-1",
+          "atLogical": {
+            "x": 266,
+            "y": 132
+          },
+          "displayWidth": 412,
+          "displayHeight": 278
+        },
+        {
+          "asset": "prop-party",
+          "atLogical": {
+            "x": 473,
+            "y": 293
+          },
+          "displayWidth": 48,
+          "displayHeight": 35,
+          "sourceRect": {
+            "x": 98,
+            "y": 0,
+            "width": 96,
+            "height": 70
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-party-glow-2": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-2",
+          "atLogical": {
+            "x": 102,
+            "y": 24
+          },
+          "displayWidth": 737,
+          "displayHeight": 495
+        },
+        {
+          "asset": "prop-party",
+          "atLogical": {
+            "x": 473,
+            "y": 293
+          },
+          "displayWidth": 48,
+          "displayHeight": 34,
+          "sourceRect": {
+            "x": 196,
+            "y": 0,
+            "width": 96,
+            "height": 68
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-party-glow-3": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "glow-3",
+          "atLogical": {
+            "x": 0,
+            "y": 0
+          },
+          "displayWidth": 960,
+          "displayHeight": 540
+        },
+        {
+          "asset": "prop-party",
+          "atLogical": {
+            "x": 473,
+            "y": 293
+          },
+          "displayWidth": 49,
+          "displayHeight": 34,
+          "sourceRect": {
+            "x": 294,
+            "y": 0,
+            "width": 98,
+            "height": 68
+          }
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
     "story-grandma-garden-spilled": {
       "base": "base-grandma-garden",
       "layers": [
@@ -730,6 +1114,120 @@
       "subject": {
         "top": 176,
         "bottom": 285
+      }
+    },
+    "story-ada-room-night-glowing": {
+      "base": "base-ada-room-night",
+      "layers": [
+        {
+          "asset": "story-ada-room-sleep-glow",
+          "atLogical": {
+            "x": 361,
+            "y": 194
+          },
+          "displayWidth": 220,
+          "displayHeight": 151
+        },
+        {
+          "asset": "story-ada-night",
+          "atLogical": {
+            "x": 233,
+            "y": 290
+          },
+          "displayWidth": 96,
+          "displayHeight": 84
+        }
+      ],
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    "story-ada-room-party-ada": {
+      "base": "base-ada-room-unpolished",
+      "layers": [
+        {
+          "asset": "prop-polished-rock",
+          "atLogical": {
+            "x": 426,
+            "y": 238
+          },
+          "displayWidth": 91,
+          "displayHeight": 63
+        },
+        {
+          "asset": "prop-party",
+          "atLogical": {
+            "x": 473,
+            "y": 293
+          },
+          "displayWidth": 48,
+          "displayHeight": 34,
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 96,
+            "height": 68
+          }
+        },
+        {
+          "asset": "story-ada-list",
+          "atLogical": {
+            "x": 308,
+            "y": 258
+          },
+          "displayWidth": 52,
+          "displayHeight": 108
+        }
+      ],
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    "story-schoolyard-friends": {
+      "base": "base-schoolyard",
+      "layers": [
+        {
+          "asset": "story-schoolyard-casey",
+          "atLogical": {
+            "x": 501,
+            "y": 218
+          },
+          "displayWidth": 24,
+          "displayHeight": 55
+        },
+        {
+          "asset": "story-schoolyard-ada",
+          "atLogical": {
+            "x": 525,
+            "y": 222
+          },
+          "displayWidth": 26,
+          "displayHeight": 54
+        },
+        {
+          "asset": "story-schoolyard-sam",
+          "atLogical": {
+            "x": 552,
+            "y": 220
+          },
+          "displayWidth": 27,
+          "displayHeight": 56
+        },
+        {
+          "asset": "story-schoolyard-friend",
+          "atLogical": {
+            "x": 574,
+            "y": 219
+          },
+          "displayWidth": 30,
+          "displayHeight": 54
+        }
+      ],
+      "subject": {
+        "top": 168,
+        "bottom": 278
       }
     },
     "story-ada-room-unpolished-cats": {

@@ -503,13 +503,20 @@ export function roomScene(
 /** The latest explicit room variant in a visit, with ordinary daylight for a new visit. */
 export function roomBackground(pages: readonly StoryPage[]): Background {
   return pages.reduce<Background>((light, page) => {
+    if (page.background === "adaRoomPartyAda" || page.background === "adaRoomParty") {
+      return "adaRoomParty";
+    }
     if (page.background === "adaRoomInvitations" || page.background === "adaRoomRecorder") {
       return page.background;
     }
     if (page.background === "adaRoomMorning" || page.background === "adaRoomMorningCats") {
       return "adaRoomMorningCats";
     }
-    if (page.background === "adaRoomNight" || page.background === "adaRoomSleep") {
+    if (
+      page.background === "adaRoomNight" ||
+      page.background === "adaRoomNightGlowing" ||
+      page.background === "adaRoomSleep"
+    ) {
       return "adaRoomNight";
     }
     return light;

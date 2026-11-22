@@ -5,13 +5,13 @@ import { boardingScene, openingScene, roomBackground, roomScene } from "./storyb
 
 const labels = { continue: "Continue", pickUpRock: "Pick up rock" };
 
-describe("Phantom invitation room context", () => {
+describe("Phantom party room context", () => {
   it("carries the actual Phantom opening into its room and boarding narration", () => {
     const opening = openingScene(CONTENT, 6);
     const background = roomBackground(opening.pages);
-    expect(background).toBe("adaRoomInvitations");
+    expect(background).toBe("adaRoomParty");
     const room = roomScene(CONTENT, labels, false, background);
-    expect(room.pages[0]?.background).toBe("adaRoomInvitations");
+    expect(room.pages[0]?.background).toBe("adaRoomParty");
     for (const announce of [false, true]) {
       const boarding = boardingScene(
         CONTENT,
@@ -19,7 +19,7 @@ describe("Phantom invitation room context", () => {
         roomBackground([...opening.pages, ...room.pages]),
       );
       for (const page of boarding.pages) {
-        expect(page.background).toBe(page.speaker ? "aboard" : "adaRoomInvitations");
+        expect(page.background).toBe(page.speaker ? "aboard" : "adaRoomParty");
       }
       expect(boarding.pages[0]?.text).toBe(CONTENT.premise.boarding[0]?.text);
     }
@@ -31,23 +31,22 @@ describe("Phantom invitation room context", () => {
     expect(boardingScene(CONTENT, false).pages[0]?.background).toBe("adaRoom");
     for (const galaxy of [1, 2, 3, 4, 5] as const) {
       expect(
-        openingScene(CONTENT, galaxy).pages.some(
-          (page) => page.background === "adaRoomInvitations",
-        ),
+        openingScene(CONTENT, galaxy).pages.some((page) => page.background === "adaRoomParty"),
       ).toBe(false);
     }
   });
 
-  it("lets later explicit morning and night scenes replace invitation context", () => {
-    const invitation = openingScene(CONTENT, 6).pages;
+  it("lets later explicit morning and night scenes replace party context", () => {
+    const party = openingScene(CONTENT, 6).pages;
     for (const [background, expected] of [
       ["adaRoomMorning", "adaRoomMorningCats"],
       ["adaRoomSleep", "adaRoomNight"],
+      ["adaRoomNightGlowing", "adaRoomNight"],
     ] as const) {
-      expect(roomBackground([...invitation, { background, id: "later", text: "" }])).toBe(expected);
+      expect(roomBackground([...party, { background, id: "later", text: "" }])).toBe(expected);
     }
-    expect(
-      roomBackground([{ background: "adaRoomNight", id: "night", text: "" }, ...invitation]),
-    ).toBe("adaRoomInvitations");
+    expect(roomBackground([{ background: "adaRoomNight", id: "night", text: "" }, ...party])).toBe(
+      "adaRoomParty",
+    );
   });
 });

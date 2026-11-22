@@ -59,6 +59,9 @@ export type ArtBackground =
   | "adaRoomMorning"
   | "adaRoomMorningCats"
   | "adaRoomNight"
+  | "adaRoomNightGlowing"
+  | "adaRoomParty"
+  | "adaRoomPartyAda"
   | "adaRoomRecorder"
   | "adaRoomRecorderDad"
   | "adaRoomSleep"
@@ -68,13 +71,15 @@ export type ArtBackground =
   | "frontDoor"
   | "frontDoorMom"
   | "gardenLot"
+  | "gardenLotRain"
   | "grandmaGarden"
   | "grandmaGardenReplanted"
   | "grandmaGardenSpilled"
   | "kitchen"
   | "park"
   | "schoolHallway"
-  | "schoolyard";
+  | "schoolyard"
+  | "schoolyardFriends";
 /** A storybook page's location. */
 export type Background = ArtBackground;
 

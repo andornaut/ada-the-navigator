@@ -32,11 +32,11 @@ describe("Needle recorder room context", () => {
     );
   });
 
-  it("uses the latest explicit recorder, invitation or lighting variant", () => {
+  it("uses the latest explicit recorder, party or lighting variant", () => {
     const recorder = openingScene(CONTENT, 4).pages;
-    const invitation = openingScene(CONTENT, 6).pages;
-    expect(roomBackground([...recorder, ...invitation])).toBe("adaRoomInvitations");
-    expect(roomBackground([...invitation, ...recorder])).toBe("adaRoomRecorder");
+    const party = openingScene(CONTENT, 6).pages;
+    expect(roomBackground([...recorder, ...party])).toBe("adaRoomParty");
+    expect(roomBackground([...party, ...recorder])).toBe("adaRoomRecorder");
     expect(
       roomBackground([...recorder, { background: "adaRoomNight", id: "night", text: "" }]),
     ).toBe("adaRoomNight");

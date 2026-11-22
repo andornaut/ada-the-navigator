@@ -6649,6 +6649,144 @@
       "base": "story-ada-room-morning"
     },
     {
+      "id": "story-community-garden-rain",
+      "path": "/art/story-composed/base-community-garden-rain.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 182,
+        "bottom": 274
+      }
+    },
+    {
+      "id": "story-ada-room-party",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-party-glow-1",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-party-glow-2",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-party-glow-3",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-night-glowing",
+      "path": "/art/story-composed/base-ada-room-night.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 250,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-party-ada",
+      "path": "/art/story-composed/base-ada-room-unpolished.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      },
+      "base": "story-ada-room-party"
+    },
+    {
+      "id": "story-schoolyard-friends",
+      "path": "/art/story-composed/base-schoolyard.webp",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 168,
+        "bottom": 278
+      },
+      "base": "story-schoolyard"
+    },
+    {
       "id": "story-ada-skywatch",
       "path": "/art/story/ada-skywatch.png",
       "width": 28,
