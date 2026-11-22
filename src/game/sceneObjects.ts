@@ -15,7 +15,7 @@ import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
-import { orePickupSize } from "../model/pickupBody.ts";
+import { orePickupSize, stardustPickupSize } from "../model/pickupBody.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
@@ -808,8 +808,9 @@ export function drawStardust(
     stardustPhase(object.id, art.loopMs),
     scene.time.now,
   );
+  const size = stardustPickupSize(object.amount);
   const sprite = objectSprite(scene, object.id, art.asset.id, frame)
-    .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
+    .setDisplaySize(size, size)
     .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
     .setPosition(at.x, at.y);
   keylineSprite(scene, "stardust", object.id, sprite);

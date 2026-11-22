@@ -91,15 +91,8 @@ export function rollSalvageDrop(
   };
 }
 
-/**
- * Splits an amount into whole-Stardust pickups, one per Stardust up to `cap`, as evenly
- * as possible with the larger pieces first.
- */
-export function splitStardust(cap: number, amount: number): number[] {
+/** Split one resource reward into five-unit bundles, then its single-unit remainder. */
+export function splitResourcePickup(amount: number): number[] {
   const total = Math.max(0, Math.floor(amount));
-  const count = Math.min(total, Math.max(1, Math.floor(cap)));
-  return Array.from(
-    { length: count },
-    (_, index) => Math.floor(total / count) + (index < total % count ? 1 : 0),
-  );
+  return [...Array<number>(Math.floor(total / 5)).fill(5), ...Array<number>(total % 5).fill(1)];
 }

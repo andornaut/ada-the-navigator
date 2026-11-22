@@ -15,6 +15,7 @@ import { GAME_AREA } from "../model/edgeMarkers.ts";
 import { createEnemy } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
+import { stardustPickupReach, stardustPickupSize } from "../model/pickupBody.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
@@ -424,30 +425,33 @@ describe("emitted primitive marker geometry", () => {
     expect(f.ink.fillEllipse).not.toHaveBeenCalled();
     expect(f.displayed).not.toHaveBeenCalled();
   });
-  it("acknowledges generated cache lore only after a valid member emits visible geometry", () => {
-    const f = fixture();
-    const cache = vi.spyOn(f.model, "discoveryCacheDisplayed");
-    const code = production("./sceneObjects.ts", ["drawStardust"], f.globals);
-    const member = {
-      ...f.target,
-      amount: 1,
-      id: "chunk:0,1:2:stardust:0",
-      kind: "pickup",
-      radius: ECONOMY.stardustPickupRadius,
-      role: "stardust",
-    };
-    const near = { x: 10, y: 10 };
-    code.drawStardust(f.scene, member, { x: -100, y: -100 }, member.radius);
-    code.drawStardust(f.scene, { ...member, id: "ordinary:stardust:0" }, near, member.radius);
-    code.drawStardust({ ...f.scene, warpCover: true }, member, near, member.radius);
-    expect(cache).not.toHaveBeenCalled();
-    code.drawStardust(f.scene, member, near, member.radius);
-    expect(cache).toHaveBeenCalledExactlyOnceWith("chunk:0,1:2");
-    expect(f.ink.fillCircle.mock.invocationCallOrder.at(-1)).toBeLessThan(
-      cache.mock.invocationCallOrder[0]!,
-    );
-    expect(f.displayed).not.toHaveBeenCalled();
-  });
+  it.each([1, ECONOMY.discoveryStardust])(
+    "acknowledges generated cache lore only after a %i-unit member emits visible geometry",
+    (amount) => {
+      const f = fixture();
+      const cache = vi.spyOn(f.model, "discoveryCacheDisplayed");
+      const code = production("./sceneObjects.ts", ["drawStardust"], f.globals);
+      const member = {
+        ...f.target,
+        amount,
+        id: amount === 1 ? "chunk:0,1:2:stardust:1" : "chunk:0,1:2:stardust:0",
+        kind: "pickup",
+        radius: stardustPickupReach(ECONOMY.stardustPickupRadius, amount),
+        role: "stardust",
+      };
+      const near = { x: 10, y: 10 };
+      code.drawStardust(f.scene, member, { x: -100, y: -100 }, member.radius);
+      code.drawStardust(f.scene, { ...member, id: "ordinary:stardust:0" }, near, member.radius);
+      code.drawStardust({ ...f.scene, warpCover: true }, member, near, member.radius);
+      expect(cache).not.toHaveBeenCalled();
+      code.drawStardust(f.scene, member, near, member.radius);
+      expect(cache).toHaveBeenCalledExactlyOnceWith("chunk:0,1:2");
+      expect(f.ink.fillCircle.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        cache.mock.invocationCallOrder[0]!,
+      );
+      expect(f.displayed).not.toHaveBeenCalled();
+    },
+  );
   it("acknowledges only a visible emitted discovery gem, preserving release and eligibility guards", () => {
     const f = fixture();
     const code = production("./sceneObjects.ts", ["drawStardust"], f.globals);
@@ -459,6 +463,43 @@ describe("emitted primitive marker geometry", () => {
     f.displayed.mockClear();
     code.drawStardust(f.scene, { ...cache, role: "loot" }, { x: 10, y: 10 }, 10);
     expect(f.displayed).not.toHaveBeenCalled();
+  });
+  it("draws a five-unit Stardust pickup larger without changing its sprite identity", () => {
+    const f = fixture();
+    const sprite = {
+      setDisplaySize: vi.fn().mockReturnThis(),
+      setOrigin: vi.fn().mockReturnThis(),
+      setPosition: vi.fn().mockReturnThis(),
+    };
+    const objectSprite = vi.fn(() => sprite);
+    const keylineSprite = vi.fn();
+    const point = { x: 10, y: 12 };
+    const scene = {
+      ...f.scene,
+      stardustArt: { asset: { id: "stardust", pivot: { x: 0.5, y: 0.5 } }, loopMs: 100 },
+    };
+    const code = production("./sceneObjects.ts", ["drawStardust"], {
+      ...f.globals,
+      keylineSprite,
+      objectSprite,
+      stardustDrawn: () => point,
+      stardustFrame: () => 2,
+      stardustPhase: () => 0,
+      stardustPickupSize,
+    });
+
+    code.drawStardust(scene, { ...f.target, amount: 1 }, point, 9);
+    code.drawStardust(scene, { ...f.target, amount: 5 }, point, 9);
+
+    expect(sprite.setDisplaySize.mock.calls).toEqual([
+      [9, 9],
+      [18, 18],
+    ]);
+    expect(objectSprite).toHaveBeenCalledTimes(2);
+    expect(objectSprite).toHaveBeenLastCalledWith(scene, "target", "stardust", 2);
+    expect(sprite.setOrigin).toHaveBeenLastCalledWith(0.5, 0.5);
+    expect(sprite.setPosition).toHaveBeenLastCalledWith(10, 12);
+    expect(keylineSprite).toHaveBeenLastCalledWith(scene, "stardust", "target", sprite);
   });
   it("does not acknowledge a missing-parts Phantom flagship that draws nothing", () => {
     const f = fixture();

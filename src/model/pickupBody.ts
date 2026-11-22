@@ -3,7 +3,7 @@ import cache from "../../public/art/discovery-cache.json" with { type: "json" };
 import huntGlint from "../../public/art/hunt-glint.json" with { type: "json" };
 import ammoPack from "../../public/art/pickups/ammo-pack.json" with { type: "json" };
 import stardust from "../../public/art/stardust.json" with { type: "json" };
-import type { Parts } from "./convex.ts";
+import { type Parts, partsReach, worldParts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
@@ -56,6 +56,8 @@ function sheetOutline(
 
 /** A Stardust gem: every frame of its glint loop. */
 const STARDUST = sheetOutline(stardust as Sheet);
+const LARGE_STARDUST = scaleOutline(STARDUST, stardustPickupSize(5) / stardustPickupSize());
+const LARGE_STARDUST_REACH = LARGE_STARDUST && partsReach(worldParts(LARGE_STARDUST));
 /** A discovery cache, lit: Ada comes within its approach range before she can reach it. */
 const { height, pivot, width } = cache.meta.displayGeometry;
 const CACHE = sheetOutline(cache as Sheet, [" 1.aseprite", " 2.aseprite"], {
@@ -67,14 +69,25 @@ const CACHE = sheetOutline(cache as Sheet, [" 1.aseprite", " 2.aseprite"], {
 export const HUNT_GLINT = sheetOutline(huntGlint as Sheet);
 /** A cargo piece, Art's ore nugget. */
 const ORE = sheetOutline(ore as Sheet);
-const ORE_SCALE = orePickupSize(5) / orePickupSize();
-const LARGE_ORE = ORE?.map((part) =>
-  part.map(({ x, y }) => ({ x: x * ORE_SCALE, y: y * ORE_SCALE })),
-);
+const LARGE_ORE = scaleOutline(ORE, orePickupSize(5) / orePickupSize());
+
+function scaleOutline(outline: Parts | undefined, scale: number): Parts | undefined {
+  return outline?.map((part) => part.map(({ x, y }) => ({ x: x * scale, y: y * scale })));
+}
 
 /** Ore uses the canonical frame at native size, enlarged for a five-unit chunk. */
 export function orePickupSize(amount?: number): number {
   return amount === 5 ? 18 : Object.values(ore.frames)[0]!.sourceSize.w;
+}
+
+/** The animated world glyph, at native size or exactly five units. */
+export function stardustPickupSize(amount?: number): number {
+  return amount === 5 ? 18 : Object.values(stardust.frames)[0]!.sourceSize.w;
+}
+
+/** World-plane footprint for a five-unit discovery or drop. */
+export function stardustPickupReach(singleReach: number, amount?: number): number {
+  return amount === 5 ? Math.max(singleReach, LARGE_STARDUST_REACH ?? singleReach) : singleReach;
 }
 /** An ammo pack's cartridge clip: every frame of its glint loop. */
 export const AMMO_PACK = sheetOutline(ammoPack as Sheet);
@@ -93,7 +106,7 @@ export function pickupOutline(object: SpaceObject): Parts | null {
     return CACHE ?? null;
   }
   if (carriesStardust(object)) {
-    return STARDUST ?? null;
+    return (object.amount === 5 ? LARGE_STARDUST : STARDUST) ?? null;
   }
   if (object.role === "cargo") {
     return (object.amount === 5 ? LARGE_ORE : ORE) ?? null;

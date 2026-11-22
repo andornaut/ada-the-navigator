@@ -112,8 +112,6 @@ export interface EconomyCatalog {
    * at `releaseSeconds`, spread up to `spread` world units, and is gone at `durationSeconds`.
    */
   destruction: Readonly<Record<EnemyArchetype, Destruction>>;
-  /** Most pickups a destroyed enemy's drop splits into; asteroids release one per Stardust. */
-  pickupCap: Readonly<Record<EnemyArchetype, number>>;
   stardustPickupGap: number;
   stardustPickupRadius: number;
   station: {
@@ -254,7 +252,7 @@ export const ECONOMY: EconomyCatalog = {
       spread: 16.8,
     },
   },
-  discoveryStardust: 4,
+  discoveryStardust: 5,
   // Engine tuning: -10% acceleration and braking seconds per level.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
@@ -275,15 +273,6 @@ export const ECONOMY: EconomyCatalog = {
     graphite: { label: "paintGraphite", top: "#d96b73" },
     iris: { label: "paintIris", top: "#d9ccff" },
     seafoam: { label: "paintSeafoam", top: "#d4f6ea" },
-  },
-  pickupCap: {
-    capital: 24,
-    fighter: 8,
-    frigate: 16,
-    interceptor: 8,
-    platform: 16,
-    retaliator: 8,
-    swarm: 8,
   },
   // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
   // Every level waits 30 s after damage (gameplay/economy.md).

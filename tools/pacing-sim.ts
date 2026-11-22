@@ -49,7 +49,7 @@ import {
   rollAmmoDrop,
   rollEnemyDrop,
   rollSalvageDrop,
-  splitStardust,
+  splitResourcePickup,
 } from "../src/model/drops.ts";
 import {
   createFlight,
@@ -72,7 +72,7 @@ import {
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { clearOfOreFields } from "../src/model/oreFields.ts";
-import { stardustDiamond } from "../src/model/stardustPlacement.ts";
+import { stardustPickupReach } from "../src/model/pickupBody.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
 import {
@@ -506,24 +506,14 @@ export function generateChunk(
       const size = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid)?.size : undefined;
       chunk.rocks.push({ id: placement.id, size: size ?? "small", x: at.x, y: at.y });
     } else if (placement.kind === "pickup") {
-      const points = stardustDiamond(catalog, at);
-      const radius = catalog.stardustPickupRadius;
+      const amount = catalog.discoveryStardust;
+      const radius = stardustPickupReach(catalog.stardustPickupRadius, amount);
       if (
-        points.every(
-          (point) =>
-            distance(point, player) > tuning.safeRadius + radius &&
-            distance(point, FLIGHT_START) > tuning.safeRadius + radius &&
-            stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, point).length === 0,
-        )
+        distance(at, player) > tuning.safeRadius + radius &&
+        distance(at, FLIGHT_START) > tuning.safeRadius + radius &&
+        stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, at).length === 0
       ) {
-        chunk.caches.push(
-          ...points.map((point, index) => ({
-            amount: catalog.discoveryStardust / points.length,
-            id: `${placement.id}:stardust:${index}`,
-            source: "caches" as const,
-            ...point,
-          })),
-        );
+        chunk.caches.push({ amount, id: `${placement.id}:stardust:0`, source: "caches", ...at });
       }
     }
   }
@@ -834,7 +824,7 @@ export function simulate(input: SimulationInput): RunResult {
   const loot = (archetype: EnemyArchetype, id: string, source: Source, salvaged = false) => {
     const next = dropRandom(flightSeed, wreckId(id));
     const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, galaxy, archetype, next);
-    const pieces = splitStardust(catalog.pickupCap[archetype], drop.stardust);
+    const pieces = splitResourcePickup(drop.stardust);
     const collected = pieces.reduce(
       (sum, piece) => sum + (rng() < behaviour.dropCollection ? piece : 0),
       0,

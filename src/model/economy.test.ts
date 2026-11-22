@@ -35,13 +35,13 @@ import {
   rollEnemyDrop,
   rollRockAmmoDrop,
   rollSalvageDrop,
-  splitStardust,
+  splitResourcePickup,
 } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
-import { HUNT_GLINT, orePickupSize, pickupOutline } from "./pickupBody.ts";
+import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
@@ -294,10 +294,14 @@ describe("guaranteed destruction loot", () => {
         );
         for (const [index, first] of glyphs.entries()) {
           const a = toScreen(first);
-          const widthA = first.role === "cargo" ? orePickupSize(first.amount) : 12;
+          const widthA = (first.role === "cargo" ? orePickupSize : stardustPickupSize)(
+            first.amount,
+          );
           for (const second of glyphs.slice(index + 1)) {
             const b = toScreen(second);
-            const widthB = second.role === "cargo" ? orePickupSize(second.amount) : 12;
+            const widthB = (second.role === "cargo" ? orePickupSize : stardustPickupSize)(
+              second.amount,
+            );
             const dx = Math.max(0, Math.abs(a.x - b.x) - (widthA + widthB) / 2);
             const dy = Math.max(0, Math.abs(a.y - b.y) - (widthA + widthB) / 2);
             expect(Math.hypot(dx, dy)).toBeGreaterThanOrEqual(ECONOMY.stardustPickupGap - 1e-9);
@@ -363,12 +367,9 @@ describe("guaranteed destruction loot", () => {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
         const drop = rollEnemyDrop(ECONOMY, galaxy, archetype, () => 1);
         expect(drop.stardust, `${galaxy}:${archetype}`).toBeGreaterThanOrEqual(1);
-        expect(
-          splitStardust(ECONOMY.pickupCap[archetype], drop.stardust).reduce(
-            (sum, amount) => sum + amount,
-            0,
-          ),
-        ).toBe(drop.stardust);
+        expect(splitResourcePickup(drop.stardust).reduce((sum, amount) => sum + amount, 0)).toBe(
+          drop.stardust,
+        );
       }
     }
   });
@@ -524,36 +525,14 @@ describe("Stardust drops", () => {
     },
   );
 
-  it("splits a drop above its cap into pickups worth more than 1", () => {
-    // A destroyed capital's 28 at position 1 over its 24 pickups.
-    const pieces = splitStardust(ECONOMY.pickupCap.capital, enemyStardust(1, "capital") * 2);
-    expect(pieces).toHaveLength(24);
-    expect(pieces.filter((piece) => piece === 2)).toHaveLength(4);
-    expect(pieces.reduce((sum, piece) => sum + piece, 0)).toBe(28);
-  });
-
-  it("splits every small craft's drop below its cap into pickups of 1 Stardust", () => {
-    const small = ["swarm", "fighter", "interceptor", "retaliator"] as const;
-    for (const archetype of small) {
-      const value = enemyStardust(1, archetype);
-      expect(value).toBeLessThanOrEqual(ECONOMY.pickupCap[archetype]);
-      expect(splitStardust(ECONOMY.pickupCap[archetype], value)).toEqual(
-        Array.from({ length: value }, () => 1),
-      );
-    }
-  });
-
-  it("splits a capped drop into its pickup count, larger first", () => {
-    expect(splitStardust(8, 15)).toEqual([2, 2, 2, 2, 2, 2, 2, 1]);
-    expect(splitStardust(16, 40)).toEqual([3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2]);
-  });
-
-  it("splits an asteroid into one pickup per Stardust and a capped drop into whole pieces", () => {
-    expect(splitStardust(0, 0)).toEqual([]);
-    expect(splitStardust(1, 1)).toEqual([1]);
-    const capped = splitStardust(ECONOMY.pickupCap.swarm, 26);
-    expect(capped).toHaveLength(8);
-    expect(capped.reduce((sum, piece) => sum + piece, 0)).toBe(26);
+  it("packs declared rewards into fives followed by singles, including a destroyed capital", () => {
+    expect(splitResourcePickup(0)).toEqual([]);
+    expect(splitResourcePickup(1)).toEqual([1]);
+    expect(splitResourcePickup(12)).toEqual([5, 5, 1, 1]);
+    const reward = enemyStardust(1, "capital") * 2;
+    const pieces = splitResourcePickup(reward);
+    expect(pieces).toEqual([5, 5, 5, 5, 5, 1, 1, 1]);
+    expect(pieces.reduce((sum, amount) => sum + amount, 0)).toBe(reward);
   });
 
   it("releases a destroyed retaliator as four pickups carrying 4 Stardust", () => {
@@ -642,7 +621,7 @@ describe("Stardust drops", () => {
     const released = pickups(value);
     const spread = ECONOMY.destruction.fighter.reduced.spread;
     const spacing =
-      2 * Math.SQRT2 * (ECONOMY.stardustPickupRadius + GALAXIES_FILE.lightField.keyline) +
+      2 * Math.SQRT2 * (stardustPickupSize(1) / 2 + GALAXIES_FILE.lightField.keyline) +
       ECONOMY.stardustPickupGap;
     const points = released.map((pickup) =>
       toScreen({ x: pickup.x - wreck.x, y: pickup.y - wreck.y }),
@@ -872,7 +851,7 @@ describe("Stardust drops", () => {
 });
 
 describe("discovery caches", () => {
-  it("generates four ordinary single-unit Stardust pickups per cache instead of upgrade pickups", () => {
+  it("generates one five-unit Stardust pickup per cache instead of upgrade pickups", () => {
     const value = createFlight(CONTENT, 1, 4242, { known: [] });
     const discoveries = new Map<string, SpaceObject>();
     for (let step = 0; step < 40; step++) {
@@ -880,14 +859,14 @@ describe("discovery caches", () => {
       stepFlight(CONTENT, 1 / 60, idle, value);
       // Rare caches are gathered along the way, since distant chunks unload.
       for (const object of value.objects) {
-        if (object.kind === "pickup" && /:stardust:[0-3]$/.test(object.id)) {
+        if (object.kind === "pickup" && /:stardust:0$/.test(object.id)) {
           discoveries.set(object.id, object);
         }
       }
     }
     expect(discoveries.size).toBeGreaterThan(0);
     for (const cache of discoveries.values()) {
-      expect(cache).toMatchObject({ amount: 1, role: "stardust" });
+      expect(cache).toMatchObject({ amount: 5, role: "stardust" });
       expect(cache.upgrade).toBeUndefined();
     }
   });

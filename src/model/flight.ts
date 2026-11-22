@@ -150,7 +150,8 @@ import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import {
   discoveryStardustId,
   type PickupObstacle,
-  stardustDiamond,
+  pickupRowGap,
+  pickupSpacingRadius,
   stardustDropOffsets,
 } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
@@ -178,7 +179,7 @@ import {
   rollEnemyDrop,
   rollRockAmmoDrop,
   rollSalvageDrop,
-  splitStardust,
+  splitResourcePickup,
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
@@ -195,7 +196,12 @@ import {
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
 import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
-import { orePickupSize, pickupOutline } from "./pickupBody.ts";
+import {
+  orePickupSize,
+  pickupOutline,
+  stardustPickupReach,
+  stardustPickupSize,
+} from "./pickupBody.ts";
 import { planPlayerVolley } from "./playerProjectiles.ts";
 import { impactEntry, impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
@@ -920,55 +926,35 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
       if (object.kind !== "rock") {
         object.role = "discovery";
       }
-      // A discovery cache holds Stardust; weapons come only from shops and enemy drops.
-      if (object.kind === "pickup") {
+      // Keep the child namespace so a retained older diamond prevents refill.
+      const pickup = object.kind === "pickup";
+      const pickupPrefix = `${object.id}:stardust:`;
+      if (pickup) {
         object.amount = ECONOMY.discoveryStardust;
+        object.id = discoveryStardustId(object.id, 0);
+        object.radius = stardustPickupReach(ECONOMY.stardustPickupRadius, object.amount);
+        object.role = "stardust";
       }
-      const cachePickups: SpaceObject[] | null =
-        object.kind === "pickup"
-          ? stardustDiamond(ECONOMY, object).map((point, index, points) => ({
-              ...object,
-              ...point,
-              amount: object.amount! / points.length,
-              id: discoveryStardustId(object.id, index),
-              radius: ECONOMY.stardustPickupRadius,
-              role: "stardust",
-            }))
-          : null;
       // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
       // included; an ore field holds only its own rocks.
       const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
       const at = object.orbit ?? object;
       if (
         !existing.has(object.id) &&
-        (object.kind !== "pickup" ||
-          !flight.objects.some((candidate) => candidate.id.startsWith(`${object.id}:stardust:`))) &&
+        (!pickup ||
+          (!flight.objects.some((candidate) => candidate.id.startsWith(pickupPrefix)) &&
+            !Object.hasOwn(flight.world.notables, placement.id))) &&
         !Object.hasOwn(flight.world.notables, object.id) &&
         clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
         clearOfSafeAreas(content, object, flight) &&
         clearOfLandmarks(object, flight) &&
-        (cachePickups === null ||
-          cachePickups.every(
-            (pickup) =>
-              clearOf(flight, content.tuning.safeRadius, flight.player, pickup) &&
-              clearOfSafeAreas(content, pickup, flight) &&
-              clearOfLandmarks(pickup, flight),
-          )) &&
         (object.kind === "pickup" ||
           (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
             worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at)))
       ) {
-        if (cachePickups) {
-          for (const pickup of cachePickups) {
-            canonicalObject(flight, pickup);
-            flight.objects.push(pickup);
-            existing.add(pickup.id);
-          }
-        } else {
-          canonicalObject(flight, object);
-          flight.objects.push(object);
-          existing.add(object.id);
-        }
+        canonicalObject(flight, object);
+        flight.objects.push(object);
+        existing.add(object.id);
       }
     }
     placeOreFields(content, x, y, existing, flight);
@@ -4291,19 +4277,17 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
   }
   const next = dropRandom(flight.seed, object.id);
   const loot = rollAsteroidLoot(ASTEROID_LOOT, asteroidSize(object), next);
-  const chunks = Math.floor(loot.ore / 5);
-  const orePieces = chunks + (loot.ore % 5);
-  const amounts = Array.from({ length: orePieces }, (_, index) => (index < chunks ? 5 : 1));
+  const amounts = splitResourcePickup(loot.ore);
+  const orePieces = amounts.length;
   const widths = amounts.map(orePickupSize);
-  const span =
-    widths.reduce((sum, width) => sum + width, 0) +
-    Math.max(0, orePieces - 1) * ECONOMY.stardustPickupGap;
+  const gap = pickupRowGap(ECONOMY.stardustPickupGap);
+  const span = widths.reduce((sum, width) => sum + width, 0) + Math.max(0, orePieces - 1) * gap;
   let edge = -span / 2;
   const obstacles: PickupObstacle[] = [];
   for (let p = 0; p < orePieces; p++) {
     const centre = edge + widths[p]! / 2;
-    edge += widths[p]! + ECONOMY.stardustPickupGap;
-    obstacles.push({ radius: (widths[p]! * Math.SQRT2) / 2, x: centre, y: 0 });
+    edge += widths[p]! + gap;
+    obstacles.push({ radius: pickupSpacingRadius(widths[p]!), x: centre, y: 0 });
     flight.objects.push({
       amount: amounts[p]!,
       hp: 1,
@@ -4316,16 +4300,7 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
     });
   }
   const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
-  releaseStardust(
-    obstacles,
-    object,
-    ROCK_RELEASE.spread,
-    next,
-    loot.stardust,
-    loot.stardust,
-    release,
-    flight,
-  );
+  releaseStardust(obstacles, object, ROCK_RELEASE.spread, next, loot.stardust, release, flight);
 }
 
 /** The weapons ammo packs drop for: those Ada owns. */
@@ -5088,16 +5063,19 @@ function releaseStardust(
   at: Vec,
   spread: number,
   next: () => number,
-  cap: number,
   amount: number,
   release: PickupRelease,
   flight: FlightState,
 ) {
-  const pieces = splitStardust(cap, amount);
-  const candidates = pieces.map((_, index) => {
+  const pieces = splitResourcePickup(amount);
+  const candidates = pieces.map((value, index) => {
     const angle = (index / pieces.length) * Math.PI * 2 + (next() * 2 - 1) * 0.3;
     const reach = spread * (0.6 + next() * 0.4);
-    return { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach * 0.8 };
+    return {
+      radius: pickupSpacingRadius(stardustPickupSize(value)),
+      x: Math.cos(angle) * reach,
+      y: Math.sin(angle) * reach * 0.8,
+    };
   });
   const offsets = stardustDropOffsets({ ...ECONOMY, obstacles }, candidates);
   pieces.forEach((value, index) => {
@@ -5107,7 +5085,7 @@ function releaseStardust(
       hp: 1,
       id: `stardust:${flight.nextId++}`,
       kind: "pickup",
-      radius: ECONOMY.stardustPickupRadius,
+      radius: stardustPickupReach(ECONOMY.stardustPickupRadius, value),
       release: { ...release },
       role: "stardust",
       // The view's projection maps screen offsets back to world axes.
@@ -5157,7 +5135,6 @@ export function salvage(content: GameContent, flight: FlightState): boolean {
     object,
     ECONOMY.destruction[enemy.archetype].spread,
     next,
-    ECONOMY.pickupCap[enemy.archetype],
     object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.salvageStardust : drop.stardust,
     { at: flight.time, from: { x: object.x, y: object.y } },
     flight,
@@ -5205,7 +5182,6 @@ function stepWrecks(
       object,
       timing.spread,
       next,
-      ECONOMY.pickupCap[object.wreck.archetype],
       object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.salvageStardust : drop.stardust,
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,

@@ -19,6 +19,7 @@ import {
 import { ensureStation } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { flightLandmarkSites, landmarkSites } from "./landmarks.ts";
+import { stardustPickupReach } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
@@ -245,7 +246,7 @@ it("binds a confirmed friendly station discovery to its galaxy pool and leaves r
   expect(hear(model, 1).filter((line) => words.includes(line))).toEqual([]);
 });
 
-it("deduplicates distinct visible diamonds by group, with no marker, reward or survey write", () => {
+it("deduplicates visible legacy and bundled caches by group, with no marker, reward or survey write", () => {
   const { arrival, model } = newFlight();
   model.state.flight!.player = arrival;
   const marker = structuredClone(model.state.progress[1].markerKnowledge);
@@ -253,12 +254,13 @@ it("deduplicates distinct visible diamonds by group, with no marker, reward or s
   const words = deck[1].cache.map(({ text }) => text);
   const groups = ["chunk:0,1:2", "chunk:1,0:4"];
   for (const [index, group] of groups.entries()) {
+    const amount = index === 0 ? 1 : ECONOMY.discoveryStardust;
     model.state.flight!.objects.push({
-      amount: ECONOMY.discoveryStardust / 4,
+      amount,
       hp: 1,
-      id: discoveryStardustId(group, 0),
+      id: discoveryStardustId(group, index === 0 ? 1 : 0),
       kind: "pickup",
-      radius: ECONOMY.stardustPickupRadius,
+      radius: stardustPickupReach(ECONOMY.stardustPickupRadius, amount),
       role: "stardust",
       x: arrival.x + 300 + index * 100,
       y: arrival.y,
