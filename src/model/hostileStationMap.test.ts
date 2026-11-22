@@ -66,6 +66,7 @@ it("maps only identified sites without travel permission or altered chart totals
     label: "Hostile station",
     objective: false,
     symbol: "hostileStation",
+    taskCategory: "generic",
     travel: false,
     x: site.x,
     y: site.y,
