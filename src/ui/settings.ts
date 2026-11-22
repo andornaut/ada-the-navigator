@@ -23,6 +23,7 @@ import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
+import { NAVIGATION_DISCS } from "./layout/navigationButton.ts";
 import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
 import {
   SETTINGS_OUTER_PADDING,
@@ -106,6 +107,10 @@ export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
+const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
+  .ada-close,.ada-route-marker,${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON}
+))`;
+
 // The start screen while Exit shows: .ada-controls carries this attribute while it does.
 export const EXIT_SHOWN_ATTRIBUTE = "data-exit-shown";
 
@@ -147,11 +152,11 @@ ${viewStyle(WHOLE_PX_EDGES)}
   padding:8px 16px
 }
 
-/* Close, route and legacy text buttons paint their focus in their own rules. */
-.ada-controls button:focus-visible:not(:where(.ada-close,.ada-route-marker,${LEGACY_TEXT_BUTTON})){${FOCUS_STYLE}
+/* These controls paint their focus in their own rules. */
+${DEFAULT_CONTROL_FOCUS}{${FOCUS_STYLE}
 }
 @media (forced-colors: active){
-  .ada-controls button:focus-visible:not(:where(.ada-close,.ada-route-marker,${LEGACY_TEXT_BUTTON})){
+  ${DEFAULT_CONTROL_FOCUS}{
     outline-color:Highlight;
     box-shadow:none
   }

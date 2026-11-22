@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
+import { MODAL_STYLE } from "../modal.ts";
 import { MENU_ART, PAUSE_ART } from "../pause.ts";
 import { EXIT_ART, NAVIGATION_BUTTON_STYLE } from "./navigationButton.ts";
 
@@ -40,3 +41,15 @@ it.each(["rest", "press", "held"] as const)(
     expect(NAVIGATION_BUTTON_STYLE).toContain(`url('${EXIT_ART[pose]}')`);
   },
 );
+
+it("uses a face cue for every navigation disc while preserving the authored pose edge", () => {
+  const nav = ":is(.ada-pause,.ada-exit-open):focus-visible";
+  expect(MODAL_STYLE).not.toContain(".ada-pause:focus-visible");
+  expect(NAVIGATION_BUTTON_STYLE).toContain(`${nav}{
+  outline:none;
+  box-shadow:none`);
+  expect(NAVIGATION_BUTTON_STYLE).not.toMatch(/outline-offset|drop-shadow|box-shadow:0/u);
+  expect(NAVIGATION_BUTTON_STYLE).toContain("var(--ada-nav-face-radius)),var(--ada-nav-pose)");
+  expect(NAVIGATION_BUTTON_STYLE).toContain(`${nav}[data-pose=held]::before`);
+  expect(NAVIGATION_BUTTON_STYLE).toContain("--ada-nav-focus-blend:difference");
+});

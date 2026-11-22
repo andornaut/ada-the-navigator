@@ -487,15 +487,14 @@ ${UI_SCOPE} .ada-pause::before{
   content:"";
   width:${units(PAUSE_BUTTON.art.width)};
   height:${units(PAUSE_BUTTON.art.height)};
-  background:url('${PAUSE_ART.rest}') center / 100% 100% no-repeat
+  --ada-nav-pose:url('${PAUSE_ART.rest}');
+  background:var(--ada-nav-pose) center / 100% 100% no-repeat
 }
 ${UI_SCOPE} .ada-pause[data-pose=press]::before{
-  background-image:url('${PAUSE_ART.press}')
+  --ada-nav-pose:url('${PAUSE_ART.press}')
 }
 ${UI_SCOPE} .ada-pause[data-pose=held]::before{
-  background-image:url('${PAUSE_ART.held}')
-}
-${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
+  --ada-nav-pose:url('${PAUSE_ART.held}')
 }
 
 /* A row with one visible button centers independently of its role or native presentation. */
