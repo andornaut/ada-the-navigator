@@ -1536,6 +1536,374 @@ function scanSource(context: ScanContext, path: string, text: string) {
     inspect(callback.body);
     return { coordinates, editing, focus, registered, sampled, suppression, unknown, writesOuter };
   };
+  // A compatibility click may consume a private pointer latch and suppress the browser click.
+  // Prove the whole click body and every use of its slot, independently of the handler's name.
+  const consumesPointerLatch = (call: ts.CallExpression): boolean => {
+    const click = call.arguments[1];
+    if (
+      call.arguments.length !== 3 ||
+      call.arguments[2]?.kind !== ts.SyntaxKind.TrueKeyword ||
+      !click ||
+      !ts.isArrowFunction(click) ||
+      !ts.isBlock(click.body)
+    ) {
+      return false;
+    }
+
+    // Require the local DOM element (or a const iteration over such elements), not an
+    // arbitrary object with an addEventListener method.
+    const fixed = (node: ts.Expression) =>
+      ![...writes].some((value) => overlaps(reference(node), value));
+    const domElement = (node: ts.Expression): boolean => {
+      const entry = lexicalDeclaration(node);
+      if (
+        !entry ||
+        !ts.isVariableDeclaration(entry) ||
+        !(entry.parent.flags & ts.NodeFlags.Const) ||
+        !fixed(node)
+      ) {
+        return false;
+      }
+      const init = entry.initializer;
+      return (
+        init !== undefined &&
+        ts.isCallExpression(init) &&
+        ts.isPropertyAccessExpression(init.expression) &&
+        init.expression.name.text === "createElement" &&
+        ts.isIdentifier(init.expression.expression) &&
+        init.expression.expression.text === "document" &&
+        !lexicalDeclaration(init.expression.expression) &&
+        init.arguments.length === 1 &&
+        ts.isStringLiteral(init.arguments[0]!)
+      );
+    };
+    const target = ts.isPropertyAccessExpression(call.expression)
+      ? call.expression.expression
+      : undefined;
+    const receiver = target && lexicalDeclaration(target);
+    if (
+      !target ||
+      !receiver ||
+      !ts.isVariableDeclaration(receiver) ||
+      !(receiver.parent.flags & ts.NodeFlags.Const) ||
+      !fixed(target)
+    ) {
+      return false;
+    }
+    const loop = receiver.parent.parent;
+    if (
+      !domElement(target) &&
+      !(
+        ts.isForOfStatement(loop) &&
+        loop.initializer === receiver.parent &&
+        ts.isArrayLiteralExpression(loop.expression) &&
+        loop.expression.elements.length &&
+        loop.expression.elements.every(domElement)
+      )
+    ) {
+      return false;
+    }
+    const method = `${reference(target)}.addEventListener`;
+    // Disposal is irrelevant to proving the method's identity. Method/receiver writes are not.
+    if ([...writes].some((value) => overlaps(method, value, true))) {
+      return false;
+    }
+    const listener = (handler: ts.ArrowFunction, events: readonly string[]) => {
+      const registration = handler.parent;
+      if (
+        !ts.isCallExpression(registration) ||
+        registration.arguments[1] !== handler ||
+        !ts.isPropertyAccessExpression(registration.expression) ||
+        registration.expression.name.text !== "addEventListener" ||
+        !lexicalIdentity(registration.expression.expression, receiver) ||
+        !registration.arguments[0] ||
+        handler.modifiers?.length ||
+        handler.parameters.length !== 1
+      ) {
+        return undefined;
+      }
+      const name = registration.arguments[0];
+      if (ts.isIdentifier(name) && !stable(name)) {
+        return undefined;
+      }
+      const names = eventNames(name);
+      const [parameter] = handler.parameters;
+      return names.length &&
+        names.every((name) => events.includes(name)) &&
+        parameter &&
+        ts.isIdentifier(parameter.name) &&
+        !parameter.initializer &&
+        !parameter.dotDotDotToken
+        ? parameter
+        : undefined;
+    };
+    const event = listener(click, ["click"]);
+    if (!event) {
+      return false;
+    }
+    const property = (node: ts.Expression, parameter: ts.ParameterDeclaration, name: string) =>
+      ts.isPropertyAccessExpression(node) &&
+      !node.questionDotToken &&
+      node.name.text === name &&
+      lexicalIdentity(node.expression, parameter);
+    const assignment = (statement: ts.Statement | undefined) =>
+      statement &&
+      ts.isExpressionStatement(statement) &&
+      ts.isBinaryExpression(statement.expression) &&
+      statement.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+        ? statement.expression
+        : undefined;
+    const comparison = (node: ts.Node, operator: ts.SyntaxKind) =>
+      ts.isBinaryExpression(node) && node.operatorToken.kind === operator ? node : undefined;
+    const terms = (expression: ts.Expression, join: ts.SyntaxKind): ts.Expression[] => {
+      if (ts.isParenthesizedExpression(expression)) {
+        return terms(expression.expression, join);
+      }
+      const tree = comparison(expression, join);
+      return tree ? [...terms(tree.left, join), ...terms(tree.right, join)] : [expression];
+    };
+    const zero = (node: ts.Expression) => ts.isNumericLiteral(node) && Number(node.text) === 0;
+    const empty = (node: ts.Expression) =>
+      node.kind === ts.SyntaxKind.NullKeyword ||
+      (ts.isIdentifier(node) && node.text === "undefined" && !lexicalDeclaration(node));
+    const scalar = (name: ts.Expression) => {
+      const slot = lexicalDeclaration(name);
+      if (
+        !slot ||
+        !ts.isVariableDeclaration(slot) ||
+        !ts.isIdentifier(slot.name) ||
+        !ts.isVariableDeclarationList(slot.parent) ||
+        !(slot.parent.flags & ts.NodeFlags.Let) ||
+        !ts.isVariableStatement(slot.parent.parent) ||
+        !ts.isBlock(slot.parent.parent.parent) ||
+        slot.pos >= click.pos ||
+        phase(slot) === source ||
+        phase(slot) !== phase(click)
+      ) {
+        return undefined;
+      }
+      const types = slot.type && ts.isUnionTypeNode(slot.type) ? slot.type.types : [];
+      if (types.length !== 2 || !types.some((item) => item.kind === ts.SyntaxKind.NumberKeyword)) {
+        return undefined;
+      }
+      if (
+        slot.initializer?.kind === ts.SyntaxKind.NullKeyword &&
+        types.some(
+          (item) => ts.isLiteralTypeNode(item) && item.literal.kind === ts.SyntaxKind.NullKeyword,
+        )
+      ) {
+        return { sentinel: ts.SyntaxKind.NullKeyword, slot };
+      }
+      return types.some((item) => item.kind === ts.SyntaxKind.UndefinedKeyword) &&
+        (!slot.initializer || (ts.isIdentifier(slot.initializer) && empty(slot.initializer)))
+        ? { sentinel: ts.SyntaxKind.Identifier, slot }
+        : undefined;
+    };
+    const isEmpty = (node: ts.Expression, sentinel: ts.SyntaxKind) =>
+      node.kind === sentinel && empty(node);
+
+    const statements = [...click.body.statements];
+    const local = statements[0];
+    let compatibility: ts.VariableDeclaration | undefined;
+    if (local && ts.isVariableStatement(local)) {
+      if (
+        !(local.declarationList.flags & ts.NodeFlags.Const) ||
+        local.declarationList.declarations.length !== 1
+      ) {
+        return false;
+      }
+      [compatibility] = local.declarationList.declarations;
+      statements.shift();
+    }
+    const gate = statements.shift();
+    if (!gate || !ts.isIfStatement(gate) || gate.elseStatement || !ts.isBlock(gate.thenStatement)) {
+      return false;
+    }
+    const earlyReturn =
+      gate.thenStatement.statements.length === 1 ? gate.thenStatement.statements[0] : undefined;
+    const rejects =
+      earlyReturn !== undefined && ts.isReturnStatement(earlyReturn) && !earlyReturn.expression;
+    if (!rejects && statements.length) {
+      return false;
+    }
+    const effects = rejects ? statements : gate.thenStatement.statements;
+    const reset = assignment(effects[0]);
+    const latch = reset && scalar(reset.left);
+    if (!reset || !latch || !isEmpty(reset.right, latch.sentinel) || effects.length !== 3) {
+      return false;
+    }
+    const suppresses = (statement: ts.Statement | undefined, method: string) =>
+      statement &&
+      ts.isExpressionStatement(statement) &&
+      ts.isCallExpression(statement.expression) &&
+      !statement.expression.questionDotToken &&
+      statement.expression.arguments.length === 0 &&
+      property(statement.expression.expression, event, method);
+    if (
+      !suppresses(effects[1], "preventDefault") ||
+      !(
+        suppresses(effects[2], "stopPropagation") ||
+        suppresses(effects[2], "stopImmediatePropagation")
+      )
+    ) {
+      return false;
+    }
+
+    let latest: ReturnType<typeof scalar>;
+    let fallbackRead: ts.Expression | undefined;
+    if (compatibility) {
+      const value = compatibility.initializer;
+      const check =
+        value && ts.isConditionalExpression(value)
+          ? comparison(value.condition, ts.SyntaxKind.EqualsEqualsEqualsToken)
+          : undefined;
+      if (
+        !value ||
+        !ts.isConditionalExpression(value) ||
+        !check ||
+        !ts.isTypeOfExpression(check.left) ||
+        !property(check.left.expression, event, "pointerId") ||
+        !ts.isStringLiteral(check.right) ||
+        check.right.text !== "number" ||
+        !property(value.whenTrue, event, "pointerId")
+      ) {
+        return false;
+      }
+      fallbackRead = value.whenFalse;
+      latest = scalar(fallbackRead);
+      if (!latest || latest.slot === latch.slot || latest.sentinel !== ts.SyntaxKind.Identifier) {
+        return false;
+      }
+    }
+    const clauses = terms(
+      gate.expression,
+      rejects ? ts.SyntaxKind.BarBarToken : ts.SyntaxKind.AmpersandAmpersandToken,
+    );
+    const predicate = rejects
+      ? ts.SyntaxKind.ExclamationEqualsEqualsToken
+      : ts.SyntaxKind.EqualsEqualsEqualsToken;
+    const detail = clauses.find((node) => {
+      const expr = comparison(
+        node,
+        rejects
+          ? ts.SyntaxKind.EqualsEqualsEqualsToken
+          : ts.SyntaxKind.ExclamationEqualsEqualsToken,
+      );
+      return expr && property(expr.left, event, "detail") && zero(expr.right);
+    });
+    const matches = clauses.find((node) => {
+      const expr = comparison(node, predicate);
+      return (
+        expr &&
+        [expr.left, expr.right].some(
+          (side, index) =>
+            lexicalIdentity(side, latch.slot) &&
+            (compatibility
+              ? lexicalIdentity(index ? expr.left : expr.right, compatibility)
+              : property(index ? expr.left : expr.right, event, "pointerId")),
+        )
+      );
+    });
+    const armed = clauses.find((node) => {
+      const expr = comparison(
+        node,
+        rejects
+          ? ts.SyntaxKind.EqualsEqualsEqualsToken
+          : ts.SyntaxKind.ExclamationEqualsEqualsToken,
+      );
+      return expr && lexicalIdentity(expr.left, latch.slot) && isEmpty(expr.right, latch.sentinel);
+    });
+    if (!detail || !matches || (compatibility && !armed) || clauses.length !== (armed ? 3 : 2)) {
+      return false;
+    }
+
+    // Other uses can arm the slot from a pointer listener or clear it. A read outside
+    // click may only gate another clear, so changing the slot cannot enable an action.
+    const accesses = (value: NonNullable<ReturnType<typeof scalar>>, fallback: boolean) => {
+      const { sentinel, slot } = value;
+      let armedFromPointer = false;
+      let valid = true;
+      const inspect = (node: ts.Node): void => {
+        if (!valid) {
+          return;
+        }
+        if (ts.isWithStatement(node) || (ts.isIdentifier(node) && node.text === "eval")) {
+          valid = false;
+          return;
+        }
+        if (
+          ts.isIdentifier(slot.name) &&
+          ts.isIdentifier(node) &&
+          node.text === slot.name.text &&
+          node !== slot.name
+        ) {
+          const parent = node.parent;
+          // A shorthand property's symbol may be the property rather than the local value.
+          const shorthand = ts.isShorthandPropertyAssignment(parent) && parent.name === node;
+          if (shorthand || lexicalIdentity(node, slot)) {
+            if (node === fallbackRead || (!fallback && (parent === matches || parent === armed))) {
+              return;
+            }
+            const write = comparison(parent, ts.SyntaxKind.EqualsToken);
+            if (write?.left === node && ts.isExpressionStatement(write.parent)) {
+              if (isEmpty(write.right, sentinel)) {
+                return;
+              }
+              const handler = phase(write);
+              const parameter = ts.isArrowFunction(handler)
+                ? listener(handler, fallback ? ["pointerdown"] : ["pointerdown", "pointermove"])
+                : undefined;
+              if (parameter && property(write.right, parameter, "pointerId")) {
+                armedFromPointer = true;
+                return;
+              }
+            }
+            if (!fallback) {
+              const read = comparison(parent, ts.SyntaxKind.EqualsEqualsEqualsToken);
+              if (read && (read.left === node || read.right === node)) {
+                for (
+                  let guard: ts.Node = read;
+                  guard && !ts.isStatement(guard);
+                  guard = guard.parent
+                ) {
+                  if (!ts.isIfStatement(guard.parent) || guard.parent.expression !== guard) {
+                    continue;
+                  }
+                  const branch = guard.parent;
+                  const handler = phase(branch);
+                  const parameter = ts.isArrowFunction(handler)
+                    ? listener(handler, ["pointerdown", "pointerup", "pointercancel"])
+                    : undefined;
+                  const body = ts.isBlock(branch.thenStatement)
+                    ? branch.thenStatement.statements
+                    : [];
+                  const clear = body.length === 1 && assignment(body[0]);
+                  if (
+                    parameter &&
+                    !branch.elseStatement &&
+                    terms(branch.expression, ts.SyntaxKind.AmpersandAmpersandToken).at(-1) ===
+                      read &&
+                    property(read.left === node ? read.right : read.left, parameter, "pointerId") &&
+                    clear &&
+                    lexicalIdentity(clear.left, slot) &&
+                    isEmpty(clear.right, sentinel)
+                  ) {
+                    return;
+                  }
+                }
+              }
+            }
+            valid = false;
+            return;
+          }
+        }
+        ts.forEachChild(node, inspect);
+      };
+      ts.forEachChild(slot.parent.parent.parent, inspect);
+      return valid && armedFromPointer;
+    };
+    return accesses(latch, false) && (!latest || accesses(latest, true));
+  };
   const findings: ActionBindingFinding[] = [];
   const runtimeAssertions: (AssertionSite & { readonly kind: RuntimeAssertionKind })[] = [];
   const unresolvedRuntimeAssertions: AssertionSite[] = [];
@@ -1709,6 +2077,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
             node,
             "suppressor",
             "Only event suppression and local statements; no action/helper call",
+          );
+        } else if (discrete && consumesPointerLatch(node)) {
+          record(
+            "non-action",
+            node,
+            "suppressor",
+            "Capture click only clears a private pointer latch used for suppression and cancels the browser event",
           );
         } else if (discrete) {
           if (node !== nativeBridge) {

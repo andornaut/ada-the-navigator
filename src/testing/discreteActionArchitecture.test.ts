@@ -146,6 +146,152 @@ it("distinguishes pure event suppressors from a suppressor that also invokes an 
   }
 });
 
+function compatibilityClicks(after = "", mutate = (source: string) => source) {
+  const source = mutate(`
+    export function build() {
+      const surface = document.createElement("div");
+      let pending: number | null = null;
+      surface.addEventListener("pointerdown", event => {
+        if (arriving) {
+          pending = event.pointerId;
+          finish();
+        } else if (pending === event.pointerId) {
+          pending = null;
+        }
+      }, true);
+      surface.addEventListener("click", event => {
+        if (event.detail !== 0 && event.pointerId === pending) {
+          pending = null;
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+      ${after}
+    }
+  `);
+  return scanWithRegistry("src/ui/independent.ts", source).filter(({ source }) =>
+    source.includes('addEventListener("click"'),
+  );
+}
+
+it("recognizes a private pointer latch reset on a physical captured click", () => {
+  expect(compatibilityClicks()).toEqual([
+    expect.objectContaining({ classification: "suppressor", kind: "non-action" }),
+  ]);
+});
+
+const legacyCompatibilitySource = `
+  export function build() {
+    const list = document.createElement("div");
+    for (const node of [list]) {
+      let dragged: number | undefined;
+      let latest: number | undefined;
+      node.addEventListener("pointerdown", event => {
+        latest = event.pointerId;
+        if (dragged === event.pointerId) {
+          dragged = undefined;
+        }
+      });
+      node.addEventListener("pointermove", event => {
+        dragged = event.pointerId;
+      });
+      node.addEventListener("click", event => {
+        const physical = typeof event.pointerId === "number" ? event.pointerId : latest;
+        if (event.detail === 0 || dragged === undefined || physical !== dragged) {
+          return;
+        }
+        dragged = undefined;
+        event.preventDefault();
+        event.stopPropagation();
+      }, true);
+      for (const type of ["pointerup", "pointercancel"] as const) {
+        node.addEventListener(type, event => {
+          if (type === "pointercancel" && dragged === event.pointerId) {
+            dragged = undefined;
+          }
+        });
+      }
+    }
+  }
+`;
+
+it("recognizes a legacy physical click tied to the same receiver's latest pointer", () => {
+  const findings = scanWithRegistry("src/paging.ts", legacyCompatibilitySource);
+  expect(findings.find(({ source }) => source.includes('addEventListener("click"'))).toMatchObject({
+    classification: "suppressor",
+    kind: "non-action",
+  });
+  expect(findings.filter(({ kind }) => kind === "gesture-review")).toHaveLength(3);
+});
+
+it("leaves latch consumers that can act, focus, mutate, escape or rearm blocking", () => {
+  for (const [before, next] of [
+    ["event.stopPropagation();", "event.stopPropagation(); activate();"],
+    ["event.stopPropagation();", "event.stopPropagation(); button.focus();"],
+    ["event.stopPropagation();", "event.stopPropagation(); state.changed = true;"],
+    [
+      "event.stopPropagation();",
+      'event.stopPropagation(); surface.addEventListener("keydown", activate);',
+    ],
+    ["event.stopPropagation();", "event.stopPropagation(activate());"],
+    ["event.stopPropagation();", "audit.stopPropagation();"],
+    ["event.detail !== 0 && ", ""],
+    [
+      "pending = null;\n          event.preventDefault();",
+      "pending = event.pointerId; event.preventDefault();",
+    ],
+    ["pending = null;\n          event.preventDefault();", "other = null; event.preventDefault();"],
+    ["pending = event.pointerId;", "pending = readPointer();"],
+    ["pending === event.pointerId) {", "pending === event.pointerId && activate()) {"],
+    [
+      "event.stopPropagation();\n        }\n      }, true);",
+      "event.stopPropagation();\n        }\n      }, false);",
+    ],
+    ['document.createElement("div")', "new FakeTarget()"],
+  ] as const) {
+    expect(
+      compatibilityClicks("", (text) => {
+        expect(text).toContain(before);
+        return text.replace(before, next);
+      }).some(({ kind }) => kind === "raw-discrete"),
+      next,
+    ).toBe(true);
+  }
+  for (const use of [
+    "activate(pending);",
+    "if (pending === null) activate();",
+    "return { pending };",
+    'eval("activate(pending)");',
+    "let stale = pending;",
+    "++pending;",
+    "surface.addEventListener = intercept;",
+  ]) {
+    expect(compatibilityClicks(use)[0]?.kind, use).toBe("raw-discrete");
+  }
+});
+
+it("keeps legacy click latches blocking without an armed check or stable pointer provenance", () => {
+  for (const [before, next] of [
+    ["dragged === undefined || ", ""],
+    [": latest;", ": selectPointer();"],
+    ["latest = event.pointerId;", "latest = getPointer();"],
+    ["event.stopPropagation();", "event.stopPropagation(); return dragged;"],
+    [
+      'type === "pointercancel" && dragged === event.pointerId',
+      'dragged === event.pointerId && type === "pointercancel" && act()',
+    ],
+  ] as const) {
+    const findings = scanWithRegistry(
+      "src/paging.ts",
+      legacyCompatibilitySource.replace(before, next),
+    );
+    expect(
+      findings.find(({ source }) => source.includes('addEventListener("click"'))?.kind,
+      next,
+    ).toBe("raw-discrete");
+  }
+});
+
 it("keeps mixed drag release actions blocking and classifies native value editing separately", () => {
   const findings = scanWithRegistry(
     "any/consumer.ts",
