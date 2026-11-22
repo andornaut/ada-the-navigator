@@ -1,44 +1,100 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { filled, over, resize, rgba, writePng } from "./paint.ts";
+import {
+  engineJets,
+  jetTriangles,
+  normalJetTailRegions,
+  readEngineJets,
+} from "../../src/game/shipJets.ts";
+import { filled, fillPolygon, over, resize, rgba, writePng, type Xy } from "./paint.ts";
 import { SPACE_BG } from "./palette.ts";
-import { classic, drawn, FRAME, UP } from "./ship-model.ts";
+import { classic, drawn, FRAME } from "./ship-model.ts";
 import { paintShip } from "./ship-raster.ts";
 
 const output = fileURLToPath(new URL("../../public/art/app-icon/", import.meta.url));
 // Review imagery stays out of the shipped art.
 const review = fileURLToPath(new URL("../review/", import.meta.url));
 const SIZE = 512;
-const SCALE = 5.8;
-const OFFSET = [-22.4, -3.2] as const;
-const polygons = drawn(FRAME / 2, classic.paint, { yaw: UP });
+const HEADING = 46;
+const SPEED = 0.6;
+const DENSITY = 4;
+const SAFE_ZONE = 0.8;
+// A small margin inside the circular crop leaves room for the reduction filter.
+const REGULAR_RADIUS = SIZE * 0.48;
 const background = rgba(`#${SPACE_BG}`);
+const hull = drawn(FRAME / 2, classic.paint, { yaw: HEADING });
+const data = readEngineJets(
+  JSON.parse(readFileSync(new URL("../../public/art/ship-jets.json", import.meta.url), "utf8")),
+);
+if (!data || data.frame !== FRAME) throw new Error("Invalid Classic ship jet art");
+const jets = engineJets(data, 1);
+const pivot = { x: 0, y: 0 };
+const frameDisplay = { displayHeight: FRAME, displayWidth: FRAME, pivot };
+const tail = normalJetTailRegions(jets, frameDisplay, HEADING);
 
-// Raster exports sample the same projected geometry without an external SVG delegate. `fit`
-// scales the composition about the canvas centre.
-const density = 4;
-function raster(fit: number) {
-  const centre = SIZE / 2;
-  const master = filled(background, SIZE * density, SIZE * density);
+const composition = [
+  ...hull.flatMap(({ outline }) => outline),
+  ...jetTriangles(jets, frameDisplay, HEADING, SPEED).flatMap(({ points }) =>
+    points.map(({ x, y }): Xy => [x, y]),
+  ),
+];
+const xs = composition.map(([x]) => x);
+const ys = composition.map(([, y]) => y);
+const centreX = (Math.min(...xs) + Math.max(...xs)) / 2;
+const centreY = (Math.min(...ys) + Math.max(...ys)) / 2;
+const radius = Math.max(...composition.map(([x, y]) => Math.hypot(x - centreX, y - centreY)));
+const scale = REGULAR_RADIUS / radius;
+
+// One hull-and-exhaust fit serves both exports and both jet material profiles.
+function raster(displaySize: number, fit = 1) {
+  const project = ([x, y]: Xy): Xy => [
+    (SIZE / 2 + (x - centreX) * scale * fit) * DENSITY,
+    (SIZE / 2 + (y - centreY) * scale * fit) * DENSITY,
+  ];
+  const master = filled(background, SIZE * DENSITY, SIZE * DENSITY);
   paintShip(
     master,
-    polygons.map(({ color, outline }) => ({
-      color,
-      outline: outline.map(
-        ([x, y]) =>
-          [
-            (centre + (x * SCALE + OFFSET[0] - centre) * fit) * density,
-            (centre + (y * SCALE + OFFSET[1] - centre) * fit) * density,
-          ] as const,
-      ),
-    })),
+    hull.map(({ color, outline }) => ({ color, outline: outline.map(project) })),
   );
+  const hullPixels = master.data.slice();
+
+  // Use the destination's frame size to choose the canonical small jet material.
+  const displayScale = (displaySize * scale * fit) / SIZE;
+  const display = {
+    displayHeight: FRAME * displayScale,
+    displayWidth: FRAME * displayScale,
+    pivot,
+  };
+  for (const { alpha, color, points } of jetTriangles(jets, display, HEADING, SPEED)) {
+    if (alpha !== 1) throw new Error("Expected opaque normal jet material");
+    fillPolygon(
+      master,
+      points.map(({ x, y }) => project([x / displayScale, y / displayScale])),
+      rgba(color.toString(16).padStart(6, "0")),
+    );
+  }
+
+  // Normal exhaust draws in front, with the original hull pixels restored at the tail.
+  const mask = filled([0, 0, 0, 0], master.width, master.height);
+  for (const region of tail) {
+    fillPolygon(
+      mask,
+      region.map(({ x, y }) => project([x, y])),
+      [255, 255, 255, 255],
+    );
+  }
+  for (let at = 0; at < mask.data.length; at += 4) {
+    if (mask.data[at + 3]) master.data.set(hullPixels.subarray(at, at + 4), at);
+  }
   return master;
 }
-const master = raster(1);
+
+const master = raster(SIZE);
 const images = new Map<number, ReturnType<typeof resize>>();
-for (const size of [16, 32, 180, 192, 512]) images.set(size, resize(master, size, size));
+for (const size of [16, 32, 180, 192, 512]) {
+  images.set(size, resize(size <= 32 ? raster(size) : master, size, size));
+}
 for (const [name, size] of [
   ["icon-192", 192],
   ["icon-512", 512],
@@ -48,10 +104,7 @@ for (const [name, size] of [
 ] as const)
   writePng(`${output}${name}.png`, images.get(size)!, true);
 
-// The maskable safe zone is the centred circle of radius 40%. Scaling the regular composition by
-// 0.8 maps its full canvas onto that circle, so the minimum mask shows the regular icon's framing.
-const SAFE_ZONE = 0.8;
-writePng(`${output}icon-maskable-512.png`, resize(raster(SAFE_ZONE), SIZE, SIZE), true);
+writePng(`${output}icon-maskable-512.png`, resize(raster(SIZE, SAFE_ZONE), SIZE, SIZE), true);
 
 // ICO PNG payloads retain the exact exported 16 and 32 pixel favicon images.
 const payloads = [16, 32].map((size) => ({

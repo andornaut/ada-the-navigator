@@ -1,10 +1,9 @@
 # App icon
 
-Ada's ship as the in-game sprite draws it nose up (heading 20, `ship.svg`):
-the pyramid hull with swept wings, blue walls and engine mouths either side of
-the white tail, and the opaque blue canopy, so the icon and the game show the
-same craft. No text or outlines. All exports have an opaque dark lavender
-background; the maskable export draws the same artwork scaled to its safe zone.
+The app icon shows Ada's Classic ship facing the upper right at heading 46 of
+64, with two normal jets at medium thrust. The hull uses the shared ship model
+and its original rear attachments. All exports use the opaque dark lavender
+background.
 
 ## Files
 
@@ -32,29 +31,26 @@ neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
   panels `#28558a` and skirt `#abbfce`.
 - Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, engine mouths `#64caff`.
 
-The maskable safe zone is the centred circle with diameter 80% of the canvas:
-409.6 px at 512 px, centred at (256, 256), radius 204.8 px. In the regular
-icon, every hull and canopy vertex, its stroke included, lies within radius
-185 px. `icon-maskable-512.png` scales that composition by 0.8 about the canvas
-centre, so its full canvas maps onto the safe circle and the artwork lies within
-radius 149 px. The background fills the whole square. Under the minimum safe
-circle mask the maskable icon shows the regular icon's framing. No baked corner
-rounding.
+The regular composition centres the combined hull and jet bounds and scales
+their farthest point to 48% of the canvas width. The maskable icon scales the
+same composition by 0.8. At 512 px its mark fits within radius 196.6 px,
+leaving about 8 px of background inside the minimum 204.8 px safe circle.
+The background also fills the square outside the circle for launcher masks
+of other shapes.
 
 ## Export and integration
 
-Rebuild with `node art/tools/app-icon.ts`. It draws the nose-up pose
-(heading 20) from the shared [ship model](ship.md), the polygons of `ship.svg`
-in order, scaled by 5.8 and offset by (-22.4, -3.2), which centres the frame's
-bounding box on the canvas and fits it inside radius 185 px, with no added
-stroke or keyline growth. Reruns are byte-identical while the model is
-unchanged.
+Rebuild with `node art/tools/app-icon.ts`. The exporter uses the Classic
+[ship model](ship.md) and Engine level 1 normal jet data at speed fraction
+0.6. The length curve gives 14.64 model units before projection. The exported
+tail regions restore the painted hull where the jets pass behind it. The
+launcher PNGs use all the normal layers. At 16 and 32 px the shared small
+display profile uses the blue centre and omits the pale core.
 
-The command writes every PNG, the two-size ICO and the contact sheet. The
-maskable PNG is rendered from its own scaled master.
-Raster exports sample the shared projected geometry at 4x the 512px master
-before reduction. The ICO embeds the exact 16px and 32px PNG payloads. No
-external SVG rasterizer or ImageMagick step is required.
+The command writes every PNG, the two-size ICO and the contact sheet. Raster
+exports sample the projected geometry at 4× the 512 px master before
+reduction. The ICO embeds the exact 16 and 32 px PNG payloads. The maskable
+PNG is rendered from its own scaled master.
 
 Tech owns manifest and HTML icon links. Asset delivery does not enable PWA,
 service worker or offline behaviour. Keep contact-sheet imagery out of icon links.
