@@ -108,18 +108,28 @@ keeps its figure IDs and placements. Ada has separate poses for each scene.
 Every storybook background, like the aboard backdrop, is a 960 by 540 logical px canvas
 with `displayWidth` 960 and `displayHeight` 540 and the pivot at the centre: a
 1920 by 1080 opaque PNG at 2x, or for the [aboard backdrop](aboard.md) an SVG
-of 960 by 540 user units. Non-bedroom backgrounds draw at display size under
-the insets, centred across and offset by the [run anchor](layout.md#storybook-page),
-which places their [subject bands](#subject-bands) in the strip above the story panel;
-a backdrop without a panel stays centred. It covers every view up to 960 by 540
-(a 720 by 540 4:3 view, an 800 by 360 21:9 phone); scale it up to cover only
-past that.
+of 960 by 540 user units. The canvas scales up only to cover views larger than
+its display size. Non-bedroom canvases are centred horizontally. Their base
+vertical placement uses the [run anchor](layout.md#storybook-page) to centre the
+[subject band](#subject-bands) in the strip above the run's tallest panel for
+that background. A backdrop without a panel uses the centred base placement.
 
-All bedroom backgrounds, aliases and glow frames share one camera. With logical
-view dimensions `viewW` and `viewH`, their cover scale is
-`k = max(1, viewW / 960, viewH / 540)` and canvas top is `viewH - 540 * k`.
-This bottom alignment is independent of panel height, subject band, story run,
-Previous navigation and overnight cross-fades, including pages without a panel.
+All bedroom backgrounds, aliases and glow frames share a camera. With logical
+view dimensions `viewW` and `viewH`, the cover scale is
+`k = max(1, viewW / 960, viewH / 540)` and the base canvas top is `viewH - 540 * k`.
+This bottom anchor applies across story runs, Previous navigation and overnight
+cross-fades, including pages without a panel.
+
+The shared horizontal fit uses the authored occupied-night layer rectangle for
+every bedroom variant. The camera prefers the centred position and shifts only
+as far as needed to leave a layout gap from the Menu's visible right edge
+(including its safe HUD inset) and from the viewport's right edge. If those two
+edge constraints conflict, the camera takes the midpoint of the requested
+shifts. It clamps every shift to the canvas's horizontal overhang to maintain
+full cover. The canvas centres when the occupied-night layer is unavailable.
+The base and incoming frames share this horizontal fit with their overlays.
+Boarding fades use the outgoing page's placement for their steps. Overnight
+background fades use the incoming background's anchor.
 
 Scenes are composed on the 844 by 390 design frame, the 779 by 360 logical view
 of an 844 by 390 phone, which sits at the canvas centre (logical x 90.5 to
@@ -272,7 +282,11 @@ the story page offsets the canvas so the band centres in the strip above the tal
 story run ([run anchor](layout.md#storybook-page)). At a 360-high view the canvas can
 rise at most 180 (90 past centred), so a band's bottom shows only while it is
 at most the panel top + 180; at 720x405 the limit is the panel top + 135.
-Bedroom subject bands describe the art; they do not control its placement.
+The ordinary upper-half art window applies a separate vertical translation.
+It centres the base scene's subject band in the upper half, using the canvas
+centre if there is no band. Bedroom art also moves up by the panel padding
+within that window. This presentation offset is separate from the bedroom's
+fixed bottom anchor.
 
 | Id                               | Band     | Key objects                                            |
 | -------------------------------- | -------- | ------------------------------------------------------ |
@@ -297,9 +311,10 @@ Bedroom subject bands describe the art; they do not control its placement.
 The viewport columns below are CSS sizes; coordinates are logical px. Their
 logical views are 720x360, 779.08x360 and 720x405. Bedroom cover scale is 1 at
 all three, so every bedroom variant uses fixed top -180, -180 and -135.
-The bedroom row lists this top only. Other rows list the per-run canvas top
-`y`, subject band view rows and tallest panel top, with insets 43/43/0/19 at
-the two phone sizes. A star marks a clamped non-bedroom placement. Runs: the
+The bedroom row lists this base top before the upper-half translation. Other
+rows list the per-run canvas top `y`, subject band view rows and tallest panel
+top, with insets 43/43/0/19 at the two phone sizes. A star marks a clamped
+non-bedroom placement. Runs: the
 first launch (chapter one's opening, then the prologue),
 a visit (a waiting chapter scene, Ada's room, boarding), the empty visit, the
 jump home (the jump-home page, night, morning, then the visit) and the holodisk
