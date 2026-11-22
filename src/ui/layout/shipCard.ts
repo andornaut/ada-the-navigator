@@ -1,4 +1,4 @@
-import { FOCUS_STYLE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
+import { BUTTON_FACE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { FOCUS_RING } from "./controls.ts";
 import { font, units } from "./css.ts";
 import { SPACING, TYPE } from "./tokens.ts";
@@ -52,16 +52,28 @@ ${UI_SCOPE} .ada-ship-row{
   color:${TEXT_TOKENS.label};
   cursor:pointer
 }
-/* Widen the scroll clip around the ring without moving the inventory columns. */
+/* Keep the inventory's scroll gutter and column positions. */
 ${UI_SCOPE} .ada-card[data-dialog=ship] > .ada-card-body{
   margin-inline:${units(-FOCUS_RING.outset)};
   padding-inline:${units(FOCUS_RING.outset)}
 }
-${UI_SCOPE} .ada-ship-row:focus-visible{${FOCUS_STYLE}
+${UI_SCOPE} .ada-ship-row:focus-visible{
+  outline:none;
+  box-shadow:none
+}
+/* Paint the text area in place so the icon stays on its authored background. */
+${UI_SCOPE} .ada-ship-row:not(:disabled):is(:focus-visible,:active) .ada-ship-text{
+  background-color:${TEXT_TOKENS.label};
+  color:${TEXT_TOKENS.buttonLabel}
+}
+${UI_SCOPE} .ada-ship-row:not(:disabled):active .ada-ship-text{
+  background-color:${BUTTON_FACE.primary}
 }
 @media (forced-colors: active){
-  ${UI_SCOPE} .ada-ship-row:focus-visible{
-    outline-color:Highlight
+  ${UI_SCOPE} .ada-ship-row:not(:disabled):is(:focus-visible,:active) .ada-ship-text{
+    forced-color-adjust:none;
+    background-color:Highlight;
+    color:HighlightText
   }
 }
 ${UI_SCOPE} .ada-ship-icon{
