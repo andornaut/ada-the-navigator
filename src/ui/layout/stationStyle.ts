@@ -3,7 +3,7 @@ import { buttonProperty } from "../uiSkin.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./controls.ts";
 import { font, safeEdge, slice, units } from "./css.ts";
-import { BALANCE, CONFIRM_ITEM, EXCHANGE_FIELD, SHOP_ROW } from "./shopCard.ts";
+import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 export const STATION_SPRITES = "/art/ui/sprites/";
@@ -37,23 +37,33 @@ export const STATION_STYLE = `
 }
 
 .ada-controls .ada-exchange{
+  display:grid;
+  gap:${units(SPACING.gap)};
   max-width:100%;
   text-align:left
 }
-.ada-controls .ada-exchange label{
-  display:flex;
+.ada-controls .ada-exchange-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
   align-items:center;
-  flex-wrap:wrap;
   gap:${units(SPACING.gap)}
 }
-.ada-controls .ada-exchange input{
-  box-sizing:border-box;
-  width:${units(EXCHANGE_FIELD.width)};
-  max-width:100%;
-  font:inherit;
-  color:inherit;
-  background:transparent;
-  border:${units(EXCHANGE_FIELD.edge)} solid currentColor
+.ada-controls .ada-exchange-row h3{
+  margin:0;
+  font:${font(TYPE.label)}
+}
+.ada-controls .ada-exchange-direction,
+.ada-controls .ada-exchange-amount{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:${units(BALANCE.markGap)}
+}
+.ada-controls .ada-exchange-icon{
+  width:${units(BALANCE.icon)};
+  height:${units(BALANCE.icon)};
+  flex:none;
+  image-rendering:pixelated
 }
 .ada-controls .ada-exchange p{
   overflow-wrap:anywhere

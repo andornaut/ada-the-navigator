@@ -5,7 +5,6 @@ import type { ExchangeAmount, ExchangeResource } from "../model/exchange.ts";
 export interface ExchangeActionData {
   readonly amount: ExchangeAmount;
   readonly resource: ExchangeResource;
-  readonly label: string;
 }
 export type ExchangeSchema = {
   container: { props: { readonly id: "root" | ExchangeResource }; slots: "content" };

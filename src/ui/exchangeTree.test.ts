@@ -7,7 +7,6 @@ it("composes caller fixed-action facts without an editor or confirmation control
   const actions = (resource: ExchangeResource) =>
     EXCHANGE_AMOUNTS.map((amount) => ({
       amount,
-      label: `Caller ${resource} ${amount}`,
       resource,
     }));
   const tree = exchangeTree({ ore: actions("ore"), stardust: actions("stardust") });

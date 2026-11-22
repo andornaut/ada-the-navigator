@@ -241,6 +241,26 @@ describe("immediate fixed Exchange actions", () => {
           ),
         ),
     ).toBe(false);
+    const rows = f.nodes().filter((node) => node.className === "ada-exchange-row");
+    expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual(["Buy Stardust", "Buy ore"]);
+    expect(rows.map((row) => row.children[1]!.getAttribute("aria-label"))).toEqual([
+      "ore to Stardust",
+      "Stardust to ore",
+    ]);
+    expect(f.action("exchange-stardust-10").getAttribute("aria-label")).toBe(
+      "Spend 20 ore to get 10 Stardust",
+    );
+    for (const resource of ["stardust", "ore"] as const) {
+      for (const amount of EXCHANGE_AMOUNTS) {
+        const action = f.action(`exchange-${resource}-${amount}`);
+        expect(action.textContent).toBe(String(amount));
+        expect(action.children).toHaveLength(1);
+        expect(action.children[0]!.tagName).toBe("IMG");
+        expect((action.children[0] as unknown as HTMLImageElement).src).toBe(
+          `/art/ui/sprites/icon-${resource}-20.png`,
+        );
+      }
+    }
     expect(f.view.back()).toBe(false);
     expect(f.view.isConfirming()).toBe(false);
     expect(f.commit).not.toHaveBeenCalled();
@@ -257,26 +277,44 @@ describe("immediate fixed Exchange actions", () => {
     expect(f.balances()).toEqual({ ore: 10, stardust: 90 });
     expect(f.onChange).toHaveBeenCalledTimes(2);
   });
-  it("keeps unaffordable fixed actions visible but refuses direct disabled activation", () => {
+  it("gives refusal feedback through the registered native action for either low balance", () => {
     const f = fixture();
-    expect(f.action("exchange-ore-100").disabled).toBe(true);
-    expect(f.action("exchange-ore-100").hidden).toBe(false);
-    expect(f.action("exchange-stardust-100").disabled).toBe(true);
-    f.click("exchange-ore-100");
-    f.click("exchange-stardust-100");
+    const balances = f.balances();
+    const status = f.nodes().find((node) => node.getAttribute("role") === "status")!;
+    for (const [resource, reason] of [
+      ["stardust", "Not enough ore"],
+      ["ore", "Not enough Stardust"],
+    ] as const) {
+      const id = `exchange-${resource}-100`;
+      expect(f.action(id).disabled).toBe(false);
+      expect(f.action(id).hidden).toBe(false);
+      expect(f.action(id).getAttribute("aria-disabled")).toBe("true");
+      f.click(id);
+      expect(status.textContent).toBe(reason);
+    }
     expect(f.commit).not.toHaveBeenCalled();
+    expect(f.onChange).not.toHaveBeenCalled();
+    expect(f.balances()).toEqual(balances);
   });
-  it("revalidates live balances at the model transaction rather than spending an old preview", () => {
+  it("revalidates live balances rather than spending an old preview", () => {
     const f = fixture();
+    const button = f.action("exchange-ore-10");
+    expect(button.getAttribute("aria-disabled")).toBe("false");
     f.setBalances({ ore: 20, stardust: 0 });
     f.click("exchange-ore-10");
-    expect(f.commit.mock.results[0]!.value).toMatchObject({
-      kind: "refused",
-      reason: "cantAfford",
-    });
+    expect(f.commit).not.toHaveBeenCalled();
     expect(f.balances()).toEqual({ ore: 20, stardust: 0 });
     expect(f.onChange).not.toHaveBeenCalled();
-    expect(f.action("exchange-ore-10").disabled).toBe(true);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+  });
+  it("preserves the action on focus when its purchase spends the last affordable balance", () => {
+    const f = fixture();
+    const key = "exchange-stardust-10";
+    f.click(key);
+    expect(f.action(key).getAttribute("aria-disabled")).toBe("true");
+    expect(f.action(key).disabled).toBe(false);
+    expect(f.action(key).focus).toHaveBeenCalledOnce();
+    expect(f.balances()).toEqual({ ore: 0, stardust: 110 });
   });
   it("retains button identities and ignores hidden or disposed callbacks", () => {
     const f = fixture();
@@ -358,7 +396,7 @@ it("does not rescan unchanged Exchange node graphs during balance refresh", () =
   f.setBalances({ ore: 0, stardust: 0 });
   f.view.render();
   expect(queries).not.toHaveBeenCalled();
-  expect(f.action("exchange-ore-1").disabled).toBe(true);
-  expect(f.action("exchange-stardust-1").disabled).toBe(true);
+  expect(f.action("exchange-ore-1").getAttribute("aria-disabled")).toBe("true");
+  expect(f.action("exchange-stardust-1").getAttribute("aria-disabled")).toBe("true");
   f.view.dispose();
 });
