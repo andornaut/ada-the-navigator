@@ -69,3 +69,4 @@ These are not cheats and start no cheat session.
 | ada-0311 | Add session-only cheats, Show tips again, the FPS counter and Reset save | [ada-0311.md](../work/ada-0311.md) |
 | ada-0317 | Keep Show tips again effective in the stored save during a cheat session | [ada-0317.md](../work/ada-0317.md) |
 | ada-0319 | Apply Art's Cheats card review and wire the FPS counter icon             | [ada-0319.md](../work/ada-0319.md) |
+| ada-0356 | Fit Cheats in two columns and open it from game navigation               | [ada-0356.md](../work/ada-0356.md) |
