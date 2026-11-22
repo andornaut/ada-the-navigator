@@ -7,19 +7,20 @@ modals. Similar elements use the same token everywhere. A screen is data
 control states, colours and the refusal cue; [Station and shop](shop.md) owns
 the shop's groups, states and item art; this page owns every distance and size.
 
-Each token row names the constant that implements it in `src/ui/layout/`.
-"To implement" marks a constant Tech has not created yet; "now" names where
-the value currently lives, in CSS px.
+Shared logical values live in `src/data/layout.ts` and are exposed through
+`src/ui/layout/`. Token rows may also cite earlier implementation names from
+the layout proposal. The layout and button-state requirements describe the
+design, including pending state migration in [Controls](controls.md#buttons).
 
 ## Coordinates and scale
 
-| Token          | Value                            | Rule                                                                               | Constant                                                 |
-| -------------- | -------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| Base view      | 720x360                          | Smallest logical view; Chibi's base view                                           | Verified `SCREEN`, `src/data/screen.ts`                  |
-| View scale `s` | `min(cssW / 720, cssH / 360)`    | Logical px to CSS px, for the canvas and the DOM overlay alike                     | `viewScale(cssSize)`, `playView.ts`, to implement        |
-| Logical view   | `cssW / s` by `cssH / s`         | At least 720x360; one axis widens past the base with the screen aspect             | `logicalView(cssSize)`, `playView.ts`, to implement      |
-| Safe insets    | `env(safe-area-inset-*) / s`     | Per edge, in logical px, in the turned frame's orientation                         | `safeInsets()`, `playView.ts`, to implement              |
-| Safe rect      | Edge moved in by `max(m, inset)` | The shared safe-margin clamp: margin `m` from the view edge, never inside an inset | `safeRect(insets, m, view)`, `playView.ts`, to implement |
+| Token          | Value                            | Rule                                                                               | Constant                                   |
+| -------------- | -------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------ |
+| Base view      | 720x360                          | Smallest logical view; Chibi's base view                                           | Verified `SCREEN`, `src/data/screen.ts`    |
+| View scale `s` | `min(cssW / 720, cssH / 360)`    | Logical px to CSS px, for the canvas and the DOM overlay alike                     | `viewScale(cssSize)`, `playView.ts`        |
+| Logical view   | `cssW / s` by `cssH / s`         | At least 720x360; one axis widens past the base with the screen aspect             | `logicalView(cssSize)`, `playView.ts`      |
+| Safe insets    | `env(safe-area-inset-*) / s`     | Per edge, in logical px, in the turned frame's orientation                         | `safeInsets(cssInsets, s)`, `playView.ts`  |
+| Safe rect      | Edge moved in by `max(m, inset)` | The shared safe-margin clamp: margin `m` from the view edge, never inside an inset | `safeRect(insets, m, view)`, `playView.ts` |
 
 - Measure all UI in logical px. The Phaser canvas draws the logical view
   through game-kit's `followFrameTurn` with `Scale.NONE` and a device-pixel
@@ -84,24 +85,24 @@ Padding and margins are measured to drawn pixels, counting an icon's side
 bearings: a gap given to an icon is to its drawn pixels, not its box, so an
 icon whose drawn pixels sit 3 inside its 20 box takes 3 less on that side.
 
-| Token             | Value | Rule                                                                                                   | Constant                                                                      |
-| ----------------- | ----- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Row gap           | 4     | Between rows of one list that are not buttons: item rows, text rows                                    | `SPACING.rowGap`, `tokens.ts`, to implement; now `CARD.rowGap`                |
-| Group gap         | 8     | Between card groups and row parts                                                                      | `SPACING.gap`, `tokens.ts`, to implement; now `CARD.gap`                      |
-| Column gap        | 8     | Between columns that are not buttons                                                                   | `SPACING.columnGap`, `tokens.ts`, to implement                                |
-| Mark gap          | 6     | From an inline icon to its label inside one control or pill                                            | `SPACING.markGap`, `tokens.ts`, to implement                                  |
-| Button gap        | 16    | Between standard button faces side by side: action rows and grid columns                               | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`)                             |
-| Small button gap  | 24    | Between faces when either is a small button (face under 48 high), in any direction                     | `SMALL_BUTTON_GAP`, `tokens.ts` (game-kit `SMALL_BUTTON_GAP`)                 |
-| Stack button gap  | 8     | Between standard button faces stacked vertically: action stacks, control rows, grid rows, line buttons | `STACK_BUTTON_GAP`, `tokens.ts` (game-kit `STACK_BUTTON_GAP`)                 |
-| HUD edge          | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                                     |
-| Control edge      | 8     | The HUD safe-rect margin                                                                               | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
-| Stick area margin | 8     | Least gap from each stick's drawn ring to the game area's edge                                         | `STICK_AREA_MARGIN`, `playView.ts`, to implement                              |
-| Page inset        | 16    | Page content from the view edge; preset modal margins are defined below                                | `SPACING.pageInset`, `tokens.ts`                                              |
-| Panel padding     | 16    | Inside cards and the story panel, including the 2 px frame                                             | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
-| Body line box     | 20    | 16 px text (body, labels, supporting)                                                                  | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
-| Heading line box  | 28    | 24 px bold titles                                                                                      | `TYPE.heading.lineHeight`, `tokens.ts`, to implement                          |
-| Count line box    | 14    | 12 px bold HUD weapon counts                                                                           | `TYPE.count.lineHeight`, `tokens.ts`, to implement                            |
-| Story line box    | 26    | 18 px storybook text column                                                                            | `TYPE.story.lineHeight`, `tokens.ts`, to implement                            |
+| Token             | Value | Rule                                                                                                   | Constant                                                      |
+| ----------------- | ----- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Row gap           | 4     | Between rows of one list that are not buttons: item rows, text rows                                    | `SPACING.rowGap`, `tokens.ts`                                 |
+| Group gap         | 8     | Between card groups and row parts                                                                      | `SPACING.gap`, `tokens.ts`                                    |
+| Column gap        | 8     | Between columns that are not buttons                                                                   | `SPACING.columnGap`, `tokens.ts`                              |
+| Mark gap          | 6     | From an inline icon to its label inside one control or pill                                            | `SPACING.markGap`, `tokens.ts`                                |
+| Button gap        | 16    | Between standard button faces side by side: action rows and grid columns                               | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`)             |
+| Small button gap  | 24    | Between faces when either is a small button (face under 48 high), in any direction                     | `SMALL_BUTTON_GAP`, `tokens.ts` (game-kit `SMALL_BUTTON_GAP`) |
+| Stack button gap  | 8     | Between standard button faces stacked vertically: action stacks, control rows, grid rows, line buttons | `STACK_BUTTON_GAP`, `tokens.ts` (game-kit `STACK_BUTTON_GAP`) |
+| HUD edge          | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                     |
+| Control edge      | 8     | The HUD safe-rect margin                                                                               | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)          |
+| Stick area margin | 8     | Least gap from each stick's drawn ring to the game area's edge                                         | `STICK_AREA_MARGIN`, `src/data/layout.ts`                     |
+| Page inset        | 16    | Page content from the view edge; preset modal margins are defined below                                | `SPACING.pageInset`, `tokens.ts`                              |
+| Panel padding     | 16    | Inside cards and the story panel, including the 2 px frame                                             | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`     |
+| Body line box     | 20    | 16 px text (body, labels, supporting)                                                                  | `TYPE.body.lineHeight`, `tokens.ts`                           |
+| Heading line box  | 28    | 24 px bold titles                                                                                      | `TYPE.heading.lineHeight`, `tokens.ts`                        |
+| Count line box    | 14    | 12 px bold HUD weapon counts                                                                           | `TYPE.count.lineHeight`, `tokens.ts`                          |
+| Story line box    | 26    | 18 px storybook text column                                                                            | `TYPE.story.lineHeight`, `tokens.ts`                          |
 
 Type roles: `TYPE.heading` 24 bold on 28; `TYPE.body` 16 regular on 20;
 `TYPE.label` 16 bold on 20; `TYPE.story` 18 regular on 26, for the storybook
@@ -140,36 +141,48 @@ space nor a gap.
 - Prose groups (wrapping body or supporting text) never widen a card: they
   wrap to the inner width that the other groups and the 50% floor set.
   Single-line labels inside rows and buttons count at their full width.
-- Action row: buttons share one width, the widest label plus
-  `2 * TEXT_BUTTON.inset`, `BUTTON_GAP` apart; the group centres. Every
-  group places its primary down and to the right
-  ([Controls](controls.md#buttons)).
-- Action stack: buttons fill the inner width, `STACK_BUTTON_GAP` apart.
-- Control grid: equal-width tiles in up to two columns `BUTTON_GAP` apart and
-  rows `STACK_BUTTON_GAP` apart; one column when two plus the panel
-  padding exceed the available width.
+- Action row: each button fits its own content plus `2 * TEXT_BUTTON.inset`,
+  with `BUTTON_GAP` between faces. The same sizing applies on each line of a
+  wrapping row. Keep the primary last in visual order and rightmost on its
+  line. Centre a row's sole visible action, including a dismissal footer.
+  Count visible buttons inside their wrappers and skip hidden controls.
+- Action stack: buttons stretch to the group's shared inner width,
+  `STACK_BUTTON_GAP` apart, with the primary at the bottom.
+- Control grid: non-action tiles keep equal widths in up to two columns,
+  `BUTTON_GAP` apart, with rows `STACK_BUTTON_GAP` apart. Use one column
+  when two plus the panel padding exceed the available width. Keep command
+  groups distinct and preserve their existing roles and secondary order.
 - Paged and tabbed cards measure every page or tab and keep the largest width
   and height, so paging never resizes the card.
 
+Current sizing in `src/ui/modal.ts` still gives `.ada-actions` equal
+`1fr` columns and gives `.ada-wrap > .ada-button` `flex: 1 1 auto`, so
+wrapped buttons can grow. `.ada-stack` stretches. A selector for one visible
+direct child button or button presentation without `hidden` centres
+matching rows and footers.
+`actionsWidth` in `src/ui/layout/contentCard.ts` measures a row by
+multiplying the widest padded label by the button count and adding gaps.
+Equal-track rows, growing wrapped buttons and widest-label row measurement
+are pending migration. The Start screen has its own fixed-width treatment.
+
 ## Controls and targets
 
-| Token                | Value                                                                   | Rule                                                                                                                                                             | Constant                                                              |
-| -------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Action height        | 48                                                                      | 44 face over a 4 lip                                                                                                                                             | `TEXT_BUTTON.height`, `controls.ts`, to implement                     |
-| Lip, pressed sink    | 4, 2                                                                    | Face geometry per state, in [Controls](controls.md)                                                                                                              | `TEXT_BUTTON.lipHeight`, `TEXT_BUTTON.pressedSink`                    |
-| Action inset         | 16 horizontal, 12 vertical                                              | Content inset per side; a wrapped label grows the face by 20 per line                                                                                            | `TEXT_BUTTON.inset`, `TEXT_BUTTON.verticalInset`; now `BUTTON_INSET`  |
-| Compact height       | 28                                                                      | Row actions and pills: the native 16x28 nine-slice frame                                                                                                         | `TEXT_BUTTON.compactHeight`, `controls.ts`, to implement              |
-| Story action         | 36: a 32 face over the 4 lip, pressed sink 2                            | Storybook choices and page controls; label inset 16 across and 6 down; a wrapped label grows the face by 20 per line (56 for two lines); press `hitAround(face)` | `STORY_BUTTON`, `controls.ts`, to implement                           |
-| Compact width        | 72, or the label plus 8 px insets when that is wider                    | Install row action (Chibi's 72x28 face)                                                                                                                          | `cardActionsSize`, `contentCard.ts`; now fixed `ROW.action.button` 72 |
-| Control row          | 48 high, 16 icon, 8, label, 8, action                                   | Whole row is one control; action at the row's right end                                                                                                          | `CONTROL_ROW`, `controls.ts`, to implement; now `ROW`                 |
-| Row growth           | `max(48, text + 2 * SPACING.rowGap)`                                    | A row with a wrapped note grows by 20 per line                                                                                                                   | `CONTROL_ROW`, `controls.ts`, to implement                            |
-| Switch               | 32x16                                                                   | `ui-switch` frame                                                                                                                                                | `CONTROL_ROW.switch`; now `ROW.action.switch`                         |
-| Row icon             | 16x16                                                                   | Settings and install-step icons                                                                                                                                  | `CONTROL_ROW.icon`; now `ROW.icon`                                    |
-| Minimum press target | 48x48                                                                   | Every discrete control                                                                                                                                           | `HIT_RULE.minTarget`, `hitAreas.ts`, to implement                     |
-| Press-area growth    | `clamp(6, 16, 0.25 * shorter side)` per side, then grown to 48 per axis | Pause, Use and the close X; nearest drawn centre wins an overlap                                                                                                 | `hitAround`, `pressedArea`, `HIT_RULE`, `hitAreas.ts`, to implement   |
-| Focus ring outset    | 4                                                                       | `ui-focus` outside the drawn face, every state                                                                                                                   | `FOCUS_RING.outset`, `controls.ts`, to implement                      |
-| Selection ring       | 2 band, 2 outside the face                                              | Shares the focus outset; focus may overlap it                                                                                                                    | `FOCUS_RING`, `controls.ts`, to implement                             |
-| Pill                 | 28 high, radius 4, 8 side padding                                       | Price pills and the HUD status pill                                                                                                                              | `PILL`, `controls.ts`, to implement                                   |
+| Token                 | Value                                                                   | Rule                                                                                                                                                             | Constant                                                            |
+| --------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Action height         | 48                                                                      | 44 face over a 4 lip                                                                                                                                             | `TEXT_BUTTON.height`, `controls.ts`                                 |
+| Lip, pressed sink     | 4, 2                                                                    | Face geometry per state, in [Controls](controls.md)                                                                                                              | `TEXT_BUTTON.lipHeight`, `TEXT_BUTTON.pressedSink`                  |
+| Action inset          | 16 horizontal, 12 vertical                                              | Content inset per side; a wrapped label grows the face by 20 per line                                                                                            | `TEXT_BUTTON.inset`, `TEXT_BUTTON.verticalInset`                    |
+| Compact height        | 28                                                                      | Row actions and pills: the native 16x28 nine-slice frame                                                                                                         | `TEXT_BUTTON.compactHeight`, `controls.ts`                          |
+| Story action          | 36: a 32 face over the 4 lip, pressed sink 2                            | Storybook choices and page controls; label inset 16 across and 6 down; a wrapped label grows the face by 20 per line (56 for two lines); press `hitAround(face)` | `STORY_BUTTON`, `controls.ts`                                       |
+| Compact width         | 72, or the label plus 8 px insets when that is wider                    | Install row action (Chibi's 72x28 face)                                                                                                                          | `cardActionsSize`, `contentCard.ts`                                 |
+| Control row           | 48 high, 16 icon, 8, label, 8, action                                   | Whole row is one control; action at the row's right end                                                                                                          | `CONTROL_ROW`, `controls.ts`                                        |
+| Row growth            | `max(48, text + 2 * SPACING.rowGap)`                                    | A row with a wrapped note grows by 20 per line                                                                                                                   | `CONTROL_ROW`, `controls.ts`                                        |
+| Switch                | 32x16                                                                   | `ui-switch` frame                                                                                                                                                | `CONTROL_ROW.switch`                                                |
+| Row icon              | 16x16                                                                   | Settings and install-step icons                                                                                                                                  | `CONTROL_ROW.icon`                                                  |
+| Minimum press target  | 48x48                                                                   | Every discrete control                                                                                                                                           | `HIT_RULE.minTarget`, `hitAreas.ts`, to implement                   |
+| Press-area growth     | `clamp(6, 16, 0.25 * shorter side)` per side, then grown to 48 per axis | Pause, Use and the close X; nearest drawn centre wins an overlap                                                                                                 | `hitAround`, `pressedArea`, `HIT_RULE`, `hitAreas.ts`, to implement |
+| Authored focus outset | 4                                                                       | For controls with the `ui-focus` treatment. Game button states follow [Controls](controls.md#buttons). Retain existing layout reserves during migration.         | `FOCUS_RING.outset`                                                 |
+| Pill                  | 28 high, radius 4, 8 side padding                                       | Price pills and the HUD status pill                                                                                                                              | `PILL`, `controls.ts`                                               |
 
 Faces, content insets, nine-slice margins and press areas are separate
 measurements; place neighbours against the full press area. Centre labels by
@@ -186,9 +199,9 @@ the face of each state, never the press area.
 | Close inset     | 6 from the top and right edges                                       | Press area `hitAround(face)` = 48x48, may extend 6 past the card                         | `CARD_CONTENT.closeInset`; now `CARD.closeInset`                   |
 | Title clearance | `max(padding, closeHitRight + SPACING.gap)` = `max(16, 42 + 8)` = 50 | Mirrored on both sides of the title                                                      | `cardTitleReserve(close)`, `cardFrame.ts`; now `card-layout.ts`    |
 | Header balance  | Frame inner edge to title equals title to first group                | Measured on line boxes in DOM                                                            | `cardHeaderLayout`, `cardFrame.ts`; now `card-layout.ts`           |
-| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding                          | `SCROLL`, `contentCard.ts`, to implement                           |
+| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding                          | `SCROLL`, `contentCard.ts`                                         |
 | Scroll end pad  | 16                                                                   | Below the last control at the scroll end                                                 | `SCROLL.endPad` = `SPACING.panelPadding`                           |
-| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                   | `SCROLL.dragThreshold`, to implement                               |
+| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                   | `SCROLL.dragThreshold`                                             |
 
 - Shared preset cards have fixed widths by width family: Large 688, Medium 500
   and Small 400 logical pixels. Their available rect is the actual game area,
@@ -212,10 +225,25 @@ the face of each state, never the press area.
 - Scrolling: a card taller than the available rect caps there and scrolls one
   region, its scroll group (by default every group below the header). The
   header and close X stay fixed. Keyboard focus scrolls the focused control
-  fully into view, including its focus ring.
+  fully into view, including any authored non-button focus treatment.
 - Every modal dims the whole view and takes input exclusively; outside taps
   never activate controls underneath. One card shows at a time over one dim,
   except the buy confirm over the dimmed shop.
+- Keep the top-right X in every modal. Where cancellation is allowed, the
+  X invokes the existing Cancel, Back or Close action exactly once, dismisses
+  one layer and restores focus to the invoking control or a logical control
+  in the restored view. When each decision action closes its modal, keep
+  its existing action-area dismissal and remove only extra dismissal
+  buttons in that area. Keep the established action order.
+- Back returns to the opener's view, with its state and pause status.
+  Close dismisses one dialog and restores the immediate view underneath.
+  Resume leaves Pause and returns to active play.
+- Where dismissal is allowed, existing Escape, back and backdrop inputs
+  use the same one-layer dismissal. Preserve confirmation and mandatory-choice
+  guards. A close input never accepts a decision or advances a story choice.
+  Flag a modal without a valid cancellation path for an explicit user
+  decision and preserve its existing behavior until resolved. Mandatory
+  choices remain nondismissible until the user approves a valid path.
 
 ## HUD and overlays
 
@@ -277,7 +305,7 @@ at 744x396.
 | Sticks       | Drawn ring edges 80 logical px from each outer screen side and 50 above the screen bottom, ignoring safe insets, moved inward only to stay at least 8 inside the game area. Both sticks use canonical TOUCH_STICK; Use retains its (-77, -100) offset from aim.                                                                                                                                                                                                                                                                                                                                                                                                                        | `TOUCH_STICK`, `touchControls.ts`, to implement, now `sticks.ts`; `STICK_AREA_MARGIN` and `controlsBottom()`, `playView.ts` |
 | Use          | Touch only: Chibi's touch disc (`USE_DISC`), a 75 frame with an open ring 73 across and the action's symbol, at the sticks' 85% opacity ([Controls](controls.md#use-disc)); its centre is the aim stick's rest centre plus `USE_DISC.fromAim` (-77, -100), as Chibi places Use from Jump: (526, 173) at the 720 base and (585, 173) at 844x390, the same with phone insets because the sticks ignore them; press shape a circle of radius 100 (`TOUCH_CIRCLE_RADIUS` 63 plus the 37 hint radius) about the centre, cut on the line midway to the aim stick's centre; shown only while an interaction is available, on a touch screen, outside modals                                   | `USE_DISC`, `touchControls.ts`, to implement; replaces `USE_BUTTON`                                                         |
 | Menu         | Start screen and Ada's room: the pause button's frame, disc and press area (`PAUSE_BUTTON`) with the three-bar menu glyph (`menu.svg`, `menu-press.svg`, `menu-held.svg`); opens the Menu card. See [Cards](#cards)                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `PAUSE_BUTTON`, `navigationButton.ts`                                                                                       |
-| Exit         | Start screen only, and only in an installed app window that can close the app (Chromium on Android and desktop), never in a plain browser tab: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner. See [Start screen](#start-screen)                                                                                                                                                                                                          | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`                                                                           |
+| Exit         | Start screen only, and only in an installed app window that can close the app (Chromium on Android and desktop), never in a plain browser tab: a `HUD_BUTTON` with the authored Exit disc poses (`exit-disc.svg`, `exit-disc-press.svg`, `exit-disc-held.svg`, with Archie's door and arrow glyph); target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner. See [Start screen](#start-screen)                                                                                                                                                                                                                                             | `HUD_BUTTON`, `hudButtonTarget(0)`, `playView.ts`                                                                           |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                 | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`                                                |
 | Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 53.5 (65.5 at a top of 12), name tab top 10 higher (55.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                           | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                                                                      |
 
@@ -366,7 +394,7 @@ follow the shield icon's current HUD-relative centre.
 
 ### Status pill
 
-Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
+Constants: `STATUS_PILL`, `playView.ts`. Colours and contrast
 are in [Controls](controls.md#status-pill). Parts, left to right, each centred
 on the pill's row:
 
@@ -464,7 +492,7 @@ towed craft, one at a time.
 
 ### Shield pill
 
-Constants: `SHIELD_PILL`, `playView.ts`, to implement. Colours, the light-field
+Constants: `SHIELD_PILL`, `playView.ts`. Colours, the light-field
 outline and contrast are in [Controls](controls.md#status-pill). Parts, left to
 right, each centred on the pill's row; placement is in
 [HUD and overlays](#hud-and-overlays):
@@ -577,12 +605,11 @@ around the game area's perimeter while the view gives its small shake
 - Draws above the backdrop and the world and below the HUD, the sticks and the
   [edge markers](#edge-markers), so the markers stay readable over it.
 - Reduced motion: not drawn.
-- Constants: `HIT_FLASH` (colour, width 3, duration 200) in `src/data/layout.ts`,
-  to implement.
+- Constants: `HIT_FLASH` (colour, width 3, duration 200) in `src/data/layout.ts`.
 
 ### Item notice
 
-Constants: `ITEM_NOTICE`, `itemNotice.ts`, to implement. Colours, icons and
+Constants: `ITEM_NOTICE`, `itemNotice.ts`. Colours, icons and
 contrast are in [Controls](controls.md#item-notice). Gameplay's rule: every
 gain but Stardust and ore shows one, queued one at a time.
 
@@ -690,7 +717,7 @@ pills and their geometry stay unchanged. See [Controls](controls.md#top-right-hu
 
 ### Weapon count pill
 
-Constants: `HUD_AMMO_COUNT`, `playView.ts`, to implement; it replaces the
+Constants: `HUD_AMMO_COUNT`, `playView.ts`. It replaces the
 placeholder count label (idle lavender, 38 to 58 below the target top).
 Colours, states and contrast are in [Controls](controls.md#ammunition-count).
 Each owned non-Laser weapon's `HUD_BUTTON` carries one pill showing Gameplay's
@@ -715,17 +742,23 @@ ammunition count string; Laser shows none.
 
 ### Edge markers
 
-Constants: `EDGE_MARKERS`, `EDGE_MARKER_GLYPHS`, `src/data/edgeMarkers.ts`;
-glyphs and colours in [Space palette](space-palette.md#edge-markers). Each
-marker's centre is where the ray from the view's centre toward its object meets
-the marker rect: the game area intersected with
-`safeRect(insets, SAFE_MARGIN.edge, view)`, moved in on every side by
-`edgeMarkerInset`, the glyph's half extent plus the light-field outline (1 on
-a light field, 0 on a dark one) plus `EDGE_MARKERS.gap` 1. Each edge of the
-marker rect then moves inward to the nearest device pixel edge along the
-frame's axes (a turned frame's own axes). Every marker's outermost drawn pixel
-therefore sits 1 inside the safe game area, moved inward by less than one
-device pixel, never under a notch, a curved corner or the home bar.
+[Gameplay's marker contract](../gameplay/marker-design.md#contract) owns
+eligibility, range, lifetime and identification. Its
+[placement rule](../gameplay/marker-design.md#state-and-presentation) keeps
+each marker on the projected Ada-to-target bearing. HUD and dialogue overlap
+is diagnostic and does not shift or discard the marker.
+
+The shared DOM layer measures visible glyph extents, including applicable
+light-field outlines, in `src/ui/pennyMarkers.ts`.
+`layoutTargetMarkers` in `src/ui/layout/targetMarkers.ts` insets the safe game
+area by `EDGE_MARKERS.gap` (1), snaps the edges inward on the device grid in
+the frame's axes, and intersects the bearing with the rect reduced by the
+glyph extents. The visible inset is ordinarily about 1 to 2 logical px, with
+the retained 3 px small-marker half-scale corner case.
+
+The tables below are nominal geometry for the original enemy, heavy, guard
+and station glyphs at the stated views, before raster rounding. See
+[Space palette](space-palette.md#edge-markers) for their art and colours.
 
 | Kind                     | Half extent | Inset, dark | Inset, light |
 | ------------------------ | ----------: | ----------: | -----------: |
@@ -746,8 +779,8 @@ field each line moves 1 further in, and an enemy's lines sit 2 further out):
 Phone insets are 43 left and right, 0 top and 19 bottom. The marker rect takes
 each edge's own inset, so a one-sided notch moves only its side.
 
-Clearance along the edges, from the band the 10-across markers can occupy
-(dark field; a light field's band is 2 deeper):
+Nominal clearances from the 10-across marker band (dark field, with the
+light-field band 2 deeper):
 
 | Edge and control                        | 720x360 | Phone insets | 844x390 | 844x390, insets 43 |
 | --------------------------------------- | ------: | -----------: | ------: | -----------------: |
@@ -757,8 +790,9 @@ Clearance along the edges, from the band the 10-across markers can occupy
 | Bottom band to the stick rings          |      39 |           20 |      39 |                 20 |
 | Bottom band to the shield pill bottom   |       1 |      11 over |       1 |            11 over |
 
-- Markers draw under the sticks (`STICK_DEPTHS`) and the HTML HUD, so an
-  overlap hides part of a marker and never covers a control.
+- The original canvas markers drew below the sticks (`STICK_DEPTHS`).
+  The current DOM marker layer is pointer-transparent. Treat these overlap
+  examples as clearance measurements.
 - Top band: 1 to 11 on a dark field and 1 to 13 on a light one; the discs start
   at 12, so a light-field marker directly behind a disc loses 1 row to it.
 - With phone insets the side bands (44 to 54, or 44 to 56 lit) share their
@@ -820,20 +854,20 @@ token above; strings are Gameplay's.
 
 ### Cards
 
-| Screen        | Groups (top to bottom)                                                                                                                                                                   | Scroll group |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Action row: Open Cheats (browser tab only), Back (primary)             | Rows         |
-| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                         | Steps        |
-| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                         | None         |
-| Cheats        | Header, close. Row column, one full-width row per cheat or action ([Cheats card](#cheats-card)). Close (primary)                                                                         | Rows         |
-| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Exit (Start screen, when shown), Settings; then Back to title (not on the Start screen); then primary Close          | None         |
-| Paused        | Header, close. Control grid, two columns, alphabetical: Map when permitted and Quests, then Settings and Ship. Then Back to title, full width, directly above primary Resume, full width | None         |
-| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                              | None         |
-| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))       | Text column  |
-| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                      | Item list    |
-| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                | Job list     |
-| Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                  | None         |
-| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                  | None         |
+| Screen        | Groups (top to bottom)                                                                                                                                                                                       | Scroll group |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Action row: Open Cheats (browser tab only), Back (primary)                                 | Rows         |
+| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                             | Steps        |
+| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                             | None         |
+| Cheats        | Header, close. Row column, one full-width row per cheat or action ([Cheats card](#cheats-card)). Close (primary)                                                                                             | Rows         |
+| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Settings; then Back to title (not on the Start screen); then primary Close                                                               | None         |
+| Paused        | Header, close. Command group: Map when permitted and Quests, then Settings and Ship, currently an equal-track two-column action grid. Separate full-width stack: Back to title directly above primary Resume | None         |
+| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                  | None         |
+| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))                           | Text column  |
+| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                          | Item list    |
+| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                    | Job list     |
+| Buy confirm   | Header with top-right X. Item well. Description (weapons). Offered price. Action row with Cancel (secondary, left) and Buy (primary, right). The X invokes Cancel. See [Buy confirm](shop.md#buy-confirm).   | None         |
+| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                      | None         |
 
 The Paused card shows no objective or job lines. Its grid actions sort
 alphabetically by label: Map and Quests, then Settings and Ship. Back to title
@@ -868,14 +902,17 @@ cheats), then Show tips again, the FPS counter and Reset save.
 | Part          | Token or derivation                                                                                                                                        | Rule                                                                                                                                            |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Outer padding | `SPACING.panelPadding` (16), the 2 frame inside it                                                                                                         | Every edge, as every card                                                                                                                       |
-| Header        | The title and close X of every card; header balance puts the first row's face 58 below the card's top                                                      | The row column's clip starts `FOCUS_RING.outset` (4) above it, at 54, clear of the close X's press area bottom (42) plus `SPACING.gap` (50)     |
-| Row column    | The scroll group: one column, rows `STACK_BUTTON_GAP` (8, the `SPACING.gap` value) apart                                                                   | `FOCUS_RING.outset` (4) inside its clip around the rows, and the scroll reserve (14) on its right while it scrolls, as the job list             |
+| Header        | The title and close X of every card; header balance puts the first row's face 58 below the card's top                                                      | The row column's clip starts 4 above it, at 54, clear of the close X's press area bottom (42) plus `SPACING.gap` (50)                           |
+| Row column    | The scroll group: one column, rows `STACK_BUTTON_GAP` (8, the `SPACING.gap` value) apart                                                                   | A 4 px reserve inside its clip around the rows, and the scroll reserve (14) on its right while it scrolls, as the job list                      |
 | Row width     | The row column's content width: inner width - 2 \* 4, 360 in the full 400 card and 346 while the column scrolls                                            | Every row one width; a wrapped label grows its row by 20 per line                                                                               |
 | Action row    | `TEXT_BUTTON`: 48, a 44 secondary face over the 4 lip, label centred                                                                                       | The six cheats, Show tips again and Reset save. A cheat with nothing left to grant shows the disabled face                                      |
 | Switch row    | The FPS counter as a Settings control row: `icon-fps-counter` (16), `CONTROL_ROW.gap` (8), the label, then the switch over its On or Off state             | 48 high, the whole row the press target; the icon's drawn pixels on the row's left edge, level with the faces above and below                   |
-| Reset confirm | Reset save opens the Restart confirm's card titled "Reset save?": Cancel (secondary, left) and Reset (primary, right) in an action row                     | Cancel, the close X, back and Escape cancel                                                                                                     |
+| Reset confirm | Reset save opens a Small card titled "Reset save?" with a top-right X. Cancel is secondary on the left and Reset is primary on the right.                  | The X, back, Escape and an outside tap use Cancel's one-layer path to Cheats. Restore focus to Reset save or a logical control in Cheats.       |
 | Footer        | Close (primary), centred at its label width plus `2 * TEXT_BUTTON.inset`, outside the scroll group, its face `SPACING.gap` (8) below the row column's clip | Its lip `SPACING.panelPadding` (16) above the card's bottom edge, frame included (14 below the frame's inner edge), as the Ship card's Back     |
 | Height        | Content-fitted up to the available rect's height                                                                                                           | The nine rows take 496 with their gaps, past the 328 cap of the 720x360 game area, so the column scrolls and the header, close X and Close stay |
+
+Restart from Start uses the same confirmation layout. Cancel and the
+top-right X return to Start. Restart is the primary action on the right.
 
 ### Conversation card
 
@@ -1032,7 +1069,10 @@ bottom-left, and the footer of Quests, Galaxies and Close (primary) on its
 bottom-right. Quests opens a Quests modal card over it. Its tokens
 (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
 [Map](map.md). Close (labelled Back from the Paused card), back and Escape
-return to Paused.
+return to Paused. The modal's top-right X uses that same one-layer path
+exactly once and preserves focus restoration. The current Map has the footer
+dismissal but lacks the header X. Its informational Place panel is part of
+the Map, with no separate X or dim.
 
 The balance is one centred group: `icon-stardust-20`, `SPACING.markGap`, the
 amount in `TYPE.label`, on a 20 line. The shop's row and well geometry is in
@@ -1046,24 +1086,30 @@ two-line wordmark, the action row under it, then the note. There is no card,
 header, dim or portrait; the Ada and Penny portraits and the start card are
 removed. Art, colours and contrast are in [Title screen art](title-screen.md).
 The HUD row's top left holds the Menu button in the pause button's place; it
-opens the Menu card (Achievements, Exit when shown, Settings, Close). In an
+opens the Menu card (Achievements, Settings, Close). In an
 installed app window that can close the app, Exit shows at the top right at
-`hudButtonTarget(0)` in the [nav disc states](achievements-icon.md#states).
+`hudButtonTarget(0)` with the authored Exit poses.
 Nothing moves with the saved state except the action row's contents.
+The Start row follows the [action sizing rule](#groups). Keep Start centred
+when it is the sole action, and keep Continue to the right of Restart.
+Current `START_BUTTON_WIDTH` in `src/data/layout.ts` supplies 192 to
+`START_SCREEN.actions.width`, which `src/ui/startScreen.ts` applies to each
+title button. The fixed width and its x coordinates below record current
+geometry pending content-based sizing.
 
 Every part except the field and the nav discs is placed in play-view px, from
 `playView(view)`'s top-left (`x0`, `y0`), so it stays centred on the game area
 at every aspect.
 
-| Token             | Value                                               | Rule                                                                                                                | Constant                                    |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Field             | `title-field`, 960x660, top-left (-120, -120)       | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
-| Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-52` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`       |
-| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`   |
-| Action row        | Top 264, buttons 192 wide, `TEXT_BUTTON.height`     | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`    |
-| Start             | x 264 (`360 - 192 / 2`)                             | Primary, `ui-button-primary`; first run only                                                                        | `START_SCREEN.actions`                      |
-| Restart, Continue | x 160 and 368 (`360 - 192 - 8`, `360 + 8`)          | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `BUTTON_GAP` apart | `START_SCREEN.actions`                      |
-| Note              | One `TYPE.body` line box, top 320, centred on x 360 | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                             | `START_SCREEN.note`, `startScreen.ts`       |
+| Token             | Value                                                   | Rule                                                                                                                | Constant                                    |
+| ----------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Field             | `title-field`, 960x660, top-left (-120, -120)           | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
+| Ship              | 280 square frame centred on (378, 84)                   | The selected paint's `ship-52` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`       |
+| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)          | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`   |
+| Action row        | Top 264, current buttons 192 wide, `TEXT_BUTTON.height` | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`    |
+| Start             | x 264 (`360 - 192 / 2`)                                 | Primary, `ui-button-primary`; first run only                                                                        | `START_SCREEN.actions`                      |
+| Restart, Continue | x 160 and 368 (`360 - 192 - 8`, `360 + 8`)              | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `BUTTON_GAP` apart | `START_SCREEN.actions`                      |
+| Note              | One `TYPE.body` line box, top 320, centred on x 360     | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                             | `START_SCREEN.note`, `startScreen.ts`       |
 
 - Labels and actions are Gameplay's: Start, Continue, Restart and the
   `deferred` note; the wordmark's accessible name is the `home` string.
@@ -1110,8 +1156,11 @@ Clearances, smallest at 720x360 with insets:
 | Note to the available rect bottom | `341 - 340`     | 1 (4 without a bottom inset)              |
 | Restart to the available rect     | `160 - 43`      | 117                                       |
 
-- The focus ring (4 outside a face) stays inside the 16 gap and the 14 above
-  the row; the press area of each nav disc is its target.
+- Keep the 16 gap and the 14 above the row. The current 4 px button focus
+  outset fits inside these gaps pending migration to the
+  [button state cues](controls.md#buttons). Exit currently puts its ring on
+  the disc artwork and switches the outline to `Highlight` in forced colors.
+  Each nav disc's target is its press area.
 - Menu takes the pause button's place and press area on the HUD rect's top-left
   corner. Exit's target is `hudButtonTarget(0)`: its disc has its drawn right
   edge and top on the HUD rect's corner, and its target reaches 7.5 past it
@@ -1150,7 +1199,7 @@ Constants: `SHOP_ROW` and the job list's style in `src/ui/station.ts`.
 | Trailing slot  | Right inset, centred vertically: the reward pill (or Active), `SPACING.gap`, then the compact action |
 | Compact action | 72 x 28, or the label plus 8 px insets when wider; every row's action one width                      |
 | Row width      | inset + well + gap + widest title or detail + gap + slot + inset; one width for every row            |
-| List           | One column, rows `STACK_BUTTON_GAP` apart, the focus outset around it and the scroll reserve kept    |
+| List           | One column, rows `STACK_BUTTON_GAP` apart, with the 4 px clip reserve and the scroll reserve kept    |
 
 At 720x360 the Jobs card is Large, 688 (634 with phone insets); the widest
 Sunflower row, "Deliver spare parts to the salvagers' yard" with a two-digit
@@ -1164,35 +1213,42 @@ available, and the job list scrolls.
 Earth scenes, and space story pages that pause flight. One panel holds a text
 column and a choice column side by side, bottom-anchored over the scene and
 only as tall as its page needs; the scene shows in the strip above it.
+
+A mandatory Earth Storybook choice in the live story, such as a chapter's
+`opening` page, has no Cancel path. Storybook renders a region and requires
+an explicit choice to advance. Skip and Next are guarded, and Previous only
+retraces the story when a prior page exists. Preserve those guards and
+keep replay's existing navigation.
+
 Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 `STORY_BUTTON`, `controls.ts`; `STORY_SKIP` and `STORY_PANEL_TOP`,
-`playView.ts`; all to implement at the values below.
+`playView.ts`.
 
-| Token          | Value                                                                                                                                                                                                                                                                                                                                                                                 | Rule                                                                                                                                                                                                                                                                                                           |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Background     | 960x540 logical canvas at 2x ([storybook](storybook.md)), scale `k = max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets, centred across                                                                                                                                                                                                                           | Offset down by the run anchor below, so the subject shows in the strip                                                                                                                                                                                                                                         |
-| Run anchor     | Canvas top `y = clamp(viewH - 540 * k, stripTop / 2 - k * (subject.top + subject.bottom) / 2, 0)`, `stripTop` the panel top of the tallest page in the story run on that background                                                                                                                                                                                                   | The subject band's centre sits at the centre of the strip above that panel; the clamp keeps the canvas covering the view. One placement per story run and background, so the background never moves between its pages, Previous across a scene boundary included; a shorter page shows more of the scene below |
-| Subject band   | `subject: { top, bottom }` in canvas logical px, on each background's manifest entry ([storybook](storybook.md#subject-bands))                                                                                                                                                                                                                                                        | The rows the scene's key objects span                                                                                                                                                                                                                                                                          |
-| Panel rect     | The available rect's width, at most `STORY_PANEL.maxWidth` 760, centred; bottom on the available rect's bottom                                                                                                                                                                                                                                                                        | `ui-settings-card` face, no dim behind it                                                                                                                                                                                                                                                                      |
-| Panel height   | `2 * padding + max(text column content, choice column content)`                                                                                                                                                                                                                                                                                                                       | The width and bottom edge stay fixed; the top moves with each page's content                                                                                                                                                                                                                                   |
-| Panel top cap  | `STORY_PANEL_TOP`: the HUD row's lowest press area plus `SPACING.gap`: y 60.5 (Skip and Settings end at 52.5), y 62.75 on Ada's room page (the pause press area ends at 54.75)                                                                                                                                                                                                        | Past it the panel stops growing and only the text column scrolls                                                                                                                                                                                                                                               |
-| Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                                                                                                                                                                                                              | Inner width = panel width - 32                                                                                                                                                                                                                                                                                 |
-| Columns        | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                                                                                                                                                                                                | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                                                                                                                                                                                  |
-| Choice column  | `clamp(228, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                                                                                                             | The text column takes the rest: 349 to 428, about 43 to 53 characters of `TYPE.story` per line; the 228 floor seats Previous and Continue side by side                                                                                                                                                         |
-| Text content   | The heading if present, the name tab and portrait if present, then the paragraph                                                                                                                                                                                                                                                                                                      | Its height includes the portrait frame where the frame is taller                                                                                                                                                                                                                                               |
-| Choice content | The choices, `SMALL_BUTTON_GAP` 24, then the page controls; a page without choices holds the page controls alone                                                                                                                                                                                                                                                                      | The page controls are one 36 row; a named action that does not fit beside Previous takes its own row 24 below it (36 + 24 + 36 = 96)                                                                                                                                                                           |
-| Story text     | `TYPE.story` 18 regular on 26, cream `#ead4aa` on the card `#3b3850` (7.76:1), left-aligned, top of the column                                                                                                                                                                                                                                                                        | Liberation Sans averages 8.02 per character at 18; never shrinks                                                                                                                                                                                                                                               |
-| Heading        | The chapter's panel title (Gameplay's copy) on opening, resolution and closing pages: `TYPE.heading` 24 bold on 28, white `#ffffff` on the card (11.25:1), left-aligned, the column's first line                                                                                                                                                                                      | `SPACING.gap` above the paragraph, so it adds 36 to the text column; the widest title ("The Glowing Rock.", 216) fits every measure on one line                                                                                                                                                                |
-| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                                                                                                                       | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                                                                                                                                                                                |
-| Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                                                                                                         | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                                                                                                             |
-| Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                                                                                                                     | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                                                                                                                      |
-| Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces `SMALL_BUTTON_GAP` 24 apart (a 60 pitch)                                                                                                                                                                                                                                                             | `hitAround` grows a 36 face 9 per side (54), so neighbouring press areas stay 6 apart, each at least `HIT_RULE.minTarget` 48                                                                                                                                                                                   |
-| Page controls  | One row on the choice column's bottom: Previous (secondary) at the left, Next or Continue (primary) at the right, each `(choice column - 24) / 2` wide, `SMALL_BUTTON_GAP` 24 apart; a row because both fit side by side at their own widths ([Controls](controls.md#buttons))                                                                                                        | 102 to 119 wide; at their own widths (label + 32) Previous is 99.59, Next 66.68 and Continue 101.32, so Previous and Continue need 224.91 of the 228 floor                                                                                                                                                     |
-| Named action   | A page's named action in Next's place: beside Previous, on its right, when both fit the choice column at their own widths with the 24 gap; otherwise on its own row 24 below Previous, filling the choice column                                                                                                                                                                      | At their own widths "Touch the glow." (151.98), "Pick up the rock." (160.04) and "Let's find your holodisk." (216.26) need 275.57, 283.63 and 339.85 beside Previous, past every choice column (228 to 262.23), so all three go below Previous at all four screens                                             |
-| Scroll         | The text column scrolls when the panel reaches its top cap; the choices scroll only past the choice limits below. Each scrolling region reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                                             | Text never shrinks and never paginates; the page controls stay fixed                                                                                                                                                                                                                                           |
-| Skip           | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SMALL_BUTTON_GAP` (24) left of the Settings disc (57 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                                                                                                                                                                                                                                    |
-| Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                                                                                                               | The start screen's Settings disc, at the same place on every story page                                                                                                                                                                                                                                        |
-| Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                                                                                                                      | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                                                                              |
+| Token          | Value                                                                                                                                                                                                                                                                                                                                                                                 | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Background     | 960x540 logical canvas at 2x ([storybook](storybook.md)), scale `k = max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets, centred across                                                                                                                                                                                                                           | Offset down by the run anchor below, so the subject shows in the strip                                                                                                                                                                                                                                                                                                                                                                                      |
+| Run anchor     | Canvas top `y = clamp(viewH - 540 * k, stripTop / 2 - k * (subject.top + subject.bottom) / 2, 0)`, `stripTop` the panel top of the tallest page in the story run on that background                                                                                                                                                                                                   | The subject band's centre sits at the centre of the strip above that panel; the clamp keeps the canvas covering the view. One placement per story run and background, so the background never moves between its pages, Previous across a scene boundary included; a shorter page shows more of the scene below                                                                                                                                              |
+| Subject band   | `subject: { top, bottom }` in canvas logical px, on each background's manifest entry ([storybook](storybook.md#subject-bands))                                                                                                                                                                                                                                                        | The rows the scene's key objects span                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Panel rect     | The available rect's width, at most `STORY_PANEL.maxWidth` 760, centred; bottom on the available rect's bottom                                                                                                                                                                                                                                                                        | `ui-settings-card` face, no dim behind it                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Panel height   | `2 * padding + max(text column content, choice column content)`                                                                                                                                                                                                                                                                                                                       | The width and bottom edge stay fixed; the top moves with each page's content                                                                                                                                                                                                                                                                                                                                                                                |
+| Panel top cap  | `STORY_PANEL_TOP`: the HUD row's lowest press area plus `SPACING.gap`: y 60.5 (Skip and Settings end at 52.5), y 62.75 on Ada's room page (the pause press area ends at 54.75)                                                                                                                                                                                                        | Past it the panel stops growing and only the text column scrolls                                                                                                                                                                                                                                                                                                                                                                                            |
+| Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                                                                                                                                                                                                              | Inner width = panel width - 32                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Columns        | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                                                                                                                                                                                                | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                                                                                                                                                                                                                                                                                                                               |
+| Choice column  | `clamp(228, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                                                                                                             | The text column takes the rest: 349 to 428, about 43 to 53 characters of `TYPE.story` per line; the 228 floor seats Previous and Continue side by side                                                                                                                                                                                                                                                                                                      |
+| Text content   | The heading if present, the name tab and portrait if present, then the paragraph                                                                                                                                                                                                                                                                                                      | Its height includes the portrait frame where the frame is taller                                                                                                                                                                                                                                                                                                                                                                                            |
+| Choice content | The choices, `SMALL_BUTTON_GAP` 24, then the page controls; a page without choices holds the page controls alone                                                                                                                                                                                                                                                                      | The page controls are one 36 row; a named action that does not fit beside Previous takes its own row 24 below it (36 + 24 + 36 = 96)                                                                                                                                                                                                                                                                                                                        |
+| Story text     | `TYPE.story` 18 regular on 26, cream `#ead4aa` on the card `#3b3850` (7.76:1), left-aligned, top of the column                                                                                                                                                                                                                                                                        | Liberation Sans averages 8.02 per character at 18; never shrinks                                                                                                                                                                                                                                                                                                                                                                                            |
+| Heading        | The chapter's panel title (Gameplay's copy) on opening, resolution and closing pages: `TYPE.heading` 24 bold on 28, white `#ffffff` on the card (11.25:1), left-aligned, the column's first line                                                                                                                                                                                      | `SPACING.gap` above the paragraph, so it adds 36 to the text column; the widest title ("The Glowing Rock.", 216) fits every measure on one line                                                                                                                                                                                                                                                                                                             |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                                                                                                                       | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                                                                                                                                                                                                                                                                                                                             |
+| Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                                                                                                         | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                                                                                                                                                                                                                                                          |
+| Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                                                                                                                     | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                                                                                                                                                                                                                                                                   |
+| Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces `SMALL_BUTTON_GAP` 24 apart (a 60 pitch)                                                                                                                                                                                                                                                             | `hitAround` grows a 36 face 9 per side (54), so neighbouring press areas stay 6 apart, each at least `HIT_RULE.minTarget` 48                                                                                                                                                                                                                                                                                                                                |
+| Page controls  | One row at the bottom: Previous (secondary) left, Next or Continue (primary) right, sized to their own labels with the story insets and `SMALL_BUTTON_GAP` 24 between them. Centre a sole visible action.                                                                                                                                                                             | At label width + 32, Previous is 99.59, Next 66.68 and Continue 101.32, so Previous and Continue need 224.91 of the 228 floor. Current equal halves are 102 to 119 wide and pending sizing migration.                                                                                                                                                                                                                                                       |
+| Named action   | A page's named action in Next's place: size each button to its content plus the story insets when both fit with the 24 gap. When they exceed the column, stack them 24 apart at a shared width.                                                                                                                                                                                       | At their own widths "Touch the glow." (151.98), "Pick up the rock." (160.04) and "Let's find your holodisk." (216.26) need 275.57, 283.63 and 339.85 beside Previous, past every choice column (228 to 262.23), so all three go below Previous at all four screens. Currently a beside action can grow in its track. In the two-line layout the lower action fills the column while Previous keeps its half-width track. Both are pending sizing migration. |
+| Scroll         | The text column scrolls when the panel reaches its top cap; the choices scroll only past the choice limits below. Each scrolling region reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                                             | Text never shrinks and never paginates; the page controls stay fixed                                                                                                                                                                                                                                                                                                                                                                                        |
+| Skip           | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SMALL_BUTTON_GAP` (24) left of the Settings disc (57 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                                                                                                               | The start screen's Settings disc, at the same place on every story page                                                                                                                                                                                                                                                                                                                                                                                     |
+| Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                                                                                                                      | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                                                                                                                                                                                                                           |
 
 The edge rect is `playView(view)` inset by 12, intersected with
 `safeRect(insets, 12, view)`: the top-corner controls' drawn edges sit 12 from
@@ -1319,7 +1375,7 @@ Behaviour:
 ### Conversation box
 
 In-flight dialogue: one line at a time from one speaker, over live flight.
-Constants: `CONVERSATION_BOX`, `conversationBox.ts`, to implement. Colours are in
+Constants: `CONVERSATION_BOX`, `conversationBox.ts`. Colours are in
 [Controls](controls.md#conversation-box); portraits are in
 [Conversation portraits](conversation.md). Chibi's dialogue panel uses the same
 values with its own sprites and fonts, and the same vertical rule: the box top
@@ -1405,10 +1461,14 @@ Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 
 ### Galaxy selector
 
-A route map over the [route sky](route-sky.md), after Chibi's zone map: six
-galaxy markers left to right along one arc over the night sky, an Earth marker
-inside the arc, a panel for the chosen destination, and one destination action
-below it. There is no close X or Back button.
+The Galaxy selector is a standalone full-screen modal over the
+[route sky](route-sky.md), after Chibi's zone map. Six galaxy markers run
+left to right along one arc over the night sky, with Earth inside the arc.
+The selected destination has a panel and one centred destination action
+below it. Use the top-right X for the existing one-layer Back action exactly
+once, with no extra Back button in the action area. The current selector
+offers Back and Escape input and lacks the header X.
+
 Constants: `GALAXY_MAP`, `GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS` and `GALAXY_MAP_MOVE`,
 `src/ui/layout/galaxyMap.ts`. Positions are logical px from the play view's
 top-left (add `playView.x` and `playView.y`: 29 and 0 at 779 wide, 0 and 22
@@ -1419,21 +1479,21 @@ flavour lines are Gameplay's; marker colours and previews are in
 
 Chart (`GALAXY_MAP`):
 
-| Part           | Geometry                                                                                                                                                                                                                                                                                                                                                                                      |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind the six galaxy markers, their labels and every leg; the Earth marker and its label are outside the guard's footprint         |
-| Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`GALAXY_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                  |
-| Marker centres | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
-| Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
-| Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the marker whose panel shows, Earth's included (`marker.ring`)                                                                                                                                                                                                                                                                      |
-| Route line     | The arc itself between consecutive markers, each leg 111.34 of arc; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                                                                                                                                     |
-| Line looks     | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                                                                                                                 |
-| Label          | Name in `TYPE.label` on an ink pill at 0.85: 20 high, label + 8 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                         |
-| Ship           | Selected ship frame (`ship-N`) at 42 display, the game area's in-flight size, pivot at (centre x, centre y - 33) (`ship`)                                                                                                                                                                                                                                                                     |
-| Ship heading   | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the arc's tangent at the marker, toward the next galaxy; at galaxy 6, the incoming leg's at its end. Rest headings 24, 25, 27, 29, 31 and 0 for galaxies 1 to 6                                                                                                                                                    |
-| Earth marker   | A seventh marker centred at (360, 122), midway between markers 1 and 6, inside the arc: the galaxy marker's frame, backing and ring, its disc blue `#65AEDD` with two green `#8AB86B` patches and no number; label "Earth" on the same pill, top at 141                                                                                                                                       |
-| Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); galaxy centres are 111.1 apart and Earth's is 91.64 or more from each (markers 3 and 4), so press areas never overlap                                                                                                                                                                                                                    |
-| Focus ring     | `ui-focus`, 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side)                                                                                                                                                                                                                                                                                                             |
+| Part                  | Geometry                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backdrop              | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind the six galaxy markers, their labels and every leg; the Earth marker and its label are outside the guard's footprint         |
+| Rules                 | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`GALAXY_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                  |
+| Marker centres        | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
+| Marker                | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
+| Current selected ring | 2 px cream `#EAD4AA` at radius 17 (band 16 to 18) on the marker whose panel shows, Earth's included (`marker.ring`). Pending button-state migration                                                                                                                                                                                                                                           |
+| Route line            | The arc itself between consecutive markers, each leg 111.34 of arc; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                                                                                                                                     |
+| Line looks            | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                                                                                                                 |
+| Label                 | Name in `TYPE.label` on an ink pill at 0.85: 20 high, label + 8 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                         |
+| Ship                  | Selected ship frame (`ship-N`) at 42 display, the game area's in-flight size, pivot at (centre x, centre y - 33) (`ship`)                                                                                                                                                                                                                                                                     |
+| Ship heading          | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the arc's tangent at the marker, toward the next galaxy; at galaxy 6, the incoming leg's at its end. Rest headings 24, 25, 27, 29, 31 and 0 for galaxies 1 to 6                                                                                                                                                    |
+| Earth marker          | A seventh marker centred at (360, 122), midway between markers 1 and 6, inside the arc: the galaxy marker's frame, backing, its disc blue `#65AEDD` with two green `#8AB86B` patches and no number; label "Earth" on the same pill, top at 141                                                                                                                                                |
+| Press area            | 48x48 centred on each marker (`HIT_RULE.minTarget`); galaxy centres are 111.1 apart and Earth's is 91.64 or more from each (markers 3 and 4), so press areas never overlap                                                                                                                                                                                                                    |
+| Current focus ring    | 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side). Pending button-state migration                                                                                                                                                                                                                                                                                         |
 
 At viewport widths of 720 CSS px or less or heights of 360 CSS px or less,
 named destination labels, including Earth, use a 22 logical px line height
@@ -1447,14 +1507,14 @@ order.
 
 Panel and action (`GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS`):
 
-| Part        | Geometry                                                                                                                                                                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the action; padding 8, the 2 px frame inside it (see Exceptions)                                                                                   |
-| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                   |
-| Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                    |
-| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second |
-| Action      | One primary `TEXT_BUTTON` (`galaxy-jump`), 48 high and 192 wide (`GALAXY_MAP_ACTIONS.width`), centred on the view across; its label names the selected destination. While unavailable it widens to its label, 192 to 614 (the panel's width)     |
-| Action top  | Available rect bottom - 48                                                                                                                                                                                                                       |
+| Part        | Geometry                                                                                                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the action; padding 8, the 2 px frame inside it (see Exceptions)                                                                                                            |
+| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                                            |
+| Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                                             |
+| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second                          |
+| Action      | One centred primary `TEXT_BUTTON` (`galaxy-jump`), 48 high, labelled for the selected destination. Size it to the label with standard insets. Current width is 192 (`GALAXY_MAP_ACTIONS.width`), or 192 to 614 (panel width) while unavailable, pending sizing migration. |
+| Action top  | Available rect bottom - 48                                                                                                                                                                                                                                                |
 
 The chart anchors to the play view's top; the panel and action anchor to the
 available rect's bottom, so a taller view opens the gap between them.
@@ -1478,7 +1538,10 @@ hull keeps 23.5 from every label pill, 18.8 from every leg's stroke and 6.1
 from the play view's top. At markers 3 and 4 the resting hull starts at 10.3 and
 7.8 at 360-high views, over the rules at 16 and 19, which draw under it.
 
-Marker faces:
+Galaxy and Earth markers use native buttons. The state table records the
+current button visuals pending migration. Use a visible face or ink change
+for focus, press and selection per [Controls](controls.md#buttons). Keep the
+authored marker art, persistent edges, route and ship clearance.
 
 | Face     | Disc                  | Edge                                                    | Number      | Label            |
 | -------- | --------------------- | ------------------------------------------------------- | ----------- | ---------------- |
@@ -1518,8 +1581,8 @@ Input and focus:
 - Tapping an open marker moves the ship there. Tapping a locked
   marker shows its panel face while the ship stays on its open galaxy; the
   action is then unavailable and refuses. Tapping Earth shows Earth's panel.
-- Tab focuses every galaxy marker in route order, then Earth and the
-  destination action, and wraps. Focus starts on the action, the default. A
+- In the current selector, Tab focuses every galaxy marker in route
+  order, then Earth and the destination action, and wraps. Focus starts on the action, the default. A
   focused locked marker or Earth shows its panel as a tap does; a focused open
   marker moves the ship there. Enter, Space and the gamepad's confirm activate
   the focused control; on a marker they act as a tap.
@@ -1527,9 +1590,11 @@ Input and focus:
   jumps there, "Jump to Earth" jumps Ada home to her room, "Stay in {galaxy}"
   returns to the local map and "Stay on Earth" returns her to her room, both
   without a jump.
-- Back and Escape go one step back without a jump: in flight to the local
-  map, focus on its Galaxies; at boarding to the "Welcome back, Navigator."
-  page.
+- The top-right X follows the same one-layer return as Back and Escape
+  without jumping. In flight, restore the Local Map with focus on Galaxies.
+  At boarding, restore the "Welcome back, Navigator." page and its existing
+  focus target. Preserve the authored unlock and jump input guards. An input
+  that finishes the unlock animation must not also dismiss the selector.
 
 Moves (`GALAXY_MAP_MOVE`):
 
@@ -1541,7 +1606,7 @@ Moves (`GALAXY_MAP_MOVE`):
 | 0 to 400 ms    | A 2 px ring in the farthest new marker's hue grows from radius 13 to 26, alpha 0.8 to 0                                                                                                                                                                             |
 | 400 ms         | The ship departs on its heading frame, selected each frame from the path tangent; it flies the legs to the farthest newly unlocked galaxy as one path at clamp(length / 180 px/s, 0.8, 2.0) s, easeInOutSine on arc length, so the whole unlock takes at most 2.4 s |
 | Timeline       | Sunflower to Whirlpool, one 111.34 leg: 800 ms of flight (the 0.8 s floor), arrival at 1200 ms. Whirlpool to Cartwheel, 334.02 over three legs: 1856 ms of flight, arrival at 2256 ms                                                                               |
-| Arrival        | The idle frame; the selected ring fades in over 120 ms; the panel crossfades to the new galaxy over 160 ms; focus moves to the action                                                                                                                               |
+| Arrival        | The idle frame. The current selected ring fades in over 120 ms pending button-state migration. The panel crossfades to the new galaxy over 160 ms and focus moves to the action                                                                                     |
 | Skip           | A tap, key or button press during the unlock jumps to the arrived state                                                                                                                                                                                             |
 | Reduced motion | No travel or pulse. Selection moves cut. The unlock fades the ship out over 150 ms, switches the markers and legs at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all                                                                    |
 
@@ -1549,6 +1614,10 @@ The ship's path is the route curve offset by the ship pivot (0, -25), so it
 leaves and lands standing above the markers.
 
 ## Changes from current values
+
+This table records the layout rollout against its earlier baseline. The
+screen sections above specify the design, and source-specific observations
+identify pending runtime changes.
 
 | Change                                                                                                                                                                                                                       | Was                                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -1563,12 +1632,12 @@ leaves and lands standing above the markers.
 | `+N` labels under their counts, over the conversation box, in the item notice's layer                                                                                                                                        | Beside the pill on its row                                                                                                    |
 | Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                                                                                                                             | Panels at 0.70; opaque ink track                                                                                              |
 | HUD top controls anchor to `hudRect`: drawn art `HUD_EDGE` 12 in from the game area's top and sides, mirrored with the larger side inset; the pill takes the left edge while pause is hidden                                 | Press targets `CONTROL_EDGE` 8 in, each side clamped by its own inset; the pill kept its place beside the hidden pause button |
-| Weapon buttons: 48 targets 9 apart (discs 24), 33 disc, 20 glyph, ink selection annulus; target is the press area                                                                                                            | 48 squares, 24 glyph, cream ring                                                                                              |
+| Weapon buttons: 48 targets 9 apart (discs 24), 33 disc, 20 glyph, common ink annulus; target is the press area                                                                                                               | 48 squares, 24 glyph, cream ring                                                                                              |
 | Ammunition counts: an ink count pill under each non-Laser weapon disc                                                                                                                                                        | No counts; ammunition was unlimited                                                                                           |
 | Pause draws `pause.svg` with smooth sampling                                                                                                                                                                                 | `ui-pause` PNG, nearest neighbour                                                                                             |
 | Settings draws `settings.svg` as a mask with smooth sampling                                                                                                                                                                 | `icon-settings-nav` PNG mask                                                                                                  |
 | Start screen Menu in the pause button's place opens the Menu card; Exit, only in an installed app window that can close, is a `HUD_BUTTON` at `hudButtonTarget(0)`; the action row keeps only Start, or Restart and Continue | A secondary button at the end of the start card's action stack                                                                |
-| Start screen: ship, wordmark and an action row of 192-wide buttons over the title field, Start and Continue primary (`START_SCREEN`)                                                                                         | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
+| Start screen: ship, wordmark and an action row over the title field, Start and Continue primary (`START_SCREEN`). Current buttons are 192 wide pending sizing migration                                                      | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
 | Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                                                                                                 | Idle in every state                                                                                                           |
 | Cards scroll one scroll group with the header and close fixed                                                                                                                                                                | The whole card scrolls                                                                                                        |
 | Prose never widens a card                                                                                                                                                                                                    | 36em prose cap                                                                                                                |
@@ -1578,19 +1647,19 @@ leaves and lands standing above the markers.
 | Story panel: content-fitted per page, a `TYPE.story` text column beside a column of 36 `STORY_BUTTON` choices and page controls, over a background anchored per story run by its subject band                                | A bottom panel up to 640 wide over a centred background, `TYPE.body` prose, 48 stacked choices                                |
 | Story page HUD row on the 12 edge rect (the HUD symmetry rule)                                                                                                                                                               | Skip and Settings on the `CONTROL_EDGE` 8 HUD rect                                                                            |
 | Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                                                                                        | 16; a 24 line                                                                                                                 |
-| Galaxy selection is a route map (`GALAXY_MAP`): six markers on two rows, a panel, Earth and Jump                                                                                                                             | A modal card per galaxy with Previous, Home, Jump and Next (`GALAXY_CARD`)                                                    |
+| Galaxy selection is a route map (`GALAXY_MAP`): six galaxy markers on an arc, a panel, Earth and Jump                                                                                                                        | A modal card per galaxy with Previous, Home, Jump and Next (`GALAXY_CARD`)                                                    |
 | Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                                                                                                   | A 288x160 chart in a Map card (`MAP_CARD`)                                                                                    |
 
 ## Exceptions
 
-| Exception           | Reason                                                                                                                                                                    | Retained rules                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Card press areas    | DOM hit-tests element boxes                                                                                                                                               | Each control box is at least 48 per axis; close uses `hitAround`                                       |
-| Touch sticks        | Continuous input with floating origins                                                                                                                                    | `TOUCH_STICK` anchors, the `STICK_AREA_MARGIN` clamp, 85% opacity                                      |
-| Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                          |
-| Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
-| Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
-| Ship card sections  | Cargo, Equipment and Weapons remain side by side at every width, with decorative dividers                                                                                 | Panel padding on both sides of each 1 px page divider; list row and heading gaps remain distinct       |
+| Exception           | Reason                                                                                                                                                                                               | Retained rules                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Card press areas    | DOM hit-tests element boxes                                                                                                                                                                          | Each control box is at least 48 per axis; close uses `hitAround`                                       |
+| Touch sticks        | Continuous input with floating origins                                                                                                                                                               | `TOUCH_STICK` anchors, the `STICK_AREA_MARGIN` clamp, 85% opacity                                      |
+| Landing page        | Responsive HTML outside the game canvas                                                                                                                                                              | Same token numbers in CSS px, CSS safe insets                                                          |
+| Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                                               | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
+| Route panel padding | The historical two-row chart ended at 164. Padding 16 made the panel 128 and overlapped the labels by 7. On the arc, the labels end at 161 and the 112 panel starts at 176, or 173 with phone insets | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
+| Ship card sections  | Cargo, Equipment and Weapons remain side by side at every width, with decorative dividers                                                                                                            | Panel padding on both sides of each 1 px page divider; list row and heading gaps remain distinct       |
 
 ## Verification
 
@@ -1616,10 +1685,14 @@ Tests:
 - Card width equals its family's width (Large 688, Medium 500, Small 400)
   capped at the available width, at 720 and 779 logical wide, whatever the
   content width.
-- Every action in a row shares one width and sits `BUTTON_GAP` apart; every
-  pair of neighbouring standard faces is `STACK_BUTTON_GAP` apart stacked and
-  `BUTTON_GAP` side by side, and `SMALL_BUTTON_GAP` in any direction when
-  either is small.
+- Verify horizontal and wrapping rows with unequal labels. Every standard
+  button keeps `TYPE.label`, `TEXT_BUTTON.height` and the standard insets,
+  and each row button fits its own content. Check that one visible action
+  centres with hidden siblings or native wrappers present, including in
+  dismissal footers. Verify stretched stack widths and primary order in each
+  group. Keep neighbouring standard faces `STACK_BUTTON_GAP` apart stacked
+  and `BUTTON_GAP` apart side by side, with `SMALL_BUTTON_GAP` in any
+  direction when either is small.
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
   `SPACING.pageInset` apart.
@@ -1656,16 +1729,16 @@ Tests:
 - On the start screen at 720x360 with phone insets, the Menu target is the
   pause press area (33.25 to 85.75, top 2.25) and the Exit target, when shown,
   is `hudButtonTarget(0)` (636.5 to 684.5, top 4.5), 141.5 from the wordmark
-  and 152.5 from the ship's ink; the action row (top 264), the note (320 to 340) and every rect in
-  the [Start screen](#start-screen) table match at 720x360 and 844x390, with
-  and without insets.
+  and 152.5 from the ship's ink. Keep the row top at 264 and the note at
+  320 to 340 at 720x360 and 844x390, with and without insets. Use the
+  [Start screen](#start-screen) table as the current fixed-width baseline
+  for the title buttons, then verify the content-sized row and centred Start.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The route panel keeps one size for every galaxy and state. At 720x360 with
   and without phone insets, every route map rect lies in the available rect,
-  the row 2 labels end at least `SPACING.gap` above the panel, and no marker
-  press area overlaps another or the
-  close target. The story panel matches the
+  the lowest labels end at least `SPACING.gap` above the panel, and the
+  marker press areas remain disjoint. The story panel matches the
   storybook rect and height tables at each screen, keeps its width and bottom
   edge across pages, and fits every Gameplay page without scrolling; each
   story run's background placement matches the run anchor for its tallest

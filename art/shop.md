@@ -221,19 +221,21 @@ activity; its title is the activity's name and its detail line the goal.
 
 ## Buy confirm
 
-Opens over the shop, which dims behind it. The close X, an outside tap, back,
-Escape and Cancel all cancel.
+Opens over the shop, which dims and stays inactive behind it. The top-right
+X invokes Cancel. An outside tap, back and Escape use the same one-layer
+path where dismissal is allowed. Keep the shop open and restore focus to
+the invoking item or a logical shop control.
 
-1. Header: `confirmTitle` ("Buy {name}?").
+1. `confirmTitle` ("Buy {name}?") and the top-right X.
 2. Item well: the confirm well, with the item well's edge and navy face and
    the glyph at 2x by nearest neighbour or the paint swatch, centred.
 3. Weapons only: the weapon's description (`aboutRapidMissile`,
    `aboutMultiLaser`, `aboutHeavyMissile`, `aboutScattershot`, `aboutPhaser`),
    body text, centred lines.
-4. Price: `icon-stardust-20` and the price in cream, centred.
-5. `confirmLeft` ("{amount} left after"), supporting text, centred.
-6. Action group: Cancel (`confirmCancel`, secondary) left, Buy (`confirmBuy`,
-   primary) right.
+4. Offered price, centred in cream with `icon-stardust-20`. Omit the
+   projected remaining Stardust balance.
+5. Cancel (`confirmCancel`, secondary) left, Buy (`confirmBuy`, primary) right.
+   Cancel is the only dismissal button in this action row.
 
 ## Differences from the approved mock-ups
 

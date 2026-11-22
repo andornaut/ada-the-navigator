@@ -7,35 +7,57 @@ sprites and their provenance are in [UI assets](ui.md).
 
 ## Buttons
 
+Game buttons in HTML, canvas and mocks show focus, press and selection with
+a clearly visible change to the face fill, label or icon colour. Keep that cue
+visible in forced-colors mode, including when focus coincides with a press,
+selection or an unavailable action. Keep ordinary borders present in every
+state. Added state outlines, border rings and ring-shaped shadows are
+excluded. Existing pressed movement can supplement the colour cue. Preserve
+native focus, tab order, keyboard activation, focus restoration and a
+distinct disabled state.
+
 Padding and margins are measured to drawn pixels, counting icon side bearings
 ([Spacing tokens](layout.md#spacing-tokens)).
 
-| Rule         | Value                                                                                                                                                                                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Geometry     | `TEXT_BUTTON` and `FOCUS_RING` in [Layout](layout.md#controls-and-targets)                                                                                                                                                                             |
-| Pressed      | Face, label and icon sink by `TEXT_BUTTON.pressedSink`; the lip disappears                                                                                                                                                                             |
-| Disabled     | Flat face over the full height, no lip, no press displacement                                                                                                                                                                                          |
-| Unavailable  | The disabled face, but focusable; activation plays the refusal cue                                                                                                                                                                                     |
-| Width        | Shared within an action group; grows to fit the widest label                                                                                                                                                                                           |
-| Label        | `TYPE.label`, centred by visible ink in each state's face                                                                                                                                                                                              |
-| Leading icon | Centred with the label as one group, `SPACING.markGap` apart                                                                                                                                                                                           |
-| Focus        | `ui-focus` outside the face, independent of pressed, selected or checked                                                                                                                                                                               |
-| Primary      | A group is a row whenever its buttons fit side by side at their own widths (label plus the insets) with the button gap, the primary rightmost; only when they do not fit is it a column or grid, the primary at the bottom, full width or at the right |
-| Hover        | No hover-only styling; hover never changes size or role colour                                                                                                                                                                                         |
-| Sheets       | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled                                                                                                                                                                           |
-| Nine-slice   | 16x28 frames, margins left/top/right/bottom 2/4/2/6                                                                                                                                                                                                    |
+| Rule         | Value                                                                                                                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geometry     | `TEXT_BUTTON` uses the standard 48 px height and 16 px horizontal and 12 px vertical text insets. Authored compact and round controls keep their specified geometry. See [Layout](layout.md#controls-and-targets).                                   |
+| Pressed      | Face, label and icon sink by `TEXT_BUTTON.pressedSink`; the lip disappears                                                                                                                                                                           |
+| Disabled     | Flat face over the full height, no lip, no press displacement                                                                                                                                                                                        |
+| Unavailable  | The disabled face, but focusable; activation plays the refusal cue                                                                                                                                                                                   |
+| Width        | In a horizontal row or a row that wraps, each button fits its own content plus the standard insets. A sole visible action centres in its row, independent of hidden controls and wrappers. A vertical stack stretches its buttons to a shared width. |
+| Label        | `TYPE.label`, centred by visible ink in each state's face                                                                                                                                                                                            |
+| Leading icon | Centred with the label as one group, `SPACING.markGap` apart                                                                                                                                                                                         |
+| Focus        | Use a visible face, label or icon cue for keyboard focus in each focusable state                                                                                                                                                                     |
+| Primary      | Keep the existing primary last in its own group, rightmost in a horizontal layout and at the bottom of a vertical layout. Preserve secondary order, safety roles and separate command groups.                                                        |
+| Hover        | No hover-only styling; hover never changes size or role colour                                                                                                                                                                                       |
+| Sheets       | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled                                                                                                                                                                         |
+| Nine-slice   | 16x28 frames, margins left/top/right/bottom 2/4/2/6                                                                                                                                                                                                  |
 
 The normal face is the drawn rectangle minus the lip, the pressed face has the
 same height moved down by the sink, and the disabled face is the whole
 rectangle. Measure label centring against these faces, not the nine-slice
 margins or press target. Never shrink a label to fit; grow the button or reword
 the label. Primary and secondary share one silhouette; role sets colour and
-state sets geometry. A disabled control keeps its label and layout, cannot
-activate and is skipped by keyboard navigation.
+the pressed pose keeps its geometry. A disabled control keeps its label
+and layout, cannot activate and is skipped by keyboard navigation.
 
-The focus sheet `ui-focus` is a 16x16 nine-slice with 4px margins: a 1px ink
-fringe, a 2px cream band and a 1px ink fringe. HTML pages draw the same ring with
-a 2px cream outline at 1px offset over 1px and 4px ink shadows.
+Current Ada row widths still depend on the shared grid and wrapping styles,
+and Start still uses its fixed title width. See the
+[sizing implementation notes](layout.md#groups) for the current behavior
+and the remaining migration.
+
+Other game controls keep their authored visible focus treatment. The
+`ui-focus` sheet is a 16x16 nine-slice with 4px margins (1px ink, 2px cream,
+1px ink). Current HTML button focus still includes the shared 2px cream
+outline at 1px offset with 1px and 4px ink shadows, plus per-control variants.
+The primary, secondary and tile sprites keep their centre fill in the
+pressed frame (`#bfa06f`, `#9690b4` and `#46425e` respectively). Standard
+text button labels keep their ink on press. The ring and missing colour cue
+are pending migration. Game Kit owns shared button rendering and states.
+Tech owns Ada's skin and local overrides. Verify the shared defaults and
+Ada's buttons in source and rendered states, including forced colors and
+keyboard navigation.
 
 ## Compact row action
 
@@ -64,6 +86,9 @@ and receives input exclusively. Outside taps never activate controls
 underneath.
 
 ## Pause
+
+The rim is part of each authored pose. The press changes the face and glyph
+colour and keeps the existing swell and held geometry.
 
 - Pause button: vector art, 35x35 logical, drawn with smooth sampling (never
   `image-rendering: pixelated`), so it stays sharp at every view scale. Its
@@ -109,7 +134,8 @@ underneath.
 
 `ui-switch` is 32x16 with tags `on` and `off`. On places the knob right with a
 tick; off places it left with a cross. Off is an available value and never looks
-disabled. Focus uses the shared ring.
+disabled. Settings exposes the row as a switch (`role="switch"`) on a
+native button. The authored switch focus ring remains its keyboard cue.
 
 ## Refusal cue
 
@@ -519,14 +545,14 @@ a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
 glyph centred on it. Sizes and placement are `HUD_BUTTON` and `HUD_ROW` in
 [Layout](layout.md#hud-and-overlays): the rightmost disc's drawn edge and
 every disc's drawn top sit `HUD_EDGE` (12) in from the game area, mirroring
-the pause disc on the left. The space screen has no settings button;
-Settings opens from the pause card. The start screen's Achievements and
-Settings buttons draw the vector trophy `achievements.svg` and gear
-`settings.svg` in the [nav disc states](achievements-icon.md#states): idle,
-and white on `#3a4466` while pressed.
+the pause disc on the left. Settings opens from the Pause or Menu card.
+The retained trophy and gear nav-disc art is documented in [Achievements](achievements-icon.md#states).
 
 Every selected weapon has an opaque navy `#262b44` face on every field.
-Inactive weapons use these distinct opaque dark faces:
+Inactive weapons use these distinct opaque dark faces. Selection changes
+the glyph to cream and the face to navy (Laser already has a navy face).
+Keep the common annulus and tier pips as ordinary disc art. The glyph
+provides the selection cue on every weapon.
 
 | Weapon        | Face                 |
 | ------------- | -------------------- |
@@ -548,7 +574,7 @@ Inactive weapons use these distinct opaque dark faces:
   including ink. The 4 px annulus contains an outer 1 px ink fringe, a 2 px
   coloured band and an inner 1 px ink fringe. Its centre has the weapon's
   solid face when inactive and navy `#262b44` when selected.
-- Selection uses the cream band. Idle and empty glyphs are muted by their
+- The current selected band is cream. Idle and empty glyphs are muted by their
   palette colours, without extra opacity that would reduce contrast on the
   solid faces. The same colours apply on dark and light fields. Every glyph
   and ring band has at least 3:1 contrast against its face.
@@ -556,8 +582,9 @@ Inactive weapons use these distinct opaque dark faces:
   During the wait a tap on another weapon disc plays the
   [refusal cue](#refusal-cue) with the glyph as its label (the Refused state);
   the selected weapon keeps its selected look throughout.
-- Focus-visible is the shared focus ring, `FOCUS_RING.outset` outside the disc
-  and round with it, over any state.
+- Current focus-visible draws the shared round ring outside the disc, over
+  any state. Apply the [button focus cue](#buttons) to the face or glyph in
+  the migration. The weapon buttons also lack a separate press colour cue.
 - Empty applies to a non-Laser weapon with no ammunition left. It is never
   selected: when the selected weapon fires its last shot, Laser is selected in
   the same frame, ignoring the switch wait, and the empty disc takes the Empty
@@ -578,10 +605,9 @@ no pip at level 1, two at level 2 and three at level 3.
 |     3 | Purple `#a66bff`         | Three, purple `#a66bff` |
 
 - The coloured band stays inside the common 33 px outer diameter: radii
-  13.5 to 15.5, with ink at 12.5 to 13.5 and 15.5 to 16.5. Selection replaces
-  the band colour with cream at every level. Level dots retain their tier.
-- There is no exterior level halo or light-field outline. The shared
-  keyboard focus ring remains a separate accessible outline outside the disc.
+  13.5 to 15.5, with ink at 12.5 to 13.5 and 15.5 to 16.5. The current
+  selected band takes cream at every level. Level dots retain their tier.
+- There is no exterior level halo or light-field outline.
 - Pips: discs of radius 2 in the level's pip colour, each inside a 1 px ink
   outline (6 across), centres 7 apart. At levels 2 and 3 their horizontal row
   is centred under the icon, with centres on the bottom ring stroke's centre
@@ -605,11 +631,11 @@ Each owned non-Laser weapon shows its ammunition count in an opaque navy pill
 on the disc's lower edge; Laser shows none. Geometry is `HUD_AMMO_COUNT` in
 [Layout](layout.md#weapon-count-pill).
 
-| State       | Pill                          | Count text                                  | Contrast        |
-| ----------- | ----------------------------- | ------------------------------------------- | --------------- |
-| Selected    | Navy `#262b44`, inset ink rim | Cream `#ead4aa`, matching the selected ring | 10.11:1         |
-| Idle, empty | Navy `#262b44`, inset ink rim | Grey `#b8b8b8`, including "0"               | 7.00:1          |
-| Refused     | Navy `#262b44`, inset ink rim | Unchanged from the current state            | At least 7.00:1 |
+| State       | Pill                          | Count text                       | Contrast        |
+| ----------- | ----------------------------- | -------------------------------- | --------------- |
+| Selected    | Navy `#262b44`, inset ink rim | Cream `#ead4aa`                  | 10.11:1         |
+| Idle, empty | Navy `#262b44`, inset ink rim | Grey `#b8b8b8`, including "0"    | 7.00:1          |
+| Refused     | Navy `#262b44`, inset ink rim | Unchanged from the current state | At least 7.00:1 |
 
 - The count is Gameplay's count string in at most four characters: the exact
   number up to 9999 with no separator, then whole thousands "10k" to "999k",
@@ -637,7 +663,7 @@ Draw the chrome in CSS at logical units so it stays sharp at any scale
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Disc        | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, the weapon's solid face; weapon-only normal disc shadow is none                                                                                                                                                                                                              |
 | Weapon ring | A pseudo-element inset `calc(u * 1)`, a 2 px coloured border, a 1 px outer ink shadow and a 1 px inset ink shadow; selected border cream, inactive centres filled with their weapon face, selected centre navy                                                                                                                          |
-| Level band  | Levels 2 and 3 set the contained border colour to the tier; no exterior halo or outline and no change to the shared focus styling                                                                                                                                                                                                       |
+| Level band  | Levels 2 and 3 set the contained border colour to the tier; no exterior halo or outline                                                                                                                                                                                                                                                 |
 | Pips        | A child of the button: `position: absolute`, centred at `top: calc(u * 38.5)` (14.5 below the disc centre at 24), `left: 50%`; each pip `calc(u * 4)` round in the pip colour with `box-shadow: 0 0 0 calc(u * 1)` ink, `gap: calc(u * 3)`, `pointer-events: none`                                                                      |
 | Glyph       | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                                                                                                                                                                                                                             |
 | Count pill  | A child of the button: `position: absolute`, `top: calc(u * 42)`, `left: 50%`, `transform: translateX(-50%)`, `height` and `line-height` `calc(u * 14)`, `padding: 0 calc(u * 4)`, `border-radius: calc(u * 4)`, `background` navy `#262b44`, a 1 px inset ink shadow, `TYPE.count` text, `white-space: nowrap`, `pointer-events: none` |
@@ -677,7 +703,10 @@ resolution, at the sticks' 85% opacity in every state. Placement and press
 shape are `USE_DISC` in [Layout](layout.md#hud-and-overlays). It shows only
 while an interaction is available, on a touch screen, outside modals; desktop
 hides it with no hint, and Space activates the action. Its accessible name is
-the action's Gameplay string.
+the action's Gameplay string. A native button provides assistive activation
+over the canvas art. Its current exterior focus ring needs migration to a
+visible cue on the drawn symbol. Keep the authored ring in the disc art and
+its press geometry.
 
 Geometry is in the 75x75 frame's px, centre (37.5, 37.5), in Chibi's layer
 model: each disc, ring or stroke draws over an ink layer 1 px wider each side
@@ -723,4 +752,4 @@ symbol on whole pixels at 16x16; see
 `pages/index.html` and `public/site.css` apply these rules to HTML, with the
 [Layout](layout.md) token numbers in CSS px: Install (secondary) on the left,
 Play (primary) on the right, as one action row. The install steps dialog's
-Close is secondary. Each uses the focus ring above.
+Close is secondary. These site controls use the site's visible focus ring.

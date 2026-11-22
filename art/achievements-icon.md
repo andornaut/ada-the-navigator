@@ -1,9 +1,9 @@
 # Achievements navigation icon
 
-The start screen's Achievements button, immediately left of Settings, draws a
-trophy in the same form as the [vector gear](settings-icon.md#vector-gear), so
-both games' nav rows read the same. Placement and press areas are in
-[Layout](layout.md#start-screen).
+The trophy uses the same form as the [vector gear](settings-icon.md#vector-gear).
+Ada retains the trophy and gear disc styles from the retired standalone
+Achievements and Settings buttons. Menu now opens from the top left.
+[Layout](layout.md#start-screen) covers active Start controls.
 
 ## Source
 
@@ -18,10 +18,11 @@ edges and no outline (Chibi `art/style-guide.md`, "Achievements").
 
 ## Vector trophy
 
-`public/art/ui/icons/achievements.svg` is the start screen's Achievements
-glyph: a 20x20 single-colour vector on the outline of Chibi's trophy, cream
-`#ead4aa`, drawn as a CSS mask in the HUD button's glyph colour with smooth
-sampling, so it stays sharp at fractional scales.
+`public/art/ui/icons/achievements.svg` is the retained glyph from the retired
+standalone Achievements control on the Start screen. It is a 20x20
+single-colour vector based on the outline of Chibi's trophy, cream `#ead4aa`.
+The retained CSS draws it as a mask in the HUD button's glyph colour with
+smooth sampling, so it stays sharp at fractional scales.
 
 - Cup: a 12-wide rim from y 2 to 4, a 10-wide cup to y 7 that curves into a
   4-wide stem from y 10.5 to 13, a 7-wide collar to y 15 and a 10-wide base to
@@ -51,19 +52,23 @@ duration 100 ms, at `/art/ui/sprites/icon-achievements.png` and matching
 
 ## States
 
-Achievements and Settings share these states. Each is a `HUD_BUTTON` disc: a
-33 disc with a 1 ink `#181425` edge in a 48 target, the 20 glyph centred on it.
+The retained trophy and gear styles share these states. Each is a
+`HUD_BUTTON` disc: a 33 disc with a 1 ink `#181425` edge in a 48 target, the
+20 glyph centred on it.
 
-| State   | Face           | Glyph           | Glyph contrast | Notes                                                 |
-| ------- | -------------- | --------------- | -------------- | ----------------------------------------------------- |
-| Normal  | Navy `#262b44` | `#b8b3c9`       | 6.83:1         | The weapons' idle state                               |
-| Hover   | As normal      | As normal       | 6.83:1         | No hover-only styling ([Controls](controls.md))       |
-| Focus   | As normal      | As normal       | 6.83:1         | Shared focus ring, `FOCUS_RING.outset` outside, round |
-| Pressed | `#3a4466`      | White `#ffffff` | 9.55:1         | The pause disc's held colours, while the press holds  |
+| State   | Face           | Glyph           | Glyph contrast | Notes                                                                         |
+| ------- | -------------- | --------------- | -------------- | ----------------------------------------------------------------------------- |
+| Normal  | Navy `#262b44` | `#b8b3c9`       | 6.83:1         | The weapons' idle state                                                       |
+| Hover   | As normal      | As normal       | 6.83:1         | No hover-only styling ([Controls](controls.md))                               |
+| Focus   |                |                 |                | Use a visible face or glyph cue, including while pressed and in forced colors |
+| Pressed | `#3a4466`      | White `#ffffff` | 9.55:1         | The pause disc's held colours, while the press holds                          |
 
 - The disc and glyph never move or resize between states. Focus combines with
   pressed.
-- The focus ring's cream band is 10.11:1 on the space background `#292734`.
-- Accessible label: Gameplay's `achievements` string, "Achievements", as the
-  button's `aria-label` and `title`; the glyph is `aria-hidden`. The button
-  opens the Achievements card (`aria-haspopup="dialog"`).
+- The retained CSS draws an exterior focus ring with a cream band at 10.11:1
+  on the space background `#292734`. Migrate this focus cue before reusing
+  these styles on a game button. Keep the ink edge and pressed colours.
+- If a future button reuses the trophy to open the Achievements card, use
+  Gameplay's `achievements` string, "Achievements", for `aria-label` and
+  `title`. Set `aria-hidden` on the glyph and `aria-haspopup="dialog"` on the
+  button.

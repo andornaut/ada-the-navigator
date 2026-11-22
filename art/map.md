@@ -13,10 +13,18 @@ and `MAP_TOOLS` in `src/ui/layout/mapScreen.ts`; the panel's height is
 
 ## Screen
 
-The map is a screen, not a card: the field fills the whole logical view, under
-the insets, and the header, the tools, the footer and the place panel float on
-it. Like a modal it takes input exclusively; nothing of the flight HUD shows.
-Every part anchors to the page rect, `safeRect(insets, SPACING.pageInset, view)`:
+The Local Map is a full-screen modal (`role="dialog"`, `aria-modal="true"`).
+The field fills the logical view under the insets, with the header, tools,
+footer and informational Place panel over it. The Map takes input exclusively
+and covers the flight HUD.
+
+Keep a top-right X as the Map's modal dismissal, following
+[Layout](layout.md#modals). It invokes the footer's existing contextual
+Back or Close path exactly once and restores focus to the opener or a
+logical control in the restored view. The current runtime exposes the
+footer dismissal but lacks the header X.
+
+The existing page-relative parts use `safeRect(insets, SPACING.pageInset, view)`:
 16 in from each view edge, or the safe inset where that is larger. At the 720
 base it spans 16 to 704 across and 16 to 344 down; with phone insets (left and
 right 43, bottom 19) 43 to 677 and 16 to 341.
@@ -111,7 +119,12 @@ rect's top-right corner, so target `i` (0 to 2) is at
 - Face, edge and glyph geometry are the idle `HUD_BUTTON`
   ([Controls](controls.md#top-right-hud-icon-buttons), `HUD_DISC_STATES.idle`):
   navy `#262b44` 33 disc centred in its target (7.5 in on each side), 1 ink
-  edge, 20 glyph mask in supporting `#b8b3c9`.
+  edge, 20 glyph mask in supporting `#b8b3c9`. The tools are native buttons
+  and share the [button state rules](controls.md#buttons) with the footer and
+  Travel here. The current tool CSS still adds the shared disc focus ring
+  and has no distinct held face or glyph. Map text buttons still use the
+  shared exterior focus outline, with `Highlight` in forced colors. These
+  states are pending migration.
 - Down, at a top inset up to 16, every target spans 16 to 64 and every disc
   23.5 to 56.5. The row ends at the page rect's right (704, or 677 with phone
   insets), the recentre disc's drawn right edge 7.5 inside it (696.5, 669.5).
@@ -149,9 +162,10 @@ action `map-close`), the map's only primary button. Constants:
 | 720x360, phone insets 43 | 351 to 449 | 465 to 563 | 579 to 677 | 293 to 341 |
 
 - Close's right is the tool row's right, so the two right-align.
-- Close's label is the caller's dismissal: "Back" when the map opens from the
-  Paused card (`questBack`), "Close" otherwise. It returns to the Paused card,
-  as back and Escape do. The width stays 98 for either label.
+- Keep the footer dismissal visible. Its label is "Back" when the Map
+  opens from Paused (`questBack`) and "Close" otherwise. The width stays 98
+  for either label. The modal X uses the same context-specific return and
+  focus restoration.
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region's
   bottom is `SPACING.gap` above the footer's top.
 - Quests opens the [Quests modal](#quests-modal). It is always available, in
@@ -159,7 +173,7 @@ action `map-close`), the map's only primary button. Constants:
 - Galaxies: Gameplay's action, with no confirm. It opens the
   [galaxy selector](layout.md#galaxy-selector), whose one destination action
   jumps to another galaxy or home to Earth, or returns here as "Stay in
-  {galaxy}", as back and Escape do. It stays available while
+  {galaxy}", as the selector's X, Back and Escape do. It stays available while
   towing; leaving the galaxy returns the towed craft to where it was
   stranded. In danger it shows the unavailable face
   (disabled face, focusable), activation plays the
@@ -168,10 +182,11 @@ action `map-close`), the map's only primary button. Constants:
 
 ### Place panel
 
-Shows while a place is selected, holds the empty note while the map has no
-places, and holds the danger reason while Ada is in danger. A
-`ui-settings-card` face (the card nine-slice) with no close X and no dim, its
-left and bottom on the page rect's bottom-left corner.
+The Place panel is an informational part of the Map, with no separate
+modal, X or dim. It shows the selected place, the empty note when the Map has
+no places, or the danger reason while Ada is in danger. Its
+`ui-settings-card` nine-slice face keeps its left and bottom on the page
+rect's bottom-left corner.
 
 | Token                 | Value | Rule                                                   |
 | --------------------- | ----- | ------------------------------------------------------ |
@@ -266,12 +281,23 @@ type line. Each place is a round chip: a `chip` disc in the symbol's face
 colour with a 1 ink edge inside it, and the symbol's 20 glyph in ink, centred. Ada is her arrow. The objective carries the flight's direction
 indicator.
 
+Place chips are native buttons with `aria-pressed` for selection. The Map
+field handles pointer selection and dragging; the chip handles keyboard and
+assistive activation. Apply the [button state rules](controls.md#buttons) to
+the chip's face or glyph for focus, press and selection. Use the face when
+a chip has no glyph. Keep its permanent ink edge, place or job identity,
+target, selected stacking and current keep-clear reservations. Decorative chips, Ada's keyline, objective marks
+and search dashes keep their authored geometry.
+
+The ring geometry below records the current runtime and spacing reservations
+pending migration.
+
 | Token                         | Value | Rule                                                                 |
 | ----------------------------- | ----- | -------------------------------------------------------------------- |
 | `MAP_SYMBOL.chip`             | 28    | Disc diameter                                                        |
 | `MAP_SYMBOL.edge`             | 1     | Ink `#181425` edge inside the disc; face radius 13                   |
 | `MAP_SYMBOL.glyph`            | 20    | Ink glyph mask, centred; every glyph pixel lies inside the face      |
-| `MAP_SYMBOL.ring.radius`      | 17    | Selection ring centre radius: 2 outside the face, as `FOCUS_RING`    |
+| `MAP_SYMBOL.ring.radius`      | 17    | Current selection band centre radius                                 |
 | `MAP_SYMBOL.ring.band`        | 2     | Cream `#ead4aa` band                                                 |
 | `MAP_SYMBOL.ring.fringe`      | 1     | Ink fringe each side of the band; the ring's outer radius is 19      |
 | `MAP_SYMBOL.objective.tip`    | 23    | Indicator tip above the chip centre: 2 clear of the ring and its ink |
@@ -306,9 +332,12 @@ indicator.
   `map-job-survey`, `map-job-delivery`, `map-job-rescue` or `map-job-hunt`
   (the board row's [job icons](shop-icons.md#job-icons)). A hunt also draws its
   [search area](#search-area).
-- Selected: the selection ring around the chip. Focus-visible: the shared
-  focus ring, `FOCUS_RING.outset` outside the face and round with it; the two
-  may overlap.
+- Current selection adds the cream band and ink fringes outside the chip.
+  Current keyboard focus adds a 2 px cream outline with 1 px offset, with
+  the permanent inset ink edge still visible. The outlines can overlap.
+  The chip currently keeps the same face and glyph colours in these
+  states, with no separate pressed cue. Tech owns the replacement chip cues
+  and verification of focus, contrast and reservations on each field.
 - Objective indicator: the flight's arrow and circle
   (`src/game/scene.ts` `drawIndicators`, with `u` pointing down), above the
   chip at `(x, y)`: tip `(x, y - 23)` (`objective.tip`), base corners
@@ -362,25 +391,25 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 - The search area is always explored: the hunt's own spot is a discovered
   place, so the fog reveals 1500 world units around it, past the 900 radius.
 
-| SVG                    | Glyph                                                             | SHA-256                                                            |
-| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `map-station.svg`      | Mast and dome over an elliptical ring                             | `c37da99f168077a262e22d3ba864339700e46d7f55bf205ae0afa843a6256c24` |
-| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals                         | `d45d65444064a7ef623af615da73a389305ed3c55ba4071ac0058da8c6d7db6e` |
-| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right                      | `44ebde453e4c2cc37b16cfb93fae76349f6ca5342e1e940293c87f22858a19a3` |
-| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips                    | `349287b87d73a3abc8850ac6f80472614631e30d0607679ca88f19e734d78a67` |
-| `map-destination.svg`  | Swallowtail flag on a footed pole                                 | `c08853609fb79bbd8b90a9412e68de255ea8950892b3b74eede63d1edec67a25` |
-| `map-holodisk.svg`     | Disc band around a spindle hole                                   | `a0af8690c6897e9fe24b0b647cc6fc9d270a74a7c664f2ff102a6374b0eac937` |
-| `map-nebula.svg`       | Cloud with two stars                                              | `17c2a676c16744df28415ebb8fce0efd91a79f3897fab95651bf3f7d963d943a` |
-| `map-wreck.svg`        | Hull split in two with debris                                     | `0fa939e4cfbb6ad474d28972101070547ed7e87bee94777f1f73cf41dbf5c8ec` |
-| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs                     | `7b1ca89be87881ef4d8688f85af658f55cd5e8739a8319aadf2f074a6484ec75` |
-| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout                     | `81ba78498f06a6383717a203580d3595ea6d4f0c27dcc826bce93378c7dc13a3` |
-| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label                       | `6f3d862fd0088bce3a1b2fbfb4f37386b6024a58bc0d27b2ba17643acc9a8bfa` |
-| `map-job-rescue.svg`   | Tow hook hanging from its eye                                     | `fb0eec4f96a028185496048e3af6e655b0b2c4037369bcdef07e70d64c7258ce` |
-| `map-job-hunt.svg`     | Magnifier with a glint in the lens                                | `9845ae0486b601b2c0394508a35cccf22d8127170137603306505ab339cb6470` |
-| `map-close.svg`        | X, 2 to 3 px strokes; the shared close grid, not drawn on the Map | `a4299a5cdebef05021315beac332491023d5497befd2dc62878b305bc1f05b59` |
-| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                                            | `21d936df7e0d21089102108780dbf64cf53009e5d507ca6d0beda4e1dd918600` |
-| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                                           | `e95563bb5c3a9bb3526205298f32c890881fa14fdf79f602dd68d800223f34ca` |
-| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks                        | `e50643fe1cd9b792a6f4ab3d56b288a29f356dc205a2ebe294332d6d2a6b2014` |
+| SVG                    | Glyph                                                                    | SHA-256                                                            |
+| ---------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `map-station.svg`      | Mast and dome over an elliptical ring                                    | `c37da99f168077a262e22d3ba864339700e46d7f55bf205ae0afa843a6256c24` |
+| `map-growers.svg`      | Sunflower head: an 8 disc in eight petals                                | `d45d65444064a7ef623af615da73a389305ed3c55ba4071ac0058da8c6d7db6e` |
+| `map-workshop.svg`     | Wrench on the diagonal, jaw to the top right                             | `44ebde453e4c2cc37b16cfb93fae76349f6ca5342e1e940293c87f22858a19a3` |
+| `map-salvagers.svg`    | Electromagnet: horseshoe with gapped pole tips                           | `349287b87d73a3abc8850ac6f80472614631e30d0607679ca88f19e734d78a67` |
+| `map-destination.svg`  | Swallowtail flag on a footed pole                                        | `c08853609fb79bbd8b90a9412e68de255ea8950892b3b74eede63d1edec67a25` |
+| `map-holodisk.svg`     | Disc band around a spindle hole                                          | `a0af8690c6897e9fe24b0b647cc6fc9d270a74a7c664f2ff102a6374b0eac937` |
+| `map-nebula.svg`       | Cloud with two stars                                                     | `17c2a676c16744df28415ebb8fce0efd91a79f3897fab95651bf3f7d963d943a` |
+| `map-wreck.svg`        | Hull split in two with debris                                            | `0fa939e4cfbb6ad474d28972101070547ed7e87bee94777f1f73cf41dbf5c8ec` |
+| `map-beacon.svg`       | Mast with a lamp and two pairs of signal arcs                            | `7b1ca89be87881ef4d8688f85af658f55cd5e8739a8319aadf2f074a6484ec75` |
+| `map-job-survey.svg`   | Folded chart, middle panel raised, X knockout                            | `81ba78498f06a6383717a203580d3595ea6d4f0c27dcc826bce93378c7dc13a3` |
+| `map-job-delivery.svg` | Parcel: lid over the box, knocked-out label                              | `6f3d862fd0088bce3a1b2fbfb4f37386b6024a58bc0d27b2ba17643acc9a8bfa` |
+| `map-job-rescue.svg`   | Tow hook hanging from its eye                                            | `fb0eec4f96a028185496048e3af6e655b0b2c4037369bcdef07e70d64c7258ce` |
+| `map-job-hunt.svg`     | Magnifier with a glint in the lens                                       | `9845ae0486b601b2c0394508a35cccf22d8127170137603306505ab339cb6470` |
+| `map-close.svg`        | X, 2 to 3 px strokes; the shared close grid, currently unused on the Map | `a4299a5cdebef05021315beac332491023d5497befd2dc62878b305bc1f05b59` |
+| `map-zoom-in.svg`      | Plus, 14 long, 2 thick                                                   | `21d936df7e0d21089102108780dbf64cf53009e5d507ca6d0beda4e1dd918600` |
+| `map-zoom-out.svg`     | Minus, 14 long, 2 thick                                                  | `e95563bb5c3a9bb3526205298f32c890881fa14fdf79f602dd68d800223f34ca` |
+| `map-recentre.svg`     | Crosshair: ring, centre dot and four ticks                               | `e50643fe1cd9b792a6f4ab3d56b288a29f356dc205a2ebe294332d6d2a6b2014` |
 
 ### Contrast per field
 
@@ -401,7 +430,7 @@ Whirlpool are light fields (`tint.light`); Phantom is dark.
 | Search area dash          | `#FEAE34` | 1.12                | 1.35                | 1.11                | 4.64              |
 | Ada hull                  | `#ffffff` | 1.65                | 2.51                | 1.65                | 8.62              |
 | Objective stroke          | `#C4AFCC` | 1.22                | 1.23                | 1.22                | 4.25              |
-| Ring band                 | `#ead4aa` | 1.14                | 1.73                | 1.14                | 5.95              |
+| Current selection band    | `#ead4aa` | 1.14                | 1.73                | 1.14                | 5.95              |
 | Ink edge, keyline, fringe | `#181425` | 10.89               | 7.17                | 10.86               | 2.08              |
 | Tool disc face            | `#262b44` | 8.40                | 5.53                | 8.37                | 1.61              |
 
@@ -409,8 +438,8 @@ Whirlpool are light fields (`tint.light`); Phantom is dark.
   stroke and the band fall below 2:1, and Ada's hull is 2.51:1 or less, so the
   ink parts carry each mark at 7.17:1 or more (Cartwheel; 10.89:1 on
   Sunflower): the chip's edge, Ada's keyline, the indicator's ink stroke and
-  the ring's fringes. On Phantom the colours carry it (2.97:1 or more) and the
-  ink parts are outlines. Every mark draws its ink parts on
+  the current selection band's fringes. On Phantom the colours carry it
+  (2.97:1 or more) and the ink parts are outlines. Every mark draws its ink parts on
   every field, so a mark has one look across galaxies; a map mark with no ink
   edge is not allowed.
 - The search area's ink dash carries it on the light fields, 7.17:1 or more on
@@ -540,16 +569,17 @@ and take presses first; a chip under them takes no press there.
 
 - Open: Map on the Paused card opens the map at the opening fit. The Paused
   card and its dim hide; one screen shows at a time.
-- Close: the footer's Close (labelled Back from the Paused card), back and
-  Escape return to the Paused card.
+- Dismissal: the Map's X invokes the same one-layer action as the footer
+  and allowed Back or Escape. From Paused, return to that card and restore
+  focus to the Map opener when available.
 - Pan: a pointer pressed on the field (on a chip or not) that moves more than
   `dragThreshold` pans the map with the pointer and selects nothing.
 - Select: a press released within `dragThreshold` selects the chip that
   `pressedArea` gives; on empty field it clears the selection. Selecting the
   selected chip keeps it selected.
-- Keep clear: on selection, pan the least distance that puts the chip and its
-  ring (radius 19) inside the fit region and at least `SPACING.gap` above the
-  panel's top. The pan is immediate.
+- Keep clear: on selection, pan the least distance that puts the current
+  19 px radius reservation inside the fit region and at least `SPACING.gap`
+  above the panel's top. The pan is immediate.
 - Pinch: two pointers zoom by the ratio of their distance, about their
   midpoint, and pan with the midpoint.
 - Wheel: zoom by `zoomStep` per `wheelStep` of `deltaY` (continuous:
@@ -559,7 +589,7 @@ and take presses first; a chip under them takes no press there.
   recentre pans to Ada at the current scale.
 - Every zoom clamps to `minScale`..`maxScale`; every pan clamps to the pan
   limit.
-- Keyboard: Tab moves through the tools (zoom out, zoom in, recentre), then
+- Current keyboard order: Tab moves through the tools (zoom out, zoom in, recentre), then
   the places in reading order (drawn centre top to bottom, then left to
   right), then Travel here, then the footer (Quests, Galaxies, Close), and
   wraps at either end. Enter or Space on a place selects it; focusing a place
@@ -569,6 +599,8 @@ and take presses first; a chip under them takes no press there.
 - Quests and Galaxies: see [Footer](#footer).
 
 ## States
+
+The selected rows record the current chip visuals pending button-state migration.
 
 | State                 | Field and symbols                               | Panel                                                                           |
 | --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- |

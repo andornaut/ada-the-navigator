@@ -1,39 +1,62 @@
 # Art
 
 Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
-Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
-sector one enemy ships and their [destruction](destruction.md), the
-[heavies](heavies.md) with destructible hardpoints, aimed turrets and capped
-weapon mounts, General Gadget's own capital, the
-[station](station.md), the [outposts and discovery cache](outposts.md),
-Cartwheel's [hub, mooring buoy and story craft](cartwheel.md) and its
-[claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers),
-[asteroids, resource rocks and backdrop rocks](asteroids.md), the
-[Cartwheel props](cartwheel-props.md) (traveling debris, the ore nugget,
-stranded craft, the tow line and the ore field layouts), [Stardust](stardust.md),
-[the rock](rock.md), the
-[aboard backdrop](aboard.md), the galaxy selector's [route sky](route-sky.md),
-the [title screen art](title-screen.md),
-the [holodisk](holodisk.md), the
-[quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
-[Whirlpool whales](whales.md), the
-[Whirlpool current streaks, river debris and project world changes](whirlpool.md),
-Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
-its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze),
-[Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
-Loom's saucer and portrait and the crimson drones, Phantom's
-[station and Blurb settlements](phantom.md), character portraits, and the
-[storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
-The station jobs have [job art in space](jobs.md) (landmarks, the search area
-and the lost item's glint), the job board's row icons and Map marks.
-The [finale allies](allies.md) draw the Phantom battle's allies, Marlo's song
-and the ally jump.
-[Destinations](destinations.md) set the scale, light-field keyline and Use
-callout of every place Ada visits. [Community projects](projects.md) add the Projects shop tab and the world
-changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy,
-and the [backdrop layers](backdrop.md) give every galaxy a parallax sky in its own field tones. Other space objects
-use simple runtime shapes with the [space palette](space-palette.md): muted
-surroundings and stronger active signals.
+Gameplay supplies semantic requirements.
+
+## UI
+
+- [Layout](layout.md) defines coordinates, spacing, sizes and screen groups.
+  [Controls](controls.md) defines button, switch, focus and refusal states.
+- [UI provenance](ui.md) covers fonts, slices and licences.
+  [Title screen art](title-screen.md) and [route sky](route-sky.md) cover the
+  Start and galaxy-selector backgrounds.
+- [Station and shop](shop.md) covers station pages, shop and buy confirmation.
+  [Map](map.md) covers the pause map, symbols, fog and interactions.
+- [Community projects](projects.md) covers the Projects shop tab and the
+  world changes from funding projects.
+
+## Environments
+
+- [Galaxies](galaxies.md) supplies field tones, including Andromeda's
+  [backdrop haze](galaxies.md#backdrop-haze). [Backdrop layers](backdrop.md)
+  defines galaxy parallax. The [space palette](space-palette.md) keeps
+  surroundings muted and active signals stronger.
+- [Destinations](destinations.md) defines scale, light-field keylines and Use
+  callouts. See the [station](station.md), [outposts and discovery cache](outposts.md),
+  and space-facing [job art](jobs.md) for landmarks, the search area and lost
+  item glint. Jobs also have board row icons and Map marks.
+- [Asteroids, resource rocks and backdrop rocks](asteroids.md), [the rock](rock.md)
+  and the [aboard backdrop](aboard.md) cover scenery and the ship interior.
+- [Cartwheel](cartwheel.md) covers the hub, mooring buoy and story craft.
+  [Cartwheel props](cartwheel-props.md) covers traveling debris, the ore nugget,
+  stranded craft, the tow line and ore field layouts.
+- [Whirlpool](whirlpool.md) covers current streaks, river debris and project
+  world changes. [Andromeda](andromeda.md) covers the settlers' station,
+  settlements, guide beacons, Pip's mail scooter, project world changes and
+  Munix portraits.
+- [Needle](needle.md) covers the Weavers' station, ring gates, channels, the
+  Eye, Elder Loom's saucer and portrait, and the crimson drones. [Phantom](phantom.md)
+  covers its station and Blurb settlements.
+- [Storybook](storybook.md) covers Earth backgrounds and sprites for Ada
+  and her family.
+
+## Actors
+
+- [Ship geometry](ship.md), [sector one enemies](enemies.md) and
+  [heavies](heavies.md) cover spacecraft. The heavies include General Gadget's
+  capital, destructible hardpoints, aimed turrets and capped weapon mounts.
+- [Cartwheel claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers)
+  and [Andromeda garnet drones](andromeda.md#garnet-drones) cover regional enemies.
+- [Whirlpool whales](whales.md), [portrait provenance](portraits.md) and
+  [conversation portraits](conversation.md) cover the cast.
+- [Finale allies](allies.md) covers the Phantom battle's allies, Marlo's song
+  and the ally jump.
+
+## Effects
+
+- [Destruction](destruction.md) and [weapon effects](weapons.md) cover combat.
+- [Stardust](stardust.md), the [holodisk](holodisk.md) and
+  [quantum jump](quantum-jump.md) cover pickups and travel.
 
 ## Spacecraft design
 
@@ -49,19 +72,14 @@ highlights. Reserve warmer accents for functional signals.
 
 ## Published toolkit
 
-Use `@andornaut/art-kit` version `0.22.0` from the verified published
-[tarball](https://github.com/andornaut/art-kit/releases/download/v0.22.0/art-kit-0.22.0.tgz).
+Use the published `@andornaut/art-kit` tarball and Node.js range in
+[`package.json`](../package.json). [`package-lock.json`](../package-lock.json)
+records the resolved release, integrity, and image and font dependencies.
 
-- SHA256: `8d6f7433af167ca70c64513b8e42b67383dd1dc9b1814ea1e2d4f68e496092d3`
-- `SOURCE_COMMIT`: `30ccd1fa13f677d09190a2fd2582c3baf2fa1309`
-- Node.js: `^24.22.2 || ^26.12.0` (project `engines`; art-kit itself
-  requires `>=24.21.0`)
-- Image dependencies: `pngjs` `7.0.0`, `@jsquash/webp` `1.5.0`
-- Optional font support: `skia-canvas` `4.0.0`
-
-The tarball contains compiled ESM and declarations, with no manifest schema.
-Use explicit subpath imports such as `@andornaut/art-kit/build`,
-`@andornaut/art-kit/png` and `@andornaut/art-kit/spriteSheet`.
+The tarball supplies compiled ESM and declarations. Ada owns the art manifest
+schema. Follow the explicit build subpaths used by the generators, such as
+`@andornaut/art-kit/build/png`, `@andornaut/art-kit/build/spriteSheet` and
+`@andornaut/art-kit/build/woff2`.
 
 ## Ada contract and validation
 
@@ -187,13 +205,7 @@ whole sheet; the pivot applies to each frame. Tech owns loading and rotation.
 The `ui` entry points to the [Chibi UI subset manifest](../public/art/ui/manifest.json)
 and its public base path. That subset preserves the source `fonts` and `sprites`
 schema, with paths relative to `/art/ui/`; it is separate from the prototype
-`assets` list. [UI provenance](ui.md) records fonts, slices and licences.
-[Layout](layout.md) is the coordinate system, spacing and size tokens, and
-every screen's groups. [Controls](controls.md) is the button, switch, focus
-and refusal contract.
-[Station and shop](shop.md) lays out the station pages, shop and buy confirm.
-[Map](map.md) is the pause map: its screen, symbols and glyphs, fog and
-interaction.
+`assets` list.
 
 Ship textures use 64 isometric headings (enemy craft use 16) with a centered
 pivot and a 96 by 96 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
@@ -201,9 +213,6 @@ Choose the projected heading without rotating the image. Draw procedural
 normal and reverse jets from `ship-jets.json` and `ship-retro-jets.json`.
 Resolve Classic and paid hulls from `ship-materials.json` and `ship-paint.json`;
 the core manifest's ship frame paths are logical references.
-[Ship geometry](ship.md),
-[sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
-the authored and reused assets.
 
 Ship material and geometry data are deterministic exports from `art/tools/ship.ts`.
 Enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool
@@ -237,7 +246,7 @@ Needle's Avi portraits, `phantom-portraits.ts` Phantom's Blurb portraits, and
 `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
 `cartwheel-portraits.ts` each galaxy's cast, from the bust parts in `art/tools/bust.ts`.
 `art/tools/portraits.ts` draws the Astra, General Gadget and Grandma portraits and the compact
-conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
+conversation sheets. No generated kit source or assets
 from another game's build pipeline are required.
 
 The toolkit's `buildCommand(options, argv)` supports `check.paths`, optional
