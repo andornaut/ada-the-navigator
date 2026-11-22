@@ -179,6 +179,12 @@ export const STATION_STYLE = `
 .ada-controls .ada-exchange-rate{
   font:${font(TYPE.body)}
 }
+.ada-controls .ada-exchange-rate-visual{
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:center;
+  column-gap:${units(BALANCE.markGap)}
+}
 .ada-controls .ada-exchange-direction,
 .ada-controls .ada-exchange-amount{
   display:inline-flex;
@@ -228,7 +234,8 @@ export const STATION_STYLE = `
   image-rendering:pixelated
 }
 
-.ada-controls .ada-confirm-reward-spoken{
+.ada-controls .ada-confirm-reward-spoken,
+.ada-controls .ada-exchange-rate-spoken{
   position:absolute;
   white-space:nowrap;
   clip-path:inset(50%)

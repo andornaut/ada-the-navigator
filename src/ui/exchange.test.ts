@@ -243,15 +243,33 @@ describe("immediate fixed Exchange actions", () => {
       "ore to Stardust",
       "Stardust to ore",
     ]);
-    for (const [index, payment] of ["ore", "stardust"].entries()) {
+    for (const [index, [payment, received, heading, phrase]] of [
+      ["ore", "stardust", "Buy Stardust", "1 Stardust costs 2 ore"],
+      ["stardust", "ore", "Buy ore", "1 ore costs 2 Stardust"],
+    ].entries()) {
       const row = rows[index]!;
       const labels = row.children[0]!;
       expect(labels.children.map((part) => part.tagName)).toEqual(["H3", "P"]);
-      expect(labels.children.map((part) => part.textContent)).toEqual(
-        index === 0
-          ? ["Buy Stardust", "1 Stardust costs 2 ore"]
-          : ["Buy ore", "1 ore costs 2 Stardust"],
-      );
+      expect(labels.children[0]!.textContent).toBe(heading);
+      const rate = labels.children[1]!;
+      expect(rate.children.map((part) => part.className)).toEqual([
+        "ada-exchange-rate-visual",
+        "ada-exchange-rate-spoken",
+      ]);
+      const [visual, spoken] = rate.children;
+      expect(visual!.getAttribute("aria-hidden")).toBe("true");
+      expect(spoken!.getAttribute("aria-hidden")).toBeNull();
+      expect(spoken!.textContent).toBe(phrase);
+      expect(visual!.children.map((part) => part.tagName)).toEqual(["SPAN", "IMG", "SPAN", "IMG"]);
+      expect(
+        visual!.children.filter((part) => part.tagName === "SPAN").map((part) => part.textContent),
+      ).toEqual(["1", "costs 2"]);
+      const rateIcons = visual!.children.filter((part) => part.tagName === "IMG");
+      expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).src)).toEqual([
+        `/art/ui/sprites/icon-${received}-20.png`,
+        `/art/ui/sprites/icon-${payment}-20.png`,
+      ]);
+      expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).alt)).toEqual(["", ""]);
       const direction = row.children[1]!;
       const arrow = direction.children[1]!;
       expect(direction.getAttribute("role")).toBe("img");

@@ -162,11 +162,29 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
             heading.textContent = buyLabel[receive];
             const rate = document.createElement("p");
             rate.className = "ada-exchange-rate";
-            rate.textContent = fill(EXCHANGE_COPY.rate, {
+            const values = {
               cost: IMMEDIATE_EXCHANGE_UNIT_COST,
               received: resourceName[receive],
               spent: resourceName[give],
-            });
+            };
+            const visual = document.createElement("span");
+            visual.className = "ada-exchange-rate-visual";
+            visual.setAttribute("aria-hidden", "true");
+            for (const part of EXCHANGE_COPY.rate
+              .split(/(\{received\}|\{spent\})/u)
+              .filter(Boolean)) {
+              if (part === "{received}" || part === "{spent}") {
+                visual.append(exchangeIcon(part === "{received}" ? receive : give));
+              } else {
+                const text = document.createElement("span");
+                text.textContent = fill(part, values).trim();
+                visual.append(text);
+              }
+            }
+            const spoken = document.createElement("span");
+            spoken.className = "ada-exchange-rate-spoken";
+            spoken.textContent = fill(EXCHANGE_COPY.rate, values);
+            rate.append(visual, spoken);
             summary.append(heading, rate);
             const direction = document.createElement("span");
             direction.className = "ada-exchange-direction";
