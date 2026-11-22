@@ -12,7 +12,6 @@ export interface ShipAsset {
 }
 
 // Ship heading 4k of SHIP_HEADINGS (64) faces enemy heading k of ENEMY_HEADINGS (16).
-const DIRECTIONAL = /^ship-(?:thrust-)?\d+$/;
 const IDLE = /^ship-\d+$/;
 
 /**
@@ -45,30 +44,19 @@ export function shipDirection(count: number, facing: Vec): number {
   return ((index % count) + count) % count;
 }
 
-/**
- * The nearest of the 64 headings: aim and movement stay continuous and only the sprite snaps.
- * A missing thrust frame falls back to the matching idle view. Incomplete sets are rejected.
- */
+/** The nearest of the 64 hull headings. Aim and movement stay continuous. */
 export function selectShipAsset<T extends ShipAsset>(
   assets: readonly T[],
-  thrust: boolean,
   facing: Vec,
 ): T | undefined {
   if (!hasShipHeadings(assets)) {
     return undefined;
   }
   const direction = shipDirection(SHIP_HEADINGS, facing);
-  const directional = (prefix: string) =>
-    direction === undefined
-      ? undefined
-      : assets.find(
-          (asset) =>
-            DIRECTIONAL.test(asset.id) &&
-            asset.id.startsWith(`${prefix}-`) &&
-            (prefix === "ship-thrust" || !asset.id.startsWith("ship-thrust")) &&
-            asset.directionIndex === direction,
-        );
-  return (thrust ? directional("ship-thrust") : undefined) ?? directional("ship");
+  return assets.find(
+    (asset) =>
+      IDLE.test(asset.id) && asset.paint === undefined && asset.directionIndex === direction,
+  );
 }
 
 /** A paint scheme's idle frames, which load only while that scheme is in use. */
@@ -78,28 +66,18 @@ export function paintFrames<T extends ShipAsset>(assets: readonly T[], paint: st
 
 const THRUST = /^ship-thrust(?:-\d+)?$/;
 
-/** The thrust frames and their alias, drawn only when the speed jets are missing or invalid. */
-export function thrustFrames<T extends { readonly id: string }>(assets: readonly T[]): T[] {
-  return assets.filter((asset) => THRUST.test(asset.id));
-}
-
-/**
- * Ship frames the scene loads on demand instead of in preload: painted frames while their
- * scheme is in use, thrust frames only without valid jets.
- */
-export function loadsOnDemand(asset: { readonly id: string; readonly paint?: string }): boolean {
+/** Painted hulls load on demand. Legacy thrust frames are unused. */
+export function skipShipPreload(asset: { readonly id: string; readonly paint?: string }): boolean {
   return asset.paint !== undefined || THRUST.test(asset.id);
 }
 
 /**
  * The frame for the scheme in use: a painted scheme's idle frame at the heading, else the
- * Classic selection. Painted schemes have no thrust frames, and a frame not yet loaded falls
- * back to Classic.
+ * Classic selection if the painted frame is unavailable.
  */
 export function selectPaintedShipAsset<T extends ShipAsset>(
   assets: readonly T[],
   paint: string | null,
-  thrust: boolean,
   facing: Vec,
 ): T | undefined {
   const classic = assets.filter((asset) => asset.paint === undefined);
@@ -111,5 +89,5 @@ export function selectPaintedShipAsset<T extends ShipAsset>(
       return frame;
     }
   }
-  return selectShipAsset(classic, thrust, facing);
+  return selectShipAsset(classic, facing);
 }

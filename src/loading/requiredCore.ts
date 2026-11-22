@@ -1,7 +1,21 @@
 import { ECONOMY } from "../data/economy.ts";
 import { hasPlayerHeadingPackage } from "../game/playerHeadingPackage.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
+import { readEngineJets } from "../game/shipJets.ts";
 import { readShipMaterialPalettes, readShipMaterials } from "../game/shipMaterials.ts";
+
+/** Decode both required jet files before constructing the first playable scene. */
+export function requireBootJets(cache: { get(key: string): unknown }) {
+  const normal = readEngineJets(cache.get("ship-jets"));
+  if (!normal) {
+    throw new Error("Required ship-jets geometry is invalid");
+  }
+  const retro = readEngineJets(cache.get("ship-retro-jets"));
+  if (!retro) {
+    throw new Error("Required ship-retro-jets geometry is invalid");
+  }
+  return { normal, retro };
+}
 
 /** Validate the canonical loader's actual cached package without another metadata download. */
 export function validateBootCore(cache: { get(key: string): unknown }, shipReady: boolean): void {

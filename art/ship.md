@@ -43,13 +43,10 @@
   about the hull's forward axis), `stretch` along the hull and `squash` across
   it, about the pivot and before the heading turn. Sprite frames use the bare
   heading, so their numbers are the heading rotation's exactly.
-- Exports: `ship-{0..63}.svg`, `ship-thrust-{0..63}.svg`, `ship-jets.json`,
-  `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
-  nose all derive from the one model, so a model change regenerates them
-  together.
-  The `ship-thrust` entry is the index-40 (up) fallback alias and names
-  `ship-thrust-40.svg`. `ship.svg` remains a
-  logical manifest alias, resolved from semantic geometry rather than a file.
+- Exports: `ship-{0..63}.svg`, `ship-jets.json`, `ship-nose.json` and the
+  [paint schemes](#paint-schemes). Frames, jets and nose derive from the
+  same model. Thrust uses the idle hull with procedural jet geometry.
+  `ship.svg` is the logical up alias, resolved from semantic geometry.
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
 - The ship has 64 headings from the shared player heading contract; enemy
@@ -180,7 +177,7 @@ Engine surfaces do not recolour flame layers.
   Gameplay's purchase-order prices; Art does not assign a fixed scheme price.
 - Other schemes export idle frames only:
   `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..63}.svg`. Draw speed jets
-  as for Classic. There are no painted thrust frames.
+  as for Classic.
 - `ship-paint.json` version 1 lists these six schemes in order, with `id`,
   `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`,
   `engineHousing`, `engineOpening` and the derived compatibility colour `canopyHighlight`. Highlight metadata
@@ -190,14 +187,10 @@ Engine surfaces do not recolour flame layers.
   scheme id. Classic frames have no `paint` field. Select by `paint` and
   `directionIndex`; a lookup by `ship-` prefix alone must exclude entries with
   `paint`.
-- `art/tools/ship.ts` writes the frames, `ship-paint.json` and every `ship`
-  and `ship-*` manifest entry at the start of the manifest, in order: `ship`,
-  `ship-thrust`, then `ship-N` and `ship-thrust-N` per heading, then the paint
-  entries. It replaces any earlier ship entries and sets the manifest's
-  `shipNose` link. `--data-only` writes only the jet and paint JSON, without
-  generating frames, collision or manifest entries. `--paint-only` writes
-  `ship-paint.json` and the five purchased paint frame sets, without changing
-  Classic frames, jets, collision or manifest entries.
+- `art/tools/ship.ts` writes the Classic frames and ship data. It replaces the
+  ship manifest entries in order: `ship`, the 64 `ship-N` entries, then the
+  paint entries. It also sets the manifest's `shipNose` link. `--data-only`
+  writes jets, paint and material data. `--paint-only` writes paint data.
 
 ### Engine housing and opening materials
 
@@ -285,8 +278,8 @@ independent of this material contract.
 
 The shared contract supplies paid hulls, all nine jump poses and the idle up
 alias. Their 375 retired physical SVGs are not emitted. The 64 Classic idle
-frames remain for the local map; 65 Classic thrust fallbacks, the historical
-yellow archive and all 450 logical player manifest entries remain available.
+frames remain for the local map. The historical yellow archive and 385
+logical player manifest entries remain available.
 
 ## Speed jets
 
@@ -388,8 +381,7 @@ Source-coordinate assertions alone do not establish visible compliance. Verify
 all 64 projected mouth/collision/nose alignments when those geometries change;
 compare legacy/reverse points, RGB and alpha independently. A static contact does
 not establish full application or PWA acceptance. `node art/tools/ship.ts
---jets-only` updates the normal JSON and 65 thrust fallbacks without rebuilding
-unchanged hull/collision/material exports.
+--jets-only` updates only the normal jet JSON.
 
 ### Retro jets
 

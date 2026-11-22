@@ -20,7 +20,6 @@ import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/e
 import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
-import { SHIP_HEADINGS } from "../model/nose.ts";
 import { fill, itemAbout, itemName, type ShopItem, weaponName } from "../model/shop.ts";
 import type { FlightState, GameSave } from "../model/types.ts";
 import {
@@ -86,7 +85,6 @@ import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./rout
 import type { GameScene } from "./scene.ts";
 import {
   loadAsteroidArt,
-  loadShipFrames,
   materialShipFrames,
   materialShipHeading,
   materialShipSwatch,
@@ -97,8 +95,8 @@ import {
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
-import { hasShipHeadings, thrustFrames } from "./shipArt.ts";
-import { engineJets, readEngineJets } from "./shipJets.ts";
+import { hasShipHeadings } from "./shipArt.ts";
+import { engineJets } from "./shipJets.ts";
 import { stationRow } from "./shopView.ts";
 import {
   FALLBACK_SPACE_PALETTE,
@@ -348,14 +346,6 @@ export function buildScene(scene: UiContext): void {
   }
   const bootAssets = [...(manifest?.assets ?? []), ...(sunflower?.assets ?? [])];
   scene.shipAssets = bootAssets.filter((asset) => scene.textures.exists(asset.id));
-  // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
-  // the authored thrust frames, which load only then; until they do, the idle frames draw.
-  const jets = readEngineJets(scene.cache.json.get("ship-jets"));
-  scene.shipJets =
-    jets?.headings.length === SHIP_HEADINGS && hasShipHeadings(scene.shipAssets) ? jets : undefined;
-  if (!scene.shipJets) {
-    loadShipFrames(scene, thrustFrames(manifest?.assets ?? []));
-  }
   scene.partAssets = (manifest?.assets ?? []).filter(
     (asset) => enemyPartFrame(asset) && asset.family === undefined,
   );
@@ -508,7 +498,7 @@ export function buildScene(scene: UiContext): void {
     scene.shipJets && engineJets(scene.shipJets, 1),
     scene.cache.json.get(TITLE_SCREEN_KEY),
   );
-  if (!titleArt || !scene.shipJets) {
+  if (!titleArt || !scene.shipJets || !hasShipHeadings(scene.shipAssets)) {
     throw new Error("Required first-screen art or normal jets are invalid");
   }
   titleArts.set(scene, titleArt);

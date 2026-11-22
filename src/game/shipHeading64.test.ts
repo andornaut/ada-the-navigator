@@ -89,7 +89,6 @@ describe("atomic 64-heading player package", () => {
         const selected = selectPaintedShipAsset(
           manifest.assets as (ShipAsset & { path: string })[],
           paint === ECONOMY.defaultPaint ? null : paint,
-          false,
           direction,
         )!;
         expect(selected.directionIndex).toBe(index);
@@ -173,6 +172,25 @@ describe("atomic 64-heading player package", () => {
         readTitleScreen(manifest.assets, engineJets(forward, 1), { ...title, shipHeadings }),
       ).toBeNull();
       expect(hasPlayerHeadingPackage(paints, { ...manifest, shipHeadings })).toBe(false);
+    }
+  });
+
+  it("validates either legacy or retired manifest inventory without accepting remnants", () => {
+    const assets = manifest.assets.filter(({ id }) => !/^ship-thrust(?:-\d+)?$/.test(id));
+    const retired = { ...manifest, assets };
+    expect(hasPlayerHeadingPackage(paints, retired)).toBe(true);
+    const thrust = Array.from({ length: SHIP_HEADINGS }, (_, directionIndex) => ({
+      directionIndex,
+      id: `ship-thrust-${directionIndex}`,
+    }));
+    const alias = { directionIndex: 40, id: "ship-thrust" };
+    expect(
+      hasPlayerHeadingPackage(paints, { ...retired, assets: [...assets, ...thrust, alias] }),
+    ).toBe(true);
+    for (const remnants of [[alias], thrust.slice(1), [...thrust.slice(1), alias]]) {
+      expect(
+        hasPlayerHeadingPackage(paints, { ...retired, assets: [...assets, ...remnants] }),
+      ).toBe(false);
     }
   });
 

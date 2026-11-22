@@ -5,13 +5,12 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
 import {
   hasShipHeadings,
-  loadsOnDemand,
   paintFrames,
   selectPaintedShipAsset,
   selectShipAsset,
   type ShipAsset,
   shipDirection,
-  thrustFrames,
+  skipShipPreload,
 } from "./shipArt.ts";
 
 const asset = (id: string, directionIndex: number): ShipAsset => ({
@@ -90,81 +89,68 @@ describe("authored ship headings", () => {
 
   it("snaps the sprite to the nearest of 64 headings for a continuous facing", () => {
     const assets = [asset("ship", 40), ...headings(64, true)];
-    expect(selectShipAsset(assets, false, at(5.625))?.id).toBe("ship-1");
-    expect(selectShipAsset(assets, true, at(5.625))?.id).toBe("ship-thrust-1");
-    expect(selectShipAsset(assets, false, at(8.4))?.id).toBe("ship-1");
-    expect(selectShipAsset(assets, false, at(8.5))?.id).toBe("ship-2");
-    expect(selectShipAsset(assets, false, { x: -1, y: -1 })?.id).toBe("ship-40");
+    expect(selectShipAsset(assets, at(5.625))?.id).toBe("ship-1");
+    expect(selectShipAsset(assets, at(8.4))?.id).toBe("ship-1");
+    expect(selectShipAsset(assets, at(8.5))?.id).toBe("ship-2");
+    expect(selectShipAsset(assets, { x: -1, y: -1 })?.id).toBe("ship-40");
   });
 
   it("selects the nearest heading from Art's manifest for all 64 headings, with up at 40", () => {
     const assets = manifest.assets as ShipAsset[];
     expect(hasShipHeadings(assets)).toBe(true);
     for (let index = 0; index < 64; index++) {
-      for (const thrust of [false, true]) {
-        const selected = selectShipAsset(assets, thrust, at(index * 5.625));
-        expect(selected?.directionIndex).toBe(index);
-        expect(selected?.id).toBe(thrust ? `ship-thrust-${index}` : `ship-${index}`);
-      }
+      const selected = selectShipAsset(assets, at(index * 5.625));
+      expect(selected?.directionIndex).toBe(index);
+      expect(selected?.id).toBe(`ship-${index}`);
     }
-    expect(selectShipAsset(assets, false, { x: -1, y: -1 })?.id).toBe("ship-40");
+    expect(selectShipAsset(assets, { x: -1, y: -1 })?.id).toBe("ship-40");
     expect(assets.find((asset) => asset.id === "ship")?.directionIndex).toBe(40);
-    expect(assets.find((asset) => asset.id === "ship-thrust")?.directionIndex).toBe(40);
   });
 
   it("uses manifest direction metadata rather than array order or the legacy alias heading", () => {
     const up = asset("ship", 40);
     const frames = [...headings(64, true)].reverse();
     const right = frames.find((frame) => frame.id === "ship-56")!;
-    const thrust = frames.find((frame) => frame.id === "ship-thrust-56")!;
     const assets = [up, ...frames];
-    expect(selectShipAsset(assets, false, { x: 1, y: -1 })).toBe(right);
-    expect(selectShipAsset(assets, true, { x: 1, y: -1 })).toBe(thrust);
-    expect(selectShipAsset(assets, false, { x: -1, y: -1 })).toBe(
+    expect(selectShipAsset(assets, { x: 1, y: -1 })).toBe(right);
+    expect(selectShipAsset(assets, { x: -1, y: -1 })).toBe(
       frames.find((frame) => frame.id === "ship-40"),
     );
   });
 
-  it("preserves the matching idle perspective when a thrust frame is unavailable", () => {
+  it("ignores a legacy thrust alias when selecting the matching hull", () => {
     const assets = [asset("ship-thrust", 40), ...headings(64)];
     const idle = assets.find((frame) => frame.id === "ship-24");
-    expect(selectShipAsset(assets, true, { x: -1, y: 1 })).toBe(idle);
+    expect(selectShipAsset(assets, { x: -1, y: 1 })).toBe(idle);
   });
 
   it("rejects legacy incomplete or absent heading sets without alias fallback", () => {
     const idle = asset("ship", 40);
     const thrust = asset("ship-thrust", 40);
-    expect(selectShipAsset([idle, thrust, ...headings(16, true)], false, at(22.5))).toBeUndefined();
-    expect(selectShipAsset([idle, thrust], true, { x: 1, y: 0 })).toBeUndefined();
-    expect(selectShipAsset([idle], true, { x: 1, y: 0 })).toBeUndefined();
-    expect(selectShipAsset([], false, { x: 1, y: 0 })).toBeUndefined();
+    expect(selectShipAsset([idle, thrust, ...headings(16, true)], at(22.5))).toBeUndefined();
+    expect(selectShipAsset([idle, thrust], { x: 1, y: 0 })).toBeUndefined();
+    expect(selectShipAsset([idle], { x: 1, y: 0 })).toBeUndefined();
+    expect(selectShipAsset([], { x: 1, y: 0 })).toBeUndefined();
   });
 });
 
 describe("ship frames loaded on demand", () => {
   const shipped = manifest.assets as ShipAsset[];
 
-  it("loads Art's 64 thrust frames and their alias only without valid jets", () => {
-    const thrust = thrustFrames(shipped);
-    expect(thrust.map((frame) => frame.id).sort()).toEqual(
-      ["ship-thrust", ...Array.from({ length: 64 }, (_, index) => `ship-thrust-${index}`)].sort(),
-    );
-    expect(thrust.every(loadsOnDemand)).toBe(true);
+  it("excludes every legacy thrust ID from preload while retaining Classic", () => {
+    const legacy = [asset("ship-thrust", 40), ...headings(64, true)];
+    for (const frame of legacy) {
+      expect(skipShipPreload(frame)).toBe(frame.id.startsWith("ship-thrust"));
+    }
   });
 
   it("preloads the idle headings and their alias, and leaves painted frames for their scheme", () => {
-    const preloaded = shipped.filter((frame) => !loadsOnDemand(frame));
+    const preloaded = shipped.filter((frame) => !skipShipPreload(frame));
     expect(hasShipHeadings(preloaded)).toBe(true);
     expect(preloaded.some((frame) => frame.id === "ship")).toBe(true);
     expect(preloaded.some((frame) => frame.paint !== undefined)).toBe(false);
     expect(preloaded.some((frame) => frame.id.startsWith("ship-thrust"))).toBe(false);
-    expect(paintFrames(shipped, "iris").every(loadsOnDemand)).toBe(true);
-  });
-
-  it("draws the idle heading while thrusting until the thrust frames load", () => {
-    const preloaded = shipped.filter((frame) => !loadsOnDemand(frame));
-    expect(selectShipAsset(preloaded, true, at(5.625))?.id).toBe("ship-1");
-    expect(selectShipAsset(shipped, true, at(5.625))?.id).toBe("ship-thrust-1");
+    expect(paintFrames(shipped, "iris").every(skipShipPreload)).toBe(true);
   });
 });
 
@@ -172,27 +158,25 @@ describe("ship paint schemes", () => {
   const shipped = manifest.assets as ShipAsset[];
 
   it("keeps Classic on the unpainted frames, skipping painted entries", () => {
-    const classic = selectPaintedShipAsset(shipped, null, false, at(5.625));
+    const classic = selectPaintedShipAsset(shipped, null, at(5.625));
     expect(classic?.id).toBe("ship-1");
     expect(classic?.paint).toBeUndefined();
   });
 
   it.each(["cobalt", "seafoam", "graphite", "iris"])(
-    "selects %s idle frames by heading and keeps them for thrust",
+    "selects %s hull frames by heading",
     (paint) => {
       expect(paintFrames(shipped, paint)).toHaveLength(64);
       for (let index = 0; index < 64; index++) {
-        for (const thrust of [false, true]) {
-          const frame = selectPaintedShipAsset(shipped, paint, thrust, at(index * 5.625));
-          expect(frame?.id).toBe(`ship-${paint}-${index}`);
-          expect(frame?.paint).toBe(paint);
-        }
+        const frame = selectPaintedShipAsset(shipped, paint, at(index * 5.625));
+        expect(frame?.id).toBe(`ship-${paint}-${index}`);
+        expect(frame?.paint).toBe(paint);
       }
     },
   );
 
   it("falls back to Classic while a scheme's frames are not loaded", () => {
     const loaded = shipped.filter((asset) => asset.paint === undefined);
-    expect(selectPaintedShipAsset(loaded, "iris", false, at(5.625))?.id).toBe("ship-1");
+    expect(selectPaintedShipAsset(loaded, "iris", at(5.625))?.id).toBe("ship-1");
   });
 });

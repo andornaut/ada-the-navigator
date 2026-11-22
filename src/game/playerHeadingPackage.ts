@@ -14,6 +14,7 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
     return false;
   }
   const groups = new Map<string, Set<number>>();
+  let legacyThrustAlias = false;
   for (const asset of root.assets as unknown[]) {
     if (!asset || typeof asset !== "object" || Array.isArray(asset)) {
       return false;
@@ -22,6 +23,7 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
     if (typeof frame.id !== "string") {
       return false;
     }
+    legacyThrustAlias ||= frame.id === "ship-thrust";
     const match = /^ship-(?:([a-z][a-z0-9-]*)-)?(\d+)$/u.exec(frame.id);
     if (!match) {
       continue;
@@ -44,8 +46,12 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
     indices.add(index as number);
     groups.set(group, indices);
   }
-  const required = ["idle", "thrust", ...paints];
+  // A package can omit the retired thrust family, but cannot contain a partial family.
+  const thrust = groups.get("thrust");
+  groups.delete("thrust");
+  const required = ["idle", ...paints];
   return (
+    (thrust ? thrust.size === SHIP_HEADINGS : !legacyThrustAlias) &&
     groups.size === required.length &&
     required.every((group) => groups.get(group)?.size === SHIP_HEADINGS)
   );

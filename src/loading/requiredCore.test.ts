@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
+import manifest from "../../public/art/manifest.json";
 import { validateBootCore } from "./requiredCore.ts";
 
 function fixture() {
@@ -21,6 +22,15 @@ function fixture() {
 }
 it("validates the shipped logical headings, semantic geometry, palettes and actual native texture", () => {
   const f = fixture();
+  expect(() => validateBootCore(f.cache, true)).not.toThrow();
+  expect(() => validateBootCore(f.cache, false)).toThrow("texture");
+});
+it("admits the cached boot package with the thrust rows and alias retired", () => {
+  const f = fixture();
+  f.data.set("art-manifest", {
+    ...manifest,
+    assets: manifest.assets.filter(({ id }) => !/^ship-thrust(?:-\d+)?$/.test(id)),
+  });
   expect(() => validateBootCore(f.cache, true)).not.toThrow();
   expect(() => validateBootCore(f.cache, false)).toThrow("texture");
 });

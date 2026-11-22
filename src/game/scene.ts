@@ -25,7 +25,7 @@ import {
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
-import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
+import { shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { direction } from "../model/shipPhysics.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
@@ -140,13 +140,12 @@ import {
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
 import { StoryShell } from "./shell.ts";
-import { hasShipHeadings, loadsOnDemand, selectPaintedShipAsset } from "./shipArt.ts";
+import { selectPaintedShipAsset, skipShipPreload } from "./shipArt.ts";
 import {
   type EngineJets,
   jetTriangles,
   normalJetsInFront,
   normalJetTailRegions,
-  readEngineJets,
   shipJetDirection,
   travelJets,
 } from "./shipJets.ts";
@@ -589,12 +588,11 @@ export class GameScene extends Scene {
           manifest.assets,
         );
         for (const asset of manifest.assets) {
-          // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
-          // a heavy's part frames when that craft first appears and whale frames for a whale. A
-          // galaxy's own art is in its galaxy manifest, not here.
+          // Painted hulls, heavy parts and whale frames load when needed. Legacy thrust frames
+          // are unused. Each galaxy has its own art manifest.
           if (
             asset.svgSheet ||
-            loadsOnDemand(asset) ||
+            skipShipPreload(asset) ||
             !galaxyLoadsAtOnce(asset) ||
             (materialFrames && materialShipHeading(asset) !== undefined)
           ) {
@@ -667,11 +665,6 @@ export class GameScene extends Scene {
     this.holdSource = false;
     this.emergencyReturn.cancel();
     buildScene(this);
-    const retro = readEngineJets(this.cache.json.get("ship-retro-jets"));
-    this.shipRetroJets =
-      retro?.headings.length === SHIP_HEADINGS && hasShipHeadings(this.shipAssets)
-        ? retro
-        : undefined;
     const chipColor = () => {
       const color = this.asteroidArt?.stone[1];
       return color ? hexNumber(color) : this.palette.obstacle;
@@ -1137,7 +1130,6 @@ export class GameScene extends Scene {
     drawIndicators(this);
     drawFeedback(this);
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
-    // Jets and thrust frames share the 1 unit/s thrust threshold.
     const travel = shipJetDirection(flight.facing, flight.velocity);
     const activeJets = travelJets(
       this.shipJets,
@@ -1147,12 +1139,7 @@ export class GameScene extends Scene {
       travel,
     );
     const speed = travel ? shipSpeedFraction(CONTENT, flight) : 0;
-    const ship = selectPaintedShipAsset(
-      this.shipAssets,
-      paintInUse(this),
-      !activeJets && travel === "forward" && speed > 0,
-      flight.facing,
-    );
+    const ship = selectPaintedShipAsset(this.shipAssets, paintInUse(this), flight.facing);
     this.ship.setTexture(ship?.id ?? "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);

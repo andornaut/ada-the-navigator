@@ -35,7 +35,7 @@ export const SVG_DECIMALS = {
   navGlyphs: 3,
   /** The outposts' growers and rings. */
   outposts: 2,
-  /** Ada's ship and thrust frames, 96 units drawn at 42 px. */
+  /** Ada's ship frames, 96 units drawn at 42 px. */
   ship: 2,
   /** The core station frames. */
   station: 2,

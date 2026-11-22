@@ -26,7 +26,7 @@ import { followPageVisibility } from "./lifecycle.ts";
 import { prepareBootReveal, type RequiredBootResources } from "./loading/bootReveal.ts";
 import { EntryReloadRequired } from "./loading/entryRecovery.ts";
 import { requiredLoading, requiredReady } from "./loading/required.ts";
-import { validateBootCore } from "./loading/requiredCore.ts";
+import { requireBootJets, validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
 import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
@@ -320,6 +320,9 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
     if (!attempt.isCurrent()) {
       return;
     }
+    const jets = requireBootJets(scene.cache.json);
+    scene.shipJets = jets.normal;
+    scene.shipRetroJets = jets.retro;
     constructScene();
     validateBootCore(scene.cache.json, scene.textures.exists("ship"));
     boot!.collect();

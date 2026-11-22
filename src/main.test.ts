@@ -12,6 +12,7 @@ const boot = vi.hoisted(() => ({
   appGuard: { gate: { accepts: () => true, capture: () => () => true } },
   appRoot: vi.fn(),
   blockWrites: vi.fn(),
+  construct: vi.fn(),
   constructorThrows: false,
   crash: undefined as (() => void) | undefined,
   game: vi.fn(),
@@ -22,6 +23,7 @@ const boot = vi.hoisted(() => ({
     loop: { wake: ReturnType<typeof vi.fn> };
     scene: { getScene: () => unknown };
   }[],
+  jetBodies: new Map<string, unknown>(),
   launch: vi.fn(),
   load: vi.fn(),
   manifest: {} as unknown,
@@ -65,6 +67,9 @@ vi.mock("./game/scene.ts", () => ({
           if (key === "art-manifest") {
             return boot.manifest;
           }
+          if (boot.jetBodies.has(key)) {
+            return boot.jetBodies.get(key);
+          }
           const files: Record<string, string> = {
             "quantum-jump": "quantum-jump.json",
             "ship-material-palettes": "ship-paint.json",
@@ -105,7 +110,7 @@ vi.mock("phaser", () => ({
       config.callbacks.postBoot(this);
       queueMicrotask(() => {
         (config.scene[0] as unknown as { entryCreate: (create: () => void) => void }).entryCreate(
-          () => {},
+          boot.construct,
         );
         config.scene[0]!.events.emit("create");
       });
@@ -148,6 +153,10 @@ beforeEach(() => {
   boot.ship = true;
   boot.constructorThrows = false;
   boot.manifest = JSON.parse(readFileSync("public/art/manifest.json", "utf8"));
+  boot.jetBodies.clear();
+  for (const key of ["ship-jets", "ship-retro-jets"]) {
+    boot.jetBodies.set(key, JSON.parse(readFileSync(`public/art/${key}.json`, "utf8")));
+  }
   boot.launch.mockResolvedValue("continue");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
   vi.stubGlobal("document", { getElementById: (id: string) => (id === "app" ? boot.app : {}) });
@@ -223,6 +232,37 @@ it("waits for actual deferred retirement before constructing a Retry, without la
   expect(boot.load).toHaveBeenCalledOnce();
   expect(boot.reveal.commit).toHaveBeenCalledOnce();
 });
+it.each(["ship-jets", "ship-retro-jets"])(
+  "blocks scene construction for malformed cached %s even after loader completion, then admits Retry",
+  async (key) => {
+    const geometry = boot.jetBodies.get(key) as { headings: unknown[] };
+    boot.jetBodies.set(key, { ...geometry, headings: geometry.headings.slice(0, -1) });
+    const { attempt, module } = await entry();
+    await attempt.start();
+    expect(attempt.state).toMatchObject({
+      error: expect.objectContaining({ message: expect.stringContaining(key) }),
+      kind: "failed",
+    });
+    expect(boot.construct).not.toHaveBeenCalled();
+    expect(boot.reveal.commit).not.toHaveBeenCalled();
+    expect(boot.blockWrites).not.toHaveBeenCalled();
+
+    const failed = boot.instances[0]!;
+    expect(failed.destroy).toHaveBeenCalledWith(true);
+    boot.jetBodies.set(key, geometry);
+    const retry = attempt.retry();
+    await settle();
+    expect(boot.game).toHaveBeenCalledOnce();
+    failed.events.emit("destroy");
+    await retry;
+    expect(attempt.state.kind).toBe("ready");
+    expect(boot.game).toHaveBeenCalledTimes(2);
+    expect(boot.construct).toHaveBeenCalledOnce();
+    expect(boot.reveal.commit).toHaveBeenCalledOnce();
+    expect(boot.load).toHaveBeenCalledOnce();
+    module.disposeGame();
+  },
+);
 it("revokes a retained successful game's resources synchronously on page disposal", async () => {
   const { attempt, module } = await entry();
   await attempt.start();

@@ -137,7 +137,6 @@ Shared files are:
   cargo hauler's being `retaliator-hardpoints.json`. Only the claim platform's
   layout is its family's own.
 - Cartwheel's `visitor2` jets: `/art/cartwheel/visitor1-jets.json`.
-- The core `ship-thrust` entry: `/art/ship-thrust-40.svg`.
 
 ### SVG output
 
@@ -158,7 +157,7 @@ names each exception:
 
 | Set                                                          | Decimals | Reason at one decimal                                                |
 | ------------------------------------------------------------ | -------: | -------------------------------------------------------------------- |
-| Ada's ship and thrust frames                                 |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
+| Ada's ship frames                                            |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
 | Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
 | Outposts                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
 | Upgrade pickup chevron                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
@@ -184,11 +183,11 @@ and refusal contract.
 [Map](map.md) is the pause map: its screen, symbols and glyphs, fog and
 interaction.
 
-Ship textures use 32 isometric headings (enemy craft use 16) with a centered
+Ship textures use 64 isometric headings (enemy craft use 16) with a centered
 pivot and a 96 by 96 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
-Choose the projected heading without rotating the image; draw speed jets from
-`ship-jets.json` behind the idle texture. Thrust textures remain a fallback when
-the jets file is unavailable. [Ship geometry](ship.md),
+Choose the projected heading without rotating the image. Draw procedural
+normal and reverse jets from `ship-jets.json` and `ship-retro-jets.json`.
+[Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 

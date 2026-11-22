@@ -28,36 +28,8 @@
       }
     },
     {
-      "id": "ship-thrust",
-      "path": "/art/ship-thrust-40.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-40",
-      "directionIndex": 40,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-0",
       "path": "/art/ship-0.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-0",
-      "directionIndex": 0,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-0",
-      "path": "/art/ship-thrust-0.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -84,36 +56,8 @@
       }
     },
     {
-      "id": "ship-thrust-1",
-      "path": "/art/ship-thrust-1.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-1",
-      "directionIndex": 1,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-2",
       "path": "/art/ship-2.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-2",
-      "directionIndex": 2,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-2",
-      "path": "/art/ship-thrust-2.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -140,36 +84,8 @@
       }
     },
     {
-      "id": "ship-thrust-3",
-      "path": "/art/ship-thrust-3.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-3",
-      "directionIndex": 3,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-4",
       "path": "/art/ship-4.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-4",
-      "directionIndex": 4,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-4",
-      "path": "/art/ship-thrust-4.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -196,36 +112,8 @@
       }
     },
     {
-      "id": "ship-thrust-5",
-      "path": "/art/ship-thrust-5.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-5",
-      "directionIndex": 5,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-6",
       "path": "/art/ship-6.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-6",
-      "directionIndex": 6,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-6",
-      "path": "/art/ship-thrust-6.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -252,36 +140,8 @@
       }
     },
     {
-      "id": "ship-thrust-7",
-      "path": "/art/ship-thrust-7.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-7",
-      "directionIndex": 7,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-8",
       "path": "/art/ship-8.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-8",
-      "directionIndex": 8,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-8",
-      "path": "/art/ship-thrust-8.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -308,36 +168,8 @@
       }
     },
     {
-      "id": "ship-thrust-9",
-      "path": "/art/ship-thrust-9.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-9",
-      "directionIndex": 9,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-10",
       "path": "/art/ship-10.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-10",
-      "directionIndex": 10,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-10",
-      "path": "/art/ship-thrust-10.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -364,36 +196,8 @@
       }
     },
     {
-      "id": "ship-thrust-11",
-      "path": "/art/ship-thrust-11.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-11",
-      "directionIndex": 11,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-12",
       "path": "/art/ship-12.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-12",
-      "directionIndex": 12,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-12",
-      "path": "/art/ship-thrust-12.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -420,36 +224,8 @@
       }
     },
     {
-      "id": "ship-thrust-13",
-      "path": "/art/ship-thrust-13.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-13",
-      "directionIndex": 13,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-14",
       "path": "/art/ship-14.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-14",
-      "directionIndex": 14,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-14",
-      "path": "/art/ship-thrust-14.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -476,36 +252,8 @@
       }
     },
     {
-      "id": "ship-thrust-15",
-      "path": "/art/ship-thrust-15.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-15",
-      "directionIndex": 15,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-16",
       "path": "/art/ship-16.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-16",
-      "directionIndex": 16,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-16",
-      "path": "/art/ship-thrust-16.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -532,36 +280,8 @@
       }
     },
     {
-      "id": "ship-thrust-17",
-      "path": "/art/ship-thrust-17.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-17",
-      "directionIndex": 17,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-18",
       "path": "/art/ship-18.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-18",
-      "directionIndex": 18,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-18",
-      "path": "/art/ship-thrust-18.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -588,36 +308,8 @@
       }
     },
     {
-      "id": "ship-thrust-19",
-      "path": "/art/ship-thrust-19.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-19",
-      "directionIndex": 19,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-20",
       "path": "/art/ship-20.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-20",
-      "directionIndex": 20,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-20",
-      "path": "/art/ship-thrust-20.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -644,36 +336,8 @@
       }
     },
     {
-      "id": "ship-thrust-21",
-      "path": "/art/ship-thrust-21.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-21",
-      "directionIndex": 21,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-22",
       "path": "/art/ship-22.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-22",
-      "directionIndex": 22,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-22",
-      "path": "/art/ship-thrust-22.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -700,36 +364,8 @@
       }
     },
     {
-      "id": "ship-thrust-23",
-      "path": "/art/ship-thrust-23.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-23",
-      "directionIndex": 23,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-24",
       "path": "/art/ship-24.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-24",
-      "directionIndex": 24,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-24",
-      "path": "/art/ship-thrust-24.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -756,36 +392,8 @@
       }
     },
     {
-      "id": "ship-thrust-25",
-      "path": "/art/ship-thrust-25.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-25",
-      "directionIndex": 25,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-26",
       "path": "/art/ship-26.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-26",
-      "directionIndex": 26,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-26",
-      "path": "/art/ship-thrust-26.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -812,36 +420,8 @@
       }
     },
     {
-      "id": "ship-thrust-27",
-      "path": "/art/ship-thrust-27.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-27",
-      "directionIndex": 27,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-28",
       "path": "/art/ship-28.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-28",
-      "directionIndex": 28,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-28",
-      "path": "/art/ship-thrust-28.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -868,36 +448,8 @@
       }
     },
     {
-      "id": "ship-thrust-29",
-      "path": "/art/ship-thrust-29.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-29",
-      "directionIndex": 29,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-30",
       "path": "/art/ship-30.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-30",
-      "directionIndex": 30,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-30",
-      "path": "/art/ship-thrust-30.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -924,36 +476,8 @@
       }
     },
     {
-      "id": "ship-thrust-31",
-      "path": "/art/ship-thrust-31.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-31",
-      "directionIndex": 31,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-32",
       "path": "/art/ship-32.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-32",
-      "directionIndex": 32,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-32",
-      "path": "/art/ship-thrust-32.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -980,36 +504,8 @@
       }
     },
     {
-      "id": "ship-thrust-33",
-      "path": "/art/ship-thrust-33.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-33",
-      "directionIndex": 33,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-34",
       "path": "/art/ship-34.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-34",
-      "directionIndex": 34,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-34",
-      "path": "/art/ship-thrust-34.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1036,36 +532,8 @@
       }
     },
     {
-      "id": "ship-thrust-35",
-      "path": "/art/ship-thrust-35.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-35",
-      "directionIndex": 35,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-36",
       "path": "/art/ship-36.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-36",
-      "directionIndex": 36,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-36",
-      "path": "/art/ship-thrust-36.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1092,36 +560,8 @@
       }
     },
     {
-      "id": "ship-thrust-37",
-      "path": "/art/ship-thrust-37.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-37",
-      "directionIndex": 37,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-38",
       "path": "/art/ship-38.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-38",
-      "directionIndex": 38,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-38",
-      "path": "/art/ship-thrust-38.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1148,36 +588,8 @@
       }
     },
     {
-      "id": "ship-thrust-39",
-      "path": "/art/ship-thrust-39.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-39",
-      "directionIndex": 39,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-40",
       "path": "/art/ship-40.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-40",
-      "directionIndex": 40,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-40",
-      "path": "/art/ship-thrust-40.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1204,36 +616,8 @@
       }
     },
     {
-      "id": "ship-thrust-41",
-      "path": "/art/ship-thrust-41.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-41",
-      "directionIndex": 41,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-42",
       "path": "/art/ship-42.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-42",
-      "directionIndex": 42,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-42",
-      "path": "/art/ship-thrust-42.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1260,36 +644,8 @@
       }
     },
     {
-      "id": "ship-thrust-43",
-      "path": "/art/ship-thrust-43.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-43",
-      "directionIndex": 43,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-44",
       "path": "/art/ship-44.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-44",
-      "directionIndex": 44,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-44",
-      "path": "/art/ship-thrust-44.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1316,36 +672,8 @@
       }
     },
     {
-      "id": "ship-thrust-45",
-      "path": "/art/ship-thrust-45.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-45",
-      "directionIndex": 45,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-46",
       "path": "/art/ship-46.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-46",
-      "directionIndex": 46,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-46",
-      "path": "/art/ship-thrust-46.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1372,36 +700,8 @@
       }
     },
     {
-      "id": "ship-thrust-47",
-      "path": "/art/ship-thrust-47.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-47",
-      "directionIndex": 47,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-48",
       "path": "/art/ship-48.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-48",
-      "directionIndex": 48,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-48",
-      "path": "/art/ship-thrust-48.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1428,36 +728,8 @@
       }
     },
     {
-      "id": "ship-thrust-49",
-      "path": "/art/ship-thrust-49.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-49",
-      "directionIndex": 49,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-50",
       "path": "/art/ship-50.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-50",
-      "directionIndex": 50,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-50",
-      "path": "/art/ship-thrust-50.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1484,36 +756,8 @@
       }
     },
     {
-      "id": "ship-thrust-51",
-      "path": "/art/ship-thrust-51.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-51",
-      "directionIndex": 51,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-52",
       "path": "/art/ship-52.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-52",
-      "directionIndex": 52,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-52",
-      "path": "/art/ship-thrust-52.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1540,36 +784,8 @@
       }
     },
     {
-      "id": "ship-thrust-53",
-      "path": "/art/ship-thrust-53.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-53",
-      "directionIndex": 53,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-54",
       "path": "/art/ship-54.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-54",
-      "directionIndex": 54,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-54",
-      "path": "/art/ship-thrust-54.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1596,36 +812,8 @@
       }
     },
     {
-      "id": "ship-thrust-55",
-      "path": "/art/ship-thrust-55.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-55",
-      "directionIndex": 55,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-56",
       "path": "/art/ship-56.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-56",
-      "directionIndex": 56,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-56",
-      "path": "/art/ship-thrust-56.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1652,36 +840,8 @@
       }
     },
     {
-      "id": "ship-thrust-57",
-      "path": "/art/ship-thrust-57.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-57",
-      "directionIndex": 57,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-58",
       "path": "/art/ship-58.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-58",
-      "directionIndex": 58,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-58",
-      "path": "/art/ship-thrust-58.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1708,36 +868,8 @@
       }
     },
     {
-      "id": "ship-thrust-59",
-      "path": "/art/ship-thrust-59.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-59",
-      "directionIndex": 59,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-60",
       "path": "/art/ship-60.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-60",
-      "directionIndex": 60,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-60",
-      "path": "/art/ship-thrust-60.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1764,20 +896,6 @@
       }
     },
     {
-      "id": "ship-thrust-61",
-      "path": "/art/ship-thrust-61.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-61",
-      "directionIndex": 61,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-62",
       "path": "/art/ship-62.svg",
       "width": 96,
@@ -1792,36 +910,8 @@
       }
     },
     {
-      "id": "ship-thrust-62",
-      "path": "/art/ship-thrust-62.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-62",
-      "directionIndex": 62,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "id": "ship-63",
       "path": "/art/ship-63.svg",
-      "width": 96,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 42,
-      "facing": "world-63",
-      "directionIndex": 63,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "id": "ship-thrust-63",
-      "path": "/art/ship-thrust-63.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,

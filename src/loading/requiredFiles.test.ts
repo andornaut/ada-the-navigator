@@ -15,9 +15,19 @@ async function settle() {
 const failure = (key: string) => ({ key });
 it("retries only failed required loader resources and never treats COMPLETE settlement as success", async () => {
   const required = createRequiredLoading();
-  let failures = [failure("ui-move-hint"), failure("optional-world")];
+  let failures = [
+    "ship-jets",
+    "ship-retro-jets",
+    "ui-move-hint",
+    "ship-thrust-40",
+    "optional-world",
+  ].map(failure);
   const retryFailures = vi.fn(async (select: (f: { readonly key: string }) => boolean) => {
-    expect(failures.filter(select).map((f) => f.key)).toEqual(["ui-move-hint"]);
+    expect(failures.filter(select).map((f) => f.key)).toEqual([
+      "ship-jets",
+      "ship-retro-jets",
+      "ui-move-hint",
+    ]);
   });
   const entered = vi.fn();
   const watch = { failures: () => failures, retryFailures };
@@ -40,7 +50,7 @@ it("retries only failed required loader resources and never treats COMPLETE sett
   await pending;
   expect(entered).toHaveBeenCalledOnce();
   expect(retryFailures).toHaveBeenCalledTimes(2);
-  expect(failures.map((f) => f.key)).toEqual(["optional-world"]);
+  expect(failures.map((f) => f.key)).toEqual(["ship-thrust-40", "optional-world"]);
   required.dispose();
   owner.dispose();
 });

@@ -13,14 +13,11 @@ import {
   forwardJetMouths,
   nose,
   SCHEMES,
-  tailOccluders,
-  type Scheme,
   UP,
 } from "./ship-model.ts";
 import { JET_LENGTH, JET_LEVELS } from "./ship-jet-layers.ts";
 import { normalJetLayers } from "./ship-normal-materials.ts";
 import { svgPaths } from "./ship-paths.ts";
-import { forwardJetSvg } from "./ship-jet-svg.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
@@ -30,24 +27,14 @@ const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const paintOnly = process.argv.includes("--paint-only");
 const jetsOnly = process.argv.includes("--jets-only");
 
-function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
-  const polygons = svgPaths(drawn(FRAME / 2, scheme.paint, { thrust, yaw })).map(
+function svg(yaw: number): string {
+  const polygons = svgPaths(drawn(FRAME / 2, classic.paint, { yaw })).map(
     ({ color, path }) => `  <path fill="${color}" d="${path}"/>`,
   );
-  const tail = thrust
-    ? svgPaths(
-        tailOccluders(FRAME / 2, { yaw }).map((outline) => ({
-          color: scheme.paint.rearSides,
-          outline,
-        })),
-      ).map(({ color, path }) => `  <path fill="${color}" d="${path}"/>`)
-    : [];
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
-    `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
+    `  <title>Ship ${yaw} idle</title>`,
     ...polygons,
-    ...(thrust ? forwardJetSvg(FRAME / 2, { yaw }).map((path) => `  ${path}`) : []),
-    ...tail,
     "</svg>",
     "",
   ].join("\n");
@@ -130,29 +117,18 @@ if (!jetsOnly)
     }),
   );
 
-if (jetsOnly) {
-  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    writeFileSync(`${output}ship-thrust-${yaw}.svg`, svgText(svg(yaw, true), SVG_DECIMALS.ship));
-  }
-}
-
 if (!jetsOnly && !process.argv.includes("--data-only")) {
   if (!paintOnly) {
     writeFileSync(`${output}ship-nose.json`, noses());
     for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-      for (const thrust of [false, true]) {
-        writeFileSync(
-          `${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`,
-          svgText(svg(yaw, thrust), SVG_DECIMALS.ship),
-        );
-      }
+      writeFileSync(`${output}ship-${yaw}.svg`, svgText(svg(yaw), SVG_DECIMALS.ship));
     }
   }
 
   // Paid hulls use the shared material geometry; retain their logical manifest entries.
   const painted = SCHEMES.filter((scheme) => scheme !== classic);
 
-  // Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
+  // Ship entries open the manifest: the up alias, then idle per heading, then
   // the paint frames, which mirror ship-N with their own path and a paint id.
   const entry = (id: string, path: string, yaw: number) => ({
     id,
@@ -168,12 +144,7 @@ if (!jetsOnly && !process.argv.includes("--data-only")) {
   const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
   const entries = [
     entry("ship", "/art/ship.svg", UP),
-    // The up thrust alias is the up heading's thrust frame.
-    entry("ship-thrust", `/art/ship-thrust-${UP}.svg`, UP),
-    ...yaws.flatMap((yaw) => [
-      entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
-      entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
-    ]),
+    ...yaws.map((yaw) => entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw)),
     ...painted.flatMap((scheme) =>
       yaws.map((yaw) => ({
         ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
