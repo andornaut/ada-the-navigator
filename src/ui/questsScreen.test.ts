@@ -253,12 +253,14 @@ function screenFixture(owned = true) {
     fixtureActionRoot(root);
   }
   root.attached = true;
+  const onClose = vi.fn();
+  const onLocate = vi.fn();
   const screen = createQuestsScreen(root as unknown as HTMLElement, {
     labels: mapScreenLabels(CONTENT.labels),
-    onClose: vi.fn(),
-    onLocate: vi.fn(),
+    onClose,
+    onLocate,
   });
-  return { root, screen };
+  return { onClose, onLocate, root, screen };
 }
 
 it("audits completed Quests rows on semantic changes, including disabled routes, before reveal", () => {
@@ -306,6 +308,79 @@ it("rejects an unowned connected Quests subtree before reveal without evaluating
   screen.setState([entry], [], 1);
   expect(() => screen.open()).toThrow("no live action root");
   expect(producer.reveal).not.toHaveBeenCalled();
+  screen.dispose();
+});
+
+it("resumes the selected endpoint and original filtered list page after locating", () => {
+  const { onClose, onLocate, root, screen } = screenFixture();
+  const quests = [entry, { ...entry, id: "extra" }, { ...entry, id: "last" }];
+  const places = [place("growers"), place("workshop")];
+  screen.setState([...quests, { ...entry, id: "unrelated" }], places, 1);
+  screen.openContext({ quests, targetId: "growers" });
+  const buttons = () => root.querySelectorAll("button");
+  const click = (button: QuestNode) => button.dispatchEvent(new Event("click"));
+  click(buttons().find(({ textContent }) => textContent === CONTENT.labels.next)!);
+  click(buttons().find(({ dataset }) => dataset.questId === "last")!);
+  const original = buttons().find(
+    (node) => node.getAttribute("aria-label") === "Show on map: Workshop",
+  )!;
+  click(original);
+  expect(onLocate).toHaveBeenCalledExactlyOnceWith("workshop");
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.isOpen()).toBe(false);
+  expect(screen.isSuspended()).toBe(true);
+
+  screen.resume();
+  expect(screen.isOpen()).toBe(true);
+  expect(screen.isSuspended()).toBe(false);
+  const restored = producer.reveal.mock.lastCall?.[0].focus;
+  expect(restored).not.toBe(original);
+  expect(restored.getAttribute("aria-label")).toBe("Show on map: Workshop");
+  screen.back();
+  expect(
+    buttons()
+      .filter(({ dataset }) => dataset.questId)
+      .map(({ dataset }) => dataset.questId),
+  ).toEqual(["last"]);
+  expect(producer.reveal.mock.lastCall?.[0].focus.dataset.questId).toBe("last");
+  screen.back();
+  expect(onClose).toHaveBeenCalledOnce();
+  screen.dispose();
+});
+
+it("focuses dismissal when the located endpoint is no longer on the map", () => {
+  const { onClose, root, screen } = screenFixture();
+  screen.setState([entry], [place("growers"), place("workshop")], 1);
+  screen.openContext({ quests: [entry], targetId: "growers" });
+  const target = root
+    .querySelectorAll("button")
+    .find((node) => node.className === "ada-quest-endpoint")!;
+  target.dispatchEvent(new Event("click"));
+  expect(screen.isSuspended()).toBe(true);
+  screen.setState([entry], [place("workshop")], 1);
+  screen.resume();
+  expect(producer.reveal.mock.lastCall?.[0].focus.dataset.action).toBe("quest-close");
+  expect(onClose).not.toHaveBeenCalled();
+  screen.back();
+  expect(onClose).toHaveBeenCalledOnce();
+  screen.dispose();
+});
+
+it("returns to the caller when a suspended filtered context becomes empty", () => {
+  const { onClose, root, screen } = screenFixture();
+  screen.setState([entry], [place("growers")], 1);
+  screen.openContext({ quests: [entry], targetId: "growers" });
+  root
+    .querySelectorAll("button")
+    .find((node) => node.className === "ada-quest-endpoint")!
+    .dispatchEvent(new Event("click"));
+  expect(screen.isSuspended()).toBe(true);
+  screen.setState([{ ...entry, id: "unrelated" }], [place("growers")], 1);
+  expect(onClose).not.toHaveBeenCalled();
+  screen.resume();
+  expect(screen.isSuspended()).toBe(false);
+  expect(screen.isOpen()).toBe(false);
+  expect(onClose).toHaveBeenCalledOnce();
   screen.dispose();
 });
 

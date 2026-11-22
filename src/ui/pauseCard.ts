@@ -275,7 +275,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
     },
     onLocate: (id) => {
-      questRoot = "map";
       if (!mapScreen.isOpen()) {
         show("map");
       }
@@ -303,7 +302,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const mapOpen = () => open && mapScreen.isOpen();
   const shipOpen = () => open && !ship.frame.hidden;
   // The map shows in the cards' and the dim's place; the Ship card in the Paused card's.
-  const show = (view: "map" | "paused" | "ship") => {
+  const show = (view: "map" | "paused" | "ship", retainPause = false) => {
     releaseUnderlay?.();
     releaseUnderlay = undefined;
     leaveLayer?.();
@@ -334,6 +333,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     assertAdaActionBindings(paused.frame);
     paused.fit();
+    if (retainPause) {
+      hidePause(true);
+      return;
+    }
     // Focus starts on the primary Resume, else the first action shown.
     const focus =
       actions.querySelector<HTMLButtonElement>(".ada-primary:not([hidden])") ??
@@ -503,6 +506,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapScreen.close();
   }
   function openQuests(opener: "map" | "quests" = "map"): void {
+    if (opener === "map" && quests.isSuspended()) {
+      closeMap();
+      return;
+    }
     mapOpener = opener;
     questRoot = opener === "quests" ? "pause" : "map";
     setOpen(true);
@@ -583,6 +590,15 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       return;
     }
     if (mapOpen()) {
+      if (quests.isSuspended()) {
+        if (questRoot === "pause") {
+          show("paused", true);
+        } else if (questRoot !== "map") {
+          mapScreen.close();
+        }
+        quests.resume();
+        return;
+      }
       show("paused");
       const mapButton = buttons.get(mapOpener);
       if (mapButton && !mapButton.hidden) {

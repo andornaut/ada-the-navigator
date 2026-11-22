@@ -1236,6 +1236,62 @@ it.each([1, 2])(
   },
 );
 
+it("returns through a borrowed Locate Map to the contextual quest, then to unpaused flight", () => {
+  const original = mapUI.createMapScreen;
+  let mapOpen = false;
+  const locate = vi.fn();
+  vi.spyOn(mapUI, "createMapScreen").mockImplementation((...args) => ({
+    ...original(...args),
+    close: () => {
+      mapOpen = false;
+    },
+    isOpen: () => mapOpen,
+    locate,
+    open: () => {
+      mapOpen = true;
+    },
+  }));
+  const { options, pause, root } = cards();
+  const known: MapPlace = {
+    id: "growers",
+    job: false,
+    kind: "destination",
+    label: "Growers",
+    objective: true,
+    symbol: "growers",
+    travel: true,
+    x: 0,
+    y: 0,
+  };
+  const quest = {
+    galaxy: 1 as const,
+    id: "story:1:1",
+    line: { kind: "story" as const, target: known.id, text: "Known objective" },
+    locations: [{ id: known.id, label: known.label, symbol: known.symbol }],
+  };
+  pause.setState(state({ galaxy: 1, map: { ...MAP, places: [known] }, questEntries: [quest] }));
+  expect(pause.openContextQuests({ quests: [quest], targetId: known.id })).toBe(true);
+  const dialog = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+  const endpoint = () =>
+    dialog.querySelectorAll().find((node) => node.className === "ada-quest-endpoint")!;
+  endpoint().click();
+  expect(locate).toHaveBeenCalledExactlyOnceWith(known.id);
+  expect(dialog.hidden).toBe(true);
+  expect(pause.mapOpen()).toBe(true);
+  pause.closeMap();
+  expect(pause.mapOpen()).toBe(false);
+  expect(dialog.hidden).toBe(false);
+  expect(focused()).toBe(endpoint());
+  dialog
+    .querySelectorAll()
+    .find((node) => node.dataset.action === "quest-close")!
+    .click();
+  expect(pause.isOpen()).toBe(false);
+  expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);
+  expect(options.onTravel).not.toHaveBeenCalled();
+  pause.dispose();
+});
+
 it("retains a real label node through native presentation moves and action queries", () => {
   const button = PAGE.createElement("button");
   button.dataset.action = "dismiss-resource";

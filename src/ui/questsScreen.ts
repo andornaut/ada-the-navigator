@@ -29,6 +29,11 @@ import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
 
+interface LocatedEndpoint {
+  readonly kind: "source" | "target";
+  readonly placeId: string;
+}
+
 /** Endpoint metadata is already filtered by the model; current map membership enables locating. */
 export function questRoute(entry: QuestEntry, places: readonly MapPlace[]) {
   const { line } = entry;
@@ -163,6 +168,7 @@ export function createQuestsScreen(
   };
   let signature = "";
   let listPage = 0;
+  let suspended: LocatedEndpoint | undefined;
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leave: (() => void) | undefined;
   const release = () => {
@@ -174,6 +180,7 @@ export function createQuestsScreen(
   const hide = () => {
     release();
     contextEntries = null;
+    suspended = undefined;
     modal.hidden = true;
   };
   const icon = (entry: QuestEntry, symbol?: MapSymbol, job = Boolean(entry.jobType)) => {
@@ -209,7 +216,7 @@ export function createQuestsScreen(
     }
   };
   register(card.close, back, false);
-  function render(focusQuestId?: string): void {
+  function render(focusQuestId?: string, focusEndpoint?: LocatedEndpoint): void {
     let questFocus: HTMLButtonElement | undefined;
     for (const binding of renderedBindings.splice(0)) {
       binding.dispose();
@@ -424,9 +431,22 @@ export function createQuestsScreen(
                     `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
                   );
                 }
+                const placeId = endpoint.place?.id;
+                if (
+                  !button.disabled &&
+                  focusEndpoint?.kind === endpoint.kind &&
+                  focusEndpoint.placeId === placeId
+                ) {
+                  questFocus = button;
+                }
                 register(button, () => {
-                  hide();
-                  options.onLocate(endpoint.place!.id);
+                  if (placeId === undefined) {
+                    return;
+                  }
+                  suspended = { kind: endpoint.kind, placeId };
+                  release();
+                  modal.hidden = true;
+                  options.onLocate(placeId);
                 });
                 route.append(button);
               }
@@ -556,6 +576,7 @@ export function createQuestsScreen(
       focusTarget(card.body.querySelector<HTMLButtonElement>(".ada-primary") ?? card.close);
     },
     isOpen: () => !modal.hidden,
+    isSuspended: () => suspended !== undefined,
     open(
       id: string | null = null,
       from: QuestOrigin = "list",
@@ -563,6 +584,7 @@ export function createQuestsScreen(
     ): void {
       rootDismissal = dismissal ?? { intent: "close", label: labels.close };
       contextEntries = null;
+      suspended = undefined;
       selected = id;
       origin = from;
       render();
@@ -575,12 +597,26 @@ export function createQuestsScreen(
         return false;
       }
       rootDismissal = { intent: "close", label: labels.close };
+      suspended = undefined;
       contextEntries = [...context.quests];
       selected = contextEntries.length === 1 ? contextEntries[0]!.id : null;
       origin = contextEntries.length === 1 ? "flight" : "list";
       listPage = 0;
       render();
       return true;
+    },
+    resume(): void {
+      if (!suspended || disposed) {
+        return;
+      }
+      const endpoint = suspended;
+      suspended = undefined;
+      if (contextEntries?.length === 0) {
+        hide();
+        options.onClose();
+      } else {
+        render(undefined, endpoint);
+      }
     },
     setState(
       next: readonly QuestEntry[],
