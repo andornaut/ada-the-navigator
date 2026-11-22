@@ -28,12 +28,12 @@ export function createRestartCard(
   root: HTMLElement,
   options: { readonly labels: RestartLabels } & (
     | {
-        readonly kind?: "reset-save" | "restart";
+        readonly kind?: "restart";
         readonly onRestart: () => void;
         readonly commit?: never;
       }
     | {
-        readonly kind: "rewind-quests";
+        readonly kind: "reset-save" | "rewind-quests";
         readonly commit: (current: () => boolean) => Promise<((present: boolean) => void) | null>;
         readonly onRestart?: never;
       }
@@ -58,7 +58,7 @@ export function createRestartCard(
     if (disposed || (!open && modal.hidden)) {
       return;
     }
-    if (open && kind === "rewind-quests") {
+    if (open && kind !== "restart") {
       // Cheats may have moved to the front on open. Put its child above it in paint order.
       root.append(modal);
     }

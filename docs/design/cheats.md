@@ -58,8 +58,9 @@ These are not cheats and start no cheat session.
   and new repeatable jobs and activities still pay their usual rewards.
   Cancel or X returns to Cheats. A failed write leaves the save and current view
   in place. The action uses the stored save, so session-only cheats stay temporary.
-- **Reset save**, last, asks first on a card titled "Reset save?" with Reset
-  and Cancel; back and Escape cancel. Reset clears the whole save, achievements
+- **Reset save**, last, stays disabled until there is a valid saved game.
+  When available it asks first on a card titled "Reset save?" with Reset and
+  Cancel. Back and Escape cancel. Reset clears the whole save, achievements
   included, ends any cheat session and returns to the start screen as on a first
   launch. Device settings that are not part of the save stay.
 

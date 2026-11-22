@@ -522,10 +522,26 @@ export function buildScene(scene: UiContext): void {
   saveBeforeUpdate(() => flushScene(scene));
   let rewindSource: CampaignSave | null = null;
   let rewindRequest = 0;
+  let hasSavedGame = false;
+  const canResetSave = () =>
+    !newer &&
+    requiredReady() &&
+    scene.entryCurrent() &&
+    scene.sys.isActive() &&
+    !scene.savingUnavailable &&
+    !scene.cheatSession.ending;
   const canRewind = () => !newer && campaignRewindAllowed(scene);
-  const authorizeRewind = (open: boolean) => {
+  const authorizeSaveActions = (open: boolean) => {
     const request = ++rewindRequest;
     rewindSource = null;
+    hasSavedGame = false;
+    if (open && canResetSave()) {
+      void saves.hasSavedGame().then((available) => {
+        if (request === rewindRequest && canResetSave()) {
+          hasSavedGame = available;
+        }
+      });
+    }
     if (open && canRewind()) {
       void saves.readCampaign().then((source) => {
         if (request === rewindRequest && canRewind()) {
@@ -563,7 +579,7 @@ export function buildScene(scene: UiContext): void {
     },
     cheats: {
       labels: CHEAT_COPY,
-      onOpenChange: authorizeRewind,
+      onOpenChange: authorizeSaveActions,
       rows: [
         ...CHEAT_IDS.map(cheat),
         // Not cheats: they start no session (gameplay/cheats.md "Other actions").
@@ -593,10 +609,14 @@ export function buildScene(scene: UiContext): void {
           },
         },
         {
-          available: () => true,
+          available: () => hasSavedGame && canResetSave(),
           id: "resetSave",
           label: CHEAT_COPY.resetSave,
-          run: () => scene.resetSaveCard.open(),
+          run: () => {
+            if (hasSavedGame && canResetSave()) {
+              scene.resetSaveCard.open();
+            }
+          },
         },
       ],
     },
@@ -1093,7 +1113,23 @@ export function buildScene(scene: UiContext): void {
       restart: CHEAT_COPY.reset,
       title: CHEAT_COPY.resetSaveTitle,
     },
-    onRestart: () => resetSave(scene),
+    commit: async (current) => {
+      const model = scene.model;
+      const stillCurrent = () => canResetSave() && current() && scene.model === model;
+      if (!stillCurrent()) {
+        return null;
+      }
+      const available = await saves.hasSavedGame();
+      if (!stillCurrent()) {
+        return null;
+      }
+      hasSavedGame = available;
+      return available ? (present) => {
+        if (present && canResetSave() && scene.model === model) {
+          resetSave(scene);
+        }
+      } : null;
+    },
   });
   partial.push(() => scene.resetSaveCard.dispose());
   const rewindCard = createRestartCard(scene.controls.overlay, {

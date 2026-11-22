@@ -83,6 +83,7 @@ export interface CampaignSave {
 }
 
 interface AdaSaves extends SaveStore<GameSave> {
+  hasSavedGame(): Promise<boolean>;
   load(options?: { readonly bindModel?: boolean }): ReturnType<SaveStore<GameSave>["load"]>;
   readCampaign(): Promise<CampaignSave | null>;
   commitCampaign(
@@ -115,6 +116,33 @@ export function createAdaSaves(
     generation,
     revision: crypto.randomUUID(),
   });
+  async function readPlayableSave(): Promise<CampaignSave | null> {
+    if (blocked !== null) {
+      return null;
+    }
+    try {
+      return await access(async () => {
+        const raw = await storage.read(SAVE_KEYS.save);
+        if (
+          raw === null ||
+          blocked !== null ||
+          (participating() &&
+            (saveStamp(storedRecord(raw)?.adaSaveStamp)?.generation ?? null) !== modelGeneration)
+        ) {
+          return null;
+        }
+        const inspected = inspectAdaSave(raw);
+        if (inspected.status !== "valid") {
+          return null;
+        }
+        const save = inspected.save as GameSave & { adaSaveStamp?: unknown };
+        delete save.adaSaveStamp;
+        return save.started || save.pendingStory || save.prologueSeen ? { raw, save } : null;
+      });
+    } catch {
+      return null;
+    }
+  }
   const store = saveStore(
     {
       async read(key) {
@@ -249,31 +277,11 @@ export function createAdaSaves(
       }
       return loaded;
     },
+    async hasSavedGame() {
+      return (await readPlayableSave()) !== null;
+    },
     async readCampaign() {
-      if (!participating() || blocked !== null) {
-        return null;
-      }
-      try {
-        return await access(async () => {
-          const raw = await storage.read(SAVE_KEYS.save);
-          if (
-            raw === null ||
-            blocked !== null ||
-            (saveStamp(storedRecord(raw)?.adaSaveStamp)?.generation ?? null) !== modelGeneration
-          ) {
-            return null;
-          }
-          const inspected = inspectAdaSave(raw);
-          if (inspected.status !== "valid") {
-            return null;
-          }
-          const save = inspected.save as GameSave & { adaSaveStamp?: unknown };
-          delete save.adaSaveStamp;
-          return save.started || save.pendingStory || save.prologueSeen ? { raw, save } : null;
-        });
-      } catch {
-        return null;
-      }
+      return participating() ? readPlayableSave() : null;
     },
     save: (value) => store.save(value),
   };

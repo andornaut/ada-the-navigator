@@ -14,7 +14,7 @@ import { stationsNear } from "../model/stations.ts";
 import type { FlightState } from "../model/types.ts";
 import { collectWeapon } from "../model/weapons.ts";
 import { relaunch } from "../testing/launch.ts";
-import { SAVE_FORMAT, SAVE_KEYS, saves } from "./persistence.ts";
+import { createAdaSaves, SAVE_FORMAT, SAVE_KEYS, saves } from "./persistence.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
 function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
@@ -70,6 +70,29 @@ function pendingOffer(): GameModel {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("canonical Ada save storage", () => {
+  it("reports a real saved game without treating a boot record as playable or requiring rewind support", async () => {
+    const { port, values } = storage();
+    const store = createAdaSaves(port);
+    const fresh = new GameModel(CONTENT);
+
+    expect(await store.hasSavedGame()).toBe(false);
+    values.set(SAVE_KEYS.save, fresh.save());
+    expect(await store.hasSavedGame()).toBe(false);
+
+    const played = new GameModel(CONTENT);
+    played.startGalaxy(1);
+    values.set(SAVE_KEYS.save, played.save());
+    expect(await store.hasSavedGame()).toBe(true);
+    expect(await store.readCampaign()).toBeNull();
+
+    values.set(SAVE_KEYS.save, "{broken");
+    expect(await store.hasSavedGame()).toBe(false);
+    values.set(SAVE_KEYS.save, played.save());
+    store.blockWrites("game crashed");
+    expect(await store.hasSavedGame()).toBe(false);
+    expect(port.write).not.toHaveBeenCalled();
+  });
+
   it("keeps the existing key, schema and exact effective flight snapshot at the start screen", async () => {
     const boundary = storage();
     expect((await boundary.store.load()).status).toBe("new");
