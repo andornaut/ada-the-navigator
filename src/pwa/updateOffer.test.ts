@@ -56,7 +56,7 @@ describe("in-session update offer", () => {
     warn.mockRestore();
   });
 
-  it("clears switching without dismissing the newer offer when a shared switch rejects for an older version", async () => {
+  it("keeps the newer offer when a shared switch rejects for an older version", async () => {
     const f = fixture();
     const update = f.staged("newer");
     update.updateNow.mockRejectedValueOnce(new ObsoleteUpdateOfferError("older"));
