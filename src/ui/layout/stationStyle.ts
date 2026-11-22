@@ -5,7 +5,7 @@ import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
 import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 export const STATION_SPRITES = "/art/ui/sprites/";
 const SPRITES = STATION_SPRITES;
@@ -196,8 +196,8 @@ export const STATION_STYLE = `
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
-  gap:${units(SPACING.gap)};
-  padding-inline:${units(SPACING.gap)};
+  column-gap:${units(BUTTON_GAP)};
+  padding-inline:${units(SPACING.gap)} ${units(BUTTON_GAP)};
   background:#302e42;
   border:${slice(FRAME_LINE)} solid #49465f
 }
@@ -206,7 +206,8 @@ export const STATION_STYLE = `
   font:${font(TYPE.label)}
 }
 .ada-controls .ada-exchange-rate{
-  font:${font(TYPE.body)}
+  font:${font(TYPE.body)};
+  text-align:end
 }
 .ada-controls .ada-exchange-rate-visual{
   display:inline-flex;
