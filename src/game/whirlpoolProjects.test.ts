@@ -63,7 +63,7 @@ describe("Whirlpool's project world changes", () => {
     const bounds = frameBounds(beacon.frames[0]);
     expect(
       [bounds.left, bounds.top, bounds.right, bounds.bottom].map((v) => Number(v.toFixed(6))),
-    ).toEqual([-17.5, -39.2, 17.5, 9.8]);
+    ).toEqual([-25.375, -56.84, 25.375, 14.21]);
   });
 
   it("drops a malformed project and refuses a file of another version", () => {

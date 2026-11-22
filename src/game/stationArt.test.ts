@@ -36,10 +36,12 @@ describe("station art", () => {
     expect(art.frames.map((frame) => stationDockWorld(frame))).toEqual([undefined, undefined]);
   });
 
-  it("draws at the destination scale, 1.5 times its earlier size", () => {
-    // 180 by 150 frame px at 0.4375 times 1.5 (art/destinations.md).
-    expect(art.frames[0]!.displayWidth).toBeCloseTo(118.125, 3);
-    expect(art.frames[0]!.displayHeight).toBeCloseTo(98.438, 3);
+  it("draws both enlarged station frames at the authored destination size", () => {
+    // 280 by 220 frame px at 0.4375 times 1.5 (art/destinations.md).
+    for (const frame of art.frames) {
+      expect(frame.displayWidth).toBeCloseTo(183.75, 3);
+      expect(frame.displayHeight).toBeCloseTo(144.375, 3);
+    }
   });
 
   it("keeps the placeholder when the station frames are missing", () => {
@@ -81,7 +83,7 @@ describe("galaxy station art", () => {
       [0, 1, 2, 3].map((index) => `whirlpool-station-${index}`),
     );
     expect(eddy.frameMs).toBe(350);
-    expect(eddy.frames[0]).toMatchObject({ displayHeight: 84, displayWidth: 115.5 });
+    expect(eddy.frames[0]).toMatchObject({ displayHeight: 136.5, displayWidth: 199.5 });
     expect(stationLoopFrame(eddy, false, 1400).id).toBe("whirlpool-station-0");
     expect(stationLoopFrame(eddy, false, 1050).id).toBe("whirlpool-station-3");
     const bobbin = stationArtOf(6)!.base;
@@ -158,11 +160,12 @@ describe("outpost art", () => {
     expect(stationFrame(growers, true, 700).id).toBe("outpost-growers-a");
   });
 
-  it("draws each outpost at frame * 0.4375 * 1.5 from its world-plane pivot", () => {
+  it("draws the enlarged Workshop from its authored world-plane pivot", () => {
     const workshop = outposts.get("workshop")!.frames[0];
-    // The destination scale (art/destinations.md), rounded by Art to three decimals.
-    expect(workshop.displayWidth).toBeCloseTo(workshop.width * 0.4375 * 1.5, 2);
-    expect(workshop.displayHeight).toBeCloseTo(workshop.height * 0.4375 * 1.5, 2);
+    // The destination scale and 40% enlargement, rounded by Art to three decimals.
+    const scale = 0.4375 * 1.5 * 1.4;
+    expect(workshop.displayWidth).toBeCloseTo(workshop.width * scale, 2);
+    expect(workshop.displayHeight).toBeCloseTo(workshop.height * scale, 2);
     expect(workshop.pivot).toEqual({ x: 0.5, y: 0.675 });
   });
 

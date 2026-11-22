@@ -96,8 +96,8 @@ describe("project world-change art", () => {
       ["outpost-salvagers-beacon-b", 1],
       ["outpost-salvagers-beacon-a", 2],
     ]);
-    // Frame px scale by the outpost's display size, 0.4375 at the destination scale 1.5.
-    const scale = 0.4375 * 1.5;
+    // The Salvagers enlargement applies equally to the hull and beacon anchors.
+    const scale = 0.4375 * 1.5 * 1.4;
     expect(parts[0]!.offset.x).toBeCloseTo(-36.232 * scale, 9);
     expect(parts[0]!.offset.y).toBeCloseTo(-44.86 * scale, 9);
     expect(parts[3]!.offset.x).toBeCloseTo(55.426 * scale, 9);
@@ -151,12 +151,12 @@ describe("project world-change art", () => {
     const bounds = partsBounds(
       outpostParts(outposts.get("growers")!, [change("greenhouseRing")], 0),
     );
-    // The ring is 118.125 by 91.875 display px with its pivot at (0.5, 0.45).
-    expect(bounds.left).toBeCloseTo(-59.0625, 9);
-    expect(bounds.top).toBeCloseTo(-41.34375, 9);
-    expect(boundsOnScreen(screen, { x: -59, y: 100 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: -59.0625, y: 100 }, bounds)).toBe(false);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 41.3 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 41.4 }, bounds)).toBe(false);
+    // The ring is 165.375 by 128.625 display px with its pivot at (0.5, 0.45).
+    expect(bounds.left).toBeCloseTo(-82.6875, 9);
+    expect(bounds.top).toBeCloseTo(-57.88125, 9);
+    expect(boundsOnScreen(screen, { x: -82.65, y: 100 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: -82.6875, y: 100 }, bounds)).toBe(false);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 57.85 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 57.9 }, bounds)).toBe(false);
   });
 });
