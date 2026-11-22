@@ -38,23 +38,24 @@ Needle's station, the Whorl, entered by Use. Rebuild with
 open Needle's manifest.
 
 - A long faceted pearl habitat, with a lavender dorsal band, smoked glazing
-  and rose fittings. An offset blue beacon rises from the upper deck.
+  and rose fittings. A slotted thermal blade sweeps out to the left above
+  the berth. An offset blue beacon rises from the upper deck.
 - A diagonal steel brace suspends an offset service spar below the habitat,
   with open space between the spar and upper hull.
 - The two story-craft mouths sit flush with the tapered ends of the service
   spine, facing outward on the world plane. Ada enters by Use. The station
   has a fixed orientation.
 
-| Field               | Value                                                                     |
-| ------------------- | ------------------------------------------------------------------------- |
-| Ids                 | `needle-station-a`, `-b`; Loom hall `needle-station-hall-a`, `-b`         |
-| Frame               | 336 by 128 frame px; display 220.5 by 84                                  |
-| Pivot               | `(0.5, 0.6875)`: the core base on the world plane                         |
-| `facing`            | `fixed`                                                                   |
-| `frameMs`           | 700                                                                       |
-| `destination`       | `station`; `variant` `base` or `loom-hall`                                |
-| `berths`, base      | `(8.783, 88)` outward `[-1, 0]`; `(258.631, 88)` outward `[1, 0]`; 24.495 |
-| `berths`, Loom hall | `(8.783, 88)` outward `[-1, 0]`; `(307.621, 88)` outward `[1, 0]`; 24.495 |
+| Field               | Value                                                                        |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Ids                 | `needle-station-a`, `-b`; Loom hall `needle-station-hall-a`, `-b`            |
+| Frame               | 480 by 160 frame px; display 315 by 105                                      |
+| Pivot               | `(0.5, 0.6875)`: the core base on the world plane                            |
+| `facing`            | `fixed`                                                                      |
+| `frameMs`           | 700                                                                          |
+| `destination`       | `station`; `variant` `base` or `loom-hall`                                   |
+| `berths`, base      | `(80.783, 110)` outward `[-1, 0]`; `(330.631, 110)` outward `[1, 0]`; 24.495 |
+| `berths`, Loom hall | `(80.783, 110)` outward `[-1, 0]`; `(379.621, 110)` outward `[1, 0]`; 24.495 |
 
 - `berths` use the outposts' dock schema: the mouth's centre on the world
   plane in frame px, the outward screen direction and the drawn mouth width. A

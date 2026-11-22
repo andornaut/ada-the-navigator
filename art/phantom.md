@@ -33,22 +33,23 @@ nebulae (`nebula-phantom-1`, `-2`).
 ## Station
 
 The station has a broad teal mantle, swept lateral fins and three
-magenta-banded limbs. Magenta inlays pulse inside the mantle. Ada enters by Use.
+magenta-banded limbs. Magenta inlays pulse inside the mantle between fixed
+observation lights. The outer fins have pale inserts. Ada enters by Use.
 
 ### Frames and manifest
 
 | Field         | Value                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------ |
 | Ids           | `phantom-station-{k}`, `k` 0 to 7, files `/art/phantom/station-{k}.svg`                    |
-| Frame         | 288 by 112 frame px; display 189 by 73.5 at the [destination scale](destinations.md#scale) |
+| Frame         | 352 by 144 frame px; display 231 by 94.5 at the [destination scale](destinations.md#scale) |
 | Pivot         | `(0.5, 0.8125)`: the world plane under the hull's middle                                   |
 | `facing`      | `fixed`                                                                                    |
 | `frameMs`     | 150                                                                                        |
 | `destination` | `station`; `frameIndex` `k`                                                                |
 
 - The eight inlay phases advance every 150 ms. Reduced motion holds frame 0.
-- Over the eight frames the silhouette radius is 98.4 display px and the top is
-  52.1 px above the pivot. The station stays pass-through.
+- Over the eight frames the silhouette radius is about 123 display px and the top is
+  65 px above the pivot. The station stays pass-through.
 
 ## Settlements
 

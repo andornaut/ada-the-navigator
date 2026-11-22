@@ -4,10 +4,10 @@
     {
       "id": "station-settlers-a",
       "path": "/art/andromeda/settlers-station-a.svg",
-      "width": 176,
-      "height": 160,
-      "displayWidth": 115.5,
-      "displayHeight": 105,
+      "width": 304,
+      "height": 240,
+      "displayWidth": 199.5,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -19,10 +19,10 @@
     {
       "id": "station-settlers-b",
       "path": "/art/andromeda/settlers-station-b.svg",
-      "width": 176,
-      "height": 160,
-      "displayWidth": 115.5,
-      "displayHeight": 105,
+      "width": 304,
+      "height": 240,
+      "displayWidth": 199.5,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,

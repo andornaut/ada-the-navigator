@@ -35,20 +35,21 @@
   berths, moorings and jets are frame px, as for the station and the outposts.
   `displayWidth` and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset       | Ids                                                | Frame px | Display          | Pivot            |
-| ----------- | -------------------------------------------------- | -------- | ---------------- | ---------------- |
-| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
-| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
-| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
-| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 96   | 42 by 42         | `(0.5, 0.65625)` |
-| Miner       | `craft-miner-{0..15}`                              | 128      | 56               | `(0.5, 0.5)`     |
-| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35               | `(0.5, 0.5)`     |
-| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42               | `(0.5, 0.5)`     |
+| Asset       | Ids                                                | Frame px | Display       | Pivot            |
+| ----------- | -------------------------------------------------- | -------- | ------------- | ---------------- |
+| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 304, 320 | 166.25 by 175 | `(0.5, 0.5625)`  |
+| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 304, 320 | 166.25 by 175 | `(0.5, 0.5625)`  |
+| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 304, 320 | 166.25 by 175 | `(0.5, 0.5625)`  |
+| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 96   | 42 by 42      | `(0.5, 0.65625)` |
+| Miner       | `craft-miner-{0..15}`                              | 128      | 56            | `(0.5, 0.5)`     |
+| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35            | `(0.5, 0.5)`     |
+| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42            | `(0.5, 0.5)`     |
 
 ## Hub
 
 An asymmetrical armored installation with faceted teal plates, slate ribs and
-copper bracing. A solid forward keel frames the main body. Two recessed
+copper bracing. Slotted heat exchangers sit high on its shoulders. A solid
+forward keel frames the main body. Two recessed
 side berths serve the story craft. Ada enters the hub by Use.
 
 - Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700.
@@ -58,8 +59,8 @@ side berths serve the story craft. Ada enters the hub by Use.
   `destination` `hub` and `variant` (`worn` or `repaired`), not `outpost`, so
   the sector one outpost reader does not pick them up.
 - `berths` lists the free berths left then right on screen, each in the dock
-  schema with its own outward screen direction: `(21.374, 175.72)` outward
-  `[-0.924, 0.382]` and `(218.626, 175.72)` outward `[0.924, 0.382]`, width
+  schema with its own outward screen direction: `(53.374, 220.72)` outward
+  `[-0.924, 0.382]` and `(250.626, 220.72)` outward `[0.924, 0.382]`, width
   28.169. A craft docks moving opposite `outward`.
 - A docked craft holds just outside its berth: its pivot sits on the berth
   point moved along `outward` by the craft's
@@ -86,7 +87,9 @@ Both project changes keep the hub's frame, pivot and berths.
   overlay is a small guide slit in the forward hull plate. The third story
   craft meets the hull at this point.
 - The overlay entry has `overlay` `true` and `berths` with the forward
-  attachment at `(108, 194.571)`, outward `[-0.612, 0.791]`, width 36.742.
+  attachment at `(140, 239.571)`, outward `[-0.612, 0.791]`, width 36.742.
+  Its offset from the frame pivot is `(-12, 59.571)` frame px. In the
+  story's 240 px reference frame it is `(108, 194.571)`.
 
 ### Placement anchors
 

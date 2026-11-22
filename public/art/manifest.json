@@ -7055,10 +7055,10 @@
     {
       "id": "station-a",
       "path": "/art/station-a.svg",
-      "width": 224,
-      "height": 180,
-      "displayWidth": 147,
-      "displayHeight": 118.125,
+      "width": 280,
+      "height": 220,
+      "displayWidth": 183.75,
+      "displayHeight": 144.375,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7069,10 +7069,10 @@
     {
       "id": "station-b",
       "path": "/art/station-b.svg",
-      "width": 224,
-      "height": 180,
-      "displayWidth": 147,
-      "displayHeight": 118.125,
+      "width": 280,
+      "height": 220,
+      "displayWidth": 183.75,
+      "displayHeight": 144.375,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,

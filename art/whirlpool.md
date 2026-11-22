@@ -25,7 +25,8 @@ Use, the Dock action. Its hull has no collar or dock mouth.
 
 - A suspended ribbon winds 1.3 turns around the core with open gaps
   between the turns. Thirty segments climb from the outer tip to a
-  short brace at the core. Five colour bands mark the sweep.
+  short brace at the core. Five colour bands mark the sweep. A pale outer
+  rail and dark channel trace the turns.
 - Fifteen current chevrons point inward along the ribbon, as the
   [current streaks](#current-streaks) point downstream.
 - A blue plinth supports a faceted teal hull, a lilac observation deck and an
@@ -38,14 +39,14 @@ Use, the Dock action. Its hull has no collar or dock mouth.
 
 ### Frames and manifest
 
-| Field         | Value                                                                                        |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| Ids           | `whirlpool-station-{k}`, `k` 0 to 3, files `/art/whirlpool/station-{k}.svg`                  |
-| Frame         | 208 by 144 frame px; display 136.5 by 94.5 at the [destination scale](destinations.md#scale) |
-| Pivot         | `(0.5, 0.4375)`, frame px `(104, 63)` at the station world origin                            |
-| `facing`      | `fixed`                                                                                      |
-| `frameMs`     | 350                                                                                          |
-| `destination` | `station`; `frameIndex` `k`                                                                  |
+| Field         | Value                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| Ids           | `whirlpool-station-{k}`, `k` 0 to 3, files `/art/whirlpool/station-{k}.svg`                   |
+| Frame         | 304 by 208 frame px; display 199.5 by 136.5 at the [destination scale](destinations.md#scale) |
+| Pivot         | `(0.5, 0.4375)`, frame px `(152, 91)` at the station world origin                             |
+| `facing`      | `fixed`                                                                                       |
+| `frameMs`     | 350                                                                                           |
+| `destination` | `station`; `frameIndex` `k`                                                                   |
 
 - Show frame `k` for 350 ms, 0 to 3 in order, and loop (1.4 s). The blue
   beacon, window banks and sensor signal light on frames 0 and 1 and dim on
@@ -54,8 +55,8 @@ Use, the Dock action. Its hull has no collar or dock mouth.
   `k mod 4`. The lit positions advance inward one place per frame.
 - Reduced motion holds frame 0.
 - Every frame shares one frame size and pivot. At 1×, the painted silhouette
-  spans 113.5 px across, reaches 38.0 px above the pivot and has a 64.5 px
-  screen radius. Its reach on the world plane is 53.8 units. The Dock callout
+  spans about 164 px across, reaches 55 px above the pivot and has a 93 px
+  screen radius. Its reach on the world plane is about 78 units. The Dock callout
   follows the drawn top
   ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
   The station is pass-through and carries no `collision`.
@@ -72,7 +73,7 @@ Use, the Dock action. Its hull has no collar or dock mouth.
 | Core hull              | `#46adad`                                             | `#2e707c`                                             |
 | Observation deck       | `#9e8eb9`                                             | `#54496e`                                             |
 | Crown                  | `#94d5c0`                                             | `#397b83`                                             |
-| Current chevrons       | `#f9fff4`                                             | `#2d5065`                                             |
+| Current chevrons       | `#f9fff4`                                             | `#82b9b6`                                             |
 | Amber windows          | `#ffe9b8`                                             | `#b29a73`                                             |
 | Mint windows           | `#c1ffdf`                                             | `#65948d`                                             |
 | Blue beacon            | `#70ace8`                                             | `#3f5878`                                             |

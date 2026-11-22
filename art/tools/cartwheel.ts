@@ -91,13 +91,15 @@ function lamp(x: number, y: number, z0: number, size: number, color: string): Pa
 const SIDE_FACE = 99;
 const SIDE_MOUTH = 23;
 const SPREAD = 0.95;
-const hubFrame: Layout = { halfWidth: 120, above: 135, width: 240, height: 240 };
+const hubFrame: Layout = { halfWidth: 152, above: 180, width: 304, height: 320 };
+// The plates and fixed story contacts share the original drawing coordinates.
+const hubDesignPivot = { x: 120, y: 135 };
 // The funded berth sits on the forward plate edge from (88, 190) to (123, 198).
 const BAY_ANGLE = DOCK + 0.42;
 const BAY_MOUTH = 30;
 const bayBerth = {
-  x: 108,
-  y: round(190 + ((108 - 88) * 8) / 35),
+  x: hubFrame.halfWidth + (108 - hubDesignPivot.x),
+  y: round(hubFrame.above + (190 + ((108 - 88) * 8) / 35 - hubDesignPivot.y)),
   outward: screenAxis(BAY_ANGLE),
   width: round((BAY_MOUTH * Math.sqrt(3)) / Math.SQRT2),
 };
@@ -133,20 +135,69 @@ function hubBerths(lit: boolean, repaired: boolean): Part[][] {
   );
 }
 
-// Armor and the flush guide are drawn in the fixed hub frame.
+// Armor and the flush guide are drawn relative to the original hub pivot.
 function face(color: string, plan: Plan): Face {
   return {
     color,
     points: plan.map(([x, y]) => {
-      const across = (x - hubFrame.halfWidth) / Math.sqrt(3);
-      return [across, -across, hubFrame.above - y];
+      const across = (x - hubDesignPivot.x) / Math.sqrt(3);
+      return [across, -across, hubDesignPivot.y - y];
     }),
   };
+}
+
+function radiatorShoulders(repaired: boolean): Face[] {
+  return [-1, 1].flatMap((side) => {
+    const plate = (color: string, plan: Plan) =>
+      face(
+        color,
+        plan.map(([x, y]) => [hubDesignPivot.x + side * x, y]),
+      );
+    const rib = repaired ? "#a6a488" : "#837d6b";
+    return [
+      plate("#303c49", [
+        [68, 100],
+        [100, 93],
+        [128, 106],
+        [140, 120],
+        [132, 132],
+        [117, 137],
+        [75, 136],
+      ]),
+      plate("#526472", [
+        [79, 102],
+        [100, 97],
+        [126, 109],
+        [135, 119],
+        [120, 122],
+        [92, 116],
+      ]),
+      plate("#23333e", [
+        [95, 103],
+        [113, 111],
+        [130, 121],
+        [119, 128],
+        [96, 118],
+        [88, 110],
+      ]),
+      ...[0, 1, 2, 3].map((i) => {
+        const x = 95 + i * 7;
+        const y = 105 + i * 3.5;
+        return plate(rib, [
+          [x, y],
+          [x + 4, y + 1],
+          [x + 1, y + 9],
+          [x - 3, y + 7],
+        ]);
+      }),
+    ];
+  });
 }
 
 function hubArmor(lit: boolean, repaired: boolean): Face[] {
   const signal = lit ? blue : blueDim;
   return [
+    ...radiatorShoulders(repaired),
     // Continuous lower hull, including the shoulders that house the two berth mouths.
     face("#303743", [
       [10, 161],
@@ -429,6 +480,16 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [121, 9],
       [121, 13],
     ]),
+    ...[0, 1, 2].map((i) => {
+      const x = 93 + i * 8;
+      const y = 56 - i * 3;
+      return face("#b6c6b9", [
+        [x, y],
+        [x + 5, y - 2],
+        [x + 6, y],
+        [x + 1, y + 2],
+      ]);
+    }),
     face(lit ? warm : "#a08f78", [
       [109, 154],
       [119, 150],
@@ -551,7 +612,18 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
 }
 
 function hubFaces(lit: boolean, repaired: boolean): Face[] {
-  return [...hubArmor(lit, repaired), ...polygons(hubBerths(lit, repaired))];
+  // Grow the upper envelope while the side mouths, lower keel and flush plate stay put.
+  const upperStretch = 1.3;
+  const deckZ = hubDesignPivot.y - 166;
+  const armor = hubArmor(lit, repaired).map(({ color, points }) => ({
+    color,
+    points: points.map(([x, y, z]): Point => [
+      x,
+      y,
+      z + Math.max(0, z - deckZ) * (upperStretch - 1),
+    ]),
+  }));
+  return [...armor, ...polygons(hubBerths(lit, repaired))];
 }
 
 // The project lights a flush guide on the plate, above the world-plane berth point.

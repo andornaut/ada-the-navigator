@@ -46,12 +46,27 @@ function habitat(start: number, end: number, raised: boolean): Part[][] {
   for (let segment = start; segment < end; segment += 15) {
     const plan = arc(segment, segment + 15, 48, 65);
     const joint = segment === start || segment + 15 === end;
-    groups.push([
+    const parts: Part[] = [
       { plan, z0: floor - 3, z1: floor, ...dark },
       { plan, z0: floor, z1: floor + 8, ...(joint ? copper : armour) },
       ...wallWindows((x, y) => x + y > 0.45, floor + 2, floor + 5, 2, 2, plan),
       { plan: arc(segment + 1, segment + 14, 50, 57), z0: floor + 8, z1: floor + 9, ...frameMetal },
-    ]);
+      {
+        plan: arc(segment + 2, segment + 13, 59, 63),
+        z0: floor + 8,
+        z1: floor + 9,
+        ...(joint ? cyan : dark),
+      },
+    ];
+    if ((segment - start) % 30 === 0) {
+      parts.push({
+        plan: arc(segment + 6, segment + 9, 58, 64),
+        z0: floor + 9,
+        z1: floor + 10,
+        ...armour,
+      });
+    }
+    groups.push(parts);
   }
   return groups;
 }
@@ -86,6 +101,12 @@ function model(lit: boolean): Part[][] {
     ...wallWindows(facing, 8, 13, 2, 3, base, cyan.top),
     { plan: head, z0: 19, z1: 29, ...hull },
     ...wallWindows(facing, 22, 25, 3, 2.6, head, warm),
+    ...[-8, -3, 2].map((offset) => ({
+      plan: orientedBox(offset, -6, angle(30), 9, 1.5),
+      z0: 29,
+      z1: 30,
+      ...dark,
+    })),
     { plan: ngon(6, 8, -2, 4, Math.PI / 6), z0: 29, z1: 35, ...armour },
     { plan: ngon(4, 2, -2, 4), z0: 35, z1: 49, ...frameMetal },
     {
@@ -158,7 +179,7 @@ function model(lit: boolean): Part[][] {
   return groups;
 }
 
-const MODEL_SCALE = 1.15;
+const MODEL_SCALE = 1.15 * 1.25;
 const polygons = (lit: boolean) =>
   draw(model(lit)).map(({ color, points }) => ({
     color,
@@ -166,10 +187,10 @@ const polygons = (lit: boolean) =>
   }));
 
 // A larger frame encloses the new structure around the same world anchor.
-const width = 224;
-const height = 180;
+const width = 280;
+const height = 220;
 const halfWidth = width / 2;
-const above = 81;
+const above = 99;
 for (const { points } of [...polygons(true), ...polygons(false)]) {
   for (const point of points) {
     const [x, y] = projectAt(halfWidth, above, point);

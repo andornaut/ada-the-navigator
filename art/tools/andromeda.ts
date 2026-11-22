@@ -174,7 +174,7 @@ mkdirSync(output, { recursive: true });
 
 // Every Andromeda station draws this pair in place of the trading station.
 const station = pair("station-settlers", "settlers-station", "Settlers' station", m.station);
-const stationFrame = fixedLayout(allFaces(station), 176, 160, 82);
+const stationFrame = fixedLayout(allFaces(station), 304, 240, 123);
 for (const item of station) writeFixed(stationFrame, item);
 const stationEntries = station.map((item) =>
   fixedEntry(stationFrame, item, { station: "settlers" }),

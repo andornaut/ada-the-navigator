@@ -36,12 +36,15 @@ const FRAMES = 4;
 const FRAME_MS = 350;
 
 // Enlarge the model around the same world-plane origin and retain the normalized pivot.
-const MODEL_SCALE = 1.17;
-const frame = { width: 208, height: 144, halfWidth: 104, above: 63 };
+const MODEL_SCALE = 1.17 * 1.44;
+const frame = { width: 304, height: 208, halfWidth: 152, above: 91 };
 
 const C = {
   chevron: "#f9fff4",
-  chevronDim: "#2d5065",
+  chevronDim: "#82b9b6",
+  channel: "#284b63",
+  rail: "#a0e5d4",
+  railSide: "#447a89",
   plinth: "#537caa",
   plinthSide: "#35476b",
   hull: "#46adad",
@@ -86,7 +89,18 @@ function spiral(frameIndex: number): Part[][] {
     ];
     const z1 = 3 + 13 * t1;
     const sector = SECTORS[Math.floor((i * SECTORS.length) / RAMP.segments)]!;
-    const parts: Part[] = [{ plan, z0: z1 - 5, z1, ...sector }];
+    // The dark channel and its continuous pale outer rail separate the two turns.
+    const strip = (inner: number, outer: number): Plan => [
+      rampPoint(p, outer),
+      rampPoint(q, outer),
+      rampPoint(q, inner),
+      rampPoint(p, inner),
+    ];
+    const parts: Part[] = [
+      { plan, z0: z1 - 5, z1, ...sector },
+      { plan: strip(-3.35, 3.35), z0: z1, z1, top: C.channel, side: C.channel },
+      { plan: strip(3.6, half), z0: z1, z1: z1 + 0.65, top: C.rail, side: C.railSide },
+    ];
     if (i % 2 === 1) {
       const midpoint = rampAt((t0 + t1) / 2);
       const [x, y] = rampPoint(midpoint, 0);
@@ -97,15 +111,15 @@ function spiral(frameIndex: number): Part[][] {
       const fill = k % FRAMES === frameIndex ? C.chevron : C.chevronDim;
       parts.push({
         plan: orientedPlan(x, y, tangent, [
-          [-2.1, -3],
-          [0, -3],
+          [-2.5, -2.9],
+          [-0.3, -2.9],
           [2.7, 0],
-          [0, 3],
-          [-2.1, 3],
-          [0.6, 0],
+          [-0.3, 2.9],
+          [-2.5, 2.9],
+          [0.5, 0],
         ]),
-        z0: z1,
-        z1,
+        z0: z1 + 0.1,
+        z1: z1 + 0.1,
         top: fill,
         side: fill,
       });
@@ -150,6 +164,13 @@ function core(lit: boolean): Part[] {
     { plan: deck, z0: 23, z1: 31, top: C.deck, side: C.deckSide },
     ...wallWindows(facing, 25, 28.5, 2, 3.8, deck, lit ? C.mint : C.mintDim),
     { plan: sail, z0: 31, z1: 38, top: C.sail, side: C.sailSide },
+    ...[-10, -6, -2].map((y) => ({
+      plan: orientedBox(-8, y, Math.PI / 6, 6, 1.3),
+      z0: 38,
+      z1: 38.3,
+      top: C.plinth,
+      side: C.plinthSide,
+    })),
     {
       plan: orientedBox(-7, -9, Math.PI / 6, 6, 5),
       z0: 38,
@@ -236,6 +257,7 @@ const FLOOR = {
   sail: C.sail,
   chevron: C.chevron,
   mint: C.mint,
+  rail: C.rail,
   warm,
   blue,
 };
@@ -257,16 +279,16 @@ const frames = Array.from({ length: FRAMES }, (_, k) => {
 const scale = DISPLAY_SCALE * DESTINATION_SCALE;
 mkdirSync(OUT, { recursive: true });
 const entries = frames.map((faces, k) => {
+  const artwork = placed(frame.halfWidth, frame.above, faces);
+  for (const { points } of artwork) {
+    if (points.some(([x, y]) => x < 4 || x > frame.width - 4 || y < 4 || y > frame.height - 4)) {
+      throw new Error("Eddy station exceeds its fixed frame");
+    }
+  }
   writeFileSync(
     `${OUT}station-${k}.svg`,
     svgText(
-      svgFile(
-        `Whirlpool station ${k}`,
-        frame.width,
-        frame.height,
-        placed(frame.halfWidth, frame.above, faces),
-        DESTINATION_SCALE,
-      ),
+      svgFile(`Whirlpool station ${k}`, frame.width, frame.height, artwork, DESTINATION_SCALE),
     ),
   );
   return {

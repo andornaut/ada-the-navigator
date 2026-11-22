@@ -37,7 +37,7 @@ and `displayHeight` equal the SVG's intrinsic size.
 
 | Asset              | Ids                                                                         | Frame px | Display          | Pivot           |
 | ------------------ | --------------------------------------------------------------------------- | -------- | ---------------- | --------------- |
-| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 176, 160 | 115.5 by 105     | `(0.5, 0.5125)` |
+| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 304, 240 | 199.5 by 157.5   | `(0.5, 0.5125)` |
 | Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 76.125 by 76.125 | `(0.5, 0.4375)` |
 | Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 60.9 by 76.125   | `(0.5, 0.6)`    |
 | Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 47.25 by 63      | `(0.5, 0.75)`   |
@@ -54,9 +54,11 @@ blink. Ada enters it by Use, so it has no `dock`. Entries carry `station`
 `settlers`.
 
 A raised blue concourse and coral and blue pressure modules sit on a
-126-unit cross-truss with paired dark-blue solar leaves at each end. An offset
-laboratory sits behind the right wing under an antenna gantry. Twin rails run
-to a sealed service spur on the near side.
+cross-truss with paired, ribbed dark-blue solar leaves at each end. An offset
+laboratory sits behind the right wing under an antenna gantry. The pressure
+complex extends to starboard of the station pivot, leaving clearance for the
+courier school to port. A swept service spur meets its sealed contact on the
+near side.
 
 `facing` is `fixed` and `frameMs` is 700. Frame A lights the mast, wingtip
 markers and service windows. Frame B dims them. Reduced motion shows frame A.

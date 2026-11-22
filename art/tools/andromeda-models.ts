@@ -182,7 +182,7 @@ export function station(lit: boolean): Part[][] {
       part(orbitalBox(5, 0, 2, 126), 5, 8, ...alloy),
     ],
     [
-      part(orbitalBox(8, 0, 86, 24), 0, 10, ...truss),
+      part(orbitalBox(5, 0, 76, 24), 0, 10, ...truss),
       part(orbitalBox(-15, 0, 44, 32), 9, 14, ...alloy),
     ],
     [
@@ -206,20 +206,33 @@ export function station(lit: boolean): Part[][] {
         part(orbitalBox(-4, across, 60, 3), 6, 9, ...alloy),
         ...solarLeaf(-21, across - side, 26, 20, 9),
         ...solarLeaf(17, across - side, 18, 20, 9),
+        part(orbitalBox(-21, across - side, 25, 1.2), 10.7, 11, ...ice),
+        part(orbitalBox(17, across - side, 17, 1.2), 10.7, 11, ...ice),
       ],
       [cube(...along(DOCK, 5, side * 61), 7, 3.8, lit ? blue : blueDim)],
     );
   }
 
+  groups.push([
+    ...[-5, 0, 5].map((offset) => part(orbitalBox(-19 + offset, 0, 1.6, 16), 36, 36.5, ...truss)),
+    part(orbitalBox(-24, 0, 4, 4), 36, 47, ...truss),
+    part(orbitalBox(-24, 0, 4, 17), 46, 49, ...alloy),
+    cube(...along(DOCK, -24, 0), 49, 4, lit ? blue : blueDim),
+  ]);
+  // The school and its pier keep their site to port. Grow the station mainly to starboard.
+  const [dx, dy] = along(DOCK, 0, -22);
+  const body = scaleGroups(1.44, groups).map((group) => group.map((part) => shift(dx, dy, part)));
+
+  // Expand the pressure complex while keeping the sealed approach at its existing contact.
   const boom = orientedPlan(0, 0, DOCK, [
-    [46, -12],
-    [55, -13],
+    [44, -28],
+    [58, -23],
     [76, -7],
     [85, -7],
     [85, 7],
     [76, 7],
-    [55, 13],
-    [46, 12],
+    [58, 2],
+    [44, -8],
   ]);
   const foot = orientedPlan(...along(DOCK, STATION_APPROACH, 0), DOCK, [
     [-7, -8],
@@ -231,18 +244,25 @@ export function station(lit: boolean): Part[][] {
     [-5, 13],
     [-7, 8],
   ]);
-  groups.push([
+  body.push([
     part(boom, 1, 9, ...truss),
-    part(orbitalBox(65, 0, 29, 6), 9, 11, ...ice),
+    part(
+      orientedPlan(0, 0, DOCK, [
+        [49, -23],
+        [65, -11],
+        [80, -2],
+        [79, 3],
+        [64, -5],
+        [49, -15],
+      ]),
+      9,
+      11,
+      ...ice,
+    ),
     part(foot, -2, 10, ...alloy),
     part(orbitalBox(STATION_APPROACH - 2, 0, 2, 10), 10, 11, lit ? warm : a.creamRear, a.creamRear),
   ]);
-  groups.push([
-    part(orbitalBox(-24, 0, 4, 4), 36, 47, ...truss),
-    part(orbitalBox(-24, 0, 4, 17), 46, 49, ...alloy),
-    cube(...along(DOCK, -24, 0), 49, 4, lit ? blue : blueDim),
-  ]);
-  return groups;
+  return body;
 }
 
 // ---------------------------------------------------------------- courier school

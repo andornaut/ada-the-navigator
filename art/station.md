@@ -16,22 +16,23 @@
 
 A blue-steel orbital station with two offset habitat arcs. The gaps show the
 structural ribs connecting the arcs to the hexagonal command core. Copper
-radiator pylons break the skyline and cyan panels mark their ends. A utility
-module sits outboard on a narrow truss.
+radiator pylons break the skyline and cyan panels mark their ends. Dark
+radiator runs and raised clamps sit along the habitat arcs. A utility module
+sits outboard on a narrow truss.
 
 The tapered service module faces the viewer. Its small windows sit in sealed
 plating. Ada enters by Use ([Destinations](destinations.md#use-callout)).
 
 ## Frames and manifest
 
-| Field     | Value                                                                                              |
-| --------- | -------------------------------------------------------------------------------------------------- |
-| Ids       | `station-a`, `station-b`                                                                           |
-| Frame     | 224 by 180 frame px, transparent                                                                   |
-| Display   | 147 by 118.125 logical px (`frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale)) |
-| Pivot     | `(0.5, 0.45)`: the hub base on the world plane                                                     |
-| `facing`  | `fixed`                                                                                            |
-| `frameMs` | 700                                                                                                |
+| Field     | Value                                                                                                 |
+| --------- | ----------------------------------------------------------------------------------------------------- |
+| Ids       | `station-a`, `station-b`                                                                              |
+| Frame     | 280 by 220 frame px, transparent                                                                      |
+| Display   | 183.75 by 144.375 logical px (`frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale)) |
+| Pivot     | `(0.5, 0.45)`: the hub base on the world plane                                                        |
+| `facing`  | `fixed`                                                                                               |
+| `frameMs` | 700                                                                                                   |
 
 - Idle blink alternates frame A and frame B, 700 ms each. A lights the mast
   beacon `#70ace8` and the service module windows. B shows the dim beacon

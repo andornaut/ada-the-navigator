@@ -13,7 +13,8 @@ const PATH = "/art/phantom/";
 const ROTATION_FRAMES = 8;
 const FRAME_MS = 150;
 // The world plane under the mantle stays at the original frame pivot.
-const frame = { halfWidth: 144, above: 91, width: 288, height: 112 };
+const frame = { halfWidth: 176, above: 117, width: 352, height: 144 };
+const MODEL_SCALE = 1.25;
 
 type Ramp = readonly [string, string, string, string, string];
 
@@ -198,10 +199,17 @@ function drawStation(rotation: number): Face[] {
     }),
   );
   const flanks = fins.map((fin) =>
-    loft(fin, 8, (band, facet, points) => [tinted(band === 2 && facet < 5 ? ARM : FIN, points)]),
+    loft(fin, 8, (band, facet, points) => {
+      const shell = tinted(band === 2 && facet < 5 ? ARM : FIN, points);
+      return facet === 2 && (band === 1 || band === 3)
+        ? [shell, inlay(points, "#9ddbcc")]
+        : [shell];
+    }),
   );
   const mantle = loft(profile, 12, (band, facet, points) => {
     const shell = tinted(facet === 1 || facet === 5 || band === 0 ? PLATE : MANTLE, points);
+    // Fixed warm windows sit between the moving mantle inlays.
+    if ((band === 2 || band === 4) && facet === 3) return [shell, ...habitationLights(points)];
     if (band < 1 || band > 5 || (facet !== 1 && facet !== 4 && facet !== 5)) return [shell];
     const color = WAVE[(rotation + band + 2 * facet) % ROTATION_FRAMES]!;
     return [shell, inlay(points, color)];
@@ -211,7 +219,12 @@ function drawStation(rotation: number): Face[] {
   return [...limbs[0]!, ...limbs[1]!, ...flanks[0]!, ...limbs[2]!, ...mantle, ...flanks[1]!];
 }
 
-const frames = Array.from({ length: ROTATION_FRAMES }, (_, k) => drawStation(k));
+const frames = Array.from({ length: ROTATION_FRAMES }, (_, k) =>
+  drawStation(k).map(({ color, points }) => ({
+    color,
+    points: points.map(([x, y, z]): Point => [x * MODEL_SCALE, y * MODEL_SCALE, z * MODEL_SCALE]),
+  })),
+);
 for (const { points } of frames.flat()) {
   for (const point of points) {
     const [x, y] = projectAt(frame.halfWidth, frame.above, point);
