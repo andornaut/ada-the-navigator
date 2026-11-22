@@ -401,8 +401,10 @@ it.each([true, false])(
     const restored: FocusNode[] = [];
     const bindings = {
       HTMLElement: FocusNode,
+      auditNavigation() {},
       backdropShown: null,
       base: {},
+      disposed: false,
       document,
       fill: () => [],
       focusTarget: (node: FocusNode) => {
@@ -415,6 +417,7 @@ it.each([true, false])(
         }
       },
       measuredRun: "run",
+      navigationButtons: [],
       next: new FocusNode(),
       panel: { hidden: false },
       place() {},

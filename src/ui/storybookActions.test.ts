@@ -6,6 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { SCROLL } from "../data/layout.ts";
 import { ControlState } from "../input/state.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
@@ -21,6 +22,11 @@ vi.mock("./storyArt.ts", async (original) => ({
 }));
 
 class Element extends EventTarget {
+  readonly tag: string;
+  constructor(tag = "div") {
+    super();
+    this.tag = tag;
+  }
   readonly children: Element[] = [];
   parentElement: Element | null = null;
   attached = false;
@@ -76,7 +82,17 @@ class Element extends EventTarget {
     },
   };
   matches(selector: string): boolean {
-    return selector === ":disabled" && this.disabled;
+    return selector.split(",").some((part) => {
+      const rule = part.trim();
+      return (
+        rule === this.tag ||
+        (rule === ":disabled" && this.disabled) ||
+        (rule === "[data-action]" && "action" in this.dataset)
+      );
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.all().filter((child) => child.matches(selector));
   }
   contains(node: unknown): boolean {
     return node === this || this.children.some((child) => child.contains(node));
@@ -160,7 +176,7 @@ const page: StoryPageView = {
   next: true,
   text: "Existing page facts",
 };
-function setup() {
+function setup(beforeMount?: (host: Element) => void) {
   const win = Object.assign(new EventTarget(), {
     HTMLElement: Element,
     Node: Element,
@@ -168,11 +184,15 @@ function setup() {
     performance: { now: () => Date.now() },
     setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay),
   });
+  let resolveFonts = () => {};
+  const fontsReady = new Promise<void>((resolve) => {
+    resolveFonts = resolve;
+  });
   const doc = Object.assign(new EventTarget(), {
     activeElement: null,
-    createElement: () => new Element(),
+    createElement: (tag: string) => new Element(tag),
     defaultView: win,
-    fonts: { ready: new Promise(() => {}) },
+    fonts: { ready: fontsReady },
   });
   vi.stubGlobal("document", doc);
   vi.stubGlobal("window", win);
@@ -195,8 +215,15 @@ function setup() {
     onSkip: vi.fn(),
     reducedMotion: () => true,
   };
-  const story = createStorybook(host as unknown as HTMLElement, options);
-  story.show(page);
+  let story: ReturnType<typeof createStorybook>;
+  try {
+    beforeMount?.(host);
+    story = createStorybook(host as unknown as HTMLElement, options);
+    story.show(page);
+  } catch (error) {
+    unregister();
+    throw error;
+  }
   const button = (action: string) => host.all().find((node) => node.dataset.action === action)!;
   const resolve = (element: Element) =>
     resolveAdaHoldAction(host as unknown as HTMLElement, element as unknown as EventTarget);
@@ -205,9 +232,11 @@ function setup() {
     deny: () => {
       allowed = false;
     },
+    fontsReady,
     host,
     options,
     resolve,
+    resolveFonts,
     story,
     unregister,
   };
@@ -215,7 +244,157 @@ function setup() {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
+it("rejects a missing Storybook navigation binding before mounting the hidden layer", () => {
+  const bind = actionBinding.bindAdaAction;
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
+    element.dataset.action === "story-previous"
+      ? { activate: () => false, dispose() {}, update() {} }
+      : bind(action, element),
+  );
+  const insertions: Element[] = [];
+  expect(() =>
+    setup((host) => {
+      const insert = host.insertBefore.bind(host);
+      vi.spyOn(host, "insertBefore").mockImplementation((node, before) => {
+        insertions.push(node);
+        insert(node, before);
+      });
+    }),
+  ).toThrow("no registered action binding");
+  expect(insertions).toEqual([]);
+});
+
+it("requires a live root when constructing the attached Storybook", () => {
+  let detached: Element | undefined;
+  expect(() =>
+    setup((host) => {
+      detached = host;
+      host.attached = false;
+    }),
+  ).toThrow("no live action root");
+  expect(detached?.children).toEqual([]);
+});
+
+it("does not audit a disposed Storybook when font readiness arrives late", async () => {
+  const f = setup();
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  f.story.dispose();
+  f.unregister();
+  f.resolveFonts();
+  await f.fontsReady;
+  expect(audit).not.toHaveBeenCalled();
+});
+
+it("rechecks a retained Storybook page after reattachment without a hidden render", () => {
+  const f = setup();
+  const outer = new Element();
+  outer.attached = true;
+  const unregister = registerAdaActionRoot(
+    { permits: () => true },
+    outer as unknown as HTMLElement,
+  );
+  const original = f.resolve(f.button("story-next"))!;
+  try {
+    // Moving the Controls subtree changes its owning ancestor without showing another page.
+    outer.append(f.host);
+    unregister();
+    expect(() => f.story.show(page)).toThrow("no live action root");
+    expect(f.host.children[0]?.hidden).toBe(true);
+    original.activate();
+    expect(f.options.onNext).not.toHaveBeenCalled();
+
+    f.host.remove();
+    f.host.attached = true;
+    f.story.show(page);
+    expect(f.host.children[0]?.hidden).toBe(false);
+    f.resolve(f.button("story-next"))!.activate();
+    expect(f.options.onNext).toHaveBeenCalledOnce();
+  } finally {
+    unregister();
+    f.story.dispose();
+    f.unregister();
+  }
+});
+
+it("rejects an unbound Storybook choice before attaching any new choice and releases its batch", () => {
+  const f = setup();
+  const choicePage = { ...page, choices: [{ label: "First" }, { label: "Second" }], next: false };
+  f.story.show({ ...choicePage, choices: [{ label: "Original" }] });
+  const previous = f.button("story-choice");
+  const old = f.resolve(previous)!;
+  const row = previous.parentElement!;
+  const attach = vi.spyOn(row, "insertBefore");
+  const bind = actionBinding.bindAdaAction;
+  const staged: HTMLElement[] = [];
+  const disposals: (() => void)[] = [];
+  const registrations = vi
+    .spyOn(actionBinding, "bindAdaAction")
+    .mockImplementation((action, element) => {
+      staged.push(element);
+      const binding =
+        element.dataset.choice === "1"
+          ? { activate: () => false, dispose() {}, update() {} }
+          : bind(action, element);
+      const dispose = vi.fn(binding.dispose);
+      disposals.push(dispose);
+      return { ...binding, dispose };
+    });
+  try {
+    expect(() => f.story.show(choicePage)).toThrow("no registered action binding");
+    expect(staged).toHaveLength(2);
+    expect(attach).not.toHaveBeenCalled();
+    expect(staged.every((element) => !element.isConnected && element.hidden)).toBe(true);
+    expect(f.host.children[0]?.hidden).toBe(true);
+    expect(row.children).toEqual([]);
+    expect(f.resolve(previous)).toBeNull();
+    old.activate();
+    expect(f.options.onChoose).not.toHaveBeenCalled();
+    registrations.mockRestore();
+    f.story.show(choicePage);
+    expect(row.children.map((node) => node.textContent)).toEqual(["First", "Second"]);
+    expect(document.activeElement).toBe(row.children[0]);
+  } finally {
+    f.story.dispose();
+    f.unregister();
+  }
+  for (const dispose of disposals) {
+    expect(dispose).toHaveBeenCalledOnce();
+  }
+});
+
+it("rejects an unbound overnight generation and keeps its surface semantic only while bound", () => {
+  const f = setup();
+  const background = f.host.all().find((node) => node.className === "ada-story-background")!;
+  const bind = actionBinding.bindAdaAction;
+  const registrations = vi
+    .spyOn(actionBinding, "bindAdaAction")
+    .mockImplementation((action, element) =>
+      element.dataset.action === "story-sleep"
+        ? { activate: () => false, dispose() {}, update() {} }
+        : bind(action, element),
+    );
+  const sleep = { ...page, canSkip: false, sleep: true };
+  try {
+    expect(background.dataset.action).toBeUndefined();
+    expect(() => f.story.show(sleep)).toThrow("no registered action binding");
+    expect(f.host.children[0]?.hidden).toBe(true);
+    expect(background.dataset.action).toBeUndefined();
+    expect(f.resolve(background)).toBeNull();
+    registrations.mockRestore();
+    f.story.show(sleep);
+    expect(background.dataset.action).toBe("story-sleep");
+    expect(f.resolve(background)).not.toBeNull();
+    f.story.show(page);
+    expect(background.dataset.action).toBeUndefined();
+    expect(f.resolve(background)).toBeNull();
+  } finally {
+    f.story.dispose();
+    f.unregister();
+  }
+});
+
 it("registers native navigation with default holds and current callbacks", () => {
   const f = setup();
   try {

@@ -6,7 +6,11 @@ import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts"
 import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { bedroomBackground, bedroomTop } from "./bedroom.ts";
 import {
   type StoryPanelContainer,
@@ -715,9 +719,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   );
   artWindow.append(background);
   layer.append(artWindow, panel, skip);
-  // The page goes first in the controls layer, so the HUD's settings button draws and presses
-  // above it. Its style follows the shared card styles it refines (src/ui/stylesheet.ts).
-  root.prepend(layer);
   let disposed = false;
   let preload: StoryImagePreload = preloadStoryImages([]);
   // Bumped as each page shows, so a holodisk start that waited on its decodes plays only if its
@@ -743,9 +744,33 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     bindStoryAction(previous, () => options.onPrevious()),
     bindStoryAction(next, () => options.onNext()),
   ];
+  try {
+    assertAdaActionMetadata(layer);
+    // Keep the page first in the controls layer so Settings draws and presses above it.
+    root.prepend(layer);
+    assertAdaActionBindings(layer);
+  } catch (error) {
+    for (const action of navigationActions) {
+      action.dispose();
+    }
+    panelArrangement.dispose();
+    layer.remove();
+    throw error;
+  }
   let choiceActions: ReturnType<typeof bindAdaAction>[] = [];
+  const forgetChoices = () => {
+    for (const action of choiceActions) {
+      action.dispose();
+    }
+    choiceActions = [];
+  };
   // The model owns the overnight skip delay; each displayed page owns its action identity.
   let sleepAction: ReturnType<typeof bindAdaAction> | undefined;
+  const forgetSleep = () => {
+    sleepAction?.dispose();
+    sleepAction = undefined;
+    delete background.dataset.action;
+  };
   let art: StoryArt = {
     backgrounds: {},
     bases: {},
@@ -824,19 +849,35 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       delete face.dataset.speaker;
     }
     panel.setAttribute("aria-label", page.heading ?? page.speaker ?? page.text);
-    for (const action of choiceActions) {
-      action.dispose();
+    const actions: typeof choiceActions = [];
+    let buttons: HTMLButtonElement[];
+    try {
+      buttons = (page.choices ?? []).map(({ label }, index) => {
+        const button = createButton(label);
+        button.classList.add("ada-story-button");
+        button.dataset.action = "story-choice";
+        button.dataset.choice = String(index);
+        button.hidden = true;
+        actions.push(bindStoryAction(button, () => options.onChoose(index)));
+        assertAdaActionMetadata(button);
+        return button;
+      });
+      forgetChoices();
+      choices.replaceChildren(...buttons);
+      if (buttons.length > 0) {
+        assertAdaActionBindings(choices);
+      }
+    } catch (error) {
+      for (const action of actions) {
+        action.dispose();
+      }
+      rejectPage();
+      throw error;
     }
-    choiceActions = [];
-    const buttons = (page.choices ?? []).map(({ label }, index) => {
-      const button = createButton(label);
-      button.classList.add("ada-story-button");
-      button.dataset.action = "story-choice";
-      button.dataset.choice = String(index);
-      choiceActions.push(bindStoryAction(button, () => options.onChoose(index)));
-      return button;
-    });
-    choices.replaceChildren(...buttons);
+    choiceActions = actions;
+    for (const button of buttons) {
+      button.hidden = false;
+    }
     choices.hidden = buttons.length === 0;
     previous.hidden = !page.canGoBack;
     previous.textContent = page.previousAction ?? labels.previous;
@@ -1182,17 +1223,49 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       play(steps, done, index + 1);
     }, step.fadeMs + step.holdMs);
   };
+  const rejectPage = () => {
+    layer.hidden = true;
+    panel.hidden = true;
+    skip.hidden = true;
+    forgetSleep();
+    forgetChoices();
+    choices.replaceChildren();
+    stop();
+    stopNight();
+    stopPortrait();
+    shown = "";
+    lastPage = null;
+    rendered = null;
+    backdropShown = null;
+  };
+  const auditNavigation = (buttons: readonly HTMLButtonElement[]) => {
+    try {
+      for (const button of buttons) {
+        assertAdaActionBindings(button);
+      }
+    } catch (error) {
+      rejectPage();
+      throw error;
+    }
+  };
+  const navigationButtons = [skip, previous, next];
   const render = (
     page: StoryPageView | null,
     backdrop: Background | null,
     focusFirst: boolean,
     exit: StoryOverlay | null = null,
   ) => {
+    if (page) {
+      auditNavigation(navigationButtons);
+    }
     const returningToRoom = rendered?.previousAction !== undefined && page?.room;
     rendered = page;
-    sleepAction?.dispose();
-    sleepAction = page?.sleep
-      ? bindAdaAction(
+    forgetSleep();
+    if (page?.sleep) {
+      // This non-button surface is semantic only for the current sleep generation.
+      background.dataset.action = "story-sleep";
+      try {
+        sleepAction = bindAdaAction(
           {
             click: {
               availability: () =>
@@ -1205,8 +1278,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
             slopPx: () => SCROLL.dragThreshold * readViewUnit(background),
           },
           background,
-        )
-      : undefined;
+        );
+        assertAdaActionBindings(background);
+      } catch (error) {
+        rejectPage();
+        throw error;
+      }
+    }
     layer.classList.toggle("ada-story-half", Boolean(page && !page.sleep));
     aboardShip.hidden = !page?.aboard;
     aboardShip.style.height = page?.aboard && !page.sleep ? "50%" : "";
@@ -1245,12 +1323,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   // A new view size or font re-measures the run and re-lays the page, keeping focus.
   const relayout = () => {
+    if (disposed) {
+      return;
+    }
     if (!rendered) {
       if (backdropShown) {
         place(base, backdropShown, false);
       }
       return;
     }
+    auditNavigation(navigationButtons);
     const focused = document.activeElement;
     placePanelContent();
     measuredRun = "";
@@ -1272,13 +1354,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const show = (page: StoryPageView | null, backdrop: Background | null = null): void => {
     const signature = JSON.stringify([page && { ...page, run: page.run?.id }, backdrop]);
     if (signature === shown) {
+      if (page) {
+        // The retained layer might have moved while this page stayed the same.
+        auditNavigation([skip]);
+      }
       return;
     }
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
     showing += 1;
-    sleepAction?.dispose();
-    sleepAction = undefined;
+    forgetSleep();
     const from = lastPage;
     const exit = from?.holodisk && !page?.holodisk ? holodiskFrame() : null;
     stop();
@@ -1334,12 +1419,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   return {
     dispose(): void {
       disposed = true;
-      sleepAction?.dispose();
-      sleepAction = undefined;
-      for (const action of [...navigationActions, ...choiceActions]) {
+      forgetSleep();
+      forgetChoices();
+      for (const action of navigationActions) {
         action.dispose();
       }
-      choiceActions = [];
       stop();
       stopNight();
       stopPortrait();
