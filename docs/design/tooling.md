@@ -46,4 +46,4 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0331 | Pin delivery-kit 7.0.0 and coordination-kit 3.0.0                         | [ada-0331.md](../work/ada-0331.md) |
 | ada-0332 | Retire generated Ada thrust and Classic idle SVGs                         | [ada-0332.md](../work/ada-0332.md) |
 | ada-0344 | Use the workspace memory limit for browser and preview containers         | [ada-0344.md](../work/ada-0344.md) |
-| ada-0348 | Discover deployed updates after reconnect and resume                     | [ada-0348.md](../work/ada-0348.md) |
+| ada-0348 | Discover deployed updates after reconnect and resume                      | [ada-0348.md](../work/ada-0348.md) |
