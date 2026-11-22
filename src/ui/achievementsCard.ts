@@ -273,63 +273,64 @@ export function createAchievementsCard(
   footer.append(pager, actions);
   card.body.append(list, footer);
   modal.append(card.frame);
-  root.append(modal);
-  const mounted = mountLayout<AchievementsLayoutSchema>(
-    {
-      components: {
-        achievements: {
-          create(initial) {
-            const update = (data: AchievementsLayoutSchema["achievements"]["props"]) => {
-              pager.hidden = data.pagerHidden;
-              actions.style.gridColumn = data.pagerHidden ? "1 / -1" : "3";
-              actions.style.justifySelf = data.pagerHidden ? "center" : "end";
-            };
-            update(initial);
-            return { dispose() {}, element: card.frame, slots: { entries: list, pager }, update };
+  const mount = () =>
+    mountLayout<AchievementsLayoutSchema>(
+      {
+        components: {
+          achievements: {
+            create(initial) {
+              const update = (data: AchievementsLayoutSchema["achievements"]["props"]) => {
+                pager.hidden = data.pagerHidden;
+                actions.style.gridColumn = data.pagerHidden ? "1 / -1" : "3";
+                actions.style.justifySelf = data.pagerHidden ? "center" : "end";
+              };
+              update(initial);
+              return { dispose() {}, element: card.frame, slots: { entries: list, pager }, update };
+            },
+            slots: ["entries", "pager"],
           },
-          slots: ["entries", "pager"],
-        },
-        entry: {
-          create(initial) {
-            const node = entryNode(initial.labels, initial.entry);
-            return {
-              dispose() {},
-              element: node,
-              slots: {},
-              update: (data) => {
-                entryNode(data.labels, data.entry, node);
-              },
-            };
+          entry: {
+            create(initial) {
+              const node = entryNode(initial.labels, initial.entry);
+              return {
+                dispose() {},
+                element: node,
+                slots: {},
+                update: (data) => {
+                  entryNode(data.labels, data.entry, node);
+                },
+              };
+            },
+            slots: [],
           },
-          slots: [],
-        },
-        pageCount: {
-          create(initial) {
-            const update = (data: AchievementsLayoutSchema["pageCount"]["props"]) => {
-              pageCount.textContent = data.text;
-            };
-            update(initial);
-            return { dispose() {}, element: pageCount, slots: {}, update };
+          pageCount: {
+            create(initial) {
+              const update = (data: AchievementsLayoutSchema["pageCount"]["props"]) => {
+                pageCount.textContent = data.text;
+              };
+              update(initial);
+              return { dispose() {}, element: pageCount, slots: {}, update };
+            },
+            slots: [],
           },
-          slots: [],
-        },
-        pagerAction: {
-          create(initial) {
-            const button = initial.actionId === "achievements-previous" ? previous : next;
-            const update = (data: AchievementsLayoutSchema["pagerAction"]["props"]) => {
-              button.textContent = data.label;
-              button.hidden = data.hidden;
-            };
-            update(initial);
-            return { dispose() {}, element: button, slots: {}, update };
+          pagerAction: {
+            create(initial) {
+              const button = initial.actionId === "achievements-previous" ? previous : next;
+              const update = (data: AchievementsLayoutSchema["pagerAction"]["props"]) => {
+                button.textContent = data.label;
+                button.hidden = data.hidden;
+              };
+              update(initial);
+              return { dispose() {}, element: button, slots: {}, update };
+            },
+            slots: [],
           },
-          slots: [],
         },
+        host: modal,
       },
-      host: modal,
-    },
-    initialTree,
-  );
+      initialTree,
+    );
+  let mounted: ReturnType<typeof mount> | undefined;
   let entries: readonly AchievementEntry[] = [];
   let page = 0;
   let perPage = ACHIEVEMENTS_PER_PAGE;
@@ -345,6 +346,9 @@ export function createAchievementsCard(
     perPage = columns * achievementRows((modal.clientHeight - down) / unit);
   };
   const render = () => {
+    if (!mounted) {
+      return;
+    }
     const focused = document.activeElement;
     if (!modal.hidden) {
       measure();
@@ -381,7 +385,6 @@ export function createAchievementsCard(
       }
     }
   };
-  window.addEventListener(VIEW_SCALE_EVENT, render);
   const setOpen = (open: boolean) => {
     if (open === !modal.hidden) {
       return;
@@ -398,49 +401,50 @@ export function createAchievementsCard(
     }
     options.onOpenChange(open);
   };
-  register(previous, () => {
-    if (previous.hidden) {
-      return;
-    }
-    page = Math.max(0, page - 1);
-    render();
-  });
-  register(next, () => {
-    if (next.hidden) {
-      return;
-    }
-    page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
-    render();
-  });
   const close = () => setOpen(false);
-  register(card.close, close);
-  register(dismiss, close);
-  try {
-    audit();
-  } catch (error) {
+  const dispose = () => {
+    disposed = true;
+    leavePressView?.();
+    leavePressView = undefined;
     for (const binding of bindings) {
       binding.dispose();
     }
     window.removeEventListener(VIEW_SCALE_EVENT, render);
-    mounted.dispose();
+    mounted?.dispose();
     card.dispose();
     modal.remove();
+  };
+  try {
+    register(previous, () => {
+      if (previous.hidden) {
+        return;
+      }
+      page = Math.max(0, page - 1);
+      render();
+    });
+    register(next, () => {
+      if (next.hidden) {
+        return;
+      }
+      page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
+      render();
+    });
+    register(card.close, close);
+    register(dismiss, close);
+    mounted = mount();
+    assertAdaActionMetadata(modal);
+    root.append(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
+    }
+    window.addEventListener(VIEW_SCALE_EVENT, render);
+  } catch (error) {
+    dispose();
     throw error;
   }
   return {
-    close: () => setOpen(false),
-    dispose(): void {
-      disposed = true;
-      leavePressView?.();
-      leavePressView = undefined;
-      for (const binding of bindings) {
-        binding.dispose();
-      }
-      window.removeEventListener(VIEW_SCALE_EVENT, render);
-      mounted.dispose();
-      card.dispose();
-      modal.remove();
-    },
+    close,
+    dispose,
     isOpen: () => !modal.hidden,
     open(dismissal?: { readonly intent: "back" | "close"; readonly label: string }): void {
       if (!modal.hidden) {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 
@@ -190,9 +191,16 @@ const entries = (count: number): AchievementEntry[] =>
     name: `entry:${index}`,
     unlocked: false,
   }));
-function setup() {
+function setup(onPublish?: (modal: Element) => void) {
   const root = fixtureActionRoot(new Element());
   mountedRoots.add(root);
+  if (onPublish) {
+    const append = root.append.bind(root);
+    vi.spyOn(root, "append").mockImplementation((modal) => {
+      append(modal);
+      onPublish(modal);
+    });
+  }
   const onOpenChange = vi.fn();
   const card = createAchievementsCard(root as unknown as HTMLElement, {
     labels: {
@@ -225,6 +233,29 @@ function setup() {
 }
 
 describe("Achievements page actions", () => {
+  it("publishes the complete action bindings on the original four buttons", () => {
+    const published = vi.fn((modal: Element) => {
+      const subtree = modal as unknown as HTMLElement;
+      assertAdaActionMetadata(subtree);
+      assertAdaActionBindings(subtree);
+      expect(modal.hidden).toBe(true);
+      return modal.querySelectorAll("button");
+    });
+    const { card, close, dismiss, next, previous } = setup(published);
+    expect(published).toHaveBeenCalledTimes(1);
+    const controls = published.mock.results[0]!.value;
+    expect(controls.map((button: Element) => button.dataset.action).sort()).toEqual([
+      "achievements-close-footer",
+      "achievements-next",
+      "achievements-previous",
+      "close-achievements",
+    ]);
+    for (const button of [previous, next, close, dismiss]) {
+      expect(controls.some((item: Element) => item === button)).toBe(true);
+    }
+    card.dispose();
+  });
+
   it("hides Previous on the first page and ignores its unavailable action", () => {
     const { card, count, next, previous } = setup();
     expect(count.textContent).toBe("1/2");
@@ -359,6 +390,31 @@ it("rejects unregistered hidden disabled controls in completed Achievements fact
   expect(root.children).toEqual([]);
   expect(active).toBeNull();
   expect(changed).not.toHaveBeenCalled();
+});
+
+it("releases every binding when the publication root audit fails", () => {
+  const root = new Element();
+  mountedRoots.add(root);
+  const append = root.append.bind(root);
+  let controls: Element[] = [];
+  vi.spyOn(root, "append").mockImplementation((modal) => {
+    append(modal);
+    controls = modal.querySelectorAll("button");
+  });
+  expect(() =>
+    createAchievementsCard(root as unknown as HTMLElement, {
+      labels: auditLabels,
+      onOpenChange: vi.fn(),
+    }),
+  ).toThrow("no live action root");
+  expect(controls).toHaveLength(4);
+  for (const button of controls) {
+    expect(button.listeners.get("click")).toEqual([]);
+    expect(() => assertAdaActionMetadata(button as unknown as HTMLElement)).toThrow(
+      "no registered action binding",
+    );
+  }
+  expect(root.children).toEqual([]);
 });
 
 it("audits completed Achievements entry reconciliation before refitting or moving focus", () => {
