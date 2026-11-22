@@ -707,7 +707,6 @@ export function buildScene(scene: UiContext): void {
     label: label({ ammo: "ammo", equipment: "equipment", weapons: "shopWeapons" }[category]),
     offers: rows.map(stationOfferRow),
   });
-  const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
   const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
   // The conversation box never pauses play; a tap dismisses it.
   const finishConversation = (): void =>
