@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAST, castSheet } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
@@ -98,7 +99,14 @@ class Element {
       : (this.parent?.closest(selector) ?? null);
   }
   matches(selector: string): boolean {
-    return selector === ":disabled" && this.disabled;
+    return selector.split(",").some((part) => {
+      const rule = part.trim();
+      return (
+        rule === this.tag ||
+        (rule === ":disabled" && this.disabled) ||
+        (rule === "[data-action]" && "action" in this.dataset)
+      );
+    });
   }
   readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
   readonly style: Record<string, string> = {};
@@ -141,7 +149,7 @@ class Element {
     (document as unknown as { activeElement: Element | null }).activeElement = this;
   }
   querySelectorAll(selector: string): Element[] {
-    return selector.includes("button") ? this.all().filter((node) => node.tag === "button") : [];
+    return this.all().filter((node) => node.matches(selector));
   }
   querySelector(selector: string): Element | null {
     return (
@@ -740,6 +748,107 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
     actionRoot.dispose();
   }
 });
+
+it.each(["dialogue-skip", "conversation-close"])(
+  "rejects missing compact Interaction metadata for %s before mount",
+  (id) => {
+    setup();
+    const parent = fixtureActionRoot(connectedParent());
+    const attach = vi.spyOn(parent, "insertBefore");
+    const bind = actionBinding.bindAdaAction;
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, button) =>
+      button.dataset.action === id
+        ? { activate: () => false, dispose() {}, update() {} }
+        : bind(action, button),
+    );
+    expect(() =>
+      createInteractionCard(parent as unknown as HTMLElement, {
+        choose: vi.fn(),
+        close: vi.fn(),
+        skip: vi.fn(),
+      }),
+    ).toThrow("no registered action binding");
+    expect(attach).not.toHaveBeenCalled();
+    expect(parent.children).toEqual([]);
+  },
+);
+
+it.each(["open", "replace"])(
+  "rejects an unbound material Interaction choice before attachment on %s",
+  (phase) => {
+    setup();
+    const parent = fixtureActionRoot(connectedParent());
+    const origin = new Element("button");
+    parent.append(origin);
+    origin.focus();
+    const options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+    const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
+    const prior = {
+      choices: [{ id: "start", label: "Working choice" }],
+      context: "test-decision",
+      text: "Existing",
+      title: "Rivet",
+    };
+    if (phase === "replace") {
+      interaction.show(1, prior);
+    }
+    const modal = parent.children[1]!;
+    const row = modal.querySelector(".ada-story-choices")!;
+    const old = row.children[0];
+    const attach = vi.spyOn(row, "insertBefore");
+    const focus = vi.spyOn(Element.prototype, "focus");
+    const bind = actionBinding.bindAdaAction;
+    const staged: HTMLElement[] = [];
+    const disposals: (() => void)[] = [];
+    const registrations = vi
+      .spyOn(actionBinding, "bindAdaAction")
+      .mockImplementation((action, button) => {
+        staged.push(button);
+        const binding =
+          button.textContent === "Decline"
+            ? { activate: () => false, dispose() {}, update() {} }
+            : bind(action, button);
+        const dispose = vi.fn(binding.dispose);
+        disposals.push(dispose);
+        return { ...binding, dispose };
+      });
+    const panel = {
+      choices: [
+        { id: "accept", label: "Accept" },
+        { id: "decline", label: "Decline" },
+      ],
+      context: "test-decision",
+      text: "Decision",
+      title: "Rivet",
+    };
+    try {
+      expect(() => interaction.show(1, panel)).toThrow("no registered action binding");
+      expect(staged).toHaveLength(2);
+      expect(attach).not.toHaveBeenCalled();
+      expect(staged.every((button) => !button.isConnected && button.hidden)).toBe(true);
+      expect(focus.mock.contexts.some((element) => staged.includes(element as HTMLElement))).toBe(
+        false,
+      );
+      expect(interaction.isOpen()).toBe(false);
+      expect(document.activeElement).toBe(origin);
+      expect(row.children).toEqual([]);
+      expect(currentView(parent as unknown as HTMLElement)).toBe(parent);
+      old?.click();
+      expect(options.choose).not.toHaveBeenCalled();
+      expect(options.close).not.toHaveBeenCalled();
+      expect(options.skip).not.toHaveBeenCalled();
+      registrations.mockRestore();
+      interaction.show(1, panel);
+      expect(row.children.map((button) => button.textContent)).toEqual(["Accept", "Decline"]);
+      expect(document.activeElement).toBe(row.children[0]);
+    } finally {
+      interaction.dispose();
+    }
+    for (const dispose of disposals) {
+      expect(dispose).toHaveBeenCalledOnce();
+    }
+  },
+);
 
 it("registers native material choices with default hold dispatch, live callbacks and redraw cleanup", () => {
   setup();

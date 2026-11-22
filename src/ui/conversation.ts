@@ -6,7 +6,11 @@ import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { type Mood, type Speaker } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -354,8 +358,6 @@ export function createInteractionCard(
   });
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
-  parent.append(modal);
-  const layer = createModalLayer(modal);
   let disposed = false;
   const bindAction = (button: HTMLButtonElement, run: () => void) =>
     bindAdaAction(
@@ -377,76 +379,118 @@ export function createInteractionCard(
   let returnFocus: HTMLElement | null = null;
   const state = new InteractionConversation();
   let signature = "";
+  let checkedAttached = false;
+  const hide = () => {
+    modal.hidden = true;
+    leaveView?.();
+    leaveView = undefined;
+    returnFocus = null;
+    state.reset();
+    signature = "";
+  };
+  const disposePageActions = () => {
+    for (const action of actions) {
+      action.dispose();
+    }
+    actions = [];
+  };
+  const rejectPage = () => {
+    hide();
+    disposePageActions();
+    card.choices.replaceChildren();
+    card.controls.replaceChildren();
+  };
+  const isPrimary = (button: Element) => button.className.split(" ").includes("ada-primary");
   // The controls row's primary button, if it has one.
   const controlsPrimary = (): HTMLButtonElement | null =>
-    ([...card.controls.children] as HTMLButtonElement[]).find((node) =>
-      node.className.split(" ").includes("ada-primary"),
-    ) ?? null;
+    ([...card.controls.children] as HTMLButtonElement[]).find(isPrimary) ?? null;
   // Focus starts on the first choice, else the controls' primary, else their first.
   const defaultFocus = (): HTMLButtonElement | null =>
     card.choices.querySelector<HTMLButtonElement>("button") ??
     controlsPrimary() ??
     card.controls.querySelector<HTMLButtonElement>("button");
-  const draw = (): void => {
-    const line = state.line;
-    card.showLine(line?.speaker, line?.text ?? "");
-    for (const action of actions) {
-      action.dispose();
-    }
-    actions = [];
-    card.choices.replaceChildren();
-    card.controls.replaceChildren();
+  const draw = (reveal = false): void => {
+    const nextActions: typeof actions = [];
+    const choices: HTMLButtonElement[] = [];
+    const controls: HTMLButtonElement[] = [];
     const add = (label: string, callback: () => void, choice = false, primary = false) => {
       const button = createButton(label, primary ? "primary" : "secondary");
       button.classList.add("ada-story-button");
-      actions.push(
+      button.hidden = true;
+      nextActions.push(
         bindAction(button, () => {
           callback();
           draw();
         }),
       );
-      if (choice) {
-        card.choices.append(button);
-      } else {
-        // The controls share a row with the primary rightmost: a secondary goes before it.
-        card.controls.insertBefore(button, primary ? null : controlsPrimary());
-      }
+      assertAdaActionMetadata(button);
+      // The controls share a row with the primary rightmost: a secondary goes before it.
+      const row = choice ? choices : controls;
+      const before = choice || primary ? -1 : row.findIndex(isPrimary);
+      row.splice(before === -1 ? row.length : before, 0, button);
     };
-    for (const [index, topic] of state.topics.entries()) {
-      add(topic.label, () => state.topic(index), true);
-    }
-    if (!state.atOutcome) {
-      add(
-        CONTENT.labels.continue ?? "",
-        () => {
-          const action = state.advance();
-          if (action) {
-            options.choose(action);
-          }
-        },
-        false,
-        true,
-      );
-    } else {
-      for (const choice of state.choices) {
+    try {
+      for (const [index, topic] of state.topics.entries()) {
+        add(topic.label, () => state.topic(index), true);
+      }
+      if (!state.atOutcome) {
         add(
-          choice.label,
+          CONTENT.labels.continue ?? "",
           () => {
-            if (choice.refused) {
-              refuse(card.choices, false);
-            } else {
-              options.choose(choice.id);
+            const action = state.advance();
+            if (action) {
+              options.choose(action);
             }
           },
-          choice.id !== "continue",
-          state.choices.length === 1,
+          false,
+          true,
         );
+      } else {
+        for (const choice of state.choices) {
+          add(
+            choice.label,
+            () => {
+              if (choice.refused) {
+                refuse(card.choices, false);
+              } else {
+                options.choose(choice.id);
+              }
+            },
+            choice.id !== "continue",
+            state.choices.length === 1,
+          );
+        }
       }
+      if (state.hasTopics && !state.choosingTopic && !state.atChoice) {
+        add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
+      }
+      disposePageActions();
+      card.choices.replaceChildren(...choices);
+      card.controls.replaceChildren(...controls);
+      if (modal.isConnected) {
+        for (const button of [...choices, ...controls]) {
+          assertAdaActionBindings(button);
+        }
+      } else {
+        checkedAttached = false;
+      }
+    } catch (error) {
+      for (const action of nextActions) {
+        action.dispose();
+      }
+      rejectPage();
+      throw error;
     }
-    if (state.hasTopics && !state.choosingTopic && !state.atChoice) {
-      add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
+    actions = nextActions;
+    for (const button of [...choices, ...controls]) {
+      button.hidden = false;
     }
+    const line = state.line;
+    card.showLine(line?.speaker, line?.text ?? "");
     card.skip.hidden = state.atChoice;
+    if (reveal) {
+      modal.hidden = false;
+    }
     card.fit();
     defaultFocus()?.focus({ preventScroll: true });
   };
@@ -467,14 +511,28 @@ export function createInteractionCard(
     draw();
   };
   const closeAction = bindAction(card.close, close);
+  try {
+    assertAdaActionMetadata(modal);
+    parent.append(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
+      checkedAttached = true;
+    }
+  } catch (error) {
+    skipAction.dispose();
+    closeAction.dispose();
+    card.dispose();
+    modal.remove();
+    throw error;
+  }
+  const layer = createModalLayer(modal);
   return {
     back: close,
     dispose() {
       disposed = true;
-      for (const action of [skipAction, closeAction, ...actions]) {
-        action.dispose();
-      }
-      actions = [];
+      skipAction.dispose();
+      closeAction.dispose();
+      disposePageActions();
       returnFocus = null;
       layer.dispose();
       leaveView = undefined;
@@ -495,14 +553,18 @@ export function createInteractionCard(
             ? document.activeElement
             : null;
       }
-      modal.hidden = panel === null;
       if (!panel) {
-        leaveView?.();
-        leaveView = undefined;
-        returnFocus = null;
-        state.reset();
-        signature = "";
+        hide();
         return;
+      }
+      if (!checkedAttached && modal.isConnected) {
+        try {
+          assertAdaActionBindings(modal);
+          checkedAttached = true;
+        } catch (error) {
+          rejectPage();
+          throw error;
+        }
       }
       const copy = interactionCopy(context, panel);
       state.show(copy, panel);
@@ -511,7 +573,9 @@ export function createInteractionCard(
         signature = next;
         card.title.textContent = "";
         card.frame.setAttribute("aria-label", state.party);
-        draw();
+        draw(true);
+      } else {
+        modal.hidden = false;
       }
       if (!card.frame.isConnected) {
         return;
