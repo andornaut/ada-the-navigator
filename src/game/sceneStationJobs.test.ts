@@ -39,7 +39,7 @@ if (!jobs) {
 const code = ts.transpileModule(`(${jobs.initializer.getText(source)})`, {
   compilerOptions: { target: ts.ScriptTarget.ES2023 },
 }).outputText;
-const label = (key: keyof typeof CONTENT.labels) => CONTENT.labels[key];
+const label = (key: string) => CONTENT.labels[key] ?? "";
 function board(rows: readonly JobRow[], galaxy?: GalaxyNumber): readonly StationJob[] {
   const project = runInNewContext(code, {
     STATION_JOB_BRIEFS,
