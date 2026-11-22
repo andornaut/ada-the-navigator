@@ -141,6 +141,9 @@ export const STATION_STYLE = `
 .ada-controls .ada-card-body[data-shop-stock]{
   overflow:hidden
 }
+.ada-controls .ada-card-body[data-shop-stock] h3{
+  color:${TEXT_TOKENS.label}
+}
 .ada-controls .ada-card-body > .ada-station-panes{
   flex:1;
   min-height:0;
