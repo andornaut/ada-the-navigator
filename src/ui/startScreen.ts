@@ -6,7 +6,7 @@ import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { createButton, FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 import { TITLE_SHIP_STYLE, titleShipView } from "./titleShipView.ts";
@@ -78,6 +78,14 @@ ${TITLE_SHIP_STYLE}
   width:${units(actions.width)};
   height:${units(actions.height)};
   box-sizing:border-box
+}
+
+.${START_SCREEN_CLASS} .ada-start-actions > .ada-button:focus-visible{${FOCUS_STYLE}
+}
+@media (forced-colors: active){
+  .${START_SCREEN_CLASS} .ada-start-actions > .ada-button:focus-visible{
+    outline-color:Highlight
+  }
 }
 
 ${(Object.keys(actions.left) as StartAction[])
