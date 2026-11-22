@@ -46,7 +46,6 @@ function render(enabled: boolean, covered: boolean, coarse = true, map = false, 
     inCurrentView: () => foreground,
     modalOpen: () => covered,
     navigation,
-    navigationCovered: () => covered && !map,
     noticePlaces: () => ({ x: 0, y: 0 }),
     notices,
     pausable: !map,
@@ -106,10 +105,10 @@ describe("actual controls paint under modal covers", () => {
     expect(view.target.hidden).toBe(true);
     expect(view.button.hidden).toBe(true);
   });
-  it("retains the existing top-level Map Menu entry and its availability", () => {
+  it("retains the Menu pose behind the full-screen Map and blocks its action", () => {
     const view = render(true, true, true, true);
     expect(view.navigation.setMode).toHaveBeenCalledWith("menu");
-    expect(view.pauseButton).toEqual({ hidden: false, inert: false });
+    expect(view.pauseButton).toEqual({ hidden: false, inert: true });
     expect(view.status.setShown).toHaveBeenCalledWith(false);
     expect(view.weapons.setShown).toHaveBeenCalledWith(false);
     expect(view.target.hidden).toBe(true);

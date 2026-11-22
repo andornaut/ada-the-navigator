@@ -459,10 +459,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const modalOpen = (): boolean => navigationCovered() || pause.isOpen();
   const syncNavigationEntry = () => {
     navigation.setMode(pausable && !pause.mapOpen() ? "pause" : "menu");
-    const mapOnly =
-      pause.mapOpen() && !navigationCovered() && inCurrentView(settings.root, pauseButton);
     pauseButton.hidden = false;
-    pauseButton.inert = !inCurrentView(settings.root, pauseButton) || (modalOpen() && !mapOnly);
+    pauseButton.inert = modalOpen() || !inCurrentView(settings.root, pauseButton);
     if (exitButton) {
       exitButton.inert = modalOpen();
     }

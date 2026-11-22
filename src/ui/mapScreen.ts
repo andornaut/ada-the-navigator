@@ -86,7 +86,7 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -337,9 +337,11 @@ export function panelHeight(reason: boolean, lines = 2): number {
 }
 
 export const MAP_SCREEN_STYLE = `
+/* The full-screen Map covers the HUD. Its Quests and Galaxies dialogs stack above it. */
 .ada-controls .ada-map-screen{
   position:absolute;
   inset:0;
+  z-index:${MODAL_LAYER - 2};
   overflow:hidden;
   pointer-events:auto;
   touch-action:none;
