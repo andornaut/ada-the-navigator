@@ -792,7 +792,6 @@ function constructedStation(
       about: "About",
       action: "Buy",
       kind: "confirm" as const,
-      left: "90 Stardust remaining after purchase.",
       price: 10,
       title: "Item",
     })),
@@ -1056,9 +1055,15 @@ it("keeps inert measurement rows unregistered and registers only completed real 
   f.activate(row);
   expect(f.request).toHaveBeenCalledExactlyOnceWith("item-0");
   const detail = f.native.get("confirm-cancel-x")!.body;
-  expect(detail.querySelectorAll(".ada-confirm-left").map((line) => line.textContent)).toEqual([
-    "90 Stardust remaining after purchase.",
-  ]);
+  expect(detail.querySelectorAll(".ada-confirm-left")).toEqual([]);
+  expect(detail.querySelector(".ada-confirm-price")?.textContent).toBe("10");
+  f.activate(f.action("confirm-cancel"));
+  expect(f.buy).not.toHaveBeenCalled();
+  const retry = f.parent.querySelector('[data-item="item-0"]')!;
+  expect(f.doc.activeElement).toBe(retry);
+  f.activate(retry);
+  expect(detail.querySelectorAll(".ada-confirm-left")).toEqual([]);
+  expect(detail.querySelector(".ada-confirm-price")?.textContent).toBe("10");
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("item-0");
 });
@@ -1312,7 +1317,6 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
     about: "Restore the orchard.",
     action: f.labels.jobAccept,
     kind: "confirm",
-    left: "90 Stardust remaining after contribution.",
     price: 10,
     stillNeeded: "40 Stardust still needed.",
     title: "Orchard",

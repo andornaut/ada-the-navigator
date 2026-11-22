@@ -802,7 +802,6 @@ export function buildScene(scene: UiContext): void {
               about: label(`projectAbout${view.copy}`),
               action: label("jobAccept"),
               kind: "confirm",
-              left: fill(label("confirmLeft"), { amount: amount(donation.left) }),
               price: donation.amount,
               ...(donation.stillNeeded > 0
                 ? {
@@ -821,7 +820,6 @@ export function buildScene(scene: UiContext): void {
             about: itemAbout(ECONOMY, labels, item(key)),
             action: label("confirmBuy"),
             kind: "confirm",
-            left: fill(label("confirmLeft"), { amount: amount(request.left) }),
             price: request.price,
             title: fill(label("confirmTitle"), { name: itemName(ECONOMY, labels, item(key)) }),
           };

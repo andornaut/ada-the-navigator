@@ -161,7 +161,6 @@ export type StationRequest =
       /** The primary action's label: Buy, or Accept for a project. */
       readonly action: string;
       readonly kind: "confirm";
-      readonly left: string;
       readonly price: number;
       /** A donation leaving part unpaid: "{amount} still needed after". */
       readonly stillNeeded?: string;
@@ -1136,9 +1135,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       parts.push(prose("ada-confirm-about", request.about));
     }
     parts.push(price);
-    if (catalog !== "projects") {
-      parts.push(prose("ada-confirm-left", request.left));
-    }
     if (request.stillNeeded) {
       parts.push(prose("ada-confirm-left", request.stillNeeded));
     }
