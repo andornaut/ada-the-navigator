@@ -73,7 +73,7 @@ describe("discovery cache art", () => {
   it("reads the hidden frame and the 1000 ms lit loop from Art's manifest", () => {
     expect(cache.frames).toEqual({ hidden: 0, litA: 1, litB: 2 });
     expect(cache.loopMs).toBe(1000);
-    expect(cache.asset.displayWidth).toBe(21);
+    expect(cache.asset.displayWidth).toBe(31);
   });
 
   it("stays hidden before Ada approaches, then alternates litA and litB every 500 ms", () => {
