@@ -155,15 +155,16 @@ space nor a gap.
 - Paged and tabbed cards measure every page or tab and keep the largest width
   and height, so paging never resizes the card.
 
-Current sizing in `src/ui/modal.ts` still gives `.ada-actions` equal
-`1fr` columns and gives `.ada-wrap > .ada-button` `flex: 1 1 auto`, so
-wrapped buttons can grow. `.ada-stack` stretches. A selector for one visible
-direct child button or button presentation without `hidden` centres
-matching rows and footers.
-`actionsWidth` in `src/ui/layout/contentCard.ts` measures a row by
-multiplying the widest padded label by the button count and adding gaps.
-Equal-track rows, growing wrapped buttons and widest-label row measurement
-are pending migration. The Start screen has its own fixed-width treatment.
+In `src/ui/modal.ts`, ordinary `.ada-actions` rows use
+`minmax(0,max-content)` tracks and `.ada-wrap > .ada-button` uses
+`flex: 0 1 auto` so buttons can shrink without growing to share spare
+width. Vertical stacks stretch. A selector for one visible direct button
+or button presentation centres matching rows and footers.
+
+`actionsWidth` in `src/ui/layout/contentCard.ts` is used by tests and
+the layout dump tool. It adds each action's padded width, with the standard
+minimum, and the intervening gaps for a row. For a stack it returns the
+largest padded width. The runtime rows size through CSS.
 
 ## Controls and targets
 
@@ -870,8 +871,11 @@ token above; strings are Gameplay's.
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                      | None         |
 
 The Paused card shows no objective or job lines. Its grid actions sort
-alphabetically by label: Map and Quests, then Settings and Ship. Back to title
-sits full width directly above the full-width primary Resume. Map is hidden
+alphabetically by label: Map and Quests, then Settings and Ship. Pause's two
+equal columns place the commands, and each button fits its own content. An
+unpaired grid action keeps its intrinsic width and centres across both
+columns. The final stack shares the full width, with Back to title directly
+above primary Resume. Map is hidden
 when its canonical permission is false, and opens the local map. The Map
 and Resume buttons have a 44 logical px face over a 4 px lip. At viewport
 widths of 720 CSS px or less or heights of 360 CSS px or less, their labels
@@ -1092,24 +1096,23 @@ installed app window that can close the app, Exit shows at the top right at
 Nothing moves with the saved state except the action row's contents.
 The Start row follows the [action sizing rule](#groups). Keep Start centred
 when it is the sole action, and keep Continue to the right of Restart.
-Current `START_BUTTON_WIDTH` in `src/data/layout.ts` supplies 192 to
-`START_SCREEN.actions.width`, which `src/ui/startScreen.ts` applies to each
-title button. The fixed width and its x coordinates below record current
-geometry pending content-based sizing.
+`src/ui/startScreen.ts` centres the row on the game area. Its buttons
+have intrinsic widths. `START_SCREEN.actions.width` caps each at 192
+logical px, and the row cap is two such widths plus `BUTTON_GAP`.
 
 Every part except the field and the nav discs is placed in play-view px, from
 `playView(view)`'s top-left (`x0`, `y0`), so it stays centred on the game area
 at every aspect.
 
-| Token             | Value                                                   | Rule                                                                                                                | Constant                                    |
-| ----------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Field             | `title-field`, 960x660, top-left (-120, -120)           | Under everything; the space background fills beyond it                                                              | `titleScreen.field.at`, `title-screen.json` |
-| Ship              | 280 square frame centred on (378, 84)                   | The selected paint's `ship-52` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                 | `START_SCREEN.ship`, `startScreen.ts`       |
-| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)          | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                | `START_SCREEN.wordmark`, `startScreen.ts`   |
-| Action row        | Top 264, current buttons 192 wide, `TEXT_BUTTON.height` | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                      | `START_SCREEN.actions`, `startScreen.ts`    |
-| Start             | x 264 (`360 - 192 / 2`)                                 | Primary, `ui-button-primary`; first run only                                                                        | `START_SCREEN.actions`                      |
-| Restart, Continue | x 160 and 368 (`360 - 192 - 8`, `360 + 8`)              | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `BUTTON_GAP` apart | `START_SCREEN.actions`                      |
-| Note              | One `TYPE.body` line box, top 320, centred on x 360     | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                             | `START_SCREEN.note`, `startScreen.ts`       |
+| Token             | Value                                               | Rule                                                                                                | Constant                                    |
+| ----------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Field             | `title-field`, 960x660, top-left (-120, -120)       | Under everything; the space background fills beyond it                                              | `titleScreen.field.at`, `title-screen.json` |
+| Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-52` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                 | `START_SCREEN.ship`, `startScreen.ts`       |
+| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                | `START_SCREEN.wordmark`, `startScreen.ts`   |
+| Action row        | Top 264, `TEXT_BUTTON.height`                       | Centred, 14 below the wordmark (Chibi's 15 from logo to actions). Chibi's row is at 268.            | `START_SCREEN.actions`, `startScreen.ts`    |
+| Start             | Content width, centred on the game area             | Primary, `ui-button-primary`. First run only.                                                       | `START_SCREEN.actions`                      |
+| Restart, Continue | Content widths, `BUTTON_GAP` apart                  | With saved progress, Restart secondary (`ui-button`) on the left and Continue primary on the right. | `START_SCREEN.actions`                      |
+| Note              | One `TYPE.body` line box, top 320, centred on x 360 | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                             | `START_SCREEN.note`, `startScreen.ts`       |
 
 - Labels and actions are Gameplay's: Start, Continue, Restart and the
   `deferred` note; the wordmark's accessible name is the `home` string.
@@ -1124,8 +1127,12 @@ at every aspect.
   1280x720 it spans view y -98 to 562, so it covers the game area and the
   bands above and below it.
 
-Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
-the logical view is 779.08x360 and `x0` is 29.
+Native Start measurements at 720x360 with left and right insets of 43,
+bottom 19 and top 0 recorded face widths of 73.02 for Start, 94.03 for
+Restart and 110 for Continue, each 48 logical px high.
+
+Anchor rects in logical px. Insets are left and right 43, bottom 19, top 0;
+at 844x390 the logical view is 779.08x360 and `x0` is 29.
 
 | Part             | 720x360                      | 720x360, insets               | 844x390                       | 844x390, insets               |
 | ---------------- | ---------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
@@ -1135,9 +1142,6 @@ the logical view is 779.08x360 and `x0` is 29.
 | Ship frame       | 238 to 518, -56 to 224       | 238 to 518, -56 to 224        | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
 | Ship ink         | 226.3 to 484, 48 to 141      | 226.3 to 484, 48 to 141       | 255.3 to 513, 48 to 141       | 255.3 to 513, 48 to 141       |
 | Wordmark         | 225 to 495, 148 to 250       | 225 to 495, 148 to 250        | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
-| Start            | 264 to 456, 264 to 312       | 264 to 456, 264 to 312        | 293 to 485, 264 to 312        | 293 to 485, 264 to 312        |
-| Restart          | 160 to 352, 264 to 312       | 160 to 352, 264 to 312        | 189 to 381, 264 to 312        | 189 to 381, 264 to 312        |
-| Continue         | 368 to 560, 264 to 312       | 368 to 560, 264 to 312        | 397 to 589, 264 to 312        | 397 to 589, 264 to 312        |
 | Note line box    | Centre 360, 320 to 340       | Centre 360, 320 to 340        | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
 | Menu             | 2.25 to 54.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 | 31.25 to 83.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 |
 | Exit, when shown | 667.5 to 715.5, 4.5 to 52.5  | 636.5 to 684.5, 4.5 to 52.5   | 697.58 to 745.58, 4.5 to 52.5 | 695.58 to 743.58, 4.5 to 52.5 |
@@ -1154,7 +1158,6 @@ Clearances, smallest at 720x360 with insets:
 | Wordmark to the action row        | `264 - 250`     | 14                                        |
 | Action row to the note            | `320 - 312`     | 8, `SPACING.gap`                          |
 | Note to the available rect bottom | `341 - 340`     | 1 (4 without a bottom inset)              |
-| Restart to the available rect     | `160 - 43`      | 117                                       |
 
 - Keep the 16 gap and the 14 above the row. The current 4 px button focus
   outset fits inside these gaps pending migration to the
@@ -1637,7 +1640,7 @@ identify pending runtime changes.
 | Pause draws `pause.svg` with smooth sampling                                                                                                                                                                                 | `ui-pause` PNG, nearest neighbour                                                                                             |
 | Settings draws `settings.svg` as a mask with smooth sampling                                                                                                                                                                 | `icon-settings-nav` PNG mask                                                                                                  |
 | Start screen Menu in the pause button's place opens the Menu card; Exit, only in an installed app window that can close, is a `HUD_BUTTON` at `hudButtonTarget(0)`; the action row keeps only Start, or Restart and Continue | A secondary button at the end of the start card's action stack                                                                |
-| Start screen: ship, wordmark and an action row over the title field, Start and Continue primary (`START_SCREEN`). Current buttons are 192 wide pending sizing migration                                                      | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
+| Start screen: ship, wordmark and an action row over the title field, Start and Continue primary (`START_SCREEN`). Buttons fit their own labels                                                                               | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
 | Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                                                                                                 | Idle in every state                                                                                                           |
 | Cards scroll one scroll group with the header and close fixed                                                                                                                                                                | The whole card scrolls                                                                                                        |
 | Prose never widens a card                                                                                                                                                                                                    | 36em prose cap                                                                                                                |
@@ -1730,9 +1733,9 @@ Tests:
   pause press area (33.25 to 85.75, top 2.25) and the Exit target, when shown,
   is `hudButtonTarget(0)` (636.5 to 684.5, top 4.5), 141.5 from the wordmark
   and 152.5 from the ship's ink. Keep the row top at 264 and the note at
-  320 to 340 at 720x360 and 844x390, with and without insets. Use the
-  [Start screen](#start-screen) table as the current fixed-width baseline
-  for the title buttons, then verify the content-sized row and centred Start.
+  320 to 340 at 720x360 and 844x390, with and without insets.
+  Check the centred, content-sized row against the
+  [Start screen](#start-screen) sizing rule and measure Start on its own.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The route panel keeps one size for every galaxy and state. At 720x360 with
