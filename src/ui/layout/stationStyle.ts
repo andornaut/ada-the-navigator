@@ -97,16 +97,41 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-footer [data-action=undock]{
   margin-left:auto
 }
-/* Paint the selected destination in the existing button box and keep the native press skin. */
-.ada-controls .ada-station-footer .ada-button[aria-current=page]:where(:not(:active,:disabled,[aria-disabled=true])){
-  color:#f3dbad;
-  border-color:transparent;
-  border-image-source:none;
-  background:linear-gradient(to top,#e0c08a ${units(TEXT_BUTTON.lipHeight)},#514b68 0) border-box
+/* Tint the face inside the shared border slices so both normal and pressed edges keep their paint. */
+.ada-controls .ada-station-footer .ada-button:is([aria-current=page],:focus-visible):where(:not(:disabled,[aria-disabled=true])){
+  --ada-station-footer-face:#514b68;
+  --ada-station-footer-ink:${TEXT_TOKENS.label};
+  color:var(--ada-station-footer-ink);
+  background-image:linear-gradient(var(--ada-station-footer-face),var(--ada-station-footer-face)),none;
+  background-clip:padding-box,border-box;
+  border-image-slice:${TILE_SLICE}
+}
+.ada-controls .ada-station-footer .ada-button:focus-visible{
+  --ada-station-footer-face:${TEXT_TOKENS.label};
+  --ada-station-footer-ink:${TEXT_TOKENS.buttonLabel};
+  outline:none;
+  box-shadow:none
+}
+.ada-controls .ada-station-footer .ada-button[aria-current=page]:focus-visible{
+  --ada-station-footer-face:#5f5980;
+  --ada-station-footer-ink:${TEXT_TOKENS.title}
 }
 @media (forced-colors:active){
+  .ada-controls .ada-station-footer .ada-button:is([aria-current=page],:focus-visible):where(:not(:disabled,[aria-disabled=true])){
+    forced-color-adjust:none;
+    background-color:ButtonFace
+  }
   .ada-controls .ada-station-footer .ada-button[aria-current=page]{
-    border-bottom-color:Highlight
+    --ada-station-footer-face:color-mix(in srgb,ButtonFace 75%,ButtonText);
+    --ada-station-footer-ink:ButtonText
+  }
+  .ada-controls .ada-station-footer .ada-button:focus-visible{
+    --ada-station-footer-face:Highlight;
+    --ada-station-footer-ink:HighlightText
+  }
+  .ada-controls .ada-station-footer .ada-button[aria-current=page]:focus-visible{
+    --ada-station-footer-face:color-mix(in srgb,ButtonFace 35%,ButtonText);
+    --ada-station-footer-ink:ButtonFace
   }
 }
 .ada-controls .ada-card-body > .ada-station-panes{
