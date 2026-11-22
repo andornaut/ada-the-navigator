@@ -1,12 +1,12 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { SCROLL } from "../data/layout.ts";
-import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
+import { assertAdaActionBindings } from "./actionBinding.ts";
 import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
 import { BUTTON_GAP, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { TEXT_TOKENS } from "./modal.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 import { TITLE_SHIP_STYLE, titleShipView } from "./titleShipView.ts";
@@ -147,22 +147,22 @@ export function createStartScreen(
       components: {
         action: {
           create(initial) {
-            const button = createButton(initial.label, initial.role);
+            const action = createStandardTextAction(parent, initial.label, {
+              availability: (button) =>
+                button?.disabled
+                  ? { kind: "disabled" }
+                  : button?.hidden
+                    ? { kind: "omitted" }
+                    : { kind: "available" },
+              current: () => !disposed,
+              run: () => callbacks.get(initial.action)!(),
+              // Keep the Kit focus fill above the existing nine-slice face.
+              separateFace: true,
+            });
+            const button = action.element;
             button.dataset.action = initial.action;
-            const action = bindAdaAction(
-              {
-                click: {
-                  availability: () =>
-                    button.disabled || button.closest("[hidden], [inert]")
-                      ? { kind: "omitted" }
-                      : { kind: "available" },
-                  run: () => callbacks.get(initial.action)!(),
-                },
-                current: () => !disposed && button.isConnected,
-                slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-              },
-              button,
-            );
+            button.classList.toggle("ada-primary", initial.role === "primary");
+            setButtonRole(initial.role, button);
             buttons.push(button);
             return {
               dispose: action.dispose,

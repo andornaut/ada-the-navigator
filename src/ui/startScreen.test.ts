@@ -62,12 +62,19 @@ class Element {
         .filter((item) => item !== name)
         .join(" ");
     }),
+    toggle: (name: string, enabled: boolean) => {
+      if (enabled) {
+        this.classList.add(name);
+      } else {
+        this.classList.remove(name);
+      }
+    },
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
   disabled = false;
   parent: Element | undefined;
-  readonly listeners = new Map<string, (() => void)[]>();
+  readonly listeners = new Map<string, ((event: Event) => void)[]>();
   readonly properties = new Map<string, string>();
   readonly style = {
     getPropertyValue: (name: string) => this.properties.get(name) ?? "",
@@ -78,11 +85,17 @@ class Element {
     },
     setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
   };
-  textContent = "";
-  addEventListener(type: string, listener: () => void) {
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.text = value;
+  }
+  addEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
-  removeEventListener(type: string, listener: () => void) {
+  removeEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(
       type,
       (this.listeners.get(type) ?? []).filter((item) => item !== listener),
@@ -96,7 +109,8 @@ class Element {
     }
   }
   click() {
-    this.listeners.get("click")?.forEach((listener) => listener());
+    const event = new Event("click", { cancelable: true });
+    this.listeners.get("click")?.forEach((listener) => listener(event));
   }
   closest(): Element | null {
     return this.hidden ? this : (this.parent?.closest() ?? null);
@@ -120,6 +134,7 @@ class Element {
     return selector.split(",").some((part) => {
       const token = part.trim();
       return (
+        (token === ":disabled" && this.disabled) ||
         (token === "button" && this.tag === "button") ||
         (token === '[role="button"]' && this.attributes.get("role") === "button") ||
         (token === "[data-action]" && this.dataset.action !== undefined)
@@ -137,8 +152,19 @@ class Element {
     }
     this.parent = undefined;
   }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
   removeAttribute(name: string) {
     this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, enabled: boolean) {
+    if (enabled) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
+    return enabled;
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
@@ -277,12 +303,22 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   expect(root.children[2]!.attributes.get("role")).toBe("status");
   const buttons = view.buttons as unknown as Element[];
   expect(root.children[1]!.children).toEqual(buttons);
-  expect(
-    buttons.map(({ className, dataset, textContent }) => [dataset.action, textContent, className]),
-  ).toEqual([
-    ["restart", "New", "ada-button"],
-    ["continue", "Continue", "ada-button ada-primary"],
+  expect(buttons.map(({ dataset, textContent }) => [dataset.action, textContent])).toEqual([
+    ["restart", "New"],
+    ["continue", "Continue"],
   ]);
+  expect(buttons.map((button) => button.getAttribute("data-ui-button-role"))).toEqual([
+    "secondary",
+    "primary",
+  ]);
+  for (const button of buttons) {
+    const classes = button.className.split(" ");
+    expect(classes).toContain("ada-button");
+    expect(classes).toContain("ui-standard-button");
+    expect(classes.includes("ada-primary")).toBe(button.dataset.action === "continue");
+    expect(button.firstElementChild?.className).toContain("ui-button-face");
+    expect(button.listeners.get("click")).toHaveLength(1);
+  }
   buttons[0]!.click();
   buttons[1]!.click();
   expect(restart).toHaveBeenCalledTimes(1);
@@ -304,7 +340,12 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   expect(held.available()).toBe(false);
   buttons[1]!.click();
   expect(proceed).toHaveBeenCalledTimes(2);
+  expect(buttons[1]!.disabled).toBe(true);
   buttons[1]!.disabled = false;
+  root.hidden = true;
+  buttons[1]!.click();
+  expect(proceed).toHaveBeenCalledTimes(2);
+  root.hidden = false;
   view.dispose();
   view.dispose();
   held.activate();
@@ -315,6 +356,7 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   buttons[1]!.click();
   expect(proceed).toHaveBeenCalledTimes(2);
   expect(host.children).toEqual([existing]);
+  expect(buttons[1]!.listeners.get("click")).toHaveLength(0);
 });
 
 it.each(["hidden", "disabled"] as const)(

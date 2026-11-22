@@ -19,6 +19,21 @@ class Element extends EventTarget {
   id = "";
   readonly attributes = new Map<string, string>();
   className = "";
+  readonly classList = {
+    add: (name: string) => {
+      this.className = [...new Set([...this.className.split(" "), name])].filter(Boolean).join(" ");
+    },
+    toggle: (name: string, enabled: boolean) => {
+      if (enabled) {
+        this.classList.add(name);
+      } else {
+        this.className = this.className
+          .split(" ")
+          .filter((token) => token !== name)
+          .join(" ");
+      }
+    },
+  };
   dataset: Record<string, string> = {};
   hidden = false;
   inert = false;
@@ -102,7 +117,13 @@ class Element extends EventTarget {
       node,
     );
   }
-  textContent = "";
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.text = value;
+  }
   type = "";
   setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);

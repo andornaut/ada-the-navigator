@@ -4,10 +4,6 @@ import {
   invokeControl,
 } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
-import {
-  type ButtonView,
-  createButton as createKitButton,
-} from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { bindButtonAvailability } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutComponentPorts,
@@ -16,11 +12,9 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import {
-  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-  resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { presentAdaButtonContent } from "./buttonPresentation.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
@@ -33,6 +27,7 @@ import {
   setFooterAction,
 } from "./modal.ts";
 import { createProse } from "./prose.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface AdaCardProps<A extends string> {
   /** Footer-only confirmations omit the empty content slot without reserving a gap. */
@@ -89,38 +84,13 @@ function standardButton<A extends string>(
   }
   let current = initial;
   let disposed = false;
-  const kit: ButtonView = createKitButton(root.ownerDocument, {
-    appearance: {
-      className: "ada-button",
-      contentClassName: "ui-control-label",
-      layout: "caller",
-    },
-    content: { kind: "text", label: initial.label },
-    getAction: () => {
-      const action = resolveAdaHoldAction(root, kit.element);
-      return action?.available() ? action : null;
-    },
-    getState: () => ({ availability: context.availability(current.actionId) }),
-    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  const kit = createStandardTextAction(root, initial.label, {
+    availability: () => context.availability(current.actionId),
+    current: () => !disposed,
+    run: () => dispatch(current.actionId),
   });
   const button = kit.element;
-  const presentation = presentAdaButtonContent(
-    button,
-    (label) => kit.setContent({ kind: "text", label }),
-    initial,
-  );
-  const registered = bindAdaAction(
-    {
-      click: {
-        availability: () => context.availability(current.actionId),
-        run: () => dispatch(current.actionId),
-      },
-      current: () => !disposed,
-      nativeClickOwner: "factory",
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-    },
-    button,
-  );
+  const presentation = presentAdaButtonContent(button, kit.setLabel, initial);
   const update = (next: AdaButtonProps<A>) => {
     current = next;
     button.dataset.action = next.actionId;
@@ -130,7 +100,6 @@ function standardButton<A extends string>(
   };
   const dispose = () => {
     disposed = true;
-    registered.dispose();
     kit.dispose();
     presentation.dispose();
   };
