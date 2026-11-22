@@ -3,10 +3,12 @@
 // `{craft}-jets.json`. Art's layout holds every hardpoint and weapon mount position; the catalog
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
-// Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir>]
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { format, resolveConfig } from "prettier";
 
 import {
@@ -50,8 +52,10 @@ import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
+  GALAXIES,
   mergeEntries,
   mergeSidecars,
+  readManifest,
   type SidecarKind,
   sidecarsIn,
   storedAt,
@@ -1909,6 +1913,108 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
+function isCapitalPart(entry: Entry): boolean {
+  return (
+    entry.archetype === "capital" && (entry.hardpoint !== undefined || entry.top !== undefined)
+  );
+}
+
+// Pack the canonical standalone roots after SVG formatting, as in the enemy hull sheets.
+// The raw-sized cells leave room for each root's smaller, intrinsic display dimensions.
+function capitalPartSheets(
+  dir: string,
+  files: Map<string, string>,
+  entries: readonly Entry[],
+  selecting: boolean,
+) {
+  const core: Entry[] = readManifest("core").assets;
+  const current = core.filter(isCapitalPart);
+  const currentById = new Map(current.map((entry) => [entry.id, entry]));
+  const packed = current.filter(({ svgSheet }) => svgSheet === true).length;
+  if (!selecting && packed === 0) return undefined;
+
+  const selected = entries.filter(isCapitalPart);
+  const groups = new Map<string, Entry[]>();
+  for (const entry of selected) {
+    const { id } = entry;
+    const group = id.slice("enemy-".length, id.lastIndexOf("-"));
+    const members = groups.get(group) ?? [];
+    members.push(entry);
+    groups.set(group, members);
+  }
+  if (
+    groups.size !== 29 ||
+    selected.length !== 464 ||
+    current.length !== selected.length ||
+    (packed !== 0 && packed !== selected.length)
+  ) {
+    throw new Error(
+      "The core capital must own 29 complete part groups, all standalone or all sheets",
+    );
+  }
+
+  const sheets = new Map<string, string>();
+  const replacements = new Map<string, Entry>();
+  const retired = new Set<string>();
+  const ownedPaths = new Set<string>();
+  for (const [group, members] of groups) {
+    const size = Number(members[0]!.width);
+    const wide = size * 4;
+    const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
+      { rectangles: members.map(() => ({ width: size, height: size })), value: group },
+    ])?.pages[0];
+    if (!layout || members.length !== ENEMY_HEADINGS)
+      throw new Error(`Incomplete capital part group: ${group}`);
+    const sheet = `${group}-sheet.svg`;
+    const path = `/art/enemies/${sheet}`;
+    ownedPaths.add(path);
+    const roots = members.map((row, index) => {
+      const id = `enemy-${group}-${index}`;
+      const file = `${group}-${index}.svg`;
+      const standalone = files.get(file);
+      if (
+        row.id !== id ||
+        (row.aimIndex ?? row.directionIndex) !== index ||
+        row.width !== size ||
+        row.height !== size ||
+        !standalone?.startsWith("<svg ")
+      ) {
+        throw new Error(`Invalid capital part frame: ${id}`);
+      }
+      const oldPath = `/art/enemies/${file}`;
+      const currentRow = currentById.get(id);
+      if (
+        !currentRow ||
+        currentRow.path !== (packed ? path : oldPath) ||
+        (!packed && !isDeepStrictEqual(currentRow, row))
+      ) {
+        throw new Error(`The core manifest does not own the expected frame: ${id}`);
+      }
+      const target = dir + file;
+      if ((!packed || existsSync(target)) && readFileSync(target, "utf8") !== standalone) {
+        throw new Error(`The capital producer does not match the standalone frame: ${file}`);
+      }
+      retired.add(file);
+      ownedPaths.add(oldPath);
+      replacements.set(id, { ...row, path, svgSheet: true });
+      const { x, y } = layout.placed[0]!.at[index]!;
+      return `<svg id="${id}" x="${x}" y="${y}" ${standalone.trimEnd().slice("<svg ".length)}`;
+    });
+    sheets.set(
+      sheet,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${layout.height}" viewBox="0 0 ${wide} ${layout.height}">${roots.join("")}</svg>\n`,
+    );
+  }
+  const otherRows: Entry[] = [
+    ...core.filter(({ id }) => !replacements.has(id)),
+    ...GALAXIES.flatMap((galaxy) => readManifest(galaxy).assets),
+  ];
+  const referrer = otherRows.find(({ path }) => typeof path === "string" && ownedPaths.has(path));
+  if (referrer)
+    throw new Error(`Capital part packing would retire or replace art used by ${referrer.id}`);
+  return { sheets, replacements, retired };
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const flag = (name: string) => {
@@ -1918,13 +2024,21 @@ async function main() {
   const root = fileURLToPath(new URL("../../", import.meta.url));
   const offsetsPath = flag("--offsets") ?? `${root}tools/enemy-hardpoints.json`;
   const out = flag("--out");
+  const selecting = args.includes("--capital-part-sheets");
+  if (selecting && out !== undefined)
+    throw new Error("--capital-part-sheets requires the core manifest");
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
-  const results = drawn.map((craft) => build(craft, place(offsets, craft)));
-  const layoutOf = (name: string) =>
-    results[drawn.findIndex((craft) => craft.name === name)]!.files.get(`${name}-hardpoints.json`)!;
-  checkGadget(layoutOf("capital"), layoutOf("gadget"));
+  const craftsToBuild = selecting ? [capital] : drawn;
+  const results = craftsToBuild.map((craft) => build(craft, place(offsets, craft)));
+  if (!selecting) {
+    const layoutOf = (name: string) =>
+      results[drawn.findIndex((craft) => craft.name === name)]!.files.get(
+        `${name}-hardpoints.json`,
+      )!;
+    checkGadget(layoutOf("capital"), layoutOf("gadget"));
+  }
   mkdirSync(dir, { recursive: true });
   const files = new Map<string, string>();
   const entries: Entry[] = [];
@@ -1943,14 +2057,29 @@ async function main() {
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
-    const paths = writeOnce("/art/enemies/", new Map(), files);
-    mergeEntries(
-      "core",
-      owns,
-      entries.map((entry) => storedAt(paths, entry)),
-    );
-    mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
+    const pack = capitalPartSheets(dir, files, entries, selecting);
+    if (selecting && pack) {
+      const paths = writeOnce("/art/enemies/", new Map(), pack.sheets);
+      mergeEntries(
+        "core",
+        (id) => pack.replacements.has(id),
+        [...pack.replacements.values()].map((entry) => storedAt(paths, entry)),
+      );
+    } else {
+      if (pack) {
+        for (const file of pack.retired) files.delete(file);
+        for (const [file, text] of pack.sheets) files.set(file, text);
+      }
+      // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
+      const paths = writeOnce("/art/enemies/", new Map(), files);
+      mergeEntries(
+        "core",
+        owns,
+        entries.map((entry) => storedAt(paths, pack?.replacements.get(entry.id) ?? entry)),
+      );
+      mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
+    }
+    for (const file of pack?.retired ?? []) rmSync(dir + file, { force: true });
   } else {
     for (const [file, text] of files) {
       writeFileSync(`${dir}${file}`, text);
