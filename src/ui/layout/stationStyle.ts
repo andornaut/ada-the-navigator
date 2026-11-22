@@ -1,4 +1,4 @@
-import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
+import { BUTTON_FACE, FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
@@ -111,20 +111,20 @@ export const STATION_STYLE = `
 }
 /* The current page has a flat face and a single stripe along its bottom edge. */
 .ada-controls .ada-station-footer .ada-button[aria-current=page]:where(:not(:disabled,[aria-disabled=true])){
-  --ada-station-footer-face:#514b68;
+  --ada-station-footer-face:${BUTTON_FACE.disabled};
   --ada-station-footer-ink:${TEXT_TOKENS.label};
-  --ada-station-footer-underline:#bfa06f;
+  --ada-station-footer-underline:${BUTTON_FACE.primary};
+  --ada-station-footer-underline-height:${units(6)};
   color:var(--ada-station-footer-ink);
   border-color:transparent;
   border-image-source:none;
   background:linear-gradient(var(--ada-station-footer-underline),var(--ada-station-footer-underline))
-    left bottom / 100% ${units(TEXT_BUTTON.lipHeight)} no-repeat var(--ada-station-footer-face);
+    left bottom / 100% var(--ada-station-footer-underline-height) no-repeat var(--ada-station-footer-face);
   background-origin:border-box
 }
 .ada-controls .ada-station-footer .ada-button[aria-current=page]:focus-visible{
-  --ada-station-footer-face:${TEXT_TOKENS.label};
-  --ada-station-footer-ink:${TEXT_TOKENS.buttonLabel};
-  --ada-station-footer-underline:#8a7148
+  --ada-station-footer-underline:${TEXT_TOKENS.label};
+  --ada-station-footer-underline-height:${units(8)}
 }
 @media (forced-colors:active){
   .ada-controls .ada-station-footer .ada-button:is(

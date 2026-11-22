@@ -34,6 +34,11 @@ import { PAUSE_ART } from "./pause.ts";
 // offer, the cheats card, Paused and Travel share these styles and builders. Every size is a
 // logical px through src/ui/layout.
 
+export const BUTTON_FACE = {
+  disabled: "#2f2d3d",
+  primary: "#bfa06f",
+} as const;
+
 // Text colours on the card face #3b3850.
 export const TEXT_TOKENS = {
   buttonLabel: "#181425",
@@ -357,8 +362,8 @@ ${UI_SCOPE} .ada-button:where(${SPECIAL_BUTTON_SHAPES}){
   font:${font(TYPE.label)}
 }
 ${UI_SCOPE} .ada-button.ada-primary{
-  background:#bfa06f;
-  border-color:#bfa06f #bfa06f #8a7148;
+  background:${BUTTON_FACE.primary};
+  border-color:${BUTTON_FACE.primary} ${BUTTON_FACE.primary} #8a7148;
   border-image-source:var(--ui-button-primary-normal)
 }
 ${UI_SCOPE} .ada-button:active:not(:disabled){
@@ -371,8 +376,8 @@ ${UI_SCOPE} .ada-button.ada-primary:active:not(:disabled){
 ${UI_SCOPE} .ada-button:disabled{
   padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
-  background:#2f2d3d;
-  border-color:#2f2d3d;
+  background:${BUTTON_FACE.disabled};
+  border-color:${BUTTON_FACE.disabled};
   border-image-source:var(--ui-button-disabled);
   cursor:default
 }
@@ -387,8 +392,8 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"],
 ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
   padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
-  background:#2f2d3d;
-  border-color:#2f2d3d;
+  background:${BUTTON_FACE.disabled};
+  border-color:${BUTTON_FACE.disabled};
   border-image-source:var(--ui-button-disabled);
   cursor:default
 }
