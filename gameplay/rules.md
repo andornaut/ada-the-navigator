@@ -784,6 +784,14 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   disabled heavy; when several are in range, the nearest wins, and a destination
   on a blocked route is excluded. Other ranges are their own values: tow attach
   120, and station discovery uses its own 320.
+- Back returns one step to the screen that opened the current page. A page
+  opened from Menu or Pause returns to that same menu with its state and pause
+  status intact. Close dismisses one dialog to the view underneath it. Resume
+  leaves Pause and returns to play. Where dismissal is available, the existing
+  close X, Escape and backdrop go to the same one-layer destination as the
+  visible dismissal action. Restore focus to its opener or a logical control
+  in the restored view. Keep mandatory choices, Cancel and confirmation or
+  save guards, and block underlying gameplay input while the menu remains open.
 - Pause is visible at the top left during gameplay, including story and dialogue,
   except on the title screen and during initial loading. Settings opens from Pause
   or Menu. Pause opens a card titled "Paused" over the dimmed game without
@@ -816,7 +824,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Known locations in the current galaxy can be selected on the map.
   List detail uses primary "Back" to return to its list. A carried quest item's
   HUD icon opens its detail directly, with secondary "All quests" and primary
-  "Close" to resume gameplay. All quests deliberately opens the list. A list
+  "Close" to return to the flight. All quests deliberately opens the list. A list
   opened from the local map or Paused returns there with primary "Back"; a list
   opened from gameplay returns to gameplay with primary "Close". The close
   X, Escape and back always perform the same action as the current primary footer
