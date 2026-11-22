@@ -618,8 +618,8 @@ The selected rows record the current chip visuals pending button-state migration
 
 ## Pause card
 
-The Paused card's actions are Map and Ship, Settings and Back to title in a
-two-column grid, then Resume (primary) at the bottom ([Layout screens](layout.md#cards)). Map always opens, in danger too.
+Map opens from the [Paused card](layout.md#cards), including while Ada is
+in danger.
 Galaxies is on the map, not on the card; in danger it and Travel here
 are unavailable on the map.
 

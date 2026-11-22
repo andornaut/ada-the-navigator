@@ -117,15 +117,15 @@ colour and keeps the existing swell and held geometry.
   frames 2 and 3 `pause-held.svg`. The sheet's PNG is no longer drawn.
 - Contrast: cream bars and ring 9.59:1 on the navy face and 10.11:1 on the
   space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
-- Pause card: Map and Quests, then Settings and Ship, as a two-column grid
-  sorted by label, then Back to title and Resume (primary), each full width,
-  Resume at the bottom; its groups are in [Layout screens](layout.md#cards).
+- Pause opens the [Paused card](layout.md#cards), where Cheats is a direct
+  action. Back to title and primary Resume are full-width, with Resume at
+  the bottom.
   Every action stays available in danger. Map always opens the
   [map](map.md), which holds Galaxies; in danger Travel here and Galaxies are
   unavailable there. Settings opens over the same dim; one card or the map
   shows at a time.
 - Ada's room page shows the Menu button at the top left, also touch only (on
-  desktop Escape opens the Menu card): Achievements, Settings, Back to title,
+  desktop Escape opens the Menu card): Achievements, Cheats, Settings, Back to title,
   then Close (primary).
 - The space screen shows no navigation or destination panel; navigation lives in
   the pause card.

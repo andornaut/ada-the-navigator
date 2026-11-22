@@ -214,9 +214,9 @@ the face of each state, never the press area.
   its slot wraps and grows the header. Large fills the 720-pixel game area to
   its 16-pixel margins when no larger safe-area inset applies.
 - Families: every modal takes one family's width, never a content-fitted
-  width. Large: Settings in two columns, Ship, Achievements, Quests, Map
-  Quests, the station Shop and Jobs. Medium: Paused, Settings in one column,
-  install steps. Small: Menu, Restart and the Reset save confirm, Cheats,
+  width. Large: Settings in two columns, Ship, Achievements, Cheats, Quests,
+  Map Quests, the station Shop and Jobs. Medium: Paused, Settings in one column,
+  install steps. Small: Menu, Restart, the two Cheats reset confirmations,
   Update offer, resource and weapon details, station drop, the buy confirm. A
   card created without a family is Medium. Settings is Large when its rows fit
   two columns and Medium when they take one.
@@ -844,9 +844,10 @@ downloads during play, such as on-demand art fetched ahead, show no bar.
   250 ms hold and the 150 ms fade. Its frame border runs on every side, so the
   bottom-only ink rule needs a kit option or Ada CSS on the bar's bottom edge;
   `LOADING_BAR` does not carry it yet.
-- Loading failures show through game-kit's loading-failure presentation. Its
-  Retry label takes the Start button's visible label colour, ink `#181425`
-  (the primary label, 7.27:1 on `#bfa06f`).
+- Startup failures use Game Kit's loading-safe Retry. Centre the button and
+  size it to its label plus `2 * TEXT_BUTTON.inset` (16 logical px per side).
+  Keep `TEXT_BUTTON.height` (48), the Start button's label colour,
+  ink `#181425` (7.27:1 on `#bfa06f`), and the existing recovery path.
 
 ## Screens
 
@@ -855,24 +856,24 @@ token above; strings are Gameplay's.
 
 ### Cards
 
-| Screen        | Groups (top to bottom)                                                                                                                                                                                       | Scroll group |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Action row: Open Cheats (browser tab only), Back (primary)                                 | Rows         |
-| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                             | Steps        |
-| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                             | None         |
-| Cheats        | Header, close. Row column, one full-width row per cheat or action ([Cheats card](#cheats-card)). Close (primary)                                                                                             | Rows         |
-| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Settings; then Back to title (not on the Start screen); then primary Close                                                               | None         |
-| Paused        | Header, close. Command group: Map when permitted and Quests, then Settings and Ship, currently an equal-track two-column action grid. Separate full-width stack: Back to title directly above primary Resume | None         |
-| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                  | None         |
-| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))                           | Text column  |
-| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                          | Item list    |
-| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                    | Job list     |
-| Buy confirm   | Header with top-right X. Item well. Description (weapons). Offered price. Action row with Cancel (secondary, left) and Buy (primary, right). The X invokes Cancel. See [Buy confirm](shop.md#buy-confirm).   | None         |
-| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                      | None         |
+| Screen        | Groups (top to bottom)                                                                                                                                                                                     | Scroll group |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Centred Back (primary)                                                                   | Rows         |
+| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                           | Steps        |
+| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                           | None         |
+| Cheats        | Header with top-right X. Two logical columns ([Cheats card](#cheats-card)). Centred Back (primary)                                                                                                         | None         |
+| Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Cheats, Settings; then Back to title (not on the Start screen); then primary Close                                                     | None         |
+| Paused        | Header, close. Full-width Cheats, then the two-column command grid. Separate full-width stack: Back to title directly above primary Resume                                                                 | None         |
+| Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                | None         |
+| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))                         | Text column  |
+| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                        | Item list    |
+| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                  | Job list     |
+| Buy confirm   | Header with top-right X. Item well. Description (weapons). Offered price. Action row with Cancel (secondary, left) and Buy (primary, right). The X invokes Cancel. See [Buy confirm](shop.md#buy-confirm). | None         |
+| Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                    | None         |
 
-The Paused card shows no objective or job lines. Its grid actions sort
-alphabetically by label: Map and Quests, then Settings and Ship. Pause's two
-equal columns place the commands, and each button fits its own content. An
+The Paused card shows no objective or job lines. Full-width Cheats sits above
+the grid. Its actions sort by label: Map and Quests, then Settings and Ship.
+Two equal columns place the grid commands, and each button fits its own content. An
 unpaired grid action keeps its intrinsic width and centres across both
 columns. The final stack shares the full width, with Back to title directly
 above primary Resume. Map is hidden
@@ -881,10 +882,9 @@ and Resume buttons have a 44 logical px face over a 4 px lip. At viewport
 widths of 720 CSS px or less or heights of 360 CSS px or less, their labels
 move down 1 logical px to centre the cap bands on those faces.
 
-The Start screen and Ada's room open the Menu card
-instead: Achievements, Exit (Start screen, when shown) and Settings,
-alphabetically, then Back to title away from the Start screen, then primary
-Close.
+The Start screen and Ada's room open the Menu card. Its stack starts with
+Achievements, Cheats and Settings, then Back to title away from the Start
+screen, then primary Close.
 Ship has one centred primary Back, returning to Paused with the same action
 as its X, Escape and back. Quests list Close restores its actual opener; detail Back returns to
 the list, while a directly opened HUD detail Close returns to gameplay. The X,
@@ -892,28 +892,53 @@ Escape and back match the primary footer action.
 
 ### Cheats card
 
-Settings' Open Cheats, shown only in a browser tab, opens the shared `small`
-card (`CARD_WIDTH_CAPS.small` 400, clamped to the available rect) titled
-"Cheats", with the close X and Close as its bottom primary. Close, the close X,
-Escape and back close it. Rows and strings are Gameplay's
-([Cheats](../gameplay/cheats.md)). Constants: `createCheats` in
-`src/ui/cheats.ts`; the row tree is `cheatsTree` in `src/ui/cheatsTree.ts`.
+Offer **Cheats** directly in the active Menu or Pause in browser tabs and
+installed apps. The Large card is titled "Cheats" and fits two logical columns
+without scrolling. The top-right X and centred bottom primary **Back** use
+the same one-layer dismissal and restore focus to Cheats in the invoking
+Menu or Pause. Escape, back and backdrop dismissal follow that path. Keep
+the parent's pause state.
 
-The rows, top to bottom: Unlock all weapons, Unlock all equipment, Unlock all
-galaxies, Max weapon levels, Add 1,000 ore and Add 1,000 Stardust (the six
-cheats), then Show tips again, the FPS counter and Reset save.
+| Column            | Visible controls in order                                                             |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Progression       | Unlock all equipment, Unlock all galaxies, Unlock all weapons, Maximize weapon levels |
+| Resources & tools | FPS counter, the two +1,000 grants, Reset jobs, projects & quests, Reset save         |
 
-| Part          | Token or derivation                                                                                                                                        | Rule                                                                                                                                            |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Outer padding | `SPACING.panelPadding` (16), the 2 frame inside it                                                                                                         | Every edge, as every card                                                                                                                       |
-| Header        | The title and close X of every card; header balance puts the first row's face 58 below the card's top                                                      | The row column's clip starts 4 above it, at 54, clear of the close X's press area bottom (42) plus `SPACING.gap` (50)                           |
-| Row column    | The scroll group: one column, rows `STACK_BUTTON_GAP` (8, the `SPACING.gap` value) apart                                                                   | A 4 px reserve inside its clip around the rows, and the scroll reserve (14) on its right while it scrolls, as the job list                      |
-| Row width     | The row column's content width: inner width - 2 \* 4, 360 in the full 400 card and 346 while the column scrolls                                            | Every row one width; a wrapped label grows its row by 20 per line                                                                               |
-| Action row    | `TEXT_BUTTON`: 48, a 44 secondary face over the 4 lip, label centred                                                                                       | The six cheats, Show tips again and Reset save. A cheat with nothing left to grant shows the disabled face                                      |
-| Switch row    | The FPS counter as a Settings control row: `icon-fps-counter` (16), `CONTROL_ROW.gap` (8), the label, then the switch over its On or Off state             | 48 high, the whole row the press target; the icon's drawn pixels on the row's left edge, level with the faces above and below                   |
-| Reset confirm | Reset save opens a Small card titled "Reset save?" with a top-right X. Cancel is secondary on the left and Reset is primary on the right.                  | The X, back, Escape and an outside tap use Cancel's one-layer path to Cheats. Restore focus to Reset save or a logical control in Cheats.       |
-| Footer        | Close (primary), centred at its label width plus `2 * TEXT_BUTTON.inset`, outside the scroll group, its face `SPACING.gap` (8) below the row column's clip | Its lip `SPACING.panelPadding` (16) above the card's bottom edge, frame included (14 below the frame's inner edge), as the Ship card's Back     |
-| Height        | Content-fitted up to the available rect's height                                                                                                           | The nine rows take 496 with their gaps, past the 328 cap of the 720x360 game area, so the column scrolls and the header, close X and Close stay |
+`cheatsTree` in `src/ui/cheatsTree.ts` sets the order and `createCheats`
+in `src/ui/cheats.ts` mounts the card. The grants form an equal-width pair. Stardust comes before Ore in visual and
+keyboard order. Show the matching resource glyphs beside +1,000 and use the
+spoken labels "Add 1,000 Stardust" and "Add 1,000 ore".
+
+| Part            | Rule                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Padding         | `SPACING.panelPadding` (16), with the 2 px frame inside it                                                                                             |
+| Ordinary action | `TEXT_BUTTON` at 48 high, with a 44 face over the 4 px lip. Preserve action availability and the disabled face when a cheat has nothing left to grant. |
+| FPS counter     | A 48-high switch row with `icon-fps-counter` (16), `CONTROL_ROW.gap` (8), the label, then the switch over its On or Off state.                         |
+| Back            | Centre at label width plus `2 * TEXT_BUTTON.inset`.                                                                                                    |
+
+**Reset jobs, projects & quests** sits directly above **Reset save** and
+opens a Small "Reset jobs, projects & quests?" confirmation with an
+explanatory body. It rewinds the stored campaign to Earth's opening in Sunflower, relocks later galaxies and
+clears jobs, project funding and reveals, holodisks and story progress. Ada
+keeps her ship, equipment, resources, map discoveries and achievements.
+Past contributions stay spent and earned one-time rewards stay recorded.
+Repeatable jobs and activities still pay their usual rewards. Preserve the
+save and current view when the write fails, and keep the live action and
+save guards.
+
+**Reset save** opens a separate Small "Reset save?" confirmation. Reset
+clears the whole save, including achievements, ends the cheat session and
+returns to Start. Device settings are retained.
+
+Both confirmations have a top-right X, secondary Cancel on the left and
+primary Reset on the right. X, back, Escape and backdrop use Cancel's
+one-layer path where allowed. Return focus to the invoking reset action or
+a logical control in Cheats. Keep the selective confirmation's dismissal
+guard during its write.
+
+[Gameplay's Cheats guide](../gameplay/cheats.md) covers cheat effects.
+[Reset and save details](../docs/design/cheats.md#other-actions) cover the
+stored campaign and reward rules.
 
 Restart from Start uses the same confirmation layout. Cancel and the
 top-right X return to Start. Restart is the primary action on the right.
@@ -1090,7 +1115,7 @@ two-line wordmark, the action row under it, then the note. There is no card,
 header, dim or portrait; the Ada and Penny portraits and the start card are
 removed. Art, colours and contrast are in [Title screen art](title-screen.md).
 The HUD row's top left holds the Menu button in the pause button's place; it
-opens the Menu card (Achievements, Settings, Close). In an
+opens the Menu card (Achievements, Cheats, Settings, Close). In an
 installed app window that can close the app, Exit shows at the top right at
 `hudButtonTarget(0)` with the authored Exit poses.
 Nothing moves with the saved state except the action row's contents.
@@ -1251,7 +1276,7 @@ Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 | Scroll         | The text column scrolls when the panel reaches its top cap; the choices scroll only past the choice limits below. Each scrolling region reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                                             | Text never shrinks and never paginates; the page controls stay fixed                                                                                                                                                                                                                                                                                                                                                                                        |
 | Skip           | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SMALL_BUTTON_GAP` (24) left of the Settings disc (57 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                                                                                                               | The start screen's Settings disc, at the same place on every story page                                                                                                                                                                                                                                                                                                                                                                                     |
-| Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                                                                                                                      | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                                                                                                                                                                                                                           |
+| Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Menu card, including Cheats                                                                                                                                                                                | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                                                                                                                                                                                                                           |
 
 The edge rect is `playView(view)` inset by 12, intersected with
 `safeRect(insets, 12, view)`: the top-corner controls' drawn edges sit 12 from
