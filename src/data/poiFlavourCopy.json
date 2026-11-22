@@ -1,0 +1,1476 @@
+{
+  "1": {
+    "namedLandmark": {
+      "landmark:1:0": {
+        "nameKey": "landmark1Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Its seed drawers were shallow so nobody had to stack the trays."
+          },
+          {
+            "speaker": "astra",
+            "text": "The crew painted little pictures on the drawers to tell the seeds apart."
+          }
+        ]
+      },
+      "landmark:1:1": {
+        "nameKey": "landmark1Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "From here the dust looks like petals in a shallow bowl."
+          },
+          {
+            "speaker": "astra",
+            "text": "The outpost charts sketch this cloud as a flower with one petal missing."
+          }
+        ]
+      },
+      "landmark:1:2": {
+        "nameKey": "landmark1Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Its petals fold around the lamp to shade it from glare."
+          },
+          {
+            "speaker": "astra",
+            "text": "A grower painted each petal a slightly different yellow."
+          }
+        ]
+      },
+      "landmark:1:3": {
+        "nameKey": "landmark1Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The stripes help pilots spot it against a bright sky."
+          },
+          {
+            "speaker": "astra",
+            "text": "Someone touched up the yellow stripes and left the black ones chipped."
+          }
+        ]
+      },
+      "landmark:1:4": {
+        "nameKey": "landmark1Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The planting arms fold right against the hull for docking."
+          },
+          {
+            "speaker": "astra",
+            "text": "That rust has left the paint around the planting chutes almost untouched."
+          }
+        ]
+      },
+      "landmark:1:5": {
+        "nameKey": "landmark1Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Light collects in the thickest part of the cloud. That's where the honey color comes from."
+          },
+          {
+            "speaker": "astra",
+            "text": "From the far side, the cloud looks darker at the edges, like syrup in a jar."
+          }
+        ]
+      },
+      "landmark:1:6": {
+        "nameKey": "landmark1Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "A broad nose gave the tug room for its towing gear."
+          },
+          {
+            "speaker": "astra",
+            "text": "The cockpit window is tiny. The pilot must have spent more time looking back."
+          }
+        ]
+      },
+      "landmark:1:7": {
+        "nameKey": "landmark1Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The little specks glow together when the light hits them."
+          },
+          {
+            "speaker": "astra",
+            "text": "The growers named this for the haze that hangs over their busiest beds."
+          }
+        ]
+      },
+      "landmark:1:8": {
+        "nameKey": "landmark1Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Crews used this buoy to agree when the workday started."
+          },
+          {
+            "speaker": "astra",
+            "text": "The dial still marks a time for setting out and a time for coming home."
+          }
+        ]
+      },
+      "landmark:1:9": {
+        "nameKey": "landmark1Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The dust trails point away from a single bright knot."
+          },
+          {
+            "speaker": "astra",
+            "text": "I can see why pilots wrote Dandelion in the margin of the first chart."
+          }
+        ]
+      },
+      "landmark:1:10": {
+        "nameKey": "landmark1Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Old outpost charts mark this as a place to wait for the other ships."
+          },
+          {
+            "speaker": "astra",
+            "text": "The hooks around the lamp held little pennants from visiting crews."
+          }
+        ]
+      },
+      "landmark:1:11": {
+        "nameKey": "landmark1Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The panels come from at least three kinds of shuttle."
+          },
+          {
+            "speaker": "astra",
+            "text": "Each repair is a different color. Someone kept this ship going for years."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "I can see the pale dust against Sunflower's bright sky."
+        },
+        {
+          "speaker": "astra",
+          "text": "The growers' names for clouds often come straight from their beds."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "The old cargo brackets look like they were built for growing trays."
+        },
+        {
+          "speaker": "astra",
+          "text": "The hull has patches that look like they came from spare outpost panels."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "The lamp has the broad hood growers use to cut glare."
+        },
+        {
+          "speaker": "astra",
+          "text": "Outpost pilots used lights like that to mark their routes between stops."
+        }
+      ]
+    },
+    "storyPlace": {
+      "growers": [
+        {
+          "speaker": "ada",
+          "text": "All those little beds look like Grandma's. I wonder what they grow here."
+        },
+        {
+          "speaker": "ada",
+          "text": "They've squeezed growing space in wherever the light reaches."
+        }
+      ],
+      "workshop": [
+        {
+          "speaker": "ada",
+          "text": "There's room around the workbench to bring in something big."
+        },
+        {
+          "speaker": "ada",
+          "text": "Those shelves look like they were built for saving useful scraps."
+        }
+      ],
+      "salvagers": [
+        {
+          "speaker": "ada",
+          "text": "The sorted piles remind me of how Grandma keeps spare pots."
+        },
+        {
+          "speaker": "ada",
+          "text": "Someone here has an eye for which pieces are worth keeping."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "The wide docking arms remind me of the growers' outpost."
+      },
+      {
+        "speaker": "ada",
+        "text": "I like how the station windows stand out against all that yellow."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "Someone tied this bundle up carefully."
+      },
+      {
+        "speaker": "ada",
+        "text": "It reminds me of the spare boxes Grandma keeps by the potting bench."
+      }
+    ]
+  },
+  "2": {
+    "namedLandmark": {
+      "landmark:2:0": {
+        "nameKey": "landmark2Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "That's a drill mount at the front. The crack follows its seam."
+          },
+          {
+            "speaker": "astra",
+            "text": "The drill shroud wore down on one side before the hull split."
+          }
+        ]
+      },
+      "landmark:2:1": {
+        "nameKey": "landmark2Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The lamp flashes once for each section of the outer ring."
+          },
+          {
+            "speaker": "astra",
+            "text": "Haulers marked the ring entrance with a low lamp so it wouldn't dazzle the pilots."
+          }
+        ]
+      },
+      "landmark:2:2": {
+        "nameKey": "landmark2Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The empty cargo rack is wider than the cabin."
+          },
+          {
+            "speaker": "astra",
+            "text": "The hauler has numbered tie-downs so crews could balance a heavy load quickly."
+          }
+        ]
+      },
+      "landmark:2:3": {
+        "nameKey": "landmark2Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The lamp has a hood to keep its beam off nearby cockpit windows."
+          },
+          {
+            "speaker": "astra",
+            "text": "There's a miner's thumbprint in the old paint around the switch."
+          }
+        ]
+      },
+      "landmark:2:4": {
+        "nameKey": "landmark2Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The red light is strongest where the dust packs together."
+          },
+          {
+            "speaker": "astra",
+            "text": "From this side I can see the dark cracks between the bright patches."
+          }
+        ]
+      },
+      "landmark:2:5": {
+        "nameKey": "landmark2Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The crane could lift cargo without anyone pushing it by hand."
+          },
+          {
+            "speaker": "astra",
+            "text": "The bent boom still has its old safety stripes."
+          }
+        ]
+      },
+      "landmark:2:6": {
+        "nameKey": "landmark2Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Heat shields line the hull where the furnace used to sit."
+          },
+          {
+            "speaker": "astra",
+            "text": "The vents face away from the work deck, where the crew would stand."
+          }
+        ]
+      },
+      "landmark:2:7": {
+        "nameKey": "landmark2Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Iron-rich dust gives this haze its rusty color."
+          },
+          {
+            "speaker": "astra",
+            "text": "The pale streaks show where thinner dust lets more light through."
+          }
+        ]
+      },
+      "landmark:2:8": {
+        "nameKey": "landmark2Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Its long bar lines up with one of the old hauling routes."
+          },
+          {
+            "speaker": "astra",
+            "text": "Crews could read the marker from either side without turning around."
+          }
+        ]
+      },
+      "landmark:2:9": {
+        "nameKey": "landmark2Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The tiny bright spots are stars shining through gaps in the cloud."
+          },
+          {
+            "speaker": "astra",
+            "text": "Light catches the dust in bursts as we change our angle."
+          }
+        ]
+      },
+      "landmark:2:10": {
+        "nameKey": "landmark2Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "That broad band was meant to show through the dust around the hub."
+          },
+          {
+            "speaker": "astra",
+            "text": "The base is scraped where crews clipped their tow lines to it."
+          }
+        ]
+      },
+      "landmark:2:11": {
+        "nameKey": "landmark2Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The warm color comes from a bright star behind the cloud."
+          },
+          {
+            "speaker": "astra",
+            "text": "Pilots named it for the glow through a smelter door."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "The dust here has the color of a freshly cut vein."
+        },
+        {
+          "speaker": "astra",
+          "text": "The bright grains look like sparks when we pass across them."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "That hull has the heavy tie-downs of a mining vessel."
+        },
+        {
+          "speaker": "astra",
+          "text": "I can see where the crew wore a path across the empty loading deck."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "Haulers use lights like this to agree where a route bends."
+        },
+        {
+          "speaker": "astra",
+          "text": "The lamp is easy to pick out through a haze of mining dust."
+        }
+      ]
+    },
+    "storyPlace": {
+      "hub": [
+        {
+          "speaker": "ada",
+          "text": "The loading racks are big enough to give several crews room to work."
+        },
+        {
+          "speaker": "ada",
+          "text": "This place is built around moving things from one ship to the next."
+        }
+      ],
+      "miner": [
+        {
+          "speaker": "ada",
+          "text": "That's a working miner's spot. Everything has to fit where they can reach it."
+        },
+        {
+          "speaker": "ada",
+          "text": "I can see why a miner would use a marker close to their ship."
+        }
+      ],
+      "visitors": [
+        {
+          "speaker": "ada",
+          "text": "The moored ships are a good reminder of how many crews come through here."
+        },
+        {
+          "speaker": "ada",
+          "text": "From out there it seemed quiet. The moorings tell a different story."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "The cargo fittings look sturdy enough for the crews' heaviest loads."
+      },
+      {
+        "speaker": "ada",
+        "text": "I bet the first thing a miner wants here is somewhere to sit down."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "The handles look like the kind miners use with thick gloves."
+      },
+      {
+        "speaker": "ada",
+        "text": "That looks like a packet a hauling crew could pick up in a hurry."
+      }
+    ]
+  },
+  "3": {
+    "namedLandmark": {
+      "landmark:3:0": {
+        "nameKey": "landmark3Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "That buoy carries a record of the rhythm the whales use here."
+          },
+          {
+            "speaker": "astra",
+            "text": "The buoy has a recessed grille so the sound can travel out both sides."
+          }
+        ]
+      },
+      "landmark:3:1": {
+        "nameKey": "landmark3Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The cloud's bands are easiest to see when we look across them."
+          },
+          {
+            "speaker": "astra",
+            "text": "The brightest ridge looks like a tide line left on a beach."
+          }
+        ]
+      },
+      "landmark:3:2": {
+        "nameKey": "landmark3Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The dark rims make those clear pockets look like bubbles."
+          },
+          {
+            "speaker": "astra",
+            "text": "Stars shine through the middle of each bright ring."
+          }
+        ]
+      },
+      "landmark:3:3": {
+        "nameKey": "landmark3Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The lens is broad enough to see across a whole bend in the current."
+          },
+          {
+            "speaker": "astra",
+            "text": "The bracket let crews angle the lamp without moving the buoy."
+          }
+        ]
+      },
+      "landmark:3:4": {
+        "nameKey": "landmark3Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The shell shape protects the lamp from anything drifting past."
+          },
+          {
+            "speaker": "astra",
+            "text": "The outer ridges helped crews grip it when they came to service it."
+          }
+        ]
+      },
+      "landmark:3:5": {
+        "nameKey": "landmark3Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The marker's long fins line up with the flow."
+          },
+          {
+            "speaker": "astra",
+            "text": "Pilots drew arrows on their charts to record how this marker sat in the current."
+          }
+        ]
+      },
+      "landmark:3:6": {
+        "nameKey": "landmark3Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The outer streaks bend around a broad, dim patch."
+          },
+          {
+            "speaker": "astra",
+            "text": "A pilot used the curl on this cloud to check which way their chart was facing."
+          }
+        ]
+      },
+      "landmark:3:7": {
+        "nameKey": "landmark3Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Its broad belly was built to ride along the current."
+          },
+          {
+            "speaker": "astra",
+            "text": "The skimmer's little rear fins did most of the steering."
+          }
+        ]
+      },
+      "landmark:3:8": {
+        "nameKey": "landmark3Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The hull grew rough as dust collected along its ribs."
+          },
+          {
+            "speaker": "astra",
+            "text": "The cockpit is empty. The coral-like crust grew around the door hinges."
+          }
+        ]
+      },
+      "landmark:3:9": {
+        "nameKey": "landmark3Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The long scrape marks run the same way across both sides."
+          },
+          {
+            "speaker": "astra",
+            "text": "Pilots compare the grain on these old panels to wood that has washed ashore."
+          }
+        ]
+      },
+      "landmark:3:10": {
+        "nameKey": "landmark3Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The round window let a crew watch the current from inside."
+          },
+          {
+            "speaker": "astra",
+            "text": "The hooks on top tell me this bell used to hang below a larger ship."
+          }
+        ]
+      },
+      "landmark:3:11": {
+        "nameKey": "landmark3Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The thin bright strands hang together like seaweed."
+          },
+          {
+            "speaker": "astra",
+            "text": "The glow looks green where the strands overlap."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "Whirlpool's clouds always make me think of water, even this far from the currents."
+        },
+        {
+          "speaker": "astra",
+          "text": "The dust gathers in broad bands, with a clear edge on each side."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "Look at the fins. This ship was built to drift with the flow."
+        },
+        {
+          "speaker": "astra",
+          "text": "The old hull has a wide belly like the skimmers in the current."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "The light has the flat sides of a buoy built to face a current."
+        },
+        {
+          "speaker": "astra",
+          "text": "The mount has room for a wide signal lens."
+        }
+      ]
+    },
+    "storyPlace": {
+      "whale": [
+        {
+          "speaker": "ada",
+          "text": "I've never seen anyone move through space like that."
+        },
+        {
+          "speaker": "ada",
+          "text": "Even here, the whale moves as if it can feel the water around it."
+        }
+      ],
+      "family": [
+        {
+          "speaker": "ada",
+          "text": "They stay close enough for the little one to find them."
+        },
+        {
+          "speaker": "ada",
+          "text": "It's easier to follow their calls when there's a whole group to listen to."
+        }
+      ],
+      "holodisk": [
+        {
+          "speaker": "ada",
+          "text": "That looks small after searching through so much open space."
+        },
+        {
+          "speaker": "ada",
+          "text": "I can see the little disk. Let's make sure we have a clear way to it."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "The station lights remind me of the buoys out in the current."
+      },
+      {
+        "speaker": "ada",
+        "text": "After all that drifting, a doorway that stays put looks nice."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "The sealed case would have kept its contents together in a current."
+      },
+      {
+        "speaker": "ada",
+        "text": "Someone put a bright mark on it so it wouldn't be lost in the drift."
+      }
+    ]
+  },
+  "4": {
+    "namedLandmark": {
+      "landmark:4:0": {
+        "nameKey": "landmark4Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The two steering cables still cross under the wing."
+          },
+          {
+            "speaker": "astra",
+            "text": "The glider was light enough to leave room for just one small flight seat."
+          }
+        ]
+      },
+      "landmark:4:1": {
+        "nameKey": "landmark4Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Its split lens let pilots see the center of a gate."
+          },
+          {
+            "speaker": "astra",
+            "text": "An instructor could turn the lamp down as a learner got more confident."
+          }
+        ]
+      },
+      "landmark:4:2": {
+        "nameKey": "landmark4Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The spool once reeled long guide lines out of the practice lane."
+          },
+          {
+            "speaker": "astra",
+            "text": "The old winding drum is the round piece in the broken bay."
+          }
+        ]
+      },
+      "landmark:4:3": {
+        "nameKey": "landmark4Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The silver edge gets sharp when we see it nearly end-on."
+          },
+          {
+            "speaker": "astra",
+            "text": "Needle's instructors used the thread shape as a landmark on hand-drawn charts."
+          }
+        ]
+      },
+      "landmark:4:4": {
+        "nameKey": "landmark4Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The Avi left wide handholds for pilots climbing into the seat."
+          },
+          {
+            "speaker": "astra",
+            "text": "The pilot's footrests fold flat along the body."
+          }
+        ]
+      },
+      "landmark:4:5": {
+        "nameKey": "landmark4Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The narrow light marked the line through the next turn."
+          },
+          {
+            "speaker": "astra",
+            "text": "The little ticks on its bracket are angles for practice drills."
+          }
+        ]
+      },
+      "landmark:4:6": {
+        "nameKey": "landmark4Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The cloud is thick in the middle and thin at both ends."
+          },
+          {
+            "speaker": "astra",
+            "text": "The faint stripes wrap around the center like thread on a spindle."
+          }
+        ]
+      },
+      "landmark:4:7": {
+        "nameKey": "landmark4Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "This beacon joined two stretches of an old practice route."
+          },
+          {
+            "speaker": "astra",
+            "text": "The mounting holes show where instructors moved it to tighten the turn."
+          }
+        ]
+      },
+      "landmark:4:8": {
+        "nameKey": "landmark4Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "A single bright point was enough for pilots to line up on."
+          },
+          {
+            "speaker": "astra",
+            "text": "The little shield kept the lamp from dazzling a pilot on the way through."
+          }
+        ]
+      },
+      "landmark:4:9": {
+        "nameKey": "landmark4Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The light and dark stripes cross where two bands of dust overlap."
+          },
+          {
+            "speaker": "astra",
+            "text": "Some parts look woven until you move and see the layers slide apart."
+          }
+        ]
+      },
+      "landmark:4:10": {
+        "nameKey": "landmark4Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "There's a clear opening through the dust where more stars show."
+          },
+          {
+            "speaker": "astra",
+            "text": "The dark oval gives this cloud its name."
+          }
+        ]
+      },
+      "landmark:4:11": {
+        "nameKey": "landmark4Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The cabin has two seats side by side. A learner could bring an instructor."
+          },
+          {
+            "speaker": "astra",
+            "text": "The shuttle could coast a long way on those broad wings."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "Those fine strands are one reason Needle's pilots name so many clouds after sewing tools."
+        },
+        {
+          "speaker": "astra",
+          "text": "The dust looks thin from here, but the strands show up when we look across them."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "The hull looks light enough for a practice craft."
+        },
+        {
+          "speaker": "astra",
+          "text": "The tiny control surfaces would have made this craft quick to turn."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "I can see why pilots use a point like that to practise a turn."
+        },
+        {
+          "speaker": "astra",
+          "text": "The lens has a narrow stripe across it, like the markers on the practice channel."
+        }
+      ]
+    },
+    "storyPlace": {
+      "elderLoom": [
+        {
+          "speaker": "ada",
+          "text": "I wonder how many first attempts Elder Loom has seen."
+        },
+        {
+          "speaker": "ada",
+          "text": "This looks like a good place to ask how the practice lanes work."
+        }
+      ],
+      "needlePractice": [
+        {
+          "speaker": "ada",
+          "text": "I can picture how a new pilot would learn one turn at a time here."
+        },
+        {
+          "speaker": "ada",
+          "text": "The route makes more sense now that I can see where it starts."
+        }
+      ],
+      "needleEye": [
+        {
+          "speaker": "ada",
+          "text": "From a distance the turns all seemed to run together."
+        },
+        {
+          "speaker": "ada",
+          "text": "The approach looks a lot different when you can finally see it."
+        }
+      ],
+      "holodisk": [
+        {
+          "speaker": "ada",
+          "text": "The disk is a much smaller target than anything on the practice course."
+        },
+        {
+          "speaker": "ada",
+          "text": "There's the disk. After all those turns, I almost missed it."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "The station looks like a good place for trainee pilots to catch their breath."
+      },
+      {
+        "speaker": "ada",
+        "text": "I wonder how many pilots practised their first dock here."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "The clasp is small enough to open with one hand."
+      },
+      {
+        "speaker": "ada",
+        "text": "It looks like the sort of case a pilot would tuck under a practice seat."
+      }
+    ]
+  },
+  "5": {
+    "namedLandmark": {
+      "landmark:5:0": {
+        "nameKey": "landmark5Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The lens throws its light in two directions along the route."
+          },
+          {
+            "speaker": "astra",
+            "text": "The caretakers left room inside the shell to replace the lamp on site."
+          }
+        ]
+      },
+      "landmark:5:1": {
+        "nameKey": "landmark5Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The slots were arranged by stop so mail could go out fast."
+          },
+          {
+            "speaker": "astra",
+            "text": "The old route diagram is still painted inside the cargo doors."
+          }
+        ]
+      },
+      "landmark:5:2": {
+        "nameKey": "landmark5Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Couriers used its slow flash to confirm they'd reached the harbor."
+          },
+          {
+            "speaker": "astra",
+            "text": "The housing has a wide stripe facing out toward arriving ships."
+          }
+        ]
+      },
+      "landmark:5:3": {
+        "nameKey": "landmark5Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The edges are bright where they're too thin to hide the stars."
+          },
+          {
+            "speaker": "astra",
+            "text": "The cloud looks like a curtain from this angle. There's more behind it."
+          }
+        ]
+      },
+      "landmark:5:4": {
+        "nameKey": "landmark5Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "Two pockets of dust look closer together from here than they are."
+          },
+          {
+            "speaker": "astra",
+            "text": "Old courier maps draw the two clouds side by side so pilots can pick out both."
+          }
+        ]
+      },
+      "landmark:5:5": {
+        "nameKey": "landmark5Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The box was built to unlatch quickly at small docks."
+          },
+          {
+            "speaker": "astra",
+            "text": "The little corner bumpers kept the pod from denting a courier's hull."
+          }
+        ]
+      },
+      "landmark:5:6": {
+        "nameKey": "landmark5Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "A courier could check the two lights against each other to read the signal."
+          },
+          {
+            "speaker": "astra",
+            "text": "The name comes from the lamp's job. It confirms where you really are."
+          }
+        ]
+      },
+      "landmark:5:7": {
+        "nameKey": "landmark5Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The barge carried heavy lamps out to the routes."
+          },
+          {
+            "speaker": "astra",
+            "text": "The round dents on the deck are marks from lamp housings."
+          }
+        ]
+      },
+      "landmark:5:8": {
+        "nameKey": "landmark5Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The pale center is light scattered through fine dust."
+          },
+          {
+            "speaker": "astra",
+            "text": "The color changes a little as we pass the denser edge."
+          }
+        ]
+      },
+      "landmark:5:9": {
+        "nameKey": "landmark5Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "I can still see where the ferry's rows of seats were bolted down."
+          },
+          {
+            "speaker": "astra",
+            "text": "The loading ramp was built wide enough for passengers and their bags."
+          }
+        ]
+      },
+      "landmark:5:10": {
+        "nameKey": "landmark5Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "One side catches more light, like the first bright edge of morning."
+          },
+          {
+            "speaker": "astra",
+            "text": "The oldest route charts shade this cloud in just two colors."
+          }
+        ]
+      },
+      "landmark:5:11": {
+        "nameKey": "landmark5Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The tall plate made the marker easy to spot over a courier's cargo."
+          },
+          {
+            "speaker": "astra",
+            "text": "Old route notes used its flash to tell pilots where to check their bearing."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "Couriers used the bright edge of this cloud to check their bearing."
+        },
+        {
+          "speaker": "astra",
+          "text": "The dust is thin enough to leave a line of stars along the edge."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "Those small compartments would have held parcels for separate stops."
+        },
+        {
+          "speaker": "astra",
+          "text": "The pieces of the route numbers tell me this was a working courier ship."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "The broad lens makes sense for a light shared by different routes."
+        },
+        {
+          "speaker": "astra",
+          "text": "The mount looks like it was designed to trade out a lamp quickly."
+        }
+      ]
+    },
+    "storyPlace": {
+      "darkBeacon": [
+        {
+          "speaker": "ada",
+          "text": "There ought to be a light here. The route feels different without it."
+        },
+        {
+          "speaker": "ada",
+          "text": "It's easier to see why couriers count on these lights when one is dark."
+        }
+      ],
+      "pip": [
+        {
+          "speaker": "ada",
+          "text": "That little craft looks like it has made this trip more than once."
+        },
+        {
+          "speaker": "ada",
+          "text": "Pip's ship doesn't have much room, but the parcel rack uses all of it."
+        }
+      ],
+      "settlement": [
+        {
+          "speaker": "ada",
+          "text": "A landing light makes a big difference when you're looking for a place to stop."
+        },
+        {
+          "speaker": "ada",
+          "text": "I can see the settlement now. It looked much farther away from the last light."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "A courier could use a good place to stop between runs."
+      },
+      {
+        "speaker": "ada",
+        "text": "I can see why crews put lights where an arriving pilot can easily spot them."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "Couriers use straps like these so a parcel stays closed on a long run."
+      },
+      {
+        "speaker": "ada",
+        "text": "The corners are worn in the same places as Pip's delivery bags."
+      }
+    ]
+  },
+  "6": {
+    "namedLandmark": {
+      "landmark:6:0": {
+        "nameKey": "landmark6Wreck1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The empty casing shows where the guidance parts used to fit."
+          },
+          {
+            "speaker": "astra",
+            "text": "The drone's wing is gone, but you can trace its mount on the body."
+          }
+        ]
+      },
+      "landmark:6:1": {
+        "nameKey": "landmark6Wreck2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The hull is empty. The lights went out a long time ago."
+          },
+          {
+            "speaker": "astra",
+            "text": "The hatches are still open on the side where the crew would have boarded."
+          }
+        ]
+      },
+      "landmark:6:2": {
+        "nameKey": "landmark6Nebula1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "There are fewer visible stars where the dust is thickest."
+          },
+          {
+            "speaker": "astra",
+            "text": "The cloud's edge is clearest where it crosses a faint star field."
+          }
+        ]
+      },
+      "landmark:6:3": {
+        "nameKey": "landmark6Nebula2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The dust looks black where it's thick and blue at its thinnest."
+          },
+          {
+            "speaker": "astra",
+            "text": "The deepest patch looks like ink from here."
+          }
+        ]
+      },
+      "landmark:6:4": {
+        "nameKey": "landmark6Beacon1",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The red shield makes the lamp hard to mistake for a star."
+          },
+          {
+            "speaker": "astra",
+            "text": "An old chart marks this lamp at the end of a watch route."
+          }
+        ]
+      },
+      "landmark:6:5": {
+        "nameKey": "landmark6Wreck3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The freighter has cargo doors at both ends."
+          },
+          {
+            "speaker": "astra",
+            "text": "The long empty hold was made for loads too big to stack."
+          }
+        ]
+      },
+      "landmark:6:6": {
+        "nameKey": "landmark6Beacon2",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The casing is thick enough to protect the lens from stray debris."
+          },
+          {
+            "speaker": "astra",
+            "text": "The lamp has a slit for pilots who needed a narrow signal."
+          }
+        ]
+      },
+      "landmark:6:7": {
+        "nameKey": "landmark6Nebula3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The veil hides some of the smaller stars nearest its center."
+          },
+          {
+            "speaker": "astra",
+            "text": "I can still see a few stars through the edge if I let my eyes settle."
+          }
+        ]
+      },
+      "landmark:6:8": {
+        "nameKey": "landmark6Wreck4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The thin panels give the patrol ship a wide view out front."
+          },
+          {
+            "speaker": "astra",
+            "text": "The battered watch light is still fixed to the back of the hull."
+          }
+        ]
+      },
+      "landmark:6:9": {
+        "nameKey": "landmark6Beacon3",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The signal repeats the same fragment each time."
+          },
+          {
+            "speaker": "astra",
+            "text": "It sounds like a marker tone cut short halfway through."
+          }
+        ]
+      },
+      "landmark:6:10": {
+        "nameKey": "landmark6Beacon4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The stripes are broad so a pilot could read them at a distance."
+          },
+          {
+            "speaker": "astra",
+            "text": "The marker has an extra brace where crews could bolt on a larger panel."
+          }
+        ]
+      },
+      "landmark:6:11": {
+        "nameKey": "landmark6Nebula4",
+        "variants": [
+          {
+            "speaker": "astra",
+            "text": "The bands of dust thin out toward the outer edge."
+          },
+          {
+            "speaker": "astra",
+            "text": "The haze looks like smoke until you notice how still it is."
+          }
+        ]
+      }
+    },
+    "generatedLandmark": {
+      "nebula": [
+        {
+          "speaker": "astra",
+          "text": "The darker bands hide the smallest stars behind them."
+        },
+        {
+          "speaker": "astra",
+          "text": "Clouds here can look like gaps in the sky until you pick out the edges."
+        }
+      ],
+      "wreck": [
+        {
+          "speaker": "astra",
+          "text": "There's no crew aboard. The old casing still has its service panels."
+        },
+        {
+          "speaker": "astra",
+          "text": "The paint is worn off where maintenance crews used to work."
+        }
+      ],
+      "beacon": [
+        {
+          "speaker": "astra",
+          "text": "Its signal is short and easy to tell apart from another lamp."
+        },
+        {
+          "speaker": "astra",
+          "text": "The old shielding lets the light out through a narrow opening."
+        }
+      ]
+    },
+    "storyPlace": {
+      "phantomSettlement1": [
+        {
+          "speaker": "ada",
+          "text": "There are lights here, even with all that dark space around them."
+        },
+        {
+          "speaker": "ada",
+          "text": "This close, I can see where people come and go."
+        }
+      ],
+      "phantomSettlement2": [
+        {
+          "speaker": "ada",
+          "text": "The buildings are easier to pick out once we're near enough to see their windows."
+        },
+        {
+          "speaker": "ada",
+          "text": "From a distance I could barely tell there was a settlement here."
+        }
+      ],
+      "phantomSettlement3": [
+        {
+          "speaker": "ada",
+          "text": "These little lights are a relief after the dark between stops."
+        },
+        {
+          "speaker": "ada",
+          "text": "It's good to see another place where people have made a home."
+        }
+      ]
+    },
+    "station": [
+      {
+        "speaker": "ada",
+        "text": "A working station stands out in a place with this much darkness."
+      },
+      {
+        "speaker": "ada",
+        "text": "After flying past so many silent hulls, I like seeing lights in the windows."
+      }
+    ],
+    "cache": [
+      {
+        "speaker": "ada",
+        "text": "The latch is still closed. The case has held up out here."
+      },
+      {
+        "speaker": "ada",
+        "text": "I almost missed it in the dark. Good thing the rim caught the light."
+      }
+    ]
+  }
+}

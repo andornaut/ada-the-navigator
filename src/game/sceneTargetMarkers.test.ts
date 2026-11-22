@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GameModel } from "../model/game.ts";
-import { acknowledgeTargetDraws } from "./sceneTargetMarkers.ts";
+import { acknowledgeCacheSprite, acknowledgeTargetDraws } from "./sceneTargetMarkers.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT);
@@ -32,6 +32,21 @@ function fixture() {
 }
 
 describe("actual target render acknowledgment", () => {
+  it("requires an unmasked placed cache sprite crossing the view", () => {
+    const f = fixture();
+    const cache = vi.spyOn(f.context.model, "discoveryCacheDisplayed");
+    const group = "chunk:0,1:2";
+    acknowledgeCacheSprite(f.context, { ...f.node, mask: {} }, group);
+    acknowledgeCacheSprite(f.context, { ...f.node, visible: false }, group);
+    f.context.settingsOpen = true;
+    acknowledgeCacheSprite(f.context, f.node, group);
+    expect(cache).not.toHaveBeenCalled();
+    f.context.settingsOpen = false;
+    acknowledgeCacheSprite(f.context, f.node, group);
+    expect(cache).toHaveBeenCalledExactlyOnceWith(group);
+    expect(f.displayed).not.toHaveBeenCalled();
+  });
+
   it("acknowledges a partially drawn target once across render collections", () => {
     const f = fixture();
     f.context.revealGroups.set("target", f.node);

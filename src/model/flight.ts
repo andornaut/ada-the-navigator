@@ -147,7 +147,12 @@ import {
 } from "./requiredWorldReservations.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
-import { type PickupObstacle, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
+import {
+  discoveryStardustId,
+  type PickupObstacle,
+  stardustDiamond,
+  stardustDropOffsets,
+} from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
 import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
@@ -925,7 +930,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
               ...object,
               ...point,
               amount: object.amount! / points.length,
-              id: `${object.id}:stardust:${index}`,
+              id: discoveryStardustId(object.id, index),
               radius: ECONOMY.stardustPickupRadius,
               role: "stardust",
             }))

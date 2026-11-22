@@ -16,8 +16,11 @@ import { createEnemy } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
+import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 import {
+  acknowledgeCachePrimitive,
+  acknowledgeCacheSprite,
   acknowledgePrimitiveGlint,
   acknowledgePrimitiveTarget,
   primitiveTargetInView,
@@ -99,9 +102,12 @@ function fixture() {
       },
     },
     SCREEN,
+    acknowledgeCachePrimitive,
+    acknowledgeCacheSprite,
     acknowledgePrimitiveGlint,
     acknowledgePrimitiveTarget,
     destinationDrawn: () => true,
+    discoveryCacheGroup,
     enemyEquipmentDefinition,
     familyArt: () => undefined,
     hullOffset,
@@ -416,6 +422,30 @@ describe("emitted primitive marker geometry", () => {
     });
     code.drawDestination(f.scene, f.target, { x: 10, y: 10 }, 20);
     expect(f.ink.fillEllipse).not.toHaveBeenCalled();
+    expect(f.displayed).not.toHaveBeenCalled();
+  });
+  it("acknowledges generated cache lore only after a valid member emits visible geometry", () => {
+    const f = fixture();
+    const cache = vi.spyOn(f.model, "discoveryCacheDisplayed");
+    const code = production("./sceneObjects.ts", ["drawStardust"], f.globals);
+    const member = {
+      ...f.target,
+      amount: 1,
+      id: "chunk:0,1:2:stardust:0",
+      kind: "pickup",
+      radius: ECONOMY.stardustPickupRadius,
+      role: "stardust",
+    };
+    const near = { x: 10, y: 10 };
+    code.drawStardust(f.scene, member, { x: -100, y: -100 }, member.radius);
+    code.drawStardust(f.scene, { ...member, id: "ordinary:stardust:0" }, near, member.radius);
+    code.drawStardust({ ...f.scene, warpCover: true }, member, near, member.radius);
+    expect(cache).not.toHaveBeenCalled();
+    code.drawStardust(f.scene, member, near, member.radius);
+    expect(cache).toHaveBeenCalledExactlyOnceWith("chunk:0,1:2");
+    expect(f.ink.fillCircle.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      cache.mock.invocationCallOrder[0]!,
+    );
     expect(f.displayed).not.toHaveBeenCalled();
   });
   it("acknowledges only a visible emitted discovery gem, preserving release and eligibility guards", () => {

@@ -571,7 +571,11 @@ describe("jobs in play", () => {
     model.dismissNotice();
     const heard = listen(model, held.target, 120);
     expect(heard).toContain("jobLore:1:0");
-    expect(heard.indexOf("reaction:mapped")).toBeLessThan(heard.indexOf("jobLore:1:0"));
+    const discovery = heard.findIndex((instance) =>
+      /^poi:1:(?:namedLandmark|generatedLandmark):/u.test(instance),
+    );
+    expect(discovery).toBeGreaterThanOrEqual(0);
+    expect(discovery).toBeLessThan(heard.indexOf("jobLore:1:0"));
   });
 
   it("mark the job's target on the Map and show charted landmarks there by name", () => {

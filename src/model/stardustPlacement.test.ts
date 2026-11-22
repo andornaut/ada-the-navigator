@@ -6,7 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
 import { toScreen } from "./convex.ts";
 import { createFlight, stepFlight } from "./flight.ts";
-import { stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
+import { discoveryCacheGroup, stardustDiamond, stardustDropOffsets } from "./stardustPlacement.ts";
 import { collectWeapon } from "./weapons.ts";
 
 const cacheContent = {
@@ -40,6 +40,15 @@ describe("ordinary Stardust placement", () => {
       expect(objects.reduce((sum, object) => sum + (object.amount ?? 0), 0)).toBe(4);
       expect(flight.objects.some((object) => object.id === parent)).toBe(false);
       for (const object of objects) {
+        expect(discoveryCacheGroup(ECONOMY, object)).toBe(parent);
+        expect(discoveryCacheGroup(ECONOMY, structuredClone(object))).toBe(parent);
+        expect(
+          discoveryCacheGroup(ECONOMY, { ...object, id: "asteroid:1:stardust:0" }),
+        ).toBeUndefined();
+        expect(
+          discoveryCacheGroup(ECONOMY, { ...object, id: `${parent}:stardust:04` }),
+        ).toBeUndefined();
+        expect(discoveryCacheGroup(ECONOMY, { ...object, amount: 7 })).toBeUndefined();
         expect(object).toMatchObject({
           amount: 1,
           kind: "pickup",

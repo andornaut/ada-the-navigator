@@ -1025,6 +1025,15 @@ same landmark without a duplicate. Direct identification without Penny uses the
 same first-time fallback. Normal conversation visibility guards apply; mark it
 heard only when visibly shown. Tutorial playback does not chart the landmark.
 
+Discovery lore uses the authored point-of-interest dialogue deck. Named
+landmarks and story places use their canonical identity. Generated landmarks
+use the galaxy and landmark kind; friendly stations and discovery caches use
+their galaxy. Choose one line from the matching pool when the place or pickup
+is identified, or on explicit Scan for landmarks. Selection can vary across
+runs. Preserve factual quest hints, Scan receipts and progress. Penny's
+unknown-target cue reveals no identity, and remembered survey credit does
+not replay discovery lore. Keep the generic mapped lines as fallbacks.
+
 New destination mapped:
 
 - Astra: "New place mapped." Ada: "Our map is growing!" (happy)

@@ -315,16 +315,43 @@ describe("conversation triggers", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
     run(talk, 0.05, { newlyMapped: ["workshop"] });
     const lines = [tapThrough(talk)];
-    run(talk, cooldownSeconds + 0.05);
+    run(talk, 0.05);
     lines.push(tapThrough(talk));
     expect(lines.flat().map((line) => line.replace(/:\d+$/u, ""))).toEqual([
       "meeting:1:workshop",
       "meeting:1:workshop",
-      "reaction:mapped",
-      "reaction:mapped",
+      "poi:1:storyPlace:workshop",
     ]);
     run(talk, cooldownSeconds + 0.05, { newStation: true, newlyMapped: ["growers"] });
     expect(showing(talk)).toBe("meeting:1:growers:0");
+  });
+
+  it("queues every confirmed authored site in order, coalescing only duplicates", () => {
+    const talk = new ConversationDirector([], [], inOrder);
+    talk.beginFlight(1);
+    run(talk, 0.05, { newlyMapped: ["growers", "salvagers", "growers"] });
+    expect(tapThrough(talk)).toEqual(["poi:1:storyPlace:growers:0"]);
+    run(talk, 0.05);
+    expect(tapThrough(talk)).toEqual(["poi:1:storyPlace:salvagers:0"]);
+    run(talk, cooldownSeconds + 0.05);
+    expect(talk.showing).toBeNull();
+  });
+
+  it("keeps distinct procedural story IDs that share a copy pool", () => {
+    const talk = new ConversationDirector([], [], inOrder);
+    talk.beginFlight(5);
+    const first = "settlement:0,1";
+    const second = "settlement:0,2";
+    const mappedStoryRoles = new Map([
+      [first, "settlement"],
+      [second, "settlement"],
+    ]);
+    run(talk, 0.05, { mappedStoryRoles, newlyMapped: [first, second, first] });
+    expect(tapThrough(talk)).toEqual([`poi:5:storyPlace:settlement:${first}:0`]);
+    run(talk, 0.05);
+    expect(tapThrough(talk)).toEqual([`poi:5:storyPlace:settlement:${second}:0`]);
+    run(talk, cooldownSeconds + 0.05);
+    expect(talk.showing).toBeNull();
   });
 
   it("react to a capital ship and a frigate once each flight", () => {

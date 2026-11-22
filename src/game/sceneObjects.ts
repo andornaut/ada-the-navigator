@@ -16,6 +16,7 @@ import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { orePickupSize } from "../model/pickupBody.ts";
+import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 import {
@@ -52,7 +53,11 @@ import { keylineEdges, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { type Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
-import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
+import {
+  acknowledgeCachePrimitive,
+  acknowledgeCacheSprite,
+  acknowledgePrimitiveTarget,
+} from "./sceneTargetMarkers.ts";
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
 import { BEACON_SUFFIX, FLASH_SUFFIX, hubBayKey, partKey } from "./spriteKeys.ts";
@@ -772,16 +777,21 @@ export function drawStardust(
   if (flight && !stardustShown(object.release, flight.time)) {
     return;
   }
+  const cache = discoveryCacheGroup(ECONOMY, object);
   if (!art || !flight) {
     scene.ink.fillStyle(scene.palette.active);
     scene.ink.fillCircle(point.x, point.y, radius / 2);
-    if (isDiscoveryCache(object)) {
-      acknowledgePrimitiveTarget(
-        scene,
-        scene.ink,
-        { center: point, filled: true, height: radius, kind: "ellipse", width: radius },
-        object.id,
-      );
+    const shape = {
+      center: point,
+      filled: true,
+      height: radius,
+      kind: "ellipse",
+      width: radius,
+    } as const;
+    if (cache) {
+      acknowledgeCachePrimitive(scene, scene.ink, shape, cache);
+    } else if (isDiscoveryCache(object)) {
+      acknowledgePrimitiveTarget(scene, scene.ink, shape, object.id);
     }
     return;
   }
@@ -803,6 +813,9 @@ export function drawStardust(
     .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
     .setPosition(at.x, at.y);
   keylineSprite(scene, "stardust", object.id, sprite);
+  if (cache) {
+    acknowledgeCacheSprite(scene, sprite, cache);
+  }
 }
 
 /**

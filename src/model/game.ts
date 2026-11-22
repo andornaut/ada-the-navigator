@@ -3,6 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
+import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -34,6 +35,7 @@ import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { questReward } from "../data/questRewards.ts";
@@ -74,6 +76,8 @@ import {
   holodisksHeld,
   onScreen,
   pennyPoints,
+  type PoiApproach,
+  type PoiConfirmation,
   speakerName,
 } from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
@@ -172,6 +176,7 @@ import { type PennyMarker, type PennyPoint } from "./pennyMarkers.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
+import { ambientSecondThread } from "./poiDiscourse.ts";
 import { newProgress } from "./progress.ts";
 import {
   donate,
@@ -212,6 +217,7 @@ import {
   stationStock,
   stationStocks,
 } from "./shop.ts";
+import { discoveryCacheGroup } from "./stardustPlacement.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
 import {
   flightStationContext,
@@ -294,7 +300,7 @@ import {
   UPGRADE_WEAPONS,
   type WeaponChoice,
 } from "./weapons.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { worldDelta, worldDistance } from "./worldContacts.ts";
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
@@ -470,6 +476,7 @@ export function withoutSeenLessons(save: GameSave): GameSave {
 
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
+  private readonly seenCacheGroups = new Set<string>();
   private scannedLandmarks: string[] = [];
   private scanOutcomes: ScanOutcome[] = [];
   state: GameState;
@@ -694,6 +701,126 @@ export class GameModel {
       return;
     }
     store.set(id, "identified");
+    const object = f.objects.find((candidate) => candidate.id === id);
+    const relevant = this.poiNearby(f, point);
+    if (object?.kind === "destination" && id === "holodisk") {
+      this.talk.poiDiscovered({ id, kind: "storyPlace" }, relevant);
+    } else if (!object && !this.current.charted.includes(id)) {
+      const site = flightLandmarkSites(f).find((candidate) => candidate.id === id);
+      if (site) {
+        this.talk.poiDiscovered({ id, kind: "landmark", symbol: site.kind }, relevant);
+      }
+    }
+  }
+
+  /** A visible member can announce its generated bundle once per encounter, including Continue. */
+  discoveryCacheDisplayed(group: string): void {
+    const flight = this.state.flight;
+    if (
+      !flight ||
+      this.screen !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      this.seenCacheGroups.has(group)
+    ) {
+      return;
+    }
+    const member = flight.objects.find((object) => discoveryCacheGroup(ECONOMY, object) === group);
+    if (
+      member &&
+      this.talk.poiDiscovered(
+        { group: `${flightEncounterSeed(flight)}:${group}`, kind: "cache" },
+        this.poiNearby(flight, member),
+      )
+    ) {
+      this.seenCacheGroups.add(group);
+    }
+  }
+
+  private poiNearby(flight: FlightState, point: Vec): () => boolean {
+    return () =>
+      this.state.flight === flight &&
+      worldDistance(flightWorldContext(flight), flight.player, point) <=
+        CONVERSATION_TUNING.pennyRange;
+  }
+
+  /** Use the existing marker/landmark identities and the flight's wrapped closing velocity. */
+  private poiApproach(
+    flight: FlightState,
+    sensed: readonly string[],
+    landmarks: ReturnType<typeof flightLandmarkSites>,
+  ): PoiApproach | undefined {
+    if (flight.velocity.x === 0 && flight.velocity.y === 0) {
+      return undefined;
+    }
+    const progress = this.state.progress[flight.galaxy];
+    const store = this.markerStore(flight);
+    const held = this.held;
+    const candidates = new Map<string, PoiApproachKind>();
+    if (held?.type === "delivery" && held.carrying) {
+      candidates.set(held.target.id, "job");
+    }
+    if (this.talk.heardScanLesson) {
+      for (const site of landmarks) {
+        if (store.get(site.id) === "identified" && !candidates.has(site.id)) {
+          candidates.set(site.id, "landmark");
+        }
+      }
+    }
+    for (const id of sensed) {
+      if (!candidates.has(id) && this.talk.heardPennyPoint(id)) {
+        candidates.set(id, "unknown");
+      }
+    }
+
+    const closing = (id: string, kind: PoiApproachKind): number => {
+      if (
+        this.state.flight !== flight ||
+        this.screen !== "space" ||
+        this.state.dialogue ||
+        this.state.docked ||
+        flight.storyScene?.lineDue
+      ) {
+        return Infinity;
+      }
+      const point = this.markerPoint(flight, id);
+      const identified = this.markerStore(flight).get(id) === "identified";
+      if (!point) {
+        return Infinity;
+      }
+      if (
+        (kind === "unknown" && (identified || point.known)) ||
+        (kind === "landmark" && (!identified || progress.charted.includes(id))) ||
+        (kind === "job" &&
+          (!point.known ||
+            this.held?.id !== held?.id ||
+            this.held?.target.id !== id ||
+            !this.held.carrying))
+      ) {
+        return Infinity;
+      }
+      const delta = worldDelta(flightWorldContext(flight), flight.player, point);
+      const distance = Math.hypot(delta.x, delta.y);
+      return distance > this.content.tuning.talkRange &&
+        distance <= CONVERSATION_TUNING.pennyRange &&
+        delta.x * flight.velocity.x + delta.y * flight.velocity.y > 0
+        ? distance
+        : Infinity;
+    };
+    let selected: PoiApproach | undefined;
+    let best = Infinity;
+    for (const [id, kind] of candidates) {
+      const instance = `poi:approach:${flight.galaxy}:${flightEncounterSeed(flight)}:${id}`;
+      if (this.state.seenConversations.includes(instance)) {
+        continue;
+      }
+      const distance = closing(id, kind);
+      if (distance < best) {
+        best = distance;
+        selected = { instance, kind, relevant: () => Number.isFinite(closing(id, kind)) };
+      }
+    }
+    return selected;
   }
 
   /** The active hunt's actual glint uses the same stable target as its sensed contribution. */
@@ -935,6 +1062,7 @@ export class GameModel {
     }
   }
   private beginConversations(): void {
+    this.seenCacheGroups.clear();
     this.scannedLandmarks = [];
     this.scanOutcomes = [];
     // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
@@ -1447,6 +1575,16 @@ export class GameModel {
     });
     this.scanOutcomes.push(outcome);
     this.talk.scanOutcome(outcome);
+    if (
+      source === "scan" &&
+      !this.talk.poiDiscovered(
+        { id: site.id, kind: "landmark", symbol: site.kind },
+        this.poiNearby(flight, site),
+        true,
+      )
+    ) {
+      this.scannedLandmarks.push(site.id);
+    }
   }
   private taskQuestId(galaxy: GalaxyNumber, task: OptionalTask): string {
     return `${task.kind}:${galaxy}:${task.id}`;
@@ -2457,6 +2595,9 @@ export class GameModel {
     this.pullLoadout();
     const mapped: string[] = this.scannedLandmarks.splice(0);
     const stationsDiscovered: string[] = [];
+    const poiConfirmations: PoiConfirmation[] = mapped.map((id) => ({
+      cue: { id, kind: "storyPlace" },
+    }));
     for (const event of events) {
       if (event.type === "guardCue") {
         const store = this.markerStore(f);
@@ -2493,6 +2634,13 @@ export class GameModel {
       if (event.type === "stationDiscovered" && !this.current.stations.includes(event.id)) {
         this.current.stations.push(event.id);
         stationsDiscovered.push(event.id);
+        const station = worldStationById(flightStationContext(f), ECONOMY, f.galaxy, event.id);
+        if (station) {
+          poiConfirmations.push({
+            cue: { id: event.id, kind: "station" },
+            relevant: this.poiNearby(f, station),
+          });
+        }
       }
       if (event.type === "enemyDestroyed") {
         this.current.destroyedEnemies++;
@@ -2514,7 +2662,16 @@ export class GameModel {
       if (event.type === "discovered" && !this.current.known.includes(event.id)) {
         this.current.known.push(event.id);
         this.current.discoveries++;
-        mapped.push(event.id);
+        if (event.id !== "holodisk" || f.galaxy !== 4) {
+          const place = f.objects.find(({ id }) => id === event.id);
+          const role =
+            f.galaxy === 5 && place?.role === ANDROMEDA_PLACES.settlement ? place.role : undefined;
+          mapped.push(event.id);
+          poiConfirmations.push({
+            cue: { id: event.id, kind: "storyPlace", ...(role ? { role } : {}) },
+            ...(place ? { relevant: this.poiNearby(f, place) } : {}),
+          });
+        }
       }
       if (
         event.type === "debrisCleared" &&
@@ -2581,6 +2738,15 @@ export class GameModel {
         this.state.notice = "";
       }
     }
+    const landmarks = flightLandmarkSites(f);
+    const unknownPoi = pennyPoints(
+      this.current,
+      this.holodiskWaypoint,
+      landmarks.filter(({ id }) => !this.current.charted.includes(id)),
+      f,
+      flightWorldContext(f).worldSide,
+    );
+    const approach = this.poiApproach(f, unknownPoi, landmarks);
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
       capitalInSight: heavyInSight("capital", SCREEN, f),
@@ -2604,13 +2770,22 @@ export class GameModel {
       // The hub counts as a station for returns, but its mapping is a new place's.
       newStation: stationsDiscovered.some((id) => id !== HUB_STATION),
       newlyMapped: mapped,
-      pennyPoints: pennyPoints(
-        this.current,
-        this.holodiskWaypoint,
-        flightLandmarkSites(f).filter(({ id }) => !this.current.charted.includes(id)),
-        f,
-        flightWorldContext(f).worldSide,
-      ),
+      pennyPoints: unknownPoi,
+      ...(approach ? { poiApproach: approach } : {}),
+      poiAmbient: () => {
+        if (
+          this.state.flight !== f ||
+          this.screen !== "space" ||
+          this.state.dialogue ||
+          this.state.docked ||
+          f.storyScene?.lineDue
+        ) {
+          return undefined;
+        }
+        const second = ambientSecondThread(f.galaxy, this.state.progress[f.galaxy]);
+        return second === undefined ? undefined : poiAmbientLine(f.galaxy, second);
+      },
+      poiConfirmations,
       shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
       stardustInSight: f.objects.some(
         (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
@@ -3084,7 +3259,6 @@ export class GameModel {
     if (scan) {
       this.current.charted.push(scan.id);
       this.talk.completeScanLesson();
-      this.scannedLandmarks.push(scan.id);
       this.recordAchievement({
         galaxy: this.state.flight.galaxy,
         id: scan.id,

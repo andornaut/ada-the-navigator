@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { ConversationDirector, type ConversationFacts } from "./conversations.ts";
+import { newGameState, withoutSeenLessons } from "./game.ts";
+import { restoreSave } from "./save.ts";
+
+const scanExposure = "poi:heard:scan-lesson";
 
 const calm: ConversationFacts = {
   aimed: false,
@@ -39,27 +43,37 @@ function fixture(heard: string[] = [], penny = false) {
   return { heard, talk };
 }
 
+function reload(heard: string[]) {
+  const save = restoreSave(JSON.stringify({ ...newGameState(), seenConversations: heard }))!;
+  return fixture(save.seenConversations);
+}
+
 describe("visible landmark Scan tutorial", () => {
   it("waits behind covered notices and records the once-per-save lesson only on exposure", () => {
     const { heard, talk } = fixture();
     talk.requestScanLesson();
     talk.step(0.01, true, calm);
-    expect(heard).not.toContain("lesson:scan");
+    expect(heard).toEqual([]);
     talk.step(0.01, false, calm);
-    expect(heard).not.toContain("lesson:scan");
+    expect(heard).toEqual([]);
     expect(talk.showing?.line).toMatchObject({
       speaker: "astra",
       text: LANDMARK_SCAN_COPY.instruction,
     });
-    expect(heard).toEqual(["lesson:scan"]);
+    expect(talk.heardScanLesson).toBe(true);
+    expect(heard).toEqual(["lesson:scan", scanExposure]);
+    void talk.showing;
+    expect(heard).toEqual(["lesson:scan", scanExposure]);
     talk.advance();
     talk.requestScanLesson();
     talk.step(20, false, calm);
     expect(talk.showing).toBeNull();
-    const restored = fixture([...heard]);
+    const restored = reload(heard);
     restored.talk.requestScanLesson();
     restored.talk.step(0.01, false, calm);
     expect(restored.talk.showing).toBeNull();
+    expect(restored.talk.heardScanLesson).toBe(true);
+    expect(restored.heard).toEqual(["lesson:scan", scanExposure]);
   });
 
   it("follows an already showing Penny exchange without interrupting or duplicating it", () => {
@@ -70,12 +84,16 @@ describe("visible landmark Scan tutorial", () => {
     talk.step(0.01, false, calm);
     expect(talk.showing?.instance).toContain("penny:1:landmark:1:0");
     expect(heard).not.toContain("lesson:scan");
+    expect(heard).not.toContain(scanExposure);
     for (let i = 0; i < 8 && talk.showing?.instance.startsWith("penny:"); i++) {
       talk.advance();
     }
     talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, false, calm);
     expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
-    expect(heard.filter((id) => id === "lesson:scan")).toHaveLength(1);
+    expect(heard.filter((id) => id === "lesson:scan" || id === scanExposure)).toEqual([
+      "lesson:scan",
+      scanExposure,
+    ]);
   });
 
   it("drops a target that becomes charted before exposure without spending an unheard lesson", () => {
@@ -87,7 +105,7 @@ describe("visible landmark Scan tutorial", () => {
     expect(talk.pending("lesson:scan")).toBe(false);
     talk.step(0.01, false, calm);
     expect(talk.showing).toBeNull();
-    expect(heard).not.toContain("lesson:scan");
+    expect(heard).toEqual([]);
     talk.requestScanLesson(() => true);
     talk.step(0.01, false, calm);
     expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
@@ -101,16 +119,33 @@ describe("visible landmark Scan tutorial", () => {
     talk.requestScanLesson(() => true);
     talk.completeScanLesson();
     expect(talk.showing).toEqual(penny);
+    expect(talk.heardScanLesson).toBe(false);
     for (let i = 0; i < 8 && talk.showing?.instance.startsWith("penny:"); i++) {
       talk.advance();
     }
     talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, false, calm);
     expect(talk.showing).toBeNull();
-    expect(heard.filter((id) => id === "lesson:scan")).toHaveLength(1);
-    const restored = fixture([...heard]);
+    expect(heard.filter((id) => id === "lesson:scan" || id === scanExposure)).toEqual([
+      "lesson:scan",
+    ]);
+    const restored = reload(heard);
     restored.talk.requestScanLesson();
     restored.talk.step(0.01, false, calm);
     expect(restored.talk.showing).toBeNull();
+    expect(restored.talk.heardScanLesson).toBe(false);
+    expect(restored.heard).toEqual(heard);
+  });
+
+  it("rearms the tutorial without forgetting that the player heard it", () => {
+    const save = { ...newGameState(), seenConversations: ["lesson:scan", scanExposure] };
+    const { heard, talk } = reload(withoutSeenLessons(save).seenConversations);
+    expect(heard).toEqual([scanExposure]);
+    expect(talk.heardScanLesson).toBe(true);
+
+    talk.requestScanLesson();
+    talk.step(0.01, false, calm);
+    expect(talk.showing?.line.text).toBe(LANDMARK_SCAN_COPY.instruction);
+    expect(heard).toEqual([scanExposure, "lesson:scan"]);
   });
 
   it("does not resume stale Scan instruction after an unrelated warning", () => {

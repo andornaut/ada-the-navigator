@@ -24,7 +24,11 @@ interface TargetDrawContext {
   readonly litCaches: ReadonlySet<string>;
   readonly model: Pick<
     GameModel,
-    "markerGlintDisplayed" | "markerTargetDisplayed" | "screen" | "state"
+    | "discoveryCacheDisplayed"
+    | "markerGlintDisplayed"
+    | "markerTargetDisplayed"
+    | "screen"
+    | "state"
   >;
   readonly revealGroups: ReadonlyMap<string, DrawnTarget>;
   readonly settingsOpen: boolean;
@@ -45,18 +49,24 @@ function displayed(node: DrawnTarget): boolean {
   );
 }
 
+type TargetVisibilityContext = Pick<TargetDrawContext, "model" | "settingsOpen" | "warpCover">;
+
+function targetDrawVisible(context: TargetVisibilityContext): boolean {
+  const { model, settingsOpen, warpCover } = context;
+  return (
+    model.screen === "space" &&
+    !model.state.dialogue &&
+    !model.state.docked &&
+    !settingsOpen &&
+    !warpCover
+  );
+}
+
 /** A placed render node supplies identification; missing assets supply no projected-point fallback. */
 export function acknowledgeTargetDraws(context: TargetDrawContext): void {
   const { model } = context;
   const flight = model.state.flight;
-  if (
-    !flight ||
-    context.settingsOpen ||
-    context.warpCover ||
-    model.screen !== "space" ||
-    model.state.dialogue ||
-    model.state.docked
-  ) {
+  if (!flight || !targetDrawVisible(context)) {
     return;
   }
   const ids = new Set(
@@ -306,11 +316,7 @@ function primitiveDisplayed(
   const { model } = context;
   return Boolean(
     model.state.flight &&
-    model.screen === "space" &&
-    !model.state.dialogue &&
-    !model.state.docked &&
-    !context.settingsOpen &&
-    !context.warpCover &&
+    targetDrawVisible(context) &&
     visibleInk(ink) &&
     primitiveTargetInView(shape),
   );
@@ -325,6 +331,28 @@ export function acknowledgePrimitiveTarget(
 ): void {
   if (primitiveDisplayed(context, ink, shape)) {
     context.model.markerTargetDisplayed(id, context.litCaches);
+  }
+}
+
+/** A live cache member qualifies only through its placed frame or emitted fallback. */
+export function acknowledgeCacheSprite(
+  context: TargetVisibilityContext,
+  node: DrawnTarget,
+  group: string,
+): void {
+  if (targetDrawVisible(context) && displayed(node)) {
+    context.model.discoveryCacheDisplayed(group);
+  }
+}
+
+export function acknowledgeCachePrimitive(
+  context: PrimitiveDrawContext,
+  ink: DrawVisibility,
+  shape: PrimitiveTargetShape,
+  group: string,
+): void {
+  if (primitiveDisplayed(context, ink, shape)) {
+    context.model.discoveryCacheDisplayed(group);
   }
 }
 

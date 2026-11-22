@@ -23,6 +23,12 @@ import {
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
+import {
+  type PoiApproachKind,
+  poiApproachPool,
+  poiDiscoveryPool,
+  type PoiLoreCue,
+} from "../data/poiDiscoveryLore.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
@@ -39,6 +45,18 @@ import { nearestImage } from "./worldGeometry.ts";
 // flight runs, so pausing, a story panel or a station card freezes it. A repeating trigger's pool
 // waits as one request and shows one variant, drawn as it starts: the pool plays in a shuffled
 // order, never one variant twice in a row, and reshuffles once all have played.
+
+/** Optional lines re-read the actual subject's eligibility even while interrupted. */
+export interface PoiApproach {
+  readonly instance: string;
+  readonly kind: PoiApproachKind;
+  readonly relevant: () => boolean;
+}
+
+export interface PoiConfirmation {
+  readonly cue: PoiLoreCue;
+  readonly relevant?: () => boolean;
+}
 
 /** What the flight did and what is around Ada this step. */
 export interface ConversationFacts {
@@ -75,14 +93,21 @@ export interface ConversationFacts {
   readonly moved: boolean;
   /** Destinations and stations mapped this step, destinations by id. */
   readonly newlyMapped: readonly string[];
+  /** Authored roles for procedural story sites whose actual IDs differ from the copy key. */
+  readonly mappedStoryRoles?: ReadonlyMap<string, string>;
   readonly newStation: boolean;
   /** Undiscovered points of interest within Penny's range, nearest first. */
   readonly pennyPoints: readonly string[];
+  readonly poiAmbient?: () => Conversation | undefined;
+  readonly poiApproach?: PoiApproach;
+  readonly poiConfirmations?: readonly PoiConfirmation[];
   /** Shield over its capacity, 0 to 1. */
   readonly shieldFraction: number;
   readonly stardustInSight: boolean;
   /** Stations mapped this step, the hub included, by id. */
   readonly stationsDiscovered: readonly string[];
+  /** A newly mapped, canonically resolved friendly station. */
+  readonly friendlyStationsMapped?: readonly string[];
   /** Mapped stations, the hub included, within station discovery range of Ada, by id. */
   readonly stationsNear: readonly string[];
 }
@@ -126,10 +151,13 @@ interface Request {
   readonly instance: string;
   /** Penny's point of interest; one waits at a time. */
   readonly point?: string;
+  readonly optional?: "reaction" | "approach" | "ambient";
+  readonly relevant?: () => boolean;
   /** Where an interrupted conversation resumes. */
   readonly resume?: { readonly elapsed: number; readonly exposed: boolean; readonly line: number };
   /** A scan receipt, which ranks as a notice: below warnings, above every other line. */
   readonly notice?: true;
+  readonly variants?: readonly Conversation[];
 }
 
 interface Active extends Request {
@@ -139,8 +167,10 @@ interface Active extends Request {
 }
 
 /** A request's place in BOX_PRIORITIES, highest first. */
-const rank = (request: Pick<Request, "conversation" | "notice">) =>
-  BOX_PRIORITIES.indexOf(request.notice ? "notice" : request.conversation.priority);
+const rank = (request: Pick<Request, "conversation" | "notice" | "optional">) => {
+  const base = BOX_PRIORITIES.indexOf(request.notice ? "notice" : request.conversation.priority);
+  return base + (request.optional === "approach" ? 0.25 : request.optional === "ambient" ? 0.5 : 0);
+};
 
 /** An event's trigger, such as an arrival or a newly mapped place, which keeps holding. */
 const always: Holds = () => true;
@@ -347,9 +377,18 @@ export class ConversationDirector {
     this.queue = this.queue.filter((request) =>
       this.latestFacts
         ? this.valid(this.latestFacts, request)
-        : this.eligible(request.conversation),
+        : this.eligible(request.conversation) && request.relevant?.() !== false,
     );
-    if (this.active && !this.eligible(this.active.conversation)) {
+    if (
+      this.active &&
+      (!this.eligible(this.active.conversation) ||
+        this.active.relevant?.() === false ||
+        (this.active.optional === "ambient" && this.latestFacts?.inDanger))
+    ) {
+      if (this.active.optional && this.active.exposed) {
+        this.cooldown = CONVERSATION_TUNING.cooldownSeconds;
+        this.quietFor = 0;
+      }
       this.active = null;
     }
   }
@@ -361,6 +400,16 @@ export class ConversationDirector {
     if (active && line && !active.exposed) {
       active.exposed = true;
       this.markSeen(active);
+      if (
+        active.conversation.trigger.kind === "lesson" &&
+        active.conversation.trigger.lesson === "scan" &&
+        !this.heardScanLesson
+      ) {
+        this.seen.push("poi:heard:scan-lesson");
+      }
+      if (active.point !== undefined && !this.heardPennyPoint(active.point)) {
+        this.seen.push(`poi:heard:${active.instance}`);
+      }
     }
     const discoveryEnd = active && discoveryLineTiming(active.conversation, active.line);
     return active && line
@@ -396,6 +445,18 @@ export class ConversationDirector {
   endFlight(): void {
     this.reset();
     this.galaxy = null;
+  }
+
+  /** Completion can also mark a lesson seen, but only displayed instruction counts as heard. */
+  get heardScanLesson(): boolean {
+    return this.seen.includes("poi:heard:scan-lesson");
+  }
+
+  /** The ordinary Penny seen key also records points passed silently during her rest. */
+  heardPennyPoint(point: string): boolean {
+    return (
+      this.galaxy !== null && this.seen.includes(`poi:heard:${pennyInstance(this.galaxy, point)}`)
+    );
   }
 
   /** An actually visible landmark requests the saved once-only Scan lesson. */
@@ -526,6 +587,40 @@ export class ConversationDirector {
     });
   }
 
+  /** A confirmed discovery can supply an authored pool without changing the timing or rank. */
+  poiDiscovered(cue: PoiLoreCue, relevant?: () => boolean, replacesMapping = false): boolean {
+    if (this.galaxy === null) {
+      return false;
+    }
+    const variants = poiDiscoveryPool(this.galaxy, cue);
+    const conversation = variants[0];
+    if (!conversation?.pool) {
+      return false;
+    }
+    const point = cue.kind === "cache" ? cue.group : cue.id;
+    const instance =
+      point && !conversation.pool.endsWith(`:${point}`)
+        ? `${conversation.pool}:${point}`
+        : conversation.pool;
+    // An explicit Scan replaces unplayed visual lore for the same target. If the visual line
+    // was already shown, the receipt still plays and the optional line is already spent.
+    if (replacesMapping) {
+      this.queue = this.queue.filter((entry) => entry.instance !== instance);
+      if (this.active?.instance === instance) {
+        this.active = null;
+      }
+    }
+    this.enqueue({
+      conversation: { ...conversation, repeat: "never" },
+      holds: always,
+      instance,
+      optional: "reaction",
+      ...(relevant ? { relevant } : {}),
+      variants: variants.map((variant) => ({ ...variant, repeat: "never" })),
+    });
+    return true;
+  }
+
   /** Moves the active conversation to its next line early; after the last, the box closes. */
   advance(): void {
     if (this.active) {
@@ -590,15 +685,26 @@ export class ConversationDirector {
     }
     if (this.quietFor >= CONVERSATION_TUNING.quietSeconds - EPSILON) {
       this.quietFor = 0;
-      const pool = this.conversations.find(
-        (conversation) =>
-          conversation.trigger.kind === "quiet" &&
-          conversation.trigger.galaxy === galaxy &&
-          this.eligible(conversation) &&
-          !this.seen.includes(conversation.id),
-      );
-      if (pool) {
-        this.enqueue({ conversation: pool, holds: (now) => !now.inDanger, instance: pool.id });
+      const ambient = facts.poiAmbient?.();
+      if (ambient && !this.seen.includes(ambient.id)) {
+        this.enqueue({
+          conversation: ambient,
+          holds: (now) => !now.inDanger,
+          instance: ambient.id,
+          optional: "ambient",
+          relevant: () => facts.poiAmbient?.()?.id === ambient.id,
+        });
+      } else {
+        const pool = this.conversations.find(
+          (conversation) =>
+            conversation.trigger.kind === "quiet" &&
+            conversation.trigger.galaxy === galaxy &&
+            this.eligible(conversation) &&
+            !this.seen.includes(conversation.id),
+        );
+        if (pool) {
+          this.enqueue({ conversation: pool, holds: (now) => !now.inDanger, instance: pool.id });
+        }
       }
     }
     this.schedule(facts);
@@ -634,8 +740,34 @@ export class ConversationDirector {
           trigger.kind === "meeting" && trigger.galaxy === galaxy && trigger.destination === id,
       );
     }
-    if (facts.newlyMapped.length > 0) {
-      this.request((trigger) => trigger.kind === "mapped");
+    if (facts.poiConfirmations) {
+      for (const { cue, relevant } of facts.poiConfirmations) {
+        if (!this.poiDiscovered(cue, relevant)) {
+          this.request((trigger) => trigger.kind === "mapped");
+        }
+      }
+    } else {
+      for (const id of facts.newlyMapped) {
+        const role = facts.mappedStoryRoles?.get(id);
+        if (!this.poiDiscovered({ id, kind: "storyPlace", ...(role ? { role } : {}) })) {
+          this.request((trigger) => trigger.kind === "mapped");
+        }
+      }
+    }
+    const approach = facts.poiApproach;
+    if (approach) {
+      const variants = poiApproachPool(galaxy, approach.kind);
+      const [conversation] = variants;
+      if (conversation) {
+        this.enqueue({
+          conversation,
+          holds: always,
+          instance: approach.instance,
+          optional: "approach",
+          relevant: approach.relevant,
+          variants,
+        });
+      }
     }
     if (facts.heavyDisabled) {
       this.request((trigger) => trigger.kind === "disabled");
@@ -649,8 +781,14 @@ export class ConversationDirector {
         this.enqueue({ conversation, holds: always, instance: `guard:${galaxy}:${destination}` });
       }
     }
-    if (facts.newStation) {
-      this.request((trigger) => trigger.kind === "stationMapped");
+    if (facts.newStation && !facts.poiConfirmations?.some(({ cue }) => cue.kind === "station")) {
+      if (facts.friendlyStationsMapped?.length) {
+        for (const id of facts.friendlyStationsMapped) {
+          this.poiDiscovered({ id, kind: "station" });
+        }
+      } else {
+        this.request((trigger) => trigger.kind === "stationMapped");
+      }
     }
     this.observeReturns(galaxy, facts);
     if (facts.frigateInSight) {
@@ -813,8 +951,9 @@ export class ConversationDirector {
   }
 
   /** The pool's next variant: the next in its shuffle, never the last one drawn again. */
-  private draw(pool: string): Conversation {
-    const variants = this.conversations.filter((conversation) => conversation.pool === pool);
+  private draw(pool: string, source?: readonly Conversation[]): Conversation {
+    const variants =
+      source ?? this.conversations.filter((conversation) => conversation.pool === pool);
     const deck = this.decks.get(pool) ?? { last: null, order: [] };
     if (deck.order.length === 0) {
       deck.order = shuffled(
@@ -855,7 +994,9 @@ export class ConversationDirector {
       this.markSeen(request);
       return false;
     }
-    return this.eligible(request.conversation) && request.holds(facts);
+    return (
+      this.eligible(request.conversation) && request.holds(facts) && request.relevant?.() !== false
+    );
   }
 
   /**
@@ -881,6 +1022,7 @@ export class ConversationDirector {
     }
     if (
       next.resume !== undefined ||
+      next.optional === "reaction" ||
       rank(next) <= BOX_PRIORITIES.indexOf("notice") ||
       this.cooldown <= EPSILON
     ) {
@@ -889,7 +1031,7 @@ export class ConversationDirector {
   }
 
   private start(request: Request): void {
-    if (!this.eligible(request.conversation)) {
+    if (!this.eligible(request.conversation) || request.relevant?.() === false) {
       this.queue = this.queue.filter((entry) => entry !== request);
       return;
     }
@@ -905,7 +1047,8 @@ export class ConversationDirector {
     }
     const { resume, ...shown } = request;
     const pool = request.conversation.pool;
-    const conversation = resume === undefined && pool ? this.draw(pool) : request.conversation;
+    const conversation =
+      resume === undefined && pool ? this.draw(pool, request.variants) : request.conversation;
     this.active = {
       ...shown,
       conversation,
