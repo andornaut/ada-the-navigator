@@ -430,8 +430,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const contributionLabel = CONTENT.labels.projectContribution ?? "";
   const stardustLabel = CONTENT.labels.stardust ?? "";
   for (const [pane, label, term] of [
-    [jobsPane, labels.jobs, labels.questReward],
-    [projectsPane, labels.communityProjects, contributionLabel],
+    [jobsPane, labels.jobs, CONTENT.labels.jobsRewards ?? ""],
+    [projectsPane, labels.communityProjects, CONTENT.labels.projectContributions ?? ""],
   ] as const) {
     const heading = document.createElement("h3");
     heading.textContent = label;

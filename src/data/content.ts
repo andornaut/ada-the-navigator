@@ -460,6 +460,7 @@ export const CONTENT: GameContent = {
     jobReward: "{amount} Stardust",
     jobs: "Jobs",
     jobsProjects: "Jobs & Projects",
+    jobsRewards: "Rewards",
     jump: "Jump",
     jumpHome: "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     jumpHomeOreLost:
@@ -600,6 +601,7 @@ export const CONTENT: GameContent = {
     projectAboutNursery: "A soft light where whale calves can rest.",
     projectAboutSpareBeacon: "A spare beacon, ready if the chain ever goes dark.",
     projectContribution: "Contribution",
+    projectContributions: "Contributions",
     projectEffectBeacons: "Helps find lost things",
     projectEffectChannelLights: "Lights the practice channel",
     projectEffectCourierSchool: "Trains careful couriers",

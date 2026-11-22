@@ -1283,9 +1283,10 @@ it("gives each board heading one spoken Stardust hint", () => {
   f.activate(f.action("open-jobs"));
   const hints = f.native.get("jobs-back")!.body.querySelectorAll(".ada-station-pane-hint");
   expect(hints.map((hint) => hint.parentElement?.getAttribute("aria-label"))).toEqual([
-    `${f.labels.jobs} (${f.labels.questReward} Stardust)`,
-    `${f.labels.communityProjects} (Contribution Stardust)`,
+    `${f.labels.jobs} (Rewards Stardust)`,
+    `${f.labels.communityProjects} (Contributions Stardust)`,
   ]);
+  expect(hints.map((hint) => hint.textContent)).toEqual(["Rewards", "Contributions"]);
   expect(hints.map((hint) => hint.getAttribute("aria-hidden"))).toEqual(["true", "true"]);
 });
 
