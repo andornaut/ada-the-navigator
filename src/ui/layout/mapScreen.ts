@@ -10,6 +10,7 @@ import {
   SPACING,
   TEXT_BUTTON,
 } from "../../data/layout.ts";
+import { TASK_COLORS } from "../../data/taskCategories.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
@@ -57,7 +58,7 @@ export const MAP_SCREEN = {
 /** The map's colours (art/map.md "Symbols" and "Contrast per field"). */
 export const MAP_COLORS = {
   canopy: "#70ace8",
-  cream: "#ead4aa",
+  cream: TASK_COLORS.generic,
   divider: "#57536e",
   hull: "#ffffff",
   ink: "#181425",
@@ -73,13 +74,13 @@ const STATION_FACE = "#c4afcc";
 
 export const MAP_FACES: Readonly<Record<MapSymbol | "hostileStation", string>> = {
   beacon: "#ead4aa",
-  destination: "#65c9bf",
+  destination: TASK_COLORS.story,
   growers: "#9ccc5a",
   holodisk: "#e868c8",
   hostileStation: STATION_FACE,
-  job: "#feae34",
+  job: TASK_COLORS.job,
   nebula: "#ead4aa",
-  salvagers: "#8f9cf0",
+  salvagers: TASK_COLORS.project,
   station: STATION_FACE,
   workshop: "#f2d15a",
   wreck: "#ead4aa",

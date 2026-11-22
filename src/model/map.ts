@@ -2,6 +2,7 @@ import { DESTINATIONS } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { type StationPlacementContext, worldStationById, worldStationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
@@ -187,6 +188,7 @@ export interface MapPlace {
   /** Whether it is the current objective's destination. */
   readonly objective: boolean;
   readonly symbol: MapSymbol;
+  readonly taskCategory?: TaskCategory;
   readonly travel: boolean;
   readonly x: number;
   readonly y: number;

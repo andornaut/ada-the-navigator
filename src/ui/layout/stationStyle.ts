@@ -214,6 +214,10 @@ export const STATION_STYLE = `
 .ada-controls [data-shop-stock] .ada-shop-row:disabled .ada-shop-name > :first-child{
   grid-column:1/-1
 }
+.ada-controls .ada-job-list .ada-shop-row .ada-well,
+.ada-controls .ada-station-projects .ada-shop-row .ada-well{
+  border-color:var(--station-task-accent)
+}
 .ada-controls .ada-station-panes .ada-well{
   width:${units(SHOP_ROW.well - SPACING.rowGap)};
   height:${units(SHOP_ROW.well - SPACING.rowGap)}

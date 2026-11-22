@@ -3,9 +3,9 @@ import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
-import { MAP_FACES } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";
 import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
@@ -239,6 +239,10 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     expect(chip.firstElementChild?.attributes.size).toBe(0);
   };
   expectUnknown();
+  expect(chip.style.background).toBe("#ead4aa");
+  ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, taskCategory: "story" }]);
+  expectUnknown();
+  expect(chip.style.background).toBe("#65c9bf");
   ui.place(
     { x: 0, y: 0 },
     area,
@@ -258,13 +262,13 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     target: "workshop",
   });
   expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
-  expect(chip.style.background).toBe(MAP_FACES.beacon);
-  for (const [category, symbol, face] of [
-    ["station", "station", MAP_FACES.station],
-    ["objective", "destination", MAP_FACES.destination],
+  expect(chip.style.background).toBe(TASK_COLORS.generic);
+  for (const [category, symbol] of [
+    ["station", "station"],
+    ["objective", "destination"],
   ] as const) {
     ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, category, identified: true, symbol }]);
-    expect(chip.style.background).toBe(face);
+    expect(chip.style.background).toBe(TASK_COLORS.generic);
   }
   expect(PENNY_MARKER.size).toBe(24);
   expect(PENNY_MARKERS_STYLE).toContain("border-radius:50%");

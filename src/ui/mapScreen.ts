@@ -10,6 +10,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -748,9 +749,13 @@ export function createMapShipMarker(
 // A place's chip node: its face, glyph, kind and marks.
 /** A chip's face colour: main's orange for a held job's target or spot, else its symbol's face. */
 export function chipFace(
-  place: Pick<MapPlace, "job"> & { readonly symbol: keyof typeof MAP_FACES },
+  place: Pick<MapPlace, "job" | "taskCategory"> & { readonly symbol: keyof typeof MAP_FACES },
 ): string {
-  return place.job ? MAP_JOB_FACE : MAP_FACES[place.symbol];
+  return place.taskCategory
+    ? TASK_COLORS[place.taskCategory]
+    : place.job
+      ? MAP_JOB_FACE
+      : MAP_FACES[place.symbol];
 }
 
 /** A chip's glyph: a held job's own spot takes its job type's, every other place its symbol's. */

@@ -6,7 +6,7 @@ import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";
-import { questsForObject } from "./questObjectLinks.ts";
+import { questsForObject, taskMarkerCategory } from "./questObjectLinks.ts";
 import { HUB_STATION, stationsNear } from "./stations.ts";
 import type { HeldJob } from "./types.ts";
 
@@ -58,6 +58,13 @@ describe("canonical quest object associations", () => {
     ]);
     expect(questsForObject({ ...context, knownIds: ["growers"] }, "workshop")).toEqual([]);
     expect(model.state).toEqual(before);
+  });
+
+  it("uses project only for an explicit eligible contributor after story and job", () => {
+    expect(taskMarkerCategory([], true, true, true)).toBe("story");
+    expect(taskMarkerCategory([], false, true, true)).toBe("job");
+    expect(taskMarkerCategory([], false, false, true)).toBe("project");
+    expect(taskMarkerCategory([], false, false)).toBe("generic");
   });
 
   it("does not infer associations from a known label or coordinates", () => {

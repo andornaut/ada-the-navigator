@@ -187,7 +187,12 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { questDetails, type QuestEntry } from "./questDetails.ts";
-import { type ContextQuestDetails, questsForObject } from "./questObjectLinks.ts";
+import {
+  type ContextQuestDetails,
+  type QuestObjectLink,
+  questsForObject,
+  taskMarkerCategory,
+} from "./questObjectLinks.ts";
 import { canReplayEarthChapter, restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
 import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
@@ -782,6 +787,43 @@ export class GameModel {
     };
   }
 
+  /** Colour existing task associations without admitting or identifying another target. */
+  private markerTaskContext(
+    f: FlightState,
+    known: readonly string[],
+    quests?: readonly QuestObjectLink[],
+  ) {
+    const progress = this.state.progress[f.galaxy];
+    const task = this.state.tasks[f.galaxy];
+    const story = BUILT.has(f.galaxy) && progress.introduced && !progress.resolved;
+    const storyTargets = [this.objectiveId(f.galaxy), questItemDestination(progress)].filter(
+      (id): id is string => typeof id === "string",
+    );
+    const questContext = {
+      galaxy: f.galaxy,
+      knownIds: known,
+      quests: (task || story ? (quests ?? this.quests) : []).filter(
+        ({ galaxy, line }) => galaxy === f.galaxy && (line.kind === "story" ? story : task),
+      ),
+      storyTargets,
+      ...(task ? { task } : {}),
+    };
+    return {
+      category: (
+        id: string,
+        links: readonly QuestObjectLink[],
+        currentStory: boolean,
+        currentJob: boolean,
+      ) =>
+        taskMarkerCategory(
+          links,
+          story && (currentStory || storyTargets.includes(id)),
+          Boolean(task && (currentJob || (task.kind === "job" && id === `job:${task.id}`))),
+        ),
+      links: (id: string) => questsForObject(questContext, id),
+    };
+  }
+
   /** One merged registry for ordinary, sensed, quest and active encounter targets. */
   targetMarkers(area: Rect, litCaches?: ReadonlySet<string>): PennyMarker[] {
     const f = this.state.flight;
@@ -805,25 +847,22 @@ export class GameModel {
       f.phantom.enemyIds.includes(PHANTOM_FLAGSHIP)
         ? [PHANTOM_FLAGSHIP]
         : [];
-    const candidates = new Set([
-      ...known,
-      ...store.ids(),
-      ...this.indicatorTargets.map(({ id }) => id),
-      ...encounterIds,
-    ]);
-    const task = this.state.tasks[f.galaxy];
-    const questContext = {
-      galaxy: f.galaxy,
-      knownIds: known,
-      quests: task || (progress.introduced && !progress.resolved) ? this.quests : [],
-      storyTargets: [this.objectiveId(f.galaxy), questItemDestination(progress)].filter(
-        (id): id is string => typeof id === "string",
-      ),
-      ...(task ? { task } : {}),
-    };
+    const indicators = new Map(this.indicatorTargets.map(({ id, kind }) => [id, kind]));
+    const candidates = new Set([...known, ...store.ids(), ...indicators.keys(), ...encounterIds]);
+    const tasks = this.markerTaskContext(f, known);
+    const categories = new Map<string, NonNullable<PennyMarker["taskCategory"]>>();
     const contributions: TargetContribution[] = known.map((id) => ({ id, source: "ordinary" }));
     for (const id of candidates) {
-      if (questsForObject(questContext, id).length > 0) {
+      const links = tasks.links(id);
+      const indicator = indicators.get(id);
+      const category = tasks.category(
+        id,
+        links,
+        indicator === "objective" || indicator === "questItem" || indicator === "holodisk",
+        indicator === "job",
+      );
+      categories.set(id, category);
+      if (links.length > 0) {
         contributions.push({ id, source: "quest" });
       }
       if (encounterIds.includes(id)) {
@@ -857,6 +896,7 @@ export class GameModel {
         point,
         state: "present",
         symbol: point.symbol,
+        taskCategory: categories.get(id) ?? "generic",
       };
     };
     return this.markerRegistry
@@ -2746,7 +2786,7 @@ export class GameModel {
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
     const context = this.chapterContext();
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
-    return localMap({
+    const map = localMap({
       ...flightStationContext(f),
       ...(waypoint
         ? {
@@ -2805,6 +2845,25 @@ export class GameModel {
         storyComplete: this.current.resolved,
       },
     });
+    const tasks = this.markerTaskContext(
+      f,
+      [...this.current.known, ...this.current.stations, ...this.current.charted],
+      map.quests.flatMap((line) =>
+        line.kind === "job" || line.kind === "story" ? [{ galaxy: f.galaxy, line }] : [],
+      ),
+    );
+    return {
+      ...map,
+      places: map.places.map((place) => {
+        const category = tasks.category(
+          place.id,
+          tasks.links(place.id),
+          place.objective || place.kind === "holodisk",
+          place.job,
+        );
+        return { ...place, taskCategory: category };
+      }),
+    };
   }
   /** The current objective's destination in a galaxy, if it has one (indicators.ts). */
   private objectiveId(galaxy: GalaxyNumber): string | null {

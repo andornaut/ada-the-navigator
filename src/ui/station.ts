@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { CONTENT } from "../data/content.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import type { StationGreeting } from "../model/keepers.ts";
 import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
@@ -429,12 +430,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const projectsPane = document.createElement("section");
   const contributionLabel = CONTENT.labels.projectContribution ?? "";
   const stardustLabel = CONTENT.labels.stardust ?? "";
-  for (const [pane, label, term] of [
-    [jobsPane, labels.jobs, CONTENT.labels.jobsRewards ?? ""],
-    [projectsPane, labels.communityProjects, CONTENT.labels.projectContributions ?? ""],
+  for (const [pane, label, term, category] of [
+    [jobsPane, labels.jobs, CONTENT.labels.jobsRewards ?? "", "job"],
+    [projectsPane, labels.communityProjects, CONTENT.labels.projectContributions ?? "", "project"],
   ] as const) {
     const heading = document.createElement("h3");
     heading.textContent = label;
+    heading.style.color = TASK_COLORS[category];
     heading.setAttribute("aria-label", `${label} (${term} ${stardustLabel})`);
     const hint = document.createElement("span");
     hint.className = "ada-station-pane-hint";
@@ -625,6 +627,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationShopRowTree(labels, row),
     );
     (row.project ? jobLayouts : shopLayouts).push(layout);
+    if (row.project) {
+      node.style.setProperty("--station-task-accent", TASK_COLORS.project);
+    }
     register(
       node,
       () => {
@@ -736,6 +741,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
                 node.type = "button";
                 node.className = "ada-shop-row ada-job-row";
                 node.dataset.job = initial.id;
+                node.style.setProperty("--station-task-accent", TASK_COLORS.job);
                 node.dataset.state = initial.state;
                 node.setAttribute("aria-label", initial.ariaLabel);
                 return { dispose() {}, element: node, slots: { parts: node }, update() {} };

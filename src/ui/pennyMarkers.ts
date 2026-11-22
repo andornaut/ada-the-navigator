@@ -2,6 +2,7 @@ import { opaqueBoundsOfRgba } from "@andornaut/game-kit/runtime/opaqueBounds";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
@@ -12,7 +13,7 @@ import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { layoutTargetMarkers, type TargetMarkerExtent } from "./layout/targetMarkers.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { chipFace, chipGlyph } from "./mapScreen.ts";
+import { chipGlyph } from "./mapScreen.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 export const PENNY_MARKER_INSET = PENNY_MARKER.inset;
 export const PENNY_MARKERS_STYLE = `
@@ -197,16 +198,13 @@ export function createPennyMarkerLayer(
           delete node.dataset.target;
           delete node.dataset.symbol;
         }
-        node.style.setProperty("--marker-threat", style.threat ?? style.color);
-        node.style.background = !marker.identified
-          ? MAP_FACES.destination
-          : marker.symbol === "hostileStation"
-            ? (style.threat ?? style.color)
-            : threatSymbol(marker.symbol)
-              ? (style.threat ?? style.color)
-              : marker.item === "stardust"
-                ? MAP_FACES.beacon
-                : chipFace({ job: Boolean(marker.jobType), symbol: marker.symbol });
+        const tint = marker.taskCategory && TASK_COLORS[marker.taskCategory];
+        const threat = tint ?? style.threat ?? style.color;
+        node.style.setProperty("--marker-threat", threat);
+        node.style.background =
+          marker.identified && (marker.symbol === "hostileStation" || threatSymbol(marker.symbol))
+            ? threat
+            : (tint ?? TASK_COLORS.generic);
         const glyph = pennyGlyph(marker);
         if (glyph) {
           node.style.setProperty("--glyph", `url('${glyph}')`);

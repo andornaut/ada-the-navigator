@@ -1,4 +1,5 @@
 import type { JobType } from "../data/jobs.ts";
+import type { TaskCategory } from "../data/taskCategories.ts";
 import type { TargetSymbol } from "./targetMarkers.ts";
 import type { Vec } from "./types.ts";
 
@@ -15,4 +16,5 @@ export interface PennyPoint extends Vec {
 }
 export interface PennyMarker extends PennyPoint {
   readonly identified: boolean;
+  readonly taskCategory?: TaskCategory;
 }

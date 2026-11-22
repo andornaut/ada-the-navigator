@@ -1,6 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
@@ -182,13 +183,16 @@ export function createQuestsScreen(
     suspended = undefined;
     modal.hidden = true;
   };
-  const icon = (entry: QuestEntry, symbol?: MapSymbol, job = Boolean(entry.jobType)) => {
+  const icon = (entry: QuestEntry, symbol?: MapSymbol, category?: TaskCategory) => {
     const image = document.createElement("img");
     image.className = "ada-quest-icon";
     image.alt = "";
+    const job = symbol === undefined && Boolean(entry.jobType);
+    const taskCategory = symbol === undefined ? entry.line.kind : category;
     const shape = {
       job,
       ...(job && entry.jobType ? { jobType: entry.jobType } : {}),
+      ...(taskCategory ? { taskCategory } : {}),
       symbol: symbol ?? (job ? "job" : "destination"),
     };
     image.style.background = chipFace(shape);
@@ -319,6 +323,9 @@ export function createQuestsScreen(
             create(initial) {
               const heading = document.createElement("h3");
               heading.textContent = initial.text;
+              if (initial.category) {
+                heading.style.color = TASK_COLORS[initial.category];
+              }
               return { dispose() {}, element: heading, slots: {}, update() {} };
             },
             slots: [],
@@ -409,7 +416,7 @@ export function createQuestsScreen(
                 button.disabled =
                   origin === "ship" || endpoint.location === null || endpoint.place === null;
                 if (endpoint.location?.symbol) {
-                  const image = icon(entry, endpoint.location.symbol, false);
+                  const image = icon(entry, endpoint.location.symbol, endpoint.place?.taskCategory);
                   if (image) {
                     button.append(image);
                   }

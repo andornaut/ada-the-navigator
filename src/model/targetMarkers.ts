@@ -2,6 +2,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { EdgeMarkerKind } from "../data/edgeMarkers.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import type { TaskCategory } from "../data/taskCategories.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
 import type { MapSymbol } from "./map.ts";
 import { recordTargetKnowledge } from "./targetKnowledgeStore.ts";
@@ -27,6 +28,7 @@ export type TargetResolution =
       readonly point: Vec;
       readonly state: "present";
       readonly symbol: TargetSymbol;
+      readonly taskCategory?: TaskCategory;
     };
 export type TargetObjectResolution =
   | { readonly state: "removed" | "unresolved" }
@@ -54,6 +56,7 @@ export interface TargetMarker extends Vec {
   readonly id: string;
   readonly identified: boolean;
   readonly symbol: TargetSymbol;
+  readonly taskCategory?: TaskCategory;
 }
 interface TargetRegistryView {
   readonly area: Rect;
@@ -181,6 +184,7 @@ export class TargetMarkerRegistry {
         id,
         identified: store.get(id) === "identified",
         symbol: resolution.symbol,
+        ...(resolution.taskCategory ? { taskCategory: resolution.taskCategory } : {}),
         x: point.x,
         y: point.y,
       };

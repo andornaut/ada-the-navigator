@@ -162,6 +162,97 @@ describe("production unified marker facade", () => {
     flight.objects = [{ hp: 1, id: "workshop", kind: "destination", radius: 10, x: 2000, y: 0 }];
     expect(model.targetMarkers(GAME_AREA).filter(({ id }) => id === "workshop")).toHaveLength(1);
   });
+  it("colours an independently sensed quest target without disclosing it", () => {
+    const { flight, model, progress, store } = fixture();
+    Object.assign(progress, { introduced: true, questItem: "food", stage: 1 });
+    const workshop = {
+      hp: 1,
+      id: "workshop",
+      kind: "destination",
+      radius: 10,
+      x: 2000,
+      y: 0,
+    } as const;
+    flight.objects = [workshop];
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    expect(model.map?.places.map(({ id }) => id)).not.toContain("workshop");
+    store.set(workshop.id, "sensed");
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: "workshop", identified: false, taskCategory: "story", x: 2000, y: 0 },
+    ]);
+    expect(store.get(workshop.id)).toBe("sensed");
+    expect(model.map?.places.map(({ id }) => id)).not.toContain("workshop");
+    progress.resolved = true;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: "workshop", identified: false, taskCategory: "generic" },
+    ]);
+    expect(model.map?.places.map(({ id }) => id)).not.toContain("workshop");
+    expect(store.get(workshop.id)).toBe("sensed");
+    progress.resolved = false;
+    progress.known.push(workshop.id);
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      {
+        id: "workshop",
+        identified: true,
+        symbol: "workshop",
+        taskCategory: "story",
+        x: 2000,
+        y: 0,
+      },
+    ]);
+    expect(model.map?.places).toMatchObject([{ id: "workshop", taskCategory: "story" }]);
+  });
+
+  it("keeps one target and does not promote project catalogue or donation facts into a marker", () => {
+    const { flight, model, progress } = fixture();
+    Object.assign(progress, { introduced: true, questItem: "food", stage: 1 });
+    progress.known.push("workshop");
+    const workshop = {
+      hp: 1,
+      id: "workshop",
+      kind: "destination",
+      radius: 10,
+      x: 2000,
+      y: 0,
+    } as const;
+    flight.objects = [workshop];
+    model.state.tasks[1] = {
+      carrying: true,
+      id: "carried-job",
+      item: "seeds",
+      kind: "job",
+      reward: 17,
+      station: "issuer",
+      target: workshop,
+      type: "delivery",
+    };
+    const check = (taskCategory: "story" | "job" | "generic") => {
+      const edge = model.targetMarkers(GAME_AREA).filter(({ id }) => id === "workshop");
+      const map = model.map!.places.filter(({ id }) => id === "workshop");
+      expect(edge).toMatchObject([
+        { identified: true, symbol: "workshop", taskCategory, x: 2000, y: 0 },
+      ]);
+      expect(map).toMatchObject([{ symbol: "workshop", taskCategory, x: 2000, y: 0 }]);
+    };
+    check("story");
+    progress.resolved = true;
+    check("job");
+    delete model.state.tasks[1];
+    check("generic");
+    progress.donated.workshopCrane = 1;
+    check("generic");
+    flight.player.x = 2000 - TARGET_MARKER_RANGE - 1;
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    flight.player.x++;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: "workshop", taskCategory: "generic" },
+    ]);
+    progress.donated.workshopCrane = 265;
+    expect(model.targetMarkers(GAME_AREA)[0]).toMatchObject({ taskCategory: "generic" });
+    expect(model.map!.places[0]).toMatchObject({ taskCategory: "generic" });
+    expect(model.map!.places.map(({ id }) => id)).toEqual(["workshop"]);
+  });
+
   it("does not disclose summoned ordinary quest or station guards outside range", () => {
     const { flight, model } = fixture();
     flight.objects = [boss("quest-frigate", "frigate"), boss("quest-platform", "platform")];

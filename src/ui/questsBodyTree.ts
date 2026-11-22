@@ -29,7 +29,7 @@ export type QuestsBodyData =
     };
 export type QuestsBodySchema = {
   body: { props: Record<string, never>; slots: "content" };
-  heading: { props: { readonly text: string }; slots: never };
+  heading: { props: { readonly text: string; readonly category?: "story" | "job" }; slots: never };
   objective: {
     props: { readonly iconPath: string | null; readonly step: QuestObjective };
     slots: never;
@@ -102,11 +102,12 @@ export function questsBodyTree(
     );
   } else {
     for (const [index, group] of data.groups.entries()) {
+      const category = group.entries[0]?.line.kind;
       content.push({
         component: "heading",
         key: `heading:${index}`,
         kind: "component",
-        props: { text: group.heading },
+        props: { text: group.heading, ...(category ? { category } : {}) },
       });
       content.push(
         ...group.entries.map((entry) => ({
