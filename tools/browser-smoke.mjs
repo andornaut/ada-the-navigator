@@ -2037,6 +2037,9 @@ try {
   const { FOCUS_RING: FOCUS_RING_TOKENS, SPACING: SPACING_TOKENS } = await import(
     new URL("../src/data/layout.ts", import.meta.url)
   );
+  const { SETTING_ICON_INK_TOP } = await import(
+    new URL("../src/ui/settingsIcons.ts", import.meta.url)
+  );
   const cheatsEnd = {};
   await proofsAt("cheats-scroll", async (_insets, _view, name) => {
     await cheatsProof().evaluate((dialog) => {
@@ -2078,8 +2081,8 @@ try {
       ...geometry,
     };
     // The FPS counter row's icon ink top meets its label's ink top, as in every switch row: the
-    // label's ink from the loaded font's metrics, the icon's 1 transparent row above its ink.
-    shot.fpsInk = await cheatsProof().evaluate((dialog) => {
+    // label's ink from the loaded font's metrics, with the vector's authored ink inset.
+    shot.fpsInk = await cheatsProof().evaluate((dialog, iconInkTop) => {
       const row = dialog.querySelector('[data-cheat="fpsCounter"]');
       const caption = row.querySelector(".ada-setting-text").firstElementChild;
       const icon = row.querySelector(".ada-icon");
@@ -2096,11 +2099,10 @@ try {
         (parseFloat(style.lineHeight) - box) / 2 +
         metrics.fontBoundingBoxAscent;
       return {
-        // icon-fps-counter's ink starts 1 below its frame top (art/settings-icons.md).
-        icon: icon.getBoundingClientRect().top / unit + 1,
+        icon: icon.getBoundingClientRect().top / unit + iconInkTop,
         label: (baseline - metrics.actualBoundingBoxAscent) / unit,
       };
-    });
+    }, SETTING_ICON_INK_TOP.get("icon-fps-counter"));
     cheatsEnd[name] = shot;
     assert.ok(
       Math.abs(shot.fpsInk.icon - shot.fpsInk.label) <= 1,
@@ -6011,7 +6013,7 @@ try {
     ["sound", CONTENT.labels.soundNote],
     "Sound keeps its note in the same element",
   );
-  // The Move and Aim controls rows show Art's control icons, nearest-neighbour.
+  // The Move and Aim controls rows show Art's smooth control icons.
   const stickIcons = await page.locator(".ada-row[data-setting]").evaluateAll((rows) =>
     rows
       .filter((row) => ["move", "aim"].includes(row.dataset.setting))
@@ -6021,14 +6023,14 @@ try {
         return [
           row.dataset.setting,
           icon.dataset.icon,
-          /\/art\/ui\/sprites\/icon-(?:move|aim)-controls\.png/u.test(style.backgroundImage),
+          /\/art\/ui\/icons\/icon-(?:move|aim)-controls\.svg/u.test(style.backgroundImage),
           style.imageRendering,
         ];
       }),
   );
   assert.deepEqual(stickIcons, [
-    ["move", "icon-move-controls", true, "pixelated"],
-    ["aim", "icon-aim-controls", true, "pixelated"],
+    ["move", "icon-move-controls", true, "auto"],
+    ["aim", "icon-aim-controls", true, "auto"],
   ]);
   await page
     .locator('.ada-row[data-setting="move"]')

@@ -2,8 +2,7 @@ import type { InstallStepsKind } from "../pwa/index.ts";
 import type { DeviceSetting } from "./deviceSettings.ts";
 import { units } from "./layout/css.ts";
 
-// Art's Settings icons (art/settings-icons.md): 16 by 16 single-frame sheets in the UI manifest,
-// drawn at their own size as Chibi's rows draw them.
+// Art's Settings icons use 16 by 16 frames, drawn at their own size in each row.
 
 export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> = {
   aim: "icon-aim-controls",
@@ -13,10 +12,15 @@ export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> 
   sound: "icon-sound",
 };
 
-// Transparent source rows above a sprite's visible ink, in its authored 16-pixel frame.
+// The top of each approved vector's stroke, in its logical 16-pixel frame. The settings
+// and FPS rows align this ink edge to their existing label ink position.
 export const SETTING_ICON_INK_TOP: ReadonlyMap<string, number> = new Map([
-  ["icon-fps-counter", 1],
-  [SETTING_ICONS.sound, 1],
+  [SETTING_ICONS.aim, 0.84],
+  [SETTING_ICONS.install, 0.84],
+  [SETTING_ICONS.move, 0.84],
+  [SETTING_ICONS.reducedMotion, 2.44],
+  [SETTING_ICONS.sound, 2.04],
+  ["icon-fps-counter", 1.64],
 ]);
 
 // The glyph of the button each browser's install steps start from, as in Chibi: Share on Apple
@@ -33,11 +37,12 @@ export const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>
   samsungInternet: "icon-browser-menu",
 };
 
-// Shows the sheet's rest frame, its first and only frame, in an icon element.
+// Shows the approved vector in the existing decorative icon element.
 export function showIcon(icon: HTMLElement, key: string): void {
   icon.dataset.icon = key;
   icon.style.setProperty("--setting-icon-ink-top", units(SETTING_ICON_INK_TOP.get(key) ?? 0));
-  icon.style.backgroundImage = `url('/art/ui/sprites/${key}.png')`;
+  icon.style.backgroundImage = `url('/art/ui/icons/${key}.svg')`;
+  icon.style.imageRendering = "auto";
 }
 
 export function settingsIcon(key: string): HTMLSpanElement {

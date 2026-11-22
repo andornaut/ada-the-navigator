@@ -344,7 +344,7 @@ it("lists one scrolling column in order, runs each press once and disables an ex
   // The FPS counter's switch row shows its setting icon, keyed outside the device settings.
   const icon = fpsRow!.children.find((node) => node.className === "ada-icon")!;
   expect(icon.dataset.icon).toBe("icon-fps-counter");
-  expect(icon.style.backgroundImage).toBe("url('/art/ui/sprites/icon-fps-counter.png')");
+  expect(icon.style.backgroundImage).toBe("url('/art/ui/icons/icon-fps-counter.svg')");
   expect(fpsRow!.getAttribute("aria-checked")).toBe("false");
   fpsRow!.dispatchEvent(new Event("click"));
   expect(set).toHaveBeenCalledExactlyOnceWith(true);
