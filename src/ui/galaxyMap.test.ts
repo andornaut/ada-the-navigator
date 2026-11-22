@@ -28,6 +28,19 @@ it("fits the route name pills and centres only the locked ellipsis ink", () => {
   expect(locked).not.toMatch(/(?:^|[;\s])(?:height|top|transform|padding):/u);
 });
 
+it("ties the filled state cues to the marker labels and retains the unlock pulse", () => {
+  for (const position of ["1", "2", "3", "4", "5", "6", "earth"]) {
+    for (const state of ["[data-selected]", ":focus-visible", ":active"]) {
+      expect(GALAXY_MAP_STYLE).toContain(
+        `[data-position="${position}"]${state}) > [data-route-label="${position}"]`,
+      );
+    }
+  }
+  expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-ring");
+  expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-frame");
+  expect(GALAXY_MAP_STYLE).toContain(".ada-route-pulse{");
+});
+
 // The destination actions as the scene reads them from content.
 const labels = {
   jumpEarth: CONTENT.labels.galaxyJumpEarth!,

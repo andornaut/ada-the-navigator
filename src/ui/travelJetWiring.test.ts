@@ -203,7 +203,13 @@ function dom(hasActionRoot = true) {
     setAttribute(name: string, value: string) {
       this.attributes.set(name, value);
     }
-    toggleAttribute() {}
+    toggleAttribute(name: string, shown: boolean) {
+      if (shown) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+    }
   }
   const document = {
     createElement: (tag: string) => new ElementFake(tag),
@@ -765,6 +771,20 @@ it.each(["mouse", "hold"])(
     const currentTitle = () => fixture.nodes.find((node) => node.tag === "h2")!.textContent;
     try {
       map.show(view);
+      const selected = () =>
+        fixture.nodes
+          .filter((node) => node.tag === "button" && node.attributes.has("data-selected"))
+          .map((node) => node.dataset.position);
+      expect(selected()).toEqual([String(initial.panel)]);
+      for (const position of [1, 2, 3, 4, 5, 6, "earth"] as const) {
+        expect(
+          fixture.nodes.filter((node) => node.dataset.routeLabel === String(position)),
+        ).toHaveLength(1);
+        expect(marker(position).children.map(({ className }) => className)).toEqual([
+          "ada-route-backing",
+          "ada-route-disc",
+        ]);
+      }
       if (gesture === "mouse") {
         focus(marker(3));
         marker(3).click();
@@ -779,8 +799,10 @@ it.each(["mouse", "hold"])(
       expect(currentTitle()).toBe("3");
       const jump = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
       expect(jump.attributes.get("aria-disabled")).toBe("true");
+      expect(selected()).toEqual(["3"]);
 
       marker("earth").click();
+      expect(selected()).toEqual(["earth"]);
       expect(currentTitle()).toBe(destinationLabels.earthKicker);
       focus(marker(3));
       marker(3).click();

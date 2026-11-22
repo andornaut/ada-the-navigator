@@ -747,8 +747,8 @@ export const GALAXY_MAP_ACTIONS = {
 } as const;
 
 export const GALAXY_MAP_MOVE = {
-  // The unlock's arrival: the selected ring fades in, the panel crossfades.
-  arrival: { panel: 160, ring: 120 },
+  // The unlock's arrival crossfades the panel.
+  arrival: { panel: 160 },
   // A reduced-motion unlock: the ship fades out, the markers switch, the ship fades in.
   reduced: { fade: 150 },
   // A selection move: 360 px/s along the legs, clamped, easeInOutSine on arc length.
@@ -771,14 +771,11 @@ export const GALAXY_MAP_LAYOUT = {
   colors: { cream: GALAXY_MAP_CREAM, grey: GALAXY_MAP_GREY, ink: GALAXY_MAP_INK },
   // Each name on an ink pill: 20 high, the label plus 8 wide, its top 19 below the centre.
   label: { alpha: 0.85, height: 20, lockedInkLift: 4.4, padding: 4, radius: 4, top: 19 },
-  // The 36 frame: a radius 12 disc with a 1.5 ink edge over an ink backing disc, radius 15 at
-  // 0.85; the cream selected ring at radius 17 (band 16 to 18).
+  // A radius 12 disc with a 1.5 ink edge over an ink backing disc, radius 15 at 0.85.
   marker: {
     backing: { alpha: 0.85, radius: 15 },
     disc: 12,
     edge: 1.5,
-    frame: 36,
-    ring: { color: GALAXY_MAP_CREAM, radius: 17, width: 2 },
   },
   // The arc between consecutive markers, stamped every 0.5, stopping 15 from each centre; its
   // look is its destination's.
@@ -788,7 +785,7 @@ export const GALAXY_MAP_LAYOUT = {
     step: 0.5,
     trim: 15,
   },
-  // A 48 press area and the 44 focus ring centred on each marker.
+  // A 48 press area centred on each marker.
   press: 48,
   // The available rect's inset rules: 1 px, the inner 3 inside the outer.
   rules: { inner: "#4A4660", inset: 3, outer: "#6B6685", width: FRAME_LINE },

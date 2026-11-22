@@ -49,7 +49,7 @@ import {
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
+import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -175,6 +175,19 @@ export function destinationAction(
 const { colors, label, marker, path, ship: SHIP } = GALAXY_MAP;
 const POSITIONS = Array.from({ length: GALAXY_COUNT }, (_, i) => (i + 1) as RoutePosition);
 
+// The labels stay below the route controls in paint order and outside their hit areas.
+const labelCue = (state: string) =>
+  [...POSITIONS, "earth"]
+    .map(
+      (position) =>
+        `.ada-controls .ada-route-chart:has(> [data-position="${position}"]${state})` +
+        ` > [data-route-label="${position}"]`,
+    )
+    .join(",\n");
+const SELECTED_LABEL = labelCue("[data-selected]");
+const FOCUSED_LABEL = labelCue(":focus-visible");
+const PRESSED_LABEL = labelCue(":active");
+
 // Ink at an alpha, as a colour rather than opacity, so the backing stays under the disc it backs.
 const inkAt = (alpha: number) =>
   `${colors.ink}${Math.round(alpha * 255)
@@ -271,15 +284,9 @@ ${mapCloseStyle(".ada-controls .ada-route > .ada-close")}
     radial-gradient(ellipse at 30% 30%,#8ab86b 0 23%,transparent 25%),
     radial-gradient(ellipse at 70% 65%,#8ab86b 0 26%,transparent 28%)
 }
-.ada-controls .ada-route-frame{
-  width:${units(marker.frame)};
-  height:${units(marker.frame)}
-}
 .ada-controls .ada-route-marker:focus-visible{
-  outline:none
-}
-.ada-controls .ada-route-marker:focus-visible .ada-route-frame{
-  ${FOCUS_STYLE}
+  outline:none;
+  box-shadow:none
 }
 .ada-controls .ada-route-disc{
   width:${units(2 * marker.disc)};
@@ -291,16 +298,6 @@ ${mapCloseStyle(".ada-controls .ada-route > .ada-close")}
   font:${font(TYPE.label)};
   color:${colors.ink};
   transition:background-color ${GALAXY_MAP_MOVE.unlock.fade}s ease-out
-}
-.ada-controls .ada-route-ring{
-  width:${units(2 * (marker.ring.radius + marker.ring.width / 2))};
-  height:${units(2 * (marker.ring.radius + marker.ring.width / 2))};
-  border:${units(marker.ring.width)} solid ${marker.ring.color};
-  opacity:0;
-  transition:opacity ${GALAXY_MAP_MOVE.arrival.ring / 1000}s linear
-}
-.ada-controls .ada-route-marker[data-selected] .ada-route-ring{
-  opacity:1
 }
 .ada-controls .ada-route-pulse{
   position:absolute;
@@ -329,6 +326,40 @@ ${mapCloseStyle(".ada-controls .ada-route > .ada-close")}
 @media ${COMPACT_VIEWPORT}{
   .ada-controls .ada-route-label:not([data-locked]){line-height:${units(label.height + 2)}}
   .ada-controls .ada-route-label[data-locked]{line-height:${units(label.height - 2 * label.lockedInkLift)}}
+}
+${SELECTED_LABEL}{
+  background-color:${colors.cream};
+  color:${colors.ink}
+}
+${FOCUSED_LABEL}{
+  background-color:${colors.grey};
+  color:${colors.ink}
+}
+${PRESSED_LABEL}{
+  background-color:${TEXT_TOKENS.title};
+  color:${colors.ink}
+}
+@media (forced-colors:active){
+  /* Keep the ink backing, map hue and Earth artwork in forced colours. */
+  .ada-controls .ada-route-backing,
+  .ada-controls .ada-route-disc{
+    forced-color-adjust:none
+  }
+  ${SELECTED_LABEL}{
+    forced-color-adjust:none;
+    background-color:ButtonText;
+    color:ButtonFace
+  }
+  ${FOCUSED_LABEL}{
+    forced-color-adjust:none;
+    background-color:Highlight;
+    color:HighlightText
+  }
+  ${PRESSED_LABEL}{
+    forced-color-adjust:none;
+    background-color:HighlightText;
+    color:Highlight
+  }
 }
 .ada-controls .ada-route-ship{
   position:absolute;
@@ -521,14 +552,10 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     button.style.top = units(centre.y - GALAXY_MAP.press / 2);
     const backing = document.createElement("span");
     backing.className = "ada-route-backing";
-    const frame = document.createElement("span");
-    frame.className = "ada-route-frame";
     const disc = document.createElement("span");
     disc.className = "ada-route-disc";
     disc.textContent = String(position);
-    const ring = document.createElement("span");
-    ring.className = "ada-route-ring";
-    button.append(backing, ring, frame, disc);
+    button.append(backing, disc);
     const selectGalaxy = () => {
       if (!view || unlock || (!viewingEarth && view.panel === position)) {
         return;
@@ -543,6 +570,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     leaveFocus.push(() => button.removeEventListener("focus", selectGalaxy));
     const name = document.createElement("span");
     name.className = "ada-route-label";
+    name.dataset.routeLabel = String(position);
     name.style.left = units(centre.x);
     name.style.top = units(centre.y + label.top);
     return { button, name };
@@ -605,6 +633,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   );
   earth.querySelector(".ada-route-disc")!.textContent = "";
   const earthName = markers[0]!.name.cloneNode(true) as HTMLElement;
+  earthName.dataset.routeLabel = "earth";
   earthName.textContent = labels.earthTitle;
   earthName.style.left = units((GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2);
   chart.append(earth, earthName);
@@ -898,7 +927,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     startLoop();
   }
 
-  // The arrival: the idle frame, the ring and panel on the new galaxy, focus on Jump.
+  // The arrival: the idle frame, selection and panel on the new galaxy, focus on Jump.
   function endFlight(): void {
     if (!unlock) {
       return;
