@@ -409,9 +409,12 @@ it shows `detailMaxed` instead.
 
 ## Donations
 
-Once a galaxy's chapter is complete (its space story and its home page), every
-station in that galaxy offers its community projects, which Ada funds with
-Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
+Sunflower, Whirlpool, Needle, Andromeda and Cartwheel offer community
+projects. Once the galaxy's space story and Earth resolution are complete,
+every station in that galaxy offers its projects, which Ada funds with
+Stardust. Phantom has no community projects. Show the project pane only when
+the galaxy has an unlocked, nonempty project catalog. Jobs and held-task access
+follow their existing rules. A funded project visibly changes the galaxy, plays its thank-you line,
 counts toward achievements and makes one ally who joins the Phantom finale
 (see [Ships](ships.md#finale-allies)).
 Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 265 and
