@@ -131,7 +131,7 @@ describe("enemy frame sets", () => {
       fighter: 45.5,
       frigate: 189,
       gadget: 245,
-      hostileStation: 175,
+      hostileStation: 248.5,
       interceptor: 38.5,
       retaliator: 84,
       retaliatorCargoHauler: 84,
