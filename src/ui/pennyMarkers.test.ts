@@ -212,7 +212,7 @@ class ElementFixture {
     }
   }
 }
-it("reuses one DOM target through identification, clears obsolete nodes and releases the overlay", () => {
+it("keeps the same marker node while identifying it and clearing its identity again", () => {
   const root = new ElementFixture();
   const doc = {
     createElement: () => new ElementFixture(),
@@ -220,12 +220,21 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   } as unknown as Document;
   const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
   const area = { height: 360, width: 720, x: 0, y: 0 };
-  ui.place({ x: 0, y: 0 }, area, undefined, [marker]);
+  const target: PennyMarker = { ...marker, id: "workshop", symbol: "destination" };
+  ui.place({ x: 0, y: 0 }, area, undefined, [target]);
   const layer = root.children[0]!,
     chip = layer.children[0]!;
-  expect(layer.attributes.get("aria-hidden")).toBe("true");
-  expect(chip.dataset).toMatchObject({ identified: "false", target: "a" });
-  expect(chip.properties.has("--glyph")).toBe(false);
+  const expectUnknown = () => {
+    expect(layer.attributes.get("aria-hidden")).toBe("true");
+    expect(layer.children).toEqual([chip]);
+    expect(chip.dataset.identified).toBe("false");
+    expect(chip.dataset).not.toHaveProperty("target");
+    expect(chip.dataset).not.toHaveProperty("symbol");
+    expect(chip.properties.has("--glyph")).toBe(false);
+    expect(chip.attributes.size).toBe(0);
+    expect(chip.firstElementChild?.attributes.size).toBe(0);
+  };
+  expectUnknown();
   ui.place(
     { x: 0, y: 0 },
     area,
@@ -234,14 +243,15 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
       edge: "#102030",
       light: true,
     },
-    [{ ...marker, identified: true, item: "stardust" }],
+    [{ ...target, identified: true, item: "stardust" }],
   );
   expect(layer.children).toHaveLength(1);
   expect(layer.children[0]).toBe(chip);
   expect(chip.dataset).toMatchObject({
     identified: "true",
     light: "true",
-    target: "a",
+    symbol: "destination",
+    target: "workshop",
   });
   expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
   expect(chip.style.background).toBe(MAP_FACES.beacon);
@@ -249,7 +259,7 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
     ["station", "station", MAP_FACES.station],
     ["objective", "destination", MAP_FACES.destination],
   ] as const) {
-    ui.place({ x: 0, y: 0 }, area, undefined, [{ ...marker, category, identified: true, symbol }]);
+    ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, category, identified: true, symbol }]);
     expect(chip.style.background).toBe(face);
   }
   expect(PENNY_MARKER.size).toBe(24);
@@ -258,6 +268,8 @@ it("reuses one DOM target through identification, clears obsolete nodes and rele
   expect(chip.children).toHaveLength(1);
   expect(chip.children[0]!.className).toBe("ada-penny-glyph");
   expect(chip.children[0]!.children).toHaveLength(0);
+  ui.place({ x: 0, y: 0 }, area, undefined, [target]);
+  expectUnknown();
   ui.place({ x: 0, y: 0 }, area, undefined, []);
   expect(layer.children).toEqual([]);
   ui.destroy();
@@ -277,7 +289,8 @@ it("renders two coincident IDs at their ray despite the blocking HUD and retains
   ui.place({ x: 0, y: 0 }, area, style, [first, second]);
   const layer = root.children[0]!,
     [a, b] = layer.children;
-  expect(layer.children.map((n) => n.dataset.target)).toEqual(["a", "b"]);
+  expect(layer.children).toHaveLength(2);
+  expect(layer.children.map((n) => n.dataset.target)).toEqual([undefined, undefined]);
   for (const node of layer.children) {
     const bounds = node.getBoundingClientRect();
     expect(bounds.x + bounds.width / 2).toBe(360);
@@ -327,7 +340,7 @@ it("keeps actual displayed centres on cardinal/diagonal rays across unit and DPR
         y = (bounds.y + bounds.height / 2) / unit - 180;
       expect(x * screen.y - y * screen.x).toBeCloseTo(0, 8);
       expect(x * screen.x + y * screen.y).toBeGreaterThan(0);
-      expect(node.dataset.target).toBe(target.id);
+      expect(node.dataset).not.toHaveProperty("target");
       expect(node.dataset.crowded).toBe("true");
     }
   }

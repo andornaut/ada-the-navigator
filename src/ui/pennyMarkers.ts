@@ -188,10 +188,15 @@ export function createPennyMarkerLayer(
           layer.append(node);
           nodes.set(marker.id, node);
         }
-        node.dataset.target = marker.id;
         node.dataset.identified = String(marker.identified);
         node.dataset.light = String(style.light);
-        node.dataset.symbol = marker.symbol;
+        if (marker.identified) {
+          node.dataset.target = marker.id;
+          node.dataset.symbol = marker.symbol;
+        } else {
+          delete node.dataset.target;
+          delete node.dataset.symbol;
+        }
         node.style.setProperty("--marker-threat", style.threat ?? style.color);
         node.style.background = !marker.identified
           ? MAP_FACES.destination
