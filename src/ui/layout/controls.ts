@@ -24,6 +24,9 @@ export const WHOLE_PX_EDGES = [
   ...new Set([CARD_SLICE, BUTTON_SLICE.bottom, BUTTON_SLICE.left, BUTTON_SLICE.top, FRAME_LINE]),
 ].sort((a, b) => a - b);
 
+/** Square currency glyph in the Cheats grant actions. */
+export const CHEAT_GRANT_ICON = 20;
+
 /** Named control metrics shared by actual buttons and typed layout ports. */
 export const BUTTON_METRICS: Readonly<Record<"ordinary" | "compact", ButtonMetrics>> = {
   compact: {

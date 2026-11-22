@@ -18,6 +18,7 @@ import {
 import {
   BUTTON_SLICE,
   CARD_SLICE,
+  CHEAT_GRANT_ICON,
   CONTROL_ROW,
   FOCUS_RING,
   STORY_BUTTON,
@@ -651,8 +652,8 @@ ${UI_SCOPE} .ada-cheat-rows > .ada-row{
 }
 ${UI_SCOPE} .ada-cheat-resource-icon{
   flex:none;
-  width:${units(20)};
-  height:${units(20)};
+  width:${units(CHEAT_GRANT_ICON)};
+  height:${units(CHEAT_GRANT_ICON)};
   background-size:100% 100%;
   background-repeat:no-repeat
 }

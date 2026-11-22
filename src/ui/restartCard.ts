@@ -16,7 +16,8 @@ export interface RestartLabels {
 
 // A confirm covers the start screen's panel, which sits above the controls layer.
 export const RESTART_STYLE =
-  ".ada-controls:is(.ada-restart-open,.ada-reset-save-open,.ada-rewind-quests-open){z-index:30}";
+  ".ada-controls.ada-restart-open,.ada-controls.ada-reset-save-open," +
+  ".ada-controls.ada-rewind-quests-open{z-index:30}";
 
 /**
  * Restart's confirm, as Chibi's: "Restart?" with Cancel (secondary, left) and Restart (primary,
