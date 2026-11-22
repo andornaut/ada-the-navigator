@@ -307,6 +307,7 @@ describe("modal text", () => {
     expect(mapCloseStyle(".map-close", "#262b44")).toContain("--ada-close-rest:#262b44");
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:transparent");
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:ButtonFace");
+    expect(mapCloseStyle(".map-close")).toContain("var(--ada-close-ink,ButtonText)");
   });
 
   it("places the close X's 24 face 6 from the card's corner in its hitAround target", () => {

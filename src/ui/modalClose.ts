@@ -12,18 +12,16 @@ export function createModalClose(action: string, label: string): HTMLButtonEleme
   return close;
 }
 
+// Mask only the idle atlas frame. The active sprite keeps its own face and ink.
+const CLOSE_GLYPH_MASK = `mask:url('/art/ui/sprites/ui-close.png') 0 0 /
+  ${units(2 * CARD_CLOSE.art.width)} ${units(CARD_CLOSE.art.height)} no-repeat`;
+
 /** Give close buttons a filled focus cue, using the idle art as the glyph. */
 export function modalCloseStyle(
   selector: string,
   paint: { readonly face: string; readonly ink: string },
 ): string {
   const focus = `${selector}:focus-visible`;
-  // Mask the idle atlas frame only. The shared active sprite already has its own face and ink.
-  const glyph = `
-    background:var(--ada-close-ink);
-    mask:url('/art/ui/sprites/ui-close.png') 0 0 /
-      ${units(2 * CARD_CLOSE.art.width)} ${units(CARD_CLOSE.art.height)} no-repeat
-  `;
   return `
 ${selector}::after{
   content:"";
@@ -43,17 +41,16 @@ ${focus}{
   --ada-close-face:${paint.face};
   --ada-close-ink:${paint.ink}
 }
-${focus}:not(:active)::before{${glyph}}
+${focus}:not(:active)::before{
+  background:var(--ada-close-ink);
+  ${CLOSE_GLYPH_MASK}
+}
 @media (forced-colors:active){
-  ${selector}{
-    forced-color-adjust:none;
-    --ada-close-ink:ButtonText
-  }
+  ${selector}{forced-color-adjust:none}
   ${focus}{
     --ada-close-face:Highlight;
     --ada-close-ink:HighlightText
   }
-  ${selector}:not(:active)::before{${glyph}}
 }
 `;
 }
@@ -64,6 +61,10 @@ export function mapCloseStyle(selector: string, restFace = "transparent"): strin
 ${selector}{--ada-close-rest:${restFace}}
 @media (forced-colors:active){
   ${selector}{--ada-close-rest:ButtonFace}
+  ${selector}:not(:active)::before{
+    background:var(--ada-close-ink,ButtonText);
+    ${CLOSE_GLYPH_MASK}
+  }
 }
 `;
 }
