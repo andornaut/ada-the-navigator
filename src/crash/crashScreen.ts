@@ -4,6 +4,7 @@
 // (src/main.ts), so the next launch resumes from the last save. src/crash/install.ts imports this
 // module before any other.
 import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
+import "./reload.css";
 
 import {
   type CrashColours,
@@ -14,6 +15,8 @@ import type { HoldActionBinding } from "@andornaut/game-kit/runtime/web/input/do
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_COPY } from "../data/crashCopy.ts";
+import { TEXT_BUTTON } from "../data/layout.ts";
+import { SCREEN } from "../data/screen.ts";
 import { createAdaFactoryHoldBinding } from "../ui/actionBinding.ts";
 import { bindAdaRecoveryActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
@@ -51,9 +54,23 @@ const onPageHide = (event: PageTransitionEvent) => {
     disposeRecovery();
   }
 };
+// The body-level dialog uses the viewport fit, as startup Retry does before the play area exists.
+const recoveryLength = (value: number) =>
+  `min(calc(100vw * ${value} / ${SCREEN.width}), calc(100vh * ${value} / ${SCREEN.height}))`;
 const bindHoldAction: HoldActionBinding = (action) => {
-  const body = action.element.ownerDocument.body;
-  let host = action.element;
+  const { element } = action;
+  if (element.matches(".crash-panel > button.crash-button")) {
+    const { style } = element;
+    style.setProperty(
+      "--ada-reload-height",
+      `max(${TEXT_BUTTON.height}px, ${recoveryLength(TEXT_BUTTON.height)})`,
+    );
+    style.setProperty("--ada-reload-inset", recoveryLength(TEXT_BUTTON.inset));
+    style.setProperty("--ada-reload-label", `${TEXT_BUTTON.label.size}px`);
+    style.setProperty("--ada-reload-line", `${TEXT_BUTTON.label.lineHeight}px`);
+  }
+  const body = element.ownerDocument.body;
+  let host = element;
   while (host.parentElement && host.parentElement !== body) {
     host = host.parentElement;
   }

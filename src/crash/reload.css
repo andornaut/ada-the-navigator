@@ -1,0 +1,14 @@
+/* Specificity keeps the inline padding through the Kit's pressed padding shorthand. */
+.crash-panel > button.crash-button {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--ada-reload-height, 48px);
+  padding-inline: var(--ada-reload-inset, 20px);
+  font-family: system-ui, sans-serif;
+  font-size: var(--ada-reload-label, 18px);
+  line-height: var(--ada-reload-line, normal);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
