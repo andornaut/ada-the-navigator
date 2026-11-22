@@ -1013,8 +1013,24 @@ describe("tractor beam and pickup reach", () => {
     return best;
   }
 
+  /** Centre distance along an axis just beyond the allowed gap, to within 0.001. */
+  function contactEdge(outline: Parts, value: FlightState, axis: Vec, margin: number): number {
+    const body = shipBody(value.facing);
+    let low = 0;
+    let high = 200;
+    while (high - low > 1e-3) {
+      const middle = (low + high) / 2;
+      const at = { x: value.player.x + axis.x * middle, y: value.player.y + axis.y * middle };
+      if (outlineGap(outline, at, body, value.player) <= margin) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    return high;
+  }
+
   it.each([
-    ["cache", 20, { amount: 3, radius: 10, role: "discovery" }],
     ["Stardust gem", 20, { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
     ["ore nugget", 20, { radius: 7, role: "cargo" }],
     ["upgrade pickup", 20, { radius: 10, upgrade: true }],
@@ -1031,25 +1047,9 @@ describe("tractor beam and pickup reach", () => {
       });
       const outline = pickupOutline(pickup("probe", 0, 0))!;
       expect(outline).not.toBeNull();
-      // Along each axis, where the drawn gap between pickup and ship first exceeds 4, to 0.001.
       const value = flight();
-      const body = shipBody(value.facing);
-      const edge = (axis: Vec) => {
-        let low = 0;
-        let high = 200;
-        while (high - low > 1e-3) {
-          const middle = (low + high) / 2;
-          const at = { x: value.player.x + axis.x * middle, y: value.player.y + axis.y * middle };
-          if (outlineGap(outline, at, body, value.player) <= margin) {
-            low = middle;
-          } else {
-            high = middle;
-          }
-        }
-        return high;
-      };
-      const east = edge({ x: 1, y: 0 });
-      const south = edge({ x: 0, y: 1 });
+      const east = contactEdge(outline, value, { x: 1, y: 0 }, margin);
+      const south = contactEdge(outline, value, { x: 0, y: 1 }, margin);
       value.objects.push(
         pickup("inside", value.player.x + east - 0.3, value.player.y),
         pickup("outside", value.player.x, value.player.y + south + 1),
@@ -1068,6 +1068,74 @@ describe("tractor beam and pickup reach", () => {
       }
     },
   );
+
+  it.each([
+    ["east", { x: 1, y: 0 }],
+    ["south", { x: 0, y: 1 }],
+  ] as const)("collects the lit cache from its rendered outline to the %s", (_, axis) => {
+    // Use the actual renderer manifest as the test oracle for the compact sidecar.
+    const manifest = JSON.parse(
+      readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+    ) as {
+      assets: readonly {
+        id: string;
+        displayWidth: number;
+        displayHeight: number;
+        frames: { litA: number; litB: number };
+        pivot: Vec;
+      }[];
+    };
+    const asset = manifest.assets.find(({ id }) => id === "discovery-cache")!;
+    const sheet = JSON.parse(
+      readFileSync(new URL("../../public/art/discovery-cache.json", import.meta.url), "utf8"),
+    ) as {
+      frames: Record<
+        string,
+        {
+          collision: [number, number][][];
+          sourceSize: { w: number; h: number };
+        }
+      >;
+      meta: { displayGeometry: unknown };
+    };
+    expect(sheet.meta.displayGeometry).toEqual({
+      height: asset.displayHeight,
+      pivot: asset.pivot,
+      width: asset.displayWidth,
+    });
+    const drawn = [asset.frames.litA, asset.frames.litB].flatMap((index) => {
+      const frame = sheet.frames[`discovery-cache ${index}.aseprite`]!;
+      return frame.collision.map((part) =>
+        part.map(([x, y]) => ({
+          x: (x / frame.sourceSize.w - asset.pivot.x) * asset.displayWidth,
+          y: (y / frame.sourceSize.h - asset.pivot.y) * asset.displayHeight,
+        })),
+      );
+    });
+    const value = flight();
+    expect(CONTENT.tuning.flight.pickupMargin).toBe(20);
+    const edge = contactEdge(drawn, value, axis, 20);
+    const pickup = (id: string, distance: number): SpaceObject => ({
+      amount: 3,
+      hp: 1,
+      id,
+      kind: "pickup",
+      radius: 10,
+      role: "discovery",
+      x: value.player.x + axis.x * distance,
+      y: value.player.y + axis.y * distance,
+    });
+    const inside = pickup("inside", edge - 0.3);
+    const outside = pickup("outside", edge + 1);
+    value.objects.push(inside, outside);
+    const events = stepFlight(CONTENT, 0.001, idle, value);
+    expect(value.objects.map(({ id }) => id)).toEqual(["outside"]);
+    expect(events.filter(({ type }) => type === "collected")).toEqual([
+      expect.objectContaining({ id: "inside", type: "collected" }),
+    ]);
+    expect(gained(events)).toBe(3);
+    expect(pickupOutline(inside)).toEqual(drawn);
+  });
 
   it("collects a hunt's lost item within 20 world units of Ada's drawn ship, as its glint", () => {
     // One pickup rule: every kind reaches 20 past the drawn ship.
