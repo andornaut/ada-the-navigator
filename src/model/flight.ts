@@ -2401,7 +2401,10 @@ export function ensureRouteEncounter(
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
   const heading = direction(worldDelta(flightWorldContext(flight), destination, flight.player));
   const approach = length(heading) ? heading : { x: 0, y: 1 };
-  const offset = content.tuning.safeRadius + radius + 120;
+  // Keep the initial hidden capital outside the strict placement boundary after rounding.
+  const placementMargin =
+    flight.galaxy === 3 && archetype === "capital" && planningRequiredWorld.has(flight) ? 0.01 : 0;
+  const offset = content.tuning.safeRadius + radius + 120 + placementMargin;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
   const object = spawnEnemy(content, flight, archetype, `route:${id}`, point);
   object.routeId = id;
