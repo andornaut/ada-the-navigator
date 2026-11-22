@@ -6,6 +6,7 @@ import {
 } from "../data/economy.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
+import { type StationStockCategory, stationShopSeed } from "./stationServices.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -190,7 +191,6 @@ export function shopRows(
   return items.map((item) => shopRow(catalog, economy, item));
 }
 
-export const STATION_STOCK_SLOTS = { ammo: 2, equipment: 2, weapons: 2 } as const;
 export interface StationStock {
   readonly ammo: readonly UpgradeWeapon[];
   readonly equipment: readonly Extract<ShopItem, { kind: "track" | "paint" }>[];
@@ -198,13 +198,18 @@ export interface StationStock {
 }
 
 /** Canonical catalogue order and route position select stock without consuming random draws. */
-function stockSlice<T>(items: readonly T[], position: RoutePosition, count: number): T[] {
+function stockSlice<T>(items: readonly T[], position: RoutePosition, seed: number): T[] {
+  const count = 2 + (seed % 3);
   return Array.from(
     { length: Math.min(count, items.length) },
-    (_, index) => items[(position - 1 + index) % items.length]!,
+    (_, index) => items[(position - 1 + (seed >>> 2) + index) % items.length]!,
   );
 }
-export function stationStock(catalog: EconomyCatalog, position: RoutePosition): StationStock {
+export function stationStock(
+  catalog: EconomyCatalog,
+  position: RoutePosition,
+  stationId: string,
+): StationStock {
   const eligible = unlockedWeapons(position);
   const equipment: Extract<ShopItem, { kind: "track" | "paint" }>[] = [
     ...SHIP_TRACKS.map((track): Extract<ShopItem, { kind: "track" }> => ({ kind: "track", track })),
@@ -213,9 +218,13 @@ export function stationStock(catalog: EconomyCatalog, position: RoutePosition): 
       .map((scheme): Extract<ShopItem, { kind: "paint" }> => ({ kind: "paint", scheme })),
   ];
   return {
-    ammo: stockSlice(eligible, position, STATION_STOCK_SLOTS.ammo),
-    equipment: stockSlice(equipment, position, STATION_STOCK_SLOTS.equipment),
-    weapons: stockSlice<Weapon>(["laser", ...eligible], position, STATION_STOCK_SLOTS.weapons),
+    ammo: stockSlice(eligible, position, stationShopSeed(stationId + ":ammo")),
+    equipment: stockSlice(equipment, position, stationShopSeed(stationId + ":equipment")),
+    weapons: stockSlice<Weapon>(
+      ["laser", ...eligible],
+      position,
+      stationShopSeed(stationId + ":weapons"),
+    ),
   };
 }
 
@@ -223,35 +232,29 @@ export function stationStock(catalog: EconomyCatalog, position: RoutePosition): 
 export function stationShopRows(
   catalog: EconomyCatalog,
   economy: EconomyState,
-  position: RoutePosition,
-  tab: ShopTab,
+  stock: StationStock,
+  category: StationStockCategory,
 ): ShopRow[] {
-  const stock = stationStock(catalog, position);
-  if (tab === "ship") {
+  if (category === "equipment") {
     return stock.equipment.map((item) => shopRow(catalog, economy, item));
   }
-  return [
-    ...stock.ammo.map((weapon): ShopRow => ({
+  if (category === "ammo") {
+    return stock.ammo.map((weapon): ShopRow => ({
       ...shopRow(catalog, economy, { kind: "ammo", weapon }),
       ...(!weaponOwned(economy, weapon) ? { requiresWeapon: weapon } : {}),
-    })),
-    ...stock.weapons.map((weapon) =>
-      shopRow(
-        catalog,
-        economy,
-        weaponOwned(economy, weapon)
-          ? { kind: "weaponUpgrade", weapon }
-          : { kind: "weapon", weapon: weapon as UpgradeWeapon },
-      ),
+    }));
+  }
+  return stock.weapons.map((weapon) =>
+    shopRow(
+      catalog,
+      economy,
+      weaponOwned(economy, weapon)
+        ? { kind: "weaponUpgrade", weapon }
+        : { kind: "weapon", weapon: weapon as UpgradeWeapon },
     ),
-  ];
+  );
 }
-export function stationStocks(
-  catalog: EconomyCatalog,
-  position: RoutePosition,
-  item: ShopItem,
-): boolean {
-  const stock = stationStock(catalog, position);
+export function stationStocks(stock: StationStock, item: ShopItem): boolean {
   switch (item.kind) {
     case "ammo":
       return stock.ammo.includes(item.weapon);

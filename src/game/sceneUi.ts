@@ -21,7 +21,7 @@ import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/e
 import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
-import { fill, itemAbout, itemName, type ShopItem, weaponName } from "../model/shop.ts";
+import { fill, itemAbout, itemName, type ShopItem, type ShopRow, weaponName } from "../model/shop.ts";
 import type { FlightState, GameSave } from "../model/types.ts";
 import {
   exitGame,
@@ -681,6 +681,25 @@ export function buildScene(scene: UiContext): void {
   });
   const labels = CONTENT.labels;
   const label = (key: string): string => labels[key] ?? "";
+  const stationOfferRow = (row: ShopRow) =>
+    stationRow(
+      ECONOMY,
+      labels,
+      scene.model.state.economy.stardust,
+      row,
+      (weapon) => fill(label("requiresWeapon"), { weapon: weaponName(labels, weapon) }),
+      (scheme) =>
+        materialShipSwatch(scene, scheme) ??
+        (scheme === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined),
+    );
+  const shopGroup = ({
+    category,
+    rows,
+  }: NonNullable<ReturnType<GameModel["shopGroups"]>>[number]) => ({
+    category,
+    label: label({ ammo: "ammo", equipment: "equipment", weapons: "shopWeapons" }[category]),
+    offers: rows.map(stationOfferRow),
+  });
   const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
   const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
   // The conversation box never pauses play; a tap dismisses it.
@@ -825,40 +844,26 @@ export function buildScene(scene: UiContext): void {
             title: fill(label("confirmTitle"), { name: itemName(ECONOMY, labels, item(key)) }),
           };
     },
-    rows: (tab) =>
-      tab === "projects"
-        ? // A project row: its effect line until something is paid, then its progress, and a
-          // price showing what remains; unaffordable only at a balance of 0 (art/projects.md).
-          (scene.model.projects ?? []).map((project) => ({
-            glyph: { key: project.icon, kind: "sprite" },
-            group: "items",
-            key: `project:${project.id}`,
-            level:
-              project.paid > 0
-                ? fill(label("projectProgress"), { paid: project.paid, price: project.cost })
-                : label(`projectEffect${project.copy}`),
-            name: project.name,
-            price: project.funded ? null : project.remaining,
-            project: true,
-            projectDetails: label(`projectAbout${project.copy}`),
-            state: project.funded
-              ? "owned"
-              : scene.model.state.economy.stardust > 0
-                ? "forSale"
-                : "unaffordable",
-          }))
-        : scene.model.shopRows(tab).map((row) => {
-            return stationRow(
-              ECONOMY,
-              labels,
-              scene.model.state.economy.stardust,
-              row,
-              (weapon) => fill(label("requiresWeapon"), { weapon: weaponName(labels, weapon) }),
-              (scheme) =>
-                materialShipSwatch(scene, scheme) ??
-                (scheme === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined),
-            );
-          }),
+    rows: () =>
+      // Show an effect before funding and the remaining price and progress afterward.
+      (scene.model.projects ?? []).map((project) => ({
+        glyph: { key: project.icon, kind: "sprite" },
+        group: "items",
+        key: `project:${project.id}`,
+        level:
+          project.paid > 0
+            ? fill(label("projectProgress"), { paid: project.paid, price: project.cost })
+            : label(`projectEffect${project.copy}`),
+        name: project.name,
+        price: project.funded ? null : project.remaining,
+        project: true,
+        projectDetails: label(`projectAbout${project.copy}`),
+        state: project.funded
+          ? "owned"
+          : scene.model.state.economy.stardust > 0
+            ? "forSale"
+            : "unaffordable",
+      })),
     select: (key) => {
       const chosen = item(key);
       if (chosen.kind === "paint") {
@@ -866,6 +871,10 @@ export function buildScene(scene: UiContext): void {
       }
     },
     services: () => scene.model.stationServices,
+    shopGroups: () => {
+      const groups = scene.model.shopGroups();
+      return groups ? [shopGroup(groups[0]), shopGroup(groups[1])] : undefined;
+    },
     stationTitle: () => scene.model.dockedStationName,
     undock: () => apply(() => scene.model.undock()),
   });

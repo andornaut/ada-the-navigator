@@ -559,20 +559,17 @@ describe("shop through the model", () => {
   });
 
   it("applies an owned paint scheme at once and saves it with purchases", () => {
-    const galaxy = GALAXY_NUMBERS.find((galaxy) =>
-      stationStock(ECONOMY, ROUTE_POSITION[galaxy]).equipment.some(
-        (item) => item.kind === "paint" && item.scheme === "iris",
-      ),
-    );
-    if (galaxy === undefined) {
-      throw new Error("No canonical station offers Iris");
-    }
+    const galaxy = 1;
     const model = new GameModel(CONTENT);
     model.state.unlocked = [...GALAXY_NUMBERS];
     model.startGalaxy(galaxy);
     playOpening(model);
     const site = stationsNear(ECONOMY, galaxy, 40000, model.state.flight!.player).find(
-      (site) => stationSpecialty(galaxy, site.id) === "equipment",
+      (site) =>
+        stationSpecialty(galaxy, site.id) === "equipment" &&
+        stationStock(ECONOMY, ROUTE_POSITION[galaxy], site.id).equipment.some(
+          (item) => item.kind === "paint" && item.scheme === "iris",
+        ),
     )!;
     model.state.docked = site.id;
     expect(model.shopRows("ship").map(({ item }) => item)).toContainEqual({

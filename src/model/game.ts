@@ -204,6 +204,7 @@ import {
   type ShopRow,
   type ShopTab,
   stationShopRows,
+  stationStock,
   stationStocks,
 } from "./shop.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
@@ -214,7 +215,12 @@ import {
   type StationSite,
   worldStationById,
 } from "./stations.ts";
-import { type StationServices, stationSpecialty } from "./stationServices.ts";
+import {
+  type StationServices,
+  type StationStockCategory,
+  stationShopCategories,
+  stationSpecialty,
+} from "./stationServices.ts";
 import {
   advance,
   atRunEnd,
@@ -1509,37 +1515,62 @@ export class GameModel {
       weaponsAmmo: all || specialty === "weaponsAmmo",
     };
   }
-  private stationSells(item: ShopItem): boolean {
+  private shopSupply() {
     const services = this.stationServices;
-    if (!services) {
+    const id = this.state.docked;
+    const categories = services && id ? stationShopCategories(services, id) : undefined;
+    if (!id || !categories) {
+      return undefined;
+    }
+    const holodisk = this.holodiskRow();
+    const eligible = stationStock(ECONOMY, this.shopPosition, id);
+    const stock = {
+      ammo: categories.includes("ammo") ? eligible.ammo : [],
+      equipment: categories.includes("equipment")
+        ? holodisk
+          ? eligible.equipment.slice(0, 3)
+          : eligible.equipment
+        : [],
+      weapons: categories.includes("weapons") ? eligible.weapons : [],
+    };
+    return { categories, holodisk, stock };
+  }
+  private stationSells(item: ShopItem): boolean {
+    const supply = this.shopSupply();
+    if (!supply) {
       return false;
     }
-    const available =
-      item.kind === "weapon" || item.kind === "weaponUpgrade" || item.kind === "ammo"
-        ? services.weaponsAmmo
-        : services.equipment;
-    return (
-      available && (item.kind === "holodisk" || stationStocks(ECONOMY, this.shopPosition, item))
-    );
+    return item.kind === "holodisk" ? supply.holodisk !== null : stationStocks(supply.stock, item);
+  }
+  shopGroups() {
+    const supply = this.shopSupply();
+    if (!supply) {
+      return undefined;
+    }
+    const { categories, holodisk, stock } = supply;
+    this.pullLoadout();
+    const group = (category: StationStockCategory) => {
+      const rows = stationShopRows(ECONOMY, this.state.economy, stock, category);
+      if (category === "equipment" && holodisk) {
+        rows.unshift(holodisk);
+      }
+      return { category, rows };
+    };
+    return [group(categories[0]), group(categories[1])] as const;
   }
   shopRows(tab: ShopTab): ShopRow[] {
-    const services = this.stationServices;
-    if (!services || !(tab === "ship" ? services.equipment : services.weaponsAmmo)) {
-      return [];
-    }
-    this.pullLoadout();
-    const holodisk = tab === "ship" ? this.holodiskRow() : null;
-    return [
-      ...(holodisk ? [holodisk] : []),
-      ...stationShopRows(ECONOMY, this.state.economy, this.shopPosition, tab),
-    ];
+    return (
+      this.shopGroups()?.flatMap(({ category, rows }) =>
+        (category === "equipment") === (tab === "ship") ? rows : [],
+      ) ?? []
+    );
   }
   /** The route position of the galaxy whose shop Ada is at, which sets what it sells. */
   private get shopPosition(): RoutePosition {
     return ROUTE_POSITION[this.state.flight?.galaxy ?? this.state.selectedGalaxy];
   }
   /**
-   * The hub's holodisk row, first on its Ship tab once Cartwheel's space quest is complete:
+   * The hub's holodisk row, first in Equipment once Cartwheel's space quest is complete:
    * Owned once bought (gameplay/economy.md). Null at any other station or before then.
    */
   private holodiskRow(): ShopRow | null {

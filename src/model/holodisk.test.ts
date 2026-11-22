@@ -331,7 +331,7 @@ describe("unlocking the next galaxy", () => {
 describe("galaxy two's holodisk", () => {
   const ship = (model: GameModel) => model.shopRows("ship");
 
-  it("is the first row of the hub shop's Ship tab once the space quest is complete", () => {
+  it("reserves an Equipment slot at the hub once the space quest is complete", () => {
     expect(HOLODISKS.hubPrice).toBe(500);
     const model = questDone(2, ["hub", "miner", "visitors"]);
     expect(model.objective).toBe("Buy the holodisk at the hub.");
@@ -350,6 +350,9 @@ describe("galaxy two's holodisk", () => {
     expect(model.contextAction).toBe("dock");
     model.interact();
     expect(model.state.docked).toBe("hub");
+    const groups = model.shopGroups()!;
+    expect(new Set(groups.map(({ category }) => category)).size).toBe(2);
+    expect(groups.find(({ category }) => category === "equipment")?.rows.length).toBeLessThanOrEqual(4);
     expect(ship(model)[0]).toEqual({
       inUse: false,
       item: { kind: "holodisk" },
@@ -357,7 +360,7 @@ describe("galaxy two's holodisk", () => {
       owned: false,
       price: 500,
     });
-    // Other stations' Ship tabs, and the Weapons tab, list no holodisk.
+    // The holodisk is confined to Equipment.
     expect(model.shopRows("weapons").some(({ item }) => item.kind === "holodisk")).toBe(false);
   });
 

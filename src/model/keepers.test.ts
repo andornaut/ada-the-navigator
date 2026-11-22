@@ -173,12 +173,14 @@ describe("a keeper's greeting at the station card", () => {
         reason: "notForSale",
       });
     }
-    if (!services.weaponsAmmo) {
-      expect(model.shopRows("weapons")).toEqual([]);
+    if (!model.shopGroups()?.some(({ category }) => category === "ammo")) {
       expect(model.buy({ kind: "ammo", weapon: "rapidMissile" })).toEqual({
         kind: "refused",
         reason: "notForSale",
       });
+    }
+    if (services.jobs) {
+      expect(model.shopGroups()).toBeUndefined();
     }
     if (!services.jobs) {
       expect(model.jobBoard()).toEqual([]);
