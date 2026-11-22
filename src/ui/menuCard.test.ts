@@ -209,7 +209,11 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
 
-import { resolveAdaHoldAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
 import { createMenuCard } from "./menuCard.ts";
 import { actionOrder } from "./modal.ts";
 
@@ -230,7 +234,7 @@ afterEach(() => {
   fixture.corruptFactory = false;
 });
 
-function setup() {
+function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
   const doc = Object.assign(new EventTarget(), {
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
@@ -261,6 +265,15 @@ function setup() {
     root as unknown as HTMLElement,
   );
   rootReleases.push(attached.dispose);
+  if (onPublish) {
+    const append = root.append.bind(root);
+    vi.spyOn(root, "append").mockImplementation((...nodes) => {
+      append(...nodes);
+      for (const node of nodes.filter((candidate) => candidate.matches(".ada-modal"))) {
+        onPublish(node);
+      }
+    });
+  }
   const onAction = vi.fn();
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
@@ -280,6 +293,31 @@ function setup() {
     rows: () => fixture.card.body.children[0]!.children.map((node) => node.children[0]!),
   };
 }
+
+it("publishes the initial Menu with its fixed X already registered", () => {
+  const addListener = vi.spyOn(fixture.card.close, "addEventListener");
+  const removeListener = vi.spyOn(fixture.card.close, "removeEventListener");
+  try {
+    const published = vi.fn((modal: InstanceType<typeof fixture.Node>) => {
+      const subtree = modal as unknown as HTMLElement;
+      expect(modal.hidden).toBe(true);
+      expect(modal.querySelectorAll("button")).toEqual([fixture.card.close]);
+      assertAdaActionMetadata(subtree);
+      assertAdaActionBindings(subtree);
+    });
+    const { menu, onOpenChange, root } = setup(published);
+    expect(published).toHaveBeenCalledExactlyOnceWith(root.children[0]);
+    expect(addListener).toHaveBeenCalledExactlyOnceWith("click", expect.any(Function));
+    menu.dispose();
+    expect(removeListener).toHaveBeenCalledWith(...addListener.mock.calls[0]!);
+    expect(root.children).toEqual([]);
+    fixture.card.close.dispatchEvent(new Event("click"));
+    expect(onOpenChange).not.toHaveBeenCalled();
+  } finally {
+    addListener.mockRestore();
+    removeListener.mockRestore();
+  }
+});
 
 describe("production Menu consumer", () => {
   it.each(["start", "nonplay"] as const)(
@@ -551,11 +589,30 @@ it("rebuilds Start with only Achievements, Settings and Close", () => {
 
 it("rejects an unregistered hidden disabled control in the completed Menu factory", () => {
   fixture.corruptFactory = true;
-  expect(() => setup()).toThrow("no registered action binding");
+  const published = vi.fn();
+  expect(() => setup(published)).toThrow("no registered action binding");
+  expect(published).not.toHaveBeenCalled();
   expect(fixture.layer.open).not.toHaveBeenCalled();
   expect(fixture.card.close.focus).not.toHaveBeenCalled();
   expect(fixture.card.dispose).toHaveBeenCalledOnce();
   expect(fixture.card.frame.parentElement?.parentElement).toBeNull();
+});
+
+it("withdraws the initial Menu if its attached-root audit fails", () => {
+  const published = vi.fn((modal: InstanceType<typeof fixture.Node>) => {
+    expect(modal.isConnected).toBe(true);
+    assertAdaActionMetadata(modal as unknown as HTMLElement);
+    rootReleases.pop()!();
+    return modal;
+  });
+  expect(() => setup(published)).toThrow("no live action root");
+  expect(published).toHaveBeenCalledOnce();
+  const modal = published.mock.results[0]!.value;
+  expect(modal.parentElement).toBeNull();
+  expect(fixture.card.dispose).toHaveBeenCalledOnce();
+  expect(() => assertAdaActionMetadata(fixture.card.close as unknown as HTMLElement)).toThrow(
+    "no registered action binding",
+  );
 });
 
 it("audits each Menu rebuild before focus and rejects a native refusal bypass", () => {

@@ -47,7 +47,6 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   actions.className = "ada-actions ada-stack";
   card.body.append(actions);
   modal.append(card.frame);
-  root.append(modal);
   const audit = () => {
     assertAdaActionMetadata(modal);
     if (modal.isConnected) {
@@ -165,7 +164,11 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   });
   const fixedBindings = [register(card.close, close)];
   try {
-    audit();
+    assertAdaActionMetadata(modal);
+    root.append(modal);
+    if (modal.isConnected) {
+      assertAdaActionBindings(modal);
+    }
   } catch (error) {
     for (const binding of fixedBindings) {
       binding.dispose();
