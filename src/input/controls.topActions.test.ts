@@ -5,7 +5,11 @@ import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { PHONE_EVENTS } from "../pwa/events.ts";
-import { bindAdaAction, resolveAdaHoldAction } from "../ui/actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  bindAdaAction,
+  resolveAdaHoldAction,
+} from "../ui/actionBinding.ts";
 import { createBackStack, pressBack } from "../ui/backStack.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
@@ -58,6 +62,11 @@ function actualLeaves(): string {
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit") ||
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
   );
+  const use = statements.find((node) => variable(node, "useAction"));
+  const audits = statements.filter(
+    (node) =>
+      ts.isForOfStatement(node) && node.getText(source).includes("assertAdaActionBindings("),
+  );
   const keys = ["requiredReady", "menuContext", "onBack", "keyDown"].map((name) => {
     const statement = statements.find((node) => variable(node, name));
     if (!statement) {
@@ -75,6 +84,7 @@ function actualLeaves(): string {
       [
         "achievementsAction.dispose();",
         "exitAction?.dispose();",
+        "useAction.dispose();",
         ...listen.map((statement) => statement.replace("addEventListener", "removeEventListener")),
       ].includes(n.getText(source)),
     ) ?? [];
@@ -82,7 +92,8 @@ function actualLeaves(): string {
     first < 0 ||
     last < first ||
     exit.length !== 4 ||
-    cleanup.length !== 4 ||
+    !use ||
+    cleanup.length !== 5 ||
     listeners.length !== 2 ||
     !updateExit ||
     !updateContext
@@ -93,6 +104,8 @@ function actualLeaves(): string {
     "let disposed = false;",
     ...statements.slice(first, last + 1).map((n) => n.getText(source)),
     ...exit.map((n) => n.getText(source)),
+    use.getText(source),
+    ...audits.map((n) => n.getText(source)),
     ...keys,
     ...listeners.map((n) => n.getText(source)),
     `({achievementsButton, exitButton, ${updateExit.getText(source)}, updateContext(view) {
@@ -157,7 +170,19 @@ class Element extends EventTarget {
       : (this.parentElement?.closest(selector) ?? null);
   }
   matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+    return selector.split(",").some((part) => {
+      const key = part.trim();
+      return (
+        key === this.tag ||
+        (key === ":disabled" && this.disabled) ||
+        (key === "[data-action]" && this.dataset.action !== undefined)
+      );
+    });
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.ownerDocument.nodes.filter(
+      (node) => node !== this && this.contains(node) && node.matches(selector),
+    );
   }
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
@@ -174,6 +199,7 @@ class Element extends EventTarget {
   }
 }
 class FixtureDocument extends EventTarget {
+  readonly nodes: Element[] = [];
   hidden = false;
   defaultView = Object.assign(new EventTarget(), {
     HTMLElement: Element,
@@ -183,7 +209,9 @@ class FixtureDocument extends EventTarget {
     setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
   createElement(tag?: string) {
-    return new Element(this, tag);
+    const node = new Element(this, tag);
+    this.nodes.push(node);
+    return node;
   }
 }
 const stops: (() => void)[] = [];
@@ -194,14 +222,36 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-function fixture(exit = true) {
+function fixture(exit = true, missing?: "achievements" | "exit" | "settings" | "use") {
   vi.useFakeTimers();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const document = new FixtureDocument(),
     root = document.createElement(),
-    openButton = document.createElement();
+    openButton = document.createElement("button"),
+    useButton = document.createElement("button");
   root.connected = true;
-  root.append(openButton);
+  openButton.dataset.action = "settings";
+  openButton.hidden = true;
+  useButton.hidden = true;
+  root.append(openButton, useButton);
+  const register: typeof bindAdaAction = (options, element) => {
+    const binding = bindAdaAction(options, element);
+    const kind = element === (useButton as unknown as HTMLElement) ? "use" : element.dataset.action;
+    if (missing && kind === missing) {
+      binding.dispose();
+    }
+    stops.push(binding.dispose);
+    return binding;
+  };
+  // The real Settings factory binds the launcher before returning it to Controls.
+  register(
+    {
+      click: { availability: () => ({ kind: "omitted" }), run() {} },
+      current: () => true,
+      slopPx: () => 0,
+    },
+    openButton as unknown as HTMLElement,
+  );
   let ready = true,
     notify = () => {};
   const host = root as unknown as HTMLElement;
@@ -236,8 +286,9 @@ function fixture(exit = true) {
       PHONE_EVENTS,
       SCROLL,
       achievements,
+      assertAdaActionBindings,
       backStack,
-      bindAdaAction,
+      bindAdaAction: register,
       document,
       inCurrentView,
       openNavigation,
@@ -246,7 +297,7 @@ function fixture(exit = true) {
       pauseButton: openButton,
       pressBack,
       readViewUnit,
-      settings: { openButton, root },
+      settings: { openButton, root, useButton },
       state: { accepts: () => false },
       window: document.defaultView,
     }),
@@ -307,6 +358,7 @@ function fixture(exit = true) {
     down,
     host,
     key,
+    openButton,
     openNavigation,
     options,
     phoneBack: () => document.defaultView.dispatchEvent(new Event(PHONE_EVENTS.backPressed)),
@@ -316,6 +368,7 @@ function fixture(exit = true) {
       notify();
     },
     up,
+    useButton,
   };
 }
 it.each(["achievements", "exit"] as const)(
@@ -383,10 +436,20 @@ it.each(["achievements", "exit"] as const)(
     expect(run).not.toHaveBeenCalled();
   },
 );
+it.each(["achievements", "exit", "settings", "use"] as const)(
+  "rejects completed Controls construction with unbound %s",
+  (control) => {
+    expect(() => fixture(true, control)).toThrow("no registered action binding");
+  },
+);
+
 it("retains an absent optional Exit without constructing a control or binding", () => {
   const f = fixture(false);
   expect(f.exitButton).toBeUndefined();
   expect(f.options.exit).toBeUndefined();
+  expect(f.achievementsButton.hidden).toBe(true);
+  expect(f.openButton.hidden).toBe(true);
+  expect(f.useButton.hidden).toBe(true);
   expect(resolveAdaHoldAction(f.host, f.achievementsButton)).not.toBeNull();
   f.dispose();
   expect(resolveAdaHoldAction(f.host, f.achievementsButton)).toBeNull();

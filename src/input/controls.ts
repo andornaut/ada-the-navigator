@@ -35,7 +35,7 @@ import {
   type AchievementsLabels,
   createAchievementsCard,
 } from "../ui/achievementsCard.ts";
-import { bindAdaAction } from "../ui/actionBinding.ts";
+import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, type CheatSwitch, createCheats } from "../ui/cheats.ts";
@@ -733,6 +733,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     settings.useButton,
   );
+  for (const button of [achievementsButton, exitButton, settings.openButton, settings.useButton]) {
+    if (button) {
+      assertAdaActionBindings(button);
+    }
+  }
   // Where the item notice's chip and destinations sit now, in HUD rect px.
   const noticePlaces = (): NoticePlaces => {
     const view = canvasSize(sceneFit(scene));
