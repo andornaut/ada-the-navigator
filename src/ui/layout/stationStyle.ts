@@ -206,6 +206,14 @@ export const STATION_STYLE = `
   text-overflow:ellipsis;
   white-space:nowrap
 }
+/* Locked ammo keeps its pack size and requirement together beneath its name. */
+.ada-controls [data-shop-stock] .ada-shop-row:disabled .ada-shop-name{
+  grid-template-columns:max-content minmax(0,1fr);
+  column-gap:${units(SPACING.markGap)}
+}
+.ada-controls [data-shop-stock] .ada-shop-row:disabled .ada-shop-name > :first-child{
+  grid-column:1/-1
+}
 .ada-controls .ada-station-panes .ada-well{
   width:${units(SHOP_ROW.well - SPACING.rowGap)};
   height:${units(SHOP_ROW.well - SPACING.rowGap)}
