@@ -15,14 +15,8 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { cardPages } from "./layout/cardPages.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { FOCUS_RING } from "./layout/controls.ts";
-import { units } from "./layout/css.ts";
-import { frameSize } from "./layout/frameBox.ts";
-import * as shopCardLayout from "./layout/shopCard.ts";
-import { SPACING } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
@@ -34,13 +28,11 @@ import {
   stationBack,
   stationJobsRows,
   stationJobsShown,
-  stationTabs,
   weaponItemGlyph,
 } from "./station.ts";
 import { stationJobRowTree } from "./stationJobsTree.ts";
 import { stationMenuTree } from "./stationMenuTree.ts";
-import { stationPagerTree } from "./stationPagerTree.ts";
-import { stationShopRowTree, stationShopTree } from "./stationShopTree.ts";
+import { stationShopRowTree } from "./stationShopTree.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 describe("station card back steps", () => {
@@ -196,20 +188,16 @@ describe("canonical station service presentation", () => {
   };
 
   it.each([
-    ["equipment", ["ship"], false],
-    ["weaponsAmmo", ["weapons"], false],
-    ["jobs", [], true],
-  ] as const)("shows only the %s specialty while retaining Exchange", (service, tabs, jobs) => {
-    const actual = { ...exchangeOnly, [service]: true };
-    expect(stationTabs(actual)).toEqual(tabs);
-    expect(stationJobsShown(actual)).toBe(jobs);
+    ["equipment", false],
+    ["weaponsAmmo", false],
+    ["jobs", true],
+  ] as const)("shows the Jobs action only for the %s specialty with work", (service, jobs) => {
+    expect(stationJobsShown({ ...exchangeOnly, [service]: true })).toBe(jobs);
   });
 
   it("keeps held-task Drop and existing Projects independent of specialist offers", () => {
     const held = { ...exchangeOnly, heldTask: true, projects: true };
     expect(stationJobsShown(held)).toBe(true);
-    expect(stationTabs(held)).toEqual([]);
-    expect(stationTabs(exchangeOnly)).toEqual([]);
     expect(stationJobsShown(exchangeOnly)).toBe(false);
   });
 
@@ -222,9 +210,7 @@ describe("canonical station service presentation", () => {
       projects: true,
       weaponsAmmo: true,
     };
-    expect(stationTabs(hub)).toEqual(["weapons", "ship"]);
     expect(stationJobsShown(hub)).toBe(true);
-    expect(stationTabs(null)).toEqual([]);
     expect(stationJobsShown(null)).toBe(false);
   });
 });
@@ -306,10 +292,8 @@ function strictStation() {
       this.children.splice(before ? this.children.indexOf(before) : this.children.length, 0, node);
       return node;
     }
-    onRemove?: () => void;
     onAttribute?: (name: string) => void;
     remove() {
-      this.onRemove?.();
       if (this.parentElement) {
         this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
       }
@@ -331,11 +315,7 @@ function strictStation() {
       return {
         bottom: 32,
         height:
-          this.className.includes("ada-shop-row") ||
-          this.className.includes("page-row") ||
-          this.className.includes("ada-shop-group")
-            ? 32
-            : 24,
+          this.className.includes("ada-shop-row") || this.className.includes("page-row") ? 32 : 24,
         left: 0,
         right: 180,
         top: 0,
@@ -633,7 +613,6 @@ function constructedStation(
     strictCleanup.push(registerAdaActionRoot({ permits }, parent as unknown as HTMLElement));
   }
   const state = { corruptConfirmation: false, corruptRow: "" };
-  const measurements: { ids: string[]; registered: boolean[] }[] = [];
   const native = new Map<string, ReturnType<typeof parts>>();
   const button = (label: string) =>
     Object.assign(new Node("button", false), { textContent: label });
@@ -714,21 +693,6 @@ function constructedStation(
         (node.dataset.item === state.corruptRow || node.dataset.job === state.corruptRow)
       ) {
         node.append(unbound());
-      }
-    };
-    node.onRemove = () => {
-      if (node.className === "ada-shop-measure" && node.isConnected) {
-        const rows = node.querySelectorAll("button");
-        measurements.push({
-          ids: rows.map((row) => row.dataset.item ?? row.dataset.job ?? ""),
-          registered: rows.map(
-            (row) =>
-              resolveAdaHoldAction(
-                parent as unknown as HTMLElement,
-                row as unknown as HTMLElement,
-              ) !== null,
-          ),
-        });
       }
     };
     return node;
@@ -824,8 +788,7 @@ function constructedStation(
     labels,
     reducedMotion: () => true,
     request,
-    rows: (catalog) =>
-      catalog === "projects" ? [{ ...rows[0]!, key: "project:orchard", project: true }] : rows,
+    rows: () => [{ ...rows[0]!, key: "project:orchard", project: true }],
     select,
     services: () => ({
       equipment: !projectOnly,
@@ -835,26 +798,29 @@ function constructedStation(
       projects: projectOnly,
       weaponsAmmo: !projectOnly,
     }),
-    ...(shopGroups ? { shopGroups } : {}),
+    shopGroups:
+      shopGroups ??
+      (() =>
+        projectOnly
+          ? undefined
+          : [
+              { category: "weapons", label: "Weapons", offers: rows.slice(0, 4) },
+              { category: "equipment", label: "Equipment", offers: rows.slice(4) },
+            ]),
     stationTitle: () => "Actual Station",
     undock,
   };
   beforeCreate?.(parent);
   const context = createContext({
     ...stationSource,
-    ...shopCardLayout,
     CONTENT,
     EXCHANGE_COPY,
-    FOCUS_RING,
     HTMLElement: Node,
     SCROLL,
-    SPACING,
     SPRITES: "/art/",
-    VIEW_SCALE_EVENT,
     assertAdaActionBindings,
     assertAdaActionMetadata,
     bindAdaAction,
-    cardPages,
     createActions: actions,
     createButton: button,
     createCard: parts,
@@ -868,7 +834,6 @@ function constructedStation(
     createStationItemIcon: () => new Node("span", false),
     document: doc,
     focusTarget: (node: InstanceType<typeof Node>) => node.focus(),
-    frameSize,
     getComputedStyle,
     inCurrentView,
     isTap,
@@ -885,10 +850,7 @@ function constructedStation(
     },
     stationJobRowTree,
     stationMenuTree,
-    stationPagerTree,
     stationShopRowTree,
-    stationShopTree,
-    units,
     window: win,
   });
   const source = ts.createSourceFile(
@@ -927,7 +889,6 @@ function constructedStation(
     doc,
     jobs: () => jobs,
     labels,
-    measurements,
     native,
     parent,
     request,
@@ -1042,15 +1003,10 @@ it("releases both Station roots and permanent bindings after a failed live-root 
   }
 });
 
-it("keeps inert measurement rows unregistered and registers only completed real Shop rows", () => {
+it("registers completed Shop rows and preserves confirmation and retry", () => {
   const f = constructedStation();
   f.station.setOpen(true);
   f.activate(f.action("open-shop"));
-  expect(f.measurements.length).toBeGreaterThan(0);
-  expect(
-    f.measurements.every((sample) => sample.registered.every((registered) => !registered)),
-  ).toBe(true);
-  expect(f.parent.querySelectorAll(".ada-shop-measure")).toEqual([]);
   const row = f.parent.querySelector('[data-item="item-0"]')!;
   expect(
     resolveAdaHoldAction(f.parent as unknown as HTMLElement, row as unknown as HTMLElement),
@@ -1075,7 +1031,7 @@ function stationList(kind: "shop" | "jobs") {
   const f = constructedStation();
   f.station.setOpen(true);
   f.activate(f.action(kind === "shop" ? "open-shop" : "open-jobs"));
-  const list = f.parent.querySelector(kind === "shop" ? ".ada-shop-list" : ".ada-job-list")!;
+  const list = f.parent.querySelector(kind === "shop" ? ".ada-station-panes" : ".ada-job-list")!;
   const row = list.querySelector(kind === "shop" ? '[data-item="item-0"]' : '[data-job="job-1"]')!;
   const action = resolveAdaHoldAction(
     f.parent as unknown as HTMLElement,
@@ -1408,7 +1364,7 @@ it("renders all eight ordered fixed Shop offers, using the same guarded Buy and 
   expect(f.doc.activeElement?.dataset.item).toBe("equipment2");
 });
 
-it("keeps sparse ordered panes and restores every legacy category when approved groups are absent", () => {
+it("keeps sparse panes and hides Shop when its provider has no stock", () => {
   let groups: stationSource.StationShopGroups | undefined = approvedGroups(
     [],
     [stockOffer("holodisk")],
@@ -1421,16 +1377,14 @@ it("keeps sparse ordered panes and restores every legacy category when approved 
     0, 1,
   ]);
   expect(body.querySelectorAll("button").map((node) => node.dataset.item)).toEqual(["holodisk"]);
-  f.station.layers.inner.back();
   groups = undefined;
-  f.activate(f.action("open-shop"));
-  expect(body.querySelectorAll(".ada-stock-rows")).toHaveLength(0);
-  expect(
-    body.querySelectorAll(".ada-shop-tabs")[0]!.children.map((button) => button.dataset.tab),
-  ).toEqual(["weapons", "ship"]);
-  expect(
-    body.querySelectorAll(".ada-shop-list")[0]!.querySelectorAll("button").length,
-  ).toBeGreaterThan(0);
+  f.station.layers.inner.back();
+  expect(f.action("open-shop").hidden).toBe(true);
+  expect(f.native.get("shop-back")!.frame.hidden).toBe(true);
+  expect(f.action("open-jobs").hidden).toBe(false);
+  expect(f.action("open-exchange").hidden).toBe(false);
+  expect(body.querySelectorAll(".ada-shop-tabs")).toEqual([]);
+  expect(body.querySelectorAll(".ada-station-pager")).toEqual([]);
 });
 
 it("rejects an oversized fixed stock batch without silently dropping eligible rows", () => {
@@ -1445,4 +1399,15 @@ it("rejects an oversized fixed stock batch without silently dropping eligible ro
   );
   expect(f.native.get("shop-back")!.frame.hidden).toBe(true);
   expect(f.buy).not.toHaveBeenCalled();
+});
+
+it("keeps an unbound fixed Shop offer out of the mounted pane", () => {
+  const f = constructedStation();
+  f.station.setOpen(true);
+  f.state.corruptRow = "item-0";
+  expect(() => f.activate(f.action("open-shop"))).toThrow("no registered action binding");
+  const shop = f.native.get("shop-back")!;
+  expect(shop.frame.hidden).toBe(true);
+  expect(shop.body.querySelectorAll("[data-item]")).toEqual([]);
+  expect(f.request).not.toHaveBeenCalled();
 });

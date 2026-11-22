@@ -312,51 +312,11 @@ export const STATION_STYLE = `
   color:${TEXT_TOKENS.label}
 }
 
-/* Paged rows retain space for focus and selection rings. */
-.ada-controls .ada-shop-list{
-  box-sizing:border-box;
-  display:grid;
-  align-content:start;
-  justify-items:center;
-  gap:${units(SPACING.gap)};
-  padding:${units(FOCUS_RING.outset)};
-  align-self:center
-}
-
-.ada-controls .ada-shop-group{
-  display:grid;
-  grid-template-columns:repeat(var(--shop-columns,2),var(--shop-row-width,max-content));
-  column-gap:${units(SHOP_ROW.columnGap)};
-  row-gap:${units(SHOP_ROW.rowGap)}
-}
-.ada-controls .ada-shop-paint{
-  display:grid;
-  gap:${units(SHOP_ROW.paintHeading.gap)}
-}
-
-.ada-controls .ada-paint-heading{
-  justify-self:start;
-  display:flex;
-  align-items:center;
-  gap:${units(SHOP_ROW.markGap)};
-  height:${units(SHOP_ROW.paintHeading.line)};
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.title}
-}
-.ada-controls .ada-paint-heading::before{
-  content:"";
-  flex:none;
-  width:${units(SHOP_ROW.paintHeading.icon)};
-  height:${units(SHOP_ROW.paintHeading.icon)};
-  background:url('${SPRITES}icon-shop-ship-paint.png') 0 0 / 200% 100% no-repeat;
-  image-rendering:pixelated
-}
-
 /* An item row: a ui-button-tile at the action height; the whole row is one control. */
 .ada-controls .ada-shop-row{
   position:relative;
   box-sizing:border-box;
-  width:var(--shop-row-width,max-content);
+  width:max-content;
   height:${units(SHOP_ROW.height)};
   min-width:0;
   min-height:${units(SHOP_ROW.height)};
@@ -487,13 +447,11 @@ export const STATION_STYLE = `
 
 .ada-controls .ada-shop-slot{
   flex:none;
-  min-width:var(--shop-slot-width,auto);
   display:flex;
   justify-content:flex-end
 }
 .ada-controls .ada-price{
   box-sizing:border-box;
-  min-width:var(--shop-pill-width,auto);
   height:${units(SHOP_ROW.pill.pill.height)};
   padding:0 ${units(PILL.padding)};
   display:flex;
@@ -543,38 +501,4 @@ export const STATION_STYLE = `
   gap:${units(SPACING.rowGap)}
 }
 
-/* Measuring: rows at their natural widths, off screen. */
-.ada-controls .ada-shop-measure{
-  position:absolute;
-  visibility:hidden;
-  pointer-events:none;
-  height:auto;
-  width:max-content
-}
-.ada-controls .ada-shop-measure .ada-shop-row{
-  width:max-content
-}
-.ada-controls .ada-shop-measure .ada-shop-name{
-  flex:none;
-  white-space:nowrap
-}
-.ada-controls .ada-station-pager{
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-station-previous{
-  grid-column:1;
-  grid-row:1
-}
-.ada-controls .ada-station-next{
-  grid-column:3;
-  grid-row:1
-}
-.ada-controls .ada-station-pager p{
-  grid-column:2;
-  grid-row:1;
-  margin:0
-}
 `;

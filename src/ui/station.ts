@@ -14,21 +14,10 @@ import {
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
-import { cardPages } from "./layout/cardPages.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { FOCUS_RING } from "./layout/controls.ts";
-import { units } from "./layout/css.ts";
-import { frameSize } from "./layout/frameBox.ts";
-import {
-  CONFIRM_ITEM,
-  shopColumns,
-  shopListWidth,
-  shopRowHeight,
-  shopRowWidth,
-} from "./layout/shopCard.ts";
+import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
-import { SPACING } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -41,13 +30,7 @@ import {
   type StationMenuSchema,
   stationMenuTree,
 } from "./stationMenuTree.ts";
-import { type StationPagerSchema, stationPagerTree } from "./stationPagerTree.ts";
-import {
-  type StationShopRowSchema,
-  stationShopRowTree,
-  type StationShopSchema,
-  stationShopTree,
-} from "./stationShopTree.ts";
+import { type StationShopRowSchema, stationShopRowTree } from "./stationShopTree.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -91,9 +74,7 @@ export interface StationLabels {
   readonly undock: string;
 }
 
-export type StationTab = "ship" | "weapons";
-type StationCatalog = StationTab | "projects";
-type RowCatalogue = StationCatalog | "fixed";
+type RowCatalogue = "projects" | "shop";
 
 export interface StationShopGroup {
   readonly category: "weapons" | "equipment" | "ammo";
@@ -102,16 +83,6 @@ export interface StationShopGroup {
 }
 
 export type StationShopGroups = readonly [StationShopGroup, StationShopGroup];
-
-/** Visible shop tabs come only from the docked station's authoritative capabilities. */
-export function stationTabs(services: StationServices | null): readonly StationTab[] {
-  return services === null
-    ? []
-    : [
-        ...(services.weaponsAmmo ? ["weapons" as const] : []),
-        ...(services.equipment ? ["ship" as const] : []),
-      ];
-}
 
 /** Held tasks remain accessible for Drop at every station. */
 export function stationJobsShown(services: StationServices | null): boolean {
@@ -151,10 +122,7 @@ export interface StationRow {
   readonly project?: boolean;
   readonly projectDetails?: string;
   readonly glyph: ItemGlyph;
-  /**
-   * The ammunition group precedes the item group on the Weapons tab; the paint group follows
-   * it on the Ship tab.
-   */
+  /** The source row group, independent of the station’s pane assignment. */
   readonly group: "ammo" | "items" | "paint";
   readonly key: string;
   readonly level: string;
@@ -214,12 +182,12 @@ export interface StationOptions {
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
   readonly request: (key: string) => StationRequest;
-  readonly rows: (tab: StationCatalog) => readonly StationRow[];
+  readonly rows: (catalog: "projects") => readonly StationRow[];
   readonly select: (key: string) => void;
   readonly services: () => StationServices | null;
   /** Approved groups in display order, including any independently eligible story offer in its pane. */
-  /** Undefined keeps the full current catalogue until the approved groups are supplied. */
-  readonly shopGroups?: () => StationShopGroups | undefined;
+  /** The docked station’s ordered Shop panes, or undefined when it offers no Shop. */
+  readonly shopGroups: () => StationShopGroups | undefined;
   readonly stationTitle: () => string | undefined;
   readonly undock: () => void;
 }
@@ -414,28 +382,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   shopCard.card.dataset.dialog = "shop";
   shopCard.frame.hidden = true;
-  const tabButtons = new Map<StationTab, HTMLButtonElement>();
-  for (const [id, label] of [
-    ["weapons", labels.shopWeapons],
-    ["ship", labels.shopShip],
-  ] as const) {
-    const button = createButton(label);
-    button.setAttribute("role", "tab");
-    button.dataset.tab = id;
-    tabButtons.set(id, button);
-  }
-  const tabs = createActions(
-    [...tabButtons.values()].map((button) => ({ button, role: "secondary" as const })),
-  );
-  tabs.classList.add("ada-shop-tabs");
-  tabs.setAttribute("role", "tablist");
-  const list = document.createElement("div");
-  list.className = "ada-shop-list";
-  list.setAttribute("role", "tabpanel");
-  shopCard.body.append(tabs, list);
-  const fixedStock = document.createElement("div");
-  fixedStock.className = "ada-station-panes";
-
+  const shopStock = document.createElement("div");
+  shopStock.className = "ada-station-panes";
+  shopCard.body.setAttribute("data-shop-stock", "");
+  shopCard.body.append(shopStock);
   const exchangeCard = createCard({
     closeAction: "exchange-back",
     closeLabel: labels.close,
@@ -491,148 +441,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   jobsPanes.append(jobsPane, projectsPane);
   jobsCard.body.append(jobsPanes);
 
-  const pagerLayouts: ReturnType<typeof mountLayout<StationPagerSchema>>[] = [];
-  const makePager = (host: HTMLElement) => {
-    const node = document.createElement("div");
-    node.className = "ada-station-pager";
-    let previous!: HTMLButtonElement;
-    let next!: HTMLButtonElement;
-    let count!: HTMLParagraphElement;
-    pagerLayouts.push(
-      mountLayout<StationPagerSchema>(
-        {
-          components: {
-            button: {
-              create(initial) {
-                const button = createButton(initial.label);
-                button.classList.add(`ada-station-${initial.direction}`);
-                if (initial.direction === "previous") {
-                  previous = button;
-                } else {
-                  next = button;
-                }
-                return {
-                  dispose() {},
-                  element: button,
-                  slots: {},
-                  update(data) {
-                    button.textContent = data.label;
-                  },
-                };
-              },
-              slots: [],
-            },
-            count: {
-              create() {
-                count = document.createElement("p");
-                count.setAttribute("role", "status");
-                count.setAttribute("aria-live", "polite");
-                return { dispose() {}, element: count, slots: {}, update() {} };
-              },
-              slots: [],
-            },
-            pager: {
-              create() {
-                return { dispose() {}, element: node, slots: { controls: node }, update() {} };
-              },
-              slots: ["controls"],
-            },
-          },
-          host,
-        },
-        stationPagerTree({
-          next: CONTENT.labels.next ?? "",
-          previous: CONTENT.labels.previous ?? "",
-        }),
-      ),
-    );
-    return { count, next, node, pages: 1, previous };
-  };
-  const shopPager = makePager(shopCard.body);
-  let shopPage = 0;
-
-  const focusPage = (
-    parts: Pick<typeof shopCard, "close">,
-    group: HTMLElement,
-    pager: typeof shopPager,
-    preferred?: HTMLElement,
-  ): void => {
-    const action = pager.node.hidden
-      ? undefined
-      : [preferred, pager.previous, pager.next].find((button) => button && !button.hidden);
-    focusTarget(action ?? group.querySelector<HTMLElement>("button") ?? parts.close);
-  };
-
-  // Fit actual laid-out grid rows below the fixed groups, with the pager only when needed.
-  const fitPages = (
-    parts: Pick<typeof shopCard, "close" | "fit" | "frame"> & { readonly body: HTMLElement },
-    group: HTMLElement,
-    pager: typeof shopPager,
-    chunks: readonly HTMLElement[],
-    page: number,
-  ): number => {
-    const focused =
-      document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-    const restoreFocus = focused && (pager.node.contains(focused) || group.contains(focused));
-    pager.node.hidden = true;
-    pager.previous.hidden = false;
-    pager.next.hidden = false;
-    group.replaceChildren(...chunks);
-    parts.fit();
-    const unit = readViewUnit(group);
-    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row")) {
-      const name = row.querySelector<HTMLElement>(".ada-shop-name")!;
-      row.style.height = units(shopRowHeight(frameSize(name).height / unit));
-    }
-    const heights = chunks.map((chunk) => frameSize(chunk).height / unit);
-    const room = () => {
-      const children = [...parts.body.children].filter(
-        (child) => child instanceof HTMLElement && !child.hidden,
-      );
-      const others = children
-        .filter((child) => child !== group)
-        .reduce((total, child) => total + frameSize(child).height / unit, 0);
-      const end = parseFloat(getComputedStyle(parts.body, "::after").height) / unit;
-      return (
-        parts.body.clientHeight / unit -
-        others -
-        children.length * SPACING.gap -
-        end -
-        2 * FOCUS_RING.outset
-      );
-    };
-    let pages = cardPages(room(), SPACING.gap, heights);
-    if (pages.length > 1) {
-      pager.node.hidden = false;
-      pages = cardPages(room(), SPACING.gap, heights);
-    }
-    const currentPage = Math.min(page, pages.length - 1);
-    pager.pages = pages.length;
-    pager.count.textContent = (CONTENT.labels.achievementsPage ?? "")
-      .replace("{page}", String(currentPage + 1))
-      .replace("{pages}", String(pages.length));
-    for (const [button, unavailable] of [
-      [pager.previous, currentPage === 0],
-      [pager.next, currentPage === pages.length - 1],
-    ] as const) {
-      button.hidden = unavailable;
-    }
-    group.replaceChildren(...pages[currentPage]!.map((index) => chunks[index]!));
-    try {
-      for (const chunk of chunks) {
-        audit(chunk);
-      }
-      audit(parts.frame);
-    } catch (error) {
-      parts.frame.hidden = true;
-      throw error;
-    }
-    if (restoreFocus) {
-      focusPage(parts, group, pager, pager.node.contains(focused) ? focused : undefined);
-    }
-    return currentPage;
-  };
-
   const dropHost = document.createElement("div");
   dropHost.hidden = true;
   let dropDetails: ReturnType<typeof mountStationDropDetails> | undefined;
@@ -650,10 +458,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   let open = false;
   let view: StationView = "card";
-  let tab: StationTab | null = null;
-  const shownTabs = () => stationTabs(options.services());
   const configuredStock = () => {
-    const groups = options.services() ? options.shopGroups?.() : undefined;
+    const groups = options.services() ? options.shopGroups() : undefined;
     if (groups) {
       const offers = groups.flatMap((group) => group.offers);
       if (
@@ -666,23 +472,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         throw new Error("Shop requires two distinct groups of up to four unique offers");
       }
     }
-    return groups;
+    return groups?.some((group) => group.offers.length > 0) ? groups : undefined;
   };
-  const shopAvailable = (groups: StationShopGroups | undefined) =>
-    groups ? groups.some((group) => group.offers.length > 0) : shownTabs().length > 0;
   const liveRows = (catalog: RowCatalogue): readonly StationRow[] => {
     if (catalog === "projects") {
       return options.services()?.projects ? options.rows(catalog) : [];
     }
-    const groups = configuredStock();
-    if (groups) {
-      return catalog === "fixed" ? groups.flatMap((group) => group.offers) : [];
-    }
-    return catalog !== "fixed" && shownTabs().includes(catalog) ? options.rows(catalog) : [];
+    return configuredStock()?.flatMap((group) => group.offers) ?? [];
   };
-  const shopListRoot = () => (fixedStock.parentElement === shopCard.body ? fixedStock : list);
   const focusShop = (key: string, index = 0): void => {
-    const rows = [...shopListRoot().querySelectorAll<HTMLButtonElement>("button")].filter(
+    const rows = [...shopStock.querySelectorAll<HTMLButtonElement>("button")].filter(
       (row) => !row.disabled,
     );
     const next =
@@ -751,7 +550,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const shopLayouts: { dispose(): void }[] = [];
-  const rowElement = (row: StationRow, interactive = true, fixed = false): HTMLButtonElement => {
+  const rowElement = (row: StationRow, catalog: RowCatalogue): HTMLButtonElement => {
     const node = document.createElement("button");
     const host = document.createElement("div");
     const layout = mountLayout<StationShopRowSchema>(
@@ -819,138 +618,46 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationShopRowTree(labels, row),
     );
     (row.project ? jobLayouts : shopLayouts).push(layout);
-    if (interactive) {
-      register(
-        node,
-        () => {
-          const catalog = row.project ? "projects" : fixed ? "fixed" : tab;
-          const liveRow =
-            catalog === null ? undefined : liveRows(catalog).find((item) => item.key === row.key);
-          if (!catalog || !liveRow) {
-            render();
-            return;
+    register(
+      node,
+      () => {
+        const liveRow = liveRows(catalog).find((item) => item.key === row.key);
+        if (!liveRow) {
+          render();
+          return;
+        }
+        if (liveRow.project) {
+          openProject(liveRow, node);
+          return;
+        }
+        if (liveRow.requiresWeapon !== undefined) {
+          return;
+        }
+        const action = rowAction(liveRow.state);
+        if (action === "select") {
+          options.select(row.key);
+          render();
+          if (view === "shop") {
+            focusShop(row.key);
           }
-          if (liveRow.project) {
-            openProject(liveRow, node);
-            return;
-          }
-          if (liveRow.requiresWeapon !== undefined) {
-            return;
-          }
-          const action = rowAction(liveRow.state);
-          if (action === "select") {
-            options.select(row.key);
-            render();
-            if (view === "shop") {
-              focusShop(row.key);
-            }
-            return;
-          }
-          if (action === "none") {
-            return;
-          }
-          const request = options.request(row.key);
-          if (request.kind === "refused") {
-            refuse(node, options.reducedMotion());
-            return;
-          }
-          openConfirm(liveRow, request, catalog, node);
-        },
-        row.project ? jobBindings : shopBindings,
-      );
-    }
+          return;
+        }
+        if (action === "none") {
+          return;
+        }
+        const request = options.request(row.key);
+        if (request.kind === "refused") {
+          refuse(node, options.reducedMotion());
+          return;
+        }
+        openConfirm(liveRow, request, catalog, node);
+      },
+      row.project ? jobBindings : shopBindings,
+    );
     return node;
   };
 
-  const tabContent = (id: StationTab, columns: number): HTMLElement[] => {
-    const rows = options.rows(id);
-    const chunks: HTMLElement[] = [];
-    for (const tree of stationShopTree({ columns, paintHeading: labels.shipPaint }, rows)) {
-      let chunk!: HTMLDivElement;
-      shopLayouts.push(
-        mountLayout<StationShopSchema>(
-          {
-            components: {
-              group: {
-                create(initial) {
-                  const group = document.createElement("div");
-                  group.className = "ada-shop-group";
-                  group.append(...initial.indices.map((index) => rowElement(rows[index]!)));
-                  chunk = group;
-                  if (initial.heading !== null) {
-                    const block = document.createElement("div");
-                    block.className = "ada-shop-paint";
-                    const heading = document.createElement("div");
-                    heading.className = "ada-paint-heading";
-                    heading.textContent = initial.heading;
-                    block.append(heading, group);
-                    chunk = block;
-                  }
-                  return { dispose() {}, element: chunk, slots: {}, update() {} };
-                },
-                slots: [],
-              },
-            },
-            host: document.createElement("div"),
-          },
-          tree,
-        ),
-      );
-      chunks.push(chunk);
-    }
-    return chunks;
-  };
-
-  // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
-  const fitListContent = (): void => {
-    clearBindings(shopBindings);
-    list.hidden = tab === null;
-    if (tab === null) {
-      shopPager.node.hidden = true;
-      return;
-    }
-    const card = shopCard.card;
-    const unit = readViewUnit(card);
-    for (const name of ["--shop-row-width", "--shop-slot-width", "--shop-pill-width"]) {
-      card.style.removeProperty(name);
-    }
-    const measure = document.createElement("div");
-    measure.className = "ada-shop-measure";
-    measure.append(
-      ...shownTabs().flatMap((id) => options.rows(id).map((row) => rowElement(row, false))),
-    );
-    card.append(measure);
-    const widest = (selector: string) =>
-      Math.max(
-        0,
-        ...[...measure.querySelectorAll<HTMLElement>(selector)].map(
-          (node) => frameSize(node).width / unit,
-        ),
-      );
-    const pill = Math.ceil(widest(".ada-price"));
-    const slot = Math.max(pill, Math.ceil(widest(".ada-owned")));
-    const natural = shopRowWidth(Math.ceil(widest(".ada-shop-name")), slot);
-    measure.remove();
-    const available = card.clientWidth / unit;
-    const row = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
-    const columns = shopColumns(available, row);
-    card.style.setProperty("--shop-pill-width", units(pill));
-    card.style.setProperty("--shop-slot-width", units(slot));
-    card.style.setProperty("--shop-row-width", units(row));
-    card.style.setProperty("--shop-columns", String(columns));
-    list.style.width = units(shopListWidth(columns, row) + 2 * FOCUS_RING.outset);
-    shopPage = fitPages(shopCard, list, shopPager, tabContent(tab, columns), shopPage);
-  };
-
-  const fitList = (): void => {
-    const previousLayouts = shopLayouts.splice(0);
-    fitListContent();
-    for (const layout of previousLayouts) {
-      layout.dispose();
-    }
-  };
-
-  const renderFixedStock = (groups: StationShopGroups): void => {
+  const renderShop = (groups: StationShopGroups): void => {
     const previousBindings = shopBindings.splice(0);
     const previousLayouts = shopLayouts.splice(0);
     try {
@@ -961,14 +668,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         heading.textContent = group.label;
         const rows = document.createElement("div");
         rows.className = "ada-stock-rows";
-        rows.append(...group.offers.map((offer) => rowElement(offer, true, true)));
+        rows.append(...group.offers.map((offer) => rowElement(offer, "shop")));
         section.append(heading, rows);
         audit(section);
         return section;
       });
-      fixedStock.replaceChildren(...sections);
-      shopCard.body.replaceChildren(fixedStock);
-      shopCard.body.setAttribute("data-shop-stock", "");
+      shopStock.replaceChildren(...sections);
       audit(shopCard.frame);
     } catch (error) {
       shopCard.frame.hidden = true;
@@ -1085,7 +790,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const previousLayouts = jobLayouts.splice(0);
     try {
       const rows = stationJobsRows(options.jobs(), services, projects).map(jobElement);
-      const projectRows = projects.map((row) => rowElement(row));
+      const projectRows = projects.map((row) => rowElement(row, "projects"));
       for (const row of [...rows, ...projectRows]) {
         audit(row);
       }
@@ -1117,18 +822,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     );
   };
 
-  const renderShop = (): void => {
-    const available = shownTabs();
-    if (tab === null || !available.includes(tab)) {
-      tab = available[0] ?? null;
-    }
-    for (const [id, button] of tabButtons) {
-      button.hidden = !shownTabs().includes(id);
-      button.classList.toggle("ada-primary", id === tab);
-      button.setAttribute("aria-selected", String(id === tab));
-    }
-  };
-
   const render = (): void => {
     const groups = configuredStock();
     const welcome = stationWelcome(options.stationTitle() ?? labels.station, options.greeting());
@@ -1136,7 +829,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     stationCard.title.hidden = false;
     stationCard.frame.setAttribute("aria-label", welcome.title);
     stationCard.showLine(welcome.speaker, welcome.text);
-    openShop.hidden = !shopAvailable(groups);
+    openShop.hidden = !groups;
     openJobs.hidden = !stationJobsShown(options.services());
     if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
       closeConfirm();
@@ -1153,17 +846,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (footer.parentElement !== parts.card) {
       parts.card.append(balances, footer);
     }
-    if (view === "shop") {
-      if (groups) {
-        renderFixedStock(groups);
-      } else {
-        if (fixedStock.parentElement === shopCard.body) {
-          shopCard.body.replaceChildren(tabs, list, shopPager.node);
-          shopCard.body.removeAttribute("data-shop-stock");
-        }
-        renderShop();
-        fitList();
-      }
+    if (view === "shop" && groups) {
+      renderShop(groups);
     } else if (view === "jobs") {
       renderJobs();
     } else if (view === "exchange") {
@@ -1172,20 +856,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     parts.fit();
     syncPressView();
   };
-
-  for (const [button, direction] of [
-    [shopPager.previous, -1],
-    [shopPager.next, 1],
-  ] as const) {
-    register(button, () => {
-      if (button.hidden || shopPager.node.hidden) {
-        return;
-      }
-      shopPage += direction;
-      render();
-      focusPage(shopCard, list, shopPager, button);
-    });
-  }
 
   const showConfirmation = (title: string, parts: readonly HTMLElement[], action: string): void => {
     confirmCard.frame.hidden = false;
@@ -1372,15 +1042,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   };
 
-  // The row width and columns follow the view; the card builder refits the card itself.
-  const refit = (): void => {
-    if (open && view === "shop" && !confirm && fixedStock.parentElement !== shopCard.body) {
-      render();
-    }
-  };
-  window.addEventListener("resize", refit);
-  window.addEventListener(VIEW_SCALE_EVENT, refit);
-
   register(openJobs, () => {
     if (!stationJobsShown(options.services())) {
       return;
@@ -1399,23 +1060,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   register(undock, options.undock);
   register(openShop, () => {
-    if (!shopAvailable(configuredStock())) {
+    if (!configuredStock()) {
       return;
     }
     view = "shop";
     render();
     focusTarget(openShop);
   });
-  for (const [id, button] of tabButtons) {
-    register(button, () => {
-      if (!shownTabs().includes(id)) {
-        return;
-      }
-      tab = id;
-      shopPage = 0;
-      render();
-    });
-  }
   register(stationCard.close, back);
   register(shopCard.close, back);
   register(confirmCard.close, back);
@@ -1461,7 +1112,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
     }
-    const shopIndex = [...shopListRoot().querySelectorAll<HTMLButtonElement>("button")]
+    const shopIndex = [...shopStock.querySelectorAll<HTMLButtonElement>("button")]
       .filter((row) => !row.disabled)
       .indexOf(pending.origin as HTMLButtonElement);
     closeConfirm();
@@ -1479,7 +1130,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
 
   // A drag across a page must not activate the row where the gesture started.
-  for (const group of [list, fixedStock, jobList, projectList]) {
+  for (const group of [shopStock, jobList, projectList]) {
     let start: { readonly pointerId: number; readonly x: number; readonly y: number } | undefined;
     let draggedPointer: number | undefined;
     let latestPointer: number | undefined;
@@ -1537,8 +1188,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       clearBindings(bindings);
       clearBindings(shopBindings);
       clearBindings(jobBindings);
-      window.removeEventListener("resize", refit);
-      window.removeEventListener(VIEW_SCALE_EVENT, refit);
       exchange.dispose();
       for (const layout of jobLayouts) {
         layout.dispose();
@@ -1547,9 +1196,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         layout.dispose();
       }
       menuLayout.dispose();
-      for (const pagerLayout of pagerLayouts) {
-        pagerLayout.dispose();
-      }
       stationCard.dispose();
       shopCard.dispose();
       jobsCard.dispose();
