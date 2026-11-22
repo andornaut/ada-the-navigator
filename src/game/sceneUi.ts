@@ -782,6 +782,7 @@ export function buildScene(scene: UiContext): void {
       jobsProjects: label("jobsProjects"),
       owned: label("owned"),
       projectFunded: label("projectFunded"),
+      questReward: label("questReward"),
       shipPaint: label("shipPaint"),
       shop: label("shop"),
       shopShip: label("shopShip"),

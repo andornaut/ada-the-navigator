@@ -81,6 +81,7 @@ export interface StationLabels {
   readonly continue: string;
   readonly owned: string;
   readonly projectFunded: string;
+  readonly questReward: string;
   readonly shipPaint: string;
   readonly shop: string;
   readonly shopShip: string;
@@ -1147,7 +1148,17 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (job.brief) {
       parts.push(prose("ada-confirm-about", job.brief));
     }
-    parts.push(prose("ada-confirm-left", job.rewardText));
+    const reward = document.createElement("div");
+    reward.className = "ada-confirm-reward";
+    const amount = document.createElement("span");
+    amount.className = "ada-confirm-reward-amount";
+    amount.setAttribute("aria-hidden", "true");
+    amount.textContent = `${labels.questReward}: ${job.reward}`;
+    const spoken = document.createElement("span");
+    spoken.className = "ada-confirm-reward-spoken";
+    spoken.textContent = `${labels.questReward}: ${job.rewardText}`;
+    reward.append(amount, spoken);
+    parts.push(reward);
     if (job.state === "busy") {
       const busy = prose("ada-confirm-about", options.busyLine());
       busy.setAttribute("role", "status");

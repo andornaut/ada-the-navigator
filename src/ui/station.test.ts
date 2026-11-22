@@ -755,6 +755,7 @@ function constructedStation(
       "continue",
       "owned",
       "projectFunded",
+      "questReward",
       "communityProjects",
       "shipPaint",
       "shop",
@@ -1243,11 +1244,19 @@ it("opens unmutated Jobs details then accepts and focuses the same active row", 
   expect(f.native.get("confirm-cancel-x")!.title.textContent).toBe("Job");
   expect(f.action("confirm-buy").textContent).toBe(f.labels.jobAccept);
   const detail = f.native.get("confirm-cancel-x")!.body;
-  expect(detail.children.slice(0, 3).map((part) => part.textContent)).toEqual([
+  expect(detail.children.slice(0, 2).map((part) => part.textContent)).toEqual([
     "Detail",
     "Keeper brief.",
-    "10 Stardust",
   ]);
+  const reward = detail.querySelector(".ada-confirm-reward")!;
+  expect(reward).not.toBeNull();
+  expect(
+    reward.children.map((child) => [child.textContent, child.getAttribute("aria-hidden")]),
+  ).toEqual([
+    [`${f.labels.questReward}: 10`, "true"],
+    [`${f.labels.questReward}: 10 Stardust`, null],
+  ]);
+  expect(detail.querySelectorAll(".ada-confirm-left")).toEqual([]);
   f.activate(f.action("confirm-cancel"));
   expect(f.doc.activeElement).toBe(row);
   f.activate(row);

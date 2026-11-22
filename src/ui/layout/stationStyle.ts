@@ -199,7 +199,8 @@ export const STATION_STYLE = `
 }
 
 .ada-controls .ada-balance,
-.ada-controls .ada-confirm-price{
+.ada-controls .ada-confirm-price,
+.ada-controls .ada-confirm-reward-amount{
   display:flex;
   align-items:center;
   justify-content:center;
@@ -214,13 +215,20 @@ export const STATION_STYLE = `
   font:${font(CONFIRM_ITEM.price.text)}
 }
 .ada-controls .ada-balance::before,
-.ada-controls .ada-confirm-price::before{
+.ada-controls .ada-confirm-price::before,
+.ada-controls .ada-confirm-reward-amount::after{
   content:"";
   flex:none;
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};
   background:url('${SPRITES}icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
+}
+
+.ada-controls .ada-confirm-reward-spoken{
+  position:absolute;
+  white-space:nowrap;
+  clip-path:inset(50%)
 }
 
 .ada-controls .ada-card .ada-confirm-about{
