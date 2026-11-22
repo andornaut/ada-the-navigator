@@ -788,11 +788,11 @@ function constructedStation(
     },
   ];
   const buy = vi.fn(),
-    request = vi.fn(() => ({
+    request = vi.fn((): stationSource.StationRequest => ({
       about: "About",
       action: "Buy",
       kind: "confirm" as const,
-      left: "Left",
+      left: "90 Stardust remaining after purchase.",
       price: 10,
       title: "Item",
     })),
@@ -1055,6 +1055,10 @@ it("keeps inert measurement rows unregistered and registers only completed real 
   ).not.toBeNull();
   f.activate(row);
   expect(f.request).toHaveBeenCalledExactlyOnceWith("item-0");
+  const detail = f.native.get("confirm-cancel-x")!.body;
+  expect(detail.querySelectorAll(".ada-confirm-left").map((line) => line.textContent)).toEqual([
+    "90 Stardust remaining after purchase.",
+  ]);
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("item-0");
 });
@@ -1304,7 +1308,26 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
   f.activate(f.action("open-jobs"));
   expect(f.native.get("jobs-back")!.title.textContent).toBe(f.labels.jobsProjects);
   expect(f.parent.querySelectorAll("[data-job]")).toHaveLength(0);
+  f.request.mockReturnValue({
+    about: "Restore the orchard.",
+    action: f.labels.jobAccept,
+    kind: "confirm",
+    left: "90 Stardust remaining after contribution.",
+    price: 10,
+    stillNeeded: "40 Stardust still needed.",
+    title: "Orchard",
+  });
   f.activate(f.parent.querySelector('[data-item="project:orchard"]')!);
+  const confirmation = f.native.get("confirm-cancel-x")!;
+  expect(confirmation.title.textContent).toBe("Orchard");
+  expect(confirmation.body.querySelector(".ada-confirm-about")?.textContent).toBe(
+    "Restore the orchard.",
+  );
+  expect(confirmation.body.querySelector(".ada-confirm-price")?.textContent).toBe("10");
+  expect(
+    confirmation.body.querySelectorAll(".ada-confirm-left").map((line) => line.textContent),
+  ).toEqual(["40 Stardust still needed."]);
+  expect(f.action("confirm-buy").textContent).toBe(f.labels.jobAccept);
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("project:orchard");
   expect(f.doc.activeElement?.dataset.item).toBe("project:orchard");

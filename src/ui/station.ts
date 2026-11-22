@@ -1135,7 +1135,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (request.about) {
       parts.push(prose("ada-confirm-about", request.about));
     }
-    parts.push(price, prose("ada-confirm-left", request.left));
+    parts.push(price);
+    if (catalog !== "projects") {
+      parts.push(prose("ada-confirm-left", request.left));
+    }
     if (request.stillNeeded) {
       parts.push(prose("ada-confirm-left", request.stillNeeded));
     }
