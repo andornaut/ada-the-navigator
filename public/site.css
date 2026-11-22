@@ -359,5 +359,5 @@ body.site {
   height: 16px;
   margin: 3.2px 0 3.2px 4px;
   vertical-align: top;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }

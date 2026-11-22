@@ -50,7 +50,7 @@ const fakeDocument = {
 
 const LESSON_MOVE = CONVERSATIONS.find(({ id }) => id === "lesson:move")!.lines[0]!;
 const LESSON_AIM = CONVERSATIONS.find(({ id }) => id === "lesson:aim")!.lines[0]!;
-const SPRITES = new URL("../../public/art/ui/sprites/", import.meta.url);
+const ICONS = new URL("../../public/art/ui/icons/", import.meta.url);
 
 describe("control help tokens", () => {
   it("splits copy into text and control tokens, and refuses an unknown token", () => {
@@ -79,14 +79,10 @@ describe("control help tokens", () => {
 });
 
 describe("control icons", () => {
-  it("are Art's single-frame 16 by 16 sheets, 4 after the name and centred on the line", () => {
+  it("uses Art's 16 by 16 vectors, 4 after the name and centred on the line", () => {
     for (const key of Object.values(CONTROL_ICONS)) {
-      const sheet = JSON.parse(readFileSync(new URL(`${key}.json`, SPRITES), "utf8")) as {
-        frames: Record<string, { frame: { h: number; w: number; x: number; y: number } }>;
-      };
-      expect(Object.values(sheet.frames).map(({ frame }) => frame)).toEqual([
-        { h: 16, w: 16, x: 0, y: 0 },
-      ]);
+      const svg = readFileSync(new URL(`${key}.svg`, ICONS), "utf8");
+      expect(svg).toMatch(/<svg\b[^>]*\bwidth="16"[^>]*\bheight="16"/u);
     }
     expect(INLINE_CONTROL).toEqual({ gap: 4, icon: 16, inset: 2 });
     expect(TYPE.label.lineHeight).toBe(TYPE.body.lineHeight);
@@ -108,7 +104,7 @@ describe("control icons", () => {
       alt: "",
       className: "ada-control-icon",
       dataset: { control: "move" },
-      src: "/art/ui/sprites/icon-move-controls.png",
+      src: "/art/ui/icons/icon-move-controls.svg",
       tag: "img",
     });
     expect(icon.getAttribute("aria-hidden")).toBe("true");
@@ -121,7 +117,7 @@ describe("control icons", () => {
       (["move", "aim", "use"] as const).map(
         (control) =>
           `<img class="ada-control-icon" data-control="${control}" ` +
-          `src="/art/ui/sprites/${CONTROL_ICONS[control]}.png" alt="" aria-hidden="true" ` +
+          `src="/art/ui/icons/${CONTROL_ICONS[control]}.svg" alt="" aria-hidden="true" ` +
           'width="16" height="16">',
       ),
     );
@@ -141,7 +137,7 @@ it("renders the approved Scan instruction with the actual icon only and an acces
   expect(nodes[0]!.textContent).toBe("Fly closer, then press ");
   expect(nodes[1]!.children).toHaveLength(1);
   const icon = nodes[1]!.children[0]!;
-  expect(icon.src).toBe("/art/ui/sprites/icon-use-control.png");
+  expect(icon.src).toBe("/art/ui/icons/icon-use-control.svg");
   expect(icon.alt).toBe(CONTROL_WORDS.use);
   expect(icon.getAttribute("aria-hidden")).not.toBe("true");
   expect(nodes[2]!.textContent).toBe(" to scan it.");

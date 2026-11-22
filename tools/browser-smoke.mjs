@@ -120,6 +120,7 @@ async function measureInlineIcons(root) {
       natural: [icon.naturalWidth, icon.naturalHeight],
       opacity: style.opacity,
       rendering: style.imageRendering,
+      source: icon.getAttribute("src"),
       sameLine: Math.abs(box.top + box.height / 2 - (name.top + name.height / 2)) < 1,
       width: box.width,
       wrap: getComputedStyle(icon.parentElement).whiteSpace,
@@ -140,7 +141,13 @@ function assertInlineIcons(icons, controls, scale, lineHeight, where) {
     assert.equal(icon.ariaHidden, "true", `The icon is hidden from screen readers: ${detail}`);
     assert.deepEqual(icon.natural, [16, 16], `The icon loads its 16 by 16 frame: ${detail}`);
     assert.equal(icon.opacity, "1", `The icon is at full opacity: ${detail}`);
-    assert.equal(icon.rendering, "pixelated", `The icon scales nearest-neighbour: ${detail}`);
+    const key = icon.control === "use" ? "icon-use-control" : `icon-${icon.control}-controls`;
+    assert.equal(
+      icon.source,
+      `/art/ui/icons/${key}.svg`,
+      `The icon loads the approved SVG: ${detail}`,
+    );
+    assert.equal(icon.rendering, "auto", `The vector renders smoothly: ${detail}`);
     assert.equal(icon.wrap, "nowrap", `The name and icon wrap as one: ${detail}`);
     assert.ok(icon.sameLine, `The icon is on its name's line: ${detail}`);
     assert.ok(Math.abs(icon.lineHeight - lineHeight * scale) < 0.1, `Line box: ${detail}`);

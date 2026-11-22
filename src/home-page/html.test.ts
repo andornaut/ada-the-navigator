@@ -19,7 +19,7 @@ describe("the landing page's and manifest's copy", () => {
   it("follows each control named in the Mobile line with its icon", () => {
     expect(homePageHtml(copy, "<p>%HOME_MOBILE%</p>")).toBe(
       '<p>Tap <span class="ada-control-help">Use<img class="ada-control-icon" data-control="use" ' +
-        'src="/art/ui/sprites/icon-use-control.png" alt="" aria-hidden="true" width="16" ' +
+        'src="/art/ui/icons/icon-use-control.svg" alt="" aria-hidden="true" width="16" ' +
         'height="16"></span> &amp; go.</p>',
     );
   });

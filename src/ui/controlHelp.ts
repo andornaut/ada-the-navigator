@@ -12,20 +12,20 @@ export const HELP_CONTROLS: readonly HelpControl[] = ["move", "aim", "use"];
 /** Each control's name, written before its icon. */
 export type ControlWords = Readonly<Record<HelpControl, string>>;
 
-/** Each control's icon sheet in the UI manifest. */
+/** Each control's existing art key. */
 export const CONTROL_ICONS: Readonly<Record<HelpControl, string>> = {
   aim: "icon-aim-controls",
   move: "icon-move-controls",
   use: "icon-use-control",
 };
 
-/** A control's icon image: the sheet's PNG is its one 16 by 16 frame. */
+/** The shared image URL for game DOM and landing markup. */
 export const controlIconSource = (control: HelpControl): string =>
-  `/art/ui/sprites/${CONTROL_ICONS[control]}.png`;
+  `/art/ui/icons/${CONTROL_ICONS[control]}.svg`;
 
 /**
  * The name and its icon wrap as one; the icon starts a gap after the name, centred on the line
- * box, nearest-neighbour at every density.
+ * box.
  */
 export const CONTROL_HELP_STYLE = `
 .ada-control-help{
@@ -37,7 +37,7 @@ export const CONTROL_HELP_STYLE = `
   height:${units(INLINE_CONTROL.icon)};
   margin:${units(INLINE_CONTROL.inset)} 0 ${units(INLINE_CONTROL.inset)} ${units(INLINE_CONTROL.gap)};
   vertical-align:top;
-  image-rendering:pixelated
+  image-rendering:auto
 }
 `;
 
