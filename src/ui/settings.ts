@@ -146,9 +146,14 @@ ${viewStyle(WHOLE_PX_EDGES)}
   padding:8px 16px
 }
 
-.ada-controls button:focus-visible{
-  outline:3px solid #5078b4;
-  outline-offset:4px
+/* Route markers draw their own ring on the child frame. */
+.ada-controls button:focus-visible:not(:where(.ada-route-marker)){${FOCUS_STYLE}
+}
+@media (forced-colors: active){
+  .ada-controls button:focus-visible:not(:where(.ada-route-marker)){
+    outline-color:Highlight;
+    box-shadow:none
+  }
 }
 
 /* The retired start-screen Settings disc, which never shows: an idle HUD disc button on the HUD
