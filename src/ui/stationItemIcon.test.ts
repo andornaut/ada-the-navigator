@@ -88,6 +88,13 @@ describe("station row and detail header item icons", () => {
     } else if (glyph.kind === "swatch") {
       expect(rowIcon.src).toBe(glyph.path);
       expect(rowIcon.tagName).toBe("img");
+    } else if (glyph.kind === "equipment") {
+      const icon = `/art/ui/icons/${glyph.key}`;
+      expect(rowIcon.className).toBe("ada-glyph ada-glyph-equipment");
+      expect(rowIcon.properties).toEqual({
+        "--equipment-icon": `url('${icon}.svg')`,
+        "--equipment-icon-disabled": `url('${icon}-disabled.svg')`,
+      });
     } else {
       expect(rowIcon.properties["--sheet"]).toBe(`url('/art/ui/sprites/${glyph.key}.png')`);
     }

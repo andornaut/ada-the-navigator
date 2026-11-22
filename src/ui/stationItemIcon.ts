@@ -1,10 +1,11 @@
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
-import { STATION_SPRITES } from "./layout/stationStyle.ts";
+import { STATION_ICONS, STATION_SPRITES } from "./layout/stationStyle.ts";
 
 const SPRITES = STATION_SPRITES;
 
 export type ItemGlyph =
+  | { readonly kind: "equipment"; readonly key: string }
   | { readonly kind: "sprite"; readonly key: string }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
@@ -32,6 +33,13 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
     const badge = document.createElement("span");
     badge.className = "ada-glyph-badge";
     node.append(createStationItemIcon(weaponItemGlyph(glyph.weapon)), badge);
+    return node;
+  }
+  if (glyph.kind === "equipment") {
+    const icon = `${STATION_ICONS}${glyph.key}`;
+    node.className = "ada-glyph ada-glyph-equipment";
+    node.style.setProperty("--equipment-icon", `url('${icon}.svg')`);
+    node.style.setProperty("--equipment-icon-disabled", `url('${icon}-disabled.svg')`);
     return node;
   }
   node.className = "ada-glyph ada-glyph-sprite";

@@ -32,7 +32,7 @@ export function itemGlyph(
     case "ammo":
       return { key: ammoShopSheet(item.weapon), kind: "sprite" };
     case "track":
-      return { key: TRACK_ICONS[item.track], kind: "sprite" };
+      return { key: TRACK_ICONS[item.track], kind: "equipment" };
     case "holodisk":
       return { key: "icon-holodisk", kind: "sprite" };
     default:

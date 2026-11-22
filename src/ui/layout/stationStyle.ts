@@ -8,7 +8,8 @@ import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 export const STATION_SPRITES = "/art/ui/sprites/";
 const SPRITES = STATION_SPRITES;
-const ICONS = "/art/ui/icons/";
+export const STATION_ICONS = "/art/ui/icons/";
+const ICONS = STATION_ICONS;
 const { bottom, left, right, top } = BUTTON_SLICE;
 const TILE_SLICE = `${top} ${right} ${bottom} ${left}`;
 const TILE_WIDTHS = `${slice(top)} ${slice(right)} ${slice(bottom)} ${slice(left)}`;
@@ -491,6 +492,14 @@ ${STOCK_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   width:${scaled(SHOP_ROW.glyph.icon)};
   height:${scaled(SHOP_ROW.glyph.icon)};
   image-rendering:pixelated
+}
+/* Fixed equipment glyphs have one SVG per state. */
+.ada-controls .ada-glyph-equipment{
+  background:var(--equipment-icon) 0 0 / 100% 100% no-repeat;
+  image-rendering:auto
+}
+.ada-controls [data-state=unaffordable] .ada-glyph-equipment{
+  background-image:var(--equipment-icon-disabled)
 }
 .ada-controls .ada-glyph-sprite{
   background:var(--sheet) 0 0 / 200% 100% no-repeat

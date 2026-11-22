@@ -40,7 +40,12 @@ describe("shop rows on the station view", () => {
       ["engine", "icon-shop-engine-tuning"],
       ["tractor", "icon-shop-tractor-beam"],
     ] as const) {
-      expect(itemGlyph(ECONOMY, { kind: "track", track })).toEqual({ key, kind: "sprite" });
+      expect(itemGlyph(ECONOMY, { kind: "track", track })).toEqual({ key, kind: "equipment" });
+      for (const suffix of ["", "-disabled"]) {
+        expect(readFileSync(publicFile(`/art/ui/icons/${key}${suffix}.svg`), "utf8")).toContain(
+          'width="20" height="20"',
+        );
+      }
       expect(existsSync(publicFile(`/art/ui/sprites/${key}.png`))).toBe(true);
     }
   });
@@ -82,7 +87,7 @@ describe("shop rows on the station view", () => {
       stationRow(ECONOMY, CONTENT.labels, economy.stardust, row),
     );
     expect(rows[0]).toMatchObject({
-      glyph: { key: "icon-shop-shield", kind: "sprite" },
+      glyph: { key: "icon-shop-shield", kind: "equipment" },
       group: "items",
       level: "Level 1 of 3",
       name: "Shield",
