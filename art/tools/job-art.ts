@@ -27,8 +27,8 @@ const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
 };
 const POI = space.colors.pointOfInterest!.toLowerCase();
 const POI_SIDE = "#8f7c9c";
-const PANEL_FACE = "#6f5f7d";
-const PANEL_GRID = "#b5a2c0";
+const PANEL_FACE = "#354a78";
+const PANEL_GRID = "#8bb6d7";
 const WHITE = "#ffffff";
 const INK = "#181425";
 
@@ -313,14 +313,14 @@ function wreck(): string {
   ].join("\n");
 }
 
-// Beacon: a horizontal satellite with mirrored solar panels and a lavender transmitter at the
-// world anchor. Its paired signal arcs pulse above and below the body.
+// The signal beacon is a low, horizontal satellite. Its corner-cut solar wings flank an
+// armoured transmitter at the world anchor, with paired signal arcs above and below.
 const BEACON = {
-  width: 40,
+  width: 48,
   height: 30,
-  displayWidth: 60,
+  displayWidth: 72,
   displayHeight: 45,
-  transmitter: [20, 15],
+  transmitter: [24, 15],
 } as const;
 const ARCS = { a: 7.5, b: 12 } as const;
 const BLINK_MS = 700;
@@ -337,13 +337,19 @@ function beacon(frame: keyof typeof ARCS): string {
   const radius = ARCS[frame];
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${BEACON.displayWidth}" height="${BEACON.displayHeight}" viewBox="0 0 ${BEACON.width} ${BEACON.height}">`,
-    `  <rect x="11" y="14" width="18" height="2" fill="${PANEL_GRID}" />`,
-    ...[2, 28].flatMap((x) => [
-      `  <rect x="${x}" y="7" width="10" height="16" fill="${PANEL_FACE}" stroke="${POI}" />`,
-      `  <path d="M${x + 10 / 3} 7V23M${x + 20 / 3} 7V23M${x} 11H${x + 10}M${x} 15H${x + 10}M${x} 19H${x + 10}" fill="none" stroke="${PANEL_GRID}" stroke-width="0.6" />`,
-    ]),
-    `  <circle cx="${lx}" cy="${ly}" r="4" fill="${POI}" />`,
-    `  <circle cx="${lx}" cy="${ly}" r="2" fill="${WHITE}" />`,
+    `  <path d="M8 13.5h32v3H8z" fill="#b6c4df" stroke="#303a51" stroke-width="1" />`,
+    `  <path d="M11 13.8l2 2.4 2-2.4 2 2.4 2-2.4m18 0-2 2.4-2-2.4-2 2.4-2-2.4" fill="none" stroke="#6c6b86" stroke-width=".65" />`,
+    ...[false, true].map(
+      (mirror) => `  <g${mirror ? ' transform="translate(48 0) scale(-1 1)"' : ""}>
+    <path d="M1 9.5 3.5 7H9l1.5 2.5v11L8 23H3.5L1 20.5z" fill="${PANEL_FACE}" stroke="#bdc7dc" />
+    <path d="M4 8v14m3-14.5v15M1.5 12h8.5m-8.5 5H10" fill="none" stroke="${PANEL_GRID}" stroke-width=".7" />
+    <path d="M1.5 10 4 7.5h4.5" fill="none" stroke="#eef3fb" stroke-width=".8" />
+  </g>`,
+    ),
+    `  <path d="M19 12.5 22 9.5h4l3 3v5l-3 3h-4l-3-3z" fill="#c78564" stroke="#5c4a61" />`,
+    `  <path d="M20 12.5 23 10h3l2 2.5-5 2.5z" fill="#efb88c" />`,
+    `  <circle cx="${lx}" cy="${ly}" r="2.4" fill="#5a647d" />`,
+    `  <circle cx="${lx}" cy="${ly}" r="1.35" fill="${WHITE}" />`,
     `  <path d="${arc(radius, Math.PI * 0.28, Math.PI * 0.72)}${arc(radius, Math.PI * 1.28, Math.PI * 1.72)}" fill="none" stroke="${POI}" stroke-width="1.5" stroke-linecap="round" />`,
     "</svg>",
     "",

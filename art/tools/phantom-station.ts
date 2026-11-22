@@ -1,44 +1,31 @@
-// Phantom's own station, entered by Use: the Bobbin, a long habitat cylinder of lilac goo that
-// turns under a helical band of set goo and a line of warm windows, with a goo dome aft, a blunt
-// command section and a lamp stalk forward, and two solar wings on a short truss. Eight rotation
-// frames; no dock. Contract: art/phantom.md (Station).
-// Usage: node art/tools/phantom-station.ts
+// Phantom's undocked station. Build with node art/tools/phantom-station.ts.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { blurb } from "./phantom-models.ts";
-import { svgText } from "./svg-text.ts";
 import { unit } from "./debris.ts";
 import { replaceEntries } from "./manifest.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 import { DESTINATION_SCALE, DISPLAY_SCALE, type Face } from "./solid.ts";
+import { svgText } from "./svg-text.ts";
 
 const output = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
 const PATH = "/art/phantom/";
-const PAD = 4;
-const STEP = 16;
-
-// Rotation: the winding repeats every 8 of the hull's 16 facets, so 8 one-facet steps loop.
 const ROTATION_FRAMES = 8;
 const FRAME_MS = 150;
-const SIDES = 16;
+// The world plane under the mantle stays at the original frame pivot.
+const frame = { halfWidth: 144, above: 91, width: 288, height: 112 };
 
-// Ramps, lit to shadow, shaded from the world light as the debris and gates are.
-const RAMP = {
-  goo: [blurb.gloss, blurb.goo, "#bba0d8", blurb.gooSide, blurb.deck],
-  float: ["#a58bc3", blurb.deckInset, blurb.deck, "#7d64a0", "#715a94"],
-  panel: [blurb.deckInset, blurb.deck, "#7d64a0", "#715a94", "#664f88"],
-  frame: [blurb.gloss, blurb.goo, "#bba0d8", blurb.gooSide, "#9478b4"],
-  warm: [blurb.lamp, blurb.lamp, "#f0d8a6", "#e6c98f", "#d9b878"],
-  dim: [blurb.lampDim, blurb.lampDim, "#7c6d54", "#6b5e49", "#5c5140"],
-} as const;
-type Ramp = readonly string[];
+type Ramp = readonly [string, string, string, string, string];
 
+const MANTLE: Ramp = ["#a8f6dc", "#6ed5c5", "#389d9e", "#246d80", "#203e60"];
+const PLATE: Ramp = ["#76d8ca", "#50b3b0", "#367b8e", "#315772", "#272f50"];
+const FIN: Ramp = ["#6cddca", "#449fa4", "#356d88", "#3b466c", "#2b2d4d"];
+const ARM: Ramp = ["#f091cf", "#c560ae", "#96468f", "#6e366c", "#4b2b57"];
+const JOINT: Ramp = ["#87d9d1", "#569da9", "#496e91", "#454b76", "#352f56"];
 const LIGHT = unit([-0.25, 0.45, 1]);
 const STEPS = [0.9, 0.7, 0.45, 0.15];
-const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-function normal(points: readonly Point[]): Point {
+function tone(ramp: Ramp, points: readonly Point[]): string {
   let [nx, ny, nz] = [0, 0, 0];
   for (const [i, a] of points.entries()) {
     const b = points[(i + 1) % points.length]!;
@@ -46,194 +33,194 @@ function normal(points: readonly Point[]): Point {
     ny += (a[2] - b[2]) * (a[0] + b[0]);
     nz += (a[0] - b[0]) * (a[1] + b[1]);
   }
-  return [nx, ny, nz];
+  const normal = unit([nx, ny, nz]);
+  const light = normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2];
+  const index = STEPS.findIndex((step) => light >= step);
+  return ramp[index < 0 ? 4 : index]!;
 }
 
-const tone = (ramp: Ramp, face: readonly Point[]) => {
-  const i = STEPS.findIndex((s) => dot(unit(normal(face)), LIGHT) >= s);
-  return ramp[i < 0 ? ramp.length - 1 : i]!;
-};
+// The mantle points up and right. Sections give the centre along, across and above
+// its world-plane axis, then half-width and half-height. Arm sections follow the sweep.
+const AXIS = -Math.PI / 4 - 0.12;
+type Section = readonly [along: number, across: number, z: number, width: number, height: number];
+type Quad = readonly [Point, Point, Point, Point];
 
-// The hull's axis on the world plane: screen right, turned 0.32 rad toward the viewer, at height
-// ZC above the pivot. s runs along the axis, r out from it, t round it from across toward up.
-const AXIS = -Math.PI / 4 + 0.32;
-const ZC = 26;
-const RC = 20;
-const ax: Point = [Math.cos(AXIS), Math.sin(AXIS), 0];
-const across: Point = [-Math.sin(AXIS), Math.cos(AXIS), 0];
-const P = (s: number, r: number, t: number): Point => [
-  s * ax[0] + r * Math.cos(t) * across[0],
-  s * ax[1] + r * Math.cos(t) * across[1],
-  ZC + r * Math.sin(t),
-];
-
-type Group = { points: Point[]; ramp: Ramp }[];
-
-// Quads between successive (s, r) stations of a profile, `sides` round; `pick(k, j)` is the ramp
-// of facet k in band j.
-function lathe(
-  profile: readonly (readonly [number, number])[],
-  sides: number,
-  pick: (k: number, j: number) => Ramp,
-): Group {
-  const faces: Group = [];
-  for (let j = 0; j < profile.length - 1; j++) {
-    const [s0, r0] = profile[j]!;
-    const [s1, r1] = profile[j + 1]!;
-    for (let k = 0; k < sides; k++) {
-      const [t0, t1] = [(k * 2 * Math.PI) / sides, ((k + 1) * 2 * Math.PI) / sides];
-      faces.push({
-        points: [P(s0, r0, t0), P(s1, r1, t0), P(s1, r1, t1), P(s0, r0, t1)],
-        ramp: pick(k, j),
-      });
-    }
-  }
-  return faces;
-}
-
-// A box in the axis frame: s along the axis, v across it, z up.
-function block(
-  s0: number,
-  s1: number,
-  v0: number,
-  v1: number,
-  z0: number,
-  z1: number,
-  ramp: Ramp,
-): Group {
-  const Q = (s: number, v: number, z: number): Point => [
-    s * ax[0] + v * across[0],
-    s * ax[1] + v * across[1],
+function world(along: number, across: number, z: number): Point {
+  return [
+    along * Math.cos(AXIS) - across * Math.sin(AXIS),
+    along * Math.sin(AXIS) + across * Math.cos(AXIS),
     z,
   ];
-  const [a, b, c, d] = [Q(s0, v0, z0), Q(s1, v0, z0), Q(s1, v1, z0), Q(s0, v1, z0)];
-  const [e, f, g, h] = [Q(s0, v0, z1), Q(s1, v0, z1), Q(s1, v1, z1), Q(s0, v1, z1)];
-  return [
-    [e, f, g, h],
-    [d, c, b, a],
-    [a, b, f, e],
-    [b, c, g, f],
-    [c, d, h, g],
-    [d, a, e, h],
-  ].map((points) => ({ points, ramp }));
 }
 
-const HULL = [-56, 56] as const;
-const BAND = 4;
+function loft(
+  sections: readonly Section[],
+  sides: number,
+  shade: (band: number, facet: number, points: Quad) => Face[],
+): Face[] {
+  const rings = sections.map(([along, across, z, width, height], i) => {
+    const previous = sections[Math.max(i - 1, 0)]!;
+    const next = sections[Math.min(i + 1, sections.length - 1)]!;
+    const tangent = Math.atan2(next[1] - previous[1], next[0] - previous[0]);
+    return Array.from({ length: sides }, (_, k) => {
+      const angle = (k * 2 * Math.PI) / sides;
+      const span = width * Math.cos(angle);
+      return world(
+        along - span * Math.sin(tangent),
+        across + span * Math.cos(tangent),
+        z + height * Math.sin(angle),
+      );
+    });
+  });
 
-function bobbin(rotation: number, lit: boolean): Group[] {
-  const groups: Group[] = [];
-  // Aft of the dome: a short truss with two flat solar wings across the axis, three cells each
-  // of set goo in lilac goo frames.
-  groups.push(block(HULL[0] - 48, HULL[0] - 22, -1.4, 1.4, ZC - 1.4, ZC + 1.4, RAMP.frame));
-  for (const side of [-1, 1]) {
-    const [v0, v1] = [side * 2, side * 8].toSorted((p, q) => p - q);
-    groups.push(block(HULL[0] - 42, HULL[0] - 30, v0!, v1!, ZC - 0.8, ZC + 0.8, RAMP.frame));
-    for (let i = 0; i < 3; i++) {
-      const [w0, w1] = [side * (8 + i * 13), side * (20 + i * 13)].toSorted((p, q) => p - q);
-      groups.push(block(HULL[0] - 46, HULL[0] - 26, w0!, w1!, ZC - 0.5, ZC + 0.5, RAMP.panel));
+  const visible: { band: number; facet: number; points: Quad }[] = [];
+  for (const [band, ring] of rings.slice(0, -1).entries()) {
+    for (let facet = 0; facet < sides; facet++) {
+      const next = (facet + 1) % sides;
+      const forward = rings[band + 1]!;
+      const points: Quad = [ring[facet]!, ring[next]!, forward[next]!, forward[facet]!];
+      if (facesViewer(points)) visible.push({ band, facet, points });
     }
   }
-  // Aft: a goo dome with a set-goo rim, as the Blurbs build their homes.
-  groups.push(
-    lathe(
-      [
-        [HULL[0] - 22, 0.01],
-        [HULL[0] - 21, 6],
-        [HULL[0] - 18, 10.5],
-        [HULL[0] - 13, 13.5],
-        [HULL[0] - 6, 15],
-        [HULL[0] - 2, 15],
-        [HULL[0], 16],
-      ],
-      12,
-      (_k, j) => (j === 5 ? RAMP.float : RAMP.goo),
+  return visible
+    .sort((a, b) => depth(b.points) - depth(a.points))
+    .flatMap(({ band, facet, points }) => shade(band, facet, points));
+}
+
+const profile: readonly Section[] = [
+  [-47, 0, 29, 4, 4],
+  [-32, 1, 31, 23, 18],
+  [-8, 1, 32, 33, 23],
+  [10, 0, 32, 39, 24],
+  [28, -2, 34, 36, 23],
+  [46, -4, 36, 27, 18],
+  [62, -5, 39, 13, 11],
+  [74, -7, 40, 0, 0],
+];
+
+const arms: readonly (readonly Section[])[] = [
+  [
+    [-17, -16, 32, 14, 11],
+    [-39, -28, 38, 13, 9],
+    [-54, -43, 44, 9, 7],
+    [-69, -50, 43, 7, 5],
+    [-87, -50, 45, 5, 4],
+    [-104, -42, 43, 3, 3],
+    [-108, -32, 39, 0, 0],
+  ],
+  [
+    [-25, 0, 24, 13, 10],
+    [-51, -4, 24, 12, 8],
+    [-68, -5, 22, 9, 6],
+    [-88, 1, 22, 7, 5],
+    [-105, 9, 28, 4, 3],
+    [-112, 25, 40, 0, 0],
+  ],
+  [
+    [-12, 18, 28, 16, 11],
+    [-34, 35, 32, 14, 9],
+    [-51, 49, 34, 10, 7],
+    [-68, 59, 40, 8, 5],
+    [-86, 60, 41, 6, 4],
+    [-98, 50, 41, 4, 3],
+    [-93, 46, 43, 0, 0],
+  ],
+];
+
+const fins: readonly (readonly Section[])[] = [
+  [
+    [39, -13, 35, 12, 8],
+    [31, -30, 35, 16, 7],
+    [13, -44, 38, 13, 5],
+    [-11, -49, 39, 7, 3],
+    [-30, -45, 37, 0, 0],
+  ],
+  [
+    [39, 13, 31, 12, 8],
+    [32, 26, 34, 17, 7],
+    [14, 42, 35, 15, 5],
+    [-9, 50, 35, 8, 3],
+    [-30, 47, 35, 0, 0],
+  ],
+];
+
+function tinted(ramp: Ramp, points: Quad): Face {
+  return { color: tone(ramp, points), points };
+}
+
+function mix(a: Point, b: Point, t: number): Point {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+
+function inlay(points: Quad, color: string): Face {
+  const [a, b, c, d] = points;
+  return {
+    color,
+    points: [mix(a, b, 0.24), mix(a, b, 0.48), mix(d, c, 0.68), mix(d, c, 0.38)].map(
+      (point, i, corners) => mix(point, corners[3 - i]!, 0.17),
     ),
-  );
-  // The habitat cylinder: lilac goo wound with a helical band of set goo, two turns round, and a
-  // line of warm windows; both turn with the cylinder, one facet per frame.
-  const bands = Math.round((HULL[1] - HULL[0]) / BAND);
-  const profile = [
-    [HULL[0], 16] as const,
-    ...Array.from({ length: bands + 1 }, (_, j) => [HULL[0] + j * BAND, RC] as const),
-    [HULL[1], 16] as const,
-  ];
-  groups.push(
-    lathe(profile, SIDES, (k, j) => {
-      if (j === 0 || j === profile.length - 2) return RAMP.float;
-      const m = (((k + rotation - Math.floor(j / 2)) % 8) + 8) % 8;
-      if (m === 0 || m === 1) return RAMP.float;
-      if ((k + rotation) % 8 === 4 && j % 3 === 1) return RAMP.warm;
-      return RAMP.goo;
+  };
+}
+
+function habitationLights([a, b, c, d]: Quad): Face[] {
+  const onFacet = (along: number, across: number) =>
+    mix(mix(a, d, along), mix(b, c, along), across);
+  return [0.13, 0.42, 0.71].map((start) => ({
+    color: "#ffe5b9",
+    points: [
+      onFacet(start, 0.27),
+      onFacet(start, 0.73),
+      onFacet(start + 0.15, 0.73),
+      onFacet(start + 0.15, 0.27),
+    ],
+  }));
+}
+
+const WAVE = [
+  "#ffd1f1",
+  "#f69fd3",
+  "#d875b7",
+  "#995891",
+  "#7e497a",
+  "#995891",
+  "#d875b7",
+  "#f69fd3",
+];
+
+function drawStation(rotation: number): Face[] {
+  const limbs = arms.map((arm, index) =>
+    loft(arm, 8, (band, facet, points) => {
+      const shell = tinted(band % 2 && facet < 5 ? JOINT : ARM, points);
+      // The inner face of the far arm carries three fixed habitation lights.
+      return index === 0 && band === 3 && facet === 3
+        ? [shell, ...habitationLights(points)]
+        : [shell];
     }),
   );
-  // Forward: a blunt stepped command section with a band of lit windows, and a lamp stalk with a
-  // round lamp, lit in the first half of the loop.
-  groups.push(
-    lathe(
-      [
-        [HULL[1], 16],
-        [HULL[1] + 6, 17],
-        [HULL[1] + 14, 17],
-        [HULL[1] + 18, 13],
-        [HULL[1] + 24, 8],
-        [HULL[1] + 26, 0.01],
-      ],
-      12,
-      (k, j) => (j === 1 ? (k % 2 ? RAMP.warm : RAMP.float) : j === 0 ? RAMP.float : RAMP.goo),
-    ),
+  const flanks = fins.map((fin) =>
+    loft(fin, 8, (band, facet, points) => [tinted(band === 2 && facet < 5 ? ARM : FIN, points)]),
   );
-  groups.push(block(HULL[1] + 26, HULL[1] + 40, -0.9, 0.9, ZC - 0.9, ZC + 0.9, RAMP.float));
-  groups.push(
-    lathe(
-      [
-        [HULL[1] + 39, 0.01],
-        [HULL[1] + 40, 2.6],
-        [HULL[1] + 43, 3.6],
-        [HULL[1] + 46, 2.6],
-        [HULL[1] + 47, 0.01],
-      ],
-      8,
-      () => (lit ? RAMP.warm : RAMP.dim),
-    ),
-  );
-  return groups;
+  const mantle = loft(profile, 12, (band, facet, points) => {
+    const shell = tinted(facet === 1 || facet === 5 || band === 0 ? PLATE : MANTLE, points);
+    if (band < 1 || band > 5 || (facet !== 1 && facet !== 4 && facet !== 5)) return [shell];
+    const color = WAVE[(rotation + band + 2 * facet) % ROTATION_FRAMES]!;
+    return [shell, inlay(points, color)];
+  });
+
+  // Far limbs and fin root behind the mantle. The near fin overlaps the arm root.
+  return [...limbs[0]!, ...limbs[1]!, ...flanks[0]!, ...limbs[2]!, ...mantle, ...flanks[1]!];
 }
 
-// Groups draw far to near by their centroid depth; inside a convex group, faces far to near.
-function draw(groups: readonly Group[]): Face[] {
-  return groups
-    .toSorted((a, b) => depth(b.flatMap((f) => f.points)) - depth(a.flatMap((f) => f.points)))
-    .flatMap((group) =>
-      group
-        .filter(({ points }) => facesViewer(points))
-        .toSorted((a, b) => depth(b.points) - depth(a.points))
-        .map(({ points, ramp }) => ({ color: tone(ramp, points), points })),
-    );
-}
-
-const frames = Array.from({ length: ROTATION_FRAMES }, (_, k) =>
-  draw(bobbin(k, k < ROTATION_FRAMES / 2)),
-);
-
-// One frame over every rotation frame: the pivot (the world plane under the hull's middle) on
-// the vertical centre line, sides in multiples of 16 and an exact five-decimal pivot height.
-function layout(faces: readonly Face[]) {
-  const all = faces.flatMap(({ points }) => points.map((p) => projectAt(0, 0, p)));
-  const half = Math.max(...all.map(([x]) => Math.abs(x))) + PAD;
-  const halfWidth = Math.ceil(half / (STEP / 2)) * (STEP / 2);
-  const minAbove = Math.ceil(-Math.min(...all.map(([, y]) => y)) + PAD);
-  const minBelow = Math.ceil(Math.max(...all.map(([, y]) => y)) + PAD);
-  for (let height = Math.ceil((minAbove + minBelow) / STEP) * STEP; ; height += STEP) {
-    for (let above = minAbove; above <= height - minBelow; above++) {
-      if ((above * 100000) % height === 0) {
-        return { halfWidth, above, width: halfWidth * 2, height };
-      }
+const frames = Array.from({ length: ROTATION_FRAMES }, (_, k) => drawStation(k));
+for (const { points } of frames.flat()) {
+  for (const point of points) {
+    const [x, y] = projectAt(frame.halfWidth, frame.above, point);
+    if (x < 4 || y < 4 || x > frame.width - 4 || y > frame.height - 4) {
+      throw new Error(`Station mesh exceeds the frame margin at ${x}, ${y}`);
     }
   }
 }
 
-const frame = layout(frames.flat());
 const scale = DISPLAY_SCALE * DESTINATION_SCALE;
 mkdirSync(output, { recursive: true });
 const entries = frames.map((faces, k) => {

@@ -4,47 +4,19 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import * as m from "./phantom-models.ts";
-import { svgText } from "./svg-text.ts";
 import { replaceEntries } from "./manifest.ts";
+import * as m from "./phantom-models.ts";
 import { type Point, projectAt, round } from "./projection.ts";
-import {
-  along,
-  BLINK_MS,
-  DESTINATION_SCALE,
-  DISPLAY_SCALE,
-  DOCK,
-  type Face,
-  polygons,
-} from "./solid.ts";
+import { along, BLINK_MS, DESTINATION_SCALE, DISPLAY_SCALE, DOCK, type Face } from "./solid.ts";
+import { svgText } from "./svg-text.ts";
 
 const output = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
 const PATH = "/art/phantom/";
 const PAD = 4;
-const STEP = 16;
 
 // ---------------------------------------------------------------- frames
 
 type Layout = { halfWidth: number; above: number; width: number; height: number };
-
-// One frame over every listed face, with the pivot on the vertical centre line: width and height
-// are multiples of 16 px and the pivot height is an exact five-decimal fraction.
-function layout(faces: readonly Face[]): Layout {
-  const all = faces.flatMap(({ points }) => points);
-  const xs = all.map((point) => projectAt(0, 0, point)[0]);
-  const ys = all.map((point) => projectAt(0, 0, point)[1]);
-  const half = Math.max(-Math.min(...xs), Math.max(...xs)) + PAD;
-  const halfWidth = Math.ceil(half / (STEP / 2)) * (STEP / 2);
-  const minAbove = Math.ceil(-Math.min(...ys) + PAD);
-  const minBelow = Math.ceil(Math.max(...ys) + PAD);
-  for (let height = Math.ceil((minAbove + minBelow) / STEP) * STEP; ; height += STEP) {
-    for (let above = minAbove; above <= height - minBelow; above++) {
-      if ((above * 100000) % height === 0) {
-        return { halfWidth, above, width: halfWidth * 2, height };
-      }
-    }
-  }
-}
 
 const frameXY = ({ above, halfWidth }: Layout, point: Point) => projectAt(halfWidth, above, point);
 
@@ -84,23 +56,39 @@ type Item = { id: string; file: string; title: string; faces: readonly Face[]; s
 // The three settlements in story order. Each design's four sprites share one frame and pivot, so a
 // state change or a blink swaps the sprite in place.
 const settlements = [
-  { variant: "homes", title: "Blurb homes", build: m.homes },
-  { variant: "harbour", title: "Blurb harbour", build: m.harbour },
-  { variant: "signal", title: "Blurb signal", build: m.signal },
+  { variant: "homes", title: "Blurb homes", build: m.homes, width: 96, height: 96, above: 36 },
+  {
+    variant: "harbour",
+    title: "Blurb harbour",
+    build: m.harbour,
+    width: 112,
+    height: 80,
+    above: 32,
+  },
+  { variant: "signal", title: "Blurb signal", build: m.signal, width: 80, height: 112, above: 56 },
 ] as const;
 
 mkdirSync(output, { recursive: true });
-const entries = settlements.flatMap(({ build, title, variant }) => {
+const entries = settlements.flatMap(({ above, build, height, title, variant, width }) => {
   const items: Item[] = (["cracked", "mended"] as const).flatMap((state) =>
     (["a", "b"] as const).map((letter) => ({
       id: `outpost-${variant}-${state}-${letter}`,
       file: `${variant}-${state}-${letter}`,
       title: `${title}, ${state} ${letter.toUpperCase()}`,
-      faces: polygons(build(letter === "a", state), undefined, m.SETTLEMENT_LEVELS),
+      faces: build(letter === "a", state),
       state,
     })),
   );
-  const frame = layout(items.flatMap(({ faces }) => faces));
+  // The world pivot and dock metadata stay fixed through art changes.
+  const frame = { above, halfWidth: width / 2, height, width };
+  for (const { id, faces } of items) {
+    for (const point of faces.flatMap((face) => face.points)) {
+      const [x, y] = frameXY(frame, point);
+      if (x < PAD || y < PAD || x > width - PAD || y > height - PAD) {
+        throw new Error(`${id} exceeds its fixed frame margin at ${x}, ${y}`);
+      }
+    }
+  }
   const dock = dockAt(frame, m.SETTLEMENT_DOCK.face, m.SETTLEMENT_DOCK.mouth);
   return items.map((item) => {
     writeFileSync(`${output}${item.file}.svg`, svgText(svgFile(item.title, frame, item.faces)));

@@ -7055,28 +7055,28 @@
     {
       "id": "station-a",
       "path": "/art/station-a.svg",
-      "width": 180,
-      "height": 150,
-      "displayWidth": 118.125,
-      "displayHeight": 98.438,
+      "width": 224,
+      "height": 180,
+      "displayWidth": 147,
+      "displayHeight": 118.125,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.46
+        "y": 0.45
       },
       "frameMs": 700
     },
     {
       "id": "station-b",
       "path": "/art/station-b.svg",
-      "width": 180,
-      "height": 150,
-      "displayWidth": 118.125,
-      "displayHeight": 98.438,
+      "width": 224,
+      "height": 180,
+      "displayWidth": 147,
+      "displayHeight": 118.125,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.46
+        "y": 0.45
       },
       "frameMs": 700
     },
@@ -7135,9 +7135,9 @@
     {
       "id": "landmark-beacon-a",
       "path": "/art/landmarks/beacon-a.svg",
-      "width": 60,
+      "width": 72,
       "height": 45,
-      "displayWidth": 60,
+      "displayWidth": 72,
       "displayHeight": 45,
       "facing": "fixed",
       "pivot": {
@@ -7149,9 +7149,9 @@
     {
       "id": "landmark-beacon-b",
       "path": "/art/landmarks/beacon-b.svg",
-      "width": 60,
+      "width": 72,
       "height": 45,
-      "displayWidth": 60,
+      "displayWidth": 72,
       "displayHeight": 45,
       "facing": "fixed",
       "pivot": {

@@ -11,10 +11,9 @@ portraits of Pip and the settlers.
   since the Phantom finale draws the scooter too; its files stay in
   `public/art/andromeda/`.
 - [art/tools/andromeda-models.ts](tools/andromeda-models.ts) holds the solid
-  models in the [station](station.md) projection, culling and family: the
-  station's closed collar, the settlements' and the courier school's dock
-  collars with their mouths, lit floor strips and blue corner lights, and warm
-  lit windows `#ffe9b8`.
+  models in the [station](station.md) projection. The station and settlements
+  have sealed service faces and warm lit windows `#ffe9b8`. The courier
+  school's berth has a mouth, lit floor strip and blue corner lights.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
 - The space look adds a [backdrop haze](galaxies.md#backdrop-haze): two soft
@@ -39,7 +38,7 @@ and `displayHeight` equal the SVG's intrinsic size.
 
 | Asset              | Ids                                                                         | Frame px | Display      | Pivot           |
 | ------------------ | --------------------------------------------------------------------------- | -------- | ------------ | --------------- |
-| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 160 | 94.5 by 105  | `(0.5, 0.5125)` |
+| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 176, 160 | 115.5 by 105 | `(0.5, 0.5125)` |
 | Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 52.5 by 52.5 | `(0.5, 0.4375)` |
 | Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 42 by 52.5   | `(0.5, 0.6)`    |
 | Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 31.5 by 42   | `(0.5, 0.75)`   |
@@ -55,44 +54,29 @@ and `-b` for every station in Andromeda, with the trading station's shop and
 blink. Ada enters it by Use, so it has no `dock`. Entries carry `station`
 `settlers`.
 
-A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
+A raised blue concourse and coral and blue pressure modules sit on a
+126-unit cross-truss with paired dark-blue solar leaves at each end. An offset
+laboratory sits behind the right wing under an antenna gantry. Twin rails run
+to a sealed service spur on the near side.
 
-- Pearl deck `#e4e2ef` (sides `#a9a6c2`) with a lighter inset top `#d6d3e6`
-  and warm rim lamps on the facing rim.
-- Six cottages around the deck, clear of the arm: cream walls `#efe4cf`
-  (sides `#bfae94`) with warm windows and two-step slate-blue roofs `#8d94c4`
-  (sides `#5f6594`).
-- A striped lighthouse at the centre: a pearl tower with two marker-dark bands
-  `#6f78b8` (sides `#4a5080`), a cream gallery, the marker lantern `#b8c1ff`
-  with a white core, a slate-blue cap and a mast with the blue beacon.
-- A cream post depot with a periwinkle sign band, and two slate tanks
-  `#8d9bb0` behind.
-- The family arm toward the viewer ending in a closed cream collar with two
-  warm windows, as on the trading station.
-
-### Blink
-
-`facing` `fixed`, `frameMs` 700. Frame A lights the mast beacon, the rim lamps
-and the collar windows, and the lantern shows `#b8c1ff` with its white core;
-frame B shows the beacon unlit `#3f5878`, dims the lantern to `#8f9cf0` and
-the rim lamps and collar windows to `#a08f78`. Reduced motion shows frame A.
+`facing` is `fixed` and `frameMs` is 700. Frame A lights the mast, wingtip
+markers and service windows. Frame B dims them. Reduced motion shows frame A.
 
 ## Settlements
 
-The settlements are Andromeda's outposts, used like Sunflower's: Ada uses one
-without docking, so their docks are decorative. Entries use the
+Ada enters the settlements by Use. Entries use the
 [outpost schema](outposts.md#frames-and-manifest) with `outpost`
-`settlement` and `variant` naming the design, `hamlet` or `lamphouse`; Tech
-assigns a design to each settlement. Fixed orientation, the station blink
-(`frameMs` 700) and reduced motion as on the station.
+`settlement` and `variant` naming the design, `hamlet` or `lamphouse`. Both
+use the station's fixed orientation, blink timing and reduced-motion frame.
 
-- Hamlet: a round pearl float 52 units across with three cottages, a slate
-  lamp post with a marker lamp and a small dock collar.
-- Lamp house: a pearl float 44 units across with a tall cream house under a
-  rooftop marker lantern, a shed, a slate mailbox post with a periwinkle box
-  and a small dock collar.
-- Frame A lights the dock corner lights and the marker lamps; frame B dims the
-  corner lights to `#3f5878` and the lamps to `#4a5080`.
+- Hamlet is a compact cluster of coral and blue pressure modules on a utility
+  spine with one solar bank.
+- Lamp House is a tall relay satellite with an elevated blue antenna array and
+  offset solar leaves.
+- Their service faces are sealed. Frame A lights the service windows and Lamp
+  House's antenna marker. Frame B dims them.
+
+The outpost entries retain their frame-space dock metadata.
 
 | Variant     | Dock `(x, y)`  | Dock width | Below the pivot |
 | ----------- | -------------- | ---------: | --------------: |

@@ -1,9 +1,8 @@
 # Phantom
 
 Phantom's art: a smoke-and-violet field, Phantom's own station and the
-three Blurb settlements.
-Blurbs are goo folk, so their settlements are lilac goo domes on set-goo
-floats. Gadget's home guard is the shared [coral family](enemies.md) and his
+three Blurb settlements. Each uses folded or faceted organic material in a
+distinct colour family. Gadget's home guard is the shared [coral family](enemies.md) and his
 flagship the [Gadget capital](heavies.md#gadget), both in core.
 
 - Rebuild the settlements with `node art/tools/phantom.ts` and the station
@@ -11,9 +10,8 @@ flagship the [Gadget capital](heavies.md#gadget), both in core.
   `public/art/phantom/` and replaces its own entries in place in
   [Phantom's manifest](../public/art/phantom/manifest.json).
 - [art/tools/phantom-models.ts](tools/phantom-models.ts) holds the solid
-  models in the [station](station.md) projection, culling and family: the
-  dock collar, mouth, lit floor strip, blue corner lights and approach lights,
-  and warm lit windows `#ffe9b8`.
+  settlement models in the [station](station.md) projection, with sealed
+  membranes and local windows.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
 
@@ -34,23 +32,10 @@ nebulae (`nebula-phantom-1`, `-2`).
 
 ## Station
 
-Phantom's own station, the Bobbin, in place of the shared
-[trading station](station.md) at every Phantom station. Ada enters it by
-Use, the Dock action; it has no dock, mouth or approach lights.
+The station has a broad teal mantle, swept lateral fins and three
+magenta-banded limbs. Magenta inlays pulse inside the mantle. Ada enters by Use.
 
-- A long habitat cylinder of lilac goo, 112 units long and 40 across, wound
-  with a helical band of set goo, two turns round, and a line of warm windows.
-  The whole hull turns under its winding.
-- Forward: a blunt stepped command section with a band of lit windows, and a
-  lamp stalk ending in a round lamp. Aft: a goo dome with a set-goo rim, as the
-  Blurbs build their homes, then a short truss with two flat solar wings across
-  the axis, three cells of set goo each in lilac goo frames.
-- Built as a lathe and block mesh in the [station](station.md) projection,
-  each face shaded from the world light into its ramp, as the
-  [debris](whirlpool.md#river-debris) is. Fixed orientation: no headings and
-  no screen rotation. 4.8 Ada wingspans from the solar wings to the lamp.
-
-### Rotation and manifest
+### Frames and manifest
 
 | Field         | Value                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------ |
@@ -61,64 +46,24 @@ Use, the Dock action; it has no dock, mouth or approach lights.
 | `frameMs`     | 150                                                                                        |
 | `destination` | `station`; `frameIndex` `k`                                                                |
 
-- Rotation, by the per-galaxy station frame contract shared with Whirlpool's
-  Eddy: `frameIndex` `k` is the frame's place in the loop; show frame `k` for
-  `frameMs` (150 ms), 0 to 7 in order, and loop (1.2 s). Each frame turns the band and the window line one facet of the hull's 16, so
-  the loop is seamless. The lamp is lit in frames 0 to 3 and dim in 4 to 7.
-- Reduced motion holds frame 0.
-- Every frame shares one frame size and pivot, so the station turns in place.
-  Silhouette radius 90.2 and top 52.5 above the pivot over all eight frames, at
-  1.5x; the Dock callout's centre sits 72.5 above the pivot
-  ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
-  Pass-through, with no `collision`, as every destination.
-
-### Palette
-
-| Role           | Colour    | On the field | White edge |
-| -------------- | --------- | -----------: | ---------: |
-| Gloss          | `#f4eafc` |       7.40:1 |     8.63:1 |
-| Goo            | `#d4b8ee` |       4.88:1 |     8.63:1 |
-| Goo mid        | `#bba0d8` |       3.75:1 |     8.63:1 |
-| Goo side       | `#a283c2` |       2.70:1 |     8.63:1 |
-| Set goo, lit   | `#a58bc3` |       2.91:1 |     8.63:1 |
-| Set goo        | `#9c82ba` |       2.59:1 |     8.63:1 |
-| Set goo shadow | `#8a6fa8` |       2.02:1 |     8.63:1 |
-| Set goo deep   | `#715a94` |       1.48:1 |     8.63:1 |
-| Windows, lamp  | `#ffe9b8` |       7.23:1 |     8.63:1 |
-| Lamp dim       | `#8a7a5c` |       2.06:1 |     8.63:1 |
-
-The goo and set goo stay in the field's own hue, lighter, as the settlements'
-do, and take no signal band. The 2 px white edge carries the silhouette at
-8.63:1; unkeylined, its edge median would be 1.98:1, with 23% of edge pixels at
-3:1 or more.
+- The eight inlay phases advance every 150 ms. Reduced motion holds frame 0.
+- Over the eight frames the silhouette radius is 98.4 display px and the top is
+  52.1 px above the pivot. The station stays pass-through.
 
 ## Settlements
 
-The settlements are Phantom's outposts, story destinations placed like
-Sunflower's, one design per settlement in story order. Ada uses one without
-docking, so their docks are decorative. Entries use the
-[outpost schema](outposts.md#frames-and-manifest) with `outpost`
-`settlement`, `variant` naming the design and `state` the dock.
+The Blurb settlements are story destinations entered by Use. In the outpost
+schema, `variant` names the settlement and `state` identifies its damaged or
+repaired membrane.
 
-| Variant   | Settlement      | Design                                                                                                   |
-| --------- | --------------- | -------------------------------------------------------------------------------------------------------- |
-| `homes`   | First           | Five goo domes of mixed sizes with round warm windows on a round float 62 units across, and a lamp stalk |
-| `harbour` | Second          | A long float 80 by 48 units with a three-dome hall and a cream berth with a lamp pylon at each end       |
-| `signal`  | Third, Dollop's | A tall wobbly goo spire of six leaning tiers under a signal lamp with a white core, and two small domes  |
+| Variant   | Settlement      | Design                                                |
+| --------- | --------------- | ----------------------------------------------------- |
+| `homes`   | First           | Cluster of rose, lilac and ice-blue habitation lobes  |
+| `harbour` | Second          | Teal central body with wide, swept protective vanes   |
+| `signal`  | Third, Dollop's | Pink base with a curved blue-violet transmitter stalk |
 
-### Dock states
-
-Each settlement has two states. `cracked`: the dock as the blockades left it,
-until the chapter is complete. `mended`: the dock the Blurbs and General
-Gadget repaired, after it. Tech draws the state for the chapter; both states
-blink.
-
-- Cracked: the collar's top corner on the screen-right side of the mouth is
-  broken off 2.8 units down, a stepped dark crack (`#1e1a26`) runs from the
-  break across the band above the mouth, the lit floor strip is split, and
-  the corner light beside the break is out (`#3f5878` in both frames).
-- Mended: the collar whole, every light working, and the crack filled with
-  goo `#d4b8ee`, a lilac seam where the break was.
+Both states blink. The cracked state has a dark break and dim light near its
+base. The mended state replaces that break with a bright membrane.
 
 ### Frames and manifest
 

@@ -141,8 +141,8 @@
       "project": "second-docking-bay",
       "berths": [
         {
-          "x": 50.084,
-          "y": 225.391,
+          "x": 108,
+          "y": 194.571,
           "outward": [-0.612, 0.791],
           "width": 36.742
         }
@@ -166,8 +166,8 @@
       "project": "second-docking-bay",
       "berths": [
         {
-          "x": 50.084,
-          "y": 225.391,
+          "x": 108,
+          "y": 194.571,
           "outward": [-0.612, 0.791],
           "width": 36.742
         }

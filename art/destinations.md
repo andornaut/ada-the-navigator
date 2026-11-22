@@ -82,52 +82,42 @@ space stroke):
 ## Collision, silhouette, dock and clearance
 
 Destinations stay pass-through and carry no `collision`. Their silhouette and
-the outposts' and settlements' decorative dock points and mouths grow with the
-scale, linearly; nothing else changes. Stations have no dock: Ada enters one by
-Use, the Dock action. Display px from the pivot; world units through the game's projection
-`(x - y, (x + y) / 2)`. Silhouette radius is frame A and the top is over every blink frame, at the
-display size, measured at 4 times (over all 4 frames for Whirlpool's station and all 8
-for Phantom's); the earlier radius is the same divided by the scale. The Dock
-callout's centre sits `top + 20` above the pivot: the Weavers' station's 74.8,
-Whirlpool's station's 52.5 and Phantom's station's 72.5. The Blurb settlements' Talk callout centres sit
-40.9 (homes), 37.8 (harbour) and 52.0 (signal) above their pivots; their top
-and radius are frame A of the mended state and the top over all four sprites.
+the outposts' and settlements' authored approach points grow with the
+scale linearly. Ada enters stations by Use. All measurements in the table
+use display px from the pivot unless otherwise marked. The figures for the
+Blurb settlements use the mended state. The Use callout sits above the
+current silhouette.
 
-| Asset             | Scale | Display           | Silhouette radius (was) | Top above pivot | Dock world offset    | Mouth circle radius (was) |
-| ----------------- | ----: | ----------------- | ----------------------: | --------------: | -------------------- | ------------------------: |
-| Trading station   |   1.5 | 118.125 by 98.438 |             56.4 (37.6) |            42.3 | none, entered by Use |                      none |
-| Growers           |   1.5 | 94.5 by 78.75     |             44.2 (29.5) |            28.5 | (28.771, 28.771)     |             7.388 (4.925) |
-| Workshop          |   1.5 | 111.563 by 78.75  |             71.6 (47.7) |            50.2 | (11.137, 11.137)     |              6.82 (4.547) |
-| Salvagers         |   1.5 | 110.25 by 72.188  |             52.4 (34.9) |            26.2 | (25.058, 25.058)     |             7.388 (4.925) |
-| Cartwheel hub     |  1.25 | 131.25 by 131.25  |             70.5 (56.4) |            70.6 | none, entered by Use |                      none |
-| Settlers' station |   1.5 | 94.5 by 105       |             50.4 (33.6) |            50.6 | none, entered by Use |                      none |
-| Hamlet            |   1.5 | 52.5 by 52.5      |             21.8 (14.5) |            20.2 | (15.778, 15.778)     |              5.115 (3.41) |
-| Lamp house        |   1.5 | 42 by 52.5        |             28.6 (19.1) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
-| Dark beacon       |   1.5 | 31.5 by 42        |             27.8 (18.5) |            27.2 | none                 |                      none |
-| Weavers' station  |   1.5 | 220.5 by 84       |            106.5 (71.0) |            54.8 | none, entered by Use |                      none |
-| Whirlpool station |   1.5 | 115.5 by 84       |             55.2 (36.8) |            32.5 | none, entered by Use |                      none |
-| Phantom station   |   1.5 | 189 by 73.5       |             90.2 (60.1) |            52.5 | none, entered by Use |                      none |
-| Blurb homes       |   1.5 | 63 by 63          |             28.1 (18.7) |            20.9 | (16.706, 16.706)     |              5.115 (3.41) |
-| Blurb harbour     |   1.5 | 73.5 by 52.5      |             32.3 (21.5) |            17.8 | (16.706, 16.706)     |              5.115 (3.41) |
-| Blurb signal      |   1.5 | 52.5 by 73.5      |             31.9 (21.3) |            32.0 | (16.706, 16.706)     |              5.115 (3.41) |
+| Asset             | Scale | Display          | Silhouette radius (was) | Top above pivot | Dock world offset    | Mouth circle radius (was) |
+| ----------------- | ----: | ---------------- | ----------------------: | --------------: | -------------------- | ------------------------: |
+| Trading station   |   1.5 | 147 by 118.125   |             71.6 (47.7) |            49.7 | none, entered by Use |                      none |
+| Growers           |   1.5 | 94.5 by 78.75    |             44.3 (29.5) |            28.5 | (28.771, 28.771)     |             7.388 (4.925) |
+| Workshop          |   1.5 | 111.563 by 78.75 |             56.7 (37.8) |            48.8 | (11.137, 11.137)     |              6.82 (4.547) |
+| Salvagers         |   1.5 | 110.25 by 72.188 |             52.6 (35.1) |            26.3 | (25.058, 25.058)     |             7.388 (4.925) |
+| Cartwheel hub     |  1.25 | 131.25 by 131.25 |             68.9 (55.1) |            68.9 | none, entered by Use |                      none |
+| Settlers' station |   1.5 | 115.5 by 105     |             55.4 (36.9) |            47.3 | none, entered by Use |                      none |
+| Hamlet            |   1.5 | 52.5 by 52.5     |             26.2 (17.5) |            18.8 | (15.778, 15.778)     |              5.115 (3.41) |
+| Lamp house        |   1.5 | 42 by 52.5       |             31.5 (21.0) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
+| Dark beacon       |   1.5 | 31.5 by 42       |             27.8 (18.5) |            27.2 | none                 |                      none |
+| Weavers' station  |   1.5 | 220.5 by 84      |            106.7 (71.1) |            54.9 | none, entered by Use |                      none |
+| Whirlpool station |   1.5 | 136.5 by 94.5    |             64.5 (43.0) |            38.0 | none, entered by Use |                      none |
+| Phantom station   |   1.5 | 189 by 73.5      |             98.4 (65.6) |            52.1 | none, entered by Use |                      none |
+| Blurb homes       |   1.5 | 63 by 63         |             28.6 (19.1) |            20.1 | (16.706, 16.706)     |              5.115 (3.41) |
+| Blurb harbour     |   1.5 | 73.5 by 52.5     |             35.9 (23.9) |            17.7 | (16.706, 16.706)     |              5.115 (3.41) |
+| Blurb signal      |   1.5 | 52.5 by 73.5     |             32.4 (21.6) |            31.4 | (16.706, 16.706)     |              5.115 (3.41) |
 
 - **Use range**: 160 world units from the centre still reaches past every
   drawn edge; the closest is the Weavers' station, 53 past its silhouette, and
-  Phantom's station is 70 past its own.
-- **Stations**: no dock point, mouth or mouth circle; the closed collars carry
-  no docking contact. The story craft's mouths stay: the hub's two berths and
-  its second bay, the Weavers' station's berths and the courier school's pier.
+  Phantom's station is about 62 past its own.
+- **Stations**: Ada enters by Use. Story craft use the hub and Weavers' station
+  berths and the courier school's pier.
 - **Clearance**: every rule stated as an object's silhouette radius plus a
-  margin (large rocks keep theirs plus 160 clear of stations, destinations and
-  launch points) grows by the radius increase in the table, for example 18.8 for
-  the trading station, 18.4 for Whirlpool's, 35.5 for the Weavers' station, 30.1 for Phantom's
-  station and 9.4 (homes), 10.8 (harbour) and 10.6 (signal) for the Blurb
-  settlements. Centre-to-centre
-  spacings are unchanged: 8000 between stations, 1200 between story
+  margin keeps large rocks clear of stations, destinations and launch points.
+  Centre-to-centre spacings are 8000 between stations, 1200 between story
   destinations and from them to stations, 2000 from launches. The callout
   fills the 30 px from 3 to 33 px above a destination's top and is pass-through.
-- **Story craft at the hub**: the hub's berths and the second bay's berth, in
-  world units from the hub pivot at 1.25: left (-4.699, 49.237), right
-  (49.237, -4.699), bay (30.315, 68.55). The mooring buoy stays at 1, so its moorings are unchanged. The Weavers'
+- **Story craft at the hub**: the hub's berth points in world units from the
+  pivot at 1.25 are left (-4.699, 49.237), right (49.237, -4.699), and the
+  funded forward attachment (29.297, 35.859). The mooring buoy stays at 1. The Weavers'
   station's berths at 1.5: (-52.243, 52.243) and (29.738, -29.738), the Loom
   hall's second (45.813, -45.813).

@@ -169,12 +169,9 @@ unchanged.
 | ------------------------------------------------------ | -------- | -------------- | --------------- | --------------- | ------- | ----- |
 | `outpost-workshop-crane-a`, `outpost-workshop-crane-b` | 134, 80  | 87.938 by 52.5 | `(0.5, 0.7625)` | `(0, 0)`        | `front` | 0     |
 
-- A yellow `#f2d15a` gantry (sides `#b99a36`, dark `#8c7428`) straddling the
-  hall 6 units behind its centre: two legs 44 tall beside the hall's ends and a
-  bridge over the roof, with a trolley, a hook line and a cream hook block. It
-  reads apart from the two jib cranes by its span and its legs.
-- A warm beacon on the bridge, `#ffe9b8` in A and `#8c7428` in B, with the sign
-  band.
+- An additional articulated service arm extends from the forward side of the
+  orbital repair rig. Its slate links and ochre joints match the two base
+  manipulators. The tool tip pulses warm in frame A.
 
 ### Salvage beacons
 

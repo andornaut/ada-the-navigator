@@ -21,11 +21,7 @@ const PAD = 4;
 // Station family shared by every outpost.
 const cream = "#efe4cf";
 const creamSide = "#bfae94";
-const blue = "#70ace8";
-const blueDim = "#3f5878";
 const warm = "#ffe9b8";
-const mouth = "#1e1a26";
-const mouthInner = "#35304a";
 
 // The dock axis (+x, +y) projects straight down the screen.
 const DOCK = Math.PI / 4;
@@ -100,80 +96,6 @@ const at = (distance: number, across: number) =>
     Math.sin(DOCK) * distance + Math.cos(DOCK) * across,
   ] as const;
 
-// Dock collar with a dark mouth, lit floor and four blue corner lights, as on the station.
-function dockCollar(
-  lit: boolean,
-  face: number,
-  mouthWidth: number,
-  collarWidth: number,
-  collarTop: string,
-  collarSide: string,
-  height: number,
-): Part[] {
-  const frameLight = lit ? blue : blueDim;
-  const half = mouthWidth / 2 + 3;
-  return [
-    {
-      plan: orientedBox(...at(face - 4, 0), DOCK, 8, collarWidth),
-      z0: -3,
-      z1: height + 4,
-      top: collarTop,
-      side: collarSide,
-    },
-    {
-      plan: orientedBox(...at(face + 0.3, 0), DOCK, 0.6, mouthWidth),
-      z0: 0,
-      z1: height,
-      top: mouth,
-      side: mouth,
-    },
-    {
-      plan: orientedBox(...at(face + 0.6, 0), DOCK, 0.6, mouthWidth * 0.71),
-      z0: 3.5,
-      z1: height - 3.5,
-      top: mouthInner,
-      side: mouthInner,
-    },
-    {
-      plan: orientedBox(...at(face + 0.9, 0), DOCK, 0.6, mouthWidth * 0.77),
-      z0: 0.6,
-      z1: 2.2,
-      top: warm,
-      side: warm,
-    },
-    ...[-1, 1].flatMap((side) =>
-      [1.5, height - 1.5].map((z): Part => ({
-        plan: orientedBox(...at(face + 0.9, side * half), DOCK, 1.4, 3.6),
-        z0: z - 1.8,
-        z1: z + 1.8,
-        top: frameLight,
-        side: frameLight,
-      })),
-    ),
-  ];
-}
-
-// Two approach-light pairs in front of the mouth blink opposite the corner lights.
-function approachLights(lit: boolean, face: number): Part[] {
-  const approach = lit ? blueDim : blue;
-  return [
-    [face + 14, 9],
-    [face + 28, 6.5],
-  ].flatMap(([distance, across]) =>
-    [-1, 1].map((side): Part => {
-      const [lx, ly] = at(distance!, side * across!);
-      return {
-        plan: box(lx - 2, ly - 2, lx + 2, ly + 2),
-        z0: 5,
-        z1: 7.5,
-        top: approach,
-        side: approach,
-      };
-    }),
-  );
-}
-
-// Stepped dome: a rounded profile from stacked 12-gon tiers.
 function dome(
   cx: number,
   cy: number,
@@ -209,12 +131,15 @@ type Outpost = {
   outpost?: string;
   project?: string;
   title?: string;
+  frame?: FixedFrame;
 };
 
 // Growers: leaf-green planters radiating like a sunflower head around glass domes.
 const leaf = "#9ccc5a";
 const leafSide = "#6c9a3a";
-const leafDark = "#4f7a2c";
+const leafDark = "#3d705e";
+const podFrame = "#637985";
+const podSide = "#3b5260";
 const growersGlass = "#c9ecb4";
 const growersGlassSide = "#8fbf78";
 const growersGlassCap = "#eefbe2";
@@ -226,20 +151,20 @@ const GROWERS_FACE = 62;
 
 function growers(lit: boolean): Part[][] {
   const groups: Part[][] = [];
-  // Seven planters; the eighth slot on the dock axis stays clear.
+  // Seven pressurised hydroponics modules radiate from the central habitat.
   for (let i = 1; i < 8; i++) {
     const a = ((45 + i * 45) * Math.PI) / 180;
     const mid = 36;
     const plan = orientedBox(mid * Math.cos(a), mid * Math.sin(a), a, 30, 13);
     const bed = orientedBox(mid * Math.cos(a), mid * Math.sin(a), a, 26, 9.5);
     const parts: Part[] = [
-      { plan, z0: 0, z1: 4, top: cream, side: creamSide },
-      { plan: bed, z0: 4, z1: 5.5, top: leaf, side: leafSide },
+      { plan, z0: 0, z1: 4, top: podFrame, side: podSide },
+      { plan: bed, z0: 4, z1: 6.5, top: leafDark, side: leafSide },
     ];
-    // Three crop tufts along the bed.
+    // Three illuminated growth chambers along the module.
     for (const t of [-8, 0, 8]) {
       const [tx, ty] = [(mid + t) * Math.cos(a), (mid + t) * Math.sin(a)];
-      parts.push({ plan: ngon(6, 2.6, tx, ty), z0: 5.5, z1: 8, top: leaf, side: leafDark });
+      parts.push({ plan: ngon(6, 2.6, tx, ty), z0: 5.5, z1: 8, top: growersGlass, side: leafDark });
     }
     // Tip lamp, lit in frame A.
     const [lx, ly] = [(mid + 16.5) * Math.cos(a), (mid + 16.5) * Math.sin(a)];
@@ -286,148 +211,111 @@ function growers(lit: boolean): Part[][] {
       side: lit ? bloomSide : bloomDimSide,
     },
   ]);
-  // Dock: a short neck from the deck to the collar.
+  // A low navigation strip is inset into the habitat's forward rim.
   groups.push([
-    { plan: orientedBox(...at(42, 0), DOCK, 28, 16), z0: 1, z1: 9, top: cream, side: creamSide },
-    ...dockCollar(lit, GROWERS_FACE, 26, 36, cream, creamSide, 14),
+    { plan: orientedBox(...at(23, 0), DOCK, 7, 17), z0: 1, z1: 6, top: podFrame, side: podSide },
+    {
+      plan: orientedBox(...at(25, 0), DOCK, 3, 11),
+      z0: 6,
+      z1: 6.5,
+      top: lit ? bloom : bloomDim,
+      side: bloomDimSide,
+    },
   ]);
-  groups.push(approachLights(lit, GROWERS_FACE));
   return groups;
 }
 
-// Workshop: a cream hall with lit bays, a sawtooth roof and two yellow cranes.
-const yellow = "#f2d15a";
-const yellowSide = "#b99a36";
+// Workshop: a free-flying repair rig with articulated manipulators and an open work area.
 const yellowDark = "#8c7428";
-const roof = "#d9cbb1";
-const bayGlow = "#ffd88a";
+const rigPlate = { top: "#899fbd", side: "#43546f" };
+const rigDark = { top: "#5b718d", side: "#323d57" };
+const brass = { top: "#df9b60", side: "#986245" };
 const WORKSHOP_FACE = 44;
-const HALL_DEPTH = 40;
-const HALL_WIDTH = 78;
-// The hall's centre sits behind the collar, which reaches 4 units back from the face.
-const HALL_CENTRE = WORKSHOP_FACE - HALL_DEPTH / 2 - 4;
+const WORKSHOP_PIVOT = 20;
 
-function crane(
-  across: number,
-  back: number,
+function armLink(
+  start: readonly [number, number],
+  end: readonly [number, number],
+  z0: number,
+  z1: number,
+  width: number,
+  material: Pick<Part, "top" | "side">,
+): Part {
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  return {
+    plan: orientedBox(
+      (start[0] + end[0]) / 2,
+      (start[1] + end[1]) / 2,
+      Math.atan2(dy, dx),
+      Math.hypot(dx, dy) + 1,
+      width,
+    ),
+    z0,
+    z1,
+    ...material,
+  };
+}
+
+function manipulator(
+  base: readonly [number, number],
+  elbow: readonly [number, number],
+  tip: readonly [number, number],
   height: number,
-  boomDir: number,
-  boomLen: number,
+  lit: boolean,
 ): Part[] {
-  const [mx, my] = at(back, across);
-  const boomAngle = DOCK + boomDir;
-  const [ux, uy] = [Math.cos(boomAngle), Math.sin(boomAngle)];
-  const [bx, by] = [mx + ux * (boomLen / 2 - 4), my + uy * (boomLen / 2 - 4)];
-  const [hx, hy] = [mx + ux * (boomLen - 8), my + uy * (boomLen - 8)];
-  const [cx, cy] = [mx - ux * 7, my - uy * 7];
+  const [x, y] = base;
+  const [ex, ey] = elbow;
+  const [tx, ty] = tip;
+  const lamp = lit ? warm : yellowDark;
   return [
+    { plan: ngon(8, 9, x, y), z0: 1, z1: 11, ...rigDark },
+    { plan: ngon(6, 6, x, y), z0: 11, z1: height, ...rigPlate },
+    armLink(base, elbow, height - 6, height, 7, brass),
+    { plan: ngon(8, 5, ex, ey), z0: height - 10, z1: height + 2, ...rigDark },
+    armLink(elbow, tip, height - 10, height - 5, 5, rigPlate),
+    { plan: ngon(6, 4, tx, ty), z0: height - 14, z1: height - 5, ...brass },
     {
-      plan: box(mx - 2.2, my - 2.2, mx + 2.2, my + 2.2),
-      z0: 0,
-      z1: height,
-      top: yellow,
-      side: yellowSide,
-    },
-    {
-      plan: orientedBox(bx, by, boomAngle, boomLen, 3.6),
-      z0: height - 3,
-      z1: height,
-      top: yellow,
-      side: yellowSide,
-    },
-    {
-      plan: box(cx - 3, cy - 3, cx + 3, cy + 3),
-      z0: height - 5,
-      z1: height + 1,
-      top: yellowSide,
-      side: yellowDark,
-    },
-    {
-      plan: box(hx - 0.5, hy - 0.5, hx + 0.5, hy + 0.5),
-      z0: height - 18,
-      z1: height - 3,
-      top: yellowDark,
-      side: yellowDark,
-    },
-    {
-      plan: box(hx - 2.2, hy - 2.2, hx + 2.2, hy + 2.2),
-      z0: height - 21,
-      z1: height - 18,
-      top: yellow,
-      side: yellowSide,
+      plan: ngon(4, 2.1, tx, ty),
+      z0: height - 16,
+      z1: height - 14,
+      top: lamp,
+      side: lamp,
     },
   ];
 }
 
 function workshop(lit: boolean): Part[][] {
-  const groups: Part[][] = [];
-  // The hall's long bay wall faces the viewer.
-  const centre = at(HALL_CENTRE, 0);
-  const hall = orientedBox(...centre, DOCK, HALL_DEPTH, HALL_WIDTH);
-  // Cranes first so they draw behind the hall.
-  groups.push(crane(-30, -6, 54, -Math.PI / 2, 40));
-  groups.push(crane(30, -2, 46, Math.PI / 2, 34));
-  // Hall body and sawtooth roof strips.
-  const parts: Part[] = [{ plan: hall, z0: 0, z1: 24, top: cream, side: creamSide }];
-  for (const k of [-2, -1, 0, 1, 2]) {
-    const c = [centre[0] + Math.cos(DOCK) * k * 7.5, centre[1] + Math.sin(DOCK) * k * 7.5] as const;
-    parts.push({
-      plan: orientedBox(...c, DOCK, 3.5, HALL_WIDTH - 6),
-      z0: 24,
-      z1: 27,
-      top: roof,
-      side: creamSide,
-    });
-  }
-  groups.push(parts);
-  // Two lit work bays flanking the dock, each with a yellow lintel.
-  for (const side of [-1, 1]) {
-    groups.push([
-      {
-        plan: orientedBox(...at(WORKSHOP_FACE - 3.7, side * 26), DOCK, 0.6, 18),
-        z0: 2,
-        z1: 15,
-        top: bayGlow,
-        side: bayGlow,
-      },
-      {
-        plan: orientedBox(...at(WORKSHOP_FACE - 3.4, side * 26), DOCK, 0.6, 14),
-        z0: 4,
-        z1: 13,
-        top: warm,
-        side: warm,
-      },
-      {
-        plan: orientedBox(...at(WORKSHOP_FACE - 3.1, side * 26), DOCK, 0.6, 22),
-        z0: 16,
-        z1: 18.5,
-        top: yellow,
-        side: yellow,
-      },
-    ]);
-  }
-  groups.push(
-    [-34, -26, 26, 34].map((across): Part => ({
-      plan: orientedBox(...at(WORKSHOP_FACE - 3.7, across), DOCK, 0.6, 3.4),
-      z0: 19.5,
-      z1: 22,
-      top: warm,
-      side: warm,
-    })),
-  );
-  // Dock collar in the hall's centre with a yellow sign band above it.
-  const sign = lit ? yellow : yellowSide;
-  groups.push([
-    ...dockCollar(lit, WORKSHOP_FACE, 24, 32, cream, creamSide, 15),
-    {
-      plan: orientedBox(...at(WORKSHOP_FACE + 0.6, 0), DOCK, 0.6, 32),
-      z0: 19.5,
-      z1: 22,
-      top: sign,
-      side: sign,
-    },
-  ]);
-  groups.push(approachLights(lit, WORKSHOP_FACE));
+  const core = at(WORKSHOP_PIVOT, 0);
+  const port = at(8, -46);
+  const starboard = at(-2, 40);
+  const stern = at(-9, 8);
+  const tank = at(WORKSHOP_PIVOT + 4, 28);
+  const bus = ngon(6, 15, ...core, DOCK);
+  const groups: Part[][] = [
+    [
+      armLink(port, core, 2, 9, 8, rigPlate),
+      armLink(port, stern, 4, 10, 4, rigDark),
+      armLink(stern, starboard, 3, 11, 5, rigDark),
+      armLink(starboard, core, 2, 9, 8, rigPlate),
+    ],
+    [
+      { plan: ngon(8, 11, ...stern), z0: 0, z1: 17, ...brass },
+      { plan: ngon(6, 8, ...stern), z0: 17, z1: 21, ...rigPlate },
+    ],
+    [
+      { plan: bus, z0: 0, z1: 12, ...rigDark },
+      { plan: ngon(6, 12, ...core, DOCK), z0: 12, z1: 17, ...rigPlate },
+      ...wallWindows(facing, 4, 7, 2, 2.5, bus, lit ? warm : yellowDark),
+    ],
+    [
+      armLink(core, tank, 4, 8, 5, rigDark),
+      { plan: ngon(8, 6, ...tank), z0: 3, z1: 14, ...brass },
+      { plan: ngon(8, 4.5, ...tank), z0: 14, z1: 16, ...rigPlate },
+    ],
+    manipulator(port, at(-8, -25), at(2, -13), 49, lit),
+    manipulator(starboard, at(-12, 24), at(2, 12), 41, lit),
+  ];
   return groups;
 }
 
@@ -538,19 +426,6 @@ function salvagers(lit: boolean): Part[][] {
     { plan: box(-14.6, 7.4, -13.4, 8.6), z0: 20, z1: 32, top: dark, side: darkSide },
     { plan: box(-16, 6, -12, 10), z0: 32, z1: 35, top: signal, side: signalSide },
   ]);
-  // Dock: a patched collar.
-  groups.push([
-    { plan: orientedBox(...at(37, 0), DOCK, 18, 18), z0: 1, z1: 10, top: slate, side: slateSide },
-    ...dockCollar(lit, SALVAGERS_FACE, 26, 36, steel, steelSide, 14),
-    {
-      plan: orientedBox(...at(SALVAGERS_FACE + 0.6, -9), DOCK, 0.6, 9),
-      z0: 15,
-      z1: 18,
-      top: olive,
-      side: olive,
-    },
-  ]);
-  groups.push(approachLights(lit, SALVAGERS_FACE));
   return groups;
 }
 
@@ -632,66 +507,12 @@ function greenhouseRing(lit: boolean): Part[][] {
 
 const growersRing = (lit: boolean): Part[][] => [...growers(lit), ...greenhouseRing(lit)];
 
-// Workshop crane: a tall gantry straddling the hall behind its centre, taller than the two jib
-// cranes, with a trolley, a hook block and a warm beacon on the bridge lit in frame A.
-const GANTRY_BACK = HALL_CENTRE - 6;
-
+// The paid project adds an independent articulated service arm beside the rig.
 function gantry(lit: boolean): Part[][] {
-  const legs = [-46, 46].map((across): Part[] => {
-    const [x, y] = at(GANTRY_BACK, across);
-    return [
-      {
-        plan: box(x - 2.4, y - 2.4, x + 2.4, y + 2.4),
-        z0: 0,
-        z1: 44,
-        top: yellow,
-        side: yellowSide,
-      },
-      {
-        plan: box(x - 3.6, y - 3.6, x + 3.6, y + 3.6),
-        z0: 0,
-        z1: 3,
-        top: yellowSide,
-        side: yellowDark,
-      },
-    ];
-  });
-  const [bx, by] = at(GANTRY_BACK, 0);
-  const [tx, ty] = at(GANTRY_BACK, 12);
-  const beacon = lit ? warm : yellowDark;
+  const base = at(33, 5);
   return [
-    ...legs,
-    [
-      {
-        plan: orientedBox(bx, by, DOCK + Math.PI / 2, 98, 4.4),
-        z0: 44,
-        z1: 48,
-        top: yellow,
-        side: yellowSide,
-      },
-      {
-        plan: box(tx - 3.2, ty - 3.2, tx + 3.2, ty + 3.2),
-        z0: 41,
-        z1: 44,
-        top: yellowSide,
-        side: yellowDark,
-      },
-      {
-        plan: box(tx - 0.5, ty - 0.5, tx + 0.5, ty + 0.5),
-        z0: 32,
-        z1: 41,
-        top: yellowDark,
-        side: yellowDark,
-      },
-      { plan: box(tx - 3, ty - 2, tx + 3, ty + 2), z0: 29, z1: 32, top: cream, side: creamSide },
-      {
-        plan: box(bx - 1.4, by - 1.4, bx + 1.4, by + 1.4),
-        z0: 48,
-        z1: 50.5,
-        top: beacon,
-        side: beacon,
-      },
-    ],
+    [armLink(at(WORKSHOP_PIVOT, 0), base, 2, 7, 7, rigDark)],
+    manipulator(base, at(26, 3), at(11, -2), 40, lit),
   ];
 }
 
@@ -752,7 +573,13 @@ function polygons(groups: Part[][]) {
 }
 
 const outposts: Readonly<Record<string, Outpost>> = {
-  growers: { build: growers, face: GROWERS_FACE, pivot: 0, mouthWidth: 26 },
+  growers: {
+    build: growers,
+    face: GROWERS_FACE,
+    pivot: 0,
+    mouthWidth: 26,
+    frame: { width: 144, height: 120, above: 48 },
+  },
   // The growers with the greenhouse ring: the same pivot and dock entrance in a larger frame.
   "growers-ring": {
     build: growersRing,
@@ -761,14 +588,28 @@ const outposts: Readonly<Record<string, Outpost>> = {
     mouthWidth: 26,
     outpost: "growers",
     project: "greenhouseRing",
+    frame: { width: 180, height: 140, above: 63 },
     title: "Growers outpost with the greenhouse ring",
   },
-  // Pivot on the hall's base centre.
-  workshop: { build: workshop, face: WORKSHOP_FACE, pivot: HALL_CENTRE, mouthWidth: 24 },
-  salvagers: { build: salvagers, face: SALVAGERS_FACE, pivot: 0, mouthWidth: 26 },
+  // The replacement rig keeps the established frame, interaction offset and world pivot.
+  workshop: {
+    build: workshop,
+    face: WORKSHOP_FACE,
+    pivot: WORKSHOP_PIVOT,
+    mouthWidth: 24,
+    frame: { width: 170, height: 120, above: 81 },
+  },
+  salvagers: {
+    build: salvagers,
+    face: SALVAGERS_FACE,
+    pivot: 0,
+    mouthWidth: 26,
+    frame: { width: 168, height: 110, above: 44 },
+  },
 };
 
 type Polygons = ReturnType<typeof polygons>;
+type FixedFrame = { width: number; height: number; above: number };
 
 // Writes both blink frames around the world-plane model point `pivot` and returns the frame
 // geometry. The pivot sits on the vertical centre line at an exact five-decimal height.
@@ -777,21 +618,33 @@ function writeFrames(
   title: string,
   [px, py]: readonly [number, number],
   frames: { a: Polygons; b: Polygons },
+  fixed?: FixedFrame,
 ) {
   const local = ([x, y, z]: Point): Point => [x - px, y - py, z];
   // Frame bounds over both blink frames.
   const all = [...frames.a, ...frames.b].flatMap(({ points }) => points.map(local));
   const xs = all.map((point) => projectAt(0, 0, point)[0]);
   const ys = all.map((point) => projectAt(0, 0, point)[1]);
-  const halfWidth = Math.ceil(Math.max(-Math.min(...xs), Math.max(...xs)) + PAD);
-  const above = Math.ceil(-Math.min(...ys) + PAD);
+  const halfWidth = fixed
+    ? fixed.width / 2
+    : Math.ceil(Math.max(-Math.min(...xs), Math.max(...xs)) + PAD);
+  const above = fixed?.above ?? Math.ceil(-Math.min(...ys) + PAD);
   const width = halfWidth * 2;
   // Extra rows below keep the normalized pivot an exact five-decimal value.
-  let height = above + Math.ceil(Math.max(...ys) + PAD);
+  let height = fixed?.height ?? above + Math.ceil(Math.max(...ys) + PAD);
   while ((above * 100000) % height !== 0) {
     height++;
   }
 
+  if (
+    fixed &&
+    all.some((point) => {
+      const [x, y] = projectAt(halfWidth, above, point);
+      return x < 2 || x > width - 2 || y < 2 || y > height - 2;
+    })
+  ) {
+    throw new Error(`${name}: replacement clipped by its fixed frame`);
+  }
   for (const frame of ["a", "b"] as const) {
     const shapes = frames[frame].map(({ color, points }) => {
       const projected = points.map((point) => {
@@ -834,7 +687,7 @@ function frameEntries(name: string, width: number, height: number, above: number
 
 function entries(
   name: string,
-  { build, face, pivot, mouthWidth, outpost, project, title }: Outpost,
+  { build, face, pivot, mouthWidth, outpost, project, title, frame }: Outpost,
 ) {
   const role = outpost ?? name;
   const frames = { a: polygons(build(true)), b: polygons(build(false)) };
@@ -844,6 +697,7 @@ function entries(
     title ?? `${name[0]!.toUpperCase()}${name.slice(1)} outpost`,
     at(pivot, 0),
     frames,
+    frame,
   );
 
   // Dock entrance: the mouth's centre on the z = 0 plane, opening toward screen-down.
@@ -870,6 +724,7 @@ type Overlay = {
   title: string;
   // The sprite's pivot, a world-plane model point.
   pivot: readonly [number, number];
+  frame?: FixedFrame;
   // Each copy's pivot as a model point, whether it draws behind or in front of the outpost, and
   // its blink phase: 0 shows frame A while the outpost shows A, 1 shows B.
   anchors: readonly { at: readonly [number, number]; layer: "behind" | "front"; phase: 0 | 1 }[];
@@ -878,20 +733,20 @@ type Overlay = {
 // Each outpost's pivot as a model point, matching `outposts`.
 const pivots: Readonly<Record<string, readonly [number, number]>> = {
   growers: at(0, 0),
-  workshop: at(HALL_CENTRE, 0),
+  workshop: at(WORKSHOP_PIVOT, 0),
   salvagers: at(0, 0),
 };
 
 const overlays: Readonly<Record<string, Overlay>> = {
-  // The gantry rises beside and above the hall and never passes behind it, so it draws over the
-  // unchanged outpost.
+  // The project arm draws over the underlying rig.
   "workshop-crane": {
     build: gantry,
     outpost: "workshop",
     project: "workshopCrane",
+    frame: { width: 134, height: 80, above: 61 },
     title: "Workshop crane",
-    pivot: at(HALL_CENTRE, 0),
-    anchors: [{ at: at(HALL_CENTRE, 0), layer: "front", phase: 0 }],
+    pivot: at(WORKSHOP_PIVOT, 0),
+    anchors: [{ at: at(WORKSHOP_PIVOT, 0), layer: "front", phase: 0 }],
   },
   // One beacon at each yard anchor; beacons farther than the pivot draw behind the outpost.
   "salvagers-beacon": {
@@ -911,9 +766,9 @@ const overlays: Readonly<Record<string, Overlay>> = {
   },
 };
 
-function overlayEntries(name: string, { build, outpost, pivot, project, title }: Overlay) {
+function overlayEntries(name: string, { build, outpost, pivot, project, title, frame }: Overlay) {
   const frames = { a: polygons(build(true)), b: polygons(build(false)) };
-  const { above, height, width } = writeFrames(name, title, pivot, frames);
+  const { above, height, width } = writeFrames(name, title, pivot, frames, frame);
   return frameEntries(name, width, height, above).map((entry) => ({
     ...entry,
     outpost,

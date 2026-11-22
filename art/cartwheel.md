@@ -47,15 +47,12 @@
 
 ## Hub
 
-A slate collection tower with an open ore hopper on a round cream deck, two
-banded silos behind and three piers fanned toward the viewer: the front pier,
-facing screen-down, ends in a closed slate collar with two warm windows, and a
-free berth for the story craft opens on each side. Ada uses the hub as a
-station, by Use, so it has no `dock`.
+An asymmetrical armored installation with faceted teal plates, slate ribs and
+copper bracing. A solid forward keel frames the main body. Two recessed
+side berths serve the story craft. Ada enters the hub by Use.
 
-- Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700
-  and the station's blink (A lights the berths' corner lights, the mast beacon
-  and the front collar's windows, B dims them; unlit blue `#3f5878`). Reduced
+- Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700.
+  Windows and berth guide lights alternate with the station blink. Reduced
   motion shows A.
 - The pivot is the deck centre on the world plane. Entries carry
   `destination` `hub` and `variant` (`worn` or `repaired`), not `outpost`, so
@@ -74,13 +71,8 @@ station, by Use, so it has no `dock`.
 
 The hub looks worn but working until the Hub repairs project is funded.
 
-| Detail      | Worn (`outpost-hub-a`, `-b`)                              | Repaired (`outpost-hub-repaired-a`, `-b`)          |
-| ----------- | --------------------------------------------------------- | -------------------------------------------------- |
-| Hopper cap  | Two front segments broken to dark stubs, notching the rim | Whole cap ring                                     |
-| Tower       | Half the windows dark; tan patch plates; rust streaks     | Every window lit; ore band under the cap, lit in A |
-| Deck        | Three scorched plates on the deck top; one patched wall   | Eight blue rim lights alternating with the blink   |
-| Right berth | Corner lights out in both frames                          | Corner lights blink with the others                |
-| Ore crates  | One crate knocked flat                                    | Both upright with ore tops                         |
+Restoring the hub lights the repaired panel and more of the guide lights.
+Both states retain the same frame, pivot and recessed berth mouths.
 
 ## World changes
 
@@ -91,12 +83,10 @@ Both project changes keep the hub's frame, pivot and berths.
 - Second docking bay (`project` `second-docking-bay`): an overlay pair. Draw
   `outpost-hub-bay-a` over the current hub frame A and `-b` over B, at the hub's
   position with the same pivot, over either the worn or the repaired hub. The
-  overlay is a new pier off the deck's front left with a fresh cap-slate collar
-  and an ore sign band (lit in A). The generator fails if any hub face
-  drawn after the bay in a full render would overlap it, so overlay and full
-  render match.
-- The overlay entry has `overlay` `true` and `berths` with the new bay:
-  `(50.084, 225.391)`, outward `[-0.612, 0.791]`, width 36.742.
+  overlay is a small guide slit in the forward hull plate. The third story
+  craft meets the hull at this point.
+- The overlay entry has `overlay` `true` and `berths` with the forward
+  attachment at `(108, 194.571)`, outward `[-0.612, 0.791]`, width 36.742.
 
 ### Placement anchors
 

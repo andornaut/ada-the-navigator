@@ -25,7 +25,6 @@ import {
 } from "./projection.ts";
 import {
   along,
-  at,
   BLINK_MS,
   blue,
   blueDim,
@@ -35,10 +34,10 @@ import {
   DISPLAY_SCALE,
   HUB_SCALE,
   DOCK,
-  closedCollar,
   dockCollar,
   type Face,
   facing,
+  mouthInner,
   ngon,
   orientedBox,
   orientedPlan,
@@ -56,23 +55,11 @@ const PAD = 4;
 const STEP = 16;
 
 // ---------------------------------------------------------------- palette
-// Hub: cool slate structure with ore (art/tools/ore.ts) where deposits collect.
-const slate = "#9aaccb";
-const slateSide = "#6a7c9e";
-const slateDark = "#4e5d7a";
-const slateCap = "#c3cfe2";
+// Second-bay overlay and shared fittings.
 const ore = ORE_SOLID.top;
-const oreLit = ORE_SOLID.lit;
-const oreSide = ORE_SOLID.side;
 const oreDim = ORE_SOLID.dim;
 const steelDark = "#6e7482";
 const steelDarkSide = "#4f5462";
-// Wear on the unrepaired hub: mismatched patch plates, rust streaks and scorched deck plating.
-const patch = "#b3a68a";
-const patchSide = "#857a62";
-const rust = "#9a5f48";
-const scorch = "#a39784";
-
 // ---------------------------------------------------------------- shared parts
 function beacon(x: number, y: number, z0: number, height: number, lit: boolean): Part[] {
   const light = lit ? blue : blueDim;
@@ -94,27 +81,6 @@ function beacon(x: number, y: number, z0: number, height: number, lit: boolean):
   ];
 }
 
-// Ore heaped in an open top: a flat ore surface with lumps of a fixed lump size.
-function oreHeap(cx: number, cy: number, r: number, z: number, lumps: number): Part[] {
-  const out: Part[] = [
-    { plan: ngon(8, r, cx, cy, Math.PI / 8), z0: z - 0.6, z1: z, top: ore, side: oreSide },
-  ];
-  for (let i = 0; i < lumps; i++) {
-    const a = 0.9 + i * 2.4;
-    const d = r * (0.2 + (0.6 * ((i * 37) % 10)) / 10);
-    const [lx, ly] = [cx + Math.cos(a) * d, cy + Math.sin(a) * d];
-    const s = 1.6 + (i % 3) * 0.7;
-    out.push({
-      plan: orientedBox(lx, ly, a, s * 1.4, s),
-      z0: z,
-      z1: z + s * 0.9,
-      top: oreLit,
-      side: ore,
-    });
-  }
-  return out;
-}
-
 // A light cube of side `size` centred at (x, y) from z0.
 function lamp(x: number, y: number, z0: number, size: number, color: string): Part {
   const h = size / 2;
@@ -122,203 +88,487 @@ function lamp(x: number, y: number, z0: number, size: number, color: string): Pa
 }
 
 // ---------------------------------------------------------------- hub
-// A slate collection tower with an open ore hopper on a round cream deck, two banded silos
-// behind, and three docking piers fanned toward the viewer: the live dock and two free berths.
-const PIER_FACE = 115;
 const SIDE_FACE = 99;
 const SIDE_MOUTH = 23;
 const SPREAD = 0.95;
-const DECK_R = 68;
-const DECK_TOP = 11;
-const TOWER_R = 34;
-const TOWER_TOP = 68;
-const CAP_TOP = 74.4;
-// The second docking bay's pier, between the live dock and the left free berth.
+const hubFrame: Layout = { halfWidth: 120, above: 135, width: 240, height: 240 };
+// The funded berth sits on the forward plate edge from (88, 190) to (123, 198).
 const BAY_ANGLE = DOCK + 0.42;
-const BAY_FACE = 140;
 const BAY_MOUTH = 30;
+const bayBerth = {
+  x: 108,
+  y: round(190 + ((108 - 88) * 8) / 35),
+  outward: screenAxis(BAY_ANGLE),
+  width: round((BAY_MOUTH * Math.sqrt(3)) / Math.SQRT2),
+};
 
-type HubState = { repaired: boolean };
+// Use the dock geometry for the story approach, with muted guide rails and a shadowed recess.
+const serviceTones = new Map([
+  [mouthInner, "#2e3844"],
+  [warm, "#52656a"],
+  [blue, "#526976"],
+  [blueDim, "#3c4c59"],
+]);
 
-function silos(): Part[][] {
-  return [-1, 1].map((side) => {
-    const [sx, sy] = at(-46.5, side * 37);
-    return [
-      { plan: ngon(12, 17, sx, sy, Math.PI / 12), z0: 0, z1: 59, top: slateCap, side: creamSide },
-      { plan: ngon(12, 17.4, sx, sy, Math.PI / 12), z0: 40, z1: 46.5, top: ore, side: oreSide },
-      {
-        plan: ngon(12, 17.4, sx, sy, Math.PI / 12),
-        z0: 12.4,
-        z1: 15.5,
-        top: slate,
-        side: slateSide,
-      },
-    ];
-  });
+function serviceCollar(...geometry: Parameters<typeof dockCollar>): Part[] {
+  return dockCollar(...geometry).map((part) => ({
+    ...part,
+    top: serviceTones.get(part.top) ?? part.top,
+    side: serviceTones.get(part.side) ?? part.side,
+  }));
 }
 
-// The cap ring as eight segments. The worn hub's two front segments are broken down to low
-// dark stubs, notching the hopper rim.
-function capRing(repaired: boolean): Part[] {
-  const outer = ngon(8, 40.3, 0, 0, Math.PI / 8);
-  const inner = ngon(8, 33.3, 0, 0, Math.PI / 8);
-  const broken = repaired ? [] : [0, 7];
-  return Array.from({ length: 8 }, (_, i): Part => {
-    const plan = [outer[i]!, outer[(i + 1) % 8]!, inner[(i + 1) % 8]!, inner[i]!];
-    return broken.includes(i)
-      ? { plan, z0: 62, z1: 65.5, top: steelDark, side: steelDarkSide }
-      : { plan, z0: 62, z1: CAP_TOP, top: slateCap, side: slateSide };
-  });
-}
-
-function hubParts(lit: boolean, { repaired }: HubState): Part[][] {
-  const groups: Part[][] = [...silos()];
-  const deck = ngon(8, DECK_R, 0, 0, Math.PI / 8);
-  const deckGroup: Part[] = [
-    { plan: deck, z0: 0, z1: DECK_TOP, top: cream, side: creamSide },
-    ...wallWindows(facing, 3.5, 6.5, 3, 3, deck),
-  ];
-  if (repaired) {
-    // Rim lights round the restored deck, alternating with the blink.
-    for (let i = 0; i < 8; i++) {
-      const a = Math.PI / 8 + (i * Math.PI) / 4;
-      const [x, y] = [Math.cos(a) * (DECK_R - 3), Math.sin(a) * (DECK_R - 3)];
-      deckGroup.push(lamp(x, y, DECK_TOP, 2.4, (i % 2 === 0) === lit ? blue : blueDim));
-    }
-  } else {
-    // Scorched plating on the deck top and one patched deck wall.
-    for (const [d, a, angle, l, w] of [
-      [48, 30, 0.4, 16, 9],
-      [44, -40, -0.3, 11, 7],
-      [-20, 52, 1.1, 13, 6],
-    ] as const) {
-      deckGroup.push({
-        plan: orientedBox(...at(d, a), DOCK + angle, l, w),
-        z0: DECK_TOP,
-        z1: DECK_TOP,
-        top: scorch,
-        side: scorch,
-      });
-    }
-    deckGroup.push(...wallWindows((nx, ny) => nx > 0.9 && ny < -0.2, 2, 9, 1, 14, deck, patch));
-  }
-  groups.push(deckGroup);
-  // Side piers (drawn behind the tower's front), each with a free berth. The worn hub's right
-  // berth lights stay out.
-  for (const s of [-1, 1]) {
-    const angle = DOCK + s * SPREAD;
-    const dead = !repaired && s === -1;
-    groups.push([
-      {
-        plan: orientedBox(...along(angle, 77.5, 0), angle, 37, 15.5),
-        z0: 1.5,
-        z1: 11,
-        top: cream,
-        side: creamSide,
-      },
-      ...dockCollar(lit && !dead, SIDE_FACE, SIDE_MOUTH, 32.5, slate, slateSide, 15.5, angle),
-    ]);
-  }
-  const tower = ngon(8, TOWER_R, 0, 0, Math.PI / 8);
-  const towerGroup: Part[] = [
-    { plan: tower, z0: DECK_TOP, z1: TOWER_TOP, top: slate, side: slateSide },
-  ];
-  for (const [row, z] of [22, 33, 44].entries()) {
-    const panes = wallWindows(facing, z, z + 3, 3, 3, tower);
-    towerGroup.push(
-      ...panes.map((pane, i) =>
-        // Half the worn tower's rooms are dark.
-        !repaired && (row + i) % 2 === 1 ? { ...pane, top: slateDark, side: slateDark } : pane,
-      ),
-    );
-  }
-  const front = (nx: number, ny: number) => nx > 0.6 && ny > 0.6;
-  const left = (nx: number, ny: number) => nx < 0.2 && ny > 0.9;
-  const right = (nx: number, ny: number) => nx > 0.9 && ny < 0.2;
-  if (repaired) {
-    // A lit ore band below the restored cap.
-    towerGroup.push(...wallWindows(facing, 53, 57, 1, 24, tower, lit ? ore : oreDim));
-  } else {
-    // Patch plates over the window bands and rust streaks below the broken cap.
-    const plate = (part: Part): Part => ({ ...part, side: patchSide });
-    towerGroup.push(
-      ...wallWindows(front, 27, 39, 1, 10, tower, patch).map(plate),
-      ...wallWindows(right, 15, 21, 1, 14, tower, patch).map(plate),
-      ...wallWindows(left, 47, 61, 2, 2.2, tower, rust),
-      ...wallWindows(front, 50, 61, 3, 2.2, tower, rust),
-      ...wallWindows(right, 52, 61, 1, 2.2, tower, rust),
-    );
-  }
-  towerGroup.push(
-    ...capRing(repaired),
-    {
-      plan: ngon(8, 33.3, 0, 0, Math.PI / 8),
-      z0: CAP_TOP - 0.6,
-      z1: CAP_TOP - 0.1,
-      top: slateDark,
-      side: slateDark,
-    },
-    ...oreHeap(0, 0, 29.5, CAP_TOP + 0.2, 12),
+function hubBerths(lit: boolean, repaired: boolean): Part[][] {
+  return [1, -1].map((side) =>
+    serviceCollar(
+      lit && (repaired || side === 1),
+      SIDE_FACE,
+      SIDE_MOUTH,
+      32.5,
+      "#42535a",
+      "#303c49",
+      15.5,
+      DOCK + side * SPREAD,
+    ),
   );
-  groups.push(towerGroup);
-  groups.push(beacon(-24.8, -24.8, CAP_TOP, 24.8, lit));
-  // Crates of deposited ore beside the tower; the worn hub has one crate knocked flat.
-  for (const [d, a, angle] of [
-    [37, -50, DOCK],
-    [46.5, -37, repaired ? DOCK : DOCK + 0.5],
-  ] as const) {
-    const [cx, cy] = at(d, a);
-    const flat = !repaired && angle !== DOCK;
-    groups.push([
-      {
-        plan: orientedBox(cx, cy, angle, 11, 11),
-        z0: DECK_TOP,
-        z1: DECK_TOP + (flat ? 6 : 9.3),
-        top: slate,
-        side: slateSide,
-      },
-      ...(flat
-        ? []
-        : [
-            {
-              plan: orientedBox(cx, cy, angle, 8.5, 8.5),
-              z0: DECK_TOP + 9.3,
-              z1: DECK_TOP + 9.9,
-              top: ore,
-              side: ore,
-            },
-          ]),
-    ]);
-  }
-  groups.push([
-    { plan: orientedBox(...at(87, 0), DOCK, 50, 25), z0: 1.5, z1: 14, top: cream, side: creamSide },
-    ...closedCollar(lit, PIER_FACE, 56, slate, slateSide, 21.7),
-  ]);
-  return groups;
 }
 
-// The second docking bay project: a new pier and collar off the deck's front left, in fresh
-// cap slate with an ore sign band. Drawn as an overlay on either hub state.
-function bayParts(lit: boolean): Part[][] {
-  const length = BAY_FACE - 4 - DECK_R + 6;
+// Armor and the flush guide are drawn in the fixed hub frame.
+function face(color: string, plan: Plan): Face {
+  return {
+    color,
+    points: plan.map(([x, y]) => {
+      const across = (x - hubFrame.halfWidth) / Math.sqrt(3);
+      return [across, -across, hubFrame.above - y];
+    }),
+  };
+}
+
+function hubArmor(lit: boolean, repaired: boolean): Face[] {
+  const signal = lit ? blue : blueDim;
   return [
-    [
-      {
-        plan: orientedBox(...along(BAY_ANGLE, DECK_R - 6 + length / 2, 0), BAY_ANGLE, length, 20),
-        z0: 1.5,
-        z1: 10,
-        top: cream,
-        side: creamSide,
-      },
-      ...dockCollar(lit, BAY_FACE, BAY_MOUTH, 42, slateCap, slateSide, 18, BAY_ANGLE),
-      {
-        plan: orientedBox(...along(BAY_ANGLE, BAY_FACE + 0.6, 0), BAY_ANGLE, 0.6, 34),
-        z0: 19,
-        z1: 21.4,
-        top: lit ? ore : oreDim,
-        side: lit ? ore : oreDim,
-      },
-    ],
+    // Continuous lower hull, including the shoulders that house the two berth mouths.
+    face("#303743", [
+      [10, 161],
+      [24, 137],
+      [49, 133],
+      [65, 111],
+      [164, 103],
+      [186, 121],
+      [212, 135],
+      [230, 159],
+      [218, 177],
+      [186, 169],
+      [166, 183],
+      [140, 186],
+      [123, 198],
+      [88, 190],
+      [76, 174],
+      [51, 167],
+      [24, 178],
+    ]),
+    face("#455966", [
+      [10, 161],
+      [24, 137],
+      [49, 133],
+      [76, 144],
+      [78, 155],
+      [52, 158],
+      [24, 170],
+    ]),
+    face("#8a614b", [
+      [165, 110],
+      [186, 121],
+      [212, 135],
+      [230, 159],
+      [212, 162],
+      [189, 148],
+      [168, 144],
+    ]),
+    face("#b88354", [
+      [177, 121],
+      [191, 128],
+      [211, 141],
+      [217, 150],
+      [206, 149],
+      [185, 137],
+    ]),
+    face("#556477", [
+      [46, 156],
+      [66, 150],
+      [100, 163],
+      [99, 178],
+      [76, 174],
+      [51, 167],
+    ]),
+    face("#434d63", [
+      [89, 176],
+      [146, 158],
+      [174, 155],
+      [166, 173],
+      [140, 177],
+      [121, 188],
+      [91, 182],
+    ]),
+    face("#647181", [
+      [104, 177],
+      [132, 167],
+      [149, 165],
+      [140, 173],
+      [121, 180],
+    ]),
+    face("#282f3a", [
+      [156, 174],
+      [180, 155],
+      [191, 153],
+      [185, 162],
+      [165, 175],
+    ]),
+    // Offset upper installation with a flat crown, sloping facets and a tapered lower shell.
+    face("#263441", [
+      [33, 110],
+      [40, 77],
+      [58, 47],
+      [82, 31],
+      [121, 24],
+      [153, 37],
+      [177, 63],
+      [188, 92],
+      [181, 124],
+      [155, 152],
+      [119, 168],
+      [85, 161],
+      [57, 145],
+      [41, 127],
+    ]),
+    face("#8a9e9e", [
+      [40, 77],
+      [58, 47],
+      [82, 31],
+      [121, 24],
+      [139, 34],
+      [102, 45],
+      [72, 61],
+      [53, 88],
+    ]),
+    face("#546e7a", [
+      [40, 77],
+      [53, 88],
+      [47, 115],
+      [57, 145],
+      [41, 127],
+      [33, 110],
+    ]),
+    face("#527e80", [
+      [53, 88],
+      [72, 61],
+      [102, 45],
+      [139, 34],
+      [153, 46],
+      [160, 68],
+      [129, 87],
+      [91, 104],
+      [47, 115],
+    ]),
+    face("#3d676d", [
+      [47, 115],
+      [91, 104],
+      [129, 87],
+      [160, 68],
+      [170, 91],
+      [147, 115],
+      [112, 134],
+      [68, 140],
+      [57, 145],
+    ]),
+    face("#354b61", [
+      [57, 145],
+      [68, 140],
+      [112, 134],
+      [147, 115],
+      [170, 91],
+      [181, 101],
+      [174, 122],
+      [151, 146],
+      [119, 161],
+      [85, 155],
+    ]),
+    face("#5d536c", [
+      [121, 24],
+      [153, 37],
+      [177, 63],
+      [188, 92],
+      [181, 124],
+      [174, 122],
+      [181, 101],
+      [169, 88],
+      [154, 51],
+      [139, 34],
+    ]),
+    // Heavy segmented ribs and inlaid service panels.
+    face("#395460", [
+      [54, 89],
+      [73, 62],
+      [85, 56],
+      [71, 78],
+      [64, 103],
+      [70, 124],
+      [63, 129],
+      [55, 109],
+    ]),
+    face("#b9b5a1", [
+      [55, 88],
+      [73, 62],
+      [79, 60],
+      [62, 88],
+      [59, 102],
+      [52, 104],
+    ]),
+    face("#708e8a", [
+      [61, 111],
+      [67, 106],
+      [71, 120],
+      [84, 136],
+      [100, 144],
+      [87, 148],
+      [71, 138],
+    ]),
+    face("#283e4a", [
+      [71, 83],
+      [94, 63],
+      [121, 51],
+      [144, 47],
+      [150, 58],
+      [131, 62],
+      [108, 72],
+      [78, 93],
+    ]),
+    face("#354650", [
+      [75, 99],
+      [101, 85],
+      [116, 80],
+      [115, 89],
+      [99, 97],
+      [76, 109],
+    ]),
+    face("#746579", [
+      [113, 73],
+      [132, 65],
+      [156, 58],
+      [160, 67],
+      [132, 77],
+      [116, 86],
+    ]),
+    face("#a09b8d", [
+      [120, 34],
+      [136, 32],
+      [145, 38],
+      [131, 42],
+      [110, 47],
+      [104, 44],
+    ]),
+    face("#7f9e99", [
+      [103, 122],
+      [136, 107],
+      [154, 91],
+      [161, 91],
+      [156, 103],
+      [138, 116],
+      [119, 125],
+    ]),
+    face("#263743", [
+      [89, 143],
+      [113, 139],
+      [139, 125],
+      [151, 115],
+      [156, 117],
+      [145, 130],
+      [115, 148],
+      [100, 151],
+    ]),
+    face("#6c8b8d", [
+      [105, 145],
+      [124, 137],
+      [136, 129],
+      [134, 134],
+      [121, 142],
+      [108, 149],
+    ]),
+    face("#ac7954", [
+      [160, 51],
+      [169, 59],
+      [183, 85],
+      [179, 90],
+      [171, 77],
+      [166, 66],
+    ]),
+    face("#d0a06c", [
+      [176, 96],
+      [182, 93],
+      [182, 101],
+      [177, 113],
+      [172, 115],
+    ]),
+    face("#465969", [
+      [182, 134],
+      [195, 140],
+      [202, 145],
+      [195, 146],
+      [181, 140],
+    ]),
+    // A small axial beacon and short window strips retain the frame blink.
+    face("#394657", [
+      [113, 26],
+      [116, 13],
+      [120, 12],
+      [119, 26],
+    ]),
+    face(signal, [
+      [115, 14],
+      [116, 10],
+      [121, 9],
+      [121, 13],
+    ]),
+    face(lit ? warm : "#a08f78", [
+      [109, 154],
+      [119, 150],
+      [120, 153],
+      [110, 157],
+    ]),
+    face(lit ? warm : "#a08f78", [
+      [125, 148],
+      [134, 143],
+      [136, 145],
+      [127, 151],
+    ]),
+    face("#bb9f80", [
+      [82, 101],
+      [87, 98],
+      [87, 101],
+      [82, 104],
+    ]),
+    face(repaired ? warm : "#4c5052", [
+      [91, 96],
+      [96, 93],
+      [96, 96],
+      [91, 99],
+    ]),
+    face(warm, [
+      [101, 91],
+      [107, 88],
+      [107, 91],
+      [101, 94],
+    ]),
+    ...(repaired
+      ? [
+          face("#759391", [
+            [79, 112],
+            [103, 102],
+            [122, 92],
+            [124, 97],
+            [105, 108],
+            [81, 119],
+          ]),
+          face(lit ? ore : oreDim, [
+            [111, 72],
+            [132, 63],
+            [146, 60],
+            [148, 63],
+            [133, 67],
+            [112, 76],
+          ]),
+          face(signal, [
+            [49, 156],
+            [55, 155],
+            [59, 157],
+            [52, 159],
+          ]),
+          face(signal, [
+            [171, 154],
+            [175, 151],
+            [179, 151],
+            [175, 155],
+          ]),
+          face(lit ? blueDim : blue, [
+            [86, 171],
+            [93, 173],
+            [95, 176],
+            [87, 174],
+          ]),
+        ]
+      : [
+          face("#253640", [
+            [78, 113],
+            [89, 107],
+            [95, 109],
+            [110, 100],
+            [123, 92],
+            [121, 100],
+            [105, 110],
+            [95, 111],
+            [83, 121],
+          ]),
+          face("#a39577", [
+            [82, 106],
+            [91, 102],
+            [96, 105],
+            [89, 109],
+            [84, 110],
+          ]),
+          face("#90674f", [
+            [96, 112],
+            [105, 108],
+            [103, 114],
+            [100, 115],
+            [100, 120],
+            [97, 122],
+          ]),
+          face("#a5947b", [
+            [47, 156],
+            [54, 153],
+            [65, 155],
+            [64, 159],
+            [53, 161],
+          ]),
+          face("#2c363e", [
+            [142, 43],
+            [151, 43],
+            [165, 53],
+            [166, 66],
+            [159, 61],
+            [154, 52],
+            [148, 52],
+          ]),
+          face("#97694f", [
+            [145, 47],
+            [152, 47],
+            [159, 53],
+            [157, 56],
+            [151, 51],
+          ]),
+        ]),
+  ];
+}
+
+function hubFaces(lit: boolean, repaired: boolean): Face[] {
+  return [...hubArmor(lit, repaired), ...polygons(hubBerths(lit, repaired))];
+}
+
+// The project lights a flush guide on the plate, above the world-plane berth point.
+function bayFaces(lit: boolean): Face[] {
+  return [
+    face("#202b36", [
+      [98, 184],
+      [112, 181],
+      [117, 184],
+      [102, 188],
+    ]),
+    face(lit ? ore : oreDim, [
+      [102, 184.5],
+      [111, 182.5],
+      [113, 183.5],
+      [104, 186],
+    ]),
   ];
 }
 
@@ -491,21 +741,21 @@ const hubWorn: Fixed = {
   id: "outpost-hub",
   path: "hub",
   title: "Cartwheel hub, worn",
-  frames: blink((lit) => hubParts(lit, { repaired: false })),
+  frames: { a: hubFaces(true, false), b: hubFaces(false, false) },
   scale: HUB_SCALE,
 };
 const hubRepaired: Fixed = {
   id: "outpost-hub-repaired",
   path: "hub-repaired",
   title: "Cartwheel hub, repaired",
-  frames: blink((lit) => hubParts(lit, { repaired: true })),
+  frames: { a: hubFaces(true, true), b: hubFaces(false, true) },
   scale: HUB_SCALE,
 };
 const hubBay: Fixed = {
   id: "outpost-hub-bay",
   path: "hub-bay",
   title: "Cartwheel hub, second docking bay",
-  frames: blink(bayParts),
+  frames: { a: bayFaces(true), b: bayFaces(false) },
   scale: HUB_SCALE,
 };
 const buoy: Fixed = {
@@ -516,47 +766,17 @@ const buoy: Fixed = {
   scale: 1,
 };
 
-// Screen outlines of two convex faces overlap with positive area (separating axis test).
-function overlaps(a: Face, b: Face): boolean {
-  const outline = (face: Face) => face.points.map((point) => projectAt(0, 0, point));
-  const [pa, pb] = [outline(a), outline(b)];
-  for (const poly of [pa, pb]) {
-    for (const [i, [x0, y0]] of poly.entries()) {
-      const [x1, y1] = poly[(i + 1) % poly.length]!;
-      const [nx, ny] = [y0 - y1, x1 - x0];
-      if (Math.hypot(nx, ny) < 1e-9) {
-        continue;
-      }
-      const span = (points: [number, number][]) => points.map(([x, y]) => x * nx + y * ny);
-      const [sa, sb] = [span(pa), span(pb)];
-      if (Math.max(...sa) <= Math.min(...sb) + 1e-6 || Math.max(...sb) <= Math.min(...sa) + 1e-6) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-// The bay overlay drawn over either hub state must match a full render: no hub face that the
-// full render draws after a bay face may overlap it.
-for (const repaired of [false, true]) {
-  for (const lit of [true, false]) {
-    const bay = new Set(polygons(bayParts(lit)).map((face) => JSON.stringify(face)));
-    const full = polygons([...hubParts(lit, { repaired }), ...bayParts(lit)]);
-    const drawn: Face[] = [];
-    for (const face of full) {
-      if (bay.has(JSON.stringify(face))) {
-        drawn.push(face);
-      } else if (drawn.some((under) => overlaps(under, face))) {
-        throw new Error(`a ${repaired ? "repaired" : "worn"} hub face covers the bay overlay`);
+// Keep the shared attachment frame fixed and check that all four edges retain padding.
+for (const { frames } of [hubWorn, hubRepaired, hubBay]) {
+  for (const { points } of [...frames.a, ...frames.b]) {
+    for (const point of points) {
+      const [x, y] = frameXY(hubFrame, point);
+      if (x < PAD || x > hubFrame.width - PAD || y < PAD || y > hubFrame.height - PAD) {
+        throw new Error("Cartwheel hub art exceeds its shared frame");
       }
     }
   }
 }
-
-const hubFrame = layout(
-  [hubWorn, hubRepaired, hubBay].flatMap(({ frames }) => [...frames.a, ...frames.b]),
-);
 const buoyFrame = layout([...buoy.frames.a, ...buoy.frames.b]);
 
 // ---------------------------------------------------------------- craft
@@ -912,7 +1132,7 @@ const hubEntries = [
       overlay: true,
       destination: "hub",
       project: "second-docking-bay",
-      berths: [dockAt(hubFrame, BAY_ANGLE, BAY_FACE, BAY_MOUTH)],
+      berths: [bayBerth],
     }),
   ),
 ];

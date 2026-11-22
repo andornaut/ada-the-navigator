@@ -1,308 +1,352 @@
-// Phantom's solid models in the station family's projection (solid.ts): the three Blurb
-// settlements, each with its dock cracked by the blockades or mended. Contract: art/phantom.md.
-import {
-  blue,
-  blueDim,
-  box,
-  cream,
-  creamSide,
-  DOCK,
-  dockCollar,
-  mouth,
-  ngon,
-  orientedBox,
-  type Part,
-  type Plan,
-  along,
-  warm,
-} from "./solid.ts";
-
-// Two approach-light pairs in front of a settlement's decorative mouth blink opposite the corner
-// lights, as at the outposts.
-function approachLights(lit: boolean, face: number, angle = DOCK, offset = 0): Part[] {
-  const approach = lit ? blueDim : blue;
-  return [
-    [face + 14, 9],
-    [face + 28, 6.5],
-  ].flatMap(([distance, across]) =>
-    [-1, 1].map((side): Part => {
-      const [lx, ly] = along(angle, distance!, side * across! + offset);
-      return {
-        plan: box(lx - 2, ly - 2, lx + 2, ly + 2),
-        z0: 5,
-        z1: 7.5,
-        top: approach,
-        side: approach,
-      };
-    }),
-  );
-}
-
-// ---------------------------------------------------------------- palette
-
-// Lilac goo, lighter than the field in its own hue, on a darker set-goo float.
-export const blurb = {
-  goo: "#d4b8ee",
-  gooSide: "#a283c2",
-  gloss: "#f4eafc",
-  deck: "#8a6fa8",
-  deckSide: "#614b7e",
-  deckInset: "#9c82ba",
-  lamp: warm,
-  lampDim: "#8a7a5c",
-} as const;
-const b = blurb;
+// Blurb settlements in the shared Phantom projection. Contract in art/phantom.md.
+import { depth, facesViewer, type Point } from "./projection.ts";
+import { along, DOCK, type Face } from "./solid.ts";
 
 export type DockState = "cracked" | "mended";
 
-// Deck height that buildings rest on: a group based at or above it draws after the float.
-export const DECK = 5.6;
-export const SETTLEMENT_LEVELS = [DECK] as const;
-// Every settlement's decorative dock: mouth width and face distance on the dock axis.
-export const SETTLEMENT_DOCK = { face: 36, mouth: 18, collar: 26, height: 10 } as const;
+// The sealed plating retains the decorative dock's world-plane anchor and span.
+export const SETTLEMENT_DOCK = { face: 36, mouth: 18 } as const;
 
-const degrees = (d: number) => (d * Math.PI) / 180;
-const polar = (angle: number, r: number) => [Math.cos(angle) * r, Math.sin(angle) * r] as const;
+type Palette = readonly [highlight: string, midtone: string, shade: string, underside: string];
+type Section = readonly [x: number, y: number, z: number, major: number, minor: number];
+type Axis = "horizontal" | "vertical";
 
-// A goo dome: five tiers on a dome profile, each nudged by `lean` for a wobble, a gloss spot on
-// the top tier toward the light at the upper left of the screen, and warm windows on the front
-// of the lowest tier.
-function dome(
-  cx: number,
-  cy: number,
-  r: number,
-  z0: number,
-  h: number,
-  lean: number,
-  windows: number,
-): Part[] {
-  const steps = 5;
-  const radius = (i: number) => r * Math.sqrt(1 - (i / steps) ** 2 * 0.97);
-  const centre = (i: number) => [cx + lean * i * 0.8, cy - lean * i * 0.5] as const;
-  const parts: Part[] = Array.from({ length: steps }, (_, i) => ({
-    plan: ngon(12, radius(i), ...centre(i), Math.PI / 12),
-    z0: z0 + (h * i) / steps,
-    z1: z0 + (h * (i + 1)) / steps,
-    top: b.goo,
-    side: b.gooSide,
-  }));
-  const top = radius(steps - 1);
-  const [gx, gy] = centre(steps - 1);
-  parts.push({
-    plan: ngon(8, top * 0.42, gx - top * 0.32, gy, Math.PI / 8),
-    z0: z0 + h,
-    z1: z0 + h + 0.3,
-    top: b.gloss,
-    side: b.goo,
-  });
-  for (let w = 0; w < windows; w++) {
-    const angle = degrees(45 + (w - (windows - 1) / 2) * 34);
-    const [wx, wy] = polar(angle, r * 0.98);
-    parts.splice(1 + w, 0, {
-      plan: orientedBox(cx + wx, cy + wy, angle + Math.PI / 2, r * 0.32, 0.6),
-      z0: z0 + h * 0.07,
-      z1: z0 + h * 0.07 + Math.min(3.2, r * 0.32),
-      top: warm,
-      side: warm,
-    });
-  }
-  return parts;
+const PEARL: Palette = ["#e2c2f9", "#b892d9", "#8262a8", "#51406f"];
+const IRIS: Palette = ["#c6c5ff", "#9299eb", "#6567bd", "#3f458a"];
+const PLUM: Palette = ["#f1aad9", "#c972ae", "#8a4f91", "#573759"];
+const JADE: Palette = ["#a3eee0", "#65c6b5", "#368d96", "#2d556b"];
+const CERULEAN: Palette = ["#a1dff2", "#65adc8", "#3e7ba2", "#334e79"];
+
+const point = ([x, y, z]: Point): Point => [...along(DOCK, y, -x), z];
+
+function surface(points: Point[], color: string): Face {
+  return { points: points.map(point), color };
 }
 
-// A set-goo float with a lighter inset top.
-function float(plan: Plan, inset: Plan): Part[] {
-  return [
-    { plan, z0: 0, z1: DECK - 0.6, top: b.deck, side: b.deckSide },
-    { plan: inset, z0: DECK - 0.6, z1: DECK, top: b.deckInset, side: b.deckSide },
-  ];
-}
-
-// A goo stalk rising to a lamp bulb.
-function stalk(x: number, y: number, height: number, bulb: number, lit: boolean): Part[] {
-  const lamp = lit ? b.lamp : b.lampDim;
-  return [
-    { plan: ngon(6, 1.3, x, y), z0: DECK, z1: DECK + height, top: b.goo, side: b.gooSide },
-    {
-      plan: ngon(8, bulb, x, y, Math.PI / 8),
-      z0: DECK + height,
-      z1: DECK + height + bulb * 1.6,
-      top: lamp,
-      side: lamp,
-    },
-  ];
-}
-
-// ---------------------------------------------------------------- dock
-
-// The crack the blockades left, as stepped panes 0.3 proud of the collar's face, across the band
-// above the mouth from the broken corner on the screen-right side: [across, width, z0, z1] with
-// z from the mouth's top.
-const CRACK = [
-  [-11.6, 1.4, 2.8, 4],
-  [-9.9, 2, 1.9, 3.2],
-  [-7.8, 2.2, 1, 2.3],
-  [-5.6, 2.2, 0, 1.4],
-] as const;
-
-// The family dock collar. Cracked: its top corner on the crack side broken off, the crack dark,
-// the floor strip split and that corner light out. Mended: whole, the crack filled with goo.
-export function blurbDock(lit: boolean, state: DockState): Part[] {
-  const { collar, face, height, mouth: mouthWidth } = SETTLEMENT_DOCK;
-  const p = (distance: number, across: number) => along(DOCK, distance, across);
-  const parts = dockCollar(lit, face, mouthWidth, collar, cream, creamSide, height);
-  const crack = CRACK.map(([across, width, z0, z1]): Part => ({
-    plan: orientedBox(...p(face + 0.3, across), DOCK, 0.6, width),
-    z0: height + z0,
-    z1: height + z1,
-    top: state === "cracked" ? mouth : b.goo,
-    side: state === "cracked" ? mouth : b.goo,
-  }));
-  if (state === "mended") {
-    return [parts[0]!, ...crack, ...parts.slice(1), ...approachLights(lit, face)];
-  }
-  // The collar without its broken corner: the full-height span, and the corner stub below the
-  // break.
-  const edge = -collar / 2;
-  const breakAt = -mouthWidth / 2 + 0.5;
-  const whole = (from: number, to: number, z1: number): Part => ({
-    plan: orientedBox(...p(face - 4, (from + to) / 2), DOCK, 8, to - from),
-    z0: -3,
-    z1,
-    top: cream,
-    side: creamSide,
-  });
-  const floor = parts[3]!;
-  const strip = (from: number, to: number): Part => ({
-    ...floor,
-    plan: orientedBox(...p(face + 0.9, (from + to) / 2), DOCK, 0.6, to - from),
-  });
-  const reach = (mouthWidth * 0.77) / 2;
-  return [
-    whole(breakAt, -edge, height + 4),
-    whole(edge, breakAt, height + 1.2),
-    ...crack,
-    parts[1]!,
-    parts[2]!,
-    strip(-reach, -2.4),
-    strip(-0.8, reach),
-    parts[4]!,
-    { ...parts[5]!, top: blueDim, side: blueDim },
-    parts[6]!,
-    parts[7]!,
-    ...approachLights(lit, face),
-  ];
-}
-
-// ---------------------------------------------------------------- settlements
-
-// First settlement, the homes: five goo domes of mixed sizes on a round float and a lamp stalk.
-export function homes(lit: boolean, state: DockState): Part[][] {
-  const groups: Part[][] = [
-    float(ngon(14, 31, 0, 0, Math.PI / 14), ngon(14, 28, 0, 0, Math.PI / 14)),
-  ];
-  for (const [angle, distance, r, h, lean, windows] of [
-    [205, 14, 10, 13, 0.6, 2],
-    [262, 17, 7.5, 9, -0.5, 1],
-    [318, 15, 9, 11, 0.4, 1],
-    [150, 18, 7, 8, -0.4, 1],
-    [10, 18, 6.5, 7, 0.5, 1],
-  ] as const) {
-    const [x, y] = polar(degrees(angle), distance);
-    groups.push(dome(x, y, r, DECK, h, lean, windows));
-  }
-  groups.push(stalk(...polar(degrees(95), 22), 16, 2.2, lit));
-  groups.push(blurbDock(lit, state));
-  return groups;
-}
-
-// Second settlement, the travellers' harbour: a long float with a three-dome hall and a cream
-// berth with a lamp pylon at each end.
-export function harbour(lit: boolean, state: DockState): Part[][] {
-  const axis = degrees(-45);
-  const turn = (u: number, v: number) =>
-    [u * Math.cos(axis) - v * Math.sin(axis), u * Math.sin(axis) + v * Math.cos(axis)] as const;
-  const oval = (rx: number, ry: number): Plan =>
-    Array.from({ length: 18 }, (_, i) => {
-      const t = (2 * Math.PI * i) / 18;
-      return turn(Math.cos(t) * rx, Math.sin(t) * ry);
-    });
-  const groups: Part[][] = [float(oval(40, 24), oval(37, 21))];
-  for (const [d, r, h, windows] of [
-    [-14, 8.5, 10, 1],
-    [0, 10.5, 14, 2],
-    [14, 8.5, 10, 1],
-  ] as const) {
-    groups.push(dome(...turn(d, -4), r, DECK, h, 0, windows));
-  }
-  for (const end of [-1, 1]) {
-    const [x, y] = turn(end * 33, 2);
-    groups.push([
-      {
-        plan: orientedBox(x, y, axis, 10, 6),
-        z0: DECK - 2,
-        z1: DECK + 1.5,
-        top: cream,
-        side: creamSide,
-      },
-      ...stalk(x, y, 12, 1.8, lit),
-    ]);
-  }
-  groups.push(blurbDock(lit, state));
-  return groups;
-}
-
-// Third settlement, Dollop's signal: a tall wobbly goo spire under a signal lamp, two small domes.
-export function signal(lit: boolean, state: DockState): Part[][] {
-  const groups: Part[][] = [
-    float(ngon(12, 28, 0, 0, Math.PI / 12), ngon(12, 25, 0, 0, Math.PI / 12)),
-  ];
-  const [cx, cy] = polar(degrees(225), 4);
-  const spire: Part[] = [];
-  let z = DECK;
-  const tiers = [
-    [10, 7],
-    [8, 6],
-    [6.5, 6],
-    [5, 5],
-    [4, 5],
-    [3, 4],
+function facingFaces([p, q, r, s]: [Point, Point, Point, Point], palette: Palette): Face[] {
+  const a = point(p);
+  const b = point(q);
+  const c = point(r);
+  const d = point(s);
+  const points = [a, b, c, d];
+  if (!facesViewer(points)) return [];
+  // The face diagonals also give a normal at a collapsed end ring.
+  const u: Point = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  const v: Point = [d[0] - b[0], d[1] - b[1], d[2] - b[2]];
+  const normal = [
+    u[1] * v[2] - u[2] * v[1],
+    u[2] * v[0] - u[0] * v[2],
+    u[0] * v[1] - u[1] * v[0],
   ] as const;
-  tiers.forEach(([r, h], i) => {
-    const wobble = (i % 2 === 0 ? 1 : -1) * 1.2;
-    spire.push({
-      plan: ngon(10, r, cx + wobble, cy - wobble, Math.PI / 10),
-      z0: z,
-      z1: z + h,
-      top: i === tiers.length - 1 ? b.gloss : b.goo,
-      side: b.gooSide,
-    });
-    if (i === 1) {
-      spire.push({
-        plan: orientedBox(cx + wobble + 5.6, cy - wobble + 5.6, degrees(135), 3, 0.6),
-        z0: z + 1.5,
-        z1: z + 4.5,
-        top: warm,
-        side: warm,
-      });
-    }
-    z += h;
-  });
-  const lamp = lit ? b.lamp : b.lampDim;
-  spire.push({ plan: ngon(8, 3.4, cx, cy, Math.PI / 8), z0: z, z1: z + 5, top: lamp, side: lamp });
-  spire.push({
-    plan: ngon(8, 2.2, cx, cy, Math.PI / 8),
-    z0: z + 5,
-    z1: z + 6,
-    top: lit ? "#ffffff" : lamp,
-    side: lamp,
-  });
-  groups.push(spire);
-  for (const [angle, distance, r, h] of [
-    [140, 17, 6.5, 8],
-    [320, 17, 7, 9],
-  ] as const) {
-    groups.push(dome(...polar(degrees(angle), distance), r, DECK, h, 0.4, 1));
+  const light = (-0.25 * normal[0] + 0.45 * normal[1] + normal[2]) / Math.hypot(...normal);
+  const color = palette[light > 0.84 ? 0 : light > 0.55 ? 1 : light > 0.05 ? 2 : 3];
+  return [{ color, points }];
+}
+
+// Each sculpted shell follows a sequence of elliptical rings, which can lean or flare.
+function shell(sections: readonly Section[], axis: Axis, palette: Palette): Face[] {
+  const sides = 8;
+  const rings = sections.map(([x, y, z, major, minor]) =>
+    Array.from({ length: sides }, (_, i): Point => {
+      const angle = ((i + 0.5) * 2 * Math.PI) / sides;
+      const u = major * Math.cos(angle);
+      const v = minor * Math.sin(angle);
+      return axis === "vertical" ? [x + u, y + v, z] : [x, y + u, z + v];
+    }),
+  );
+  return rings
+    .slice(0, -1)
+    .flatMap((ring, j) =>
+      ring.flatMap((a, i) => {
+        const k = (i + 1) % sides;
+        const next = rings[j + 1]!;
+        return facingFaces([a, ring[k]!, next[k]!, next[i]!], palette);
+      }),
+    )
+    .sort((a, b) => depth(b.points) - depth(a.points));
+}
+
+function aperture(x: number, y: number, z: number, lit: boolean, color: string): Face {
+  return surface(
+    [
+      [x - 4.5, y, z - 2],
+      [x - 1.3, y - 1, z + 2.7],
+      [x + 5, y, z + 2.1],
+      [x + 1.6, y + 1, z - 2.5],
+    ],
+    lit ? color : "#655a92",
+  );
+}
+
+function standardSeam(state: DockState): Face[] {
+  const cracked = state === "cracked";
+  return [
+    surface(
+      [
+        [cracked ? 13 : 14, 32, cracked ? 7 : 12],
+        [7, 34, 10],
+        [4, 35, 5],
+        [0, 36, 6],
+        [-6, 35, 0],
+        [1, 37, 3],
+        [8, 36, 2.5],
+        [10, 35, 6.5],
+      ],
+      cracked ? "#3c244f" : "#effff6",
+    ),
+  ];
+}
+
+function pronouncedSeam(state: DockState): Face[] {
+  if (state === "cracked") {
+    const dark = "#281735";
+    return [
+      surface(
+        [
+          [13, 32, 8],
+          [7, 34, 10],
+          [3, 35, 5],
+          [7, 36, 2],
+          [9, 35, 6],
+        ],
+        dark,
+      ),
+      surface(
+        [
+          [0, 35, 7],
+          [-5, 34, 8],
+          [-12, 32, 3],
+          [-8, 34, 1],
+          [-3, 36, 3],
+        ],
+        dark,
+      ),
+    ];
   }
-  groups.push(blurbDock(lit, state));
-  return groups;
+
+  const outline = surface(
+    [
+      [15, 31, 13],
+      [7, 33, 13],
+      [2, 35, 7],
+      [-4, 34, 9],
+      [-14, 32, 3],
+      [-10, 33, 0],
+      [-4, 36, 4],
+      [3, 37, 3],
+      [9, 35, 7],
+      [15, 33, 8],
+    ],
+    "#53618c",
+  );
+  const seal = surface(
+    [
+      [13, 32, 12],
+      [8, 34, 11.5],
+      [2, 36, 6],
+      [-4, 35, 7.5],
+      [-12, 33, 2.5],
+      [-10, 34, 1.5],
+      [-4, 36, 5.5],
+      [3, 37, 4.5],
+      [9, 35, 9],
+      [13, 33, 10],
+    ],
+    "#efffe4",
+  );
+  return [outline, seal];
+}
+
+// Fused into the foreground shell, at the old dock face. Pigment and flush lamps read
+// through a repaired fracture, while the cracked side has a missing flake and a dead lamp.
+function repairPlate(
+  palette: Palette,
+  lit: boolean,
+  state: DockState,
+  seam = standardSeam,
+): Face[] {
+  const cracked = state === "cracked";
+  const edge: Point = cracked ? [12, 31, 5] : [17, 30, 13];
+  return [
+    surface(
+      [
+        [-22, 18, 8],
+        [-11, 31, 0],
+        [3, 36, -1],
+        [cracked ? 15 : 18, 31, 2],
+        [22, 20, 8],
+        edge,
+        [-5, 26, 14],
+      ],
+      palette[1],
+    ),
+    surface([[-22, 18, 8], [-5, 26, 14], edge, [3, 36, 9], [-11, 31, 6]], palette[0]),
+    ...seam(state),
+    aperture(-12, 33, 4, lit, "#9df1eb"),
+    aperture(13, 33, 3, lit && !cracked, "#9df1eb"),
+  ];
+}
+
+export function homes(lit: boolean, state: DockState): Face[] {
+  return [
+    ...shell(
+      [
+        [1, 10, -6, 1, 1],
+        [0, 9, -3, 30, 23],
+        [1, 6, 4, 28, 24],
+        [-1, 4, 9, 20, 17],
+        [0, 4, 10, 0, 0],
+      ],
+      "vertical",
+      IRIS,
+    ),
+    ...shell(
+      [
+        [0, -10, 1, 14, 13],
+        [-3, -12, 11, 15, 13],
+        [-6, -10, 17, 10, 10],
+        [-2, -9, 23, 0, 0],
+      ],
+      "vertical",
+      PEARL,
+    ),
+    ...shell(
+      [
+        [15, 1, 1, 14, 12],
+        [19, -1, 7, 14.5, 11],
+        [22, -1, 13, 10, 8],
+        [26, -3, 18, 0, 0],
+      ],
+      "vertical",
+      IRIS,
+    ),
+    ...shell(
+      [
+        [-14, 7, 0, 13, 13],
+        [-20, 4, 7, 15, 12],
+        [-23, 1, 14, 11, 9],
+        [-28, -2, 19, 0, 0],
+      ],
+      "vertical",
+      PLUM,
+    ),
+    ...shell(
+      [
+        [5, 15, 1, 14, 12],
+        [3, 13, 8, 14, 13],
+        [4, 11, 14, 11, 9],
+        [9, 10, 21, 0, 0],
+      ],
+      "vertical",
+      PEARL,
+    ),
+    aperture(-18, 15, 9, lit, "#ffcbeb"),
+    aperture(24, 9, 10, lit, "#bdf3fe"),
+    aperture(4, 23, 12, lit, "#ffd4f2"),
+    ...repairPlate(IRIS, lit, state, pronouncedSeam),
+  ];
+}
+
+export function harbour(lit: boolean, state: DockState): Face[] {
+  return [
+    ...shell(
+      [
+        [-40, -6, 13, 0, 0],
+        [-31, 1, 10, 12, 3],
+        [-21, 4, 7, 18, 5],
+        [-8, 7, 6, 18, 6],
+        [5, 5, 8, 18, 8],
+        [19, 2, 10, 17, 5],
+        [31, -4, 13, 12, 3],
+        [40, -13, 15, 0, 0],
+      ],
+      "horizontal",
+      JADE,
+    ),
+    ...shell(
+      [
+        [0, 7, -4, 9, 20],
+        [1, 3, 1, 16, 23],
+        [1, -1, 8, 14, 22],
+        [-1, -3, 15, 8, 15],
+        [-6, -6, 19, 0, 0],
+      ],
+      "vertical",
+      CERULEAN,
+    ),
+    surface(
+      [
+        [-38, -5, 13],
+        [-29, 10, 13],
+        [-18, 16, 11],
+        [-22, 6, 13],
+      ],
+      "#c88ac1",
+    ),
+    surface(
+      [
+        [38, -11, 15],
+        [28, 6, 15],
+        [17, 13, 12],
+        [21, 2, 14],
+      ],
+      "#dc9fce",
+    ),
+    aperture(-22, 13, 11, lit, "#cbfbea"),
+    aperture(24, 8, 14, lit, "#cbfbea"),
+    ...repairPlate(JADE, lit, state),
+  ];
+}
+
+export function signal(lit: boolean, state: DockState): Face[] {
+  return [
+    ...shell(
+      [
+        [0, 18, -4, 1, 1],
+        [0, 16, 0, 22, 18],
+        [-2, 10, 6, 20, 20],
+        [1, 5, 12, 13, 14],
+        [0, 5, 15, 0, 0],
+      ],
+      "vertical",
+      PLUM,
+    ),
+    ...shell(
+      [
+        [4, 2, 2, 10, 12],
+        [5, 0, 10, 12, 13],
+        [2, -3, 20, 10, 9],
+        [-5, -5, 28, 7, 7],
+        [-10, -6, 37, 5, 5],
+        [-10, -7, 43, 0, 0],
+      ],
+      "vertical",
+      PLUM,
+    ),
+    ...shell(
+      [
+        [10, 4, 4, 8, 11],
+        [13, 3, 11, 8, 9],
+        [17, 1, 19, 7, 6],
+        [18, 0, 28, 4, 4],
+        [14, -1, 37, 1.6, 1.5],
+        [7, -2, 43, 0, 0],
+      ],
+      "vertical",
+      IRIS,
+    ),
+    ...shell(
+      [
+        [-1, 1, 26, 0, 0],
+        [1, 1, 31, 5, 4],
+        [0, 0, 37, 6, 5],
+        [0, -1, 43, 3.5, 3],
+        [2, -2, 46, 0, 0],
+      ],
+      "vertical",
+      lit ? JADE : CERULEAN,
+    ),
+    aperture(1, 5, 36, lit, "#e9fffc"),
+    ...repairPlate(PLUM, lit, state, pronouncedSeam),
+  ];
 }

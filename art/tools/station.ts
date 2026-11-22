@@ -8,14 +8,12 @@ import {
   BLINK_MS,
   blue,
   blueDim,
-  box,
-  cream,
   creamSide,
   DESTINATION_SCALE,
   DISPLAY_SCALE,
-  DOCK,
   ngon,
   orientedBox,
+  orientedPlan,
   type Part,
   type Plan,
   polygons as draw,
@@ -24,133 +22,161 @@ import {
 } from "./solid.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-const PAD = 4;
+const armour = { top: "#829fb7", side: "#43596f" };
+const frameMetal = { top: "#afc4d0", side: "#647b90" };
+const hull = { top: "#c9d5dc", side: "#738d9d" };
+const dark = { top: "#52677f", side: "#343f55" };
+const copper = { top: "#ca916f", side: "#895d58" };
+const cyan = { top: "#7fd6cc", side: "#4fa59d" };
+const angle = (degrees: number) => (degrees * Math.PI) / 180;
 
-const lavender = "#c4afcc";
-const lavenderSide = "#8f7c9c";
-const lavenderDark = "#6f5f7d";
-const spoke = "#b5a2c0";
-const hub = "#dccfe2";
-const hubSide = "#a08cad";
-const craneTop = "#d9cbb1";
-const glass = "#7fd6cc";
-const glassSide = "#4fa59d";
-const glassCap = "#c4efe8";
-const blueSide = "#5687ba";
-const blueDimSide = "#33475f";
+function at(degrees: number, radius: number): readonly [number, number] {
+  const a = angle(degrees);
+  return [Math.cos(a) * radius, Math.sin(a) * radius];
+}
 
-const R_IN = 54;
-const R_OUT = 65;
-const DOCK_FACE = 88;
+function arc(start: number, end: number, inner: number, outer: number): Plan {
+  return [at(start, outer), at(end, outer), at(end, inner), at(start, inner)];
+}
 
-// Groups draw far to near by their first part; parts inside a group keep list order.
-function model(lit: boolean): Part[][] {
+// Split habitat arcs. The open sectors expose their trusses and leave two clear gaps.
+function habitat(start: number, end: number, raised: boolean): Part[][] {
   const groups: Part[][] = [];
-  const segments = 24;
-  for (let i = 0; i < segments; i++) {
-    const [a0, a1] = [(2 * Math.PI * i) / segments, (2 * Math.PI * (i + 1)) / segments];
-    const plan: Plan = [
-      [R_OUT * Math.cos(a0), R_OUT * Math.sin(a0)],
-      [R_OUT * Math.cos(a1), R_OUT * Math.sin(a1)],
-      [R_IN * Math.cos(a1), R_IN * Math.sin(a1)],
-      [R_IN * Math.cos(a0), R_IN * Math.sin(a0)],
-    ];
-    const ring: Part[] = [{ plan, z0: 0, z1: 7, top: lavender, side: lavenderSide }];
-    if (i % 2 === 0) {
-      ring.push(...wallWindows((nx, ny) => nx + ny > 0.9, 2.5, 4.5, 1, 2.4, plan));
-    }
-    groups.push(ring);
-  }
-
-  // Four spokes on the screen diagonals, clear of the dock axis.
-  for (const degrees of [0, 90, 180, 270]) {
-    const a = (degrees * Math.PI) / 180;
-    const mid = (21 + R_IN) / 2;
-    const plan = orientedBox(mid * Math.cos(a), mid * Math.sin(a), a, R_IN - 21 + 2, 6);
-    groups.push([{ plan, z0: 2, z1: 5.5, top: spoke, side: lavenderDark }]);
-  }
-
-  // Hub: tall octagon with windows, cream cap, mast and beacon.
-  const facing = (nx: number, ny: number) => nx + ny > 0.3;
-  const hubPlan = ngon(8, 23, 0, 0, Math.PI / 8);
-  groups.push([
-    { plan: hubPlan, z0: 0, z1: 18, top: hub, side: hubSide },
-    ...wallWindows(facing, 9, 13, 2, 3.2, hubPlan),
-    { plan: ngon(8, 13, 0, 0, Math.PI / 8), z0: 18, z1: 23, top: cream, side: creamSide },
-    { plan: box(-1.3, -1.3, 1.3, 1.3), z0: 23, z1: 38, top: hub, side: hubSide },
-    {
-      plan: box(-2.4, -2.4, 2.4, 2.4),
-      z0: 38,
-      z1: 41.5,
-      top: lit ? blue : blueDim,
-      side: lit ? blueSide : blueDimSide,
-    },
-  ]);
-
-  // Greenhouses: stepped glass domes on the ring.
-  const ringMid = (R_IN + R_OUT) / 2;
-  for (const degrees of [135, 315, 245]) {
-    const a = (degrees * Math.PI) / 180;
-    const [cx, cy] = [ringMid * Math.cos(a), ringMid * Math.sin(a)];
+  const floor = raised ? 10 : 3;
+  for (let segment = start; segment < end; segment += 15) {
+    const plan = arc(segment, segment + 15, 48, 65);
+    const joint = segment === start || segment + 15 === end;
     groups.push([
-      { plan: ngon(6, 10.5, cx, cy), z0: 7, z1: 9.5, top: lavender, side: lavenderSide },
-      { plan: ngon(6, 9, cx, cy), z0: 9.5, z1: 15, top: glass, side: glassSide },
-      { plan: ngon(6, 5, cx, cy), z0: 15, z1: 18, top: glassCap, side: glass },
+      { plan, z0: floor - 3, z1: floor, ...dark },
+      { plan, z0: floor, z1: floor + 8, ...(joint ? copper : armour) },
+      ...wallWindows((x, y) => x + y > 0.45, floor + 2, floor + 5, 2, 2, plan),
+      { plan: arc(segment + 1, segment + 14, 50, 57), z0: floor + 8, z1: floor + 9, ...frameMetal },
+    ]);
+  }
+  return groups;
+}
+
+function model(lit: boolean): Part[][] {
+  const groups = [...habitat(60, 210, true), ...habitat(245, 380, false)];
+
+  // Four skinny diagonal ribs tie the half rings to the hub and leave the centre open.
+  for (const degrees of [86, 172, 260, 344]) {
+    const [x, y] = at(degrees, 36);
+    const a = angle(degrees);
+    const z = degrees < 200 ? 9 : 4;
+    const plan = orientedBox(x, y, a, 32, 6);
+    groups.push([
+      { plan, z0: z - 4, z1: z, ...dark },
+      { plan: orientedBox(x, y, a, 30, 2.4), z0: z, z1: z + 2, ...frameMetal },
     ]);
   }
 
-  // Workshop: cream block with lit windows and a crane rail.
-  const w = (205 * Math.PI) / 180;
-  const [wx, wy] = [ringMid * Math.cos(w), ringMid * Math.sin(w)];
-  const workshop = orientedBox(wx, wy, w + Math.PI / 2, 24, 15);
+  const facing = (x: number, y: number) => x + y > 0.4;
+  const base = ngon(6, 23, 0, 0, Math.PI / 6);
+  const head = orientedPlan(0, 0, angle(30), [
+    [-18, -10],
+    [11, -10],
+    [20, -3],
+    [17, 7],
+    [-10, 11],
+    [-18, 6],
+  ]);
   groups.push([
-    { plan: workshop, z0: 7, z1: 17, top: cream, side: creamSide },
-    ...wallWindows(facing, 11, 14, 3, 2.6, workshop),
+    { plan: base, z0: 0, z1: 19, ...dark },
+    ...wallWindows(facing, 8, 13, 2, 3, base, cyan.top),
+    { plan: head, z0: 19, z1: 29, ...hull },
+    ...wallWindows(facing, 22, 25, 3, 2.6, head, warm),
+    { plan: ngon(6, 8, -2, 4, Math.PI / 6), z0: 29, z1: 35, ...armour },
+    { plan: ngon(4, 2, -2, 4), z0: 35, z1: 49, ...frameMetal },
     {
-      plan: orientedBox(wx, wy, w + Math.PI / 2, 24, 4),
-      z0: 17,
-      z1: 19,
-      top: craneTop,
-      side: creamSide,
+      plan: ngon(6, 2.7, -2, 4),
+      z0: 49,
+      z1: 52,
+      top: lit ? blue : blueDim,
+      side: lit ? cyan.side : dark.side,
     },
   ]);
 
-  // The arm toward the viewer ends in a closed cream collar with two warm windows.
-  const [ux, uy] = [Math.cos(DOCK), Math.sin(DOCK)];
-  const [vx, vy] = [-uy, ux];
-  const at = (distance: number, across: number) =>
-    [ux * distance + vx * across, uy * distance + vy * across] as const;
-  const armMid = (R_OUT - 2 + 80) / 2;
-  const arm = orientedBox(...at(armMid, 0), DOCK, 80 - (R_OUT - 2), 20);
+  // Three tapered, raised radiator pylons give the station a distinct skyline. They are sealed.
+  for (const [heading, low, high] of [
+    [102, 18, 37],
+    [201, 18, 26],
+    [286, 10, 32],
+  ] as const) {
+    const a = angle(heading);
+    const [x, y] = at(heading, 55);
+    const plan = orientedPlan(x, y, a, [
+      [-7, -5],
+      [7, -3],
+      [9, 1],
+      [2, 5],
+      [-7, 3],
+    ]);
+    groups.push([
+      { plan, z0: low, z1: high - 5, ...armour },
+      { plan: orientedBox(x, y, a, 12, 3), z0: high - 5, z1: high, ...copper },
+      { plan: orientedBox(x, y, a, 9, 1.5), z0: high, z1: high + 1.2, ...cyan },
+    ]);
+  }
+
+  // Detached-looking utility pods are linked to the habitat by a narrow exposed truss.
+  const [outX, outY] = at(317, 70);
+  const [trussX, trussY] = at(317, 65);
   groups.push([
-    { plan: arm, z0: 1, z1: 11, top: hub, side: hubSide },
-    ...wallWindows((nx, ny) => nx + ny > -0.2 && Math.abs(nx - ny) > 0.5, 5, 8, 2, 2.6, arm),
-    { plan: orientedBox(...at(84, 0), DOCK, 8, 42), z0: -3, z1: 20, top: cream, side: creamSide },
-    ...[-1, 1].map((side): Part => ({
-      plan: orientedBox(...at(DOCK_FACE + 0.3, side * 9.2), DOCK, 0.6, 9.2),
-      z0: 6,
-      z1: 12,
-      top: lit ? warm : "#a08f78",
-      side: lit ? warm : "#a08f78",
-    })),
+    { plan: orientedBox(trussX, trussY, angle(317), 20, 4), z0: 2, z1: 6, ...frameMetal },
+    { plan: orientedBox(outX, outY, angle(317), 11, 18), z0: 4, z1: 11, ...dark },
+    {
+      plan: orientedBox(outX, outY, angle(317), 8, 15),
+      z0: 11,
+      z1: 14,
+      ...hull,
+    },
+    {
+      plan: orientedBox(...at(317, 74), angle(317), 4, 12),
+      z0: 14,
+      z1: 15,
+      ...copper,
+    },
+  ]);
+
+  // Sealed service module toward the viewer. The angled nose reads as hull plating.
+  const module = orientedPlan(...at(45, 39), angle(45), [
+    [-17, -7],
+    [10, -8],
+    [17, -4],
+    [17, 5],
+    [9, 8],
+    [-17, 7],
+  ]);
+  groups.push([
+    { plan: module, z0: 2, z1: 10, ...dark },
+    { plan: module, z0: 10, z1: 16, ...hull },
+    ...wallWindows(facing, 12, 14.5, 2, 2.6, module, lit ? warm : creamSide),
+    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...copper },
   ]);
 
   return groups;
 }
 
-const polygons = (lit: boolean) => draw(model(lit));
+const MODEL_SCALE = 1.15;
+const polygons = (lit: boolean) =>
+  draw(model(lit)).map(({ color, points }) => ({
+    color,
+    points: points.map(([x, y, z]) => [x * MODEL_SCALE, y * MODEL_SCALE, z * MODEL_SCALE] as const),
+  }));
 
-// Frame bounds over both blink frames, with the pivot (hub base) on the vertical centre line.
-const all = [...polygons(true), ...polygons(false)].flatMap(({ points }) => points);
-const xs = all.map((point) => projectAt(0, 0, point)[0]);
-const ys = all.map((point) => projectAt(0, 0, point)[1]);
-const halfWidth = Math.ceil(Math.max(-Math.min(...xs), Math.max(...xs)) + PAD);
-const above = Math.ceil(-Math.min(...ys) + PAD);
-const width = halfWidth * 2;
-// Extra rows below keep the normalized pivot an exact five-decimal value.
-let height = above + Math.ceil(Math.max(...ys) + PAD);
-while ((above * 100000) % height !== 0) {
-  height++;
+// A larger frame encloses the new structure around the same world anchor.
+const width = 224;
+const height = 180;
+const halfWidth = width / 2;
+const above = 81;
+for (const { points } of [...polygons(true), ...polygons(false)]) {
+  for (const point of points) {
+    const [x, y] = projectAt(halfWidth, above, point);
+    if (x < 2 || x > width - 2 || y < 2 || y > height - 2) {
+      throw new Error(`Sunflower station geometry exceeds its safe frame at ${x}, ${y}`);
+    }
+  }
 }
 
 function svg(frame: "a" | "b"): string {

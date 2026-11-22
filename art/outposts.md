@@ -18,18 +18,19 @@ The three sector one cooperating outposts: growers, a workshop and salvagers.
 
 - Solid models in the [station](station.md) projection, culling and family:
   cream structure `#efe4cf` (sides `#bfae94`), warm lit windows `#ffe9b8`, and
-  a decorative dock collar, mouth, lit floor strip, blue corner lights and two
-  approach-light pairs: Ada uses an outpost without docking. Fixed orientation: no headings and no screen rotation.
+  fixed orientations. The Growers' navigation strip sits in the habitat rim.
+  The Salvagers' lights sit on the hull and grabber. The Workshop's articulated
+  arms surround an open repair area. Ada visits each outpost with Use.
 - Each outpost is identified by its silhouette and colours alone. No labels,
   signs or text are drawn on or beside it.
 
 ### Palette
 
-| Outpost   | Shapes                                                                    | Colours                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Growers   | Seven planters radiating like a sunflower head, a round deck, three domes | Leaf `#9ccc5a` (sides `#6c9a3a`, tufts `#4f7a2c`), glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`) |
-| Workshop  | Long hall with a sawtooth roof, two lit bays, a sign band, two cranes     | Yellow `#f2d15a` (sides `#b99a36`, dark `#8c7428`), roof `#d9cbb1`, bay glow `#ffd88a`                                                     |
-| Salvagers | Patched hull, tank, scrap stacks, a turret grabber with an electromagnet  | Steel `#b8bfc9`, slate `#8d9bb0`, olive `#aaa883`, rust `#b49a7c`, dark `#6e7482`; periwinkle magnet and beacon `#8f9cf0` (dim `#4a5080`)  |
+| Outpost   | Shapes                                                                   | Colours                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Growers   | Seven hydroponic modules around a round deck and three habitat domes     | Steel `#637985`, leaf `#9ccc5a`, glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`)                  |
+| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, ochre `#df9b60`                                                                                    |
+| Salvagers | Patched hull, tank, scrap stacks, a turret grabber with an electromagnet | Steel `#b8bfc9`, slate `#8d9bb0`, olive `#aaa883`, rust `#b49a7c`, dark `#6e7482`; periwinkle magnet and beacon `#8f9cf0` (dim `#4a5080`) |
 
 Growers' leaf green stays clearly yellower and darker than the
 [Stardust](stardust.md) mint.
@@ -48,60 +49,42 @@ Every entry has the station schema plus `outpost`, the outpost role
 - Display size is `frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale), as for the
   station. `facing` is
   `fixed`; `dock.outward` is `[0, 1]`.
-- Pivots lie on the world plane: the growers' deck centre, the workshop hall's
-  base centre and the model origin between the salvagers' hull and tank.
-- The dock entrance is the mouth's centre on the world plane, below the pivot
-  by 43.841 frame px (growers), 16.971 (workshop) and 38.184 (salvagers). Ada
-  enters moving screen-up, opposite `dock.outward`. Dock values are frame px;
-  scale them by the display size like any other manifest value.
+- Pivots lie on the world plane: the growers' deck centre, the workshop's central bus and the model origin between the salvagers' hull and tank.
+- The legacy approach point lies on the world plane, below the pivot by 43.841
+  frame px (growers), 16.971 (workshop) and 38.184 (salvagers). Dock values are
+  frame px.
 
 ### Blink
 
 - `frameMs` 700: frames A and B alternate, 700 ms each.
-- A lights the dock corner lights `#70ace8` and each outpost's own lamps: the
-  growers' planter tips and dome beacon, the workshop's sign band, the
-  salvagers' magnet and antenna beacon. B lights the approach-light pairs and
-  dims the rest. Unlit blue lights use `#3f5878`.
+- A lights the growers' module tips and dome beacon, the workshop's
+  manipulator tips, and the salvagers' magnet and antenna beacon. B dims them.
 - Reduced motion shows frame A only.
 
 ## Discovery cache
 
-A sealed pod with a beacon mast, drawn as pixel art from character grids like
-[Stardust](stardust.md). Every pixel is opaque or clear; draw with
-nearest-neighbour filtering.
+A sealed data satellite with swept solar wings, a central bus and a mast
+receiver. Draw the opaque and clear pixel art with nearest-neighbour filtering.
 
 - Root manifest id `discovery-cache`: a 63 by 21 sheet of 21 by 21 frames,
   displayed at 21 by 21 logical px with the pivot at the centre. `frames` names
   `hidden` (0), `litA` (1) and `litB` (2).
-- `hidden` is the pod before Ada approaches: desaturated and unlit, close to
+- `hidden` is the satellite before Ada approaches: desaturated and unlit, close to
   the environment tones.
 - On approach the cache switches straight to the lit loop, with no reveal
   frame. `loop` (and the sheet's `lit` tag) alternates `litA` and `litB`,
   500 ms each.
-- Lit frames use point-of-interest lavender from the
-  [space palette](space-palette.md), linking the cache to the station and other
-  points of interest. A lights the full beacon with a white core; B shrinks it
-  to a warm core and shows eight warm halo pixels around the pod. The table
-  lists frame A; B changes only the beacon and adds the halo.
+- Lit frames reveal navy solar wings, a bronze bus and a warm beacon.
+  A broad pale cluster on the bus separates the lit frames from the hidden
+  state. Frame A uses a white beacon core. Frame B uses a warm core and eight
+  warm halo pixels around the satellite.
 - Reduced motion: `hidden` before approach, then `litA` without the loop.
 - Collision: each frame of `discovery-cache.json` carries `collision`, its
   drawn silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
   frame (one frame px is one display px), the schema of the ship's
   `collision[k]`. Traced by the
-  [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
-  ladder that passes: 16 parts, intersection over union 0.999. The halo is
-  light, not matter, like the ship's speed jets, so `litB` traces its pod
-  alone and all three frames carry the same parts.
-
-| Role        | Hidden    | Lit       |
-| ----------- | --------- | --------- |
-| Light       | `#6e6478` | `#e6dbeb` |
-| Body        | `#5a5164` | `#c4afcc` |
-| Shade, mast | `#453e4f` | `#8f7c9c` |
-| Seam        | `#3a3344` | `#ffe9b8` |
-| Beacon      | `#5a5164` | `#ffe9b8` |
-| Beacon core | `#6e6478` | `#ffffff` |
-| Halo (B)    | none      | `#ffe9b8` |
+  [shared tracer](ship.md#shared-tracer) from the 21 px sprite. All three
+  frames use the same physical silhouette and the trace excludes the beacon halo.
 
 ## Stranded craft
 

@@ -60,6 +60,22 @@ function layout(faces: readonly Face[]): Layout {
   }
 }
 
+// Keep the established destination pivot, display box and frame-space dock metadata.
+function fixedLayout(faces: readonly Face[], width: number, height: number, above: number): Layout {
+  const frame = { halfWidth: width / 2, above, width, height };
+  for (const { points } of faces) {
+    for (const point of points) {
+      const [x, y] = frameXY(frame, point);
+      if (x < PAD || x > width - PAD || y < PAD || y > height - PAD) {
+        throw new Error(
+          `Andromeda destination exceeds its ${width} by ${height} frame: ${x}, ${y}`,
+        );
+      }
+    }
+  }
+  return frame;
+}
+
 const frameXY = ({ halfWidth, above }: Layout, point: Point) => projectAt(halfWidth, above, point);
 
 // SVG at its display size (frame * DISPLAY_SCALE * scale) with the viewBox in frame px, as
@@ -148,15 +164,9 @@ mkdirSync(output, { recursive: true });
 
 // ---------------------------------------------------------------- settlers' station
 
-// Every Andromeda station draws this pair in place of the trading station, with its live dock.
-const station = pair(
-  "station-settlers",
-  "settlers-station",
-  "Settlers' station",
-  m.station,
-  m.STATION_LEVELS,
-);
-const stationFrame = layout(allFaces(station));
+// Every Andromeda station draws this pair in place of the trading station.
+const station = pair("station-settlers", "settlers-station", "Settlers' station", m.station);
+const stationFrame = fixedLayout(allFaces(station), 176, 160, 82);
 for (const item of station) writeFixed(stationFrame, item);
 const stationEntries = station.map((item) =>
   fixedEntry(stationFrame, item, { station: "settlers" }),
@@ -170,25 +180,28 @@ replaceEntries(
 
 // ---------------------------------------------------------------- settlements
 
-// Andromeda's outposts, in the outpost schema: role `settlement`, one entry pair per design. Docks
-// are decorative, as on Sunflower's outposts.
+// Andromeda's outposts retain their dock metadata for the outpost schema.
 const settlements = [
-  { variant: "hamlet", title: "Hamlet", build: m.hamlet, dock: m.HAMLET_DOCK },
-  { variant: "lamphouse", title: "Lamp house", build: m.lampHouse, dock: m.LAMPHOUSE_DOCK },
+  { variant: "hamlet", title: "Hamlet", build: m.hamlet, dock: m.HAMLET_DOCK, frame: [80, 80, 35] },
+  {
+    variant: "lamphouse",
+    title: "Lamp house",
+    build: m.lampHouse,
+    dock: m.LAMPHOUSE_DOCK,
+    frame: [64, 80, 48],
+  },
 ] as const;
-const settlementEntries = settlements.flatMap(({ build, dock, title, variant }) => {
-  const items = pair(
-    `outpost-${variant}`,
-    variant,
-    `Settlement, ${title.toLowerCase()}`,
-    build,
-    m.SETTLEMENT_LEVELS,
-  );
-  const frame = layout(allFaces(items));
-  for (const item of items) writeFixed(frame, item);
-  const at = dockAt(frame, dock.face, dock.mouth);
-  return items.map((item) => fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }));
-});
+const settlementEntries = settlements.flatMap(
+  ({ build, dock, frame: dimensions, title, variant }) => {
+    const items = pair(`outpost-${variant}`, variant, `Settlement, ${title.toLowerCase()}`, build);
+    const frame = fixedLayout(allFaces(items), ...dimensions);
+    for (const item of items) writeFixed(frame, item);
+    const at = dockAt(frame, dock.face, dock.mouth);
+    return items.map((item) =>
+      fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }),
+    );
+  },
+);
 replaceEntries(
   "andromeda",
   (id) => /^outpost-(hamlet|lamphouse)-[ab]$/.test(id),
@@ -363,7 +376,7 @@ function siteAnchor([sx, sy]: Point2, layer: "behind" | "front", phase: 0 | 1) {
 for (const lit of [true, false])
   checkClear(
     "courier school",
-    polygons(m.station(lit), undefined, m.STATION_LEVELS),
+    polygons(m.station(lit)),
     m.courierSchool(lit),
     m.SCHOOL.site,
     m.SCHOOL_LEVELS,

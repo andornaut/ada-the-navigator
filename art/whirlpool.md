@@ -21,75 +21,66 @@
 
 Whirlpool's own station, the Eddy, in place of the shared
 [trading station](station.md) at every Whirlpool station. Ada enters it by
-Use, the Dock action; it has no dock, mouth or approach lights.
+Use, the Dock action. Its hull has no collar or dock mouth.
 
-- A pale teal ramp spirals in and up to a tower, as a whirlpool's eddy: 30
-  segments over 1.3 turns, radius 66 to 24 model units, 11 wide, rising from 3
-  to 16 as it winds in. The turns stay apart, so the spiral reads open.
-- Current chevrons on every other ramp segment, 15 in all, point inward along
-  the ramp, as the [current streaks](#current-streaks) point downstream.
-- A hexagonal tower with two rows of warm windows, a cream cap, a mast and the
-  blue beacon; three salvaged debris plates on its skirt, in the river debris'
-  field-matter tones.
-- An arm toward the viewer ending in the station family's closed collar with
-  two warm windows: no mouth.
-- The [station](station.md) solid model, projection and culling, in a fixed
-  orientation: no headings and no screen rotation. 3.0 Ada wingspans across
-  at its widest, as the trading station.
+- A suspended ribbon winds 1.3 turns around the core with open gaps
+  between the turns. Thirty segments climb from the outer tip to a
+  short brace at the core. Five colour bands mark the sweep.
+- Fifteen current chevrons point inward along the ribbon, as the
+  [current streaks](#current-streaks) point downstream.
+- A blue plinth supports a faceted teal hull, a lilac observation deck and an
+  offset sea-glass crown. Amber and mint windows distinguish the two levels,
+  and a low blue beacon caps the crown.
+- A short brace on the outer turn carries a raised sensor pod with a mint
+  signal on the near-right edge.
+- The [station](station.md) solid model, projection and culling give the
+  Eddy a fixed orientation.
 
 ### Frames and manifest
 
-| Field         | Value                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Ids           | `whirlpool-station-{k}`, `k` 0 to 3, files `/art/whirlpool/station-{k}.svg`                |
-| Frame         | 176 by 128 frame px; display 115.5 by 84 at the [destination scale](destinations.md#scale) |
-| Pivot         | `(0.5, 0.4375)`: the tower base on the world plane                                         |
-| `facing`      | `fixed`                                                                                    |
-| `frameMs`     | 350                                                                                        |
-| `destination` | `station`; `frameIndex` `k`                                                                |
+| Field         | Value                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| Ids           | `whirlpool-station-{k}`, `k` 0 to 3, files `/art/whirlpool/station-{k}.svg`                  |
+| Frame         | 208 by 144 frame px; display 136.5 by 94.5 at the [destination scale](destinations.md#scale) |
+| Pivot         | `(0.5, 0.4375)`, frame px `(104, 63)` at the station world origin                            |
+| `facing`      | `fixed`                                                                                      |
+| `frameMs`     | 350                                                                                          |
+| `destination` | `station`; `frameIndex` `k`                                                                  |
 
-- Show frame `k` for 350 ms, 0 to 3 in order, and loop (1.4 s). Frames 0 and
-  1 light the mast beacon `#70ace8`, the windows and the collar windows; 2 and
-  3 dim them (`#3f5878`, `#a08f78`), the station family's 700 ms blink.
-- Chevron `k`, counted from the outer end, is lit `#f7f2ff` on frame `f` when
-  `(k + f) mod 4 = 0`, otherwise `#5b8089`, so the lit chevrons step inward one
-  place per frame, flowing to the tower.
+- Show frame `k` for 350 ms, 0 to 3 in order, and loop (1.4 s). The blue
+  beacon, window banks and sensor signal light on frames 0 and 1 and dim on
+  frames 2 and 3, the station family's 700 ms blink.
+- Chevron `k`, counting from zero at the outer tip, lights on frame
+  `k mod 4`. The lit positions advance inward one place per frame.
 - Reduced motion holds frame 0.
-- Every frame shares one frame size and pivot. Silhouette radius 55.2 and top
-  32.5 above the pivot over all four frames, at 1.5x; the Dock callout's centre
-  sits 52.5 above the pivot
+- Every frame shares one frame size and pivot. At 1×, the painted silhouette
+  spans 113.5 px across, reaches 38.0 px above the pivot and has a 64.5 px
+  screen radius. Its reach on the world plane is 53.8 units. The Dock callout
+  follows the drawn top
   ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
-  Pass-through, with no `collision`, as every destination.
+  The station is pass-through and carries no `collision`.
 - No project world change attaches to the station: the nursery beacon sits at
   the whale family, 1200 or more from any station, and the current-map buoys
   along the whales' current, which keeps 800 clear of stations.
 
 ### Palette
 
-| Role                  | Colour    | On the field | Keyline |
-| --------------------- | --------- | -----------: | ------: |
-| Tower                 | `#dff6fa` |       1.48:1 | 10.86:1 |
-| Ramp                  | `#c8eef5` |       1.34:1 | 10.86:1 |
-| Tower side            | `#a9cfd8` |       1.00:1 | 10.86:1 |
-| Ramp side             | `#7aa4ae` |       1.63:1 | 10.86:1 |
-| Ramp rear             | `#6d8f97` |       2.10:1 | 10.86:1 |
-| Cap, collar           | `#efe4cf` |       1.32:1 | 10.86:1 |
-| Cap side, collar side | `#bfae94` |       1.31:1 | 10.86:1 |
-| Chevron lit           | `#f7f2ff` |       1.51:1 | 10.86:1 |
-| Chevron unlit, plates | `#5b8089` |       2.59:1 | 10.86:1 |
-| Plate side            | `#3e636c` |       3.95:1 | 10.86:1 |
-| Windows               | `#ffe9b8` |       1.39:1 | 10.86:1 |
-| Windows dim           | `#a08f78` |       1.89:1 | 10.86:1 |
-| Beacon                | `#70ace8` |       1.45:1 | 10.86:1 |
+| Role                   | Top or lit                                            | Side or dim                                           |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| Ribbon, outer to inner | `#57c0ad`, `#5abdd5`, `#779cda`, `#a398cb`, `#6ec7ac` | `#317f84`, `#326b92`, `#465983`, `#655984`, `#438c85` |
+| Plinth                 | `#537caa`                                             | `#35476b`                                             |
+| Core hull              | `#46adad`                                             | `#2e707c`                                             |
+| Observation deck       | `#9e8eb9`                                             | `#54496e`                                             |
+| Crown                  | `#94d5c0`                                             | `#397b83`                                             |
+| Current chevrons       | `#f9fff4`                                             | `#2d5065`                                             |
+| Amber windows          | `#ffe9b8`                                             | `#b29a73`                                             |
+| Mint windows           | `#c1ffdf`                                             | `#65948d`                                             |
+| Blue beacon            | `#70ace8`                                             | `#3f5878`                                             |
 
-- The build fails if the tower, ramp, cap, lit chevron, windows or beacon falls
-  below 5:1 on the field, Whirlpool's floor for bodies and lamps. On the light
-  field the station draws over the 2 px destination keyline
-  ([Destinations](destinations.md#light-field-keyline)), whose ink is
-  10.86:1 on the field, so the check takes the ink (`floorColour`) and the
-  fills stay as drawn.
-- The ramp's teal stays pale, clear of the mint `active` (`#65C9BF`) of ore
-  and Stardust, and the station takes no coral `obstacle`.
+The producer checks the 5:1 field contrast floor for the hull and lit accents.
+On Whirlpool's light field, `floorColour` uses the ink of the
+[2 px destination keyline](destinations.md#light-field-keyline), which has
+10.86:1 contrast on the field.
 
 ## Current streaks
 

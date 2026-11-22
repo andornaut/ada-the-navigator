@@ -11,24 +11,22 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const SIZE = 21;
 const BLINK_MS = 500;
 
-// Sealed pod with a beacon: "L" light, "M" body, "D" shade, "S" seam, "a" mast, "B" beacon,
-// "W" beacon core, "." clear.
+// A sealed data satellite with swept solar wings, a central bus and a blinking receiver.
 const POD = [
-  "......B......",
-  ".....BWB.....",
-  "......B......",
-  "......a......",
-  "....LLLLL....",
-  "..LLLLLLLLL..",
-  ".MLLLLLLLLLM.",
-  "MMMMMMMMMMMMM",
-  "SSSSSSSSSSSSS",
-  "MMMMMMMMMMMMM",
-  "DMMMMMMMMMMMD",
-  ".DDMMMMMMMDD.",
-  "...DDDDDDD...",
+  ".........B.........",
+  "........BWB........",
+  ".........B.........",
+  ".........a.........",
+  ".......LCCCL.......",
+  ".RPP...LMMML...PPR.",
+  ".RGPPR.MMSMM.RPPGR.",
+  "..RPGPPMMMMMPPGPR..",
+  "...RPGPMSMSMPGPR...",
+  "....RRRMDMDMRRR....",
+  ".......DDDDD.......",
+  "........a.a........",
 ] as const;
-const POD_ORIGIN = [4, 5] as const;
+const POD_ORIGIN = [1, 4] as const;
 // Lit B adds eight warm halo pixels on a ring around the pod.
 const HALO = [
   [10, 2],
@@ -52,16 +50,24 @@ const HIDDEN: Palette = {
   a: "453e4f",
   B: "5a5164",
   W: "6e6478",
+  C: "5a5164",
+  R: "484956",
+  P: "505769",
+  G: "666b79",
 };
 // Lit: point-of-interest lavender with a warm seam and beacon.
 const LIT_A: Palette = {
-  L: "e6dbeb",
-  M: "c4afcc",
-  D: "8f7c9c",
+  L: "e3d9ae",
+  M: "a09370",
+  D: "5d5b60",
   S: "ffe9b8",
   a: "8f7c9c",
   B: "ffe9b8",
   W: "ffffff",
+  C: "fff2cf",
+  R: "384267",
+  P: "556ca6",
+  G: "8fafd3",
 };
 const LIT_B: Palette = { ...LIT_A, B: "c4afcc", W: "ffe9b8" };
 const HALO_COLOUR = "ffe9b8";

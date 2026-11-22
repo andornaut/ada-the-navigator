@@ -29,7 +29,7 @@ defines no change when a landmark is charted, so the art has one state.
 | ------ | ------------------------------------------------------------------------ | ------------------- | ---------------------------------- |
 | Nebula | `landmark-nebula-outer`, `landmark-nebula-core`, `landmark-nebula-stars` | 380 x 180, layered  | (0.5, 0.5)                         |
 | Wreck  | `landmark-wreck`                                                         | 140 x 84            | (0.5, 0.5)                         |
-| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 60 x 45             | (0.5, 0.5), the transmitter centre |
+| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 72 x 45             | (0.5, 0.5), the transmitter centre |
 
 All are `facing: fixed`: no headings and no screen rotation, like the station.
 
@@ -73,12 +73,11 @@ apart and tilts, with its fin; three debris flakes float by.
 
 ### Beacon
 
-A horizontal satellite with a lavender transmitter and white core between two
-mirrored solar panels. Each panel has a lavender frame and a three-column,
-four-row cell grid. The panel faces are `#6f5f7d`, the beam and grids
-`#b5a2c0`, and the transmitter, panel frames and arcs `#c4afcc`.
+A horizontal satellite with a white receiver in a faceted copper bus. Two
+clipped-corner navy solar wings are set apart from the bus by exposed trusses. Sky-blue gridlines
+separate the cells. Lavender signal arcs mark the receiver.
 
-The SVG uses a 40 x 30 view box and displays at 60 x 45 logical px, centred
+The SVG uses a 48 x 30 view box and displays at 72 x 45 logical px, centred
 on the transmitter. One pair of signal arcs sits above and below the body,
 1.5 units wide with round caps. Frame A uses radius 7.5 and frame B uses
 radius 12. The frames alternate every 700 ms (`frameMs`), and reduced motion
@@ -144,6 +143,6 @@ Reduced motion draws no ping.
 | `public/art/landmarks/nebula-core.svg`  | `d63fed89f279d3e5a7f451c030ebdd305b75452f50ef9326b2b50a3c171aa2af` |
 | `public/art/landmarks/nebula-stars.svg` | `a1b9a52d9c6027867b72311ddd335cc2637e54ce757ead12fe7725f9dbaeb880` |
 | `public/art/landmarks/wreck.svg`        | `fe8a0761873babdaab096ca0291adbd32df448062168f87d4114c6e4b8dd5e74` |
-| `public/art/landmarks/beacon-a.svg`     | `2e7b641b8809827cfdbd06349e3892258e7b72f2e0584ac0315d3350f0249ee8` |
-| `public/art/landmarks/beacon-b.svg`     | `9c380d4e98d34a62d1a43a8e2a5fccea1ca79abd500c7f894a11898a574ebdd7` |
+| `public/art/landmarks/beacon-a.svg`     | `480e5f6431c4b767fa89714cdcdecfee2f19c01eb7966c2cafbde332e18f1163` |
+| `public/art/landmarks/beacon-b.svg`     | `41b213a41328f58f7320ab865074f2c19cc9cdd1b83d7da78946ddef2113fc74` |
 | `public/art/hunt-glint.png`             | `4d6e5783bb68d1f8e76cd68d8dfdf96a5dd8c33346e1162afaec0906617828cc` |

@@ -16,6 +16,7 @@ import {
   facing,
   ngon,
   orientedBox,
+  orientedPlan,
   type Part,
   type Plan,
   wallWindows,
@@ -44,7 +45,6 @@ export const andromeda = {
   steelDark: "#6e7482",
   steelDarkSide: "#4f5462",
   scrape: "#cfcde0",
-  warmDim: "#a08f78",
   creamRear: "#a08f78",
 } as const;
 const a = andromeda;
@@ -112,141 +112,135 @@ function float(n: number, r: number, height: number, cx = 0, cy = 0): Part[] {
 
 // ---------------------------------------------------------------- settlers' station
 
-// Deck heights that buildings rest on: a group based at or above a level draws after every group
-// below it, so a deck never covers the buildings standing on it (solid.ts `polygons`).
-export const STATION_LEVELS = [7] as const;
-export const SCHOOL_LEVELS = [4.6] as const;
-export const SETTLEMENT_LEVELS = [5.6] as const;
+const alloy = ["#d5e1eb", "#758ba8"] as const;
+const truss = ["#8096af", "#425775"] as const;
+const ice = ["#7cc5e5", "#3d719b"] as const;
+const coral = ["#ef9f8e", "#a85b60"] as const;
+const cells = ["#335c96", "#243f67"] as const;
+const orbitalBox = (distance: number, across: number, length: number, width: number) =>
+  orientedBox(...along(DOCK, distance, across), DOCK, length, width);
 
-// The live dock: mouth width and face distance on the dock axis, as on the trading station.
-export const STATION = { deckR: 52, dockFace: 90, collar: 42, height: 16 } as const;
-
-// A lantern station: a pearl deck ringed by cottages, a striped lighthouse whose lantern carries
-// the galaxy marker, a post depot, two tanks and the family dock arm toward the viewer.
-export function station(lit: boolean): Part[][] {
-  const groups: Part[][] = [];
-  const { deckR } = STATION;
-  groups.push([
-    { plan: ngon(20, deckR, 0, 0, Math.PI / 20), z0: 0, z1: 6, top: a.pearl, side: a.pearlSide },
-    {
-      plan: ngon(20, deckR - 4, 0, 0, Math.PI / 20),
-      z0: 6,
-      z1: 7,
-      top: a.pearlInset,
-      side: a.pearlSide,
-    },
-  ]);
-  // Warm rim lamps on every other segment of the facing rim.
-  for (let i = 0; i < 20; i += 2) {
-    const angle = (2 * Math.PI * (i + 0.5)) / 20;
-    if (Math.cos(angle) + Math.sin(angle) < 0.2) continue;
-    groups.push([cube(...polar(angle, deckR + 0.4), 2, 2.2, lit ? warm : a.warmDim)]);
-  }
-  // Cottages around the deck, clear of the dock axis.
-  for (const d of [120, 165, 215, 260, 320, 0]) {
-    const angle = degrees(d);
-    groups.push(cottage(...polar(angle, 36), angle + Math.PI / 2, 15, 11, 7, 9));
-  }
-  // Post depot: a cream hall with a periwinkle sign band.
-  const depot = degrees(285);
-  const [px, py] = polar(depot, 20);
-  const hall = orientedBox(px, py, depot + Math.PI / 2, 22, 13);
-  groups.push([
-    { plan: hall, z0: 7, z1: 19, top: cream, side: creamSide },
-    ...wallWindows(facing, 10, 14, 3, 2.6, hall),
-    {
-      plan: orientedBox(px, py, depot + Math.PI / 2, 22.6, 13.6),
-      z0: 15,
-      z1: 17,
-      top: a.markerDark,
-      side: a.markerDark,
-    },
-    {
-      plan: orientedBox(px, py, depot + Math.PI / 2, 22, 13),
-      z0: 19,
-      z1: 20,
-      top: a.roof,
-      side: a.roofSide,
-    },
-  ]);
-  // Lighthouse: banded pearl tower, cream gallery, marker lantern, cap and blue mast beacon.
-  const tower = ngon(12, 12.2, 0, 0, Math.PI / 12);
-  groups.push([
-    ...tiers(
-      0,
-      0,
-      14,
-      7,
-      [
-        [1, 0, 10],
-        [0.93, 10, 16],
-        [0.9, 16, 26],
-        [0.86, 26, 32],
-        [0.83, 32, 42],
-      ],
-      a.pearl,
-      a.pearlSide,
-      a.pearl,
-      12,
-    ),
-    {
-      plan: ngon(12, 13.4, 0, 0, Math.PI / 12),
-      z0: 17,
-      z1: 22,
-      top: a.markerDark,
-      side: a.markerDeep,
-    },
-    {
-      plan: ngon(12, 12.4, 0, 0, Math.PI / 12),
-      z0: 33,
-      z1: 38,
-      top: a.markerDark,
-      side: a.markerDeep,
-    },
-    ...wallWindows(facing, 26.5, 30.5, 1, 2.6, tower),
-    { plan: ngon(12, 16, 0, 0, Math.PI / 12), z0: 49, z1: 51, top: cream, side: creamSide },
-    {
-      plan: ngon(12, 8.5, 0, 0, Math.PI / 12),
-      z0: 51,
-      z1: 60,
-      top: lit ? a.marker : a.markerDim,
-      side: lit ? a.markerDim : a.markerDark,
-    },
-    ...(lit ? [cube(0, 0, 54, 4, a.white)] : []),
-    { plan: ngon(12, 10.5, 0, 0, Math.PI / 12), z0: 60, z1: 62, top: a.roof, side: a.roofSide },
-    { plan: ngon(12, 6, 0, 0, Math.PI / 12), z0: 62, z1: 65, top: a.roof, side: a.roofSide },
-    { plan: box(-0.9, -0.9, 0.9, 0.9), z0: 65, z1: 72, top: a.slate, side: a.slateSide },
-    cube(0, 0, 72, 3.4, lit ? blue : blueDim),
-  ]);
-  // Fuel tanks behind.
-  for (const [d, r] of [
-    [235, 44],
-    [250, 30],
-  ] as const) {
-    groups.push(
-      tiers(
-        ...polar(degrees(d), r),
-        6,
-        7,
-        [
-          [0.8, 0, 1.5],
-          [1, 1.5, 10],
-          [0.75, 10, 12],
-        ],
-        a.slate,
-        a.slateSide,
-        a.slateCap,
-        10,
+// The cross-truss carries separate solar leaves, with the bus visible through the gaps.
+function solarLeaf(distance: number, across: number, length: number, width: number, z: number) {
+  return [
+    part(orbitalBox(distance, across, length, width), z, z + 1.3, ...truss),
+    ...[-1, 0, 1].map((row) =>
+      part(
+        orbitalBox(distance + (row * length) / 3, across, length / 3 - 0.8, width - 1.3),
+        z + 1.3,
+        z + 1.7,
+        ...cells,
       ),
+    ),
+  ];
+}
+
+// Chamfered pressure modules with warm observation windows and a coloured equipment casing.
+function habitat(
+  distance: number,
+  across: number,
+  length: number,
+  width: number,
+  z: number,
+  height: number,
+  casing: readonly [string, string],
+): Part[] {
+  const u = length / 2;
+  const v = width / 2;
+  const walls = orientedPlan(...along(DOCK, distance, across), DOCK, [
+    [-u, -v + 3],
+    [-u + 3, -v],
+    [u - 3, -v],
+    [u, -v + 3],
+    [u, v - 3],
+    [u - 3, v],
+    [-u + 3, v],
+    [-u, v - 3],
+  ]);
+  return [
+    part(walls, z, z + height, ...alloy),
+    ...wallWindows(facing, z + 3, z + 6, 2, 2.8, walls),
+    part(
+      orbitalBox(distance, across, length - 5, width - 5),
+      z + height,
+      z + height + 2,
+      ...casing,
+    ),
+  ];
+}
+
+export const SCHOOL_LEVELS = [4.6] as const;
+
+const STATION_APPROACH = 90;
+
+// An occupied orbital complex with a cross-truss, a raised concourse and a sealed service spur.
+export function station(lit: boolean): Part[][] {
+  const groups: Part[][] = [
+    [
+      part(orbitalBox(0, 0, 3, 126), 3, 7, ...truss),
+      part(orbitalBox(-5, 0, 2, 126), 5, 8, ...alloy),
+      part(orbitalBox(5, 0, 2, 126), 5, 8, ...alloy),
+    ],
+    [
+      part(orbitalBox(8, 0, 86, 24), 0, 10, ...truss),
+      part(orbitalBox(-15, 0, 44, 32), 9, 14, ...alloy),
+    ],
+    [
+      part(orbitalBox(-23, -20, 8, 29), 6, 11, ...truss),
+      part(orbitalBox(-25, -17, 8, 16), 17, 21, ...alloy),
+      ...habitat(-23, -30, 22, 19, 11, 13, coral),
+      part(orbitalBox(-25, -36, 3, 3), 26, 37, ...truss),
+      part(orbitalBox(-25, -24, 3, 3), 26, 37, ...truss),
+      part(orbitalBox(-25, -30, 4, 17), 36, 39, ...alloy),
+      part(orbitalBox(-23, -30, 1, 9), 38, 43, ...ice),
+    ],
+    habitat(-19, 0, 32, 25, 14, 20, ice),
+    habitat(18, 22, 29, 24, 8, 14, coral),
+    habitat(21, -23, 37, 24, 8, 17, ice),
+    habitat(29, 0, 24, 22, 10, 10, coral),
+  ];
+  for (const side of [-1, 1]) {
+    const across = side * 54;
+    groups.push(
+      [
+        part(orbitalBox(-4, across, 60, 3), 6, 9, ...alloy),
+        ...solarLeaf(-21, across - side, 26, 20, 9),
+        ...solarLeaf(17, across - side, 18, 20, 9),
+      ],
+      [cube(...along(DOCK, 5, side * 61), 7, 3.8, lit ? blue : blueDim)],
     );
   }
-  // Dock arm, collar, mouth, corner lights and approach lights.
-  const at = (distance: number, across: number) => along(DOCK, distance, across);
-  const arm = orientedBox(...at((deckR - 4 + 82) / 2, 0), DOCK, 82 - (deckR - 4), 20);
+
+  const boom = orientedPlan(0, 0, DOCK, [
+    [46, -12],
+    [55, -13],
+    [76, -7],
+    [85, -7],
+    [85, 7],
+    [76, 7],
+    [55, 13],
+    [46, 12],
+  ]);
+  const foot = orientedPlan(...along(DOCK, STATION_APPROACH, 0), DOCK, [
+    [-7, -8],
+    [-5, -13],
+    [-3, -13],
+    [0, -8],
+    [0, 8],
+    [-3, 13],
+    [-5, 13],
+    [-7, 8],
+  ]);
   groups.push([
-    { plan: arm, z0: 1, z1: 11, top: a.pearl, side: a.pearlSide },
-    ...wallWindows((nx, ny) => nx + ny > -0.2 && Math.abs(nx - ny) > 0.5, 5, 8, 2, 2.6, arm),
-    ...closedCollar(lit, STATION.dockFace, STATION.collar, cream, creamSide, STATION.height),
+    part(boom, 1, 9, ...truss),
+    part(orbitalBox(65, 0, 29, 6), 9, 11, ...ice),
+    part(foot, -2, 10, ...alloy),
+    part(orbitalBox(STATION_APPROACH - 2, 0, 2, 10), 10, 11, lit ? warm : a.creamRear, a.creamRear),
+  ]);
+  groups.push([
+    part(orbitalBox(-24, 0, 4, 4), 36, 47, ...truss),
+    part(orbitalBox(-24, 0, 4, 17), 46, 49, ...alloy),
+    cube(...along(DOCK, -24, 0), 49, 4, lit ? blue : blueDim),
   ]);
   return groups;
 }
@@ -323,87 +317,44 @@ export function courierSchool(lit: boolean): Part[][] {
 export const HAMLET_DOCK = { face: 34, mouth: 18, collar: 26, height: 10 } as const;
 export const LAMPHOUSE_DOCK = { face: 30, mouth: 16, collar: 24, height: 10 } as const;
 
-// Hamlet: three cottages on a round float, a marker lamp post and a small dock.
+// Hamlet is a compact habitation cluster with a coral utility spine and a single solar bank.
 export function hamlet(lit: boolean): Part[][] {
-  const groups: Part[][] = [float(12, 26, 5)];
-  for (const [d, length, width, height] of [
-    [200, 14, 10, 9],
-    [275, 12, 10, 11],
-    [345, 13, 9, 8],
-  ] as const) {
-    const angle = degrees(d);
-    groups.push(cottage(...polar(angle, 12), angle + Math.PI / 2, length, width, 5.6, height));
-  }
-  const [lx, ly] = polar(2.2, 19);
-  groups.push([
-    {
-      plan: box(lx - 0.9, ly - 0.9, lx + 0.9, ly + 0.9),
-      z0: 5.6,
-      z1: 20,
-      top: a.slate,
-      side: a.slateSide,
-    },
-    cube(lx, ly, 20, 3.4, lit ? a.marker : a.markerDeep),
-  ]);
-  const { collar, face, height, mouth } = HAMLET_DOCK;
-  groups.push(dockCollar(lit, face, mouth, collar, cream, creamSide, height));
-  return groups;
+  const { collar, face, height } = HAMLET_DOCK;
+  return [
+    [part(orbitalBox(0, 0, 8, 52), 1, 5, ...truss), part(orbitalBox(5, 0, 50, 13), 1, 6, ...alloy)],
+    solarLeaf(-10, -20, 20, 16, 5),
+    habitat(0, 2, 24, 17, 6, 14, coral),
+    habitat(4, 17, 22, 18, 5, 11, coral),
+    habitat(10, -14, 16, 15, 5, 9, ice),
+    [
+      ...closedCollar(lit, face, collar, ...alloy, height),
+      part(orbitalBox(face - 4, 0, 6, 15), height + 4, height + 6, ...coral),
+    ],
+  ];
 }
 
-// Lamp house: a tall house with a rooftop marker lantern, a shed, a mailbox post and a small dock.
+// Lamp House is a tall relay satellite with offset solar leaves and an elevated antenna array.
 export function lampHouse(lit: boolean): Part[][] {
-  const groups: Part[][] = [float(10, 22, 5)];
-  const [hx, hy] = polar(degrees(250), 5);
-  const walls = orientedBox(hx, hy, DOCK + Math.PI / 2, 15, 13);
-  groups.push([
-    { plan: walls, z0: 5.6, z1: 27, top: cream, side: creamSide },
-    ...wallWindows(facing, 9, 12.5, 2, 2.4, walls),
-    ...wallWindows(facing, 17, 20.5, 2, 2.4, walls),
-    {
-      plan: orientedBox(hx, hy, DOCK + Math.PI / 2, 16.5, 14.5),
-      z0: 27,
-      z1: 29,
-      top: a.roof,
-      side: a.roofSide,
-    },
-    {
-      plan: orientedBox(hx, hy, DOCK + Math.PI / 2, 10, 9),
-      z0: 29,
-      z1: 31,
-      top: a.roof,
-      side: a.roofSide,
-    },
-    {
-      plan: ngon(8, 3.6, hx, hy, Math.PI / 8),
-      z0: 31,
-      z1: 36,
-      top: lit ? a.marker : a.markerDeep,
-      side: lit ? a.markerDim : a.markerDeep,
-    },
-    { plan: ngon(8, 4.4, hx, hy, Math.PI / 8), z0: 36, z1: 37.5, top: a.roof, side: a.roofSide },
-  ]);
-  const shed = degrees(330);
-  groups.push(cottage(...polar(shed, 13), shed + Math.PI / 2, 8, 7, 5.6, 6));
-  const [mx, my] = polar(2.0, 15);
-  groups.push([
-    {
-      plan: box(mx - 0.7, my - 0.7, mx + 0.7, my + 0.7),
-      z0: 5.6,
-      z1: 11,
-      top: a.slate,
-      side: a.slateSide,
-    },
-    {
-      plan: box(mx - 2.2, my - 1.6, mx + 2.2, my + 1.6),
-      z0: 11,
-      z1: 14,
-      top: a.markerDim,
-      side: a.markerDark,
-    },
-  ]);
-  const { collar, face, height, mouth } = LAMPHOUSE_DOCK;
-  groups.push(dockCollar(lit, face, mouth, collar, cream, creamSide, height));
-  return groups;
+  const { collar, face, height } = LAMPHOUSE_DOCK;
+  return [
+    [
+      part(orbitalBox(-4, 0, 7, 40), 2, 7, ...truss),
+      part(orbitalBox(3, 3, 39, 13), 0, 8, ...alloy),
+    ],
+    solarLeaf(-10, -15, 24, 13, 7),
+    solarLeaf(8, -15, 10, 13, 7),
+    habitat(-6, 6, 23, 19, 8, 12, ice),
+    [
+      part(orbitalBox(-5, 6, 5, 5), 22, 37, ...truss),
+      part(orbitalBox(-5, 4, 5, 26), 32, 38, ...alloy),
+      ...[-4, 4, 12].map((across) => part(orbitalBox(-2, across, 1, 6), 33, 37, ...ice)),
+      cube(...along(DOCK, -3, 4), 38, 2.2, lit ? a.marker : a.markerDeep),
+    ],
+    [
+      ...closedCollar(lit, face, collar, ...alloy, height),
+      part(orbitalBox(face - 4, 0, 6, 11), height + 4, height + 6, ...coral),
+    ],
+  ];
 }
 
 // ---------------------------------------------------------------- guide beacons

@@ -1,8 +1,5 @@
-// Whirlpool's own station, entered by Use: the Eddy, a pale teal ramp that spirals in and up to a
-// tower, as a whirlpool's eddy, with salvaged debris plates on the tower's skirt and current
-// chevrons on the ramp that light in sequence, flowing inward. Four frames; no dock. Contract:
-// art/whirlpool.md (Station).
-// Usage: node art/tools/whirlpool-station.ts
+// The Eddy: an open spiral with an inward current chase and a layered ocean-coloured core.
+// Contract: art/whirlpool.md (Station). Usage: node art/tools/whirlpool-station.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -10,29 +7,24 @@ import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { replaceEntries } from "./manifest.ts";
 import { floorColour } from "./palette.ts";
-import { svgText } from "./svg-text.ts";
-import { layout, placed, svgFile } from "./needle-common.ts";
+import { placed, RIGHT, svgFile } from "./needle-common.ts";
 import { round } from "./projection.ts";
 import {
-  along,
   blue,
   blueDim,
-  box,
-  closedCollar,
-  cream,
-  creamSide,
   DESTINATION_SCALE,
   DISPLAY_SCALE,
-  DOCK,
   facing,
   ngon,
   orientedBox,
+  orientedPlan,
   type Part,
   type Plan,
   polygons,
   wallWindows,
   warm,
 } from "./solid.ts";
+import { svgText } from "./svg-text.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const OUT = `${art}whirlpool/`;
@@ -43,113 +35,188 @@ const PATH = "/art/whirlpool/";
 const FRAMES = 4;
 const FRAME_MS = 350;
 
+// Enlarge the model around the same world-plane origin and retain the normalized pivot.
+const MODEL_SCALE = 1.17;
+const frame = { width: 208, height: 144, halfWidth: 104, above: 63 };
+
 const C = {
-  ramp: "#c8eef5",
-  rampSide: "#7aa4ae",
-  rampRear: "#6d8f97",
-  tower: "#dff6fa",
-  towerSide: "#a9cfd8",
-  chevron: "#f7f2ff",
-  chevronDim: "#5b8089",
-  plate: "#5b8089",
-  plateSide: "#3e636c",
-  windowDim: "#a08f78",
-  blueSide: "#5687ba",
-  blueDimSide: "#33475f",
+  chevron: "#f9fff4",
+  chevronDim: "#2d5065",
+  plinth: "#537caa",
+  plinthSide: "#35476b",
+  hull: "#46adad",
+  hullSide: "#2e707c",
+  deck: "#9e8eb9",
+  deckSide: "#54496e",
+  sail: "#94d5c0",
+  sailSide: "#397b83",
+  mint: "#c1ffdf",
+  mintDim: "#65948d",
+  windowDim: "#b29a73",
 } as const;
 
-// The spiral ramp: 30 segments over 1.3 turns, radius 66 to 24, 11 wide, rising from 3 to 16
-// as it winds in, starting at 100 degrees in plan.
-const RAMP = { segments: 30, turns: 1.3, outer: 66, inner: 24, width: 11, start: 100 };
+const SECTORS = [
+  { top: "#57c0ad", side: "#317f84" },
+  { top: "#5abdd5", side: "#326b92" },
+  { top: "#779cda", side: "#465983" },
+  { top: "#a398cb", side: "#655984" },
+  { top: "#6ec7ac", side: "#438c85" },
+];
 
-function eddy(frame: number): Part[][] {
-  const lit = frame < FRAMES / 2;
-  const groups: Part[][] = [];
-  const at = (t: number) => ({
-    a: (RAMP.start * Math.PI) / 180 + t * RAMP.turns * 2 * Math.PI,
-    r: RAMP.outer + (RAMP.inner - RAMP.outer) * t,
-  });
-  for (let i = 0; i < RAMP.segments; i++) {
+// Thirty segments over 1.3 turns, rising around the core as the radius contracts.
+const RAMP = { segments: 30, turns: 1.3, outer: 66, inner: 24, width: 11, start: 100 };
+const rampAt = (t: number) => ({
+  angle: (RAMP.start * Math.PI) / 180 + t * RAMP.turns * 2 * Math.PI,
+  radius: RAMP.outer + (RAMP.inner - RAMP.outer) * t,
+});
+function rampPoint({ angle, radius }: ReturnType<typeof rampAt>, offset: number) {
+  return [(radius + offset) * Math.cos(angle), (radius + offset) * Math.sin(angle)] as const;
+}
+
+function spiral(frameIndex: number): Part[][] {
+  return Array.from({ length: RAMP.segments }, (_, i) => {
     const [t0, t1] = [i / RAMP.segments, (i + 1) / RAMP.segments];
-    const [p, q] = [at(t0), at(t1)];
-    const edge = (s: { a: number; r: number }, offset: number) =>
-      [(s.r + offset) * Math.cos(s.a), (s.r + offset) * Math.sin(s.a)] as const;
+    const [p, q] = [rampAt(t0), rampAt(t1)];
+    const half = RAMP.width / 2;
     const plan: Plan = [
-      edge(p, RAMP.width / 2),
-      edge(q, RAMP.width / 2),
-      edge(q, -RAMP.width / 2),
-      edge(p, -RAMP.width / 2),
+      rampPoint(p, half),
+      rampPoint(q, half),
+      rampPoint(q, -half),
+      rampPoint(p, -half),
     ];
     const z1 = 3 + 13 * t1;
-    const part: Part[] = [{ plan, z0: 0, z1, top: C.ramp, side: C.rampSide, rear: C.rampRear }];
-    // A chevron on every other segment pointing inward along the ramp; chevron k is lit on
-    // frames where (k + frame) mod 4 is 0, so the lit chevrons step inward each frame.
+    const sector = SECTORS[Math.floor((i * SECTORS.length) / RAMP.segments)]!;
+    const parts: Part[] = [{ plan, z0: z1 - 5, z1, ...sector }];
     if (i % 2 === 1) {
-      const m = at((t0 + t1) / 2);
-      const [cx, cy] = [m.r * Math.cos(m.a), m.r * Math.sin(m.a)];
-      const tangent = m.a + Math.PI / 2;
+      const midpoint = rampAt((t0 + t1) / 2);
+      const [x, y] = rampPoint(midpoint, 0);
+      const [px, py] = rampPoint(p, 0);
+      const [qx, qy] = rampPoint(q, 0);
+      const tangent = Math.atan2(qy - py, qx - px);
       const k = (i - 1) / 2;
-      const colour = (k + frame) % FRAMES === 0 ? C.chevron : C.chevronDim;
-      for (const side of [-1, 1]) {
-        const [ox, oy] = along(tangent, -1.2, side * 2.2);
-        part.push({
-          plan: orientedBox(cx + ox, cy + oy, tangent + side * 0.7, 5, 1.6),
-          z0: z1,
-          z1: z1 + 0.6,
-          top: colour,
-          side: colour,
-        });
-      }
+      const fill = k % FRAMES === frameIndex ? C.chevron : C.chevronDim;
+      parts.push({
+        plan: orientedPlan(x, y, tangent, [
+          [-2.1, -3],
+          [0, -3],
+          [2.7, 0],
+          [0, 3],
+          [-2.1, 3],
+          [0.6, 0],
+        ]),
+        z0: z1,
+        z1,
+        top: fill,
+        side: fill,
+      });
     }
-    groups.push(part);
-  }
-  // Salvaged debris plates on the tower's skirt, in the river debris' field-matter tones.
-  for (const degrees of [200, 250, 300]) {
-    const a = (degrees * Math.PI) / 180;
-    groups.push([
-      {
-        plan: orientedBox(21 * Math.cos(a), 21 * Math.sin(a), a + Math.PI / 2, 9, 2),
-        z0: 2,
-        z1: 9,
-        top: C.plate,
-        side: C.plateSide,
-      },
-    ]);
-  }
-  // The tower: a hexagon with two rows of warm windows, a cream cap, the mast and the beacon.
-  const tower = ngon(6, 16, 0, 0, Math.PI / 6);
+    return parts;
+  });
+}
+
+function core(lit: boolean): Part[] {
+  const foot = ngon(6, 17, 0, 0, Math.PI / 6);
+  const hull: Plan = [
+    [-14, -8],
+    [-5, -16],
+    [5, -12],
+    [13, -2],
+    [10, 10],
+    [0, 13],
+    [-12, 7],
+  ];
+  const deck = ngon(6, 13, 1, -1, Math.PI / 6);
+  const sail: Plan = [
+    [-10, -12],
+    [-4, -15],
+    [3, -9],
+    [-2, -1],
+    [-8, 8],
+    [-14, 3],
+    [-15, -4],
+  ];
   const windows = lit ? warm : C.windowDim;
-  groups.push([
-    { plan: tower, z0: 0, z1: 28, top: C.tower, side: C.towerSide },
-    ...wallWindows(facing, 11, 15, 2, 3, tower, windows),
-    ...wallWindows(facing, 20, 24, 2, 3, tower, windows),
-    { plan: ngon(6, 11, 0, 0, Math.PI / 6), z0: 28, z1: 32, top: cream, side: creamSide },
-    { plan: box(-1.3, -1.3, 1.3, 1.3), z0: 32, z1: 42, top: C.tower, side: C.towerSide },
+  return [
     {
-      plan: box(-2.4, -2.4, 2.4, 2.4),
-      z0: 42,
-      z1: 45.5,
-      top: lit ? blue : blueDim,
-      side: lit ? C.blueSide : C.blueDimSide,
+      plan: orientedBox(-14, -7, Math.PI / 6, 19, 7),
+      z0: 10,
+      z1: 16,
+      top: C.plinth,
+      side: C.plinthSide,
     },
-  ]);
-  // The arm toward the viewer ends in the station family's closed collar: no mouth.
-  const [from, face] = [58, 86];
-  const arm = orientedBox(...along(DOCK, (from + face - 4) / 2, 0), DOCK, face - 4 - from, 16);
-  groups.push([
-    { plan: arm, z0: 1, z1: 9, top: C.tower, side: C.towerSide },
-    ...wallWindows(
-      (nx, ny) => nx + ny > -0.2 && Math.abs(nx - ny) > 0.5,
-      4.5,
-      7.5,
-      2,
-      2.6,
-      arm,
-      windows,
-    ),
-    ...closedCollar(lit, face, 30, cream, creamSide, 13),
-  ]);
-  return groups;
+    { plan: foot, z0: 1, z1: 10, top: C.plinth, side: C.plinthSide },
+    { plan: hull, z0: 10, z1: 24, top: C.hull, side: C.hullSide },
+    ...wallWindows(facing, 14, 18.5, 2, 3.3, hull, windows),
+    { plan: deck, z0: 23, z1: 31, top: C.deck, side: C.deckSide },
+    ...wallWindows(facing, 25, 28.5, 2, 3.8, deck, lit ? C.mint : C.mintDim),
+    { plan: sail, z0: 31, z1: 38, top: C.sail, side: C.sailSide },
+    {
+      plan: orientedBox(-7, -9, Math.PI / 6, 6, 5),
+      z0: 38,
+      z1: 39.2,
+      top: lit ? blue : blueDim,
+      side: C.plinthSide,
+    },
+  ];
+}
+
+// A short brace branches from the outer turn into a raised sensor pod at its near-right edge.
+function sensor(lit: boolean): Part[] {
+  const plan = (outline: Plan) => orientedPlan(0, 0, RIGHT, outline);
+  const pulse = lit ? C.mint : C.mintDim;
+  return [
+    {
+      plan: plan([
+        [36, 20],
+        [40, 19],
+        [49, 48],
+        [44, 50],
+      ]),
+      z0: 4,
+      z1: 8,
+      top: C.plinth,
+      side: C.plinthSide,
+    },
+    {
+      plan: plan([
+        [39, 47],
+        [47, 43],
+        [52, 49],
+        [51, 58],
+        [44, 63],
+        [37, 55],
+      ]),
+      z0: 3,
+      z1: 11,
+      top: C.deck,
+      side: C.deckSide,
+    },
+    {
+      plan: plan([
+        [41, 47],
+        [47, 45],
+        [50, 50],
+        [47, 55],
+        [40, 52],
+      ]),
+      z0: 11,
+      z1: 17,
+      top: C.sail,
+      side: C.sailSide,
+    },
+    {
+      plan: plan([
+        [42, 48],
+        [46, 47],
+        [48, 50],
+        [44, 52],
+      ]),
+      z0: 17,
+      z1: 17,
+      top: pulse,
+      side: pulse,
+    },
+  ];
 }
 
 // Whirlpool's floor: the body and every lit lamp at 5:1 or more on the field. On a light field
@@ -161,7 +228,17 @@ const galaxy = (
 ).galaxies.whirlpool!;
 const field = galaxy.colors.background!;
 const ratio = (colour: string) => contrast(colour.slice(1), field.slice(1));
-const FLOOR = { ramp: C.ramp, tower: C.tower, cream, chevron: C.chevron, warm, blue };
+const FLOOR = {
+  ...Object.fromEntries(SECTORS.map(({ top }, i) => [`sector ${i}`, top])),
+  plinth: C.plinth,
+  hull: C.hull,
+  deck: C.deck,
+  sail: C.sail,
+  chevron: C.chevron,
+  mint: C.mint,
+  warm,
+  blue,
+};
 for (const [role, fill] of Object.entries(FLOOR)) {
   const colour = floorColour(Boolean(galaxy.tint.light), fill);
   if (ratio(colour) < 5) {
@@ -169,8 +246,14 @@ for (const [role, fill] of Object.entries(FLOOR)) {
   }
 }
 
-const frames = Array.from({ length: FRAMES }, (_, k) => polygons(eddy(k)));
-const frame = layout(frames.flat());
+const frames = Array.from({ length: FRAMES }, (_, k) => {
+  const lit = k < FRAMES / 2;
+  return polygons([...spiral(k), core(lit), sensor(lit)], ([x, y, z]) => [
+    x * MODEL_SCALE,
+    y * MODEL_SCALE,
+    z * MODEL_SCALE,
+  ]);
+});
 const scale = DISPLAY_SCALE * DESTINATION_SCALE;
 mkdirSync(OUT, { recursive: true });
 const entries = frames.map((faces, k) => {

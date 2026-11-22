@@ -37,19 +37,13 @@ Needle's station, the Whorl, entered by Use. Rebuild with
 `station-hall-{a,b}.svg` and replaces its `needle-station-` entries, which
 open Needle's manifest.
 
-- A spindle core: a lower point under the ring, a pearl base module with warm
-  windows, a shaft wound with a cop of lavender, rose and silver thread, a
-  tapered tip and the blue mast beacon.
-- A woven habitat ring 120 units across on five thin silver thread spokes at
-  uneven angles: two threads, lavender outside and silver inside, cross over
-  and under each other every segment, with warm windows and a thin silver band
-  round the outer wall.
-- Two straight needle masts at ring height along the screen-horizontal axes,
-  the long one to the left and the short one to the right. Each ends in a
-  story-craft berth: the station family's mouth collar on the world plane, its
-  mouth facing outward, with an open needle's eye and a lamp on top.
-- No dock: Ada enters by Use. Fixed orientation: no headings and no screen
-  rotation. 4.8 Ada wingspans from berth to berth.
+- A long faceted pearl habitat, with a lavender dorsal band, smoked glazing
+  and rose fittings. An offset blue beacon rises from the upper deck.
+- A diagonal steel brace suspends an offset service spar below the habitat,
+  with open space between the spar and upper hull.
+- The two story-craft mouths sit flush with the tapered ends of the service
+  spine, facing outward on the world plane. Ada enters by Use. The station
+  has a fixed orientation.
 
 | Field               | Value                                                                     |
 | ------------------- | ------------------------------------------------------------------------- |
@@ -70,41 +64,34 @@ open Needle's manifest.
   berths keep their world offsets from the pivot at 1.5x: (-52.243, 52.243),
   (29.738, -29.738) and the Loom hall's (45.813, -45.813). Read `berths` from
   the frame in use.
-- Blink, 700 ms: frame A lights the mast beacon `#70ace8`, the berth collars'
-  corner lights and the right eye's lamp; B lights the left eye's lamp and dims
-  the rest. Unlit blue `#3f5878`, dim lamp `#8c7c60`. Reduced motion shows A.
-- Silhouette radius 106.5 and top 54.8 above the pivot at 1.5x; the Dock
-  callout's centre sits 74.8 above the pivot
-  ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
-  Pass-through, with no `collision`, as every destination.
+- Blink, 700 ms. A lights the beacon and berth corner lights. B dims them.
+  Reduced motion shows A.
+- The station is pass-through and carries no `collision`. See
+  [Destinations](destinations.md#collision-silhouette-dock-and-clearance) for
+  silhouette clearance and callout placement.
 
 ### Palette
 
-| Role                   | Colour    |   Fill | Keyline |
-| ---------------------- | --------- | -----: | ------: |
-| Pearl structure        | `#e9e3da` | 1.49:1 |  9.49:1 |
-| Pearl side             | `#b3aba1` | 1.19:1 |  9.49:1 |
-| Silver threads, cap    | `#cfc5bd` | 1.12:1 |  9.49:1 |
-| Lavender thread, roof  | `#c4afcc` | 1.07:1 |  9.49:1 |
-| Lavender side          | `#8f7c9c` | 2.00:1 |  9.49:1 |
-| Rose thread            | `#e3b7c0` | 1.07:1 |  9.49:1 |
-| Warm windows, lanterns | `#ffe9b8` | 1.59:1 |  9.49:1 |
-| Lamp dim               | `#8c7c60` | 2.14:1 |  9.49:1 |
-| Blue lights            | `#70ace8` | 1.26:1 |  9.49:1 |
-
-The 2 px keyline carries the silhouette; unkeylined, its edge median would be
-1.17:1.
+| Role                 | Colour    |   Fill | Keyline |
+| -------------------- | --------- | -----: | ------: |
+| Pearl habitat        | `#e9e3da` | 1.49:1 |  9.49:1 |
+| Pearl side           | `#b3aba1` | 1.19:1 |  9.49:1 |
+| Lavender bands, ribs | `#c4afcc` | 1.07:1 |  9.49:1 |
+| Lavender side        | `#8f7c9c` | 2.00:1 |  9.49:1 |
+| Rose fittings        | `#e3b7c0` | 1.07:1 |  9.49:1 |
+| Steel spar, spine    | `#8d8a99` | 1.78:1 |  9.49:1 |
+| Steel side           | `#625f70` | 3.26:1 |  9.49:1 |
+| Smoked glazing       | `#6f6688` | 2.81:1 |  9.49:1 |
+| Glazing side         | `#4a4360` | 4.89:1 |  9.49:1 |
+| Warm panes           | `#ffe9b8` | 1.59:1 |  9.49:1 |
+| Blue lights          | `#70ace8` | 1.26:1 |  9.49:1 |
 
 ### Loom hall
 
-`loomHall` replaces the station frames: draw `needle-station-hall-a` and `-b`
-in place of `needle-station-a` and `-b`. The right needle mast runs on to the
-hall's end, and a teaching hall stands along it outside the ring: pearl walls
-with five warm windows on the near side, a stepped lavender roof with three
-warm lanterns and a lavender porch with a lit door toward the viewer. Frame
-and pivot are unchanged; the right berth moves to the hall's end, 114 units
-out. The hall sorts in depth with the ring, so it is a replacement, not an
-overlay.
+`loomHall` replaces the station's two frames. A ribbed, glazed chamber
+extends the service spine on the right. The habitat, spar, left berth,
+frame and pivot carry through to the replacement. The hall frame seats the
+right berth at the chamber's outer end, 114 units from the pivot.
 
 ## Ring gates
 
