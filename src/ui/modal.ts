@@ -27,6 +27,7 @@ import { font, fromHudEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.t
 import { PAUSE_BUTTON } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { modalCloseStyle } from "./modalClose.ts";
 import { PAUSE_ART } from "./pause.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
@@ -308,6 +309,7 @@ ${UI_SCOPE} .ada-close{
   background:transparent;
   display:grid;
   place-items:center;
+  isolation:isolate;
   cursor:pointer;
   pointer-events:auto
 }
@@ -323,6 +325,10 @@ ${UI_SCOPE} .ada-close::before{
 ${UI_SCOPE} .ada-close:active::before{
   background-position:${units(-CARD_CLOSE.art.width)} 0
 }
+${modalCloseStyle(`${UI_SCOPE} .ada-close`, {
+  face: TEXT_TOKENS.label,
+  ink: TEXT_TOKENS.buttonLabel,
+})}
 
 /* Buttons: 48 high, a 44 face over a 4 lip; pressed sinks 2; disabled is flat. A wrapped label
    grows the face by a line box per line. */
@@ -618,8 +624,7 @@ ${UI_SCOPE} .ada-cheat-items>*{
 }
 
 ${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON})),
-${UI_SCOPE} .ada-row:focus-visible,
-${UI_SCOPE} .ada-close:focus-visible{${FOCUS_STYLE}
+${UI_SCOPE} .ada-row:focus-visible{${FOCUS_STYLE}
 }
 
 ${UI_SCOPE} [hidden]{

@@ -147,11 +147,11 @@ ${viewStyle(WHOLE_PX_EDGES)}
   padding:8px 16px
 }
 
-/* Route markers and legacy text buttons paint their focus in their own rules. */
-.ada-controls button:focus-visible:not(:where(.ada-route-marker,${LEGACY_TEXT_BUTTON})){${FOCUS_STYLE}
+/* Close, route and legacy text buttons paint their focus in their own rules. */
+.ada-controls button:focus-visible:not(:where(.ada-close,.ada-route-marker,${LEGACY_TEXT_BUTTON})){${FOCUS_STYLE}
 }
 @media (forced-colors: active){
-  .ada-controls button:focus-visible:not(:where(.ada-route-marker,${LEGACY_TEXT_BUTTON})){
+  .ada-controls button:focus-visible:not(:where(.ada-close,.ada-route-marker,${LEGACY_TEXT_BUTTON})){
     outline-color:Highlight;
     box-shadow:none
   }

@@ -24,6 +24,7 @@ import {
   TEXT_TOKENS,
   UI_SCOPE,
 } from "./modal.ts";
+import { mapCloseStyle } from "./modalClose.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 const json = (path: string): unknown =>
@@ -67,14 +68,14 @@ describe("Settings control rows", () => {
     }
   });
 
-  it("keeps the shared focus ring outside focused rows, close X and specialised buttons", () => {
+  it("keeps the existing focus ring outside focused rows and specialised buttons", () => {
     const start = MODAL_STYLE.indexOf(
       `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON}))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
     expect(focus).toContain(`${UI_SCOPE} .ada-row:focus-visible`);
-    expect(focus).toContain(`${UI_SCOPE} .ada-close:focus-visible`);
+    expect(focus).not.toContain(`${UI_SCOPE} .ada-close:focus-visible`);
     expect(focus).toContain(`outline:${units(FOCUS_RING.band)} solid #ead4aa`);
     expect(focus).toContain(`outline-offset:${units(FOCUS_RING.fringe)}`);
     expect(focus).toContain(`0 0 0 ${units(FOCUS_RING.outset)} #181425`);
@@ -283,6 +284,29 @@ describe("modal text", () => {
   it("keeps a page card's title in the padding, with no close X to clear", () => {
     expect(rule(`${UI_SCOPE} .ada-card.ada-page-card header`)).toContain("padding:0 0px");
     expect(UI_SCOPE).toBe(":is(.ada-controls,.ada-start)");
+  });
+
+  it("paints the shared close focus face and glyph without changing the pressed frame", () => {
+    const close = `${UI_SCOPE} .ada-close`;
+    const focus = rule(`${close}:focus-visible`);
+    expect(focus).toContain("outline:none");
+    expect(focus).toContain("box-shadow:none");
+    expect(focus).toContain(`--ada-close-face:${TEXT_TOKENS.label}`);
+    expect(focus).toContain(`--ada-close-ink:${TEXT_TOKENS.buttonLabel}`);
+    expect(rule(`${close}::after`)).toContain(
+      "background:var(--ada-close-face,var(--ada-close-rest,transparent))",
+    );
+    expect(rule(`${close}:focus-visible:not(:active)::before`)).toContain(
+      "mask:url('/art/ui/sprites/ui-close.png')",
+    );
+    expect(rule(`${close}:active::before`)).toContain(
+      `background-position:${units(-CARD_CLOSE.art.width)} 0`,
+    );
+    expect(MODAL_STYLE).toContain("--ada-close-face:Highlight");
+    expect(MODAL_STYLE).toContain("--ada-close-ink:HighlightText");
+    expect(mapCloseStyle(".map-close", "#262b44")).toContain("--ada-close-rest:#262b44");
+    expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:transparent");
+    expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:ButtonFace");
   });
 
   it("places the close X's 24 face 6 from the card's corner in its hitAround target", () => {
