@@ -2,7 +2,7 @@ import { PAUSE_ART } from "../../data/layout.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
-import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./controls.ts";
+import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
 import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { SPACING, TYPE } from "./tokens.ts";
@@ -97,8 +97,17 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-footer [data-action=undock]{
   margin-left:auto
 }
-.ada-controls .ada-station-footer [aria-current=page]{
-  border-bottom-color:#ead4aa
+/* Paint the selected destination in the existing button box and keep the native press skin. */
+.ada-controls .ada-station-footer .ada-button[aria-current=page]:where(:not(:active,:disabled,[aria-disabled=true])){
+  color:#f3dbad;
+  border-color:transparent;
+  border-image-source:none;
+  background:linear-gradient(to top,#e0c08a ${units(TEXT_BUTTON.lipHeight)},#514b68 0) border-box
+}
+@media (forced-colors:active){
+  .ada-controls .ada-station-footer .ada-button[aria-current=page]{
+    border-bottom-color:Highlight
+  }
 }
 .ada-controls .ada-card-body > .ada-station-panes{
   flex:1;
@@ -158,7 +167,10 @@ export const STATION_STYLE = `
   display:grid;
   grid-template-columns:minmax(0,1fr) auto auto;
   align-items:center;
-  gap:${units(SPACING.gap)}
+  gap:${units(SPACING.gap)};
+  padding-inline:${units(SPACING.gap)};
+  background:#302e42;
+  border:${slice(FRAME_LINE)} solid #49465f
 }
 .ada-controls .ada-exchange-row h3{
   margin:0;
