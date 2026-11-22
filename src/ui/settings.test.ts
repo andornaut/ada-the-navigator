@@ -555,9 +555,35 @@ it("isolates Settings, releases its foreground once and restores the original op
   settings.dispose();
 });
 
-it("replaces Settings with Install Steps and returns to the same native Settings frame", async () => {
+it("publishes bound Settings and Install Steps, then returns to the same native Settings frame", async () => {
   const onOpenChange = vi.fn();
-  const settings = createSettings(fixtureParent(), {
+  const parent = fixtureParent();
+  const append = parent.append.bind(parent);
+  const published: string[][] = [];
+  vi.spyOn(parent, "append").mockImplementation((...nodes) => {
+    append(...nodes);
+    const root = nodes[0] as HTMLElement;
+    expect(root.isConnected).toBe(true);
+    published.push(
+      [...root.querySelectorAll<HTMLElement>("[data-action]")]
+        .map((element) => {
+          const id = element.dataset.action!;
+          try {
+            actionBinding.assertAdaActionMetadata(element);
+            return id;
+          } catch {
+            return `${id} (unbound)`;
+          }
+        })
+        .sort(),
+    );
+    const use = root.querySelector<HTMLElement>(".ada-use")!;
+    expect(use.hidden).toBe(true);
+    expect(() => actionBinding.assertAdaActionMetadata(use)).toThrow(
+      "no registered action binding",
+    );
+  });
+  const settings = createSettings(parent, {
     build: "test-build",
     install: {
       port: {
@@ -574,7 +600,17 @@ it("replaces Settings with Install Steps and returns to the same native Settings
     onVisibilityChange: vi.fn(),
   });
   fixtureActionRoot(settings.root);
-  settings.open();
+  expect(published).toEqual([
+    [
+      "close-install-steps",
+      "close-install-steps",
+      "close-settings",
+      "install",
+      "settings",
+      "settings-close",
+    ],
+  ]);
+  (settings.openButton as unknown as Element).click();
   const root = settings.root as unknown as Element;
   const modal = root.children.find((node) => node.className === "ada-modal")!;
   const [frame, steps] = modal.children;
@@ -599,16 +635,35 @@ it("replaces Settings with Install Steps and returns to the same native Settings
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
 });
 
-it.each(["close-settings", "close-install-steps"])(
-  "rejects missing Settings semantic metadata %s before return",
+it.each(["settings", "close-settings", "close-install-steps"])(
+  "rejects missing Settings semantic metadata %s before publication and releases its registrations",
   (id) => {
     const original = actionBinding.bindAdaAction;
-    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
-      element.dataset.action === id
-        ? { activate: () => false, dispose() {}, update() {} }
-        : original(options, element),
-    );
-    expect(() => setup()).toThrow("no registered action binding");
+    const disposals: (() => void)[] = [];
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
+      if (element.dataset.action === id) {
+        return { activate: () => false, dispose() {}, update() {} };
+      }
+      const binding = original(options, element);
+      const dispose = vi.spyOn(binding, "dispose");
+      disposals.push(dispose);
+      return binding;
+    });
+    const parent = fixtureParent();
+    const append = vi.spyOn(parent, "append");
+    expect(() =>
+      createSettings(parent, {
+        build: "test-build",
+        labels,
+        onOpenChange: vi.fn(),
+        onVisibilityChange: vi.fn(),
+      }),
+    ).toThrow("no registered action binding");
+    expect(append).not.toHaveBeenCalled();
+    expect(disposals.length).toBeGreaterThan(0);
+    for (const dispose of disposals) {
+      expect(dispose).toHaveBeenCalledOnce();
+    }
   },
 );
 

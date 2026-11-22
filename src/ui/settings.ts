@@ -477,8 +477,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
   root.append(...joystickTargets, openButton, useButton, modal);
-  parent.append(root);
-  void applyButtonSkin(root).catch(() => undefined);
   const layer = createModalLayer(modal);
   let disposed = false;
   let open = false;
@@ -705,31 +703,41 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   registerAction(openButton, () => setOpen(true));
   registerAction(closeButton, () => setOpen(false));
   registerAction(dismiss, () => setOpen(false));
-  assertAdaActionMetadata(cardFrame);
-  assertAdaActionMetadata(stepsFrame);
+  const dispose = () => {
+    if (disposed) {
+      return;
+    }
+    setOpen(false);
+    disposed = true;
+    layer.dispose();
+    for (const binding of actionBindings) {
+      binding.dispose();
+    }
+    stopInstallRow();
+    window.removeEventListener("resize", fitSettings);
+    window.removeEventListener(VIEW_SCALE_EVENT, fitSettings);
+    arrangement.dispose();
+    settingsCard.dispose();
+    stepsParts.dispose();
+    root.remove();
+  };
+  try {
+    // Controls installs the live action root and binds contextual Use after this factory returns.
+    assertAdaActionMetadata(openButton);
+    assertAdaActionMetadata(cardFrame);
+    assertAdaActionMetadata(stepsFrame);
+    parent.append(root);
+  } catch (error) {
+    dispose();
+    throw error;
+  }
+  void applyButtonSkin(root).catch(() => undefined);
   return {
     actions,
     card,
     close: () => setOpen(false),
     closeSteps,
-    dispose(): void {
-      if (disposed) {
-        return;
-      }
-      setOpen(false);
-      disposed = true;
-      layer.dispose();
-      for (const binding of actionBindings) {
-        binding.dispose();
-      }
-      stopInstallRow();
-      window.removeEventListener("resize", fitSettings);
-      window.removeEventListener(VIEW_SCALE_EVENT, fitSettings);
-      arrangement.dispose();
-      settingsCard.dispose();
-      stepsParts.dispose();
-      root.remove();
-    },
+    dispose,
     isOpen: () => open,
     joystickTargets,
     open: () => setOpen(true),
