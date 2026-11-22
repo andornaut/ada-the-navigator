@@ -21,7 +21,14 @@ import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/e
 import { GameModel, withoutSeenLessons } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
-import { fill, itemAbout, itemName, type ShopItem, type ShopRow, weaponName } from "../model/shop.ts";
+import {
+  fill,
+  itemAbout,
+  itemName,
+  type ShopItem,
+  type ShopRow,
+  weaponName,
+} from "../model/shop.ts";
 import type { FlightState, GameSave } from "../model/types.ts";
 import {
   exitGame,

@@ -352,7 +352,9 @@ describe("galaxy two's holodisk", () => {
     expect(model.state.docked).toBe("hub");
     const groups = model.shopGroups()!;
     expect(new Set(groups.map(({ category }) => category)).size).toBe(2);
-    expect(groups.find(({ category }) => category === "equipment")?.rows.length).toBeLessThanOrEqual(4);
+    expect(
+      groups.find(({ category }) => category === "equipment")?.rows.length,
+    ).toBeLessThanOrEqual(4);
     expect(ship(model)[0]).toEqual({
       inUse: false,
       item: { kind: "holodisk" },
