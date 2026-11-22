@@ -1577,7 +1577,7 @@
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-0",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-0.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1591,11 +1591,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-1",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-1.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1609,11 +1610,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-2",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-2.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1627,11 +1629,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-3",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-3.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1645,11 +1648,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-4",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-4.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1663,11 +1667,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-5",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-5.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1681,11 +1686,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-6",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-6.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1699,11 +1705,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-7",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-7.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1717,11 +1724,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-8",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-8.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1735,11 +1743,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-9",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-9.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1753,11 +1762,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-10",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-10.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1771,11 +1781,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-11",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-11.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1789,11 +1800,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-12",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-12.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1807,11 +1819,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-13",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-13.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1825,11 +1838,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-14",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-14.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1843,11 +1857,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-15",
-      "path": "/art/andromeda/enemies/frigate-engine-intact-15.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-intact-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1861,11 +1876,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-0",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-0.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1879,11 +1895,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-1",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-1.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1897,11 +1914,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-2",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-2.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1915,11 +1933,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-3",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-3.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1933,11 +1952,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-4",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-4.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1951,11 +1971,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-5",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-5.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1969,11 +1990,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-6",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-6.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -1987,11 +2009,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-7",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-7.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2005,11 +2028,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-8",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-8.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2023,11 +2047,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-9",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-9.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2041,11 +2066,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-10",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-10.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2059,11 +2085,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-11",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-11.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2077,11 +2104,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-12",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-12.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2095,11 +2123,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-13",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-13.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2113,11 +2142,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-14",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-14.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2131,11 +2161,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-destroyed-15",
-      "path": "/art/andromeda/enemies/frigate-engine-destroyed-15.svg",
+      "path": "/art/andromeda/enemies/frigate-engine-destroyed-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -2149,11 +2180,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-0",
-      "path": "/art/andromeda/enemies/frigate-port-intact-0.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2167,11 +2199,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-1",
-      "path": "/art/andromeda/enemies/frigate-port-intact-1.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2185,11 +2218,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-2",
-      "path": "/art/andromeda/enemies/frigate-port-intact-2.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2203,11 +2237,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-3",
-      "path": "/art/andromeda/enemies/frigate-port-intact-3.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2221,11 +2256,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-4",
-      "path": "/art/andromeda/enemies/frigate-port-intact-4.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2239,11 +2275,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-5",
-      "path": "/art/andromeda/enemies/frigate-port-intact-5.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2257,11 +2294,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-6",
-      "path": "/art/andromeda/enemies/frigate-port-intact-6.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2275,11 +2313,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-7",
-      "path": "/art/andromeda/enemies/frigate-port-intact-7.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2293,11 +2332,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-8",
-      "path": "/art/andromeda/enemies/frigate-port-intact-8.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2311,11 +2351,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-9",
-      "path": "/art/andromeda/enemies/frigate-port-intact-9.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2329,11 +2370,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-10",
-      "path": "/art/andromeda/enemies/frigate-port-intact-10.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2347,11 +2389,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-11",
-      "path": "/art/andromeda/enemies/frigate-port-intact-11.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2365,11 +2408,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-12",
-      "path": "/art/andromeda/enemies/frigate-port-intact-12.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2383,11 +2427,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-13",
-      "path": "/art/andromeda/enemies/frigate-port-intact-13.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2401,11 +2446,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-14",
-      "path": "/art/andromeda/enemies/frigate-port-intact-14.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2419,11 +2465,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-intact-15",
-      "path": "/art/andromeda/enemies/frigate-port-intact-15.svg",
+      "path": "/art/andromeda/enemies/frigate-port-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2437,11 +2484,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-0",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-0.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2455,11 +2503,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-1",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-1.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2473,11 +2522,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-2",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-2.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2491,11 +2541,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-3",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-3.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2509,11 +2560,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-4",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-4.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2527,11 +2579,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-5",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-5.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2545,11 +2598,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-6",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-6.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2563,11 +2617,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-7",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-7.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2581,11 +2636,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-8",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-8.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2599,11 +2655,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-9",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-9.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2617,11 +2674,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-10",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-10.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2635,11 +2693,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-11",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-11.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2653,11 +2712,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-12",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-12.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2671,11 +2731,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-13",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-13.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2689,11 +2750,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-14",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-14.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2707,11 +2769,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-port-destroyed-15",
-      "path": "/art/andromeda/enemies/frigate-port-destroyed-15.svg",
+      "path": "/art/andromeda/enemies/frigate-port-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2725,11 +2788,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-0",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-0.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2743,11 +2807,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-1",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-1.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2761,11 +2826,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-2",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-2.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2779,11 +2845,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-3",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-3.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2797,11 +2864,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-4",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-4.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2815,11 +2883,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-5",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-5.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2833,11 +2902,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-6",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-6.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2851,11 +2921,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-7",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-7.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2869,11 +2940,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-8",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-8.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2887,11 +2959,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-9",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-9.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2905,11 +2978,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-10",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-10.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2923,11 +2997,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-11",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-11.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2941,11 +3016,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-12",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-12.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2959,11 +3035,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-13",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-13.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2977,11 +3054,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-14",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-14.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -2995,11 +3073,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-intact-15",
-      "path": "/art/andromeda/enemies/frigate-starboard-intact-15.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3013,11 +3092,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-0",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-0.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3031,11 +3111,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-1",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-1.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3049,11 +3130,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-2",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-2.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3067,11 +3149,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-3",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-3.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3085,11 +3168,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-4",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-4.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3103,11 +3187,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-5",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-5.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3121,11 +3206,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-6",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-6.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3139,11 +3225,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-7",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-7.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3157,11 +3244,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-8",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-8.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3175,11 +3263,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-9",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-9.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3193,11 +3282,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-10",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-10.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3211,11 +3301,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-11",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-11.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3229,11 +3320,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-12",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-12.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3247,11 +3339,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-13",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-13.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3265,11 +3358,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-14",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-14.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3283,11 +3377,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-starboard-destroyed-15",
-      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-15.svg",
+      "path": "/art/andromeda/enemies/frigate-starboard-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3301,11 +3396,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-0",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-0.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3319,11 +3415,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-1",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-1.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3337,11 +3434,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-2",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-2.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3355,11 +3453,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-3",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-3.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3373,11 +3472,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-4",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-4.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3391,11 +3491,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-5",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-5.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3409,11 +3510,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-6",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-6.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3427,11 +3529,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-7",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-7.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3445,11 +3548,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-8",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-8.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3463,11 +3567,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-9",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-9.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3481,11 +3586,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-10",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-10.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3499,11 +3605,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-11",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-11.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3517,11 +3624,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-12",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-12.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3535,11 +3643,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-13",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-13.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3553,11 +3662,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-14",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-14.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3571,11 +3681,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-intact-15",
-      "path": "/art/andromeda/enemies/frigate-spine-intact-15.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3589,11 +3700,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-0",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-0.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3607,11 +3719,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-1",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-1.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3625,11 +3738,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-2",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-2.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3643,11 +3757,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-3",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-3.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3661,11 +3776,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-4",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-4.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3679,11 +3795,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-5",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-5.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3697,11 +3814,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-6",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-6.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3715,11 +3833,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-7",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-7.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3733,11 +3852,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-8",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-8.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3751,11 +3871,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-9",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-9.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3769,11 +3890,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-10",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-10.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3787,11 +3909,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-11",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-11.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3805,11 +3928,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-12",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-12.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3823,11 +3947,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-13",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-13.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3841,11 +3966,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-14",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-14.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3859,11 +3985,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-destroyed-15",
-      "path": "/art/andromeda/enemies/frigate-spine-destroyed-15.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3877,11 +4004,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-0",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-0.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3895,11 +4023,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-1",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-1.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3913,11 +4042,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-2",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-2.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3931,11 +4061,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-3",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-3.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3949,11 +4080,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-4",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-4.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3967,11 +4099,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-5",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-5.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -3985,11 +4118,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-6",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-6.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4003,11 +4137,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-7",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-7.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4021,11 +4156,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-8",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-8.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4039,11 +4175,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-9",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-9.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4057,11 +4194,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-10",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-10.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4075,11 +4213,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-11",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-11.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4093,11 +4232,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-12",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-12.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4111,11 +4251,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-13",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-13.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4129,11 +4270,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-14",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-14.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4147,11 +4289,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-spine-capped-15",
-      "path": "/art/andromeda/enemies/frigate-spine-capped-15.svg",
+      "path": "/art/andromeda/enemies/frigate-spine-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4165,11 +4308,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-0",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-0.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4183,11 +4327,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-1",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-1.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4201,11 +4346,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-2",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-2.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4219,11 +4365,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-3",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-3.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4237,11 +4384,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-4",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-4.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4255,11 +4403,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-5",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-5.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4273,11 +4422,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-6",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-6.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4291,11 +4441,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-7",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-7.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4309,11 +4460,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-8",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-8.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4327,11 +4479,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-9",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-9.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4345,11 +4498,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-10",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-10.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4363,11 +4517,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-11",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-11.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4381,11 +4536,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-12",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-12.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4399,11 +4555,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-13",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-13.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4417,11 +4574,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-14",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-14.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4435,11 +4593,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-intact-15",
-      "path": "/art/andromeda/enemies/frigate-bow-intact-15.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-intact-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4453,11 +4612,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-0",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-0.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4471,11 +4631,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-1",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-1.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4489,11 +4650,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-2",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-2.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4507,11 +4669,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-3",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-3.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4525,11 +4688,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-4",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-4.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4543,11 +4707,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-5",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-5.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4561,11 +4726,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-6",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-6.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4579,11 +4745,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-7",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-7.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4597,11 +4764,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-8",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-8.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4615,11 +4783,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-9",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-9.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4633,11 +4802,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-10",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-10.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4651,11 +4821,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-11",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-11.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4669,11 +4840,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-12",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-12.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4687,11 +4859,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-13",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-13.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4705,11 +4878,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-14",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-14.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4723,11 +4897,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-destroyed-15",
-      "path": "/art/andromeda/enemies/frigate-bow-destroyed-15.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-destroyed-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4741,11 +4916,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-0",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-0.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4759,11 +4935,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-1",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-1.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4777,11 +4954,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-2",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-2.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4795,11 +4973,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-3",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-3.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4813,11 +4992,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-4",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-4.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4831,11 +5011,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-5",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-5.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4849,11 +5030,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-6",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-6.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4867,11 +5049,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-7",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-7.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4885,11 +5068,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-8",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-8.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4903,11 +5087,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-9",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-9.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4921,11 +5106,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-10",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-10.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4939,11 +5125,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-11",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-11.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4957,11 +5144,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-12",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-12.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4975,11 +5163,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-13",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-13.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -4993,11 +5182,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-14",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-14.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -5011,11 +5201,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-bow-capped-15",
-      "path": "/art/andromeda/enemies/frigate-bow-capped-15.svg",
+      "path": "/art/andromeda/enemies/frigate-bow-capped-sheet.svg",
       "width": 72,
       "height": 72,
       "displayWidth": 31.5,
@@ -5029,11 +5220,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-0",
-      "path": "/art/andromeda/enemies/frigate-gun-top-0.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5046,11 +5238,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-1",
-      "path": "/art/andromeda/enemies/frigate-gun-top-1.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5063,11 +5256,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-2",
-      "path": "/art/andromeda/enemies/frigate-gun-top-2.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5080,11 +5274,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-3",
-      "path": "/art/andromeda/enemies/frigate-gun-top-3.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5097,11 +5292,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-4",
-      "path": "/art/andromeda/enemies/frigate-gun-top-4.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5114,11 +5310,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-5",
-      "path": "/art/andromeda/enemies/frigate-gun-top-5.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5131,11 +5328,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-6",
-      "path": "/art/andromeda/enemies/frigate-gun-top-6.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5148,11 +5346,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-7",
-      "path": "/art/andromeda/enemies/frigate-gun-top-7.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5165,11 +5364,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-8",
-      "path": "/art/andromeda/enemies/frigate-gun-top-8.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5182,11 +5382,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-9",
-      "path": "/art/andromeda/enemies/frigate-gun-top-9.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5199,11 +5400,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-10",
-      "path": "/art/andromeda/enemies/frigate-gun-top-10.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5216,11 +5418,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-11",
-      "path": "/art/andromeda/enemies/frigate-gun-top-11.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5233,11 +5436,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-12",
-      "path": "/art/andromeda/enemies/frigate-gun-top-12.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5250,11 +5454,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-13",
-      "path": "/art/andromeda/enemies/frigate-gun-top-13.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5267,11 +5472,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-14",
-      "path": "/art/andromeda/enemies/frigate-gun-top-14.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5284,11 +5490,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-gun-top-15",
-      "path": "/art/andromeda/enemies/frigate-gun-top-15.svg",
+      "path": "/art/andromeda/enemies/frigate-gun-top-sheet.svg",
       "width": 136,
       "height": 136,
       "displayWidth": 59.5,
@@ -5301,11 +5508,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-0",
-      "path": "/art/andromeda/enemies/frigate-rail-top-0.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5318,11 +5526,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-1",
-      "path": "/art/andromeda/enemies/frigate-rail-top-1.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5335,11 +5544,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-2",
-      "path": "/art/andromeda/enemies/frigate-rail-top-2.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5352,11 +5562,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-3",
-      "path": "/art/andromeda/enemies/frigate-rail-top-3.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5369,11 +5580,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-4",
-      "path": "/art/andromeda/enemies/frigate-rail-top-4.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5386,11 +5598,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-5",
-      "path": "/art/andromeda/enemies/frigate-rail-top-5.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5403,11 +5616,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-6",
-      "path": "/art/andromeda/enemies/frigate-rail-top-6.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5420,11 +5634,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-7",
-      "path": "/art/andromeda/enemies/frigate-rail-top-7.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5437,11 +5652,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-8",
-      "path": "/art/andromeda/enemies/frigate-rail-top-8.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5454,11 +5670,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-9",
-      "path": "/art/andromeda/enemies/frigate-rail-top-9.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5471,11 +5688,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-10",
-      "path": "/art/andromeda/enemies/frigate-rail-top-10.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5488,11 +5706,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-11",
-      "path": "/art/andromeda/enemies/frigate-rail-top-11.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5505,11 +5724,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-12",
-      "path": "/art/andromeda/enemies/frigate-rail-top-12.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5522,11 +5742,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-13",
-      "path": "/art/andromeda/enemies/frigate-rail-top-13.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5539,11 +5760,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-14",
-      "path": "/art/andromeda/enemies/frigate-rail-top-14.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5556,11 +5778,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-rail-top-15",
-      "path": "/art/andromeda/enemies/frigate-rail-top-15.svg",
+      "path": "/art/andromeda/enemies/frigate-rail-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -5573,7 +5796,8 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-0",

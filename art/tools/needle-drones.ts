@@ -33,7 +33,7 @@ import {
   ember as wreckEmber,
   heavies,
   industrialHeavies,
-  packFamilyCapitalParts,
+  packInstalledHeavyParts,
   place,
   readOffsets,
   scorch,
@@ -225,7 +225,7 @@ for (const file of texts.keys()) {
     copies.set(file, `/art/enemies/${file}`);
   }
 }
-const outputEntries = packFamilyCapitalParts("needle", texts, entries);
+const { outputEntries } = packInstalledHeavyParts("needle", texts, entries);
 const paths = writeOnce(PATH, copies, texts);
 // In Needle's manifest after the gates and debris, before the story craft.
 // Only these crafts' ids, not the whole `enemy-needle-` family prefix.

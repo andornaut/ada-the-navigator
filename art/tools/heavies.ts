@@ -4,7 +4,7 @@
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
-// Pack retained family capital parts with --noncore-capital-part-sheets.
+// Use --noncore-capital-part-sheets or --frigate-part-sheets to pack retained frames only.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -1915,21 +1915,22 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-function isCapitalPart(entry: Entry): boolean {
-  return (
-    entry.archetype === "capital" && (entry.hardpoint !== undefined || entry.top !== undefined)
-  );
+const PART_GROUPS = { capital: 29, frigate: 14 } as const;
+type SheetCraft = keyof typeof PART_GROUPS;
+
+function isHeavyPart(craft: SheetCraft, entry: Entry): boolean {
+  return entry.archetype === craft && (entry.hardpoint !== undefined || entry.top !== undefined);
 }
 
-type CapitalSheetTarget = { manifest: ManifestFile; prefix: string; directory: string };
+type HeavySheetTarget = { manifest: ManifestFile; prefix: string; directory: string };
 
-const coreCapitalParts = {
+const corePartTarget = {
   manifest: "core",
   prefix: "enemy-",
   directory: "/art/enemies/",
-} satisfies CapitalSheetTarget;
+} satisfies HeavySheetTarget;
 
-const noncoreCapitalParts = {
+const familyPartTargets = {
   andromeda: {
     manifest: "andromeda",
     prefix: "enemy-garnet-",
@@ -1945,31 +1946,33 @@ const noncoreCapitalParts = {
     prefix: "enemy-needle-",
     directory: "/art/needle/enemies/",
   },
-} satisfies Record<string, CapitalSheetTarget>;
+} satisfies Record<string, HeavySheetTarget>;
 
-const standaloneCapitalPart = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const standaloneHeavyPart = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
 // Pack the canonical standalone roots after SVG formatting, as in the enemy hull sheets.
 // Raw-sized cells leave room for each root's smaller intrinsic display dimensions.
-function capitalPartSheets(
-  target: CapitalSheetTarget,
+function heavyPartSheets(
+  target: HeavySheetTarget,
+  craft: SheetCraft,
   text: (file: string) => string | undefined,
   entries: readonly Entry[],
   selecting: boolean,
 ) {
   const { manifest, prefix, directory } = target;
   const installed: Entry[] = readManifest(manifest).assets;
-  const current = installed.filter(isCapitalPart);
+  const current = installed.filter((entry) => isHeavyPart(craft, entry));
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
   const packed = current.filter(({ svgSheet }) => svgSheet === true).length;
   if (!selecting && packed === 0) return undefined;
 
-  const selected = entries.filter(isCapitalPart);
+  const selected = entries.filter((entry) => isHeavyPart(craft, entry));
   const groups = new Map<string, Entry[]>();
   for (const entry of selected) {
     const { id } = entry;
-    if (!id.startsWith(prefix) || !/^capital-[\w-]+-\d+$/u.test(id.slice(prefix.length))) {
-      throw new Error(`Invalid capital part id in ${manifest}: ${id}`);
+    const stem = id.slice(prefix.length);
+    if (!id.startsWith(prefix) || !stem.startsWith(`${craft}-`) || !/^[\w-]+-\d+$/u.test(stem)) {
+      throw new Error(`Invalid ${craft} part id in ${manifest}: ${id}`);
     }
     const group = id.slice(prefix.length, id.lastIndexOf("-"));
     const members = groups.get(group) ?? [];
@@ -1977,14 +1980,14 @@ function capitalPartSheets(
     groups.set(group, members);
   }
   if (
-    groups.size !== 29 ||
-    selected.length !== 464 ||
+    groups.size !== PART_GROUPS[craft] ||
+    selected.length !== PART_GROUPS[craft] * ENEMY_HEADINGS ||
     current.length !== selected.length ||
     currentById.size !== current.length ||
     (packed !== 0 && packed !== selected.length)
   ) {
     throw new Error(
-      `${manifest} must own 29 complete capital part groups, all standalone or all sheets`,
+      `${manifest} must own ${PART_GROUPS[craft]} complete ${craft} part groups, all standalone or all sheets`,
     );
   }
 
@@ -1995,13 +1998,13 @@ function capitalPartSheets(
   for (const [group, members] of groups) {
     const size = Number(members[0]!.width);
     if (!Number.isInteger(size) || size <= 0)
-      throw new Error(`Invalid capital part size: ${group}`);
+      throw new Error(`Invalid ${craft} part size: ${group}`);
     const wide = size * 4;
     const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
       { rectangles: members.map(() => ({ width: size, height: size })), value: group },
     ])?.pages[0];
     if (!layout || members.length !== ENEMY_HEADINGS)
-      throw new Error(`Incomplete capital part group: ${group}`);
+      throw new Error(`Incomplete ${craft} part group: ${group}`);
     const sheet = `${group}-sheet.svg`;
     const path = directory + sheet;
     ownedPaths.add(path);
@@ -2019,7 +2022,7 @@ function capitalPartSheets(
         !standalone?.startsWith(root) ||
         !standalone.endsWith("</svg>")
       ) {
-        throw new Error(`Invalid capital part frame: ${id}`);
+        throw new Error(`Invalid ${craft} part frame: ${id}`);
       }
       const oldPath = directory + file;
       const currentRow = currentById.get(id);
@@ -2031,8 +2034,9 @@ function capitalPartSheets(
       ) {
         throw new Error(`${manifest} does not own the expected frame: ${id}`);
       }
-      const original = standaloneCapitalPart(oldPath);
+      const original = standaloneHeavyPart(oldPath);
       if (
+        craft === "capital" &&
         manifest === "core" &&
         (!packed || existsSync(original)) &&
         readFileSync(original, "utf8") !== source
@@ -2055,17 +2059,16 @@ function capitalPartSheets(
   const referrer = allAssets.find(
     ({ id, path }) => !replacements.has(id) && typeof path === "string" && ownedPaths.has(path),
   );
-  if (referrer)
-    throw new Error(`Capital part packing would retire or replace art used by ${referrer.id}`);
+  if (referrer) throw new Error(`${craft} part packing would replace art used by ${referrer.id}`);
   return { sheets, replacements, retired };
 }
 
-type CapitalPartPack = ReturnType<typeof capitalPartSheets>;
+type HeavyPartPack = ReturnType<typeof heavyPartSheets>;
 
-function applyCapitalPartSheets(
+function applyHeavyPartSheets(
   files: Map<string, string>,
   entries: readonly Entry[],
-  pack: CapitalPartPack,
+  pack: HeavyPartPack,
 ): readonly Entry[] {
   if (!pack) return entries;
   for (const file of pack.retired) files.delete(file);
@@ -2073,27 +2076,30 @@ function applyCapitalPartSheets(
   return entries.map((entry) => pack.replacements.get(entry.id) ?? entry);
 }
 
-/** Keep installed family sheets when the ordinary family exporter rebuilds its capital. */
-export function packFamilyCapitalParts(
-  galaxy: keyof typeof noncoreCapitalParts,
+/** Keep installed sheets and exclude their standalone frames from an ordinary export. */
+export function packInstalledHeavyParts(
+  manifest: "core" | keyof typeof familyPartTargets,
   files: Map<string, string>,
   entries: readonly Entry[],
-): readonly Entry[] {
-  const pack = capitalPartSheets(
-    noncoreCapitalParts[galaxy],
-    (file) => files.get(file),
-    entries,
-    false,
-  );
-  return applyCapitalPartSheets(files, entries, pack);
+) {
+  const target = manifest === "core" ? corePartTarget : familyPartTargets[manifest];
+  const text = (file: string) => files.get(file);
+  const capitalPack = heavyPartSheets(target, "capital", text, entries, false);
+  const frigatePack = heavyPartSheets(target, "frigate", text, entries, false);
+  const capitals = applyHeavyPartSheets(files, entries, capitalPack);
+  return {
+    outputEntries: applyHeavyPartSheets(files, capitals, frigatePack),
+    retiredCapital: capitalPack?.retired ?? [],
+  };
 }
 
-function packRetainedFamilyCapitalParts(): void {
-  const plans = Object.values(noncoreCapitalParts).map((target) => ({
+function packRetainedHeavyParts(craft: SheetCraft, targets: readonly HeavySheetTarget[]): void {
+  const plans = targets.map((target) => ({
     target,
-    pack: capitalPartSheets(
+    pack: heavyPartSheets(
       target,
-      (file) => readFileSync(standaloneCapitalPart(target.directory + file), "utf8"),
+      craft,
+      (file) => readFileSync(standaloneHeavyPart(target.directory + file), "utf8"),
       readManifest(target.manifest).assets,
       true,
     )!,
@@ -2110,9 +2116,17 @@ function packRetainedFamilyCapitalParts(): void {
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.includes("--noncore-capital-part-sheets")) {
-    if (args.length !== 1) throw new Error("--noncore-capital-part-sheets takes no other options");
-    packRetainedFamilyCapitalParts();
+  const retained = args.find(
+    (arg) => arg === "--noncore-capital-part-sheets" || arg === "--frigate-part-sheets",
+  );
+  if (retained) {
+    if (args.length !== 1) throw new Error(`${retained} takes no other options`);
+    const families = Object.values(familyPartTargets);
+    if (retained === "--frigate-part-sheets") {
+      packRetainedHeavyParts("frigate", [corePartTarget, ...families]);
+    } else {
+      packRetainedHeavyParts("capital", families);
+    }
     return;
   }
   const flag = (name: string) => {
@@ -2155,8 +2169,16 @@ async function main() {
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    const pack = capitalPartSheets(coreCapitalParts, (file) => files.get(file), entries, selecting);
-    if (selecting && pack) {
+    let retiredCapital: Iterable<string>;
+    if (selecting) {
+      const pack = heavyPartSheets(
+        corePartTarget,
+        "capital",
+        (file) => files.get(file),
+        entries,
+        true,
+      )!;
+      retiredCapital = pack.retired;
       const paths = writeOnce("/art/enemies/", new Map(), pack.sheets);
       mergeEntries(
         "core",
@@ -2164,17 +2186,18 @@ async function main() {
         [...pack.replacements.values()].map((entry) => storedAt(paths, entry)),
       );
     } else {
-      const outputEntries = applyCapitalPartSheets(files, entries, pack);
+      const installed = packInstalledHeavyParts("core", files, entries);
+      retiredCapital = installed.retiredCapital;
       // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
       const paths = writeOnce("/art/enemies/", new Map(), files);
       mergeEntries(
         "core",
         owns,
-        outputEntries.map((entry) => storedAt(paths, entry)),
+        installed.outputEntries.map((entry) => storedAt(paths, entry)),
       );
       mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
     }
-    for (const file of pack?.retired ?? []) rmSync(dir + file, { force: true });
+    for (const file of retiredCapital) rmSync(dir + file, { force: true });
   } else {
     for (const [file, text] of files) {
       writeFileSync(`${dir}${file}`, text);
