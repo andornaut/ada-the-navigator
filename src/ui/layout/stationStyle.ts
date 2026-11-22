@@ -98,7 +98,9 @@ export const STATION_STYLE = `
   margin-left:auto
 }
 /* Tint the face inside the shared border slices so both normal and pressed edges keep their paint. */
-.ada-controls .ada-station-footer .ada-button:is([aria-current=page],:focus-visible):where(:not(:disabled,[aria-disabled=true])){
+.ada-controls .ada-station-footer .ada-button:is(
+  [aria-current=page],:focus-visible
+):where(:not(:disabled,[aria-disabled=true])){
   --ada-station-footer-face:#514b68;
   --ada-station-footer-ink:${TEXT_TOKENS.label};
   color:var(--ada-station-footer-ink);
@@ -117,7 +119,9 @@ export const STATION_STYLE = `
   --ada-station-footer-ink:${TEXT_TOKENS.title}
 }
 @media (forced-colors:active){
-  .ada-controls .ada-station-footer .ada-button:is([aria-current=page],:focus-visible):where(:not(:disabled,[aria-disabled=true])){
+  .ada-controls .ada-station-footer .ada-button:is(
+    [aria-current=page],:focus-visible
+  ):where(:not(:disabled,[aria-disabled=true])){
     forced-color-adjust:none;
     background-color:ButtonFace
   }
