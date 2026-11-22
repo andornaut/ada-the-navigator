@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
-import { DesktopControlState } from "./desktop.ts";
-import { MOVE_STICK_GEOMETRY } from "./state.ts";
+import { bindDesktopInput, DesktopControlState } from "./desktop.ts";
+import { ControlState, MOVE_STICK_GEOMETRY } from "./state.ts";
 
 const frame = { facing: { x: 0, y: -1 }, ship: { x: 310, y: 170 } };
 const neutral = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: -0 }, turn: 0 };
@@ -114,5 +114,155 @@ describe("desktop flight controls", () => {
     state.keyUp("KeyW");
     state.keyDown("KeyW");
     expect(state.sample(frame).move).toEqual({ x: 0, y: -1 });
+  });
+});
+
+describe("desktop keyboard listener", () => {
+  // EventTarget dispatches the real listeners. The fixture supplies the focused element ancestry
+  // that a browser keyboard event would carry to Window.
+  class FixtureElement {
+    readonly tag: string;
+    readonly editable: boolean;
+    readonly parent: FixtureElement | undefined;
+    constructor(tag: string, editable = false, parent?: FixtureElement) {
+      this.tag = tag;
+      this.editable = editable;
+      this.parent = parent;
+    }
+    closest(selector: string): FixtureElement | null {
+      const selectors = selector.split(",");
+      if (
+        selectors.includes(this.tag) ||
+        (this.editable && selectors.includes("[contenteditable]:not([contenteditable=false])"))
+      ) {
+        return this;
+      }
+      return this.parent?.closest(selector) ?? null;
+    }
+  }
+
+  function bind() {
+    vi.stubGlobal("Element", FixtureElement);
+    const host = new EventTarget();
+    const document = Object.assign(new EventTarget(), { defaultView: host, hidden: false });
+    const surface = Object.assign(new FixtureElement("canvas"), { ownerDocument: document });
+    const controls = new ControlState();
+    controls.setUseAvailable(true);
+    const accepts = () => controls.accepts();
+    const state = new DesktopControlState(accepts);
+    const onUse = vi.fn(() => controls.requestUse());
+    const binding = bindDesktopInput(
+      {
+        accepts,
+        onModeChange: () => controls.reset(),
+        onUse,
+        point: () => frame.ship,
+        surface: surface as unknown as HTMLElement,
+      },
+      state,
+    );
+    onTestFinished(() => {
+      binding.dispose();
+      vi.unstubAllGlobals();
+    });
+    const key = (
+      type: "keydown" | "keyup",
+      code: string,
+      target: FixtureElement = surface,
+      repeat = false,
+    ) => {
+      const event = new Event(type, { cancelable: true });
+      Object.defineProperties(event, {
+        code: { value: code },
+        repeat: { value: repeat },
+        target: { value: target },
+      });
+      host.dispatchEvent(event);
+      return event;
+    };
+    return { binding, controls, document, host, key, onUse, state, surface };
+  }
+
+  it.each(["KeyE", "Enter"])("routes a fresh %s press through Use exactly once", (code) => {
+    const { controls, key, onUse, state, surface } = bind();
+    expect(key("keydown", code).defaultPrevented).toBe(true);
+    expect(onUse).toHaveBeenCalledOnce();
+    expect(controls.sample().use).toBe(true);
+    expect(controls.sample().use).toBe(false);
+    expect(state.sample(frame)).toEqual(neutral);
+
+    key("keydown", code, surface, true);
+    key("keydown", code);
+    expect(onUse).toHaveBeenCalledOnce();
+    expect(controls.sample().use).toBe(false);
+
+    key("keyup", code);
+    key("keydown", code, surface, true);
+    expect(onUse).toHaveBeenCalledOnce();
+    key("keydown", code);
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(controls.sample().use).toBe(true);
+  });
+
+  it("leaves focused native buttons and editable elements alone and rejects modal input", () => {
+    const { binding, controls, key, onUse, state } = bind();
+    const buttonContent = new FixtureElement("span", false, new FixtureElement("button"));
+    const editor = new FixtureElement("div", true);
+    for (const target of [buttonContent, editor]) {
+      expect(key("keydown", "Enter", target).defaultPrevented).toBe(false);
+      expect(key("keydown", "KeyE", target).defaultPrevented).toBe(false);
+    }
+    expect(binding.active()).toBe(false);
+    expect(onUse).not.toHaveBeenCalled();
+
+    controls.openModal();
+    for (const code of ["Enter", "KeyW", "Space"]) {
+      expect(key("keydown", code).defaultPrevented).toBe(false);
+    }
+    controls.closeModal();
+    expect(state.sample(frame)).toEqual(neutral);
+    expect(controls.sample().use).toBe(false);
+    expect(onUse).not.toHaveBeenCalled();
+    key("keydown", "Enter");
+    expect(onUse).toHaveBeenCalledOnce();
+    expect(controls.sample().use).toBe(true);
+  });
+
+  it("retains continuous keyboard flight through Use and clears held input on reset and disposal", () => {
+    const { binding, controls, document, host, key, onUse, state, surface } = bind();
+    const flying = { ...neutral, fire: true, move: { x: 0, y: -0.2 }, turn: -1 };
+    for (const code of ["KeyW", "ShiftLeft", "KeyA", "Space"]) {
+      expect(key("keydown", code).defaultPrevented).toBe(true);
+    }
+    expect(state.sample(frame)).toEqual(flying);
+    expect(controls.sample().use).toBe(false);
+    key("keydown", "KeyE");
+    expect(controls.sample().use).toBe(true);
+    expect(state.sample(frame)).toEqual(flying);
+
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(state.sample(frame)).toEqual(flying);
+    document.hidden = true;
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(state.sample(frame)).toEqual(neutral);
+    key("keydown", "KeyE", surface, true);
+    expect(onUse).toHaveBeenCalledOnce();
+    key("keydown", "KeyE");
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(controls.sample().use).toBe(true);
+
+    key("keydown", "Space");
+    host.dispatchEvent(new Event("blur"));
+    expect(state.sample(frame)).toEqual(neutral);
+    key("keydown", "KeyW");
+    key("keydown", "Space");
+    expect(state.sample(frame)).toEqual({ ...neutral, fire: true, move: { x: 0, y: -1 } });
+    binding.dispose();
+    expect(state.sample(frame)).toEqual(neutral);
+    for (const code of ["Enter", "KeyW", "Space"]) {
+      expect(key("keydown", code).defaultPrevented).toBe(false);
+    }
+    expect(state.sample(frame)).toEqual(neutral);
+    expect(onUse).toHaveBeenCalledTimes(2);
   });
 });
