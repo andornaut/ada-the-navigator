@@ -358,10 +358,9 @@ export const STORYBOOK_STYLE = `
   pointer-events:auto
 }
 
-/* Art's canvas at display size, centred across the view under the insets and scaled up only to
-   cover a view past it, nearest neighbour; its top is the story run's anchor for its background
-   (art/layout.md "Run anchor"), set as each page shows. The second image is a transition's
-   incoming frame, faded in over the first. */
+/* Art's canvas at display size, centred by default and scaled up only to cover a view past it,
+   nearest neighbour. Both images share any bedroom crop. The top is the story run's anchor
+   (art/layout.md "Run anchor"), set as each page shows. The incoming frame fades over the base. */
 .ada-controls .ada-story-art{
   position:absolute;
   left:calc(50% + var(--ada-story-art-offset-x, 0px));

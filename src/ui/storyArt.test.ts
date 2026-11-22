@@ -197,7 +197,7 @@ describe("storybook art", () => {
       "width:max(calc(var(--ada-unit) * 960px), 100cqw, calc(100cqh * 960 / 540));",
     );
     expect(art).toContain("aspect-ratio:960 / 540;");
-    expect(art).toContain("left:50%;");
+    expect(art).toContain("left:calc(50% + var(--ada-story-art-offset-x, 0px));");
     // Its top is the run anchor, set as each page shows.
     expect(art).toContain("top:0;");
     expect(art).toContain("transform:translateX(-50%);");
