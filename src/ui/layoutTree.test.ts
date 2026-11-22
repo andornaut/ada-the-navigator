@@ -143,7 +143,8 @@ class Element extends EventTarget {
 }
 
 const factories = vi.hoisted(() => ({ dispose: vi.fn(), fit: vi.fn(), unboundCard: false }));
-vi.mock("./modal.ts", () => ({
+vi.mock("./modal.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./modal.ts")>()),
   createActions: () => new Element(),
   createButton: (label: string) => {
     const button = new Element("button");
