@@ -899,6 +899,7 @@ it("opens a held quest directly, returns All quests to its list, and resumes onl
   expect(quests.querySelectorAll().some((button) => button.dataset.questId === entry.id)).toBe(
     true,
   );
+  expect(focused()?.dataset.questId).toBe(entry.id);
   find("quest-close").click();
   expect(pause.isOpen()).toBe(false);
   expect(options.onOpenChange.mock.calls).toEqual([[true], [false]]);

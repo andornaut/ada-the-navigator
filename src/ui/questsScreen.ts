@@ -200,15 +200,17 @@ export function createQuestsScreen(
   };
   const back = () => {
     if (selected !== null && origin === "list") {
+      const focusQuestId = selected;
       selected = null;
-      render();
+      render(focusQuestId);
     } else {
       hide();
       options.onClose();
     }
   };
   register(card.close, back, false);
-  function render(): void {
+  function render(focusQuestId?: string): void {
+    let questFocus: HTMLButtonElement | undefined;
     for (const binding of renderedBindings.splice(0)) {
       binding.dispose();
     }
@@ -359,6 +361,9 @@ export function createQuestsScreen(
               const item = initial.entry;
               const button = createButton(item.line.text, "secondary");
               button.dataset.questId = item.id;
+              if (item.id === focusQuestId) {
+                questFocus = button;
+              }
               const image = icon(item);
               if (image) {
                 button.prepend(image);
@@ -529,7 +534,7 @@ export function createQuestsScreen(
     modal.hidden = false;
     card.fit();
     layer = createModalLayer(modal);
-    leave = layer.open({ close: back, focus: close }, card.frame);
+    leave = layer.open({ close: back, focus: questFocus ?? close }, card.frame);
   }
   return {
     back,
