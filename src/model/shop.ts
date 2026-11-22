@@ -6,7 +6,7 @@ import {
 } from "../data/economy.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
-import { type StationStockCategory, stationShopSeed } from "./stationServices.ts";
+import { stationShopSeed, type StationStockCategory } from "./stationServices.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -218,12 +218,12 @@ export function stationStock(
       .map((scheme): Extract<ShopItem, { kind: "paint" }> => ({ kind: "paint", scheme })),
   ];
   return {
-    ammo: stockSlice(eligible, position, stationShopSeed(stationId + ":ammo")),
-    equipment: stockSlice(equipment, position, stationShopSeed(stationId + ":equipment")),
+    ammo: stockSlice(eligible, position, stationShopSeed(`${stationId}:ammo`)),
+    equipment: stockSlice(equipment, position, stationShopSeed(`${stationId}:equipment`)),
     weapons: stockSlice<Weapon>(
       ["laser", ...eligible],
       position,
-      stationShopSeed(stationId + ":weapons"),
+      stationShopSeed(`${stationId}:weapons`),
     ),
   };
 }

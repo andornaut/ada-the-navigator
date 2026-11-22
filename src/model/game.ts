@@ -217,9 +217,9 @@ import {
 } from "./stations.ts";
 import {
   type StationServices,
-  type StationStockCategory,
   stationShopCategories,
   stationSpecialty,
+  type StationStockCategory,
 } from "./stationServices.ts";
 import {
   advance,
