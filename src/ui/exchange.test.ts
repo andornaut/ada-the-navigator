@@ -138,8 +138,8 @@ const dom = vi.hoisted(() => {
   const state = { corruptFactory: false, corruptResult: false };
   return { Node, mountedRoots, state };
 });
-vi.mock("./modal.ts", () => ({
-  FOCUS_STYLE: "",
+vi.mock("./modal.ts", async () => ({
+  ...(await vi.importActual<typeof import("./modal.ts")>("./modal.ts")),
   createActions: (actions: { button: InstanceType<typeof dom.Node> }[]) => {
     const node = new dom.Node();
     node.append(...actions.map(({ button }) => button));
