@@ -421,7 +421,7 @@ function mapMeasurement() {
 }
 
 it.each(["map-zoomIn", "map-travel"])(
-  "rejects missing %s metadata in the completed Map layout",
+  "rejects missing %s metadata in the completed Map layout before publication",
   (id) => {
     const bind = actionBinding.bindAdaAction;
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
@@ -431,11 +431,136 @@ it.each(["map-zoomIn", "map-travel"])(
     );
     // The Travel leaf is mounted in the hidden panel even without a selection or an action root.
     const root = id === "map-travel" ? new FakeElement() : mountedRoot();
+    const append = vi.spyOn(root, "append");
+    const observe = vi.fn();
+    const assertMetadata = actionBinding.assertAdaActionMetadata;
+    vi.spyOn(actionBinding, "assertAdaActionMetadata").mockImplementation((screen) => {
+      observe({
+        actionPresent: screen.querySelector(`[data-action="${id}"]`) !== null,
+        connected: screen.isConnected,
+        panelHidden: screen.querySelector<HTMLElement>(".ada-map-panel")?.hidden,
+      });
+      assertMetadata(screen);
+    });
     expect(() => standaloneMap(root)).toThrow("no registered action binding");
-    expect(root.querySelector(`[data-action="${id}"]`)).not.toBeNull();
-    expect(root.querySelector(".ada-map-panel")?.hidden).toBe(true);
+    expect(observe).toHaveBeenCalledExactlyOnceWith({
+      actionPresent: true,
+      connected: false,
+      panelHidden: true,
+    });
+    expect(append).not.toHaveBeenCalled();
+    expect(root.children).toEqual([]);
   },
 );
+
+it("publishes the hidden Local Map field and its seven chrome nodes already bound", () => {
+  const root = mountedRoot();
+  const append = root.append.bind(root);
+  const registered = new Set<HTMLElement>();
+  const observed = vi.fn();
+  const style = vi.fn(() => {
+    throw Error("Map construction read connected geometry");
+  });
+  vi.stubGlobal("getComputedStyle", style);
+  const bind = actionBinding.bindAdaAction;
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
+    const binding = bind(options, element);
+    registered.add(element);
+    return binding;
+  });
+  vi.spyOn(root, "append").mockImplementation((...nodes) => {
+    append(...nodes);
+    const screen = nodes[0]!;
+    expect(screen.isConnected).toBe(true);
+    const controls = screen
+      .querySelectorAll("button")
+      .map((node) => {
+        try {
+          actionBinding.assertAdaActionMetadata(node as unknown as HTMLElement);
+          return node.dataset.action!;
+        } catch {
+          return `${node.dataset.action} (unbound)`;
+        }
+      })
+      .sort();
+    observed({
+      controls,
+      field: registered.has(screen as unknown as HTMLElement),
+      hidden: screen.hidden,
+      travelHidden: screen.querySelector(".ada-map-panel")!.hidden,
+    });
+  });
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  const { map } = standaloneMap(root);
+  try {
+    expect(observed).toHaveBeenCalledExactlyOnceWith({
+      controls: [
+        "map-close",
+        "map-galaxies",
+        "map-quests",
+        "map-recentre",
+        "map-travel",
+        "map-zoomIn",
+        "map-zoomOut",
+      ],
+      field: true,
+      hidden: true,
+      travelHidden: true,
+    });
+    expect(audit.mock.calls).toEqual([[map.element]]);
+    expect(style).not.toHaveBeenCalled();
+  } finally {
+    map.dispose();
+  }
+});
+
+it("rejects a missing Map chrome binding before publication and releases owned bindings", () => {
+  const root = mountedRoot();
+  const append = vi.spyOn(root, "append");
+  const buttons: HTMLElement[] = [];
+  const disposals: (() => void)[] = [];
+  const bind = actionBinding.bindAdaAction;
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
+    if (element.dataset.action === "map-travel") {
+      return { activate: () => false, dispose() {}, update() {} };
+    }
+    const binding = bind(options, element);
+    disposals.push(vi.spyOn(binding, "dispose"));
+    if (element.tagName === "BUTTON") {
+      buttons.push(element);
+    }
+    return binding;
+  });
+  expect(() => standaloneMap(root)).toThrow("no registered action binding");
+  expect(append).not.toHaveBeenCalled();
+  expect(disposals).toHaveLength(7);
+  for (const dispose of disposals) {
+    expect(dispose).toHaveBeenCalledOnce();
+  }
+  expect(buttons).toHaveLength(6);
+  for (const element of buttons) {
+    expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
+      "no registered action binding",
+    );
+  }
+});
+
+it("rolls back Local Map attachment when its connected action root audit fails", () => {
+  const root = new FakeElement();
+  PAGE.body!.append(root);
+  const append = root.append.bind(root);
+  let close: FakeElement | null = null;
+  vi.spyOn(root, "append").mockImplementation((...nodes) => {
+    append(...nodes);
+    close = nodes[0]!.querySelector('[data-action="map-close"]');
+  });
+  expect(() => standaloneMap(root)).toThrow("no live action root");
+  expect(root.children).toEqual([]);
+  expect(close).not.toBeNull();
+  expect(() => actionBinding.assertAdaActionMetadata(close as unknown as HTMLElement)).toThrow(
+    "no registered action binding",
+  );
+});
 
 it("audits a detached Map when it first opens in an owning root", () => {
   const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");

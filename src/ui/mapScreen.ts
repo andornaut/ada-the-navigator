@@ -1052,7 +1052,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     ),
   );
   screen.append(fog, placesLayer, adaLayer, header, hudRow, tools, panel);
-  root.append(screen);
 
   let textMeasure: CanvasRenderingContext2D | null | undefined;
   const inkMeasurements = new Map<string, { offset: number; width: number }>();
@@ -1694,19 +1693,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       render();
     }
   };
-  // The mounted chrome and panel are complete here, including Travel while the panel is hidden.
-  let checkedAttached = screen.isConnected;
-  if (checkedAttached) {
-    assertAdaActionBindings(screen);
-  } else {
-    assertAdaActionMetadata(screen);
-  }
-
-  window.addEventListener(VIEW_SCALE_EVENT, refit);
-  window.addEventListener("resize", refit);
-  document.fonts.addEventListener("loadingdone", refit);
-
-  return {
+  let checkedAttached = false;
+  const map = {
     close(): void {
       cancelFieldAction();
       renderQueue.cancel();
@@ -1795,4 +1783,20 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
     },
   };
+  try {
+    // The completed panel includes Travel even while hidden.
+    assertAdaActionMetadata(screen);
+    root.append(screen);
+    checkedAttached = screen.isConnected;
+    if (checkedAttached) {
+      assertAdaActionBindings(screen);
+    }
+  } catch (error) {
+    map.dispose();
+    throw error;
+  }
+  window.addEventListener(VIEW_SCALE_EVENT, refit);
+  window.addEventListener("resize", refit);
+  document.fonts.addEventListener("loadingdone", refit);
+  return map;
 }
