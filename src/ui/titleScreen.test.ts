@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { engineJets, jetLength, layerAlpha, readEngineJets } from "../game/shipJets.ts";
-import { fromAreaLeft, fromAreaTop } from "./layout/css.ts";
+import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./startScreen.ts";
 import { jetPolygons, readTitleScreen, type TitleAsset, titleShip } from "./titleScreen.ts";
@@ -260,14 +260,14 @@ describe("start screen style", () => {
     expect(rule(`.${START_SCREEN_CLASS} .ada-start-ship`)).toContain(
       `left:${fromAreaLeft(ship.centre.x - ship.size / 2)}`,
     );
-    for (const action of ["continue", "restart", "start"] as const) {
-      expect(rule(`.${START_SCREEN_CLASS} .ada-start-actions > [data-action=${action}]`)).toContain(
-        `left:${fromAreaLeft(actions.left[action])}`,
-      );
-    }
-    expect(rule(`.${START_SCREEN_CLASS} .ada-start-actions > button`)).toContain(
-      `top:${fromAreaTop(actions.top)}`,
-    );
+    const row = rule(`.${START_SCREEN_CLASS} .ada-start-actions`);
+    expect(row).toContain(`left:${fromAreaLeft(note.centre)}`);
+    expect(row).toContain(`top:${fromAreaTop(actions.top)}`);
+    expect(row).toContain("transform:translateX(-50%)");
+    expect(row).toContain("display:flex");
+    const button = rule(`.${START_SCREEN_CLASS} .ada-start-actions > button`);
+    expect(button).toContain("width:max-content");
+    expect(button).toContain(`max-width:${units(actions.width)}`);
     // The note (only the forced update's message) is one body line centred on the game area.
     const noteRule = rule(`.${START_SCREEN_CLASS} .ada-start-note`);
     expect(noteRule).toContain(`left:${fromAreaLeft(note.centre)}`);

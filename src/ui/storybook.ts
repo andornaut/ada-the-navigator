@@ -29,11 +29,10 @@ import {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { STORY_BUTTON } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
 import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
-import { HUD_ROW, STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import {
   STORY_BACKGROUND,
   STORY_PANEL,
@@ -551,17 +550,23 @@ ${STORY_PORTRAIT_RULES}
   grid-template-columns:max-content minmax(0, 1fr)
 }
 .ada-controls .ada-story-controls.ada-story-wide{
-  grid-template-areas:"previous ." "next next";
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"previous" "next"
 }
 .ada-controls .ada-story-controls > [data-action="story-previous"]{
-  grid-area:previous
+  grid-area:previous;
+  justify-self:start
 }
 .ada-controls .ada-story-controls > [data-action="story-next"]{
   grid-area:next;
-  white-space:nowrap
+  justify-self:end
 }
-.ada-controls .ada-story-controls.ada-story-wide > [data-action="story-next"]{
-  white-space:normal
+.ada-controls .ada-story-controls.ada-story-wide > .ada-button{
+  width:100%;
+  justify-self:stretch
+}
+.ada-controls .ada-story-controls:is(.ada-story-no-previous,.ada-story-no-next) > .ada-button{
+  justify-self:center
 }
 
 /* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or
@@ -576,7 +581,7 @@ ${STORY_PORTRAIT_RULES}
 }
 .ada-controls .ada-story .ada-button.ada-story-choice-previous{
   position:absolute;
-  top:${fromHudEdge("top", HUD_ROW.centre - STORY_BUTTON.height / 2)};
+  top:${fromHudEdge("top", STORY_SKIP.top)};
   right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}
 }
 .ada-controls.ada-no-settings-button .ada-story .ada-story-choice-previous{
@@ -605,7 +610,7 @@ export function storyControlsLayout(
   previous: number,
   primary: number,
 ): StoryControlsLayout {
-  if (primary <= (column - SMALL_BUTTON_GAP) / 2 + 0.5) {
+  if (Math.max(previous, primary) <= (column - SMALL_BUTTON_GAP) / 2 + 0.5) {
     return "halves";
   }
   return previous + SMALL_BUTTON_GAP + primary <= column + 0.5 ? "beside" : "below";
@@ -893,17 +898,17 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.classList.remove("ada-story-choice-previous");
     controls.replaceChildren(previous, next);
     let layout: StoryControlsLayout = "halves";
-    if (page.canGoBack && page.next && page.action !== undefined) {
+    if (page.canGoBack && page.next) {
       const unit = readViewUnit(controls);
-      previous.style.width = "max-content";
-      next.style.width = "max-content";
+      previous.style.maxWidth = "none";
+      next.style.maxWidth = "none";
       layout = storyControlsLayout(
         frameSize(controls).width / unit,
         frameSize(previous).width / unit,
         frameSize(next).width / unit,
       );
-      previous.style.width = "";
-      next.style.width = "";
+      previous.style.maxWidth = "";
+      next.style.maxWidth = "";
     }
     controls.classList.toggle("ada-story-beside", layout === "beside");
     controls.classList.toggle("ada-story-wide", layout === "below");

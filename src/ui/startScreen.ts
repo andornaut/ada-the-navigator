@@ -4,7 +4,7 @@ import { SCROLL } from "../data/layout.ts";
 import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
 import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
-import { TYPE } from "./layout/tokens.ts";
+import { BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
@@ -68,25 +68,19 @@ ${TITLE_SHIP_STYLE}
 }
 
 .${START_SCREEN_CLASS} .ada-start-actions{
-  left:0;
-  top:0
+  left:${fromAreaLeft(note.centre)};
+  top:${fromAreaTop(actions.top)};
+  transform:translateX(-50%);
+  display:flex;
+  gap:${units(BUTTON_GAP)};
+  width:max-content;
+  max-width:${units(2 * actions.width + BUTTON_GAP)}
 }
 
 .${START_SCREEN_CLASS} .ada-start-actions > button{
-  position:absolute;
-  top:${fromAreaTop(actions.top)};
-  width:${units(actions.width)};
-  height:${units(actions.height)};
-  box-sizing:border-box
+  width:max-content;
+  max-width:${units(actions.width)}
 }
-
-${(Object.keys(actions.left) as StartAction[])
-  .map(
-    (action) => `.${START_SCREEN_CLASS} .ada-start-actions > [data-action=${action}]{
-  left:${fromAreaLeft(actions.left[action])}
-}`,
-  )
-  .join("\n\n")}
 `;
 
 export interface StartScreenContent {

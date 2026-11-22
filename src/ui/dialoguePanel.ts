@@ -38,13 +38,19 @@ export const DIALOGUE_PANEL_STYLE = `
 .ada-controls .ada-dialogue-panel .ada-dialogue-controls{
   display:grid;
   grid-template-columns:var(--ada-dialogue-row, minmax(0,1fr));
-  grid-template-areas:none
+  grid-template-areas:none;
+  justify-content:space-between;
+  justify-items:start
 }
 .ada-controls .ada-dialogue-panel .ada-dialogue-controls[hidden],
 .ada-controls .ada-dialogue-panel .ada-story-choices[hidden]{
   display:none
 }
-.ada-controls .ada-dialogue-panel .ada-story-controls > .ada-button{
+.ada-controls .ada-dialogue-panel .ada-dialogue-controls > .ada-primary{
+  justify-self:end
+}
+.ada-controls .ada-dialogue-panel .ada-dialogue-controls.ada-dialogue-stacked > .ada-button{
+  justify-self:stretch;
   width:100%
 }
 .ada-controls .ada-dialogue-panel .ada-story-choices{
@@ -63,15 +69,8 @@ export function dialogueControlWidths(
   widths: readonly [number] | readonly [number, number],
 ): { readonly stacked: boolean; readonly widths: readonly number[] } {
   const [left, right] = widths;
-  const half = (column - SMALL_BUTTON_GAP) / 2;
-  if (right === undefined) {
-    return { stacked: false, widths: [Math.min(column, Math.max(half, left))] };
-  }
-  if (left + SMALL_BUTTON_GAP + right > column) {
-    return { stacked: true, widths: [Math.min(column, Math.max(half, left)), column] };
-  }
-  const secondary = Math.min(column - SMALL_BUTTON_GAP - right, Math.max(half, left));
-  return { stacked: false, widths: [secondary, column - SMALL_BUTTON_GAP - secondary] };
+  const stacked = right !== undefined && left + SMALL_BUTTON_GAP + right > column;
+  return { stacked, widths: widths.map((width) => (stacked ? column : Math.min(column, width))) };
 }
 
 export type DialogueSpeaker =
@@ -182,22 +181,20 @@ export function createDialoguePanel(options: {
       const column = width / unit;
       const ownWidth = (button: HTMLButtonElement): number => {
         button.style.width = "max-content";
+        button.style.maxWidth = "none";
         const own = frameSize(button).width / unit;
         button.style.width = "";
+        button.style.maxWidth = "";
         return own;
       };
       const left = ownWidth(first);
       const layout = dialogueControlWidths(column, second ? [left, ownWidth(second)] : [left]);
+      controls.classList.toggle("ada-dialogue-stacked", layout.stacked);
       controls.style.setProperty(
         "--ada-dialogue-row",
         second && !layout.stacked ? layout.widths.map(units).join(" ") : "minmax(0,1fr)",
       );
-      if (second) {
-        second.style.width = "";
-        second.style.justifySelf = "";
-      }
-      first.style.width = layout.stacked || !second ? units(layout.widths[0]!) : "";
-      first.style.justifySelf = !second && first.classList.contains("ada-primary") ? "end" : "";
+      first.style.justifySelf = second ? "" : "center";
     }
     const scrolls = copy.scrollHeight > copy.clientHeight + 1;
     copy.classList.toggle("ada-story-scrolls", scrolls);

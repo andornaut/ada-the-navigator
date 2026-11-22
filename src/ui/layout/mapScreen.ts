@@ -176,9 +176,16 @@ export function mapQuestsRect(insets: Insets, view: Size): Rect {
 }
 
 /** The selected destination stays left of the entire footer action group. */
-export function panelMaxWidth(insets: Insets, view: Size): number {
+export function panelMaxWidth(
+  insets: Insets,
+  view: Size,
+  navigationWidth = MAP_SCREEN.hudRow.close.width +
+    MAP_SCREEN.hudRow.galaxies.width +
+    MAP_SCREEN.hudRow.quests.width +
+    2 * MAP_SCREEN.hudRow.gap,
+): number {
   const page = safeRect(insets, SPACING.pageInset, view);
-  return Math.max(0, mapQuestsRect(insets, view).x - SPACING.gap - page.x);
+  return Math.max(0, page.width - navigationWidth - SPACING.gap);
 }
 
 /**

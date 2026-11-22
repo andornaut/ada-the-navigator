@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
-import { slice, units } from "./layout/css.ts";
+import { font, slice, units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { LOADING_LAYER, LOADING_STYLE } from "./loadingBar.ts";
 import {
@@ -141,21 +141,21 @@ describe("modal buttons", () => {
     const button = rule(`${UI_SCOPE} .ada-button`);
     expect(button).toContain(`min-height:${units(TEXT_BUTTON.height)}`);
     expect(button).toContain(`border-width:${slice(4)} ${slice(2)} ${slice(6)} ${slice(2)}`);
-    // 12 down to the label's line box, 16 across, inside the 4, 2 and 6 slices; the 4 lip below.
+    // The face insets exclude the whole-pixel borders and the lip.
+    expect(button).toContain(`--ada-button-inset-y:${units(11)}`);
+    expect(button).toContain(`font:${font(TEXT_BUTTON.label)}`);
+    const inset = "var(--ada-button-inset-y)";
+    const side = `calc(${units(16)} - ${slice(2)})`;
     expect(button).toContain(
-      `padding:calc(${units(12)} - ${slice(4)}) calc(${units(16)} - ${slice(2)}) calc(${units(
-        16,
-      )} - ${slice(6)})`,
+      `padding:calc(${inset} + 0px - ${slice(4)}) ${side} calc(${inset} + ${units(4)} - ${slice(6)})`,
     );
     expect(rule(`${UI_SCOPE} .ada-button:active:not(:disabled)`)).toContain(
-      `padding:calc(${units(14)} - ${slice(4)}) calc(${units(16)} - ${slice(2)}) calc(${units(
-        14,
-      )} - ${slice(6)})`,
+      `padding:calc(${inset} + ${units(2)} - ${slice(4)}) ${side} calc(${inset} + ${units(2)} - ${slice(6)})`,
     );
     expect(rule(`${UI_SCOPE} .ada-button:disabled`)).toContain(TEXT_TOKENS.disabledLabel);
     expect(rule(`${UI_SCOPE} .ada-actions`)).toContain(`gap:${units(BUTTON_GAP)}`);
     expect(rule(`${UI_SCOPE} .ada-actions.ada-stack`)).toContain(`gap:${units(STACK_BUTTON_GAP)}`);
-    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain("grid-auto-columns:1fr");
+    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain("grid-auto-columns:minmax(0,max-content)");
   });
 
   it("stacks groups a gap apart in the scrolling body, each at its own width and centred", () => {
@@ -175,12 +175,7 @@ describe("modal buttons", () => {
     expect(rule(`${UI_SCOPE} .ada-card header`)).toContain(`padding:0 ${units(34)}`);
   });
 
-  it("keeps compact geometry with top placement by default and explicit centered rows", () => {
-    const compact = rule(`${UI_SCOPE} .ada-button.ada-compact`);
-    expect(compact).toContain(`min-width:${units(TEXT_BUTTON.compactWidth)}`);
-    expect(compact).toContain(`height:${units(TEXT_BUTTON.compactHeight)}`);
-    // The 2 nine-slice edge plus the padding makes the 8 inset.
-    expect(compact).toContain(`padding:0 calc(${units(8)} - ${slice(2)})`);
+  it("keeps top placement by default and explicit centered rows", () => {
     expect(rule(`${UI_SCOPE} .ada-row`)).toContain("align-items:flex-start");
     expect(rule(`${UI_SCOPE} .ada-row[data-ui-placement="center"]`)).toContain(
       "align-items:center",

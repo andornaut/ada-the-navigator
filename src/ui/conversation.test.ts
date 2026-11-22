@@ -334,16 +334,15 @@ describe("Interaction card HUD row", () => {
     expect(inView(hud, closeFace)).toEqual([679.5, 703.5, 38.5, 62.5]);
     expect(skipRight).toBe(STORY_SKIP.right.besideSettings);
     const skip = [
-      hud.x + hud.width - skipRight - TEXT_BUTTON.compactWidth,
       hud.x + hud.width - skipRight,
       hud.y + STORY_SKIP.top,
-      hud.y + STORY_SKIP.top + TEXT_BUTTON.compactHeight,
+      hud.y + STORY_SKIP.top + TEXT_BUTTON.height,
     ];
-    // Beside Settings: 57 in from the HUD rect's right (708), so its face ends at 651.
-    expect(skip).toEqual([579, 651, 36.5, 64.5]);
+    // The face's left edge follows the label width. Its right edge clears the Settings slot.
+    expect(skip).toEqual([651, 34, 82]);
     // The press areas never overlap, and both end above the panel's top cap.
-    expect(skip[1]).toBeLessThanOrEqual(inView(hud, close)[0]!);
-    expect(Math.max(skip[3]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
+    expect(skip[0]).toBeLessThanOrEqual(inView(hud, close)[0]!);
+    expect(Math.max(skip[2]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
   });
 
   it("places the X and moves Skip beside it through the Interaction card's styles", () => {

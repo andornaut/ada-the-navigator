@@ -53,9 +53,9 @@ describe("storybook page", () => {
   });
 
   it("caps the panel's top a gap below the HUD row, lower on Ada's room page", () => {
-    expect(STORY_PANEL_TOP).toBe(48.5);
-    expect(STORY_PANEL_TOP).toBe(HUD_ROW.bottom + SPACING.gap);
-    // From the 12 HUD rect top: y 60.5, and 62.75 under the room's pause press area.
+    expect(STORY_PANEL_TOP).toBe(56);
+    expect(STORY_PANEL_TOP).toBe(STORY_SKIP.top + TEXT_BUTTON.height + SPACING.gap);
+    // The room has its separate pause press-area clearance.
     expect(STORY_ROOM_PANEL_TOP).toBe(50.75);
     const height = (top: number) =>
       `max-height:calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
@@ -160,6 +160,8 @@ describe("storybook page", () => {
     expect(storyControlsLayout(228, previous, 104)).toBe("beside");
     // Past the column at its own width: Art's named actions go below Previous at every column.
     expect(storyControlsLayout(228, previous, 106)).toBe("below");
+    expect(storyControlsLayout(220, 120, 70)).toBe("beside");
+    expect(storyControlsLayout(180, 105, 70)).toBe("below");
     for (const action of [151.98, 160.04, 216.26]) {
       expect(storyControlsLayout(262.23, previous, action)).toBe("below");
     }
@@ -183,13 +185,12 @@ describe("storybook page", () => {
       "grid-template-columns:max-content minmax(0, 1fr)",
     );
     expect(rule(".ada-controls .ada-story-controls.ada-story-wide")).toContain(
-      'grid-template-areas:"previous ." "next next"',
+      'grid-template-areas:"previous" "next"',
     );
   });
 
-  it("draws story buttons 36 high with a press area grown 9 past the face", () => {
-    const button = MODAL_STYLE.slice(MODAL_STYLE.indexOf(".ada-button.ada-story-button{"));
-    expect(button).toContain(`min-height:${units(36)}`);
+  it("uses ordinary-sized story buttons with the approved enlarged press area", () => {
+    expect(MODAL_STYLE).toContain(`min-height:${units(TEXT_BUTTON.height)}`);
     const press = MODAL_STYLE.slice(MODAL_STYLE.indexOf(".ada-button.ada-story-button::after{"));
     expect(press.slice(0, press.indexOf("}"))).toContain(`inset:${units(-9)}`);
   });
@@ -213,9 +214,8 @@ describe("storybook page", () => {
     expect(alone).not.toContain("top:");
   });
 
-  it("centres the compact Skip on the HUD row's centre line, the discs' centre", () => {
-    expect(STORY_SKIP.top + TEXT_BUTTON.compactHeight / 2).toBe(HUD_ROW.centre);
-    expect(STORY_SKIP.top).toBe(2.5);
+  it("keeps the standard-height Skip within the HUD and above the panel", () => {
+    expect(STORY_SKIP.top).toBe(Math.max(0, HUD_ROW.centre - TEXT_BUTTON.height / 2));
   });
 
   it("fills the speaker's tab with their conversation colour, or the neutral one", () => {

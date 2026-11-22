@@ -76,32 +76,16 @@ const FRAME = slice(CARD_SLICE);
 // A logical length less a whole-pixel nine-slice edge.
 const lessSlice = (length: number, edge: number) => `calc(${units(length)} - ${slice(edge)})`;
 
-// Button content insets: the label's line box 12 below the face's top and above its bottom, 16 in
+// Button content insets: the label's line box 11 below the face's top and above its bottom, 16 in
 // from each side, inside the nine-slice edges. Normal faces sit on the lip; pressed and disabled
 // faces sink by pressedSink.
-const { inset, lipHeight, pressedSink, verticalInset } = TEXT_BUTTON;
+const { height, inset, lipHeight, pressedSink, verticalInset } = TEXT_BUTTON;
 const BUTTON_SIDE = lessSlice(inset, left);
-const NORMAL_PADDING = `${lessSlice(verticalInset, top)} ${BUTTON_SIDE} ${lessSlice(
-  verticalInset + lipHeight,
-  bottom,
-)}`;
-const SUNK_PADDING = `${lessSlice(verticalInset + pressedSink, top)} ${BUTTON_SIDE} ${lessSlice(
-  verticalInset + lipHeight - pressedSink,
-  bottom,
-)}`;
-const COMPACT_SIDE = lessSlice(TEXT_BUTTON.compactInset, left);
+const buttonY = (offset: number, edge: number) =>
+  `calc(var(--ada-button-inset-y) + ${units(offset)} - ${slice(edge)})`;
+const NORMAL_PADDING = `${buttonY(0, top)} ${BUTTON_SIDE} ${buttonY(lipHeight, bottom)}`;
+const SUNK_PADDING = `${buttonY(pressedSink, top)} ${BUTTON_SIDE} ${buttonY(lipHeight - pressedSink, bottom)}`;
 
-// Story action insets (STORY_BUTTON): the label's line box 6 below the face's top and above its
-// bottom, 16 in from each side; pressed and disabled faces sink as every button's do.
-const STORY_SIDE = lessSlice(STORY_BUTTON.inset, left);
-const STORY_PADDING = `${lessSlice(STORY_BUTTON.verticalInset, top)} ${STORY_SIDE} ${lessSlice(
-  STORY_BUTTON.verticalInset + lipHeight,
-  bottom,
-)}`;
-const STORY_SUNK_PADDING = `${lessSlice(
-  STORY_BUTTON.verticalInset + pressedSink,
-  top,
-)} ${STORY_SIDE} ${lessSlice(STORY_BUTTON.verticalInset + lipHeight - pressedSink, bottom)}`;
 // The story action's press area grows its face by hitAround's margin on each side.
 const STORY_HIT = hitMargin(HIT_RULE, {
   height: STORY_BUTTON.height,
@@ -132,6 +116,9 @@ const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
 const LEGACY_ENABLED_FOCUS = `${LEGACY_TEXT_FOCUS}:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
 )`;
+const SPECIAL_BUTTON_SHAPES = `
+  .ada-exchange-amount,.ada-quest-list [data-quest-id]
+`;
 
 /**
  * An open modal's stacking order in its layer: above every HUD and start-screen control there,
@@ -335,6 +322,7 @@ ${UI_SCOPE} .ada-close:active::before{
 /* Buttons: 48 high, a 44 face over a 4 lip; pressed sinks 2; disabled is flat. A wrapped label
    grows the face by a line box per line. */
 ${UI_SCOPE} .ada-button{
+  --ada-button-inset-y:${units(verticalInset)};
   box-sizing:border-box;
   min-width:${units(TEXT_BUTTON.height)};
   height:auto;
@@ -346,7 +334,7 @@ ${UI_SCOPE} .ada-button{
   justify-content:center;
   text-align:center;
   gap:${units(SPACING.markGap)};
-  font:${font(TYPE.label)};
+  font:${font(TEXT_BUTTON.label)};
   color:${TEXT_TOKENS.buttonLabel};
   background:#9690b4;
   border-style:solid;
@@ -357,6 +345,16 @@ ${UI_SCOPE} .ada-button{
   image-rendering:pixelated;
   cursor:pointer;
   pointer-events:auto
+}
+${UI_SCOPE} .ada-button:not(:where(${SPECIAL_BUTTON_SHAPES})){
+  width:max-content;
+  max-width:100%;
+  overflow-wrap:anywhere
+}
+/* Numeric amount controls and quest list entries keep their purpose-specific geometry. */
+${UI_SCOPE} .ada-button:where(${SPECIAL_BUTTON_SHAPES}){
+  --ada-button-inset-y:${units((height - lipHeight - TYPE.label.lineHeight) / 2)};
+  font:${font(TYPE.label)}
 }
 ${UI_SCOPE} .ada-button.ada-primary{
   background:#bfa06f;
@@ -422,13 +420,16 @@ ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
   }
 }
 
-/* An action stack fills the card's inner width, its faces STACK_BUTTON_GAP apart. */
+/* Equal-width vertical stacks fill their group. Horizontal rows keep each action's width. */
 ${UI_SCOPE} .ada-actions.ada-stack{
   grid-auto-flow:row;
   grid-template-columns:minmax(0,1fr);
   align-self:stretch;
   width:auto;
   gap:${units(STACK_BUTTON_GAP)}
+}
+${UI_SCOPE} .ada-actions.ada-stack .ada-button{
+  width:100%
 }
 
 /* Standard actions wrap with the same horizontal and vertical face gaps as action grids. */
@@ -443,7 +444,7 @@ ${UI_SCOPE} .ada-actions.ada-wrap{
   row-gap:${units(STACK_BUTTON_GAP)}
 }
 ${UI_SCOPE} .ada-actions.ada-wrap > .ada-button{
-  flex:1 1 auto;
+  flex:0 1 auto;
   overflow-wrap:anywhere
 }
 
@@ -495,10 +496,11 @@ ${UI_SCOPE} :is(.ada-actions,[data-footer-action],.ada-ship-back):has(
   align-self:center;justify-content:center;width:max-content;max-width:100%
 }
 
-/* An action row shares one width, the widest label plus the insets, BUTTON_GAP apart, centred. */
+/* Keep each action's own width and centre the group. */
 ${UI_SCOPE} .ada-actions{
   display:grid;
-  grid-auto-columns:1fr;
+  grid-auto-columns:minmax(0,max-content);
+  justify-content:center;
   grid-auto-flow:column;
   gap:${units(BUTTON_GAP)};
   width:max-content;
@@ -515,31 +517,9 @@ ${UI_SCOPE} .ada-rows{
   align-self:stretch
 }
 
-/* Chibi's compact exception for a button inside a control row: a 72x28 face, wider when its label
-   and compact insets need it, full-size label; the whole row stays the target. */
-${UI_SCOPE} .ada-button.ada-compact{
-  flex:none;
-  min-width:${units(TEXT_BUTTON.compactWidth)};
-  height:${units(TEXT_BUTTON.compactHeight)};
-  min-height:${units(TEXT_BUTTON.compactHeight)};
-  padding:0 ${COMPACT_SIDE}
-}
-${UI_SCOPE} .ada-button.ada-compact:active:not(:disabled){
-  padding:0 ${COMPACT_SIDE};
-  border-image-source:var(--ui-button-pressed)
-}
-
-/* Story actions: a 36 face, the label 6 down and 16 across; a wrapped label grows the face by a
-   line box per line. The press area reaches hitAround's margin past the face on every side. */
+/* Preserve the story action's press area beyond the drawn face. */
 ${UI_SCOPE} .ada-button.ada-story-button{
-  position:relative;
-  min-width:0;
-  min-height:${units(STORY_BUTTON.height)};
-  padding:${STORY_PADDING}
-}
-${UI_SCOPE} .ada-button.ada-story-button:active:not(:disabled),
-${UI_SCOPE} .ada-button.ada-story-button:disabled{
-  padding:${STORY_SUNK_PADDING}
+  position:relative
 }
 ${UI_SCOPE} .ada-button.ada-story-button::after{
   content:"";

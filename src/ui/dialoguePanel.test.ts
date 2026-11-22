@@ -17,10 +17,10 @@ import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 it("applies the approved stack, measured split, and lone primary widths", () => {
-  expect(dialogueControlWidths(228, [105, 101])).toEqual({ stacked: true, widths: [105, 228] });
-  expect(dialogueControlWidths(232, [105, 101])).toEqual({ stacked: false, widths: [105, 103] });
-  expect(dialogueControlWidths(240, [105, 101])).toEqual({ stacked: false, widths: [108, 108] });
-  expect(dialogueControlWidths(228, [101])).toEqual({ stacked: false, widths: [102] });
+  expect(dialogueControlWidths(228, [105, 101])).toEqual({ stacked: true, widths: [228, 228] });
+  expect(dialogueControlWidths(232, [105, 101])).toEqual({ stacked: false, widths: [105, 101] });
+  expect(dialogueControlWidths(240, [105, 101])).toEqual({ stacked: false, widths: [105, 101] });
+  expect(dialogueControlWidths(228, [101])).toEqual({ stacked: false, widths: [101] });
 });
 
 class Element {

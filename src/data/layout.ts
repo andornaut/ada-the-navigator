@@ -44,7 +44,7 @@ export const TYPE = {
 // controls (src/ui/layout/controls.ts)
 
 // Standard actions: 48 high, a 44 face over a 4 lip, pressed sinks 2; content inset 16 across
-// and 12 down, so a wrapped label grows the face by one line box per line. Compact faces (row
+// and 11 down, so a wrapped label grows the face by one 22 px line box per line. Compact faces (row
 // actions and pills) are the native 28 high nine-slice frame; the compact Install action is 72
 // wide, or its label plus compactInset on each side when that is wider.
 export const TEXT_BUTTON = {
@@ -53,9 +53,10 @@ export const TEXT_BUTTON = {
   compactWidth: 72,
   height: 48,
   inset: 16,
+  label: { lineHeight: 22, size: 18, weight: TYPE.label.weight },
   lipHeight: 4,
   pressedSink: 2,
-  verticalInset: 12,
+  verticalInset: 11,
 } as const;
 
 // Storybook choices and page controls (art/layout.md "Story action"): 36 high, a 32 face over the
@@ -296,18 +297,18 @@ export const HUD_ROW = {
   reach: HUD_BUTTON_INSET.disc,
 } as const;
 
-// Storybook Skip: a compact secondary control apart from page navigation, centred on the HUD
-// row's centre line. Both are small buttons, so while the settings button shows Skip ends
+// Storybook Skip: the standard-height action starts inside the HUD rect. While Settings shows it ends
 // SMALL_BUTTON_GAP left of its disc, whose drawn right edge is on the HUD rect's top-right corner;
 // otherwise Skip's drawn right edge is on that corner. Offsets from that corner.
 export const STORY_SKIP = {
   right: { besideSettings: HUD_BUTTON.disc + SMALL_BUTTON_GAP, corner: 0 },
-  top: HUD_ROW.centre - TEXT_BUTTON.compactHeight / 2,
+  top: Math.max(0, HUD_ROW.centre - TEXT_BUTTON.height / 2),
 } as const;
 
 // The storybook panel's highest top: the HUD row's bottom plus a gap, from the HUD rect's top, so
 // the panel never runs under Skip or the settings button.
-export const STORY_PANEL_TOP = HUD_ROW.bottom + SPACING.gap;
+export const STORY_PANEL_TOP =
+  Math.max(HUD_ROW.bottom, STORY_SKIP.top + TEXT_BUTTON.height) + SPACING.gap;
 
 // TYPE.label's advance, in font units, for each character a count holds (Liberation Sans Bold,
 // 2048 units per em): its digits are tabular, every one 1139, as is k; m is 1821 and the point 569.

@@ -11,12 +11,13 @@ import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./tokens.ts";
 export const PAUSE_GRID_STYLE = `
 ${UI_SCOPE} .ada-actions.ada-pause-grid{
   grid-auto-flow:row;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  justify-items:center;
   column-gap:${units(BUTTON_GAP)};
   row-gap:${units(STACK_BUTTON_GAP)};
   width:auto
 }
-${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1}
+${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1;width:100%}
 @media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
   ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
 }

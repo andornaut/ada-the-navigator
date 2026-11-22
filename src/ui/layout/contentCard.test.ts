@@ -57,16 +57,17 @@ describe("card groups", () => {
     expect(CARD_CONTENT.rowGap).toBe(4);
   });
 
-  it("share one action width of the widest label plus the insets, BUTTON_GAP apart", () => {
-    expect(actionsWidth("row", [60, 90])).toBe(2 * (90 + 2 * TEXT_BUTTON.inset) + BUTTON_GAP);
-    expect(actionsWidth("row", [60, 90])).toBe(260);
+  it("sum intrinsic widths in rows and share the widest width in stacks", () => {
+    expect(actionsWidth("row", [60, 90])).toBe(60 + 90 + 4 * TEXT_BUTTON.inset + BUTTON_GAP);
+    expect(actionsWidth("row", [60, 90])).toBe(230);
     expect(actionsWidth("stack", [60, 90])).toBe(90 + 32);
     expect(actionsWidth("row", [])).toBe(0);
   });
 
-  it("make the compact Install 72 wide, or its label plus 8 insets when wider", () => {
+  it("give Install the standard minimum and label insets", () => {
     expect(cardActionsSize(40)).toBe(72);
-    expect(cardActionsSize(70)).toBe(86);
+    expect(cardActionsSize(70)).toBe(102);
+    expect(cardActionsSize(4)).toBe(TEXT_BUTTON.height);
   });
 
   it("reserve a 6 gap and an 8 track for a scrolling body, with a 16 end pad", () => {

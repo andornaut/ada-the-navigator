@@ -471,14 +471,13 @@ export const MAP_SCREEN_STYLE = `
   bottom:${safeEdge("bottom", SPACING.pageInset)};
   display:flex;
   align-items:center;
+  max-width:calc(100% - ${safeEdge("left", SPACING.pageInset)} -
+    ${safeEdge("right", SPACING.pageInset)});
   gap:${units(MAP_SCREEN.hudRow.gap)};
   pointer-events:auto
 }
 .ada-controls .ada-map-navigation .ada-button{
-  flex:none;
-  box-sizing:border-box;
-  width:${units(MAP_SCREEN.hudRow.close.width)};
-  white-space:nowrap
+  flex:0 1 auto
 }
 .ada-controls .ada-map-header{
   position:absolute;
@@ -1367,7 +1366,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   // The panel's content and width for the selection.
   const dressPanel = () => {
     const { insets, size } = layout();
-    const width = units(panelMaxWidth(insets, size));
+    const navigation = frameSize(hudRow).width / readViewUnit(hudRow);
+    const width = units(panelMaxWidth(insets, size, navigation || undefined));
     panel.style.maxWidth = width;
     panel.style.setProperty("--map-panel-width", width);
     const place = selectedPlace();

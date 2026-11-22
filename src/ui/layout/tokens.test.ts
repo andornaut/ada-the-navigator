@@ -52,12 +52,13 @@ describe("layout tokens", () => {
       compactWidth: 72,
       height: 48,
       inset: 16,
+      label: { lineHeight: 22, size: 18, weight: 700 },
       lipHeight: 4,
       pressedSink: 2,
-      verticalInset: 12,
+      verticalInset: 11,
     });
-    // A one-line label fills the 44 face with its 20 line box and 12 insets.
-    expect(2 * TEXT_BUTTON.verticalInset + TYPE.label.lineHeight).toBe(
+    // A one-line label fills the 44 face with its 22 line box and 11 insets.
+    expect(2 * TEXT_BUTTON.verticalInset + TEXT_BUTTON.label.lineHeight).toBe(
       TEXT_BUTTON.height - TEXT_BUTTON.lipHeight,
     );
     expect(CONTROL_ROW).toEqual({

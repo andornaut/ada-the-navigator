@@ -12,7 +12,7 @@ export { START_SCREEN } from "../../data/layout.ts";
 
 export type StartAction = keyof typeof START_SCREEN.actions.left;
 
-/** Each part's rect in logical px of the view, for its game area. */
+/** Each part's rect in play-view px, with action rects at their maximum label width. */
 export function startScreenRects(view: Size): {
   readonly actions: Readonly<Record<StartAction, Rect>>;
   readonly note: Rect & { readonly centre: number };

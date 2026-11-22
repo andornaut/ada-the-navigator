@@ -25,9 +25,9 @@ export function groupX(innerWidth: number, width: number): number {
   return (innerWidth - width) / 2;
 }
 
-// The compact Install action's width: 72, or its label plus the compact insets when wider.
+// Install uses the same intrinsic width as other labeled actions.
 export function cardActionsSize(labelWidth: number): number {
-  return Math.max(TEXT_BUTTON.compactWidth, labelWidth + 2 * TEXT_BUTTON.compactInset);
+  return Math.max(TEXT_BUTTON.height, labelWidth + 2 * TEXT_BUTTON.inset);
 }
 
 // A control row's width for its label and right-end action.
@@ -35,14 +35,14 @@ export function rowWidth(labelWidth: number, actionWidth: number): number {
   return CONTROL_ROW.icon + CONTROL_ROW.gap + labelWidth + CONTROL_ROW.gap + actionWidth;
 }
 
-// An action row's width: buttons of one shared width, the widest label plus the insets,
-// BUTTON_GAP apart; a stack fills the inner width, so its least width is one button.
+// Intrinsic widths include each action's own label and two insets, with gaps in a row.
 export function actionsWidth(axis: "row" | "stack", labelWidths: readonly number[]): number {
   if (labelWidths.length === 0) {
     return 0;
   }
-  const button = Math.max(...labelWidths) + 2 * TEXT_BUTTON.inset;
+  const buttonWidths = labelWidths.map(cardActionsSize);
   return axis === "row"
-    ? labelWidths.length * button + (labelWidths.length - 1) * BUTTON_GAP
-    : button;
+    ? buttonWidths.reduce((total, width) => total + width, 0) +
+        (buttonWidths.length - 1) * BUTTON_GAP
+    : Math.max(...buttonWidths);
 }
