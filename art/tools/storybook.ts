@@ -379,19 +379,19 @@ const ROOM: Palette = {
   floor: "#d9b98f",
   plank: "#cfac80",
   slab: "#b99a76",
-  wall: "#e6d6ea",
+  wall: "#dfc9e9",
   trim: "#f6eef6",
   glass: "#9fd0e8",
-  curtain: "#eaa9bd",
+  curtain: "#e49ab7",
   poster: "#f2d49a",
   star: "#b9a2e0",
   desk: "#c99a6a",
   drawer: "#bb8c5e",
   lamp: "#8fb2dc",
   shade: "#f4cf7a",
-  chair: "#b48ad0",
+  chair: "#a874c8",
   bed: "#b8875e",
-  blanket: "#8fb0e2",
+  blanket: "#7da6e2",
   pillow: "#f7f0f4",
   shelf: "#c99a6a",
   pebble1: "#c7a593",
@@ -403,9 +403,10 @@ const ROOM: Palette = {
   glow: "#96ecde",
   cloth: "#ef9fa8",
   // Needle's recorder (dark brown, ivory rings) and its song sheet on the desk.
-  recorder: "#7a4a32",
+  recorder: "#69473a",
   joint: "#efe4c8",
   sheet: "#fbf7ee",
+  songPaper: "#efe4cf",
   staff: "#8c86a0",
 };
 
@@ -459,9 +460,9 @@ function recorder(
   const r = 0.1;
   s.solid(rod(at(0), at(0.32), r * 0.95, 8, r * 1.1), P.recorder!, 2, key);
   s.solid(rod(at(0.32), at(0.4), r * 1.18, 8), P.joint!, 2, key + 0.001);
-  s.solid(rod(at(0.4), at(1.12), r, 8), P.recorder!, 2, key + 0.002);
-  s.solid(rod(at(1.12), at(1.2), r * 1.15, 8), P.joint!, 2, key + 0.003);
-  s.solid(rod(at(1.2), at(1.42), r * 1.05, 8, r * 1.3), P.recorder!, 2, key + 0.004);
+  s.solid(rod(at(0.4), at(0.98), r, 8), P.recorder!, 2, key + 0.002);
+  s.solid(rod(at(0.98), at(1.06), r * 1.15, 8), P.joint!, 2, key + 0.003);
+  s.solid(rod(at(1.06), at(1.3), r * 1.05, 8, r * 1.3), P.recorder!, 2, key + 0.004);
 }
 
 function room(
@@ -510,9 +511,9 @@ function room(
     [onX(0.021, y0, y1, 0, 0.8), P.drawer!],
   ]);
   // Shelf of collected rocks on the left wall, between the corner and the doorway.
-  s.solid(box(0, 0.9, 1.0, 5.0, 4.2, 4.4), P.shelf!, 2, 2);
+  s.solid(box(0, 0.9, 1.0, 3.6, 4.2, 4.4), P.shelf!, 2, 2);
   ["pebble1", "pebble2", "pebble3", "pebble1"].forEach((c, i) => {
-    s.solid(frustum(0.45, 1.6 + i * 0.95, 0.32, 0.22, 6, 4.4, 4.75), P[c]!, 2, 2.1 + i * 0.01);
+    s.solid(frustum(0.45, 1.45 + i * 0.55, 0.25, 0.17, 6, 4.4, 4.75), P[c]!, 2, 2.1 + i * 0.01);
   });
   // Bed along the left wall.
   s.solid(box(0, 3.6, 6.6, 7.0, 0, 2.8), P.bed!, 2, 6.8);
@@ -534,7 +535,7 @@ function room(
   if (withRecorder) {
     // The song sheet, turned a little on the desk, with two staves.
     const sheet = (u0: number, u1: number, v0: number, v1: number, z: number): Face => {
-      const [cx, cy, a] = [1.95, 1.55, -0.25];
+      const [cx, cy, a] = [1.9, 1.72, -0.25];
       return [
         [u0, v0],
         [u1, v0],
@@ -546,13 +547,13 @@ function room(
         z,
       ]);
     };
-    desk.push([sheet(-0.75, 0.75, -0.55, 0.55, 2.601), P.sheet!]);
+    desk.push([sheet(-0.75, 0.75, -0.55, 0.55, 2.601), P.songPaper!]);
     for (const v of [-0.32, -0.22, -0.12, 0.12, 0.22, 0.32]) {
       desk.push([sheet(-0.62, 0.62, v - 0.018, v + 0.018, 2.602), P.staff!]);
     }
   }
   s.solid(box(1.0, 6.8, 0, 2.8, 2.3, 2.6), P.desk!, 2, 6.0, desk);
-  if (withRecorder) recorder(s, P, 2.6, 6.05, [1.15, 2.2, 0], [Math.SQRT1_2, -Math.SQRT1_2]);
+  if (withRecorder) recorder(s, P, 2.6, 6.05, [1.15, 2.38, 0], [Math.SQRT1_2, -Math.SQRT1_2]);
   s.solid(frustum(6.0, 0.9, 0.38, 0.38, 8, 2.6, 2.75), P.lamp!, 2, 6.6);
   s.solid(box(5.95, 6.05, 0.85, 0.95, 2.75, 3.8), P.lamp!, 2, 6.7);
   s.solid(frustum(6.0, 0.9, 0.62, 0.32, 8, 3.6, 4.2), P.shade!, 2, 6.8);
@@ -1807,7 +1808,7 @@ const SLEEP_GLOW = "story-ada-room-sleep-glow";
 const OVERLAYS = [SLEEP_GLOW] as const;
 
 // The rock's peak glow over the same unoccupied night room.
-function overnightOverlays(): Record<(typeof OVERLAYS)[number], Overlay> {
+export function overnightOverlays(): Record<(typeof OVERLAYS)[number], Overlay> {
   const base = paint(NIGHT, night(NIGHT, NIGHT_GLOW));
   const breath = paint(NIGHT, night(NIGHT, BREATH_GLOW));
   return { [SLEEP_GLOW]: overlay(base, breath) };

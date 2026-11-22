@@ -23,7 +23,7 @@
 ## Shared scene package
 
 `node art/tools/story-compositions.ts <candidate-directory>` builds the additive
-WebP package from the authored PNG references, lossy at quality 80 (method 6,
+WebP package from the authored bedroom generator and other scene PNG references, lossy at quality 80 (method 6,
 alpha quality 100, so the patches' binary alpha stays exact). It does not
 activate the root manifest or remove reference images. The package contains
 twelve full bases across nine locations, a polished-rock patch, recorder,
@@ -34,8 +34,12 @@ galaxy-map character images.
 
 `art/sources/story-reference.json` preserves the authored scene paths, subject
 bands and overlay positions independently of the activated runtime manifest.
-The producer reads preserved PNG inputs in `art/sources/story/`, falling back
-to their original public paths before cutover. Paired retirement moves those
+The producer paints bedroom plates from `art/tools/storybook.ts` and keeps the
+original PNGs in `art/sources/story/`. Other scenes read the preserved PNG
+inputs, falling back to their original public paths before cutover. Pass
+`--bedroom-only` after the output directory to build and check just the
+bedroom bases, layers and aliases. Merge those selected IDs into the complete
+composition document when pairing the candidate with the consumer. Paired retirement moves those
 authored inputs out of `public/art/story/`; it does not discard their bytes.
 
 The Garden Party closing places the original Ada-in-bed sprite over the night
@@ -154,7 +158,7 @@ and the scene's subject stays clearest above it.
 | Id                               | Scene                                                 | Backdrop              | Key colours                                                               |
 | -------------------------------- | ----------------------------------------------------- | --------------------- | ------------------------------------------------------------------------- |
 | `story-park`                     | Park: pond, bench, three trees, the dig spot and rock | `#cfe4e8` → `#dfeadb` | grass `#8cc777`, path `#e8d3a2`, pond `#8fc8de`, rock `#93877e`           |
-| `story-ada-room-unpolished`      | Ada's room, the rock on the desk as dug up            | `#d9d2e6` → `#cfc5de` | wall `#e6d6ea`, floor `#d9b98f`, blanket `#8fb0e2`, rock `#93877e`        |
+| `story-ada-room-unpolished`      | Ada's room, the rock on the desk as dug up            | `#d9d2e6` → `#cfc5de` | wall `#dfc9e9`, floor `#d9b98f`, blanket `#7da6e2`, rock `#93877e`        |
 | `story-ada-room`                 | Ada's room, the polished rock's faint glowing pattern | `#d9d2e6` → `#cfc5de` | as above, glow line `#53d1c2`, glow `#96ecde`                             |
 | `story-grandma-garden`           | Grandma's house, fence, raised beds in bloom, tree    | `#bfe0e8` → `#d9ecd6` | grass `#86c46f`, wall `#f0d7a8`, roof `#d06a55`, blooms `#ef7f8f`         |
 | `story-community-garden`         | Fenced lot: shed, one sprouting and two empty beds    | `#d3dfe6` → `#dfe6dc` | ground `#cfae82`, patches `#a9c98b`, shed `#b49ad6`, bin `#6f9a7a`        |
@@ -162,7 +166,7 @@ and the scene's subject stays clearest above it.
 | `story-school-hallway`           | Lockers, notice board, two doors, bench               | `#c7d3e6` → `#a9b8d2` | wall `#f1e3c6`, lockers `#5fb3a6`, floor `#d8c29c`, bench `#7d8fc0`       |
 | `story-kitchen`                  | Kitchen at home: round table set for supper, counter  | `#e9dccb` → `#e1d2c2` | wall `#f6e2b8`, cabinets `#93c2b0`, cloth `#ef9b84`, tiles `#d9b487`      |
 | `story-front-door`               | Front door, coats and lead, shoe rack, dog's bowl     | `#e6dccd` → `#dcd0c0` | door `#a98bc4`, floor `#d6b48e`, coats `#f0c95e` and `#86ade0`            |
-| `story-ada-room-recorder`        | `story-ada-room` with the recorder on a song sheet    | `#d9d2e6` → `#cfc5de` | as `story-ada-room`, recorder `#7a4a32`, rings `#efe4c8`                  |
+| `story-ada-room-recorder`        | `story-ada-room` with the recorder on a song sheet    | `#d9d2e6` → `#cfc5de` | as `story-ada-room`, recorder `#69473a`, rings `#efe4c8`                  |
 | `story-concert-hall`             | Corner stage, curtains, piano, spotlight, chair rows  | `#d8cde0` → `#cbbfd2` | wall `#efe2cf`, floor `#d7ad7c`, curtain `#c95a66`, chairs `#6f93cf`      |
 | `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#6e4a30` |
 | `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#7cc95a`, trowel `#9aa6b4`, sack `#c9a978`           |
@@ -200,7 +204,7 @@ Full palettes are in the generator. Colours are before treatment d.
   high), open onto the landing: its frame in the palette's desk wood, the
   landing in the lamp shade's colour (lit by day, `#6c6a72` at night) and its
   floor in drawer wood, so each background's grade carries over. The rock shelf
-  sits between the corner and the doorway (y 1.0 to 5.0).
+  sits between the corner and the doorway (y 1.0 to 3.6), clear of the trim.
 - Cartwheel's dinner is in `story-kitchen`, a room of the same size and
   projection raised 88 rows so the table's near edge ends on row 293: sage
   cabinets with the hob, a pot and the sink under a dusk window along the right

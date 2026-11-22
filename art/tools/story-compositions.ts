@@ -8,7 +8,13 @@ import { composite, resizeNearest } from "@andornaut/art-kit/build/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 import { decodeWebp, encodeLosslessWebp, encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 
-import { PARTY_ROOM, PARTY_ROOM_STAGES } from "./storybook.ts";
+import {
+  BACKGROUNDS,
+  overnightOverlays,
+  paint,
+  PARTY_ROOM,
+  PARTY_ROOM_STAGES,
+} from "./storybook.ts";
 
 interface Asset {
   id: string;
@@ -81,6 +87,9 @@ const subjects = new Map([
   [peakNightScene, { top: 250, bottom: 300 }],
 ]);
 const originals = new Map(manifest.assets.map((asset) => [asset.id, asset]));
+const bedrooms = new Map(
+  BACKGROUNDS.filter(({ id }) => id.startsWith("story-ada-room")).map((scene) => [scene.id, scene]),
+);
 const images = new Map<string, RgbaImage>();
 const original = (id: string): RgbaImage => {
   if (!images.has(id)) {
@@ -110,10 +119,26 @@ const original = (id: string): RgbaImage => {
     const asset = originals.get(id);
     assert(asset, `Missing authored scene ${id}`);
     const archived = `${references}${basename(asset.path)}`;
-    images.set(
-      id,
-      decodePng(readFileSync(existsSync(archived) ? archived : `${source}${asset.path.slice(5)}`)),
-    );
+    const bedroom = bedrooms.get(`story-${basename(asset.path, ".png")}`);
+    if (bedroom) {
+      images.set(
+        id,
+        id === bedroom.id
+          ? paint(bedroom.palette, bedroom.build(bedroom.palette))
+          : original(bedroom.id),
+      );
+    } else if (id === sleepGlow) {
+      const { at, image } = overnightOverlays()[sleepGlow];
+      assert.deepEqual(at, asset.at, "The authored overnight overlay anchor must stay fixed");
+      images.set(id, image);
+    } else {
+      images.set(
+        id,
+        decodePng(
+          readFileSync(existsSync(archived) ? archived : `${source}${asset.path.slice(5)}`),
+        ),
+      );
+    }
   }
   return images.get(id)!;
 };
@@ -205,7 +230,10 @@ function displayDifference(width: number, height: number, a: Uint8Array, b: Uint
 }
 
 /** Generate additive candidates only; the consumer owns activation and offline closure. */
-export async function buildStoryCompositions(output: string) {
+export async function buildStoryCompositions(
+  output: string,
+  { bedroomOnly = false }: { bedroomOnly?: boolean } = {},
+) {
   const directory = resolve(output);
   assert.notEqual(directory, resolve(source), "Use a separate candidate directory");
   mkdirSync(`${directory}/story-composed`, { recursive: true });
@@ -258,7 +286,7 @@ export async function buildStoryCompositions(output: string) {
     "story-kitchen",
     "story-front-door",
     "story-concert-hall",
-  ];
+  ].filter((id) => !bedroomOnly || bedrooms.has(id));
   const addScene = (id: string, base: string, layers: Layer[]) => {
     const subject = subjects.get(id) ?? originals.get(id)?.subject;
     assert(subject, `Missing original subject band ${id}`);
@@ -320,7 +348,7 @@ export async function buildStoryCompositions(output: string) {
       ]);
     }
   }
-  for (const state of ["spilled", "replanted"]) {
+  for (const state of bedroomOnly ? [] : ["spilled", "replanted"]) {
     const id = `story-grandma-garden-${state}`;
     addScene(id, scenes["story-grandma-garden"]!.base, [
       await patch(`garden-${state}`, "story-grandma-garden", id),
@@ -339,7 +367,7 @@ export async function buildStoryCompositions(output: string) {
     },
   ]);
   addScene(partyOpening, day, [...scenes[PARTY_ROOM]!.layers]);
-  addScene(lunchScene, scenes["story-schoolyard"]!.base, []);
+  if (!bedroomOnly) addScene(lunchScene, scenes["story-schoolyard"]!.base, []);
   // Preserve environment-only aliases and their individual run placement bands.
   for (const asset of originals.values()) {
     if (!asset.id.startsWith("story-") || scenes[asset.id] || !asset.subject) continue;
@@ -350,6 +378,7 @@ export async function buildStoryCompositions(output: string) {
   }
   const authoredFigures = new Map<string, RgbaImage>();
   for (const [id, figures] of Object.entries(figureScenes)) {
+    if (!scenes[id]) continue;
     const plate = original(id);
     const authored = { ...plate, data: new Uint8Array(plate.data) };
     for (const [name, x, y, scale] of figures) {
@@ -442,5 +471,7 @@ export async function buildStoryCompositions(output: string) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   assert(process.argv[2], "Pass a separate additive candidate output directory");
-  await buildStoryCompositions(process.argv[2]);
+  const scope = process.argv[3];
+  assert(scope === undefined || scope === "--bedroom-only", "Unknown composition scope");
+  await buildStoryCompositions(process.argv[2], { bedroomOnly: scope === "--bedroom-only" });
 }
