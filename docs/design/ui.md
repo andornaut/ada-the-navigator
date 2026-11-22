@@ -64,3 +64,5 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0318 | Measure DOM boxes in the turned frame's own axes                                | [ada-0318.md](../work/ada-0318.md) |
 | ada-0321 | Place scan receipts by Art's start and rise rules                               | [ada-0321.md](../work/ada-0321.md) |
 | ada-0326 | Show the final ore cost tick when shield recharge stops                         | [ada-0326.md](../work/ada-0326.md) |
+| ada-0333 | Inset Ada's touch sticks 80 pixels from the screen sides                        | [ada-0333.md](../work/ada-0333.md) |
+| ada-0334 | Complete Map tap and hold routing and verify discrete action coverage           | [ada-0334.md](../work/ada-0334.md) |
