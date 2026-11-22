@@ -68,7 +68,7 @@ export const GALAXY_MAP = {
 /** The view's route map rects, in logical px from the view's top-left. */
 export interface GalaxyMapRects {
   readonly available: Rect;
-  /** The one destination action, at its 192 width (an unavailable label widens it). */
+  /** The reference action box. The rendered button sizes to its label. */
   readonly action: Rect;
   readonly capture: Rect;
   /** Each route position's 48 press area, in route order. */

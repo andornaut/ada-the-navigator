@@ -434,11 +434,7 @@ ${PRESSED_LABEL}{
   transform:translateX(-50%);
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
   display:flex;
-  gap:${units(SPACING.panelPadding)}
-}
-.ada-controls .ada-route-action{width:${units(GALAXY_MAP_ACTIONS.width)}}
-.ada-controls .ada-route-action.ada-unavailable{
-  min-width:${units(GALAXY_MAP_ACTIONS.width)};
+  gap:${units(SPACING.panelPadding)};
   width:max-content;
   max-width:${units(GALAXY_MAP_PANEL.width)}
 }
