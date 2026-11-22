@@ -15,6 +15,7 @@ const output = `${art}outposts/`;
 // project frames draw at the destination scale (art/destinations.md).
 const DISPLAY_SCALE = 0.4375;
 const DESTINATION_SCALE = 1.5;
+const OUTPOST_GROWTH = 1.4;
 const BLINK_MS = 700;
 const PAD = 4;
 
@@ -166,6 +167,16 @@ function growers(lit: boolean): Part[][] {
       const [tx, ty] = [(mid + t) * Math.cos(a), (mid + t) * Math.sin(a)];
       parts.push({ plan: ngon(6, 2.6, tx, ty), z0: 5.5, z1: 8, top: growersGlass, side: leafDark });
     }
+    // A nutrient line beside each row of growth chambers.
+    const sx = mid * Math.cos(a) - 3.75 * Math.sin(a);
+    const sy = mid * Math.sin(a) + 3.75 * Math.cos(a);
+    parts.push({
+      plan: orientedBox(sx, sy, a, 19, 1.6),
+      z0: 6.5,
+      z1: 7.05,
+      top: growersGlassCap,
+      side: leafSide,
+    });
     // Tip lamp, lit in frame A.
     const [lx, ly] = [(mid + 16.5) * Math.cos(a), (mid + 16.5) * Math.sin(a)];
     const lamp = lit ? bloom : bloomDim;
@@ -274,6 +285,7 @@ function manipulator(
     armLink(base, elbow, height - 6, height, 7, brass),
     { plan: ngon(8, 5, ex, ey), z0: height - 10, z1: height + 2, ...rigDark },
     armLink(elbow, tip, height - 10, height - 5, 5, rigPlate),
+    { plan: ngon(8, 2.8, ex, ey), z0: height + 2, z1: height + 2.8, ...brass },
     { plan: ngon(6, 4, tx, ty), z0: height - 14, z1: height - 5, ...brass },
     {
       plan: ngon(4, 2.1, tx, ty),
@@ -414,6 +426,13 @@ function salvagers(lit: boolean): Part[][] {
     { plan: orientedBox(15, 12, 0.6, 10, 8), z0: 14, z1: 14.8, top: rust, side: rustSide },
     { plan: orientedBox(16, -1, 0.1, 8, 7), z0: 14, z1: 14.8, top: slate, side: slateSide },
     ...wallWindows(facing, 6, 9, 2, 2.6, hull),
+    ...[0, 3, 6].map((rib) => ({
+      plan: orientedBox(8 + rib, 6 + rib * 0.25, 0.25, 1.2, 5),
+      z0: 14.8,
+      z1: 15.25,
+      top: darkSide,
+      side: darkSide,
+    })),
   ]);
   const tank = ngon(8, 9, -14, 8, Math.PI / 8);
   groups.push([
@@ -677,8 +696,8 @@ function frameEntries(name: string, width: number, height: number, above: number
     path: `/art/outposts/${name}-${frame}.svg`,
     width,
     height,
-    displayWidth: round(width * DISPLAY_SCALE * DESTINATION_SCALE),
-    displayHeight: round(height * DISPLAY_SCALE * DESTINATION_SCALE),
+    displayWidth: round(width * DISPLAY_SCALE * DESTINATION_SCALE * OUTPOST_GROWTH),
+    displayHeight: round(height * DISPLAY_SCALE * DESTINATION_SCALE * OUTPOST_GROWTH),
     facing: "fixed",
     pivot: { x: 0.5, y: above / height },
     frameMs: BLINK_MS,

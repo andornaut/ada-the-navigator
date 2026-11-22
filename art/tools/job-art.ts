@@ -66,7 +66,7 @@ const TINTS = Object.fromEntries([
 
 // Nebula: blurred white masses Tech multiplies by the galaxy's tint, outer then core, and an
 // untinted star layer. Ellipses are [cx, cy, rx, ry] from the box centre, turned -6.875 degrees.
-const NEBULA = { width: 380, height: 180 } as const;
+const NEBULA = { width: 380, height: 180, displayWidth: 475, displayHeight: 225 } as const;
 const TURN = -6.875;
 const OUTER: readonly (readonly number[])[] = [
   [0, 0, 120, 52],
@@ -88,7 +88,7 @@ function mass(ellipses: readonly (readonly number[])[], blur: number): string {
     return `    <ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${TURN} ${x} ${y})" />`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${NEBULA.width}" height="${NEBULA.height}" viewBox="0 0 ${NEBULA.width} ${NEBULA.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${NEBULA.displayWidth}" height="${NEBULA.displayHeight}" viewBox="0 0 ${NEBULA.width} ${NEBULA.height}">`,
     `  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}" /></filter>`,
     `  <g fill="${WHITE}" filter="url(#soft)">`,
     ...shapes,
@@ -129,14 +129,14 @@ function stars(): string {
   const cx = NEBULA.width / 2;
   const cy = NEBULA.height / 2;
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${NEBULA.width}" height="${NEBULA.height}" viewBox="0 0 ${NEBULA.width} ${NEBULA.height}" shape-rendering="crispEdges">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${NEBULA.displayWidth}" height="${NEBULA.displayHeight}" viewBox="0 0 ${NEBULA.width} ${NEBULA.height}" shape-rendering="crispEdges">`,
     ...STARS.flatMap(([rows, dx, dy]) => pixels(rows, STAR_COLOURS, cx + dx, cy + dy)),
     "</svg>",
     "",
   ].join("\n");
 }
 
-// Wreck: an unlit hull split in two with debris, in a 100 x 60 box drawn at 140 x 84.
+// Wreck: an unlit hull split in two with debris, in a 100 x 60 viewBox.
 const HULL = {
   break: "#2a2433",
   rust: "#a77a68",
@@ -144,7 +144,7 @@ const HULL = {
   top: "#9d95ad",
   window: "#3f3a4d",
 };
-const WRECK = { width: 100, height: 60, displayWidth: 140, displayHeight: 84 } as const;
+const WRECK = { width: 100, height: 60, displayWidth: 189, displayHeight: 113.4 } as const;
 const WRECK_PARTS: readonly [string, readonly (readonly [number, number])[]][] = [
   // Bow half, left: nose to the break, three dark windows and a rust band.
   [
@@ -213,6 +213,25 @@ const WRECK_PARTS: readonly [string, readonly (readonly [number, number])[]][] =
       [38, 25],
       [38, 27],
       [34, 27],
+    ],
+  ],
+  // Exposed ribs across the torn bow skin.
+  [
+    HULL.break,
+    [
+      [40, 18],
+      [42, 19],
+      [41, 23],
+      [40, 22],
+    ],
+  ],
+  [
+    HULL.rust,
+    [
+      [42, 26],
+      [44, 28],
+      [44, 35],
+      [42, 32],
     ],
   ],
   // Stern half, right, drifted and tilted, with its fin.
@@ -318,8 +337,8 @@ function wreck(): string {
 const BEACON = {
   width: 48,
   height: 30,
-  displayWidth: 72,
-  displayHeight: 45,
+  displayWidth: 108,
+  displayHeight: 67.5,
   transmitter: [24, 15],
 } as const;
 const ARCS = { a: 7.5, b: 12 } as const;
@@ -348,6 +367,7 @@ function beacon(frame: keyof typeof ARCS): string {
     ),
     `  <path d="M19 12.5 22 9.5h4l3 3v5l-3 3h-4l-3-3z" fill="#c78564" stroke="#5c4a61" />`,
     `  <path d="M20 12.5 23 10h3l2 2.5-5 2.5z" fill="#efb88c" />`,
+    '  <path d="M21 17.5h1.5m3 0H27" fill="none" stroke="#ffe9b8" stroke-width=".8" />',
     `  <circle cx="${lx}" cy="${ly}" r="2.4" fill="#5a647d" />`,
     `  <circle cx="${lx}" cy="${ly}" r="1.35" fill="${WHITE}" />`,
     `  <path d="${arc(radius, Math.PI * 0.28, Math.PI * 0.72)}${arc(radius, Math.PI * 1.28, Math.PI * 1.72)}" fill="none" stroke="${POI}" stroke-width="1.5" stroke-linecap="round" />`,
@@ -476,26 +496,26 @@ const entries = [
   svgEntry(
     "landmark-nebula-outer",
     "nebula-outer.svg",
-    NEBULA.width,
-    NEBULA.height,
-    NEBULA.width,
-    NEBULA.height,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
   ),
   svgEntry(
     "landmark-nebula-core",
     "nebula-core.svg",
-    NEBULA.width,
-    NEBULA.height,
-    NEBULA.width,
-    NEBULA.height,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
   ),
   svgEntry(
     "landmark-nebula-stars",
     "nebula-stars.svg",
-    NEBULA.width,
-    NEBULA.height,
-    NEBULA.width,
-    NEBULA.height,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
+    NEBULA.displayWidth,
+    NEBULA.displayHeight,
   ),
   svgEntry(
     "landmark-wreck",

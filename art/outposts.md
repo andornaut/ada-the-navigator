@@ -40,15 +40,14 @@ Growers' leaf green stays clearly yellower and darker than the
 Every entry has the station schema plus `outpost`, the outpost role
 (`growers`, `workshop` or `salvagers`).
 
-| Outpost   | Ids                                          | Frame px | Display          | Pivot          | Dock `(x, y)`  | Dock width |
-| --------- | -------------------------------------------- | -------- | ---------------- | -------------- | -------------- | ---------- |
-| Growers   | `outpost-growers-a`, `outpost-growers-b`     | 144, 120 | 94.5 by 78.75    | `(0.5, 0.4)`   | `(72, 91.841)` | 31.843     |
-| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | 170, 120 | 111.563 by 78.75 | `(0.5, 0.675)` | `(85, 97.971)` | 29.394     |
-| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | 168, 110 | 110.25 by 72.188 | `(0.5, 0.4)`   | `(84, 82.184)` | 31.843     |
+| Outpost   | Ids                                          | Frame px | Display           | Pivot          | Dock `(x, y)`  | Dock width |
+| --------- | -------------------------------------------- | -------- | ----------------- | -------------- | -------------- | ---------- |
+| Growers   | `outpost-growers-a`, `outpost-growers-b`     | 144, 120 | 132.3 by 110.25   | `(0.5, 0.4)`   | `(72, 91.841)` | 31.843     |
+| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | 170, 120 | 156.188 by 110.25 | `(0.5, 0.675)` | `(85, 97.971)` | 29.394     |
+| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | 168, 110 | 154.35 by 101.063 | `(0.5, 0.4)`   | `(84, 82.184)` | 31.843     |
 
-- Display size is `frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale), as for the
-  station. `facing` is
-  `fixed`; `dock.outward` is `[0, 1]`.
+- Display size is `frame * 0.4375 * 1.5 * 1.4`, the [destination scale](destinations.md#scale) with
+  Sunflower outpost growth. `facing` is `fixed`; `dock.outward` is `[0, 1]`.
 - Pivots lie on the world plane: the growers' deck centre, the workshop's central bus and the model origin between the salvagers' hull and tank.
 - The legacy approach point lies on the world plane, below the pivot by 43.841
   frame px (growers), 16.971 (workshop) and 38.184 (salvagers). Dock values are
@@ -67,7 +66,7 @@ A sealed data satellite with swept solar wings, a central bus and a mast
 receiver. Draw the opaque and clear pixel art with nearest-neighbour filtering.
 
 - Root manifest id `discovery-cache`: a 63 by 21 sheet of 21 by 21 frames,
-  displayed at 21 by 21 logical px with the pivot at the centre. `frames` names
+  displayed at 31 by 31 logical px with the pivot at the centre. `frames` names
   `hidden` (0), `litA` (1) and `litB` (2).
 - `hidden` is the satellite before Ada approaches: desaturated and unlit, close to
   the environment tones.

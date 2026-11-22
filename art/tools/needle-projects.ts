@@ -22,6 +22,7 @@ import { type Point, projectAt, round } from "./projection.ts";
 import { BLINK_MS, box, DISPLAY_SCALE, ngon, type Part, polygons } from "./solid.ts";
 import { writeProjects } from "./projects.ts";
 
+const LAMP_GROWTH = 1.5;
 const LAMP_DIM = "#8c7c60";
 const POOL_R = 14;
 const POOL_ALPHA = { a: 0.14, b: 0.05 };
@@ -55,11 +56,14 @@ const pool: Point[] = Array.from({ length: 24 }, (_, i) => [
   POOL_R * Math.sin((2 * Math.PI * i) / 24),
   0,
 ]);
-const frame = layout([
-  ...polygons(lampBuoy(true)),
-  ...polygons(lampBuoy(false)),
-  { color: lamp, points: pool },
-]);
+function lampFaces(lit: boolean) {
+  return polygons(lampBuoy(lit)).map(({ color, points }) => ({
+    color,
+    points: points.map(([x, y, z]): Point => [x * LAMP_GROWTH, y * LAMP_GROWTH, z * LAMP_GROWTH]),
+  }));
+}
+
+const frame = layout([...lampFaces(true), ...lampFaces(false), { color: lamp, points: pool }]);
 
 const lamps = (["a", "b"] as const).map((letter) => {
   const lit = letter === "a";
@@ -69,7 +73,7 @@ const lamps = (["a", "b"] as const).map((letter) => {
       opacity: POOL_ALPHA[letter],
       points: pool.map((p) => projectAt(frame.halfWidth, frame.above, p)),
     },
-    ...placed(frame.halfWidth, frame.above, polygons(lampBuoy(lit))),
+    ...placed(frame.halfWidth, frame.above, lampFaces(lit)),
   ];
   writeFileSync(
     `${OUT}lamp-${letter}.svg`,

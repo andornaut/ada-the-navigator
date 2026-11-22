@@ -4406,8 +4406,8 @@
       "path": "/art/whirlpool/whirlpool-nursery-beacon-a.svg",
       "width": 80,
       "height": 112,
-      "displayWidth": 35,
-      "displayHeight": 49,
+      "displayWidth": 50.75,
+      "displayHeight": 71.05,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -4421,8 +4421,8 @@
       "path": "/art/whirlpool/whirlpool-nursery-beacon-b.svg",
       "width": 80,
       "height": 112,
-      "displayWidth": 35,
-      "displayHeight": 49,
+      "displayWidth": 50.75,
+      "displayHeight": 71.05,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -4436,8 +4436,8 @@
       "path": "/art/whirlpool/whirlpool-current-buoy-a.svg",
       "width": 48,
       "height": 64,
-      "displayWidth": 21,
-      "displayHeight": 28,
+      "displayWidth": 31.5,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -4450,8 +4450,8 @@
       "path": "/art/whirlpool/whirlpool-current-buoy-b.svg",
       "width": 48,
       "height": 64,
-      "displayWidth": 21,
-      "displayHeight": 28,
+      "displayWidth": 31.5,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,

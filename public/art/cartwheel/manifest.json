@@ -177,29 +177,29 @@
       "id": "mooring-buoy-a",
       "path": "/art/cartwheel/mooring-buoy-a.svg",
       "width": 96,
-      "height": 80,
+      "height": 96,
       "displayWidth": 42,
-      "displayHeight": 35,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.65625
       },
       "frameMs": 700,
       "moorings": [
         {
           "x": 10.033,
-          "y": 45,
+          "y": 63,
           "outward": [-1, 0]
         },
         {
           "x": 85.967,
-          "y": 45,
+          "y": 63,
           "outward": [1, 0]
         },
         {
           "x": 61.019,
-          "y": 24.409,
+          "y": 42.409,
           "outward": [0.534, -0.845]
         }
       ]
@@ -208,29 +208,29 @@
       "id": "mooring-buoy-b",
       "path": "/art/cartwheel/mooring-buoy-b.svg",
       "width": 96,
-      "height": 80,
+      "height": 96,
       "displayWidth": 42,
-      "displayHeight": 35,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.65625
       },
       "frameMs": 700,
       "moorings": [
         {
           "x": 10.033,
-          "y": 45,
+          "y": 63,
           "outward": [-1, 0]
         },
         {
           "x": 85.967,
-          "y": 45,
+          "y": 63,
           "outward": [1, 0]
         },
         {
           "x": 61.019,
-          "y": 24.409,
+          "y": 42.409,
           "outward": [0.534, -0.845]
         }
       ]

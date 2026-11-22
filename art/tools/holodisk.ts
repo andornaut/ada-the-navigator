@@ -111,14 +111,15 @@ writeSheet(`${art}holodisk-beacon.png`, { key: "holodisk-beacon" }, [
 const sheetEntry = (
   id: string,
   size: number,
+  displaySize: number,
   frames: readonly (readonly [string, unknown, number])[],
 ) => ({
   id,
   path: `/art/${id}.png`,
   width: size * frames.length,
   height: size,
-  displayWidth: size,
-  displayHeight: size,
+  displayWidth: displaySize,
+  displayHeight: displaySize,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
   frameWidth: size,
@@ -127,8 +128,8 @@ const sheetEntry = (
   loop: frames.map(([name, , ms], frame) => ({ frame, name, ms })),
 });
 placeEntries("core", "holodisk", [
-  sheetEntry("holodisk", PICKUP, TURN),
-  sheetEntry("holodisk-beacon", BEACON, PULSE),
+  sheetEntry("holodisk", PICKUP, 16, TURN),
+  sheetEntry("holodisk-beacon", BEACON, 28, PULSE),
 ]);
 
 // UI subset entries stay sorted by key.

@@ -36,7 +36,7 @@ band, pearl hub and a dark spindle hole.
 ## Pickup
 
 - Root manifest id `holodisk`: a 44 by 11 sheet of 11 by 11 frames, displayed
-  at 11 by 11 logical px with the pivot at the centre. `frames` names `rest`
+  at 16 by 16 logical px with the pivot at the centre. `frames` names `rest`
   (0), `turn1` (1), `edge` (2) and `turn2` (3).
 - Coin turn (`loop`, and the sheet's `turn` tag): rest 600 ms, then turn1,
   edge and turn2 at 70 ms each; 810 ms in all. The turn narrows the silhouette
@@ -47,7 +47,7 @@ band, pearl hub and a dark spindle hole.
 ## Beacon
 
 - Root manifest id `holodisk-beacon`: a 38 by 19 sheet of 19 by 19 frames, a
-  dotted 1 px ring of 16 dots at radius 8, displayed at 19 by 19 logical px
+  dotted 1 px ring of 16 dots at radius 8, displayed at 28 by 28 logical px
   with the pivot at the centre. `frames` names `base` (0, `#a83a96`) and
   `bright` (1, `#e868c8`).
 - Pulse (`loop`, and the sheet's `pulse` tag): base 600 ms, bright 600 ms; a

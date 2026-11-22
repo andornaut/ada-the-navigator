@@ -6854,8 +6854,8 @@
       "path": "/art/holodisk.png",
       "width": 44,
       "height": 11,
-      "displayWidth": 11,
-      "displayHeight": 11,
+      "displayWidth": 16,
+      "displayHeight": 16,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -6897,8 +6897,8 @@
       "path": "/art/holodisk-beacon.png",
       "width": 38,
       "height": 19,
-      "displayWidth": 19,
-      "displayHeight": 19,
+      "displayWidth": 28,
+      "displayHeight": 28,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -7083,10 +7083,10 @@
     {
       "id": "landmark-nebula-outer",
       "path": "/art/landmarks/nebula-outer.svg",
-      "width": 380,
-      "height": 180,
-      "displayWidth": 380,
-      "displayHeight": 180,
+      "width": 475,
+      "height": 225,
+      "displayWidth": 475,
+      "displayHeight": 225,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7096,10 +7096,10 @@
     {
       "id": "landmark-nebula-core",
       "path": "/art/landmarks/nebula-core.svg",
-      "width": 380,
-      "height": 180,
-      "displayWidth": 380,
-      "displayHeight": 180,
+      "width": 475,
+      "height": 225,
+      "displayWidth": 475,
+      "displayHeight": 225,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7109,10 +7109,10 @@
     {
       "id": "landmark-nebula-stars",
       "path": "/art/landmarks/nebula-stars.svg",
-      "width": 380,
-      "height": 180,
-      "displayWidth": 380,
-      "displayHeight": 180,
+      "width": 475,
+      "height": 225,
+      "displayWidth": 475,
+      "displayHeight": 225,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7122,10 +7122,10 @@
     {
       "id": "landmark-wreck",
       "path": "/art/landmarks/wreck.svg",
-      "width": 140,
-      "height": 84,
-      "displayWidth": 140,
-      "displayHeight": 84,
+      "width": 189,
+      "height": 113.4,
+      "displayWidth": 189,
+      "displayHeight": 113.4,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7135,10 +7135,10 @@
     {
       "id": "landmark-beacon-a",
       "path": "/art/landmarks/beacon-a.svg",
-      "width": 72,
-      "height": 45,
-      "displayWidth": 72,
-      "displayHeight": 45,
+      "width": 108,
+      "height": 67.5,
+      "displayWidth": 108,
+      "displayHeight": 67.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7149,10 +7149,10 @@
     {
       "id": "landmark-beacon-b",
       "path": "/art/landmarks/beacon-b.svg",
-      "width": 72,
-      "height": 45,
-      "displayWidth": 72,
-      "displayHeight": 45,
+      "width": 108,
+      "height": 67.5,
+      "displayWidth": 108,
+      "displayHeight": 67.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
@@ -7207,8 +7207,8 @@
       "path": "/art/discovery-cache.png",
       "width": 63,
       "height": 21,
-      "displayWidth": 21,
-      "displayHeight": 21,
+      "displayWidth": 31,
+      "displayHeight": 31,
       "facing": "front",
       "pivot": {
         "x": 0.5,

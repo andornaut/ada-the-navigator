@@ -6,7 +6,7 @@ import { writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { svgText } from "./svg-text.ts";
-import { depth, facesViewer, type Point } from "./projection.ts";
+import { depth, facesViewer, type Point, round } from "./projection.ts";
 
 // World light from above and screen-left of the viewer, stepped into five tones as the whales.
 const LIGHT = unit([-0.25, 0.45, 1]);
@@ -344,6 +344,7 @@ type Spec = {
   title: string;
   model: (frame: Frame) => Part[];
   scale: number;
+  displayGrowth: number;
   // Frame px, multiples of 16, and the pivot as a fraction of the frame.
   frame: readonly [number, number];
   pivot: readonly [number, number];
@@ -370,7 +371,7 @@ function svg(spec: Spec, frame: Frame, polys: readonly Poly[]): string {
       .map(([x, y]) => `${(x + px).toFixed(2)},${(y + py).toFixed(2)}`)
       .join(" ")}"/>`;
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${fw * DISPLAY_SCALE}" height="${fh * DISPLAY_SCALE}" viewBox="0 0 ${fw} ${fh}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(fw * DISPLAY_SCALE * spec.displayGrowth)}" height="${round(fh * DISPLAY_SCALE * spec.displayGrowth)}" viewBox="0 0 ${fw} ${fh}">`,
     `  <title>${spec.title} ${frame.toUpperCase()}</title>`,
     '  <g stroke-width="1" stroke-linejoin="round">',
     ...polys.filter(({ decal }) => !decal).map((poly) => line(poly, true)),
@@ -388,6 +389,7 @@ export const NURSERY: Spec = {
   title: "Nursery beacon",
   model: nursery,
   scale: 1.25,
+  displayGrowth: 1.45,
   frame: [80, 112],
   pivot: [0.5, 0.8],
 };
@@ -397,6 +399,7 @@ export const BUOY: Spec = {
   title: "Current buoy",
   model: buoy,
   scale: 1,
+  displayGrowth: 1.5,
   frame: [48, 64],
   pivot: [0.5, 0.8],
 };
@@ -424,8 +427,8 @@ export function exportProject(
       path: `${publicDir}${file}`,
       width,
       height,
-      displayWidth: width * DISPLAY_SCALE,
-      displayHeight: height * DISPLAY_SCALE,
+      displayWidth: round(width * DISPLAY_SCALE * spec.displayGrowth),
+      displayHeight: round(height * DISPLAY_SCALE * spec.displayGrowth),
       facing: "fixed",
       pivot: { x: r2(spec.pivot[0]), y: r2(spec.pivot[1]) },
       ...(frameMs === undefined ? {} : { frameMs }),

@@ -327,6 +327,10 @@ export function hamlet(lit: boolean): Part[][] {
     habitat(4, 17, 22, 18, 5, 11, coral),
     habitat(10, -14, 16, 15, 5, 9, ice),
     [
+      part(orbitalBox(-6, 21, 10, 3), 5, 7, ...alloy),
+      part(orbitalBox(-6, 21, 6, 1.3), 7, 7.5, ...ice),
+    ],
+    [
       ...closedCollar(lit, face, collar, ...alloy, height),
       part(orbitalBox(face - 4, 0, 6, 15), height + 4, height + 6, ...coral),
     ],
@@ -348,6 +352,7 @@ export function lampHouse(lit: boolean): Part[][] {
       part(orbitalBox(-5, 6, 5, 5), 22, 37, ...truss),
       part(orbitalBox(-5, 4, 5, 26), 32, 38, ...alloy),
       ...[-4, 4, 12].map((across) => part(orbitalBox(-2, across, 1, 6), 33, 37, ...ice)),
+      part(orbitalBox(-3, 4, 2, 20), 38, 38.65, ...truss),
       cube(...along(DOCK, -3, 4), 38, 2.2, lit ? a.marker : a.markerDeep),
     ],
     [

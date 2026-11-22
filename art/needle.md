@@ -424,7 +424,7 @@ lamp frames and replaces its `needle-lamp-` entries, and writes the
 - `needle-lamp-a` and `-b`: a small pearl float, a silver mast and a soft warm
   lamp, `#ffe9b8` lit in A and `#8c7c60` dim in B, over a faint warm pool of
   light on the world plane (radius 14, alpha 0.14 in A, 0.05 in B). Frame 48 by
-  48 (display 21), pivot `(0.5, 0.5625)`: the float's centre on the world
+  64 (display 21 by 28), pivot `(0.5, 0.59375)`: the float's centre on the world
   plane. `facing` `fixed`, `frameMs` 700, `project` `channelLights`.
 - `anchors`: the first pair 40 world units along the channel from its start,
   then every 80, each 4 inside its edge (`start`, `spacing`, `inset`), on both

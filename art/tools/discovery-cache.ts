@@ -9,6 +9,7 @@ import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const SIZE = 21;
+const DISPLAY_SIZE = 31;
 const BLINK_MS = 500;
 
 // A sealed data satellite with swept solar wings, a central bus and a blinking receiver.
@@ -117,8 +118,8 @@ const entry = {
   path: "/art/discovery-cache.png",
   width: SIZE * 3,
   height: SIZE,
-  displayWidth: SIZE,
-  displayHeight: SIZE,
+  displayWidth: DISPLAY_SIZE,
+  displayHeight: DISPLAY_SIZE,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
   frameWidth: SIZE,

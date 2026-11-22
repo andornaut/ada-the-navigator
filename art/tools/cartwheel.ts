@@ -576,6 +576,7 @@ function bayFaces(lit: boolean): Face[] {
 // A cream buoy with a beacon and three mooring arms where the story craft hold between scenes.
 const BUOY_ARMS = [DOCK + Math.PI / 2, DOCK - Math.PI / 2, DOCK + Math.PI + 0.35];
 const BUOY_R = 19;
+const BUOY_CORE_GROWTH = 1.45;
 const ARM_END = 31;
 
 function buoyParts(lit: boolean): Part[][] {
@@ -601,7 +602,7 @@ function buoyParts(lit: boolean): Part[][] {
     ]);
   }
   const deck = ngon(10, BUOY_R, 0, 0, Math.PI / 10);
-  groups.push([
+  const core: Part[] = [
     { plan: deck, z0: 0, z1: 11.6, top: cream, side: creamSide },
     ...wallWindows(facing, 4.5, 7.5, 1, 3, deck),
     ...[
@@ -615,8 +616,17 @@ function buoyParts(lit: boolean): Part[][] {
       top: i === all.length - 1 ? warm : cream,
       side: creamSide,
     })),
-  ]);
-  groups.push(beacon(0, 0, 23.2, 12, lit));
+    ...beacon(0, 0, 23.2, 12, lit),
+  ];
+  // The body grows between the original arm tips. Story craft use their old world offsets.
+  groups.push(
+    core.map(({ plan, z0, z1, ...material }): Part => ({
+      ...material,
+      plan: plan.map(([x, y]) => [x * BUOY_CORE_GROWTH, y * BUOY_CORE_GROWTH]),
+      z0: z0 * BUOY_CORE_GROWTH,
+      z1: z1 * BUOY_CORE_GROWTH,
+    })),
+  );
   groups.push(dockCollar(lit, BUOY_R + 3, 13, 20, cream, creamSide, 10));
   return groups;
 }

@@ -35,15 +35,15 @@
   berths, moorings and jets are frame px, as for the station and the outposts.
   `displayWidth` and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset       | Ids                                                | Frame px | Display          | Pivot           |
-| ----------- | -------------------------------------------------- | -------- | ---------------- | --------------- |
-| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
-| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
-| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)` |
-| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 80   | 42 by 35         | `(0.5, 0.5625)` |
-| Miner       | `craft-miner-{0..15}`                              | 128      | 56               | `(0.5, 0.5)`    |
-| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35               | `(0.5, 0.5)`    |
-| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42               | `(0.5, 0.5)`    |
+| Asset       | Ids                                                | Frame px | Display          | Pivot            |
+| ----------- | -------------------------------------------------- | -------- | ---------------- | ---------------- |
+| Hub, worn   | `outpost-hub-a`, `outpost-hub-b`                   | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
+| Hub repairs | `outpost-hub-repaired-a`, `-b`                     | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
+| Second bay  | `outpost-hub-bay-a`, `-b` (overlay)                | 240, 240 | 131.25 by 131.25 | `(0.5, 0.5625)`  |
+| Buoy        | `mooring-buoy-a`, `mooring-buoy-b`                 | 96, 96   | 42 by 42         | `(0.5, 0.65625)` |
+| Miner       | `craft-miner-{0..15}`                              | 128      | 56               | `(0.5, 0.5)`     |
+| Visitors    | `craft-visitor1-{0..15}`, `craft-visitor2-{0..15}` | 80       | 35               | `(0.5, 0.5)`     |
+| Blocker     | `craft-blocker-{0..15}`                            | 96       | 42               | `(0.5, 0.5)`     |
 
 ## Hub
 
@@ -113,9 +113,9 @@ cream eyes with blue lamps.
 - `facing` `fixed`, `frameMs` 700. A lights the beacon, the dock corner lights
   and the left and back eyes; B lights the right eye and dims the rest.
 - `moorings` lists the arm tips on the world plane in frame px with each arm's
-  outward screen direction: left `(10.033, 45)` `[-1, 0]`, right
-  `(85.967, 45)` `[1, 0]`, back `(61.019, 24.409)` `[0.534, -0.845]`. No tether
-  is drawn; a moored craft holds just beyond a tip.
+  outward screen direction: left `(10.033, 63)` `[-1, 0]`, right
+  `(85.967, 63)` `[1, 0]`, back `(61.019, 42.409)` `[0.534, -0.845]`.
+  These tips keep their world offsets from the pivot as the core grows.
 
 ## Story craft
 

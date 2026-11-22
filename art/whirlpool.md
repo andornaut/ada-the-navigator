@@ -214,16 +214,16 @@ Both are fixed flat-shaded solids in the whale convention: world light
 `(-0.25, 0.45, 1)`, five-tone ramps (thresholds 0.9, 0.78, 0.6 and 0.3), the
 frame projection, 1 frame px own-fill seams on body faces and unstroked decals.
 Frames are multiples of 16 px; each SVG's intrinsic size is its display size
-(`frame * 0.4375`) and its `viewBox` the frame. The pivot is the float's centre
+(`frame * 0.4375` times the asset's display multiplier) and its `viewBox` the frame. The pivot is the float's centre
 on the world plane: place it at the world position and sort by its screen y.
 On Whirlpool's light field both draw over the 1 px ink keyline of the
 [light-field rule](galaxies.md#light-fields) (`nurseryBeacon`, `currentBuoy`),
 10.86:1 on the field, which carries the glass and lamp floor.
 
-| Change            | Ids                                                        | Frame px | Display  | Pivot        |
-| ----------------- | ---------------------------------------------------------- | -------- | -------- | ------------ |
-| Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 80, 112  | 35 by 49 | `(0.5, 0.8)` |
-| Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 48, 64   | 21 by 28 | `(0.5, 0.8)` |
+| Change            | Ids                                                        | Frame px | Display        | Pivot        |
+| ----------------- | ---------------------------------------------------------- | -------- | -------------- | ------------ |
+| Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 80, 112  | 50.75 by 71.05 | `(0.5, 0.8)` |
+| Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 48, 64   | 31.5 by 42     | `(0.5, 0.8)` |
 
 | Part            | Colour                                                      | On `#B8CEC4` |
 | --------------- | ----------------------------------------------------------- | ------------ |

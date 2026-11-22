@@ -13,6 +13,7 @@ import { svgText } from "./svg-text.ts";
 const output = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
 const PATH = "/art/phantom/";
 const PAD = 4;
+const SETTLEMENT_SCALE = DISPLAY_SCALE * DESTINATION_SCALE * 1.45;
 
 // ---------------------------------------------------------------- frames
 
@@ -30,7 +31,7 @@ function svgFile(title: string, frame: Layout, faces: readonly Face[]): string {
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE)}" height="${round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * SETTLEMENT_SCALE)}" height="${round(frame.height * SETTLEMENT_SCALE)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
     `  <title>${title}</title>`,
     ...shapes,
     "</svg>",
@@ -97,8 +98,8 @@ const entries = settlements.flatMap(({ above, build, height, title, variant, wid
       path: `${PATH}${item.file}.svg`,
       width: frame.width,
       height: frame.height,
-      displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
-      displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
+      displayWidth: round(frame.width * SETTLEMENT_SCALE),
+      displayHeight: round(frame.height * SETTLEMENT_SCALE),
       facing: "fixed",
       pivot: { x: 0.5, y: frame.above / frame.height },
       frameMs: BLINK_MS,

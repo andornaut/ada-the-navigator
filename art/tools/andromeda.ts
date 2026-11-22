@@ -36,6 +36,8 @@ const output = fileURLToPath(new URL("../../public/art/andromeda/", import.meta.
 const PATH = "/art/andromeda/";
 const PAD = 4;
 const STEP = 16;
+const SETTLEMENT_SCALE = DESTINATION_SCALE * 1.45;
+const GUIDE_SCALE = DESTINATION_SCALE * 1.5;
 
 // ---------------------------------------------------------------- frames
 
@@ -119,21 +121,27 @@ function dockAt(frame: Layout, face: number, mouthWidth: number, across = 0, ang
 type Fixed = { id: string; file: string; title: string; faces: readonly Face[] };
 
 // Every fixed asset here is a destination or a change to one, drawn at the destination scale.
-function writeFixed(frame: Layout, item: Fixed) {
+function writeFixed(frame: Layout, item: Fixed, scale = DESTINATION_SCALE) {
   writeFileSync(
     `${output}${item.file}.svg`,
-    svgText(svgFile(item.title, frame, item.faces, DESTINATION_SCALE)),
+    svgText(svgFile(item.title, frame, item.faces, scale)),
   );
 }
 
-function fixedEntry(frame: Layout, item: Fixed, extra: Record<string, unknown>, blink = true) {
+function fixedEntry(
+  frame: Layout,
+  item: Fixed,
+  extra: Record<string, unknown>,
+  blink = true,
+  scale = DESTINATION_SCALE,
+) {
   return {
     id: item.id,
     path: `${PATH}${item.file}.svg`,
     width: frame.width,
     height: frame.height,
-    displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
-    displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
+    displayWidth: round(frame.width * DISPLAY_SCALE * scale),
+    displayHeight: round(frame.height * DISPLAY_SCALE * scale),
     facing: "fixed",
     pivot: { x: 0.5, y: frame.above / frame.height },
     ...(blink ? { frameMs: BLINK_MS } : {}),
@@ -195,10 +203,10 @@ const settlementEntries = settlements.flatMap(
   ({ build, dock, frame: dimensions, title, variant }) => {
     const items = pair(`outpost-${variant}`, variant, `Settlement, ${title.toLowerCase()}`, build);
     const frame = fixedLayout(allFaces(items), ...dimensions);
-    for (const item of items) writeFixed(frame, item);
+    for (const item of items) writeFixed(frame, item, SETTLEMENT_SCALE);
     const at = dockAt(frame, dock.face, dock.mouth);
     return items.map((item) =>
-      fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }),
+      fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }, true, SETTLEMENT_SCALE),
     );
   },
 );
@@ -229,9 +237,9 @@ const beacons: (Fixed & { state: m.BeaconState; blink: boolean })[] = [
   },
 ];
 const beaconFrame = layout(allFaces(beacons));
-for (const item of beacons) writeFixed(beaconFrame, item);
+for (const item of beacons) writeFixed(beaconFrame, item, GUIDE_SCALE);
 const beaconEntries = beacons.map((item) =>
-  fixedEntry(beaconFrame, item, { beacon: "guide", state: item.state }, item.blink),
+  fixedEntry(beaconFrame, item, { beacon: "guide", state: item.state }, item.blink, GUIDE_SCALE),
 );
 replaceEntries(
   "andromeda",
@@ -411,9 +419,15 @@ for (const lit of [true, false])
   checkClear("spare beacon", polygons(m.beacon("relit", lit)), m.spareBeacon(lit), m.SPARE_SITE);
 const spare = pair("beacon-guide-spare", "beacon-spare", "Spare guide beacon", m.spareBeacon);
 const spareFrame = layout(allFaces(spare));
-for (const item of spare) writeFixed(spareFrame, item);
+for (const item of spare) writeFixed(spareFrame, item, GUIDE_SCALE);
 const spareEntries = spare.map((item) =>
-  fixedEntry(spareFrame, item, { overlay: true, beacon: "guide", project: "spareBeacon" }),
+  fixedEntry(
+    spareFrame,
+    item,
+    { overlay: true, beacon: "guide", project: "spareBeacon" },
+    true,
+    GUIDE_SCALE,
+  ),
 );
 replaceEntries(
   "andromeda",

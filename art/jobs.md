@@ -27,9 +27,9 @@ defines no change when a landmark is charted, so the art has one state.
 
 | Kind   | Manifest ids                                                             | Display, logical px | Pivot                              |
 | ------ | ------------------------------------------------------------------------ | ------------------- | ---------------------------------- |
-| Nebula | `landmark-nebula-outer`, `landmark-nebula-core`, `landmark-nebula-stars` | 380 x 180, layered  | (0.5, 0.5)                         |
-| Wreck  | `landmark-wreck`                                                         | 140 x 84            | (0.5, 0.5)                         |
-| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 72 x 45             | (0.5, 0.5), the transmitter centre |
+| Nebula | `landmark-nebula-outer`, `landmark-nebula-core`, `landmark-nebula-stars` | 475 x 225, layered  | (0.5, 0.5)                         |
+| Wreck  | `landmark-wreck`                                                         | 189 x 113.4         | (0.5, 0.5)                         |
+| Beacon | `landmark-beacon-a`, `landmark-beacon-b`                                 | 108 x 67.5          | (0.5, 0.5), the transmitter centre |
 
 All are `facing: fixed`: no headings and no screen rotation, like the station.
 
@@ -77,7 +77,7 @@ A horizontal satellite with a white receiver in a faceted copper bus. Two
 clipped-corner navy solar wings are set apart from the bus by exposed trusses. Sky-blue gridlines
 separate the cells. Lavender signal arcs mark the receiver.
 
-The SVG uses a 48 x 30 view box and displays at 72 x 45 logical px, centred
+The SVG uses a 48 x 30 view box and displays at 108 x 67.5 logical px, centred
 on the transmitter. One pair of signal arcs sits above and below the body,
 1.5 units wide with round caps. Frame A uses radius 7.5 and frame B uses
 radius 12. The frames alternate every 700 ms (`frameMs`), and reduced motion

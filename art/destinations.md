@@ -7,21 +7,15 @@ drawn on them.
 
 ## Scale
 
-A destination's display size is `frame * 0.4375 * scale`, from `DISPLAY_SCALE`
-and the scales in [art/tools/solid.ts](tools/solid.ts). Frame px values
-(pivots, docks, berths, moorings and project anchors) are unchanged, so they
-scale with the display size like every other manifest value. SVGs that declare
-their display size declare the scaled one; the trading station's and
-Sunflower's outposts' declare their frame, as before.
+Destination sources use `DISPLAY_SCALE` (0.4375) with the destination
+multiplier (1.5) or Cartwheel hub multiplier (1.25). Each family's producer
+sets its final display dimensions. Sunflower outposts and their project
+frames grow by 1.4, Andromeda and Phantom settlements by 1.45, and Andromeda
+guide beacons by 1.5. The scale of a sprite converts its frame-px measurements
+to display px. Placement uses its authored pivot at the current world position.
 
-| Scale                             | Value | Assets                                                                                                                                                                                                                                                                                                                                                                                |
-| --------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Destination (`DESTINATION_SCALE`) |   1.5 | The [trading station](station.md); Sunflower's [outposts](outposts.md) and their project frames; Andromeda's [settlers' station, courier school, settlements, guide beacons and spare beacon](andromeda.md); Needle's [Weavers' station and Loom hall](needle.md#weavers-station); Whirlpool's [station](whirlpool.md#station); Phantom's [station and Blurb settlements](phantom.md) |
-| Hub (`HUB_SCALE`)                 |  1.25 | Cartwheel's [hub](cartwheel.md), repaired and with its second bay: it is already built at about 1.55 times the outposts' proportions                                                                                                                                                                                                                                                  |
-| None                              |     1 | Ships, story craft, the mooring buoy, gates, channel lamps, whales and every other asset                                                                                                                                                                                                                                                                                              |
-
-Every guide beacon state shares the dark beacon's frame and scale, so the chain
-and the story beacon stay alike and a state change swaps in place.
+Every guide beacon state shares the dark beacon's frame and pivot, so a state
+change swaps in place. The spare has its own frame and world anchor.
 
 ## Light-field keyline
 
@@ -81,34 +75,12 @@ space stroke):
 
 ## Collision, silhouette, dock and clearance
 
-Destinations stay pass-through and carry no `collision`. Their silhouette and
-the outposts' and settlements' authored approach points grow with the
-scale linearly. Ada enters stations by Use. All measurements in the table
-use display px from the pivot unless otherwise marked. The figures for the
-Blurb settlements use the mended state. The Use callout sits above the
-current silhouette.
+Destinations stay pass-through and carry no `collision`. Ada enters stations
+by Use. The body's silhouette and decorative mouth offsets use the dimensions
+in its manifest, measured relative to the pivot. The Use callout sits 3 px
+above the current silhouette. Gameplay keeps its 160-world-unit Use range
+centred on the destination.
 
-| Asset             | Scale | Display          | Silhouette radius (was) | Top above pivot | Dock world offset    | Mouth circle radius (was) |
-| ----------------- | ----: | ---------------- | ----------------------: | --------------: | -------------------- | ------------------------: |
-| Trading station   |   1.5 | 147 by 118.125   |             71.6 (47.7) |            49.7 | none, entered by Use |                      none |
-| Growers           |   1.5 | 94.5 by 78.75    |             44.3 (29.5) |            28.5 | (28.771, 28.771)     |             7.388 (4.925) |
-| Workshop          |   1.5 | 111.563 by 78.75 |             56.7 (37.8) |            48.8 | (11.137, 11.137)     |              6.82 (4.547) |
-| Salvagers         |   1.5 | 110.25 by 72.188 |             52.6 (35.1) |            26.3 | (25.058, 25.058)     |             7.388 (4.925) |
-| Cartwheel hub     |  1.25 | 131.25 by 131.25 |             68.9 (55.1) |            68.9 | none, entered by Use |                      none |
-| Settlers' station |   1.5 | 115.5 by 105     |             55.4 (36.9) |            47.3 | none, entered by Use |                      none |
-| Hamlet            |   1.5 | 52.5 by 52.5     |             26.2 (17.5) |            18.8 | (15.778, 15.778)     |              5.115 (3.41) |
-| Lamp house        |   1.5 | 42 by 52.5       |             31.5 (21.0) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
-| Dark beacon       |   1.5 | 31.5 by 42       |             27.8 (18.5) |            27.2 | none                 |                      none |
-| Weavers' station  |   1.5 | 220.5 by 84      |            106.7 (71.1) |            54.9 | none, entered by Use |                      none |
-| Whirlpool station |   1.5 | 136.5 by 94.5    |             64.5 (43.0) |            38.0 | none, entered by Use |                      none |
-| Phantom station   |   1.5 | 189 by 73.5      |             98.4 (65.6) |            52.1 | none, entered by Use |                      none |
-| Blurb homes       |   1.5 | 63 by 63         |             28.6 (19.1) |            20.1 | (16.706, 16.706)     |              5.115 (3.41) |
-| Blurb harbour     |   1.5 | 73.5 by 52.5     |             35.9 (23.9) |            17.7 | (16.706, 16.706)     |              5.115 (3.41) |
-| Blurb signal      |   1.5 | 52.5 by 73.5     |             32.4 (21.6) |            31.4 | (16.706, 16.706)     |              5.115 (3.41) |
-
-- **Use range**: 160 world units from the centre still reaches past every
-  drawn edge; the closest is the Weavers' station, 53 past its silhouette, and
-  Phantom's station is about 62 past its own.
 - **Stations**: Ada enters by Use. Story craft use the hub and Weavers' station
   berths and the courier school's pier.
 - **Clearance**: every rule stated as an object's silhouette radius plus a
