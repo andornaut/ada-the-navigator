@@ -1,4 +1,5 @@
 import { FOCUS_STYLE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
+import { FOCUS_RING } from "./controls.ts";
 import { font, units } from "./css.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -50,6 +51,11 @@ ${UI_SCOPE} .ada-ship-row{
   line-height:${units(SHIP_CARD.row)};
   color:${TEXT_TOKENS.label};
   cursor:pointer
+}
+/* Widen the scroll clip around the ring without moving the inventory columns. */
+${UI_SCOPE} .ada-card[data-dialog=ship] > .ada-card-body{
+  margin-inline:${units(-FOCUS_RING.outset)};
+  padding-inline:${units(FOCUS_RING.outset)}
 }
 ${UI_SCOPE} .ada-ship-row:focus-visible{${FOCUS_STYLE}
 }
