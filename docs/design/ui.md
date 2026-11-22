@@ -69,3 +69,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0340 | Use game-styled keyboard focus indicators                                       | [ada-0340.md](../work/ada-0340.md) |
 | ada-0341 | Share task categories across lists, maps, and edge markers                      | [ada-0341.md](../work/ada-0341.md) |
 | ada-0342 | Render standard game buttons through Game Kit                                   | [ada-0342.md](../work/ada-0342.md) |
+| ada-0343 | Move game UI icons to source-driven SVGs                                        | [ada-0343.md](../work/ada-0343.md) |
