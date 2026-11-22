@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, SPEAKERS } from "../data/conversations.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import { playOpening } from "../testing/launch.ts";
+import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import {
   donate,
@@ -20,6 +22,8 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { restoreSave } from "./save.ts";
+import { stationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 
 // Gameplay's economy doc, with its line wrapping undone.
 const ECONOMY_DOC = readFileSync(new URL("../../gameplay/economy.md", import.meta.url), "utf8");
@@ -256,6 +260,57 @@ describe("donating at a station", () => {
     model.state.progress[1].resolved = true;
     model.state.docked = null;
     expect(model.projects).toBeNull();
+  });
+
+  it("keeps Jobs and held-task access in resolved Phantom without offering any projects", () => {
+    const model = new GameModel(CONTENT);
+    model.state.unlocked.push(6);
+    model.startGalaxy(6);
+    Object.assign(model.state.progress[6], { holodisk: true, questComplete: true, resolved: true });
+    const flight = model.state.flight!;
+    const sites = stationsNear(ECONOMY, 6, 30_000, flight.player);
+    const jobs = sites.find((site) => stationSpecialty(6, site.id) === "jobs")!;
+    const equipment = sites.find((site) => stationSpecialty(6, site.id) === "equipment")!;
+    for (const site of [jobs, equipment]) {
+      expect(ensureStation(CONTENT, site.id, flight)).not.toBeNull();
+    }
+
+    model.state.docked = equipment.id;
+    expect(model.stationServices).toMatchObject({
+      heldTask: false,
+      jobs: false,
+      projects: false,
+    });
+    expect(model.projects).toBeNull();
+    expect(model.jobBoard()).toEqual([]);
+
+    model.state.docked = jobs.id;
+    expect(model.stationServices).toMatchObject({ heldTask: false, jobs: true, projects: false });
+    const offer = model
+      .jobBoard()
+      .find(({ state, type }) => state === "offer" && type !== "survey")!;
+    expect(model.acceptJob(offer.id)).toBe("accepted");
+
+    model.state.docked = equipment.id;
+    expect(model.stationServices).toMatchObject({ heldTask: true, jobs: false, projects: false });
+    expect(model.jobBoard()).toEqual([expect.objectContaining({ id: offer.id, state: "held" })]);
+    expect(model.projects).toBeNull();
+  });
+
+  it("offers unlocked projects at a real station without Jobs or an active task", () => {
+    const model = docked(1000);
+    const flight = model.state.flight!;
+    const site = stationsNear(ECONOMY, 1, 30_000, flight.player).find(
+      ({ id }) => stationSpecialty(1, id) === "equipment",
+    )!;
+    expect(ensureStation(CONTENT, site.id, flight)).not.toBeNull();
+    model.state.docked = site.id;
+    expect(model.stationServices).toMatchObject({ heldTask: false, jobs: false, projects: true });
+    expect(model.jobBoard()).toEqual([]);
+    expect(model.projects?.map(({ id }) => id)).toEqual(sunflower.map(({ id }) => id));
+    expect(model.donationRequest("salvageBeacons")).toMatchObject({
+      amount: cost("salvageBeacons"),
+    });
   });
 
   it("spends the Stardust, and funding the last part closes the card and thanks Ada", () => {

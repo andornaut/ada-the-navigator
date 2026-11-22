@@ -1300,6 +1300,20 @@ function expectContribution(detail: StationFixtureNode, visible: number): void {
   expect(spoken?.getAttribute("aria-hidden")).toBeNull();
 }
 
+it("keeps the Jobs & Projects route for Jobs without showing a Community projects pane", () => {
+  const f = constructedStation();
+  f.station.setOpen(true);
+  expect(f.action("open-jobs").textContent).toBe(f.labels.jobsProjects);
+  f.activate(f.action("open-jobs"));
+  const board = f.native.get("jobs-back")!;
+  expect(board.title.textContent).toBe(f.labels.jobsProjects);
+  const job = board.body.querySelector('[data-job="job-1"]')!;
+  expect(job.closest("[hidden]")).toBeNull();
+  const projects = board.body.querySelector(".ada-station-projects")!;
+  expect(projects.parentElement?.hidden).toBe(true);
+  expect(projects.children).toHaveLength(0);
+});
+
 it("opens Jobs and Projects and can donate at a project-only station", () => {
   const f = constructedStation("", true, true, undefined, true);
   f.station.setOpen(true);
@@ -1308,6 +1322,8 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
   f.activate(f.action("open-jobs"));
   expect(f.native.get("jobs-back")!.title.textContent).toBe(f.labels.jobsProjects);
   expect(f.parent.querySelectorAll("[data-job]")).toHaveLength(0);
+  const projects = f.native.get("jobs-back")!.body.querySelector(".ada-station-projects")!;
+  expect(projects.parentElement?.hidden).toBe(false);
   f.request.mockReturnValue({
     about: "Restore the orchard.",
     action: f.labels.jobAccept,

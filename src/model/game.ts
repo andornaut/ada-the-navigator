@@ -1638,15 +1638,15 @@ export class GameModel {
     return result;
   }
   /**
-   * The docked galaxy's community projects with their progress, or null where none are offered:
-   * outside a station, or before the galaxy's chapter is complete (projects.ts).
+   * The docked galaxy's unlocked community projects, or null if the station offers none.
    */
   get projects(): ProjectView[] | null {
     const galaxy = this.state.flight?.galaxy;
     if (!this.state.docked || !galaxy || !projectsOffered(this.state.progress[galaxy])) {
       return null;
     }
-    return projectViews(galaxyProjects(galaxy), this.state.progress[galaxy]);
+    const catalog = galaxyProjects(galaxy);
+    return catalog.length ? projectViews(catalog, this.state.progress[galaxy]) : null;
   }
   /** The donation confirm for a docked galaxy's project (projects.ts). */
   donationRequest(id: string): DonationRequest {
