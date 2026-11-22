@@ -308,7 +308,9 @@ describe("modal text", () => {
     expect(MODAL_STYLE).toContain("--ada-close-ink:HighlightText");
     expect(mapCloseStyle(".map-close", "#262b44")).toContain("--ada-close-rest:#262b44");
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:transparent");
-    expect(mapCloseStyle(".map-close")).toContain(`--ada-close-face-size:${units(HUD_BUTTON.disc)}`);
+    expect(mapCloseStyle(".map-close")).toContain(
+      `--ada-close-face-size:${units(HUD_BUTTON.disc)}`,
+    );
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:ButtonFace");
     expect(mapCloseStyle(".map-close")).toContain("var(--ada-close-ink,ButtonText)");
   });
