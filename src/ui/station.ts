@@ -530,7 +530,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let jobsPage = 0;
 
   const focusPage = (
-    parts: typeof shopCard,
+    parts: Pick<typeof shopCard, "close">,
     group: HTMLElement,
     pager: typeof shopPager,
     preferred?: HTMLElement,
@@ -543,7 +543,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // Fit actual laid-out grid rows below the fixed groups, with the pager only when needed.
   const fitPages = (
-    parts: typeof shopCard,
+    parts: Pick<typeof shopCard, "close" | "fit" | "frame"> & { readonly body: HTMLElement },
     group: HTMLElement,
     pager: typeof shopPager,
     chunks: readonly HTMLElement[],

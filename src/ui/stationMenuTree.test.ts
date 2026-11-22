@@ -11,7 +11,9 @@ it("orders the three Station sections before primary Undock", () => {
     undock: "Undock",
   });
   validateLayoutTree({ button: [], stationMenu: ["controls"] }, tree);
-  expect(tree.slots!.controls!.map(({ props }) => props)).toEqual([
+  expect(
+    tree.slots!.controls!.map((node) => (node.kind === "component" ? node.props : null)),
+  ).toEqual([
     { actionId: "open-shop", id: "shop", label: "Shop", role: "secondary" },
     { actionId: "open-jobs", id: "jobs", label: "Jobs & Projects", role: "secondary" },
     { actionId: "open-exchange", id: "exchange", label: "Exchange", role: "secondary" },
