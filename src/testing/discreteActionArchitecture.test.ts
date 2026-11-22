@@ -1417,3 +1417,81 @@ it("does not transfer imported factory proof across execution owners", () => {
     }),
   );
 });
+
+it.each([
+  ["opaque argument", "expose(button);", "", true],
+  ["asserted opaque argument", "expose(button);", "", true],
+  ["container escape", "expose({ button });", "", true],
+  ["exceptional publication", "try { prepare(); } finally { expose(button); }", "", true],
+  ["hoisted publication", "publish();", "function publish() { expose(button); }", true],
+  ["unbound audit", "", "", true],
+  ["conditional registration", "", "", true],
+  ["deferred registration", "", "", true],
+  ["shadowed registration", "const bindAdaAction = fake;", "", true],
+  ["post-disposal publication", "", "action.dispose(); root.append(button);", true],
+  [
+    "post-disposal through a stored handle",
+    "",
+    "const saved = { action }; saved.action.dispose(); root.append(button);",
+    true,
+  ],
+  ["different receiver", "{ const button = other; expose(button); }", "", false],
+  ["ordinary staging", 'button.type = "button"; button.dataset.action = "run";', "", false],
+] as const)(
+  "requires a live registration before constructor publication (%s)",
+  (name, before, after, open) => {
+    const target = name === "asserted opaque argument" ? "(button as HTMLElement)!" : "button";
+    const direct = `const action = bindAdaAction({click: {run: () => act(button)}}, ${target});`;
+    const registration =
+      name === "unbound audit"
+        ? "assertAdaActionBindings(button);"
+        : name === "conditional registration"
+          ? "if (enabled) bindAdaAction(options, button);"
+          : name === "deferred registration"
+            ? "later(() => bindAdaAction(options, button));"
+            : direct;
+    const path = "src/ui/owner.ts";
+    const result = scanRegistryFixtures([
+      {
+        path,
+        text: `import {assertAdaActionBindings} from "./actionBinding.ts";
+      export function make(root) {
+        const button = document.createElement("button");
+        ${before}
+        ${registration}
+        ${after}
+        return button;
+      }`,
+      },
+      {
+        path: "src/consumer.ts",
+        text: `import {make} from "./ui/owner.ts";
+        const control = make(root);
+        control.dataset.action = "use";`,
+      },
+    ]);
+    const construction = result.findings.find(
+      (finding) => finding.path === path && finding.source === 'document.createElement("button")',
+    );
+    expect(construction?.kind).toBe(open ? "unbound-discrete" : undefined);
+    expect(result.factoryAssociations.flatMap(({ members }) => members)).toEqual(open ? [] : [""]);
+    expect(result.findings.some((finding) => finding.path === "src/consumer.ts")).toBe(open);
+  },
+);
+
+it.each([
+  ["", "return bindAdaAction(options, control);", false],
+  ["expose(control);", "return bindAdaAction(options, control);", true],
+  ["", "const action = bindAdaAction(options, control); action.dispose();", true],
+] as const)("requires a live, unpublished wrapper argument (%s %s)", (before, body, open) => {
+  const result = scanWithRegistry(
+    "src/wrapper.ts",
+    `
+    function register(control) { ${before} ${body} }
+    const button = document.createElement("button");
+    register(button);
+    root.append(button);
+    `,
+  );
+  expect(result.map(({ kind }) => kind)).toEqual(open ? ["unbound-discrete"] : []);
+});

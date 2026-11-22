@@ -550,9 +550,22 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
       if (
         ts.isVariableDeclaration(node) &&
-        !ts.isIdentifier(node.name) &&
         node.initializer &&
-        carries(node.initializer, key)
+        carries(node.initializer, key) &&
+        !(
+          ts.isIdentifier(node.name) &&
+          ts.isIdentifier(node.initializer) &&
+          ts.isVariableDeclarationList(node.parent) &&
+          node.parent.flags & ts.NodeFlags.Const
+        )
+      ) {
+        found = true;
+      }
+      if (
+        ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+        carries(node.right, key)
       ) {
         found = true;
       }
@@ -708,8 +721,108 @@ function scanSource(context: ScanContext, path: string, text: string) {
       immediateWrapperCall(call, owner)
     );
   };
-  const addBinding = (key: string, call: ts.CallExpression): void => {
+  const createsButton = (call: ts.CallExpression): boolean => {
+    const callee = call.expression;
+    return (
+      (ts.isIdentifier(callee) && callee.text === "createButton") ||
+      (ts.isPropertyAccessExpression(callee) && callee.name.text === "createButton") ||
+      (ts.isPropertyAccessExpression(callee) &&
+        callee.name.text === "createElement" &&
+        call.arguments[0] !== undefined &&
+        strings(call.arguments[0]).includes("button"))
+    );
+  };
+  const stagedMetadata = (node: ts.Identifier): boolean => {
+    const access = node.parent;
+    if (!ts.isPropertyAccessExpression(access) || access.expression !== node) {
+      return false;
+    }
+    const name = access.name.text;
+    const field = name === "dataset" ? access.parent : access;
+    const assignment = field.parent;
+    return (
+      ts.isBinaryExpression(assignment) &&
+      assignment.left === field &&
+      ts.isExpressionStatement(assignment.parent) &&
+      assignment.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ((name === "dataset" &&
+        ts.isPropertyAccessExpression(field) &&
+        field.expression === access &&
+        field.name.text === "action" &&
+        ts.isStringLiteralLike(assignment.right)) ||
+        (["type", "className", "title"].includes(name) &&
+          ts.isStringLiteralLike(assignment.right)) ||
+        (["hidden", "disabled"].includes(name) &&
+          (assignment.right.kind === ts.SyntaxKind.TrueKeyword ||
+            assignment.right.kind === ts.SyntaxKind.FalseKeyword)))
+    );
+  };
+  // Any opaque use of the fresh node may publish it, even on a path which throws.
+  const privateUntilBinding = (
+    control: ts.VariableDeclaration | ts.ParameterDeclaration,
+    target: ts.Expression,
+    call: ts.CallExpression,
+  ): boolean => {
+    if (!ts.isIdentifier(control.name)) {
+      return false;
+    }
+    const owner = phase(call);
+    const options = canonicalBindingCall(call) ? call.arguments[0] : undefined;
+    const inert = options && inertRegistrationOptions(options) ? options : undefined;
+    const name = control.name.text;
+    const mentionsBeforeBind = (node: ts.Node, hoisted = false): boolean => {
+      if (node === target || node === inert || node === control.name) {
+        return false;
+      }
+      // A declaration below the call can still be invoked before it.
+      const mayRunEarly = hoisted || (node !== owner && ts.isFunctionDeclaration(node));
+      if (!mayRunEarly && node.pos >= call.end) {
+        return false;
+      }
+      if (
+        ts.isIdentifier(node) &&
+        node.text === name &&
+        (lexicalIdentity(node, control) ||
+          (ts.isShorthandPropertyAssignment(node.parent) && declaration(node) === control))
+      ) {
+        return !stagedMetadata(node);
+      }
+      return (
+        ts.forEachChild(node, (child) => mentionsBeforeBind(child, mayRunEarly) || undefined) ===
+        true
+      );
+    };
+    return !mentionsBeforeBind(owner);
+  };
+  const trackedRegistration = (call: ts.CallExpression): boolean =>
+    ts.isExpressionStatement(call.parent) ||
+    (ts.isVariableDeclaration(call.parent) &&
+      ts.isIdentifier(call.parent.name) &&
+      call.parent.initializer === call);
+  const addBinding = (key: string, call: ts.CallExpression, target?: ts.Expression): void => {
     if (!immediateInvocation(call)) {
+      return;
+    }
+    let subject = target;
+    while (
+      subject &&
+      (ts.isAsExpression(subject) ||
+        ts.isParenthesizedExpression(subject) ||
+        ts.isNonNullExpression(subject))
+    ) {
+      subject = subject.expression;
+    }
+    const control = subject && origin(subject);
+    if (
+      control &&
+      ts.isVariableDeclaration(control) &&
+      control.initializer &&
+      ts.isCallExpression(control.initializer) &&
+      createsButton(control.initializer) &&
+      (!trackedRegistration(call) ||
+        call.pos < control.end ||
+        !privateUntilBinding(control, target!, call))
+    ) {
       return;
     }
     const proofs = bound.get(key) ?? [];
@@ -740,7 +853,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
   };
   const collectBindings = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && canonicalBindingCall(node) && node.arguments[1]) {
-      addBinding(reference(node.arguments[1]), node);
+      addBinding(reference(node.arguments[1]), node, node.arguments[1]);
       for (let owner: ts.Node | undefined = node.parent; owner; owner = owner.parent) {
         if (
           !ts.isArrowFunction(owner) &&
@@ -770,7 +883,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
           name &&
           ts.isIdentifier(name) &&
           stable(name) &&
-          stable(node.arguments[1]!)
+          stable(node.arguments[1]!) &&
+          privateUntilBinding(owner.parameters[position]!, node.arguments[1]!, node) &&
+          (owner.body === node ||
+            (owner.body &&
+              ts.isBlock(owner.body) &&
+              owner.body.statements.at(-1) === node.parent &&
+              (ts.isExpressionStatement(node.parent) || ts.isReturnStatement(node.parent))))
         ) {
           const ports = wrappers.get(declaration) ?? new Set<number>();
           ports.add(position);
@@ -787,7 +906,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       for (const position of wrapperPorts(node.expression) ?? []) {
         const argument = node.arguments[position];
         if (argument) {
-          addBinding(reference(argument), node);
+          addBinding(reference(argument), node, argument);
         }
       }
     }
@@ -1620,14 +1739,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           record("unresolved-event", node);
         }
       }
-      const createsButton =
-        (ts.isIdentifier(callee) && callee.text === "createButton") ||
-        (ts.isPropertyAccessExpression(callee) && callee.name.text === "createButton") ||
-        (ts.isPropertyAccessExpression(callee) &&
-          callee.name.text === "createElement" &&
-          node.arguments[0] &&
-          strings(node.arguments[0]).includes("button"));
-      if (createsButton) {
+      if (createsButton(node)) {
         const target =
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
             ? node.parent.name
