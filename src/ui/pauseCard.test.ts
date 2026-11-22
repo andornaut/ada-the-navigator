@@ -453,21 +453,75 @@ it("audits a detached Map when it first opens in an owning root", () => {
   }
 });
 
-it("rejects a newly mounted Map chip whose registration was bypassed", () => {
-  mapMeasurement();
-  const { map } = standaloneMap();
-  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation(() => ({
-    activate: () => false,
-    dispose() {},
-    update() {},
-  }));
-  map.setState(mapState([STATION]));
-  try {
-    expect(() => map.open()).toThrow("no registered action binding");
-  } finally {
-    map.dispose();
-  }
-});
+it.each(["open", "update"] as const)(
+  "rejects an unbound Map chip before attaching its batch during %s",
+  (phase) => {
+    mapMeasurement();
+    const { map, root } = standaloneMap();
+    if (phase === "update") {
+      map.setState(mapState([STATION]));
+      map.open();
+      map.locate(STATION.id);
+    }
+    const layer = root.querySelector(".ada-map-places")!;
+    const previous = [...layer.children];
+    const insert = vi.spyOn(layer, "insertBefore");
+    const bind = actionBinding.bindAdaAction;
+    const staged: HTMLElement[] = [];
+    const disposers: (() => void)[] = [];
+    const bindings = vi
+      .spyOn(actionBinding, "bindAdaAction")
+      .mockImplementation((options, element) => {
+        staged.push(element);
+        const binding =
+          staged.length === 1
+            ? bind(options, element)
+            : {
+                activate: () => false,
+                dispose() {},
+                update() {},
+              };
+        const dispose = vi.fn(binding.dispose);
+        disposers.push(dispose);
+        return { ...binding, dispose };
+      });
+    const next = mapState([
+      { ...STATION, id: "station:0,1" },
+      { ...STATION, id: "station:0,2" },
+    ]);
+    const apply = () => {
+      map.setState(next);
+      if (phase === "open") {
+        map.open();
+      }
+    };
+    try {
+      expect(apply).toThrow("no registered action binding");
+      expect(staged).toHaveLength(2);
+      expect(insert).not.toHaveBeenCalled();
+      expect(staged.every((chip) => !chip.isConnected)).toBe(true);
+      expect(layer.children).toEqual(previous);
+      expect(map.isOpen()).toBe(phase === "update");
+      if (phase === "update") {
+        expect(previous[0]?.getAttribute("aria-pressed")).toBe("true");
+      }
+      for (const dispose of disposers) {
+        expect(dispose).toHaveBeenCalledOnce();
+      }
+      bindings.mockRestore();
+      apply();
+      expect(layer.children.map((chip) => chip.dataset.place).sort()).toEqual([
+        "station:0,1",
+        "station:0,2",
+      ]);
+    } finally {
+      map.dispose();
+    }
+    for (const dispose of disposers) {
+      expect(dispose).toHaveBeenCalledOnce();
+    }
+  },
+);
 
 it("audits Map chrome once and each newly attached chip without consulting action policy", () => {
   mapMeasurement();

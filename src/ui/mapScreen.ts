@@ -1136,6 +1136,65 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
 
   const presentation = createMapPresentationRevision();
+  const addChips = (nextPlaces: readonly MapPlace[]) => {
+    const pending = new Map<
+      string,
+      { readonly binding: ReturnType<typeof bindAdaAction>; readonly chip: HTMLButtonElement }
+    >();
+    try {
+      for (const { id } of nextPlaces) {
+        if (chips.has(id) || pending.has(id)) {
+          continue;
+        }
+        const chip = document.createElement("button");
+        chip.type = "button";
+        const binding = registerAction(
+          {
+            beforeClick(event) {
+              // Spatial pointer gestures belong to the root. Enter and assistive clicks still use
+              // this button's own target, even when it moved under keyboard focus.
+              if (event.detail !== 0) {
+                return false;
+              }
+              cancelFieldAction();
+              return true;
+            },
+            run: () => select(id),
+          },
+          chip,
+        );
+        pending.set(id, { binding, chip });
+        assertAdaActionMetadata(chip);
+        chip.addEventListener("focus", () => {
+          if (view && state) {
+            const target = places().find((entry) => entry.id === id);
+            const { fit: region, inner: room, insets, size, unit } = layout();
+            if (target) {
+              view = keepClear(region, room, panelTop(size, insets, unit), target, view);
+              render();
+            }
+          }
+        });
+      }
+      if (pending.size === 0) {
+        return;
+      }
+      placesLayer.append(...[...pending.values()].map(({ chip }) => chip));
+      for (const { chip } of pending.values()) {
+        assertAdaActionBindings(chip);
+      }
+    } catch (error) {
+      for (const { binding, chip } of pending.values()) {
+        forgetAction(binding);
+        chip.remove();
+      }
+      throw error;
+    }
+    for (const [id, { binding, chip }] of pending) {
+      chipBindings.set(id, binding);
+      chips.set(id, chip);
+    }
+  };
   const renderQueue = createMapRenderQueue(window, () => render());
   const render = () => {
     renderQueue.cancel();
@@ -1259,44 +1318,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chips.delete(id);
       }
     }
-    const inserted: HTMLButtonElement[] = [];
     for (const { place, x, y } of shown) {
-      let chip = chips.get(place.id);
-      if (!chip) {
-        chip = document.createElement("button");
-        chip.type = "button";
-        const id = place.id;
-        chipBindings.set(
-          id,
-          registerAction(
-            {
-              beforeClick(event) {
-                // Spatial pointer gestures belong to the root. Enter and assistive clicks still use
-                // this button's own target, even when it moved under keyboard focus.
-                if (event.detail !== 0) {
-                  return false;
-                }
-                cancelFieldAction();
-                return true;
-              },
-              run: () => select(id),
-            },
-            chip,
-          ),
-        );
-        chip.addEventListener("focus", () => {
-          if (view && state) {
-            const target = places().find((entry) => entry.id === id);
-            const { fit: region, inner: room, insets, size, unit } = layout();
-            if (target) {
-              view = keepClear(region, room, panelTop(size, insets, unit), target, view);
-              render();
-            }
-          }
-        });
-        chips.set(id, chip);
-        inserted.push(chip);
-      }
+      const chip = chips.get(place.id)!;
       dressChip(chip, place);
       chip.setAttribute("aria-label", place.label);
       chip.setAttribute("aria-pressed", String(place.id === selected));
@@ -1315,9 +1338,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (reading.join("\n") !== order) {
       order = reading.join("\n");
       placesLayer.replaceChildren(...reading.map((id) => chips.get(id)!));
-    }
-    for (const chip of inserted) {
-      assertAdaActionBindings(chip);
     }
     // Ada.
     const at = toScreen(inner, current, state.map.player);
@@ -1728,6 +1748,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         assertAdaActionBindings(screen);
         checkedAttached = true;
       }
+      addChips(places());
       cancelFieldAction();
       screen.hidden = false;
       selected = null;
@@ -1736,6 +1757,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       focusTarget(closeButton);
     },
     setState(next: MapScreenState): void {
+      if (!screen.hidden) {
+        addChips(next.map.places);
+      }
       if (state?.map.worldSide !== next.map.worldSide) {
         cancelFieldAction();
         view = null;
