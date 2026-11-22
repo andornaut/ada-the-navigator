@@ -429,13 +429,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   jobsPanes.className = "ada-station-panes";
   const jobsPane = document.createElement("section");
   const projectsPane = document.createElement("section");
+  const contributionLabel = CONTENT.labels.projectContribution ?? "";
+  const stardustLabel = CONTENT.labels.stardust ?? "";
   for (const [pane, label, term] of [
     [jobsPane, labels.jobs, labels.questReward],
-    [projectsPane, labels.communityProjects, CONTENT.labels.projectContribution],
+    [projectsPane, labels.communityProjects, contributionLabel],
   ] as const) {
     const heading = document.createElement("h3");
     heading.textContent = label;
-    heading.setAttribute("aria-label", `${label} (${term} ${CONTENT.labels.stardust})`);
+    heading.setAttribute("aria-label", `${label} (${term} ${stardustLabel})`);
     const hint = document.createElement("span");
     hint.className = "ada-station-pane-hint";
     hint.setAttribute("aria-hidden", "true");
@@ -877,7 +879,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.fit();
     focusTarget(buy);
   };
-  const stardustLine = (label: string, value: number, spokenAmount: string): HTMLElement => {
+  const stardustLine = (label: string, value: number, spokenAmount: string): HTMLDivElement => {
     const line = document.createElement("div");
     line.className = "ada-confirm-stardust";
     const amount = document.createElement("span");
@@ -890,11 +892,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     line.append(amount, spoken);
     return line;
   };
-  const contributionLine = (value: number): HTMLElement =>
+  const contributionLine = (value: number): HTMLDivElement =>
     stardustLine(
-      CONTENT.labels.projectContribution,
+      contributionLabel,
       value,
-      fill(CONTENT.labels.stardustAmount, { amount: value }),
+      fill(CONTENT.labels.stardustAmount ?? "", { amount: value }),
     );
 
   const openConfirm = (
