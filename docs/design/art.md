@@ -117,3 +117,4 @@ Reference: [art](../../art/README.md).
 | ada-0320 | Specify the Small Cheats card and draw the FPS counter icon               | [ada-0320.md](../work/ada-0320.md) |
 | ada-0345 | Redraw stations and points of interest                                    | [ada-0345.md](../work/ada-0345.md) |
 | ada-0347 | Distinguish combat, industrial, and rescue craft                          | [ada-0347.md](../work/ada-0347.md) |
+| ada-0354 | Improve and reuse Earth Storybook backgrounds                             | [ada-0354.md](../work/ada-0354.md) |
