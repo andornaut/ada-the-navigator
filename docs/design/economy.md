@@ -22,3 +22,4 @@ Reference: [economy](../../gameplay/economy.md).
 | ada-0257 | Add station services, keepers and the Exchange                                       | [ada-0257.md](../work/ada-0257.md) |
 | ada-0258 | Pay quests at triple base, rounded up to 25                                          | [ada-0258.md](../work/ada-0258.md) |
 | ada-0330 | Draw the Andromeda guide-beacon chain, the spare beacon and the Needle channel lamps | [ada-0330.md](../work/ada-0330.md) |
+| ada-0339 | Simplify station welcome, shopping, and exchange                                     | [ada-0339.md](../work/ada-0339.md) |
