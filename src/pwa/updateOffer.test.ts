@@ -74,14 +74,17 @@ describe("in-session update offer", () => {
     const f = fixture();
     const old = f.staged("old");
     const newer = f.staged("newer");
-    const pending = Promise.withResolvers<void>();
-    old.updateNow.mockReturnValueOnce(pending.promise);
+    let reject!: (reason: unknown) => void;
+    const pending = new Promise<void>((_resolve, rejectPromise) => {
+      reject = rejectPromise;
+    });
+    old.updateNow.mockReturnValueOnce(pending);
     f.offer.offer(old);
     f.offer.accept();
     f.offer.offer(newer);
     f.offer.accept();
     expect(newer.updateNow).not.toHaveBeenCalled();
-    pending.reject(new ObsoleteUpdateOfferError(old.version));
+    reject(new ObsoleteUpdateOfferError(old.version));
     await vi.waitFor(() => expect(f.switching).toHaveBeenLastCalledWith(false));
     expect(f.visible).toEqual([false, true]);
     expect(old.dismiss).not.toHaveBeenCalled();

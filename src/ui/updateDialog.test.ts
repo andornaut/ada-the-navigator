@@ -336,14 +336,17 @@ it.each([
     const switching = vi.fn();
     const offer = createUpdateOffer({ save: vi.fn(), switching });
     const f = setup(false, offer);
-    const pending = Promise.withResolvers<void>();
-    const update = { dismiss: vi.fn(), updateNow: vi.fn(() => pending.promise), version: "shown" };
+    let reject!: (reason: unknown) => void;
+    const pending = new Promise<void>((_resolve, rejectPromise) => {
+      reject = rejectPromise;
+    });
+    const update = { dismiss: vi.fn(), updateNow: vi.fn(() => pending), version: "shown" };
     offer.offer(update);
     f.doc.activeElement = f.button("accept");
     f.button("accept").dispatchEvent(new Event("click"));
     expect(f.dialog.isOpen()).toBe(true);
     expect(f.restore).not.toHaveBeenCalled();
-    pending.reject(new ObsoleteUpdateOfferError(version));
+    reject(new ObsoleteUpdateOfferError(version));
     await vi.waitFor(() => expect(switching.mock.calls).toEqual([[true], [false]]));
     expect(f.dialog.isOpen()).toBe(remains);
     expect(f.restore).toHaveBeenCalledTimes(remains ? 0 : 1);
