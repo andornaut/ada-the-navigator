@@ -1106,13 +1106,6 @@ export function buildScene(scene: UiContext): void {
   });
   partial.push(() => scene.restartCard.dispose());
   scene.resetSaveCard = createRestartCard(scene.controls.overlay, {
-    kind: "reset-save",
-    labels: {
-      cancel: CHEAT_COPY.cancel,
-      close: CHEAT_COPY.close,
-      restart: CHEAT_COPY.reset,
-      title: CHEAT_COPY.resetSaveTitle,
-    },
     commit: async (current) => {
       const model = scene.model;
       const stillCurrent = () => canResetSave() && current() && scene.model === model;
@@ -1131,6 +1124,13 @@ export function buildScene(scene: UiContext): void {
             }
           }
         : null;
+    },
+    kind: "reset-save",
+    labels: {
+      cancel: CHEAT_COPY.cancel,
+      close: CHEAT_COPY.close,
+      restart: CHEAT_COPY.reset,
+      title: CHEAT_COPY.resetSaveTitle,
     },
   });
   partial.push(() => scene.resetSaveCard.dispose());

@@ -268,6 +268,9 @@ export function createAdaSaves(
         return null;
       }
     },
+    async hasSavedGame() {
+      return (await readPlayableSave()) !== null;
+    },
     async load({ bindModel = true } = {}) {
       const loaded = await store.load();
       if (loaded.status === "unavailable" || loaded.status === "newer") {
@@ -276,9 +279,6 @@ export function createAdaSaves(
         modelGeneration = decodedStamps.get(loaded.save)?.generation ?? null;
       }
       return loaded;
-    },
-    async hasSavedGame() {
-      return (await readPlayableSave()) !== null;
     },
     async readCampaign() {
       return participating() ? readPlayableSave() : null;
