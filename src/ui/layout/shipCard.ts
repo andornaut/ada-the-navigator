@@ -1,4 +1,4 @@
-import { TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
+import { FOCUS_STYLE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { font, units } from "./css.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -50,6 +50,13 @@ ${UI_SCOPE} .ada-ship-row{
   line-height:${units(SHIP_CARD.row)};
   color:${TEXT_TOKENS.label};
   cursor:pointer
+}
+${UI_SCOPE} .ada-ship-row:focus-visible{${FOCUS_STYLE}
+}
+@media (forced-colors: active){
+  ${UI_SCOPE} .ada-ship-row:focus-visible{
+    outline-color:Highlight
+  }
 }
 ${UI_SCOPE} .ada-ship-icon{
   flex:none;
