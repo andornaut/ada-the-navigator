@@ -630,9 +630,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   }
   stationCard.card.append(balances, footer);
   confirmModal.append(confirmCard.frame, dropHost);
-  parent.append(modal, confirmModal);
-  const stationLayer = createModalLayer(modal);
-  const confirmationLayer = createModalLayer(confirmModal);
+  let stationLayer: ReturnType<typeof createModalLayer>;
+  let confirmationLayer: ReturnType<typeof createModalLayer>;
 
   let open = false;
   let view: StationView = "card";
@@ -1436,8 +1435,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
       disposed = true;
-      stationLayer.dispose();
-      confirmationLayer.dispose();
+      stationLayer?.dispose();
+      confirmationLayer?.dispose();
       leavePress = undefined;
       leaveConfirmation = undefined;
       clearBindings(bindings);
@@ -1494,15 +1493,24 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     settleDetails: () => dropDetails?.settle() ?? Promise.resolve(),
   };
   try {
-    for (const scope of [
+    const scopes = [
       stationCard.frame,
       shopCard.frame,
       jobsCard.frame,
       exchangeCard.frame,
       confirmCard.frame,
       confirmActions,
-    ]) {
-      audit(scope);
+    ];
+    for (const scope of scopes) {
+      assertAdaActionMetadata(scope);
+    }
+    parent.append(modal, confirmModal);
+    stationLayer = createModalLayer(modal);
+    confirmationLayer = createModalLayer(confirmModal);
+    for (const scope of scopes) {
+      if (scope.isConnected) {
+        assertAdaActionBindings(scope);
+      }
     }
   } catch (error) {
     station.dispose();

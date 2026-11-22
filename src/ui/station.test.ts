@@ -615,12 +615,15 @@ it("uses the actual purchase or drop card as the strict dialog rather than its b
   expect(f.back).not.toHaveBeenCalled();
 });
 
+type StationFixtureNode = InstanceType<ReturnType<typeof strictStation>["Node"]>;
+
 function constructedStation(
   fault = "",
   connected = true,
   owned = true,
   permits: () => boolean = () => true,
   projectOnly = false,
+  beforeCreate?: (parent: StationFixtureNode) => void,
 ) {
   const f = strictStation();
   const { Node } = f;
@@ -834,6 +837,7 @@ function constructedStation(
     stationTitle: () => "Actual Station",
     undock,
   };
+  beforeCreate?.(parent);
   const context = createContext({
     ...stationSource,
     ...shopCardLayout,
@@ -952,6 +956,88 @@ it("requires connected Station construction ownership without evaluating the liv
   const active = constructedStation("", true, true, permits);
   expect(permits).not.toHaveBeenCalled();
   active.station.dispose();
+});
+
+it("publishes both hidden Station roots with their permanent actions bound", () => {
+  const observed = vi.fn();
+  const geometry = vi.fn(() => {
+    throw Error("Station construction read connected geometry");
+  });
+  const f = constructedStation("", true, true, undefined, false, (parent) => {
+    vi.stubGlobal("getComputedStyle", geometry);
+    const append = parent.append.bind(parent);
+    vi.spyOn(parent, "append").mockImplementation((...nodes) => {
+      append(...nodes);
+      observed(
+        nodes.map((root) => {
+          const unbound = root.querySelectorAll("button").flatMap((element) => {
+            try {
+              assertAdaActionMetadata(element as unknown as HTMLElement);
+              return [];
+            } catch {
+              return [element.dataset.action ?? element.dataset.tab ?? element.textContent];
+            }
+          });
+          return { connected: root.isConnected, hidden: root.hidden, unbound };
+        }),
+      );
+    });
+  });
+  try {
+    expect(observed).toHaveBeenCalledExactlyOnceWith([
+      { connected: true, hidden: true, unbound: [] },
+      { connected: true, hidden: true, unbound: [] },
+    ]);
+    expect(f.parent.children.map(({ dataset }) => Object.keys(dataset))).toEqual([
+      ["station"],
+      ["stationConfirm"],
+    ]);
+    expect(geometry).not.toHaveBeenCalled();
+  } finally {
+    f.station.dispose();
+  }
+});
+
+it.each(["station-back", "confirm-actions"])(
+  "keeps both Station roots private when the %s preflight fails",
+  (fault) => {
+    const published = vi.fn();
+    expect(() =>
+      constructedStation(fault, true, true, undefined, false, (parent) => {
+        const append = parent.append.bind(parent);
+        vi.spyOn(parent, "append").mockImplementation((...nodes) => {
+          published();
+          append(...nodes);
+        });
+      }),
+    ).toThrow("no registered action binding");
+    expect(published).not.toHaveBeenCalled();
+  },
+);
+
+it("releases both Station roots and permanent bindings after a failed live-root audit", () => {
+  const published = vi.fn();
+  let parent: StationFixtureNode | undefined;
+  let controls: HTMLElement[] = [];
+  expect(() =>
+    constructedStation("", true, false, undefined, false, (root) => {
+      parent = root;
+      const append = root.append.bind(root);
+      vi.spyOn(root, "append").mockImplementation((...nodes) => {
+        append(...nodes);
+        published(nodes.length);
+        controls = nodes.flatMap((node) =>
+          node.querySelectorAll("button"),
+        ) as unknown as HTMLElement[];
+      });
+    }),
+  ).toThrow("no live action root");
+  expect(published).toHaveBeenCalledExactlyOnceWith(2);
+  expect(parent?.children).toEqual([]);
+  expect(controls.length).toBeGreaterThan(1);
+  for (const control of controls) {
+    expect(() => assertAdaActionMetadata(control)).toThrow("no registered action binding");
+  }
 });
 
 it("keeps inert measurement rows unregistered and registers only completed real Shop rows", () => {
