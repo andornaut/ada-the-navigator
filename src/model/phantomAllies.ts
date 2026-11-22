@@ -211,7 +211,24 @@ export function stepPhantomAllies(
   }
   return shots;
 }
+export interface PhantomSong {
+  readonly center: Vec;
+  readonly radius: number;
+}
+
+/** Only the current roster can provide Marlo's field or widen it. */
+export function activePhantomSong(allies: readonly PhantomAlly[]): PhantomSong | undefined {
+  const center = allies.find((ally) => ally.id === "marlo" && ally.song);
+  if (!center) {
+    return undefined;
+  }
+  const nursery = allies.some(
+    (ally) => ally.id === "project:3:nurseryBeacon" && ally.behavior === "whale",
+  );
+  return { center, radius: T.songRadius * (nursery ? T.songNurseryScale : 1) };
+}
+
 /** Multiplies this frame's physics input without changing a catalog or a saved archetype. */
-export function phantomSongSpeed(allies: readonly PhantomAlly[], point: Vec): number {
-  return allies.some((ally) => ally.song && gap(ally, point) <= T.songRadius) ? T.songSpeed : 1;
+export function phantomSongSpeed(song: PhantomSong | undefined, point: Vec): number {
+  return song && gap(song.center, point) <= song.radius ? T.songSpeed : 1;
 }

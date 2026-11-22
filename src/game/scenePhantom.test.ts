@@ -1,12 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import phantomAllies from "../../public/art/phantom/allies.json";
 import phantomManifest from "../../public/art/phantom/manifest.json";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { toScreen } from "../model/convex.ts";
 import { createEnemy } from "../model/enemyAi.ts";
+import type { PhantomDeparture } from "../model/phantom.ts";
+import { phantomAllyRoster, rotatePhantomAllies } from "../model/phantomAllies.ts";
 import type { SpaceObject } from "../model/types.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
-import { drawPhantomFlagship, drawPhantomSettlement, phantomAllyCraft } from "./scenePhantom.ts";
+import {
+  drawPhantomAllies,
+  drawPhantomFlagship,
+  drawPhantomSettlement,
+  phantomAllyCraft,
+} from "./scenePhantom.ts";
+import { clearPhantomSong } from "./scenePhantomSong.ts";
 const calls = vi.hoisted(() => ({
   enemy: vi.fn(),
   family: vi.fn(),
@@ -108,4 +118,137 @@ describe("Phantom authored rendering", () => {
     ).toBe(false);
     expect(calls.enemy).not.toHaveBeenCalled();
   });
+});
+
+function songGraphics() {
+  return {
+    beginPath: vi.fn(),
+    clear() {
+      this.lineBetween.mockClear();
+      this.moveTo.mockClear();
+    },
+    closePath: vi.fn(),
+    fillPath: vi.fn(),
+    fillStyle: vi.fn(),
+    lineBetween: vi.fn(),
+    lineStyle: vi.fn(),
+    lineTo: vi.fn(),
+    moveTo: vi.fn(),
+    setDepth() {
+      return this;
+    },
+    strokePath: vi.fn(),
+  };
+}
+
+describe("Phantom song rendering", () => {
+  it.each([false, true])(
+    "draws the active nursery reach and rings with reduced motion=%s",
+    (reducedMotion) => {
+      const roster = phantomAllyRoster(
+        [
+          {
+            activityCompleted: true,
+            galaxy: 3,
+            projects: [{ ally: "current", project: "nurseryBeacon" }],
+          },
+        ],
+        21,
+      );
+      const player = { x: 40, y: 80 };
+      const allies = rotatePhantomAllies(roster, 0, { facing: { x: 0, y: -1 }, player });
+      const marlo = allies.find(({ id }) => id === "marlo")!;
+      const nursery = allies.find(({ id }) => id === "project:3:nurseryBeacon")!;
+      for (const ally of allies) {
+        ally.jumpAge = 10;
+      }
+      const drone = (distance: number, disabled = false): SpaceObject => {
+        const id = `song-drone:${distance}`;
+        const point = { x: marlo.x + distance, y: marlo.y };
+        const definition = enemyDefinition(6, "swarm", id);
+        const enemy = createEnemy(
+          definition,
+          { archetype: "swarm", id, packId: null, phase: 0 },
+          point,
+        );
+        enemy.disabled = disabled;
+        return { ...point, enemy, hp: definition.hp, id, kind: "enemy", radius: 10 };
+      };
+      const departures: PhantomDeparture[] = [
+        { age: 10, id: nursery.id, x: nursery.x, y: nursery.y },
+      ];
+      const phantom = { allies, allyTurn: 0, departures };
+      const flight = {
+        galaxy: 6,
+        objects: [drone(450), drone(451), drone(200, true)],
+        phantom,
+        player,
+        time: 0.6,
+      };
+      const layers: ReturnType<typeof songGraphics>[] = [];
+      const ink = songGraphics();
+      let authored = true;
+      const view = {
+        add: {
+          graphics: () => {
+            const layer = songGraphics();
+            layers.push(layer);
+            return layer;
+          },
+        },
+        cache: { json: { get: () => (authored ? phantomAllies : undefined) } },
+        ink,
+        model: { state: { flight } },
+        palette: { environmentDetail: 0 },
+        project: toScreen,
+        reducedMotion,
+        textures: { exists: () => false },
+      } as unknown as ObjectsContext;
+      const vertex = (center: { x: number; y: number }, radius: number) => {
+        const point = toScreen({ x: center.x + radius, y: center.y });
+        return [point.x, point.y];
+      };
+
+      drawPhantomAllies(view);
+      expect(layers).toHaveLength(2);
+      const [field, ring] = layers;
+      expect(field!.moveTo.mock.calls).toEqual(
+        (reducedMotion ? [450, 450] : [450, 450, 112.5, 337.5]).map((radius) =>
+          vertex(marlo, radius),
+        ),
+      );
+      expect(ring!.moveTo).toHaveBeenCalledOnce();
+
+      clearPhantomSong(view);
+      phantom.allies = [marlo];
+      drawPhantomAllies(view);
+      expect(field!.moveTo.mock.calls[1]).toEqual(vertex(marlo, 300));
+      expect(ring!.moveTo).not.toHaveBeenCalled();
+
+      clearPhantomSong(view);
+      phantom.allies = [nursery];
+      departures.push({ age: 10, id: marlo.id, x: marlo.x, y: marlo.y });
+      drawPhantomAllies(view);
+      expect(field!.moveTo).not.toHaveBeenCalled();
+      expect(ring!.moveTo).not.toHaveBeenCalled();
+
+      authored = false;
+      phantom.allies = allies;
+      drawPhantomAllies(view);
+      expect(ink.lineBetween).toHaveBeenCalledTimes(96);
+      expect(ink.lineBetween.mock.calls[0]!.slice(0, 2)).toEqual(vertex(marlo, 450));
+      expect(ink.lineBetween.mock.calls[48]!.slice(0, 2)).toEqual(vertex(flight.objects[0]!, 14));
+
+      ink.clear();
+      phantom.allies = [marlo];
+      drawPhantomAllies(view);
+      expect(ink.lineBetween).toHaveBeenCalledTimes(48);
+      expect(ink.lineBetween.mock.calls[0]!.slice(0, 2)).toEqual(vertex(marlo, 300));
+
+      ink.clear();
+      phantom.allies = [];
+      drawPhantomAllies(view);
+      expect(ink.lineBetween).not.toHaveBeenCalled();
+    },
+  );
 });

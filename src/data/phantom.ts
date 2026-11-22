@@ -18,6 +18,7 @@ export const PHANTOM_TUNING = {
   formationGap: 60,
   neighborGap: 16,
   salvageStardust: 44,
+  songNurseryScale: 1.5,
   songRadius: 300,
   songSpeed: 0.75,
   waves: 3,

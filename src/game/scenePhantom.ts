@@ -1,9 +1,10 @@
 import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import type { PhantomDeparture, PhantomFlight } from "../model/phantom.ts";
 import {
+  activePhantomSong,
   type PhantomAlly,
   type PhantomAllySpec,
   phantomSongSpeed,
@@ -301,6 +302,7 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
     jump && state.allyTurn > 0 && state.departures?.length
       ? allyJumpDuration(jump, scene.reducedMotion)
       : 0;
+  const song = activePhantomSong(state.allies);
   for (const ally of state.allies) {
     const visual = jump
       ? allyPresentation(jump, "in", ally.jumpAge * 1000 - delay, scene.reducedMotion)
@@ -308,10 +310,12 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
     if (visual) {
       drawAllyBody(scene, ally, authored, visual, depthLimit);
     }
-    if (ally.song && ally.id === "marlo" && authored?.song) {
-      drawPhantomSong(scene, authored.song, flight, ally);
-    } else if (ally.song && !authored?.song) {
-      rim(scene, ally, T.songRadius);
+    if (song?.center === ally) {
+      if (authored?.song) {
+        drawPhantomSong(scene, authored.song, flight, song);
+      } else {
+        rim(scene, song.center, song.radius);
+      }
     }
   }
   for (const object of flight.objects) {
@@ -320,7 +324,7 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
       object.kind === "enemy" &&
       object.enemy &&
       !object.enemy.disabled &&
-      phantomSongSpeed(state.allies, object) < 1
+      phantomSongSpeed(song, object) < 1
     ) {
       rim(scene, object, object.radius + 4);
     }

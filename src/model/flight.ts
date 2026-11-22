@@ -111,7 +111,7 @@ import {
   type StationMaterialization,
   stationPopulationObjects,
 } from "./hostileStations.ts";
-import { phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
+import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import {
   nextPhantomBatchReserved,
   phantomFutureFlagshipGeometry,
@@ -3401,13 +3401,14 @@ function enemies(
     eligible,
     flight.player,
   );
+  const activeSong = activePhantomSong(flight.phantom?.allies ?? []);
   let industrialAsteroids: ReturnType<typeof retaliatorAsteroidQuery> | undefined;
   for (const object of objects) {
     const state = object.enemy!;
     const base = enemyEquipmentDefinition(flight.galaxy, state);
     const blockade =
       flight.galaxy === 6 && PHANTOM_DESTINATIONS.some((id) => id === object.routeId);
-    const song = phantomSongSpeed(flight.phantom?.allies ?? [], object);
+    const song = phantomSongSpeed(activeSong, object);
     const definition =
       blockade || song !== 1
         ? {

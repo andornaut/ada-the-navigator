@@ -1,10 +1,9 @@
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { enemyAssetKey } from "../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { PHANTOM_TUNING } from "../data/phantom.ts";
 import { partsReach, toScreen, worldParts } from "../model/convex.ts";
 import { enemyPhysicalBody } from "../model/enemyBody.ts";
-import { type PhantomAlly, phantomSongSpeed } from "../model/phantomAllies.ts";
+import { type PhantomSong, phantomSongSpeed } from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
 import type { PhantomAllyArt } from "./phantomAllyArt.ts";
@@ -87,7 +86,7 @@ export function drawPhantomSong(
   scene: SongContext,
   song: NonNullable<PhantomAllyArt["song"]>,
   flight: FlightState,
-  marlo: PhantomAlly,
+  active: PhantomSong,
 ): void {
   let sprites = layers.get(scene);
   if (!sprites) {
@@ -96,8 +95,8 @@ export function drawPhantomSong(
     layers.set(scene, sprites);
   }
   const { field, rings } = sprites;
-  const center = scene.project(marlo);
-  const reach = PHANTOM_TUNING.songRadius;
+  const center = scene.project(active.center);
+  const reach = active.radius;
   field.fillStyle(song.colour, song.fieldAlpha);
   circle(field, center, reach, true);
   field.lineStyle(song.rim.width, song.colour, song.rim.alpha);
@@ -115,7 +114,7 @@ export function drawPhantomSong(
       object.kind !== "enemy" ||
       !object.enemy ||
       object.enemy.disabled ||
-      phantomSongSpeed([marlo], object) === 1
+      phantomSongSpeed(active, object) === 1
     ) {
       continue;
     }

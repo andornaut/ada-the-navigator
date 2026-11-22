@@ -1,14 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
+import * as enemyAi from "./enemyAi.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import {
   activateRouteEncounter,
   createFlight,
   questGuardPlacementContext,
   routeBlocked,
+  spawnChapterEnemy,
+  stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
 import {
@@ -26,6 +29,7 @@ import {
   validPhantomProgress,
 } from "./phantom.ts";
 import {
+  activePhantomSong,
   phantomAllyRoster,
   phantomEscortSlot,
   phantomSongSpeed,
@@ -516,7 +520,7 @@ describe("Phantom allies", () => {
     const turned = phantomEscortSlot({ x: 0, y: 0 }, { x: 1, y: 0 }, 21, allies, 0);
     expect(turned.x).toBeLessThan(0);
   });
-  it("keeps whales nonfiring and Marlo's song exactly 300 at 0.75", () => {
+  it("keeps the whales nonfiring and takes song range from the current roster", () => {
     const context = fixture();
     const roster = phantomAllyRoster(
       [
@@ -531,8 +535,86 @@ describe("Phantom allies", () => {
     const allies = rotatePhantomAllies(roster, 0, context.flight);
     expect(stepPhantomAllies(CONTENT.tuning.physics, 0.1, context.flight, allies)).toEqual([]);
     const marlo = allies.find((ally) => ally.id === "marlo")!;
-    expect(phantomSongSpeed(allies, { x: marlo.x + 300, y: marlo.y })).toBe(0.75);
-    expect(phantomSongSpeed(allies, { x: marlo.x + 301, y: marlo.y })).toBe(1);
+    const nursery = allies.find(({ id }) => id === "project:3:nurseryBeacon")!;
+    const at = (distance: number) => ({ x: marlo.x + distance, y: marlo.y });
+    expect(phantomSongSpeed(activePhantomSong([marlo]), at(300))).toBe(0.75);
+    expect(phantomSongSpeed(activePhantomSong([marlo]), at(301))).toBe(1);
+    expect(phantomSongSpeed(activePhantomSong(allies), at(450))).toBe(0.75);
+    expect(phantomSongSpeed(activePhantomSong(allies), at(451))).toBe(1);
+    expect(phantomSongSpeed(activePhantomSong([nursery]), nursery)).toBe(1);
+    expect(
+      phantomSongSpeed(activePhantomSong([{ ...nursery, id: "another-whale" }, marlo]), at(301)),
+    ).toBe(1);
+    expect(phantomSongSpeed(activePhantomSong([]), marlo)).toBe(1);
     expect(allies.filter((ally) => ally.song)).toHaveLength(1);
+
+    const others = Array.from({ length: 7 }, (_, index) => ({
+      ...nursery,
+      behavior: "escort" as const,
+      id: `test-escort:${index}`,
+    }));
+    const rotating = [marlo, ...others.slice(0, 6), nursery, others[6]!];
+    const first = rotatePhantomAllies(rotating, 0, context.flight);
+    const next = rotatePhantomAllies(rotating, 1, context.flight);
+    const after = state(context);
+    after.allies = next;
+    after.departures = [{ age: 0, id: nursery.id, x: nursery.x, y: nursery.y }];
+    const reach = (group: typeof allies) => {
+      const singer = group.find(({ id }) => id === "marlo")!;
+      return phantomSongSpeed(activePhantomSong(group), { x: singer.x + 301, y: singer.y });
+    };
+    expect(reach(first)).toBe(0.75);
+    expect(next.map(({ id }) => id)).not.toContain(nursery.id);
+    expect(reach(after.allies)).toBe(1);
+  });
+
+  it.each([false, true])("routes the active nursery=%s to the real flight speed cap", (active) => {
+    const context = fixture();
+    const { flight } = context;
+    const roster = phantomAllyRoster(
+      [
+        {
+          activityCompleted: true,
+          galaxy: 3,
+          projects: [{ ally: "current", project: "nurseryBeacon" }],
+        },
+      ],
+      21,
+    );
+    const allies = rotatePhantomAllies(roster, 0, flight);
+    const marlo = allies.find(({ id }) => id === "marlo")!;
+    const nursery = allies.find(({ id }) => id === "project:3:nurseryBeacon")!;
+    const current = state(context);
+    current.allies = active ? allies : [marlo];
+    if (!active) {
+      current.departures = [{ age: 0, id: nursery.id, x: nursery.x, y: nursery.y }];
+    }
+    const boundaries = [
+      { distance: 300, x: marlo.x + 300, y: marlo.y },
+      { distance: 301, x: marlo.x - 301, y: marlo.y },
+      { distance: 450, x: marlo.x, y: marlo.y + 450 },
+      { distance: 451, x: marlo.x, y: marlo.y - 451 },
+    ];
+    const enemies = boundaries.map(({ distance, x, y }) =>
+      spawnChapterEnemy(CONTENT, "swarm", `song-boundary:${distance}`, { x, y }, flight)!,
+    );
+    const step = vi.spyOn(enemyAi, "stepEnemy");
+    try {
+      stepFlight(CONTENT, 0.001, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false }, flight);
+      const speeds = enemies.map(({ id }) => {
+        const call = step.mock.calls.find(([, , actor]) => actor.id === id);
+        expect(call, id).toBeDefined();
+        return call![0].physics.maxSpeed;
+      });
+      const normal = speeds[3]!;
+      expect(normal).toBeGreaterThan(0);
+      expect(speeds).toEqual(
+        active
+          ? [normal * 0.75, normal * 0.75, normal * 0.75, normal]
+          : [normal * 0.75, normal, normal, normal],
+      );
+    } finally {
+      step.mockRestore();
+    }
   });
 });
