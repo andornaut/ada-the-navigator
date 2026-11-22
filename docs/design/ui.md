@@ -75,3 +75,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0336 | Fade notices after discovering points of interest                               | [ada-0336.md](../work/ada-0336.md) |
 | ada-0338 | Verify Back, Close, and Resume navigation                                       | [ada-0338.md](../work/ada-0338.md) |
 | ada-0350 | Use fill, text or icon cues for button states                                   | [ada-0350.md](../work/ada-0350.md) |
+| ada-0352 | Standardize rectangular action button sizing                                    | [ada-0352.md](../work/ada-0352.md) |
