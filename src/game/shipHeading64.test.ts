@@ -194,6 +194,21 @@ describe("atomic 64-heading player package", () => {
     }
   });
 
+  it("requires the one unpainted up alias alongside the 64 logical rows", () => {
+    const alias = manifest.assets.find(({ id }) => id === "ship")!;
+    const assets = manifest.assets.filter(({ id }) => id !== "ship");
+    for (const invalid of [
+      [],
+      [{ ...alias, directionIndex: 39 }],
+      [{ ...alias, paint: "iris" }],
+      [alias, alias],
+    ]) {
+      expect(
+        hasPlayerHeadingPackage(paints, { ...manifest, assets: [...assets, ...invalid] }),
+      ).toBe(false);
+    }
+  });
+
   it("rejects partial sets, missing paint groups, duplicate or out-of-range manifest and mouth indices", () => {
     expect(
       hasPlayerHeadingPackage(paints, {

@@ -9,6 +9,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import {
   type CoreManifest,
   galaxyLoadsAtOnce,
@@ -54,7 +55,6 @@ import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
-import { routeShipFrames } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
 import { paintFrames } from "./shipArt.ts";
@@ -96,10 +96,10 @@ export function materialShipHeading(asset: Asset): number | undefined {
 export function queueShipMaterialSources(
   scene: AssetsContext,
   manifest: CoreManifest<Asset>,
-): boolean {
+): void {
   materialCaches.delete(scene);
   if (!manifest.shipMaterials || !manifest.quantumJump) {
-    return false;
+    return;
   }
   let queued = false;
   const prepare = () => {
@@ -123,14 +123,15 @@ export function queueShipMaterialSources(
       ECONOMY.paintOrder,
       scene.cache.json.get("ship-material-palettes"),
     );
-    if (geometry && palettes && jump) {
-      materialCaches.set(scene, {
-        poseIds: jump.warp.poses.map(({ id }) => id),
-        poses: new Map(),
-        source: new ShipMaterialSources(geometry, palettes),
-        sprites: new Map(),
-      });
+    if (!geometry || !palettes || !jump) {
+      return;
     }
+    materialCaches.set(scene, {
+      poseIds: jump.warp.poses.map(({ id }) => id),
+      poses: new Map(),
+      source: new ShipMaterialSources(geometry, palettes),
+      sprites: new Map(),
+    });
     for (const asset of manifest.assets) {
       if (asset.paint === undefined && materialShipHeading(asset) !== undefined) {
         loadSvg(scene, asset);
@@ -142,7 +143,6 @@ export function queueShipMaterialSources(
   }
   scene.load.json("ship-materials", manifest.shipMaterials);
   scene.load.json("ship-material-palettes", "/art/ship-paint.json");
-  return true;
 }
 
 /** Load a core vector sheet once, keeping the scale and lifetime of each named texture. */
@@ -184,26 +184,32 @@ export function queueCoreSvgSheets(
 }
 
 /** Stable material-generated source URLs for the selected paint, including the route map. */
-export function materialShipFrames(
-  scene: object,
-  assets: readonly Asset[],
-  paint: string | null,
-): readonly string[] {
+export function materialShipFrames(scene: object, paint: string | null): readonly string[] {
   const cache = materialCaches.get(scene);
   if (!cache) {
-    return routeShipFrames(assets, paint);
+    return [];
   }
   const scheme = paint ?? ECONOMY.defaultPaint;
   let sprites = cache.sprites.get(scheme);
   if (!sprites) {
-    const legacy = routeShipFrames(assets, paint);
-    sprites = legacy.map((path, heading) => cache.source.ship(scheme, heading)?.url ?? path);
+    sprites = Array.from(
+      { length: SHIP_HEADINGS },
+      (_, heading) =>
+        cache.source.ship(scheme, heading)?.url ??
+        cache.source.ship(ECONOMY.defaultPaint, heading)?.url ??
+        "",
+    );
     cache.sprites.set(scheme, sprites);
   }
   return sprites;
 }
 
-/** A shop swatch uses the same cached source as heading 48 of the selected paint. */
+/** The Local Map and the Classic swatch fallback use standalone frame precision. */
+export function materialClassicShipFrame(scene: object, heading: number): string | undefined {
+  return materialCaches.get(scene)?.source.standaloneClassic(heading)?.url;
+}
+
+/** A shop swatch uses the same cached material source as heading 48 of its paint. */
 export function materialShipSwatch(scene: object, paint: string): string | undefined {
   return materialCaches.get(scene)?.source.ship(paint, 48)?.url;
 }
@@ -1015,15 +1021,17 @@ export function loadSvg(scene: AssetsContext, asset: Asset): void {
     return;
   }
   const { displayHeight, displayWidth } = asset;
+  const heading = materialShipHeading(asset);
+  const path =
+    heading === undefined
+      ? asset.path
+      : materialCaches.get(scene)?.source.ship(asset.paint ?? ECONOMY.defaultPaint, heading)?.url;
+  if (!path) {
+    return;
+  }
   queueSvg(scene, {
     key: asset.id,
-    path:
-      materialShipHeading(asset) === undefined
-        ? asset.path
-        : (materialCaches
-            .get(scene)
-            ?.source.ship(asset.paint ?? ECONOMY.defaultPaint, materialShipHeading(asset)!)?.url ??
-          asset.path),
+    path,
     size: (scale) =>
       displayHeight !== undefined && displayWidth !== undefined
         ? vectorRaster(scale, { displayHeight, displayWidth })

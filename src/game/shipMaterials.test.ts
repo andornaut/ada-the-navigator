@@ -1,6 +1,9 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import paints from "../../public/art/ship-paint.json";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import {
   readShipMaterialPalettes,
   readShipMaterials,
@@ -71,6 +74,35 @@ describe("semantic ship material sources", () => {
     expect(sources.pose("cobalt", "bank-30")?.svg).toContain('viewBox="0 0 256 256"');
     expect(sources.ship("cobalt", 63)).toBeDefined();
     expect(sources.ship("cobalt", 64)).toBeUndefined();
+  });
+
+  it("reproduces the standalone serializer without replacing existing material sources", () => {
+    const materials = fixture();
+    materials.paths[0] = "M-.004,0L2.006,0L1.234,2Z";
+    const geometry = readShipMaterials(expected, materials)!;
+    const palettes = readShipMaterialPalettes(
+      paints.schemes.map(({ id }) => id),
+      paints,
+    )!;
+    const sources = new ShipMaterialSources(geometry, palettes);
+    const classic = sources.standaloneClassic(0)!;
+    expect(classic.svg).toContain('d="M0,0L2.01,0L1.23,2Z"');
+    expect(classic.svg).toContain("<title>Ship 0 idle</title>");
+    expect(sources.standaloneClassic(0)).toBe(classic);
+    expect(sources.ship("classic", 0)?.svg).toContain('d="M-.004,0L2.006,0L1.234,2Z"');
+    expect(sources.standaloneClassic(64)).toBeUndefined();
+  });
+
+  it("matches the 64 original Classic bodies while they remain in the package", () => {
+    const sources = SHIPPED_SHIP_SOURCES!;
+    for (let heading = 0; heading < 64; heading++) {
+      const path = new URL(`../../public/art/ship-${heading}.svg`, import.meta.url);
+      const frame = sources.standaloneClassic(heading)!;
+      expect(frame.svg).toContain(`<title>Ship ${heading} idle</title>`);
+      if (existsSync(path)) {
+        expect(frame.svg).toBe(readFileSync(path, "utf8"));
+      }
+    }
   });
 
   it("rejects incomplete heading/pose geometry, foreign XML, and changed opacity", () => {

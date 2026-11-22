@@ -3,7 +3,14 @@ import { readFile } from "node:fs/promises";
 import type { Plugin } from "vite";
 
 import { CONTROL_WORDS } from "../data/controlWords.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { HOME_COPY } from "../data/homeCopy.ts";
+import { readQuantumJump } from "../game/quantumJump.ts";
+import {
+  readShipMaterialPalettes,
+  readShipMaterials,
+  ShipMaterialSources,
+} from "../game/shipMaterials.ts";
 import { controlHelpMarkup, escaped } from "../ui/controlHelp.ts";
 
 interface HomeCopy {
@@ -28,13 +35,52 @@ export function homePageHtml(copy: HomeCopy, html: string): string {
   });
 }
 
-// Renders the landing page's copy in dev and production, before HTML assets and headers are
-// processed. The play page has no tokens and passes through.
+const CLASSIC_SHIP = /%CLASSIC_SHIP_(26|40)%/gu;
+
+export function prebootShipHtml(html: string, sources: ShipMaterialSources): string {
+  return html.replace(CLASSIC_SHIP, (_, heading: string) => {
+    const frame = sources.standaloneClassic(Number(heading));
+    if (!frame) {
+      throw new Error(`Required preboot ship heading ${heading} is missing`);
+    }
+    return frame.url;
+  });
+}
+
+async function prebootShipSources(): Promise<ShipMaterialSources> {
+  const art = new URL("../../public/art/", import.meta.url);
+  const json = async (path: string): Promise<unknown> =>
+    JSON.parse(await readFile(new URL(path, art), "utf8"));
+  const [payload, colors, jumpData] = await Promise.all([
+    json("ship-materials.json"),
+    json("ship-paint.json"),
+    json("quantum-jump.json"),
+  ]);
+  const jump = readQuantumJump(jumpData);
+  const geometry =
+    jump &&
+    readShipMaterials(
+      { poses: jump.warp.poses.map(({ id }) => id), warpHeading: jump.warp.heading },
+      payload,
+    );
+  const palettes = readShipMaterialPalettes(ECONOMY.paintOrder, colors);
+  if (!geometry || !palettes) {
+    throw new Error("Required preboot ship materials are invalid");
+  }
+  return new ShipMaterialSources(geometry, palettes);
+}
+
+// Resolve the two pre-script Classic images before Vite resolves HTML asset paths.
 export function homePagePlugin(): Plugin {
   return {
     name: "ada-home-page-copy",
     transformIndexHtml: {
-      handler: (html) => homePageHtml(HOME_COPY, html),
+      async handler(html) {
+        const resolved = homePageHtml(HOME_COPY, html);
+        return resolved.includes("%CLASSIC_SHIP_")
+          ? prebootShipHtml(resolved, await prebootShipSources())
+          : resolved;
+      },
       order: "pre",
     },
   };

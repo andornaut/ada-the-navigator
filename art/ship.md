@@ -30,9 +30,8 @@
 ## Canonical exports and geometry
 
 - Rebuild with `node art/tools/ship.ts` when resources are available. It uses
-  Node builtins and writes directly to `public/art/`. Retained SVG exports are
-  Classic only; purchased paints and jump poses keep shared semantic geometry,
-  not regenerated coloured hull files.
+  Node builtins and writes data directly to `public/art/`. Classic, purchased
+  paints and jump poses resolve from shared material geometry.
 - The model is [ship-model.ts](tools/ship-model.ts), a module with no side
   effects: `drawn(pivot, paint, pose)` returns a pose's polygons in draw order.
   Every ship drawing imports it rather than copying the geometry:
@@ -43,10 +42,10 @@
   about the hull's forward axis), `stretch` along the hull and `squash` across
   it, about the pivot and before the heading turn. Sprite frames use the bare
   heading, so their numbers are the heading rotation's exactly.
-- Exports: `ship-{0..63}.svg`, `ship-jets.json`, `ship-nose.json` and the
-  [paint schemes](#paint-schemes). Frames, jets and nose derive from the
-  same model. Thrust uses the idle hull with procedural jet geometry.
-  `ship.svg` is the logical up alias, resolved from semantic geometry.
+- Exports include `ship-materials.json`, `ship-jets.json`, `ship-nose.json` and
+  the [paint schemes](#paint-schemes). Hulls, jets and nose derive from the same
+  model. Thrust uses the idle hull with procedural jet geometry. The manifest
+  retains the logical `ship` alias at heading 40.
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
 - The ship has 64 headings from the shared player heading contract; enemy
@@ -173,11 +172,11 @@ Engine surfaces do not recolour flame layers.
 | Amber   | `#f4b665` | `#24577b`   | `#173a57`    |
 
 - Crimson retains the stable `graphite` id and asset paths.
-- Classic is free and is the `ship-{0..63}.svg` set. Other schemes use
-  Gameplay's purchase-order prices; Art does not assign a fixed scheme price.
-- Other schemes export idle frames only:
-  `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..63}.svg`. Draw speed jets
-  as for Classic.
+- Classic is free and uses the 64 logical `ship-N` entries. Other schemes use
+  Gameplay's purchase-order prices.
+- Purchased paints use the same material geometry and speed jets as Classic.
+  Their logical paths are
+  `paint/{cobalt,seafoam,graphite,iris,amber}/ship-{0..63}.svg`.
 - `ship-paint.json` version 1 lists these six schemes in order, with `id`,
   `name`, `top`, `frontSides`, `rearSides`, `skirt`, `canopyRoof`, `canopySides`,
   `engineHousing`, `engineOpening` and the derived compatibility colour `canopyHighlight`. Highlight metadata
@@ -187,7 +186,7 @@ Engine surfaces do not recolour flame layers.
   scheme id. Classic frames have no `paint` field. Select by `paint` and
   `directionIndex`; a lookup by `ship-` prefix alone must exclude entries with
   `paint`.
-- `art/tools/ship.ts` writes the Classic frames and ship data. It replaces the
+- `art/tools/ship.ts` writes ship data and logical frame entries. It replaces the
   ship manifest entries in order: `ship`, the 64 `ship-N` entries, then the
   paint entries. It also sets the manifest's `shipNose` link. `--data-only`
   writes jets, paint and material data. `--paint-only` writes paint data.
@@ -276,10 +275,16 @@ and all nine authored bank/stretch/squash poses. Their shared source is
 Jet geometry, collision, opening dimensions and all palette values remain
 independent of this material contract.
 
-The shared contract supplies paid hulls, all nine jump poses and the idle up
-alias. Their 375 retired physical SVGs are not emitted. The 64 Classic idle
-frames remain for the local map. The historical yellow archive and 385
-logical player manifest entries remain available.
+The shared contract supplies all six paints, the heading 40 alias and all
+nine jump poses. The core manifest keeps 385 logical player entries: the
+alias, 64 Classic headings and 320 paid headings. These resolve through
+the material package. The historical yellow archive remains available.
+
+The landing page (heading 40), boot (heading 26), Local Map Classic frames
+and the Classic shop swatch (heading 48) use the standalone SVG's two-decimal
+command and fill stream. Local Map keeps its previous decoded frame until the
+replacement decodes. Flight, title, Galaxy Map, warp and painted views retain
+the full-precision material paths.
 
 ## Speed jets
 

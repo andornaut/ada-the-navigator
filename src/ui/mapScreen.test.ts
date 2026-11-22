@@ -244,6 +244,8 @@ it("uses existing pagination copy without adding quest-specific player strings",
   expect(LABELS.page).toBe(CONTENT.labels.achievementsPage);
 });
 
+const shipSource = (heading: number) => `data:image/svg+xml,fixture-${heading}`;
+
 it("decodes only requested canonical headings and retains a ready ship while the next frame loads", async () => {
   const element = {
     className: "",
@@ -254,7 +256,7 @@ it("decodes only requested canonical headings and retains a ready ship while the
   vi.stubGlobal("document", { createElement: () => element });
   const loads: { frame: HTMLImageElement; resolve: () => void; reject: () => void }[] = [];
   try {
-    const marker = createMapShipMarker(() => {
+    const marker = createMapShipMarker(shipSource, () => {
       let resolve!: () => void;
       let reject!: () => void;
       const ready = new Promise<void>((yes, no) => {
@@ -288,9 +290,7 @@ it("decodes only requested canonical headings and retains a ready ship while the
     expect(element.replaceChildren).toHaveBeenLastCalledWith(loads[1]!.frame);
     marker.setFacing({ x: 0, y: -1 });
     expect(loads).toHaveLength(5);
-    expect(loads.map(({ frame }) => frame.src)).toEqual(
-      [0, 16, 32, 8, 48].map((heading) => `/art/ship-${heading}.svg`),
-    );
+    expect(loads.map(({ frame }) => frame.src)).toEqual([0, 16, 32, 8, 48].map(shipSource));
     expect(
       loads.every(({ frame }) => frame.loading === "eager" && frame.alt === "" && !frame.draggable),
     ).toBe(true);
@@ -319,7 +319,7 @@ it("deduplicates pending and ready headings and never displays stale initial com
     resolve: () => void;
   }[] = [];
   try {
-    const marker = createMapShipMarker(() => {
+    const marker = createMapShipMarker(shipSource, () => {
       let resolve!: () => void;
       const promise = new Promise<void>((yes) => {
         resolve = yes;
@@ -359,7 +359,7 @@ it("requests the canonical path for every actual heading without prefetching its
   vi.stubGlobal("document", { createElement: () => element });
   const frames: HTMLImageElement[] = [];
   try {
-    const marker = createMapShipMarker(() => {
+    const marker = createMapShipMarker(shipSource, () => {
       const frame = { decode: vi.fn(() => Promise.resolve()) } as unknown as HTMLImageElement;
       frames.push(frame);
       return frame;
@@ -372,7 +372,7 @@ it("requests the canonical path for every actual heading without prefetching its
       // eslint-disable-next-line no-await-in-loop
       await Promise.resolve();
       expect(frames).toHaveLength(heading + 1);
-      expect(frames[heading]!.src).toBe(`/art/ship-${heading}.svg`);
+      expect(frames[heading]!.src).toBe(shipSource(heading));
       expect(element.dataset.heading).toBe(String(heading));
     }
     marker.setFacing({ x: 1, y: -1e-10 });

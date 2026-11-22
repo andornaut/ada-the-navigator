@@ -3,6 +3,7 @@ import { hasPlayerHeadingPackage } from "../game/playerHeadingPackage.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
 import { readEngineJets } from "../game/shipJets.ts";
 import { readShipMaterialPalettes, readShipMaterials } from "../game/shipMaterials.ts";
+import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 
 /** Decode both required jet files before constructing the first playable scene. */
 export function requireBootJets(cache: { get(key: string): unknown }) {
@@ -18,7 +19,10 @@ export function requireBootJets(cache: { get(key: string): unknown }) {
 }
 
 /** Validate the canonical loader's actual cached package without another metadata download. */
-export function validateBootCore(cache: { get(key: string): unknown }, shipReady: boolean): void {
+export function validateBootCore(
+  cache: { get(key: string): unknown },
+  textureReady: (id: string) => boolean,
+): void {
   const root = cache.get("art-manifest");
   if (
     !hasPlayerHeadingPackage(
@@ -47,7 +51,14 @@ export function validateBootCore(cache: { get(key: string): unknown }, shipReady
     ECONOMY.paintOrder,
     cache.get("ship-material-palettes"),
   );
-  if (!geometry || !palettes || !shipReady) {
+  if (
+    !geometry ||
+    !palettes ||
+    !textureReady("ship") ||
+    !Array.from({ length: SHIP_HEADINGS }, (_, heading) => textureReady(`ship-${heading}`)).every(
+      Boolean,
+    )
+  ) {
     throw new Error("Required default ship materials or texture are invalid");
   }
 }

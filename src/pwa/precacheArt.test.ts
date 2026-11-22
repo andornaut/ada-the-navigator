@@ -61,12 +61,12 @@ describe("artUrls", () => {
     let generatedHulls = 0;
     const assets = manifest.assets.map((asset) => {
       const heading = asset.directionIndex;
-      const generatedId = asset.paint ? `ship-${asset.paint}-${heading}` : "ship";
+      const generatedId = asset.paint ? `ship-${asset.paint}-${heading}` : `ship-${heading}`;
       if (
         !SHIPPED_SHIP_SOURCES ||
         typeof heading !== "number" ||
         !Number.isInteger(heading) ||
-        asset.id !== generatedId
+        (asset.id !== generatedId && asset.id !== "ship")
       ) {
         return asset;
       }
@@ -76,12 +76,15 @@ describe("artUrls", () => {
       return { ...asset, path: source!.url };
     });
     expect(generatedHulls).toBe(
-      SHIPPED_SHIP_SOURCES ? (ECONOMY.paintOrder.length - 1) * SHIP_HEADINGS + 1 : 0,
+      SHIPPED_SHIP_SOURCES ? ECONOMY.paintOrder.length * SHIP_HEADINGS + 1 : 0,
     );
-    // Classic headings remain real network assets for the current local map.
-    for (let heading = 0; heading < SHIP_HEADINGS; heading++) {
-      expect(urls).toContain(`/art/ship-${heading}.svg`);
-    }
+    const physicalClassic = urls.filter((url) => /^\/art\/ship-\d+\.svg$/u.test(url));
+    expect(physicalClassic).toEqual(
+      physicalClassic.length
+        ? Array.from({ length: SHIP_HEADINGS }, (_, heading) => `/art/ship-${heading}.svg`).sort()
+        : [],
+    );
+    expect(urls).not.toContain("/art/ship.svg");
     const jump = read(manifest.quantumJump) as {
       warp: { poses: { id: string; paths: Record<string, string> }[] };
     };

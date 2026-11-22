@@ -4,13 +4,7 @@ import { GALAXIES } from "../data/storybook.ts";
 import { ART_MANIFEST, CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { storyBackgrounds, storyComposites } from "../ui/storyArt.ts";
 import { readStoryCompositionAssets } from "../ui/storyCompositions.ts";
-import {
-  markerHue,
-  readRouteArt,
-  readRouteMarkers,
-  routePreviews,
-  routeShipFrames,
-} from "./routeArt.ts";
+import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 
 const markers = readRouteMarkers(publicJson(ART_MANIFEST.galaxyFields));
 
@@ -59,17 +53,6 @@ describe("route map art", () => {
     expect(art?.homePreview).toBeUndefined();
     expect(art?.homeScene).toBeUndefined();
     expect(readRouteArt([], markers, () => [])).toBeNull();
-  });
-
-  it("keeps the selected idle hull paint during thrust and never uses baked Classic flames", () => {
-    const classic = routeShipFrames(CORE_MANIFEST.assets, null);
-    expect(classic).toHaveLength(64);
-    expect(classic[12]).toBe("/art/ship-12.svg");
-    expect(classic.some((path) => path.includes("thrust"))).toBe(false);
-    const cobalt = routeShipFrames(CORE_MANIFEST.assets, "cobalt");
-    expect(cobalt[12]).toMatch(/cobalt/u);
-    expect(cobalt.some((path) => path.includes("thrust"))).toBe(false);
-    expect(routeShipFrames(CORE_MANIFEST.assets, "none")).toEqual(classic);
   });
 });
 

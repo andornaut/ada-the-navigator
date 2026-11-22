@@ -552,7 +552,7 @@ export class GameScene extends Scene {
         if (!sidecars) {
           throw new Error("The art manifest's sidecars map is malformed");
         }
-        const materialFrames = queueShipMaterialSources(this, manifest);
+        queueShipMaterialSources(this, manifest);
         const composed = composedArchetypes(manifest.assets);
         for (const archetype of enemyFrameSets(manifest.assets).keys()) {
           const jets = enemyJetsPath(sidecars, archetype);
@@ -594,7 +594,7 @@ export class GameScene extends Scene {
             asset.svgSheet ||
             skipShipPreload(asset) ||
             !galaxyLoadsAtOnce(asset) ||
-            (materialFrames && materialShipHeading(asset) !== undefined)
+            materialShipHeading(asset) !== undefined
           ) {
             continue;
           }

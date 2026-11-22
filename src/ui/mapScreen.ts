@@ -228,6 +228,7 @@ export interface MapScreenState {
 }
 
 export interface MapScreenOptions {
+  readonly shipFrame?: (heading: number) => string | undefined;
   /** Caller-owned dismissal label; standalone maps retain Close. */
   readonly closeLabel?: string;
   /** Quests: the caller opens the shared Quests list (questsScreen.ts) over the map. */
@@ -666,7 +667,10 @@ function objectiveIndicator(): SVGSVGElement {
 }
 
 /** Decode only requested canonical headings, retaining the last ready frame during loading. */
-export function createMapShipMarker(image: () => HTMLImageElement = () => new Image()) {
+export function createMapShipMarker(
+  source: (heading: number) => string | undefined,
+  image: () => HTMLImageElement = () => new Image(),
+) {
   const element = document.createElement("div");
   element.className = "ada-map-ship";
   element.setAttribute("aria-hidden", "true");
@@ -687,12 +691,16 @@ export function createMapShipMarker(image: () => HTMLImageElement = () => new Im
     if (frames.has(heading)) {
       return;
     }
+    const url = source(heading);
+    if (!url) {
+      return;
+    }
     const frame = image();
     frame.alt = "";
     frame.draggable = false;
     frame.loading = "eager";
     frames.set(heading, frame);
-    frame.src = `/art/ship-${heading}.svg`;
+    frame.src = url;
     void frame
       .decode()
       .then(() => {
@@ -848,7 +856,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   placesLayer.className = "ada-map-places";
   const adaLayer = document.createElement("div");
   adaLayer.className = "ada-map-ada";
-  const shipMarker = createMapShipMarker();
+  const shipMarker = createMapShipMarker((heading) => options.shipFrame?.(heading));
   const ada = shipMarker.element;
   adaLayer.append(ada);
   // The header.

@@ -323,8 +323,8 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
     const jets = requireBootJets(scene.cache.json);
     scene.shipJets = jets.normal;
     scene.shipRetroJets = jets.retro;
+    validateBootCore(scene.cache.json, (id) => scene.textures.exists(id));
     constructScene();
-    validateBootCore(scene.cache.json, scene.textures.exists("ship"));
     boot!.collect();
     stopVisibility = followPageVisibility(window, document, owned!.loop, scene.entryCurrent);
     finishEntry();

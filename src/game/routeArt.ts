@@ -1,7 +1,6 @@
 import { byGalaxy } from "../data/galaxies.ts";
 import { type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { GalaxyMapArt } from "../ui/galaxyMap.ts";
 import type { StoryArt } from "../ui/storyArt.ts";
 
@@ -47,19 +46,6 @@ export function routePreviews(
     locked: art("-locked") ?? galaxyPreview(card, true),
     open: art("") ?? galaxyPreview(card, false),
   };
-}
-
-/**
- * Ada's 32 idle heading frames on the route map: the paint's frame where present, else Classic's.
- * Thrust is a separate canonical material overlay, so it never replaces the selected hull paint.
- */
-export function routeShipFrames(assets: readonly RouteAsset[], paint: string | null): string[] {
-  const path = (id: string) => assets.find((asset) => asset.id === id)?.path;
-  return Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
-    const painted = paint === null ? undefined : path(`ship-${paint}-${heading}`);
-    const idle = painted ?? path(`ship-${heading}`);
-    return idle ?? "";
-  });
 }
 
 /** The sky, the ground with its figures and the locked grey; null while any is missing. */

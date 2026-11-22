@@ -106,6 +106,7 @@ export interface ControlsOptions {
     readonly buttonLabel: string;
     readonly menuLabel?: string;
     readonly labels: PauseLabels;
+    readonly shipFrame?: (heading: number) => string | undefined;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
     readonly onGalaxies: () => void;
@@ -317,6 +318,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     onTravel: (destination) => options.pause.onTravel(destination),
     reducedMotion: () => reducedMotion,
+    shipFrame: (heading) => options.pause.shipFrame?.(heading),
   });
   // The start screen's Achievements disc remains in the HUD.
   const achievements = createAchievementsCard(settings.root, {

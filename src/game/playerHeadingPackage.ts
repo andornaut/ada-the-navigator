@@ -15,6 +15,7 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
   }
   const groups = new Map<string, Set<number>>();
   let legacyThrustAlias = false;
+  let classicAlias = false;
   for (const asset of root.assets as unknown[]) {
     if (!asset || typeof asset !== "object" || Array.isArray(asset)) {
       return false;
@@ -22,6 +23,12 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
     const frame = asset as Record<string, unknown>;
     if (typeof frame.id !== "string") {
       return false;
+    }
+    if (frame.id === "ship") {
+      if (classicAlias || frame.directionIndex !== 40 || frame.paint !== undefined) {
+        return false;
+      }
+      classicAlias = true;
     }
     legacyThrustAlias ||= frame.id === "ship-thrust";
     const match = /^ship-(?:([a-z][a-z0-9-]*)-)?(\d+)$/u.exec(frame.id);
@@ -51,6 +58,7 @@ export function hasPlayerHeadingPackage(paints: readonly string[], value: unknow
   groups.delete("thrust");
   const required = ["idle", ...paints];
   return (
+    classicAlias &&
     (thrust ? thrust.size === SHIP_HEADINGS : !legacyThrustAlias) &&
     groups.size === required.length &&
     required.every((group) => groups.get(group)?.size === SHIP_HEADINGS)

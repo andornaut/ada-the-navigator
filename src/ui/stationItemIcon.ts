@@ -18,7 +18,9 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
   if (glyph.kind === "swatch") {
     const image = document.createElement("img");
     image.className = "ada-glyph-swatch";
-    image.src = glyph.path;
+    if (glyph.path) {
+      image.src = glyph.path;
+    }
     image.alt = "";
     image.setAttribute("aria-hidden", "true");
     return image;

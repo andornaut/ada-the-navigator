@@ -18,12 +18,11 @@ const TRACK_ICONS: Readonly<Record<UpgradeTrack, string>> = {
   tractor: "icon-shop-tractor-beam",
 };
 
-/** A paint scheme's swatch: the scheme's idle frame 48, Classic's from the unpainted set. */
-export function paintSwatchPath(scheme: string, defaultPaint: string): string {
-  return scheme === defaultPaint ? "/art/ship-48.svg" : `/art/paint/${scheme}/ship-48.svg`;
-}
-
-export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
+export function itemGlyph(
+  catalog: EconomyCatalog,
+  item: ShopItem,
+  paintSwatch?: (scheme: string) => string | undefined,
+): ItemGlyph {
   switch (item.kind) {
     case "weapon":
       return weaponItemGlyph(item.weapon);
@@ -37,7 +36,10 @@ export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
     case "holodisk":
       return { key: "icon-holodisk", kind: "sprite" };
     default:
-      return { kind: "swatch", path: paintSwatchPath(item.scheme, catalog.defaultPaint) };
+      return {
+        kind: "swatch",
+        path: catalog.paints[item.scheme] ? (paintSwatch?.(item.scheme) ?? "") : "",
+      };
   }
 }
 
@@ -47,9 +49,10 @@ export function stationRow(
   stardust: number,
   row: ShopRow,
   requirementText?: (weapon: NonNullable<ShopRow["requiresWeapon"]>) => string,
+  paintSwatch?: (scheme: string) => string | undefined,
 ): StationRow {
   return {
-    glyph: itemGlyph(catalog, row.item),
+    glyph: itemGlyph(catalog, row.item, paintSwatch),
     group: row.item.kind === "paint" ? "paint" : row.item.kind === "ammo" ? "ammo" : "items",
     key: JSON.stringify(row.item),
     // An ammunition row's pack size takes the level line's place.

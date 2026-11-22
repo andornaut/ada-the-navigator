@@ -23,11 +23,11 @@ const boot = vi.hoisted(() => ({
     loop: { wake: ReturnType<typeof vi.fn> };
     scene: { getScene: () => unknown };
   }[],
-  jetBodies: new Map<string, unknown>(),
   launch: vi.fn(),
   load: vi.fn(),
   manifest: {} as unknown,
   requireNewer: vi.fn(),
+  requiredBodies: new Map<string, unknown>(),
   reveal: { collect: vi.fn(), commit: vi.fn(), dispose: vi.fn() },
   scene: vi.fn(),
   ship: true,
@@ -67,8 +67,8 @@ vi.mock("./game/scene.ts", () => ({
           if (key === "art-manifest") {
             return boot.manifest;
           }
-          if (boot.jetBodies.has(key)) {
-            return boot.jetBodies.get(key);
+          if (boot.requiredBodies.has(key)) {
+            return boot.requiredBodies.get(key);
           }
           const files: Record<string, string> = {
             "quantum-jump": "quantum-jump.json",
@@ -153,9 +153,9 @@ beforeEach(() => {
   boot.ship = true;
   boot.constructorThrows = false;
   boot.manifest = JSON.parse(readFileSync("public/art/manifest.json", "utf8"));
-  boot.jetBodies.clear();
+  boot.requiredBodies.clear();
   for (const key of ["ship-jets", "ship-retro-jets"]) {
-    boot.jetBodies.set(key, JSON.parse(readFileSync(`public/art/${key}.json`, "utf8")));
+    boot.requiredBodies.set(key, JSON.parse(readFileSync(`public/art/${key}.json`, "utf8")));
   }
   boot.launch.mockResolvedValue("continue");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
@@ -235,8 +235,8 @@ it("waits for actual deferred retirement before constructing a Retry, without la
 it.each(["ship-jets", "ship-retro-jets"])(
   "blocks scene construction for malformed cached %s even after loader completion, then admits Retry",
   async (key) => {
-    const geometry = boot.jetBodies.get(key) as { headings: unknown[] };
-    boot.jetBodies.set(key, { ...geometry, headings: geometry.headings.slice(0, -1) });
+    const geometry = boot.requiredBodies.get(key) as { headings: unknown[] };
+    boot.requiredBodies.set(key, { ...geometry, headings: geometry.headings.slice(0, -1) });
     const { attempt, module } = await entry();
     await attempt.start();
     expect(attempt.state).toMatchObject({
@@ -249,7 +249,7 @@ it.each(["ship-jets", "ship-retro-jets"])(
 
     const failed = boot.instances[0]!;
     expect(failed.destroy).toHaveBeenCalledWith(true);
-    boot.jetBodies.set(key, geometry);
+    boot.requiredBodies.set(key, geometry);
     const retry = attempt.retry();
     await settle();
     expect(boot.game).toHaveBeenCalledOnce();
@@ -263,6 +263,31 @@ it.each(["ship-jets", "ship-retro-jets"])(
     module.disposeGame();
   },
 );
+it("keeps invalid material geometry out of the scene and retries through the launcher", async () => {
+  boot.requiredBodies.set("ship-materials", { version: 1 });
+  const { attempt, module } = await entry();
+  await attempt.start();
+  expect(attempt.state).toMatchObject({
+    error: expect.objectContaining({ message: expect.stringContaining("ship materials") }),
+    kind: "failed",
+  });
+  expect(boot.construct).not.toHaveBeenCalled();
+  expect(boot.reveal.commit).not.toHaveBeenCalled();
+  expect(boot.blockWrites).not.toHaveBeenCalled();
+  const failed = boot.instances[0]!;
+  expect(failed.destroy).toHaveBeenCalledWith(true);
+  boot.requiredBodies.delete("ship-materials");
+  const retry = attempt.retry();
+  await settle();
+  expect(boot.game).toHaveBeenCalledOnce();
+  failed.events.emit("destroy");
+  await retry;
+  expect(attempt.state.kind).toBe("ready");
+  expect(boot.construct).toHaveBeenCalledOnce();
+  expect(boot.reveal.commit).toHaveBeenCalledOnce();
+  expect(boot.load).toHaveBeenCalledOnce();
+  module.disposeGame();
+});
 it("revokes a retained successful game's resources synchronously on page disposal", async () => {
   const { attempt, module } = await entry();
   await attempt.start();

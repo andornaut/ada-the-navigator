@@ -2,7 +2,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
-import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import {
   classic,
@@ -17,28 +16,14 @@ import {
 } from "./ship-model.ts";
 import { JET_LENGTH, JET_LEVELS } from "./ship-jet-layers.ts";
 import { normalJetLayers } from "./ship-normal-materials.ts";
-import { svgPaths } from "./ship-paths.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
-// Writes Ada's ship sprite frames, paint schemes, speed jets, nose and collision from the shared
-// model in ship-model.ts.
+// Writes Ada's logical ship frames, material geometry, paint, speed jets, nose and collision
+// from the shared model in ship-model.ts.
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const paintOnly = process.argv.includes("--paint-only");
 const jetsOnly = process.argv.includes("--jets-only");
-
-function svg(yaw: number): string {
-  const polygons = svgPaths(drawn(FRAME / 2, classic.paint, { yaw })).map(
-    ({ color, path }) => `  <path fill="${color}" d="${path}"/>`,
-  );
-  return [
-    '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
-    `  <title>Ship ${yaw} idle</title>`,
-    ...polygons,
-    "</svg>",
-    "",
-  ].join("\n");
-}
 
 // Speed jets use centred, foreground normal apertures with the selected Engine-level materials.
 function jets(): string {
@@ -117,19 +102,14 @@ if (!jetsOnly)
     }),
   );
 
-if (!jetsOnly && !process.argv.includes("--data-only")) {
-  if (!paintOnly) {
-    writeFileSync(`${output}ship-nose.json`, noses());
-    for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-      writeFileSync(`${output}ship-${yaw}.svg`, svgText(svg(yaw), SVG_DECIMALS.ship));
-    }
-  }
+if (!paintOnly && !jetsOnly && !process.argv.includes("--data-only")) {
+  writeFileSync(`${output}ship-nose.json`, noses());
 
-  // Paid hulls use the shared material geometry; retain their logical manifest entries.
+  // All hulls use shared material geometry and retain their logical manifest entries.
   const painted = SCHEMES.filter((scheme) => scheme !== classic);
 
-  // Ship entries open the manifest: the up alias, then idle per heading, then
-  // the paint frames, which mirror ship-N with their own path and a paint id.
+  // Ship entries open the manifest: the up alias, then Classic per heading, then
+  // the paid rows, which mirror ship-N with their own logical path and paint id.
   const entry = (id: string, path: string, yaw: number) => ({
     id,
     path,
@@ -153,12 +133,11 @@ if (!jetsOnly && !process.argv.includes("--data-only")) {
     ),
   ];
   const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
-  if (!paintOnly)
-    editManifest("core", (manifest) => {
-      manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
-      manifest.shipNose = "/art/ship-nose.json";
-      manifest.shipHeadings = SHIP_HEADING_CONTRACT;
-    });
+  editManifest("core", (manifest) => {
+    manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
+    manifest.shipNose = "/art/ship-nose.json";
+    manifest.shipHeadings = SHIP_HEADING_CONTRACT;
+  });
 }
 
 if (!paintOnly && !jetsOnly) writeShipMaterials();

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { homePageHtml, webManifestJson } from "./html.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
+import { homePageHtml, prebootShipHtml, webManifestJson } from "./html.ts";
 
 const copy = { description: 'Ada & Penny "fly" <far>', mobile: "Tap {use} & go." } as const;
 
@@ -35,4 +36,16 @@ describe("the landing page's and manifest's copy", () => {
       'manifest.webmanifest has no "%HOME_DESCRIPTION%" description',
     );
   });
+});
+
+it("resolves landing and splash Classic images before either document runs a script", () => {
+  const sources = SHIPPED_SHIP_SOURCES!;
+  for (const [token, heading] of [
+    ["%CLASSIC_SHIP_26%", 26],
+    ["%CLASSIC_SHIP_40%", 40],
+  ] as const) {
+    expect(prebootShipHtml(`<img src="${token}">`, sources)).toBe(
+      `<img src="${sources.standaloneClassic(heading)?.url}">`,
+    );
+  }
 });

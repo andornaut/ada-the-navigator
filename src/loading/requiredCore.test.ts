@@ -22,8 +22,9 @@ function fixture() {
 }
 it("validates the shipped logical headings, semantic geometry, palettes and actual native texture", () => {
   const f = fixture();
-  expect(() => validateBootCore(f.cache, true)).not.toThrow();
-  expect(() => validateBootCore(f.cache, false)).toThrow("texture");
+  expect(() => validateBootCore(f.cache, () => true)).not.toThrow();
+  expect(() => validateBootCore(f.cache, () => false)).toThrow("texture");
+  expect(() => validateBootCore(f.cache, (id) => id !== "ship-63")).toThrow("texture");
 });
 it("admits the cached boot package with the thrust rows and alias retired", () => {
   const f = fixture();
@@ -31,19 +32,19 @@ it("admits the cached boot package with the thrust rows and alias retired", () =
     ...manifest,
     assets: manifest.assets.filter(({ id }) => !/^ship-thrust(?:-\d+)?$/.test(id)),
   });
-  expect(() => validateBootCore(f.cache, true)).not.toThrow();
-  expect(() => validateBootCore(f.cache, false)).toThrow("texture");
+  expect(() => validateBootCore(f.cache, () => true)).not.toThrow();
+  expect(() => validateBootCore(f.cache, () => false)).toThrow("texture");
 });
 it("rejects missing logical headings even when a native texture exists", () => {
   const f = fixture();
   f.data.set("art-manifest", { assets: [], version: 1 });
-  expect(() => validateBootCore(f.cache, true)).toThrow("heading");
+  expect(() => validateBootCore(f.cache, () => true)).toThrow("heading");
 });
 it.each(["ship-materials", "ship-material-palettes", "quantum-jump"])(
   "rejects malformed cached %s rather than accepting a fallback ship",
   (key) => {
     const f = fixture();
     f.data.set(key, { version: 1 });
-    expect(() => validateBootCore(f.cache, true)).toThrow("materials");
+    expect(() => validateBootCore(f.cache, () => true)).toThrow("materials");
   },
 );

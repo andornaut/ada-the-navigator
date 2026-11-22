@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import paints from "../../public/art/ship-paint.json";
 import { ECONOMY } from "../data/economy.ts";
+import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
 import { ShipMaterialSources } from "./shipMaterials.ts";
 const source = ts.createSourceFile(
@@ -18,7 +20,7 @@ const code = source.statements
   .filter(
     (node) =>
       (ts.isFunctionDeclaration(node) &&
-        ["loadSvg", "materialShipHeading"].includes(node.name?.text ?? "")) ||
+        ["loadSvg", "materialShipHeading", "materialShipFrames"].includes(node.name?.text ?? "")) ||
       (ts.isVariableStatement(node) &&
         node.declarationList.declarations.some(
           (declaration) => declaration.name.getText(source) === "materialCaches",
@@ -29,14 +31,21 @@ const code = source.statements
 function fixture() {
   const svg = vi.fn();
   const queueSvg = vi.fn();
-  const context = createContext({ ECONOMY, decorationRasterSize, queueSvg, vectorRaster: vi.fn() });
+  const context = createContext({
+    ECONOMY,
+    SHIP_HEADINGS,
+    decorationRasterSize,
+    queueSvg,
+    vectorRaster: vi.fn(),
+  });
   runInContext(ts.transpile(code), context);
   const load = context.loadSvg as (scene: unknown, asset: unknown) => void;
   const materialCaches = runInContext("materialCaches", context) as WeakMap<
     object,
     { source: ShipMaterialSources }
   >;
-  return { load, materialCaches, queueSvg, scene: { load: { svg } }, svg };
+  const frames = context.materialShipFrames as (scene: object, paint: string | null) => string[];
+  return { frames, load, materialCaches, queueSvg, scene: { load: { svg } }, svg };
 }
 describe("production decoration SVG loader", () => {
   it("queues only fixed capped rasters and never registers them for zoom rerasterization", () => {
@@ -76,11 +85,11 @@ describe("production decoration SVG loader", () => {
     expect(f.queueSvg).toHaveBeenCalledOnce();
     expect(f.queueSvg.mock.calls[0]![1]).toMatchObject({ key: "ship", path: "/ship.svg" });
   });
-  it("uses cached semantic geometry for ship headings and retains legacy URLs without a matching source", () => {
+  it("loads ship geometry only from the material cache", () => {
     const f = fixture();
     const asset = { directionIndex: 0, id: "ship-0", path: "/ship-0.svg" };
     f.load(f.scene, asset);
-    expect(f.queueSvg.mock.calls[0]![1]).toMatchObject({ path: asset.path });
+    expect(f.queueSvg).not.toHaveBeenCalled();
     const refs = [{ alpha: 1, path: 0, slot: "top" }] as const;
     const source = new ShipMaterialSources(
       {
@@ -92,11 +101,27 @@ describe("production decoration SVG loader", () => {
     );
     f.materialCaches.set(f.scene, { source });
     f.load(f.scene, asset);
-    expect(f.queueSvg.mock.calls[1]![1]).toMatchObject({
+    expect(f.queueSvg.mock.calls[0]![1]).toMatchObject({
       path: source.ship(ECONOMY.defaultPaint, 0)!.url,
     });
     expect(source.ship(ECONOMY.defaultPaint, 0)!.url).toMatch(/^data:image\/svg\+xml;base64,/u);
     f.load(f.scene, { ...asset, directionIndex: 1, id: "ship-1", path: "/ship-1.svg" });
-    expect(f.queueSvg.mock.calls[2]![1]).toMatchObject({ path: "/ship-1.svg" });
+    expect(f.queueSvg).toHaveBeenCalledOnce();
+  });
+  it("gives route and warp sprite consumers complete material hulls with Classic fallback", () => {
+    const f = fixture();
+    expect(f.frames(f.scene, null)).toHaveLength(0);
+    const source = SHIPPED_SHIP_SOURCES!;
+    const cache = { source, sprites: new Map<string, readonly string[]>() };
+    f.materialCaches.set(f.scene, cache);
+    const classic = f.frames(f.scene, null);
+    expect(classic).toHaveLength(64);
+    expect(classic[12]).toBe(source.ship(ECONOMY.defaultPaint, 12)?.url);
+    const cobalt = f.frames(f.scene, "cobalt");
+    expect(cobalt[12]).toBe(source.ship("cobalt", 12)?.url);
+    expect(
+      [...classic, ...cobalt].every((url) => url.startsWith("data:image/svg+xml;base64,")),
+    ).toBe(true);
+    expect(f.frames(f.scene, "missing")).toEqual(classic);
   });
 });

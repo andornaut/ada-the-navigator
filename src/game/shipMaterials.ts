@@ -1,3 +1,5 @@
+import { SVG_DECIMALS, svgText } from "../../art/tools/svg-text.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 
 export const SHIP_MATERIAL_SLOTS = [
@@ -182,6 +184,26 @@ export class ShipMaterialSources {
 
   ship(paint: string, heading: number): MaterialSvg | undefined {
     return this.source(`ship:${paint}:${heading}`, paint, 96, this.materials.headings.get(heading));
+  }
+
+  /** The same geometry serialized like the former standalone Classic SVG. */
+  standaloneClassic(heading: number): MaterialSvg | undefined {
+    const key = `standalone-classic:${heading}`;
+    const cached = this.sources.get(key);
+    if (cached) {
+      return cached;
+    }
+    const material = this.ship(ECONOMY.defaultPaint, heading);
+    if (!material) {
+      return undefined;
+    }
+    const svg = svgText(
+      material.svg.replace(">\n", `>\n<title>Ship ${heading} idle</title>\n`),
+      SVG_DECIMALS.ship,
+    );
+    const source = { svg, url: `data:image/svg+xml;base64,${btoa(svg)}` };
+    this.sources.set(key, source);
+    return source;
   }
 
   pose(paint: string, id: string): MaterialSvg | undefined {

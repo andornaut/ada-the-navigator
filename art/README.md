@@ -157,7 +157,7 @@ names each exception:
 
 | Set                                                          | Decimals | Reason at one decimal                                                |
 | ------------------------------------------------------------ | -------: | -------------------------------------------------------------------- |
-| Ada's ship frames                                            |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
+| Classic landing, boot, Local Map and Shop                    |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
 | Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
 | Outposts                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
 | Upgrade pickup chevron                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
@@ -187,13 +187,15 @@ Ship textures use 64 isometric headings (enemy craft use 16) with a centered
 pivot and a 96 by 96 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
 Choose the projected heading without rotating the image. Draw procedural
 normal and reverse jets from `ship-jets.json` and `ship-retro-jets.json`.
+Resolve Classic and paid hulls from `ship-materials.json` and `ship-paint.json`;
+the core manifest's ship frame paths are logical references.
 [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool
-debris, project and Andromeda SVGs are deterministic exports from `art/tools/ship.ts`,
-`art/tools/enemies.ts`, `art/tools/station.ts`, `art/tools/outposts.ts`,
+Ship material and geometry data are deterministic exports from `art/tools/ship.ts`.
+Enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool
+debris, project and Andromeda SVGs are deterministic exports from `art/tools/enemies.ts`, `art/tools/station.ts`, `art/tools/outposts.ts`,
 `art/tools/cartwheel.ts`, `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`,
 `art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
 heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers from

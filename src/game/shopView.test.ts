@@ -7,7 +7,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { type ShopRow, shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { itemGlyph, paintSwatchPath, stationRow } from "./shopView.ts";
+import { itemGlyph, stationRow } from "./shopView.ts";
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
@@ -46,17 +46,23 @@ describe("shop rows on the station view", () => {
   });
 
   it("draws each paint scheme's swatch from its idle frame 48", () => {
-    expect(paintSwatchPath("classic", "classic")).toBe("/art/ship-48.svg");
-    expect(paintSwatchPath("iris", "classic")).toBe("/art/paint/iris/ship-48.svg");
-    for (const scheme of Object.keys(ECONOMY.paints)) {
-      if (SHIPPED_SHIP_SOURCES) {
-        const source = SHIPPED_SHIP_SOURCES.ship(scheme, 48);
-        expect(source).toBeDefined();
-        expect(source!.svg).toContain('viewBox="0 0 96 96"');
-      } else {
-        expect(existsSync(publicFile(paintSwatchPath(scheme, ECONOMY.defaultPaint)))).toBe(true);
-      }
+    const source = SHIPPED_SHIP_SOURCES!;
+    const swatch = (scheme: string) =>
+      scheme === ECONOMY.defaultPaint
+        ? source.standaloneClassic(48)?.url
+        : source.ship(scheme, 48)?.url;
+    for (const scheme of ECONOMY.paintOrder) {
+      const item = { kind: "paint", scheme } as const;
+      expect(itemGlyph(ECONOMY, item, swatch)).toEqual({
+        kind: "swatch",
+        path: swatch(scheme),
+      });
+      expect(swatch(scheme)).toMatch(/^data:image\/svg\+xml;base64,/u);
     }
+    expect(itemGlyph(ECONOMY, { kind: "paint", scheme: ECONOMY.defaultPaint })).toEqual({
+      kind: "swatch",
+      path: "",
+    });
   });
 
   it("matches Art's paint schemes, ids and colours", () => {

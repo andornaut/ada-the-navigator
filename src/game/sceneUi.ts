@@ -85,6 +85,7 @@ import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./rout
 import type { GameScene } from "./scene.ts";
 import {
   loadAsteroidArt,
+  materialClassicShipFrame,
   materialShipFrames,
   materialShipHeading,
   materialShipSwatch,
@@ -490,9 +491,7 @@ export function buildScene(scene: UiContext): void {
         ? asset
         : {
             ...asset,
-            path:
-              materialShipFrames(scene, manifest?.assets ?? [], asset.paint ?? null)[heading] ??
-              asset.path,
+            path: materialShipFrames(scene, asset.paint ?? null)[heading] ?? "",
           };
     }),
     scene.shipJets && engineJets(scene.shipJets, 1),
@@ -641,6 +640,7 @@ export function buildScene(scene: UiContext): void {
           jumpThen(() => scene.model.teleport(id));
         }
       },
+      shipFrame: (heading) => materialClassicShipFrame(scene, heading),
     },
     rasterScale: scene.rasters.scale,
     requiredReady,
@@ -842,16 +842,16 @@ export function buildScene(scene: UiContext): void {
                 : "unaffordable",
           }))
         : scene.model.shopRows(tab).map((row) => {
-            const view = stationRow(
+            return stationRow(
               ECONOMY,
               labels,
               scene.model.state.economy.stardust,
               row,
               (weapon) => fill(label("requiresWeapon"), { weapon: weaponName(labels, weapon) }),
+              (scheme) =>
+                materialShipSwatch(scene, scheme) ??
+                (scheme === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined),
             );
-            const path =
-              row.item.kind === "paint" ? materialShipSwatch(scene, row.item.scheme) : undefined;
-            return path ? { ...view, glyph: { kind: "swatch" as const, path } } : view;
           }),
     select: (key) => {
       const chosen = item(key);
@@ -978,7 +978,7 @@ export function buildScene(scene: UiContext): void {
     );
   };
   const routeArt = readRouteArt(routeAssets, markers, () =>
-    materialShipFrames(scene, routeAssets, paintInUse(scene)),
+    materialShipFrames(scene, paintInUse(scene)),
   );
   if (routeArt) {
     scene.galaxies.setArt({ ...routeArt, jets: travelMaterial });
@@ -991,7 +991,7 @@ export function buildScene(scene: UiContext): void {
       const resolved = readRouteArt(
         routeAssets,
         markers,
-        () => materialShipFrames(scene, routeAssets, paintInUse(scene)),
+        () => materialShipFrames(scene, paintInUse(scene)),
         home,
       );
       if (resolved) {
@@ -1008,7 +1008,7 @@ export function buildScene(scene: UiContext): void {
       jets: travelMaterial,
       ...(poses ? { poses } : {}),
       scheme,
-      sprites: materialShipFrames(scene, routeAssets, paintInUse(scene)),
+      sprites: materialShipFrames(scene, paintInUse(scene)),
     };
   };
   scene.routeGalaxies = () =>

@@ -57,6 +57,7 @@ export interface PauseLabels {
 }
 
 export interface PauseOptions {
+  readonly shipFrame?: (heading: number) => string | undefined;
   readonly labels: PauseLabels;
   readonly onBackToTitle: () => void;
   readonly onOpenChange: (open: boolean) => void;
@@ -248,6 +249,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       options.onTravel(id);
     },
     reducedMotion: options.reducedMotion,
+    shipFrame: (heading) => options.shipFrame?.(heading),
   });
   let questRoot: "map" | "flight" | "pause" | "ship" = "map";
   let shipDetailOrigin: HTMLElement | undefined;
