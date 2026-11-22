@@ -23,3 +23,4 @@ prices and pacing.
 | ada-0330 | Draw the Andromeda guide-beacon chain, the spare beacon and the Needle channel lamps | [ada-0330.md](../work/ada-0330.md) |
 | ada-0339 | Simplify station welcome, shopping, and exchange                                     | [ada-0339.md](../work/ada-0339.md) |
 | ada-0355 | Group Ore and Stardust pickups in fives                                              | [ada-0355.md](../work/ada-0355.md) |
+| ada-0357 | Add three community projects across the middle galaxies                             | [ada-0357.md](../work/ada-0357.md) |
