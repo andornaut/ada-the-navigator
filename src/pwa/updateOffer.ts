@@ -1,4 +1,7 @@
-import type { UpdateOffer as StagedUpdate } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import {
+  ObsoleteUpdateOfferError,
+  type UpdateOffer as StagedUpdate,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 // The in-session update offer: the kit's launch hands over each staged version once
 // (onUpdateReady), on whatever screen the player is, and the game draws its Update now card,
@@ -23,6 +26,8 @@ export interface UpdateOfferContext {
 
 export function createUpdateOffer(context: UpdateOfferContext): UpdateOffer {
   let visible = false;
+  // Keep the accepted card in place until the switch settles, since the promise can be shared.
+  let switching = false;
   let current: StagedUpdate | undefined;
   let listener: ((visible: boolean) => void) | undefined;
   const setVisible = (next: boolean) => {
@@ -31,30 +36,44 @@ export function createUpdateOffer(context: UpdateOfferContext): UpdateOffer {
       listener?.(visible);
     }
   };
+  const close = (update: StagedUpdate, dismiss: boolean) => {
+    if (current !== update) {
+      return;
+    }
+    current = undefined;
+    setVisible(false);
+    if (dismiss) {
+      update.dismiss();
+    }
+  };
   return {
     accept() {
       const update = current;
-      if (!visible || update === undefined) {
+      if (switching || update === undefined) {
         return;
       }
-      setVisible(false);
-      current = undefined;
+      switching = true;
       context.switching(true);
-      // The switch reloads the page once it succeeds; a staged build that has gone keeps play on
-      // the active build.
-      update.updateNow(context.save).catch((error: unknown) => {
-        console.warn("Update now could not switch builds.", error);
-        context.switching(false);
-      });
+      void update.updateNow(context.save).then(
+        () => close(update, false),
+        (error: unknown) => {
+          switching = false;
+          context.switching(false);
+          if (error instanceof ObsoleteUpdateOfferError) {
+            if (error.version === update.version) {
+              close(update, true);
+            }
+            return;
+          }
+          console.warn("Update now could not switch builds.", error);
+          close(update, false);
+        },
+      );
     },
     defer() {
-      const update = current;
-      if (!visible || update === undefined) {
-        return;
+      if (!switching && current !== undefined) {
+        close(current, true);
       }
-      setVisible(false);
-      current = undefined;
-      update.dismiss();
     },
     offer(update) {
       current = update;

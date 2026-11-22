@@ -1,3 +1,4 @@
+import { ObsoleteUpdateOfferError } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { describe, expect, it, vi } from "vitest";
 
 import { createUpdateOffer } from "./updateOffer.ts";
@@ -33,21 +34,74 @@ describe("in-session update offer", () => {
     f.offer.accept();
     f.offer.accept();
     f.offer.defer();
-    expect(f.visible).toEqual([false, true, false]);
+    expect(f.visible).toEqual([false, true]);
     expect(f.switching).toHaveBeenCalledExactlyOnceWith(true);
     expect(update.updateNow).toHaveBeenCalledOnce();
     expect(f.save).toHaveBeenCalledOnce();
     expect(update.dismiss).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(f.visible).toEqual([false, true, false]));
   });
 
-  it("ends the switch and keeps play on the active build when the staged build has gone", async () => {
+  it("dismisses a matching obsolete offer without warning or presenting another offer", async () => {
     const f = fixture();
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const update = { ...f.staged(), updateNow: vi.fn(() => Promise.reject(new Error("gone"))) };
+    const error = new ObsoleteUpdateOfferError("next");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const update = { ...f.staged(), updateNow: vi.fn(() => Promise.reject(error)) };
+    f.offer.offer(update);
+    f.offer.accept();
+    await vi.waitFor(() => expect(f.visible).toEqual([false, true, false]));
+    expect(f.switching.mock.calls).toEqual([[true], [false]]);
+    expect(update.dismiss).toHaveBeenCalledOnce();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("clears switching without dismissing the newer offer when a shared switch rejects for an older version", async () => {
+    const f = fixture();
+    const update = f.staged("newer");
+    update.updateNow.mockRejectedValueOnce(new ObsoleteUpdateOfferError("older"));
+    f.offer.offer(update);
+    f.offer.accept();
+    await vi.waitFor(() => expect(f.switching.mock.calls).toEqual([[true], [false]]));
+    expect(f.visible).toEqual([false, true]);
+    expect(update.dismiss).not.toHaveBeenCalled();
+    f.offer.accept();
+    await vi.waitFor(() => expect(f.visible).toEqual([false, true, false]));
+    expect(update.updateNow).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not close a replacement while an obsolete accepted offer settles", async () => {
+    const f = fixture();
+    const old = f.staged("old");
+    const newer = f.staged("newer");
+    const pending = Promise.withResolvers<void>();
+    old.updateNow.mockReturnValueOnce(pending.promise);
+    f.offer.offer(old);
+    f.offer.accept();
+    f.offer.offer(newer);
+    f.offer.accept();
+    expect(newer.updateNow).not.toHaveBeenCalled();
+    pending.reject(new ObsoleteUpdateOfferError(old.version));
+    await vi.waitFor(() => expect(f.switching).toHaveBeenLastCalledWith(false));
+    expect(f.visible).toEqual([false, true]);
+    expect(old.dismiss).not.toHaveBeenCalled();
+    expect(newer.dismiss).not.toHaveBeenCalled();
+    f.offer.accept();
+    expect(newer.updateNow).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the genuine save failure on the warning path and closes the offer", async () => {
+    const f = fixture();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const error = new Error("save unavailable");
+    const update = { ...f.staged(), updateNow: vi.fn(() => Promise.reject(error)) };
     f.offer.offer(update);
     f.offer.accept();
     await vi.waitFor(() => expect(f.switching).toHaveBeenLastCalledWith(false));
     expect(f.visible.at(-1)).toBe(false);
+    expect(warn).toHaveBeenCalledExactlyOnceWith("Update now could not switch builds.", error);
+    expect(update.dismiss).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("dismisses once and offers a newer staged version again", () => {

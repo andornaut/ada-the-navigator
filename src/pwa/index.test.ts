@@ -283,9 +283,9 @@ describe("launch", () => {
     expect(visible).toEqual([false, true]);
     pwa.updateOffer.accept();
     pwa.updateOffer.accept();
-    expect(visible).toEqual([false, true, false]);
+    expect(visible).toEqual([false, true]);
     expect(active).toBe(true);
-    await Promise.resolve();
+    await vi.waitFor(() => expect(visible).toEqual([false, true, false]));
     expect(update.updateNow).toHaveBeenCalledOnce();
     expect(save).toHaveBeenCalledOnce();
     expect(update.dismiss).not.toHaveBeenCalled();

@@ -1,5 +1,7 @@
+import { ObsoleteUpdateOfferError } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { createUpdateOffer, type UpdateOffer } from "../pwa/updateOffer.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
@@ -220,7 +222,7 @@ const labels = {
   close: "Close",
   title: "Update available",
 };
-function setup(initial = false) {
+function setup(initial = false, liveOffer?: UpdateOffer) {
   const root = new fixture.Node();
   const doc = Object.assign(new EventTarget(), {
     activeElement: null as unknown,
@@ -267,7 +269,7 @@ function setup(initial = false) {
   const dialog = createUpdateDialog(
     root as unknown as HTMLElement,
     labels,
-    offer,
+    liveOffer ?? offer,
     restore,
     changed,
   );
@@ -325,6 +327,30 @@ it("only Update now accepts; all defer routes retain visibility until notificati
   expect(f.offer.accept).toHaveBeenCalledOnce();
   f.dialog.dispose();
 });
+it.each([
+  ["shown", false],
+  ["older", true],
+])(
+  "keeps or dismisses the visible dialog after an obsolete %s version",
+  async (version, remains) => {
+    const switching = vi.fn();
+    const offer = createUpdateOffer({ save: vi.fn(), switching });
+    const f = setup(false, offer);
+    const pending = Promise.withResolvers<void>();
+    const update = { dismiss: vi.fn(), updateNow: vi.fn(() => pending.promise), version: "shown" };
+    offer.offer(update);
+    f.doc.activeElement = f.button("accept");
+    f.button("accept").dispatchEvent(new Event("click"));
+    expect(f.dialog.isOpen()).toBe(true);
+    expect(f.restore).not.toHaveBeenCalled();
+    pending.reject(new ObsoleteUpdateOfferError(version));
+    await vi.waitFor(() => expect(switching.mock.calls).toEqual([[true], [false]]));
+    expect(f.dialog.isOpen()).toBe(remains);
+    expect(f.restore).toHaveBeenCalledTimes(remains ? 0 : 1);
+    expect(update.dismiss).toHaveBeenCalledTimes(remains ? 0 : 1);
+    f.dialog.dispose();
+  },
+);
 it("invalidates previous captures and registers both native header and typed footer in the current scope", () => {
   const f = setup();
   const captured = f.guard.gate!.capture();
