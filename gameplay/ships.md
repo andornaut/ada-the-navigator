@@ -568,8 +568,11 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
 | Cartwheel | Mica's mining ship | `chase` against turrets |
 
 - **Arrival:** the allies Ada has made jump in beside her with the usual jump
-  effect when the battle begins, and jump out when the flagship is salvaged or
-  the flight ends. At most 8 allies are on screen at once. The rest rotate in: at the
+  effect when the battle begins. Incoming craft start in their existing escort
+  ring slots, including chasers. Incoming whales start at their follow positions.
+  These positions apply to the first arrival and each rotation, in normal and
+  reduced motion. Allies jump out when the flagship is salvaged or the flight
+  ends. At most 8 allies are on screen at once. The rest rotate in: at the
   start of each later wave and of the flagship fight, allies that have not yet
   flown jump in and replace ones that have, so every ally takes part. Those that
   have flown longest leave first; Marlo never rotates out, so the song never
