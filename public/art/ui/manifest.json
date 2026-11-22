@@ -19,27 +19,9 @@
       "once": []
     },
     {
-      "key": "icon-aim-controls",
-      "png": "sprites/icon-aim-controls.png",
-      "json": "sprites/icon-aim-controls.json",
-      "once": []
-    },
-    {
-      "key": "icon-browser-menu",
-      "png": "sprites/icon-browser-menu.png",
-      "json": "sprites/icon-browser-menu.json",
-      "once": []
-    },
-    {
       "key": "icon-cargo-20",
       "png": "sprites/icon-cargo-20.png",
       "json": "sprites/icon-cargo-20.json",
-      "once": []
-    },
-    {
-      "key": "icon-fps-counter",
-      "png": "sprites/icon-fps-counter.png",
-      "json": "sprites/icon-fps-counter.json",
       "once": []
     },
     {
@@ -58,18 +40,6 @@
       "key": "icon-holodisk-24",
       "png": "sprites/icon-holodisk-24.png",
       "json": "sprites/icon-holodisk-24.json",
-      "once": []
-    },
-    {
-      "key": "icon-install",
-      "png": "sprites/icon-install.png",
-      "json": "sprites/icon-install.json",
-      "once": []
-    },
-    {
-      "key": "icon-ios-share",
-      "png": "sprites/icon-ios-share.png",
-      "json": "sprites/icon-ios-share.json",
       "once": []
     },
     {
@@ -100,12 +70,6 @@
       "key": "icon-job-survey",
       "png": "sprites/icon-job-survey.png",
       "json": "sprites/icon-job-survey.json",
-      "once": []
-    },
-    {
-      "key": "icon-move-controls",
-      "png": "sprites/icon-move-controls.png",
-      "json": "sprites/icon-move-controls.json",
       "once": []
     },
     {
@@ -178,12 +142,6 @@
       "key": "icon-project-workshop-crane",
       "png": "sprites/icon-project-workshop-crane.png",
       "json": "sprites/icon-project-workshop-crane.json",
-      "once": []
-    },
-    {
-      "key": "icon-reduced-motion",
-      "png": "sprites/icon-reduced-motion.png",
-      "json": "sprites/icon-reduced-motion.json",
       "once": []
     },
     {
@@ -313,12 +271,6 @@
       "once": []
     },
     {
-      "key": "icon-sound",
-      "png": "sprites/icon-sound.png",
-      "json": "sprites/icon-sound.json",
-      "once": []
-    },
-    {
       "key": "icon-stardust",
       "png": "sprites/icon-stardust.png",
       "json": "sprites/icon-stardust.json",
@@ -334,12 +286,6 @@
       "key": "icon-tow-20",
       "png": "sprites/icon-tow-20.png",
       "json": "sprites/icon-tow-20.json",
-      "once": []
-    },
-    {
-      "key": "icon-use-control",
-      "png": "sprites/icon-use-control.png",
-      "json": "sprites/icon-use-control.json",
       "once": []
     },
     {

@@ -5,9 +5,7 @@ import type { Frame } from "@andornaut/art-kit/build/grid";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 
-// Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear frame: 16 by 16
-// for Settings rows, 24 by 24 for the top-right HUD settings button. The 20 by 20 nav glyphs
-// keep Chibi's nav icon outlines.
+// Cream ink for the live achievements and HUD settings sheets and the 20 by 20 nav glyphs.
 const INK = "ead4aa";
 const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
 const output = `${ui}sprites/`;
@@ -38,85 +36,6 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "....................",
     "....................",
   ],
-  // The aim stick at icon size: the touch ring as a 2-pixel ring (pixel centres 6.1 to 8.2 from
-  // the frame centre) around the knob, a 4 by 4 disc with its corners clear.
-  "icon-aim-controls": [
-    ".....######.....",
-    "...##########...",
-    "..###......###..",
-    ".###........###.",
-    ".##..........##.",
-    "##............##",
-    "##.....##.....##",
-    "##....####....##",
-    "##....####....##",
-    "##.....##.....##",
-    "##............##",
-    ".##..........##.",
-    ".###........###.",
-    "..###......###..",
-    "...##########...",
-    ".....######.....",
-  ],
-  // A frame-rate readout: a 16 by 14 frame (rows 1 to 14, as icon-sound) with its outer corners
-  // clear, around three 2-wide frame-time bars 2 apart on a shared baseline, 1 clear of the frame.
-  "icon-fps-counter": [
-    "................",
-    ".##############.",
-    "################",
-    "##............##",
-    "##............##",
-    "##.....##.....##",
-    "##.....##.....##",
-    "##.....##..##.##",
-    "##.##..##..##.##",
-    "##.##..##..##.##",
-    "##.##..##..##.##",
-    "##.##..##..##.##",
-    "##............##",
-    "################",
-    ".##############.",
-    "................",
-  ],
-  // The move stick at icon size: the aim stick's ring and knob with the move ring's left and right
-  // chevrons, 1 pixel wide, between them.
-  "icon-move-controls": [
-    ".....######.....",
-    "...##########...",
-    "..###......###..",
-    ".###........###.",
-    ".##..........##.",
-    "##............##",
-    "##..#..##..#..##",
-    "##.#..####..#.##",
-    "##.#..####..#.##",
-    "##..#..##..#..##",
-    "##............##",
-    ".##..........##.",
-    ".###........###.",
-    "..###......###..",
-    "...##########...",
-    ".....######.....",
-  ],
-  // A wave that settles, through a down chevron, into a flat line.
-  "icon-reduced-motion": [
-    "..##.......##...",
-    ".####.....####..",
-    "##..##...##..##.",
-    "#....##.##....##",
-    "......###......#",
-    ".......#........",
-    "................",
-    ".....##..##.....",
-    "......####......",
-    ".......##.......",
-    "................",
-    "................",
-    "################",
-    "################",
-    "................",
-    "................",
-  ],
   // Gear for the top-right settings button: a ring with four orthogonal and four diagonal teeth.
   "icon-settings-nav-24": [
     "..........####..........",
@@ -143,45 +62,6 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "..........####..........",
     "..........####..........",
     "..........####..........",
-  ],
-  // Speaker with two sound waves.
-  "icon-sound": [
-    "................",
-    "......##........",
-    ".....###...##...",
-    "....####....##..",
-    "...#####.....##.",
-    "########.##..##.",
-    "########..##..##",
-    "########..##..##",
-    "########..##..##",
-    "########..##..##",
-    "########.##..##.",
-    "...#####.....##.",
-    "....####....##..",
-    ".....###...##...",
-    "......##........",
-    "................",
-  ],
-  // The Use disc at icon size with the generic Use symbol: the 2-pixel ring around a 1-pixel
-  // symbol ring (pixel centres 3.0 to 4.1 from the centre) and a 2 by 2 centre dot.
-  "icon-use-control": [
-    ".....######.....",
-    "...##########...",
-    "..###......###..",
-    ".###........###.",
-    ".##...####...##.",
-    "##...#....#...##",
-    "##..#......#..##",
-    "##..#..##..#..##",
-    "##..#..##..#..##",
-    "##..#......#..##",
-    "##...#....#...##",
-    ".##...####...##.",
-    ".###........###.",
-    "..###......###..",
-    "...##########...",
-    ".....######.....",
   ],
 };
 

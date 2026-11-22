@@ -14,9 +14,6 @@ type Colours = Readonly<Record<string, string>>;
 // every other pixel, alpha, frame, tag and slice is copied from the source sheet.
 // Usage: node art/tools/controls.ts <chibis-way-home checkout>/public/art/sprites
 const RECOLOURS: Readonly<Record<string, Colours>> = {
-  "icon-browser-menu": { "3a4466": "ead4aa" },
-  "icon-install": { "3a4466": "ead4aa" },
-  "icon-ios-share": { "3a4466": "ead4aa" },
   "ui-button": { "5a6988": "5f5980", "8b9bb4": "9690b4" },
   "ui-button-primary": {
     "262b44": "8a7148",
