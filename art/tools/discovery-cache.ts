@@ -91,27 +91,6 @@ function frame(palette: Palette, halo: boolean): Frame {
   return px;
 }
 
-await writeSprites(
-  { data: `${art}discovery-cache.json`, sheet: `${art}discovery-cache.png` },
-  { key: "discovery-cache" },
-  [
-    ["hidden", [frame(HIDDEN, false)], BLINK_MS],
-    ["lit", [frame(LIT_A, false), frame(LIT_B, true)], BLINK_MS],
-  ],
-);
-// Each frame's drawn silhouette, in frame px. The halo is light, not matter, so lit B traces
-// its pod alone.
-writeFileSync(
-  `${art}discovery-cache.json`,
-  withCollision(
-    readFileSync(`${art}discovery-cache.json`, "utf8"),
-    [frame(HIDDEN, false), frame(LIT_A, false), frame(LIT_B, false)].map(
-      (rows, i) => traceGrid(`discovery-cache ${i}`, rows).collision,
-    ),
-  ),
-);
-await prettify(`${art}discovery-cache.json`);
-
 // The sheet loads as a core manifest sprite sheet after the station and before the enemies.
 const entry = {
   id: "discovery-cache",
@@ -130,6 +109,33 @@ const entry = {
     { frame: 2, name: "litB", ms: BLINK_MS },
   ],
 };
+
+await writeSprites(
+  { data: `${art}discovery-cache.json`, sheet: `${art}discovery-cache.png` },
+  { key: "discovery-cache" },
+  [
+    ["hidden", [frame(HIDDEN, false)], BLINK_MS],
+    ["lit", [frame(LIT_A, false), frame(LIT_B, true)], BLINK_MS],
+  ],
+);
+// Each frame's drawn silhouette, in frame px. The halo is light, not matter, so lit B traces
+// its pod alone.
+const data = JSON.parse(
+  withCollision(
+    readFileSync(`${art}discovery-cache.json`, "utf8"),
+    [frame(HIDDEN, false), frame(LIT_A, false), frame(LIT_B, false)].map(
+      (rows, i) => traceGrid(`discovery-cache ${i}`, rows).collision,
+    ),
+  ),
+) as { meta: Record<string, unknown> };
+data.meta.displayGeometry = {
+  width: entry.displayWidth,
+  height: entry.displayHeight,
+  pivot: entry.pivot,
+};
+writeFileSync(`${art}discovery-cache.json`, JSON.stringify(data));
+await prettify(`${art}discovery-cache.json`);
+
 editManifest("core", (manifest) => {
   const kept = manifest.assets.filter(({ id }) => id !== "discovery-cache");
   const later = kept.findIndex(({ id }) => id.startsWith("enemy-"));
