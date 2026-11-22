@@ -659,7 +659,12 @@ describe("enemy SVGs", () => {
       "retaliatorMiningFreighter",
     ]);
     const heavies = (
-      manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
+      manifest.assets as (EnemyFrame & {
+        height: number;
+        path: string;
+        svgSheet?: boolean;
+        width: number;
+      })[]
     ).filter((asset) => composed.has(enemyFrameKey(asset) ?? ""));
     const groups = new Map<string, { directory: string; archetype: string }>();
     for (const asset of heavies) {
@@ -675,7 +680,12 @@ describe("enemy SVGs", () => {
     expect(heavies).toHaveLength(expected);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
-      const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
+      const [outer, ...members] = Array.from(svg.matchAll(/<svg\b[^>]*>/gu), ([tag]) => tag);
+      const roots = asset.svgSheet
+        ? members.filter((tag) => /\sid="([^"]+)"/u.exec(tag)?.[1] === asset.id)
+        : [outer];
+      expect(roots, asset.id).toHaveLength(1);
+      const root = roots[0] ?? "";
       const size = (name: string) =>
         Number(new RegExp(`\\b${name}="([\\d.]+)"`, "u").exec(root)?.[1]);
       const nativeHull = asset.archetype === "retaliator" && !enemyPartFrame(asset);
