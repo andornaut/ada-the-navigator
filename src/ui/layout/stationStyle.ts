@@ -116,7 +116,7 @@ export const STATION_STYLE = `
   --ada-station-footer-underline:#bfa06f;
   color:var(--ada-station-footer-ink);
   border-color:transparent;
-  border-image:none;
+  border-image-source:none;
   background:linear-gradient(var(--ada-station-footer-underline),var(--ada-station-footer-underline))
     left bottom / 100% ${units(TEXT_BUTTON.lipHeight)} no-repeat var(--ada-station-footer-face);
   background-origin:border-box
