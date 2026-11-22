@@ -9,7 +9,7 @@ Choices converge. The choice column scrolls if needed. Previous is hidden when t
 also offers Skip. Skip follows the whole continuation across scene boundaries
 and stops for an unresolved choice.
 
-Story and quest Use interactions open the conversation card. Normal Dock opens the Station welcome. The conversation's PARTY heading names the person or group Ada is
+Every space Use interaction, Dock included, opens the conversation card. The conversation's PARTY heading names the person or group Ada is
 addressing. Each line has its own speaker name and portrait, including Ada,
 Astra and Penny when they speak. A PARTY heading never attributes every line to
 that party. Narration remains unattributed. Continue advances essential lines;
@@ -1144,13 +1144,75 @@ Phantom:
 
 ## Greeters
 
-The Station welcome shows one keeper paragraph. Generic first visits use
-“Welcome to {station}. I'm {keeper}.” and a galaxy-specific arrival line.
-Return visits use the galaxy's return pool. Quartz and Admiral Archie use
-their authored welcome and return variants where their current identities
-apply. When Jobs is actually available, append a matching job-board line.
-Show the available services immediately. Normal welcomes have no Next or Skip.
-Story and quest interactions keep their own text and controls.
+On a first docking each greeting line is a page of the conversation card,
+advanced with Continue. Skip opens the last page when more than one advance remains. The last page shows
+the keeper's last line, the Stardust icon with the balance, as in the shop, then
+Jobs (at a station with jobs), Undock and Shop.
+
+Station keepers, first docking (three lines), then later dockings (one line, in
+turn):
+
+Sunflower, a Bumble keeper:
+
+- "Bzz, hello! A new face at our station. I'm the keeper here."
+- "We Bumbles hum while we work. It makes heavy jobs feel lighter."
+- "Trade your Stardust, or take a job. Every bit of help counts."
+- Later: "Welcome back! The whole station is humming today." / "Back again?
+  Good. Many wings make light work." / "Hello, friend. The shop is open, and the
+  job board is full."
+
+Whirlpool, a Voron keeper:
+
+- "Oh, a visitor! Welcome, welcome. I'm the keeper of this station."
+- "We Voron ride the currents with the whales. They're our oldest friends."
+- "Trade, rest or take a job. Mind the currents on your way out."
+- Later: "Welcome back! The currents brought you right to us." / "Hello again.
+  Eight arms, and every one of them waving at you." / "Back so soon? The whales
+  were singing about you."
+
+Needle, an Avi keeper:
+
+- "Welcome, young pilot. Rest your wings. Well, your engines."
+- "We Avi stand still a long time before we move. It helps us see clearly."
+- "Trade, or take a job. There is no hurry here."
+- Later: "Welcome back. Slowly in, slowly out." / "Ah, the young pilot. Your
+  docking was very smooth." / "Hello again. Stay as long as you need."
+
+Andromeda, a Munix keeper:
+
+- "Hello, traveler! Come into the light. I'm the keeper of this station."
+- "We Munix were built to follow the beacons. Their light shows us home."
+- "Trade your Stardust, or take a job. We trade fairly here."
+- Later: "Welcome back! Our lamps are always lit for you." / "Hello again,
+  traveler. Safe flying out there?" / "Back again! Come in, out of the dark."
+
+Cartwheel, Cobble keepers. Lines that mention the hub play only at the mining
+hub.
+
+The mining hub, Quartz:
+
+- "Welcome to the hub! Mind the dust. I'm the keeper here."
+- "We Cobbles are made of stone, so a little bump never bothers us."
+- "Trade your Stardust, or take a job. There's room for everyone."
+- Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
+  Find any good rocks out there?" / "Back again. There's always room at the
+  hub."
+
+Every other Cartwheel station, Slate or Garnet:
+
+- "Welcome! Mind the dust. I'm the keeper here."
+- "We Cobbles are made of stone, so a little bump never bothers us."
+- "Trade your Stardust, or take a job. There's room for everyone."
+- Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
+  Find any good rocks out there?" / "Back again. There's always room here."
+
+Phantom, Admiral Archie as keeper once the chapter is complete:
+
+- "Ah. The navigator. Welcome to the Blurbs' station."
+- "I am helping mend their docks. It is slower than conquering, and better."
+- "Trade, or take a job. The Blurbs insist I say please."
+- Later: "Welcome back, Navigator." / "The docks are nearly mended. Mind the
+  scaffolding." / "Astra still flies with you, I see. Good."
 
 Andromeda settler, first approach to a settlement: Settler: "Hello! You found
 our little settlement." Settler: "Mail comes by courier, and visitors come by
@@ -1170,8 +1232,8 @@ beacon light. Welcome!"
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
-- Conversation buttons: Continue on every page that advances, including topic
-  lists; Ask more. The Station welcome does not advance through greeting pages.
+- Conversation buttons: Continue on every page that advances, Dock's greeting
+  pages and topic lists included; Ask more.
 - Shop ammunition lock reason: key `requiresWeapon`, exact text
   "Requires {weapon}". Substitute the canonical current weapon display name for
   `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.
@@ -1179,13 +1241,8 @@ beacon light. Welcome!"
   otherwise show no reason. Keep the locked row visible and preserve the
   existing purchase guard, prices, unlocks, rates and quantities. Runtime
   placement remains with the existing shop consumer.
-- Station footer and section title: Jobs & Projects. Pane headings: Jobs and
-  Community projects. The Map button reads Quests and the story heading
-  reads Story quests.
-- Exchange: Buy Stardust and Buy ore. The 1, 10 and 100 actions buy that
-  amount at twice the cost in the other resource. No amount input or
-  confirmation.
-
+- Exchange: Buy ore and Sell ore offer immediate amounts 1, 10 and 100.
+  No amount input or confirmation. Rates remain buy 2 and sell 1 Stardust per ore.
 - Scan outcome copy follows [Scan feedback](scan-feedback.md#canonical-astra-outcome-copy).
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.

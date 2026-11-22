@@ -294,9 +294,10 @@ describe("ammunition", () => {
     expect(model.selectWeapon("multiLaser")).toBe(false);
     expect(flight.weapon).toBe("laser");
     const vendors = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 });
-    model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "equipment")!.id;
+    model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "jobs")!.id;
     model.state.economy.stardust = 10;
-    expect(model.stationServices?.weaponsAmmo).toBe(false);
+    expect(model.stationServices?.jobs).toBe(true);
+    expect(model.shopGroups()).toBeUndefined();
     expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
       kind: "refused",
       reason: "notForSale",
