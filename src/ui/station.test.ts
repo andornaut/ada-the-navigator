@@ -1066,7 +1066,7 @@ it.each(["shop", "jobs"] as const)(
     expect(f.calls()).toEqual([[f.id]]);
     if (kind === "jobs") {
       expect(f.acceptJob).not.toHaveBeenCalled();
-      f.activate(f.action("confirm-cancel"));
+      f.station.layers.inner.back();
     }
     f.station.dispose();
     expect(f.action.available()).toBe(false);
