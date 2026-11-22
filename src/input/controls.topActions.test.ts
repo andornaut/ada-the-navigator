@@ -59,6 +59,7 @@ function actualLeaves(): string {
     (n) =>
       variable(n, "exitButton") ||
       variable(n, "exitAction") ||
+      variable(n, "exitPose") ||
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit") ||
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
   );
@@ -84,6 +85,7 @@ function actualLeaves(): string {
       [
         "achievementsAction.dispose();",
         "exitAction?.dispose();",
+        "exitPose?.dispose();",
         "useAction.dispose();",
         ...listen.map((statement) => statement.replace("addEventListener", "removeEventListener")),
       ].includes(n.getText(source)),
@@ -91,9 +93,9 @@ function actualLeaves(): string {
   if (
     first < 0 ||
     last < first ||
-    exit.length !== 4 ||
+    exit.length !== 5 ||
     !use ||
-    cleanup.length !== 5 ||
+    cleanup.length !== 6 ||
     listeners.length !== 2 ||
     !updateExit ||
     !updateContext
@@ -291,6 +293,7 @@ function fixture(exit = true, missing?: "achievements" | "exit" | "settings" | "
       bindAdaAction: register,
       document,
       inCurrentView,
+      mountNavigationPose: () => ({ dispose() {}, press() {}, rest() {} }),
       openNavigation,
       options,
       // The Menu, which Exit follows in the root.

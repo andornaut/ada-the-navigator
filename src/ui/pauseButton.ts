@@ -15,21 +15,8 @@ export function disposePauseButton(button: HTMLButtonElement): void {
 
 const UI_ROOT = "/art/ui/";
 
-// Chibi's touch pause button (ui-pause): rest, then its press frames once on a press, then held
-// until release, each frame drawn as its pose's vector art. Activating it pauses. Its tags and
-// timing come from the UI manifest's sheet; until they load it shows the rest pose.
-export function createPauseButton(
-  root: HTMLElement,
-  label: string,
-  onPause: () => void,
-): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "ada-pause";
-  button.dataset.action = "pause";
-  button.setAttribute("aria-label", label);
-  button.title = label;
-  button.hidden = true;
+/** Presents the shared navigation poses without owning an activation. */
+export function mountNavigationPose(button: HTMLButtonElement) {
   let disposed = false;
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -54,47 +41,6 @@ export function createPauseButton(
     };
     play(0);
   };
-  const action = bindAdaAction(
-    {
-      click: {
-        availability: () =>
-          button.disabled || button.closest("[hidden], [inert]")
-            ? { kind: "omitted" }
-            : { kind: "available" },
-        run: () => {
-          rest();
-          onPause();
-        },
-      },
-      current: () => !disposed && button.isConnected,
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-    },
-    button,
-  );
-  const dispose = () => {
-    disposed = true;
-    action.dispose();
-    clearTimeout(timer);
-    button.removeEventListener("pointerdown", press);
-    for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
-      button.removeEventListener(type, rest);
-    }
-    disposers.delete(button);
-  };
-  try {
-    assertAdaActionMetadata(button);
-    root.append(button);
-    assertAdaActionBindings(button);
-  } catch (error) {
-    dispose();
-    button.remove();
-    throw error;
-  }
-  button.addEventListener("pointerdown", press);
-  for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
-    button.addEventListener(type, rest);
-  }
-  disposers.set(button, dispose);
   void fetch(`${UI_ROOT}manifest.json`)
     .then((response) => response.json() as Promise<{ sprites?: { json: string; key: string }[] }>)
     .then((manifest) => {
@@ -110,5 +56,73 @@ export function createPauseButton(
       }
     })
     .catch(() => undefined);
+  return {
+    dispose() {
+      disposed = true;
+      clearTimeout(timer);
+    },
+    press,
+    rest,
+  };
+}
+
+// Chibi's touch pause button (ui-pause): rest, then its press frames once on a press, then held
+// until release, each frame drawn as its pose's vector art. Activating it pauses. Its tags and
+// timing come from the UI manifest's sheet; until they load it shows the rest pose.
+export function createPauseButton(
+  root: HTMLElement,
+  label: string,
+  onPause: () => void,
+): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ada-pause";
+  button.dataset.action = "pause";
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.hidden = true;
+  let disposed = false;
+  const pose = mountNavigationPose(button);
+  const action = bindAdaAction(
+    {
+      click: {
+        availability: () =>
+          button.disabled || button.closest("[hidden], [inert]")
+            ? { kind: "omitted" }
+            : { kind: "available" },
+        run: () => {
+          pose.rest();
+          onPause();
+        },
+      },
+      current: () => !disposed && button.isConnected,
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+    },
+    button,
+  );
+  const dispose = () => {
+    disposed = true;
+    action.dispose();
+    pose.dispose();
+    button.removeEventListener("pointerdown", pose.press);
+    for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
+      button.removeEventListener(type, pose.rest);
+    }
+    disposers.delete(button);
+  };
+  try {
+    assertAdaActionMetadata(button);
+    root.append(button);
+    assertAdaActionBindings(button);
+  } catch (error) {
+    dispose();
+    button.remove();
+    throw error;
+  }
+  button.addEventListener("pointerdown", pose.press);
+  for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
+    button.addEventListener(type, pose.rest);
+  }
+  disposers.set(button, dispose);
   return button;
 }

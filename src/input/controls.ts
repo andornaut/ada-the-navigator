@@ -58,6 +58,7 @@ import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchContr
 import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
+import { mountNavigationPose } from "../ui/pauseButton.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
 import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
@@ -255,6 +256,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       visibility = value;
     },
   });
+  let exitPose: ReturnType<typeof mountNavigationPose> | undefined;
   const actionRoot = bindAdaActionRoot(
     {
       allowNonPrimaryTouch: true,
@@ -262,6 +264,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pointerRelease: {
         onPressChange: (element) => {
           usePress = element === settings.useButton ? { since: performance.now() } : undefined;
+          if (exitPose) {
+            const present = element === exitButton ? exitPose.press : exitPose.rest;
+            present();
+          }
         },
         pointerTarget: document,
         resolvePointer: (event) => resolveUsePointer(event),
@@ -377,10 +383,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     exitButton.setAttribute("aria-label", label);
     exitButton.title = label;
     exitButton.hidden = true;
-    const exitDisc = document.createElement("span");
-    exitDisc.className = "ada-disc";
-    exitDisc.setAttribute("aria-hidden", "true");
-    exitButton.append(exitDisc);
+    exitPose = mountNavigationPose(exitButton);
     exitAction = bindAdaAction(
       {
         click: {
@@ -388,7 +391,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
             exitButton.disabled || exitButton.closest("[hidden], [inert]")
               ? { kind: "omitted" }
               : { kind: "available" },
-          run: () => options.exit?.onExit(),
+          run: () => {
+            exitPose?.rest();
+            options.exit?.onExit();
+          },
         },
         current: () =>
           !disposed && exitButton.isConnected && inCurrentView(settings.root, exitButton),
@@ -971,6 +977,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       update?.dispose();
       achievementsAction.dispose();
       exitAction?.dispose();
+      exitPose?.dispose();
       achievements.dispose();
       pause.dispose();
       settings.dispose();
@@ -1067,6 +1074,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     setExitButton(shown) {
       if (exitButton) {
+        if (!shown && !exitButton.hidden) {
+          exitPose?.rest();
+        }
         exitButton.hidden = !shown;
         settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);
       }

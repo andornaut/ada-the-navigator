@@ -102,10 +102,6 @@ export const SETTINGS_GLYPH = "/art/ui/icons/settings.svg";
 // drawn with smooth sampling.
 export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
 
-// The start screen's Exit glyph (art/exit-icon.md): the 20 vector door with an arrow leaving it,
-// a mask drawn with smooth sampling, as the Settings gear is.
-export const EXIT_GLYPH = "/art/ui/icons/exit.svg";
-
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
@@ -177,20 +173,16 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
    far top right. Where it does not show it is never made, so it has no press area. */
 .ada-controls .ada-exit-open{
   position:absolute;
-  ${navPlace(startNavOrder(true).indexOf("exit"))};
-  --glyph:url('${EXIT_GLYPH}')
+  ${navPlace(startNavOrder(true).indexOf("exit"))}
 }
-${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
 
 /* Pressed, on every start-screen disc: the pause disc's held face and a white glyph. */
 .ada-controls .ada-settings-open:active,
-.ada-controls .ada-achievements-open:active,
-.ada-controls .ada-exit-open:active{
+.ada-controls .ada-achievements-open:active{
   color:${NAV_DISC_PRESSED.glyph}
 }
 .ada-controls .ada-settings-open:active .ada-disc,
-.ada-controls .ada-achievements-open:active .ada-disc,
-.ada-controls .ada-exit-open:active .ada-disc{
+.ada-controls .ada-achievements-open:active .ada-disc{
   background:${NAV_DISC_PRESSED.face}
 }
 

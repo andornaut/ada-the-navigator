@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { MENU_ART, PAUSE_ART } from "../pause.ts";
-import { NAVIGATION_BUTTON_STYLE } from "./navigationButton.ts";
+import { EXIT_ART, NAVIGATION_BUTTON_STYLE } from "./navigationButton.ts";
 
 const art = (path: string) =>
   readFileSync(new URL(`../../../public${path}`, import.meta.url), "utf8");
@@ -25,5 +25,18 @@ it.each(["rest", "press", "held"] as const)(
 it("changes only the pose artwork and stacking without a competing HUD disc or hit geometry", () => {
   expect(NAVIGATION_BUTTON_STYLE).toContain("[data-pose=press]");
   expect(NAVIGATION_BUTTON_STYLE).toContain("[data-pose=held]");
-  expect(NAVIGATION_BUTTON_STYLE).not.toMatch(/width:|height:|border:|ada-navigation-disc/u);
+  const menu = NAVIGATION_BUTTON_STYLE.split(".ada-exit-open")[0]!;
+  expect(menu).not.toMatch(/width:|height:|border:|ada-navigation-disc/u);
 });
+
+it.each(["rest", "press", "held"] as const)(
+  "draws the %s Exit pose in the reviewed Pause circles",
+  (pose) => {
+    const exit = art(EXIT_ART[pose]);
+    expect(exit).toContain('viewBox="0 0 35 35"');
+    expect(exit.match(/<circle[^>]+\/>/gu)).toEqual(
+      art(PAUSE_ART[pose]).match(/<circle[^>]+\/>/gu),
+    );
+    expect(NAVIGATION_BUTTON_STYLE).toContain(`url('${EXIT_ART[pose]}')`);
+  },
+);
