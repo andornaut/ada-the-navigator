@@ -146,9 +146,9 @@ describe("canonical station service presentation", () => {
   };
 
   it.each([
-    ["equipment", ["ship", "exchange"], false],
-    ["weaponsAmmo", ["weapons", "exchange"], false],
-    ["jobs", ["exchange"], true],
+    ["equipment", ["ship"], false],
+    ["weaponsAmmo", ["weapons"], false],
+    ["jobs", [], true],
   ] as const)("shows only the %s specialty while retaining Exchange", (service, tabs, jobs) => {
     const actual = { ...exchangeOnly, [service]: true };
     expect(stationTabs(actual)).toEqual(tabs);
@@ -158,8 +158,8 @@ describe("canonical station service presentation", () => {
   it("keeps held-task Drop and existing Projects independent of specialist offers", () => {
     const held = { ...exchangeOnly, heldTask: true, projects: true };
     expect(stationJobsShown(held)).toBe(true);
-    expect(stationTabs(held)).toEqual(["projects", "exchange"]);
-    expect(stationTabs(exchangeOnly)).toEqual(["exchange"]);
+    expect(stationTabs(held)).toEqual([]);
+    expect(stationTabs(exchangeOnly)).toEqual([]);
     expect(stationJobsShown(exchangeOnly)).toBe(false);
   });
 
@@ -172,7 +172,7 @@ describe("canonical station service presentation", () => {
       projects: true,
       weaponsAmmo: true,
     };
-    expect(stationTabs(hub)).toEqual(["weapons", "ship", "projects", "exchange"]);
+    expect(stationTabs(hub)).toEqual(["weapons", "ship"]);
     expect(stationJobsShown(hub)).toBe(true);
     expect(stationTabs(null)).toEqual([]);
     expect(stationJobsShown(null)).toBe(false);
@@ -455,6 +455,7 @@ function strictStation() {
     stationCard,
     stationLayer,
     view: "card",
+    views: { card: stationCard, jobs: jobsCard, shop: shopCard },
   });
   const source = ts.createSourceFile(
     "station.ts",
@@ -569,7 +570,7 @@ function constructedStation(
   connected = true,
   owned = true,
   permits: () => boolean = () => true,
-  greetingIndex = 2,
+  projectOnly = false,
 ) {
   const f = strictStation();
   const { Node } = f;
@@ -577,7 +578,7 @@ function constructedStation(
   if (owned) {
     strictCleanup.push(registerAdaActionRoot({ permits }, parent as unknown as HTMLElement));
   }
-  const state = { corruptConfirmation: false, corruptRow: "", greetingIndex };
+  const state = { corruptConfirmation: false, corruptRow: "" };
   const measurements: { ids: string[]; registered: boolean[] }[] = [];
   const native = new Map<string, ReturnType<typeof parts>>();
   const button = (label: string) =>
@@ -697,6 +698,7 @@ function constructedStation(
       "jobDropCancel",
       "jobDropTitle",
       "jobs",
+      "jobsProjects",
       "continue",
       "owned",
       "projectFunded",
@@ -748,10 +750,7 @@ function constructedStation(
     });
   const options: stationSource.StationOptions = {
     acceptJob,
-    advanceGreeting: () => {
-      state.greetingIndex++;
-    },
-    balance: () => ({ amount: 100, text: "100 Stardust" }),
+    balance: () => ({ ore: 25, stardust: 100 }),
     busyLine: () => "Busy",
     buy,
     dropJob: vi.fn(),
@@ -762,7 +761,7 @@ function constructedStation(
     greeting: () => ({
       count: 3,
       displayName: "Slate",
-      index: state.greetingIndex,
+      index: 0,
       keeper: "slate",
       line: "Greeting",
     }),
@@ -770,16 +769,18 @@ function constructedStation(
     labels,
     reducedMotion: () => true,
     request,
-    rows: () => rows,
+    rows: (catalog) =>
+      catalog === "projects" ? [{ ...rows[0]!, key: "project:orchard", project: true }] : rows,
     select,
     services: () => ({
-      equipment: true,
+      equipment: !projectOnly,
       exchange: true,
       heldTask: false,
-      jobs: true,
-      projects: false,
-      weaponsAmmo: true,
+      jobs: !projectOnly,
+      projects: projectOnly,
+      weaponsAmmo: !projectOnly,
     }),
+    stationTitle: () => "Actual Station",
     undock,
   };
   const context = createContext({
@@ -1098,55 +1099,52 @@ it("audits rebuilt purchase confirmation before strict-dialog focus", () => {
   );
 });
 
-it("does not rescan completed Station controls for greeting changes", () => {
-  const f = constructedStation("", true, true, undefined, 0);
+it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchange", () => {
+  const f = constructedStation();
   f.station.setOpen(true);
-  const frame = f.native.get("station-back")!.frame;
-  const queries = vi.spyOn(frame, "querySelectorAll");
-  const next = frame
-    .querySelectorAll("button")
-    .find((node) => node.textContent === f.labels.continue)!;
-  queries.mockClear();
-  f.activate(next);
-  expect(f.state.greetingIndex).toBe(1);
-  expect(queries).not.toHaveBeenCalled();
-});
-
-it("shows only Continue before the final greeting and gives the completed row to Shop", () => {
-  const f = constructedStation("", true, true, undefined, 0);
-  f.station.setOpen(true);
-  const parts = f.native.get("station-back")!;
-  const finish = parts.controls.children.find((node) => node.textContent === f.labels.continue)!;
-  expect(parts.controls.children.filter((node) => !node.hidden)).toEqual([finish]);
-  expect(parts.choices.children.every((node) => node.hidden)).toBe(true);
-  expect(f.doc.activeElement).toBe(finish);
-  expect(parts.skip.hidden).toBe(false);
-  f.activate(parts.skip);
-  expect(f.state.greetingIndex).toBe(2);
-  expect(parts.controls.children.filter((node) => !node.hidden)).toEqual([
-    f.action("undock"),
-    f.action("open-shop"),
+  const footer = f.parent.querySelector(".ada-station-footer")!;
+  const balances = f.parent.querySelector(".ada-station-balances")!;
+  expect(f.native.get("station-back")!.title.textContent).toBe("Actual Station");
+  expect(f.native.get("station-back")!.frame.contains(f.action("open-shop"))).toBe(true);
+  expect(f.native.get("station-back")!.skip.parentElement).toBeNull();
+  expect(
+    f.parent.querySelectorAll("button").some((button) => button.textContent === f.labels.continue),
+  ).toBe(false);
+  expect(footer.children.map((button) => button.dataset.action)).toEqual([
+    "open-shop",
+    "open-jobs",
+    "open-exchange",
+    "undock",
   ]);
-  expect(parts.choices.children.every((node) => !node.hidden)).toBe(true);
-  expect(parts.skip.hidden).toBe(true);
-  expect(f.doc.activeElement).toBe(f.action("open-shop"));
+  for (const [action, card] of [
+    ["open-shop", "shop-back"],
+    ["open-jobs", "jobs-back"],
+    ["open-exchange", "exchange-back"],
+  ] as const) {
+    f.activate(f.action(action));
+    const frame = f.native.get(card)!.frame;
+    expect(frame.contains(footer)).toBe(true);
+    expect(frame.contains(balances)).toBe(true);
+    expect(f.parent.querySelectorAll(".ada-station-footer")).toEqual([footer]);
+    expect(f.doc.activeElement).toBe(f.action(action));
+  }
+  f.station.layers.inner.back();
+  expect(f.doc.activeElement).toBe(f.action("open-exchange"));
+  expect(f.native.get("station-back")!.frame.contains(footer)).toBe(true);
 });
 
-it("hides redundant Skip when Continue alone reaches the final greeting", () => {
-  const f = constructedStation("", true, true, undefined, 0);
+it("opens Jobs and Projects and can donate at a project-only station", () => {
+  const f = constructedStation("", true, true, undefined, true);
   f.station.setOpen(true);
-  const parts = f.native.get("station-back")!;
-  const advance = parts.controls.children.find((node) => node.textContent === f.labels.continue)!;
-  expect(parts.skip.hidden).toBe(false);
-  f.activate(advance);
-  expect(f.state.greetingIndex).toBe(1);
-  expect(parts.skip.hidden).toBe(true);
-  expect(advance.hidden).toBe(false);
-  expect(f.doc.activeElement).toBe(advance);
-  f.activate(advance);
-  expect(f.state.greetingIndex).toBe(2);
-  expect(parts.skip.hidden).toBe(true);
-  expect(f.doc.activeElement).toBe(f.action("open-shop"));
+  expect(f.action("open-shop").hidden).toBe(true);
+  expect(f.action("open-jobs").hidden).toBe(false);
+  f.activate(f.action("open-jobs"));
+  expect(f.native.get("jobs-back")!.title.textContent).toBe(f.labels.jobsProjects);
+  expect(f.parent.querySelectorAll("[data-job]")).toHaveLength(0);
+  f.activate(f.parent.querySelector('[data-item="project:orchard"]')!);
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).toHaveBeenCalledExactlyOnceWith("project:orchard");
+  expect(f.doc.activeElement?.dataset.item).toBe("project:orchard");
 });
 
 it("audits the completed welcome view before strict focus on reopening", () => {

@@ -459,6 +459,7 @@ export const CONTENT: GameContent = {
     jobObjective: "Job: {objective}",
     jobReward: "{amount} Stardust",
     jobs: "Jobs",
+    jobsProjects: "Jobs & Projects",
     jump: "Jump",
     jumpHome: "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     jumpHomeOreLost:

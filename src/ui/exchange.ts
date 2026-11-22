@@ -46,7 +46,6 @@ function exchangeIcon(resource: ExchangeResource): HTMLImageElement {
 export function createExchangeView(parent: HTMLElement, port: ExchangePort, onChange: () => void) {
   const root = document.createElement("section");
   root.className = "ada-exchange";
-  root.setAttribute("role", "tabpanel");
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
   const result = document.createElement("div");
   result.dataset.exchange = "result";

@@ -1761,10 +1761,7 @@ export class GameModel {
       return;
     }
     const specialty = stationSpecialty(galaxy, id);
-    const station = stationDisplayName(
-      GALAXY_ID[galaxy][0]!.toUpperCase() + GALAXY_ID[galaxy].slice(1),
-      id,
-    );
+    const station = this.keeperStationName(galaxy, id);
     const name = stationKeeperPersonalName(galaxy, id);
     const displayName = id === HUB_STATION ? name : `${name} of ${station}`;
     const format = (text: string) =>
@@ -1805,6 +1802,19 @@ export class GameModel {
     return greeting && docked && flight
       ? { ...greeting, displayName: stationKeeperPersonalName(flight.galaxy, docked) }
       : greeting;
+  }
+  /** The ordinary Station welcome retains the selected keeper and all authored sentences. */
+  dockWelcome(): StationGreeting | null {
+    const greeting = this.dockGreeting();
+    return greeting && this.greeting ? { ...greeting, line: this.greeting.lines.join(" ") } : null;
+  }
+  get dockedStationName(): string | undefined {
+    const { docked, flight } = this.state;
+    return docked && flight ? this.keeperStationName(flight.galaxy, docked) : undefined;
+  }
+  private keeperStationName(galaxy: GalaxyNumber, id: string): string {
+    const name = GALAXY_ID[galaxy];
+    return stationDisplayName(name[0]!.toUpperCase() + name.slice(1), id);
   }
   /** A tap on the keeper block: the greeting's next line, the last staying on show. */
   advanceGreeting(): void {

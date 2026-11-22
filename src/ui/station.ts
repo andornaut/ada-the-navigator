@@ -29,19 +29,12 @@ import {
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import {
-  createActions,
-  createButton,
-  createCard,
-  isTap,
-  SCROLL_RESERVE_CLASS,
-  setFooterAction,
-} from "./modal.ts";
+import { createActions, createButton, createCard, isTap, SCROLL_RESERVE_CLASS } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
-import { createStationItemIcon, type ItemGlyph, setStationItemTitle } from "./stationItemIcon.ts";
+import { createStationItemIcon, type ItemGlyph } from "./stationItemIcon.ts";
 import {
   type StationJobRowSchema,
   stationJobRowTree,
@@ -87,6 +80,7 @@ export interface StationLabels {
   readonly jobDropCancel: string;
   readonly jobDropTitle: string;
   readonly jobs: string;
+  readonly jobsProjects: string;
   /** The keeper block's name while it shows the next line. */
   readonly continue: string;
   readonly owned: string;
@@ -101,7 +95,8 @@ export interface StationLabels {
   readonly undock: string;
 }
 
-export type StationTab = "exchange" | "projects" | "ship" | "weapons";
+export type StationTab = "ship" | "weapons";
+type StationCatalog = StationTab | "projects";
 
 /** Visible shop tabs come only from the docked station's authoritative capabilities. */
 export function stationTabs(services: StationServices | null): readonly StationTab[] {
@@ -110,18 +105,16 @@ export function stationTabs(services: StationServices | null): readonly StationT
     : [
         ...(services.weaponsAmmo ? ["weapons" as const] : []),
         ...(services.equipment ? ["ship" as const] : []),
-        ...(services.projects ? ["projects" as const] : []),
-        "exchange",
       ];
 }
 
 /** Held tasks remain accessible for Drop at every station. */
 export function stationJobsShown(services: StationServices | null): boolean {
-  return services !== null && (services.jobs || services.heldTask);
+  return services !== null && (services.jobs || services.heldTask || services.projects);
 }
 
 /** The station's cards: the station card, the shop and the job board. */
-export type StationView = "card" | "shop" | "jobs";
+export type StationView = "card" | "shop" | "jobs" | "exchange";
 
 /**
  * One job board row as shown: the held job (Active, with Drop) or an offer, which refuses while
@@ -196,13 +189,8 @@ export function stationWelcome(
         }
       : undefined,
     text: greeting?.line ?? "",
-    title: greeting ? "" : title,
+    title,
   };
-}
-
-/** Skip is distinct from Continue only when its destination is more than one advance away. */
-export function stationGreetingCanSkip(greeting: StationGreeting | null): boolean {
-  return greeting !== null && greeting.count - greeting.index - 1 > 1;
 }
 
 export interface StationOptions {
@@ -210,10 +198,7 @@ export interface StationOptions {
   readonly acceptJob: (id: string) => boolean;
   /** Why Accept refuses while the galaxy's slot is taken: a job or an activity holds it. */
   readonly busyLine: () => string;
-  /** A tap on the keeper block shows the keeper's next line. */
-  readonly advanceGreeting: () => void;
-  /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
-  readonly balance: () => { readonly amount: number; readonly text: string };
+  readonly balance: () => { readonly ore: number; readonly stardust: number };
   readonly buy: (key: string) => void;
   readonly exchange: ExchangePort;
   readonly dropJob: () => void;
@@ -223,9 +208,10 @@ export interface StationOptions {
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
   readonly request: (key: string) => StationRequest;
-  readonly rows: (tab: Exclude<StationTab, "exchange">) => readonly StationRow[];
+  readonly rows: (tab: StationCatalog) => readonly StationRow[];
   readonly select: (key: string) => void;
   readonly services: () => StationServices | null;
+  readonly stationTitle: () => string | undefined;
   readonly undock: () => void;
 }
 
@@ -337,26 +323,30 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   stationCard.card.dataset.dialog = "station";
   stationCard.frame.classList.add("ada-station-frame");
-  const stationBalance = document.createElement("div");
-  stationBalance.className = "ada-balance";
-  stationBalance.dataset.inkTop = "0";
+  stationCard.skip.remove();
+  const balances = document.createElement("div");
+  balances.className = "ada-station-balances";
+  const balanceParts = {
+    ore: document.createElement("span"),
+    stardust: document.createElement("span"),
+  };
+  for (const key of ["stardust", "ore"] as const) {
+    const part = balanceParts[key];
+    part.dataset.balance = key;
+    balances.append(part);
+  }
+  const footer = document.createElement("footer");
+  footer.className = "ada-station-footer";
   const menuButtons = new Map<StationMenuButton, HTMLButtonElement>();
   const menuLayout = mountLayout<StationMenuSchema>(
     {
       components: {
-        balance: {
-          create() {
-            return { dispose() {}, element: stationBalance, slots: {}, update() {} };
-          },
-          slots: [],
-        },
         button: {
           create(initial) {
             const button = createButton(initial.label, initial.role);
             if (initial.actionId !== undefined) {
               button.dataset.action = initial.actionId;
             }
-            button.classList.add("ada-story-button");
             menuButtons.set(initial.id, button);
             return {
               dispose() {},
@@ -373,72 +363,24 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           create() {
             return {
               dispose() {},
-              element: stationCard.frame,
-              slots: { choices: stationCard.choices, controls: stationCard.controls },
+              element: footer,
+              slots: { controls: footer },
               update() {},
             };
           },
-          slots: ["choices", "controls"],
+          slots: ["controls"],
         },
       },
-      host: modal,
+      host: document.createElement("div"),
     },
-    stationMenuTree(labels),
+    stationMenuTree({ ...labels, exchange: EXCHANGE_COPY.title }),
   );
   const undock = menuButtons.get("undock")!;
   const openShop = menuButtons.get("shop")!;
   const openJobs = menuButtons.get("jobs")!;
-  const nextGreeting = menuButtons.get("nextGreeting")!;
-  const keeper = {
-    render(greeting: StationGreeting | null) {
-      const welcome = stationWelcome(labels.station, greeting);
-      stationCard.title.textContent = welcome.title;
-      stationCard.title.hidden = welcome.title === "";
-      stationCard.showLine(welcome.speaker, welcome.text);
-      nextGreeting.hidden = !greeting || greeting.index >= greeting.count - 1;
-      stationCard.skip.hidden = !stationGreetingCanSkip(greeting);
-      const final = nextGreeting.hidden;
-      stationBalance.hidden = !final;
-      openJobs.hidden = !final || !stationJobsShown(options.services());
-      undock.hidden = !final;
-      openShop.hidden = !final || shownTabs().length === 0;
-      stationCard.fit();
-    },
-  };
-  const focusWelcome = (): void => {
-    const target = !nextGreeting.hidden
-      ? nextGreeting
-      : !openShop.hidden
-        ? openShop
-        : !openJobs.hidden
-          ? openJobs
-          : undock;
-    focusTarget(target);
-  };
-  register(nextGreeting, () => {
-    options.advanceGreeting();
-    keeper.render(options.greeting());
-    focusWelcome();
-  });
-  register(stationCard.skip, () => {
-    const initial = options.greeting();
-    if (!initial || !stationGreetingCanSkip(initial)) {
-      return;
-    }
-    for (let step = 0; step < initial.count; step++) {
-      const current = options.greeting();
-      if (!current || current.index >= current.count - 1) {
-        break;
-      }
-      options.advanceGreeting();
-      const next = options.greeting();
-      if (!next || next.index <= current.index) {
-        break;
-      }
-    }
-    keeper.render(options.greeting());
-    focusWelcome();
-  });
+  const openExchange = menuButtons.get("exchange")!;
+  const focusWelcome = () =>
+    focusTarget(!openShop.hidden ? openShop : !openJobs.hidden ? openJobs : openExchange);
 
   const shopCard = createCard({
     closeAction: "shop-back",
@@ -448,15 +390,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   shopCard.card.dataset.dialog = "shop";
   shopCard.frame.hidden = true;
-  const shopBalance = document.createElement("div");
-  shopBalance.className = "ada-balance";
-  shopBalance.dataset.inkTop = "0";
   const tabButtons = new Map<StationTab, HTMLButtonElement>();
   for (const [id, label] of [
     ["weapons", labels.shopWeapons],
     ["ship", labels.shopShip],
-    ["projects", labels.projects],
-    ["exchange", EXCHANGE_COPY.title],
   ] as const) {
     const button = createButton(label);
     button.setAttribute("role", "tab");
@@ -471,9 +408,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const list = document.createElement("div");
   list.className = "ada-shop-list";
   list.setAttribute("role", "tabpanel");
-  shopCard.body.append(shopBalance, tabs, list);
-  const exchange = createExchangeView(shopCard.body, options.exchange, () => render());
-  exchange.root.hidden = true;
+  shopCard.body.append(tabs, list);
+  const exchangeCard = createCard({
+    closeAction: "exchange-back",
+    closeLabel: labels.close,
+    size: "large",
+    title: EXCHANGE_COPY.title,
+  });
+  exchangeCard.card.dataset.dialog = "exchange";
+  exchangeCard.frame.hidden = true;
+  const exchange = createExchangeView(exchangeCard.body, options.exchange, () => render());
 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",
@@ -495,19 +439,32 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     closeAction: "jobs-back",
     closeLabel: labels.close,
     size: "large",
-    title: labels.jobBoard,
+    title: labels.jobsProjects,
   });
   jobsCard.card.dataset.dialog = "jobs";
   jobsCard.frame.hidden = true;
-  const jobsBalance = document.createElement("div");
-  jobsBalance.className = "ada-balance";
-  jobsBalance.dataset.inkTop = "0";
-  const jobsIntro = prose("ada-jobs-intro", labels.jobBoardIntro);
   const jobsBusy = prose("ada-jobs-busy", labels.jobBusy);
   jobsBusy.hidden = true;
   const jobList = document.createElement("div");
   jobList.className = "ada-job-list";
-  jobsCard.body.append(jobsBalance, jobsIntro, jobsBusy, jobList);
+  const projectList = document.createElement("div");
+  projectList.className = "ada-station-projects";
+  const jobsPanes = document.createElement("div");
+  jobsPanes.className = "ada-station-panes";
+  const jobsPane = document.createElement("section");
+  const projectsPane = document.createElement("section");
+  for (const [pane, label] of [
+    [jobsPane, labels.jobs],
+    [projectsPane, labels.projects],
+  ] as const) {
+    const heading = document.createElement("h3");
+    heading.textContent = label;
+    pane.append(heading);
+  }
+  jobsPane.append(jobsBusy, jobList);
+  projectsPane.append(projectList);
+  jobsPanes.append(jobsPane, projectsPane);
+  jobsCard.body.append(jobsPanes);
   jobsCard.body.classList.add(SCROLL_RESERVE_CLASS);
 
   const pagerLayouts: ReturnType<typeof mountLayout<StationPagerSchema>>[] = [];
@@ -568,19 +525,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return { count, next, node, pages: 1, previous };
   };
   const shopPager = makePager(shopCard.body);
-  const jobsPager = makePager(jobsCard.body);
-  const shopBack = createButton(CONTENT.labels.questBack!, "primary");
-  shopBack.dataset.action = "shop-back-footer";
-  const jobsBack = createButton(CONTENT.labels.questBack!, "primary");
-  jobsBack.dataset.action = "jobs-back-footer";
-  for (const [parts, button] of [
-    [shopCard, shopBack],
-    [jobsCard, jobsBack],
-  ] as const) {
-    const footer = createActions([{ button, role: "primary" }]);
-    setFooterAction("back", footer);
-    parts.body.append(footer);
-  }
+  const jobsPager = makePager(jobsPane);
   let shopPage = 0;
   let jobsPage = 0;
 
@@ -671,7 +616,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let dropDetails: ReturnType<typeof mountStationDropDetails> | undefined;
   let dropOrigin: HTMLElement | null = null;
 
-  modal.append(stationCard.frame, shopCard.frame, jobsCard.frame);
+  const views = { card: stationCard, exchange: exchangeCard, jobs: jobsCard, shop: shopCard };
+  for (const parts of Object.values(views)) {
+    parts.card.classList.add("ada-station-page");
+    modal.append(parts.frame);
+  }
+  stationCard.card.append(balances, footer);
   confirmModal.append(confirmCard.frame, dropHost);
   parent.append(modal, confirmModal);
   const stationLayer = createModalLayer(modal);
@@ -681,20 +631,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let view: StationView = "card";
   let tab: StationTab | null = null;
   const shownTabs = () => stationTabs(options.services());
-  let confirm: { readonly key: string } | { readonly drop: true } | null = null;
+  let confirm:
+    | { readonly catalog: StationCatalog; readonly key: string; readonly origin: HTMLElement }
+    | { readonly drop: true }
+    | null = null;
   let pressDialog: HTMLElement | undefined;
   let confirmationDialog: HTMLElement | undefined;
   let leavePress: (() => void) | undefined;
   let leaveConfirmation: (() => void) | undefined;
   const syncPressView = () => {
-    const next =
-      !open || disposed
-        ? undefined
-        : view === "shop"
-          ? shopCard.frame
-          : view === "jobs"
-            ? jobsCard.frame
-            : stationCard.frame;
+    const next = open && !disposed ? views[view].frame : undefined;
     const nextConfirmation =
       !open || disposed || !confirm
         ? undefined
@@ -731,9 +677,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const renderBalances = (): void => {
     const balance = options.balance();
-    stationBalance.textContent = balance.text;
-    shopBalance.textContent = String(balance.amount);
-    jobsBalance.textContent = String(balance.amount);
+    for (const key of ["stardust", "ore"] as const) {
+      const part = balanceParts[key];
+      part.textContent = String(balance[key]);
+      part.setAttribute("aria-label", `${balance[key]} ${CONTENT.labels[key]}`);
+    }
   };
 
   const shopLayouts: { dispose(): void }[] = [];
@@ -802,18 +750,22 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       },
       stationShopRowTree(labels, row),
     );
-    shopLayouts.push(layout);
+    (row.project ? jobLayouts : shopLayouts).push(layout);
     if (interactive) {
       register(
         node,
         () => {
-          if (tab === null || !shownTabs().includes(tab)) {
+          const catalog = row.project ? "projects" : tab;
+          if (
+            catalog === null ||
+            (catalog === "projects"
+              ? !options.services()?.projects
+              : !shownTabs().includes(catalog))
+          ) {
             render();
             return;
           }
-          const liveRow = options
-            .rows(tab as Exclude<StationTab, "exchange">)
-            .find((item) => item.key === row.key);
+          const liveRow = options.rows(catalog).find((item) => item.key === row.key);
           if (!liveRow) {
             render();
             return;
@@ -841,15 +793,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
             refuse(node, options.reducedMotion());
             return;
           }
-          openConfirm(liveRow, request);
+          openConfirm(liveRow, request, catalog, node);
         },
-        shopBindings,
+        row.project ? jobBindings : shopBindings,
       );
     }
     return node;
   };
 
-  const tabContent = (id: Exclude<StationTab, "exchange">, columns: number): HTMLElement[] => {
+  const tabContent = (id: StationTab, columns: number): HTMLElement[] => {
     const rows = options.rows(id);
     const chunks: HTMLElement[] = [];
     for (const tree of stationShopTree({ columns, paintHeading: labels.shipPaint }, rows)) {
@@ -891,19 +843,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   // Measure the complete catalogs at natural widths, then bound rows before measuring heights.
   const fitListContent = (): void => {
     clearBindings(shopBindings);
+    list.hidden = tab === null;
     if (tab === null) {
-      list.hidden = true;
-      exchange.root.hidden = true;
       shopPager.node.hidden = true;
-      return;
-    }
-    list.hidden = tab === "exchange";
-    if (exchange) {
-      exchange.root.hidden = tab !== "exchange";
-    }
-    if (tab === "exchange") {
-      shopPager.node.hidden = true;
-      exchange?.render();
       return;
     }
     const card = shopCard.card;
@@ -914,9 +856,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const measure = document.createElement("div");
     measure.className = "ada-shop-measure";
     measure.append(
-      ...shownTabs()
-        .filter((id) => id !== "exchange")
-        .flatMap((id) => options.rows(id).map((row) => rowElement(row, false))),
+      ...shownTabs().flatMap((id) => options.rows(id).map((row) => rowElement(row, false))),
     );
     card.append(measure);
     const widest = (selector: string) =>
@@ -1091,9 +1031,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     // Fit the natural list before bounding rows, so a previous card width cannot narrow names.
     jobList.style.width = units(natural + 2 * FOCUS_RING.outset);
     jobsCard.fit();
-    const available = jobsCard.card.clientWidth / unit;
+    const available = jobsPane.clientWidth / unit || jobsCard.card.clientWidth / unit / 2;
     const width = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
-    const columns = shopColumns(available, width);
+    const columns = 1;
     jobList.style.setProperty("--shop-columns", String(columns));
     jobList.style.setProperty("--shop-row-width", units(width));
     jobList.style.width = units(shopListWidth(columns, width) + 2 * FOCUS_RING.outset);
@@ -1122,7 +1062,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       chunks.push(chunk);
     }
     measure.remove();
-    jobsPage = fitPages(jobsCard, jobList, jobsPager, chunks, jobsPage);
+    jobsPage = fitPages({ ...jobsCard, body: jobsPane }, jobList, jobsPager, chunks, jobsPage);
+    projectsPane.hidden = !options.services()?.projects;
+    const projects = projectsPane.hidden
+      ? []
+      : options.rows("projects").map((row) => rowElement(row));
+    for (const row of projects) {
+      audit(row);
+    }
+    projectList.replaceChildren(...projects);
+    audit(jobsCard.frame);
     for (const layout of previousLayouts) {
       layout.dispose();
     }
@@ -1141,25 +1090,37 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const render = (): void => {
-    keeper.render(options.greeting());
+    const welcome = stationWelcome(options.stationTitle() ?? labels.station, options.greeting());
+    stationCard.title.textContent = welcome.title;
+    stationCard.title.hidden = false;
+    stationCard.frame.setAttribute("aria-label", welcome.title);
+    stationCard.showLine(welcome.speaker, welcome.text);
+    openShop.hidden = shownTabs().length === 0;
+    openJobs.hidden = !stationJobsShown(options.services());
     if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
       closeConfirm();
       view = "card";
     }
     renderBalances();
-    stationCard.frame.hidden = view !== "card";
-    shopCard.frame.hidden = view !== "shop";
-    jobsCard.frame.hidden = view !== "jobs";
+    for (const [id, parts] of Object.entries(views)) {
+      parts.frame.hidden = id !== view;
+    }
+    for (const [id, button] of menuButtons) {
+      button.setAttribute("aria-current", id === view ? "page" : "false");
+    }
+    const parts = views[view];
+    if (footer.parentElement !== parts.card) {
+      parts.card.append(balances, footer);
+    }
     if (view === "shop") {
       renderShop();
       fitList();
-      shopCard.fit();
     } else if (view === "jobs") {
       renderJobs();
-      jobsCard.fit();
-    } else {
-      stationCard.fit();
+    } else if (view === "exchange") {
+      exchange.render();
     }
+    parts.fit();
     syncPressView();
   };
 
@@ -1191,11 +1152,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   }
 
-  const openConfirm = (row: StationRow, request: Extract<StationRequest, { kind: "confirm" }>) => {
-    confirm = { key: row.key };
+  const openConfirm = (
+    row: StationRow,
+    request: Extract<StationRequest, { kind: "confirm" }>,
+    catalog: StationCatalog,
+    origin: HTMLElement,
+  ) => {
+    confirm = { catalog, key: row.key, origin };
     confirmCard.frame.hidden = false;
     dropHost.hidden = true;
-    setStationItemTitle(row.glyph, request.title, confirmCard.title);
+    confirmCard.title.textContent = request.title;
     confirmCard.frame.setAttribute("aria-label", request.title);
     const item = well(row.glyph, true);
     item.dataset.inkTop = "0";
@@ -1298,32 +1264,24 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const back = (): void => {
-    if (view === "shop" && tab === "exchange" && exchange?.back()) {
-      return;
-    }
     const step = stationBack(view, confirm !== null);
     if (step === "undock") {
       options.undock();
       return;
     }
     if (confirm) {
+      const origin = "origin" in confirm ? confirm.origin : dropOrigin;
       closeConfirm();
+      if (origin?.isConnected) {
+        focusTarget(origin);
+      }
       return;
     }
     const left = view;
     view = step;
     jobsBusy.hidden = true;
     render();
-    const target =
-      view === "card"
-        ? left === "jobs" && !openJobs.hidden
-          ? openJobs
-          : openShop.hidden
-            ? undock
-            : openShop
-        : tab === null
-          ? undefined
-          : tabButtons.get(tab);
+    const target = left !== "card" ? menuButtons.get(left) : undock;
     if (target) {
       focusTarget(target);
     }
@@ -1331,7 +1289,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // The row width and columns follow the view; the card builder refits the card itself.
   const refit = (): void => {
-    if (open && view !== "card") {
+    if (open && view !== "card" && !confirm) {
       render();
     }
   };
@@ -1346,9 +1304,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     jobsPage = 0;
     jobsBusy.hidden = true;
     render();
-    focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
+    focusTarget(openJobs);
   });
   register(jobsCard.close, back);
+  register(openExchange, () => {
+    view = "exchange";
+    render();
+    focusTarget(openExchange);
+  });
+  register(exchangeCard.close, back);
 
   register(undock, options.undock);
   register(openShop, () => {
@@ -1357,17 +1321,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
     view = "shop";
     render();
-    const tabButton = tab === null ? undefined : tabButtons.get(tab);
-    if (tabButton) {
-      focusTarget(tabButton);
-    }
+    focusTarget(openShop);
   });
   for (const [id, button] of tabButtons) {
     register(button, () => {
       if (!shownTabs().includes(id)) {
         return;
       }
-      exchange.back();
       tab = id;
       shopPage = 0;
       render();
@@ -1375,18 +1335,30 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   }
   register(stationCard.close, back);
   register(shopCard.close, back);
-  register(shopBack, back);
-  register(jobsBack, back);
   register(confirmCard.close, back);
   register(cancel, back);
   register(buy, () => {
     const pending = confirm;
-    const available = tab !== null && shownTabs().includes(tab);
     closeConfirm();
-    if (pending && "key" in pending && available) {
-      options.buy(pending.key);
+    if (!pending || !("key" in pending)) {
+      return;
     }
-    render();
+    const { catalog, key } = pending;
+    const available =
+      catalog === "projects" ? options.services()?.projects : shownTabs().includes(catalog);
+    if (available && options.rows(catalog).some((row) => row.key === key)) {
+      options.buy(key);
+    }
+    if (open) {
+      render();
+      const group = catalog === "projects" ? projectList : list;
+      const rows = [...group.querySelectorAll<HTMLButtonElement>("button")];
+      focusTarget(
+        rows.find((row) => row.dataset.item === key && !row.disabled) ??
+          rows.find((row) => !row.disabled) ??
+          (catalog === "projects" ? openJobs : openShop),
+      );
+    }
   });
 
   // A drag across a page must not activate the row where the gesture started.
@@ -1450,7 +1422,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       clearBindings(jobBindings);
       window.removeEventListener("resize", refit);
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
-      exchange?.dispose();
+      exchange.dispose();
       for (const layout of jobLayouts) {
         layout.dispose();
       }
@@ -1464,6 +1436,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.dispose();
       shopCard.dispose();
       jobsCard.dispose();
+      exchangeCard.dispose();
       confirmCard.dispose();
       dropDetails?.dispose();
       dropOrigin = null;
@@ -1489,7 +1462,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       open = value;
       modal.hidden = !open;
       view = "card";
-      exchange?.back();
       jobsBusy.hidden = true;
       closeConfirm();
       if (open) {
@@ -1504,6 +1476,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       stationCard.frame,
       shopCard.frame,
       jobsCard.frame,
+      exchangeCard.frame,
       confirmCard.frame,
       confirmActions,
     ]) {

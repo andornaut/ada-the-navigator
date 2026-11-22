@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { GENERAL_NAMED } from "../data/conversations.ts";
 import type { StationGreeting } from "../model/keepers.ts";
-import { stationGreetingCanSkip, stationWelcome } from "./station.ts";
+import { stationWelcome } from "./station.ts";
 
 describe("station welcome speaker contract", () => {
   it("keeps the station title without speech or an invented speaker when no keeper exists", () => {
@@ -24,7 +24,7 @@ describe("station welcome speaker contract", () => {
     expect(stationWelcome("Station", greeting)).toEqual({
       speaker: { displayName: greeting.displayName, portraitName: "Slate" },
       text: greeting.line,
-      title: "",
+      title: "Station",
     });
     expect(greeting.index).toBe(1);
   });
@@ -39,7 +39,7 @@ describe("station welcome speaker contract", () => {
     expect(stationWelcome("Station", greeting)).toEqual({
       speaker: { displayName: GENERAL_NAMED.name, portraitName: GENERAL_NAMED.name },
       text: greeting.line,
-      title: "",
+      title: "Station",
     });
     expect(greeting).toEqual({
       count: 1,
@@ -48,29 +48,5 @@ describe("station welcome speaker contract", () => {
       keeper: "general",
       line: "The current greeting.",
     });
-  });
-});
-
-describe("station greeting Skip availability", () => {
-  it.each([
-    [3, 0, true],
-    [3, 1, false],
-    [3, 2, false],
-    [2, 0, false],
-    [2, 1, false],
-    [1, 0, false],
-  ])("for count %i at index %i is %s", (count, index, expected) => {
-    expect(
-      stationGreetingCanSkip({
-        count,
-        displayName: GENERAL_NAMED.name,
-        index,
-        keeper: "general",
-        line: "The current greeting.",
-      }),
-    ).toBe(expected);
-  });
-  it("does not offer Skip for the generic station welcome", () => {
-    expect(stationGreetingCanSkip(null)).toBe(false);
   });
 });

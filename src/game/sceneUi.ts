@@ -732,10 +732,9 @@ export function buildScene(scene: UiContext): void {
       });
       return accepted;
     },
-    advanceGreeting: () => scene.model.advanceGreeting(),
     balance: () => ({
-      amount: scene.model.state.economy.stardust,
-      text: amount(scene.model.state.economy.stardust),
+      ore: scene.model.state.flight?.cargo ?? 0,
+      stardust: scene.model.state.economy.stardust,
     }),
     busyLine: () => scene.model.jobBusyLine,
     buy: (key) =>
@@ -751,7 +750,7 @@ export function buildScene(scene: UiContext): void {
       exchangeImmediately: (order) => confirmStationExchange(scene, order),
       preview: (order) => scene.model.previewImmediateExchange(order),
     },
-    greeting: () => scene.model.dockGreeting(),
+    greeting: () => scene.model.dockWelcome(),
     jobs: () =>
       scene.model.jobBoard().map((job) => ({
         ...job,
@@ -773,6 +772,7 @@ export function buildScene(scene: UiContext): void {
       jobDropCancel: label("jobDropCancel"),
       jobDropTitle: label("jobDropTitle"),
       jobs: label("jobs"),
+      jobsProjects: label("jobsProjects"),
       owned: label("owned"),
       projectFunded: label("projectFunded"),
       projects: label("projects"),
@@ -860,6 +860,7 @@ export function buildScene(scene: UiContext): void {
       }
     },
     services: () => scene.model.stationServices,
+    stationTitle: () => scene.model.dockedStationName,
     undock: () => apply(() => scene.model.undock()),
   });
   partial.push(() => scene.station.dispose());

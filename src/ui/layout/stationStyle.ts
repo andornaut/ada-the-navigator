@@ -1,8 +1,8 @@
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
-import { CARD_CLOSE } from "./cardFrame.ts";
+import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./controls.ts";
-import { font, safeEdge, slice, units } from "./css.ts";
+import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
@@ -24,8 +24,102 @@ const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
 export const STATION_STYLE = `
-.ada-controls .ada-dialogue-frame.ada-station-frame > .ada-story-skip{
-  right:${safeEdge("right", SPACING.pageInset + CARD_CLOSE.hit.width + SPACING.gap)}
+.ada-controls [data-station] > .ada-card-frame,
+.ada-controls .ada-dialogue-frame.ada-station-frame{
+  position:relative;
+  inset:auto;
+  height:100%;
+  max-height:100%
+}
+.ada-controls .ada-dialogue-frame.ada-station-frame{
+  width:min(100%,${units(CARD_WIDTH_CAPS.large)});
+  pointer-events:auto
+}
+.ada-controls [data-station] .ada-station-page{
+  height:100%;
+  min-height:0
+}
+.ada-controls [data-station] .ada-station-page > .ada-card-body{
+  flex:1
+}
+.ada-controls .ada-station-frame > .ada-story-panel.ada-station-page{
+  position:static;
+  transform:none;
+  width:100%;
+  max-height:100%;
+  padding:${units(SPACING.panelPadding)};
+  flex-direction:column;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-station-frame .ada-story-choice-column{
+  display:none
+}
+.ada-controls .ada-station-frame .ada-story-heading{
+  text-align:center
+}
+.ada-controls .ada-station-frame > .ada-close{
+  top:0;
+  right:0
+}
+.ada-controls .ada-station-balances{
+  position:absolute;
+  top:${units(SPACING.panelPadding)};
+  left:${units(SPACING.panelPadding)};
+  display:flex;
+  gap:${units(SPACING.gap)};
+  font:${font(TYPE.label)}
+}
+.ada-controls .ada-station-balances > span{
+  display:flex;
+  align-items:center;
+  gap:${units(BALANCE.markGap)}
+}
+.ada-controls .ada-station-balances > span::before{
+  content:"";
+  width:${units(BALANCE.icon)};
+  height:${units(BALANCE.icon)};
+  background:url('${SPRITES}icon-stardust-20.png') center / 100% 100% no-repeat
+}
+.ada-controls .ada-station-balances [data-balance=ore]::before{
+  background-image:url('${SPRITES}icon-ore-20.png')
+}
+.ada-controls .ada-station-footer{
+  display:flex;
+  flex:none;
+  align-items:center;
+  gap:${units(SPACING.gap)};
+  padding:${units(SPACING.gap)} 0;
+  border-top:${units(1)} solid #6b6685;
+  margin-top:auto
+}
+.ada-controls .ada-station-footer [data-action=undock]{
+  margin-left:auto
+}
+.ada-controls .ada-station-footer [aria-current=page]{
+  border-bottom-color:#ead4aa
+}
+.ada-controls .ada-station-panes{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-station-panes h3{
+  margin:0 0 ${units(SPACING.gap)};
+  font:${font(TYPE.label)}
+}
+.ada-controls .ada-station-panes .ada-job-list{
+  box-sizing:border-box;
+  max-width:100%
+}
+.ada-controls .ada-station-projects{
+  display:grid;
+  gap:${units(SHOP_ROW.rowGap)};
+  padding:${units(FOCUS_RING.outset)}
+}
+.ada-controls .ada-station-projects > .ada-shop-row{
+  width:100%
 }
 
 .ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{

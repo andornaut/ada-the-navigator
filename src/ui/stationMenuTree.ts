@@ -2,23 +2,24 @@ import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { StationLabels } from "./station.ts";
 
-export type StationMenuButton = "jobs" | "shop" | "nextGreeting" | "undock";
-export type StationMenuLabels = Pick<StationLabels, "jobs" | "shop" | "continue" | "undock">;
+export type StationMenuButton = "shop" | "jobs" | "exchange" | "undock";
+export type StationMenuLabels = Pick<StationLabels, "jobsProjects" | "shop" | "undock"> & {
+  readonly exchange: string;
+};
 export type StationMenuSchema = {
-  balance: { props: Record<string, never>; slots: never };
   button: {
     props: {
-      readonly actionId?: "open-jobs" | "open-shop" | "undock";
+      readonly actionId: "open-jobs" | "open-shop" | "open-exchange" | "undock";
       readonly id: StationMenuButton;
       readonly label: string;
       readonly role: "primary" | "secondary";
     };
     slots: never;
   };
-  stationMenu: { props: Record<string, never>; slots: "choices" | "controls" };
+  stationMenu: { props: Record<string, never>; slots: "controls" };
 };
 
-/** Native dialogue slots only; station services, greeting progress and callbacks stay caller-owned. */
+/** The Station's stable footer buttons travel together between its views. */
 export function stationMenuTree(
   labels: StationMenuLabels,
 ): Extract<ComponentNode<StationMenuSchema>, { component: "stationMenu" }> {
@@ -28,33 +29,40 @@ export function stationMenuTree(
     kind: "component",
     props: {},
     slots: {
-      choices: [
-        { component: "balance", key: "balance", kind: "component", props: {} },
+      controls: [
+        {
+          component: "button",
+          key: "shop",
+          kind: "component",
+          props: { actionId: "open-shop", id: "shop", label: labels.shop, role: "secondary" },
+        },
         {
           component: "button",
           key: "jobs",
           kind: "component",
-          props: { actionId: "open-jobs", id: "jobs", label: labels.jobs, role: "secondary" },
+          props: {
+            actionId: "open-jobs",
+            id: "jobs",
+            label: labels.jobsProjects,
+            role: "secondary",
+          },
         },
-      ],
-      controls: [
         {
           component: "button",
-          key: "next-greeting",
+          key: "exchange",
           kind: "component",
-          props: { id: "nextGreeting", label: labels.continue, role: "primary" },
+          props: {
+            actionId: "open-exchange",
+            id: "exchange",
+            label: labels.exchange,
+            role: "secondary",
+          },
         },
         {
           component: "button",
           key: "undock",
           kind: "component",
-          props: { actionId: "undock", id: "undock", label: labels.undock, role: "secondary" },
-        },
-        {
-          component: "button",
-          key: "shop",
-          kind: "component",
-          props: { actionId: "open-shop", id: "shop", label: labels.shop, role: "primary" },
+          props: { actionId: "undock", id: "undock", label: labels.undock, role: "primary" },
         },
       ],
     },

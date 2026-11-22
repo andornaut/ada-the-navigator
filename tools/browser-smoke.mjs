@@ -3397,11 +3397,6 @@ try {
   await interactionCard().waitFor({ state: "visible" });
   await leaveInteraction();
   await tapUse(CONTENT.labels.dock);
-  const hubGreetingContinue = page
-    .locator('[data-dialog="station"]')
-    .getByRole("button", { exact: true, name: CONTENT.labels.continue });
-  await hubGreetingContinue.click();
-  await hubGreetingContinue.click();
   await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
   await page.locator('[data-action="open-shop"]').click();
   await page.locator('[data-tab="ship"]').click();
@@ -3548,9 +3543,7 @@ try {
     "The local map's Galaxies stays available while towing; leaving the galaxy from the galaxy " +
       "map ends the flight, the rescue still held with its craft where it was stranded",
   );
-  // Station keepers (gameplay/rules.md "Generic station keeper interface and copy", art/layout.md
-  // "Station card"): the keeper's introduction advances with Continue. The last page and return
-  // visits show the service actions, with Shop as the primary when offered.
+  // Normal Dock exposes all available services alongside the selected keeper paragraph.
   const keeperInput = relaunch(CONTENT, roomInput.save());
   const keeperFlight = keeperInput.state.flight;
   const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
@@ -3570,27 +3563,11 @@ try {
   keeperInput.state.docked = null;
   const modelDock = relaunch(CONTENT, keeperInput.save());
   modelDock.interact();
-  const firstGreeting = [];
-  const readGreeting = (remaining = 5) => {
-    const greeting = modelDock.stationGreeting;
-    if (!greeting || remaining === 0) {
-      return;
-    }
-    firstGreeting.push(greeting.line);
-    if (greeting.index < greeting.count - 1) {
-      modelDock.advanceGreeting();
-      readGreeting(remaining - 1);
-    }
-  };
-  readGreeting();
-  const keeperName = modelDock.dockGreeting()?.displayName;
+  const welcome = modelDock.dockWelcome();
   modelDock.undock();
   modelDock.interact();
-  const laterLine = modelDock.stationGreeting?.line;
-  assert.ok(
-    firstGreeting.length === 3 && keeperName && laterLine,
-    `The model docks at the keeper's station: ${JSON.stringify({ firstGreeting, keeperName, laterLine })}`,
-  );
+  const laterLine = modelDock.dockWelcome()?.line;
+  assert.ok(welcome?.line && welcome.displayName && laterLine);
   await seedOnce(keeperInput.save(), "ada-browser.keeper.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const stationCard = page.locator('[data-dialog="station"]');
@@ -3622,38 +3599,23 @@ try {
   const first = await keeperShown();
   assert.deepEqual(
     { line: first.line, next: first.next, primaries: first.primaries, tab: first.tab },
-    { line: firstGreeting[0], next: true, primaries: [""], tab: keeperName },
-    "The first docking shows the keeper's name and first line, Continue as the single primary",
+    { line: welcome.line, next: false, primaries: ["undock"], tab: welcome.displayName },
+    "The first docking shows the joined greeting and immediate services with primary Undock",
   );
-  await greetingContinue.click();
-  const second = await keeperShown();
-  await greetingContinue.focus();
-  await page.keyboard.press("Enter");
-  const third = await keeperShown();
-  assert.deepEqual(
-    [second, third].map(({ line, next }) => ({ line, next })),
-    [
-      { line: firstGreeting[1], next: true },
-      { line: firstGreeting[2], next: false },
-    ],
-    "A tap or Enter on Continue shows the next line; after the third it goes",
-  );
-  assert.equal(third.focused, "open-shop", "Focus moves to Shop once Continue goes");
+  assert.equal(await stationCard.locator('[data-action="dialogue-skip"]').count(), 0);
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   await dockHere();
   const later = await keeperShown();
   assert.deepEqual(
     { line: later.line, next: later.next, tab: later.tab },
-    { line: laterLine, next: false, tab: keeperName },
+    { line: laterLine, next: false, tab: welcome.displayName },
     "A later docking shows one return line without Continue",
   );
   await stationCard.locator('[data-action="undock"]').click();
   await stationCard.waitFor({ state: "hidden" });
   events.checks.push(
-    "The station card shows the keeper's name, portrait and greeting with Shop as its primary; " +
-      "the first docking's three lines step on with Continue, which then goes with Shop " +
-      "focused, and a later docking shows one return line",
+    "The Station welcome shows the keeper paragraph and immediate section actions",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
