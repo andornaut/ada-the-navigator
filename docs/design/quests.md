@@ -1,10 +1,7 @@
 # Quests
 
-Stations post jobs with base rewards converted by the shared quest payout rule. Surveys chart
-landmarks with the scan, repeatable activities give steady work, and achievements record milestones.
-Accepted jobs persist across flights with their carried items.
-
-Reference: [quests](../../gameplay/quests.md).
+See [Quests](../../gameplay/quests.md) for station jobs, surveyed landmarks,
+repeatable activities, achievements, markers and scan feedback.
 
 ## Work items
 

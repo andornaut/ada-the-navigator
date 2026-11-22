@@ -1,8 +1,7 @@
 # Version one rules
 
-This contract records approved story and mechanics decisions for version one.
-It supersedes conflicting undecided details in the initial design. Numerical
-balance values are provisional and must be tuned through playtesting.
+This contract defines the approved version one rules. Balance values are subject
+to playtesting. See [Design](design.md) for the premise and cast.
 
 ## Scope and presentation
 
@@ -270,13 +269,12 @@ immediate exit from space.
 Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
 open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
-portrait; an interaction with no person to address uses Astra. A page offers
-Continue, choice buttons and Ask more, and the card has a close X and Skip; the
-close X is its only Close control. Normal Dock opens the Station welcome with
-the keeper paragraph and immediate access to available services. Its existing
-undock and dismissal guards apply.
-All dialogue is skippable: Skip jumps to the exchange's outcome, and a pending
-choice still asks. Conversations use brief essential exchanges with optional
+portrait. An interaction with no person to address uses Astra. The card offers
+Continue, choices, Ask more and Skip where available, with X as its only Close
+control. Skip advances to the outcome and still asks for a pending choice.
+Normal Dock opens the Station welcome with the keeper paragraph and available
+services. [Stations](economy.md#stations) describes the welcome and services.
+Conversations use brief essential exchanges with optional
 questions about character and culture (see [Player copy](player-copy.md)).
 In-flight chatter, drone warnings and the Admiral's broadcasts stay in the small
 in-flight box, and that box and notices never pause play (see
@@ -1027,17 +1025,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Sunflower's roster is in
   [Ships](ships.md).
-- Enemy scenery avoidance scales its look-ahead time and corresponding query
-  reach by 1.25, up from 1. The unscaled time is the greater of the turn and
-  acceleration times plus the braking time. The steering grid changes from 16
-  to 12 directions. At each clearance, avoidance checks up to five courses
-  (straight and 30 or 60 degrees to either side), down from seven. Quest guard
-  home placement keeps its 16-direction grid. Prediction takes 12 samples,
-  starting with the actual first physics step and spacing the rest evenly across
-  the remaining horizon. Previously the count was at least six, increased to
-  cover the horizon at 60 Hz, with an extra sample for a shorter first step.
-  Clearances remain 80 world units for normal steering and 40 for passages.
-  Physical contact uses the existing collision rules.
+- [Enemy obstacle clearance](ships.md#obstacle-clearance) sets the steering
+  and prediction rules. Physical contact uses the existing collision rules.
 - Admiral Archie's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
@@ -1164,7 +1153,7 @@ only when no real action remains on a nearby quest-linked object. Use retains
 its existing proximity/input guards and centered actual quest icon. World
 objects are not click/tap inspection targets; station quests and All quests stay
 unchanged. Return paths follow
-[Scan feedback](scan-feedback.md#quest-details-through-contextual-use). It shows the action's symbol with no text;
+[Scan feedback](quests.md#quest-details-through-contextual-use). It shows the action's symbol with no text;
 the action's name is its accessible name. On desktop the disc is hidden, as in
 Chibi, and the Use key still acts. Where the disc's press area overlaps the
 conversation box, the box takes the press. Resources collect on contact. Mining cargo has no capacity limit.
@@ -1372,7 +1361,7 @@ create, expire or replace a target marker. Penny's "Woof! Woof!" and Ada's
 reaction remain once per sensed point of interest, with the existing provisional
 60-second ordinary narration interval; hunt narration retains its own exception.
 Target knowledge, real icons versus
-`?`, persistence and placement follow [Unified target markers](marker-design.md).
+`?`, persistence and placement follow [Unified target markers](quests.md#unified-target-markers).
 Exact narration lines are in
 [the player copy](player-copy.md#in-flight-conversations).
 
@@ -1381,18 +1370,9 @@ Exact narration lines are in
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no spawn warning;
 Astra's drone-arrival line is the only cue.
-Bottom edge markers draw under the shield pill, as under other controls. All
-eligible off-screen targets use the [unified marker contract](marker-design.md):
-one target, one marker, a shared 5,000-world-unit range, persistent knowledge,
-and bearing-first near-edge placement. Marker centers remain on the projected
-Ada-to-target ray; temporary HUD/dialogue or marker overlap does not justify
-tangential or inward displacement. Visible-art inset is approximately one or two
-logical pixels, retaining fractional paint rounding and the three-logical-pixel
-small-marker half-scale corner exception, not a universal exact-one-pixel rule.
-Leaving range hides without forgetting;
-Continue does not erase knowledge. Destroyed or removed targets clear their
-markers. Triggered distant boss contributions are explicit exceptions, not
-permission to reveal hidden targets. Map and Quests retain long-range guidance.
+Edge markers draw under the HUD. [Unified target markers](quests.md#unified-target-markers)
+defines eligibility, persistence and bearing-first placement. Map and Quests
+retain long-range guidance.
 Known enemies, heavies, guards and stations retain their distinct marker art;
 a disabled route guard uses its heavy marker once it stops blocking the route.
 The local map is the only galaxy map; there is no minimap. Discovery caches
@@ -1482,22 +1462,12 @@ erratic circling, swarming and pack behaviors. Aggression can begin on sight or
 only after being attacked. The retreat policy replaces permanent
 morale flight with bounded retreats and gated recovery after individual damage
 or pack losses
-([Retreat policy](enemies.md#bounded-retreat-follow-up)). Behavior selection and tuning belong in data wherever
+([Retreat policy](ships.md#bounded-retreat-follow-up)). Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
-Frigates have an engine and two to four weapon hardpoints. Capital ships are
-prominent large targets that cover at most a sixth of the screen, about 5 Ada
-widths across, so the whole ship and its hardpoints stay readable. A capital has
-a command part, two engines and four to eight weapon hardpoints, and can travel
-with escort fighters. The weapon count rises with route position. Every heavy has
-hull HP: every hit lowers it, and at 0 the ship is destroyed. Destroying all its
-weapon hardpoints disables it instead: it stops attacking, shows a red "Disabled"
-banner, and Ada can salvage it and spare it, or keep firing to destroy it (see
-[Ships](ships.md#heavy-hull-and-disabling)). A destroyed weapon hardpoint stops
-firing. Each engine provides an equal share of thrust, so losing one of two engines
-halves a ship's speed, and a heavy that loses all its engines coasts to rest,
-keeping its momentum and slowing to a stop like a disabled heavy. Large-ship weapons and command areas
-must be visually distinguishable from the rest of the hull.
+[Ships](ships.md#heavy-hull-and-disabling) defines heavy hull and hardpoint
+damage, disabling, salvage and engines. Keep weapon mounts and command areas
+visually distinct, and keep the hull and hardpoints readable during combat.
 
 Missile launchers fire straight-flying missiles, visually distinct from ordinary
 shots. No missile homes.

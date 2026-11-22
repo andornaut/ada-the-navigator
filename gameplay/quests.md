@@ -55,7 +55,7 @@ layout regeneration like stations. Restart clears jobs and boards.
   it completes the job. A valid accepted quest immediately credits its already
   scanned target without a revisit; scanning alone never accepts a quest. Survey
   emits only its actual quest completion, not a synthetic task. Once-only rewards
-  and notices follow [Scan feedback](scan-feedback.md#remembered-scan-credit).
+  and notices follow [Scan feedback](#remembered-scan-credit).
 - **Delivery**: carry cargo or a message from the issuing station to another
   known station or outpost in the galaxy at least 3000 world units away,
   preferring the nearest, with no upper limit. The job names the destination by
@@ -211,10 +211,8 @@ remain visible, scannable, chartable and available on the map. Their wider
 extent does not expand the mapping-progress or survey-area denominator.
 
 - An uncharted landmark is a point of interest for Penny's sense. A survey's
-  target gets a direction indicator. The exact target of an actually displayed
-  Penny notice also gets its marker within 5000 world units: a question mark
-  until actual on-screen identification, then its matching real glyph, without
-  duplicate markers. Sensing and identification alone do not chart it.
+  target follows [the shared marker eligibility rules](#marker-eligibility).
+  Sensing and identification alone do not chart it.
 - Within the existing station Talk range of 160 world units, an uncharted
   landmark offers Use (Scan), with the nearby Use callout. Only explicit Scan
   charts it and plays the existing "New place mapped." conversation, committing
@@ -256,6 +254,184 @@ and saves.
 | Andromeda | Bright Veil, Neighbor Nebula, Pearl Cloud, Dawn Haze    | Old Mail Ship, Lost Courier Pod, Rusted Lamp Barge, Sleepy Ferry     | Guide Light, Harbor Beacon, Truth Lamp, Courier Marker |
 | Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker     |
 | Phantom   | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker         |
+
+## Unified target markers
+
+### Status and scope
+
+The shared range is **5,000 world units**. Tech implements the registry in
+`src/model/targetMarkers.ts` and edge placement in `src/ui/layout/targetMarkers.ts`.
+See [the marker work item](../docs/work/ada-0253.md) for implementation evidence.
+Full all-edge rendered acceptance remains unverified here.
+
+### Marker eligibility
+
+- One target has one stable ID and at most one marker. Ordinary markers, Penny
+  sensing, quest destinations and explicit encounter triggers contribute to the
+  same registry entry rather than creating competing markers.
+- Known targets use their real icon, with no Penny question mark. An unknown
+  sensed target uses `?`; actual visual identification changes that same entry
+  to its real icon. Sensing alone does not identify the target.
+- Ordinary eligible off-screen targets remain marked within 5,000 world units.
+  Leaving range hides the marker without erasing knowledge; re-entry restores
+  it. An on-screen target needs no edge icon.
+- Dialogue controls narration only. Dialogue expiry, elapsed time, a nearer
+  target or save/Continue must not remove an otherwise eligible marker.
+- Destroyed or explicitly removed targets clear their markers. Unloading a
+  runtime object alone must not imply removal: resolve its stable identity from
+  authoritative world state. Never retain a stale marker for a removed target.
+- A triggered boss encounter may explicitly contribute a distant marker before
+  ordinary range eligibility. Encode activation and termination in that
+  encounter's contribution. Do not expose other hidden targets through this
+  exception.
+- Quest destinations participate in the same discoverability rules. A quest
+  reference alone must not identify an unknown destination or reveal every
+  hidden destination. Known destinations use their real icon; unknown sensed
+  destinations use `?`. Explicit authored disclosures remain explicit.
+
+### Marker state and presentation
+
+The registry resolves each stable target ID to its authoritative position,
+existence, knowledge and active contributors. Use shortest wrapped displacement
+for distance and direction. Do not key entries by current array index, nearest
+target selection, projected position or dialogue instance.
+
+Persist target knowledge separately from scan completion and story progress.
+Save/Continue reconstructs the registry from persisted knowledge and active
+world, quest and encounter facts. Preserve sensed versus visually identified
+states without granting scan completion or advancing story.
+
+Evaluate eligibility, icon, lifetime and rendering through one shared pipeline.
+Merge same-target contributors before layout; removing one contributor retains
+the marker when another still qualifies. Distinct targets retain their entries
+and identities even when their markers overlap.
+
+Place each displayed marker center on the projected Ada-to-target bearing at
+its near-edge intersection in the centered 720-logical-pixel-wide game area.
+Use the actual wrapped target position and rendered projection. Bearing accuracy
+has priority over HUD, dialogue or marker separation: temporary overlap is
+allowed. Do not move the marker tangentially along an edge or inward to avoid
+an overlap. Record overlap diagnostically without deleting or replacing targets.
+
+The visible-art inset is approximate, ordinarily one or two logical pixels,
+not a universal exact-one-pixel requirement. Preserve fractional-scale and
+paint-grid rounding and the retained small-marker half-scale corner case with
+an inset of three logical pixels. That corner exception is not a new global
+margin. Measure actual visible art, outline and scale rather than transparent
+image bounds; do not infer universal zero error or exact one-to-two-pixel
+containment from component evidence. Penny's `?`, known quests, bosses and other
+markers follow this placement rule. The 5,000 range, lifetime and knowledge/icon
+rules remain unchanged.
+
+### Task category colours
+
+[Shared task colours](../docs/work/ada-0341.md) are approved work. An eligible
+unknown target keeps its question-mark glyph. Its tint can indicate the task
+category without revealing the target's name or kind. Multiple contributions
+still produce one marker. Follow the work item for the overlap rule and evidence.
+
+### Marker acceptance matrix
+
+Review all four edges, corners, narrow viewports, overlap, and the visible
+outline of scaled known and unknown glyphs. Exercise identification, range
+exit and re-entry, view transitions, wrapped seams, Continue, disposal versus
+removal, multiple contributors and distinct targets on overlapping bearings.
+Check hidden quest references and the activation and termination of distant
+boss exceptions. Follow the [marker work item](../docs/work/ada-0253.md) for
+results.
+
+## Scan feedback
+
+### Scan scope
+
+`ScanOutcome` drives a visual notice and [Astra's receipt](player-copy.md#canonical-astra-outcome-copy).
+The model submits the outcome and the scene drains it into the view. See
+[scan timing](../docs/work/ada-0309.md) and [notice placement](../docs/work/ada-0321.md)
+for the scoped checks. Those checks leave ordinary scans, remembered credit and
+contextual Use subject to their own flow verification. No scan mock-first or
+sequencing hold applies.
+
+### Scan outcomes
+
+- Stop displaying a Scan instruction once its target is scanned. Reconcile the
+  instruction with that target's actual scan state, including an instruction
+  already visible when scanning succeeds. Source invalidation is implemented in
+  `src/model/conversations.ts`; rendered and end-to-end acceptance remain unverified.
+- Distinguish ordinary scan success, task completion and quest completion using
+  the actual outcome. A successful scan alone does not imply task or quest
+  completion, and a completed task does not imply a completed quest.
+- Task completion uses a checkbox, task text and the related quest icon.
+- Quest completion uses the quest icon and quest name, with no checkbox or task
+  icon. Preserve this distinction in both mocks and implementation.
+
+### Remembered scan credit
+
+Persist authoritative scan IDs independently of quest acceptance.
+A scan alone never accepts or starts a quest.
+
+When a quest is given, accepted or started after its required item was scanned,
+immediately reconcile the requirement against the remembered scan ID. Tick the
+already-known requirement and celebrate its completion without another visit or
+scan. Complete the quest only when all its requirements are satisfied. Grant its
+reward and emit each corresponding completion notice exactly once, including
+across save/Continue or repeated reconciliation.
+
+Use the same [completion treatment](#scan-outcomes). Astra acknowledges
+remembered credit using the [canonical outcome copy](player-copy.md#canonical-astra-outcome-copy).
+
+The current exclusion of already-charted survey job offers must not discard a
+valid accepted quest whose scan requirement was satisfied before acceptance.
+Keep offer filtering separate from reconciliation of accepted quest progress.
+
+### Completion presentation
+
+The rectangle originates at the scanned object, moves continuously straight up
+toward the top and fades. Its vertical path is chosen once, clear of the HUD,
+and stops below any HUD element above it. Astra's dialogue draws over the
+rectangle; the rectangle never hops, dodges or moves sideways around dialogue.
+With reduced motion it stays at its starting position.
+
+### Quest details through contextual Use
+
+Direct world-object click/tap inspection is cancelled because it conflicts with
+joystick interaction. Do not implement that trigger or treat its former approval
+as active.
+
+The contextual Use replacement remains approved; full interaction checks and
+acceptance remain unverified. Real Scan, Dock, Deliver and
+other immediate actions take priority, including every available repeatable
+action. Dock remains repeatable on every visit: a visited or action-done flag
+must never replace available Dock with Quest details. Only when no real action
+is currently available on a
+quest-linked nearby object, offer Quest details through Use. Center the actual
+quest icon in the Use button, not a generic question mark.
+
+For one active linked quest, open its existing details; Close and X return
+directly to gameplay. For multiple active linked quests, open a list filtered to
+that object's active quests. Details Back and X return to the filtered list;
+list Close and X return to gameplay. Preserve this caller context throughout.
+
+Use the existing proximity, availability and input guards. Do not invent an
+inspection range or quest associations, change joystick behavior, or alter held
+fire and cancelled-gesture handling. Inspection must not mutate quests or
+rewards, change discovery state or reveal hidden targets. World objects remain
+non-clickable and non-tappable.
+
+Stations retain their existing quest interface and All quests access. This
+contract does not redesign station flows.
+
+### Scan and Use acceptance
+
+Review ordinary scan, task and quest receipts, invalidation while Scan guidance
+is showing, and motion at the start, mid-rise and end relative to HUD and
+dialogue. Check both motion settings. For remembered credit, exercise scan
+before acceptance, partial and full completion, offer filtering, Continue and
+repeated reconciliation without duplicate rewards or notices.
+
+Check contextual Use independently for repeatable Dock, Scan before and after
+completion, single and multiple linked quests, correct return paths, unchanged
+station access and gesture guards. Inspect the centred quest icon. See the
+[scan scope](#scan-scope) for available evidence.
 
 ## Repeatable activities
 

@@ -1144,6 +1144,9 @@ Phantom:
 
 ## Greeters
 
+The [station refresh](../docs/work/ada-0339.md) governs the approved greeting
+layout. The copy below describes existing greeter lines.
+
 On a first docking each greeting line is a page of the conversation card,
 advanced with Continue. Skip opens the last page when more than one advance remains. The last page shows
 the keeper's last line, the Stardust icon with the balance, as in the shop, then
@@ -1218,13 +1221,42 @@ Andromeda settler, first approach to a settlement: Settler: "Hello! You found
 our little settlement." Settler: "Mail comes by courier, and visitors come by
 beacon light. Welcome!"
 
+## Canonical Astra outcome copy
+
+Runtime strings are in `src/data/landmarkScanCopy.ts`.
+
+| Key                 | Exact copy                        | Token source                                       |
+| ------------------- | --------------------------------- | -------------------------------------------------- |
+| `outcomeScan`       | `Scan complete: {target}.`        | `ScanOutcome.target.name`                          |
+| `outcomeRemembered` | `We've already scanned {target}.` | `ScanOutcome.target.name`                          |
+| `outcomeTask`       | `Task complete: {task}.`          | `ScanCompletion.task.text`, only for kind `task`   |
+| `outcomeQuest`      | `Quest complete: {quest}.`        | `ScanCompletion.quest.name`, only for kind `quest` |
+
+Astra receives one dialogue receipt per actual outcome. Select exactly one intro
+from source `scan` or `remembered`, then append only actual completion sentences
+in event order. An empty completions array adds no completion sentence. Do not
+repeat the intro for each completion or infer tasks, quests or labels from the
+nearest/current quest. The current single-condition Survey emits a quest
+completion only, never a synthetic task completion.
+
+The receipt has notice priority in the conversation priority order
+([Rules](rules.md#astra-and-penny-in-flight)): a warning, such as "Drones ahead.",
+shows first, and the receipt follows it once the warning ends. A receipt is
+never dropped for a higher-priority line. The completion rectangle's rise runs
+on its own, whether or not the receipt is showing.
+
+Use shared safe token substitution. Do not add generic praise, invented rewards
+or quest associations, restate objective counts, or claim all objectives are done
+without an actual quest completion. Continue must not reconstruct outcome events
+or replay rewards.
+
 ## Shared interface text
 
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
 - Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
-  with the action labels in [Cheats](cheats.md), Show tips again, FPS counter
+  with the action labels in [Cheats](../docs/design/cheats.md), Show tips again, FPS counter
   (On or Off), Reset save and Close. Reset save card: Reset save? with Reset and
   Cancel.
 - Galaxy map Earth button: Earth.
@@ -1243,7 +1275,7 @@ beacon light. Welcome!"
   placement remains with the existing shop consumer.
 - Exchange: Buy ore and Sell ore offer immediate amounts 1, 10 and 100.
   No amount input or confirmation. Rates remain buy 2 and sell 1 Stardust per ore.
-- Scan outcome copy follows [Scan feedback](scan-feedback.md#canonical-astra-outcome-copy).
+- Scan outcome copy follows [Scan feedback](#canonical-astra-outcome-copy).
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.
 - Weapon detail header: the existing compact weapon name, with no suffix at

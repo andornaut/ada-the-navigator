@@ -200,6 +200,9 @@ donations or nonquest achievement bonuses. See [Quests](quests.md#rewards).
 
 ## Stations
 
+The stock and service decisions are recorded in
+[Station, Shop and Exchange](../docs/work/ada-0339.md).
+
 Station density is doubled in every galaxy. Station placement remains seeded
 and stable across flights; existing known station ids and positions must survive
 adoption. The minimum station spacing is 8000 / sqrt(2), approximately

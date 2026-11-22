@@ -7,6 +7,4 @@ See [the version one rules](rules.md) for Ada's current six-galaxy scope.
 
 - Other horizontal or vertical progression beyond the station shop.
 
-Weapons, ship upgrades and ship paint from station shops, achievements and
-continued procedural play are already part of version one; see
-[Economy](economy.md).
+Current progression is in [Economy](economy.md) and [Achievements](quests.md#achievements).

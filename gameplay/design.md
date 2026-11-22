@@ -89,9 +89,6 @@ universe cannot be controlled, and the Admiral relents and stays in Phantom
 to help the Blurbs repair what his blockades broke. With all six holodisks
 Astra can navigate on her own again, but she chooses to keep flying with Ada.
 
-The interactive story at home and procedural space adventures continue together
-throughout the game. The first five chapters, in route order, concern a
-community garden, caring for her dog, patience, honesty and playground
-bullying. The sixth, the confrontation with Admiral Archie, concerns letting go
-of control: Ada's thank-you party washes out in the rain, and the day is better
-for it.
+The [chapter route](rules.md#scope-and-presentation) pairs each space adventure
+with its Earth lesson. The finale's thank-you party washes out in the rain, and
+the day is better for it.

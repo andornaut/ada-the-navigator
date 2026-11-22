@@ -1,16 +1,16 @@
 # Ada the Navigator gameplay
 
-[Version one design](design.md) records the premise, characters, story arc and
-unresolved story details. [The version one rules](rules.md)
-defines version one's rules and [the player copy](player-copy.md) its text.
-[Ships](ships.md) defines ship physics and enemy rosters, and the
-[enemy rule interface](enemies.md) the enemy AI's rules. [Quests](quests.md) defines station jobs, the landmarks surveys chart, repeatable activities and achievements. [Cheats](cheats.md)
-defines the browser-tab cheats. [Economy](economy.md) defines Stardust, stations and
-the shop. [Ideas](ideas.md) contains proposals outside the
-current version. [Unified target markers](marker-design.md) and
-[scan feedback and contextual Use](scan-feedback.md) retain the paired contracts
-and source evidence. Approved design, source presence, checks, delivery and
-acceptance are separate states. Optional Earth chapter replay remains a plan.
+| Reference                     | Covers                                            |
+| ----------------------------- | ------------------------------------------------- |
+| [Design](design.md)           | Premise, cast and story arc                       |
+| [Rules](rules.md)             | Flight, chapter progression, navigation and saves |
+| [Ships](ships.md)             | Physics, rosters, combat and enemy AI             |
+| [Economy](economy.md)         | Resources, station services, prices and rewards   |
+| [Quests](quests.md)           | Jobs, landmarks, markers, scan feedback and goals |
+| [Player copy](player-copy.md) | Dialogue, objectives and interface text           |
+
+[Ideas](ideas.md) collects future candidates. [Cheats](../docs/design/cheats.md)
+covers browser-tab cheat sessions.
 
 The [cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) define shared settings, updates,
 product consistency, saves, cheats and proposal handling. The documents here

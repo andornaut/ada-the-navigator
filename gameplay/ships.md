@@ -33,7 +33,7 @@ patrol when unengaged, investigate a fixed last-seen position after losing actua
 line of sight, and resume patrol there. Returning craft investigate home and
 patrol instead of stopping within five world units. Patrol and investigation use
 smooth seeded routes, with tuning relative to each ship's existing combat speed
-([Enemy navigation](enemies.md#patrol-and-investigation)). Platforms remain
+([Enemy navigation](#patrol-and-investigation)). Platforms remain
 stationary; disabled or salvaged ships do not navigate, and ships with no working
 engines coast to rest. Each weapon's aim starts on its first target and then turns with
 `aimTurnSeconds`. Hardpoint hit areas and fire origins rotate with the
@@ -97,7 +97,7 @@ seeded curvature and a six-second cooldown, with per-policy overrides. These are
 the shared retreat defaults in source.
 Recovery requires actual line of sight, perception, engagement admission and the
 home leash; otherwise fixed last-seen investigation gives way to home patrol
-([Retreat policy](enemies.md#bounded-retreat-follow-up)). `strafe` passes no closer
+([Retreat policy](#bounded-retreat-follow-up)). `strafe` passes no closer
 than 150 world units and loops back beyond 420; `siege`
 advances at half top speed; `escort` holds station 60 beyond its leader's hull,
 intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
@@ -621,3 +621,265 @@ blue ship. Sunflower craft are drawn with 16 heading frames: the model facing
 stays continuous and the nearest frame is drawn. A ship drawn with frames and
 hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles. The size column sets the hit circle's diameter: the mean of the drawn sprite's
 length and width, so hits match what is drawn. Sprites keep their drawn sizes.
+
+## Enemy rule interface
+
+This module supplies pure observation-to-intent rules. Overall encounter placement,
+quiet travel and optional versus required fights belong to the version one rules.
+[Ambient admission](#ambient-admission) defines encounter rates and the three
+geographic encounter regions. These do not change enemy intent rules.
+All numeric catalog values are provisional tuning, not user-selected values.
+Each archetype's maximum speed is fixed in world units ([Ships](#values)).
+Frigates and capitals may block required quest routes in the first five chapters;
+the overall placement contract remains in the version one rules.
+
+### Data and state
+
+The catalog interface defines typed aggression, size, physics ([Ships](#physics)),
+perception and engagement radii, behaviours and their parameters, wobble,
+separation, firing patterns,
+morale, hardpoints and pursuit leashes. [Ships](#physics) lists sizes, physics and
+each galaxy's archetypes, and its [Difficulty](#difficulty) section
+sets hit points, weapon mounts and enemy weapons by route position. Frigates have
+one engine and two to four weapons. Canonical assembled-body size ratios are 5
+for frigates and 6 for capitals, relative to Ada's source-model lateral hull
+span. Drawn heading metadata supplies their geometry. Capital command parts
+never fire. Each weapon carries its own typed fire profile, interval, spread and
+projectile speed. Missile profiles travel straight; there is no homing rule.
+
+`createEnemy(definition, identity, position)` creates JSON-serializable state. Identity
+includes a stable ID, actor kind, nullable pack ID, seeded phase in radians and
+an optional equipped weapon level. The adapter resolves one equipped level at
+spawn through its dedicated per-ship stream. An absent saved level means level 1;
+reconstructing a saved definition does not reroll it. The rules consume no
+randomness and do not mutate supplied state. Serialize phase, age, engagement, flee latch, velocity, hull
+HP, hardpoint HP, cooldowns, burst positions, initialized fire phases, home
+position, last-seen position and age, pursuit elapsed time, returning latch and
+time since return began. The optional retreat record preserves its kind,
+origin, fixed away direction, start age and completion age through save/load.
+Preserve initial pack sizes separately through losses
+and save/load. No functions, maps, clocks or runtime objects belong in saved state.
+
+`damageEnemy(definition, hit, state)` applies finite positive damage to the named
+hardpoint or to the hull with a null ID. Unknown part IDs do nothing. A valid hit
+latches retaliation even when the target is currently unseen. Individual hull damage
+can trigger a bounded morale retreat without killing a craft. Pack losses can
+trigger the same retreat for survivors. Active morale retreat suppresses fire;
+recovery can resume aggression under the observation and admission rules below.
+
+`enemyEffects(definition, state)` derives destroyed part IDs, disablement and
+destruction. A hit on a heavy's hardpoint damages only that hardpoint, without
+spill into the hull. A hull hit damages only the hull. Hull HP at 0 destroys the ship. Destroying every weapon
+hardpoint disables it while its hull survives: it emits no intents, steers no
+more and coasts to rest. A destroyed weapon emits no further shots. Each engine provides an equal share of thrust: a
+ship's top speed scales with the fraction of its engines still working, and
+with all of them destroyed it has no thrust and coasts to rest from its current
+momentum, like a disabled heavy. Other weapons keep firing independently. No primary hull weapon substitutes for a
+lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
+
+### Observation and intents
+
+Call `stepEnemy(definition, context, state)` on a fixed simulation slice, preferably
+1/60 second, using one immutable pre-movement peer snapshot for the entire slice.
+Context supplies Ada's maximum speed and width, player position, targeting permission,
+explicit visibility and initial pack sizes. Inputs must be finite;
+use positive dimensions, nonnegative speeds and stable unique entity/part IDs.
+Only positive finite dt advances rules. Unknown or occluded visibility grants no
+chase or fire permission. It does not classify space as safe or unreachable.
+The adapter must supply actual observation and safe-zone permission, not infer them
+from hidden runtime state. Active peers contain live, nonsalvaged, enabled
+actors, including self exactly once for an active actor. Disabled hulls remain
+physical and saved but do not influence steering or escort observation.
+The adapter supplies transient `loadedPackMembers` counts from the full live,
+nonsalvaged pre-movement snapshot, including disabled survivors. Morale adds the
+existing dormant survivor counts. If the loaded count field is absent, pure
+callers retain the peer-count fallback; a supplied map with no pack entry means
+zero loaded survivors. Preserve initial pack counts through unloading and
+Continue. Neither unloading nor disablement is a casualty.
+
+The result contains updated state, desired velocity, aim, fire intents and effects.
+State position is deliberately unchanged. Steering and velocity response are rules;
+collision resolution and position integration are runtime responsibilities. Commit
+resolved position and velocity back into the next saved state. Separation reads only
+the supplied snapshot, avoiding array-order feedback. Authored heading anchors
+and turret pivots determine hardpoint and muzzle positions when available.
+Their frame offsets use the canonical display scale once, then the existing
+inverse projection. Fractional catalog offsets are a fallback when authored
+metadata is absent. Hulls rotate to face their movement; collision and muzzle
+positions follow the drawn hull and turret headings.
+
+Sight aggression latches on visible perception. Retaliators patrol without
+attacking until hit.
+Engaged craft move by their behaviours ([Ships](#behaviours)) and separate from
+peers. Smooth seeded variation gives each mobile ship a stable patrol shape
+without erratic jitter or query-dependent RNG.
+Flee direction is away from the observed or last-seen player position. Safe-zone collision policy
+must still reject unsafe movement. There is no pathfinder or reachability oracle.
+
+Fire intents contain world-space origin, normalized aim, projectile speed, weapon
+ID, equipped level, damage ratio, projectile kind and delay within the slice.
+Hardpoint ID identifies the emitting weapon; a null ID identifies the hull
+weapon. `fireClockPolicy` is `staggered-and-paused` for frigates and capitals:
+weapon clocks initialize on first firing eligibility in stable active-mount fill
+order, with phase `(i / N) * ownInterval`. Ineligible time preserves cooldowns and
+burst positions; disabling a mount never reindexes survivors. Other actors,
+including platforms and hostile stations, use `continuous` clocks. Initialized
+phases, cooldowns and burst positions survive Continue.
+
+Catch-up shots have explicit delays; advance each new projectile for only
+`dt - delay`, or schedule it at that offset. Fixed small slices bound work and
+integration error. There is no spawn warning; Astra's drone-arrival line is the
+arrival cue. Weapon-specific tells are separate: Phaser uses a fixed 0.4-second
+aim line; charged lance tracks for 0.7 seconds and locks for 0.3 seconds
+before firing. Tell lines and beams stop at obstacles. Each fired beam damages
+Ada at most once. Disabling a weapon prevents future fire and cancels an active
+lance tell, but does not delete already emitted projectiles.
+
+`stepDebris(dt, debris)` advances position by constant velocity times dt. Debris has
+no AI, pursuit, morale, aim or weapon. The adapter owns seeded region placement and
+collision damage. Do not repurpose the stationary quest-debris behavior implicitly.
+
+### Patrol and investigation
+
+Most mobile enemies patrol a seeded offset ellipse through their fixed home
+position when unengaged. Investigation uses the same smooth route through the
+fixed last-seen position, or home during return. Ship identity and saved phase
+set the route variation; frames and observation queries do not reroll it.
+
+`ENEMY_NAVIGATION` sets patrol speed to 0.5 of each ship's existing combat
+movement speed. Investigation uses 0.7 far from the ellipse and smoothly blends
+down to 0.5 near ellipse arrival over an approach radius of 180 world units.
+For `siege`, both ratios apply to its existing combat speed, which already
+includes its behaviour speed fraction. Navigation uses
+`max(existing turnSeconds, 0.8)` seconds for smooth turns. These ratios do not
+change archetype maximum speeds.
+
+Platforms have no navigation and remain stationary. Disabled or salvaged ships
+do not patrol or investigate. A ship with every engine destroyed has no thrust
+and coasts to rest. Patrol changes neither aggression, engagement admission,
+pursuit leashes nor safe-zone permissions.
+
+### Obstacle clearance
+
+The optional read-only navigation query steers around authored scenery using the
+actual moving hull and drawn obstacle outlines. `ENEMY_AVOIDANCE` in
+`src/data/enemyNavigation.ts` supplies the preferred 80-world-unit berth,
+40-unit constrained-passage berth and a 1.25 look-ahead multiplier for time
+and query reach. Before scaling, look-ahead is the greater of the turn and
+acceleration times plus the braking time. The steering grid has 12 directions.
+At each clearance, avoidance checks up to five courses: straight and 30 or 60
+degrees to either side. Quest guard home placement uses a separate 16-direction
+grid. Prediction takes 12 samples, starting at the actual first physics step and
+spacing the rest evenly across the remaining horizon.
+These steering clearances do not inflate physical collision geometry or introduce
+cover behavior. They do not guarantee the preferred berth in every passage.
+Without relevant obstacle candidates, the existing steering path remains active.
+Combat speed, pursuit limits, weapon intent and damage remain unchanged.
+
+### Finite pursuit
+
+`pursuit.homeRadius`, `maxSeconds`, `unseenSeconds` and `rearmSeconds` are
+provisional finite tuning. The current shared values are 2000 world units, 30
+seconds, 6 seconds and 2 seconds. Home is fixed at creation.
+
+The pursuit clock counts only time while Ada is unseen or beyond the ship's
+firing range, and resets to zero while the ship is fighting her. While Ada is
+unseen after actual line-of-sight loss, an engaged mobile ship investigates her
+fixed last-seen position at a slower pace, then patrols around it. It does not
+follow her hidden position. A chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
+home radius, a visible target leaves that radius, or Ada stays unseen for
+`unseenSeconds`. Ending a chase latches return-to-home, clears engagement and
+suppresses new shots. Existing projectiles and incoming damage remain active. No
+grace or invulnerability is granted. Ship physics can retain outward momentum
+briefly before turning; the adapter's fixed slice bounds distance overshoot.
+
+Returning mobile craft investigate home and resume patrol instead of stopping
+within five world units. A returning ship re-engages when it visibly observes Ada within its perception once
+`rearmSeconds` have passed since the return began, or at once when it is hit;
+either clears the return latch and resets its pursuit clock. Unknown
+observation never re-engages it. After a retreat, sight recovery also requires
+engagement admission and the home leash; return recovery keeps its existing
+`rearmSeconds` delay. A damaged engine still takes precedence over
+return movement. Save and restore the latch, the pursuit clock, unseen time and
+time since the return began; unloading or resetting them must not renew a
+pursuit. Observation is supplied by the runtime; last-seen state never reads
+hidden target coordinates.
+
+### Bounded retreat follow-up
+
+This policy describes the approved retreat source. Morale and `hitAndRun` use independent policies in
+`retreats.morale` and `retreats.hitAndRun`. Both inherit `ENEMY_RETREAT`: at most
+1.6 seconds or 200 world units of displacement from the retreat origin,
+whichever limit is reached first, with a gentle seeded curve of up to 0.5 radians.
+The six-second cooldown after completion prevents another retreat, not sight
+recovery. Each definition can override either policy independently; route
+position no longer supplies a `retreatSeconds` timer.
+
+Swarm, fighter, interceptor and retaliator morale retreats are temporary, not
+permanent flight. Recovery requires actual line of sight, targeting permission,
+perception range, engagement admission and the existing home leash. Without
+reacquisition, ships investigate the fixed last-seen position within the existing
+unseen and pursuit limits, then return home and patrol. Existing momentum and
+turning still apply; reaching a retreat bound changes steering, not position.
+
+### Runtime integration interface
+
+The settled Tech-owned source paths are `src/model/enemyAi.ts`,
+`src/model/enemyAi.test.ts` and `src/data/enemyCatalog.ts`.
+
+`SpaceObject` carries optional `enemy`, `velocity` and `routeId` fields. Enemy state
+lives on `SpaceObject.enemy`; ballistic debris uses `SpaceObject.velocity`.
+`FlightState.combat` is optional and carries `initialPackSizes` and `routeEncounters`.
+`Shot.projectile` is optional and distinguishes bolt, missile and dot projectiles.
+There is no parallel enemy-state collection or save-version migration.
+
+`src/model/save.ts` validates these optional fields when present while accepting
+complete version-1 saves without them. Enemy state validates catalog membership,
+identity, finite vectors, nonnegative timers and HP, and exactly one state entry per
+catalog hardpoint. Route IDs and route encounters must belong to the selected galaxy.
+
+The flight adapter must take one peer snapshot and call the rules per live enemy
+per simulation slice. Apply resolved movement once, respecting safe zones and
+collisions. Adapt fire intents into `Shot` with unique `nextId` values, `enemy: true`,
+empty hit IDs, configured lifetime, intended velocity and projectile kind. Runtime
+shield damage, projectile collisions and danger tracking remain in the flight model.
+Only actual targeting threats and projectiles should extend danger, not
+unengaged patrolling retaliators. Suppress all intents after defeat.
+
+Route player-shot collisions to explicit hardpoint hit volumes before hull damage.
+Apply one hit per collision policy, preserve piercing hit IDs at the appropriate
+entity/part granularity, and recalculate effects immediately. Do not filter multipart
+enemies out while hull HP remains. Emit `enemyDisabled` exactly once when the
+last weapon hardpoint is destroyed, and the destroyed event exactly once when hull
+HP reaches 0. Preserve disabled part state while
+other parts remain active. No parallel flight loop is provided here.
+
+### Integrated verification required
+
+The canonical regression path is `src/model/enemyAi.test.ts`. Runtime source and
+tests remain under `src/`. The integrated isolated gate typechecks, lints, tests
+and builds the source, including
+actual intents and adapter commands in the following scenarios:
+
+- Identical saved state, snapshot and timestep produce identical JSON and intents;
+  observation query order consumes no RNG and cannot change subsequent spawn streams.
+- Ballistic debris has identical velocity through repeated steps and no fire intent.
+- A visible sight fighter chases and fires; an untouched retaliator does neither.
+  Damage activates retaliation. Unknown visibility never grants permission.
+- Independent cooldowns survive JSON round trips. Long elapsed fire slices preserve
+  scheduled offsets; projectile integration uses each offset exactly once.
+- Pursuit ends on distance, time spent unseen or out of firing range, or lost
+  observation, and fighting resets its clock; save/load keeps the return latch
+  and timers; a returning ship re-engages on sight within perception after
+  `rearmSeconds`, or at once when hit.
+- A pack losing its configured fraction flees; damage can make one member flee
+  before the group. Initial counts persist and unloading is not a casualty.
+- A destroyed frigate weapon stops firing while the other weapon continues. A
+  heavy with every engine lost keeps its prior momentum and coasts to rest.
+- Capital hull HP reaching zero destroys it, whatever its hardpoints. Destroying
+  every weapon hardpoint first disables it once, and salvaging or destroying a
+  disabled heavy produces one outcome event.
+- Each archetype's actual velocity stays within its maximum speed, including
+  saved momentum.
+- Quiet encounter placement, safe zones, collision routing, offscreen hardpoints,
+  danger tracking and once-only defeat events pass the real integrated flight loop.

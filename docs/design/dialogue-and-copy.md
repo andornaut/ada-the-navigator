@@ -1,11 +1,9 @@
 # Dialogue and copy
 
-Ada, a twelve-year-old navigator, flies with the ship AI Astra and her dog Penny against Admiral
-Archie. Each galaxy has chapter dialogue and an Earth storybook chapter, and short in-flight
-conversations carry warnings, Penny, lessons and lore. All dialogue can be skipped, and player text
-stays in the game world.
-
-Reference: [design](../../gameplay/design.md), [player copy](../../gameplay/player-copy.md).
+See [Design](../../gameplay/design.md) for the cast and story, and
+[Player copy](../../gameplay/player-copy.md) for dialogue, objectives and
+interface text. Where Skip is available, material choices still require an
+explicit answer.
 
 ## Work items
 
@@ -22,3 +20,4 @@ Reference: [design](../../gameplay/design.md), [player copy](../../gameplay/play
 | ada-0261 | Expand the chapter dialogue with approved editorial wording | [ada-0261.md](../work/ada-0261.md) |
 | ada-0262 | Rename the antagonist Admiral Archie and the cat Gadget     | [ada-0262.md](../work/ada-0262.md) |
 | ada-0275 | Adopt the shared loading-failure presentation and copy      | [ada-0275.md](../work/ada-0275.md) |
+| ada-0337 | Give points of interest varied galaxy-specific lore         | [ada-0337.md](../work/ada-0337.md) |

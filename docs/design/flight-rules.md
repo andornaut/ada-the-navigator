@@ -1,14 +1,8 @@
 # Flight rules
 
-Version one runs six galaxies in route order, each paired with a home lesson on Earth told as a
-storybook. Ada flies with drifting movement and a damped aim stick, docks and uses objects through
-one contextual Use action, and fights with a weapon roster, ammunition and an ore-fuelled shield.
-Maps, markers and Penny's sensing point her at targets; currents, asteroid fields and fixed galaxy
-geography shape each flight. The Pause, Menu and map screens share Back and Close rules, and flights
-persist across launches. Difficulty, rewards and prices follow route position, and numeric values
-are provisional tuning.
-
-Reference: [rules](../../gameplay/rules.md), [unified target markers](../../gameplay/marker-design.md), [scan feedback](../../gameplay/scan-feedback.md).
+See [Version one rules](../../gameplay/rules.md) for the chapter route, flight,
+interactions and persistence, and [Quests](../../gameplay/quests.md) for markers
+and scan feedback.
 
 ## Work items
 

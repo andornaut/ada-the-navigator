@@ -1,11 +1,7 @@
 # Ships and enemies
 
-Ada and enemies share one movement model, hardpoints and weapon rules. Each galaxy has its own
-roster of drones, frigates and capitals with per-archetype weapon signatures and part health.
-Enemies choose behaviours from a shared library, pursue and return home by explicit rules, and
-appear in staged and ambient encounters across geographic regions.
-
-Reference: [ships](../../gameplay/ships.md), [enemies](../../gameplay/enemies.md).
+See [Ships](../../gameplay/ships.md) for physics, rosters and
+[enemy behavior](../../gameplay/ships.md#enemy-rule-interface).
 
 ## Work items
 

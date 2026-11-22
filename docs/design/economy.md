@@ -1,8 +1,7 @@
 # Economy
 
-Stardust is the one currency. Ada earns it from enemies, asteroids, discovery caches and jobs, and spends it at stations on weapons, upgrades, ammunition, paint and community projects. Asteroids also yield ore for the shield. Each station shop has an Exchange tab to buy and sell ore, and detail cards for its goods. Prices and rates follow route position and are provisional; pacing validation stays open.
-
-Reference: [economy](../../gameplay/economy.md).
+See [Economy](../../gameplay/economy.md) for resources, station services,
+prices and pacing.
 
 ## Work items
 
