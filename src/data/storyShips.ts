@@ -34,13 +34,13 @@ export const STORY_SHIP_CRAFT: Readonly<Record<StoryShipId, string>> = {
  */
 export const MOORING_BUOY = {
   displayScale: 0.4375,
-  frame: { height: 80, width: 96 },
+  frame: { height: 96, width: 96 },
   moorings: {
-    back: { outward: [0.534, -0.845], x: 61.019, y: 24.409 },
-    left: { outward: [-1, 0], x: 10.033, y: 45 },
-    right: { outward: [1, 0], x: 85.967, y: 45 },
+    back: { outward: [0.534, -0.845], x: 61.019, y: 42.409 },
+    left: { outward: [-1, 0], x: 10.033, y: 63 },
+    right: { outward: [1, 0], x: 85.967, y: 63 },
   },
-  pivot: { x: 0.5, y: 0.5625 },
+  pivot: { x: 0.5, y: 0.65625 },
 } as const;
 
 /**
