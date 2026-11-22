@@ -50,6 +50,7 @@ function harness(required?: () => boolean) {
   const sandbox = createContext({
     CONTROL_KEYS: new Set(["KeyW", "Space"]),
     Element,
+    HTMLElement: Element,
     actionRoot,
     backStack: { anyOpen: () => false, back },
     coarsePointer: () => true,
@@ -58,11 +59,16 @@ function harness(required?: () => boolean) {
     ),
     desktop,
     desktopBinding: { active: () => false, touchActive: () => false },
-    exitButton: {},
+    exitAction: {
+      activate() {
+        exit();
+        return true;
+      },
+    },
     menuContext: "start",
     modalOpen: () => false,
     openNavigation: navigation,
-    options: { exit: { onExit: exit }, requiredReady: required },
+    options: { requiredReady: required },
     pause: { openContextQuests: vi.fn() },
     state,
     weapons,

@@ -4,11 +4,14 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { PHONE_EVENTS } from "../pwa/events.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "../ui/actionBinding.ts";
+import { createBackStack, pressBack } from "../ui/backStack.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
+import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings.ts";
 
 const source = ts.createSourceFile(
   "controls.ts",
@@ -19,6 +22,8 @@ const source = ts.createSourceFile(
 function actualLeaves(): string {
   let statements: readonly ts.Statement[] = [];
   let disposal: ts.MethodDeclaration | undefined;
+  let updateExit: ts.MethodDeclaration | undefined;
+  let updateContext: ts.Statement | undefined;
   const visit = (node: ts.Node) => {
     if (ts.isFunctionDeclaration(node) && node.name?.text === "createControls") {
       statements = node.body!.statements;
@@ -29,9 +34,12 @@ function actualLeaves(): string {
       node.initializer &&
       ts.isObjectLiteralExpression(node.initializer)
     ) {
-      disposal = node.initializer.properties.find(
-        (p) => ts.isMethodDeclaration(p) && p.name.getText(source) === "dispose",
-      ) as ts.MethodDeclaration;
+      const methods = node.initializer.properties.filter(ts.isMethodDeclaration);
+      disposal = methods.find((method) => method.name.getText(source) === "dispose");
+      updateExit = methods.find((method) => method.name.getText(source) === "setExitButton");
+      updateContext = methods
+        .find((method) => method.name.getText(source) === "setPause")
+        ?.body?.statements.find((line) => line.getText(source).startsWith("menuContext ="));
     }
     ts.forEachChild(node, visit);
   };
@@ -50,18 +58,46 @@ function actualLeaves(): string {
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit") ||
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
   );
+  const keys = ["requiredReady", "menuContext", "onBack", "keyDown"].map((name) => {
+    const statement = statements.find((node) => variable(node, name));
+    if (!statement) {
+      throw Error(`Missing actual Controls declaration ${name}`);
+    }
+    return statement.getText(source);
+  });
+  const listen = [
+    'window.addEventListener("keydown", keyDown);',
+    "window.addEventListener(PHONE_EVENTS.backPressed, onBack);",
+  ];
+  const listeners = statements.filter((node) => listen.includes(node.getText(source)));
   const cleanup =
     disposal?.body?.statements.filter((n) =>
-      ["achievementsAction.dispose();", "exitAction?.dispose();"].includes(n.getText(source)),
+      [
+        "achievementsAction.dispose();",
+        "exitAction?.dispose();",
+        ...listen.map((statement) => statement.replace("addEventListener", "removeEventListener")),
+      ].includes(n.getText(source)),
     ) ?? [];
-  if (first < 0 || last < first || exit.length !== 4 || cleanup.length !== 2) {
-    throw Error("Missing actual top-button construction or owned disposal");
+  if (
+    first < 0 ||
+    last < first ||
+    exit.length !== 4 ||
+    cleanup.length !== 4 ||
+    listeners.length !== 2 ||
+    !updateExit ||
+    !updateContext
+  ) {
+    throw Error("Missing actual top-button construction, listener or owned disposal");
   }
   return [
     "let disposed = false;",
     ...statements.slice(first, last + 1).map((n) => n.getText(source)),
     ...exit.map((n) => n.getText(source)),
-    "({achievementsButton, exitButton, dispose(){ disposed = true;",
+    ...keys,
+    ...listeners.map((n) => n.getText(source)),
+    `({achievementsButton, exitButton, ${updateExit.getText(source)}, updateContext(view) {
+      ${updateContext.getText(source)}
+    }, dispose(){ disposed = true;`,
     ...cleanup.map((n) => n.getText(source)),
     "}});",
   ].join("\n");
@@ -75,9 +111,11 @@ class Element extends EventTarget {
   readonly dataset: Record<string, string> = {};
   readonly attributes = new Map<string, string>();
   readonly ownerDocument: FixtureDocument;
-  constructor(document: FixtureDocument) {
+  readonly tag: string;
+  constructor(document: FixtureDocument, tag = "div") {
     super();
     this.ownerDocument = document;
+    this.tag = tag;
   }
   get isConnected(): boolean {
     return this.parentElement?.isConnected ?? this.connected;
@@ -99,9 +137,22 @@ class Element extends EventTarget {
       (node instanceof Element && Boolean(node.parentElement && this.contains(node.parentElement)))
     );
   }
+  get isContentEditable(): boolean {
+    const editable = this.getAttribute("contenteditable");
+    if (editable === "false") {
+      return false;
+    }
+    return (
+      editable === "" ||
+      editable === "true" ||
+      editable === "plaintext-only" ||
+      (this.parentElement?.isContentEditable ?? false)
+    );
+  }
   closest(selector: string): Element | null {
     return (selector.includes("[hidden]") && this.hidden) ||
-      (selector.includes("[inert]") && this.inert)
+      (selector.includes("[inert]") && this.inert) ||
+      selector.split(",").includes(this.tag)
       ? this
       : (this.parentElement?.closest(selector) ?? null);
   }
@@ -114,6 +165,13 @@ class Element extends EventTarget {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
+  toggleAttribute(name: string, value: boolean) {
+    if (value) {
+      this.attributes.set(name, "");
+    } else {
+      this.attributes.delete(name);
+    }
+  }
 }
 class FixtureDocument extends EventTarget {
   hidden = false;
@@ -124,8 +182,8 @@ class FixtureDocument extends EventTarget {
     performance: { now: () => Date.now() },
     setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
-  createElement() {
-    return new Element(this);
+  createElement(tag?: string) {
+    return new Element(this, tag);
   }
 }
 const stops: (() => void)[] = [];
@@ -160,26 +218,45 @@ function fixture(exit = true) {
   );
   stops.push(binding.dispose);
   const achievements = { open: vi.fn() };
+  const backStack = createBackStack();
+  const openNavigation = vi.fn();
   const options = {
     achievements: { title: "Achievements" },
+    requiredReady: () => ready,
     ...(exit ? { exit: { label: "Exit", onExit: vi.fn() } } : {}),
   };
   const value = runInContext(
     ts.transpileModule(actualLeaves(), { compilerOptions: { target: ts.ScriptTarget.ES2023 } })
       .outputText,
     createContext({
+      CONTROL_KEYS: new Set(),
+      EXIT_SHOWN_ATTRIBUTE,
+      Element,
+      HTMLElement: Element,
+      PHONE_EVENTS,
       SCROLL,
       achievements,
+      backStack,
       bindAdaAction,
       document,
       inCurrentView,
+      openNavigation,
       options,
       // The Menu, which Exit follows in the root.
       pauseButton: openButton,
+      pressBack,
       readViewUnit,
       settings: { openButton, root },
+      state: { accepts: () => false },
+      window: document.defaultView,
     }),
-  ) as { achievementsButton: Element; exitButton?: Element; dispose: () => void };
+  ) as {
+    achievementsButton: Element;
+    exitButton?: Element;
+    dispose: () => void;
+    setExitButton(shown: boolean): void;
+    updateContext(view: { menuContext: "start" | "nonplay" }): void;
+  };
   stops.push(value.dispose);
   const event = (type: string, target: Element, detail = 1) => {
     const e = new Event(type, { cancelable: true });
@@ -215,13 +292,24 @@ function fixture(exit = true) {
     document.dispatchEvent(event("pointerup", target));
     return click(target, 1);
   };
+  const key = (code: string, target = root, repeat = false) => {
+    const e = event("keydown", target, 0);
+    Object.defineProperties(e, { code: { value: code }, repeat: { value: repeat } });
+    document.defaultView.dispatchEvent(e);
+    return e;
+  };
   return {
     ...value,
     achievements,
+    backStack,
     click,
+    document,
     down,
     host,
+    key,
+    openNavigation,
     options,
+    phoneBack: () => document.defaultView.dispatchEvent(new Event(PHONE_EVENTS.backPressed)),
     root,
     setReady(value: boolean) {
       ready = value;
@@ -302,4 +390,121 @@ it("retains an absent optional Exit without constructing a control or binding", 
   expect(resolveAdaHoldAction(f.host, f.achievementsButton)).not.toBeNull();
   f.dispose();
   expect(resolveAdaHoldAction(f.host, f.achievementsButton)).toBeNull();
+});
+
+it("routes bare eligible Start Q once and leaves Escape and phone Back with their own listener", () => {
+  const f = fixture();
+  const exit = f.options.exit!.onExit;
+  const button = f.exitButton!;
+  f.setExitButton(true);
+  f.updateContext({ menuContext: "start" });
+  expect(f.key("KeyQ", button, true).defaultPrevented).toBe(false);
+  for (const tag of ["input", "textarea", "select"]) {
+    const editable = f.document.createElement(tag);
+    f.root.append(editable);
+    expect(f.key("KeyQ", editable).defaultPrevented).toBe(false);
+  }
+  expect(exit).not.toHaveBeenCalled();
+  expect(f.key("KeyQ", button).defaultPrevented).toBe(true);
+  expect(exit).toHaveBeenCalledOnce();
+  expect(f.key("Enter", button).defaultPrevented).toBe(false);
+  f.click(button);
+  expect(exit).toHaveBeenCalledTimes(2);
+  expect(f.key("Escape").defaultPrevented).toBe(true);
+  f.phoneBack();
+  expect(f.openNavigation).toHaveBeenCalledTimes(2);
+  expect(exit).toHaveBeenCalledTimes(2);
+
+  f.dispose();
+  expect(f.key("KeyQ", button).defaultPrevented).toBe(false);
+  expect(f.key("Escape").defaultPrevented).toBe(false);
+  f.phoneBack();
+  expect(f.openNavigation).toHaveBeenCalledTimes(2);
+  f.click(button);
+  expect(exit).toHaveBeenCalledTimes(2);
+});
+
+it("keeps Q fenced by runtime capability, readiness, menu context and the registered back stack", () => {
+  const absent = fixture(false);
+  absent.updateContext({ menuContext: "start" });
+  expect(absent.key("KeyQ").defaultPrevented).toBe(false);
+  const f = fixture();
+  const exit = f.options.exit!.onExit;
+  f.setExitButton(true);
+  f.updateContext({ menuContext: "nonplay" });
+  expect(f.key("KeyQ").defaultPrevented).toBe(false);
+  f.updateContext({ menuContext: "start" });
+  f.setReady(false);
+  expect(f.key("KeyQ").defaultPrevented).toBe(false);
+  f.click(f.exitButton!);
+  expect(exit).not.toHaveBeenCalled();
+  f.setReady(true);
+  const back = vi.fn();
+  const leave = f.backStack.register({ back, isOpen: () => true });
+  expect(f.key("KeyQ").defaultPrevented).toBe(false);
+  f.phoneBack();
+  expect(back).toHaveBeenCalledOnce();
+  expect(exit).not.toHaveBeenCalled();
+  leave();
+  expect(f.key("KeyQ").defaultPrevented).toBe(true);
+  expect(exit).toHaveBeenCalledOnce();
+});
+
+it.each(["hidden", "inert", "disabled", "detached", "background", "covered"] as const)(
+  "bare Start Exit contract refuses Q while its native action is %s",
+  (kind) => {
+    const f = fixture();
+    const button = f.exitButton!;
+    const exit = f.options.exit!.onExit;
+    f.setExitButton(kind !== "hidden");
+    f.updateContext({ menuContext: "start" });
+    let leave: (() => void) | undefined;
+    if (kind === "inert" || kind === "disabled") {
+      button[kind] = true;
+    } else if (kind === "background") {
+      f.document.hidden = true;
+    } else if (kind === "detached") {
+      button.parentElement = null;
+    } else if (kind === "covered") {
+      const cover = f.document.createElement();
+      f.root.append(cover);
+      leave = enterPressView(f.host, cover as unknown as HTMLElement);
+    }
+    try {
+      f.click(button);
+      expect(exit).not.toHaveBeenCalled();
+      const key = f.key("KeyQ");
+      expect({ calls: exit.mock.calls.length, prevented: key.defaultPrevented }).toEqual({
+        calls: 0,
+        prevented: false,
+      });
+    } finally {
+      leave?.();
+    }
+  },
+);
+
+it("bare Start Exit contract refuses Q from editable content", () => {
+  const f = fixture();
+  f.setExitButton(true);
+  f.updateContext({ menuContext: "start" });
+  const edit = f.document.createElement();
+  edit.setAttribute("contenteditable", "true");
+  const target = f.document.createElement("span");
+  f.root.append(edit);
+  edit.append(target);
+  for (const contentEditable of ["true", "plaintext-only"]) {
+    edit.setAttribute("contenteditable", contentEditable);
+    const key = f.key("KeyQ", target);
+    expect({
+      calls: f.options.exit!.onExit.mock.calls.length,
+      prevented: key.defaultPrevented,
+    }).toEqual({
+      calls: 0,
+      prevented: false,
+    });
+  }
+  target.setAttribute("contenteditable", "false");
+  expect(f.key("KeyQ", target).defaultPrevented).toBe(true);
+  expect(f.options.exit!.onExit).toHaveBeenCalledOnce();
 });

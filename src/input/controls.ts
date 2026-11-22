@@ -819,13 +819,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (
       event.code === "KeyQ" &&
       !event.repeat &&
-      exitButton &&
       menuContext === "start" &&
       !backStack.anyOpen() &&
-      !(event.target instanceof Element && event.target.closest("input,textarea,select"))
+      !(
+        event.target instanceof Element &&
+        (event.target.closest("input,textarea,select") ||
+          (event.target instanceof HTMLElement && event.target.isContentEditable))
+      ) &&
+      exitAction?.activate()
     ) {
       event.preventDefault();
-      options.exit?.onExit();
       return;
     }
     if (event.code === "Escape") {
