@@ -1286,10 +1286,7 @@ it("gives each board heading one spoken Stardust hint", () => {
     `${f.labels.jobs} (${f.labels.questReward} Stardust)`,
     `${f.labels.communityProjects} (Contribution Stardust)`,
   ]);
-  expect(hints.map((hint) => hint.getAttribute("aria-hidden"))).toEqual([
-    "true",
-    "true",
-  ]);
+  expect(hints.map((hint) => hint.getAttribute("aria-hidden"))).toEqual(["true", "true"]);
 });
 
 function expectContribution(detail: StationFixtureNode, visible: number): void {
