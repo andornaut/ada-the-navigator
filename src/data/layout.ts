@@ -98,13 +98,11 @@ export const CARD_SLICE = 2;
 export const FRAME_LINE = 1;
 
 // Art's focus ring outside the drawn face in every state: a 1 ink fringe, a 2 cream band, then
-// ink out to the 4 outset. The selection ring is a 2 band 2 outside the face, under focus.
+// ink out to the 4 outset.
 export const FOCUS_RING = {
   band: 2,
   fringe: 1,
   outset: 4,
-  selectionBand: 2,
-  selectionOutset: 2,
 } as const;
 
 // Price pills and the HUD Stardust pill: compact height, radius 4, 8 side padding; the count is a
@@ -187,8 +185,6 @@ export const SHOP_ROW = {
   // Price pills: a PILL with the 16 icon-stardust and the price as a label.
   pill: { icon: 16, pill: PILL },
   rowGap: STACK_BUTTON_GAP,
-  // The In use row's selection ring: a band, its offset outside the drawn row.
-  selection: { band: FOCUS_RING.selectionBand, outset: FOCUS_RING.selectionOutset },
   // The weapon upgrade composite: the 20 weapon glyph at (0, 4), the 12 badge at (12, 0).
   upgrade: { badge: 12, badgeX: 12, weaponY: 4 },
   well: SHOP_WELL,

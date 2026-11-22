@@ -168,18 +168,16 @@ describe("shop style", () => {
     expect(rule(".ada-controls .ada-shop-row[data-state=unaffordable]")).toContain("color:#a6a2b8");
   });
 
-  it("keeps the Shop focus and installed cues inside the existing tile frame", () => {
-    const shop = ".ada-controls [data-shop-stock] .ada-shop-row";
-    expect(STATION_STYLE).toContain(`${shop}:focus-visible{`);
+  it("keeps task and stock focus and current-state cues inside the shared tile", () => {
+    const tile = ".ada-controls .ada-shop-row";
+    expect(STATION_STYLE).toContain(`${tile}:focus-visible{`);
     expect(STATION_STYLE).toContain("outline:none;\n  box-shadow:none");
-    expect(STATION_STYLE).toContain(`${shop}[data-state=inUse]:focus-visible`);
-    expect(STATION_STYLE).toContain(`${shop}[data-state=unaffordable]:focus-visible`);
-    expect(STATION_STYLE).toContain(`${shop}:is([data-state=inUse],:focus-visible):where(`);
+    expect(STATION_STYLE).toContain(`${tile}[data-state=inUse]:focus-visible`);
+    expect(STATION_STYLE).toContain(`${tile}[data-state=unaffordable]:focus-visible`);
+    expect(STATION_STYLE).toContain(`${tile}:is([data-state=inUse],:focus-visible):where(`);
     expect(STATION_STYLE).toContain("background-clip:padding-box");
-    expect(STATION_STYLE).not.toContain(".ada-shop-row[data-state=inUse]::after");
-    expect(STATION_STYLE).toContain(
-      ".ada-shop-row:not(:where([data-shop-stock] *))[data-state=inUse]::after",
-    );
+    expect(STATION_STYLE).not.toMatch(/[.]ada-shop-row[^{}]*::after/u);
+    expect(STATION_STYLE).not.toMatch(/[.]ada-shop-row[^{}]*\{[^}]*outline-offset/u);
   });
 
   it("uses each job type's sheet and compact board rows", () => {

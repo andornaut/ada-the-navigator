@@ -35,13 +35,6 @@ describe("shop item row", () => {
     expect(SHOP_ROW.check).toEqual({ height: 8, width: 12 });
   });
 
-  it("rings the paint in use with the selection ring", () => {
-    expect(SHOP_ROW.selection).toEqual({
-      band: FOCUS_RING.selectionBand,
-      outset: FOCUS_RING.selectionOutset,
-    });
-  });
-
   it("measures a row as inset, well, gap, name, gap, slot and inset", () => {
     expect(shopRowWidth(120, 70)).toBe(8 + 36 + 8 + 120 + 8 + 70 + 8);
   });

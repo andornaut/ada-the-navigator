@@ -1,4 +1,4 @@
-import { BUTTON_FACE, FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
+import { BUTTON_FACE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
@@ -21,12 +21,10 @@ const PRESSED_BOTTOM = `calc(${units(TEXT_BUTTON.lipHeight - TEXT_BUTTON.pressed
   top,
 )} - ${slice(bottom)})`;
 const FLAT_TOP = `calc(${slice(bottom)} - ${slice(top)})`;
-const RING_OUT = SHOP_ROW.selection.outset + SHOP_ROW.selection.band;
-const STOCK_ROW = ".ada-controls [data-shop-stock] .ada-shop-row";
-const STOCK_FACE = `${STOCK_ROW}:is([data-state=inUse],:focus-visible):where(
+const TILE_ROW = ".ada-controls .ada-shop-row";
+const TILE_FACE = `${TILE_ROW}:is([data-state=inUse],:focus-visible):where(
   :not(:active),[data-state=unaffordable]
 )`;
-const OTHER_ROW = ".ada-controls .ada-shop-row:not(:where([data-shop-stock] *))";
 // A glyph size at the well's scale: 1 in rows, CONFIRM_ITEM.glyphScale in the confirm.
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
@@ -398,70 +396,57 @@ export const STATION_STYLE = `
   border-image-source:var(${buttonProperty("ui-button-tile", "disabled")});
   cursor:default
 }
-/* The held Job keeps its existing decoration. */
-${OTHER_ROW}[data-state=inUse]::after{
-  content:"";
-  position:absolute;
-  top:calc(${units(-RING_OUT)} - ${slice(top)});
-  right:calc(${units(-RING_OUT)} - ${slice(right)});
-  bottom:calc(${units(-RING_OUT)} - ${slice(bottom)});
-  left:calc(${units(-RING_OUT)} - ${slice(left)});
-  border:${units(SHOP_ROW.selection.band)} solid #ead4aa;
-  pointer-events:none
+/* Colour the face for focus, a held job or installed paint. Keep the tile's edges, lip and pressed art. */
+${TILE_ROW}[data-state=inUse]{
+  --ada-tile-state-face:#262b44;
+  --ada-tile-state-ink:${TEXT_TOKENS.label}
 }
-${OTHER_ROW}:focus-visible{${FOCUS_STYLE}
-}
-/* Colour the Shop face and keep the tile's edges, lip and pressed art. */
-${STOCK_ROW}[data-state=inUse]{
-  --ada-stock-face:#262b44;
-  --ada-stock-ink:${TEXT_TOKENS.label}
-}
-${STOCK_ROW}:focus-visible{
-  --ada-stock-face:${TEXT_TOKENS.label};
-  --ada-stock-ink:${TEXT_TOKENS.buttonLabel};
+${TILE_ROW}:focus-visible{
+  --ada-tile-state-face:${TEXT_TOKENS.label};
+  --ada-tile-state-ink:${TEXT_TOKENS.buttonLabel};
   outline:none;
   box-shadow:none
 }
-${STOCK_ROW}[data-state=inUse]:focus-visible{
-  --ada-stock-face:${TEXT_TOKENS.supporting}
+${TILE_ROW}[data-state=inUse]:focus-visible{
+  --ada-tile-state-face:${TEXT_TOKENS.supporting}
 }
-${STOCK_ROW}[data-state=unaffordable]:focus-visible{
-  --ada-stock-face:#514b68;
-  --ada-stock-ink:${TEXT_TOKENS.title}
+${TILE_ROW}[data-state=unaffordable]:focus-visible{
+  --ada-tile-state-face:#514b68;
+  --ada-tile-state-ink:${TEXT_TOKENS.title}
 }
-${STOCK_FACE}{
-  background-color:var(--ada-stock-face);
+${TILE_FACE}{
+  background-color:var(--ada-tile-state-face);
   background-clip:padding-box;
   border-image-slice:${TILE_SLICE}
 }
-${STOCK_FACE} :is(.ada-shop-name,.ada-shop-level,.ada-owned){
-  color:var(--ada-stock-ink)
+${TILE_FACE} :is(.ada-shop-name,.ada-shop-level,.ada-owned){
+  color:var(--ada-tile-state-ink)
 }
-${STOCK_ROW}[data-ui-refusal-red] :is(.ada-shop-name,.ada-shop-level){
+${TILE_ROW}[data-ui-refusal-red] :is(.ada-shop-name,.ada-shop-level){
   color:inherit
 }
-${STOCK_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
+${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   color:${TEXT_TOKENS.title}
 }
 @media (forced-colors:active){
-  ${STOCK_FACE}{
+  ${TILE_FACE}{
     forced-color-adjust:none
   }
-  ${STOCK_ROW}[data-state=inUse]{
-    --ada-stock-face:ButtonText;
-    --ada-stock-ink:ButtonFace
+  ${TILE_ROW}[data-state=inUse]{
+    --ada-tile-state-face:ButtonText;
+    --ada-tile-state-ink:ButtonFace
   }
-  ${STOCK_ROW}:focus-visible{
-    --ada-stock-face:Highlight;
-    --ada-stock-ink:HighlightText
+  ${TILE_ROW}:focus-visible{
+    --ada-tile-state-face:Highlight;
+    --ada-tile-state-ink:HighlightText
   }
-  ${STOCK_ROW}[data-state=inUse]:focus-visible{
-    --ada-stock-face:HighlightText;
-    --ada-stock-ink:Highlight
+  ${TILE_ROW}[data-state=inUse]:focus-visible{
+    --ada-tile-state-face:HighlightText;
+    --ada-tile-state-ink:Highlight
   }
-  ${STOCK_ROW}[data-state=unaffordable]:focus-visible{
-    --ada-stock-face:color-mix(in srgb,ButtonFace 75%,ButtonText);
-    --ada-stock-ink:ButtonText
+  ${TILE_ROW}[data-state=unaffordable]:focus-visible{
+    --ada-tile-state-face:color-mix(in srgb,ButtonFace 75%,ButtonText);
+    --ada-tile-state-ink:ButtonText
   }
 }
 
