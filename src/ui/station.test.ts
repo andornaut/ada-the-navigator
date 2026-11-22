@@ -986,7 +986,7 @@ function stationList(kind: "shop" | "jobs") {
   const calls = () =>
     kind === "shop"
       ? f.request.mock.calls
-      : f.native.get("confirm-cancel-x")!.frame.hidden
+      : f.native.get("confirm-cancel-x")!.frame.closest("[hidden]")
         ? []
         : [[id]];
   const rect = row.getBoundingClientRect();
