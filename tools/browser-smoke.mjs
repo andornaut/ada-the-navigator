@@ -6390,8 +6390,8 @@ try {
   events.checks.push("A browser tab shows no Exit disc or Menu Exit, and Q stays on the game");
   // Exit in an installed app window that can close: desktop Chromium's app window at 1280x720 and
   // Chrome's Android app at 720x360 with phone insets, each emulated with an installed display
-  // mode, a close watcher and a counted window.close(). Exit shows at hudButtonTarget(0) and in the
-  // start Menu by label; the disc, the Menu entry and Q each close the window and never navigate.
+  // mode, a close watcher and a counted window.close(). Exit shows at hudButtonTarget(0).
+  // The disc and Q close the window from bare Start and never navigate.
   const ANDROID_CHROME =
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
     "Chrome/142.0 Mobile Safari/537.36";
@@ -6534,16 +6534,14 @@ try {
     await openMenu();
     assert.deepEqual(
       await menuActionIds(),
-      ["menu-achievements", "menu-exit", "menu-settings", "menu-close"],
-      `${name}: the installed app's start Menu holds Achievements, Exit, Settings, then Close`,
+      ["menu-achievements", "menu-settings", "menu-close"],
+      `${name}: the installed app's start Menu holds Achievements, Settings, then Close`,
     );
     await page.screenshot({ path: `${output}/start-menu-app-${name}.png` });
     const closes = [];
-    await menuCard().locator('[data-action="menu-exit"]').click();
+    await page.keyboard.press("KeyQ");
     closes.push(await page.evaluate(() => window.adaClosed));
-    if (await menuCard().isVisible()) {
-      await closeMenu();
-    }
+    await closeMenu();
     await exitDisc.click();
     closes.push(await page.evaluate(() => window.adaClosed));
     await page.keyboard.press("KeyQ");
@@ -6552,8 +6550,8 @@ try {
     appProofs[name] = { ...shot, closes, exitPlace, menuPlace, order, url: page.url() };
     assert.deepEqual(
       closes,
-      [1, 2, 3],
-      `${name}: the Menu's Exit, the Exit disc and Q each close the installed app's window`,
+      [0, 1, 2],
+      `${name}: Q stays within Menu. Exit and Q each close from bare Start`,
     );
     assert.equal(page.url(), "http://ada-preview:4173/play/", `${name}: Exit never navigates`);
     await appContext.close();
@@ -6563,8 +6561,8 @@ try {
   await appWindows.reduce((prior, item) => prior.then(() => appWindowAt(item)), Promise.resolve());
   save("exit-app-proof.json", appProofs);
   events.checks.push(
-    "An installed app window that can close shows Exit at hudButtonTarget(0) and in the start " +
-      "Menu by label; Exit and Q close the window and never navigate",
+    "A closable installed app shows Exit at hudButtonTarget(0). Its Menu has no Exit. " +
+      "The disc and Q close from bare Start without navigating",
   );
   page = await crashContext.newPage();
   page.on("console", (message) => {

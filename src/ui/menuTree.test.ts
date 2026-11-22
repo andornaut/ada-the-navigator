@@ -58,38 +58,12 @@ describe("production Menu tree", () => {
   });
 });
 
-it("offers the capability-qualified Exit only on Start, sorted by label before primary Close", () => {
-  const tree = menuTree({ ...data, context: "start", exitLabel: "Exit" });
-  expect(tree.slots!.actions!.map((node) => node.key)).toEqual([
-    "achievements",
-    "exit",
-    "settings",
-    "close",
-  ]);
-  expect(tree.slots!.actions![1]).toEqual({
-    component: "button",
-    key: "exit",
-    kind: "component",
-    props: { actionId: "menu-exit", label: "Exit", role: "secondary" },
-  });
-  expect(
-    menuTree({ ...data, context: "nonplay", exitLabel: "Exit" }).slots!.actions!.some(
-      (node) => node.key === "exit",
-    ),
-  ).toBe(false);
-  expect(
-    menuTree({ ...data, context: "start" }).slots!.actions!.some((node) => node.key === "exit"),
-  ).toBe(false);
-});
-
 it("sorts the actions by label, then Back to title and primary Close", () => {
   const labels = { achievements: "Trophies", backToTitle: "Accueil", settings: "Options" };
   expect(
     menuTree({ ...data, context: "nonplay", labels }).slots!.actions!.map((node) => node.key),
   ).toEqual(["settings", "achievements", "backToTitle", "close"]);
   expect(
-    menuTree({ ...data, context: "start", exitLabel: "Quitter", labels }).slots!.actions!.map(
-      (node) => node.key,
-    ),
-  ).toEqual(["settings", "exit", "achievements", "close"]);
+    menuTree({ ...data, context: "start", labels }).slots!.actions!.map((node) => node.key),
+  ).toEqual(["settings", "achievements", "close"]);
 });

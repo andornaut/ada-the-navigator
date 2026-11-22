@@ -230,7 +230,7 @@ afterEach(() => {
   fixture.corruptFactory = false;
 });
 
-function setup(exit?: { label: string; onExit: () => void }) {
+function setup() {
   const doc = Object.assign(new EventTarget(), {
     createElement: (tag: string) =>
       Object.assign(new fixture.Node(), { tagName: tag.toUpperCase() }),
@@ -265,7 +265,6 @@ function setup(exit?: { label: string; onExit: () => void }) {
   const onOpenChange = vi.fn();
   const menu = createMenuCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
-    ...(exit ? { exit } : {}),
     labels: { achievements: "Achievements", backToTitle: "Back to title", settings: "Settings" },
     onAction,
     onOpenChange,
@@ -532,23 +531,22 @@ it("keeps a child-covered Menu painted but semantically closed and restores the 
   expect(modal.getAttribute("inert")).toBeNull();
 });
 
-it("uses the original Exit callback from the actual Start action and retires it on rebuild/disposal", () => {
-  const onExit = vi.fn();
-  const { menu, rows } = setup({ label: "Exit", onExit });
+it("rebuilds Start with only Achievements, Settings and Close", () => {
+  const { menu, onAction, rows } = setup();
+  menu.open();
+  expect(rows().map((node) => node.textContent)).toEqual([
+    "Achievements",
+    "Settings",
+    "Back to title",
+    "Close",
+  ]);
+  const stale = rows()[2]!;
+  menu.close();
   menu.setContext("start");
   menu.open();
-  const exit = rows().find((node) => node.textContent === "Exit")!;
-  exit.dispatchEvent(new Event("click"));
-  expect(onExit).toHaveBeenCalledOnce();
-  menu.close();
-  exit.dispatchEvent(new Event("click"));
-  expect(onExit).toHaveBeenCalledOnce();
-  menu.setContext("nonplay");
-  menu.open();
-  expect(rows().some((node) => node.textContent === "Exit")).toBe(false);
-  menu.dispose();
-  exit.dispatchEvent(new Event("click"));
-  expect(onExit).toHaveBeenCalledOnce();
+  expect(rows().map((node) => node.textContent)).toEqual(["Achievements", "Settings", "Close"]);
+  stale.dispatchEvent(new Event("click"));
+  expect(onAction).not.toHaveBeenCalled();
 });
 
 it("rejects an unregistered hidden disabled control in the completed Menu factory", () => {
