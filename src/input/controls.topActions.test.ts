@@ -64,6 +64,12 @@ function actualLeaves(): string {
       (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
   );
   const use = statements.find((node) => variable(node, "useAction"));
+  const updateBack = statements.find(
+    (node) =>
+      ts.isIfStatement(node) &&
+      node.expression.getText(source) === "update" &&
+      node.thenStatement.getText(source).includes("backStack.register("),
+  );
   const audits = statements.filter(
     (node) =>
       ts.isForOfStatement(node) && node.getText(source).includes("assertAdaActionBindings("),
@@ -87,6 +93,7 @@ function actualLeaves(): string {
         "exitAction?.dispose();",
         "exitPose?.dispose();",
         "useAction.dispose();",
+        "for (const leave of leaveBack) {\n        leave();\n      }",
         ...listen.map((statement) => statement.replace("addEventListener", "removeEventListener")),
       ].includes(n.getText(source)),
     ) ?? [];
@@ -95,7 +102,8 @@ function actualLeaves(): string {
     last < first ||
     exit.length !== 5 ||
     !use ||
-    cleanup.length !== 6 ||
+    !updateBack ||
+    cleanup.length !== 7 ||
     listeners.length !== 2 ||
     !updateExit ||
     !updateContext
@@ -108,6 +116,7 @@ function actualLeaves(): string {
     ...exit.map((n) => n.getText(source)),
     use.getText(source),
     ...audits.map((n) => n.getText(source)),
+    updateBack.getText(source),
     ...keys,
     ...listeners.map((n) => n.getText(source)),
     `({achievementsButton, exitButton, ${updateExit.getText(source)}, updateContext(view) {
@@ -224,7 +233,11 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-function fixture(exit = true, missing?: "achievements" | "exit" | "settings" | "use") {
+function fixture(
+  exit = true,
+  missing?: "achievements" | "exit" | "settings" | "use",
+  update?: { defer(): void; isOpen(): boolean },
+) {
   vi.useFakeTimers();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const document = new FixtureDocument(),
@@ -293,6 +306,7 @@ function fixture(exit = true, missing?: "achievements" | "exit" | "settings" | "
       bindAdaAction: register,
       document,
       inCurrentView,
+      leaveBack: [],
       mountNavigationPose: () => ({ dispose() {}, press() {}, rest() {} }),
       openNavigation,
       options,
@@ -302,6 +316,7 @@ function fixture(exit = true, missing?: "achievements" | "exit" | "settings" | "
       readViewUnit,
       settings: { openButton, root, useButton },
       state: { accepts: () => false },
+      update,
       window: document.defaultView,
     }),
   ) as {
@@ -488,6 +503,68 @@ it("routes bare eligible Start Q once and leaves Escape and phone Back with thei
   expect(f.openNavigation).toHaveBeenCalledTimes(2);
   f.click(button);
   expect(exit).toHaveBeenCalledTimes(2);
+});
+
+it("fences phone Back on an empty stack until required resources are ready", () => {
+  const f = fixture();
+  f.setReady(false);
+  f.phoneBack();
+  expect(f.openNavigation).not.toHaveBeenCalled();
+
+  f.setReady(true);
+  f.phoneBack();
+  expect(f.openNavigation).toHaveBeenCalledOnce();
+});
+
+it("fences phone Back on an open stack, then restores focus one layer at a time", () => {
+  const f = fixture();
+  let parentOpen = true;
+  let focused: "child" | "parent" | "opener" = "child";
+  const defer = vi.fn(() => {
+    focused = "parent";
+  });
+  const parentBack = vi.fn(() => {
+    parentOpen = false;
+    focused = "opener";
+  });
+  f.backStack.register({ back: parentBack, isOpen: () => parentOpen });
+  f.backStack.register({ back: defer, isOpen: () => focused === "child" });
+
+  f.setReady(false);
+  f.phoneBack();
+  expect(defer).not.toHaveBeenCalled();
+  expect(parentBack).not.toHaveBeenCalled();
+  expect(focused).toBe("child");
+  expect(f.openNavigation).not.toHaveBeenCalled();
+
+  f.setReady(true);
+  f.phoneBack();
+  expect(defer).toHaveBeenCalledOnce();
+  expect(parentBack).not.toHaveBeenCalled();
+  expect(focused).toBe("parent");
+  f.phoneBack();
+  expect(defer).toHaveBeenCalledOnce();
+  expect(parentBack).toHaveBeenCalledOnce();
+  expect(focused).toBe("opener");
+  expect(f.openNavigation).not.toHaveBeenCalled();
+});
+
+it("fences phone Back on an optional update and still defers it like Cancel once ready", () => {
+  let open = true;
+  const defer = vi.fn(() => {
+    open = false;
+  });
+  const f = fixture(true, undefined, { defer, isOpen: () => open });
+  f.setReady(false);
+  f.phoneBack();
+  expect(defer).not.toHaveBeenCalled();
+  expect(open).toBe(true);
+
+  f.setReady(true);
+  f.phoneBack();
+  expect(defer).toHaveBeenCalledOnce();
+  expect(open).toBe(false);
+  expect(f.openNavigation).not.toHaveBeenCalled();
 });
 
 it("keeps Q fenced by runtime capability, readiness, menu context and the registered back stack", () => {

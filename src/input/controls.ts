@@ -814,6 +814,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   // Back with nothing open opens the Paused card where it opens.
   const onBack = () => {
+    if (!requiredReady()) {
+      return;
+    }
     pressBack(backStack, true, openNavigation);
   };
   const reset = () => {
