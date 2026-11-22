@@ -1062,7 +1062,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       chunks.push(chunk);
     }
     measure.remove();
-    jobsPage = fitPages({ ...jobsCard, body: jobsPane }, jobList, jobsPager, chunks, jobsPage);
     projectsPane.hidden = !options.services()?.projects;
     const projects = projectsPane.hidden
       ? []
@@ -1071,7 +1070,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       audit(row);
     }
     projectList.replaceChildren(...projects);
-    audit(jobsCard.frame);
+    jobsPage = fitPages({ ...jobsCard, body: jobsPane }, jobList, jobsPager, chunks, jobsPage);
     for (const layout of previousLayouts) {
       layout.dispose();
     }
