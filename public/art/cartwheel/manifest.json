@@ -21013,10 +21013,10 @@
     {
       "id": "enemy-claim-hostileStation-0",
       "path": "/art/cartwheel/enemies/hostileStation-0.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
@@ -21029,10 +21029,10 @@
     {
       "id": "enemy-claim-hostileStation-1",
       "path": "/art/cartwheel/enemies/hostileStation-1.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
@@ -21045,10 +21045,10 @@
     {
       "id": "enemy-claim-hostileStation-2",
       "path": "/art/cartwheel/enemies/hostileStation-2.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
@@ -21061,10 +21061,10 @@
     {
       "id": "enemy-claim-hostileStation-3",
       "path": "/art/cartwheel/enemies/hostileStation-3.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
@@ -21077,10 +21077,10 @@
     {
       "id": "enemy-claim-hostileStation-4",
       "path": "/art/cartwheel/enemies/hostileStation-4.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
@@ -21093,10 +21093,10 @@
     {
       "id": "enemy-claim-hostileStation-5",
       "path": "/art/cartwheel/enemies/hostileStation-5.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
@@ -21109,10 +21109,10 @@
     {
       "id": "enemy-claim-hostileStation-6",
       "path": "/art/cartwheel/enemies/hostileStation-6.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
@@ -21125,10 +21125,10 @@
     {
       "id": "enemy-claim-hostileStation-7",
       "path": "/art/cartwheel/enemies/hostileStation-7.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
@@ -21141,10 +21141,10 @@
     {
       "id": "enemy-claim-hostileStation-8",
       "path": "/art/cartwheel/enemies/hostileStation-8.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
@@ -21157,10 +21157,10 @@
     {
       "id": "enemy-claim-hostileStation-9",
       "path": "/art/cartwheel/enemies/hostileStation-9.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
@@ -21173,10 +21173,10 @@
     {
       "id": "enemy-claim-hostileStation-10",
       "path": "/art/cartwheel/enemies/hostileStation-10.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
@@ -21189,10 +21189,10 @@
     {
       "id": "enemy-claim-hostileStation-11",
       "path": "/art/cartwheel/enemies/hostileStation-11.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
@@ -21205,10 +21205,10 @@
     {
       "id": "enemy-claim-hostileStation-12",
       "path": "/art/cartwheel/enemies/hostileStation-12.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
@@ -21221,10 +21221,10 @@
     {
       "id": "enemy-claim-hostileStation-13",
       "path": "/art/cartwheel/enemies/hostileStation-13.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
@@ -21237,10 +21237,10 @@
     {
       "id": "enemy-claim-hostileStation-14",
       "path": "/art/cartwheel/enemies/hostileStation-14.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
@@ -21253,10 +21253,10 @@
     {
       "id": "enemy-claim-hostileStation-15",
       "path": "/art/cartwheel/enemies/hostileStation-15.svg",
-      "width": 400,
-      "height": 400,
-      "displayWidth": 175,
-      "displayHeight": 175,
+      "width": 568,
+      "height": 568,
+      "displayWidth": 248.5,
+      "displayHeight": 248.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {

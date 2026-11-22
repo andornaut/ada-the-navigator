@@ -541,9 +541,17 @@ assets remain separate.
 The complete intact physical assembly spans 7 Ada source widths, from the
 canonical dimensions module. One source transform scales the hull, physical
 bases, fixed weapon tops, damaged/capped parts, origins and muzzle tips.
-All sixteen headings and turret aims fit frame 400 (display canvas 175).
-Raw frame anchors and top pivots, centred at frame/2 and scaled by 0.4375
-once, remain authoritative for runtime placement.
+The solid assembly is traced in the 400 px source frame. The hull export pads
+it to 568 frame px (248.5 logical px) for an articulated, non-solid perimeter
+field about 50% wider than the solid hull. The field is composited at 0.46
+opacity as one group so it stays below the 0.5 keyline and drawn-top cutoff,
+including where the strokes overlap.
+
+The SVG body and all absolute hull-space layout coordinates move by
+`(568 - 400) / 2 = 84` frame px per axis. The pivot stays centred and the
+draw scale stays 0.4375, so centred collision, anchors and muzzles retain
+their world positions. Top-local metadata, weapons and the empty jets file
+keep their original frames.
 
 Stable IDs `weapon-0` through `weapon-7` are all weapon bases. Canonical
 single-position tiers arm the numeric prefixes 6, 7 and 8 at route positions
