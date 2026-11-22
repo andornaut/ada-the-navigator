@@ -1,6 +1,6 @@
 // Drawing the in-world HUD: the Use callout, edge markers, indicators, feedback and keylines.
 // Functions over the scene's HudContext.
-import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Textures } from "phaser";
+import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Scenes, Textures } from "phaser";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
@@ -338,8 +338,9 @@ export function drawKeylines(
     }
   }
   scene.craftJetsDrawn.clear();
-  // Silhouettes no caller drew this frame, and no copy still draws, go.
   scene.silhouettes.sweep(
+    scene.rasters.scale,
+    scene.edgeInk ?? LIGHT_FIELD.ink,
     (key) =>
       scene.children.list.some(
         (child) => child instanceof GameObjects.Image && child.texture.key === key,
@@ -349,7 +350,7 @@ export function drawKeylines(
 }
 
 /**
- * A sprite frame's keyline source, made once per frame: opaque ink where the frame's alpha is
+ * A sprite frame's keyline source: opaque ink where the frame's alpha is
  * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
  */
 export function keylineSilhouette(
@@ -357,12 +358,21 @@ export function keylineSilhouette(
   sprite: { frame: Textures.Frame },
 ): string | undefined {
   const frame = sprite.frame;
-  // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette; any
-  // silhouette not drawn in a frame is swept (silhouettes.ts).
-  const traced = `${frame.texture.key}#${String(frame.name)}`;
   const ink = scene.edgeInk ?? LIGHT_FIELD.ink;
-  const key = `keyline:${traced}@${frame.cutWidth}:${ink.toString(16)}`;
-  scene.silhouettes.use(key);
+  const key = scene.silhouettes.use(frame, ink, scene.rasters.scale);
+  if (!key) {
+    return undefined;
+  }
+  const release = scene.silhouettes.bindTextureStore(scene.textures);
+  if (release) {
+    const dispose = () => {
+      scene.events.off(Scenes.Events.SHUTDOWN, dispose);
+      scene.events.off(Scenes.Events.DESTROY, dispose);
+      release();
+    };
+    scene.events.once(Scenes.Events.SHUTDOWN, dispose);
+    scene.events.once(Scenes.Events.DESTROY, dispose);
+  }
   if (scene.textures.exists(key)) {
     return key;
   }

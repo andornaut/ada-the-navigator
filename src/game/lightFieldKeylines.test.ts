@@ -132,6 +132,7 @@ describe("light-field craft jets", () => {
       children: { list: [] },
       keyed: [],
       keylines: new Map(),
+      rasters: { scale: 1 },
       silhouettes: { sweep: vi.fn() },
       textures: { remove: vi.fn() },
     };

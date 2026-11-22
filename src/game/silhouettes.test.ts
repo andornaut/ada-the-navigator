@@ -1,79 +1,134 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Silhouettes } from "./silhouettes.ts";
 
-// A texture store and what draws from it, as the scene keeps them: each frame, every caller marks
-// the silhouettes it draws (keyline copies, stamped groups), then one sweep runs.
-function world() {
-  const textures = new Set<string>();
-  const copies = new Map<string, string>();
-  const silhouettes = new Silhouettes();
-  const mark = (key: string): void => {
-    textures.add(key);
-    silhouettes.use(key);
+class ImageSource {}
+
+function frame(name: string, width: number, height = width, image = new ImageSource()) {
+  return {
+    cutHeight: height,
+    cutWidth: width,
+    cutX: 0,
+    cutY: 0,
+    name,
+    source: { image, scaleMode: 0 },
+    texture: { key: "atlas" },
   };
-  const frame = (copied: Readonly<Record<string, number>>, stamped: readonly string[] = []) => {
-    copies.clear();
-    for (const [traced, width] of Object.entries(copied)) {
-      const key = `keyline:${traced}@${width}`;
-      mark(key);
-      copies.set(traced, key);
-    }
-    for (const key of stamped) {
-      mark(key);
-    }
-    silhouettes.sweep(
-      (key) => [...copies.values()].includes(key),
-      (key) => textures.delete(key),
-    );
-  };
-  return { copies, frame, silhouettes, textures };
 }
 
+function world() {
+  const silhouettes = new Silhouettes();
+  const textures = new Set<string>();
+  const copies = new Set<string>();
+  const remove = (key: string) => textures.delete(key);
+  const store = { exists: (key: string) => textures.has(key), remove };
+  const teardown = silhouettes.bindTextureStore(store)!;
+  const draw = (value: ReturnType<typeof frame>, scale = 1, ink = 0) => {
+    const key = silhouettes.use(value, ink, scale)!;
+    textures.add(key);
+    return key;
+  };
+  const sweep = (scale = 1, ink = 0) =>
+    silhouettes.sweep(scale, ink, (key) => copies.has(key), remove);
+  return { copies, draw, silhouettes, store, sweep, teardown, textures };
+}
+
+beforeEach(() => vi.stubGlobal("HTMLImageElement", ImageSource));
+afterEach(() => vi.unstubAllGlobals());
+
 describe("keyline silhouettes", () => {
-  it("keeps one silhouette per drawn frame across alternating re-rasters", () => {
-    const { frame, silhouettes, textures } = world();
-    // Ten resizes between two raster scales: each gives every frame a new raster width.
-    for (let resize = 0; resize < 10; resize++) {
-      const wide = resize % 2 === 0;
-      frame({ "ship#0": wide ? 84 : 42, "station#0": wide ? 192 : 96 });
-      frame({ "ship#0": wide ? 84 : 42, "station#0": wide ? 192 : 96 });
+  it("reuses recurring paused-flight stardust crops and both Growers outpost frames", () => {
+    const { draw, sweep, textures } = world();
+    const source = new ImageSource();
+    const stardust = ["1", "2", "3"].map((name, index) => ({
+      ...frame(name, 9, 9, source),
+      cutX: (index + 1) * 9,
+    }));
+    const growers = [frame("growers-a", 235, 196), frame("growers-b", 235, 196)];
+    const keys = new Set([...stardust, ...growers].map((sprite) => draw(sprite)));
+    for (let index = 0; index < 120; index++) {
+      sweep();
+      const cached = new Set(textures);
+      expect(cached.has(draw(stardust[index % 3]!))).toBe(true);
+      expect(cached.has(draw(growers[Math.floor(index / 9) % 2]!))).toBe(true);
     }
-    expect([...textures].sort()).toEqual(["keyline:ship#0@42", "keyline:station#0@96"]);
-    expect(silhouettes.size).toBe(2);
+    expect(textures).toEqual(keys);
   });
 
-  it("frees a silhouette once its frame is no longer drawn, whoever drew it", () => {
-    const { frame, textures } = world();
-    frame({ "ship#0": 42 }, ["keyline:outpost#0@64"]);
-    expect(textures.has("keyline:outpost#0@64")).toBe(true);
-    // The rock leaves the view and the reveal group ends: nothing draws either any more.
-    frame({});
-    expect([...textures]).toEqual([]);
+  it("retires idle scales and replaces source images, crops and sampling independently", () => {
+    const { draw, sweep, textures } = world();
+    const sprite = frame("station", 96);
+    const replace = (change: () => void, scale = 1) => {
+      const old = draw(sprite);
+      sweep();
+      change();
+      const next = draw(sprite, scale);
+      sweep(scale);
+      expect(next).not.toBe(old);
+      expect(textures).toEqual(new Set([next]));
+      return next;
+    };
+    replace(() => (sprite.source.image = new ImageSource() as HTMLImageElement));
+    replace(() => (sprite.cutHeight = 128));
+    replace(() => (sprite.cutX = 16));
+    replace(() => (sprite.source.scaleMode = 1));
+    const stationary = frame("idle", 32);
+    const idle = draw(stationary);
+    sweep();
+    sweep();
+    expect(textures.has(idle)).toBe(true);
+    replace(() => (sprite.cutWidth = 192), 2);
+    expect(textures.has(idle)).toBe(false);
   });
 
-  it("keeps a silhouette a copy still draws although no caller marked it", () => {
-    const { copies, silhouettes, textures } = world();
-    textures.add("keyline:ship#0@42");
-    silhouettes.use("keyline:ship#0@42");
-    copies.set("ship#0", "keyline:ship#0@42");
-    const remove = (key: string) => textures.delete(key);
-    silhouettes.sweep((key) => [...copies.values()].includes(key), remove);
-    silhouettes.sweep((key) => [...copies.values()].includes(key), remove);
-    expect([...textures]).toEqual(["keyline:ship#0@42"]);
+  it("caps idle keys and bytes, spending spare capacity on the most recent frames", () => {
+    const { draw, sweep, textures } = world();
+    const small = Array.from({ length: 18 }, (_, index) => frame(String(index), 9));
+    const keys = small.map((sprite) => draw(sprite));
+    sweep();
+    draw(small[0]!);
+    sweep();
+    expect(textures.has(keys[1]!)).toBe(false);
+    expect(textures.has(keys[0]!)).toBe(true);
+    expect(textures.size).toBe(17);
+
+    const large = Array.from({ length: 3 }, (_, index) => draw(frame(`large-${index}`, 384)));
+    sweep();
+    sweep();
+    expect(textures).toEqual(new Set([large[2]!]));
+  });
+
+  it("keeps a referenced texture and frees it as soon as its invalid frame is unreferenced", () => {
+    const { copies, draw, sweep, textures } = world();
+    const sprite = frame("ship", 42);
+    const key = draw(sprite);
+    copies.add(key);
+    sweep();
+    sprite.source.image = new ImageSource() as HTMLImageElement;
+    const replacement = draw(sprite);
+    sweep();
+    expect(textures).toEqual(new Set([key, replacement]));
     copies.clear();
-    silhouettes.sweep((key) => [...copies.values()].includes(key), remove);
-    expect([...textures]).toEqual([]);
+    sweep();
+    expect(textures).toEqual(new Set([replacement]));
   });
 
-  it("keeps a silhouette marked after the sweep in its frame through the next sweep", () => {
-    const { silhouettes, textures } = world();
-    const remove = (key: string) => textures.delete(key);
-    silhouettes.sweep(() => false, remove);
-    // A stamped group drawn after the frame's sweep marks it; the next sweep keeps it.
-    textures.add("keyline:hub#0@64");
-    silhouettes.use("keyline:hub#0@64");
-    silhouettes.sweep(() => false, remove);
-    expect([...textures]).toEqual(["keyline:hub#0@64"]);
+  it("retires an idle mutable source and clears the store on teardown", () => {
+    const { draw, silhouettes, store, sweep, teardown, textures } = world();
+    const during = draw(frame("canvas", 32, 32, {}));
+    const cached = draw(frame("ship", 32));
+    sweep();
+    sweep();
+    expect(textures.has(during)).toBe(false);
+    expect(textures.has(cached)).toBe(true);
+    expect(silhouettes.bindTextureStore(store)).toBeUndefined();
+    teardown();
+    expect(textures.size).toBe(0);
+    const release = silhouettes.bindTextureStore(store)!;
+    const restarted = draw(frame("after-restart", 32));
+    teardown();
+    expect(textures).toEqual(new Set([restarted]));
+    release();
+    expect(textures.size).toBe(0);
   });
 });

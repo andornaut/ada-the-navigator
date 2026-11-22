@@ -1,8 +1,9 @@
+import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
 import ts from "typescript";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { inkEdges, KEYLINE_ALPHA, LIGHT_FIELD, thresholdSilhouette } from "./lightField.ts";
 import { Silhouettes } from "./silhouettes.ts";
@@ -25,8 +26,16 @@ function production(source: ts.SourceFile, name: string) {
 describe("data-selected foreground boundaries", () => {
   it("keeps white and dark silhouette caches distinct across galaxy transitions", () => {
     const pixels = new Map<string, Uint8ClampedArray>();
+    const events = new EventEmitter();
+    class ImageSource {}
+    vi.stubGlobal("HTMLImageElement", ImageSource);
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
     const scene = {
       edgeInk: 0xffffff,
+      events,
+      rasters: { scale: 1 },
       silhouettes: new Silhouettes(),
       textures: {
         createCanvas(key: string) {
@@ -43,12 +52,14 @@ describe("data-selected foreground boundaries", () => {
           };
         },
         exists: (key: string) => pixels.has(key),
+        remove: (key: string) => pixels.delete(key),
       },
     };
     const context = createContext({
       KEYLINE_ALPHA,
       LIGHT_FIELD,
       ScaleModes: { NEAREST: 0 },
+      Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
       filterTexture: vi.fn(),
       thresholdSilhouette,
     });
@@ -63,7 +74,7 @@ describe("data-selected foreground boundaries", () => {
         cutX: 0,
         cutY: 0,
         name: "0",
-        source: { image: {}, scaleMode: 0 },
+        source: { image: new ImageSource(), scaleMode: 0 },
         texture: { key: "ship" },
       },
     };
@@ -78,11 +89,16 @@ describe("data-selected foreground boundaries", () => {
     // A frame later, the silhouette nothing drew since goes; the one still drawn stays.
     for (let frame = 0; frame < 2; frame++) {
       scene.silhouettes.sweep(
+        scene.rasters.scale,
+        scene.edgeInk,
         (key) => key === white,
         (key) => pixels.delete(key),
       );
     }
     expect([...pixels.keys()]).toEqual([white]);
+    events.emit("shutdown");
+    expect([...pixels.keys()]).toEqual([]);
+    expect(events.listenerCount("destroy")).toBe(0);
   });
 
   it("uses the selected edge for geometry without rewriting original fills", () => {
