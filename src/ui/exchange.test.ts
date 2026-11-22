@@ -8,6 +8,7 @@ import {
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
+import { QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 
 const dom = vi.hoisted(() => {
   const mountedRoots = new Set<Node>();
@@ -168,6 +169,7 @@ afterEach(() => {
 function fixture(placement: "connected" | "detached" | "unowned" = "connected") {
   vi.stubGlobal("document", {
     createElement: (tag: string) => new dom.Node(tag),
+    createElementNS: (_namespace: string, tag: string) => new dom.Node(tag),
     defaultView: { HTMLElement: dom.Node, Node: dom.Node },
   });
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
@@ -247,6 +249,19 @@ describe("immediate fixed Exchange actions", () => {
       "ore to Stardust",
       "Stardust to ore",
     ]);
+    for (const row of rows) {
+      const direction = row.children[1]!;
+      const arrow = direction.children[1]!;
+      expect(direction.getAttribute("role")).toBe("img");
+      expect(direction.children.map((part) => part.tagName)).toEqual(["IMG", "SVG", "IMG"]);
+      expect(arrow.getAttribute("aria-hidden")).toBe("true");
+      expect(arrow.getAttribute("viewBox")).toBe(QUEST_ROUTE_ARROW.viewBox);
+      expect(arrow.getAttribute("fill")).toBe("currentColor");
+      expect(arrow.children.map((path) => path.getAttribute("d"))).toEqual([
+        QUEST_ROUTE_ARROW.shaft,
+        QUEST_ROUTE_ARROW.head,
+      ]);
+    }
     expect(f.action("exchange-stardust-10").getAttribute("aria-label")).toBe(
       "Spend 20 ore to get 10 Stardust",
     );
@@ -254,6 +269,11 @@ describe("immediate fixed Exchange actions", () => {
       for (const amount of EXCHANGE_AMOUNTS) {
         const action = f.action(`exchange-${resource}-${amount}`);
         expect(action.textContent).toBe(String(amount));
+        expect(action.getAttribute("aria-label")).toBe(
+          resource === "ore"
+            ? `Spend ${amount * 2} Stardust to get ${amount} ore`
+            : `Spend ${amount * 2} ore to get ${amount} Stardust`,
+        );
         expect(action.children).toHaveLength(1);
         expect(action.children[0]!.tagName).toBe("IMG");
         expect((action.children[0] as unknown as HTMLImageElement).src).toBe(

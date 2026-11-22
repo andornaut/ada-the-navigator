@@ -171,6 +171,11 @@ export const STATION_STYLE = `
   justify-content:center;
   gap:${units(BALANCE.markGap)}
 }
+.ada-controls .ada-exchange-arrow{
+  width:${units(TYPE.body.size)};
+  height:auto;
+  flex:none
+}
 .ada-controls .ada-exchange-icon{
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};

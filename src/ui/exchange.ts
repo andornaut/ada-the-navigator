@@ -18,6 +18,7 @@ import {
 } from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
@@ -181,9 +182,17 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
               "aria-label",
               `${resourceName[give]} to ${resourceName[receive]}`,
             );
-            const arrow = document.createElement("span");
+            const namespace = "http://www.w3.org/2000/svg";
+            const arrow = document.createElementNS(namespace, "svg");
             arrow.setAttribute("aria-hidden", "true");
-            arrow.textContent = "→";
+            arrow.setAttribute("class", "ada-exchange-arrow");
+            arrow.setAttribute("viewBox", QUEST_ROUTE_ARROW.viewBox);
+            arrow.setAttribute("fill", "currentColor");
+            for (const d of [QUEST_ROUTE_ARROW.shaft, QUEST_ROUTE_ARROW.head]) {
+              const path = document.createElementNS(namespace, "path");
+              path.setAttribute("d", d);
+              arrow.append(path);
+            }
             direction.append(exchangeIcon(give), arrow, exchangeIcon(receive));
             row.append(heading, direction, controls);
             return { dispose() {}, element: row, slots: { content: controls }, update() {} };
