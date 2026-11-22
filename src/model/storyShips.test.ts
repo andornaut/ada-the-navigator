@@ -126,7 +126,7 @@ describe("Cartwheel story ships", () => {
     expect(storyShips(hub, { stage: 5 }, UNDOCKED, undefined, 0)).toEqual(docked);
   });
 
-  it("dock the regulars with their noses at the berth faces, facing into their berths", () => {
+  it("docks the regulars facing their berths with the required nose clearance", () => {
     const { docked } = CARTWHEEL_STORY_SHIPS;
     expect(Object.keys(NOSES).sort()).toEqual(["blocker", "miner", "visitor-1", "visitor-2"]);
     for (const [bay, docks] of [
@@ -152,10 +152,12 @@ describe("Cartwheel story ships", () => {
         // The nose distance at the heading the scene draws, from the craft's jets file.
         const distance = NOSES[id]![shipDirection(16, dock.heading)]!;
         expect(distance).toBeGreaterThan(0);
-        // The pivot stands that far outward of the dock point, so the nose meets the dock face.
-        expect(gap(entry, { x: hub.x + dock.at.x, y: hub.y + dock.at.y })).toBeCloseTo(distance, 9);
-        expect(entry.x + entry.heading.x * distance).toBeCloseTo(hub.x + dock.at.x, 9);
-        expect(entry.y + entry.heading.y * distance).toBeCloseTo(hub.y + dock.at.y, 9);
+        // The funded central berth keeps the measured visitor clearance. The two side berths
+        // still bring their noses to the berth point.
+        const reach = distance + (bay && id === "visitor-2" ? 8 : 0);
+        expect(gap(entry, { x: hub.x + dock.at.x, y: hub.y + dock.at.y })).toBeCloseTo(reach, 9);
+        expect(entry.x + entry.heading.x * reach).toBeCloseTo(hub.x + dock.at.x, 9);
+        expect(entry.y + entry.heading.y * reach).toBeCloseTo(hub.y + dock.at.y, 9);
         const spot = dockedSpot(docking, id).at;
         expect(spot.x).toBeCloseTo(entry.x - hub.x, 9);
         expect(spot.y).toBeCloseTo(entry.y - hub.y, 9);
@@ -168,8 +170,16 @@ describe("Cartwheel story ships", () => {
         expect(gap(ship(ending, entry.id)!, entry), `${entry.id} bay ${bay}`).toBeLessThan(1e-6);
       }
       if (bay) {
-        expect(shipDirection(16, ship(ending, "visitor-2")!.heading)).toBe(9);
-        expect(shipDirection(16, ship(ships, "visitor-2")!.heading)).toBe(11);
+        const settled = ship(ships, "visitor-2")!;
+        expect(shipDirection(16, settled.heading)).toBe(11);
+        for (const elapsed of [7.51, 8, 8.49, 9.99]) {
+          const approaching = ship(
+            storyShips(hub, { stage: 5 }, docking, scene, scene.at + elapsed),
+            "visitor-2",
+          )!;
+          expect(shipDirection(16, approaching.heading)).toBe(11);
+        }
+        expect(shipDirection(16, ship(ending, "visitor-2")!.heading)).toBe(11);
       }
     }
     // Without nose data a pivot stays on its berth point.

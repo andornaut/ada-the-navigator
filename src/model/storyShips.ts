@@ -78,9 +78,8 @@ export interface StoryDocking {
 
 /**
  * A regular's hub-relative docked spot (art/cartwheel.md "Hub"): its berth point moved
- * outward, opposite its docking heading, by its craft's nose distance at that drawn heading,
- * so the nose meets the berth's face. Without the nose data, or moored, the pivot stays on the
- * point.
+ * outward, opposite its docking heading, by the nose distance at that drawn heading plus any
+ * berth clearance. Without nose data only clearance is applied. A moored pivot stays on its point.
  */
 export function dockedSpot(
   docking: StoryDocking,
@@ -88,7 +87,8 @@ export function dockedSpot(
 ): { at: Vec; heading: Vec } {
   const dock = CARTWHEEL_STORY_SHIPS.docked[docking.bay ? "bay" : "hub"][id];
   const noses = docking.noses[id];
-  const distance = dock.moored ? 0 : (noses?.[headingIndex(noses.length, dock.heading)] ?? 0);
+  const nose = noses?.[headingIndex(noses.length, dock.heading)] ?? 0;
+  const distance = dock.moored ? 0 : nose + (dock.standOff ?? 0);
   return {
     at: { x: dock.at.x - dock.heading.x * distance, y: dock.at.y - dock.heading.y * distance },
     heading: dock.heading,
@@ -99,6 +99,25 @@ export function dockedSpot(
 function headingIndex(count: number, heading: Vec): number {
   const index = Math.round(Math.atan2(heading.y, heading.x) / ((2 * Math.PI) / count));
   return ((index % count) + count) % count;
+}
+
+function dockingPath(
+  docking: StoryDocking,
+  id: Exclude<StoryShipId, "blocker">,
+  scripted: StoryPath,
+): StoryPath {
+  const { at, heading } = dockedSpot(docking, id);
+  const { approach } = CARTWHEEL_STORY_SHIPS.docked[docking.bay ? "bay" : "hub"][id];
+  const path = scripted.slice(0, -1);
+  if (approach) {
+    path.push({
+      at: approach.at,
+      x: at.x - heading.x * approach.distance,
+      y: at.y - heading.y * approach.distance,
+    });
+  }
+  path.push({ at: scripted.at(-1)!.at, ...at });
+  return path;
 }
 
 /**
@@ -128,7 +147,7 @@ export function storyShips(
     // A regular's docking path ends at its docked spot, not on the dock point itself.
     const path =
       scripted && scene!.id === "docking" && id !== "blocker"
-        ? [...scripted.slice(0, -1), { at: scripted.at(-1)!.at, ...dockedSpot(docking, id).at }]
+        ? dockingPath(docking, id, scripted)
         : scripted;
     if (path) {
       const { heading, point, thrust } = along(path, time - scene!.at);

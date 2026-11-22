@@ -116,6 +116,10 @@ export interface StoryDock {
   readonly at: Vec;
   readonly heading: Vec;
   readonly moored?: true;
+  /** Extra world clearance between the rendered nose and the berth. */
+  readonly standOff?: number;
+  /** The final straight approach starts this far outside the docked pivot. */
+  readonly approach?: { readonly at: number; readonly distance: number };
 }
 
 /**
@@ -123,7 +127,11 @@ export interface StoryDock {
  * changes"), each with its outward screen direction.
  */
 const DOCKS = {
-  bay: dock(108, 194.571, [-0.612, 0.791]),
+  bay: {
+    ...dock(108, 194.571, [-0.612, 0.791]),
+    approach: { at: 7.5, distance: 50 },
+    standOff: 8,
+  },
   left: dock(21.374, 175.72, [-0.924, 0.382]),
   right: dock(218.626, 175.72, [0.924, 0.382]),
 } as const;
