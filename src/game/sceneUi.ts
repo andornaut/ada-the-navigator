@@ -39,6 +39,7 @@ import {
   networkPlayNotice,
   offersInstall,
   onInstallStateChange,
+  requestUpdateCheck,
   requireNewerVersion,
   saveBeforeUpdate,
   setBackArmed,
@@ -414,6 +415,9 @@ export function buildScene(scene: UiContext): void {
       void endCheatSession(scene);
     }
     refreshScene(scene);
+    if (before !== "start" && scene.model.screen === "start") {
+      requestUpdateCheck();
+    }
   };
   // A cheat joins the cheat session, starting it after saving play so far (cheatSession.ts).
   const cheat = (id: CheatId) => ({

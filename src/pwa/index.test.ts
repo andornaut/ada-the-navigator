@@ -4,6 +4,7 @@ const kit = vi.hoisted(() => {
   const launch = {
     bootProgress: vi.fn(),
     dispose: vi.fn(),
+    requestUpdateCheck: vi.fn(),
     requireNewer: vi.fn(),
     run: vi.fn<() => Promise<"play" | "reloading">>(),
   };
@@ -172,6 +173,20 @@ describe("launch", () => {
     expect(options()).toHaveProperty("soundFormat", undefined);
   });
 
+  it("requests a check on the existing launch without creating a new one", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.requestUpdateCheck();
+    expect(kit.create).not.toHaveBeenCalled();
+    expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
+
+    await pwa.launchPhoneApp();
+    expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
+    pwa.requestUpdateCheck();
+    expect(kit.launch.requestUpdateCheck).toHaveBeenCalledOnce();
+    expect(kit.launch.run).toHaveBeenCalledOnce();
+  });
+
   it("returns reloading from the kit so the game never starts", async () => {
     stubDevice({});
     kit.launch.run.mockResolvedValue("reloading");
@@ -188,7 +203,9 @@ describe("launch", () => {
     stubDevice({});
     const pwa = await import("./index.ts");
     expect(await pwa.launchPhoneApp()).toBe("play");
+    pwa.requestUpdateCheck();
     expect(kit.create).not.toHaveBeenCalled();
+    expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
     const states: string[] = [];
     pwa.requireNewerVersion((state) => states.push(state));
     expect(states).toEqual(["unavailable"]);

@@ -775,6 +775,7 @@ function cheatScene(model: GameModel) {
     newer: false,
     observeFeedback: vi.fn(),
     refreshScene: vi.fn(),
+    requestUpdateCheck: vi.fn(),
     requiredLoading: { state: { attempt: 1 } },
     requiredReady: () => true,
     saves: createAdaSaves(port),
@@ -816,6 +817,24 @@ function cheatScene(model: GameModel) {
     values,
   };
 }
+
+it("checks for an update only when scene navigation returns to Start", async () => {
+  const f = cheatScene(new GameModel(CONTENT, flight().save()));
+  const leave = runInContext(callback("onBackToTitle"), f.context) as () => void;
+  const check = f.context.requestUpdateCheck;
+  await f.flush();
+  leave();
+  f.apply(() => f.scene.model.continueGame());
+  expect(check).not.toHaveBeenCalled();
+  expect(f.scene.model.screen).toBe("space");
+
+  leave();
+  expect(f.scene.model.screen).toBe("start");
+  expect(check).toHaveBeenCalledOnce();
+  leave();
+  await f.settle();
+  expect(check).toHaveBeenCalledOnce();
+});
 
 describe("cheat session", () => {
   it("saves play up to the first cheat, then suspends every save until play returns to Start", async () => {

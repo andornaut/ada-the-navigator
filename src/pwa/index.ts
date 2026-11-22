@@ -36,7 +36,6 @@ import {
 import {
   browserLaunchContext,
   createLaunch,
-  type Launch,
   type RequiredUpdateState,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
@@ -74,7 +73,7 @@ export const SERVICE_WORKER_URL = "/sw.js";
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "adaBackGuard";
 let flow: InstallFlow | undefined;
-let launch: Launch | undefined;
+let launch: ReturnType<typeof createLaunch> | undefined;
 let launched: Promise<LaunchResult> | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 // The forced update's state once a newer save requires it, and who hears it.
@@ -112,7 +111,7 @@ function requiredUpdate(state: RequiredUpdateState): void {
 
 // The production build only, where the browser has service workers and Cache Storage: the dev
 // server has no sw.js, and a worker would serve stale modules over hot reloads.
-function createPhoneLaunch(): Launch | undefined {
+function createPhoneLaunch(): ReturnType<typeof createLaunch> | undefined {
   const context = import.meta.env.PROD ? browserLaunchContext(CACHE_POLICY) : undefined;
   if (context === undefined) {
     return undefined;
@@ -292,6 +291,11 @@ export function launchPhoneApp(): Promise<LaunchResult> {
     launched = launch?.run() ?? Promise.resolve("play");
   }
   return launched;
+}
+
+/** Check for an update in the current document, using the launch lifecycle's normal guards. */
+export function requestUpdateCheck(): void {
+  launch?.requestUpdateCheck();
 }
 
 // A first install that failed for lack of service workers or storage: the game plays from the
