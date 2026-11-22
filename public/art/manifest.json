@@ -28357,17 +28357,17 @@
     {
       "id": "ore-nugget",
       "path": "/art/cartwheel/ore-nugget.png",
-      "width": 11,
-      "height": 11,
-      "displayWidth": 11,
-      "displayHeight": 11,
+      "width": 9,
+      "height": 9,
+      "displayWidth": 9,
+      "displayHeight": 9,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 11,
-      "frameHeight": 11,
+      "frameWidth": 9,
+      "frameHeight": 9,
       "frames": {
         "rest": 0
       }
