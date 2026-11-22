@@ -72,9 +72,19 @@ describe("sidecars map", () => {
       "trainee",
       "tug",
     ];
+    const pack = "/art/phantom/story-craft-jets.json";
+    const hasPack = existsSync(new URL(`../../public${pack}`, import.meta.url));
     expect(GALAXY_MANIFESTS.get(6)!.sidecars).toEqual(
-      new Map(craft.map((id) => [id, { jets: `/art/phantom/${id}-jets.json` }])),
+      new Map(craft.map((id) => [id, { jets: hasPack ? pack : `/art/phantom/${id}-jets.json` }])),
     );
+    if (hasPack) {
+      expect(Object.keys(publicJson(pack) as Record<string, unknown>).sort()).toEqual(craft);
+      for (const id of craft) {
+        expect(
+          existsSync(new URL(`../../public/art/phantom/${id}-jets.json`, import.meta.url)),
+        ).toBe(false);
+      }
+    }
   });
 
   it("names only files that exist", () => {

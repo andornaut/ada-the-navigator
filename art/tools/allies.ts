@@ -60,6 +60,7 @@ import { svgText } from "./svg-text.ts";
 
 const OUT = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
 const PUBLIC = "/art/phantom/";
+const JETS_FILE = "story-craft-jets.json";
 // Phantom's field (public/art/galaxies.json `phantom`), for the contrast checks.
 const FIELD = (
   JSON.parse(readFileSync(new URL("../../public/art/galaxies.json", import.meta.url), "utf8")) as {
@@ -910,6 +911,7 @@ function svgFile(title: string, frame: number, faces: readonly Face[]) {
 
 const ratio = (x: string, y: string) => contrast(x.slice(1), y.slice(1));
 
+const jetsByCraft = new Map<string, unknown>();
 const entries = CRAFTS.flatMap((craft) => {
   const build = builder(craft);
   const facesAt = (yaw: number) =>
@@ -926,23 +928,21 @@ const entries = CRAFTS.flatMap((craft) => {
   const centre = frame / 2;
   const nose = noses(facesAt, frame, { name: craft.name, build });
   const half = (craft.mouthWidth * craft.scale) / 2;
-  writeFileSync(
-    `${OUT}${craft.name}-jets.json`,
-    jetsFile(
-      frame,
-      (yaw) =>
-        craft.mouths.map(([u, v, z]) => ({
-          anchor: anchor(ENEMY_HEADINGS, centre, yaw, [
-            ...uv(u * craft.scale, v * craft.scale),
-            z * craft.scale,
-          ]),
-          axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
-          half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
-        })),
-      JETS,
-      { nose },
-    ),
+  const jets = jetsFile(
+    frame,
+    (yaw) =>
+      craft.mouths.map(([u, v, z]) => ({
+        anchor: anchor(ENEMY_HEADINGS, centre, yaw, [
+          ...uv(u * craft.scale, v * craft.scale),
+          z * craft.scale,
+        ]),
+        axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
+        half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
+      })),
+    JETS,
+    { nose },
   );
+  jetsByCraft.set(craft.name, JSON.parse(jets));
   // The hull is the part with the largest plan area.
   const area = ({ plan }: Part) =>
     Math.abs(
@@ -981,12 +981,16 @@ const entries = CRAFTS.flatMap((craft) => {
 
 writeFileSync(`${OUT}allies.json`, json({ version: 1, roster: ROSTER, song: SONG, jump: JUMP }));
 
-const names = CRAFTS.map(({ name }) => name);
+const names = [...jetsByCraft.keys()].sort();
+writeFileSync(
+  `${OUT}${JETS_FILE}`,
+  json(Object.fromEntries(names.map((name) => [name, jetsByCraft.get(name)]))),
+);
 replaceEntries("phantom", craftIds("craft-", names), entries);
 mergeSidecars(
   "phantom",
   (craft, kind) => kind === "jets" && names.includes(craft),
-  Object.fromEntries(names.map((name) => [name, { jets: `${PUBLIC}${name}-jets.json` }])),
+  Object.fromEntries(names.map((name) => [name, { jets: `${PUBLIC}${JETS_FILE}` }])),
 );
 linkData("phantom", { allies: `${PUBLIC}allies.json`, whales: "/art/whales.json" });
 console.log(`song colour ${glow} ${ratio(glow, FIELD).toFixed(2)}:1 on ${FIELD}`);

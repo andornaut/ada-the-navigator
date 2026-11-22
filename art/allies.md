@@ -6,7 +6,7 @@ reused story craft and whales that draw the rest, Marlo's song and the ally
 jump.
 
 - Rebuild with `node art/tools/allies.ts`. It writes `public/art/phantom/`
-  (the frames, `{craft}-jets.json` and `allies.json`), replaces its own
+  (the frames, `story-craft-jets.json` and `allies.json`), replaces its own
   `craft-` entries in [Phantom's manifest](../public/art/phantom/manifest.json)
   and registers their jet sidecars. It links `allies.json` as `allies`. Reruns
   are byte-identical.
@@ -72,7 +72,7 @@ adds a tandem pod.
 
 ### Speed jets and nose
 
-`{craft}-jets.json` beside the frames uses the
+`story-craft-jets.json` holds one complete record per craft name. Each record uses the
 [enemy speed jets](enemies.md#speed-jets) schema (version 1, outer and core
 layers, no halo, length `(6 + 24 f²) * sqrt(frame / 96)`) in the story craft's
 civil palette: outer `#c9a978` to `#ffe9b8`, core `#efe4cf` to `#ffffff`. It
@@ -97,7 +97,7 @@ the story craft. Mouths sit at the engine faces; values are at the built size.
 ## Roster
 
 `allies.json` `roster` names the art for each ally: `craft` is a story craft
-name, drawn from its `craft-{craft}-{k}` frames and `{craft}-jets.json` in
+name, drawn from its `craft-{craft}-{k}` frames and the jets sidecar in
 the manifest that lists them; `whale` is a [whale](whales.md) kind, drawn from
 its `whale-{kind}-{k}-{f}` frames with its swim loop. The reused craft and
 whales are shared art, so the core manifest lists them. `projects` is

@@ -6,17 +6,20 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import cartwheel from "../../public/art/cartwheel/manifest.json";
+import phantom from "../../public/art/phantom/manifest.json";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { publicJson } from "../testing/publicArt.ts";
 import {
   galaxyLoadsAtOnce,
   galaxyManifestKey,
   galaxyTowKey,
   readGalaxyManifest,
 } from "./artManifest.ts";
-import { craftFrameSets } from "./cartwheelArt.ts";
+import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
 import {
   composedArchetypes,
+  ENEMY_HEADINGS,
   type EnemyFamily,
   enemyFrameSets,
   enemyHardpointsPath,
@@ -27,6 +30,8 @@ import {
   GALAXY_FAMILIES,
   mergeEnemyAssets,
 } from "./enemyArt.ts";
+import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
+import { readShipJets } from "./shipJets.ts";
 
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;
 const source = ts.createSourceFile(
@@ -36,15 +41,26 @@ const source = ts.createSourceFile(
   true,
 );
 const names = new Set([
+  "PHANTOM_CRAFT_JETS_KEY",
+  "PHANTOM_CRAFT_JETS_PATH",
   "ensureEnemyFamilyManifest",
   "loadEnemyParts",
   "loadGalaxyArt",
   "loadGalaxyAsset",
   "queueGalaxyArt",
   "queueGalaxyAssets",
+  "queuePhantomCraftJets",
 ]);
 const code = source.statements
-  .filter((node) => ts.isFunctionDeclaration(node) && names.has(node.name?.text ?? ""))
+  .filter((node) => {
+    if (ts.isFunctionDeclaration(node)) {
+      return names.has(node.name?.text ?? "");
+    }
+    return (
+      ts.isVariableStatement(node) &&
+      node.declarationList.declarations.some(({ name }) => names.has(name.getText(source)))
+    );
+  })
   .map((node) => node.getText(source).replace(/^export /u, ""))
   .join("\n");
 
@@ -58,7 +74,11 @@ function fixture(family: EnemyFamily | undefined = claim) {
   const readArt = vi.fn();
   const scene = {
     cache: {
-      json: { exists: (key: string) => cache.has(key), get: (key: string) => cache.get(key) },
+      json: {
+        add: (key: string, value: unknown) => cache.set(key, value),
+        exists: (key: string) => cache.has(key),
+        get: (key: string) => cache.get(key),
+      },
     },
     destruction: { archetypes: { platform: {} } },
     family: family as EnemyFamily | undefined,
@@ -76,11 +96,13 @@ function fixture(family: EnemyFamily | undefined = claim) {
     textures: { exists: () => false },
   };
   const context = createContext({
+    ENEMY_HEADINGS,
     GALAXY_FAMILIES,
     GALAXY_ID,
     GALAXY_NUMBERS,
     INDUSTRIAL_BODY_KEYS,
     Loader: { Events: { COMPLETE: "complete" } },
+    PHANTOM_ALLIES_ART,
     composedArchetypes,
     craftFrameSets,
     enemyFrameSets,
@@ -96,9 +118,11 @@ function fixture(family: EnemyFamily | undefined = claim) {
     loadSvg: svg,
     mergeEnemyAssets,
     queueBackdrop: backdrop,
+    readCraftNose,
     readEnemyArt: readArt,
     readGalaxyArt: readArt,
     readGalaxyManifest,
+    readShipJets,
   });
   runInContext(ts.transpile(code), context);
   return {
@@ -108,6 +132,7 @@ function fixture(family: EnemyFamily | undefined = claim) {
     json,
     loadParts: context.loadEnemyParts as (value: typeof scene, archetype: string) => void,
     loadWorld: context.loadGalaxyArt as (value: typeof scene, galaxy: number) => void,
+    readArt,
     scene,
     start,
     svg,
@@ -140,7 +165,7 @@ describe("source-family manifest readiness", () => {
       queued.every((asset) => asset.family === "claim" && asset.archetype === "platform"),
     ).toBe(true);
     expect(queued.some(enemyPartFrame)).toBe(true);
-    // Phantom has no sidecars map; the platform's layout comes from Cartwheel's.
+    // The platform's layout comes from Cartwheel's sidecars.
     expect(f.json).toHaveBeenCalledWith(
       "claim-hardpoints-platform",
       cartwheel.sidecars.platform.hardpoints,
@@ -184,5 +209,80 @@ describe("source-family manifest readiness", () => {
     f.loadParts(f.scene, "platform");
     expect(f.scene.partLoads.has("coral:platform")).toBe(true);
     expect(f.json).not.toHaveBeenCalled();
+  });
+});
+
+const phantomJetsKey = "phantom-story-craft-jets";
+const phantomJetsPath = "/art/phantom/story-craft-jets.json";
+const phantomJetsEvent = `filecomplete-json-${phantomJetsKey}`;
+
+function phantomJetsFixture() {
+  const f = fixture();
+  const manifest = readGalaxyManifest(phantom)!;
+  const craft = [...manifest.sidecars.keys()];
+  const sidecars = new Map(craft.map((id) => [id, { jets: phantomJetsPath }]));
+  const records =
+    enemyJetsPath(manifest.sidecars, craft[0]!) === phantomJetsPath
+      ? (publicJson(phantomJetsPath) as Record<string, unknown>)
+      : Object.fromEntries(
+          craft.map((id) => [id, publicJson(enemyJetsPath(manifest.sidecars, id)!)]),
+        );
+  return { ...f, craft, manifest: { ...manifest, sidecars }, records };
+}
+
+describe("Phantom story craft jets", () => {
+  it("queues one optional pack and publishes the original payloads under all twelve cache keys", () => {
+    const f = phantomJetsFixture();
+    f.scene.galaxyManifests.delete(6);
+    f.loadWorld(f.scene, 6);
+    expect(f.json).not.toHaveBeenCalledWith(phantomJetsKey, phantomJetsPath);
+    f.cache.set(galaxyManifestKey(6), {
+      ...phantom,
+      sidecars: Object.fromEntries(f.manifest.sidecars),
+    });
+    f.events.emit(`filecomplete-json-${galaxyManifestKey(6)}`);
+    expect(
+      f.json.mock.calls.filter(([key]) => key === phantomJetsKey || key.startsWith("craft-jets-")),
+    ).toEqual([[phantomJetsKey, phantomJetsPath]]);
+    expect(f.craft).toHaveLength(12);
+    expect(f.craft.some((id) => f.cache.has(`craft-jets-${id}`))).toBe(false);
+    f.events.emit(phantomJetsEvent, phantomJetsKey, "json", f.records);
+    for (const id of f.craft) {
+      expect(f.cache.get(`craft-jets-${id}`)).toBe(f.records[id]);
+    }
+    f.events.emit("complete");
+    expect(f.readArt).toHaveBeenCalledOnce();
+  });
+
+  it("publishes no records if one craft has malformed jet data", () => {
+    const f = phantomJetsFixture();
+    f.cache.set(galaxyManifestKey(6), {
+      ...phantom,
+      sidecars: Object.fromEntries(f.manifest.sidecars),
+    });
+    f.scene.galaxyManifests.delete(6);
+    f.loadWorld(f.scene, 6);
+    f.events.emit(`filecomplete-json-${galaxyManifestKey(6)}`);
+    const records = { ...f.records, [f.craft.at(-1)!]: { headings: [] } };
+    f.events.emit(phantomJetsEvent, phantomJetsKey, "json", records);
+    expect(f.craft.every((id) => !f.cache.has(`craft-jets-${id}`))).toBe(true);
+  });
+
+  it("refreshes derived art when the optional pack arrives on the loader's retry", () => {
+    const f = phantomJetsFixture();
+    f.cache.set(galaxyManifestKey(6), {
+      ...phantom,
+      sidecars: Object.fromEntries(f.manifest.sidecars),
+    });
+    f.scene.galaxyManifests.delete(6);
+    f.loadWorld(f.scene, 6);
+    f.events.emit(`filecomplete-json-${galaxyManifestKey(6)}`);
+    f.events.emit("complete");
+    expect(f.readArt).toHaveBeenCalledOnce();
+    expect(f.craft.every((id) => !f.cache.has(`craft-jets-${id}`))).toBe(true);
+    f.events.emit(phantomJetsEvent, phantomJetsKey, "json", f.records);
+    f.events.emit("complete");
+    expect(f.readArt).toHaveBeenCalledTimes(2);
+    expect(f.craft.every((id) => f.cache.get(`craft-jets-${id}`) === f.records[id])).toBe(true);
   });
 });

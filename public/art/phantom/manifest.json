@@ -3964,40 +3964,40 @@
   "tow": "/art/phantom/tow.json",
   "sidecars": {
     "barge": {
-      "jets": "/art/phantom/barge-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "beacontender": {
-      "jets": "/art/phantom/beacontender-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "buoytender": {
-      "jets": "/art/phantom/buoytender-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "crane": {
-      "jets": "/art/phantom/crane-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "driller": {
-      "jets": "/art/phantom/driller-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "grower": {
-      "jets": "/art/phantom/grower-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "loomship": {
-      "jets": "/art/phantom/loomship-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "reed": {
-      "jets": "/art/phantom/reed-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "salvager": {
-      "jets": "/art/phantom/salvager-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "student": {
-      "jets": "/art/phantom/student-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "trainee": {
-      "jets": "/art/phantom/trainee-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     },
     "tug": {
-      "jets": "/art/phantom/tug-jets.json"
+      "jets": "/art/phantom/story-craft-jets.json"
     }
   },
   "allies": "/art/phantom/allies.json",

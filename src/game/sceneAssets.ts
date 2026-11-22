@@ -24,6 +24,7 @@ import {
   craftArt,
   craftFrameSets,
   readBuoyArt,
+  readCraftNose,
   readHubArt,
   storyCraftSets,
   storyNoses,
@@ -33,6 +34,7 @@ import { type DebrisArt, readDebrisArt } from "./debrisArt.ts";
 import { readShards } from "./destructionArt.ts";
 import {
   composedArchetypes,
+  ENEMY_HEADINGS,
   type EnemyArt,
   enemyArt,
   type EnemyFamily,
@@ -56,6 +58,7 @@ import { routeShipFrames } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
 import { paintFrames } from "./shipArt.ts";
+import { readShipJets } from "./shipJets.ts";
 import {
   readShipMaterialPalettes,
   readShipMaterials,
@@ -361,6 +364,48 @@ export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void
   queueGalaxyAssets(scene, undefined, galaxy);
 }
 
+const PHANTOM_CRAFT_JETS_PATH = "/art/phantom/story-craft-jets.json";
+const PHANTOM_CRAFT_JETS_KEY = "phantom-story-craft-jets";
+
+function queuePhantomCraftJets(scene: AssetsContext, craft: readonly string[]): void {
+  if (craft.length === 0 || craft.every((id) => scene.cache.json.exists(`craft-jets-${id}`))) {
+    return;
+  }
+
+  let initialLoadFinished = false;
+  scene.load.once(Loader.Events.COMPLETE, () => {
+    initialLoadFinished = true;
+  });
+  // The optional file watcher retries this same loader key after a transport failure.
+  scene.load.once(
+    `filecomplete-json-${PHANTOM_CRAFT_JETS_KEY}`,
+    (_key: string, _type: string, value: unknown) => {
+      if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return;
+      }
+      const records = value as Readonly<Record<string, unknown>>;
+      if (
+        Object.keys(records).length !== craft.length ||
+        !craft.every(
+          (id) =>
+            Object.hasOwn(records, id) &&
+            readShipJets(records[id])?.headings.length === ENEMY_HEADINGS &&
+            readCraftNose(records[id]),
+        )
+      ) {
+        return;
+      }
+      for (const id of craft) {
+        scene.cache.json.add(`craft-jets-${id}`, records[id]);
+      }
+      if (initialLoadFinished) {
+        scene.load.once(Loader.Events.COMPLETE, () => readGalaxyArt(scene));
+      }
+    },
+  );
+  scene.load.json(PHANTOM_CRAFT_JETS_KEY, PHANTOM_CRAFT_JETS_PATH);
+}
+
 function queueGalaxyAssets(
   scene: AssetsContext,
   familySubset: { readonly family: string; readonly archetype: string } | undefined,
@@ -405,12 +450,16 @@ function queueGalaxyAssets(
   // Data files come from the manifest's own sidecars map; a Phantom platform subset reads
   // Cartwheel's.
   const { sidecars } = manifest;
+  const packedCraft: string[] = [];
   for (const craft of craftFrameSets(assets).keys()) {
     const jets = enemyJetsPath(sidecars, craft);
-    if (jets && !scene.cache.json.exists(`craft-jets-${craft}`)) {
+    if (jets === PHANTOM_CRAFT_JETS_PATH && galaxy === 6 && !familySubset) {
+      packedCraft.push(craft);
+    } else if (jets && !scene.cache.json.exists(`craft-jets-${craft}`)) {
       scene.load.json(`craft-jets-${craft}`, jets);
     }
   }
+  queuePhantomCraftJets(scene, packedCraft);
   for (const { family, prefix, wired } of GALAXY_FAMILIES) {
     for (const [archetype, frames] of enemyFrameSets(assets, prefix)) {
       if (!wired.has(archetype)) {
