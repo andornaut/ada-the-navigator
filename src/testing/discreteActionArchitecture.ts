@@ -38,8 +38,90 @@ export interface FactoryAssociation {
 }
 
 interface ScanContext {
+  readonly eventImport?: (node: ts.Identifier) => ts.ImportSpecifier | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
   readonly sources: ReadonlyMap<string, ts.SourceFile>;
+}
+
+function importedEventLiteral(
+  context: ScanContext,
+  node: ts.Identifier,
+  item: ts.ImportSpecifier,
+): string | undefined {
+  // The binder distinguishes the actual import from names shadowed in any lexical scope.
+  if (context.eventImport?.(node) !== item) {
+    return undefined;
+  }
+  const clause = item.parent.parent;
+  const statement = clause.parent;
+  if (
+    item.isTypeOnly ||
+    clause.isTypeOnly ||
+    !ts.isImportDeclaration(statement) ||
+    !ts.isStringLiteral(statement.moduleSpecifier)
+  ) {
+    return undefined;
+  }
+  const specifier = statement.moduleSpecifier.text;
+  if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
+    return undefined;
+  }
+  const path = posix.normalize(posix.join(posix.dirname(node.getSourceFile().fileName), specifier));
+  const target = context.sources.get(path);
+  if (!target || target.isDeclarationFile) {
+    return undefined;
+  }
+  const name = item.propertyName?.text ?? item.name.text;
+  for (const variable of target.statements) {
+    if (
+      !ts.isVariableStatement(variable) ||
+      !(variable.declarationList.flags & ts.NodeFlags.Const) ||
+      !variable.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) ||
+      variable.modifiers.some(({ kind }) => kind === ts.SyntaxKind.DeclareKeyword)
+    ) {
+      continue;
+    }
+    for (const declaration of variable.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name) || declaration.name.text !== name) {
+        continue;
+      }
+      let value = declaration.initializer;
+      while (value && (ts.isAsExpression(value) || ts.isParenthesizedExpression(value))) {
+        value = value.expression;
+      }
+      return value && ts.isStringLiteralLike(value) ? value.text : undefined;
+    }
+  }
+  return undefined;
+}
+
+/** Bind only the provided project sources. Event imports resolve through the scan's own map. */
+function localEventImports(
+  sources: ScanContext["sources"],
+): NonNullable<ScanContext["eventImport"]> {
+  let checker: ts.TypeChecker | undefined;
+  return (node) => {
+    checker ??= ts
+      .createProgram({
+        host: {
+          fileExists: (path) => sources.has(path),
+          getCanonicalFileName: (path) => path,
+          getCurrentDirectory: () => "/",
+          getDefaultLibFileName: () => "",
+          getNewLine: () => "\n",
+          getSourceFile: (path) => sources.get(path),
+          readFile: (path) => sources.get(path)?.text,
+          useCaseSensitiveFileNames: () => true,
+          writeFile: () => undefined,
+        },
+        options: { noLib: true, noResolve: true },
+        rootNames: [...sources.keys()],
+      })
+      .getTypeChecker();
+    const declarations = checker.getSymbolAtLocation(node)?.declarations;
+    const item = declarations?.length === 1 ? declarations[0] : undefined;
+    return item && ts.isImportSpecifier(item) ? item : undefined;
+  };
 }
 
 function scanSource(context: ScanContext, path: string, text: string) {
@@ -125,6 +207,20 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
     }
     return undefined;
+  };
+  const eventNames = (event: ts.Expression): string[] => {
+    let node = event;
+    while (ts.isAsExpression(node) || ts.isParenthesizedExpression(node)) {
+      node = node.expression;
+    }
+    if (ts.isIdentifier(node)) {
+      const item = declaration(node);
+      if (item && ts.isImportSpecifier(item)) {
+        const name = importedEventLiteral(context, node, item);
+        return name === undefined ? [] : [name];
+      }
+    }
+    return strings(event);
   };
   const reference = (node: ts.Expression, seen = new Set<ts.Node>()): string => {
     if (
@@ -1139,7 +1235,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ["addEventListener", "on", "addListener"].includes(callee.name.text)
       ) {
         const event = node.arguments[0];
-        const names = event ? strings(event) : [];
+        const names = event ? eventNames(event) : [];
         const facts = callbackFacts(node.arguments[1]);
         const discrete = names.some((name) => ["click", "dblclick"].includes(name));
         const pointer = names.some((name) =>
@@ -1335,14 +1431,16 @@ export function scanDiscreteActionBindings(path: string, text: string): ActionBi
 
 /** Only exported returned nodes with actual binding associations propagate across module imports. */
 export function scanDiscreteActionProject(inputs: readonly DiscreteActionSource[]) {
+  const sources = new Map(
+    inputs.map(({ path, text }) => [
+      path,
+      ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true),
+    ]),
+  );
   const context: ScanContext = {
+    eventImport: localEventImports(sources),
     factories: new Map(),
-    sources: new Map(
-      inputs.map(({ path, text }) => [
-        path,
-        ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true),
-      ]),
-    ),
+    sources,
   };
   for (let pass = 0; pass <= inputs.length; pass++) {
     let changed = false;

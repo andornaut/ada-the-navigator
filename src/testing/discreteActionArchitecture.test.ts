@@ -188,6 +188,89 @@ it("resolves event aliases in their lexical scope and leaves unknown keyboard ac
   ]);
 });
 
+it("recognizes a direct local layout event and keeps imported click and pointer actions blocking", () => {
+  const eventSource = {
+    path: "src/layout/events.ts",
+    text: `
+      export const VIEW_EVENT = "ada-view-scale";
+      export const CLICK_EVENT = "click" as const, RELEASE_EVENT = "pointerup";
+    `,
+  };
+  const result = scanDiscreteActionProject([
+    eventSource,
+    {
+      path: "src/ui/surface.ts",
+      text: `
+        import { VIEW_EVENT, CLICK_EVENT as selected, RELEASE_EVENT } from "../layout/events.ts";
+        window.addEventListener(VIEW_EVENT, resize);
+        button.addEventListener((selected), run);
+        button.addEventListener(RELEASE_EVENT, select);
+      `,
+    },
+  ]);
+  expect(result.findings.map(({ kind, source }) => [kind, source])).toEqual([
+    ["raw-discrete", "button.addEventListener((selected), run)"],
+    ["gesture-review", "button.addEventListener(RELEASE_EVENT, select)"],
+  ]);
+});
+
+it.each([
+  ["dynamic", "export const EVENT = lookup();"],
+  ["mutable", 'export let EVENT = "ada-view-scale"; EVENT = "click";'],
+  ["private", 'const EVENT = "ada-view-scale";'],
+  ["declaration-only", 'export declare const EVENT = "ada-view-scale";'],
+  ["cycle", 'import { EVENT as alias } from "./surface.ts"; export const EVENT = alias;'],
+  ["re-export", 'export { EVENT } from "./names.ts";'],
+] as const)("leaves a named %s event import unresolved", (_case, text) => {
+  const result = scanDiscreteActionProject([
+    { path: "src/names.ts", text: 'export const EVENT = "click";' },
+    { path: "src/events.ts", text },
+    {
+      path: "src/surface.ts",
+      text: `
+        import { EVENT as value } from "./events.ts";
+        export const EVENT = value;
+        button.addEventListener(value, run);
+      `,
+    },
+  ]);
+  expect(result.findings).toEqual([
+    expect.objectContaining({
+      kind: "unresolved-event",
+      source: "button.addEventListener(value, run)",
+    }),
+  ]);
+});
+
+it("does not resolve type-only or lexically shadowed event imports", () => {
+  const result = scanDiscreteActionProject([
+    { path: "src/events.ts", text: 'export const LAYOUT = "ada-view-scale";' },
+    {
+      path: "src/shadows.ts",
+      text: `
+        import { LAYOUT, type LAYOUT as erased } from "./events.ts";
+        window.addEventListener(LAYOUT, resize);
+        element.on(erased, run);
+        function parameter(LAYOUT) { element.on(LAYOUT, fromParameter); }
+        try {} catch (LAYOUT) { element.on(LAYOUT, fromCatch); }
+        const inner = function LAYOUT() { element.on(LAYOUT, fromNamedFunction); };
+        switch (value) {
+          case 0:
+            let LAYOUT = getEvent();
+            element.on(LAYOUT, fromSwitch);
+        }
+      `,
+    },
+  ]);
+  expect(result.findings.map(({ kind, source }) => [kind, source])).toEqual([
+    ["unresolved-event", "element.on(erased, run)"],
+    ["unresolved-event", "element.on(LAYOUT, fromParameter)"],
+    ["unresolved-event", "element.on(LAYOUT, fromCatch)"],
+    ["unresolved-event", "element.on(LAYOUT, fromNamedFunction)"],
+    ["unresolved-event", "element.on(LAYOUT, fromSwitch)"],
+  ]);
+});
+
 it("does not exempt a callback because it is named continuous, drag, or editing", () => {
   for (const callback of ["continuous", "drag", "editing"]) {
     const findings = scanDiscreteActionBindings(
