@@ -71,3 +71,7 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0342 | Render standard game buttons through Game Kit                                   | [ada-0342.md](../work/ada-0342.md) |
 | ada-0343 | Move game UI icons to source-driven SVGs                                        | [ada-0343.md](../work/ada-0343.md) |
 | ada-0346 | Remove Exit from the Start Menu                                                 | [ada-0346.md](../work/ada-0346.md) |
+| ada-0335 | Match Exit chrome to Pause and Menu                                             | [ada-0335.md](../work/ada-0335.md) |
+| ada-0336 | Fade notices after discovering points of interest                               | [ada-0336.md](../work/ada-0336.md) |
+| ada-0338 | Verify Back, Close, and Resume navigation                                       | [ada-0338.md](../work/ada-0338.md) |
+| ada-0350 | Use fill, text or icon cues for button states                                   | [ada-0350.md](../work/ada-0350.md) |

@@ -47,3 +47,5 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0332 | Retire generated Ada thrust and Classic idle SVGs                         | [ada-0332.md](../work/ada-0332.md) |
 | ada-0344 | Use the workspace memory limit for browser and preview containers         | [ada-0344.md](../work/ada-0344.md) |
 | ada-0348 | Discover deployed updates after reconnect and resume                      | [ada-0348.md](../work/ada-0348.md) |
+| ada-0349 | Check for updates when returning to Start                                 | [ada-0349.md](../work/ada-0349.md) |
+| ada-0351 | Reuse keyline textures across animation frames                            | [ada-0351.md](../work/ada-0351.md) |
