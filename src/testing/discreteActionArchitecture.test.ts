@@ -599,19 +599,90 @@ it.each([
   );
 });
 
-it("reports runtime construction audit calls without treating them as binding exemptions", () => {
-  const result = scanRegistryFixtures([
+it("distinguishes direct live-root and metadata assertion sites from unresolved methods", () => {
+  const path = "src/ui/assertionConsumer.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
     {
-      path: "src/root.ts",
+      path,
       text: `
-    const button = createButton("Missing"); root.assertBindings();
-  `,
+        import { assertAdaActionBindings as verify, assertAdaActionMetadata } from "./actionBinding.ts";
+        verify(panel);
+        assertAdaActionMetadata(panel);
+        const repaint = { assertBindings() {} };
+        repaint.assertBindings();
+      `,
     },
   ]);
   expect(result.runtimeAssertions).toEqual([
-    expect.objectContaining({ path: "src/root.ts", source: "root.assertBindings()" }),
+    { kind: "live-root", line: 3, path, source: "verify(panel)" },
+    { kind: "metadata", line: 4, path, source: "assertAdaActionMetadata(panel)" },
   ]);
-  expect(result.findings[0]?.kind).toBe("unbound-discrete");
+  expect(result.unresolvedRuntimeAssertions).toEqual([
+    { line: 6, path, source: "repaint.assertBindings()" },
+  ]);
+});
+
+it("does not authenticate a wrong module, lexical shadow, bare name or indirect assertion call", () => {
+  const path = "src/ui/assertionConsumer.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    {
+      path: "src/ui/observe.ts",
+      text: "export function assertAdaActionBindings(panel) {}",
+    },
+    {
+      path,
+      text: `
+        import { assertAdaActionBindings } from "./observe.ts";
+        import { assertAdaActionMetadata as verify } from "./actionBinding.ts";
+        assertAdaActionBindings(panel);
+        function shadow(verify) { verify(panel); }
+        function assertAdaActionMetadata(panel) {}
+        assertAdaActionMetadata(panel);
+        const local = verify;
+        local(panel);
+        verify?.(panel);
+      `,
+    },
+  ]);
+  expect(result.runtimeAssertions).toEqual([]);
+  expect(result.unresolvedRuntimeAssertions).toEqual([]);
+});
+
+it("retains construction findings when a control escapes before a genuine conditional assertion", () => {
+  const path = "src/ui/assertionConsumer.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    {
+      path,
+      text: `
+        import { assertAdaActionBindings, assertAdaActionMetadata as inspect } from "./actionBinding.ts";
+        export function createPanel() {
+          const button = document.createElement("button");
+          button.dataset.action = "unbound";
+          root.append(button);
+          if (early) { return button; }
+          if (check) { assertAdaActionBindings(root); }
+          inspect(button);
+          recovery.assertBindings();
+          return button;
+        }
+      `,
+    },
+  ]);
+  expect(result.runtimeAssertions.map(({ kind, source }) => [kind, source])).toEqual([
+    ["live-root", "assertAdaActionBindings(root)"],
+    ["metadata", "inspect(button)"],
+  ]);
+  expect(result.unresolvedRuntimeAssertions.map(({ source }) => source)).toEqual([
+    "recovery.assertBindings()",
+  ]);
+  expect(result.findings.map(({ kind, source }) => [kind, source])).toEqual([
+    ["unbound-discrete", 'document.createElement("button")'],
+    ["unbound-discrete", 'button.dataset.action = "unbound"'],
+  ]);
+  expect(result.factoryAssociations).toEqual([]);
 });
 
 it("proves focus-only keyboard effects from the public focus contract, not a similarly named callback", () => {

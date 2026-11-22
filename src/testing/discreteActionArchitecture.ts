@@ -37,7 +37,16 @@ export interface FactoryAssociation {
   readonly path: string;
 }
 
+type RuntimeAssertionKind = "live-root" | "metadata";
+
+interface AssertionSite {
+  readonly line: number;
+  readonly path: string;
+  readonly source: string;
+}
+
 interface ScanContext {
+  readonly assertions: ReadonlyMap<ts.FunctionDeclaration, RuntimeAssertionKind>;
   readonly actionBinding: ts.FunctionDeclaration | undefined;
   readonly lexicalDeclarations: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
@@ -156,22 +165,35 @@ function inertRegistrationOptions(node: ts.Expression): boolean {
 
 function scanContext(sources: ScanContext["sources"]): ScanContext {
   const registry = sources.get("src/ui/actionBinding.ts");
-  const declarations = registry?.statements.filter(
-    (node): node is ts.FunctionDeclaration =>
-      ts.isFunctionDeclaration(node) &&
-      node.name?.text === "bindAdaAction" &&
-      node.body !== undefined &&
-      node.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) === true &&
-      !node.modifiers.some(
-        ({ kind }) =>
-          kind === ts.SyntaxKind.DeclareKeyword ||
-          kind === ts.SyntaxKind.DefaultKeyword ||
-          kind === ts.SyntaxKind.AsyncKeyword,
-      ) &&
-      !node.asteriskToken,
-  );
+  const directExport = (name: string): ts.FunctionDeclaration | undefined => {
+    const declarations = registry?.statements.filter(
+      (node): node is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(node) &&
+        node.name?.text === name &&
+        node.body !== undefined &&
+        node.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) === true &&
+        !node.modifiers.some(
+          ({ kind }) =>
+            kind === ts.SyntaxKind.DeclareKeyword ||
+            kind === ts.SyntaxKind.DefaultKeyword ||
+            kind === ts.SyntaxKind.AsyncKeyword,
+        ) &&
+        !node.asteriskToken,
+    );
+    return declarations?.length === 1 ? declarations[0] : undefined;
+  };
+  const assertions = new Map<ts.FunctionDeclaration, RuntimeAssertionKind>();
+  const live = directExport("assertAdaActionBindings");
+  const metadata = directExport("assertAdaActionMetadata");
+  if (live) {
+    assertions.set(live, "live-root");
+  }
+  if (metadata) {
+    assertions.set(metadata, "metadata");
+  }
   return {
-    actionBinding: declarations?.length === 1 ? declarations[0] : undefined,
+    actionBinding: directExport("bindAdaAction"),
+    assertions,
     factories: new Map(),
     lexicalDeclarations: localDeclarations(sources),
     sources,
@@ -187,40 +209,47 @@ function scanSource(context: ScanContext, path: string, text: string) {
   };
   const lexicalIdentity = (node: ts.Expression, expected: ts.Declaration): boolean =>
     lexicalDeclaration(node) === expected;
-  const bindingNames = new Set<string>();
-  if (context.actionBinding?.name) {
-    const name = context.actionBinding.name.text;
-    bindingNames.add(name);
-    for (const statement of source.statements) {
-      const bindings = ts.isImportDeclaration(statement)
-        ? statement.importClause?.namedBindings
-        : undefined;
-      if (bindings && ts.isNamedImports(bindings)) {
-        for (const item of bindings.elements) {
-          if ((item.propertyName?.text ?? item.name.text) === name) {
-            bindingNames.add(item.name.text);
-          }
+  const exported = new Map<string, ts.FunctionDeclaration>();
+  for (const item of [context.actionBinding, ...context.assertions.keys()]) {
+    if (item?.name) {
+      exported.set(item.name.text, item);
+    }
+  }
+  const candidates = new Map(exported);
+  for (const statement of source.statements) {
+    const bindings = ts.isImportDeclaration(statement)
+      ? statement.importClause?.namedBindings
+      : undefined;
+    if (bindings && ts.isNamedImports(bindings)) {
+      for (const item of bindings.elements) {
+        const target = exported.get(item.propertyName?.text ?? item.name.text);
+        if (target) {
+          candidates.set(item.name.text, target);
         }
       }
     }
   }
-  const canonicalBindingCall = (call: ts.CallExpression): boolean => {
-    const registry = context.actionBinding;
-    if (
-      !registry?.name ||
-      !call.arguments[1] ||
-      call.questionDotToken ||
-      !ts.isIdentifier(call.expression) ||
-      !bindingNames.has(call.expression.text)
-    ) {
-      return false;
+  const canonicalCall = (call: ts.CallExpression): ts.FunctionDeclaration | undefined => {
+    const callee = call.expression;
+    if (call.questionDotToken || !ts.isIdentifier(callee)) {
+      return undefined;
     }
-    if (lexicalIdentity(call.expression, registry)) {
-      return true;
+    const target = candidates.get(callee.text);
+    if (!target) {
+      return undefined;
     }
-    const imported = localValueImport(context, call.expression);
-    return imported?.target === registry.getSourceFile() && imported.name === registry.name.text;
+    if (lexicalIdentity(callee, target)) {
+      return target;
+    }
+    const imported = localValueImport(context, callee);
+    return imported?.target === target.getSourceFile() && imported.name === target.name?.text
+      ? target
+      : undefined;
   };
+  const canonicalBindingCall = (call: ts.CallExpression): boolean =>
+    context.actionBinding !== undefined &&
+    call.arguments[1] !== undefined &&
+    canonicalCall(call) === context.actionBinding;
   const strings = (node: ts.Expression, seen = new Set<string>()): string[] => {
     if (ts.isStringLiteralLike(node)) {
       return [node.text];
@@ -1389,11 +1418,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return { coordinates, editing, focus, registered, sampled, suppression, unknown, writesOuter };
   };
   const findings: ActionBindingFinding[] = [];
-  const runtimeAssertions: {
-    readonly line: number;
-    readonly path: string;
-    readonly source: string;
-  }[] = [];
+  const runtimeAssertions: (AssertionSite & { readonly kind: RuntimeAssertionKind })[] = [];
+  const unresolvedRuntimeAssertions: AssertionSite[] = [];
+  const assertionSite = (node: ts.CallExpression): AssertionSite => ({
+    line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
+    path,
+    source: node.getText(source),
+  });
   const record = (
     kind: ActionBindingFinding["kind"],
     node: ts.Node,
@@ -1496,11 +1527,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
       if (ts.isPropertyAccessExpression(callee) && callee.name.text === "assertBindings") {
-        runtimeAssertions.push({
-          line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
-          path,
-          source: node.getText(source),
-        });
+        unresolvedRuntimeAssertions.push(assertionSite(node));
+      } else if (node.arguments.length === 1 && !ts.isSpreadElement(node.arguments[0]!)) {
+        const target = canonicalCall(node);
+        const kind = target && context.assertions.get(target);
+        if (kind) {
+          runtimeAssertions.push({ ...assertionSite(node), kind });
+        }
       }
       if (ts.isIdentifier(callee) && callee.text === "bindAdaHoldActions") {
         record("legacy-root", node);
@@ -1700,7 +1733,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ts.forEachChild(node, visit);
   };
   visit(source);
-  return { factoryAssociations, findings, runtimeAssertions };
+  return { factoryAssociations, findings, runtimeAssertions, unresolvedRuntimeAssertions };
 }
 
 /** Reports bypasses without grandfathering existing consumer files. */
@@ -1739,5 +1772,6 @@ export function scanDiscreteActionProject(inputs: readonly DiscreteActionSource[
     factoryAssociations: scans.flatMap((scan) => scan.factoryAssociations),
     findings: scans.flatMap((scan) => scan.findings),
     runtimeAssertions: scans.flatMap((scan) => scan.runtimeAssertions),
+    unresolvedRuntimeAssertions: scans.flatMap((scan) => scan.unresolvedRuntimeAssertions),
   };
 }

@@ -23,7 +23,8 @@ function inspect(directory) {
   }
 }
 inspect(join(root, "src"));
-const { factoryAssociations, findings, runtimeAssertions } = scanDiscreteActionProject(sources);
+const { factoryAssociations, findings, runtimeAssertions, unresolvedRuntimeAssertions } =
+  scanDiscreteActionProject(sources);
 const counts = Object.fromEntries(
   [
     "raw-discrete",
@@ -52,6 +53,7 @@ if (report >= 0) {
         findings,
         factoryAssociations,
         runtimeAssertions,
+        unresolvedRuntimeAssertions,
       },
       null,
       2,
