@@ -759,6 +759,7 @@ export function buildScene(scene: UiContext): void {
     labels: {
       activityDrop: label("activityDrop"),
       close: label("close"),
+      communityProjects: label("communityProjects"),
       confirmBuy: label("confirmBuy"),
       confirmCancel: label("confirmCancel"),
       continue: label("continue"),
@@ -775,7 +776,6 @@ export function buildScene(scene: UiContext): void {
       jobsProjects: label("jobsProjects"),
       owned: label("owned"),
       projectFunded: label("projectFunded"),
-      projects: label("projects"),
       shipPaint: label("shipPaint"),
       shop: label("shop"),
       shopShip: label("shopShip"),

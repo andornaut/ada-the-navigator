@@ -702,7 +702,7 @@ function constructedStation(
       "continue",
       "owned",
       "projectFunded",
-      "projects",
+      "communityProjects",
       "shipPaint",
       "shop",
       "shopShip",

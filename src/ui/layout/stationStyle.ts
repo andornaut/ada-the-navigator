@@ -1,3 +1,4 @@
+import { PAUSE_ART } from "../../data/layout.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
@@ -48,6 +49,7 @@ export const STATION_STYLE = `
   width:100%;
   max-height:100%;
   padding:${units(SPACING.panelPadding)};
+  padding-top:${units(SPACING.panelPadding + TYPE.label.lineHeight + SPACING.gap)};
   flex-direction:column;
   gap:${units(SPACING.gap)}
 }
@@ -64,7 +66,7 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-balances{
   position:absolute;
   top:${units(SPACING.panelPadding)};
-  left:${units(SPACING.panelPadding)};
+  left:${units(PAUSE_ART.width + SPACING.gap)};
   display:flex;
   gap:${units(SPACING.gap)};
   font:${font(TYPE.label)}

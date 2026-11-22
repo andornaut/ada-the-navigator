@@ -67,6 +67,7 @@ export { weaponItemGlyph } from "./stationItemIcon.ts";
 
 export interface StationLabels {
   readonly close: string;
+  readonly communityProjects: string;
   readonly confirmBuy: string;
   readonly confirmCancel: string;
   readonly inUse: string;
@@ -85,7 +86,6 @@ export interface StationLabels {
   readonly continue: string;
   readonly owned: string;
   readonly projectFunded: string;
-  readonly projects: string;
   readonly shipPaint: string;
   readonly shop: string;
   readonly shopShip: string;
@@ -455,7 +455,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const projectsPane = document.createElement("section");
   for (const [pane, label] of [
     [jobsPane, labels.jobs],
-    [projectsPane, labels.projects],
+    [projectsPane, labels.communityProjects],
   ] as const) {
     const heading = document.createElement("h3");
     heading.textContent = label;

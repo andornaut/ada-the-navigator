@@ -390,6 +390,7 @@ export const CONTENT: GameContent = {
     carryTravel: "Unavailable while carrying a delivery.",
     chapterComplete: "Chapter complete. You can keep exploring.",
     close: "Close",
+    communityProjects: "Community projects",
     confirmBuy: "Buy",
     confirmCancel: "Cancel",
     confirmLeft: "{amount} left after",
