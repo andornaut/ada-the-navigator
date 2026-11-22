@@ -38,6 +38,7 @@ import {
   createCard,
   createSwitchRow,
   FOCUS_STYLE,
+  LEGACY_TEXT_BUTTON,
   MODAL_STYLE,
   setFooterAction,
   setScrollGroup,
@@ -146,11 +147,11 @@ ${viewStyle(WHOLE_PX_EDGES)}
   padding:8px 16px
 }
 
-/* Route markers draw their own ring on the child frame. */
-.ada-controls button:focus-visible:not(:where(.ada-route-marker)){${FOCUS_STYLE}
+/* Route markers and legacy text buttons paint their focus in their own rules. */
+.ada-controls button:focus-visible:not(:where(.ada-route-marker,${LEGACY_TEXT_BUTTON})){${FOCUS_STYLE}
 }
 @media (forced-colors: active){
-  .ada-controls button:focus-visible:not(:where(.ada-route-marker)){
+  .ada-controls button:focus-visible:not(:where(.ada-route-marker,${LEGACY_TEXT_BUTTON})){
     outline-color:Highlight;
     box-shadow:none
   }

@@ -123,6 +123,16 @@ const CLOSE_HIT = CARD_CLOSE.hit;
 // The shared card and control styles apply in the controls overlay and on the start screen.
 export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 
+// The shared renderer and existing specialised actions retain their own focus treatment.
+export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
+  .ui-standard-button,.ada-compact,.ada-story-button,.ada-map-screen *,.ada-quest-list *,
+  [data-station] *,[data-station-confirm] *
+))`;
+const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
+const LEGACY_ENABLED_FOCUS = `${LEGACY_TEXT_FOCUS}:where(
+  :not(:disabled,.ada-unavailable,[aria-disabled=true])
+)`;
+
 /**
  * An open modal's stacking order in its layer: above every HUD and start-screen control there,
  * whatever their document order, so no button draws over an open card. Every other control in
@@ -385,6 +395,33 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
   cursor:default
 }
 
+/* Tint the centre and retain the existing sprite slices, including the active lip. */
+${LEGACY_TEXT_FOCUS}{
+  outline:none;
+  box-shadow:none
+}
+${LEGACY_ENABLED_FOCUS}{
+  --ada-text-focus-face:${TEXT_TOKENS.label};
+  --ada-text-focus-ink:${TEXT_TOKENS.buttonLabel};
+  color:var(--ada-text-focus-ink);
+  background-image:linear-gradient(var(--ada-text-focus-face),var(--ada-text-focus-face));
+  background-clip:padding-box;
+  border-image-slice:${SLICE}
+}
+/* A focusable refusal keeps its flat disabled face and gets a label cue. */
+${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
+  text-decoration:underline;
+  text-underline-offset:.15em
+}
+@media (forced-colors:active){
+  ${LEGACY_ENABLED_FOCUS}{
+    forced-color-adjust:none;
+    --ada-text-focus-face:Highlight;
+    --ada-text-focus-ink:HighlightText;
+    background-color:ButtonFace
+  }
+}
+
 /* An action stack fills the card's inner width, its faces STACK_BUTTON_GAP apart. */
 ${UI_SCOPE} .ada-actions.ada-stack{
   grid-auto-flow:row;
@@ -595,7 +632,7 @@ ${UI_SCOPE} .ada-cheat-items>*{
   width:100%
 }
 
-${UI_SCOPE} .ada-card .ada-button:focus-visible,
+${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON})),
 ${UI_SCOPE} .ada-row:focus-visible,
 ${UI_SCOPE} .ada-close:focus-visible{${FOCUS_STYLE}
 }

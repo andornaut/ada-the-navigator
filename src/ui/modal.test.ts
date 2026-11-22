@@ -14,6 +14,7 @@ import {
   BUTTON_SLICE,
   buttonTag,
   createActions,
+  LEGACY_TEXT_BUTTON,
   MODAL_LAYER,
   MODAL_STYLE,
   reserveScrollbar,
@@ -66,8 +67,11 @@ describe("Settings control rows", () => {
     }
   });
 
-  it("draws the shared focus ring its outset outside a focused row, button or close X", () => {
-    const start = MODAL_STYLE.indexOf(`${UI_SCOPE} .ada-card .ada-button:focus-visible`);
+  it("keeps the shared focus ring outside focused rows, close X and specialised buttons", () => {
+    const start = MODAL_STYLE.indexOf(
+      `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON}))`,
+    );
+    expect(start).toBeGreaterThanOrEqual(0);
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
     expect(focus).toContain(`${UI_SCOPE} .ada-row:focus-visible`);
     expect(focus).toContain(`${UI_SCOPE} .ada-close:focus-visible`);
@@ -78,6 +82,24 @@ describe("Settings control rows", () => {
 });
 
 describe("modal buttons", () => {
+  it("tints only the legacy face and keeps the normal and pressed border slices", () => {
+    const focus = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
+    expect(rule(focus)).toContain("outline:none");
+    expect(rule(focus)).toContain("box-shadow:none");
+    const enabled = rule(`${focus}:where(
+  :not(:disabled,.ada-unavailable,[aria-disabled=true])
+)`);
+    expect(enabled).toContain("background-clip:padding-box");
+    const { bottom, left, right, top } = BUTTON_SLICE;
+    expect(enabled).toContain(`border-image-slice:${top} ${right} ${bottom} ${left}`);
+    expect(enabled).not.toMatch(/border-image-source|padding:|fill/u);
+    expect(rule(`${focus}:where(.ada-unavailable,[aria-disabled=true])`)).toContain(
+      "text-decoration:underline",
+    );
+    expect(MODAL_STYLE).toContain("--ada-text-focus-face:Highlight;");
+    expect(MODAL_STYLE).toContain("--ada-text-focus-ink:HighlightText");
+  });
+
   it("put secondary actions left of primary ones", () => {
     const order = actionOrder([
       { name: "Update now", role: "primary" as const },
