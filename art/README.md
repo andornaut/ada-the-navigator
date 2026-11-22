@@ -35,6 +35,18 @@ and the [backdrop layers](backdrop.md) give every galaxy a parallax sky in its o
 use simple runtime shapes with the [space palette](space-palette.md): muted
 surroundings and stronger active signals.
 
+## Spacecraft design
+
+Mirror intact hulls across their longitudinal centerline by default. Give
+asymmetric modules a specific role, such as a fixed weapon mount or a piece of
+working equipment. Render damage and independently aimed parts in their
+appropriate states. Check front, rear and paired oblique views at game size.
+
+Use the silhouette to communicate a ship's role. Fit cockpits, drives and cargo
+or working equipment into the hull. Color follows hull facets and recesses.
+Use cool greens, blues and violets with near-black shadows and selective white
+highlights. Reserve warmer accents for functional signals.
+
 ## Published toolkit
 
 Use `@andornaut/art-kit` version `0.22.0` from the verified published

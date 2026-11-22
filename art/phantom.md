@@ -129,12 +129,10 @@ in frame px.
 
 | Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field | White edge |
 | ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ---------: |
-| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |     8.63:1 |
+| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |     8.63:1 |
 
-- Traveler's pod: a pale mauve capsule with a mauve band `#a77fb2`, dim warm
-  portholes, two tan luggage bundles strapped on its back and a pale lilac
-  distress lamp `#dcbae3` that blinks while it waits (dim `#6c5d78`); a tow lug
-  forward. Reduced motion shows `a`.
+- Traveler's pod: a mauve passenger capsule with inset portholes, curved teal
+  storage cheeks and a blinking lilac lamp. The bow lug takes the tow line.
 
 ## Portraits
 

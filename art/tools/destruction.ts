@@ -170,8 +170,8 @@ export function shards(craft: Craft): string {
   }
   const motion = all.map((group, i) => {
     const [jitter, distance, , lift] = SEEDS[i]!;
-    // Decals are paint: they never move a shard's centroid.
-    const solid = group.parts.filter(({ decal }) => !decal);
+    // Paint and coplanar inlays have no volume and never move a shard's centroid.
+    const solid = group.parts.filter(({ decal, z0, z1 }) => !decal && z1 > z0);
     const [cx, cy] = centroid(solid.flatMap(({ plan }) => plan));
     const angle = Math.atan2(cy, cx) + jitter;
     const length = half * distance * (group.kind === "fleck" ? FLECK_DISTANCE : 1);

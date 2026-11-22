@@ -22,6 +22,8 @@ export type Part = {
   top: string;
   side: string;
   rear?: string;
+  // Paint on a loose panel, in fractions of its plan bounds so it follows scaling and breakup.
+  topDetail?: { color: string; plan: Plan };
   loose?: true;
   decal?: true;
   // Part of an aimed turret top: heavies.ts draws it as its own sprite set.
@@ -112,62 +114,136 @@ export function insignia(cx: number, cy: number, r: number, z: number): Part[] {
 
 const sourceCrafts: Craft[] = [
   {
-    // Small beetle with forward mandibles.
+    // Short seed hull with hooked jaws around the central Laser.
     name: "swarm",
     title: "Swarm",
     frame: 80,
     parts: [
       {
         plan: mirror([
-          [0, -10],
-          [5, -20],
-          [9.5, -19],
-          [14, -4],
-          [12.5, 10],
-          [4.5, 16],
+          [0, -8],
+          [7, -8],
+          [6.5, -13],
+          [4, -17],
+          [8.5, -18],
+          [12.5, -12],
+          [14, -3],
+          [9.5, 10],
+          [5, 16],
         ]),
         z0: 0,
-        z1: 3,
-        top: coral,
-        side: coralSide,
-        rear: coralRear,
+        z1: 3.5,
+        top: "#629483",
+        side: "#355b63",
+        rear: "#233940",
       },
-      { plan: box(-3.2, -6, 3.2, 0), z0: 3, z1: 4.5, top: amber, side: amberSide, loose: true },
-      // Insignia on bare hull top.
-      ...insignia(0, 6.5, 5.5, 3),
+      {
+        plan: mirror([
+          [0, -7],
+          [2.7, -4],
+          [4.7, 2],
+          [2.6, 7],
+        ]),
+        z0: 3.5,
+        z1: 6,
+        top: visor,
+        side: visorSide,
+        loose: true,
+      },
+      {
+        plan: box(-2.4, -16, 2.4, -5),
+        z0: 3.5,
+        z1: 5.7,
+        top: amber,
+        side: amberSide,
+      },
+      ...insignia(0, 11, 3.5, 3.5),
     ],
     mouths: [[0, 16]],
     mouthWidth: 4,
     cuts: [-90, -10, 80, 170],
   },
   {
-    // Baseline salvager: horseshoe pincers with a gun at each claw tip.
+    // Armoured twin booms carry the MultiLaser pair ahead of a recessed central bridge.
     name: "fighter",
     title: "Fighter",
     frame: 96,
     parts: [
       {
         plan: mirror([
-          [0, -10],
-          [7, -13],
-          [11, -29],
-          [19, -26],
-          [21, 4],
-          [12, 16],
-          [5, 20],
+          [0, -15],
+          [4, -11],
+          [4, -2],
+          [10, -5],
+          [10, -24],
+          [15, -29],
+          [20, -25],
+          [21, 9],
+          [16, 18],
+          [5, 18],
+          [3, 8],
+          [0, 6],
         ]),
         z0: 0,
-        z1: 4,
-        top: coral,
-        side: coralSide,
-        rear: coralRear,
+        z1: 5,
+        top: "#405785",
+        side: "#2e4065",
+        rear: "#202a44",
       },
-      { plan: box(-12, -2, -3, 10), z0: 4, z1: 5, top: plate, side: coralSide },
-      { plan: box(-3.5, -9, 3.5, -3), z0: 4, z1: 6, top: visor, side: visorSide, loose: true },
-      { plan: box(-17.5, -34, -14.5, -24), z0: 2, z1: 5, top: amber, side: amberSide },
-      { plan: box(14.5, -34, 17.5, -24), z0: 2, z1: 5, top: amber, side: amberSide },
-      // Insignia on bare hull top.
-      ...insignia(7.5, 3.5, 5.2, 4),
+      ...[-1, 1].flatMap((side): Part[] => {
+        const armour: Plan = [
+          [11, -20],
+          [18, -17],
+          [19, 5],
+          [15, 13],
+          [7, 13],
+          [8, 5],
+          [12, 0],
+        ];
+        const plan = armour.map(([x, y]) => [side * x, y] as const);
+        return [
+          {
+            plan,
+            z0: 5,
+            z1: 7.5,
+            top: "#718bd0",
+            side: "#4c64a0",
+          },
+          {
+            plan: box(side * 15 - 2.8, -34, side * 15 + 2.8, -14),
+            z0: 2.5,
+            z1: 6.5,
+            top: "#374b73",
+            side: "#263755",
+          },
+          {
+            plan: box(side * 15 - 2.4, -34, side * 15 + 2.4, -26),
+            z0: 6.5,
+            z1: 6.7,
+            top: "#d5e0eb",
+            side: "#d5e0eb",
+          },
+        ];
+      }),
+      {
+        plan: box(-2.7, -9, 2.7, 4),
+        z0: 5,
+        z1: 7,
+        top: "#374b73",
+        side: "#2e4065",
+        loose: true,
+        topDetail: {
+          color: "#405785",
+          plan: [
+            [0.5, 0.15],
+            [0.82, 0.35],
+            [0.7, 0.84],
+            [0.3, 0.84],
+            [0.18, 0.35],
+          ],
+        },
+      },
+      ...insignia(11, 15, 2.8, 5),
     ],
     mouths: [
       [-8, 18],
@@ -177,54 +253,116 @@ const sourceCrafts: Craft[] = [
     cuts: [-90, -25, 55, 125, 205],
   },
   {
-    // Broad diamond with a forked nose and cosmetic amber guns on the wing tips.
+    // A bone prow and one Phaser emitter lead swept violet engine pods.
     name: "interceptor",
     title: "Interceptor",
     frame: 88,
     parts: [
       {
         plan: mirror([
-          [0, -24],
-          [2.75, -30],
-          [5.5, -24],
-          [19.5, 1],
-          [16, 9],
-          [5, 20],
-          [4, 22],
+          [0, -31],
+          [8, -10],
+          [5, 3],
+          [12, 8],
+          [19.5, 18],
+          [17, 22],
+          [8, 16],
+          [4, 14],
+          [3.5, 22],
         ]),
         z0: 0,
-        z1: 4,
-        top: coral,
-        side: coralSide,
-        rear: coralRear,
+        z1: 3,
+        top: "#514575",
+        side: "#342d58",
+        rear: "#282644",
       },
-      ...[-1, 1].map((side): Part => {
-        const wing: Plan = [
-          [7, -15],
-          [18.5, 1],
-          [10, 13],
-          [3, 8],
-        ].map(([x, y]) => [side * x!, y!] as const);
-        return {
-          plan: side < 0 ? wing.toReversed() : wing,
-          z0: 4,
-          z1: 4.8,
-          top: plate,
-          side: coralSide,
-        };
-      }),
-      { plan: box(-3, -8, 3, 5), z0: 4, z1: 6.5, top: visor, side: visorSide, loose: true },
-      // Visual barrels only; the existing central fire stream gains no mounts or muzzles.
       {
-        plan: box(-21.44, -9, -18.44, 5),
+        plan: mirror([
+          [0, -31],
+          [7.6, -10],
+          [4.5, 3],
+          [3.5, 11],
+          [0, 15],
+        ]),
+        z0: 3,
+        z1: 5.5,
+        top: "#f1e5c9",
+        side: "#514575",
+        loose: true,
+        topDetail: {
+          // The narrow Phaser trace opens into the angled housing.
+          color: "#474582",
+          plan: [
+            [0.5, 0.15],
+            [0.57, 0.26],
+            [0.57, 0.33],
+            [0.65, 0.39],
+            [0.59, 0.49],
+            [0.41, 0.49],
+            [0.35, 0.39],
+            [0.43, 0.33],
+            [0.43, 0.26],
+          ],
+        },
+      },
+      {
+        plan: [
+          [0, -34],
+          [2.5, -24],
+          [0, -17],
+          [-2.5, -24],
+        ],
         z0: 1.5,
-        z1: 5,
-        top: amber,
-        side: amberSide,
+        z1: 6,
+        top: "#a9d9ff",
+        side: "#596ccc",
         loose: true,
       },
-      { plan: box(18.44, -9, 21.44, 5), z0: 1.5, z1: 5, top: amber, side: amberSide, loose: true },
-      ...insignia(0, 13, 4.6, 4),
+      {
+        plan: mirror([
+          [0, -10],
+          [3.7, -7],
+          [2.7, 2],
+          [0, 7],
+        ]),
+        z0: 5.5,
+        z1: 7,
+        top: "#474582",
+        side: visorSide,
+      },
+      ...[-1, 1].flatMap((side): Part[] => {
+        const nacelle: Plan = [
+          [12, -1],
+          [18, 5],
+          [21.44, 19],
+          [18, 25],
+          [13, 19],
+          [10, 9],
+        ];
+        const stripe: Plan = [
+          [14, 7],
+          [17, 10],
+          [19, 19],
+          [16, 16],
+        ];
+        return [
+          {
+            plan: nacelle.map(([x, y]) => [side * x, y] as const),
+            z0: 0.5,
+            z1: 4.5,
+            top: "#8170cc",
+            side: "#4d427d",
+          },
+          {
+            plan: stripe.map(([x, y]) => [side * x, y] as const),
+            z0: 4.5,
+            z1: 5.2,
+            top: "#a9d9ff",
+            side: "#596ccc",
+          },
+        ];
+      }),
+      ...insignia(0, 18, 3, 3),
     ],
     mouths: [[0, 22]],
     mouthWidth: 6,
@@ -353,6 +491,18 @@ export function faces(yaw: number, part: Part): Face[] {
     }
   }
   result.push({ color: part.top, points: top(plan) });
+  if (part.topDetail) {
+    const xs = plan.map(([x]) => x);
+    const ys = plan.map(([, y]) => y);
+    const left = Math.min(...xs);
+    const front = Math.min(...ys);
+    const width = Math.max(...xs) - left;
+    const length = Math.max(...ys) - front;
+    const detail = part.topDetail.plan.map(
+      ([x, y]) => [left + x * width, front + y * length] as const,
+    );
+    result.push({ color: part.topDetail.color, points: top(detail) });
+  }
   return result;
 }
 

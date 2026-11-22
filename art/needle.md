@@ -463,7 +463,7 @@ in frame px.
 | Craft                 | Job subject    | Manifest ids                          | Frame | Display | Frames per heading       | Hull top on field | Keyline |
 | --------------------- | -------------- | ------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ------: |
 | `stranded-glider`     | a stuck glider | `craft-stranded-glider-{k}`           |   112 |      49 | one                      |  `#cfc5bd` 1.12:1 |  9.49:1 |
-| `stranded-needle-pod` | a pod          | `craft-stranded-needle-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#e9e3da` 1.49:1 |  9.49:1 |
+| `stranded-needle-pod` | a pod          | `craft-stranded-needle-pod-{k}-{a,b}` |    48 |      21 | `a` lit, `b` dim, 700 ms |  `#e9e3da` 1.49:1 |  9.49:1 |
 
 Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
 9.49:1 on the field, which carries its silhouette.
@@ -473,7 +473,6 @@ Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
   trails astern; dark canopy, dim lamps, listing 14 degrees to port and 6 nose
   down. No wings; it reads apart from [Elder Loom's saucer](#elder-looms-saucer)
   by its silver shuttle shape.
-- Spool pod (Needle's "a pod"): an upright thread spool, pearl flanges round a
-  lavender core wound with silver bands, and a blue lamp on the top flange that
-  blinks while it waits. Reduced motion shows `a`.
+- Spool pod: a tapered personnel sledge with contoured runners, a recessed
+  canopy and reel, and blinking blue markers. Its bow lug takes the tow line.
 - Each tow point is the bow lug's face.

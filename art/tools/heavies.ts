@@ -46,6 +46,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
@@ -129,7 +130,7 @@ export type HeavyCraft = {
   // "enemies": art/tools/enemies.ts draws the hull frames and jets; this tool adds hardpoints.
   source: "heavies" | "enemies";
   // Hull parts without hardpoints, model units; the first part is the hull slab.
-  hull: Part[];
+  hull: HeavyPart[];
   hullTop: number;
   // Hull width in Ada widths: `offset` fractions scale by it.
   sizeRatio: number;
@@ -339,20 +340,20 @@ function pod(r: number, deck: number): Top {
   };
 }
 
-// Heavy Missile: one plate missile on a rail with an amber warhead and band.
+// Heavy Missile: a broad plate face over a dark launcher housing.
 function rail(r: number, deck: number): Top {
   const [mount, crown] = [deck + 1.5, deck + 4];
   return {
     name: "rail",
     z: mount,
     parts: [
-      head(turretHead(r), mount, crown),
+      { ...head(turretHead(r), mount, crown), top: coralRear, side: visorSide },
       {
         plan: box(-r * 0.34, -r * 1.9, r * 0.34, r * 0.5),
         z0: crown - 1,
         z1: crown + 2,
         top: plate,
-        side: coralSide,
+        side: visorSide,
         key: "body",
       },
       {
@@ -363,15 +364,15 @@ function rail(r: number, deck: number): Top {
         ],
         z0: crown - 1,
         z1: crown + 2,
-        top: amber,
-        side: amberSide,
+        top: plate,
+        side: visorSide,
       },
       {
         plan: box(-r * 0.34, -r * 1.2, r * 0.34, -r * 0.95),
         z0: crown + 2,
         z1: crown + 2,
-        top: amber,
-        side: amber,
+        top: coral,
+        side: coral,
         on: "body",
       },
       hatch(r, crown),
@@ -402,7 +403,7 @@ function dish(r: number, deck: number): Top {
   };
 }
 
-// Charged lance: twin plate rails like the prow tines and an amber charge crystal between them.
+// Charged Lance: continuous bright rails flanking a dark charge crystal.
 function lance(r: number, deck: number): Top {
   const [mount, crown] = [deck + 1.5, deck + 4];
   const rail: Plan = [
@@ -415,9 +416,9 @@ function lance(r: number, deck: number): Top {
     name: "lance",
     z: mount,
     parts: [
-      head(turretHead(r), mount, crown + 0.5),
-      { plan: rail, z0: crown - 1.5, z1: crown + 1, top: plate, side: coralSide },
-      { plan: flipX(rail), z0: crown - 1.5, z1: crown + 1, top: plate, side: coralSide },
+      { ...head(turretHead(r), mount, crown + 0.5), top: coralRear, side: visorSide },
+      { plan: rail, z0: crown - 1.5, z1: crown + 1, top: plate, side: plate },
+      { plan: flipX(rail), z0: crown - 1.5, z1: crown + 1, top: plate, side: plate },
       {
         plan: [
           [0, -r * 2.7],
@@ -427,8 +428,8 @@ function lance(r: number, deck: number): Top {
         ],
         z0: crown - 1,
         z1: crown + 1.5,
-        top: amber,
-        side: amberSide,
+        top: visor,
+        side: visorSide,
       },
       hatch(r, crown + 0.5),
     ],
@@ -458,15 +459,14 @@ function dome(r: number, deck: number): Top {
   };
 }
 
-// Mine layer: a hopper with two amber mines ready on top and a dark chute at the rear. It does
-// not aim: it faces aft.
+// Mine Layer: an aft-facing hopper with two dark square cells and a recessed chute.
 function hopper(r: number, deck: number): Top {
   const [mount, crown] = [deck + 1.5, deck + 4.5];
   return {
     name: "hopper",
     z: mount,
     parts: [
-      head(box(-r * 0.85, -r * 0.8, r * 0.85, r * 0.8), mount, crown),
+      { ...head(box(-r * 0.85, -r * 0.8, r * 0.85, r * 0.8), mount, crown), top: plate },
       {
         plan: box(-r * 0.42, r * 0.8, r * 0.42, r * 1.35),
         z0: mount,
@@ -474,11 +474,9 @@ function hopper(r: number, deck: number): Top {
         top: visor,
         side: visorSide,
       },
-      ...[-0.38, 0.38].map((x): HeavyPart => ({
-        ...hatch(r, crown, ring(x * r, -r * 0.2, r * 0.3, 8, Math.PI / 8)),
-        top: amber,
-        side: amber,
-      })),
+      ...[-0.42, 0.42].map((x) =>
+        hatch(r, crown, box((x - 0.35) * r, -0.57 * r, (x + 0.35) * r, 0.13 * r)),
+      ),
     ],
     muzzles: [[0, r * 1.35, mount + 1]],
   };
@@ -616,7 +614,7 @@ const CAPITAL_TIERS = tiers([4, 6, 8]);
 const cappable = (fill: readonly string[], tiers: readonly Tier[], id: string) =>
   tiers.some(({ armed }) => fill.indexOf(id) >= armed);
 
-// Frigate: a long hunter with twin prow tines, broadside guns and a stern engine block.
+// Frigate: a wide hammerhead ahead of two outboard launch decks and a compact stern.
 const FRIGATE_Z = 8;
 const frigateEngine: Model = {
   role: "engine",
@@ -632,8 +630,29 @@ const frigateEngine: Model = {
       key: "block",
     },
     ...hosted("block", [
-      { plan: box(-20, -9, -6, 11), z0: FRIGATE_Z + 6, z1: FRIGATE_Z + 6, top: plate, side: plate },
-      { plan: box(6, -9, 20, 11), z0: FRIGATE_Z + 6, z1: FRIGATE_Z + 6, top: plate, side: plate },
+      ...[-1, 1].map((side) => {
+        const facet: Plan = [
+          [12, -12],
+          [20, -7],
+          [20, 9],
+          [16, 12],
+          [17, -5],
+        ];
+        return {
+          plan: side < 0 ? flipX(facet) : facet,
+          z0: FRIGATE_Z + 6,
+          z1: FRIGATE_Z + 6,
+          top: coralSide,
+          side: coralSide,
+        };
+      }),
+      ...[-13, 13].map((x) => ({
+        plan: box(x - 5, 7, x + 5, 10),
+        z0: FRIGATE_Z + 6,
+        z1: FRIGATE_Z + 6,
+        top: coralRear,
+        side: coralRear,
+      })),
     ]),
   ],
   destroyed: [
@@ -670,26 +689,26 @@ const frigateEngine: Model = {
 export const frigate: HeavyCraft = normalizeHeavy({
   name: "frigate",
   title: "Frigate",
-  frame: 384,
+  frame: 432,
   source: "heavies",
   hullTop: FRIGATE_Z,
   hull: [
     {
       plan: mirror([
-        [0, -50],
-        [5, -58],
-        [8, -98],
-        [13, -114],
-        [22, -106],
-        [26, -62],
-        [30, -34],
-        [44, -16],
-        [66, -6],
-        [70, 14],
-        [62, 30],
-        [38, 36],
-        [30, 52],
-        [27, 68.5],
+        [16, -82],
+        [40, -79],
+        [61, -65],
+        [65, -51],
+        [53, -39],
+        [30, -36],
+        [29, -22],
+        [59, -19],
+        [70, -8],
+        [70, 11],
+        [57, 23],
+        [30, 28],
+        [28, 56],
+        [25, 68.5],
       ]),
       z0: 0,
       z1: FRIGATE_Z,
@@ -697,19 +716,77 @@ export const frigate: HeavyCraft = normalizeHeavy({
       side: coralSide,
       rear: coralRear,
     },
-    // Salvage plates: a dorsal spine under the spine mount and two sponson patches.
-    { plan: box(-8, -6, 8, 14), z0: FRIGATE_Z, z1: FRIGATE_Z + 1.5, top: plate, side: coralSide },
-    { plan: box(-60, 20, -44, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
-    { plan: box(44, 20, 60, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
+    {
+      plan: [
+        [-60, -53],
+        [-51, -66],
+        [-17, -75],
+        [17, -75],
+        [51, -66],
+        [60, -53],
+        [48, -49],
+        [-48, -49],
+      ],
+      z0: FRIGATE_Z,
+      z1: FRIGATE_Z + 3,
+      top: coralSide,
+      side: coralRear,
+      key: "hammerhead",
+    },
+    ...[-1, 1].flatMap((side): HeavyPart[] => {
+      const facet: Plan = [
+        [10, -73],
+        [18, -73],
+        [43, -66],
+        [54, -57],
+        [40, -64],
+        [17, -70],
+      ];
+      const slit: Plan = [
+        [9, -68],
+        [24, -66],
+        [27, -63],
+        [10, -65],
+      ];
+      return [
+        { plan: side < 0 ? flipX(facet) : facet, top: coral },
+        { plan: side < 0 ? flipX(slit) : slit, top: coralRear },
+      ].map(({ plan, top }) => ({
+        plan,
+        z0: FRIGATE_Z + 3,
+        z1: FRIGATE_Z + 3,
+        on: "hammerhead",
+        top,
+        side: top,
+      }));
+    }),
+    // Tapered deck recesses run inward from the sponsons toward the centreline.
+    ...[-1, 1].map((side): HeavyPart => {
+      const recess: Plan = [
+        [27, -12],
+        [51, -14],
+        [62, -5],
+        [60, 7],
+        [52, 13],
+        [30, 17],
+        [42, 10],
+        [41, -5],
+      ];
+      return {
+        plan: side < 0 ? flipX(recess) : recess,
+        z0: FRIGATE_Z,
+        z1: FRIGATE_Z,
+        top: coralSide,
+        side: coralSide,
+      };
+    }),
     {
       plan: box(-7, -22, 7, -12),
       z0: FRIGATE_Z,
       z1: FRIGATE_Z + 2.5,
-      top: visor,
-      side: visorSide,
-      loose: true,
+      top: coralRear,
+      side: coralSide,
     },
-    // On bare deck between the spine plate and the engine block.
     ...insignia(0, 25, 7, FRIGATE_Z),
   ],
   sizeRatio: 4,
@@ -736,8 +813,7 @@ export const frigate: HeavyCraft = normalizeHeavy({
   },
 });
 
-// Capital: a broad flagship with a great claw prow, a command tower, two stern nacelles and
-// four deck turrets.
+// Capital: a long armoured keel with eight turret stations and two stern nacelles.
 const CAPITAL_Z = 12;
 const TOWER: Plan = [
   [-14, -23],
@@ -828,20 +904,55 @@ const POD_BROKEN: Plan = [
   [-13, 24],
   [-13, -20],
 ];
-function nacelle(port: boolean, scale = 1): Model {
+function nacelle(deck: "faceted" | "plated", port: boolean, scale = 1): Model {
   const scaled = (plan: Plan): Plan => plan.map(([x, y]) => [x * scale, y * scale] as const);
   const side = (plan: Plan) => (port ? flipX(scaled(plan)) : scaled(plan));
   const z1 = 15;
   const wreckZ = 9;
+  const cowling: Plan = [
+    [-3, -22],
+    [4, -19],
+    [8, -11],
+    [8, 16],
+    [4, 24],
+    [-5, 22],
+    [-8, 14],
+    [-8, -11],
+  ];
+  const deckFaces =
+    deck === "faceted"
+      ? [
+          { plan: cowling, top: coralSide },
+          {
+            plan: [
+              [-7, -11],
+              [-3, -17],
+              [-4, 14],
+              [-6, 17],
+            ] as Plan,
+            top: coral,
+          },
+          { plan: box(-4, 16, 4, 19), top: coralRear },
+        ]
+      : [
+          { plan: box(-7, -18, 7, 16), top: plate },
+          { plan: box(-5, 20, 5, 26), top: visor },
+        ];
   return {
     role: "engine",
     z: z1,
     intact: [
       { plan: side(POD), z0: 0, z1, top: coral, side: coralSide, rear: coralRear, key: "pod" },
-      ...hosted("pod", [
-        { plan: side(box(-7, -18, 7, 16)), z0: z1, z1, top: plate, side: plate },
-        { plan: side(box(-5, 20, 5, 26)), z0: z1, z1, top: visor, side: visor },
-      ]),
+      ...hosted(
+        "pod",
+        deckFaces.map(({ plan, top }) => ({
+          plan: side(plan),
+          z0: z1,
+          z1,
+          top,
+          side: top,
+        })),
+      ),
     ],
     destroyed: [
       {
@@ -869,42 +980,136 @@ export const capital: HeavyCraft = normalizeHeavy({
   hull: [
     {
       plan: mirror([
-        [0, -40],
-        [12, -50],
-        [17, -90],
-        [12, -106],
-        [22, -120],
-        [44, -110],
-        [58, -86],
-        [84, -80],
-        [94, -66],
-        [98, -40],
-        [108, 6],
-        [104, 40],
-        [70, 50],
-        [60, 55.5],
-        [43, 55.5],
-        [40.5, 66],
-        [38, 84],
-        [0, 90],
+        [17, -161],
+        [30, -145],
+        [39, -112],
+        [49, -92],
+        [88, -79],
+        [98, -66],
+        [98, -46],
+        [72, -29],
+        [74, -12],
+        [108, 3],
+        [108, 31],
+        [88, 48],
+        [63, 57],
+        [41, 57],
+        [38, 106],
+        [30, 138],
+        [14, 138],
+        [10, 129],
       ]),
       z0: 0,
       z1: CAPITAL_Z,
-      top: coral,
-      side: coralSide,
-      rear: coralRear,
+      top: coralSide,
+      side: coralRear,
+      rear: visorSide,
     },
-    // Salvage plates: a keel strip ahead of the tower and two wing patches inboard of the turrets.
-    { plan: box(-8, -38, 8, -27), z0: CAPITAL_Z, z1: CAPITAL_Z + 1.5, top: plate, side: coralSide },
-    { plan: box(-74, 14, -52, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
-    { plan: box(52, 14, 74, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
+    {
+      plan: mirror([
+        [11, -154],
+        [23, -142],
+        [28, -114],
+        [15, -103],
+        [11, -30],
+      ]),
+      z0: CAPITAL_Z,
+      z1: CAPITAL_Z + 11,
+      top: coral,
+      side: coralRear,
+      key: "keel",
+    },
+    {
+      plan: box(-10, -146, 10, -112),
+      on: "keel",
+      z0: CAPITAL_Z + 11,
+      z1: CAPITAL_Z + 11,
+      top: plate,
+      side: plate,
+    },
+    // Paired shoulder armour leaves the port lance collar clear at deck height.
+    ...[-1, 1].map((side): HeavyPart => {
+      const panel: Plan = [
+        [44, -88],
+        [82, -75],
+        [84, -65],
+        [46, -72],
+      ];
+      return {
+        plan: side < 0 ? flipX(panel) : panel,
+        z0: CAPITAL_Z,
+        z1: CAPITAL_Z + 4,
+        top: plate,
+        side: coralRear,
+      };
+    }),
+    {
+      plan: box(-89, -60, -61, -44),
+      z0: CAPITAL_Z,
+      z1: CAPITAL_Z,
+      top: visor,
+      side: visorSide,
+    },
+    ...[-1, 1].map((side): HeavyPart => {
+      const panel: Plan = [
+        [43, 2],
+        [69, 10],
+        [68, 32],
+        [40, 43],
+      ];
+      return {
+        plan: side < 0 ? flipX(panel) : panel,
+        z0: CAPITAL_Z,
+        z1: CAPITAL_Z + 6,
+        top: coral,
+        side: coralRear,
+      };
+    }),
+    // Stern rails frame the aft deck and leave a clear channel behind the starboard hopper.
+    ...[-35, 29].map((x): HeavyPart => ({
+      plan: box(x, 79, x + 6, 116),
+      z0: CAPITAL_Z,
+      z1: CAPITAL_Z + 6,
+      top: coral,
+      side: coralRear,
+    })),
+    {
+      plan: [
+        [16, 73],
+        [24, 73],
+        [27, 83],
+        [24, 120],
+        [19, 129],
+        [12, 122],
+        [13, 84],
+      ],
+      key: "mine-recess",
+      z0: CAPITAL_Z,
+      z1: CAPITAL_Z,
+      top: coralRear,
+      side: coralRear,
+    },
+    {
+      plan: [
+        [17, 77],
+        [19, 77],
+        [16, 118],
+        [19, 125],
+        [14, 120],
+      ],
+      on: "mine-recess",
+      z0: CAPITAL_Z,
+      z1: CAPITAL_Z,
+      top: visorSide,
+      side: visorSide,
+    },
   ],
   sizeRatio: 5,
-  // Weapons fill pairs: shoulders, wings, claw arms, stern deck.
+  // Weapons fill pairs: shoulders, wings, forward deck, stern deck.
   hardpoints: [
     { id: "command", offset: [0, 0], model: command },
-    { id: "engine-left", offset: [-0.25, 0.4], model: nacelle(true) },
-    { id: "engine-right", offset: [0.25, 0.4], model: nacelle(false) },
+    { id: "engine-left", offset: [-0.25, 0.4], model: nacelle("faceted", true) },
+    { id: "engine-right", offset: [0.25, 0.4], model: nacelle("faceted", false) },
     ...mounts(CAPITAL_Z, [
       [-0.35, -0.3],
       [-0.42, 0.08],
@@ -1068,8 +1273,8 @@ export const gadget: HeavyCraft = normalizeHeavy({
   sizeRatio: 5,
   hardpoints: [
     { id: "command", offset: [0, 0], model: gadgetCommand },
-    { id: "engine-left", offset: [-0.27, 0.44], model: nacelle(true, 1.1) },
-    { id: "engine-right", offset: [0.27, 0.44], model: nacelle(false, 1.1) },
+    { id: "engine-left", offset: [-0.27, 0.44], model: nacelle("plated", true, 1.1) },
+    { id: "engine-right", offset: [0.27, 0.44], model: nacelle("plated", false, 1.1) },
     ...mounts(GADGET_Z, [
       [-0.36, -0.3],
       [-0.44, 0.1],
@@ -1405,7 +1610,7 @@ export function build(
 
   if (craft.source === "heavies") {
     for (const yaw of yaws) {
-      const list = drawOrder(yaw, hullTop, craft.hull).flatMap((part) => faces(yaw, part));
+      const list = partOrder(yaw, hullTop, craft.hull).flatMap((part) => faces(yaw, part));
       const hull = sprite(`${title} ${yaw} idle`, frame, 0, list);
       files.set(`${name}-${yaw}.svg`, hull.svg);
       collision.hull.push(hull.collision);
@@ -1731,7 +1936,7 @@ async function main() {
       const text = file.endsWith(".json")
         ? await format(content, { ...(await resolveConfig(path)), filepath: path })
         : file.endsWith(".svg")
-          ? svgText(content)
+          ? svgText(heavySurface("core", file, content) ?? content)
           : content;
       files.set(file, text);
     }

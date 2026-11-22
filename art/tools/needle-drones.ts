@@ -24,6 +24,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
+import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { jets, silhouettes, svg } from "./enemies.ts";
 import {
@@ -47,6 +48,7 @@ import {
   writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
+import { isIndustrialHullColor } from "./retaliator-models.ts";
 
 // Crimson lacquer at Oklab hue 14, redder than coral (39) and the claim jumpers' rust (50), with
 // plates in Needle's silver and a darker soot so wrecks read on crimson.
@@ -61,8 +63,44 @@ export const needle = {
   burn: "#58302f",
 } as const;
 
+// Small craft: dark fighter oxide and the interceptor's bone, violet and blue.
+const smallCraftSwap = {
+  "#282644": "#242a45",
+  "#342d58": "#30395d",
+  "#35252e": "#30232b",
+  "#38242f": "#39252e",
+  "#474582": "#464f89",
+  "#4b3038": "#4d2d3a",
+  "#4d427d": "#4b5084",
+  "#514575": "#4d4b76",
+  "#55313a": "#5e2e3e",
+  "#596ccc": "#536ece",
+  "#78443f": "#793947",
+  "#8170cc": "#7c79d0",
+  "#a9d9ff": "#aedfff",
+  "#bcaac1": "#b1b5cd",
+  "#f1e5c9": "#f0ece4",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
+// Cool hull materials authored on the swarm and fighter.
+const swarmFighterSwap = {
+  "#202a44": "#202937",
+  "#233940": "#253548",
+  "#263755": "#26334b",
+  "#2e4065": "#293950",
+  "#355b63": "#384e68",
+  "#374b73": "#324664",
+  "#405785": "#3a5278",
+  "#4c64a0": "#4c668c",
+  "#629483": "#5c7794",
+  "#718bd0": "#728eaf",
+  "#d5e0eb": "#d6e2eb",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
 // Coral family colour to Needle colour. Gadget's amber guns and dark visor are unchanged.
 const swap: Readonly<Record<string, string>> = {
+  ...smallCraftSwap,
+  ...swarmFighterSwap,
   [coral]: needle.crimson,
   [coralSide]: needle.crimsonSide,
   [coralRear]: needle.crimsonRear,
@@ -74,6 +112,8 @@ const swap: Readonly<Record<string, string>> = {
 };
 const family = new Set<string>([
   ...Object.values(needle),
+  ...Object.values(smallCraftSwap),
+  ...Object.values(swarmFighterSwap),
   amber,
   amberSide,
   visor,
@@ -104,7 +144,8 @@ function swapColours(
 ): string {
   const result = text.replace(/#[0-9a-f]{6}\b/gi, (color) => map[color.toLowerCase()] ?? color);
   for (const color of result.match(/#[0-9a-f]{6}\b/gi) ?? []) {
-    if (!allowed.has(color.toLowerCase())) {
+    const hex = color.toLowerCase();
+    if (!allowed.has(hex) && !isIndustrialHullColor(file, hex)) {
       throw new Error(`${file}: ${color} is not a Needle drone colour`);
     }
   }
@@ -162,7 +203,7 @@ for (const [file, content] of files) {
   const text = file.endsWith("-jets.json")
     ? swapColours(jetSwap, jetFamily, file, content)
     : drawn
-      ? swapColours(swap, family, file, content)
+      ? (heavySurface("needle", file, content) ?? swapColours(swap, family, file, content))
       : content;
   texts.set(
     file,

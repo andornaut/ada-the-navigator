@@ -102,10 +102,8 @@ in frame px.
 | `stranded-seed-pod`    | a seed pod    | `craft-stranded-seed-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms | `#efe4cf` 1.31:1, keylined |
 | `stranded-scrap-barge` | a scrap barge | `craft-stranded-scrap-barge-{k}`    |    96 |      42 | one                      | `#aaa883` 1.47:1, keylined |
 
-- Seed pod: a striped cream sunflower-seed capsule, rounded at the bow and
-  pointed at the tail, with a leaf collar and sprout at the tail, a bloom lamp
-  `#f6d76b` that blinks while it waits (dim `#8a7a3e`) and a steel tow lug
-  forward. Reduced motion shows `a`.
+- Seed pod: a cream pressure capsule with folded green solar vanes, a dark
+  viewport, a blinking bloom lamp and a forward tow lug.
 - Scrap barge: an olive steel tray with a raised workshop-yellow hazard rim,
   heaped with scrap (rust and olive plates, a steel tank, a wheel, a bent pipe),
   a cream cab on the stern quarter with dark glass and a dim lamp, and a dark

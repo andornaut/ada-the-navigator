@@ -29,6 +29,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
+import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { jets, silhouettes, svg } from "./enemies.ts";
 import {
@@ -61,6 +62,7 @@ import {
   writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
+import { isIndustrialHullColor } from "./retaliator-models.ts";
 
 // ---------------------------------------------------------------- palette
 
@@ -84,8 +86,44 @@ export const claim = {
   burn: "#613e30",
 } as const;
 
+// Small craft: dark fighter oxide and the interceptor's bone, violet and blue.
+const smallCraftSwap = {
+  "#282644": "#342937",
+  "#342d58": "#493a4e",
+  "#35252e": "#37251e",
+  "#38242f": "#3c271f",
+  "#474582": "#4c4672",
+  "#4b3038": "#523326",
+  "#4d427d": "#554571",
+  "#514575": "#5e4960",
+  "#55313a": "#633927",
+  "#596ccc": "#5f6aba",
+  "#78443f": "#82492f",
+  "#8170cc": "#8c70b0",
+  "#a9d9ff": "#b4d9f2",
+  "#bcaac1": "#c2adab",
+  "#f1e5c9": "#eee1c6",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
+// Cool hull materials authored on the swarm and fighter.
+const swarmFighterSwap = {
+  "#202a44": "#26372f",
+  "#233940": "#384639",
+  "#263755": "#2c4038",
+  "#2e4065": "#2e473f",
+  "#355b63": "#53624f",
+  "#374b73": "#39584d",
+  "#405785": "#415e53",
+  "#4c64a0": "#537263",
+  "#629483": "#858b69",
+  "#718bd0": "#7c9b85",
+  "#d5e0eb": "#c5d9ca",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
 // Coral family colour to claim-jumper colour, applied to every drawn file.
 export const swap: Readonly<Record<string, string>> = {
+  ...smallCraftSwap,
+  ...swarmFighterSwap,
   [coral]: claim.rust,
   [coralSide]: claim.rustSide,
   [coralRear]: claim.rustRear,
@@ -101,7 +139,13 @@ export const swap: Readonly<Record<string, string>> = {
 };
 
 // Gadget's claw ink and the wreck ember stay as in the coral family.
-const family = new Set<string>([...Object.values(claim), ink, wreckEmber]);
+const family = new Set<string>([
+  ...Object.values(claim),
+  ...Object.values(smallCraftSwap),
+  ...Object.values(swarmFighterSwap),
+  ink,
+  wreckEmber,
+]);
 
 // Speed jets, slow to fast: a dark ember tail opening to ember, round an ember core that runs
 // to a near-white hot centre (OKLab L 0.95, C 0.03, warm).
@@ -127,7 +171,8 @@ function swapColours(
 ): string {
   const result = text.replace(/#[0-9a-f]{6}\b/gi, (color) => map[color.toLowerCase()] ?? color);
   for (const color of result.match(/#[0-9a-f]{6}\b/gi) ?? []) {
-    if (!allowed.has(color.toLowerCase())) {
+    const hex = color.toLowerCase();
+    if (!allowed.has(hex) && !isIndustrialHullColor(file, hex)) {
       throw new Error(`${file}: ${color} is not a claim-jumper colour`);
     }
   }
@@ -427,7 +472,7 @@ async function main() {
     const text = file.endsWith("-jets.json")
       ? recolourJets(file, content)
       : drawn
-        ? recolour(file, content)
+        ? (heavySurface("cartwheel", file, content) ?? recolour(file, content))
         : content;
     // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
     texts.set(

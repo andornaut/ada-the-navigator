@@ -46,7 +46,6 @@ const leaf = "#9ccc5a";
 const leafSide = "#6c9a3a";
 const bloom = "#f6d76b";
 const bloomDim = "#8a7a3e";
-const seedDark = "#5c5446";
 const seedDarkSide = "#433d33";
 const yellow = "#f2d15a";
 const yellowSide = "#b99a36";
@@ -90,8 +89,6 @@ const mauveSide = "#a596ad";
 const mauveRear = "#7d6f86";
 const band = "#a77fb2";
 const bandSide = "#7a5a85";
-const pack = "#b49a7c";
-const packSide = "#857057";
 const lampLit = "#dcbae3";
 const lampDim = "#6c5d78";
 const warmDim = "#c9a978";
@@ -101,29 +98,52 @@ const lug = (u: number, z: number, len = 1.6) =>
 
 // ---------------------------------------------------------------- Sunflower
 
-// Seed pod: a striped sunflower-seed capsule, rounded bow and pointed tail, with a leaf collar
-// and sprout at the tail, a bloom lamp that blinks while it waits and a tow lug forward.
-const seedPod =
-  (lit: boolean) =>
-  (visible: Facing): Part[][] => [
+// The seed rescue capsule has a central pressure hull and two folded solar vanes.
+const seedPod = (lit: boolean) => (): Part[][] => {
+  const shell = craftPlan([
+    [-10, -3],
+    [-6, -6],
+    [6, -6],
+    [9, -2.2],
+    [9, 2.2],
+    [6, 6],
+    [-6, 6],
+    [-10, 3],
+  ]);
+  return [
+    ...[-1, 1].map((side) => [
+      part(craftBox(-3, side * 5.3, 7, 4), 2.8, 4.6, steelDark, steelDarkSide),
+      part(
+        orientedBox(...uv(-4.8, side * 7), FWD + side * 0.27, 9, 2.3),
+        4.5,
+        5.5,
+        leafSide,
+        seedDarkSide,
+      ),
+      part(craftBox(-4.8, side * 7, 2.3, 2.3), 5.5, 5.8, leaf, leafSide),
+    ]),
     [
-      ...hcyl(-9, 9, 0, 5.4, 5, { top: cream, side: creamSide, rear: creamRear, back: "point" }),
-      ...[-1.5, 1.5].map((v) => part(craftBox(0.5, v, 13, 0.9), 10.4, 10.45, seedDark, seedDark)),
-      ...(visible(1, 0)
-        ? [part(craftBox(0, 5.05, 12, 0.3), 3.6, 7.2, seedDark, seedDarkSide)]
-        : []),
-      ...(visible(-1, 0)
-        ? [part(craftBox(0, -5.05, 12, 0.3), 3.6, 7.2, seedDark, seedDarkSide)]
-        : []),
+      part(shell, 1.8, 5.4, cream, creamRear),
+      part(
+        craftPlan([
+          [-7, -4],
+          [5, -4],
+          [7, 0],
+          [5, 4],
+          [-7, 4],
+        ]),
+        5.4,
+        8,
+        cream,
+        creamSide,
+      ),
+      part(craftBox(2, 0, 3.2, 5.2), 8, 8.5, glassOff, glassOffSide),
+      part(craftBox(-5.2, 0, 2, 6.3), 8, 8.5, leaf, leafSide),
+      disc(-6.3, 0, 1.1, 8.5, 9.8, lit ? bloom : bloomDim, seedDarkSide, 8),
     ],
-    [disc(-6.5, 0, 3.6, 5.2, 8.6, leaf, leafSide, 8)],
-    [cube(-8.6, -0.8, 8.4, 1.4, leaf), cube(-9.4, 0.8, 8.8, 1.2, leafSide)],
     [lug(9, 5.4)],
-    [
-      part(craftBox(1, 0, 0.8, 0.8), 10.4, 12.6, steelDark, steelDark),
-      disc(1, 0, 1.2, 12.6, 14.4, lit ? bloom : bloomDim, lit ? "#b89a3e" : "#5e5329", 8),
-    ],
   ];
+};
 
 // Scrap barge: an olive steel tray with a raised yellow hazard rim, heaped with scrap (plates,
 // a tank, a wheel, a bent pipe), a dead cream cab on the stern quarter and a dark engine block.
@@ -207,27 +227,30 @@ const skimmer = () => (): Part[][] => [
   [lug(16.2, 3.6)],
 ];
 
-// Shell pod (Whirlpool's pod): a round lilac shell pod with a whale-glow band, three cream shell ridges over
-// its crown, a glow lamp that blinks while it waits and a tow lug forward.
-const whirlPod = (lit: boolean) => (): Part[][] => [
-  [
-    disc(0, 0, 4, 0.5, 2.3, lilac, lilacSide, 12),
-    disc(0, 0, 6, 2.3, 5.2, lilac, lilacSide, 12),
-    disc(0, 0, 6.5, 5.2, 6.4, lilac, lilacSide, 12),
-    disc(0, 0, 6.8, 6.4, 7.6, glow, lilacSide, 12),
-    disc(0, 0, 6.5, 7.6, 8.8, lilac, lilacSide, 12),
-    disc(0, 0, 6, 8.8, 11.7, lilac, lilacSide, 12),
-    disc(0, 0, 4, 11.7, 13.5, lilacCap, lilacSide, 12),
-  ],
-  ...[-0.9, 0, 0.9].map((a) => [
-    part(orientedBox(...uv(0, 0), FWD + Math.PI / 2 + a, 11, 1.1), 13.5, 14.1, cream, creamSide),
-  ]),
-  [lug(6.4, 7)],
-  [
-    part(craftBox(-2, 0, 0.8, 0.8), 13.5, 15.6, steelDark, steelDark),
-    disc(-2, 0, 1.2, 15.6, 17.4, lit ? glow : glowDim, lit ? lilacSide : "#46427a", 8),
-  ],
-];
+// The current rescue pod is an armored capsule inside a serrated stabilizer ring.
+const whirlPod = (lit: boolean) => (): Part[][] => {
+  const shield = (side: number) =>
+    craftPlan([
+      [-6, side * 2],
+      [-5, side * 7],
+      [1, side * 8],
+      [4, side * 5],
+      [5, side * 2],
+    ]);
+  return [
+    ...[-1, 1].map((side) => [
+      part(shield(side), 1.6, 3.4, lilacSide, lilacRear),
+      part(craftBox(-0.8, side * 6.4, 4.8, 1.2), 3.4, 4.3, glow, lilac),
+    ]),
+    [
+      part(ellipse(-0.4, 0, 6.9, 4.7, 12), 2.2, 7.2, lilac, lilacSide, lilacRear),
+      part(ellipse(-1.2, 0, 5.1, 3.8, 10), 7.2, 10.4, lilacCap, lilacSide),
+      part(craftBox(3.3, 0, 2.4, 3.2), 8.2, 9.2, glassOff, glassOffSide),
+      disc(-2, 0, 1.4, 10.4, 12, lit ? glow : glowDim, lilacRear, 8),
+    ],
+    [lug(6.4, 7)],
+  ];
+};
 
 // ---------------------------------------------------------------- Needle
 
@@ -272,19 +295,77 @@ const stuckGlider = () => (): Part[][] => {
   ];
 };
 
-// Spool pod (Needle's pod): an upright thread spool, pearl flanges round a lavender core wound with silver
-// bands, a blue lamp that blinks on the top flange and a tow lug on the core.
+// Personnel sledge with a tapered stern, recessed canopy and cased tow reel.
 const spoolPod = (lit: boolean) => (): Part[][] => [
   [
-    disc(0, 0, 6.2, 0, 1.6, pearl, pearlSide, 14),
-    disc(0, 0, 4.3, 1.6, 9.4, lav, lavSide, 14),
-    disc(0, 0, 4.45, 3.6, 4.3, silver, silverSide, 14),
-    disc(0, 0, 4.45, 6.4, 7.1, silver, silverSide, 14),
-    disc(0, 0, 6.2, 9.4, 11, pearl, pearlSide, 14),
-    disc(0, 0, 3.4, 11, 11.4, silver, silverSide, 14),
+    part(
+      craftPlan([
+        [-11.4, -2.2],
+        [-8.7, -4.3],
+        [-2.6, -5.5],
+        [3.6, -4.9],
+        [5.4, -3.4],
+        [6.1, -1.6],
+        [6.1, 1.6],
+        [5.4, 3.4],
+        [3.6, 4.9],
+        [-2.6, 5.5],
+        [-8.7, 4.3],
+        [-11.4, 2.2],
+      ]),
+      1,
+      5.6,
+      pearl,
+      pearlSide,
+    ),
+    part(
+      craftPlan([
+        [-9.6, -1.3],
+        [-6.2, -2.5],
+        [-1.5, -2.2],
+        [-0.6, 0],
+        [-1.5, 2.2],
+        [-6.2, 2.5],
+        [-9.6, 1.3],
+      ]),
+      5.6,
+      6.8,
+      pearlSide,
+      silverRear,
+    ),
+    disc(-3.9, 0, 1.15, 6.8, 7.05, steelDark, steelDarkSide, 10),
+    part(
+      craftPlan([
+        [1.8, -2],
+        [3.7, -1.8],
+        [4.8, -0.9],
+        [4.8, 0.9],
+        [3.7, 1.8],
+        [1.8, 2],
+      ]),
+      5.5,
+      6.65,
+      glassOff,
+      glassOffSide,
+    ),
   ],
+  ...[-1, 1].map((side) => [
+    part(
+      craftPlan([
+        [-8.4, side * 4.3],
+        [-4.8, side * 6.6],
+        [0.8, side * 6.15],
+        [3.9, side * 5.8],
+        [2.2, side * 4.8],
+      ]),
+      1.2,
+      4.4,
+      silver,
+      silverRear,
+    ),
+    disc(3.6, side * 5.5, 0.65, 4.4, 5.1, lit ? needleBlue : blueDim, silverRear, 6),
+  ]),
   [part(craftBox(5.4, 0, 2.6, 2.4), 4.6, 6.2, steelDark, steelDarkSide)],
-  [disc(0, 0, 1.1, 11.4, 13.2, lit ? needleBlue : blueDim, lit ? "#5687ba" : "#33475f", 8)],
 ];
 
 // ---------------------------------------------------------------- Andromeda
@@ -333,53 +414,63 @@ const lostCourier =
     [lug(12, 6)],
   ];
 
-// Drifting lamp buoy: a pearl float with a marker-dark band, a short pearl post, and a lantern
-// under a slate-blue cap that blinks while it waits; a mooring eye forward.
+// A disabled communications buoy with opposed solar blades and an open antenna yoke.
 const lampBuoy = (lit: boolean) => (): Part[][] => [
+  ...[-1, 1].map((side) => [
+    part(craftBox(0, side * 5, 3.2, 8), 2.1, 3.2, aPearlSide, markerDeep),
+    part(
+      orientedBox(...uv(-0.4, side * 8.2), FWD + side * 0.18, 5.5, 2.6),
+      3.2,
+      4.2,
+      roof,
+      roofSide,
+    ),
+    part(craftBox(-0.8, side * 8.2, 1.1, 2.2), 4.2, 4.6, marker, markerDark),
+  ]),
   [
-    disc(0, 0, 4.6, 0, 1.2, aPearl, aPearlSide, 10),
-    disc(0, 0, 6, 1.2, 3.4, aPearl, aPearlSide, 10),
-    disc(0, 0, 6.2, 2, 2.8, markerDark, markerDeep, 10),
-    disc(0, 0, 4.6, 3.4, 4.2, aPearl, aPearlSide, 10),
-  ],
-  [
-    disc(0, 0, 1.6, 4.2, 10.4, aPearl, aPearlSide, 8),
-    disc(0, 0, 1.75, 6.6, 7.8, markerDark, markerDeep, 8),
-  ],
-  [
-    disc(0, 0, 2.6, 10.4, 11, cream, creamSide, 8),
-    disc(0, 0, 2.1, 11, 14, lit ? marker : markerDeep, lit ? markerDark : "#383d62", 8),
-    ...(lit ? [disc(0, 0, 0.9, 14, 14.2, "#ffffff", "#ffffff", 6)] : []),
-    disc(0, 0, 2.8, 14.2, 15.2, roof, roofSide, 8),
+    part(
+      craftPlan([
+        [-6, -2.4],
+        [-3, -4.7],
+        [3, -4.7],
+        [6, 0],
+        [3, 4.7],
+        [-3, 4.7],
+        [-6, 2.4],
+      ]),
+      0.8,
+      5,
+      aPearl,
+      aPearlSide,
+    ),
+    part(craftBox(0, 0, 5.4, 4.1), 5, 6.4, roof, roofSide),
+    ...[-1, 1].map((side) =>
+      part(craftBox(-1.5, side * 1.9, 1.2, 1), 6.4, 10.1, steelDark, steelDarkSide),
+    ),
+    part(craftBox(-1.5, 0, 1.5, 4.5), 10.1, 11.4, lit ? marker : markerDeep, markerDark),
   ],
   [part(craftBox(6.6, 0, 1.8, 1.6), 1.4, 3, steelDark, steelDarkSide)],
 ];
 
 // ---------------------------------------------------------------- Phantom
 
-// Traveler's pod: a pale mauve capsule with a mauve band, dim warm portholes, two tan luggage
-// bundles strapped on its back and a pale lilac distress lamp that blinks; a tow lug forward.
+// Passenger capsule with inset viewports and two curved storage cheeks.
 const travelerPod =
   (lit: boolean) =>
   (visible: Facing): Part[][] => [
     [
-      ...hcyl(-8, 8, 0, 6, 5.4, { top: mauve, side: mauveSide, rear: mauveRear }),
-      ...hcyl(-1.2, 1.2, 0, 6, 5.7, { top: band, side: bandSide, front: "flat", back: "flat" }),
-      ...[-4.5, 4.5].flatMap((u) =>
-        [-1, 1]
-          .filter((s) => visible(s, 0))
-          .map((s) => part(craftBox(u, s * 5.5, 1.8, 0.4), 5.2, 7, warmDim, warmDim)),
-      ),
+      part(ellipse(-0.5, 0, 8.7, 5.4, 12), 1.2, 4.3, bandSide, mauveRear),
+      part(ellipse(0, 0, 8.3, 5.3, 12), 4.3, 8, mauve, mauveSide),
+      part(ellipse(0.4, 0, 6.8, 3.9, 10), 8, 10.4, mauve, band),
+      part(craftBox(-1, 0, 3.1, 4.2), 10.4, 11.2, glassOff, glassOffSide),
+      ...wallWindows(visible, 5, 6.2, 2, 1.6, ellipse(0, 0, 8.3, 5.3, 12), warmDim),
     ],
-    ...[-4.2, 3.6].map((u, i) => [
-      part(craftBox(u, 0, 4.4, 5.6 - i), 11.4, 14 - i * 0.6, pack, packSide),
-      part(craftBox(u, 0, 0.7, 6 - i), 11.4, 14.2 - i * 0.6, steelDarkSide, rubber),
+    ...[-1, 1].map((side) => [
+      part(ellipse(-3.6, side * 5.2, 4.3, 1.7, 10), 2.3, 4.8, "#599a9f", "#397078"),
+      part(craftBox(-3, side * 5.1, 2.2, 2), 4.8, 5.3, band, bandSide),
     ]),
     [lug(8, 6)],
-    [
-      part(craftBox(0.2, 0, 0.8, 0.8), 11.4, 15.8, steelDark, steelDark),
-      disc(0.2, 0, 1.2, 15.8, 17.6, lit ? lampLit : lampDim, lit ? band : "#4a3f53", 8),
-    ],
+    [disc(-5.8, 0, 1.1, 10, 12, lit ? lampLit : lampDim, bandSide, 8)],
   ];
 
 const blink = (build: (lit: boolean) => (visible: Facing) => Part[][]) => [
@@ -396,7 +487,7 @@ const CRAFT: readonly Stranded[] = [
     scale: 1.6,
     roll: 0,
     pitch: 0,
-    levels: [10.4],
+    levels: [5.4, 8],
     tow: [0, -10.6, 5.4],
     frames: blink(seedPod),
     note: "Blinking bloom lamp (a lit, b dim)",
@@ -435,7 +526,7 @@ const CRAFT: readonly Stranded[] = [
     scale: 1.6,
     roll: 0,
     pitch: 0,
-    levels: [13.5],
+    levels: [3.4, 7.2, 10.4],
     tow: [0, -8, 7],
     frames: blink(whirlPod),
     note: "Blinking glow lamp (a lit, b dim)",
@@ -461,7 +552,7 @@ const CRAFT: readonly Stranded[] = [
     scale: 1.6,
     roll: 0,
     pitch: 0,
-    levels: [11],
+    levels: [5.6, 7.4],
     tow: [0, -6.7, 5.4],
     frames: blink(spoolPod),
     note: "Blinking blue lamp (a lit, b dim)",
@@ -487,7 +578,7 @@ const CRAFT: readonly Stranded[] = [
     scale: 1.6,
     roll: 10 * DEG,
     pitch: 6 * DEG,
-    levels: [4.2, 10.4],
+    levels: [5, 6.4],
     tow: [0, -7.5, 2.2],
     frames: blink(lampBuoy),
     note: "Blinking lantern (a lit, b dim), drifting tilt 10 and 6",
@@ -500,7 +591,7 @@ const CRAFT: readonly Stranded[] = [
     scale: 1.6,
     roll: 0,
     pitch: 0,
-    levels: [11.4],
+    levels: [4.3, 8],
     tow: [0, -9.6, 6],
     frames: blink(travelerPod),
     note: "Dim warm portholes, blinking pale lilac lamp (a lit, b dim)",

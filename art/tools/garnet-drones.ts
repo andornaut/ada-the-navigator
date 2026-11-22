@@ -23,6 +23,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
+import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { jets, silhouettes, svg } from "./enemies.ts";
 import {
@@ -46,6 +47,7 @@ import {
   writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
+import { isIndustrialHullColor } from "./retaliator-models.ts";
 
 // ---------------------------------------------------------------- palette
 
@@ -65,8 +67,44 @@ export const garnet = {
   jetCore: "#ffe0e0",
 } as const;
 
+// Small craft: dark fighter oxide and the interceptor's bone, violet and blue.
+const smallCraftSwap = {
+  "#282644": "#302541",
+  "#342d58": "#493352",
+  "#35252e": "#36252e",
+  "#38242f": "#3d2533",
+  "#474582": "#59457d",
+  "#4b3038": "#51313d",
+  "#4d427d": "#664781",
+  "#514575": "#604465",
+  "#55313a": "#613243",
+  "#596ccc": "#7264c5",
+  "#78443f": "#874653",
+  "#8170cc": "#9c71cb",
+  "#a9d9ff": "#c4d8ff",
+  "#bcaac1": "#c7aec9",
+  "#f1e5c9": "#f6e4dc",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
+// Cool hull materials authored on the swarm and fighter.
+const swarmFighterSwap = {
+  "#202a44": "#2e263c",
+  "#233940": "#352b49",
+  "#263755": "#3a2d4c",
+  "#2e4065": "#41354f",
+  "#355b63": "#594771",
+  "#374b73": "#4c3b63",
+  "#405785": "#56446d",
+  "#4c64a0": "#705c91",
+  "#629483": "#876b9f",
+  "#718bd0": "#a089b8",
+  "#d5e0eb": "#d9d4e7",
+} satisfies Readonly<Record<`#${string}`, `#${string}`>>;
+
 // Coral family colour to garnet colour, applied to every drawn file.
 const swap: Readonly<Record<string, string>> = {
+  ...smallCraftSwap,
+  ...swarmFighterSwap,
   [coral]: garnet.hull,
   [coralSide]: garnet.hullSide,
   [coralRear]: garnet.hullRear,
@@ -79,6 +117,8 @@ const swap: Readonly<Record<string, string>> = {
 // The amber guns, the visor, the claw ink and the wreck ember stay as in the coral family.
 const family = new Set<string>([
   ...Object.values(garnet),
+  ...Object.values(smallCraftSwap),
+  ...Object.values(swarmFighterSwap),
   amber,
   amberSide,
   visor,
@@ -110,7 +150,8 @@ function swapColours(
 ): string {
   const result = text.replace(/#[0-9a-f]{6}\b/gi, (color) => map[color.toLowerCase()] ?? color);
   for (const color of result.match(/#[0-9a-f]{6}\b/gi) ?? []) {
-    if (!allowed.has(color.toLowerCase())) {
+    const hex = color.toLowerCase();
+    if (!allowed.has(hex) && !isIndustrialHullColor(file, hex)) {
       throw new Error(`${file}: ${color} is not a garnet colour`);
     }
   }
@@ -177,7 +218,7 @@ async function main() {
     const text = file.endsWith("-jets.json")
       ? swapColours(jetSwap, jetFamily, file, content)
       : drawn
-        ? swapColours(swap, family, file, content)
+        ? (heavySurface("andromeda", file, content) ?? swapColours(swap, family, file, content))
         : content;
     // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
     texts.set(

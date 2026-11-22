@@ -18,13 +18,14 @@
 
 ## Family style
 
-One salvage-craft family reads as hostile against Ada's white and blue ship:
+The salvage fleets carry shared weapon signals and insignia:
 
 - Coral `#d68b72` hull tops, darker coral sides `#a8654f` and rear edges `#7f4b3d`.
 - Lighter salvage plates `#e6a890`; the retaliator turret top is `#c27a62`.
 - Amber `#f0bd68` guns with `#b98a40` sides, matching the palette weapon signal.
 - Dark visor `#2a2433` with `#1e1a26` sides.
-- Forward pincers or tines on every hull are the family trait.
+- Combat hulls use forward pincers or tines. Industrial hulls carry role-specific paint
+  across fleets, while their aimed tops and jets use the local fleet palette.
 - Every drone carries General Gadget's [insignia](#insignia).
 
 ## Crafts
@@ -50,8 +51,12 @@ shards and hardpoint metadata from the same normalized geometry. The
 `retaliator` hull is the cargo hauler, so `retaliatorCargoHauler` entries and
 sidecars name the `retaliator` frames, turret parts, jets and hardpoints; only
 its shards are its own file. The existing
-launcher retains three tips and one non-destructible aimed mount. Variant
-selection belongs to the runtime consumer.
+Rapid Missile launcher retains three cosmetic tips and one non-destructible aimed
+mount. Variant selection belongs to the runtime consumer. The Cargo Hauler uses
+a bilateral slate-blue gunmetal fuselage with a centered cockpit, a violet-gray
+recessed storage saddle and a fitted stern drive. The Mining Freighter uses a
+continuous teal hull with a split extraction bow, inset scoops, a paired cutter
+and a connected stern.
 
 ## Insignia
 
@@ -68,12 +73,13 @@ General Gadget's portrait ([Conversation portraits](conversation.md)).
   resting on the hull top, so plates, visors and turrets occlude them.
 - Placement on bare hull top, in model units (forward is negative Y):
 
-| Archetype     | Centre     | `r` | Display across | Position                                |
-| ------------- | ---------- | --: | -------------: | --------------------------------------- |
-| `swarm`       | (0, 6.5)   | 5.5 |         4.8 px | Behind the amber hatch                  |
-| `fighter`     | (7.5, 3.5) | 5.2 |         4.6 px | Right shoulder, opposite the left plate |
-| `interceptor` | (0, 13)    | 4.6 |         4.0 px | Behind the visor                        |
-| `retaliator`  | (-34, -21) |   7 |         6.1 px | Behind the turret                       |
+| Archetype        | Centre     | `r` | Display across | Position                                |
+| ---------------- | ---------- | --: | -------------: | --------------------------------------- |
+| `swarm`          | (0, 6.5)   | 5.5 |         4.8 px | Behind the amber hatch                  |
+| `fighter`        | (7.5, 3.5) | 5.2 |         4.6 px | Right shoulder, opposite the left plate |
+| `interceptor`    | (0, 13)    | 4.6 |         4.0 px | Behind the visor                        |
+| Cargo Hauler     | (0, -44)   | 3.2 |         4.2 px | Bow ahead of the cockpit                |
+| Mining Freighter | (-15, 3)   | 4.5 |         5.4 px | Port shoulder of the extraction yoke    |
 
 ## Frames
 

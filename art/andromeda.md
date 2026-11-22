@@ -330,7 +330,7 @@ in frame px.
 | Craft                | Job subject          | Manifest ids                         | Frame | Display | Frames per heading       | Hull top on field | Keyline |
 | -------------------- | -------------------- | ------------------------------------ | ----: | ------: | ------------------------ | ----------------: | ------: |
 | `stranded-courier`   | a lost courier       | `craft-stranded-courier-{k}`         |    80 |      35 | one                      |  `#e4e2ef` 2.23:1 |  6.33:1 |
-| `stranded-lamp-buoy` | a drifting lamp buoy | `craft-stranded-lamp-buoy-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#e4e2ef` 2.23:1 |  6.33:1 |
+| `stranded-lamp-buoy` | a drifting lamp buoy | `craft-stranded-lamp-buoy-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#e4e2ef` 2.23:1 |  6.33:1 |
 
 Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
 6.33:1 on the field, which carries its silhouette.
@@ -340,10 +340,8 @@ Each craft takes the 1 px ink [light-field keyline](galaxies.md#light-fields),
   bow panes, a dead courier lamp on its mast and two dark engine bells; listing
   12 degrees to starboard and 5 nose down. It reads apart from
   [Pip's pod scooter](#pips-mail-scooter) by its single capsule.
-- Drifting lamp buoy: a pearl float with a marker-dark band, a short post and a
-  marker lantern under a slate-blue cap that blinks while it waits (dim
-  `#4a5080`), tilted 10 and 6 degrees as it drifts; a mooring eye forward.
-  Reduced motion shows `a`.
+- Drifting lamp buoy: a communications relay with opposed solar vanes and a
+  blinking lamp in an open antenna yoke.
 - Each tow point is the bow lug's or mooring eye's face.
 
 ## Palette

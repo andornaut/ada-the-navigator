@@ -286,14 +286,13 @@ in frame px.
 | Craft                      | Job subject       | Manifest ids                             | Frame | Display | Frames per heading       | Hull top on field | Keyline |
 | -------------------------- | ----------------- | ---------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ------: |
 | `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 1.37:1 | 10.86:1 |
-| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 1.37:1 | 10.86:1 |
+| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 1.37:1 | 10.86:1 |
 
 - Current skimmer: a low lilac lens hull with a whale-glow band `#cbb8ee`, a
   dark bubble canopy, two cream spindle floats on struts and dead twin nozzles
   astern; power off, listing 14 degrees to port and 3 nose up.
-- Shell pod (Whirlpool's "a pod"): a round lilac shell pod with a glow band,
-  three cream shell ridges over its crown and a glow lamp that blinks while it
-  waits (dim `#5f5a9c`). Reduced motion shows `a`.
+- Shell pod: a low lilac rescue capsule in a serrated stabilizer collar.
+  Its glow lamp blinks over the dark canopy; reduced motion holds frame A.
 - Each tow point is the bow lug's face.
 
 ## Data

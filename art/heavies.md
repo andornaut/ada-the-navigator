@@ -48,18 +48,17 @@ Platform tiers use `port`, `starboard`, `aft`, with two active at position 5
 and three at position 6. Every platform part is a weapon base; unused bases
 have a capped state. Runtime selection and damage values remain consumer data.
 
-- Frigate: long hunter with twin prow tines, a raised `engine` block that caps
-  the stern with two jet mouths, and four weapon mounts: one on each sponson
-  (`port`, `starboard`) and two on the centreline, `spine` on the dorsal spine
-  plate and `bow` between the tine roots. The insignia sits on bare deck
-  between the spine plate and the engine block.
-- Capital: broad flagship with a great claw prow, a `command` tower at the
-  centre, a nacelle on each side of the stern (`engine-left`, `engine-right`)
-  and eight weapon mounts in four pairs: `weapon-left` and `weapon-right` on the
-  shoulders, `weapon-rear-left` and `weapon-rear-right` on the wings,
-  `claw-left` and `claw-right` on the claw arms, `stern-left` and
-  `stern-right` on the stern deck. Its four escorts are the existing `fighter`
-  frames.
+- The frigate screens with fighter escorts. A faceted hammerhead leads a
+  narrow neck, two tapered sponson recesses and a stern with paired slit ports
+  above the twin jet mouths. The Heavy Missile rail sits on the `port`
+  sponson. The other mounts sit on the `starboard` sponson and the centreline
+  `spine` and `bow`.
+- The capital carries a long raised armoured spine, heavier flank armour, a
+  central `command` tower and paired stern nacelles (`engine-left` and
+  `engine-right`). The port shoulder's recessed pad frames the Lance at
+  `weapon-left`. The aft nacelle cowls use chamfered facets, and one tapered
+  recess continues aft of the Mine launcher at `stern-right`. Its eight
+  mounts sit in four pairs on the shoulders, wings, forward deck and stern.
 - Gadget: General Gadget's own capital, Phantom's heavy ([Gadget](#gadget)).
 
 ## Layout and the catalog
@@ -127,6 +126,10 @@ draws the tops of the weapons it can hold.
 | `chargedLance` | `lance`  |         |       yes       |
 | `mineLayer`    | `hopper` |         |       yes       |
 
+The Heavy Missile pairs a dark housing with a broad plate face. The Charged
+Lance has continuous bright rails and a dark centre. The Mine Layer has two
+dark square cells on a plate deck. Each uses its family's existing palette.
+
 Rapid Missile `pod` and RingBurst `dome` remain reusable native designs for the
 hostile station contract. Its canonical body span is 7 Ada source widths.
 
@@ -165,7 +168,7 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 
 | Sprite                            |         Frame |       Display |
 | --------------------------------- | ------------: | ------------: |
-| Frigate, capital and Gadget hulls | 384, 480, 560 | 168, 210, 245 |
+| Frigate, capital and Gadget hulls | 432, 480, 560 | 189, 210, 245 |
 | Weapon mount base (every state)   |            48 |            21 |
 | Frigate engine                    |            80 |            35 |
 | Capital command; Gadget command   |        72; 80 |      31.5; 35 |
@@ -336,17 +339,15 @@ grows. Each sprite takes the first Douglas-Peucker tolerance of 0.4 and 0.3
 frame px that passes the 0.98 floor. Only the destroyed weapon mount stump at
 heading 7 needs 0.3 (20 sprites, every frigate, capital and Gadget weapon
 mount); at 0.4 its ragged scorch paint, quantized by the cell grid, reaches
-0.9797. The frigate hull cuts 8 notch tips between its prow tines; its frames
-draw them under the faces.
+0.9797. When the tracer cuts notch tips, the frames draw them under the faces.
 
-Checked against the fills plus the tips: every part strictly convex and every
-boundary within 0.36 frame px of the drawing. librsvg renders at 4 px per frame
-px agree within 0.002.
+The tracer checks strict convexity and boundary distance against the fills and
+notch tips.
 
 | Sprite                              | Parts    | Intersection over union |
 | ----------------------------------- | -------- | ----------------------- |
-| Frigate hull                        | 12 to 15 | 0.996 to 0.997          |
-| Capital hull                        | 15 to 21 | 0.998                   |
+| Frigate hull                        | 8 to 14  | 0.9973 to 0.9982        |
+| Capital hull                        | 18 to 25 | 0.9979 to 0.9988        |
 | Gadget hull                         | 17 to 24 | 0.998 to 0.999          |
 | Platform hull                       | 26       | 0.997                   |
 | Engines and command, intact         | 1 to 18  | 0.992 to 0.999          |
@@ -404,8 +405,14 @@ Tech's mount offset and turret-top renderer.
 
 ## Palette
 
-Family colours follow [sector one enemies](enemies.md#family-style), with the
-turret top `#c27a62`. Wrecks add:
+The frigate and capital use cold armour on the hull, intact engines and intact
+command tower. Core uses slate blue and violet, Cartwheel uses muted green,
+Andromeda uses lavender and indigo, and Needle uses steel blue and plum.
+Near-black recesses and limited pale trim define the facets. Weapons, capped
+mounts, wrecks and jets keep their family colours. Gadget retains coral armour.
+
+The coral turret top is `#c27a62`. Coral wreck materials use the following
+colours.
 
 | Role                        | Colour    | Contrast                                |
 | --------------------------- | --------- | --------------------------------------- |
@@ -422,10 +429,9 @@ wrecks read against the coral hull; a destroyed nacelle reads by its ember,
 
 ## Cartwheel claim jumpers
 
-Cartwheel's drones and heavies are one family: the four sector one drones, the
-frigate and the capital recoloured into rust, steel and ember, plus the turret
-platform. Sunflower keeps the coral originals. Andromeda's
-[garnet drones](andromeda.md#garnet-drones) are the same recolour in garnet.
+The Cartwheel family contains the four sector one drones, the frigate, the
+capital and the turret platform. Its frigate and capital wear muted green
+armour with the existing rust, steel and ember weapon and wreck colours.
 
 - Rebuild with `node art/tools/claim-jumpers.ts`, which takes the same
   `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
@@ -433,16 +439,14 @@ platform. Sunflower keeps the coral originals. Andromeda's
   in place in [Cartwheel's manifest](../public/art/cartwheel/manifest.json),
   after the hub and buoy and before the story craft.
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
-  coral family; only fills change. Every SVG and shards file goes through the
-  colour swap below, every jets file through the claim jet colours, and the
-  tool stops on any colour outside the family.
+  core family. The intact armour uses the heavy surface palette. Other SVGs
+  and shards use the claim colours, and jets use the claim jet colours.
 - Jets files keep the coral shape, lengths, layers, mouth data and
   [collision](enemies.md#collision); hardpoints files, mounts, tiers and
   collision included, are the coral family's, unchanged. Claim frames draw the
   coral notch tips, capped plates and tops. Gadget has no claim version.
-  Andromeda's [garnet](andromeda.md#garnet-drones) and Needle's
-  [crimson](needle.md#needle-drones) families recolour the frigate and capital
-  the same way, mounts and tiers included. Destruction uses the shared
+  Andromeda and Needle use their own heavy armour colours over the same
+  frigate and capital models. Destruction uses the shared
   `destruction.json` timing and flash with the claim shards.
 
 ### Claim files and entries
