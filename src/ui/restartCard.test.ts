@@ -214,9 +214,8 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
     };
   },
 }));
-vi.mock("@andornaut/game-kit/web/ui/dom/focusModality", () => ({
-  focusTarget: (element: Element) => element.focus(),
-}));
+const focusTarget = vi.hoisted(() => vi.fn((element: Element) => element.focus()));
+vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget }));
 
 beforeEach(() => {
   native.tap.mockReturnValue(true);
@@ -302,6 +301,7 @@ describe("Restart's configured production binding", () => {
     expect(body.children[0]!.hidden).toBe(true);
     f.card.open();
     expect(doc.activeElement).toBe(cancel);
+    expect(focusTarget).toHaveBeenLastCalledWith(cancel);
     expect(native.fit).toHaveBeenCalledOnce();
     await f.card.settle();
     cancel.click();
@@ -311,6 +311,7 @@ describe("Restart's configured production binding", () => {
     expect(f.action("restart-cancel")).toBe(cancel);
     expect(f.modal.querySelector('[role="dialog"]')).toBe(frame);
     expect(doc.activeElement).toBe(cancel);
+    expect(focusTarget).toHaveBeenCalledTimes(2);
     f.card.dispose();
   });
 
