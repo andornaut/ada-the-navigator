@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { HUD_BUTTON } from "../data/layout.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
@@ -293,9 +294,10 @@ describe("modal text", () => {
     expect(focus).toContain("box-shadow:none");
     expect(focus).toContain(`--ada-close-face:${TEXT_TOKENS.label}`);
     expect(focus).toContain(`--ada-close-ink:${TEXT_TOKENS.buttonLabel}`);
-    expect(rule(`${close}::after`)).toContain(
-      "background:var(--ada-close-face,var(--ada-close-rest,transparent))",
-    );
+    const face = rule(`${close}::after`);
+    expect(face).toContain(`width:var(--ada-close-face-size,${units(CARD_CLOSE.art.width)})`);
+    expect(face).toContain(`height:var(--ada-close-face-size,${units(CARD_CLOSE.art.height)})`);
+    expect(face).toContain("background:var(--ada-close-face,var(--ada-close-rest,transparent))");
     expect(rule(`${close}:focus-visible:not(:active)::before`)).toContain(
       "mask:url('/art/ui/sprites/ui-close.png')",
     );
@@ -306,6 +308,7 @@ describe("modal text", () => {
     expect(MODAL_STYLE).toContain("--ada-close-ink:HighlightText");
     expect(mapCloseStyle(".map-close", "#262b44")).toContain("--ada-close-rest:#262b44");
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:transparent");
+    expect(mapCloseStyle(".map-close")).toContain(`--ada-close-face-size:${units(HUD_BUTTON.disc)}`);
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:ButtonFace");
     expect(mapCloseStyle(".map-close")).toContain("var(--ada-close-ink,ButtonText)");
   });

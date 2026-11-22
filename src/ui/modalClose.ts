@@ -27,8 +27,8 @@ ${selector}::after{
   content:"";
   position:absolute;
   inset:0;
-  width:${units(HUD_BUTTON.disc)};
-  height:${units(HUD_BUTTON.disc)};
+  width:var(--ada-close-face-size,${units(CARD_CLOSE.art.width)});
+  height:var(--ada-close-face-size,${units(CARD_CLOSE.art.height)});
   margin:auto;
   border-radius:50%;
   background:var(--ada-close-face,var(--ada-close-rest,transparent));
@@ -58,7 +58,10 @@ ${focus}:not(:active)::before{
 /** Keep each Map's resting face while sharing the dialog close's focus and pressed art. */
 export function mapCloseStyle(selector: string, restFace = "transparent"): string {
   return `
-${selector}{--ada-close-rest:${restFace}}
+${selector}{
+  --ada-close-rest:${restFace};
+  --ada-close-face-size:${units(HUD_BUTTON.disc)}
+}
 @media (forced-colors:active){
   ${selector}{--ada-close-rest:ButtonFace}
   ${selector}:not(:active)::before{
