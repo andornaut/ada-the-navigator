@@ -1065,7 +1065,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-0",
-      "path": "/art/andromeda/enemies/retaliator-0.svg",
+      "path": "/art/enemies/retaliator-0.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1081,7 +1081,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-1",
-      "path": "/art/andromeda/enemies/retaliator-1.svg",
+      "path": "/art/enemies/retaliator-1.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1097,7 +1097,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-2",
-      "path": "/art/andromeda/enemies/retaliator-2.svg",
+      "path": "/art/enemies/retaliator-2.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1113,7 +1113,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-3",
-      "path": "/art/andromeda/enemies/retaliator-3.svg",
+      "path": "/art/enemies/retaliator-3.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1129,7 +1129,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-4",
-      "path": "/art/andromeda/enemies/retaliator-4.svg",
+      "path": "/art/enemies/retaliator-4.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1145,7 +1145,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-5",
-      "path": "/art/andromeda/enemies/retaliator-5.svg",
+      "path": "/art/enemies/retaliator-5.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1161,7 +1161,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-6",
-      "path": "/art/andromeda/enemies/retaliator-6.svg",
+      "path": "/art/enemies/retaliator-6.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1177,7 +1177,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-7",
-      "path": "/art/andromeda/enemies/retaliator-7.svg",
+      "path": "/art/enemies/retaliator-7.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1193,7 +1193,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-8",
-      "path": "/art/andromeda/enemies/retaliator-8.svg",
+      "path": "/art/enemies/retaliator-8.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1209,7 +1209,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-9",
-      "path": "/art/andromeda/enemies/retaliator-9.svg",
+      "path": "/art/enemies/retaliator-9.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1225,7 +1225,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-10",
-      "path": "/art/andromeda/enemies/retaliator-10.svg",
+      "path": "/art/enemies/retaliator-10.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1241,7 +1241,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-11",
-      "path": "/art/andromeda/enemies/retaliator-11.svg",
+      "path": "/art/enemies/retaliator-11.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1257,7 +1257,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-12",
-      "path": "/art/andromeda/enemies/retaliator-12.svg",
+      "path": "/art/enemies/retaliator-12.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1273,7 +1273,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-13",
-      "path": "/art/andromeda/enemies/retaliator-13.svg",
+      "path": "/art/enemies/retaliator-13.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1289,7 +1289,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-14",
-      "path": "/art/andromeda/enemies/retaliator-14.svg",
+      "path": "/art/enemies/retaliator-14.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1305,7 +1305,7 @@
     },
     {
       "id": "enemy-garnet-retaliator-15",
-      "path": "/art/andromeda/enemies/retaliator-15.svg",
+      "path": "/art/enemies/retaliator-15.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14897,7 +14897,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-0",
-      "path": "/art/andromeda/enemies/retaliator-0.svg",
+      "path": "/art/enemies/retaliator-0.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14913,7 +14913,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-1",
-      "path": "/art/andromeda/enemies/retaliator-1.svg",
+      "path": "/art/enemies/retaliator-1.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14929,7 +14929,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-2",
-      "path": "/art/andromeda/enemies/retaliator-2.svg",
+      "path": "/art/enemies/retaliator-2.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14945,7 +14945,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-3",
-      "path": "/art/andromeda/enemies/retaliator-3.svg",
+      "path": "/art/enemies/retaliator-3.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14961,7 +14961,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-4",
-      "path": "/art/andromeda/enemies/retaliator-4.svg",
+      "path": "/art/enemies/retaliator-4.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14977,7 +14977,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-5",
-      "path": "/art/andromeda/enemies/retaliator-5.svg",
+      "path": "/art/enemies/retaliator-5.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -14993,7 +14993,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-6",
-      "path": "/art/andromeda/enemies/retaliator-6.svg",
+      "path": "/art/enemies/retaliator-6.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15009,7 +15009,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-7",
-      "path": "/art/andromeda/enemies/retaliator-7.svg",
+      "path": "/art/enemies/retaliator-7.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15025,7 +15025,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-8",
-      "path": "/art/andromeda/enemies/retaliator-8.svg",
+      "path": "/art/enemies/retaliator-8.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15041,7 +15041,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-9",
-      "path": "/art/andromeda/enemies/retaliator-9.svg",
+      "path": "/art/enemies/retaliator-9.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15057,7 +15057,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-10",
-      "path": "/art/andromeda/enemies/retaliator-10.svg",
+      "path": "/art/enemies/retaliator-10.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15073,7 +15073,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-11",
-      "path": "/art/andromeda/enemies/retaliator-11.svg",
+      "path": "/art/enemies/retaliator-11.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15089,7 +15089,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-12",
-      "path": "/art/andromeda/enemies/retaliator-12.svg",
+      "path": "/art/enemies/retaliator-12.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15105,7 +15105,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-13",
-      "path": "/art/andromeda/enemies/retaliator-13.svg",
+      "path": "/art/enemies/retaliator-13.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15121,7 +15121,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-14",
-      "path": "/art/andromeda/enemies/retaliator-14.svg",
+      "path": "/art/enemies/retaliator-14.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15137,7 +15137,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-15",
-      "path": "/art/andromeda/enemies/retaliator-15.svg",
+      "path": "/art/enemies/retaliator-15.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15153,7 +15153,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-0",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-0.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-0.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15169,7 +15169,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-1",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-1.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-1.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15185,7 +15185,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-2",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-2.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-2.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15201,7 +15201,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-3",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-3.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-3.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15217,7 +15217,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-4",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-4.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-4.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15233,7 +15233,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-5",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-5.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-5.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15249,7 +15249,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-6",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-6.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-6.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15265,7 +15265,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-7",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-7.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-7.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15281,7 +15281,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-8",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-8.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-8.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15297,7 +15297,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-9",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-9.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-9.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15313,7 +15313,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-10",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-10.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-10.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15329,7 +15329,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-11",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-11.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-11.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15345,7 +15345,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-12",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-12.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-12.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15361,7 +15361,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-13",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-13.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-13.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15377,7 +15377,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-14",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-14.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-14.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -15393,7 +15393,7 @@
     },
     {
       "id": "enemy-garnet-retaliatorMiningFreighter-15",
-      "path": "/art/andromeda/enemies/retaliatorMiningFreighter-15.svg",
+      "path": "/art/enemies/retaliatorMiningFreighter-15.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,

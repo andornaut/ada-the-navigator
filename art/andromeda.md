@@ -225,8 +225,9 @@ the open. Sunflower keeps the coral originals and Cartwheel the
   garnet shards.
 - File names are the coral names in `public/art/andromeda/enemies/`, less the
   [shared files](README.md#ada-contract-and-validation): the heavies' and
-  industrial stems' hardpoints are the coral files in `public/art/enemies/`,
-  and the cargo hauler uses the retaliator's files. Ids are
+  industrial stems' hardpoints are the coral files in `public/art/enemies/`.
+  The Retaliator and Mining Freighter share the core hull SVGs after a byte
+  comparison. The Cargo Hauler uses the Retaliator hull. Ids are
   the coral ids with `enemy-garnet-` in place of `enemy-`, such as
   `enemy-garnet-frigate-3` and `enemy-garnet-capital-turret-top-9`. Each entry
   has the coral entry's fields, its own `path`, the coral `archetype` and

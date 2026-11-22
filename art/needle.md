@@ -375,8 +375,9 @@ platform.
   with the Needle shards.
 - File names are the coral names in `public/art/needle/enemies/`, less the
   [shared files](README.md#ada-contract-and-validation): the heavies' and
-  industrial stems' hardpoints are the coral files in `public/art/enemies/`,
-  and the cargo hauler uses the retaliator's files. Ids are the
+  industrial stems' hardpoints are the coral files in `public/art/enemies/`.
+  The Retaliator and Mining Freighter share the core hull SVGs after a byte
+  comparison. The Cargo Hauler uses the Retaliator hull. Ids are the
   coral ids with `enemy-needle-` in place of `enemy-`, such as
   `enemy-needle-frigate-3` and `enemy-needle-capital-turret-top-9`, with the
   coral entry's fields, its own `path` and `family` `needle`. No Needle id
