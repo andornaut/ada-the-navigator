@@ -57,8 +57,8 @@ A raised blue concourse and lilac and blue pressure modules sit on a
 cross-truss with paired, ribbed dark-blue solar leaves at each end. An offset
 laboratory sits behind the right wing under an antenna gantry. The pressure
 complex extends to starboard of the station pivot, leaving clearance for the
-courier school to port. A swept service spur meets its sealed contact on the
-near side.
+courier school to port. A swept service spur meets a sealed contact with a
+dark recessed plate and a small lower bevel on the near side.
 
 `facing` is `fixed` and `frameMs` is 700. Frame A lights the mast, wingtip
 markers and service windows. Frame B dims them. Reduced motion shows frame A.

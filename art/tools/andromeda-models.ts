@@ -244,6 +244,9 @@ export function station(lit: boolean): Part[][] {
     [-5, 13],
     [-7, 8],
   ]);
+  // The inset sits inside the original face. The solid contact and its lip stay in place.
+  const contactPanel = (width: number, z0: number, z1: number, color: string) =>
+    part(orbitalBox(STATION_APPROACH - 0.125, 0, 0.25, width), z0, z1, color, color);
   body.push([
     part(boom, 1, 9, ...truss),
     part(
@@ -260,6 +263,9 @@ export function station(lit: boolean): Part[][] {
       ...ice,
     ),
     part(foot, -2, 10, ...alloy),
+    contactPanel(13, 0, 8.3, "#526381"),
+    contactPanel(11, 0.8, 1.9, "#a7b2c6"),
+    contactPanel(11, 1.9, 7, "#2c3a54"),
     part(orbitalBox(STATION_APPROACH - 2, 0, 2, 10), 10, 11, lit ? warm : a.creamRear, a.creamRear),
   ]);
   return body;
