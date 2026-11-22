@@ -7,8 +7,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { Frame } from "@andornaut/art-kit/build/grid";
-
 import {
   hauler,
   HAULER_LEVELS,
@@ -30,8 +28,8 @@ import {
   unit,
 } from "./debris.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
-import { ORE_PALETTE, rimmed } from "./ore.ts";
 import { json } from "./projection.ts";
+import { ORE_PICKUP, PICKUP_SIZE } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 import { type CraftSpec as StrandedSpec, exportStranded } from "./stranded.ts";
@@ -97,26 +95,6 @@ const BODY = bodyRamp(
   cartwheel.tint.hue,
 );
 
-// ------------------------------------------------------------------ ore nugget
-
-// 11 by 11 ore nugget, pixel art: a chunky lumpy rock, lit from the upper left and pitted, in ore's
-// palette (art/tools/ore.ts); its outline takes the light mauve rim.
-const NUGGET = rimmed([
-  "...........",
-  "...LLM.....",
-  "..LLMMMS...",
-  ".LLMMSMMS..",
-  ".LMMMMMMSD.",
-  "..MSMMMSSD.",
-  ".LMMMSMMSDD",
-  ".MMMMMMSSDD",
-  "..SMMSSSDD.",
-  "...SDSDDD..",
-  "....DD.....",
-]);
-const nuggetFrame = (rows: readonly string[]): Frame =>
-  rows.map((row) => [...row].map((cell) => ORE_PALETTE[cell] ?? null));
-
 // ------------------------------------------------------------------ main
 
 const debris = exportDebris(dir, "/art/cartwheel/", BODY, CORAL, {
@@ -131,26 +109,26 @@ const craft = CRAFT.map((spec) => exportStranded(spec, dir, "/art/cartwheel/"));
 await writeSprites(
   { data: `${dir}ore-nugget.json`, sheet: `${dir}ore-nugget.png` },
   { key: "ore-nugget" },
-  [["rest", [nuggetFrame(NUGGET)], 100]],
+  [["rest", [ORE_PICKUP], 100]],
 );
 const nuggetData = `${dir}ore-nugget.json`;
 // The frame's drawn silhouette, in frame px.
 const nuggetText = withCollision(readFileSync(nuggetData, "utf8"), [
-  traceGrid("ore-nugget", nuggetFrame(NUGGET)).collision,
+  traceGrid("ore-nugget", ORE_PICKUP).collision,
 ]);
 writeFileSync(nuggetData, nuggetText);
 await prettify(nuggetData);
 const nugget = {
   id: "ore-nugget",
   path: "/art/cartwheel/ore-nugget.png",
-  width: 11,
-  height: 11,
-  displayWidth: 11,
-  displayHeight: 11,
+  width: PICKUP_SIZE,
+  height: PICKUP_SIZE,
+  displayWidth: PICKUP_SIZE,
+  displayHeight: PICKUP_SIZE,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
-  frameWidth: 11,
-  frameHeight: 11,
+  frameWidth: PICKUP_SIZE,
+  frameHeight: PICKUP_SIZE,
   frames: { rest: 0 },
 };
 

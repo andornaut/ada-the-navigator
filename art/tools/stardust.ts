@@ -4,56 +4,28 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { editManifest } from "./manifest.ts";
+import { PICKUP_SIZE, resourceIcon, STARDUST_PALETTE, STARDUST_REST } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
 
-// Pale gold-white Stardust: "W" glint core, "L" light, "M" body, "D" shade, "." clear.
-const PALETTE: Readonly<Record<string, string>> = {
-  W: "ffffff",
-  L: "fff2cc",
-  M: "f4d98a",
-  D: "c8a24e",
-};
-
-// 9 by 9 pickup: a small four-point star, lit from the upper left; on the glint its rays lengthen
-// and its core whitens to the full 9 px.
-const PICKUP: Readonly<Record<"rest" | "glint1" | "glint2", readonly string[]>> = {
-  rest: [
-    ".........",
-    ".........",
-    "....M....",
-    "...MLD...",
-    "..MLWLD..",
-    "...DLD...",
-    "....D....",
-    ".........",
-    ".........",
-  ],
-  glint1: [
-    ".........",
-    "....L....",
-    "....M....",
-    "...MLD...",
-    ".LMLWLDD.",
-    "...DLD...",
-    "....D....",
-    "....D....",
-    ".........",
-  ],
-  glint2: [
-    "....L....",
-    "....W....",
-    "...LWL...",
-    "..LWWWL..",
-    "LWWWWWWWL",
-    "..LWWWL..",
-    "...LWL...",
-    "....W....",
-    "....L....",
-  ],
+// Brighten the resting star without changing its silhouette.
+const { W, L, M, D } = STARDUST_PALETTE;
+const GLINT = {
+  glint1: new Map([
+    [W, W],
+    [L, L],
+    [M, L],
+    [D, M],
+  ]),
+  glint2: new Map([
+    [W, W],
+    [L, W],
+    [M, L],
+    [D, L],
+  ]),
 };
 const LOOP = [
   ["rest", 420],
@@ -62,55 +34,13 @@ const LOOP = [
   ["glint1", 60],
 ] as const;
 
-// HUD icons: one large four-point star and two small ones.
-const ICONS: Readonly<Record<string, readonly string[]>> = {
-  "icon-stardust": [
-    "................",
-    ".....M..........",
-    ".....M..........",
-    "....MLD.........",
-    "....MLD.........",
-    "MMMLLWLLDDD...L.",
-    "....DLD......MWD",
-    "....DLD.......D.",
-    ".....D..........",
-    ".....D..........",
-    "................",
-    "..........M.....",
-    ".........MLD....",
-    "........MLWLD...",
-    ".........DLD....",
-    "..........D.....",
-  ],
-  "icon-stardust-20": [
-    "....................",
-    "......M.............",
-    "......M.............",
-    ".....MLD............",
-    ".....MLD............",
-    "....MLWLD...........",
-    "MMMLLWWWLLDDD....L..",
-    "....DLWLD.......MLD.",
-    ".....DLD.......LWWWL",
-    ".....DLD........DLD.",
-    "......D..........L..",
-    "......D.............",
-    "....................",
-    "............M.......",
-    "...........MLD......",
-    "..........MLWLD.....",
-    "...........DLD......",
-    "............D.......",
-    "....................",
-    "....................",
-  ],
-};
-
-function frame(rows: readonly string[]): Frame {
-  return rows.map((row) => [...row].map((cell) => PALETTE[cell] ?? null));
-}
-
-const glint = LOOP.map(([name]) => frame(PICKUP[name]));
+const glint = LOOP.map(([name]): Frame =>
+  name === "rest"
+    ? STARDUST_REST
+    : STARDUST_REST.map((row) =>
+        row.map((cell) => (cell ? (GLINT[name].get(cell) ?? cell) : null)),
+      ),
+);
 await writeSprites(
   { data: `${art}stardust.json`, sheet: `${art}stardust.png` },
   { key: "stardust" },
@@ -125,9 +55,12 @@ writeFileSync(
   ),
 );
 await prettify(`${art}stardust.json`);
-for (const [key, rows] of Object.entries(ICONS)) {
+for (const [key, size] of [
+  ["icon-stardust", 16],
+  ["icon-stardust-20", 20],
+] as const) {
   await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
-    ["rest", [frame(rows)], 100],
+    ["rest", [resourceIcon(STARDUST_REST, size)], 100],
   ]);
   await prettify(`${sprites}${key}.json`);
 }
@@ -136,14 +69,14 @@ for (const [key, rows] of Object.entries(ICONS)) {
 const entry = {
   id: "stardust",
   path: "/art/stardust.png",
-  width: 9 * LOOP.length,
-  height: 9,
-  displayWidth: 9,
-  displayHeight: 9,
+  width: PICKUP_SIZE * LOOP.length,
+  height: PICKUP_SIZE,
+  displayWidth: PICKUP_SIZE,
+  displayHeight: PICKUP_SIZE,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
-  frameWidth: 9,
-  frameHeight: 9,
+  frameWidth: PICKUP_SIZE,
+  frameHeight: PICKUP_SIZE,
   frames: { rest: 0, glint1: 1, glint2: 2 },
   loop: LOOP.map(([name, ms], index) => ({ frame: index, name, ms })),
 };

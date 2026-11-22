@@ -9,7 +9,7 @@ import type { Frame } from "@andornaut/art-kit/build/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
-import { ORE_PALETTE } from "./ore.ts";
+import { ORE_PICKUP, resourceIcon } from "./resource-glyphs.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -20,32 +20,6 @@ const INK = "181425";
 const ICONS: Readonly<
   Record<string, { palette: Record<string, string>; rows: readonly string[] }>
 > = {
-  // A nugget and a pebble in ore's palette: mauve rim, burgundy-purple body, shade and deep.
-  "icon-ore-20": {
-    palette: ORE_PALETTE,
-    rows: [
-      "....................",
-      "....................",
-      "......HHHH..........",
-      ".....HRRMMHH........",
-      "....HRRMMMMSHH......",
-      "...HRRMMSMMMMSH.....",
-      "...HRMMMMMMMSSH.....",
-      "..HRMMMSMMMMMSSH....",
-      "..HRMMMMMMMSMSDH....",
-      "..HRMSMMMMMMSSDrH...",
-      "...HRMMMMSMMSSDrH...",
-      "...HrMMMMMMSSSrH....",
-      "....HrSMMSSSDrH.....",
-      ".....HHrrrrrHH......",
-      ".......HHHHH....HHH.",
-      "...............HRMrH",
-      "..............HRMSrH",
-      "..............HrrrH.",
-      "...............HHH..",
-      "....................",
-    ],
-  },
   // Any job item: a strapped crate in the Map's job orange, as on its held-job chip.
   "icon-cargo-20": {
     palette: { O: "feae34", o: "c9781c", S: "ead4aa" },
@@ -105,13 +79,17 @@ async function prettify(path: string): Promise<void> {
   writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
 }
 
+const frames: Record<string, Frame> = { "icon-ore-20": resourceIcon(ORE_PICKUP, 20) };
 for (const [key, { palette, rows }] of Object.entries(ICONS)) {
   if (rows.length !== 20 || rows.some((row) => row.length !== 20)) {
     throw new Error(`${key} is not 20 by 20`);
   }
-  const frame: Frame = rows.map((row) =>
+  frames[key] = rows.map((row) =>
     [...row].map((cell) => (cell === "H" ? INK : (palette[cell] ?? null))),
   );
+}
+
+for (const [key, frame] of Object.entries(frames)) {
   await writeSpriteSheet(
     { data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` },
     { key },
@@ -123,7 +101,7 @@ for (const [key, { palette, rows }] of Object.entries(ICONS)) {
 // UI subset entries stay sorted by key.
 type Sprite = { key: string; png: string; json: string; once: string[] };
 const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
-const keys = Object.keys(ICONS);
+const keys = Object.keys(frames);
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.includes(key)),
   ...keys.map((key) => ({ key, png: `sprites/${key}.png`, json: `sprites/${key}.json`, once: [] })),
