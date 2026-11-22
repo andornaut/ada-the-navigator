@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { jumpHomeScene, roomBackground, roomScene } from "../model/storybook.ts";
-import { bedroomBackground, bedroomTop } from "./bedroom.ts";
+import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
+import { PAUSE_BUTTON } from "./layout/playView.ts";
+import { STORY_BACKGROUND, storyBackgroundScale } from "./layout/storyPage.ts";
+import { SPACING } from "./layout/tokens.ts";
 
 describe("shared bedroom", () => {
   const variants = Object.entries(BACKGROUND_ART)
@@ -25,6 +28,22 @@ describe("shared bedroom", () => {
       expect(bedroomTop({ height, width }, "aboard")).toBeNull();
     },
   );
+
+  it("moves the tall covering canvas just far enough to clear the Menu", () => {
+    const occupied = { left: (233 / 960) * 100, width: 10 };
+    const view = { height: 960, width: 720 };
+    const canvas = STORY_BACKGROUND.width * storyBackgroundScale(view);
+    const overhang = (canvas - view.width) / 2;
+    const hudLeft = 12;
+    const shift = bedroomSideOffset(view, occupied, hudLeft);
+    const left = (occupied.left / 100) * canvas - overhang + shift;
+    const { art, hit } = PAUSE_BUTTON;
+    expect(left).toBeCloseTo(hudLeft + hit.x + (hit.width + art.width) / 2 + SPACING.gap);
+    expect(left + (occupied.width / 100) * canvas).toBeLessThan(view.width);
+    expect(shift).toBeGreaterThan(0);
+    expect(shift).toBeLessThan(overhang);
+    expect(bedroomSideOffset({ height: 390, width: 844 }, occupied, hudLeft)).toBe(0);
+  });
 
   it("keeps morning light through the immediate room continuation without changing the story", () => {
     const run = jumpHomeScene("Jump home", "Morning").pages;

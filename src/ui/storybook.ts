@@ -11,7 +11,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { bedroomBackground, bedroomTop } from "./bedroom.ts";
+import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
 import {
   type StoryPanelContainer,
   type StoryPanelNative,
@@ -30,7 +30,7 @@ import {
 } from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import {
@@ -364,7 +364,7 @@ export const STORYBOOK_STYLE = `
    incoming frame, faded in over the first. */
 .ada-controls .ada-story-art{
   position:absolute;
-  left:50%;
+  left:calc(50% + var(--ada-story-art-offset-x, 0px));
   top:0;
   width:${ART_WIDTH};
   aspect-ratio:${STORY_BACKGROUND.width} / ${STORY_BACKGROUND.height};
@@ -1003,18 +1003,31 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     if (node === base) {
       const half = Boolean(rendered && !rendered.sleep);
       const view = viewSize();
+      const roomTop = bedroomTop(view, key);
+      let side = 0;
+      if (roomTop !== null) {
+        const occupied = art.composites.adaRoomNightGlowing?.find(
+          ({ url }) => url === "/art/story-composed/story-ada-night.webp",
+        );
+        if (occupied) {
+          const hudLeft =
+            parseFloat(getComputedStyle(root).getPropertyValue(VIEW_PROPERTIES.hud("left"))) || 0;
+          side = bedroomSideOffset(view, occupied.box, hudLeft / view.unit);
+        }
+      }
+      background.style.setProperty("--ada-story-art-offset-x", units(side));
       const offset =
         half && !rendered?.aboard
           ? storyHalfArtOffset(
               view,
               art.subjects[anchorOf(key)] ?? null,
-              bedroomTop(view, key) ??
+              roomTop ??
                 storyBackgroundTop(
                   view,
                   anchored ? (art.subjects[anchorOf(key)] ?? null) : null,
                   stripTops.get(anchorOf(key)) ?? null,
                 ),
-              bedroomTop(view, key) !== null,
+              roomTop !== null,
             )
           : 0;
       background.style.transform = offset === 0 ? "" : `translateY(${units(offset)})`;
