@@ -158,6 +158,24 @@ export const STATION_STYLE = `
   margin:0 0 ${units(SPACING.gap)};
   font:${font(TYPE.label)}
 }
+.ada-controls .ada-station-pane-hint{
+  display:inline-flex;
+  align-items:center;
+  margin-inline-start:${units(BALANCE.markGap)};
+  font:${font({ ...TYPE.count, weight: TYPE.body.weight })};
+  color:${TEXT_TOKENS.rowSupporting};
+  white-space:nowrap
+}
+.ada-controls .ada-station-pane-hint::before{
+  content:"("
+}
+.ada-controls .ada-station-pane-hint::after{
+  content:")";
+  padding-inline-start:${units(TYPE.count.size + SPACING.rowGap)};
+  background:url('${SPRITES}icon-stardust-20.png') ${units(SPACING.rowGap)} center /
+    ${units(TYPE.count.size)} ${units(TYPE.count.size)} no-repeat;
+  image-rendering:pixelated
+}
 .ada-controls .ada-station-panes > section{
   min-width:0
 }
@@ -276,7 +294,7 @@ export const STATION_STYLE = `
 
 .ada-controls .ada-balance,
 .ada-controls .ada-confirm-price,
-.ada-controls .ada-confirm-reward-amount{
+.ada-controls .ada-confirm-stardust-amount{
   display:flex;
   align-items:center;
   justify-content:center;
@@ -292,7 +310,7 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-balance::before,
 .ada-controls .ada-confirm-price::before,
-.ada-controls .ada-confirm-reward-amount::after{
+.ada-controls .ada-confirm-stardust-amount::after{
   content:"";
   flex:none;
   width:${units(BALANCE.icon)};
@@ -301,7 +319,7 @@ export const STATION_STYLE = `
   image-rendering:pixelated
 }
 
-.ada-controls .ada-confirm-reward-spoken,
+.ada-controls .ada-confirm-stardust-spoken,
 .ada-controls .ada-exchange-rate-spoken{
   position:absolute;
   white-space:nowrap;

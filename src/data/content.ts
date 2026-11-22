@@ -600,6 +600,7 @@ export const CONTENT: GameContent = {
     projectAboutLoomHall: "A teaching hall for young Avi pilots.",
     projectAboutNursery: "A soft light where whale calves can rest.",
     projectAboutSpareBeacon: "A spare beacon, ready if the chain ever goes dark.",
+    projectContribution: "Contribution",
     projectEffectBeacons: "Helps find lost things",
     projectEffectChannelLights: "Lights the practice channel",
     projectEffectCourierSchool: "Trains careful couriers",

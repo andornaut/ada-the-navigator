@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
+import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import {
   assertAdaActionBindings,
@@ -835,6 +836,7 @@ function constructedStation(
     createModalLayer,
     createStationItemIcon: () => new Node("span", false),
     document: doc,
+    fill,
     focusTarget: (node: InstanceType<typeof Node>) => node.focus(),
     getComputedStyle,
     inCurrentView,
@@ -1209,7 +1211,7 @@ it("opens unmutated Jobs details then accepts and focuses the same active row", 
     "Detail",
     "Keeper brief.",
   ]);
-  const reward = detail.querySelector(".ada-confirm-reward")!;
+  const reward = detail.querySelector(".ada-confirm-stardust")!;
   expect(reward).not.toBeNull();
   expect(
     reward.children.map((child) => [child.textContent, child.getAttribute("aria-hidden")]),
@@ -1275,6 +1277,31 @@ it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchan
   expect(f.native.get("station-back")!.frame.contains(footer)).toBe(true);
 });
 
+it("gives each board heading one spoken Stardust hint", () => {
+  const f = constructedStation("", true, true, undefined, true);
+  f.station.setOpen(true);
+  f.activate(f.action("open-jobs"));
+  const headings = f.native.get("jobs-back")!.body.querySelectorAll("h3");
+  expect(headings.map((heading) => heading.getAttribute("aria-label"))).toEqual([
+    `${f.labels.jobs} (${f.labels.questReward} Stardust)`,
+    `${f.labels.communityProjects} (Contribution Stardust)`,
+  ]);
+  expect(headings.map((heading) => heading.children[0]?.getAttribute("aria-hidden"))).toEqual([
+    "true",
+    "true",
+  ]);
+});
+
+function expectContribution(detail: StationFixtureNode, visible: number): void {
+  const lines = detail.querySelectorAll(".ada-confirm-stardust");
+  expect(lines).toHaveLength(1);
+  const [amount, spoken] = lines[0]!.children;
+  expect(amount?.textContent).toBe(`Contribution: ${visible}`);
+  expect(amount?.getAttribute("aria-hidden")).toBe("true");
+  expect(spoken?.textContent).toBe(`Contribution: ${visible} Stardust`);
+  expect(spoken?.getAttribute("aria-hidden")).toBeNull();
+}
+
 it("opens Jobs and Projects and can donate at a project-only station", () => {
   const f = constructedStation("", true, true, undefined, true);
   f.station.setOpen(true);
@@ -1297,7 +1324,7 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
   expect(confirmation.body.querySelector(".ada-confirm-about")?.textContent).toBe(
     "Restore the orchard.",
   );
-  expect(confirmation.body.querySelector(".ada-confirm-price")?.textContent).toBe("10");
+  expectContribution(confirmation.body, 10);
   expect(
     confirmation.body.querySelectorAll(".ada-confirm-left").map((line) => line.textContent),
   ).toEqual(["40 Stardust still needed."]);
@@ -1305,6 +1332,23 @@ it("opens Jobs and Projects and can donate at a project-only station", () => {
   f.activate(f.action("confirm-buy"));
   expect(f.buy).toHaveBeenCalledExactlyOnceWith("project:orchard");
   expect(f.doc.activeElement?.dataset.item).toBe("project:orchard");
+});
+
+it("labels a guarded project contribution without authorizing its purchase", () => {
+  const f = constructedStation("", true, true, undefined, true);
+  f.station.setOpen(true);
+  f.activate(f.action("open-jobs"));
+  const row = f.parent.querySelector('[data-item="project:orchard"]')!;
+  f.request.mockReturnValue({ kind: "refused" });
+  f.activate(row);
+  const confirmation = f.native.get("confirm-cancel-x")!;
+  expectContribution(confirmation.body, 10);
+  expect(confirmation.body.querySelectorAll(".ada-confirm-left")).toEqual([]);
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).not.toHaveBeenCalled();
+  expect(confirmation.frame.hidden).toBe(false);
+  f.activate(f.action("confirm-cancel"));
+  expect(f.doc.activeElement).toBe(row);
 });
 
 it("audits the completed welcome view before strict focus on reopening", () => {

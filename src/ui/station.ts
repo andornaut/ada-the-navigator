@@ -5,6 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import type { StationGreeting } from "../model/keepers.ts";
+import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import {
   assertAdaActionBindings,
@@ -428,12 +429,18 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   jobsPanes.className = "ada-station-panes";
   const jobsPane = document.createElement("section");
   const projectsPane = document.createElement("section");
-  for (const [pane, label] of [
-    [jobsPane, labels.jobs],
-    [projectsPane, labels.communityProjects],
+  for (const [pane, label, term] of [
+    [jobsPane, labels.jobs, labels.questReward],
+    [projectsPane, labels.communityProjects, CONTENT.labels.projectContribution],
   ] as const) {
     const heading = document.createElement("h3");
     heading.textContent = label;
+    heading.setAttribute("aria-label", `${label} (${term} ${CONTENT.labels.stardust})`);
+    const hint = document.createElement("span");
+    hint.className = "ada-station-pane-hint";
+    hint.setAttribute("aria-hidden", "true");
+    hint.textContent = term;
+    heading.append(hint);
     pane.append(heading);
   }
   jobsPane.append(jobList);
@@ -870,6 +877,26 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.fit();
     focusTarget(buy);
   };
+  const stardustLine = (label: string, value: number, spokenAmount: string): HTMLElement => {
+    const line = document.createElement("div");
+    line.className = "ada-confirm-stardust";
+    const amount = document.createElement("span");
+    amount.className = "ada-confirm-stardust-amount";
+    amount.setAttribute("aria-hidden", "true");
+    amount.textContent = `${label}: ${value}`;
+    const spoken = document.createElement("span");
+    spoken.className = "ada-confirm-stardust-spoken";
+    spoken.textContent = `${label}: ${spokenAmount}`;
+    line.append(amount, spoken);
+    return line;
+  };
+  const contributionLine = (value: number): HTMLElement =>
+    stardustLine(
+      CONTENT.labels.projectContribution,
+      value,
+      fill(CONTENT.labels.stardustAmount, { amount: value }),
+    );
+
   const openConfirm = (
     row: StationRow,
     request: Extract<StationRequest, { kind: "confirm" }>,
@@ -884,15 +911,19 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     };
     const item = well(row.glyph, true);
     item.dataset.inkTop = "0";
-    const price = document.createElement("div");
-    price.className = "ada-confirm-price";
-    price.dataset.inkTop = "0";
-    price.textContent = String(request.price);
     const parts: HTMLElement[] = [item];
     if (request.about) {
       parts.push(prose("ada-confirm-about", request.about));
     }
-    parts.push(price);
+    if (catalog === "projects") {
+      parts.push(contributionLine(request.price));
+    } else {
+      const price = document.createElement("div");
+      price.className = "ada-confirm-price";
+      price.dataset.inkTop = "0";
+      price.textContent = String(request.price);
+      parts.push(price);
+    }
     if (request.stillNeeded) {
       parts.push(prose("ada-confirm-left", request.stillNeeded));
     }
@@ -905,17 +936,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (job.brief) {
       parts.push(prose("ada-confirm-about", job.brief));
     }
-    const reward = document.createElement("div");
-    reward.className = "ada-confirm-reward";
-    const amount = document.createElement("span");
-    amount.className = "ada-confirm-reward-amount";
-    amount.setAttribute("aria-hidden", "true");
-    amount.textContent = `${labels.questReward}: ${job.reward}`;
-    const spoken = document.createElement("span");
-    spoken.className = "ada-confirm-reward-spoken";
-    spoken.textContent = `${labels.questReward}: ${job.rewardText}`;
-    reward.append(amount, spoken);
-    parts.push(reward);
+    parts.push(stardustLine(labels.questReward, job.reward, job.rewardText));
     if (job.state === "busy") {
       const busy = prose("ada-confirm-about", options.busyLine());
       busy.setAttribute("role", "status");
@@ -937,7 +958,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const parts = [
       well(row.glyph, true),
       prose("ada-confirm-about", row.projectDetails ?? row.level),
-      prose("ada-confirm-price", String(row.price ?? 0)),
+      contributionLine(row.price ?? 0),
     ];
     showConfirmation(row.name, parts, labels.jobAccept);
   };
