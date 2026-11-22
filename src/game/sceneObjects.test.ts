@@ -215,8 +215,8 @@ describe("traveling debris rendering", () => {
 
 describe("ore quantity rendering", () => {
   it.each([
-    [undefined, 11],
-    [1, 11],
+    [undefined, 9],
+    [1, 9],
     [5, 18],
   ] as const)("draws cargo amount %s at %s using the same centered rest frame", (amount, size) => {
     const f = fixture();

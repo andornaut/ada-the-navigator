@@ -72,8 +72,8 @@ describe("pacing simulation world", () => {
         expect(caches.sort()).toEqual(expected.caches.sort());
         cachePickups += caches.length;
         for (const cache of flight.objects.filter((object) => object.kind === "pickup")) {
-          expect(cache.id).toMatch(/:stardust:[0-3]$/);
-          expect(cache.amount).toBe(1);
+          expect(cache.id).toMatch(/:stardust:0$/);
+          expect(cache.amount).toBe(5);
         }
         expect([...packs].map(([id, members]) => `${id}:${members[0]}x${members.length}`)).toEqual(
           expected.packs,

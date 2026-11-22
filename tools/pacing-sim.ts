@@ -73,6 +73,7 @@ import {
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { clearOfOreFields } from "../src/model/oreFields.ts";
 import { stardustPickupReach } from "../src/model/pickupBody.ts";
+import { discoveryStardustId } from "../src/model/stardustPlacement.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
 import {
@@ -513,7 +514,13 @@ export function generateChunk(
         distance(at, FLIGHT_START) > tuning.safeRadius + radius &&
         stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, at).length === 0
       ) {
-        chunk.caches.push({ amount, id: `${placement.id}:stardust:0`, source: "caches", ...at });
+        chunk.caches.push({
+          amount,
+          id: discoveryStardustId(placement.id, 0),
+          source: "caches",
+          x: at.x,
+          y: at.y,
+        });
       }
     }
   }
@@ -825,8 +832,9 @@ export function simulate(input: SimulationInput): RunResult {
     const next = dropRandom(flightSeed, wreckId(id));
     const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, galaxy, archetype, next);
     const pieces = splitResourcePickup(drop.stardust);
+    // Changing the number of pickup pieces must not perturb the pilot's decision stream.
     const collected = pieces.reduce(
-      (sum, piece) => sum + (rng() < behaviour.dropCollection ? piece : 0),
+      (sum, piece) => sum + (next() < behaviour.dropCollection ? piece : 0),
       0,
     );
     earn(source, collected);
