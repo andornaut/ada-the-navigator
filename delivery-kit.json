@@ -42,7 +42,6 @@
     "skipPattern": "(\\.md$|^art/|^gameplay/)"
   },
   "reports": {
-    "project": "Ada the Navigator",
     "scheduledTicks": true,
     "recipient": "game-coordinator",
     "workerParents": ["game-coordinator"]
