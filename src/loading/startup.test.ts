@@ -315,7 +315,7 @@ it.each([
   );
   const unit = Math.min(size.width / 720, size.height / 360);
   expect(view.presentation).toMatchObject({
-    action: { heightPx: 48 * unit, widthPx: 128 * unit },
+    action: { heightPx: 48 * unit, paddingXPx: 16 * unit, widthPx: "content" },
     palette: { action: "#bfa06f", actionText: "#181425", panel: "#3b3850", text: "#ead4aa" },
     panel: { bodyActionGapPx: 24, maxWidthPx: 328, safeInsetPx: 16, titleBodyGapPx: 16 },
     text: {
@@ -346,7 +346,7 @@ it("updates the same pending presenter on scale and removes both resize listener
   events.dispatchEvent(new Event("ada-view-scale"));
   expect(view.setPresentation).toHaveBeenCalledTimes(2);
   expect(view.setPresentation.mock.lastCall?.[0]).toMatchObject({
-    action: { heightPx: 96, widthPx: 256 },
+    action: { heightPx: 96, paddingXPx: 32, widthPx: "content" },
   });
   expect(view.retry).toBe(retry);
   expect(progress.mount).toHaveBeenCalledOnce();
@@ -430,7 +430,9 @@ it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid 
     },
   });
   const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), host);
-  expect(view.presentation).toMatchObject({ action: { heightPx: 48, widthPx: 128 } });
+  expect(view.presentation).toMatchObject({
+    action: { heightPx: 48, paddingXPx: 16, widthPx: "content" },
+  });
   stop();
 });
 

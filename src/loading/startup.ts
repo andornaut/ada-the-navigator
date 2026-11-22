@@ -55,7 +55,7 @@ export async function startLoading(
     });
     return Number.isFinite(scale) && scale > 0 ? scale : 1;
   };
-  const presentation = (): LoadingFailurePresentation => {
+  const presentation = (): LoadingFailurePresentation<"content"> => {
     const unit = recoveryUnit();
     return {
       action: {
@@ -65,7 +65,7 @@ export async function startLoading(
         paddingBottomPx: TEXT_BUTTON.lipHeight * unit,
         paddingXPx: TEXT_BUTTON.inset * unit,
         shadeHeightPx: TEXT_BUTTON.lipHeight * unit,
-        widthPx: 128 * unit,
+        widthPx: "content",
       },
       palette: {
         action: "#bfa06f",
