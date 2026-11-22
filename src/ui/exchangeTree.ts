@@ -9,7 +9,7 @@ export interface ExchangeActionData {
 export type ExchangeSchema = {
   container: { props: { readonly id: "root" | ExchangeResource }; slots: "content" };
   action: { props: ExchangeActionData; slots: never };
-  native: { props: { readonly id: "result" | "status" }; slots: never };
+  native: { props: { readonly id: "status" }; slots: never };
 };
 
 /** The caller supplies canonical quantity and copy facts; transactions remain model-owned. */
@@ -38,7 +38,6 @@ export function exchangeTree(data: {
             })),
           },
         })),
-        { component: "native", key: "result", kind: "component", props: { id: "result" } },
         { component: "native", key: "status", kind: "component", props: { id: "status" } },
       ],
     },

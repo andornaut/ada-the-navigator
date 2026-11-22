@@ -176,6 +176,9 @@ export const STATION_STYLE = `
   margin:0;
   font:${font(TYPE.label)}
 }
+.ada-controls .ada-exchange-rate{
+  font:${font(TYPE.body)}
+}
 .ada-controls .ada-exchange-direction,
 .ada-controls .ada-exchange-amount{
   display:inline-flex;

@@ -85,11 +85,6 @@ const dom = vi.hoisted(() => {
         child.remove();
       }
       this.append(...nodes);
-      if (this.dataset.exchange === "result" && state.corruptResult) {
-        const unbound = new Node("button");
-        unbound.disabled = true;
-        this.append(unbound);
-      }
     }
     matches(selector: string): boolean {
       if (this.nodeType !== 1) {
@@ -136,7 +131,7 @@ const dom = vi.hoisted(() => {
       this.attributes[name] = value;
     }
   }
-  const state = { corruptFactory: false, corruptResult: false };
+  const state = { corruptFactory: false };
   return { Node, mountedRoots, state };
 });
 vi.mock("./modal.ts", async () => ({
@@ -161,7 +156,6 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
 afterEach(() => {
   dom.mountedRoots.clear();
   dom.state.corruptFactory = false;
-  dom.state.corruptResult = false;
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -250,7 +244,15 @@ describe("immediate fixed Exchange actions", () => {
       "Stardust to ore",
     ]);
     for (const [index, payment] of ["ore", "stardust"].entries()) {
-      const direction = rows[index]!.children[1]!;
+      const row = rows[index]!;
+      const labels = row.children[0]!;
+      expect(labels.children.map((part) => part.tagName)).toEqual(["H3", "P"]);
+      expect(labels.children.map((part) => part.textContent)).toEqual(
+        index === 0
+          ? ["Buy Stardust", "1 Stardust costs 2 ore"]
+          : ["Buy ore", "1 ore costs 2 Stardust"],
+      );
+      const direction = row.children[1]!;
       const arrow = direction.children[1]!;
       expect(direction.getAttribute("role")).toBe("img");
       expect(direction.children.map((part) => part.tagName)).toEqual(["IMG", "SVG"]);
@@ -299,6 +301,8 @@ describe("immediate fixed Exchange actions", () => {
     expect(f.commit).toHaveBeenLastCalledWith({ amount: 10, resource: "stardust" });
     expect(f.balances()).toEqual({ ore: 10, stardust: 90 });
     expect(f.onChange).toHaveBeenCalledTimes(2);
+    expect(f.nodes().some((node) => node.dataset.exchange === "result")).toBe(false);
+    expect(f.nodes().find((node) => node.getAttribute("role") === "status")?.textContent).toBe("");
   });
   it("gives refusal feedback through the registered native action for either low balance", () => {
     const f = fixture();
@@ -391,9 +395,13 @@ it("rejects late unregistered Exchange controls before a transaction", () => {
   f.view.dispose();
 });
 
-it("audits newly reconciled Exchange result nodes without replaying the committed transaction", () => {
+it("audits Exchange after the balance update without replaying the committed transaction", () => {
   const f = fixture();
-  dom.state.corruptResult = true;
+  f.onChange.mockImplementation(() => {
+    const unbound = new dom.Node("button");
+    unbound.disabled = true;
+    (f.view.root as unknown as InstanceType<typeof dom.Node>).append(unbound);
+  });
   const button = f.action("exchange-ore-1");
   const activate = () =>
     resolveAdaHoldAction(

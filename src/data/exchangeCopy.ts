@@ -8,6 +8,7 @@ export const EXCHANGE_COPY = {
   invalidAmount: "Enter a whole number greater than zero.",
   notEnoughOre: "Not enough ore",
   oreAfter: "Ore after",
+  rate: "1 {received} costs {cost} {spent}",
   stale: "Balances changed. Review the exchange again.",
   stardustAfter: "Stardust after",
   title: "Exchange",

@@ -11,6 +11,7 @@ import {
   type ImmediateExchangePreview,
   type ImmediateExchangeResult,
 } from "../model/exchange.ts";
+import { fill } from "../model/shop.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -23,7 +24,6 @@ import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
-import { stardustCount } from "./statusPill.ts";
 
 export interface ExchangePort {
   readonly exchangeImmediately: (order: ImmediateExchangeOrder) => ImmediateExchangeResult;
@@ -48,12 +48,9 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   const root = document.createElement("section");
   root.className = "ada-exchange";
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
-  const result = document.createElement("div");
-  result.dataset.exchange = "result";
   const status = document.createElement("p");
   status.setAttribute("role", "status");
   const containers = { ore: createActions([]), root, stardust: createActions([]) };
-  const parts = { result, status };
   let disposed = false;
   const actions: { button: HTMLButtonElement; order: ImmediateExchangeOrder }[] = [];
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
@@ -105,19 +102,6 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     audit();
     const outcome = port.exchangeImmediately(order);
     if (outcome.kind === "exchanged") {
-      const paymentLabel = resourceName[paymentFor(outcome.resource)];
-      result.replaceChildren(
-        ...[
-          `${buyLabel[outcome.resource]}: ${stardustCount(outcome.amount)}`,
-          `${EXCHANGE_COPY.totalPrice}: ${stardustCount(outcome.totalPrice)} ${paymentLabel}`,
-          `${EXCHANGE_COPY.oreAfter}: ${stardustCount(outcome.after.ore)}`,
-          `${EXCHANGE_COPY.stardustAfter}: ${stardustCount(outcome.after.stardust)}`,
-        ].map((text) => {
-          const line = document.createElement("p");
-          line.textContent = text;
-          return line;
-        }),
-      );
       onChange();
       audit();
     }
@@ -173,8 +157,17 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
             const row = document.createElement("section");
             row.className = "ada-exchange-row";
             row.setAttribute("aria-label", buyLabel[receive]);
+            const summary = document.createElement("div");
             const heading = document.createElement("h3");
             heading.textContent = buyLabel[receive];
+            const rate = document.createElement("p");
+            rate.className = "ada-exchange-rate";
+            rate.textContent = fill(EXCHANGE_COPY.rate, {
+              cost: IMMEDIATE_EXCHANGE_UNIT_COST,
+              received: resourceName[receive],
+              spent: resourceName[give],
+            });
+            summary.append(heading, rate);
             const direction = document.createElement("span");
             direction.className = "ada-exchange-direction";
             direction.setAttribute("role", "img");
@@ -194,14 +187,14 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
               arrow.append(path);
             }
             direction.append(exchangeIcon(give), arrow);
-            row.append(heading, direction, controls);
+            row.append(summary, direction, controls);
             return { dispose() {}, element: row, slots: { content: controls }, update() {} };
           },
           slots: ["content"],
         },
         native: {
-          create(data) {
-            return { dispose() {}, element: parts[data.id], slots: {}, update() {} };
+          create() {
+            return { dispose() {}, element: status, slots: {}, update() {} };
           },
           slots: [],
         },

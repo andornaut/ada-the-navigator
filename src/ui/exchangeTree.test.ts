@@ -31,7 +31,6 @@ it("composes caller fixed-action facts without an editor or confirmation control
     "ore-1",
     "ore-10",
     "ore-100",
-    "result",
     "status",
   ]);
   expect(JSON.stringify(tree)).not.toMatch(/"(?:value|quote|totalPrice|after|disabled)":/);
