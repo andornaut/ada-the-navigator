@@ -86,7 +86,7 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { createButton, FOCUS_STYLE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -349,6 +349,13 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-screen[hidden]{
   display:none
+}
+.ada-controls .ada-map-screen .ada-button:focus-visible{${FOCUS_STYLE}
+}
+@media (forced-colors: active){
+  .ada-controls .ada-map-screen .ada-button:focus-visible{
+    outline-color:Highlight
+  }
 }
 .ada-controls .ada-map-fog{
   position:absolute;
