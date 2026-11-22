@@ -10,6 +10,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { HUD_BUTTON } from "../data/layout.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
@@ -88,7 +89,7 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, FOCUS_STYLE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
@@ -353,13 +354,6 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-screen[hidden]{
   display:none
 }
-.ada-controls .ada-map-screen .ada-button:focus-visible{${FOCUS_STYLE}
-}
-@media (forced-colors: active){
-  .ada-controls .ada-map-screen .ada-button:focus-visible{
-    outline-color:Highlight
-  }
-}
 .ada-controls .ada-map-fog{
   position:absolute;
   inset:0;
@@ -575,6 +569,40 @@ export const MAP_SCREEN_STYLE = `
 }
 ${mapCloseStyle(".ada-controls .ada-map-screen > .ada-close", HUD_DISC_STATES.idle.face)}
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
+.ada-controls .ada-map-tool:focus-visible{
+  --map-tool-face:${TEXT_TOKENS.label};
+  color:${TEXT_TOKENS.buttonLabel}
+}
+.ada-controls .ada-map-tool:active{
+  --map-tool-face:${MAP_COLORS.ink};
+  color:${TEXT_TOKENS.title}
+}
+.ada-controls .ada-map-tool .ada-disc{
+  background:var(--map-tool-face,${HUD_DISC_STATES.idle.face})
+}
+.ada-controls .ada-map-tool:focus-visible .ada-disc{
+  outline:none;
+  box-shadow:inset 0 0 0 var(--disc-edge) ${MAP_COLORS.ink}
+}
+@media (forced-colors:active){
+  .ada-controls .ada-map-tool{
+    forced-color-adjust:none;
+    --map-tool-face:ButtonFace;
+    color:ButtonText
+  }
+  .ada-controls .ada-map-tool .ada-disc,
+  .ada-controls .ada-map-tool:focus-visible .ada-disc{
+    box-shadow:inset 0 0 0 ${units(HUD_BUTTON.edge)} currentColor
+  }
+  .ada-controls .ada-map-tool:focus-visible{
+    --map-tool-face:Highlight;
+    color:HighlightText
+  }
+  .ada-controls .ada-map-tool:active{
+    --map-tool-face:ButtonText;
+    color:ButtonFace
+  }
+}
 
 /* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
 .ada-controls .ada-map-panel{

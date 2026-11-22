@@ -115,7 +115,7 @@ export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 
 // The shared renderer and existing specialised actions retain their own focus treatment.
 export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
-  .ui-standard-button,.ada-compact,.ada-story-button,.ada-map-screen *,.ada-quest-list *,
+  .ui-standard-button,.ada-compact,.ada-story-button,.ada-quest-list *,
   [data-station] *,[data-station-confirm] *
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
