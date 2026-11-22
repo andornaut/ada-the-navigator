@@ -49,7 +49,7 @@ function host(dist) {
       "--cpus",
       "4",
       "--memory",
-      "2g",
+      "4g",
       "--pids-limit",
       "512",
       "--init",
