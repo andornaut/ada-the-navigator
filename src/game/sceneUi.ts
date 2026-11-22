@@ -11,6 +11,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
 import { HIT_SHAKE } from "../data/layout.ts";
+import STATION_JOB_BRIEFS from "../data/station-job-briefs.json" with { type: "json" };
 import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
@@ -751,11 +752,16 @@ export function buildScene(scene: UiContext): void {
       preview: (order) => scene.model.previewImmediateExchange(order),
     },
     greeting: () => scene.model.dockWelcome(),
-    jobs: () =>
-      scene.model.jobBoard().map((job) => ({
+    jobs: () => {
+      const galaxy = scene.model.state.flight?.galaxy;
+      return scene.model.jobBoard().map((job) => ({
         ...job,
+        ...(galaxy && job.kind === "job" && job.type !== "activity"
+          ? { brief: STATION_JOB_BRIEFS[galaxy][job.type] }
+          : {}),
         rewardText: fill(label("jobReward"), { amount: job.reward }),
-      })),
+      }));
+    },
     labels: {
       activityDrop: label("activityDrop"),
       close: label("close"),

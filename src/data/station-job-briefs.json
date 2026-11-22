@@ -1,0 +1,38 @@
+{
+  "1": {
+    "survey": "The outposts have been comparing charts. None of us has a good record of this spot yet.",
+    "delivery": "One crew offered to take this part of the run. It would help if another ship could take the next leg.",
+    "rescue": "A crew's stuck away from the dock. The workshop can look at the ship once someone brings it in.",
+    "hunt": "The crew that lost this sent a note around the outposts. Maybe a fresh pair of eyes will help."
+  },
+  "2": {
+    "survey": "The hauling crews keep giving me different notes about this patch. A proper chart would help the next crew through.",
+    "delivery": "One of the crews has already pulled a long shift. Can you take this leg so they can head back to the dock?",
+    "rescue": "A pilot called in before their ship stopped moving. There's a place for them here when you bring them in.",
+    "hunt": "A crew came in short one item. They checked the hold twice before asking us to put this up."
+  },
+  "3": {
+    "survey": "Pilots have been describing this spot by what they can see from a distance. A closer look would settle it.",
+    "delivery": "A current rider left this with us. They gave it another look and decided it needed a steadier ride.",
+    "rescue": "A pilot has asked for a tow. They did the right thing calling us instead of making another try on their own.",
+    "hunt": "A rider lost something on the way in. They remembered enough about the trip to give us somewhere to start."
+  },
+  "4": {
+    "survey": "An instructor wants a better chart of this spot. It's easier to teach a route when everyone has the same map.",
+    "delivery": "One of our practice crews has a lot on today. They asked if someone else could make this run.",
+    "rescue": "The pilot called before trying anything risky. That's what we teach here. Now they need someone to tow them in.",
+    "hunt": "Someone lost an item on a flight and went over their route with an instructor. Here's the area they narrowed it down to."
+  },
+  "5": {
+    "survey": "The couriers have notes on either side of this spot. One good look could help them join up their charts.",
+    "delivery": "A courier took on the first leg. We're looking for someone to take this one.",
+    "rescue": "A courier passed along a call for help. The pilot still needs a ship that can tow them in.",
+    "hunt": "The last courier to see it left a note. It gives us a search area, even if it doesn't give us the exact spot."
+  },
+  "6": {
+    "survey": "Two settlements have tried to chart this stretch from opposite sides. They're missing the same bit in the middle.",
+    "delivery": "A neighbor is expecting a delivery. They don't have a ship free to come and get it.",
+    "rescue": "Someone picked up a call from a ship that can't get home. The neighbors have made room for it at the dock.",
+    "hunt": "When something goes missing here, we ask the neighbors to look too. This time we'd appreciate a ship that can get out there."
+  }
+}

@@ -773,6 +773,7 @@ function constructedStation(
   }));
   let jobs: stationSource.StationJob[] = [
     {
+      brief: "Keeper brief.",
       detail: "Detail",
       id: "job-1",
       kind: "job",
@@ -1139,10 +1140,19 @@ it("opens unmutated Jobs details then accepts and focuses the same active row", 
   f.station.setOpen(true);
   f.activate(f.action("open-jobs"));
   const row = f.parent.querySelector('[data-job="job-1"]')!;
+  expect(
+    row.querySelectorAll(".ada-shop-name")[0]!.children.map((part) => part.textContent),
+  ).toEqual(["Job", "Detail"]);
   f.activate(row);
   expect(f.acceptJob).not.toHaveBeenCalled();
   expect(f.native.get("confirm-cancel-x")!.title.textContent).toBe("Job");
   expect(f.action("confirm-buy").textContent).toBe(f.labels.jobAccept);
+  const detail = f.native.get("confirm-cancel-x")!.body;
+  expect(detail.children.slice(0, 3).map((part) => part.textContent)).toEqual([
+    "Detail",
+    "Keeper brief.",
+    "10 Stardust",
+  ]);
   f.activate(f.action("confirm-cancel"));
   expect(f.doc.activeElement).toBe(row);
   f.activate(row);

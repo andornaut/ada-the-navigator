@@ -116,6 +116,7 @@ export type StationView = "card" | "shop" | "jobs" | "exchange";
  * Ada holds a job.
  */
 export interface StationJob {
+  readonly brief?: string;
   readonly detail: string;
   readonly id: string;
   /** A station job, or the galaxy's active activity, whose Drop names it. */
@@ -1144,10 +1145,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const openJob = (job: StationJob, origin: HTMLElement): void => {
     confirm = { job: job.id, origin };
-    const parts = [
-      prose("ada-confirm-about", job.detail),
-      prose("ada-confirm-left", job.rewardText),
-    ];
+    const parts = [prose("ada-confirm-about", job.detail)];
+    if (job.brief) {
+      parts.push(prose("ada-confirm-about", job.brief));
+    }
+    parts.push(prose("ada-confirm-left", job.rewardText));
     if (job.state === "busy") {
       const busy = prose("ada-confirm-about", options.busyLine());
       busy.setAttribute("role", "status");
@@ -1180,6 +1182,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     dropOrigin = origin;
     const title = job.kind === "activity" ? labels.activityDrop : labels.jobDropTitle;
     const data = {
+      ...(job.brief ? { brief: job.brief } : {}),
       cancelLabel: labels.jobDropCancel,
       closeLabel: labels.close,
       detail: job.detail,

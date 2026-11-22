@@ -33,6 +33,24 @@ describe("the production station detail tree", () => {
     expect(before.slots?.body?.[0]?.key).toBe(after.slots?.body?.[0]?.key);
     expect(after.slots?.body?.[0]).toMatchObject({ props: { text: "Delivery" } });
   });
+  it("includes the optional job brief without replacing the objective or changing the actions", () => {
+    const plain = stationDropTree({ ...data, detail: "Find the target." });
+    const withBrief = stationDropTree({
+      ...data,
+      brief: "Keeper brief.",
+      detail: "Find the target.",
+    });
+    if (plain.kind !== "component" || withBrief.kind !== "component") {
+      throw Error("Expected component");
+    }
+    expect(withBrief.slots?.body?.slice(0, 2)).toEqual(plain.slots?.body);
+    expect(withBrief.slots?.body?.[2]).toMatchObject({
+      key: "brief",
+      props: { text: "Keeper brief." },
+    });
+    expect(withBrief.slots?.footer).toEqual(plain.slots?.footer);
+  });
+
   it("validates against the published ports without a parallel schema or renderer", () => {
     expect(() =>
       validateLayoutTree(

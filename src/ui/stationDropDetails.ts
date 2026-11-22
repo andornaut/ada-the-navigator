@@ -9,6 +9,7 @@ import { type AdaLayoutSchema, mountAdaLayout } from "./layoutTree.ts";
 import { createPhysicalLayoutInspector } from "./layoutTreeMeasurements.ts";
 
 export interface StationDropData {
+  readonly brief?: string;
   readonly cancelLabel: string;
   readonly closeLabel: string;
   readonly dropLabel: string;
@@ -41,16 +42,19 @@ export function stationDropTree(
           kind: "component",
           props: { className: "ada-card-note ada-confirm-about", text: data.subject },
         },
-        ...(data.detail
-          ? ([
-              {
-                component: "text",
-                key: "detail",
-                kind: "component",
-                props: { className: "ada-card-note ada-confirm-about", text: data.detail },
-              },
-            ] as const)
-          : []),
+        ...(["detail", "brief"] as const).flatMap((key) => {
+          const text = data[key];
+          return text
+            ? [
+                {
+                  component: "text" as const,
+                  key,
+                  kind: "component" as const,
+                  props: { className: "ada-card-note ada-confirm-about", text },
+                },
+              ]
+            : [];
+        }),
       ],
       footer: [
         {
