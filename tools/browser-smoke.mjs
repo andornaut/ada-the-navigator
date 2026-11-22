@@ -549,6 +549,7 @@ try {
   // filled cream and the rest hollow rings. The widest header, the longest galaxy name with "100%
   // mapped", measured in the header's own fonts, stays in the cap.
   const mapLayout = await import(new URL("../src/ui/layout/mapScreen.ts", import.meta.url));
+  const { SPACING: mapSpacing } = await import(new URL("../src/data/layout.ts", import.meta.url));
   const { GALAXIES } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const mapHeaders = {};
   async function checkMapHeader(insets, view, name) {
@@ -610,6 +611,7 @@ try {
         const galaxy = header.querySelector(".ada-map-galaxy");
         const percent = header.querySelector(".ada-map-percent");
         return {
+          name: ink(galaxy, galaxy.textContent),
           names: Object.fromEntries(names.map((text) => [text, ink(galaxy, text)])),
           note: ink(
             header.querySelector(".ada-map-survey-info .ada-map-ink"),
@@ -617,7 +619,9 @@ try {
           ),
           percent: percent.textContent,
           percentFull: ink(percent, full),
+          percentInk: ink(percent, percent.textContent),
           pips,
+          pixelUnit: unit * density,
           row: { height: logical(rowBox.height), width: logical(rowBox.width) },
         };
       },
@@ -629,9 +633,34 @@ try {
     const percent = Number.parseInt(measured.percent, 10);
     const filled = measured.pips.filter((pip) => pip.filled).length;
     const longest = Math.max(...Object.values(measured.names));
-    const widest = mapLayout.mapHeaderGeometry(longest, measured.percentFull, measured.note);
-    const narrowest = mapLayout.mapHeaderGeometry(0, 0, measured.note);
+    const { pixelUnit } = measured;
+    const widest = mapLayout.mapHeaderGeometry(
+      longest,
+      measured.percentFull,
+      measured.note,
+      pixelUnit,
+    );
+    const narrowest = mapLayout.mapHeaderGeometry(0, 0, measured.note, pixelUnit);
+    const { divider, padding, pip, pipPitch, pips } = mapLayout.MAP_SCREEN.header;
+    const pixels = (logical) => Math.round(logical * pixelUnit);
+    // The note sets a floor from actual ink and two insets. The four row segments add
+    // five equal, whole-device-pixel gaps. Rounding these can add fewer than five pixels.
+    const gaps = 5;
+    const noteFloor = pixels(measured.note) + 2 * pixels(padding);
+    const rowFloor =
+      pixels(measured.name) +
+      pixels(divider.width) +
+      pixels(measured.percentInk) +
+      pixels((pips - 1) * pipPitch) +
+      pixels(pip) +
+      gaps * pixels(mapSpacing.gap);
+    const noteRounding = pixels(narrowest.width) - noteFloor;
+    const headerRounding = pixels(width) - Math.max(noteFloor, rowFloor);
     mapHeaders[name] = {
+      headerRounding,
+      noteFloor,
+      noteRounding,
+      rowFloor,
       cap,
       left: x,
       pips: {
@@ -658,7 +687,6 @@ try {
         mapHeaders[name],
       )}`,
     );
-    const { pip, pipPitch, pips } = mapLayout.MAP_SCREEN.header;
     const cream = "rgb(234, 212, 170)";
     const supporting = "rgb(184, 179, 201)";
     assert.ok(
@@ -680,9 +708,13 @@ try {
       )} filled at ${percent}%: ${JSON.stringify(measured)}`,
     );
     assert.ok(
-      widest.width <= cap && Math.abs(narrowest.width - 378) <= 4,
-      `${name}: the widest header stays in its ${cap} cap and the note sets about 378: ${JSON.stringify(
-        mapHeaders[name].widest,
+      widest.width <= cap &&
+        noteRounding >= 0 &&
+        noteRounding < gaps &&
+        headerRounding >= 0 &&
+        headerRounding < gaps,
+      `${name}: header fits its ${cap} cap and the ink floors with only gap rounding: ${JSON.stringify(
+        mapHeaders[name],
       )}`,
     );
   }
