@@ -234,9 +234,28 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   shipFooter.className = "ada-ship-back";
   shipFooter.append(shipBack);
   ship.card.append(shipFooter);
-  register(shipBack, () => closeShip());
   modal.append(paused.frame, ship.frame);
-  root.append(modal);
+  try {
+    register(shipBack, () => closeShip());
+    for (const [id, button] of buttons) {
+      register(button, () => act(id));
+    }
+    register(paused.close, () => setOpen(false));
+    register(ship.close, () => closeShip());
+    assertAdaActionMetadata(paused.frame);
+    assertAdaActionMetadata(ship.frame);
+    root.append(modal);
+  } catch (error) {
+    disposed = true;
+    for (const binding of actionBindings) {
+      binding.dispose();
+    }
+    pauseLayout.dispose();
+    paused.dispose();
+    ship.dispose();
+    modal.remove();
+    throw error;
+  }
   const mapScreen = createMapScreen(root, {
     closeLabel: labels.mapScreen.questBack ?? labels.close,
     labels: labels.mapScreen,
@@ -556,11 +575,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       options.onBackToTitle();
     }
   };
-  for (const [id, button] of buttons) {
-    register(button, () => act(id));
-  }
-  register(paused.close, () => setOpen(false));
-  register(ship.close, () => closeShip());
   // The Ship card's X, back and Escape return to the Paused card, on its Ship button.
   function closeShip(): void {
     if (shipResource.isOpen()) {
@@ -606,8 +620,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
     }
   }
-  assertAdaActionMetadata(paused.frame);
-  assertAdaActionMetadata(ship.frame);
   return {
     close: () => {
       if (quests.isOpen()) {

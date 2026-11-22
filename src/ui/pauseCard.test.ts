@@ -332,8 +332,9 @@ function mountedRoot() {
   return root;
 }
 
-function cards(detached = false) {
+function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
   const root = detached ? new FakeElement() : mountedRoot();
+  beforeCreate?.(root);
   const options = {
     labels: LABELS,
     onBackToTitle: vi.fn(),
@@ -1384,16 +1385,85 @@ it("rejects attached Ship rows outside an owning root before parent focus", () =
   pause.dispose();
 });
 
+it("publishes the hidden Pause and Ship controls already bound before Map and Quests", () => {
+  const publication: { actions: string[]; hidden: boolean }[] = [];
+  const { pause, root } = cards(false, (root) => {
+    const append = root.append.bind(root);
+    vi.spyOn(root, "append").mockImplementation((...nodes) => {
+      append(...nodes);
+      const modal = nodes[0]!;
+      if (modal !== root.children[0]) {
+        return;
+      }
+      expect(modal.isConnected).toBe(true);
+      const actions = modal
+        .querySelectorAll("button")
+        .map((node) => {
+          try {
+            actionBinding.assertAdaActionMetadata(node as unknown as HTMLElement);
+            return node.dataset.action!;
+          } catch {
+            return `${node.dataset.action} (unbound)`;
+          }
+        })
+        .sort();
+      publication.push({ actions, hidden: modal.hidden });
+    });
+  });
+  expect(publication).toEqual([
+    {
+      actions: [
+        "back-ship",
+        "close-pause",
+        "close-ship",
+        "pause-backToTitle",
+        "pause-map",
+        "pause-quests",
+        "pause-resume",
+        "pause-settings",
+        "pause-ship",
+      ],
+      hidden: true,
+    },
+  ]);
+  expect(root.children[1]!.dataset.dialog).toBe("map");
+  expect(root.children[2]!.querySelector('[data-dialog="quests"]')).not.toBeNull();
+  pause.dispose();
+});
+
 it.each(["pause-resume", "close-ship"])(
-  "rejects a missing static Pause binding %s at semantic completion",
+  "rejects a missing static Pause binding %s before publication and releases owned resources",
   (id) => {
     const original = actionBinding.bindAdaAction;
-    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
-      element.dataset.action === id
-        ? { activate: () => false, dispose() {}, update() {} }
-        : original(options, element),
+    const bound: HTMLElement[] = [];
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
+      if (element.dataset.action === id) {
+        return { activate: () => false, dispose() {}, update() {} };
+      }
+      bound.push(element);
+      return original(options, element);
+    });
+    const published = vi.fn();
+    expect(() =>
+      cards(false, (root) => {
+        const append = root.append.bind(root);
+        vi.spyOn(root, "append").mockImplementation((...nodes) => {
+          published();
+          append(...nodes);
+        });
+      }),
+    ).toThrow("no registered action binding");
+    expect(published).not.toHaveBeenCalled();
+    expect(bound).toHaveLength(8);
+    for (const element of bound) {
+      expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
+        "no registered action binding",
+      );
+    }
+    expect(window.addEventListener).toHaveBeenCalledTimes(4);
+    expect(vi.mocked(window.removeEventListener).mock.calls).toEqual(
+      vi.mocked(window.addEventListener).mock.calls,
     );
-    expect(() => cards()).toThrow("no registered action binding");
   },
 );
 
