@@ -10,6 +10,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { HUD_BUTTON } from "../data/layout.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -92,7 +93,7 @@ import { createModalClose } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
-import { hudDiscStyle } from "./weapons.ts";
+import { HUD_DISC_STATES, hudDiscStyle } from "./weapons.ts";
 
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input
@@ -571,6 +572,18 @@ export const MAP_SCREEN_STYLE = `
   top:${safeEdge("top", SPACING.pageInset)};
   right:${safeEdge("right", SPACING.pageInset)};
   z-index:2
+}
+.ada-controls .ada-map-screen > .ada-close::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:${units(HUD_BUTTON.disc)};
+  height:${units(HUD_BUTTON.disc)};
+  margin:auto;
+  border-radius:50%;
+  background:${HUD_DISC_STATES.idle.face};
+  pointer-events:none;
+  z-index:-1
 }
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 
