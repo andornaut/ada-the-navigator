@@ -31,6 +31,7 @@ const UNDOCKED = { bay: false, noses: {} };
 
 const manifest = ART_MANIFEST as unknown as {
   assets: {
+    berths?: { outward: readonly [number, number]; x: number; y: number }[];
     craft?: string;
     displayHeight?: number;
     displayWidth?: number;
@@ -166,6 +167,10 @@ describe("Cartwheel story ships", () => {
       for (const entry of ships) {
         expect(gap(ship(ending, entry.id)!, entry), `${entry.id} bay ${bay}`).toBeLessThan(1e-6);
       }
+      if (bay) {
+        expect(shipDirection(16, ship(ending, "visitor-2")!.heading)).toBe(9);
+        expect(shipDirection(16, ship(ships, "visitor-2")!.heading)).toBe(11);
+      }
     }
     // Without nose data a pivot stays on its berth point.
     const bare = storyShips(hub, { stage: 5 }, UNDOCKED, undefined, 100);
@@ -180,7 +185,27 @@ describe("Cartwheel story ships", () => {
     };
     close(docked.hub.miner.at, -4.699, 49.237);
     close(docked.hub["visitor-1"].at, 49.237, -4.699);
-    close(docked.bay["visitor-2"].at, 30.315, 68.55);
+    // Both funded overlay frames author the matching berth at the selected display scale.
+    const bay = docked.bay["visitor-2"];
+    for (const id of ["outpost-hub-bay-a", "outpost-hub-bay-b"]) {
+      const frame = manifest.assets.find((asset) => asset.id === id)!;
+      expect(frame.berths).toHaveLength(1);
+      const berth = frame.berths![0]!;
+      expect(bay.at.x - bay.at.y).toBeCloseTo(
+        (berth.x / frame.width - frame.pivot.x) * frame.displayWidth!,
+        9,
+      );
+      expect((bay.at.x + bay.at.y) / 2).toBeCloseTo(
+        (berth.y / frame.height - frame.pivot.y) * frame.displayHeight!,
+        9,
+      );
+      const dx = bay.heading.x - bay.heading.y;
+      const dy = (bay.heading.x + bay.heading.y) / 2;
+      const length = Math.hypot(dx, dy);
+      const outwardLength = Math.hypot(...berth.outward);
+      expect(dx / length).toBeCloseTo(-berth.outward[0] / outwardLength, 9);
+      expect(dy / length).toBeCloseTo(-berth.outward[1] / outwardLength, 9);
+    }
     // The bay docks only the waiting second visitor; the miner and the first visitor stay.
     expect(docked.bay.miner).toEqual(docked.hub.miner);
     expect(docked.bay["visitor-1"]).toEqual(docked.hub["visitor-1"]);

@@ -123,7 +123,7 @@ export interface StoryDock {
  * changes"), each with its outward screen direction.
  */
 const DOCKS = {
-  bay: dock(50.084, 225.391, [-0.612, 0.791]),
+  bay: dock(108, 194.571, [-0.612, 0.791]),
   left: dock(21.374, 175.72, [-0.924, 0.382]),
   right: dock(218.626, 175.72, [0.924, 0.382]),
 } as const;
