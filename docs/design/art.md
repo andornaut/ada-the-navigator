@@ -115,3 +115,4 @@ Reference: [art](../../art/README.md).
 | ada-0306 | Regenerate debris, nebulae and Whirlpool art for the light galaxy fields  | [ada-0306.md](../work/ada-0306.md) |
 | ada-0313 | Outline every play object on the light galaxy fields                      | [ada-0313.md](../work/ada-0313.md) |
 | ada-0320 | Specify the Small Cheats card and draw the FPS counter icon               | [ada-0320.md](../work/ada-0320.md) |
+| ada-0345 | Redraw stations and points of interest                                    | [ada-0345.md](../work/ada-0345.md) |
