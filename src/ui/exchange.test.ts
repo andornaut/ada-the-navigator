@@ -8,7 +8,6 @@ import {
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
-import { QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 
 const dom = vi.hoisted(() => {
   const mountedRoots = new Set<Node>();
@@ -239,10 +238,6 @@ describe("immediate fixed Exchange actions", () => {
     ).toBe(false);
     const rows = f.nodes().filter((node) => node.className === "ada-exchange-row");
     expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual(["Buy Stardust", "Buy ore"]);
-    expect(rows.map((row) => row.children[1]!.getAttribute("aria-label"))).toEqual([
-      "ore to Stardust",
-      "Stardust to ore",
-    ]);
     for (const [index, [payment, received, heading, phrase]] of [
       ["ore", "stardust", "Buy Stardust", "1 Stardust costs 2 ore"],
       ["stardust", "ore", "Buy ore", "1 ore costs 2 Stardust"],
@@ -270,19 +265,11 @@ describe("immediate fixed Exchange actions", () => {
         `/art/ui/sprites/icon-${payment}-20.png`,
       ]);
       expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).alt)).toEqual(["", ""]);
-      const direction = row.children[1]!;
-      const arrow = direction.children[1]!;
-      expect(direction.getAttribute("role")).toBe("img");
-      expect(direction.children.map((part) => part.tagName)).toEqual(["IMG", "SVG"]);
-      const paymentIcon = direction.children[0] as unknown as HTMLImageElement;
-      expect(paymentIcon.src).toBe(`/art/ui/sprites/icon-${payment}-20.png`);
-      expect(paymentIcon.alt).toBe("");
-      expect(arrow.getAttribute("aria-hidden")).toBe("true");
-      expect(arrow.getAttribute("viewBox")).toBe(QUEST_ROUTE_ARROW.viewBox);
-      expect(arrow.getAttribute("fill")).toBe("currentColor");
-      expect(arrow.children.map((path) => path.getAttribute("d"))).toEqual([
-        QUEST_ROUTE_ARROW.shaft,
-        QUEST_ROUTE_ARROW.head,
+      expect(row.children.map((part) => part.tagName)).toEqual(["DIV", "DIV"]);
+      expect(row.children[1]!.children.map((part) => part.tagName)).toEqual([
+        "BUTTON",
+        "BUTTON",
+        "BUTTON",
       ]);
     }
     expect(f.action("exchange-stardust-10").getAttribute("aria-label")).toBe(

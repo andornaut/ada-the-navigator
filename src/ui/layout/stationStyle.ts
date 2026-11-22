@@ -165,7 +165,7 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-exchange-row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
   gap:${units(SPACING.gap)};
   padding-inline:${units(SPACING.gap)};
@@ -185,17 +185,48 @@ export const STATION_STYLE = `
   align-items:center;
   column-gap:${units(BALANCE.markGap)}
 }
-.ada-controls .ada-exchange-direction,
 .ada-controls .ada-exchange-amount{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:${units(BALANCE.markGap)}
 }
-.ada-controls .ada-exchange-arrow{
-  width:${units(TYPE.body.size)};
-  height:auto;
-  flex:none
+.ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]{
+  color:${TEXT_TOKENS.label};
+  background:#514b68;
+  border-color:#514b68;
+  border-image-source:none
+}
+.ada-controls .ada-exchange .ada-button.ada-exchange-amount:focus-visible{
+  --ada-exchange-focus-face:${TEXT_TOKENS.label};
+  color:${TEXT_TOKENS.buttonLabel};
+  background-image:linear-gradient(var(--ada-exchange-focus-face),var(--ada-exchange-focus-face)),none;
+  background-clip:padding-box,border-box;
+  border-image-slice:${TILE_SLICE};
+  outline:none;
+  box-shadow:none
+}
+.ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]:focus-visible{
+  color:${TEXT_TOKENS.title};
+  background:#5f5980;
+  border-color:transparent
+}
+@media (forced-colors:active){
+  .ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]:not(:focus-visible){
+    color:GrayText;
+    background:ButtonFace;
+    border-color:ButtonFace
+  }
+  .ada-controls .ada-exchange .ada-button.ada-exchange-amount:focus-visible{
+    forced-color-adjust:none;
+    --ada-exchange-focus-face:Highlight;
+    color:HighlightText;
+    background-color:ButtonFace
+  }
+  .ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]:focus-visible{
+    color:ButtonText;
+    background:color-mix(in srgb,ButtonFace 75%,ButtonText)
+  }
 }
 .ada-controls .ada-exchange-icon{
   width:${units(BALANCE.icon)};
