@@ -6626,10 +6626,9 @@ try {
   // container memory it records.
   await browser.close();
   browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
-  // Resizing in flight keeps what it holds flat: ten resizes between 1280x720 and 720x360 in a
-  // fresh tab, then ten more each followed by a collection, leave live WebGL textures, canvases
-  // made and container memory where they settled after the first, as a phone rotated again and
-  // again would.
+  // Render one paused flight through ten resizes between 1280x720 and 720x360, then ten more
+  // with collection. With the flight clock paused, drifting scenery cannot pull in new spin
+  // sets during sampling. The visible canvas still draws and updates its SVG rasters.
   {
     const probe = await browser.newContext({
       hasTouch: true,
@@ -6771,6 +6770,9 @@ try {
     await tab.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
     await tab.locator('.ada-start-actions > [data-action="continue"]').click();
     await tab.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    const paused = tab.locator('[data-dialog="pause"]');
+    await tab.locator('[data-action="pause"]').click();
+    await paused.waitFor({ state: "visible" });
     async function settledRaster(target, resize) {
       const initial = await target.evaluate(() => ({
         draws: window.adaResizeActivity.draws,
@@ -6825,20 +6827,28 @@ try {
         const raster = await resizeFlight(
           step % 2 ? { height: 360, width: 720 } : { height: 720, width: 1280 },
         );
-        const counts = await tab.evaluate(() => ({ ...window.adaResizeProbe }));
         const memory = containerMemory();
-        if (!collect) {
-          return [...taken, { ...counts, memory, raster, step }];
+        if (collect) {
+          await devtools.send("HeapProfiler.collectGarbage");
+          await settledRaster(tab);
         }
-        await devtools.send("HeapProfiler.collectGarbage");
-        await settledRaster(tab);
+        const counts = await tab.evaluate(() => ({ ...window.adaResizeProbe }));
         return [
           ...taken,
-          { ...counts, memory, memoryAfterCollection: containerMemory(), raster, step },
+          {
+            ...counts,
+            memory,
+            ...(collect && { memoryAfterCollection: containerMemory() }),
+            raster,
+            step,
+          },
         ];
       }, Promise.resolve([]));
     const uncollected = await resizes(false);
     const collected = await resizes(true);
+    await paused.locator('[data-action="pause-resume"]').click();
+    await paused.waitFor({ state: "hidden" });
+    await settledRaster(tab);
     // The view after twenty resizes at each scale, then a fresh tab at each for comparison: every
     // texture on screen is drawn at the current scale, neither stale nor blurred.
     await tab.screenshot({ path: `${output}/resize-after-1280x720.png` });
@@ -6885,8 +6895,8 @@ try {
       "Container memory after a collection",
     );
     events.checks.push(
-      "Ten resizes in flight keep live WebGL textures, canvases and container memory flat, " +
-        "with and without a collection, and draw each texture at the current scale",
+      "Ten resizes of the paused flight keep live WebGL textures, canvases and container memory " +
+        "flat, with and without a collection, and draw each texture at the current scale",
     );
   }
   save("result.json", { passed: true, checks: events.checks });
