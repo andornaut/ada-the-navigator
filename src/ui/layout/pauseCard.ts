@@ -17,6 +17,8 @@ ${UI_SCOPE} .ada-actions.ada-pause-grid{
   row-gap:${units(STACK_BUTTON_GAP)};
   width:auto
 }
+/* The grid is nested in a stack, but its horizontal actions size to their own labels. */
+${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-button:not(.ada-pause-full){width:max-content}
 ${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1;width:100%}
 @media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
   ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
