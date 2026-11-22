@@ -138,6 +138,9 @@ export const STATION_STYLE = `
     --ada-station-footer-ink:ButtonFace
   }
 }
+.ada-controls .ada-card-body[data-shop-stock]{
+  overflow:hidden
+}
 .ada-controls .ada-card-body > .ada-station-panes{
   flex:1;
   min-height:0;
@@ -532,7 +535,7 @@ export const STATION_STYLE = `
   image-rendering:pixelated
 }
 
-.ada-controls :is(.ada-job-list,.ada-station-projects){
+.ada-controls :is(.ada-job-list,.ada-station-projects,.ada-stock-rows){
   display:grid;
   gap:${units(SPACING.rowGap)}
 }

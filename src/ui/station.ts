@@ -93,6 +93,15 @@ export interface StationLabels {
 
 export type StationTab = "ship" | "weapons";
 type StationCatalog = StationTab | "projects";
+type RowCatalogue = StationCatalog | "fixed";
+
+export interface StationShopGroup {
+  readonly category: "weapons" | "equipment" | "ammo";
+  readonly label: string;
+  readonly offers: readonly StationRow[];
+}
+
+export type StationShopGroups = readonly [StationShopGroup, StationShopGroup];
 
 /** Visible shop tabs come only from the docked station's authoritative capabilities. */
 export function stationTabs(services: StationServices | null): readonly StationTab[] {
@@ -208,6 +217,9 @@ export interface StationOptions {
   readonly rows: (tab: StationCatalog) => readonly StationRow[];
   readonly select: (key: string) => void;
   readonly services: () => StationServices | null;
+  /** Approved groups in display order, including any independently eligible story offer in its pane. */
+  /** Undefined keeps the full current catalogue until the approved groups are supplied. */
+  readonly shopGroups?: () => StationShopGroups | undefined;
   readonly stationTitle: () => string | undefined;
   readonly undock: () => void;
 }
@@ -421,6 +433,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   list.className = "ada-shop-list";
   list.setAttribute("role", "tabpanel");
   shopCard.body.append(tabs, list);
+  const fixedStock = document.createElement("div");
+  fixedStock.className = "ada-station-panes";
+
   const exchangeCard = createCard({
     closeAction: "exchange-back",
     closeLabel: labels.close,
@@ -637,9 +652,48 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let view: StationView = "card";
   let tab: StationTab | null = null;
   const shownTabs = () => stationTabs(options.services());
+  const configuredStock = () => {
+    const groups = options.services() ? options.shopGroups?.() : undefined;
+    if (groups) {
+      const offers = groups.flatMap((group) => group.offers);
+      if (
+        groups.length !== 2 ||
+        groups[0].category === groups[1].category ||
+        groups.some((group) => group.offers.length > 4) ||
+        offers.some((offer) => offer.project) ||
+        new Set(offers.map((offer) => offer.key)).size !== offers.length
+      ) {
+        throw new Error("Shop requires two distinct groups of up to four unique offers");
+      }
+    }
+    return groups;
+  };
+  const shopAvailable = (groups: StationShopGroups | undefined) =>
+    groups ? groups.some((group) => group.offers.length > 0) : shownTabs().length > 0;
+  const liveRows = (catalog: RowCatalogue): readonly StationRow[] => {
+    if (catalog === "projects") {
+      return options.services()?.projects ? options.rows(catalog) : [];
+    }
+    const groups = configuredStock();
+    if (groups) {
+      return catalog === "fixed" ? groups.flatMap((group) => group.offers) : [];
+    }
+    return catalog !== "fixed" && shownTabs().includes(catalog) ? options.rows(catalog) : [];
+  };
+  const shopListRoot = () => (fixedStock.parentElement === shopCard.body ? fixedStock : list);
+  const focusShop = (key: string, index = 0): void => {
+    const rows = [...shopListRoot().querySelectorAll<HTMLButtonElement>("button")].filter(
+      (row) => !row.disabled,
+    );
+    const next =
+      rows.find((row) => row.dataset.item === key) ??
+      rows[Math.max(0, Math.min(index, rows.length - 1))];
+    focusTarget(next ?? openShop);
+  };
+
   let confirm:
     | {
-        readonly catalog: StationCatalog;
+        readonly catalog: RowCatalogue;
         readonly key: string;
         readonly origin: HTMLElement;
         readonly projectAmount?: number;
@@ -697,7 +751,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const shopLayouts: { dispose(): void }[] = [];
-  const rowElement = (row: StationRow, interactive = true): HTMLButtonElement => {
+  const rowElement = (row: StationRow, interactive = true, fixed = false): HTMLButtonElement => {
     const node = document.createElement("button");
     const host = document.createElement("div");
     const layout = mountLayout<StationShopRowSchema>(
@@ -769,18 +823,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       register(
         node,
         () => {
-          const catalog = row.project ? "projects" : tab;
-          if (
-            catalog === null ||
-            (catalog === "projects"
-              ? !options.services()?.projects
-              : !shownTabs().includes(catalog))
-          ) {
-            render();
-            return;
-          }
-          const liveRow = options.rows(catalog).find((item) => item.key === row.key);
-          if (!liveRow) {
+          const catalog = row.project ? "projects" : fixed ? "fixed" : tab;
+          const liveRow =
+            catalog === null ? undefined : liveRows(catalog).find((item) => item.key === row.key);
+          if (!catalog || !liveRow) {
             render();
             return;
           }
@@ -795,11 +841,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           if (action === "select") {
             options.select(row.key);
             render();
-            const selected = [...list.querySelectorAll<HTMLElement>(".ada-shop-row")].find(
-              (entry) => entry.dataset.item === row.key,
-            );
-            if (selected) {
-              focusTarget(selected);
+            if (view === "shop") {
+              focusShop(row.key);
             }
             return;
           }
@@ -904,6 +947,41 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     fitListContent();
     for (const layout of previousLayouts) {
       layout.dispose();
+    }
+  };
+
+  const renderFixedStock = (groups: StationShopGroups): void => {
+    const previousBindings = shopBindings.splice(0);
+    const previousLayouts = shopLayouts.splice(0);
+    try {
+      const sections = groups.map((group) => {
+        const section = document.createElement("section");
+        section.dataset.stockGroup = group.category;
+        const heading = document.createElement("h3");
+        heading.textContent = group.label;
+        const rows = document.createElement("div");
+        rows.className = "ada-stock-rows";
+        rows.append(...group.offers.map((offer) => rowElement(offer, true, true)));
+        section.append(heading, rows);
+        audit(section);
+        return section;
+      });
+      fixedStock.replaceChildren(...sections);
+      shopCard.body.replaceChildren(fixedStock);
+      shopCard.body.setAttribute("data-shop-stock", "");
+      audit(shopCard.frame);
+    } catch (error) {
+      shopCard.frame.hidden = true;
+      clearBindings(shopBindings);
+      for (const layout of shopLayouts.splice(0)) {
+        layout.dispose();
+      }
+      throw error;
+    } finally {
+      clearBindings(previousBindings);
+      for (const layout of previousLayouts) {
+        layout.dispose();
+      }
     }
   };
 
@@ -1052,12 +1130,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const render = (): void => {
+    const groups = configuredStock();
     const welcome = stationWelcome(options.stationTitle() ?? labels.station, options.greeting());
     stationCard.title.textContent = welcome.title;
     stationCard.title.hidden = false;
     stationCard.frame.setAttribute("aria-label", welcome.title);
     stationCard.showLine(welcome.speaker, welcome.text);
-    openShop.hidden = shownTabs().length === 0;
+    openShop.hidden = !shopAvailable(groups);
     openJobs.hidden = !stationJobsShown(options.services());
     if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
       closeConfirm();
@@ -1075,8 +1154,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       parts.card.append(balances, footer);
     }
     if (view === "shop") {
-      renderShop();
-      fitList();
+      if (groups) {
+        renderFixedStock(groups);
+      } else {
+        if (fixedStock.parentElement === shopCard.body) {
+          shopCard.body.replaceChildren(tabs, list, shopPager.node);
+          shopCard.body.removeAttribute("data-shop-stock");
+        }
+        renderShop();
+        fitList();
+      }
     } else if (view === "jobs") {
       renderJobs();
     } else if (view === "exchange") {
@@ -1116,7 +1203,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const openConfirm = (
     row: StationRow,
     request: Extract<StationRequest, { kind: "confirm" }>,
-    catalog: StationCatalog,
+    catalog: RowCatalogue,
     origin: HTMLElement,
   ) => {
     confirm = {
@@ -1271,6 +1358,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         focusTarget(origin);
       } else if (view === "jobs") {
         focusJobs(origin?.dataset.job ?? origin?.dataset.item);
+      } else if (view === "shop") {
+        focusShop(origin?.dataset.item ?? "");
       }
       return;
     }
@@ -1285,7 +1374,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // The row width and columns follow the view; the card builder refits the card itself.
   const refit = (): void => {
-    if (open && view === "shop" && !confirm) {
+    if (open && view === "shop" && !confirm && fixedStock.parentElement !== shopCard.body) {
       render();
     }
   };
@@ -1310,7 +1399,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   register(undock, options.undock);
   register(openShop, () => {
-    if (shownTabs().length === 0) {
+    if (!shopAvailable(configuredStock())) {
       return;
     }
     view = "shop";
@@ -1372,29 +1461,25 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
     }
+    const shopIndex = [...shopListRoot().querySelectorAll<HTMLButtonElement>("button")]
+      .filter((row) => !row.disabled)
+      .indexOf(pending.origin as HTMLButtonElement);
     closeConfirm();
-    const available =
-      catalog === "projects" ? options.services()?.projects : shownTabs().includes(catalog);
-    if (available && options.rows(catalog).some((row) => row.key === key)) {
+    if (liveRows(catalog).some((row) => row.key === key && row.requiresWeapon === undefined)) {
       options.buy(key);
     }
     if (open) {
       render();
-      if (catalog === "projects" && view === "jobs") {
+      if (view === "jobs") {
         focusJobs(key);
-        return;
+      } else if (view === "shop") {
+        focusShop(key, shopIndex);
       }
-      const rows = [...list.querySelectorAll<HTMLButtonElement>("button")];
-      focusTarget(
-        rows.find((row) => row.dataset.item === key && !row.disabled) ??
-          rows.find((row) => !row.disabled) ??
-          (catalog === "projects" ? openJobs : openShop),
-      );
     }
   });
 
   // A drag across a page must not activate the row where the gesture started.
-  for (const group of [list, jobList, projectList]) {
+  for (const group of [list, fixedStock, jobList, projectList]) {
     let start: { readonly pointerId: number; readonly x: number; readonly y: number } | undefined;
     let draggedPointer: number | undefined;
     let latestPointer: number | undefined;

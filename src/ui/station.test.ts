@@ -624,6 +624,7 @@ function constructedStation(
   permits: () => boolean = () => true,
   projectOnly = false,
   beforeCreate?: (parent: StationFixtureNode) => void,
+  shopGroups?: () => stationSource.StationShopGroups | undefined,
 ) {
   const f = strictStation();
   const { Node } = f;
@@ -834,6 +835,7 @@ function constructedStation(
       projects: projectOnly,
       weaponsAmmo: !projectOnly,
     }),
+    ...(shopGroups ? { shopGroups } : {}),
     stationTitle: () => "Actual Station",
     undock,
   };
@@ -1353,4 +1355,94 @@ it("audits the completed welcome view before strict focus on reopening", () => {
   f.native.get("station-back")!.frame.append(unbound);
   expect(() => f.station.setOpen(true)).toThrow("no registered action binding");
   expect(f.doc.activeElement).toBeNull();
+});
+
+const stockOffer = (key: string, name = key): stationSource.StationRow => ({
+  glyph: { key: "icon-shop-weapon-laser", kind: "sprite" },
+  group: "items",
+  key,
+  level: "Offer details",
+  name,
+  price: 10,
+  state: "forSale",
+});
+const stockFixture = (groups: () => stationSource.StationShopGroups | undefined) =>
+  constructedStation("", true, true, undefined, false, undefined, groups);
+const approvedGroups = (
+  left: readonly stationSource.StationRow[],
+  right: readonly stationSource.StationRow[],
+): stationSource.StationShopGroups => [
+  { category: "ammo", label: "Ammo", offers: left },
+  { category: "equipment", label: "Equipment", offers: right },
+];
+
+it("renders all eight ordered fixed Shop offers, using the same guarded Buy and focus path", () => {
+  const left = ["ammo0", "ammo1", "ammo2", "ammo3"].map((id) => stockOffer(id));
+  const right = ["equipment0", "equipment1", "equipment2", "holodisk"].map((id) => stockOffer(id));
+  let groups = approvedGroups(left, right);
+  const f = stockFixture(() => groups);
+  f.station.setOpen(true);
+  f.activate(f.action("open-shop"));
+  const body = f.native.get("shop-back")!.body;
+  const offers = () => body.querySelectorAll("button");
+  expect(offers().map((node) => node.dataset.item)).toEqual(
+    [...left, ...right].map(({ key }) => key),
+  );
+  expect(body.querySelectorAll(".ada-shop-tabs")).toHaveLength(0);
+  expect(body.querySelectorAll(".ada-station-pager")).toHaveLength(0);
+  const row = offers()[5]!;
+  f.activate(row);
+  expect(f.buy).not.toHaveBeenCalled();
+  expect(f.native.get("confirm-cancel-x")!.body.querySelectorAll(".ada-well")).toHaveLength(1);
+  f.activate(f.action("confirm-cancel"));
+  expect(f.doc.activeElement).toBe(row);
+  f.activate(row);
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).toHaveBeenCalledExactlyOnceWith("equipment1");
+  expect(f.doc.activeElement?.dataset.item).toBe("equipment1");
+
+  f.activate(offers()[5]!);
+  groups = approvedGroups(left, [right[0]!, right[2]!, right[3]!]);
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).toHaveBeenCalledOnce();
+  expect(f.doc.activeElement?.dataset.item).toBe("equipment2");
+});
+
+it("keeps sparse ordered panes and restores every legacy category when approved groups are absent", () => {
+  let groups: stationSource.StationShopGroups | undefined = approvedGroups(
+    [],
+    [stockOffer("holodisk")],
+  );
+  const f = stockFixture(() => groups);
+  f.station.setOpen(true);
+  f.activate(f.action("open-shop"));
+  const body = f.native.get("shop-back")!.body;
+  expect(body.querySelectorAll(".ada-stock-rows").map((list) => list.children.length)).toEqual([
+    0, 1,
+  ]);
+  expect(body.querySelectorAll("button").map((node) => node.dataset.item)).toEqual(["holodisk"]);
+  f.station.layers.inner.back();
+  groups = undefined;
+  f.activate(f.action("open-shop"));
+  expect(body.querySelectorAll(".ada-stock-rows")).toHaveLength(0);
+  expect(
+    body.querySelectorAll(".ada-shop-tabs")[0]!.children.map((button) => button.dataset.tab),
+  ).toEqual(["weapons", "ship"]);
+  expect(
+    body.querySelectorAll(".ada-shop-list")[0]!.querySelectorAll("button").length,
+  ).toBeGreaterThan(0);
+});
+
+it("rejects an oversized fixed stock batch without silently dropping eligible rows", () => {
+  const f = stockFixture(() =>
+    approvedGroups(
+      Array.from({ length: 5 }, (_, i) => stockOffer(String(i))),
+      [],
+    ),
+  );
+  expect(() => f.station.setOpen(true)).toThrow(
+    "Shop requires two distinct groups of up to four unique offers",
+  );
+  expect(f.native.get("shop-back")!.frame.hidden).toBe(true);
+  expect(f.buy).not.toHaveBeenCalled();
 });
