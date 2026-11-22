@@ -14,7 +14,7 @@ import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import { type AdaActionOptions, bindAdaAction } from "./actionBinding.ts";
 import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
@@ -83,7 +83,7 @@ import {
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
-import { inCurrentView } from "./pressScope.ts";
+import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -805,14 +805,22 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   screen.hidden = true;
   let disposed = false;
   const actionBindings = new Set<ReturnType<typeof bindAdaAction>>();
-  const registerAction = (action: { readonly run: () => void }, element: HTMLButtonElement) => {
+  const registerAction = (
+    action: Pick<
+      AdaActionOptions,
+      "beforeClick" | "hitTarget" | "nativeClickOwner" | "resolvePointerTarget"
+    > & { readonly run: () => void },
+    element: HTMLElement,
+  ) => {
+    const { run, ...routing } = action;
     const availability = (): ControlAvailability =>
-      element.disabled || element.closest("[hidden], [inert]")
+      element.matches(":disabled") || element.closest("[hidden], [inert]")
         ? { kind: "omitted" }
         : { kind: "available" };
     const binding = bindAdaAction(
       {
-        click: { availability, run: action.run },
+        ...routing,
+        click: { availability, run },
         current: () => !disposed && !screen.hidden && inCurrentView(root, element),
         slopPx: () => MAP_SCREEN.dragThreshold * readViewUnit(screen),
       },
@@ -1237,6 +1245,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const ids = new Set(shown.map(({ place }) => place.id));
     for (const [id, chip] of chips) {
       if (!ids.has(id)) {
+        if (fieldAction?.target === chip) {
+          cancelFieldAction();
+        }
         forgetAction(chipBindings.get(id));
         chipBindings.delete(id);
         chip.remove();
@@ -1249,7 +1260,24 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chip = document.createElement("button");
         chip.type = "button";
         const id = place.id;
-        chipBindings.set(id, registerAction({ run: () => select(id) }, chip));
+        chipBindings.set(
+          id,
+          registerAction(
+            {
+              beforeClick(event) {
+                // Spatial pointer gestures belong to the root. Enter and assistive clicks still use
+                // this button's own target, even when it moved under keyboard focus.
+                if (event.detail !== 0) {
+                  return false;
+                }
+                cancelFieldAction();
+                return true;
+              },
+              run: () => select(id),
+            },
+            chip,
+          ),
+        );
         chip.addEventListener("focus", () => {
           if (view && state) {
             const target = places().find((entry) => entry.id === id);
@@ -1344,6 +1372,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
 
   const limit = () => panLimit(places());
   const zoom = (factor: number, anchor: Point, button?: HTMLButtonElement) => {
+    cancelFieldAction();
     if (!view) {
       return;
     }
@@ -1375,6 +1404,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     {
       run: () => {
         if (view && state) {
+          cancelFieldAction();
           view = recentreView(layout().inner, limit(), state.map.player, view);
           render();
         }
@@ -1400,6 +1430,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     travel,
   );
   const goTo = (place: MapPlace) => {
+    cancelFieldAction();
     if (view) {
       view = recentreView(layout().inner, limit(), place, view);
     }
@@ -1423,11 +1454,21 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     galaxies,
   );
 
-  // Field presses: a press within dragThreshold selects what pressedArea gives; more pans; two
-  // pointers pinch. The header, tools and panel take their own presses first.
+  // The shared root owns field selection. Page listeners keep pan, pinch and capture bookkeeping.
   const pointers = new Map<number, Point>();
   let press: { readonly at: Point; moved: boolean } | null = null;
   let pinch: { distance: number; mid: Point } | null = null;
+  let fieldAction: {
+    readonly id: string | null;
+    readonly pointerId: number;
+    readonly target: HTMLElement;
+  } | null = null;
+  const cancelFieldAction = () => {
+    if (fieldAction) {
+      fieldAction = null;
+      invalidatePressScope(root);
+    }
+  };
   const local = (event: PointerEvent | WheelEvent): Point => {
     const unit = readViewUnit(screen);
     const at = framePoint(turnOf(screen), screen.getBoundingClientRect(), {
@@ -1436,9 +1477,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     });
     return { x: at.x / unit, y: at.y / unit };
   };
-  const onChrome = (event: Event) =>
-    event.target instanceof Element &&
-    event.target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
+  const onChrome = (target: EventTarget | null) =>
+    target instanceof Element &&
+    target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
   const pinchOf = (): { distance: number; mid: Point } | null => {
     const [a, b] = [...pointers.values()];
     return a && b
@@ -1448,8 +1489,51 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         }
       : null;
   };
+  const resolveFieldPointer: NonNullable<AdaActionOptions["resolvePointerTarget"]> = (
+    { physicalTarget },
+    event,
+  ) => {
+    if (onChrome(physicalTarget)) {
+      return undefined;
+    }
+    const current = view;
+    if (!current) {
+      return null;
+    }
+    if (fieldAction?.pointerId === event.pointerId) {
+      const { id, target } = fieldAction;
+      return id === null || chips.get(id) === target ? target : null;
+    }
+    if (event.type !== "pointerdown" || pointers.size !== 0) {
+      return null;
+    }
+    // Captured by the root before bubbling, focus or selection can change the projection.
+    const { inner } = layout();
+    const areas: PressArea<string>[] = places().map((place) => {
+      const art = chipRect(toScreen(inner, current, place));
+      return { art, hit: hitAround(HIT_RULE, art), key: place.id };
+    });
+    // Exact ties go to the chip drawn on top: the later one in the map's order.
+    const id = pressedArea(areas.reverse(), local(event)) ?? null;
+    const target = id === null ? screen : chips.get(id);
+    if (!target) {
+      return null;
+    }
+    fieldAction = { id, pointerId: event.pointerId, target };
+    return target;
+  };
+  registerAction(
+    {
+      hitTarget: "self",
+      nativeClickOwner: "factory",
+      resolvePointerTarget: resolveFieldPointer,
+      run: () => select(null),
+    },
+    screen,
+  );
+
   screen.addEventListener("pointerdown", (event) => {
-    if (onChrome(event)) {
+    if (onChrome(event.target)) {
       return;
     }
     const at = local(event);
@@ -1458,6 +1542,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (pointers.size === 1) {
       press = { at, moved: false };
     } else {
+      cancelFieldAction();
       press = null;
       pinch = pinchOf();
     }
@@ -1491,6 +1576,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       Math.hypot(at.x - press.at.x, at.y - press.at.y) > MAP_SCREEN.dragThreshold
     ) {
       press.moved = true;
+      cancelFieldAction();
     }
     if (press?.moved) {
       view = panView(inner, limit(), { x: at.x - before.x, y: at.y - before.y }, view);
@@ -1504,15 +1590,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (pointers.size < 2) {
       pinch = null;
     }
-    if (event.type === "pointerup" && press && !press.moved && pointers.size === 0 && view) {
-      const { inner } = layout();
-      const current = view;
-      const areas: PressArea<string>[] = places().map((place) => {
-        const art = chipRect(toScreen(inner, current, place));
-        return { art, hit: hitAround(HIT_RULE, art), key: place.id };
-      });
-      // Exact ties go to the chip drawn on top: the later one in the map's order.
-      select(pressedArea([...areas].reverse(), press.at) ?? null);
+    if (fieldAction?.pointerId === event.pointerId) {
+      if (event.type === "pointerup") {
+        fieldAction = null;
+      } else {
+        cancelFieldAction();
+      }
     }
     if (pointers.size === 0) {
       press = null;
@@ -1520,6 +1603,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   screen.addEventListener("pointerup", release);
   screen.addEventListener("pointercancel", release);
+  screen.addEventListener("lostpointercapture", release);
   screen.addEventListener(
     "wheel",
     (event) => {
@@ -1555,6 +1639,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     focusTarget(targets[(next + targets.length) % targets.length]!);
   });
   const refit = () => {
+    cancelFieldAction();
     presentation.clear();
     if (!screen.hidden && view) {
       const { inner } = layout();
@@ -1568,6 +1653,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
 
   return {
     close(): void {
+      cancelFieldAction();
       renderQueue.cancel();
       presentation.clear();
       screen.hidden = true;
@@ -1575,12 +1661,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       view = null;
       pointers.clear();
       press = null;
+      pinch = null;
     },
     dispose(): void {
       if (disposed) {
         return;
       }
+      cancelFieldAction();
       disposed = true;
+      pointers.clear();
+      press = null;
+      pinch = null;
       for (const binding of actionBindings) {
         binding.dispose();
       }
@@ -1615,6 +1706,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     /** Opens at the opening fit with nothing selected, focus on close. */
     open(): void {
+      cancelFieldAction();
       screen.hidden = false;
       selected = null;
       view = null;
@@ -1623,6 +1715,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     setState(next: MapScreenState): void {
       if (state?.map.worldSide !== next.map.worldSide) {
+        cancelFieldAction();
         view = null;
         presentation.clear();
       }

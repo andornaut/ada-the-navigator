@@ -1,13 +1,21 @@
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
+import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { bindAdaHoldActions } from "./holdActionsAdapter.ts";
-import { MAP_SCREEN } from "./layout/mapScreen.ts";
-import { enterPressView, inCurrentView, rootPressGuard } from "./pressScope.ts";
+import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
+import { framePoint, turnOf } from "./layout/frameBox.ts";
+import { chipRect, MAP_SCREEN, panView, toScreen, zoomView } from "./layout/mapScreen.ts";
+import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import {
+  enterPressView,
+  inCurrentView,
+  invalidatePressScope,
+  rootPressGuard,
+} from "./pressScope.ts";
 
 const source = ts.createSourceFile(
   "mapScreen.ts",
@@ -18,14 +26,33 @@ const source = ts.createSourceFile(
 function actual(name: string): string {
   let found: ts.Node | undefined;
   const visit = (node: ts.Node) => {
-    if (ts.isVariableDeclaration(node) && node.name.getText(source) === name) {
+    if (
+      !["chip", "screen", "travel"].includes(name) &&
+      ts.isVariableDeclaration(node) &&
+      node.name.getText(source) === name
+    ) {
       found = node.initializer;
     }
     if (
-      name === "travel" &&
+      ["chip", "screen", "travel"].includes(name) &&
       ts.isCallExpression(node) &&
       node.expression.getText(source) === "registerAction" &&
-      node.arguments[1]?.getText(source) === "travel"
+      node.arguments[1]?.getText(source) === name
+    ) {
+      found = node;
+    }
+    if (
+      ["close", "dispose"].includes(name) &&
+      ts.isMethodDeclaration(node) &&
+      node.name.getText(source) === name
+    ) {
+      found = node;
+    }
+    if (
+      ["pointerdown", "pointermove"].includes(name) &&
+      ts.isCallExpression(node) &&
+      node.expression.getText(source) === "screen.addEventListener" &&
+      node.arguments[0]?.getText(source) === JSON.stringify(name)
     ) {
       found = node;
     }
@@ -67,11 +94,22 @@ class Element extends EventTarget {
   matches(selector: string) {
     return selector === ":disabled" && this.disabled;
   }
+  getBoundingClientRect() {
+    return { height: 200, left: 0, top: 0, width: 200 };
+  }
+  remove() {
+    this.connected = false;
+  }
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
   }
 }
 class FixtureDocument extends EventTarget {
+  hitTarget: Element | null = null;
+  readonly fonts = new EventTarget();
+  elementFromPoint() {
+    return this.hitTarget;
+  }
   defaultView = Object.assign(new EventTarget(), {
     HTMLElement: Element,
     Node: Element,
@@ -87,16 +125,33 @@ afterEach(() => {
   }
   vi.useRealTimers();
 });
-function fixture() {
+function fixture(spatial = false) {
   vi.useFakeTimers();
   const document = new FixtureDocument(),
     root = new Element(document),
     button = new Element(document);
-  button.parentElement = root;
-  const stop = bindAdaHoldActions(
-    rootPressGuard(root as unknown as HTMLElement),
-    root as unknown as HTMLElement,
-  );
+  const screen = spatial ? new Element(document) : root;
+  if (spatial) {
+    screen.parentElement = root;
+  }
+  button.parentElement = screen;
+  document.hitTarget = spatial ? screen : button;
+  const host = root as unknown as HTMLElement;
+  const guard = rootPressGuard(host);
+  const stop = spatial
+    ? bindAdaActionRoot(
+        {
+          guard,
+          pointerRelease: {
+            pointerTarget: document as unknown as Document,
+            resolvePointer: () => undefined,
+          },
+          requiredReady: () => true,
+          subscribeRequired: () => () => {},
+        },
+        host,
+      ).dispose
+    : bindAdaHoldActions(guard, host);
   const bindings = new Set<ReturnType<typeof bindAdaAction>>();
   cleanup.push(() => {
     for (const b of bindings) {
@@ -112,7 +167,7 @@ function fixture() {
     inCurrentView,
     readViewUnit: () => 2,
     root,
-    screen: root,
+    screen,
   });
   const execute = (code: string) =>
     runInContext(
@@ -126,35 +181,50 @@ function fixture() {
     action: { run: () => void; availability?: () => { kind: "available" } },
     target: unknown,
   ) => ReturnType<typeof bindAdaAction>;
-  const event = (type: string, detail = 1) => {
+  const event = (type: string, detail = 1, options = {}) => {
     const e = new Event(type, { cancelable: true });
     for (const [key, value] of Object.entries({
       button: 0,
-      clientX: 10,
-      clientY: 10,
+      clientX: spatial ? 100 : 10,
+      clientY: spatial ? 100 : 10,
       detail,
       isPrimary: true,
       pointerId: 5,
-      target: button,
+      target: spatial ? screen : button,
+      ...options,
     })) {
       Object.defineProperty(e, key, { value });
     }
     return e;
   };
-  const down = () => {
-    document.dispatchEvent(event("pointerdown"));
-    root.dispatchEvent(event("pointerdown"));
+  const send = (type: string, options = {}) => {
+    document.dispatchEvent(event(type, 1, options));
+    screen.dispatchEvent(event(type, 1, options));
   };
-  const up = () => document.dispatchEvent(event("pointerup"));
-  const click = (detail = 1) => {
-    const e = event("click", detail);
+  const down = (options = {}) => send("pointerdown", options);
+  const up = (options = {}) => send("pointerup", options);
+  const click = (detail = 1, target = button) => {
+    const e = event("click", detail, { target });
     root.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      button.dispatchEvent(event("click", detail));
+      target.dispatchEvent(event("click", detail, { target }));
     }
     return e;
   };
-  return { bindings, button, click, context, down, execute, register, root, up };
+  return {
+    bindings,
+    button,
+    click,
+    context,
+    document,
+    down,
+    execute,
+    register,
+    root,
+    screen,
+    send,
+    up,
+  };
 }
 
 it("routes the actual Map binding through the public 500ms fallback once and suppresses release click", () => {
@@ -243,4 +313,176 @@ it("rejects closed, disabled and covered Map controls without changing their bus
   leave();
   f.click(0);
   expect(run).toHaveBeenCalledOnce();
+});
+
+function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
+  const f = fixture(true);
+  const select = vi.fn();
+  const chips = new Map<string, Element>();
+  const schedule = vi.fn();
+  Object.assign(f.context, {
+    Element,
+    HIT_RULE,
+    VIEW_SCALE_EVENT,
+    chipBindings: new Map(),
+    chipRect,
+    chips,
+    chromeLayouts: [],
+    document: f.document,
+    fieldAction: null,
+    framePoint,
+    hitAround,
+    invalidatePressScope,
+    layout: () => ({ inner: { height: 100, width: 100, x: 0, y: 0 } }),
+    limit: () => ({ height: 10000, width: 10000, x: -5000, y: -5000 }),
+    panView,
+    panelLayout: { dispose: vi.fn() },
+    pinch: null,
+    places: () => places,
+    pointers: new Map(),
+    presentation: { clear: vi.fn() },
+    press: null,
+    pressedArea,
+    refit: vi.fn(),
+    renderQueue: { cancel: vi.fn(), dispose: vi.fn(), schedule },
+    select,
+    selected: null,
+    shipMarker: { dispose: vi.fn() },
+    toScreen,
+    turnOf,
+    view: { centre: { x: 0, y: 0 }, scale: 0.1 },
+    window: f.document.defaultView,
+    zoomView,
+  });
+  for (const name of [
+    "local",
+    "onChrome",
+    "pinchOf",
+    "cancelFieldAction",
+    "resolveFieldPointer",
+    "release",
+  ]) {
+    f.execute(`const ${name} = ${actual(name)};`);
+  }
+  f.execute(actual("screen"));
+  f.execute(actual("pointerdown"));
+  f.execute(actual("pointermove"));
+  f.execute(`
+    for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) screen.addEventListener(type, release);
+    const lifecycle = ({ ${actual("close")}, ${actual("dispose")} });
+  `);
+  const addChip = (id: string) => {
+    const chip = new Element(f.document);
+    chip.parentElement = f.screen;
+    chips.set(id, chip);
+    Object.assign(f.context, { chip, id });
+    const binding = f.execute(`((chip, id) => ${actual("chip")})(chip, id)`) as ReturnType<
+      typeof bindAdaAction
+    >;
+    return { binding, chip };
+  };
+  const added = places.map(({ id }) => addChip(id));
+  return { ...f, addChip, added, schedule, select };
+}
+
+it("takes the topmost expanded hit at pointerdown and holds it across a new projection", () => {
+  const f = spatialFixture([
+    { id: "a", x: 0, y: 0 },
+    { id: "b", x: 0, y: 0 },
+  ]);
+  f.down();
+  expect(f.context.fieldAction.id).toBe("b");
+  f.context.view = { centre: { x: 1000, y: 0 }, scale: 0.1 };
+  vi.advanceTimersByTime(499);
+  expect(f.select).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1);
+  expect(f.select).toHaveBeenCalledExactlyOnceWith("b");
+  f.up();
+  expect(f.click(1, f.screen).defaultPrevented).toBe(true);
+  expect(f.select).toHaveBeenCalledOnce();
+  f.click(0, f.added[0]!.chip);
+  expect(f.select.mock.calls).toEqual([["b"], ["a"]]);
+});
+
+it.each([false, true])("selects and clears through the same root, hold=%s", (hold) => {
+  const f = spatialFixture();
+  for (const [clientX, expected] of [
+    [100, "a"],
+    [180, null],
+  ] as const) {
+    f.down({ clientX });
+    expect(f.select).not.toHaveBeenCalled();
+    if (hold) {
+      vi.advanceTimersByTime(500);
+    }
+    expect(f.select).toHaveBeenCalledTimes(hold ? 1 : 0);
+    f.up({ clientX });
+    f.click(1, f.screen);
+    expect(f.select).toHaveBeenCalledExactlyOnceWith(expected);
+    f.select.mockClear();
+  }
+});
+
+it.each([
+  "drag",
+  "pinch",
+  "pointercancel",
+  "lostpointercapture",
+  "cover",
+  "close",
+  "replace",
+] as const)("cancels %s and accepts only a fresh tap", (kind) => {
+  const f = spatialFixture();
+  f.down();
+  let uncover: (() => void) | undefined;
+  if (kind === "drag") {
+    f.send("pointermove", { clientX: 135 });
+  }
+  if (kind === "pinch") {
+    f.down({ clientX: 140, isPrimary: false, pointerId: 6, pointerType: "touch" });
+    f.send("pointermove", { clientX: 170, pointerId: 6 });
+    f.up({ pointerId: 6 });
+  }
+  if (kind === "pointercancel" || kind === "lostpointercapture") {
+    f.send(kind);
+  }
+  if (kind === "cover") {
+    const dialog = new Element(f.document);
+    dialog.parentElement = f.root;
+    uncover = enterPressView(f.root as unknown as HTMLElement, dialog as unknown as HTMLElement);
+  }
+  if (kind === "close") {
+    f.execute("lifecycle.close()");
+  }
+  if (kind === "replace") {
+    const { binding, chip } = f.added[0]!;
+    binding.dispose();
+    chip.remove();
+    f.addChip("a");
+  }
+  vi.advanceTimersByTime(600);
+  f.up();
+  f.click(1, f.screen);
+  expect(f.select).not.toHaveBeenCalled();
+  if (kind === "drag" || kind === "pinch") {
+    expect(f.schedule).toHaveBeenCalled();
+  }
+  uncover?.();
+  f.screen.hidden = false;
+  f.context.view = { centre: { x: 0, y: 0 }, scale: 0.1 };
+  f.down();
+  f.up();
+  expect(f.select).toHaveBeenCalledExactlyOnceWith("a");
+});
+
+it("disposes the field and chip bindings while a gesture is armed", () => {
+  const f = spatialFixture();
+  f.down();
+  f.execute("lifecycle.dispose()");
+  expect(f.bindings.size).toBe(0);
+  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, f.screen)).toBeNull();
+  vi.advanceTimersByTime(600);
+  f.up();
+  f.click(1, f.screen);
+  expect(f.select).not.toHaveBeenCalled();
 });
