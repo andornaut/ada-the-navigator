@@ -217,7 +217,7 @@ class QuestNode extends EventTarget {
   }
 }
 
-const producer = vi.hoisted(() => ({ fit: vi.fn(), reveal: vi.fn() }));
+const producer = vi.hoisted(() => ({ disposeCard: vi.fn(), fit: vi.fn(), reveal: vi.fn() }));
 vi.mock("./modal.ts", async (load) => ({
   ...(await load<typeof import("./modal.ts")>()),
   createButton: (label: string) => Object.assign(new QuestNode("button"), { textContent: label }),
@@ -228,7 +228,7 @@ vi.mock("./modal.ts", async (load) => ({
     const close = new QuestNode("button");
     card.append(body);
     frame.append(card, close);
-    return { body, card, close, dispose() {}, fit: producer.fit, frame };
+    return { body, card, close, dispose: producer.disposeCard, fit: producer.fit, frame };
   },
   setScrollGroup: vi.fn(),
 }));
@@ -239,9 +239,10 @@ vi.mock("./modalLayer.ts", () => ({
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  producer.disposeCard.mockClear();
   producer.reveal.mockClear();
 });
-function screenFixture(owned = true) {
+function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
   vi.stubGlobal("document", {
     createElement: (tag: string) => new QuestNode(tag),
     createElementNS: (_namespace: string, tag: string) => new QuestNode(tag),
@@ -253,6 +254,7 @@ function screenFixture(owned = true) {
     fixtureActionRoot(root);
   }
   root.attached = true;
+  beforeCreate?.(root);
   const onClose = vi.fn();
   const onLocate = vi.fn();
   const screen = createQuestsScreen(root as unknown as HTMLElement, {
@@ -262,6 +264,70 @@ function screenFixture(owned = true) {
   });
   return { onClose, onLocate, root, screen };
 }
+
+it("publishes the hidden Quests modal with its original Close already registered", () => {
+  const publication: { bound: boolean; hidden: boolean }[] = [];
+  const { root, screen } = screenFixture(true, (root) => {
+    const append = root.append.bind(root);
+    vi.spyOn(root, "append").mockImplementation((...nodes) => {
+      append(...nodes);
+      const [modal] = nodes;
+      expect(modal?.isConnected).toBe(true);
+      const controls = modal!.querySelectorAll("button");
+      expect(controls).toHaveLength(1);
+      let bound = true;
+      try {
+        actionBinding.assertAdaActionMetadata(controls[0] as unknown as HTMLElement);
+      } catch {
+        bound = false;
+      }
+      publication.push({ bound, hidden: modal!.hidden });
+    });
+  });
+  expect(publication).toEqual([{ bound: true, hidden: true }]);
+  expect(screen.isOpen()).toBe(false);
+  screen.dispose();
+  expect(root.children).toEqual([]);
+});
+
+it("rejects a missing permanent Quests binding before first attachment", () => {
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementationOnce(() => ({
+    activate: () => false,
+    dispose() {},
+    update() {},
+  }));
+  const attached = vi.fn();
+  expect(() =>
+    screenFixture(true, (root) => {
+      vi.spyOn(root, "append").mockImplementation(attached);
+    }),
+  ).toThrow("no registered action binding");
+  expect(attached).not.toHaveBeenCalled();
+  expect(producer.disposeCard).toHaveBeenCalledOnce();
+});
+
+it("releases the permanent Quests binding if attachment throws after insertion", () => {
+  let publishedRoot: QuestNode | undefined;
+  let close: HTMLElement | undefined;
+  expect(() =>
+    screenFixture(true, (root) => {
+      publishedRoot = root;
+      const append = root.append.bind(root);
+      vi.spyOn(root, "append").mockImplementation((...nodes) => {
+        append(...nodes);
+        close = nodes[0]!.querySelectorAll("button")[0] as unknown as HTMLElement;
+        actionBinding.assertAdaActionMetadata(close);
+        throw Error("attachment failed");
+      });
+    }),
+  ).toThrow("attachment failed");
+  expect(publishedRoot?.children).toEqual([]);
+  expect(close).toBeDefined();
+  expect(() => actionBinding.assertAdaActionMetadata(close!)).toThrow(
+    "no registered action binding",
+  );
+  expect(producer.disposeCard).toHaveBeenCalledOnce();
+});
 
 it("audits completed Quests rows on semantic changes, including disabled routes, before reveal", () => {
   const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");

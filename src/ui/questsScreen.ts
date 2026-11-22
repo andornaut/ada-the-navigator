@@ -135,7 +135,6 @@ export function createQuestsScreen(
 
   card.card.dataset.dialog = "quests";
   modal.append(card.frame);
-  root.append(modal);
   let disposed = false;
   const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
@@ -215,7 +214,6 @@ export function createQuestsScreen(
       options.onClose();
     }
   };
-  register(card.close, back, false);
   function render(focusQuestId?: string, focusEndpoint?: LocatedEndpoint): void {
     let questFocus: HTMLButtonElement | undefined;
     for (const binding of renderedBindings.splice(0)) {
@@ -556,22 +554,31 @@ export function createQuestsScreen(
     layer = createModalLayer(modal);
     leave = layer.open({ close: back, focus: questFocus ?? close }, card.frame);
   }
+  function dispose(): void {
+    disposed = true;
+    for (const binding of [...bindings, ...renderedBindings]) {
+      binding.dispose();
+    }
+    bindings.length = 0;
+    renderedBindings.length = 0;
+    hide();
+    footerLayout?.dispose();
+    bodyLayout?.dispose();
+    card.dispose();
+    modal.remove();
+  }
+  try {
+    register(card.close, back, false);
+    assertAdaActionMetadata(card.frame);
+    root.append(modal);
+  } catch (error) {
+    dispose();
+    throw error;
+  }
   return {
     back,
     close: hide,
-    dispose(): void {
-      disposed = true;
-      for (const binding of [...bindings, ...renderedBindings]) {
-        binding.dispose();
-      }
-      bindings.length = 0;
-      renderedBindings.length = 0;
-      hide();
-      footerLayout?.dispose();
-      bodyLayout?.dispose();
-      card.dispose();
-      modal.remove();
-    },
+    dispose,
     focus(): void {
       focusTarget(card.body.querySelector<HTMLButtonElement>(".ada-primary") ?? card.close);
     },
