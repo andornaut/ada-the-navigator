@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
+import { enterPressView, rootPressGuard } from "./pressScope.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
@@ -95,6 +95,14 @@ const fixture = vi.hoisted(() => {
     }
     removeAttribute(name: string) {
       this.attributes.delete(name);
+    }
+    toggleAttribute(name: string, force: boolean) {
+      if (force) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+      return force;
     }
     getAttribute(name: string) {
       return this.attributes.get(name) ?? null;
@@ -255,12 +263,17 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
   const root = new fixture.Node();
+  let ready = true;
+  let notifyReady = () => {};
   const attached = bindAdaActionRoot(
     {
       guard: rootPressGuard(root as unknown as HTMLElement),
       pointerRelease: { resolvePointer: () => undefined },
-      requiredReady: () => true,
-      subscribeRequired: () => () => {},
+      requiredReady: () => ready,
+      subscribeRequired: (notify) => {
+        notifyReady = notify;
+        return () => {};
+      },
     },
     root as unknown as HTMLElement,
   );
@@ -291,6 +304,10 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
     onOpenChange,
     root,
     rows: () => fixture.card.body.children[0]!.children.map((node) => node.children[0]!),
+    setReady(value: boolean) {
+      ready = value;
+      notifyReady();
+    },
   };
 }
 
@@ -335,7 +352,7 @@ describe("production Menu consumer", () => {
           ? ["Achievements", "Settings", "Close"]
           : ["Achievements", "Settings", "Back to title", "Close"],
       );
-      expect(rows().map((node) => node.className.split(" ")[0])).toEqual(
+      expect(rows().map((node) => node.getAttribute("data-ui-button-role"))).toEqual(
         context === "start"
           ? ["secondary", "secondary", "primary"]
           : ["secondary", "secondary", "secondary", "primary"],
@@ -380,6 +397,53 @@ describe("production Menu consumer", () => {
       ]).map(({ id }) => id),
     ).toEqual(["secondary", "primary"]);
   });
+});
+
+it("uses one shared Settings click listener and keeps the live Ada root and disposal fence", () => {
+  const added = vi.spyOn(fixture.Node.prototype, "addEventListener");
+  const removed = vi.spyOn(fixture.Node.prototype, "removeEventListener");
+  try {
+    const { menu, onAction, root, rows, setReady } = setup();
+    menu.open();
+    const settings = rows()[1]!;
+    expect(
+      rows().filter(({ className }) => className.split(" ").includes("ui-standard-button")),
+    ).toEqual([settings]);
+    const native = added.mock.calls.filter(
+      ([type], index) => type === "click" && added.mock.contexts[index] === settings,
+    );
+    expect(native).toEqual([["click", expect.any(Function), true]]);
+    expect(settings.querySelector(".ui-control-label")?.textContent).toBe("Settings");
+    const click = () => settings.dispatchEvent(new Event("click", { cancelable: true }));
+    setReady(false);
+    expect(click()).toBe(false);
+    expect(onAction).not.toHaveBeenCalled();
+    setReady(true);
+    const cover = new fixture.Node();
+    root.append(cover);
+    const leave = enterPressView(root as unknown as HTMLElement, cover as unknown as HTMLElement);
+    expect(click()).toBe(false);
+    expect(onAction).not.toHaveBeenCalled();
+    leave();
+    cover.remove();
+    click();
+    expect(onAction).toHaveBeenCalledExactlyOnceWith("settings", expect.any(Function));
+    onAction.mock.calls[0]![1]();
+    expect(fixture.layer.open).toHaveBeenLastCalledWith(
+      expect.objectContaining({ focus: rows()[1] }),
+      fixture.card.frame,
+    );
+    expect(
+      removed.mock.calls.filter(
+        ([type], index) => type === "click" && removed.mock.contexts[index] === settings,
+      ),
+    ).toEqual(native);
+    click();
+    expect(onAction).toHaveBeenCalledTimes(1);
+  } finally {
+    added.mockRestore();
+    removed.mockRestore();
+  }
 });
 
 it.each(["footer", "x"])("uses the same Menu dismissal and origin focus through %s", (path) => {

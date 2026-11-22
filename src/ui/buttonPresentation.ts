@@ -38,15 +38,24 @@ export function presentAdaButton<A extends string>(
   label: ChildNode,
   initial: AdaButtonProps<A>,
 ): AdaButtonPresentation<A> {
+  const faceLabel = button.ownerDocument.createElement("span");
+  faceLabel.className = "ui-control-label";
+  faceLabel.append(label);
+  button.append(faceLabel);
+  return presentAdaButtonContent(button, (text) => (label.nodeValue = text), initial);
+}
+
+/** Styles the native button without taking ownership of its content slot. */
+export function presentAdaButtonContent<A extends string>(
+  button: HTMLButtonElement,
+  setLabel: (text: string) => void,
+  initial: AdaButtonProps<A>,
+): AdaButtonPresentation<A> {
   const document = button.ownerDocument;
   const element = document.createElement("div");
   element.className = "ada-button-presentation ui-control-row";
   element.style.setProperty("--ui-unit", "var(--ada-unit, 1)");
-  const faceLabel = document.createElement("span");
-  faceLabel.className = "ui-control-label";
-  faceLabel.append(label);
   button.classList.add("ui-control-button");
-  button.append(faceLabel);
   const reason = document.createElement("p");
   reason.className = "ada-button-reason";
   reason.hidden = true;
@@ -56,7 +65,7 @@ export function presentAdaButton<A extends string>(
     if (disposed) {
       return;
     }
-    label.nodeValue = props.label;
+    setLabel(props.label);
     button.classList.toggle("ada-primary", props.role === "primary");
     button.classList.toggle("ada-compact", props.size === "compact");
     setButtonRole(props.role, button);

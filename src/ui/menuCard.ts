@@ -161,6 +161,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     ]),
     availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
     presentButton: presentAdaButton,
+    standardButton: { actionId: "menu-settings", root },
   });
   const fixedBindings = [register(card.close, close)];
   try {

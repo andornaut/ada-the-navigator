@@ -4,6 +4,10 @@ import {
   invokeControl,
 } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
+import {
+  type ButtonView,
+  createButton as createKitButton,
+} from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { bindButtonAvailability } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutComponentPorts,
@@ -12,10 +16,13 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  resolveAdaHoldAction,
 } from "./actionBinding.ts";
+import { presentAdaButtonContent } from "./buttonPresentation.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import {
@@ -68,6 +75,73 @@ export interface AdaLayoutContext<A extends string> {
     props: AdaButtonProps<A>,
   ) => AdaButtonPresentation<A>;
   readonly onUnavailable?: (reason: string) => void;
+  readonly standardButton?: { readonly actionId: A; readonly root: HTMLElement };
+}
+
+function standardButton<A extends string>(
+  context: AdaLayoutContext<A>,
+  root: HTMLElement,
+  initial: AdaButtonProps<A>,
+  dispatch: (id: A) => void,
+) {
+  if (context.onUnavailable) {
+    throw new Error("Shared text button does not yet support refusal feedback");
+  }
+  let current = initial;
+  let disposed = false;
+  const kit: ButtonView = createKitButton(root.ownerDocument, {
+    appearance: {
+      className: "ada-button",
+      contentClassName: "ui-control-label",
+      layout: "caller",
+    },
+    content: { kind: "text", label: initial.label },
+    getAction: () => {
+      const action = resolveAdaHoldAction(root, kit.element);
+      return action?.available() ? action : null;
+    },
+    getState: () => ({ availability: context.availability(current.actionId) }),
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  });
+  const button = kit.element;
+  const presentation = presentAdaButtonContent(
+    button,
+    (label) => kit.setContent({ kind: "text", label }),
+    initial,
+  );
+  const registered = bindAdaAction(
+    {
+      click: {
+        availability: () => context.availability(current.actionId),
+        run: () => dispatch(current.actionId),
+      },
+      current: () => !disposed,
+      nativeClickOwner: "factory",
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+    },
+    button,
+  );
+  const update = (next: AdaButtonProps<A>) => {
+    current = next;
+    button.dataset.action = next.actionId;
+    presentation.update(next);
+    kit.refresh();
+    presentation.element.hidden = button.hidden;
+  };
+  const dispose = () => {
+    disposed = true;
+    registered.dispose();
+    kit.dispose();
+    presentation.dispose();
+  };
+  try {
+    update(initial);
+    assertAdaActionMetadata(presentation.element);
+  } catch (error) {
+    dispose();
+    throw error;
+  }
+  return { dispose, element: presentation.element, slots: {}, update };
 }
 
 /** Owns only component bindings. The published renderer owns tree reconciliation. */
@@ -84,6 +158,9 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
   const components: LayoutComponentPorts<AdaLayoutSchema<A>> = {
     button: {
       create(initial) {
+        if (context.standardButton?.actionId === initial.actionId) {
+          return standardButton(context, context.standardButton.root, initial, dispatch);
+        }
         let current = initial;
         let disposed = false;
         const button = createButton(initial.label, initial.role);
