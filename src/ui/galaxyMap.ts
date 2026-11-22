@@ -50,7 +50,7 @@ import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
-import { createModalClose } from "./modalClose.ts";
+import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
@@ -195,6 +195,7 @@ export const GALAXY_MAP_STYLE = `
   right:${safeEdge("right", SPACING.pageInset)};
   z-index:1
 }
+${mapCloseStyle(".ada-controls .ada-route > .ada-close")}
 .ada-controls .ada-route-sky,
 .ada-controls .ada-route-ground{
   position:absolute;

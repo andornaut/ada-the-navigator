@@ -10,7 +10,6 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
-import { HUD_BUTTON } from "../data/layout.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -89,7 +88,7 @@ import {
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { createButton, FOCUS_STYLE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
-import { createModalClose } from "./modalClose.ts";
+import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -573,18 +572,7 @@ export const MAP_SCREEN_STYLE = `
   right:${safeEdge("right", SPACING.pageInset)};
   z-index:2
 }
-.ada-controls .ada-map-screen > .ada-close::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  width:${units(HUD_BUTTON.disc)};
-  height:${units(HUD_BUTTON.disc)};
-  margin:auto;
-  border-radius:50%;
-  background:${HUD_DISC_STATES.idle.face};
-  pointer-events:none;
-  z-index:-1
-}
+${mapCloseStyle(".ada-controls .ada-map-screen > .ada-close", HUD_DISC_STATES.idle.face)}
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 
 /* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
