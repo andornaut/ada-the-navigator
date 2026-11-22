@@ -169,7 +169,8 @@ function compatibilityClicks(after = "", mutate = (source: string) => source) {
       ${after}
     }
   `);
-  return scanWithRegistry("src/ui/independent.ts", source).filter(({ source }) =>
+  // This fixture has only native listeners and no imported action binding or factory.
+  return scanSingleSource("src/ui/independent.ts", source).filter(({ source }) =>
     source.includes('addEventListener("click"'),
   );
 }
@@ -224,50 +225,72 @@ it("recognizes a legacy physical click tied to the same receiver's latest pointe
   expect(findings.filter(({ kind }) => kind === "gesture-review")).toHaveLength(3);
 });
 
-it("leaves latch consumers that can act, focus, mutate, escape or rearm blocking", () => {
-  for (const [before, next] of [
-    ["event.stopPropagation();", "event.stopPropagation(); activate();"],
-    ["event.stopPropagation();", "event.stopPropagation(); button.focus();"],
-    ["event.stopPropagation();", "event.stopPropagation(); state.changed = true;"],
-    [
-      "event.stopPropagation();",
-      'event.stopPropagation(); surface.addEventListener("keydown", activate);',
-    ],
-    ["event.stopPropagation();", "event.stopPropagation(activate());"],
-    ["event.stopPropagation();", "audit.stopPropagation();"],
-    ["event.detail !== 0 && ", ""],
-    [
-      "pending = null;\n          event.preventDefault();",
-      "pending = event.pointerId; event.preventDefault();",
-    ],
-    ["pending = null;\n          event.preventDefault();", "other = null; event.preventDefault();"],
-    ["pending = event.pointerId;", "pending = readPointer();"],
-    ["pending === event.pointerId) {", "pending === event.pointerId && activate()) {"],
-    [
-      "event.stopPropagation();\n        }\n      }, true);",
-      "event.stopPropagation();\n        }\n      }, false);",
-    ],
-    ['document.createElement("div")', "new FakeTarget()"],
-  ] as const) {
-    expect(
-      compatibilityClicks("", (text) => {
-        expect(text).toContain(before);
-        return text.replace(before, next);
-      }).some(({ kind }) => kind === "raw-discrete"),
-      next,
-    ).toBe(true);
-  }
-  for (const use of [
-    "activate(pending);",
-    "if (pending === null) activate();",
-    "return { pending };",
-    'eval("activate(pending)");',
-    "let stale = pending;",
-    "++pending;",
-    "surface.addEventListener = intercept;",
-  ]) {
-    expect(compatibilityClicks(use)[0]?.kind, use).toBe("raw-discrete");
-  }
+it.each([
+  ["calls an action", "event.stopPropagation();", "event.stopPropagation(); activate();"],
+  ["moves focus", "event.stopPropagation();", "event.stopPropagation(); button.focus();"],
+  [
+    "writes other state",
+    "event.stopPropagation();",
+    "event.stopPropagation(); state.changed = true;",
+  ],
+  [
+    "adds a listener",
+    "event.stopPropagation();",
+    'event.stopPropagation(); surface.addEventListener("keydown", activate);',
+  ],
+  [
+    "evaluates a suppression argument",
+    "event.stopPropagation();",
+    "event.stopPropagation(activate());",
+  ],
+  [
+    "calls suppression on a different receiver",
+    "event.stopPropagation();",
+    "audit.stopPropagation();",
+  ],
+  ["does not check for a physical click", "event.detail !== 0 && ", ""],
+  [
+    "rearms the latch",
+    "pending = null;\n          event.preventDefault();",
+    "pending = event.pointerId; event.preventDefault();",
+  ],
+  [
+    "clears a different value",
+    "pending = null;\n          event.preventDefault();",
+    "other = null; event.preventDefault();",
+  ],
+  ["takes its pointer ID from a helper", "pending = event.pointerId;", "pending = readPointer();"],
+  [
+    "uses a latch read to gate an action",
+    "pending === event.pointerId) {",
+    "pending === event.pointerId && activate()) {",
+  ],
+  [
+    "runs outside capture",
+    "event.stopPropagation();\n        }\n      }, true);",
+    "event.stopPropagation();\n        }\n      }, false);",
+  ],
+  ["listens on a non-DOM target", 'document.createElement("div")', "new FakeTarget()"],
+] as const)("keeps a compatibility click blocking when it %s", (_case, before, next) => {
+  expect(
+    compatibilityClicks("", (text) => {
+      expect(text).toContain(before);
+      return text.replace(before, next);
+    }).some(({ kind }) => kind === "raw-discrete"),
+    next,
+  ).toBe(true);
+});
+
+it.each([
+  ["passes the latch to an action", "activate(pending);"],
+  ["branches to an action on the latch", "if (pending === null) activate();"],
+  ["returns the latch in an object", "return { pending };"],
+  ["reads the latch through eval", 'eval("activate(pending)");'],
+  ["keeps a copy of the latch", "let stale = pending;"],
+  ["increments the latch", "++pending;"],
+  ["replaces the listener method", "surface.addEventListener = intercept;"],
+] as const)("keeps a compatibility click blocking when outside code %s", (_case, use) => {
+  expect(compatibilityClicks(use)[0]?.kind, use).toBe("raw-discrete");
 });
 
 it("keeps legacy click latches blocking without an armed check or stable pointer provenance", () => {
