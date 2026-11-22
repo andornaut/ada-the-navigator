@@ -2,7 +2,7 @@
 // Functions over the scene's AssetsContext.
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { GameObjects, Loader } from "phaser";
+import { GameObjects, Loader, Scenes } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -145,13 +145,7 @@ export function queueShipMaterialSources(
   scene.load.json("ship-material-palettes", "/art/ship-paint.json");
 }
 
-/** Load a core vector sheet once, keeping the scale and lifetime of each named texture. */
-export function queueCoreSvgSheets(
-  scene: AssetsContext,
-  current: () => boolean,
-  fail: (error: unknown) => void,
-  assets: readonly Asset[],
-): void {
+function svgSheets(assets: readonly Asset[]): Map<string, Asset[]> {
   const sheets = new Map<string, Asset[]>();
   for (const asset of assets) {
     if (asset.svgSheet) {
@@ -160,7 +154,17 @@ export function queueCoreSvgSheets(
       sheets.set(asset.path, frames);
     }
   }
-  for (const [path, frames] of sheets) {
+  return sheets;
+}
+
+/** Load a core vector sheet once, keeping the scale and lifetime of each named texture. */
+export function queueCoreSvgSheets(
+  scene: AssetsContext,
+  current: () => boolean,
+  fail: (error: unknown) => void,
+  assets: readonly Asset[],
+): void {
+  for (const [path, frames] of svgSheets(assets.filter(galaxyLoadsAtOnce))) {
     const key = vectorSheetKey(path);
     scene.load.once(`filecomplete-xml-${key}`, () => {
       if (!current()) {
@@ -896,6 +900,74 @@ export function ensureEnemyFamilyManifest(
   return false;
 }
 
+/** Publish a packed heavy only after every missing part texture is available, including retries. */
+function queueEnemyPartSheets(scene: AssetsContext, parts: readonly Asset[]): void {
+  const sheets = new Map(
+    [...svgSheets(parts)].map(([path, frames]) => [vectorSheetKey(path), { frames, path }]),
+  );
+  const pending = new Set(parts.map(({ id }) => id));
+  const events = scene.load.scene.events;
+  const dispose = (): void => {
+    events.off(Scenes.Events.SHUTDOWN, dispose);
+    events.off(Scenes.Events.DESTROY, dispose);
+    scene.load.off(Loader.Events.FILE_COMPLETE, complete);
+  };
+  const queueFrames = (key: string, xml: Document | undefined): void => {
+    const sheet = sheets.get(key);
+    if (!sheet) {
+      return;
+    }
+    sheets.delete(key);
+    try {
+      // Validate the entire sheet before queuing any of its textures.
+      const textures = sheet.frames.map((part) => ({
+        ...part,
+        path: vectorSheetSource(xml, sheet.path, {
+          ...part,
+          intrinsicHeight: part.displayHeight ?? part.height,
+          intrinsicWidth: part.displayWidth ?? part.width,
+        }),
+      }));
+      textures.forEach((part) => loadSvg(scene, part));
+    } catch (error) {
+      // Optional art keeps the heavy placeholder when a delivered sheet has invalid frames.
+      console.warn(error);
+    }
+  };
+  const complete = (key: string, type: string): void => {
+    if (type === "xml" && sheets.has(key)) {
+      queueFrames(key, scene.cache.xml.get(key) as Document | undefined);
+    } else if (
+      type === "svg" &&
+      scene.textures.exists(key) &&
+      pending.delete(key) &&
+      pending.size === 0
+    ) {
+      dispose();
+      scene.shipAssets = mergeEnemyAssets(scene.shipAssets, parts);
+      readEnemyArt(scene);
+    }
+  };
+  events.once(Scenes.Events.SHUTDOWN, dispose);
+  events.once(Scenes.Events.DESTROY, dispose);
+  // A retry can complete after the original loader batch ends. Observe file success, not the batch.
+  scene.load.on(Loader.Events.FILE_COMPLETE, complete);
+  for (const [key, { path }] of sheets) {
+    const xml = scene.cache.xml.get(key) as Document | undefined;
+    if (xml) {
+      queueFrames(key, xml);
+    } else {
+      scene.load.xml(key, path);
+    }
+  }
+  for (const part of parts) {
+    if (!part.svgSheet) {
+      loadSvg(scene, part);
+    }
+  }
+  scene.load.start();
+}
+
 /**
  * A heavy's hardpoint bases and turret tops load the first time that archetype is in flight, so
  * their hundreds of frames never delay a screen that shows none. Until they load, the craft
@@ -913,7 +985,15 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   if (parts === null) {
     return;
   }
-  scene.partLoads.add(`${family?.family ?? "coral"}:${archetype}`);
+  const key = `${family?.family ?? "coral"}:${archetype}`;
+  if (parts.some((part) => part.svgSheet)) {
+    if (!scene.partLoads.has(key)) {
+      scene.partLoads.add(key);
+      queueEnemyPartSheets(scene, parts);
+    }
+    return;
+  }
+  scene.partLoads.add(key);
   if (parts.length === 0) {
     return;
   }

@@ -15,7 +15,7 @@ export interface Asset extends ShipAsset, EnemyFrame {
   path: string;
   width: number;
   height: number;
-  /** The core SVG at path contains a nested frame named by this asset's existing ID. */
+  /** The SVG sheet at path contains a nested frame named by this asset's existing ID. */
   svgSheet?: true;
   frameWidth?: number;
   frameHeight?: number;

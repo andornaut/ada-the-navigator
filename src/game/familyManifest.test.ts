@@ -6,7 +6,9 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import cartwheel from "../../public/art/cartwheel/manifest.json";
+import core from "../../public/art/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
+import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
@@ -31,8 +33,13 @@ import {
   mergeEnemyAssets,
 } from "./enemyArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
+import type { Asset } from "./sceneShared.ts";
 import { readShipJets } from "./shipJets.ts";
+import { SvgRasters, type SvgRequest } from "./svgRasters.ts";
+import { vectorSheetKey } from "./svgSheet.ts";
+import { fileFilter, vectorRaster } from "./textures.ts";
 
+const m1 = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1")!;
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;
 const source = ts.createSourceFile(
   "sceneAssets.ts",
@@ -49,7 +56,17 @@ const names = new Set([
   "loadGalaxyAsset",
   "queueGalaxyArt",
   "queueGalaxyAssets",
+  "queueCoreSvgSheets",
+  "queueEnemyPartSheets",
   "queuePhantomCraftJets",
+  "svgSheets",
+  "loadSvg",
+  "queueSvg",
+  "rasterAgain",
+  "replaceImage",
+  "rockTexture",
+  "queueRockSheetFrame",
+  "queueRockSvg",
 ]);
 const code = source.statements
   .filter((node) => {
@@ -64,45 +81,70 @@ const code = source.statements
   .map((node) => node.getText(source).replace(/^export /u, ""))
   .join("\n");
 
-function fixture(family: EnemyFamily | undefined = claim) {
+function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
   const events = new EventEmitter();
   const cache = new Map<string, unknown>();
+  const documents = new Map<string, unknown>();
+  const textures = new Set<string>();
+  const life = new EventEmitter();
+  const xml = vi.fn();
+  const extract = vi.fn((_xml: unknown, _path: string, asset: Asset) => `data:${asset.id}`);
   const svg = vi.fn();
+  const loadRaster = vi.fn();
   const json = vi.fn();
   const start = vi.fn();
   const backdrop = vi.fn();
   const readArt = vi.fn();
   const scene = {
+    asteroidArt: ASTEROID_ART,
     cache: {
       json: {
         add: (key: string, value: unknown) => cache.set(key, value),
         exists: (key: string) => cache.has(key),
         get: (key: string) => cache.get(key),
       },
+      xml: { get: (key: string) => documents.get(key) },
     },
+    children: { list: [] },
     destruction: { archetypes: { platform: {} } },
     family: family as EnemyFamily | undefined,
     familyParts: new Map(),
     galaxyLoads: new Set(),
     galaxyManifestPaths: { 2: "/art/cartwheel/manifest.json", 6: "/art/phantom/manifest.json" },
     galaxyManifests: new Map([[6, { assets: [], links: {}, sidecars: new Map() }]]),
-    load: { json, once: events.once.bind(events), spritesheet: vi.fn(), start },
+    load: {
+      json,
+      off: events.off.bind(events),
+      on: events.on.bind(events),
+      once: events.once.bind(events),
+      scene: { events: life },
+      spritesheet: vi.fn(),
+      start,
+      svg: loadRaster,
+      xml,
+    },
     loads: { waitFor: vi.fn() },
     manifest: { assets: [] },
     model: { state: { flight: { galaxy: 6 } } },
-    partAssets: [],
+    partAssets: [] as Asset[],
     partLoads: new Set<string>(),
-    shipAssets: [],
-    textures: { exists: () => false },
+    rasters: new SvgRasters(1),
+    resourceFiles: new Set<string>(),
+    rockQueued: false,
+    rockRequests: new Set<string>(),
+    shipAssets: [] as Asset[],
+    textures: { exists: (key: string) => textures.has(key) },
   };
   const context = createContext({
     ENEMY_HEADINGS,
     GALAXY_FAMILIES,
     GALAXY_ID,
     GALAXY_NUMBERS,
+    GameObjects: { Image: class {} },
     INDUSTRIAL_BODY_KEYS,
-    Loader: { Events: { COMPLETE: "complete" } },
+    Loader: { Events: { COMPLETE: "complete", FILE_COMPLETE: "filecomplete" } },
     PHANTOM_ALLIES_ART,
+    Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
     composedArchetypes,
     craftFrameSets,
     enemyFrameSets,
@@ -115,7 +157,8 @@ function fixture(family: EnemyFamily | undefined = claim) {
     galaxyLoadsAtOnce,
     galaxyManifestKey,
     galaxyTowKey,
-    loadSvg: svg,
+    loadingRockSheets: new WeakMap(),
+    materialShipHeading: () => undefined,
     mergeEnemyAssets,
     queueBackdrop: backdrop,
     readCraftNose,
@@ -123,19 +166,48 @@ function fixture(family: EnemyFamily | undefined = claim) {
     readGalaxyArt: readArt,
     readGalaxyManifest,
     readShipJets,
+    rockSheetFrames: new Map(
+      m1.frames.map(({ file }, index) => [
+        file,
+        { id: `asteroid-m1-${index}`, path: m1.svgSheet, ...m1.frame },
+      ]),
+    ),
+    vectorRaster,
+    vectorSheetKey,
+    vectorSheetSource: extract,
   });
   runInContext(ts.transpile(code), context);
+  if (!useRealSvg) {
+    context.loadSvg = svg;
+  }
   return {
     backdrop,
     cache,
+    documents,
     events,
+    extract,
     json,
+    life,
     loadParts: context.loadEnemyParts as (value: typeof scene, archetype: string) => void,
+    loadRaster,
     loadWorld: context.loadGalaxyArt as (value: typeof scene, galaxy: number) => void,
+    queueCore: context.queueCoreSvgSheets as (
+      value: typeof scene,
+      current: () => boolean,
+      fail: (error: unknown) => void,
+      assets: readonly Asset[],
+    ) => void,
+    rasterAgain: context.rasterAgain as (
+      value: typeof scene,
+      requests: readonly SvgRequest[],
+    ) => void,
     readArt,
+    rockTexture: context.rockTexture as (value: typeof scene, file: string) => boolean,
     scene,
     start,
     svg,
+    textures,
+    xml,
   };
 }
 
@@ -284,5 +356,171 @@ describe("Phantom story craft jets", () => {
     f.events.emit("complete");
     expect(f.readArt).toHaveBeenCalledTimes(2);
     expect(f.craft.every((id) => f.cache.get(`craft-jets-${id}`) === f.records[id])).toBe(true);
+  });
+});
+
+const commandSheet = "/art/enemies/capital-command-intact-sheet.svg";
+const topSheet = "/art/enemies/capital-lance-top-sheet.svg";
+const part = (id: string, path: string): Asset => ({
+  ...(core.assets.find((asset) => asset.id === id) as Asset),
+  path,
+  svgSheet: true,
+});
+const [first, second, top] = [
+  part("enemy-capital-command-intact-0", commandSheet),
+  part("enemy-capital-command-intact-1", commandSheet),
+  part("enemy-capital-lance-top-0", topSheet),
+] as const;
+
+describe("deferred core capital sheets", () => {
+  it("queues the existing hull sheet at boot and leaves packed parts for the flight", () => {
+    const f = fixture(undefined);
+    const hull = core.assets.find(({ id }) => id === "enemy-fighter-0") as Asset;
+    f.queueCore(f.scene, () => true, vi.fn(), [first, second, top, hull]);
+    const key = vectorSheetKey(hull.path);
+    expect(f.xml).toHaveBeenCalledExactlyOnceWith(key, hull.path);
+    expect(f.svg).not.toHaveBeenCalled();
+    const document = {};
+    f.documents.set(key, document);
+    f.events.emit(`filecomplete-xml-${key}`);
+    expect(f.extract).toHaveBeenCalledExactlyOnceWith(document, hull.path, hull);
+    expect(f.svg).toHaveBeenCalledExactlyOnceWith(f.scene, { ...hull, path: `data:${hull.id}` });
+  });
+
+  it("keeps m1's original demand-only extraction and reuses its physical sheet", () => {
+    const f = fixture();
+    const path = m1.svgSheet!;
+    const key = vectorSheetKey(path);
+    const first = m1.frames[0]!.file;
+    const next = m1.frames[1]!.file;
+    expect(f.rockTexture(f.scene, first)).toBe(false);
+    expect(f.xml).toHaveBeenCalledExactlyOnceWith(key, path);
+    expect(f.loadRaster).not.toHaveBeenCalled();
+    const document = {};
+    f.documents.set(key, document);
+    f.events.emit(`filecomplete-xml-${key}`, key, "xml", document);
+    expect(f.extract).toHaveBeenCalledExactlyOnceWith(document, path, {
+      id: "asteroid-m1-0",
+      path,
+      ...m1.frame,
+    });
+    expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(first, "data:asteroid-m1-0", {
+      scale: ASTEROID_ART.displayScale,
+    });
+    expect(f.rockTexture(f.scene, next)).toBe(false);
+    expect(f.loadRaster).toHaveBeenCalledTimes(2);
+    expect(f.loadRaster).toHaveBeenLastCalledWith(next, "data:asteroid-m1-1", {
+      scale: ASTEROID_ART.displayScale,
+    });
+    expect(f.xml).toHaveBeenCalledOnce();
+  });
+
+  it("reuses cached XML, deduplicates requests and publishes the whole set after late file success", () => {
+    const f = fixture();
+    f.scene.family = undefined;
+    const cachedKey = vectorSheetKey(topSheet);
+    const commandKey = vectorSheetKey(commandSheet);
+    const cached = { root: "cached tops" };
+    const retried = { root: "command retry" };
+    f.documents.set(cachedKey, cached);
+    f.scene.partAssets = [first, second, top];
+
+    f.loadParts(f.scene, "capital");
+    f.loadParts(f.scene, "capital");
+    expect(f.xml).toHaveBeenCalledExactlyOnceWith(commandKey, commandSheet);
+    expect(f.extract).toHaveBeenCalledExactlyOnceWith(cached, topSheet, {
+      ...top,
+      intrinsicHeight: 52.5,
+      intrinsicWidth: 52.5,
+    });
+    expect(f.scene.loads.waitFor).not.toHaveBeenCalled();
+    f.textures.add(top.id);
+    f.events.emit("filecomplete", top.id, "svg");
+    // The first batch can complete before the optional XML or an extracted SVG is retried.
+    f.events.emit("complete");
+    expect(f.scene.shipAssets).toEqual([]);
+    expect(f.readArt).not.toHaveBeenCalled();
+
+    f.documents.set(commandKey, retried);
+    f.events.emit("filecomplete", commandKey, "xml");
+    f.events.emit("filecomplete", commandKey, "xml");
+    expect(f.svg.mock.calls.map(([, asset]) => [asset.id, asset.path])).toEqual([
+      [top.id, `data:${top.id}`],
+      [first.id, `data:${first.id}`],
+      [second.id, `data:${second.id}`],
+    ]);
+    for (const asset of [first, second]) {
+      f.events.emit("filecomplete", asset.id, "svg");
+      expect(f.readArt).not.toHaveBeenCalled();
+      f.textures.add(asset.id);
+      f.events.emit("filecomplete", asset.id, "svg");
+    }
+    expect(f.scene.shipAssets).toEqual([first, second, top]);
+    expect(f.readArt).toHaveBeenCalledOnce();
+    expect(f.events.listenerCount("filecomplete")).toBe(0);
+    expect(f.life.listenerCount("shutdown")).toBe(0);
+  });
+
+  it("reuses the extracted SVG and replaces the original linear texture in place on resize", () => {
+    const f = fixture(claim, true);
+    f.scene.family = undefined;
+    f.scene.partAssets = [top];
+    const uri = "data:image/svg+xml;base64,PHN2Zy8+";
+    f.extract.mockReturnValue(uri);
+    f.documents.set(vectorSheetKey(topSheet), {});
+    f.loadParts(f.scene, "capital");
+    expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(top.id, uri, { height: 53, width: 53 });
+    expect(fileFilter("svg")).toBe("linear");
+    f.textures.add(top.id);
+    f.scene.rasters.loaded(top.id);
+    f.events.emit("filecomplete", top.id, "svg");
+
+    const newImage = { height: 105, width: 105 };
+    const source = {
+      filter: fileFilter("svg"),
+      height: newImage.height,
+      updateSource: vi.fn(),
+      width: newImage.width,
+    };
+    const resizeBase = vi.fn();
+    const remove = vi.fn();
+    const original = { get: () => ({ setSize: resizeBase }), source: [source] };
+    const get = vi.fn((key: string) =>
+      key === top.id ? original : { getSourceImage: () => newImage },
+    );
+    Object.assign(f.scene.textures, { get, remove });
+    expect(f.scene.rasters.resize(2)).toBe(true);
+    const due = f.scene.rasters.due((key) => key === top.id);
+    f.rasterAgain(f.scene, due);
+    const replacement = `${top.id}@2`;
+    expect(f.loadRaster).toHaveBeenLastCalledWith(replacement, uri, { height: 105, width: 105 });
+    f.events.emit(`filecomplete-svg-${replacement}`);
+    expect(get.mock.calls).toEqual([[top.id], [replacement]]);
+    expect(source.updateSource).toHaveBeenCalledExactlyOnceWith(newImage);
+    expect(resizeBase).toHaveBeenCalledExactlyOnceWith(105, 105);
+    expect(original.source[0]).toBe(source);
+    expect(source.filter).toBe("linear");
+    expect(remove).toHaveBeenCalledExactlyOnceWith(replacement);
+    expect(f.xml).not.toHaveBeenCalled();
+  });
+
+  it("keeps a placeholder when one frame is invalid and cancels late events on shutdown", () => {
+    const f = fixture();
+    f.scene.family = undefined;
+    f.scene.partAssets = [first, second, top];
+    f.extract
+      .mockImplementationOnce(() => "data:first")
+      .mockImplementationOnce(() => {
+        throw new Error("Wrong viewBox");
+      });
+    f.loadParts(f.scene, "capital");
+    f.events.emit("filecomplete", vectorSheetKey(commandSheet), "xml");
+    expect(f.svg).not.toHaveBeenCalled();
+    expect(f.scene.shipAssets).toEqual([]);
+    f.life.emit("shutdown");
+    f.events.emit("filecomplete", vectorSheetKey(topSheet), "xml");
+    expect(f.events.listenerCount("filecomplete")).toBe(0);
+    expect(f.svg).not.toHaveBeenCalled();
+    expect(f.readArt).not.toHaveBeenCalled();
   });
 });

@@ -8,7 +8,19 @@ export function vectorSheetKey(path: string): string {
 export function vectorSheetSource(
   xml: Document | undefined,
   path: string,
-  { height, id, width }: { readonly id: string; readonly width: number; readonly height: number },
+  {
+    height,
+    id,
+    intrinsicHeight,
+    intrinsicWidth,
+    width,
+  }: {
+    readonly height: number;
+    readonly id: string;
+    readonly intrinsicHeight?: number;
+    readonly intrinsicWidth?: number;
+    readonly width: number;
+  },
 ): string {
   const root = xml?.documentElement;
   if (root?.localName !== "svg" || root.namespaceURI !== SVG_NAMESPACE) {
@@ -16,13 +28,22 @@ export function vectorSheetSource(
   }
   const matches = Array.from(root.children).filter((child) => child.id === id);
   const frame = matches[0];
+  const viewBox = frame
+    ?.getAttribute("viewBox")
+    ?.trim()
+    .split(/[\s,]+/u)
+    .map(Number);
   if (
     matches.length !== 1 ||
     frame?.localName !== "svg" ||
     frame.namespaceURI !== SVG_NAMESPACE ||
-    !frame.hasAttribute("viewBox") ||
-    Number(frame.getAttribute("width")) !== width ||
-    Number(frame.getAttribute("height")) !== height
+    viewBox?.length !== 4 ||
+    viewBox[0] !== 0 ||
+    viewBox[1] !== 0 ||
+    viewBox[2] !== width ||
+    viewBox[3] !== height ||
+    Number(frame.getAttribute("width")) !== (intrinsicWidth ?? width) ||
+    Number(frame.getAttribute("height")) !== (intrinsicHeight ?? height)
   ) {
     throw new Error(`Invalid frame ${id} in vector sheet: ${path}`);
   }
