@@ -272,6 +272,15 @@ Full all-edge rendered acceptance remains unverified here.
 - Known targets use their real icon, with no Penny question mark. An unknown
   sensed target uses `?`; actual visual identification changes that same entry
   to its real icon. Sensing alone does not identify the target.
+- An eligible task tint describes the task category. A shared physical target
+  draws one marker. Among eligible contributors, use story quest first, then
+  station job, then community project. Targets with no eligible task category
+  use the generic state.
+- A tint does not identify a target or disclose its map location. Until normal
+  identification, show the question mark without an object glyph or name.
+  A project contributes only when its active task resolves to an authoritative
+  physical site and passes the existing marker eligibility rules. A project
+  row or visual world change alone does not create a marker.
 - Ordinary eligible off-screen targets remain marked within 5,000 world units.
   Leaving range hides the marker without erasing knowledge; re-entry restores
   it. An on-screen target needs no edge icon.
