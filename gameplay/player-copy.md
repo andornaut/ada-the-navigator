@@ -1144,13 +1144,8 @@ Phantom:
 
 ## Greeters
 
-The [station refresh](../docs/work/ada-0339.md) governs the approved greeting
-layout. The copy below describes existing greeter lines.
-
-On a first docking each greeting line is a page of the conversation card,
-advanced with Continue. Skip opens the last page when more than one advance remains. The last page shows
-the keeper's last line, the Stardust icon with the balance, as in the shop, then
-Jobs (at a station with jobs), Undock and Shop.
+Normal Dock opens the Station welcome. It shows the keeper paragraph and the
+services available at that station. See [Stations](economy.md#stations).
 
 Station keepers, first docking (three lines), then later dockings (one line, in
 turn):
