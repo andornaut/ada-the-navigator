@@ -38,7 +38,8 @@ export interface FactoryAssociation {
 }
 
 interface ScanContext {
-  readonly lexicalDeclarations?: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
+  readonly actionBinding: ts.FunctionDeclaration | undefined;
+  readonly lexicalDeclarations: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
   readonly sources: ReadonlyMap<string, ts.SourceFile>;
 }
@@ -47,7 +48,7 @@ function localValueImport(
   context: ScanContext,
   node: ts.Identifier,
 ): { readonly name: string; readonly target: ts.SourceFile } | undefined {
-  const declarations = context.lexicalDeclarations?.(node);
+  const declarations = context.lexicalDeclarations(node);
   const item = declarations?.length === 1 ? declarations[0] : undefined;
   if (!item || !ts.isImportSpecifier(item)) {
     return undefined;
@@ -153,9 +154,73 @@ function inertRegistrationOptions(node: ts.Expression): boolean {
   );
 }
 
+function scanContext(sources: ScanContext["sources"]): ScanContext {
+  const registry = sources.get("src/ui/actionBinding.ts");
+  const declarations = registry?.statements.filter(
+    (node): node is ts.FunctionDeclaration =>
+      ts.isFunctionDeclaration(node) &&
+      node.name?.text === "bindAdaAction" &&
+      node.body !== undefined &&
+      node.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) === true &&
+      !node.modifiers.some(
+        ({ kind }) =>
+          kind === ts.SyntaxKind.DeclareKeyword ||
+          kind === ts.SyntaxKind.DefaultKeyword ||
+          kind === ts.SyntaxKind.AsyncKeyword,
+      ) &&
+      !node.asteriskToken,
+  );
+  return {
+    actionBinding: declarations?.length === 1 ? declarations[0] : undefined,
+    factories: new Map(),
+    lexicalDeclarations: localDeclarations(sources),
+    sources,
+  };
+}
+
 function scanSource(context: ScanContext, path: string, text: string) {
   const source =
     context.sources.get(path) ?? ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
+  const lexicalDeclaration = (node: ts.Expression): ts.Declaration | undefined => {
+    const declarations = ts.isIdentifier(node) ? context.lexicalDeclarations(node) : undefined;
+    return declarations?.length === 1 ? declarations[0] : undefined;
+  };
+  const lexicalIdentity = (node: ts.Expression, expected: ts.Declaration): boolean =>
+    lexicalDeclaration(node) === expected;
+  const bindingNames = new Set<string>();
+  if (context.actionBinding?.name) {
+    const name = context.actionBinding.name.text;
+    bindingNames.add(name);
+    for (const statement of source.statements) {
+      const bindings = ts.isImportDeclaration(statement)
+        ? statement.importClause?.namedBindings
+        : undefined;
+      if (bindings && ts.isNamedImports(bindings)) {
+        for (const item of bindings.elements) {
+          if ((item.propertyName?.text ?? item.name.text) === name) {
+            bindingNames.add(item.name.text);
+          }
+        }
+      }
+    }
+  }
+  const canonicalBindingCall = (call: ts.CallExpression): boolean => {
+    const registry = context.actionBinding;
+    if (
+      !registry?.name ||
+      !call.arguments[1] ||
+      call.questionDotToken ||
+      !ts.isIdentifier(call.expression) ||
+      !bindingNames.has(call.expression.text)
+    ) {
+      return false;
+    }
+    if (lexicalIdentity(call.expression, registry)) {
+      return true;
+    }
+    const imported = localValueImport(context, call.expression);
+    return imported?.target === registry.getSourceFile() && imported.name === registry.name.text;
+  };
   const strings = (node: ts.Expression, seen = new Set<string>()): string[] => {
     if (ts.isStringLiteralLike(node)) {
       return [node.text];
@@ -622,14 +687,30 @@ function scanSource(context: ScanContext, path: string, text: string) {
     proofs.push({ end: call.end, owner: phase(call) });
     bound.set(key, proofs);
   };
-  const wrappers = new Map<string, Set<number>>();
-  const collectBindings = (node: ts.Node): void => {
-    if (
-      ts.isCallExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      node.expression.text === "bindAdaAction" &&
-      node.arguments[1]
+  const wrappers = new Map<ts.Declaration, Set<number>>();
+  const lexicalValue = (node: ts.Expression): ts.Declaration | undefined => {
+    let value = lexicalDeclaration(node);
+    const visited = new Set<ts.Declaration>();
+    while (
+      value &&
+      !visited.has(value) &&
+      ts.isVariableDeclaration(value) &&
+      ts.isVariableDeclarationList(value.parent) &&
+      value.parent.flags & ts.NodeFlags.Const &&
+      value.initializer &&
+      ts.isIdentifier(value.initializer)
     ) {
+      visited.add(value);
+      value = lexicalDeclaration(value.initializer);
+    }
+    return value;
+  };
+  const wrapperPorts = (callee: ts.Expression): ReadonlySet<number> | undefined => {
+    const value = ts.isIdentifier(callee) && stable(callee) ? lexicalValue(callee) : undefined;
+    return value && wrappers.get(value);
+  };
+  const collectBindings = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && canonicalBindingCall(node) && node.arguments[1]) {
       addBinding(reference(node.arguments[1]), node);
       for (let owner: ts.Node | undefined = node.parent; owner; owner = owner.parent) {
         if (
@@ -646,24 +727,25 @@ function scanSource(context: ScanContext, path: string, text: string) {
           (parameter) =>
             ts.isIdentifier(parameter.name) &&
             ts.isIdentifier(node.arguments[1]!) &&
-            reference(parameter.name) === reference(node.arguments[1]!),
+            lexicalIdentity(node.arguments[1]!, parameter),
         );
         const name = ts.isFunctionDeclaration(owner)
           ? owner.name
           : ts.isVariableDeclaration(owner.parent)
             ? owner.parent.name
             : undefined;
+        const declaration = name && ts.isIdentifier(name) ? lexicalDeclaration(name) : undefined;
         if (
           position >= 0 &&
+          declaration &&
           name &&
           ts.isIdentifier(name) &&
           stable(name) &&
-          node.arguments[1] &&
-          stable(node.arguments[1])
+          stable(node.arguments[1]!)
         ) {
-          const ports = wrappers.get(reference(name)) ?? new Set<number>();
+          const ports = wrappers.get(declaration) ?? new Set<number>();
           ports.add(position);
-          wrappers.set(reference(name), ports);
+          wrappers.set(declaration, ports);
         }
         break;
       }
@@ -673,9 +755,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
   collectBindings(source);
   const collectWrapperCalls = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-      for (const position of stable(node.expression)
-        ? (wrappers.get(reference(node.expression)) ?? [])
-        : []) {
+      for (const position of wrapperPorts(node.expression) ?? []) {
         const argument = node.arguments[position];
         if (argument) {
           addBinding(reference(argument), node);
@@ -695,10 +775,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ts.isIdentifier(node.initializer.expression)
     ) {
       const call = node.initializer;
-      const positions =
-        call.expression.getText(source) === "bindAdaAction"
-          ? [1]
-          : [...(wrappers.get(reference(call.expression)) ?? [])];
+      const positions = canonicalBindingCall(call)
+        ? [1]
+        : [...(wrapperPorts(call.expression) ?? [])];
       bindingControls.set(
         reference(node.name),
         positions.flatMap((position) =>
@@ -840,7 +919,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
     target: ts.Expression,
   ): boolean => {
     if (
-      !context.lexicalDeclarations ||
       !ts.isIdentifier(target) ||
       !ts.isExpressionStatement(metadata.parent) ||
       !ts.isBlock(metadata.parent.parent) ||
@@ -880,8 +958,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
-    const ownNode = (node: ts.Expression): boolean =>
-      ts.isIdentifier(node) && context.lexicalDeclarations?.(node)?.[0] === fresh;
+    const ownNode = (node: ts.Expression): boolean => lexicalIdentity(node, fresh);
     const isMetadata = (statement: ts.Statement): boolean => {
       if (!ts.isExpressionStatement(statement)) {
         return false;
@@ -933,8 +1010,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
-    const binder = localValueImport(context, call.expression);
-    return binder?.target.fileName === "src/ui/actionBinding.ts" && binder.name === "bindAdaAction";
+    return canonicalBindingCall(call);
   };
   const inheritFactoryBindings = (node: ts.Node): void => {
     if (
@@ -992,12 +1068,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ) {
         return;
       }
-      if (
-        ts.isCallExpression(node) &&
-        ts.isIdentifier(node.expression) &&
-        node.expression.text === "bindAdaAction" &&
-        node.arguments[1]
-      ) {
+      if (ts.isCallExpression(node) && canonicalBindingCall(node) && node.arguments[1]) {
         guaranteed.set(reference(node.arguments[1]), end);
       }
       ts.forEachChild(node, (child) => unconditional(child, end));
@@ -1190,17 +1261,16 @@ function scanSource(context: ScanContext, path: string, text: string) {
       );
     };
     const registeredValue = (node: ts.Expression): boolean => {
-      const value = origin(node);
+      const value = lexicalValue(node);
       return Boolean(
         !escaped(reference(node)) &&
         stable(node, true) &&
-        !escaped(reference(node)) &&
         value &&
         ts.isVariableDeclaration(value) &&
         value.initializer &&
         ts.isCallExpression(value.initializer) &&
-        ts.isIdentifier(value.initializer.expression) &&
-        value.initializer.expression.text === "bindAdaAction",
+        canonicalBindingCall(value.initializer) &&
+        immediateInvocation(value.initializer),
       );
     };
     let writesOuter = false;
@@ -1339,14 +1409,89 @@ function scanSource(context: ScanContext, path: string, text: string) {
       source: node.getText(source),
     });
   };
-  const nativeBridge = (node: ts.Node) => {
-    for (let parent: ts.Node | undefined = node.parent; parent; parent = parent.parent) {
-      if (ts.isFunctionDeclaration(parent)) {
-        return parent.name?.text === "bindAdaAction";
-      }
+  const nativeBridgeCandidate = (call: ts.CallExpression): boolean => {
+    const registry = context.actionBinding;
+    const callee = call.expression;
+    const listener = call.arguments[1];
+    const block = call.parent.parent;
+    if (
+      !registry ||
+      phase(call) !== registry ||
+      !ts.isPropertyAccessExpression(callee) ||
+      callee.name.text !== "addEventListener" ||
+      !registry.parameters[1] ||
+      !lexicalIdentity(callee.expression, registry.parameters[1]) ||
+      call.arguments.length !== 2 ||
+      !ts.isStringLiteralLike(call.arguments[0]!) ||
+      call.arguments[0]!.text !== "click" ||
+      !listener ||
+      !ts.isIdentifier(listener) ||
+      !ts.isExpressionStatement(call.parent) ||
+      !ts.isBlock(block) ||
+      block.statements.length !== 1 ||
+      !ts.isIfStatement(block.parent) ||
+      block.parent.thenStatement !== block ||
+      block.parent.parent !== registry.body
+    ) {
+      return false;
     }
-    return false;
+    const guard = block.parent.expression;
+    if (
+      !ts.isBinaryExpression(guard) ||
+      guard.operatorToken.kind !== ts.SyntaxKind.EqualsEqualsEqualsToken ||
+      !ts.isIdentifier(guard.left) ||
+      !ts.isStringLiteralLike(guard.right) ||
+      guard.right.text !== "registry"
+    ) {
+      return false;
+    }
+    const owner = origin(guard.left);
+    const callback = origin(listener);
+    if (
+      !owner ||
+      !ts.isVariableDeclaration(owner) ||
+      !owner.initializer ||
+      !ts.isBinaryExpression(owner.initializer) ||
+      owner.initializer.operatorToken.kind !== ts.SyntaxKind.QuestionQuestionToken ||
+      !ts.isStringLiteralLike(owner.initializer.right) ||
+      owner.initializer.right.text !== "registry" ||
+      !stable(guard.left) ||
+      !callback ||
+      !ts.isVariableDeclaration(callback) ||
+      !callback.initializer ||
+      !ts.isArrowFunction(callback.initializer) ||
+      phase(callback) !== registry ||
+      !stable(listener)
+    ) {
+      return false;
+    }
+    const configuredOwner = owner.initializer.left;
+    return (
+      ts.isPropertyAccessExpression(configuredOwner) &&
+      configuredOwner.name.text === "nativeClickOwner" &&
+      registry.parameters[0] !== undefined &&
+      lexicalIdentity(configuredOwner.expression, registry.parameters[0])
+    );
   };
+  const bridgeCalls = (
+    context.actionBinding?.getSourceFile() === source
+      ? (context.actionBinding.body?.statements ?? [])
+      : []
+  )
+    .flatMap((statement) =>
+      ts.isIfStatement(statement) && ts.isBlock(statement.thenStatement)
+        ? statement.thenStatement.statements
+        : [],
+    )
+    .filter(
+      (
+        statement,
+      ): statement is ts.ExpressionStatement & { readonly expression: ts.CallExpression } =>
+        ts.isExpressionStatement(statement) &&
+        ts.isCallExpression(statement.expression) &&
+        nativeBridgeCandidate(statement.expression),
+    );
+  const nativeBridge = bridgeCalls.length === 1 ? bridgeCalls[0]!.expression : undefined;
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
@@ -1414,7 +1559,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
             "Only event suppression and local statements; no action/helper call",
           );
         } else if (discrete) {
-          if (!nativeBridge(node)) {
+          if (node !== nativeBridge) {
             record("raw-discrete", node);
           }
         } else if (pointer) {
@@ -1560,7 +1705,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
 
 /** Reports bypasses without grandfathering existing consumer files. */
 export function scanDiscreteActionBindings(path: string, text: string): ActionBindingFinding[] {
-  return scanSource({ factories: new Map(), sources: new Map() }, path, text).findings;
+  const sources = new Map([[path, ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true)]]);
+  return scanSource(scanContext(sources), path, text).findings;
 }
 
 /** Only exported returned nodes with actual binding associations propagate across module imports. */
@@ -1571,11 +1717,7 @@ export function scanDiscreteActionProject(inputs: readonly DiscreteActionSource[
       ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true),
     ]),
   );
-  const context: ScanContext = {
-    factories: new Map(),
-    lexicalDeclarations: localDeclarations(sources),
-    sources,
-  };
+  const context = scanContext(sources);
   for (let pass = 0; pass <= inputs.length; pass++) {
     let changed = false;
     for (const input of inputs) {

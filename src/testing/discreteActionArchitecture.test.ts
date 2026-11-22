@@ -1,28 +1,28 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
 import {
-  scanDiscreteActionBindings,
+  type DiscreteActionSource,
+  scanDiscreteActionBindings as scanSingleSource,
   scanDiscreteActionProject,
 } from "./discreteActionArchitecture.ts";
 
 it("accepts registered action construction and rejects a raw replacement instead of grandfathering a file", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/ui/newCard.ts",
       "bindAdaAction({click: action, current, slopPx}, button);",
     ),
   ).toEqual([]);
   expect(
-    scanDiscreteActionBindings(
-      "src/ui/newCard.ts",
-      'button.addEventListener("click", action);',
-    ).map((finding) => finding.kind),
+    scanWithRegistry("src/ui/newCard.ts", 'button.addEventListener("click", action);').map(
+      (finding) => finding.kind,
+    ),
   ).toEqual(["raw-discrete"]);
 });
 it("finds aliases, onclick forms and delegated glyph callbacks", () => {
@@ -32,36 +32,35 @@ it("finds aliases, onclick forms and delegated glyph callbacks", () => {
     'const props = {onClick: action}; glyph.setAttribute("onclick", "action()");',
   ].join("");
   expect(
-    scanDiscreteActionBindings("src/game/glyph.ts", source).filter(
+    scanWithRegistry("src/game/glyph.ts", source).filter(
       (finding) => finding.kind === "raw-discrete",
     ),
   ).toHaveLength(5);
 });
-it("permits only the registered native bridge and keeps gesture mixtures visible for owner review", () => {
+it("permits the implementation-owned click and keeps gestures visible for review", () => {
+  expect(scanSingleSource(canonicalRegistry.path, canonicalRegistry.text)).toEqual([]);
   expect(
-    scanDiscreteActionBindings(
-      "src/ui/actionBinding.ts",
+    scanSingleSource(
+      "src/ui/consumer.ts",
       'function bindAdaAction(){element.addEventListener("click", click);}',
-    ),
-  ).toEqual([]);
+    )[0]?.kind,
+  ).toBe("raw-discrete");
   expect(
-    scanDiscreteActionBindings(
+    scanSingleSource(
       "src/ui/actionBinding.ts",
       'function bypass(){element.addEventListener("click", action);}',
     )[0]?.kind,
   ).toBe("raw-discrete");
   expect(
-    scanDiscreteActionBindings("src/ui/map.ts", 'node.addEventListener("pointerup", select);')[0]
-      ?.kind,
+    scanWithRegistry("src/ui/map.ts", 'node.addEventListener("pointerup", select);')[0]?.kind,
   ).toBe("gesture-review");
-  expect(
-    scanDiscreteActionBindings("src/ui/map.ts", "node.addEventListener(event, action);")[0]?.kind,
-  ).toBe("unresolved-event");
+  expect(scanWithRegistry("src/ui/map.ts", "node.addEventListener(event, action);")[0]?.kind).toBe(
+    "unresolved-event",
+  );
 });
 it("rejects implicit-readiness root attachment until its explicit root port is adopted", () => {
   expect(
-    scanDiscreteActionBindings("src/input/controls.ts", "bindAdaHoldActions(guard, root);")[0]
-      ?.kind,
+    scanWithRegistry("src/input/controls.ts", "bindAdaHoldActions(guard, root);")[0]?.kind,
   ).toBe("legacy-root");
 });
 
@@ -75,12 +74,12 @@ it("requires binding proof for new and disabled native controls independently of
     'button.setAttribute("type", "button");',
     'const button = ui.createButton("New");',
   ]) {
-    expect(
-      scanDiscreteActionBindings("new/consumer.ts", source).map((finding) => finding.kind),
-    ).toContain("unbound-discrete");
+    expect(scanWithRegistry("new/consumer.ts", source).map((finding) => finding.kind)).toContain(
+      "unbound-discrete",
+    );
   }
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "new/consumer.ts",
       `
     const button = createButton("Run");
@@ -92,7 +91,7 @@ it("requires binding proof for new and disabled native controls independently of
 
 it("follows a local binding wrapper without exempting similarly named raw callbacks", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "new/consumer.ts",
       `
     const register = (element, run) => bindAdaAction({click: run, current, slopPx}, element);
@@ -102,7 +101,7 @@ it("follows a local binding wrapper without exempting similarly named raw callba
     ),
   ).toEqual([]);
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "new/consumer.ts",
       `
     const register = (element, run) => element.addEventListener("click", run);
@@ -113,7 +112,7 @@ it("follows a local binding wrapper without exempting similarly named raw callba
 });
 
 it("does not borrow a binding from a shadowed element in another function", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "new/consumer.ts",
     `
     function registered() { const button = createButton("A"); bindAdaAction(options, button); }
@@ -125,7 +124,7 @@ it("does not borrow a binding from a shadowed element in another function", () =
 });
 
 it("distinguishes pure event suppressors from a suppressor that also invokes an action", () => {
-  const benign = scanDiscreteActionBindings(
+  const benign = scanWithRegistry(
     "any/consumer.ts",
     `
     const suppress = event => { event.preventDefault(); event.stopPropagation(); };
@@ -137,7 +136,7 @@ it("distinguishes pure event suppressors from a suppressor that also invokes an 
   ]);
   for (const action of ["run()", "state.started = true", "started = true"]) {
     expect(
-      scanDiscreteActionBindings(
+      scanWithRegistry(
         "any/consumer.ts",
         `
       node.addEventListener("click", event => { event.preventDefault(); ${action}; });
@@ -148,7 +147,7 @@ it("distinguishes pure event suppressors from a suppressor that also invokes an 
 });
 
 it("keeps mixed drag release actions blocking and classifies native value editing separately", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "any/consumer.ts",
     `
     node.addEventListener("pointermove", event => { x = event.clientX; y = event.clientY; });
@@ -162,7 +161,7 @@ it("keeps mixed drag release actions blocking and classifies native value editin
     { classification: "editing-state", kind: "non-action" },
   ]);
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "any/consumer.ts",
       `
     input.addEventListener("input", event => { value = event.target.value; save(); });
@@ -172,7 +171,7 @@ it("keeps mixed drag release actions blocking and classifies native value editin
 });
 
 it("resolves event aliases in their lexical scope and leaves unknown keyboard actions open", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "src/ui/statusPill.ts",
     `
     const event = "click";
@@ -276,6 +275,115 @@ const canonicalRegistry = {
   text: readFileSync(new URL("../ui/actionBinding.ts", import.meta.url), "utf8"),
 };
 
+// Legacy synthetic fixtures model a consumer with an explicit import from the real registry.
+function registryImport(path: string): string {
+  const relative = posix.relative(posix.dirname(path), canonicalRegistry.path);
+  return `import { bindAdaAction } from ${JSON.stringify(relative.startsWith(".") ? relative : `./${relative}`)}; `;
+}
+
+function scanRegistryFixtures(inputs: readonly DiscreteActionSource[]) {
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    ...inputs.map(({ path, text }) => ({ path, text: registryImport(path) + text })),
+  ]);
+  return result;
+}
+
+function scanWithRegistry(path: string, text: string) {
+  return scanRegistryFixtures([{ path, text }]).findings.filter((finding) => finding.path === path);
+}
+
+const originFixture = `
+  export function makePanel() {
+    const button = document.createElement("button");
+    register({click:{run:()=>updatePanel()}},button);
+    button.dataset.action = "next";
+    return {button};
+  }
+`;
+
+it.each([
+  ["direct alias", 'import { bindAdaAction as register } from "./actionBinding.ts";', true],
+  ["same-named local", "function bindAdaAction() {}", false],
+  ["wrong module", 'import { bindAdaAction } from "./observe.ts";', false],
+  ["type-only", 'import type { bindAdaAction } from "./actionBinding.ts";', false],
+  ["re-export", 'import { bindAdaAction } from "./barrel.ts";', false],
+  ["unavailable", 'import { bindAdaAction } from "./unavailable.ts";', false],
+] as const)("requires a canonical value export for a %s", (scenario, prefix, proven) => {
+  const path = "src/ui/panel.ts";
+  const body =
+    scenario === "direct alias"
+      ? originFixture
+      : originFixture.replace("register(", "bindAdaAction(");
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    { path: "src/ui/observe.ts", text: "export function bindAdaAction() {}" },
+    { path: "src/ui/barrel.ts", text: 'export {bindAdaAction} from "./actionBinding.ts";' },
+    { path, text: prefix + body },
+  ]);
+  expect(
+    result.findings.filter((finding) => finding.path === path).map(({ kind }) => kind),
+  ).toEqual(proven ? [] : ["unbound-discrete", "unbound-discrete"]);
+  expect(
+    result.factoryAssociations
+      .filter((fact) => fact.path === path)
+      .flatMap(({ members }) => members),
+  ).toEqual(proven ? ["button"] : []);
+});
+
+it("does not promote a lexically shadowed wrapper or fake lifetime handle to a binding proof", () => {
+  const path = "src/ui/panel.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    {
+      path,
+      text: `
+      import { bindAdaAction } from "./actionBinding.ts";
+      function fakeRegistry(bindAdaAction) {
+        function register(button) { return bindAdaAction(opts, button); }
+        const button = createButton("Run");
+        const binding = register(button);
+        button.dataset.action = "wrong-wrapper";
+        button.addEventListener("keydown", () => binding.activate());
+      }
+      function unprovenHandle(bindAdaAction) {
+        const button = createButton("Run");
+        const binding = bindAdaAction(opts, button);
+        button.dataset.action = "wrong-handle";
+        button.addEventListener("keydown", () => binding.activate());
+      }
+    `,
+    },
+  ]);
+  expect(
+    result.findings.filter((finding) => finding.path === path).map(({ kind }) => kind),
+  ).toEqual([
+    "unbound-discrete",
+    "unbound-discrete",
+    "gesture-review",
+    "unbound-discrete",
+    "unbound-discrete",
+    "gesture-review",
+  ]);
+});
+
+it("keeps the actual registry bridge but flags an unrelated raw click in the same implementation", () => {
+  const marker = 'element.addEventListener("click", click);';
+  const extra = 'element.addEventListener("click", () => bypass());';
+  const patched = canonicalRegistry.text.replace(marker, `${marker}\n    ${extra}`);
+  expect(patched).not.toBe(canonicalRegistry.text);
+  const findings = scanDiscreteActionProject([{ ...canonicalRegistry, text: patched }]).findings;
+  expect(
+    findings.filter(({ kind }) => kind === "raw-discrete").map(({ source }) => source),
+  ).toEqual([marker.slice(0, -1), 'element.addEventListener("click", () => bypass())']);
+  const external = "src/ui/unrelated.ts";
+  const impostor =
+    'export function bindAdaAction(options, button) { button.addEventListener("click", options.run); }';
+  expect(
+    scanDiscreteActionProject([canonicalRegistry, { path: external, text: impostor }]).findings,
+  ).toEqual([expect.objectContaining({ kind: "raw-discrete", path: external })]);
+});
+
 function constructionFindings(path: string, text: string) {
   return scanDiscreteActionProject([canonicalRegistry, { path, text }]).findings.filter(
     (finding) => finding.path === path,
@@ -359,7 +467,7 @@ it("does not extend pre-bind proof through a destructured cleanup handle", () =>
 
 it("does not exempt a callback because it is named continuous, drag, or editing", () => {
   for (const callback of ["continuous", "drag", "editing"]) {
-    const findings = scanDiscreteActionBindings(
+    const findings = scanWithRegistry(
       "src/ui/actionBinding.ts",
       `
       function ${callback}(event) { event.preventDefault(); runAction(); }
@@ -372,15 +480,21 @@ it("does not exempt a callback because it is named continuous, drag, or editing"
 });
 
 it.each([
-  ['const button = createButton("Run"); bindAdaAction(options, button);', 0],
-  ['node.addEventListener("click", run);', 1],
-  ['node.addEventListener("pointerup", select);', 1],
-  ['const button = createButton("Later"); button.disabled = true;', 1],
-  ['node.addEventListener("click", event => event.preventDefault());', 0],
-] as const)("uses the real CLI exit contract for %s", (text, status) => {
+  ['const button = createButton("Run"); bindAdaAction(options, button);', 0, true],
+  ['const button = createButton("Run"); bindAdaAction(options, button);', 1, false],
+  ['node.addEventListener("click", run);', 1, false],
+  ['node.addEventListener("pointerup", select);', 1, false],
+  ['const button = createButton("Later"); button.disabled = true;', 1, false],
+  ['node.addEventListener("click", event => event.preventDefault());', 0, false],
+] as const)("uses the real CLI exit contract for %s", (text, status, imported) => {
   const project = mkdtempSync(join(tmpdir(), "discrete-action-cli-"));
   mkdirSync(join(project, "src"));
-  writeFileSync(join(project, "src", "consumer.ts"), text);
+  const consumer = "src/consumer.ts";
+  writeFileSync(join(project, consumer), imported ? registryImport(consumer) + text : text);
+  if (imported) {
+    mkdirSync(join(project, "src/ui"));
+    writeFileSync(join(project, canonicalRegistry.path), canonicalRegistry.text);
+  }
   const report = join(project, "report.json");
   const cli = fileURLToPath(new URL("../../tools/check-discrete-actions.mjs", import.meta.url));
   const result = spawnSync(process.execPath, [cli, "--report", report], {
@@ -392,9 +506,12 @@ it.each([
   expect(result.status, result.stderr).toBe(status);
   const facts = JSON.parse(readFileSync(report, "utf8"));
   expect(facts.blocking > 0).toBe(status === 1);
-  expect(facts.inputs).toEqual([
-    { path: "src/consumer.ts", sha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
-  ]);
+  expect(facts.inputs).toEqual(
+    [consumer, ...(imported ? [canonicalRegistry.path] : [])].map((path) => ({
+      path,
+      sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+    })),
+  );
 });
 
 it("associates exported bound factory returns through renamed imports without exempting raw factories", () => {
@@ -414,12 +531,12 @@ it("associates exported bound factory returns through renamed imports without ex
     `,
     },
   ];
-  const project = scanDiscreteActionProject(sources);
+  const project = scanRegistryFixtures(sources);
   expect(project.findings).toEqual([]);
   expect(project.factoryAssociations).toEqual([
     expect.objectContaining({ exportName: "make", members: [""], path: "src/factory.ts" }),
   ]);
-  const raw = scanDiscreteActionProject([
+  const raw = scanRegistryFixtures([
     {
       ...sources[0]!,
       text: 'export function make() { const element = createButton("Run"); return element; }',
@@ -431,7 +548,7 @@ it("associates exported bound factory returns through renamed imports without ex
 });
 
 it("associates only the returned bound member across factory chains", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/a.ts",
       text: `export function make() { const button = createButton("Run");
@@ -465,7 +582,7 @@ it.each([
   "if (flag) return button; bindAdaAction(options, button); return button;",
   "const action = bindAdaAction(options, button); action.dispose(); return button;",
 ])("keeps conditional or disposed factory registrations open: %s", (tail) => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make(){const button = createButton("Run"); ${tail}}`,
@@ -483,7 +600,7 @@ it.each([
 });
 
 it("reports runtime construction audit calls without treating them as binding exemptions", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/root.ts",
       text: `
@@ -499,7 +616,7 @@ it("reports runtime construction audit calls without treating them as binding ex
 
 it("proves focus-only keyboard effects from the public focus contract, not a similarly named callback", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/keyboard.ts",
       `
     import {focusTarget as focus} from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
@@ -509,7 +626,7 @@ it("proves focus-only keyboard effects from the public focus contract, not a sim
   ).toEqual([expect.objectContaining({ classification: "keyboard-focus", kind: "non-action" })]);
   for (const extra of ["runAction();", 'state.page = "next";']) {
     expect(
-      scanDiscreteActionBindings(
+      scanWithRegistry(
         "src/keyboard.ts",
         `
       import {focusTarget} from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
@@ -519,7 +636,7 @@ it("proves focus-only keyboard effects from the public focus contract, not a sim
     ).toBe("gesture-review");
   }
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/keyboard.ts",
       `
     function focusTarget(element) { choose(element); }
@@ -533,7 +650,7 @@ it("distinguishes canonical keyboard activation from a second direct action call
   const registered = `const button = createButton("Run");
     const binding = bindAdaAction(options, button);`;
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/keyboard.ts",
       `${registered}
     button.addEventListener("keydown", event => { event.preventDefault(); binding.activate(); });
@@ -543,7 +660,7 @@ it("distinguishes canonical keyboard activation from a second direct action call
     expect.objectContaining({ classification: "registered-keyboard", kind: "registered-action" }),
   ]);
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/keyboard.ts",
       `${registered}
     button.addEventListener("keydown", event => { binding.activate(); runAgain(); });
@@ -553,7 +670,7 @@ it("distinguishes canonical keyboard activation from a second direct action call
 });
 
 it("keeps state-latching and mixed drag callbacks open instead of granting continuous exemptions", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "src/input.ts",
     `
     const keys = new Set();
@@ -572,7 +689,7 @@ it("keeps state-latching and mixed drag callbacks open instead of granting conti
 });
 
 it("does not let factory click ownership metadata excuse an extra native action listener", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "src/factoryConsumer.ts",
     `
     const button = createButton("Run");
@@ -584,7 +701,7 @@ it("does not let factory click ownership metadata excuse an extra native action 
 });
 
 it("does not propagate a mutable returned identity from an earlier registration", () => {
-  const project = scanDiscreteActionProject([
+  const project = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make() {
@@ -616,7 +733,7 @@ it.each([
   'let button = make(); button = rawButton; button.dataset.action = "run";',
   'const button = make(); button.remove(); button.dataset.action = "run";',
 ])("rejects replaced or removed factory identities: %s", (text) => {
-  const project = scanDiscreteActionProject([
+  const project = scanRegistryFixtures([
     registeredFactory,
     { path: "src/use.ts", text: `import {make} from "./factory.ts"; ${text}` },
   ]);
@@ -626,7 +743,7 @@ it.each([
 });
 
 it("does not retain binding proof after direct eager disposal", () => {
-  const findings = scanDiscreteActionBindings(
+  const findings = scanWithRegistry(
     "src/use.ts",
     `
     const button = createButton("Run"); const binding = bindAdaAction(options, button);
@@ -644,7 +761,7 @@ it("does not borrow a same-module factory summary through a shadowed parameter o
     'function use() { const make = rawFactory; const button = make(); button.dataset.action = "run"; }',
     "export function wrap(make) { const button = make(); return button; }",
   ]) {
-    const result = scanDiscreteActionProject([
+    const result = scanRegistryFixtures([
       { path: "src/factory.ts", text: registeredFactory.text + declaration },
       {
         path: "src/use.ts",
@@ -663,7 +780,7 @@ it("does not borrow a same-module factory summary through a shadowed parameter o
 });
 
 it("does not export overwritten members from an otherwise constant factory container", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/a.ts",
       text: `export function make() { const button = createButton("Run");
@@ -692,7 +809,7 @@ it.each([
   "const binding = bindAdaAction(options, button); binding.dispose();",
 ])("keeps mutated or disposed keyboard entry proof open: %s", (binding) => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/keyboard.ts",
       `
     const button = createButton("Run"); ${binding}
@@ -706,7 +823,7 @@ it.each(["++count", "--count"])(
   "does not hide outer prefix mutation in focus-only keyboard classification: %s",
   (mutation) => {
     expect(
-      scanDiscreteActionBindings(
+      scanWithRegistry(
         "src/keyboard.ts",
         `
     import {focusTarget} from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
@@ -719,7 +836,7 @@ it.each(["++count", "--count"])(
 );
 
 it("follows constant aliases when a binding method or returned member is overwritten", () => {
-  const keyboard = scanDiscreteActionBindings(
+  const keyboard = scanWithRegistry(
     "src/alias.ts",
     `
     const button = createButton("Run"); const binding = bindAdaAction(options, button);
@@ -728,7 +845,7 @@ it("follows constant aliases when a binding method or returned member is overwri
   `,
   );
   expect(keyboard.some(({ kind }) => kind === "gesture-review")).toBe(true);
-  const member = scanDiscreteActionProject([
+  const member = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make() { const button = createButton("Run");
@@ -747,7 +864,7 @@ it("follows constant aliases when a binding method or returned member is overwri
 });
 
 it("invalidates eager local disposer calls but preserves a returned deferred disposal lifecycle", () => {
-  const stopped = scanDiscreteActionBindings(
+  const stopped = scanWithRegistry(
     "src/dispose.ts",
     `
     const button = createButton("Run"); const action = bindAdaAction(options, button);
@@ -757,7 +874,7 @@ it("invalidates eager local disposer calls but preserves a returned deferred dis
   expect(stopped).toContainEqual(
     expect.objectContaining({ kind: "unbound-discrete", source: 'button.dataset.action = "run"' }),
   );
-  const deferred = scanDiscreteActionBindings(
+  const deferred = scanWithRegistry(
     "src/deferred.ts",
     `
     const button = createButton("Run"); const action = bindAdaAction(options, button);
@@ -769,7 +886,7 @@ it("invalidates eager local disposer calls but preserves a returned deferred dis
 
 it("does not prove a keyboard entry that escaped to an unknown mutator", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/escape.ts",
       `
     const button = createButton("Run"); const binding = bindAdaAction(options, button);
@@ -780,7 +897,7 @@ it("does not prove a keyboard entry that escaped to an unknown mutator", () => {
 });
 
 it("does not borrow a mutable factory container through a constant member snapshot", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make(){const button = createButton("Run");
@@ -799,7 +916,7 @@ it("does not borrow a mutable factory container through a constant member snapsh
 });
 
 it("invalidates extracted disposers and entries escaped through containers", () => {
-  const disposed = scanDiscreteActionBindings(
+  const disposed = scanWithRegistry(
     "src/dispose.ts",
     `
     const button = createButton("Run");const action = bindAdaAction(options, button);
@@ -809,7 +926,7 @@ it("invalidates extracted disposers and entries escaped through containers", () 
   expect(disposed).toContainEqual(
     expect.objectContaining({ kind: "unbound-discrete", source: 'button.dataset.action = "run"' }),
   );
-  const escaped = scanDiscreteActionBindings(
+  const escaped = scanWithRegistry(
     "src/escape.ts",
     `
     const button = createButton("Run");const binding = bindAdaAction(options, button);
@@ -820,7 +937,7 @@ it("invalidates extracted disposers and entries escaped through containers", () 
 });
 
 it("resolves function-scoped var shadowing instead of borrowing a top-level factory", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `${registeredFactory.text}
@@ -840,7 +957,7 @@ it.each([
   "const stop = action.dispose; invokeUnknown({stop});",
 ])("keeps possibly eager disposal paths open: %s", (cleanup) => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/eager.ts",
       `
     const button = createButton("Run");const action = bindAdaAction(options, button);
@@ -854,7 +971,7 @@ it.each([
 
 it("preserves a structurally proven WeakMap disposal store without treating it as eager execution", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/store.ts",
       `
     const disposers = new WeakMap(); const button = createButton("Run");
@@ -867,7 +984,7 @@ it("preserves a structurally proven WeakMap disposal store without treating it a
 
 it("does not assume a shadowed WeakMap class stores callbacks without invoking them", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/shadow-store.ts",
       `
     class WeakMap { set(key, callback) { callback(); } }
@@ -884,7 +1001,7 @@ it("does not assume a shadowed WeakMap class stores callbacks without invoking t
 it.each([false, true])(
   "uses canonical lifetime proof for returned aliases after extracted disposal (dispose=%s)",
   (dispose) => {
-    const result = scanDiscreteActionProject([
+    const result = scanRegistryFixtures([
       {
         path: "src/factory.ts",
         text: `export function make(rawButton: HTMLElement) {
@@ -926,7 +1043,7 @@ it.each([false, true])(
     const consumerSetup = overwrite
       ? 'const rawButton = document.createElement("button");const controls = wrap(rawButton);'
       : "const controls = wrap();";
-    const result = scanDiscreteActionProject([
+    const result = scanRegistryFixtures([
       {
         path: "src/a.ts",
         text: `export function make(){const button = createButton("Run");
@@ -979,7 +1096,7 @@ it.each([
   ["{button: rawButton, button}", true],
   ['{"button": rawButton, button}', true],
 ] as const)("uses final object-return property semantics for %s", (object, bound) => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make(rawButton:HTMLElement,key:string){
@@ -1021,7 +1138,7 @@ it.each([
 ] as const)(
   "does not confuse factory runtime kind with an action element: %s",
   (declaration, modeled) => {
-    const result = scanDiscreteActionProject([
+    const result = scanRegistryFixtures([
       {
         path: "src/factory.ts",
         text: declaration.replace(
@@ -1059,7 +1176,7 @@ it.each([
 ] as const)(
   "requires synchronous registration wrapper runtime kind: %s",
   (declaration, synchronous) => {
-    const result = scanDiscreteActionBindings(
+    const result = scanWithRegistry(
       "src/wrapper.ts",
       `${declaration}
     const button=createButton("Run");register(button);button.dataset.action="run";
@@ -1080,7 +1197,7 @@ it.each([
   "function register(element){const methods={later(){bindAdaAction(options,element);}};}",
 ])("does not infer a guaranteed wrapper invocation from a conditional body: %s", (declaration) => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/wrapper.ts",
       `${declaration}
     const button=createButton("Run");register(button);button.dataset.action="run";
@@ -1107,7 +1224,7 @@ it.each(
     ),
   ),
 )("requires same-phase invocation dominance: %s %s %s", (invocation, proven, call) => {
-  const result = scanDiscreteActionBindings(
+  const result = scanWithRegistry(
     "src/caller.ts",
     `
     function register(element){bindAdaAction(options,element);}
@@ -1122,7 +1239,7 @@ it.each(
 it.each(["register(button)", "bindAdaAction(options,button)"])(
   "does not use a later registration to prove an earlier action use: %s",
   (call) => {
-    const result = scanDiscreteActionBindings(
+    const result = scanWithRegistry(
       "src/order.ts",
       `
       function register(element){bindAdaAction(options,element);}
@@ -1136,7 +1253,7 @@ it.each(["register(button)", "bindAdaAction(options,button)"])(
 );
 it("retains local unconditional synchronous registration within an invoked owner", () => {
   expect(
-    scanDiscreteActionBindings(
+    scanWithRegistry(
       "src/local.ts",
       `
     function register(element){bindAdaAction(options,element);}
@@ -1155,7 +1272,7 @@ it.each([
 ] as const)(
   "applies invocation dominance to imported factory results: %s",
   (invocation, proven) => {
-    const result = scanDiscreteActionProject([
+    const result = scanRegistryFixtures([
       {
         path: "src/factory.ts",
         text: `export function make(){
@@ -1184,7 +1301,7 @@ it.each([
   "function never(){bindAdaAction(options,button);}",
   "later(()=>bindAdaAction(options,button));",
 ])("does not export a factory result with unexecuted registration: %s", (registration) => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make(){
@@ -1208,7 +1325,7 @@ it.each([
 });
 
 it("does not transfer imported factory proof across execution owners", () => {
-  const result = scanDiscreteActionProject([
+  const result = scanRegistryFixtures([
     {
       path: "src/factory.ts",
       text: `export function make(){
