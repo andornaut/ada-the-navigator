@@ -10,7 +10,7 @@ vi.mock("@andornaut/game-kit/build/precachePlugin", () => ({
 }));
 import { bootUrls, precachePlugin } from "./precachePlugin.ts";
 
-it("forwards the build identity and boot files to the kit's producer", () => {
+it("forwards the build identity, boot files and decoded pack limit to the kit's producer", () => {
   const full = "1".repeat(40);
   const discovery = {
     sounds: {},
@@ -23,6 +23,7 @@ it("forwards the build identity and boot files to the kit's producer", () => {
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
+  expect(options.packs).toEqual({ maxBytes: 1024 * 1024 });
   expect(options).not.toHaveProperty("groups");
   expect(options.verifiedJsonBodies).toBeUndefined();
   options.hashedFiles!((url) =>
