@@ -585,10 +585,11 @@ function useFixture() {
     useShown: true,
     window,
   });
-  const declarations = ["resolveUsePointer", "useAction", "actionRoot", "stopPointers"];
+  const declarations = ["exitButton", "resolveUsePointer", "useAction", "actionRoot", "stopPointers"];
   const actual = runInContext(
     ts.transpileModule(
-      `${declarations
+      `let ${controlsDeclaration("exitPose")};
+${declarations
         .map((name) => `const ${controlsDeclaration(name)};`)
         .join("\n")}\n({actionRoot,useAction,resolveUsePointer});`,
       { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
