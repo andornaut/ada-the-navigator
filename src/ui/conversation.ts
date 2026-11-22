@@ -271,7 +271,6 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
   const name = document.createElement("span");
   name.className = "ada-conversation-name";
   root.append(frame, column, name);
-  document.getElementById(VIEW_HOST_ID)?.append(root);
   let disposed = false;
   let lineKey: string | null = null;
   const register = () => {
@@ -293,6 +292,13 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
     );
   };
   let action = register();
+  try {
+    document.getElementById(VIEW_HOST_ID)?.append(root);
+  } catch (error) {
+    action.dispose();
+    root.remove();
+    throw error;
+  }
   let shown = "";
   let shownFrame = -1;
   return {

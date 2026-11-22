@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
@@ -10,17 +10,25 @@ import { TEXT_BUTTON } from "../data/layout.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
+import {
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
+  createConversationBox,
   INTERACTION_STYLE,
   interactionHudRow,
   portraitFrame,
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
 } from "./conversation.ts";
-import { fromHudEdge, units } from "./layout/css.ts";
+import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { hudRect, logicalView, NO_INSETS, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "./notice.ts";
+import { rootPressGuard } from "./pressScope.ts";
 
 // The box's rules, by selector, from its stylesheet.
 function rules(css: string): Map<string, string> {
@@ -353,5 +361,237 @@ describe("Interaction card HUD row", () => {
   right:${fromHudEdge("right", skipRight)}
 }`,
     );
+  });
+});
+
+class ConversationElement extends EventTarget {
+  className = "";
+  hidden = false;
+  type = "";
+  textContent = "";
+  readonly dataset: Record<string, string> = {};
+  readonly style: Record<string, string> = {};
+  readonly attributes = new Map<string, string>();
+  readonly children: ConversationElement[] = [];
+  parentElement: ConversationElement | null = null;
+  readonly tag: string;
+  constructor(tag: string) {
+    super();
+    this.tag = tag;
+  }
+  get ownerDocument() {
+    return document;
+  }
+  get isConnected(): boolean {
+    return this === (document.body as unknown) || (this.parentElement?.isConnected ?? false);
+  }
+  append(...children: ConversationElement[]) {
+    for (const child of children) {
+      child.remove();
+      child.parentElement = this;
+      this.children.push(child);
+    }
+  }
+  remove() {
+    const siblings = this.parentElement?.children;
+    if (siblings) {
+      siblings.splice(siblings.indexOf(this), 1);
+    }
+    this.parentElement = null;
+  }
+  contains(node: unknown): boolean {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  matches(selector: string): boolean {
+    return selector.split(",").some((part) => {
+      const rule = part.trim();
+      return rule === this.tag || (rule === "[data-action]" && this.dataset.action !== undefined);
+    });
+  }
+  querySelectorAll(selector: string): ConversationElement[] {
+    return this.children.flatMap((child) => [
+      ...(child.matches(selector) ? [child] : []),
+      ...child.querySelectorAll(selector),
+    ]);
+  }
+  closest(selector: string): ConversationElement | null {
+    if (
+      (this.hidden && selector.includes("[hidden]")) ||
+      (selector.includes("[inert]") && this.attributes.has("inert"))
+    ) {
+      return this;
+    }
+    return this.parentElement?.closest(selector) ?? null;
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+  toggleAttribute(name: string, enabled: boolean) {
+    if (enabled) {
+      this.attributes.set(name, "");
+    } else {
+      this.attributes.delete(name);
+    }
+  }
+}
+
+const publicationLine = {
+  elapsed: 0,
+  key: "publication:0",
+  mood: "neutral",
+  name: "Penny",
+  named: false,
+  side: "left",
+  speaker: "penny",
+  text: "A line",
+} as const;
+const asHTMLElement = (node: ConversationElement) => node as unknown as HTMLElement;
+
+function conversationDocument(host?: ConversationElement) {
+  const body = new ConversationElement("body");
+  if (host) {
+    body.append(host);
+  }
+  const created: ConversationElement[] = [];
+  const doc = Object.assign(new EventTarget(), {
+    body,
+    createElement(tag: string) {
+      const node = new ConversationElement(tag);
+      created.push(node);
+      return node;
+    },
+    defaultView: Object.assign(new EventTarget(), {
+      HTMLElement: ConversationElement,
+      Node: ConversationElement,
+      clearTimeout,
+      performance,
+      setTimeout,
+    }),
+    getElementById: vi.fn((id: string) => (id === VIEW_HOST_ID ? (host ?? null) : null)),
+    hidden: false,
+  });
+  vi.stubGlobal("document", doc);
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  return { created, doc };
+}
+
+describe("conversation dismiss publication", () => {
+  it("publishes the original dismiss action bound and owns one touch release", () => {
+    const host = new ConversationElement("div");
+    const root = asHTMLElement(host);
+    const { doc } = conversationDocument(host);
+    const append = host.append.bind(host);
+    const publish = vi.spyOn(host, "append").mockImplementation((button) => {
+      append(button);
+      expect(button.hidden).toBe(true);
+      expect(button.dataset.action).toBe("conversation");
+      assertAdaActionMetadata(asHTMLElement(button));
+      assertAdaActionBindings(asHTMLElement(button));
+    });
+    const attached = bindAdaActionRoot(
+      {
+        guard: rootPressGuard(root),
+        pointerRelease: { resolvePointer: () => asHTMLElement(host.children[0]!) },
+        requiredReady: () => true,
+        subscribeRequired: () => () => {},
+      },
+      root,
+    );
+    const dismissed = vi.fn();
+    try {
+      const box = createConversationBox(dismissed);
+      try {
+        const button = host.children[0]!;
+        expect(doc.getElementById).toHaveBeenCalledExactlyOnceWith(VIEW_HOST_ID);
+        expect(publish).toHaveBeenCalledExactlyOnceWith(button);
+        const initial = resolveAdaHoldAction(root, button)!;
+        expect(initial.available()).toBe(false);
+        box.render(publicationLine, true, true);
+        expect(host.children).toEqual([button]);
+        expect(resolveAdaHoldAction(root, button)!.identity).not.toBe(initial.identity);
+        initial.activate();
+        expect(dismissed).not.toHaveBeenCalled();
+        const pointer = (type: string) =>
+          Object.defineProperty(
+            Object.assign(new Event(type, { cancelable: true }), {
+              button: 0,
+              clientX: 0,
+              clientY: 0,
+              detail: 1,
+              isPrimary: true,
+              pointerId: 7,
+              pointerType: "touch",
+            }),
+            "target",
+            { value: button },
+          );
+        const press = pointer("pointerdown");
+        doc.dispatchEvent(press);
+        host.dispatchEvent(press);
+        doc.dispatchEvent(pointer("pointerup"));
+        expect(dismissed).toHaveBeenCalledOnce();
+        const compatibility = pointer("click");
+        host.dispatchEvent(compatibility);
+        if (!compatibility.defaultPrevented) {
+          button.dispatchEvent(compatibility);
+        }
+        expect(dismissed).toHaveBeenCalledOnce();
+      } finally {
+        box.dispose();
+      }
+      const button = publish.mock.calls[0]![0]!;
+      expect(button.parentElement).toBeNull();
+      expect(() => assertAdaActionMetadata(asHTMLElement(button))).toThrow(
+        "no registered action binding",
+      );
+    } finally {
+      publish.mockRestore();
+      attached.dispose();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("releases the first binding if host publication throws", () => {
+    const host = new ConversationElement("div");
+    conversationDocument(host);
+    const append = host.append.bind(host);
+    const publish = vi.spyOn(host, "append").mockImplementation((button) => {
+      append(button);
+      assertAdaActionMetadata(asHTMLElement(button));
+      throw new Error("publication interrupted");
+    });
+    try {
+      expect(() => createConversationBox(vi.fn())).toThrow("publication interrupted");
+      expect(host.children).toEqual([]);
+      expect(() => assertAdaActionMetadata(asHTMLElement(publish.mock.calls[0]![0]!))).toThrow(
+        "no registered action binding",
+      );
+    } finally {
+      publish.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("keeps a no-host conversation detached and unavailable", () => {
+    const { created, doc } = conversationDocument();
+    const dismissed = vi.fn();
+    const box = createConversationBox(dismissed);
+    try {
+      const button = created.find((element) => element.tag === "button")!;
+      expect(doc.getElementById).toHaveBeenCalledExactlyOnceWith(VIEW_HOST_ID);
+      expect(doc.body.children).toEqual([]);
+      expect(button.isConnected).toBe(false);
+      assertAdaActionMetadata(asHTMLElement(button));
+      box.render(publicationLine, true, true);
+      button.dispatchEvent(new Event("click"));
+      expect(dismissed).not.toHaveBeenCalled();
+      expect(button.parentElement).toBeNull();
+    } finally {
+      box.dispose();
+      vi.unstubAllGlobals();
+    }
   });
 });
