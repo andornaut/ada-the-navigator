@@ -6,6 +6,7 @@ import { classic, DISPLAY, drawn, FRAME } from "../../../art/tools/ship-model.ts
 import { SVG_DECIMALS, svgNumber } from "../../../art/tools/svg-text.ts";
 import { CONVERSATIONS } from "../../data/conversations.ts";
 import { SHIP_HEADINGS } from "../../model/nose.ts";
+import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";
 import { PILL } from "./controls.ts";
 import {
   CONVERSATION_BOX,
@@ -125,8 +126,8 @@ describe("conversation box", () => {
 
   it("rises to the highest drawn hull point of Art's 64 idle headings, at the same 45-degree orientation", () => {
     const rises = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
-      const svg = readFileSync(new URL(`../../../public/art/ship-${heading}.svg`, import.meta.url));
-      const ys = [...String(svg).matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
+      const { svg } = SHIPPED_SHIP_SOURCES!.standaloneClassic(heading)!;
+      const ys = [...svg.matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
       return ((FRAME / 2 - Math.min(...ys)) * DISPLAY) / FRAME;
     });
     const highest = Math.max(...rises);
