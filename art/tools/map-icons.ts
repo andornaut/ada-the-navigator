@@ -19,6 +19,29 @@ const E = "....................";
 const FACE_RADIUS = 13;
 
 const SYMBOLS: Readonly<Record<string, readonly string[]>> = {
+  // The Jobs category: a briefcase with a centered, two-pixel handle stroke.
+  job: [
+    E,
+    E,
+    E,
+    ".......######.......",
+    ".......######.......",
+    ".......##..##.......",
+    ".......##..##.......",
+    "....############....",
+    "...##############...",
+    "...##############...",
+    "...##############...",
+    "...#............#...",
+    "...##############...",
+    "...##############...",
+    "...##############...",
+    "...##############...",
+    "....############....",
+    E,
+    E,
+    E,
+  ],
   // A mast and dome over an elliptical ring, as the in-world station.
   station: [
     E,
