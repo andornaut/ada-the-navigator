@@ -728,7 +728,7 @@ export function buildScene(scene: UiContext): void {
     acceptJob: (id) => {
       let accepted = false;
       apply(() => {
-        accepted = scene.model.acceptJob(id) !== "busy";
+        accepted = scene.model.acceptJob(id) === "accepted";
       });
       return accepted;
     },
@@ -794,7 +794,7 @@ export function buildScene(scene: UiContext): void {
           ? { kind: "refused" }
           : {
               about: label(`projectAbout${view.copy}`),
-              action: label("donate"),
+              action: label("jobAccept"),
               kind: "confirm",
               left: fill(label("confirmLeft"), { amount: amount(donation.left) }),
               price: donation.amount,
@@ -835,6 +835,7 @@ export function buildScene(scene: UiContext): void {
             name: project.name,
             price: project.funded ? null : project.remaining,
             project: true,
+            projectDetails: label(`projectAbout${project.copy}`),
             state: project.funded
               ? "owned"
               : scene.model.state.economy.stardust > 0

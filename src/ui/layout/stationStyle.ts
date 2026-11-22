@@ -114,26 +114,30 @@ export const STATION_STYLE = `
   margin:0 0 ${units(SPACING.gap)};
   font:${font(TYPE.label)}
 }
-.ada-controls .ada-station-panes .ada-job-list{
-  box-sizing:border-box;
-  max-width:100%
+.ada-controls .ada-station-panes > section{
+  min-width:0
 }
-.ada-controls .ada-station-panes .ada-job-row{
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr);
-  height:auto
+.ada-controls .ada-station-panes > section + section{
+  border-left:${units(1)} solid #6b6685;
+  padding-left:${units(SPACING.gap)}
 }
-.ada-controls .ada-station-panes .ada-job-row > .ada-shop-slot{
-  grid-column:2
-}
-.ada-controls .ada-station-projects{
-  display:grid;
-  gap:${units(SHOP_ROW.rowGap)};
-  padding:${units(FOCUS_RING.outset)}
-}
-.ada-controls .ada-station-projects > .ada-shop-row{
+.ada-controls .ada-station-panes .ada-shop-row{
   width:100%;
-  height:auto
+  height:${units(SHOP_ROW.height - SPACING.rowGap)};
+  min-height:0
+}
+.ada-controls .ada-station-panes .ada-shop-name{
+  line-height:${units(TYPE.body.lineHeight - SPACING.rowGap)};
+  overflow-wrap:normal
+}
+.ada-controls .ada-station-panes .ada-shop-name > span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.ada-controls .ada-station-panes .ada-well{
+  width:${units(SHOP_ROW.well - SPACING.rowGap)};
+  height:${units(SHOP_ROW.well - SPACING.rowGap)}
 }
 
 .ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{
@@ -432,47 +436,9 @@ export const STATION_STYLE = `
   image-rendering:pixelated
 }
 
-/* The job board packs measured rows into the available width, then pages them. */
-.ada-controls .ada-job-list{
-  box-sizing:border-box;
+.ada-controls :is(.ada-job-list,.ada-station-projects){
   display:grid;
-  grid-template-columns:1fr;
-  justify-content:center;
-  align-content:start;
-  row-gap:${units(SHOP_ROW.rowGap)};
-  padding:${units(FOCUS_RING.outset)};
-  align-self:center
-}
-.ada-controls .ada-job-row{
-  width:100%;
-  justify-self:stretch
-}
-.ada-controls .ada-job-row .ada-shop-slot{
-  gap:${units(SHOP_ROW.markGap)};
-  align-items:center
-}
-/* The compact row action (art/controls.md "Compact row action"): drawn inside the row, which
-   stays one control, so it takes no press of its own and sinks with the row. Every row's action
-   is one width. In a busy row it is the flat disabled frame, its label at 4 in row disabled. */
-.ada-controls .ada-job-action.ada-compact{
-  min-width:var(--job-action-width,${units(TEXT_BUTTON.compactWidth)});
-  pointer-events:none;
-  cursor:inherit
-}
-.ada-controls .ada-shop-row:active .ada-job-action.ada-compact:not(.ada-primary){
-  border-image-source:var(--ui-button-normal)
-}
-.ada-controls .ada-shop-row:active .ada-job-action.ada-compact.ada-primary{
-  border-image-source:var(--ui-button-primary-normal)
-}
-.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact{
-  align-items:flex-start;
-  padding-top:${units(TEXT_BUTTON.pressedSink)};
-  color:${TEXT_TOKENS.rowDisabled};
-  border-image-source:var(--ui-button-disabled)
-}
-.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact.ada-primary{
-  border-image-source:var(--ui-button-primary-disabled)
+  gap:${units(SHOP_ROW.rowGap)}
 }
 
 /* Measuring: rows at their natural widths, off screen. */
@@ -489,11 +455,6 @@ export const STATION_STYLE = `
 .ada-controls .ada-shop-measure .ada-shop-name{
   flex:none;
   white-space:nowrap
-}
-.ada-controls .ada-job-page-row{
-  display:grid;
-  grid-template-columns:repeat(var(--shop-columns,1),var(--shop-row-width,max-content));
-  column-gap:${units(SHOP_ROW.columnGap)}
 }
 .ada-controls .ada-station-pager{
   display:grid;

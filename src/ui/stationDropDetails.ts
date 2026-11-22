@@ -12,6 +12,7 @@ export interface StationDropData {
   readonly cancelLabel: string;
   readonly closeLabel: string;
   readonly dropLabel: string;
+  readonly detail?: string;
   readonly subject: string;
   readonly title: string;
 }
@@ -40,6 +41,16 @@ export function stationDropTree(
           kind: "component",
           props: { className: "ada-card-note ada-confirm-about", text: data.subject },
         },
+        ...(data.detail
+          ? ([
+              {
+                component: "text",
+                key: "detail",
+                kind: "component",
+                props: { className: "ada-card-note ada-confirm-about", text: data.detail },
+              },
+            ] as const)
+          : []),
       ],
       footer: [
         {

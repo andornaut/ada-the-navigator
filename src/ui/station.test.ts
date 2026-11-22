@@ -32,11 +32,12 @@ import {
   rowAction,
   STATION_STYLE,
   stationBack,
+  stationJobsRows,
   stationJobsShown,
   stationTabs,
   weaponItemGlyph,
 } from "./station.ts";
-import { stationJobRowTree, stationJobsTree } from "./stationJobsTree.ts";
+import { stationJobRowTree } from "./stationJobsTree.ts";
 import { stationMenuTree } from "./stationMenuTree.ts";
 import { stationPagerTree } from "./stationPagerTree.ts";
 import { stationShopRowTree, stationShopTree } from "./stationShopTree.ts";
@@ -56,11 +57,62 @@ describe("station card back steps", () => {
 });
 
 describe("job row taps", () => {
-  it("accept offers, keep refused offers tappable so they refuse, and drop the held job", () => {
+  it("presents Accept for offers and Drop for the held job", () => {
     expect(jobAction("offer")).toBe("accept");
     expect(jobAction("busy")).toBe("accept");
     expect(jobAction("held")).toBe("drop");
   });
+});
+
+it("reserves space for all unfunded projects and then takes jobs in canonical order", () => {
+  const services: StationServices = {
+    equipment: false,
+    exchange: true,
+    heldTask: true,
+    jobs: true,
+    projects: true,
+    weaponsAmmo: false,
+  };
+  const job = (
+    id: string,
+    state: stationSource.StationJob["state"] = "offer",
+  ): stationSource.StationJob => ({
+    detail: "Detail",
+    id,
+    kind: "job",
+    reward: 1,
+    rewardText: "1 Stardust",
+    state,
+    title: id,
+    type: "delivery",
+  });
+  const jobs = [job("held", "held"), job("featured"), job("first"), job("second"), job("third")];
+  const project: stationSource.StationRow = {
+    glyph: { key: "project", kind: "sprite" },
+    group: "items",
+    key: "project",
+    level: "",
+    name: "Project",
+    price: 1,
+    project: true,
+    state: "forSale",
+  };
+  const ids = (rows: stationSource.StationJob[]) => rows.map(({ id }) => id);
+  expect(
+    ids(
+      stationJobsRows(jobs, services, [
+        project,
+        { ...project, key: "secondProject", state: "unaffordable" },
+      ]),
+    ),
+  ).toEqual(["held", "featured", "first"]);
+  expect(ids(stationJobsRows(jobs, services, [{ ...project, state: "owned" }]))).toEqual([
+    "held",
+    "featured",
+    "first",
+    "second",
+  ]);
+  expect(ids(stationJobsRows(jobs, { ...services, jobs: false }, [project]))).toEqual(["held"]);
 });
 
 describe("shop row taps", () => {
@@ -121,15 +173,13 @@ describe("shop style", () => {
     expect(rule(".ada-controls .ada-shop-row[data-state=unaffordable]")).toContain("color:#a6a2b8");
   });
 
-  it("gives job rows their type's sheet and a compact action that takes no press of its own", () => {
+  it("uses each job type's sheet and compact board rows", () => {
     for (const type of ["survey", "delivery", "rescue", "hunt", "activity"]) {
       expect(
         existsSync(new URL(`../../public/art/ui/sprites/icon-job-${type}.png`, import.meta.url)),
       ).toBe(true);
     }
-    expect(STATION_STYLE).toContain(".ada-controls .ada-job-action.ada-compact{");
-    expect(STATION_STYLE).toContain("pointer-events:none");
-    expect(STATION_STYLE).toContain("var(--ui-button-primary-disabled)");
+    expect(STATION_STYLE).toContain(".ada-controls .ada-station-panes .ada-shop-row{");
     // No row keeps a placeholder flat mark: the activity row takes its sheet too.
     expect(STATION_STYLE).not.toMatch(/ada-job-glyph\[data-type=/u);
   });
@@ -791,7 +841,6 @@ function constructedStation(
     FOCUS_RING,
     HTMLElement: Node,
     SCROLL,
-    SCROLL_RESERVE_CLASS: "ada-scroll-reserve",
     SPACING,
     SPRITES: "/art/",
     VIEW_SCALE_EVENT,
@@ -828,7 +877,6 @@ function constructedStation(
       node.textContent = text;
     },
     stationJobRowTree,
-    stationJobsTree,
     stationMenuTree,
     stationPagerTree,
     stationShopRowTree,
@@ -934,8 +982,13 @@ function stationList(kind: "shop" | "jobs") {
     f.parent as unknown as HTMLElement,
     row as unknown as HTMLElement,
   )!;
-  const run = kind === "shop" ? f.request : f.acceptJob;
   const id = kind === "shop" ? "item-0" : "job-1";
+  const calls = () =>
+    kind === "shop"
+      ? f.request.mock.calls
+      : f.native.get("confirm-cancel-x")!.frame.hidden
+        ? []
+        : [[id]];
   const rect = row.getBoundingClientRect();
   const dispatch = (
     type: string,
@@ -956,7 +1009,7 @@ function stationList(kind: "shop" | "jobs") {
     }
     return event;
   };
-  return { ...f, action, dispatch, id, list, row, run };
+  return { ...f, action, calls, dispatch, id, list, row };
 }
 
 it.each([
@@ -972,10 +1025,10 @@ it.each([
     f.dispatch("pointerdown");
     f.dispatch("pointermove", SCROLL.dragThreshold + 1);
     f.dispatch(end, SCROLL.dragThreshold + 1);
-    expect(f.run).not.toHaveBeenCalled();
+    expect(f.calls()).toEqual([]);
     f.row.focus();
     const keyboard = f.dispatch("click", 0, -1, 0);
-    expect({ calls: f.run.mock.calls, prevented: keyboard.defaultPrevented }).toEqual({
+    expect({ calls: f.calls(), prevented: keyboard.defaultPrevented }).toEqual({
       calls: [[f.id]],
       prevented: false,
     });
@@ -997,23 +1050,28 @@ it.each(["shop", "jobs"] as const)(
     expect(f.dispatch("click", 0, -1, 0, f.list).defaultPrevented).toBe(false);
     expect(f.dispatch("click", 0, 8, 1, f.list).defaultPrevented).toBe(false);
     expect(f.dispatch("click").defaultPrevented).toBe(true);
-    expect(f.run).not.toHaveBeenCalled();
+    expect(f.calls()).toEqual([]);
 
     // A physical MouseEvent without pointer identity still suppresses the release on this list.
     f.dispatch("pointerdown");
     f.dispatch("pointermove", limit + 1);
     f.dispatch("pointerup", limit + 1);
     expect(f.dispatch("click", 0, null).defaultPrevented).toBe(true);
-    expect(f.run).not.toHaveBeenCalled();
+    expect(f.calls()).toEqual([]);
 
     f.dispatch("pointerdown");
     f.dispatch("pointermove", limit);
     f.dispatch("pointerup", limit);
     expect(f.dispatch("click", limit).defaultPrevented).toBe(false);
-    expect(f.run).toHaveBeenCalledExactlyOnceWith(f.id);
+    expect(f.calls()).toEqual([[f.id]]);
+    if (kind === "jobs") {
+      expect(f.acceptJob).not.toHaveBeenCalled();
+      f.activate(f.action("confirm-cancel"));
+    }
     f.station.dispose();
+    expect(f.action.available()).toBe(false);
     f.action.activate();
-    expect(f.run).toHaveBeenCalledOnce();
+    expect(f.calls()).toEqual(kind === "shop" ? [[f.id]] : []);
   },
 );
 
@@ -1024,12 +1082,12 @@ it.each(["shop", "jobs"] as const)(
     f.dispatch("pointerdown");
     f.dispatch("pointermove", SCROLL.dragThreshold + 1);
     f.dispatch("pointerup", SCROLL.dragThreshold + 1);
-    expect(f.run).not.toHaveBeenCalled();
+    expect(f.calls()).toEqual([]);
 
     f.dispatch("pointerdown", 0, 8);
     f.dispatch("pointerup", 0, 8);
     const click = f.dispatch("click", 0, null);
-    expect({ calls: f.run.mock.calls, prevented: click.defaultPrevented }).toEqual({
+    expect({ calls: f.calls(), prevented: click.defaultPrevented }).toEqual({
       calls: [[f.id]],
       prevented: false,
     });
@@ -1047,7 +1105,7 @@ it.each(["shop", "jobs"] as const)(
     expect(f.action.available()).toBe(true);
     expect(f.action.rule.holdMs).toBe(500);
     f.action.activate();
-    expect(f.run).toHaveBeenCalledExactlyOnceWith(f.id);
+    expect(f.calls()).toEqual([[f.id]]);
   },
 );
 
@@ -1068,18 +1126,27 @@ it("audits completed Jobs reconstruction before replacement-row focus", () => {
   f.station.setOpen(true);
   f.activate(f.action("open-jobs"));
   const row = f.parent.querySelector('[data-job="job-1"]')!;
+  f.activate(row);
+  expect(f.acceptJob).not.toHaveBeenCalled();
   f.state.corruptRow = "job-1";
-  expect(() => f.activate(row)).toThrow("no registered action binding");
+  expect(() => f.activate(f.action("confirm-buy"))).toThrow("no registered action binding");
   expect(f.acceptJob).toHaveBeenCalledExactlyOnceWith("job-1");
   expect(f.native.get("jobs-back")!.frame.hidden).toBe(true);
 });
 
-it("retains original Jobs accept and replacement-row registration", () => {
+it("opens unmutated Jobs details then accepts and focuses the same active row", () => {
   const f = constructedStation();
   f.station.setOpen(true);
   f.activate(f.action("open-jobs"));
   const row = f.parent.querySelector('[data-job="job-1"]')!;
   f.activate(row);
+  expect(f.acceptJob).not.toHaveBeenCalled();
+  expect(f.native.get("confirm-cancel-x")!.title.textContent).toBe("Job");
+  expect(f.action("confirm-buy").textContent).toBe(f.labels.jobAccept);
+  f.activate(f.action("confirm-cancel"));
+  expect(f.doc.activeElement).toBe(row);
+  f.activate(row);
+  f.activate(f.action("confirm-buy"));
   expect(f.acceptJob).toHaveBeenCalledExactlyOnceWith("job-1");
   expect(f.parent.querySelector('[data-state="inUse"]')).toBe(f.doc.activeElement);
 });

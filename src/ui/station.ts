@@ -29,18 +29,13 @@ import {
 import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap, SCROLL_RESERVE_CLASS } from "./modal.ts";
+import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph } from "./stationItemIcon.ts";
-import {
-  type StationJobRowSchema,
-  stationJobRowTree,
-  type StationJobsSchema,
-  stationJobsTree,
-} from "./stationJobsTree.ts";
+import { type StationJobRowSchema, stationJobRowTree } from "./stationJobsTree.ts";
 import {
   type StationMenuButton,
   type StationMenuSchema,
@@ -143,6 +138,7 @@ export type StationRowState = "forSale" | "unaffordable" | "selectable" | "owned
 export interface StationRow {
   /** A community project's row, whose owned state reads Funded (art/projects.md). */
   readonly project?: boolean;
+  readonly projectDetails?: string;
   readonly glyph: ItemGlyph;
   /**
    * The ammunition group precedes the item group on the Weapons tab; the paint group follows
@@ -161,7 +157,7 @@ export interface StationRow {
 export type StationRequest =
   | {
       readonly about: string;
-      /** The primary action's label: Buy, or Donate for a project. */
+      /** The primary action's label: Buy, or Accept for a project. */
       readonly action: string;
       readonly kind: "confirm";
       readonly left: string;
@@ -226,9 +222,24 @@ export function stationBack(view: StationView, confirming: boolean): StationView
   return view === "card" ? "undock" : "card";
 }
 
-/** What a job row tap does: an offer accepts, a refused offer refuses, the held job asks to drop. */
+/** Which decision the selected job details present. */
 export function jobAction(state: StationJob["state"]): "accept" | "drop" {
   return state === "held" ? "drop" : "accept";
+}
+
+/** Job projection keeps an active row and reserves the offer slots needed by projects. */
+export function stationJobsRows(
+  jobs: readonly StationJob[],
+  services: StationServices | null,
+  projects: readonly StationRow[],
+): StationJob[] {
+  const active = jobs.filter((job) => job.state === "held");
+  if (!services?.jobs) {
+    return active;
+  }
+  const projectOffers = projects.filter((project) => project.state !== "owned").length;
+  const room = Math.min(4 - active.length, 4 - projectOffers);
+  return [...active, ...jobs.filter((job) => job.state !== "held").slice(0, Math.max(0, room))];
 }
 
 /** What a row tap does; an unaffordable row is tappable and refuses. */
@@ -443,8 +454,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   jobsCard.card.dataset.dialog = "jobs";
   jobsCard.frame.hidden = true;
-  const jobsBusy = prose("ada-jobs-busy", labels.jobBusy);
-  jobsBusy.hidden = true;
   const jobList = document.createElement("div");
   jobList.className = "ada-job-list";
   const projectList = document.createElement("div");
@@ -461,11 +470,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     heading.textContent = label;
     pane.append(heading);
   }
-  jobsPane.append(jobsBusy, jobList);
+  jobsPane.append(jobList);
   projectsPane.append(projectList);
   jobsPanes.append(jobsPane, projectsPane);
   jobsCard.body.append(jobsPanes);
-  jobsCard.body.classList.add(SCROLL_RESERVE_CLASS);
 
   const pagerLayouts: ReturnType<typeof mountLayout<StationPagerSchema>>[] = [];
   const makePager = (host: HTMLElement) => {
@@ -525,9 +533,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     return { count, next, node, pages: 1, previous };
   };
   const shopPager = makePager(shopCard.body);
-  const jobsPager = makePager(jobsPane);
   let shopPage = 0;
-  let jobsPage = 0;
 
   const focusPage = (
     parts: Pick<typeof shopCard, "close">,
@@ -558,7 +564,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     group.replaceChildren(...chunks);
     parts.fit();
     const unit = readViewUnit(group);
-    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row:not(.ada-job-row)")) {
+    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row")) {
       const name = row.querySelector<HTMLElement>(".ada-shop-name")!;
       row.style.height = units(shopRowHeight(frameSize(name).height / unit));
     }
@@ -570,7 +576,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       const others = children
         .filter((child) => child !== group)
         .reduce((total, child) => total + frameSize(child).height / unit, 0);
-      const end = (parseFloat(getComputedStyle(parts.body, "::after").height) || 0) / unit;
+      const end = parseFloat(getComputedStyle(parts.body, "::after").height) / unit;
       return (
         parts.body.clientHeight / unit -
         others -
@@ -632,7 +638,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let tab: StationTab | null = null;
   const shownTabs = () => stationTabs(options.services());
   let confirm:
-    | { readonly catalog: StationCatalog; readonly key: string; readonly origin: HTMLElement }
+    | {
+        readonly catalog: StationCatalog;
+        readonly key: string;
+        readonly origin: HTMLElement;
+        readonly projectAmount?: number;
+      }
+    | { readonly job: string; readonly origin: HTMLElement }
     | { readonly drop: true }
     | null = null;
   let pressDialog: HTMLElement | undefined;
@@ -720,7 +732,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
               node.className = "ada-shop-row";
               node.dataset.item = initial.id;
               node.dataset.state = initial.state;
-              node.disabled = initial.requiresWeapon !== undefined;
+              node.disabled =
+                initial.requiresWeapon !== undefined ||
+                (row.project === true && row.state === "owned");
               node.setAttribute("aria-disabled", String(node.disabled));
               node.setAttribute("aria-label", initial.ariaLabel);
               return { dispose() {}, element: node, slots: { parts: node }, update() {} };
@@ -768,6 +782,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           const liveRow = options.rows(catalog).find((item) => item.key === row.key);
           if (!liveRow) {
             render();
+            return;
+          }
+          if (liveRow.project) {
+            openProject(liveRow, node);
             return;
           }
           if (liveRow.requiresWeapon !== undefined) {
@@ -897,17 +915,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       mountLayout<StationJobRowSchema>(
         {
           components: {
-            action: {
+            mark: {
               create(initial) {
                 const slot = document.createElement("span");
                 slot.className = "ada-shop-slot";
-                const action = document.createElement("span");
-                action.className = `ada-button ada-compact ada-job-action${initial.primary ? " ada-primary" : ""}`;
-                action.textContent = initial.label;
                 const mark = document.createElement("span");
-                mark.className = initial.markClass;
-                mark.textContent = initial.mark;
-                slot.append(mark, action);
+                mark.className = initial.className;
+                mark.textContent = initial.text;
+                slot.append(mark);
                 return { dispose() {}, element: slot, slots: {}, update() {} };
               },
               slots: [],
@@ -974,31 +989,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           return;
         }
         if (jobAction(liveJob.state) === "drop") {
-          openDrop(liveJob);
-          return;
-        }
-        if (!options.acceptJob(job.id)) {
-          jobsBusy.textContent = options.busyLine();
-          jobsBusy.hidden = false;
-          renderJobs();
-          jobsCard.fit();
-          const replacement = [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
-            (row) => row.dataset.job === job.id,
-          );
-          if (replacement) {
-            focusTarget(replacement);
-            refuse(replacement, options.reducedMotion());
-          } else {
-            focusPage(jobsCard, jobList, jobsPager);
-          }
-          return;
-        }
-        jobsBusy.hidden = true;
-        jobsPage = 0;
-        render();
-        const inUse = jobList.querySelector<HTMLElement>("[data-state=inUse]");
-        if (inUse) {
-          focusTarget(inUse);
+          openDrop(liveJob, node);
+        } else {
+          openJob(liveJob, node);
         }
       },
       jobBindings,
@@ -1007,73 +1000,43 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const renderJobs = (): void => {
-    clearBindings(jobBindings);
+    const services = options.services();
+    const projects = services?.projects ? options.rows("projects") : [];
+    projectsPane.hidden = !services?.projects;
+    const previousBindings = jobBindings.splice(0);
     const previousLayouts = jobLayouts.splice(0);
-    const unit = readViewUnit(jobsCard.card);
-    const measure = document.createElement("div");
-    measure.className = "ada-shop-measure";
-    const rows = options
-      .jobs()
-      .filter((job) => options.services()?.jobs || job.state === "held")
-      .map(jobElement);
-    measure.append(...rows);
-    jobsCard.card.append(measure);
-    measure.style.removeProperty("--job-action-width");
-    const action = Math.max(
-      0,
-      ...[...measure.querySelectorAll<HTMLElement>(".ada-job-action")].map(
-        (node) => frameSize(node).width / unit,
-      ),
+    try {
+      const rows = stationJobsRows(options.jobs(), services, projects).map(jobElement);
+      const projectRows = projects.map((row) => rowElement(row));
+      for (const row of [...rows, ...projectRows]) {
+        audit(row);
+      }
+      jobList.replaceChildren(...rows);
+      projectList.replaceChildren(...projectRows);
+      audit(jobsCard.frame);
+    } catch (error) {
+      jobsCard.frame.hidden = true;
+      clearBindings(jobBindings);
+      for (const layout of jobLayouts.splice(0)) {
+        layout.dispose();
+      }
+      throw error;
+    } finally {
+      clearBindings(previousBindings);
+      for (const layout of previousLayouts) {
+        layout.dispose();
+      }
+    }
+  };
+
+  const focusJobs = (id?: string): void => {
+    const rows = [
+      ...jobList.querySelectorAll<HTMLElement>("button"),
+      ...projectList.querySelectorAll<HTMLButtonElement>("button"),
+    ].filter((row) => !row.matches(":disabled"));
+    focusTarget(
+      rows.find((row) => (row.dataset.job ?? row.dataset.item) === id) ?? rows[0] ?? openJobs,
     );
-    jobList.style.setProperty("--job-action-width", units(action));
-    measure.style.setProperty("--job-action-width", units(action));
-    const natural = Math.max(0, ...rows.map((node) => frameSize(node).width / unit));
-    // Fit the natural list before bounding rows, so a previous card width cannot narrow names.
-    jobList.style.width = units(natural + 2 * FOCUS_RING.outset);
-    jobsCard.fit();
-    const available = jobsPane.clientWidth / unit || jobsCard.card.clientWidth / unit / 2;
-    const width = Math.min(natural, available - 2 * SPACING.panelPadding - 2 * FOCUS_RING.outset);
-    const columns = 1;
-    jobList.style.setProperty("--shop-columns", String(columns));
-    jobList.style.setProperty("--shop-row-width", units(width));
-    jobList.style.width = units(shopListWidth(columns, width) + 2 * FOCUS_RING.outset);
-    const chunks: HTMLElement[] = [];
-    for (const tree of stationJobsTree({ columns }, rows.length)) {
-      let chunk!: HTMLDivElement;
-      jobLayouts.push(
-        mountLayout<StationJobsSchema>(
-          {
-            components: {
-              group: {
-                create(initial) {
-                  chunk = document.createElement("div");
-                  chunk.className = "ada-job-page-row";
-                  chunk.append(...initial.indices.map((index) => rows[index]!));
-                  return { dispose() {}, element: chunk, slots: {}, update() {} };
-                },
-                slots: [],
-              },
-            },
-            host: measure,
-          },
-          tree,
-        ),
-      );
-      chunks.push(chunk);
-    }
-    measure.remove();
-    projectsPane.hidden = !options.services()?.projects;
-    const projects = projectsPane.hidden
-      ? []
-      : options.rows("projects").map((row) => rowElement(row));
-    for (const row of projects) {
-      audit(row);
-    }
-    projectList.replaceChildren(...projects);
-    jobsPage = fitPages({ ...jobsCard, body: jobsPane }, jobList, jobsPager, chunks, jobsPage);
-    for (const layout of previousLayouts) {
-      layout.dispose();
-    }
   };
 
   const renderShop = (): void => {
@@ -1123,45 +1086,45 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     syncPressView();
   };
 
-  for (const [pager, kind] of [
-    [shopPager, "shop"],
-    [jobsPager, "jobs"],
+  for (const [button, direction] of [
+    [shopPager.previous, -1],
+    [shopPager.next, 1],
   ] as const) {
-    for (const [button, direction] of [
-      [pager.previous, -1],
-      [pager.next, 1],
-    ] as const) {
-      register(button, () => {
-        if (button.hidden || pager.node.hidden) {
-          return;
-        }
-        if (kind === "shop") {
-          shopPage += direction;
-        } else {
-          jobsPage += direction;
-        }
-        render();
-        focusPage(
-          kind === "shop" ? shopCard : jobsCard,
-          kind === "shop" ? list : jobList,
-          pager,
-          button,
-        );
-      });
-    }
+    register(button, () => {
+      if (button.hidden || shopPager.node.hidden) {
+        return;
+      }
+      shopPage += direction;
+      render();
+      focusPage(shopCard, list, shopPager, button);
+    });
   }
 
+  const showConfirmation = (title: string, parts: readonly HTMLElement[], action: string): void => {
+    confirmCard.frame.hidden = false;
+    dropHost.hidden = true;
+    confirmCard.title.textContent = title;
+    confirmCard.frame.setAttribute("aria-label", title);
+    buy.textContent = action;
+    confirmCard.body.replaceChildren(...parts, confirmActions);
+    audit(confirmCard.frame);
+    confirmModal.hidden = false;
+    syncPressView();
+    confirmCard.fit();
+    focusTarget(buy);
+  };
   const openConfirm = (
     row: StationRow,
     request: Extract<StationRequest, { kind: "confirm" }>,
     catalog: StationCatalog,
     origin: HTMLElement,
   ) => {
-    confirm = { catalog, key: row.key, origin };
-    confirmCard.frame.hidden = false;
-    dropHost.hidden = true;
-    confirmCard.title.textContent = request.title;
-    confirmCard.frame.setAttribute("aria-label", request.title);
+    confirm = {
+      catalog,
+      key: row.key,
+      origin,
+      ...(catalog === "projects" ? { projectAmount: request.price } : {}),
+    };
     const item = well(row.glyph, true);
     item.dataset.inkTop = "0";
     const price = document.createElement("div");
@@ -1176,26 +1139,50 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (request.stillNeeded) {
       parts.push(prose("ada-confirm-left", request.stillNeeded));
     }
-    parts.push(confirmActions);
-    buy.textContent = request.action;
-    confirmCard.body.replaceChildren(...parts);
-    audit(confirmCard.frame);
-    confirmModal.hidden = false;
-    syncPressView();
-    confirmCard.fit();
-    focusTarget(buy);
+    showConfirmation(request.title, parts, request.action);
   };
+
+  const openJob = (job: StationJob, origin: HTMLElement): void => {
+    confirm = { job: job.id, origin };
+    const parts = [
+      prose("ada-confirm-about", job.detail),
+      prose("ada-confirm-left", job.rewardText),
+    ];
+    if (job.state === "busy") {
+      const busy = prose("ada-confirm-about", options.busyLine());
+      busy.setAttribute("role", "status");
+      parts.push(busy);
+    }
+    showConfirmation(job.title, parts, labels.jobAccept);
+  };
+
+  const openProject = (row: StationRow, origin: HTMLElement): void => {
+    if (row.state === "owned") {
+      return;
+    }
+    const request = options.request(row.key);
+    if (request.kind === "confirm") {
+      openConfirm(row, request, "projects", origin);
+      return;
+    }
+    confirm = { catalog: "projects", key: row.key, origin };
+    const parts = [
+      well(row.glyph, true),
+      prose("ada-confirm-about", row.projectDetails ?? row.level),
+      prose("ada-confirm-price", String(row.price ?? 0)),
+    ];
+    showConfirmation(row.name, parts, labels.jobAccept);
+  };
+
   // Drop asks first, naming the held job or the active activity.
-  const openDrop = (job: StationJob): void => {
+  const openDrop = (job: StationJob, origin: HTMLElement): void => {
     confirm = { drop: true };
-    dropOrigin =
-      [...jobList.querySelectorAll<HTMLElement>(".ada-job-row")].find(
-        (row) => row.dataset.job === job.id,
-      ) ?? null;
+    dropOrigin = origin;
     const title = job.kind === "activity" ? labels.activityDrop : labels.jobDropTitle;
     const data = {
       cancelLabel: labels.jobDropCancel,
       closeLabel: labels.close,
+      detail: job.detail,
       dropLabel: labels.jobDrop,
       subject: job.title,
       title,
@@ -1208,31 +1195,28 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           active: () => open && !disposed && confirm !== null && "drop" in confirm,
           artReady: applyButtonSkin(parent),
           availability: () =>
-            stationJobsShown(options.services())
+            stationJobsShown(options.services()) &&
+            options.jobs().some((job) => job.state === "held")
               ? { kind: "available" }
               : { kind: "unavailable", reason: options.busyLine() },
-          onCancel: () => {
-            const origin = dropOrigin;
-            back();
-            if (origin?.isConnected && !origin.closest("[hidden]")) {
-              focusTarget(origin);
-            }
-          },
+          onCancel: back,
           onDrop: () => {
+            const id = dropOrigin?.dataset.job;
             closeConfirm();
-            if (!stationJobsShown(options.services())) {
+            if (
+              !stationJobsShown(options.services()) ||
+              !options.jobs().some((row) => row.id === id && row.state === "held")
+            ) {
               render();
               return;
             }
             options.dropJob();
             render();
-            focusTarget(
-              view === "jobs"
-                ? (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close)
-                : openShop.hidden
-                  ? undock
-                  : openShop,
-            );
+            if (view === "jobs") {
+              focusJobs(id);
+            } else {
+              focusTarget(openShop.hidden ? undock : openShop);
+            }
           },
         },
         dropHost,
@@ -1271,14 +1255,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (confirm) {
       const origin = "origin" in confirm ? confirm.origin : dropOrigin;
       closeConfirm();
-      if (origin?.isConnected) {
+      if (origin?.isConnected && !origin.closest("[hidden], [inert]")) {
         focusTarget(origin);
+      } else if (view === "jobs") {
+        focusJobs(origin?.dataset.job ?? origin?.dataset.item);
       }
       return;
     }
     const left = view;
     view = step;
-    jobsBusy.hidden = true;
     render();
     const target = left !== "card" ? menuButtons.get(left) : undock;
     if (target) {
@@ -1288,7 +1273,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   // The row width and columns follow the view; the card builder refits the card itself.
   const refit = (): void => {
-    if (open && view !== "card" && !confirm) {
+    if (open && view === "shop" && !confirm) {
       render();
     }
   };
@@ -1300,8 +1285,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       return;
     }
     view = "jobs";
-    jobsPage = 0;
-    jobsBusy.hidden = true;
     render();
     focusTarget(openJobs);
   });
@@ -1338,11 +1321,46 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   register(cancel, back);
   register(buy, () => {
     const pending = confirm;
-    closeConfirm();
-    if (!pending || !("key" in pending)) {
+    if (!pending || "drop" in pending) {
+      return;
+    }
+    if ("job" in pending) {
+      const services = options.services();
+      const projects = services?.projects ? options.rows("projects") : [];
+      const live = stationJobsRows(options.jobs(), services, projects).find(
+        (row) => row.id === pending.job && row.state !== "held",
+      );
+      if (live && !options.acceptJob(live.id)) {
+        if (open && view === "jobs") {
+          openJob({ ...live, state: "busy" }, pending.origin);
+          refuse(buy, options.reducedMotion());
+        }
+        return;
+      }
+      closeConfirm();
+      if (open) {
+        render();
+        if (view === "jobs") {
+          focusJobs(pending.job);
+        }
+      }
       return;
     }
     const { catalog, key } = pending;
+    if (catalog === "projects") {
+      const live =
+        options.services()?.projects && options.rows("projects").find((row) => row.key === key);
+      const request = live && options.request(key);
+      if (!request || request.kind === "refused") {
+        refuse(buy, options.reducedMotion());
+        return;
+      }
+      if (live && request.price !== pending.projectAmount) {
+        openConfirm(live, request, catalog, pending.origin);
+        return;
+      }
+    }
+    closeConfirm();
     const available =
       catalog === "projects" ? options.services()?.projects : shownTabs().includes(catalog);
     if (available && options.rows(catalog).some((row) => row.key === key)) {
@@ -1350,8 +1368,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
     if (open) {
       render();
-      const group = catalog === "projects" ? projectList : list;
-      const rows = [...group.querySelectorAll<HTMLButtonElement>("button")];
+      if (catalog === "projects" && view === "jobs") {
+        focusJobs(key);
+        return;
+      }
+      const rows = [...list.querySelectorAll<HTMLButtonElement>("button")];
       focusTarget(
         rows.find((row) => row.dataset.item === key && !row.disabled) ??
           rows.find((row) => !row.disabled) ??
@@ -1361,7 +1382,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
 
   // A drag across a page must not activate the row where the gesture started.
-  for (const group of [list, jobList]) {
+  for (const group of [list, jobList, projectList]) {
     let start: { readonly pointerId: number; readonly x: number; readonly y: number } | undefined;
     let draggedPointer: number | undefined;
     let latestPointer: number | undefined;
@@ -1461,7 +1482,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       open = value;
       modal.hidden = !open;
       view = "card";
-      jobsBusy.hidden = true;
       closeConfirm();
       if (open) {
         render();
