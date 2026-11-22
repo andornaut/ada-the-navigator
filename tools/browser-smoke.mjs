@@ -4004,17 +4004,8 @@ try {
     "Owned upgrade weapons support accessible selection, the switch wait's refusal, saved " +
       "ammunition, reload, modal guards and the bottom-centre shield meter",
   );
-  // The status pill's width follows its counts (art/layout.md "Status pill"): 36 plus the
-  // Stardust slot, ore 37 plus its slot, cargo or tow 33; each slot the count's width in
-  // Liberation Sans Bold at 16 px (digits and k 1139/2048 em, m 1821/2048, the point 569/2048),
-  // at least one digit. Its left edge stays put while its right edge follows a small and a large
-  // Stardust count.
-  const countAdvance = (character) => (({ ".": 569, m: 1821 })[character] ?? 1139) * (16 / 2048);
-  const countSlot = (text) =>
-    Math.max(
-      countAdvance("0"),
-      [...text].reduce((sum, c) => sum + countAdvance(c), 0),
-    );
+  // The status pill follows its count slots and cargo or tow bearing (art/layout.md "Status pill").
+  // Its left edge stays put while its right edge follows the Stardust count.
   const pillAt = async (stardust, marker) => {
     const model = relaunch(CONTENT, safeSerialized);
     model.state.economy.stardust = stardust;
@@ -4026,8 +4017,9 @@ try {
       );
       const box = pill.getBoundingClientRect();
       const visible = (selector) => !pill.querySelector(selector).hidden;
+      const aboard = pill.querySelector(".ada-status-aboard");
       return {
-        aboard: visible(".ada-status-aboard"),
+        aboard: aboard.hidden ? null : aboard.dataset.kind,
         left: box.left / unit,
         ore: visible(".ada-status-ore-slot")
           ? pill.querySelector(".ada-status-ore-count").textContent
@@ -4037,11 +4029,8 @@ try {
         width: box.width / unit,
       };
     });
-    const expected =
-      36 +
-      countSlot(shown.stardust) +
-      (shown.ore === null ? 0 : 37 + countSlot(shown.ore)) +
-      (shown.aboard ? 33 : 0);
+    assert.ok([null, "carrying", "towing"].includes(shown.aboard));
+    const expected = insetLayout.statusPillWidth(shown, shown.aboard);
     assert.ok(
       Math.abs(shown.width - expected) < 0.5,
       `The status pill is ${expected} wide for its counts: ${JSON.stringify(shown)}`,
@@ -4053,9 +4042,16 @@ try {
   const largePill = await pillAt(44_449, "status-pill-large");
   assert.equal(smallPill.stardust, "7");
   assert.equal(largePill.stardust, "44.4k");
+  assert.equal(smallPill.ore, "0");
+  assert.equal(largePill.ore, smallPill.ore);
+  assert.equal(largePill.aboard, smallPill.aboard);
   assert.ok(Math.abs(largePill.left - smallPill.left) < 0.01, "The pill's left edge stays put");
   assert.ok(
-    Math.abs(largePill.width - smallPill.width - (countSlot("44.4k") - countSlot("7"))) < 0.5,
+    Math.abs(
+      largePill.width -
+        smallPill.width -
+        (insetLayout.countSlot("44.4k") - insetLayout.countSlot("7")),
+    ) < 0.5,
     `Only the right edge moves, by the Stardust slot's growth: ${JSON.stringify({ largePill, smallPill })}`,
   );
   save("status-pill-proof.json", { largePill, smallPill });
