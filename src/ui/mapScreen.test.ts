@@ -200,6 +200,10 @@ describe("map screen place panel", () => {
     expect(chipFace(place("station"))).toBe(MAP_FACES.station);
     expect(MAP_SCREEN_STYLE).not.toMatch(/\[data-job\]\{[^}]*--face/u);
     expect(chipGlyph(place("station", { job: true }))).toBe(MAP_GLYPHS.station);
+    expect(chipGlyph(place("job", { job: true, kind: "job" }))).toBe("map-job");
+    expect(existsSync(new URL("../../public/art/ui/icons/map-job.svg", import.meta.url))).toBe(
+      true,
+    );
     for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
       expect(chipGlyph(place("job", { job: true, jobType: type, kind: "job" }))).toBe(
         `map-job-${type}`,

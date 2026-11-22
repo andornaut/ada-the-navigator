@@ -59,9 +59,13 @@ describe("Penny's existing marker art", () => {
         true,
       );
     }
-    expect(
-      pennyGlyph({ ...marker, category: "objective", identified: true, jobType: "hunt" }),
-    ).toBe("/art/ui/icons/map-job-hunt.svg");
+    const job: PennyMarker = { ...marker, category: "objective", symbol: "job" };
+    expect(pennyGlyph({ ...job, identified: true })).toBe("/art/ui/icons/map-job.svg");
+    expect(pennyGlyph(job)).toBeNull();
+    expect(pennyGlyph({ ...job, identified: true, jobType: "hunt" })).toBe(
+      "/art/ui/icons/map-job-hunt.svg",
+    );
+    expect(pennyGlyph({ ...job, jobType: "hunt" })).toBeNull();
     expect(
       pennyGlyph({ ...marker, category: "discovery", identified: true, item: "stardust" }),
     ).toBe("/art/ui/sprites/icon-stardust-20.png");

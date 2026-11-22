@@ -85,14 +85,14 @@ export const MAP_FACES: Readonly<Record<MapSymbol | "hostileStation", string>> =
 };
 export const MAP_JOB_FACE = MAP_FACES.job;
 
-/** Each symbol's glyph: Art's map-*.svg masks (art/tools/map-icons.ts); a job spot has none. */
+/** Each symbol's glyph: Art's map-*.svg masks (art/tools/map-icons.ts), including the generic job spot. */
 export const MAP_GLYPHS: Readonly<Record<MapSymbol | "hostileStation", string | null>> = {
   beacon: "map-beacon",
   destination: "map-destination",
   growers: "map-growers",
   holodisk: "map-holodisk",
   hostileStation: "map-hostile-station",
-  job: null,
+  job: "map-job",
   nebula: "map-nebula",
   salvagers: "map-salvagers",
   station: "map-station",
