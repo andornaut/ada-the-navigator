@@ -2823,6 +2823,10 @@ try {
   );
   // Each quest line's 24 disc centres in the 28 chip slot from the face's inset, so its label
   // starts on the text column (art/map.md "Quests modal").
+  const { QUEST_ICON } = await import(new URL("../src/ui/layout/questsScreen.ts", import.meta.url));
+  const questLayout = mapLayout.MAP_SCREEN.quests;
+  const questIconLeft = questLayout.inset + (questLayout.chip - QUEST_ICON) / 2;
+  const questIconSpan = [questIconLeft, questIconLeft + QUEST_ICON];
   const questColumns = {};
   async function checkQuestColumn(insets, view, name) {
     const lines = await page.evaluate(() => {
@@ -2848,10 +2852,10 @@ try {
       lines.length > 0 &&
         lines.every(
           ({ icon, text }) =>
-            Math.abs(text - mapLayout.MAP_SCREEN.quests.textColumn) <= 0.5 &&
-            (icon === null || near(icon, [18, 42], 0.5)),
+            Math.abs(text - questLayout.textColumn) <= 0.5 &&
+            (icon === null || near(icon, questIconSpan, 0.5)),
         ),
-      `${name}: each quest line's disc spans 18 to 42 and its label starts at 50: ${JSON.stringify(
+      `${name}: quest disc spans ${questIconSpan} and text starts at ${questLayout.textColumn}: ${JSON.stringify(
         lines,
       )}`,
     );
@@ -2863,8 +2867,8 @@ try {
   save("map-header-proof.json", mapHeaders);
   save("quest-column-proof.json", questColumns);
   events.checks.push(
-    "Each quest line's disc centres in its 28 chip slot and its label starts on the 50 text " +
-      "column at 1280x720 and at 720x360 with phone insets",
+    "Each quest line's disc centres in its chip slot and its label starts on the text column " +
+      "at 1280x720 and at 720x360 with phone insets",
   );
   events.checks.push(
     "The map header starts SPACING.gap right of the pause press area and stays in its cap at " +
