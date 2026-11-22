@@ -16,6 +16,7 @@ import {
 } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -813,6 +814,7 @@ function constructedStation(
   beforeCreate?.(parent);
   const context = createContext({
     ...stationSource,
+    CONFIRM_ITEM,
     CONTENT,
     EXCHANGE_COPY,
     HTMLElement: Node,
@@ -1031,7 +1033,8 @@ function stationList(kind: "shop" | "jobs") {
   const f = constructedStation();
   f.station.setOpen(true);
   f.activate(f.action(kind === "shop" ? "open-shop" : "open-jobs"));
-  const list = f.parent.querySelector(kind === "shop" ? ".ada-station-panes" : ".ada-job-list")!;
+  const card = f.native.get(kind === "shop" ? "shop-back" : "jobs-back")!;
+  const list = card.body.querySelector(kind === "shop" ? ".ada-station-panes" : ".ada-job-list")!;
   const row = list.querySelector(kind === "shop" ? '[data-item="item-0"]' : '[data-job="job-1"]')!;
   const action = resolveAdaHoldAction(
     f.parent as unknown as HTMLElement,
