@@ -53,7 +53,7 @@ and `-b` for every station in Andromeda, with the trading station's shop and
 blink. Ada enters it by Use, so it has no `dock`. Entries carry `station`
 `settlers`.
 
-A raised blue concourse and coral and blue pressure modules sit on a
+A raised blue concourse and lilac and blue pressure modules sit on a
 cross-truss with paired, ribbed dark-blue solar leaves at each end. An offset
 laboratory sits behind the right wing under an antenna gantry. The pressure
 complex extends to starboard of the station pivot, leaving clearance for the
@@ -70,7 +70,7 @@ Ada enters the settlements by Use. Entries use the
 `settlement` and `variant` naming the design, `hamlet` or `lamphouse`. Both
 use the station's fixed orientation, blink timing and reduced-motion frame.
 
-- Hamlet is a compact cluster of coral and blue pressure modules on a utility
+- Hamlet is a compact cluster of lilac and blue pressure modules on a utility
   spine with one solar bank.
 - Lamp House is a tall relay satellite with an elevated blue antenna array and
   offset solar leaves.

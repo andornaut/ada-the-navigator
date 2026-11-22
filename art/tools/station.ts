@@ -26,7 +26,7 @@ const armour = { top: "#829fb7", side: "#43596f" };
 const frameMetal = { top: "#afc4d0", side: "#647b90" };
 const hull = { top: "#c9d5dc", side: "#738d9d" };
 const dark = { top: "#52677f", side: "#343f55" };
-const copper = { top: "#ca916f", side: "#895d58" };
+const jointMetal = { top: "#a8a2ba", side: "#625e77" };
 const cyan = { top: "#7fd6cc", side: "#4fa59d" };
 const angle = (degrees: number) => (degrees * Math.PI) / 180;
 
@@ -48,7 +48,7 @@ function habitat(start: number, end: number, raised: boolean): Part[][] {
     const joint = segment === start || segment + 15 === end;
     const parts: Part[] = [
       { plan, z0: floor - 3, z1: floor, ...dark },
-      { plan, z0: floor, z1: floor + 8, ...(joint ? copper : armour) },
+      { plan, z0: floor, z1: floor + 8, ...(joint ? jointMetal : armour) },
       ...wallWindows((x, y) => x + y > 0.45, floor + 2, floor + 5, 2, 2, plan),
       { plan: arc(segment + 1, segment + 14, 50, 57), z0: floor + 8, z1: floor + 9, ...frameMetal },
       {
@@ -135,7 +135,7 @@ function model(lit: boolean): Part[][] {
     ]);
     groups.push([
       { plan, z0: low, z1: high - 5, ...armour },
-      { plan: orientedBox(x, y, a, 12, 3), z0: high - 5, z1: high, ...copper },
+      { plan: orientedBox(x, y, a, 12, 3), z0: high - 5, z1: high, ...jointMetal },
       { plan: orientedBox(x, y, a, 9, 1.5), z0: high, z1: high + 1.2, ...cyan },
     ]);
   }
@@ -156,7 +156,7 @@ function model(lit: boolean): Part[][] {
       plan: orientedBox(...at(317, 74), angle(317), 4, 12),
       z0: 14,
       z1: 15,
-      ...copper,
+      ...jointMetal,
     },
   ]);
 
@@ -173,7 +173,7 @@ function model(lit: boolean): Part[][] {
     { plan: module, z0: 2, z1: 10, ...dark },
     { plan: module, z0: 10, z1: 16, ...hull },
     ...wallWindows(facing, 12, 14.5, 2, 2.6, module, lit ? warm : creamSide),
-    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...copper },
+    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...jointMetal },
   ]);
 
   return groups;

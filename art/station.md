@@ -15,7 +15,7 @@
 ## Design
 
 A blue-steel orbital station with two offset habitat arcs. The gaps show the
-structural ribs connecting the arcs to the hexagonal command core. Copper
+structural ribs connecting the arcs to the hexagonal command core. Violet-gray
 radiator pylons break the skyline and cyan panels mark their ends. Dark
 radiator runs and raised clamps sit along the habitat arcs. A utility module
 sits outboard on a narrow truss.

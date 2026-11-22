@@ -356,17 +356,17 @@ function beacon(frame: keyof typeof ARCS): string {
   const radius = ARCS[frame];
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${BEACON.displayWidth}" height="${BEACON.displayHeight}" viewBox="0 0 ${BEACON.width} ${BEACON.height}">`,
-    `  <path d="M8 13.5h32v3H8z" fill="#b6c4df" stroke="#303a51" stroke-width="1" />`,
-    `  <path d="M11 13.8l2 2.4 2-2.4 2 2.4 2-2.4m18 0-2 2.4-2-2.4-2 2.4-2-2.4" fill="none" stroke="#6c6b86" stroke-width=".65" />`,
+    `  <path d="M5.5 13.5h37v3h-37z" fill="#b6c4df" stroke="#303a51" stroke-width="1" />`,
+    `  <path d="M7.5 13.8l2 2.4 2-2.4 2 2.4 2-2.4 2 2.4 2-2.4m21 0-2 2.4-2-2.4-2 2.4-2-2.4-2 2.4-2-2.4" fill="none" stroke="#4f5c79" stroke-width=".8" />`,
     ...[false, true].map(
       (mirror) => `  <g${mirror ? ' transform="translate(48 0) scale(-1 1)"' : ""}>
-    <path d="M1 9.5 3.5 7H9l1.5 2.5v11L8 23H3.5L1 20.5z" fill="${PANEL_FACE}" stroke="#bdc7dc" />
-    <path d="M4 8v14m3-14.5v15M1.5 12h8.5m-8.5 5H10" fill="none" stroke="${PANEL_GRID}" stroke-width=".7" />
-    <path d="M1.5 10 4 7.5h4.5" fill="none" stroke="#eef3fb" stroke-width=".8" />
+    <path d="M1 9.5 3.5 7H6l1.5 2.5v11L5.5 23h-2L1 20.5z" fill="${PANEL_FACE}" stroke="#bdc7dc" />
+    <path d="M4 8v14M1.5 12H7m-5.5 5H7" fill="none" stroke="${PANEL_GRID}" stroke-width=".7" />
+    <path d="M1.5 10 4 7.5h1.5" fill="none" stroke="#eef3fb" stroke-width=".8" />
   </g>`,
     ),
-    `  <path d="M19 12.5 22 9.5h4l3 3v5l-3 3h-4l-3-3z" fill="#c78564" stroke="#5c4a61" />`,
-    `  <path d="M20 12.5 23 10h3l2 2.5-5 2.5z" fill="#efb88c" />`,
+    `  <path d="M19 12.5 22 9.5h4l3 3v5l-3 3h-4l-3-3z" fill="#ad7965" stroke="#5c4a61" />`,
+    `  <path d="M20 12.5 23 10h3l2 2.5-5 2.5z" fill="#d6a28c" />`,
     '  <path d="M21 17.5h1.5m3 0H27" fill="none" stroke="#ffe9b8" stroke-width=".8" />',
     `  <circle cx="${lx}" cy="${ly}" r="2.4" fill="#5a647d" />`,
     `  <circle cx="${lx}" cy="${ly}" r="1.35" fill="${WHITE}" />`,

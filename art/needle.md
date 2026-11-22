@@ -41,7 +41,8 @@ open Needle's manifest.
   and rose fittings. A slotted thermal blade sweeps out to the left above
   the berth. An offset blue beacon rises from the upper deck.
 - A diagonal steel brace suspends an offset service spar below the habitat,
-  with open space between the spar and upper hull.
+  with open space between the spar and upper hull. The lower collars taper
+  into the spine behind the original mouth faces.
 - The two story-craft mouths sit flush with the tapered ends of the service
   spine, facing outward on the world plane. Ada enters by Use. The station
   has a fixed orientation.

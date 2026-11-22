@@ -153,7 +153,7 @@ function radiatorShoulders(repaired: boolean): Face[] {
         color,
         plan.map(([x, y]) => [hubDesignPivot.x + side * x, y]),
       );
-    const rib = repaired ? "#a6a488" : "#837d6b";
+    const rib = repaired ? "#a5b8b2" : "#737f88";
     return [
       plate("#303c49", [
         [68, 100],
@@ -227,7 +227,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [52, 158],
       [24, 170],
     ]),
-    face("#8a614b", [
+    face("#506b73", [
       [165, 110],
       [186, 121],
       [212, 135],
@@ -236,7 +236,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [189, 148],
       [168, 144],
     ]),
-    face("#b88354", [
+    face("#779b9a", [
       [177, 121],
       [191, 128],
       [211, 141],
@@ -445,7 +445,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [121, 142],
       [108, 149],
     ]),
-    face("#ac7954", [
+    face("#6c657f", [
       [160, 51],
       [169, 59],
       [183, 85],
@@ -453,7 +453,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [171, 77],
       [166, 66],
     ]),
-    face("#d0a06c", [
+    face("#9c93ad", [
       [176, 96],
       [182, 93],
       [182, 101],
@@ -576,7 +576,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
             [89, 109],
             [84, 110],
           ]),
-          face("#90674f", [
+          face("#625c74", [
             [96, 112],
             [105, 108],
             [103, 114],
@@ -600,7 +600,7 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
             [154, 52],
             [148, 52],
           ]),
-          face("#97694f", [
+          face("#6b6179", [
             [145, 47],
             [152, 47],
             [159, 53],

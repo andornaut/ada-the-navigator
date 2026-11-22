@@ -29,7 +29,7 @@ The three sector one cooperating outposts: growers, a workshop and salvagers.
 | Outpost   | Shapes                                                                   | Colours                                                                                                                                   |
 | --------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Growers   | Seven hydroponic modules around a round deck and three habitat domes     | Steel `#637985`, leaf `#9ccc5a`, glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`)                  |
-| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, ochre `#df9b60`                                                                                    |
+| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, mint `#9fcbc1` and blue-green `#527c83`                                                            |
 | Salvagers | Patched hull, tank, scrap stacks, a turret grabber with an electromagnet | Steel `#b8bfc9`, slate `#8d9bb0`, olive `#aaa883`, rust `#b49a7c`, dark `#6e7482`; periwinkle magnet and beacon `#8f9cf0` (dim `#4a5080`) |
 
 Growers' leaf green stays clearly yellower and darker than the

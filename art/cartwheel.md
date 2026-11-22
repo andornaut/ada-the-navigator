@@ -48,7 +48,7 @@
 ## Hub
 
 An asymmetrical armored installation with faceted teal plates, slate ribs and
-copper bracing. Slotted heat exchangers sit high on its shoulders. A solid
+blue-green and violet-gray bracing. Slotted heat exchangers sit high on its shoulders. A solid
 forward keel frames the main body. Two recessed
 side berths serve the story craft. Ada enters the hub by Use.
 

@@ -198,9 +198,12 @@ function drawStation(rotation: number): Face[] {
         : [shell];
     }),
   );
-  const flanks = fins.map((fin) =>
+  const flanks = fins.map((fin, index) =>
     loft(fin, 8, (band, facet, points) => {
       const shell = tinted(band === 2 && facet < 5 ? ARM : FIN, points);
+      if (index === 1 && band === 0 && facet === 2) {
+        return [shell, ...habitationLights(points)];
+      }
       return facet === 2 && (band === 1 || band === 3)
         ? [shell, inlay(points, "#9ddbcc")]
         : [shell];

@@ -115,7 +115,7 @@ function float(n: number, r: number, height: number, cx = 0, cy = 0): Part[] {
 const alloy = ["#d5e1eb", "#758ba8"] as const;
 const truss = ["#8096af", "#425775"] as const;
 const ice = ["#7cc5e5", "#3d719b"] as const;
-const coral = ["#ef9f8e", "#a85b60"] as const;
+const lilac = ["#c1a5d5", "#765c90"] as const;
 const cells = ["#335c96", "#243f67"] as const;
 const orbitalBox = (distance: number, across: number, length: number, width: number) =>
   orientedBox(...along(DOCK, distance, across), DOCK, length, width);
@@ -188,16 +188,16 @@ export function station(lit: boolean): Part[][] {
     [
       part(orbitalBox(-23, -20, 8, 29), 6, 11, ...truss),
       part(orbitalBox(-25, -17, 8, 16), 17, 21, ...alloy),
-      ...habitat(-23, -30, 22, 19, 11, 13, coral),
+      ...habitat(-23, -30, 22, 19, 11, 13, lilac),
       part(orbitalBox(-25, -36, 3, 3), 26, 37, ...truss),
       part(orbitalBox(-25, -24, 3, 3), 26, 37, ...truss),
       part(orbitalBox(-25, -30, 4, 17), 36, 39, ...alloy),
       part(orbitalBox(-23, -30, 1, 9), 38, 43, ...ice),
     ],
     habitat(-19, 0, 32, 25, 14, 20, ice),
-    habitat(18, 22, 29, 24, 8, 14, coral),
+    habitat(18, 22, 29, 24, 8, 14, lilac),
     habitat(21, -23, 37, 24, 8, 17, ice),
-    habitat(29, 0, 24, 22, 10, 10, coral),
+    habitat(29, 0, 24, 22, 10, 10, lilac),
   ];
   for (const side of [-1, 1]) {
     const across = side * 54;
@@ -337,14 +337,14 @@ export function courierSchool(lit: boolean): Part[][] {
 export const HAMLET_DOCK = { face: 34, mouth: 18, collar: 26, height: 10 } as const;
 export const LAMPHOUSE_DOCK = { face: 30, mouth: 16, collar: 24, height: 10 } as const;
 
-// Hamlet is a compact habitation cluster with a coral utility spine and a single solar bank.
+// Hamlet is a compact habitation cluster with a lilac utility spine and a single solar bank.
 export function hamlet(lit: boolean): Part[][] {
   const { collar, face, height } = HAMLET_DOCK;
   return [
     [part(orbitalBox(0, 0, 8, 52), 1, 5, ...truss), part(orbitalBox(5, 0, 50, 13), 1, 6, ...alloy)],
     solarLeaf(-10, -20, 20, 16, 5),
-    habitat(0, 2, 24, 17, 6, 14, coral),
-    habitat(4, 17, 22, 18, 5, 11, coral),
+    habitat(0, 2, 24, 17, 6, 14, lilac),
+    habitat(4, 17, 22, 18, 5, 11, lilac),
     habitat(10, -14, 16, 15, 5, 9, ice),
     [
       part(orbitalBox(-6, 21, 10, 3), 5, 7, ...alloy),
@@ -352,7 +352,7 @@ export function hamlet(lit: boolean): Part[][] {
     ],
     [
       ...closedCollar(lit, face, collar, ...alloy, height),
-      part(orbitalBox(face - 4, 0, 6, 15), height + 4, height + 6, ...coral),
+      part(orbitalBox(face - 4, 0, 6, 15), height + 4, height + 6, ...lilac),
     ],
   ];
 }
@@ -377,7 +377,7 @@ export function lampHouse(lit: boolean): Part[][] {
     ],
     [
       ...closedCollar(lit, face, collar, ...alloy, height),
-      part(orbitalBox(face - 4, 0, 6, 11), height + 4, height + 6, ...coral),
+      part(orbitalBox(face - 4, 0, 6, 11), height + 4, height + 6, ...lilac),
     ],
   ];
 }

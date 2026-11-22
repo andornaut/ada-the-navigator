@@ -7,7 +7,7 @@ import { writeProjects } from "./projects.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 
 type Plan = readonly (readonly [number, number])[];
-type Part = { plan: Plan; z0: number; z1: number; top: string; side: string };
+type Part = { plan: Plan; cap?: Plan; z0: number; z1: number; top: string; side: string };
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}outposts/`;
@@ -240,7 +240,7 @@ function growers(lit: boolean): Part[][] {
 const yellowDark = "#8c7428";
 const rigPlate = { top: "#899fbd", side: "#43546f" };
 const rigDark = { top: "#5b718d", side: "#323d57" };
-const brass = { top: "#df9b60", side: "#986245" };
+const coolingMetal = { top: "#9fcbc1", side: "#527c83" };
 const WORKSHOP_FACE = 44;
 const WORKSHOP_PIVOT = 20;
 
@@ -274,6 +274,7 @@ function manipulator(
   tip: readonly [number, number],
   height: number,
   lit: boolean,
+  taper = 1,
 ): Part[] {
   const [x, y] = base;
   const [ex, ey] = elbow;
@@ -281,12 +282,18 @@ function manipulator(
   const lamp = lit ? warm : yellowDark;
   return [
     { plan: ngon(8, 9, x, y), z0: 1, z1: 11, ...rigDark },
-    { plan: ngon(6, 6, x, y), z0: 11, z1: height, ...rigPlate },
-    armLink(base, elbow, height - 6, height, 7, brass),
+    {
+      plan: ngon(6, 6, x, y),
+      cap: ngon(6, 6 * taper, x, y),
+      z0: 11,
+      z1: height,
+      ...rigPlate,
+    },
+    armLink(base, elbow, height - 6, height, 7, coolingMetal),
     { plan: ngon(8, 5, ex, ey), z0: height - 10, z1: height + 2, ...rigDark },
     armLink(elbow, tip, height - 10, height - 5, 5, rigPlate),
-    { plan: ngon(8, 2.8, ex, ey), z0: height + 2, z1: height + 2.8, ...brass },
-    { plan: ngon(6, 4, tx, ty), z0: height - 14, z1: height - 5, ...brass },
+    { plan: ngon(8, 2.8, ex, ey), z0: height + 2, z1: height + 2.8, ...coolingMetal },
+    { plan: ngon(6, 4, tx, ty), z0: height - 14, z1: height - 5, ...coolingMetal },
     {
       plan: ngon(4, 2.1, tx, ty),
       z0: height - 16,
@@ -312,7 +319,7 @@ function workshop(lit: boolean): Part[][] {
       armLink(starboard, core, 2, 9, 8, rigPlate),
     ],
     [
-      { plan: ngon(8, 11, ...stern), z0: 0, z1: 17, ...brass },
+      { plan: ngon(8, 11, ...stern), z0: 0, z1: 17, ...coolingMetal },
       { plan: ngon(6, 8, ...stern), z0: 17, z1: 21, ...rigPlate },
     ],
     [
@@ -322,10 +329,10 @@ function workshop(lit: boolean): Part[][] {
     ],
     [
       armLink(core, tank, 4, 8, 5, rigDark),
-      { plan: ngon(8, 6, ...tank), z0: 3, z1: 14, ...brass },
+      { plan: ngon(8, 6, ...tank), z0: 3, z1: 14, ...coolingMetal },
       { plan: ngon(8, 4.5, ...tank), z0: 14, z1: 16, ...rigPlate },
     ],
-    manipulator(port, at(-8, -25), at(2, -13), 49, lit),
+    manipulator(port, at(-8, -25), at(2, -13), 49, lit, 0.72),
     manipulator(starboard, at(-12, 24), at(2, 12), 41, lit),
   ];
   return groups;
@@ -564,13 +571,18 @@ const SALVAGE_BEACONS = [
 // Visible sides in plan order, then the top.
 function faces(part: Part): { color: string; points: Point[] }[] {
   const top = (plan: Plan) => plan.map(([x, y]): Point => [x, y, part.z1]);
-  const plan = facesViewer(top(part.plan)) ? part.plan : part.plan.toReversed();
+  const forward = facesViewer(top(part.plan));
+  const plan = forward ? part.plan : part.plan.toReversed();
+  const cap = part.cap ? (forward ? part.cap : part.cap.toReversed()) : plan;
   const result: { color: string; points: Point[] }[] = [];
   for (const [i, a] of plan.entries()) {
-    const b = plan[(i + 1) % plan.length]!;
+    const next = (i + 1) % plan.length;
+    const b = plan[next]!;
+    const [ax, ay] = cap[i]!;
+    const [bx, by] = cap[next]!;
     const points: Point[] = [
-      [b[0], b[1], part.z1],
-      [a[0], a[1], part.z1],
+      [bx, by, part.z1],
+      [ax, ay, part.z1],
       [a[0], a[1], part.z0],
       [b[0], b[1], part.z0],
     ];
@@ -578,7 +590,7 @@ function faces(part: Part): { color: string; points: Point[] }[] {
       result.push({ color: part.side, points });
     }
   }
-  result.push({ color: part.top, points: top(plan) });
+  result.push({ color: part.top, points: top(cap) });
   return result;
 }
 

@@ -73,8 +73,8 @@ apart and tilts, with its fin; three debris flakes float by.
 
 ### Beacon
 
-A horizontal satellite with a white receiver in a faceted copper bus. Two
-clipped-corner navy solar wings are set apart from the bus by exposed trusses. Sky-blue gridlines
+A horizontal satellite with a white receiver in a faceted muted-copper bus. Two
+clipped-corner navy solar arrays sit at the ends of a long exposed lattice. Sky-blue gridlines
 separate the cells. Lavender signal arcs mark the receiver.
 
 The SVG uses a 48 x 30 view box and displays at 108 x 67.5 logical px, centred
