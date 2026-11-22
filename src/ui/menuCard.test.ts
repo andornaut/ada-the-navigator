@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { units } from "./layout/css.ts";
+import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { enterPressView, rootPressGuard } from "./pressScope.ts";
 
 const fixture = vi.hoisted(() => {
@@ -34,6 +36,11 @@ const fixture = vi.hoisted(() => {
     }
     nodeType = 1;
     readonly childNodes: Node[] = [];
+    clientHeight = 0;
+    scrollHeight = 0;
+    get childElementCount(): number {
+      return this.children.length;
+    }
     private data = "";
     get children(): Node[] {
       return this.childNodes.filter((node) => node.nodeType === 1);
@@ -87,7 +94,12 @@ const fixture = vi.hoisted(() => {
     };
     dataset: Record<string, string> = {};
     readonly attributes = new Map<string, string>();
-    style = { getPropertyValue: () => "", removeProperty: vi.fn(), setProperty: vi.fn() };
+    style = {
+      getPropertyValue: () => "",
+      removeProperty: vi.fn(),
+      rowGap: "",
+      setProperty: vi.fn(),
+    };
     hidden = false;
     focus = vi.fn();
     setAttribute(name: string, value: string) {
@@ -238,6 +250,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.replaceChildren();
+  fixture.card.body.clientHeight = fixture.card.body.scrollHeight = 0;
+  fixture.card.body.style.rowGap = "";
   fixture.requests.length = 0;
   fixture.corruptFactory = false;
 });
@@ -371,6 +385,28 @@ describe("production Menu consumer", () => {
       expect(origin.focus).toHaveBeenCalledOnce();
     },
   );
+  it("fits all five room actions using gaps and restores ordinary spacing when they fit", () => {
+    const { doc, menu, rows } = setup();
+    const { body } = fixture.card;
+    body.scrollHeight = 286;
+    body.clientHeight = 265;
+    menu.setContext("nonplay");
+    menu.open();
+    const stack = body.children[0]!;
+    expect(rows()).toHaveLength(5);
+    expect(stack.style.rowGap).toBe(units(4));
+    expect(body.style.rowGap).toBe(units(3));
+    body.clientHeight = 286;
+    doc.defaultView.dispatchEvent(new Event(VIEW_SCALE_EVENT));
+    expect(stack.style.rowGap).toBe("");
+    expect(body.style.rowGap).toBe("");
+    menu.dispose();
+    body.clientHeight = 265;
+    doc.defaultView.dispatchEvent(new Event("resize"));
+    expect(stack.style.rowGap).toBe("");
+    expect(body.style.rowGap).toBe("");
+  });
+
   it("returns from a child to the same Menu action without invoking navigation or story actions", () => {
     const { menu, onAction, rows } = setup();
     menu.setContext("nonplay");
