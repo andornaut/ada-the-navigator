@@ -555,8 +555,8 @@ export function buildScene(scene: UiContext): void {
         },
         {
           id: "fpsCounter",
+          isOn: () => scene.fpsCounter.shown(),
           label: CHEAT_COPY.fpsCounter,
-          on: () => scene.fpsCounter.shown(),
           set: (on) => scene.fpsCounter.set(on),
         },
         {

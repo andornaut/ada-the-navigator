@@ -34,7 +34,7 @@ export interface CheatLabels {
 export interface CheatSwitch {
   readonly id: string;
   readonly label: string;
-  readonly on: () => boolean;
+  readonly isOn: () => boolean;
   readonly set: (on: boolean) => void;
 }
 
@@ -197,8 +197,8 @@ export function createCheats(
             stack.append(row.lastElementChild!, state);
             row.append(stack);
             const paint = () => {
-              show(toggle.on());
-              state.textContent = toggle.on()
+              show(toggle.isOn());
+              state.textContent = toggle.isOn()
                 ? SETTINGS_STATE_LABELS.on
                 : SETTINGS_STATE_LABELS.off;
             };
@@ -207,7 +207,7 @@ export function createCheats(
             const binding = bindRow(
               row,
               () => {
-                toggle.set(!toggle.on());
+                toggle.set(!toggle.isOn());
                 paint();
               },
               () => true,

@@ -312,7 +312,7 @@ it("lists one scrolling column in order, runs each press once and disables an ex
   const set = vi.fn((on: boolean) => {
     fps = on;
   });
-  const f = setup([unlock, add, { id: "fps", label: "FPS counter", on: () => fps, set }, reset]);
+  const f = setup([unlock, add, { id: "fps", isOn: () => fps, label: "FPS counter", set }, reset]);
   const nodes = descendants(f.root);
   const list = nodes.find((node) => node.className === "ada-cheat-items")!;
   expect(list.dataset.scroll).toBe("true");
