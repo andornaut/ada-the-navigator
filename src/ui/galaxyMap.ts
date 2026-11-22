@@ -5,7 +5,11 @@ import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { normalJetsInFront, normalJetTailRegions, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import {
   type GalaxyPanelGroup,
   type GalaxyPanelLeaf,
@@ -625,27 +629,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     number,
     shot,
   };
-  const panelLayout = mountLayout<GalaxyPanelSchema>(
-    {
-      components: {
-        group: {
-          create: (name) => ({
-            dispose() {},
-            element: panelGroups[name],
-            slots: { content: panelGroups[name] },
-            update() {},
-          }),
-          slots: ["content"],
-        },
-        leaf: {
-          create: (name) => ({ dispose() {}, element: panelLeaves[name], slots: {}, update() {} }),
-          slots: [],
-        },
-      },
-      host: root,
-    },
-    galaxyPanelTree(),
-  );
 
   let view: GalaxyMapView | null = null;
   let art: GalaxyMapArt | null = null;
@@ -1027,6 +1010,52 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const next = at < 0 ? (event.shiftKey ? order.length - 1 : 0) : at + step;
     focusTarget(order[(next + order.length) % order.length]!);
   });
+  const releaseActions = () => {
+    for (const binding of bindings) {
+      binding.dispose();
+    }
+    for (const leave of leaveFocus) {
+      leave();
+    }
+  };
+  let panelLayout: ReturnType<typeof mountLayout<GalaxyPanelSchema>> | undefined;
+  try {
+    // The native chart already contains its markers. The Jump leaf joins the screen at mount.
+    assertAdaActionMetadata(screen);
+    assertAdaActionMetadata(jump);
+    panelLayout = mountLayout<GalaxyPanelSchema>(
+      {
+        components: {
+          group: {
+            create: (name) => ({
+              dispose() {},
+              element: panelGroups[name],
+              slots: { content: panelGroups[name] },
+              update() {},
+            }),
+            slots: ["content"],
+          },
+          leaf: {
+            create: (name) => ({
+              dispose() {},
+              element: panelLeaves[name],
+              slots: {},
+              update() {},
+            }),
+            slots: [],
+          },
+        },
+        host: root,
+      },
+      galaxyPanelTree(),
+    );
+    assertAdaActionBindings(screen);
+  } catch (error) {
+    releaseActions();
+    panelLayout?.dispose();
+    screen.remove();
+    throw error;
+  }
   return {
     /** The warp ship now draws over Ada's, which hides until the map closes. */
     coverShip(): void {
@@ -1034,12 +1063,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     },
     dispose(): void {
       disposed = true;
-      for (const binding of bindings) {
-        binding.dispose();
-      }
-      for (const leave of leaveFocus) {
-        leave();
-      }
+      releaseActions();
       stop();
       panelLayout.dispose();
     },

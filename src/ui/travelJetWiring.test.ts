@@ -7,6 +7,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
 import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
@@ -40,7 +41,7 @@ const sheet: SheetArt = {
   url: "sheet.svg",
 };
 
-function dom() {
+function dom(hasActionRoot = true) {
   let request = 0;
   const callbacks = new Map<number, FrameRequestCallback>();
   const nodes: ElementFake[] = [];
@@ -64,7 +65,9 @@ function dom() {
     stroke() {},
   };
   class ElementFake {
-    readonly isConnected = true;
+    get isConnected(): boolean {
+      return this.tag === "host" || (this.parentNode?.isConnected ?? false);
+    }
     get parentElement() {
       return this.parentNode;
     }
@@ -165,6 +168,18 @@ function dom() {
       }
       return null;
     }
+    matches(selector: string): boolean {
+      return selector.split(",").some((part) => {
+        const rule = part.trim();
+        return rule === this.tag || (rule === "[data-action]" && "action" in this.dataset);
+      });
+    }
+    querySelectorAll(selector: string): ElementFake[] {
+      return this.children.flatMap((child) => [
+        ...(child.matches(selector) ? [child] : []),
+        ...child.querySelectorAll(selector),
+      ]);
+    }
     getContext() {
       return context;
     }
@@ -212,9 +227,13 @@ function dom() {
   });
   vi.stubGlobal("cancelAnimationFrame", (id: number) => callbacks.delete(id));
   vi.spyOn(performance, "now").mockReturnValue(0);
+  const host = new ElementFake("host");
+  if (hasActionRoot) {
+    fixtureActionRoot(host);
+  }
   return {
     callbacks,
-    host: fixtureActionRoot(new ElementFake("host")) as unknown as HTMLElement,
+    host: host as unknown as HTMLElement,
     nodes,
     tick(now: number) {
       const current = [...callbacks.values()];
@@ -423,6 +442,103 @@ function mapView(flight: GalaxyMapView["flight"]): GalaxyMapView {
     stay: false,
   };
 }
+
+function galaxyConstructionOptions(): Parameters<typeof createGalaxyMap>[1] {
+  return {
+    labels: {
+      ...destinationLabels,
+      development: "",
+      home: "Home",
+      jump: "Jump",
+      locked: "Locked",
+      lockedAction: "Progress the story to unlock",
+      number: "{number}",
+      stay: "Stay",
+    },
+    onClose: vi.fn(),
+    onEarth: vi.fn(),
+    onFlightEnd: vi.fn(),
+    onJump: vi.fn(),
+    onStep: vi.fn(),
+    onView: vi.fn(),
+    reducedMotion: () => true,
+  };
+}
+
+it.each(["1", "earth", "galaxy-jump"])(
+  "rejects unbound Galaxy Map control %s before the hidden screen is mounted",
+  (id) => {
+    const fixture = dom();
+    const options = galaxyConstructionOptions();
+    const mount = vi.spyOn(fixture.host, "insertBefore");
+    const bind = actionBinding.bindAdaAction;
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
+      (element.dataset.action ?? element.dataset.position) === id
+        ? { activate: () => false, dispose() {}, update() {} }
+        : bind(action, element),
+    );
+
+    expect(() => createGalaxyMap(fixture.host, options)).toThrow("no registered action binding");
+    expect(mount).not.toHaveBeenCalled();
+    expect(fixture.host.children.length).toBe(0);
+    const actions = fixture.nodes.filter((node) => node.tag === "button");
+    expect(actions).toHaveLength(8);
+    for (const element of actions) {
+      expect(element.isConnected).toBe(false);
+      expect(element.listeners.get("click") ?? []).toEqual([]);
+      expect(element.listeners.get("focus") ?? []).toEqual([]);
+    }
+    expect(options.onView).not.toHaveBeenCalled();
+    expect(options.onJump).not.toHaveBeenCalled();
+    expect(options.onEarth).not.toHaveBeenCalled();
+  },
+);
+
+it("removes the hidden Galaxy Map if the mounted screen has no live action root", () => {
+  const fixture = dom(false);
+  const mount = vi.spyOn(fixture.host, "insertBefore");
+  expect(() => createGalaxyMap(fixture.host, galaxyConstructionOptions())).toThrow(
+    "no live action root",
+  );
+  expect(mount).toHaveBeenCalledOnce();
+  expect(fixture.host.children.length).toBe(0);
+  expect(fixture.nodes.find((node) => node.dataset.dialog === "galaxies")?.hidden).toBe(true);
+});
+
+it("checks all Galaxy Map controls in the attached hidden screen without reading runtime policy", () => {
+  const fixture = dom();
+  const audit = vi.spyOn(actionBinding, "assertAdaActionBindings");
+  const bind = actionBinding.bindAdaAction;
+  const policy = vi.fn(() => {
+    throw new Error("construction read runtime action policy");
+  });
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
+    bind({ ...action, click: { ...action.click, availability: policy }, current: policy }, element),
+  );
+  const map = createGalaxyMap(fixture.host, galaxyConstructionOptions());
+  try {
+    const screen = fixture.nodes.find((node) => node.dataset.dialog === "galaxies")!;
+    expect(screen.hidden).toBe(true);
+    expect(audit.mock.calls).toEqual([[screen]]);
+    const primary = screen
+      .querySelectorAll("button")
+      .find((node) => node.dataset.action === "galaxy-jump")!;
+    expect(screen.querySelectorAll("button")).toHaveLength(8);
+    const view = mapView(null);
+    map.show({
+      ...view,
+      galaxies: view.galaxies.map((galaxy) => ({ ...galaxy, unlocked: false })),
+    });
+    expect(primary.attributes.get("aria-disabled")).toBe("true");
+    map.jump();
+    map.show(null);
+    expect(primary.isConnected).toBe(true);
+    expect(audit).toHaveBeenCalledOnce();
+    expect(policy).not.toHaveBeenCalled();
+  } finally {
+    map.dispose();
+  }
+});
 
 it("draws route thrust below the painted hull and hides it under reduced motion", () => {
   const fixture = dom();
