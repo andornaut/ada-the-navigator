@@ -100,11 +100,13 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-footer [aria-current=page]{
   border-bottom-color:#ead4aa
 }
-.ada-controls .ada-station-panes{
+.ada-controls .ada-card-body > .ada-station-panes{
+  flex:1;
+  min-height:0;
   width:100%;
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  align-items:start;
+  align-items:stretch;
   gap:${units(SPACING.gap)}
 }
 .ada-controls .ada-station-panes h3{
@@ -115,13 +117,22 @@ export const STATION_STYLE = `
   box-sizing:border-box;
   max-width:100%
 }
+.ada-controls .ada-station-panes .ada-job-row{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  height:auto
+}
+.ada-controls .ada-station-panes .ada-job-row > .ada-shop-slot{
+  grid-column:2
+}
 .ada-controls .ada-station-projects{
   display:grid;
   gap:${units(SHOP_ROW.rowGap)};
   padding:${units(FOCUS_RING.outset)}
 }
 .ada-controls .ada-station-projects > .ada-shop-row{
-  width:100%
+  width:100%;
+  height:auto
 }
 
 .ada-controls .ada-dialogue-panel[data-dialog="station"] .ada-story-tab{

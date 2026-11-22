@@ -558,7 +558,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     group.replaceChildren(...chunks);
     parts.fit();
     const unit = readViewUnit(group);
-    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row")) {
+    for (const row of group.querySelectorAll<HTMLElement>(".ada-shop-row:not(.ada-job-row)")) {
       const name = row.querySelector<HTMLElement>(".ada-shop-name")!;
       row.style.height = units(shopRowHeight(frameSize(name).height / unit));
     }
@@ -570,7 +570,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       const others = children
         .filter((child) => child !== group)
         .reduce((total, child) => total + frameSize(child).height / unit, 0);
-      const end = parseFloat(getComputedStyle(parts.body, "::after").height) / unit;
+      const end = (parseFloat(getComputedStyle(parts.body, "::after").height) || 0) / unit;
       return (
         parts.body.clientHeight / unit -
         others -
