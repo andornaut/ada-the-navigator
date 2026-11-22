@@ -3,8 +3,9 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
-import { type Mood, type Speaker } from "../data/conversations.ts";
+import type { Mood, Speaker } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
+import { NOTICE_TIMING } from "../data/noticeTiming.ts";
 import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
 import {
   assertAdaActionBindings,
@@ -37,6 +38,7 @@ import { refuse } from "./refusal.ts";
 // panel and the name tab are one press area: a tap or click moves to the next line.
 
 export interface ConversationLineView {
+  readonly discoveryFadeEnd?: number;
   /** Seconds the line has shown. */
   readonly elapsed: number;
   /** Changes with each line. */
@@ -328,6 +330,15 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
           }
         }
         shownFrame = -1;
+      }
+      let opacity = "";
+      if (line?.discoveryFadeEnd !== undefined) {
+        const fade = (reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs) / 1000;
+        const remaining = line.discoveryFadeEnd - line.elapsed;
+        opacity = String(Math.min(1, Math.max(0, remaining / fade)));
+      }
+      if (root.style.opacity !== opacity) {
+        root.style.opacity = opacity;
       }
       const frame = line ? portraitFrame(reducedMotion, line) : -1;
       if (frame !== shownFrame) {

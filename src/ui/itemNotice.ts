@@ -1,5 +1,6 @@
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { HUD_ICON_BEARINGS } from "../data/hudIconBearings.ts";
+import { NOTICE_TIMING } from "../data/noticeTiming.ts";
 import { tierColour } from "../data/upgradeTiers.ts";
 import { weaponGlyphPath, weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
@@ -14,18 +15,7 @@ import { STATUS_COLOURS } from "./statusPill.ts";
 // Non-currency item gains name the actual item at the HUD's top centre, then fade in place.
 // Ammunition refills use the corresponding weapon's feedback instead of this queue.
 
-/** The notices' timing in ms (art/layout.md "Item notice"). */
-export const NOTICE_TIMING = {
-  appearMs: 180,
-  fadeMs: 300,
-  /** The next notice appears this long after the previous one fades. */
-  gap: 120,
-  holdMs: 1200,
-  /** A hold while another notice waits. */
-  holdWaitingMs: 600,
-  /** Under reduced motion: fade in, hold, fade out, in place. */
-  reducedFadeMs: 150,
-} as const;
+export { NOTICE_TIMING } from "../data/noticeTiming.ts";
 
 export type NoticeKind = "cargo" | "holodisk" | "shield" | "tow" | "upgrade" | "weapon";
 

@@ -1032,6 +1032,37 @@ it("requires a connected owning tree for native dialogue actions", () => {
 });
 
 describe("ambient App-root action generations", () => {
+  it("fades a discovery in place with flight time, keeping its press identity until expiry", () => {
+    const f = ambientFixture();
+    try {
+      const end = 3.3;
+      const line = { ...ambientLine, discoveryFadeEnd: end };
+      f.box.render({ ...line, elapsed: end - 0.31 }, true, false);
+      expect(f.button.style.opacity).toBe("1");
+      const binding = f.resolve()!;
+      f.down();
+      const fading = { ...line, elapsed: end - 0.075 };
+      f.box.render(fading, true, false);
+      expect(Number(f.button.style.opacity)).toBeCloseTo(0.25, 8);
+      vi.advanceTimersByTime(100);
+      f.box.render(fading, true, true);
+      expect(Number(f.button.style.opacity)).toBeCloseTo(0.5, 8);
+      expect(f.resolve()!.identity).toBe(binding.identity);
+      f.box.render(null, true, true);
+      expect(f.button.hidden).toBe(true);
+      f.box.render({ ...ambientLine, elapsed: end - 0.075, key: "warning:0" }, true, true);
+      expect(f.button.style.opacity).toBe("");
+      f.up();
+      f.click();
+      expect(f.dismiss).not.toHaveBeenCalled();
+      f.down();
+      f.up();
+      f.click();
+      expect(f.dismiss).toHaveBeenCalledOnce();
+    } finally {
+      f.dispose();
+    }
+  });
   it("holds once, retains the same line identity across visual refresh and suppresses release click", () => {
     const f = ambientFixture();
     try {

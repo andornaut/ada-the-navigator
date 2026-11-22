@@ -92,6 +92,20 @@ const drones = { dronesNear: true, inDanger: true };
 const quietHeard = ["quiet:1:lonely", "quiet:1:tail", "quiet:1:name"];
 
 describe("conversation schedule", () => {
+  it("dwells and fades a one-line discovery on the same flight clock", () => {
+    const mapped = CONVERSATIONS.find(({ trigger }) => trigger.kind === "mapped")!;
+    const single = { ...mapped, lines: mapped.lines.slice(0, 1) };
+    const talk = new ConversationDirector([single], [], inOrder);
+    talk.beginFlight(1);
+    run(talk, 0.05, { newlyMapped: ["test:charted"] });
+    expect(talk.showing?.discoveryFadeEnd).toBe(3.3);
+    run(talk, 3);
+    expect(talk.showing?.elapsed).toBeCloseTo(3, 8);
+    run(talk, 0.25);
+    expect(talk.showing?.elapsed).toBeCloseTo(3.25, 8);
+    run(talk, 0.05);
+    expect(talk.showing).toBeNull();
+  });
   it("shows each line for its time or until tapped, and the last tap closes", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, 0.05);
@@ -632,7 +646,8 @@ describe("drone engagements in flight", () => {
 
   it("call out a large pack once its drones engage Ada", () => {
     const model = engaged(1, "swarm", 6);
-    expect(model.conversation?.key).toBe("warning:drones:0");
+    expect(model.conversation).toMatchObject({ key: "warning:drones:0" });
+    expect(model.conversation?.discoveryFadeEnd).toBeUndefined();
   });
 
   it("play no broadcast in Sunflower before any holodisk", () => {
@@ -742,6 +757,56 @@ describe("conversations in the game", () => {
     }
     expect(model.conversation?.elapsed).toBeCloseTo(0.5, 9);
     expect(model.conversation?.key).toBe("lesson:move:0");
+  });
+
+  it.each([
+    ["destination", "reaction:mapped"],
+    ["station", "reaction:station"],
+  ] as const)("dwells on a newly mapped %s, then fades its last line", (kind, prefix) => {
+    const model = flying([...lessonsHeard, "arrival:1"]);
+    const flight = model.state.flight!;
+    const id = "test:new-place";
+    flight.objects.push({ ...flight.player, hp: 1, id, kind, radius: 30 });
+    model.step(0.05, idle);
+    expect(
+      kind === "station" ? model.state.progress[1].stations : model.state.progress[1].known,
+    ).toContain(id);
+    // Penny can sense other nearby points before the lower-priority discovery chatter.
+    for (let i = 0; i <= lineSteps(cooldownSeconds + 0.1); i++) {
+      const current = model.conversation;
+      if (current?.key.startsWith(prefix)) {
+        break;
+      }
+      if (current) {
+        model.dismissConversation();
+      }
+      model.step(0.05, idle);
+    }
+    const first = model.conversation!;
+    expect(first?.key).toBe(`${prefix}:0`);
+    expect(first.discoveryFadeEnd).toBeUndefined();
+    for (let i = 0; i < lineSteps(2.95); i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.conversation?.key).toBe(first.key);
+    model.step(0.05, idle);
+    const last = model.conversation!;
+    expect(last?.key).toBe(`${prefix}:1`);
+    expect(last.discoveryFadeEnd).toBe(3.3);
+    for (let i = 0; i < lineSteps(3.2); i++) {
+      model.step(0.05, idle);
+    }
+    const beforeCover = model.conversation!;
+    expect(beforeCover.elapsed).toBeCloseTo(3.2, 8);
+    model.state.dialogue = { choices: [], context: "test", text: "", title: "" };
+    model.step(0.05, idle);
+    expect(model.conversation).toBeNull();
+    model.state.dialogue = null;
+    expect(model.conversation).toEqual(beforeCover);
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe(last.key);
+    model.step(0.05, idle);
+    expect(model.conversation?.key).not.toBe(last.key);
   });
 
   it("carry a line's mood: Ada's happy reply to the Stardust lesson", () => {

@@ -22,6 +22,7 @@ import {
   SPEAKERS,
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
+import { NOTICE_TIMING } from "../data/noticeTiming.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
@@ -94,6 +95,7 @@ export interface ConversationEligibilityFacts {
 }
 
 export interface ShowingConversation {
+  readonly discoveryFadeEnd?: number;
   readonly conversation: Conversation;
   /** Seconds the current line has shown. */
   readonly elapsed: number;
@@ -101,6 +103,17 @@ export interface ShowingConversation {
   readonly instance: string;
   readonly line: ConversationLine;
   readonly lineIndex: number;
+}
+
+const DISCOVERY_DWELL_SECONDS = 3;
+const DISCOVERY_END_SECONDS = DISCOVERY_DWELL_SECONDS + NOTICE_TIMING.fadeMs / 1000;
+
+function discoveryLineTiming(conversation: Conversation, index: number) {
+  const { lines, trigger } = conversation;
+  if (trigger.kind !== "mapped" && trigger.kind !== "stationMapped") {
+    return undefined;
+  }
+  return index === lines.length - 1 ? DISCOVERY_END_SECONDS : DISCOVERY_DWELL_SECONDS;
 }
 
 /** Whether a request's trigger still holds in this step's facts. */
@@ -349,8 +362,10 @@ export class ConversationDirector {
       active.exposed = true;
       this.markSeen(active);
     }
+    const discoveryEnd = active && discoveryLineTiming(active.conversation, active.line);
     return active && line
       ? {
+          ...(discoveryEnd === DISCOVERY_END_SECONDS ? { discoveryFadeEnd: discoveryEnd } : {}),
           conversation: active.conversation,
           elapsed: active.elapsed,
           instance: active.instance,
@@ -562,8 +577,11 @@ export class ConversationDirector {
     }
     if (this.active) {
       this.active.elapsed += dt;
-      const shown = this.active.conversation.lines[this.active.line];
-      if (this.active.elapsed >= lineDuration(shown?.text ?? "") - EPSILON) {
+      const { conversation, line } = this.active;
+      const duration =
+        discoveryLineTiming(conversation, line) ??
+        lineDuration(conversation.lines[line]?.text ?? "");
+      if (this.active.elapsed >= duration - EPSILON) {
         this.nextLine();
       }
     } else {

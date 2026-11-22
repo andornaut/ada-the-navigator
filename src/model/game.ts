@@ -414,6 +414,8 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** The conversation line the box shows, with its speaker's name tab and portrait side. */
 export interface ConversationView {
+  /** Flight seconds at which the final discovery line finishes fading. */
+  readonly discoveryFadeEnd?: number;
   /** Seconds the line has shown, which times a speaking loop. */
   readonly elapsed: number;
   /** Changes with each line, so the box can restart its entrance. */
@@ -633,7 +635,9 @@ export class GameModel {
     }
     const { desktop, mood = "neutral", speaker, text } = showing.line;
     const name = speakerName(this.state.progress, speaker);
+    const { discoveryFadeEnd } = showing;
     return {
+      ...(discoveryFadeEnd === undefined ? {} : { discoveryFadeEnd }),
       ...(desktop === undefined ? {} : { desktop }),
       elapsed: showing.elapsed,
       key: `${showing.instance}:${showing.lineIndex}`,
