@@ -1,4 +1,5 @@
 import { BUTTON_SLICE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
+import { FOCUS_STYLE } from "../modal.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
@@ -69,6 +70,13 @@ export const QUESTS_SCREEN_STYLE = `
   cursor:pointer}
 .ada-controls .ada-quest-endpoint:disabled{opacity:1;
   cursor:default}
+.ada-controls .ada-quest-endpoint:focus-visible{${FOCUS_STYLE}
+}
+@media (forced-colors: active){
+  .ada-controls .ada-quest-endpoint:focus-visible{
+    outline-color:Highlight
+  }
+}
 .ada-controls .ada-quest-endpoint>span{min-width:0;
   overflow-wrap:anywhere}
 .ada-controls .ada-quest-endpoint small{display:block;
