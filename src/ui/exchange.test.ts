@@ -249,11 +249,14 @@ describe("immediate fixed Exchange actions", () => {
       "ore to Stardust",
       "Stardust to ore",
     ]);
-    for (const row of rows) {
-      const direction = row.children[1]!;
+    for (const [index, payment] of ["ore", "stardust"].entries()) {
+      const direction = rows[index]!.children[1]!;
       const arrow = direction.children[1]!;
       expect(direction.getAttribute("role")).toBe("img");
-      expect(direction.children.map((part) => part.tagName)).toEqual(["IMG", "SVG", "IMG"]);
+      expect(direction.children.map((part) => part.tagName)).toEqual(["IMG", "SVG"]);
+      const paymentIcon = direction.children[0] as unknown as HTMLImageElement;
+      expect(paymentIcon.src).toBe(`/art/ui/sprites/icon-${payment}-20.png`);
+      expect(paymentIcon.alt).toBe("");
       expect(arrow.getAttribute("aria-hidden")).toBe("true");
       expect(arrow.getAttribute("viewBox")).toBe(QUEST_ROUTE_ARROW.viewBox);
       expect(arrow.getAttribute("fill")).toBe("currentColor");
@@ -276,9 +279,9 @@ describe("immediate fixed Exchange actions", () => {
         );
         expect(action.children).toHaveLength(1);
         expect(action.children[0]!.tagName).toBe("IMG");
-        expect((action.children[0] as unknown as HTMLImageElement).src).toBe(
-          `/art/ui/sprites/icon-${resource}-20.png`,
-        );
+        const receivedIcon = action.children[0] as unknown as HTMLImageElement;
+        expect(receivedIcon.src).toBe(`/art/ui/sprites/icon-${resource}-20.png`);
+        expect(receivedIcon.alt).toBe("");
       }
     }
     expect(f.view.back()).toBe(false);

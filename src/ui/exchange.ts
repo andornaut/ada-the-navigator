@@ -193,7 +193,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
               path.setAttribute("d", d);
               arrow.append(path);
             }
-            direction.append(exchangeIcon(give), arrow, exchangeIcon(receive));
+            direction.append(exchangeIcon(give), arrow);
             row.append(heading, direction, controls);
             return { dispose() {}, element: row, slots: { content: controls }, update() {} };
           },
