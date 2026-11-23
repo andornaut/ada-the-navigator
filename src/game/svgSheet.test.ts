@@ -53,6 +53,29 @@ it("keeps the authored intrinsic dimensions and raw viewBox of an extracted part
   expect(member.getAttribute("id")).toBe(id);
 });
 
+it("extracts the exact named sibling while rejecting missing and duplicate alias members", () => {
+  recordExtractedAttributes();
+  const memberId = "enemy-retaliator-turret-intact-0";
+  const alias = { ...part, svgSheetMember: memberId };
+  const logical = frame({ ...authored, width: "120" });
+  const member = frame(authored, memberId);
+  const source = vectorSheetSource(root([logical, member]), path, alias);
+  expect(JSON.parse(atob(source.split(",")[1]!))).toEqual(authored);
+  expect(member.getAttribute("id")).toBe(memberId);
+
+  const validLogical = frame(authored);
+  expect(() => vectorSheetSource(root([validLogical]), path, alias)).toThrow(`Invalid frame ${id}`);
+  expect(() => vectorSheetSource(root([member, member]), path, alias)).toThrow(
+    `Invalid frame ${id}`,
+  );
+  expect(() =>
+    vectorSheetSource(root([validLogical]), path, { ...part, svgSheetMember: "" }),
+  ).toThrow(`Invalid frame ${id}`);
+  expect(() =>
+    vectorSheetSource(root([frame({ ...authored, viewBox: "0 0 52.5 52.5" }, memberId)]), path, alias),
+  ).toThrow(`Invalid frame ${id}`);
+});
+
 it.each([
   { height: "120" },
   { viewBox: "0 0 52.5 52.5" },

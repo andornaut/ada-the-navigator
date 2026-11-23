@@ -16,6 +16,7 @@ export function vectorSheetSource(
     id,
     intrinsicHeight,
     intrinsicWidth,
+    svgSheetMember,
     width,
   }: {
     readonly archetype?: string;
@@ -25,6 +26,7 @@ export function vectorSheetSource(
     readonly id: string;
     readonly intrinsicHeight?: number;
     readonly intrinsicWidth?: number;
+    readonly svgSheetMember?: string;
     readonly width: number;
   },
 ): string {
@@ -32,7 +34,11 @@ export function vectorSheetSource(
   if (root?.localName !== "svg" || root.namespaceURI !== SVG_NAMESPACE) {
     throw new Error(`Invalid vector sheet: ${path}`);
   }
-  const matches = Array.from(root.children).filter((child) => child.id === id);
+  const member = svgSheetMember === undefined ? id : svgSheetMember;
+  if (typeof member !== "string" || member.length === 0) {
+    throw new Error(`Invalid frame ${id} in vector sheet: ${path}`);
+  }
+  const matches = Array.from(root.children).filter((child) => child.id === member);
   const frame = matches[0];
   const viewBox = frame
     ?.getAttribute("viewBox")

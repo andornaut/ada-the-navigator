@@ -611,6 +611,36 @@ describe("deferred core capital sheets", () => {
     expect(f.life.listenerCount("shutdown")).toBe(0);
   });
 
+  it("loads a shared member under both logical IDs and waits for both textures", () => {
+    const f = fixture();
+    f.scene.family = undefined;
+    const alias = { ...top, id: "enemy-capital-lance-top-1", svgSheetMember: top.id };
+    f.scene.partAssets = [top, alias];
+    f.loadParts(f.scene, "capital");
+    const key = vectorSheetKey(top.path);
+    const document = {};
+    f.documents.set(key, document);
+    f.extract.mockReturnValue("data:shared");
+    f.events.emit("filecomplete", key, "xml");
+    expect(f.xml).toHaveBeenCalledExactlyOnceWith(key, top.path);
+    expect(f.extract).toHaveBeenLastCalledWith(document, top.path, {
+      ...alias,
+      intrinsicHeight: 52.5,
+      intrinsicWidth: 52.5,
+    });
+    expect(f.svg.mock.calls).toEqual([
+      [f.scene, { ...top, path: "data:shared" }],
+      [f.scene, { ...alias, path: "data:shared" }],
+    ]);
+    f.textures.add(top.id);
+    f.events.emit("filecomplete", top.id, "svg");
+    expect(f.scene.shipAssets).toEqual([]);
+    f.textures.add(alias.id);
+    f.events.emit("filecomplete", alias.id, "svg");
+    expect(f.scene.shipAssets).toEqual([top, alias]);
+    expect(f.readArt).toHaveBeenCalledOnce();
+  });
+
   it("reuses the extracted SVG and replaces the original linear texture in place on resize", () => {
     const f = fixture(claim, true);
     f.scene.family = undefined;
