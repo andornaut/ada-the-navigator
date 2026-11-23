@@ -432,7 +432,7 @@ describe("source-family manifest readiness", () => {
     ["/art/outposts/outposts-sheet.svg", sunflower, false],
     ["/art/andromeda/hamlet-sheet.svg", andromeda, true],
     ["/art/andromeda/settlers-school-sheet.svg", andromeda, true],
-    ["/art/phantom/homes-cracked-sheet.svg", phantom, true],
+    ["/art/phantom/settlements-sheet.svg", phantom, true],
   ] as const)(
     "loads station sheet %s at its authored dimensions",
     (path, manifest, displaySized) => {
