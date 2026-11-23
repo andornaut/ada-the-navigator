@@ -551,11 +551,8 @@ export function createQuestsScreen(
     assertAdaActionMetadata(footer);
     card.body.replaceChildren(body, footer);
     assertAdaActionBindings(card.frame);
-    if (!entry) {
-      setScrollGroup(card, body);
-    } else {
-      card.body.classList.remove("ada-has-scroll");
-    }
+    // Keep the footer outside the scroll group when detail prose or a route wraps.
+    setScrollGroup(card, body);
     modal.hidden = false;
     card.fit();
     layer = createModalLayer(modal);

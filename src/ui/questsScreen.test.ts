@@ -217,7 +217,12 @@ class QuestNode extends EventTarget {
   }
 }
 
-const producer = vi.hoisted(() => ({ disposeCard: vi.fn(), fit: vi.fn(), reveal: vi.fn() }));
+const producer = vi.hoisted(() => ({
+  disposeCard: vi.fn(),
+  fit: vi.fn(),
+  reveal: vi.fn(),
+  scroll: vi.fn<(card: { readonly body: QuestNode }, group: QuestNode) => void>(),
+}));
 vi.mock("./modal.ts", async (load) => ({
   ...(await load<typeof import("./modal.ts")>()),
   createButton: (label: string) => Object.assign(new QuestNode("button"), { textContent: label }),
@@ -230,7 +235,7 @@ vi.mock("./modal.ts", async (load) => ({
     frame.append(card, close);
     return { body, card, close, dispose: producer.disposeCard, fit: producer.fit, frame };
   },
-  setScrollGroup: vi.fn(),
+  setScrollGroup: producer.scroll,
 }));
 vi.mock("./modalLayer.ts", () => ({
   createModalLayer: () => ({ dispose() {}, open: producer.reveal.mockReturnValue(() => {}) }),
@@ -241,6 +246,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   producer.disposeCard.mockClear();
   producer.reveal.mockClear();
+  producer.scroll.mockClear();
 });
 function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
   vi.stubGlobal("document", {
@@ -374,6 +380,20 @@ it("rejects an unowned connected Quests subtree before reveal without evaluating
   screen.setState([entry], [], 1);
   expect(() => screen.open()).toThrow("no live action root");
   expect(producer.reveal).not.toHaveBeenCalled();
+  screen.dispose();
+});
+
+it("keeps Back outside the quest detail's scroll group", () => {
+  const { screen } = screenFixture();
+  screen.setState([entry], [place("growers")], 1);
+  screen.open(entry.id);
+  expect(producer.scroll).toHaveBeenCalledOnce();
+  const [card, detail] = producer.scroll.mock.lastCall!;
+  expect(detail.className).toBe("ada-quest-content");
+  const [body, footer] = card.body.children;
+  expect(body).toBe(detail);
+  expect(footer?.className).toBe("ada-quest-footer");
+  expect(footer?.querySelectorAll("button")[0]?.dataset.action).toBe("quest-back");
   screen.dispose();
 });
 
