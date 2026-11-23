@@ -31,6 +31,7 @@ import {
   WHITE,
 } from "./bust.ts";
 import { type Portrait, writePortraits } from "./bust-sheets.ts";
+import { writePackedCastIfSelected } from "./cast-portrait-pages.ts";
 
 const FRAMES = ["happy", "neutral"] as const;
 type Mood = (typeof FRAMES)[number];
@@ -310,7 +311,7 @@ const communityPortraits: readonly Portrait[] = [
 ];
 export const needlePortraits = [...chapterPortraits, ...communityPortraits];
 
-if (import.meta.main) {
+if (import.meta.main && !writePackedCastIfSelected("needle", needlePortraits)) {
   for (const portraits of [chapterPortraits, communityPortraits]) {
     const ids = await writePortraits("needle", "needle/portraits", portraits, (id) =>
       portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),

@@ -28,6 +28,7 @@ import {
   WHITE,
 } from "./bust.ts";
 import { type Portrait, writePortraits } from "./bust-sheets.ts";
+import { writePackedCastIfSelected } from "./cast-portrait-pages.ts";
 
 const PEARL = { base: "e9e3da", light: "ffffff", shade: "b3aba1" };
 const PERI = { base: "8f9cf0", light: "b9c2f7", shade: "5b6093" };
@@ -421,7 +422,13 @@ const communityPortraits: readonly Portrait[] = [
 ];
 export const andromedaPortraits = [...chapterPortraits, ...communityPortraits];
 
-if (import.meta.main) {
+if (
+  import.meta.main &&
+  !writePackedCastIfSelected(
+    "andromeda",
+    andromedaPortraits.filter(({ key }) => key !== "settler-greeter"),
+  )
+) {
   await writePortraits("andromeda", "andromeda/portraits", chapterPortraits, (id) =>
     /^(pip|settler)-portrait(-compact)?$/.test(id),
   );
