@@ -152,26 +152,36 @@ export function packInstalledIndustrialHulls(
   entries: readonly Row[],
   copies?: Map<string, string>,
 ): readonly Row[] {
-  const owner = family === "cartwheel" ? family : "core";
-  const consumers: readonly IndustrialFamily[] = owner === "core" ? coreHullConsumers : [owner];
   const installed: Row[] = (["core", ...GALAXIES] as const).flatMap(
     (key) => readManifest(key).assets,
   );
   const registered = new Map(installed.map((row) => [row.id, row]));
   const input = new Map(entries.map((row) => [row.id, row]));
   const output = new Map<string, Row>();
-  const directory = directoryOf(owner);
   const groups = [];
 
   for (const craft of industrialHulls) {
     const names = craft === "retaliator" ? [craft, "retaliatorCargoHauler"] : [craft];
     const headings = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => heading);
+    const sheet = craft + "-sheet.svg";
+    const corePath = directoryOf("core") + sheet;
+    // Only the selected Mining Freighter aliases the core sheet from Cartwheel.
+    const shareClaim =
+      craft === "retaliatorMiningFreighter" &&
+      headings.some((i) => registered.get(hullId("cartwheel", craft, i))?.path === corePath);
+    const owner = family === "cartwheel" && !shareClaim ? family : "core";
+    const consumers: readonly IndustrialFamily[] =
+      owner === "cartwheel"
+        ? [owner]
+        : shareClaim
+          ? [...coreHullConsumers, "cartwheel"]
+          : coreHullConsumers;
+    const directory = directoryOf(owner);
     const ids = new Set(
       consumers.flatMap((key) =>
         names.flatMap((name) => headings.map((i) => hullId(key, name, i))),
       ),
     );
-    const sheet = `${craft}-sheet.svg`;
     const path = directory + sheet;
     if (
       ![...ids].some(
@@ -183,6 +193,7 @@ export function packInstalledIndustrialHulls(
 
     const filenames = names.flatMap((name) => headings.map((i) => `${name}-${i}.svg`));
     const paths = new Set([path, ...filenames.map((file) => directory + file)]);
+    if (shareClaim) paths.add(directoryOf("cartwheel") + sheet);
     const referrer = installed.find((row) => row.path && paths.has(row.path) && !ids.has(row.id));
     if (referrer) throw new Error(`Industrial hull is also used by ${referrer.id}`);
 
@@ -248,7 +259,7 @@ export function packInstalledIndustrialHulls(
   }
 
   for (const { filenames, sheet, path, svg } of groups) {
-    if (family !== owner) {
+    if (path !== directoryOf(family) + sheet) {
       if (!copies) throw new Error(`No shared hull output for ${family}`);
       // writeOnce compares the complete sheet against the core output before registering its path.
       copies.set(sheet, path);

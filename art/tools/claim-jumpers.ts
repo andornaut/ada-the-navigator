@@ -502,8 +502,9 @@ async function main() {
   const heavy = packInstalledHeavyParts("cartwheel", texts, entries);
   const small = packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
   const turrets = packInstalledIndustrialTurrets("cartwheel", texts, small);
-  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets);
-  const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
+  const copies = sidecarCopies("core", "hardpoints", shared);
+  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets, copies);
+  const paths = writeOnce(PATH, copies, texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
   mergeEntries(
