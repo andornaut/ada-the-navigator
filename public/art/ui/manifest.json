@@ -165,19 +165,16 @@
     {
       "key": "icon-rock",
       "png": "sprites/icon-rock.png",
-      "json": "sprites/icon-rock.json",
       "once": []
     },
     {
       "key": "icon-rock-24",
       "png": "sprites/icon-rock-24.png",
-      "json": "sprites/icon-rock-24.json",
       "once": []
     },
     {
       "key": "icon-rock-32",
       "png": "sprites/icon-rock-32.png",
-      "json": "sprites/icon-rock-32.json",
       "once": []
     },
     {
@@ -291,7 +288,6 @@
     {
       "key": "rock-closeup",
       "png": "sprites/rock-closeup.png",
-      "json": "sprites/rock-closeup.json",
       "once": []
     },
     {
