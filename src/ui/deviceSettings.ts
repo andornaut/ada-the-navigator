@@ -2,9 +2,10 @@
 // - move and aim: whether each on-screen joystick is drawn (Chibi's Move controls). Each is shown
 //   unless the player hides it; hiding one hides only its drawing and its input still works.
 // - sound: whether sound effects play (Archie's Sound switch), on unless the player mutes it.
+// - fpsCounter: whether the FPS readout is shown, off until the player enables it.
 // - reducedMotion: whether screen shakes are skipped (Archie's Reduced motion switch). A player's
 //   first setting on a device follows the device's reduced-motion preference.
-export type DeviceSetting = "aim" | "move" | "reducedMotion" | "sound";
+export type DeviceSetting = "aim" | "fpsCounter" | "move" | "reducedMotion" | "sound";
 
 export type DeviceSettings = Readonly<Record<DeviceSetting, boolean>>;
 
@@ -12,10 +13,17 @@ export type ControlSide = "aim" | "move";
 
 export type ControlVisibility = Readonly<Record<ControlSide, boolean>>;
 
-export const DEVICE_SETTINGS: readonly DeviceSetting[] = ["move", "aim", "sound", "reducedMotion"];
+export const DEVICE_SETTINGS: readonly DeviceSetting[] = [
+  "move",
+  "aim",
+  "sound",
+  "fpsCounter",
+  "reducedMotion",
+];
 
 export const DEVICE_STORAGE_KEYS: Readonly<Record<DeviceSetting, string>> = {
   aim: "ada-the-navigator.aim-controls",
+  fpsCounter: "ada-the-navigator.fps-counter",
   move: "ada-the-navigator.move-controls",
   reducedMotion: "ada-the-navigator.reduced-motion",
   sound: "ada-the-navigator.sound",
@@ -86,6 +94,7 @@ export function readDeviceSettings(
   }
   return {
     aim: read(storage, "aim") ?? true,
+    fpsCounter: read(storage, "fpsCounter") ?? false,
     move: read(storage, "move") ?? true,
     reducedMotion,
     sound: read(storage, "sound") ?? true,

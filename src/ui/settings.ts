@@ -14,6 +14,7 @@ import {
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
+  type DeviceSetting,
   pageStorage,
   prefersReducedMotion,
   readDeviceSettings,
@@ -47,12 +48,7 @@ import {
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
-import {
-  type SettingsLayoutSchema,
-  type SettingsNative,
-  type SettingsSwitch,
-  settingsTree,
-} from "./settingsTree.ts";
+import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
@@ -92,7 +88,7 @@ export type InstallSteps = Readonly<
 export interface SettingsOptions {
   // The build's version and commit (src/buildLabel.ts), the card's last line.
   readonly build: string;
-  readonly fpsCounter: { readonly shown: () => boolean; readonly set: (on: boolean) => void };
+  readonly fpsCounter: { readonly set: (on: boolean) => void };
   // The Install row's install functions and each menu browser's steps; without them no row.
   readonly install?: { readonly port: InstallPort; readonly steps: InstallSteps } | undefined;
   readonly labels: SettingsLabels;
@@ -398,7 +394,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const visibility = () => ({ aim: settings.aim, move: settings.move });
   const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });
   // A control row, as in Chibi: icon, label (and note) and switch; the whole row is the switch.
-  const switchRow = (setting: SettingsSwitch, label: string, note?: string) => {
+  const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
     const { row, show } = createSwitchRow({
       align: "top",
       icon: settingsIcon(SETTING_ICONS[setting]),
@@ -416,9 +412,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     toggleStack.className = "ada-setting-toggle";
     toggleStack.append(toggle, currentState);
     row.append(toggleStack);
-    const isOn = () => (setting === "fpsCounter" ? options.fpsCounter.shown() : settings[setting]);
     const update = () => {
-      const on = isOn();
+      const on = settings[setting];
       show(on);
       currentState.textContent =
         setting === "aim" || setting === "move"
@@ -431,17 +426,13 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     };
     update();
     registerAction(row, () => {
-      if (setting === "fpsCounter") {
-        options.fpsCounter.set(!isOn());
-        update();
-        fitSettings();
-        return;
-      }
       settings[setting] = !settings[setting];
       update();
       writeSetting(storage, setting, settings[setting]);
       fitSettings();
-      if (setting === "aim" || setting === "move") {
+      if (setting === "fpsCounter") {
+        options.fpsCounter.set(settings.fpsCounter);
+      } else if (setting === "aim" || setting === "move") {
         options.onVisibilityChange(visibility());
       } else {
         options.onFeedbackChange?.(feedback());
@@ -762,6 +753,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     assertAdaActionMetadata(cardFrame);
     assertAdaActionMetadata(stepsFrame);
     parent.append(root);
+    options.fpsCounter.set(settings.fpsCounter);
   } catch (error) {
     dispose();
     throw error;

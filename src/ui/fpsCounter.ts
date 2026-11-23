@@ -2,8 +2,8 @@
 const REFRESH_MS = 500;
 
 /**
- * The Settings FPS counter is Off by default, a display toggle that is
- * not part of the save. `fps` reads the game loop's measured frame rate.
+ * Settings controls the readout using its device preference. `fps` reads
+ * the game loop's measured frame rate.
  */
 export function createFpsCounter(host: HTMLElement, fps: () => number) {
   const readout = document.createElement("div");
@@ -35,6 +35,5 @@ export function createFpsCounter(host: HTMLElement, fps: () => number) {
         timer = setInterval(paint, REFRESH_MS);
       }
     },
-    shown: () => !readout.hidden,
   };
 }

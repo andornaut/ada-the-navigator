@@ -96,7 +96,7 @@ after a successful write; failed writes preserve the last persisted snapshot.
 The flight snapshot is stored in `localStorage` under one key
 ([`src/game/persistence.ts`](game/persistence.ts)), validated and migrated by
 [`src/model/save.ts`](model/save.ts). Device settings (move stick, aim stick,
-sound and reduced motion) are stored under their own keys
+sound, FPS counter and reduced motion) are stored under their own keys
 ([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.
 
 ## Phone

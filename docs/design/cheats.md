@@ -10,9 +10,10 @@ side by side, Maximize weapon levels, then Reset jobs, projects & quests.
 The centered primary **Back** button and top-right X return to the invoking
 Menu or Pause and restore focus to **Cheats**.
 
-The session-only **FPS counter** switch is at the top of the right column in
-Settings. Its readout stays at the bottom right of the device viewport, inside
-the safe area and above the game and letterbox bands.
+The **FPS counter** switch is at the top of the right column in Settings. The
+choice persists on this device with the other Settings preferences. Its readout
+stays at the bottom right of the device viewport, inside the safe area and
+above the game and letterbox bands.
 
 ## Cheat session
 

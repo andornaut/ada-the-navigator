@@ -282,20 +282,14 @@ function fixtureParent(): HTMLElement {
   return parent as unknown as HTMLElement;
 }
 
-function fpsPreference() {
-  let on = false;
-  return {
-    set: vi.fn((value: boolean) => {
-      on = value;
-    }),
-    shown: () => on,
-  };
+function fpsReadout() {
+  return { set: vi.fn<(value: boolean) => void>() };
 }
 
 function setup(copy: SettingsLabels = labels, detached = false) {
   const onFeedbackChange = vi.fn();
   const onVisibilityChange = vi.fn();
-  const fpsCounter = fpsPreference();
+  const fpsCounter = fpsReadout();
   const settings = createSettings(
     detached ? (new Element() as unknown as HTMLElement) : fixtureParent(),
     {
@@ -431,29 +425,83 @@ describe("Settings current-state labels", () => {
     settings.dispose();
   });
 
-  it("toggles the session FPS readout without writing preferences or changing feedback", () => {
+  it("persists FPS on and off and applies it while Settings is closed", () => {
     const { fpsCounter, onFeedbackChange, onVisibilityChange, rows, settings } = setup();
+    const key = "ada-the-navigator.fps-counter";
     const row = rows.find((node) => node.dataset.setting === "fpsCounter")!;
     expect(row.attributes.get("aria-label")).toBe("FPS counter");
     expect(row.attributes.get("role")).toBe("switch");
     expect(row.attributes.get("aria-checked")).toBe("false");
     expect(state(row).textContent).toBe("Off");
     expect(row.children[0]!.dataset.icon).toBe("icon-fps-counter");
-    const priorStored = [...stored];
+    expect(settings.isOpen()).toBe(false);
+    expect(fpsCounter.set).toHaveBeenCalledExactlyOnceWith(false);
+    expect(stored.has(key)).toBe(false);
+    const priorStored = new Map(stored);
     const priorFeedbackCalls = onFeedbackChange.mock.calls.length;
     const priorVisibilityCalls = onVisibilityChange.mock.calls.length;
     row.click();
-    expect(fpsCounter.set).toHaveBeenCalledExactlyOnceWith(true);
+    expect(fpsCounter.set).toHaveBeenLastCalledWith(true);
+    expect([...stored]).toEqual([...priorStored, [key, "on"]]);
     expect(row.attributes.get("aria-checked")).toBe("true");
     expect(state(row).textContent).toBe("On");
-    row.click();
-    expect(fpsCounter.set).toHaveBeenLastCalledWith(false);
-    expect(row.attributes.get("aria-checked")).toBe("false");
-    expect(state(row).textContent).toBe("Off");
-    expect([...stored]).toEqual(priorStored);
     expect(onFeedbackChange).toHaveBeenCalledTimes(priorFeedbackCalls);
     expect(onVisibilityChange).toHaveBeenCalledTimes(priorVisibilityCalls);
     settings.dispose();
+
+    const reopened = setup();
+    const restored = reopened.rows.find((node) => node.dataset.setting === "fpsCounter")!;
+    expect(reopened.settings.isOpen()).toBe(false);
+    expect(reopened.fpsCounter.set).toHaveBeenCalledExactlyOnceWith(true);
+    expect(state(restored).textContent).toBe("On");
+    restored.click();
+    expect(reopened.fpsCounter.set).toHaveBeenLastCalledWith(false);
+    expect(restored.attributes.get("aria-checked")).toBe("false");
+    expect(state(restored).textContent).toBe("Off");
+    expect([...stored]).toEqual([...priorStored, [key, "off"]]);
+    reopened.settings.dispose();
+
+    const disabled = setup();
+    expect(disabled.fpsCounter.set).toHaveBeenCalledExactlyOnceWith(false);
+    expect(
+      state(disabled.rows.find((node) => node.dataset.setting === "fpsCounter")!).textContent,
+    ).toBe("Off");
+    disabled.settings.dispose();
+  });
+
+  it("recreates Settings from all five choices without changing their storage", () => {
+    const { rows, settings } = setup();
+    const choices = Object.entries({
+      aim: "off",
+      fpsCounter: "on",
+      move: "off",
+      reducedMotion: "on",
+      sound: "off",
+    });
+    for (const [setting] of choices) {
+      rows.find((row) => row.dataset.setting === setting)!.click();
+    }
+    settings.dispose();
+    const values = [...stored];
+    const restored = setup();
+    const checked = Object.fromEntries(
+      restored.rows.map((row) => [
+        row.dataset.setting,
+        row.attributes.get("aria-checked") === "true" ? "on" : "off",
+      ]),
+    );
+    expect(checked).toEqual(Object.fromEntries(choices));
+    expect(restored.fpsCounter.set).toHaveBeenCalledExactlyOnceWith(true);
+    expect(restored.onVisibilityChange).toHaveBeenCalledExactlyOnceWith({
+      aim: false,
+      move: false,
+    });
+    expect(restored.onFeedbackChange).toHaveBeenCalledExactlyOnceWith({
+      reducedMotion: true,
+      sound: false,
+    });
+    expect([...stored]).toEqual(values);
+    restored.settings.dispose();
   });
 
   it.each(["move", "aim", "sound", "reducedMotion"] as const)(
@@ -556,7 +604,7 @@ it("offers one Install button and cancels a deferred guide after closing Setting
   const install = vi.fn(() => pending);
   const settings = createSettings(fixtureParent(), {
     build: "test-build",
-    fpsCounter: fpsPreference(),
+    fpsCounter: fpsReadout(),
     install: {
       port: {
         install,
@@ -616,7 +664,7 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
   const stop = vi.fn();
   const settings = createSettings(fixtureParent(), {
     build: "test-build",
-    fpsCounter: fpsPreference(),
+    fpsCounter: fpsReadout(),
     install: {
       port: {
         install: async () => "dismissed",
@@ -721,7 +769,7 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
   });
   const settings = createSettings(parent, {
     build: "test-build",
-    fpsCounter: fpsPreference(),
+    fpsCounter: fpsReadout(),
     install: {
       port: {
         install: async () => "steps",
@@ -791,7 +839,7 @@ it.each(["settings", "close-settings", "close-install-steps"])(
     expect(() =>
       createSettings(parent, {
         build: "test-build",
-        fpsCounter: fpsPreference(),
+        fpsCounter: fpsReadout(),
         labels,
         onOpenChange: vi.fn(),
         onVisibilityChange: vi.fn(),
@@ -835,7 +883,7 @@ it("rejects an externally inserted unbound Settings launcher before entry focus"
 it("audits Settings and Install Steps entry scopes while retaining external binding ownership", async () => {
   const settings = createSettings(fixtureParent(), {
     build: "test-build",
-    fpsCounter: fpsPreference(),
+    fpsCounter: fpsReadout(),
     install: {
       port: {
         install: async () => "steps",

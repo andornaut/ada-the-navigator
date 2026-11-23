@@ -36,9 +36,10 @@ describe("device settings", () => {
     expect(decodeSetting(stored)).toBeUndefined();
   });
 
-  it("shows both joysticks and plays sound by default", () => {
+  it("shows both joysticks, plays sound and hides FPS by default", () => {
     expect(readDeviceSettings(memory(), false)).toEqual({
       aim: true,
+      fpsCounter: false,
       move: true,
       reducedMotion: false,
       sound: true,
@@ -78,11 +79,12 @@ describe("device settings", () => {
   });
 
   it("uses the defaults and keeps playing where storage is missing or throws", () => {
-    const defaults = { aim: true, move: true, reducedMotion: true, sound: true };
+    const defaults = { aim: true, fpsCounter: false, move: true, reducedMotion: true, sound: true };
     expect(readDeviceSettings(undefined, true)).toEqual(defaults);
     expect(readDeviceSettings(blocked, true)).toEqual(defaults);
     expect(() => writeSetting(blocked, "sound", false)).not.toThrow();
     expect(() => writeSetting(undefined, "sound", false)).not.toThrow();
+    expect(() => writeSetting(blocked, "fpsCounter", true)).not.toThrow();
   });
 
   it("shakes the screen only while motion is not reduced", () => {
