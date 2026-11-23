@@ -4,7 +4,12 @@ import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textu
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Loader, Scenes } from "phaser";
 
-import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";
+import {
+  ASTEROID_ART,
+  RESOURCE_ART,
+  type AsteroidArt,
+  readResourceRocks,
+} from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
@@ -702,16 +707,34 @@ interface RockSheetFrame {
   readonly id: string;
   readonly width: number;
   readonly height: number;
+  readonly intrinsicWidth: number;
+  readonly intrinsicHeight: number;
 }
 
 const rockSheetFrames = new Map<string, RockSheetFrame>();
-for (const rock of ASTEROID_ART.asteroids) {
-  const path = rock.svgSheet;
-  if (path) {
+function registerRockSheets(rocks: readonly AsteroidArt[], intrinsicScale: number): void {
+  for (const rock of rocks) {
+    const path = rock.svgSheet;
+    if (!path) {
+      continue;
+    }
+    const { height, width } = rock.frame;
     rock.frames.forEach(({ file }, index) => {
-      rockSheetFrames.set(file, { id: `${rock.id}-${index}`, path, ...rock.frame });
+      rockSheetFrames.set(file, {
+        id: `${rock.id}-${index}`,
+        path,
+        height,
+        width,
+        intrinsicHeight: height * intrinsicScale,
+        intrinsicWidth: width * intrinsicScale,
+      });
     });
   }
+}
+registerRockSheets(ASTEROID_ART.asteroids, 1);
+if (RESOURCE_ART) {
+  // Resource SVGs already have a scaled intrinsic size, before rounding in the display metadata.
+  registerRockSheets(RESOURCE_ART.rocks, RESOURCE_ART.displayScale);
 }
 
 function queueRockSvg(scene: AssetsContext, file: string, path: string): void {
