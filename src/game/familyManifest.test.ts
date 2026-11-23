@@ -324,7 +324,7 @@ describe("source-family manifest readiness", () => {
     expect(f.backdrop).not.toHaveBeenCalled();
     f.loadParts(f.scene, "platform");
     expect(f.scene.partLoads.has("claim:platform")).toBe(true);
-    const selected = readGalaxyManifest(cartwheel)!.assets.filter(
+    const selected = readGalaxyManifest<Asset>(cartwheel)!.assets.filter(
       (asset) => asset.family === "claim" && asset.archetype === "platform",
     );
     const sheets = [...new Set(selected.filter(({ svgSheet }) => svgSheet).map(({ path }) => path))];
@@ -335,7 +335,9 @@ describe("source-family manifest readiness", () => {
       f.events.emit("filecomplete", key, "xml");
     }
     const queued = f.svg.mock.calls.map(([, asset]) => asset);
-    expect(queued.map(({ id }) => id).sort()).toEqual(selected.map(({ id }) => id).sort());
+    expect(queued.map(({ id }) => id).sort()).toEqual(
+      selected.map(({ id }) => id).sort(),
+    );
     expect(queued.length).toBeGreaterThan(1);
     expect(
       queued.every((asset) => asset.family === "claim" && asset.archetype === "platform"),
