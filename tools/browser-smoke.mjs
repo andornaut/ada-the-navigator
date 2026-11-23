@@ -4987,15 +4987,22 @@ try {
   await page.addInitScript(() => performance.setResourceTimingBufferSize(10000));
   await page.reload();
   await continueFlight();
+  const claimManifestResponse = await page.request.get(
+    "http://ada-preview:4173/art/cartwheel/manifest.json",
+  );
+  assert.equal(claimManifestResponse.status(), 200);
+  const claimManifest = await claimManifestResponse.json();
+  const platformPaths = ["enemy-claim-platform", "enemy-claim-platform-port-intact-0"].map((id) => {
+    const asset = claimManifest.assets.find((entry) => entry.id === id);
+    assert.ok(asset?.path.startsWith("/art/"), `Cartwheel art must name ${id}`);
+    return asset.path;
+  });
   await page.waitForFunction(
-    () =>
-      [
-        "/art/cartwheel/enemies/platform.svg",
-        "/art/cartwheel/enemies/platform-port-intact-0.svg",
-      ].every((path) =>
-        performance.getEntriesByType("resource").some(({ name }) => name.endsWith(path)),
-      ),
-    null,
+    (paths) => {
+      const downloaded = new Set(performance.getEntriesByType("resource").map(({ name }) => name));
+      return paths.every((path) => downloaded.has(new URL(path, location.origin).href));
+    },
+    platformPaths,
     { timeout: 30000 },
   );
   events.checks.push(
