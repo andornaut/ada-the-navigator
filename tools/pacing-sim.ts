@@ -1519,7 +1519,8 @@ export interface RunOptions {
   minutes: number;
   scenario: Scenario;
   galaxy: GalaxyNumber;
-  seeds: number;
+  /** A count starting at seed 1, or the exact seeds to run in order. */
+  seeds: number | readonly number[];
 }
 export function runScenario(
   options: RunOptions,
@@ -1550,7 +1551,11 @@ export function runScenario(
           pickup: scenario.cacheSpawnWeight,
         }),
   };
-  const runs = Array.from({ length: options.seeds }, (_, index) =>
+  const seeds =
+    typeof options.seeds === "number"
+      ? Array.from({ length: options.seeds }, (_, index) => index + 1)
+      : options.seeds;
+  const runs = seeds.map((seed) =>
     simulate(
       {
         behaviour: options.behaviour,
@@ -1560,7 +1565,7 @@ export function runScenario(
         encounters: scenario.encounters?.[options.galaxy] ?? encounterTable(options.galaxy),
         startWeapons: scenario.startWeapons ?? [],
         galaxy: options.galaxy,
-        seed: index + 1,
+        seed,
         spawnWeights,
       },
       plansForWorld,

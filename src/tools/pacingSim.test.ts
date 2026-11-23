@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import {
   asteroidKillSeconds,
@@ -6,9 +6,11 @@ import {
   DEFAULT_BEHAVIOUR,
   generateChunk,
   onScreen,
+  type RunOptions,
   runScenario,
   scenarioEconomy,
   SCENARIOS,
+  summarise,
 } from "../../tools/pacing-sim.ts";
 import { ASTEROID_SIZES } from "../data/asteroidCatalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
@@ -92,9 +94,33 @@ describe("pacing simulation world", () => {
   });
 });
 
+/** Recombine the real seed runs with the same aggregate used by the pacing tool. */
+function summaryOf(samples: readonly ReturnType<typeof runScenario>[]) {
+  const { packPrice, prices, scenario } = samples[0]!.summary;
+  return summarise(
+    scenario,
+    prices,
+    packPrice,
+    samples.flatMap((sample) => sample.runs),
+  );
+}
+
+function completeSamples<T>(seeds: readonly number[], samples: ReadonlyMap<number, T>): T[] {
+  expect([...samples.keys()].sort((a, b) => a - b)).toEqual(seeds);
+  return seeds.map((seed) => samples.get(seed)!);
+}
+
 describe("pacing simulation runs", () => {
   const run = createScenarioRunner();
   const options = { behaviour: DEFAULT_BEHAVIOUR, galaxy: 1 as const, minutes: 15, seeds: 3 };
+
+  const runSeed = (config: Omit<RunOptions, "seeds">, seed: number) => {
+    const sample = run({ ...config, seeds: [seed] });
+    expect(sample.runs.map((flight) => [flight.seed, flight.minutes])).toEqual([
+      [seed, config.minutes],
+    ]);
+    return sample;
+  };
 
   it("is deterministic for the same seeds and values", () => {
     const scenario = { behaviour: {}, description: "", economy: {}, name: "current", prices: {} };
@@ -131,14 +157,23 @@ describe("pacing simulation runs", () => {
     }
   });
 
-  it("meets large and huge asteroids at the generated world's share", () => {
-    const world = { large: 0, rocks: 0 };
-    for (let seed = 1; seed <= 4; seed++) {
+  describe("meets large and huge asteroids at the generated world's share", () => {
+    const seeds = [1, 2, 3, 4];
+    const asteroids = { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] };
+    const samples = new Map<
+      number,
+      { flight: ReturnType<typeof runSeed>; large: number; rocks: number }
+    >();
+    const scenario = { behaviour: {}, description: "", economy: {}, name: "sizes", prices: {} };
+
+    it.each(seeds)("samples generated and simulated rocks for seed %i", (seed) => {
+      let large = 0;
+      let rocks = 0;
       for (let x = -20; x < 20; x++) {
         for (let y = -20; y < 20; y++) {
           const plan = planChunk(CHUNK_CATALOG, {
             asteroidDensity: CONTENT.tuning.flight.asteroidDensity,
-            asteroids: { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] },
+            asteroids,
             clearance: CONTENT.tuning.flight.shipRadius,
             galaxy: 1,
             objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
@@ -150,23 +185,27 @@ describe("pacing simulation runs", () => {
             x,
             y,
           });
-          for (const placement of plan.placements.filter((at) => at.kind === "rock")) {
-            const size = ASTEROID_SHAPES.get(placement.asteroid!)!.size;
-            world.rocks++;
-            world.large += size === "large" || size === "huge" ? 1 : 0;
+          for (const placement of plan.placements) {
+            if (placement.kind === "rock") {
+              const size = ASTEROID_SHAPES.get(placement.asteroid!)!.size;
+              rocks++;
+              large += size === "large" || size === "huge" ? 1 : 0;
+            }
           }
         }
       }
-    }
-    const { summary } = run({
-      ...options,
-      minutes: 60,
-      scenario: { behaviour: {}, description: "", economy: {}, name: "sizes", prices: {} },
-      seeds: 4,
+      const flight = runSeed({ ...options, minutes: 60, scenario }, seed);
+      samples.set(seed, { flight, large, rocks });
     });
-    const seen = summary.asteroidSizeShare.seen;
-    expect(world.large / world.rocks).toBeGreaterThan(0.05);
-    expect(seen.large + seen.huge).toBeCloseTo(world.large / world.rocks, 1);
+
+    afterAll(() => {
+      const results = completeSamples(seeds, samples);
+      const worldLarge = results.reduce((sum, sample) => sum + sample.large, 0);
+      const worldRocks = results.reduce((sum, sample) => sum + sample.rocks, 0);
+      const seen = summaryOf(results.map((sample) => sample.flight)).asteroidSizeShare.seen;
+      expect(worldLarge / worldRocks).toBeGreaterThan(0.05);
+      expect(seen.large + seen.huge).toBeCloseTo(worldLarge / worldRocks, 1);
+    });
   });
 
   it("applies value overrides to drops and caches", () => {
@@ -265,7 +304,8 @@ describe("pacing simulation runs", () => {
     }
   });
 
-  it("takes and completes every job type only when jobs are on, paid from the rewards table", () => {
+  describe("takes and completes every job type only when jobs are on, paid from the rewards table", () => {
+    const seeds = [1, 2, 3, 4, 5, 6];
     const scenario = { behaviour: {}, description: "", economy: {}, name: "jobs", prices: {} };
     // Isolate job routes from optional mining, cache detours and shield failures.
     const behaviour = {
@@ -274,38 +314,44 @@ describe("pacing simulation runs", () => {
       cacheChase: 0,
       depletionChance: 0,
     };
-    const without = run({ ...options, behaviour, minutes: 40, scenario, seeds: 6 });
-    expect(without.runs.every((run) => run.stardust.jobs === 0)).toBe(true);
-    const withJobs = run({
-      ...options,
-      behaviour: { ...behaviour, jobs: true },
-      minutes: 40,
-      scenario,
-      seeds: 6,
-    });
-    const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
-      withJobs.runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0);
-    for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
-      expect(completed(type), type).toBeGreaterThan(0);
-    }
-    // Sunflower completion payouts use the canonical conversion of catalog base rewards.
-    const rewards = JOB_REWARDS[1]!;
-    for (const run of withJobs.runs) {
+    const samples = new Map<
+      number,
+      { withJobs: ReturnType<typeof runSeed>; without: ReturnType<typeof runSeed> }
+    >();
+
+    it.each(seeds)("checks jobs on and off for seed %i", (seed) => {
+      const config = { ...options, behaviour, minutes: 40, scenario };
+      const without = runSeed(config, seed);
+      expect(without.runs[0]!.stardust.jobs).toBe(0);
+      const withJobs = runSeed({ ...config, behaviour: { ...behaviour, jobs: true } }, seed);
+      // Sunflower completion payouts use the canonical conversion of catalog base rewards.
+      const rewards = JOB_REWARDS[1]!;
+      const flight = withJobs.runs[0]!;
       const fixed =
-        questReward(rewards.survey!) * (run.jobs.survey ?? 0) +
-        questReward(rewards.hunt!) * (run.jobs.hunt ?? 0) +
-        questReward(rewards.rescue!) * (run.jobs.rescue ?? 0);
-      const deliveries = run.jobs.delivery ?? 0;
-      expect(run.stardust.jobs).toBeGreaterThanOrEqual(
+        questReward(rewards.survey!) * (flight.jobs.survey ?? 0) +
+        questReward(rewards.hunt!) * (flight.jobs.hunt ?? 0) +
+        questReward(rewards.rescue!) * (flight.jobs.rescue ?? 0);
+      const deliveries = flight.jobs.delivery ?? 0;
+      expect(flight.stardust.jobs).toBeGreaterThanOrEqual(
         fixed + questReward(rewards.deliveryShort!) * deliveries,
       );
-      expect(run.stardust.jobs).toBeLessThanOrEqual(
+      expect(flight.stardust.jobs).toBeLessThanOrEqual(
         fixed + questReward(rewards.deliveryLong!) * deliveries,
       );
-    }
-    expect(withJobs.summary.firstWeaponMinutes.median).toBeLessThan(
-      without.summary.firstWeaponMinutes.median,
-    );
+      samples.set(seed, { withJobs, without });
+    });
+
+    afterAll(() => {
+      const results = completeSamples(seeds, samples);
+      const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
+        results.reduce((sum, { withJobs }) => sum + (withJobs.runs[0]!.jobs[type] ?? 0), 0);
+      for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
+        expect(completed(type), type).toBeGreaterThan(0);
+      }
+      const withJobs = summaryOf(results.map((sample) => sample.withJobs));
+      const without = summaryOf(results.map((sample) => sample.without));
+      expect(withJobs.firstWeaponMinutes.median).toBeLessThan(without.firstWeaponMinutes.median);
+    });
   });
 
   it("meets galaxy one's frigates and escorted capital battles from the catalog", () => {
