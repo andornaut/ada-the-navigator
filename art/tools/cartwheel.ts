@@ -147,36 +147,30 @@ function face(color: string, plan: Plan): Face {
   };
 }
 
-const HUB_AXIS = Math.PI / 12;
+const PANEL_Y = 96;
+const BEZEL_STEP = 7;
 const panelFace = (colour: string, plan: Plan) =>
-  face(colour, orientedPlan(110, 96, HUB_AXIS, plan));
+  face(
+    colour,
+    plan.map(([across, height]) => [hubDesignPivot.x + across, PANEL_Y + height]),
+  );
 
-function panelOval(rx: number, ry: number): Plan {
-  return ngon(12, 1, 0, 0, Math.PI / 12).map(([x, y]) => [rx * x, ry * y]);
+function panelOval(inset: number): Plan {
+  return ngon(12, 1).map(([x, y]) => [(78 - inset) * x, (72 - inset) * y]);
 }
 
-function radiatorShoulders(lit: boolean, repaired: boolean): Face[] {
+function pairedPlates(lit: boolean, repaired: boolean): Face[] {
+  const light = lit ? (repaired ? "#9ac7c2" : "#779d99") : "#617685";
   return [-1, 1].flatMap((side) => {
     const plate = (colour: string, plan: Plan) =>
       face(
         colour,
-        plan.map(([x, y]) => [hubDesignPivot.x + side * x, y]),
+        plan.map(([across, y]) => [hubDesignPivot.x + side * across, y]),
       );
-    const light = lit && (repaired || side === 1) ? "#9ac7c2" : "#617685";
     return [
-      plate("#303c49", [
-        [68, 100],
-        [100, 93],
-        [128, 106],
-        [140, 120],
-        [132, 132],
-        [117, 137],
-        [75, 136],
-      ]),
-      plate("#506673", orientedBox(112, 113, Math.PI / 8, 36, 16)),
-      ...[-7, 7].map((offset) =>
-        plate(light, orientedPlan(112, 113, Math.PI / 8, box(offset - 3, -3, offset + 3, 3))),
-      ),
+      plate("#303c49", box(69, 99, 140, 135)),
+      plate("#506673", box(75, 105, 134, 129)),
+      ...[96, 113].map((x) => plate(light, box(x - 3, 114, x + 3, 120))),
     ];
   });
 }
@@ -186,8 +180,8 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
   const panel = repaired ? "#638f8b" : "#4b7275";
   const window = repaired ? (lit ? "#a3d8cb" : "#6e9294") : lit ? "#80aa9f" : "#536f79";
   return [
-    ...radiatorShoulders(lit, repaired),
-    // Preserve the lower plate outer edge and the upper shell's tilted silhouette.
+    ...pairedPlates(lit, repaired),
+    // The underlying lower contact plate retains the original berth edges.
     face("#303743", [
       [10, 161],
       [24, 137],
@@ -207,99 +201,20 @@ function hubArmor(lit: boolean, repaired: boolean): Face[] {
       [51, 167],
       [24, 178],
     ]),
-    face("#455966", [
-      [10, 161],
-      [24, 137],
-      [49, 133],
-      [76, 144],
-      [78, 155],
-      [52, 158],
-      [24, 170],
-    ]),
-    face("#506b73", [
-      [165, 110],
-      [186, 121],
-      [212, 135],
-      [230, 159],
-      [212, 162],
-      [189, 148],
-      [168, 144],
-    ]),
-    face("#344e57", [
-      [33, 110],
-      [40, 77],
-      [58, 47],
-      [82, 31],
-      [121, 24],
-      [153, 37],
-      [177, 63],
-      [188, 92],
-      [181, 124],
-      [155, 152],
-      [119, 168],
-      [85, 161],
-      [57, 145],
-      [41, 127],
-    ]),
-    face("#769192", [
-      [40, 77],
-      [58, 47],
-      [82, 31],
-      [121, 24],
-      [139, 34],
-      [102, 45],
-      [72, 61],
-      [53, 88],
-    ]),
-    face("#354b61", [
-      [57, 145],
-      [68, 140],
-      [112, 134],
-      [147, 115],
-      [170, 91],
-      [181, 101],
-      [174, 122],
-      [151, 146],
-      [119, 161],
-      [85, 155],
-    ]),
-    face("#4f596c", [
-      [121, 24],
-      [153, 37],
-      [177, 63],
-      [188, 92],
-      [181, 124],
-      [174, 122],
-      [181, 101],
-      [169, 88],
-      [154, 51],
-      [139, 34],
-    ]),
-    panelFace("#668a8c", panelOval(62, 56)),
-    panelFace("#294653", panelOval(55, 48)),
-    panelFace(panel, [
-      [-33, -19],
-      [-27, -25],
-      [27, -25],
-      [33, -19],
-      [33, 19],
-      [27, 25],
-      [-27, 25],
-      [-33, 19],
-    ]),
-    panelFace(window, box(-22, -2, 22, 2)),
-    face("#394657", [
-      [113, 26],
-      [116, 13],
-      [120, 12],
-      [119, 26],
-    ]),
-    face(signal, [
-      [115, 14],
-      [116, 10],
-      [121, 9],
-      [121, 13],
-    ]),
+
+    ...[-1, 1].map((side) =>
+      face(
+        "#506673",
+        box(51, 146, 86, 152).map(([across, y]) => [hubDesignPivot.x + side * across, y]),
+      ),
+    ),
+    panelFace("#344e57", panelOval(0)),
+    panelFace("#668a8c", panelOval(BEZEL_STEP)),
+    panelFace("#294653", panelOval(2 * BEZEL_STEP)),
+    panelFace(panel, box(-29, -20, 29, 20)),
+    panelFace(window, box(-21, -2, 21, 2)),
+    face("#394657", box(118, 11, 122, 26)),
+    face(signal, box(118, 9, 122, 13)),
   ];
 }
 

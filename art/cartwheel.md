@@ -47,10 +47,11 @@
 
 ## Hub
 
-An asymmetrical armored installation with faceted teal plates, slate ribs and
-blue-green and violet-gray bracing. Slotted heat exchangers sit high on its shoulders. A solid
-forward keel frames the main body. Two recessed
-side berths serve the story craft. Ada enters the hub by Use.
+A teal and slate mining hub with a centered face and matching rectangular
+side housings. The face has a concentric bezel around a rectangular plate and
+a horizontal light strip. Each side housing repeats the same pair of square
+lights. The lower contact plate carries the two recessed story-craft berths.
+Ada enters the hub by Use.
 
 - Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700.
   Windows and berth guide lights alternate with the station blink. Reduced

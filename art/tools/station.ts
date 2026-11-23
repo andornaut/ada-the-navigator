@@ -11,9 +11,7 @@ import {
   creamSide,
   DESTINATION_SCALE,
   DISPLAY_SCALE,
-  ngon,
   orientedBox,
-  orientedPlan,
   type Part,
   type Plan,
   polygons as draw,
@@ -23,7 +21,6 @@ import {
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sand = { top: "#dac69b", side: "#9a815f" };
-const insetSand = { top: "#c5b086", side: "#9a815f" };
 const ivory = { top: "#ebd8ae", side: "#aa9370" };
 const frameMetal = { top: "#59646a", side: "#35434b" };
 const dark = { top: "#3d494f", side: "#2c373d" };
@@ -39,106 +36,90 @@ function arc(start: number, end: number, inner: number, outer: number): Plan {
   return [at(start, outer), at(end, outer), at(end, inner), at(start, inner)];
 }
 
-const front = (x: number, y: number) => x + y > 0.55;
+const FORWARD = 45;
+const GAP = 36;
+const PITCH = 18;
+const SECTORS = 8;
+const RING_OUTER = 70.55;
+const RING_INNER = 51.5;
+const RING_FLOOR = 5.79;
+const RING_DECK = 16.8;
+const CAP_RADIUS = 61;
+const CAP_TOP = 21.71;
 
-// Paired open arcs with wide deck sectors and a single light on every other segment.
-function habitat(start: number, end: number, floor: number, lit: boolean): Part[][] {
-  const groups: Part[][] = [];
-  for (let segment = start; segment < end; segment += 15) {
-    const index = (segment - start) / 15;
-    const plan = arc(segment, segment + 15, 48, 65);
-    groups.push([
-      { plan, z0: floor - 3, z1: floor, ...dark },
-      { plan, z0: floor, z1: floor + 9, ...dark },
+const front = (x: number, y: number) => x + y > 0.9;
+
+// Each sector has one equally spaced lamp on the outside face. The dark seams
+// between pairs of sectors divide each arc into four equal deck panels.
+function habitat(start: number, lit: boolean): Part[][] {
+  return Array.from({ length: SECTORS }, (_, index) => {
+    const first = start + index * PITCH;
+    const last = first + PITCH;
+    const mid = (first + last) / 2;
+    const [nx, ny] = at(mid, 1);
+    const plan = arc(first, last, RING_INNER, RING_OUTER);
+    return [
+      { plan, z0: RING_FLOOR, z1: RING_DECK, ...dark },
       {
-        plan: arc(segment, segment + 15, 49.4, 63.3),
-        z0: floor + 9,
-        z1: floor + 9,
-        ...(Math.floor(index / 2) % 2 ? insetSand : sand),
+        plan: arc(
+          first + (index % 2 === 0 ? 0.8 : 0),
+          last - (index % 2 === 1 ? 0.8 : 0),
+          RING_INNER + 1.5,
+          RING_OUTER - 1.7,
+        ),
+        z0: RING_DECK,
+        z1: RING_DECK,
+        ...sand,
       },
-      ...(index % 2 === 0
-        ? wallWindows(front, floor + 2, floor + 5, 1, 4.4, plan, lit ? warm : "#998968")
-        : []),
-    ]);
-  }
-  return groups;
+      ...wallWindows((x, y) => x * nx + y * ny > 0.96, 9, 12, 1, 4.4, plan, lit ? warm : "#998968"),
+    ];
+  });
 }
 
 function model(lit: boolean): Part[][] {
-  const groups = [...habitat(60, 210, 10, lit), ...habitat(245, 380, 3, lit)];
+  const first = FORWARD + GAP / 2;
+  const arcs = [first, first + 180];
+  const groups = arcs.flatMap((start) => habitat(start, lit));
 
-  // Identical spars in mirrored pairs around the station's forward axis.
-  for (const degrees of [92, 178, 272, 358]) {
-    const [x, y] = at(degrees, 36);
-    const z = degrees < 200 ? 9 : 4;
+  // Two identical rectangular caps on each opposing arc.
+  for (const start of arcs) {
+    for (const index of [0, SECTORS - 1]) {
+      const degrees = start + (index + 0.5) * PITCH;
+      const [x, y] = at(degrees, CAP_RADIUS);
+      groups.push([
+        { plan: orientedBox(x, y, angle(degrees), 12, 12), z0: RING_DECK, z1: CAP_TOP, ...dark },
+        { plan: orientedBox(x, y, angle(degrees), 9, 9), z0: CAP_TOP, z1: CAP_TOP, ...sand },
+      ]);
+    }
+  }
+
+  // One crossbar per quadrant. All four use the same height, cross-section and radius.
+  for (const degrees of [90, 180, 270, 360]) {
     groups.push([
-      { plan: orientedBox(x, y, angle(degrees), 32, 6), z0: z - 4, z1: z, ...frameMetal },
+      {
+        plan: orientedBox(...at(degrees, 37), angle(degrees), 36, 5),
+        z0: 7,
+        z1: 11,
+        ...frameMetal,
+      },
     ]);
   }
 
-  const base = ngon(6, 23, 0, 0, Math.PI / 6);
-  const lid = ngon(6, 18, 0, 0, Math.PI / 6);
+  const core = (along: number, across: number) => orientedBox(0, 0, angle(FORWARD), along, across);
+  const plate = core(24, 29);
   groups.push([
-    { plan: base, z0: 0, z1: 19, ...dark },
-    { plan: lid, z0: 19, z1: 29, ...ivory },
-    ...wallWindows(front, 22, 25.5, 1, 6.4, lid, lit ? warm : creamSide),
-    { plan: ngon(6, 8, 0, 0, Math.PI / 6), z0: 29, z1: 35, ...sand },
-    { plan: orientedBox(-2, 4, angle(45), 3.2, 3.2), z0: 35, z1: 49, ...frameMetal },
+    { plan: core(32, 35), z0: 0, z1: 18, ...dark },
+    { plan: plate, z0: 18, z1: 28, ...ivory },
+    ...wallWindows(front, 21, 25, 2, 4.4, plate, lit ? warm : creamSide),
+    { plan: core(11, 11), z0: 28, z1: 32, ...sand },
+    { plan: core(3, 3), z0: 32, z1: 47, ...frameMetal },
     {
-      plan: ngon(6, 2.7, -2, 4),
-      z0: 49,
-      z1: 52,
+      plan: core(4.4, 4.4),
+      z0: 47,
+      z1: 50,
       top: lit ? blue : blueDim,
       side: lit ? "#57888b" : dark.side,
     },
-  ]);
-
-  // Matched rear end caps follow the same axis as the ring supports.
-  const endCap = (plan: Plan) => orientedPlan(...at(201, 55), angle(201), plan);
-  const cap = endCap([
-    [-8, -12],
-    [4.5, -12],
-    [4.5, 0.75],
-    [-8, 0.75],
-  ]);
-  const plating = endCap([
-    [-6.6, -10.6],
-    [3.1, -10.6],
-    [3.1, -0.65],
-    [-6.6, -0.65],
-  ]);
-  const mirror = (plan: Plan): Plan => plan.map(([x, y]) => [y, x]);
-  for (const [shell, plate, floor] of [
-    [cap, plating, 18],
-    [mirror(cap), mirror(plating), 12],
-  ] as const) {
-    groups.push([
-      { plan: shell, z0: floor, z1: 27.2, ...dark },
-      { plan: plate, z0: 27.2, z1: 27.2, ...sand },
-    ]);
-  }
-
-  // The outboard end stays sealed within its existing reach.
-  const outboard = orientedBox(...at(317, 70), angle(317), 11, 18);
-  groups.push([
-    { plan: orientedBox(...at(317, 65), angle(317), 20, 4), z0: 2, z1: 6, ...frameMetal },
-    { plan: outboard, z0: 4, z1: 11, ...dark },
-    { plan: orientedBox(...at(317, 70), angle(317), 8, 15), z0: 11, z1: 14, ...sand },
-    { plan: orientedBox(...at(317, 74), angle(317), 4, 12), z0: 14, z1: 15, ...ivory },
-  ]);
-
-  const nose = orientedPlan(...at(45, 39), angle(45), [
-    [-17, -7],
-    [10, -8],
-    [17, -4],
-    [17, 5],
-    [9, 8],
-    [-17, 7],
-  ]);
-  groups.push([
-    { plan: nose, z0: 2, z1: 10, ...dark },
-    { plan: nose, z0: 10, z1: 16, ...sand },
-    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...ivory },
   ]);
 
   return groups;

@@ -14,14 +14,13 @@
 
 ## Design
 
-A blue-steel orbital station with two offset habitat arcs. The gaps show the
-structural ribs connecting the arcs to the hexagonal command core. Violet-gray
-radiator pylons break the skyline and cyan panels mark their ends. Dark
-radiator runs and raised clamps sit along the habitat arcs. A utility module
-sits outboard on a narrow truss.
+Sunflower's trade ring has two opposing 144-degree habitat arcs and two
+36-degree openings. Each arc has eight equal sections, evenly spaced lights
+and a matching square cap at each end. Four crossbars join the ring to the
+centered command core. Sand-colored decks and dark steel supports define the
+structure at flight scale.
 
-The tapered service module faces the viewer. Its small windows sit in sealed
-plating. Ada enters by Use ([Destinations](destinations.md#use-callout)).
+Ada enters by Use ([Destinations](destinations.md#use-callout)).
 
 ## Frames and manifest
 
