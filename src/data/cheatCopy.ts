@@ -9,9 +9,7 @@ export const CHEAT_COPY = {
   cancel: "Cancel",
   close: "Close",
   maxWeaponLevels: "Maximize weapon levels",
-  progression: "Progression",
   reset: "Reset",
-  resourcesAndTools: "Resources & tools",
   selectiveReset: "Reset jobs, projects & quests",
   selectiveResetBody:
     "Start the story again in Sunflower. This clears your jobs, project funding and quest progress. " +

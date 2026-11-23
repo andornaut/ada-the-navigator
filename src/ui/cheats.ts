@@ -123,12 +123,9 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
           slots: [],
         },
         column: {
-          create({ title }) {
-            const element = document.createElement("section");
+          create() {
+            const element = document.createElement("div");
             element.className = "ada-cheat-column";
-            const heading = document.createElement("h3");
-            heading.textContent = title;
-            element.append(heading);
             const rows = document.createElement("div");
             rows.className = "ada-cheat-rows";
             element.append(rows);

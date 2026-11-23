@@ -1968,6 +1968,7 @@ try {
         return {
           card,
           close: box(close),
+          columnHeadingCount: list.querySelectorAll("h3").length,
           closePrimary: close.classList.contains("ada-primary"),
           footerText: close.textContent,
           columns: columns.map((column) => ({
@@ -1985,6 +1986,7 @@ try {
         };
       });
       assert.equal(layout.footerText, "Back");
+      assert.equal(layout.columnHeadingCount, 0);
       const [left, right] = layout.columns;
       assert.deepEqual(left.ids, ["unlockAllEquipment", "unlockAllGalaxies", "unlockAllWeapons"]);
       assert.deepEqual(right.ids, ["addStardust", "addOre", "maxWeaponLevels", "selectiveReset"]);

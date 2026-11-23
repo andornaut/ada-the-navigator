@@ -296,8 +296,8 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   const list = nodes.find((node) => node.className === "ada-cheat-items")!;
   expect(list.dataset.scroll).toBeUndefined();
   const [left, right] = list.children;
-  expect(left!.children[0]!.textContent).toBe("Progression");
-  expect(right!.children[0]!.textContent).toBe("Resources & tools");
+  expect(left!.children.map((node) => node.className)).toEqual(["ada-cheat-rows"]);
+  expect(right!.children.map((node) => node.className)).toEqual(["ada-cheat-rows"]);
   expect(descendants(left!).flatMap((node) => node.dataset.cheat ?? [])).toEqual([
     "unlockAllEquipment",
     "unlockAllGalaxies",
@@ -309,9 +309,9 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     "maxWeaponLevels",
     "selectiveReset",
   ]);
-  const [grants, maximizeButton, selectiveButton] = right!.children[1]!.children;
+  const [grants, maximizeButton, selectiveButton] = right!.children[0]!.children;
   const [dustButton, addButton] = grants!.children;
-  const unlockButton = left!.children[1]!.children[0]!;
+  const unlockButton = left!.children[0]!.children[0]!;
   for (const [button, resource, label] of [
     [dustButton!, "stardust", dust.label],
     [addButton!, "ore", ore.label],

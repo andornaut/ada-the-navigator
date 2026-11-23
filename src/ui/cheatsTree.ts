@@ -1,13 +1,11 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { CHEAT_COPY } from "../data/cheatCopy.ts";
-
 /** One actionable row supplied by the game. */
 export type CheatRowData = { readonly id: string; readonly label: string };
 
 export type CheatsSchema = {
   layout: { props: Record<string, never>; slots: "columns" | "footer" };
-  column: { props: { readonly title: string }; slots: "rows" };
+  column: { props: Record<string, never>; slots: "rows" };
   grants: { props: Record<string, never>; slots: "buttons" };
   footer: { props: { readonly label: string }; slots: never };
   action: { props: { readonly id: string; readonly label: string }; slots: never };
@@ -40,14 +38,14 @@ export function cheatsTree(
           component: "column",
           key: "progression",
           kind: "component",
-          props: { title: CHEAT_COPY.progression },
+          props: {},
           slots: { rows: progressionIds.flatMap(row) },
         },
         {
           component: "column",
           key: "tools",
           kind: "component",
-          props: { title: CHEAT_COPY.resourcesAndTools },
+          props: {},
           slots: {
             rows: [
               ...(buttons.length

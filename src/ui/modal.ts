@@ -633,13 +633,7 @@ ${UI_SCOPE} .ada-cheat-items{
 }
 ${UI_SCOPE} .ada-cheat-column{
   display:grid;
-  gap:${units(SPACING.rowGap)};
   min-width:0
-}
-${UI_SCOPE} .ada-cheat-column h3{
-  margin:0;
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.title}
 }
 ${UI_SCOPE} .ada-cheat-rows{
   display:grid;

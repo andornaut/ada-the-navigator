@@ -4,8 +4,8 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 The user approved this list on 2026-11-18, with cheats that never touch the save.
 
 Choose **Cheats** directly from Menu or Pause in a browser tab or installed
-app. The modal uses two columns with three aligned rows each. The left
-column has the three unlock controls. The right column has Stardust and Ore
+app. The modal has two unlabeled columns with three aligned rows each. The
+left column has the three unlock controls. The right column has Stardust and Ore
 side by side, Maximize weapon levels, then Reset jobs, projects & quests.
 The centered primary **Back** button and top-right X return to the invoking
 Menu or Pause and restore focus to **Cheats**.
