@@ -23,6 +23,24 @@ export type Portrait = {
   small?: readonly Frame[];
 };
 
+/** The authored full and compact strips, in the same order as the ordinary emitter. */
+export function portraitSheets({ compact, frames, key, small }: Portrait) {
+  const names = frames.map(([name]) => name);
+  const full = frames.map(([, frame]) => frame);
+  const compactFrames = (small ?? full).map((frame) => crop(frame, compact));
+  return (
+    [
+      [key, FULL, full],
+      [`${key}-compact`, COMPACT, compactFrames],
+    ] as const
+  ).map(([sheet, size, list]) => ({
+    sheet,
+    size,
+    names,
+    tags: names.map((name, index): Tag => [name, [list[index]!], MS]),
+  }));
+}
+
 /**
  * Writes every portrait's sheets to `public/art/{folder}/` and replaces the entries whose ids
  * `owns` selects in `manifest`, full sheets then compact sheets, each sorted by id.
@@ -36,16 +54,9 @@ export async function writePortraits(
   const output = fileURLToPath(new URL(`../../public/art/${folder}/`, import.meta.url));
   mkdirSync(output, { recursive: true });
   const entries = [];
-  for (const { compact, frames, key, small } of portraits) {
-    const names = frames.map(([name]) => name);
-    const compactFrames = (small ?? frames.map(([, frame]) => frame)).map((frame) =>
-      crop(frame, compact),
-    );
-    for (const [sheet, size, list] of [
-      [key, FULL, frames.map(([, frame]) => frame)],
-      [`${key}-compact`, COMPACT, compactFrames],
-    ] as const) {
-      const tags: Tag[] = names.map((name, i) => [name, [list[i]!], MS]);
+  for (const portrait of portraits) {
+    const { key } = portrait;
+    for (const { names, sheet, size, tags } of portraitSheets(portrait)) {
       writeSheet(`${output}${sheet}.png`, { key: sheet }, tags);
       entries.push({
         id: size === FULL ? `${key}-portrait` : `${key}-portrait-compact`,

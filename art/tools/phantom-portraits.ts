@@ -2,8 +2,11 @@
 // greeter, each one neutral frame in the conversation format. General Gadget, Phantom's keeper
 // once the chapter is complete, uses his named portrait (art/conversation.md).
 // Contract: art/conversation.md (Cast portraits) and art/phantom.md (Portraits).
-// Usage: node art/tools/phantom-portraits.ts
+// Usage: node art/tools/phantom-portraits.ts [--packed-candidate]
+import { mkdirSync, writeFileSync } from "node:fs";
 import type { Frame } from "@andornaut/art-kit/build/grid";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import { spriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 
 import {
   blank,
@@ -21,7 +24,8 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
+import { type Portrait, portraitSheets, writePortraits } from "./bust-sheets.ts";
+import { packCastStrips } from "./cast-portrait-pages.ts";
 
 type Goo = { base: string; shade: string; light: string };
 const ORCHID: Goo = { base: "e48fd4", light: "ffd6f4", shade: "b05aa6" };
@@ -119,14 +123,35 @@ function settler(): Frame {
   return frame;
 }
 
-const KEYS = ["dollop", "blurb-settler"];
-const ids = await writePortraits(
-  "phantom",
-  "phantom/portraits",
-  [
-    { compact: [5, 2], frames: [["neutral", dollop()]], key: "dollop" },
-    { compact: [5, 3], frames: [["neutral", settler()]], key: "blurb-settler" },
-  ],
-  (id) => KEYS.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${ids.join(", ")}`);
+const portraits: readonly Portrait[] = [
+  { compact: [5, 2], frames: [["neutral", dollop()]], key: "dollop" },
+  { compact: [5, 3], frames: [["neutral", settler()]], key: "blurb-settler" },
+];
+
+function writePackedCandidate(): void {
+  const output = new URL("../../.check-results/ada-0281-phantom-authored-pages/", import.meta.url);
+  const authored = portraits
+    .toSorted((left, right) => left.key.localeCompare(right.key))
+    .map(portraitSheets);
+  mkdirSync(output, { recursive: true });
+  for (const [index, name] of ["full", "compact"].entries()) {
+    const strips = authored.map((sheets) => {
+      const { sheet, tags } = sheets[index]!;
+      const { sheet: png } = spriteSheet({ image: `${sheet}.png`, key: sheet }, tags);
+      return { image: decodePng(png), strip: { id: sheet } };
+    });
+    const { bytes } = packCastStrips(strips);
+    writeFileSync(new URL(`phantom-${name}.png`, output), bytes);
+  }
+}
+
+if (process.argv.length === 3 && process.argv[2] === "--packed-candidate") {
+  writePackedCandidate();
+} else {
+  if (process.argv.length !== 2)
+    throw new Error("Usage: node art/tools/phantom-portraits.ts [--packed-candidate]");
+  const ids = await writePortraits("phantom", "phantom/portraits", portraits, (id) =>
+    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+  );
+  console.log(`wrote ${ids.join(", ")}`);
+}
