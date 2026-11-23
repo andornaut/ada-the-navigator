@@ -29,6 +29,7 @@ function depleted() {
     piercing: false,
     velocity: { x: 0, y: 0 },
   });
+  expect(restoreSave(model.save())?.flight?.cargo).toBe(5);
   model.step(0.01, idle);
   expect(model.storyView?.page.id).toBe("jumpHome");
   return model;
@@ -44,6 +45,7 @@ describe("depletion story navigation", () => {
     const model = depleted();
     model.startGalaxy(1);
     expect(model.state.mode).toBe("space");
+    expect(model.state.flight?.cargo).toBe(0);
     expect(JSON.parse(model.save())).not.toHaveProperty("depletionContinuation");
   });
 
@@ -78,7 +80,7 @@ describe("depletion story navigation", () => {
       model.storySkip();
       expect(model.screen).toBe("selector");
       expect(model.state.economy).toEqual(economy);
-      expect(model.state.economy.cargo).toBe(3);
+      expect(model.state.economy.cargo).toBeUndefined();
       model.storySkip();
       expect(model.state.economy).toEqual(economy);
       expect(model.state.economy.stardust).toBe(17);
@@ -94,7 +96,7 @@ describe("depletion story navigation", () => {
     loaded.continueGame();
     loaded.storySkip();
     expect(loaded.screen).toBe("selector");
-    expect(loaded.state.economy.cargo).toBe(3);
+    expect(loaded.state.economy.cargo).toBeUndefined();
     expect(loaded.state.economy.stardust).toBe(17);
   });
 
