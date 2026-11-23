@@ -68,7 +68,7 @@ it("rotates the campaign generation once when replacing an older save format", a
   const campaign = { lock: async <T>(operation: () => T | Promise<T>) => operation() };
   const stale = createAdaSaves(f.port, undefined, campaign);
   const original = (await stale.load()).save;
-  const old = JSON.stringify({ ...played, version: SAVE_VERSION - 1, adaSaveStamp: stamp });
+  const old = JSON.stringify({ ...played, adaSaveStamp: stamp, version: SAVE_VERSION - 1 });
   f.values.set(SAVE_KEYS.save, old);
 
   const current = createAdaSaves(f.port, undefined, campaign);
