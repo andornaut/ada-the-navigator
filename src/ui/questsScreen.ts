@@ -506,20 +506,6 @@ export function createQuestsScreen(
               if (!run) {
                 throw new Error("Unregistered Quest footer action");
               }
-              if (initial.action === "other") {
-                const button = createButton(initial.label, initial.role);
-                const update = (data: QuestsFooterSchema["button"]["props"]) => {
-                  button.textContent = data.label;
-                  button.disabled = data.disabled ?? false;
-                  if (data.actionId !== undefined) {
-                    button.dataset.action = data.actionId;
-                  }
-                };
-                update(initial);
-                register(button, run);
-                return { dispose() {}, element: button, slots: {}, update };
-              }
-
               let props = initial;
               const action = createStandardTextAction(root, initial.label, {
                 availability: () => (props.disabled ? { kind: "disabled" } : { kind: "available" }),

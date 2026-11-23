@@ -1140,6 +1140,7 @@ it("opens a held quest directly, returns All quests to its list, and resumes onl
   const find = (action: string) =>
     quests.querySelectorAll().find((button) => button.dataset.action === action)!;
   expect(find("quest-other").textContent).toBe("All quests");
+  expect(find("quest-other").matches(".ui-standard-button")).toBe(true);
   expect(find("quest-close").textContent).toBe("Close");
   find("quest-other").click();
   const row = quests.querySelectorAll().find((button) => button.dataset.questId === entry.id)!;
