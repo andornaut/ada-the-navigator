@@ -10,7 +10,7 @@ import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { orePickupSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { footprintOutline, hexNumber, playDepth } from "./asteroidArt.ts";
+import { footprintOutline, hexNumber, playDepth, rockArt } from "./asteroidArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
 
 // Execute the production render boundary without starting Phaser's DOM renderer.
@@ -100,7 +100,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     objectSprite,
     orePickupSize,
     playDepth,
-    rockArt: () => undefined,
+    rockArt,
     rockFrame,
     rockFrameTexture,
     scenerySilhouette: () => undefined,
@@ -198,6 +198,15 @@ describe("traveling debris rendering", () => {
       expect(f.ink.strokeEllipse).not.toHaveBeenCalled();
     },
   );
+
+  it("renders the selected ballistic asteroid shape even where current debris has its own atlas", () => {
+    const f = fixture(2);
+    const object = { ...debris(), asteroid: "asteroid-h1" };
+    f.context.drawObject(f.scene, object);
+    expect(f.rockFrameTexture.mock.calls[0]?.[1].id).toBe(object.asteroid);
+    expect(f.ink.lineBetween).not.toHaveBeenCalled();
+    expect(f.ink.strokeEllipse).not.toHaveBeenCalled();
+  });
 
   it("leaves orbiting, stationary and other unassigned galaxies on their existing rendering paths", () => {
     const f = fixture();

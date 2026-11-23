@@ -1402,11 +1402,10 @@ about 2 logical pixels for about 100 ms; Art and Tech pin the final values.
 Reduced motion disables both the shake and the red line.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety. The approved global placement-density target is 20% more ordinary
-and resource asteroids in every galaxy, with no additional galaxy-by-galaxy
-asteroid curve. Preserve composition weights, size distribution, HP, loot, motion
-and safe corridors. Caches, other points of interest and enemies are outside
-this increase. Measure actual accepted asteroid counts after clearance
+and variety. Ambient ordinary and resource asteroids use a density multiplier
+of 1.70 in every galaxy. Preserve the composition weights,
+size distribution, HP, loot and safe corridors. Caches, other points of
+interest and enemy pacing are independent. Measure actual accepted asteroid counts after clearance
 rejections; the placement target alone does not establish an accepted-count
 ratio. A higher object-candidate count must not increase cache placement.
 Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
@@ -1433,11 +1432,8 @@ guard counts, points of interest and saved field identities do not change.
 
 The density exception preserves counts and guard coupling while allowing this
 variety catalog. Apply the increase through ambient
-ordinary and resource rocks, compensating there toward an aggregate accepted
-count of approximately 1.2 times baseline where feasible. Report unchanged
-authored-field counts separately alongside ambient counts in that aggregate
-measurement, and report feasibility limits rather than claiming every subsystem
-increases by 20%.
+ordinary and resource rocks. Compare accepted ambient counts with the previous
+tuning, and report authored fields separately and any shortfall due to clearance.
 Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
@@ -1456,10 +1452,14 @@ Ships bounce off them, with bump damage as for any asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
-Ballistic debris travels at constant velocity in a straight line and may rotate;
-it never circles, oscillates or steers toward Ada. Regions of traveling debris
-follow their currents and create navigation challenges along exploration and
-quest routes.
+Ballistic asteroid encounters target three times their original frequency independently
+of enemy encounters. About 75% of moving rocks on these routes travel in groups
+with one shared velocity. The rest choose their own heading and speed. Each
+group or solo rock rolls a seeded speed from 10 to 80 world units per second
+and travels in a straight line at constant velocity. It may rotate, and it
+keeps clear of protected places. For each rock, the seeded size weights are 60%
+Small, 30% Medium, 9% Large and 1% Huge before clearance checks. Authored
+current debris follows its current.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or

@@ -62,10 +62,16 @@ import {
   sceneryBound,
   scenerySilhouette,
   type Silhouette,
+  silhouetteWorldReach,
   worldSceneryBlocksSegment,
   worldSceneryBodyContact,
   worldSceneryContact,
 } from "./asteroids.ts";
+import {
+  assignBallisticVelocities,
+  hostsEncounterCell,
+  planBallisticAsteroids,
+} from "./ballisticAsteroids.ts";
 import { planChunk } from "./chunkTemplates.ts";
 import { onScreen } from "./conversations.ts";
 import {
@@ -179,6 +185,7 @@ import {
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
+export { hostsEncounterCell } from "./ballisticAsteroids.ts";
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import {
   type Contact,
@@ -227,6 +234,7 @@ import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import {
+  SHIP_REACH,
   shipBody,
   shipCircleContact,
   shipNearSegment,
@@ -892,12 +900,14 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
   const generated = generatedChunks(flight);
   const existing = new Set(flight.objects.map((object) => object.id));
   const grid = periodicWorldGrid(flightWorldContext(flight), size);
+  const cells: Vec[] = [];
   for (const cell of worldCellsNear(grid, grid.pitch * 2, point)) {
     const key = worldCellKey(grid, cell);
     const { x, y } = cell;
     if (generated.has(key)) {
       continue;
     }
+    cells.push(cell);
     flight.chunks.push(key);
     generated.add(key);
     chunkIndexes.get(flight)!.length = flight.chunks.length;
@@ -981,6 +991,10 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
       }
     }
     placeOreFields(content, grid, cell, existing, flight);
+  }
+  // Required sites, enemies and authored fields have the first claim on these chunks.
+  for (const cell of cells) {
+    generateBallisticRegion(content, grid, cell, existing, flight);
   }
 }
 
@@ -1691,14 +1705,6 @@ export function spawnChapterEnemy(
 }
 
 /**
- * Whether chunk index `index` hosts an encounter cell for a possibly fractional chunk
- * spacing: it contains a multiple of the spacing. Integer spacings host every multiple.
- */
-export function hostsEncounterCell(spacing: number, index: number): boolean {
-  return Math.ceil(index / spacing) * spacing < index + 1;
-}
-
-/**
  * Chunk spacing of encounter cells. Areal density follows the galaxy's encounter rate, so
  * the spacing shrinks with its square root; adjacent cells stay a quiet distance apart.
  */
@@ -1748,6 +1754,54 @@ function nearArrival(
   );
 }
 
+function generateBallisticRegion(
+  content: GameContent,
+  grid: WorldGrid,
+  cell: Vec,
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const encounterSeed = flightEncounterSeed(flight);
+  const requested = planBallisticAsteroids(
+    {
+      encounterSeed,
+      galaxy: flight.galaxy,
+      rockHp: content.tuning.flight.rockHp,
+    },
+    grid,
+    cell,
+  );
+  const center = worldCellCenter(grid, cell);
+  if (
+    !requested.length ||
+    worldDistance(grid, center, flight.player) < content.tuning.safeRadius * 2 ||
+    safe(content, center, flight)
+  ) {
+    return;
+  }
+  const admitted: SpaceObject[] = [];
+  for (const object of requested) {
+    const radius = placementRadius(object);
+    if (
+      existing.has(object.id) ||
+      Object.hasOwn(flight.world.notables, object.id) ||
+      !clearOf(flight, content.tuning.safeRadius, flight.player, object) ||
+      !clearOfSafeAreas(content, object, flight) ||
+      needleChannelContains({ radius }, flight, object) ||
+      worldInCurrent(grid, flight.galaxy, radius, object) ||
+      !worldClearOfOreFields(grid, flight.galaxy, radius, object) ||
+      flight.objects.some((other) => other.hp > 0 && !clearOf(flight, radius, object, other))
+    ) {
+      continue;
+    }
+    admitted.push(object);
+    canonicalObject(flight, object);
+    flight.objects.push(object);
+    existing.add(object.id);
+  }
+  assignBallisticVelocities(encounterSeed, admitted);
+}
+
 function generateRegion(
   content: GameContent,
   grid: WorldGrid,
@@ -1770,38 +1824,8 @@ function generateRegion(
   ) {
     return;
   }
-  const region = Math.floor(next() * 4);
-  if (region === 3) {
-    const [low, high] = enemyEncounterTuning.debris.count;
-    const count = low + Math.floor(next() * (high - low + 1));
-    const angle = next() * Math.PI * 2;
-    const [slow, fast] = enemyEncounterTuning.debris.speed;
-    const speed = slow + next() * (fast - slow);
-    for (let i = 0; i < count; i++) {
-      const point = { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size };
-      const id = `ballistic:${x},${y}:${i}`;
-      if (
-        !safe(content, point, flight) &&
-        requiredPlacementClear(content, flight, {
-          ...point,
-          hp: 1,
-          id,
-          kind: "debris",
-          radius: content.tuning.flight.rockRadius,
-        }) &&
-        !flight.objects.some((object) => object.id === id) &&
-        !Object.hasOwn(flight.world.notables, id)
-      ) {
-        flight.objects.push({
-          ...point,
-          hp: content.tuning.flight.rockHp,
-          id,
-          kind: "debris",
-          radius: content.tuning.flight.rockRadius,
-          velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-        });
-      }
-    }
+  // Preserve the original vacancy and draw count for the independent enemy stream.
+  if (Math.floor(next() * 4) === 3) {
     return;
   }
   const packId = `pack:${x},${y}`;
@@ -4101,6 +4125,12 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
       object.radius,
     );
   }
+  if (
+    segmentDistance(worldPoint(flightWorldContext(flight), from, flight.player), from, end) >
+    silhouetteWorldReach(drawn) + SHIP_REACH
+  ) {
+    return false;
+  }
   const frame = frameOf(flight, object);
   const body = shipBody(flight.facing);
   const steps = Math.max(1, Math.ceil(distance(from, end) / 2));
@@ -4123,6 +4153,7 @@ function moveDebris(
   events: FlightEvent[],
   flight: FlightState,
 ): void {
+  let protectedAreas: { area: SpaceObject; radius: number }[] | undefined;
   for (const object of flight.objects) {
     if (object.river) {
       // River debris follows its current and bumps Ada on contact like other traveling debris.
@@ -4144,19 +4175,21 @@ function moveDebris(
     }
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
     // Protected regions absorb traveling debris without changing its ballistic heading.
+    protectedAreas ??= flight.objects.flatMap((area) => {
+      const radius = protectedRadius(content, area);
+      return radius === null ? [] : [{ area, radius }];
+    });
+    const reach = placementRadius(object);
     if (
-      flight.objects.some((area) => {
-        const radius = protectedRadius(content, area);
-        return (
-          radius !== null &&
+      protectedAreas.some(
+        ({ area, radius }) =>
           segmentDistance(
             worldPoint(flightWorldContext(flight), object, area),
             object,
             next.position,
           ) <
-            radius + object.radius
-        );
-      })
+          radius + reach,
+      )
     ) {
       object.hp = 0;
       continue;

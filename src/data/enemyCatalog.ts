@@ -871,8 +871,6 @@ export const escortTuning: EscortTuning = { interceptRadius: 600, stationGap: 60
 
 /** Small encounters separated by quiet travel; the adapter owns seeded placement. */
 export const enemyEncounterTuning = {
-  /** Ballistic debris drifts at a seeded speed in this range, in world units per second. */
-  debris: { count: [3, 7], speed: [16, 50] },
   quietDistance: 1800,
   quietSeconds: 12,
 } as const;

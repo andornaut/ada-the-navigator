@@ -198,7 +198,7 @@ export function drawTravelingDebris(
 ): boolean {
   const flight = scene.model.state.flight!;
   const art = scene.debrisArt.get(flight.galaxy);
-  if (!object.velocity || object.orbit) {
+  if (!object.velocity || object.orbit || object.asteroid) {
     return false;
   }
   if (!art) {
