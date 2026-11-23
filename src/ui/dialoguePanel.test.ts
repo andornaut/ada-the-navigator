@@ -71,7 +71,16 @@ class Element {
     add: (...names: string[]) => {
       this.className += ` ${names.join(" ")}`;
     },
-    toggle: vi.fn(),
+    toggle: (name: string, force = !this.className.split(" ").includes(name)) => {
+      const names = new Set(this.className.split(" ").filter(Boolean));
+      if (force) {
+        names.add(name);
+      } else {
+        names.delete(name);
+      }
+      this.className = [...names].join(" ");
+      return force;
+    },
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
@@ -110,7 +119,14 @@ class Element {
   }
   readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
   readonly style: Record<string, string> = {};
-  textContent = "";
+  #text = "";
+  get textContent(): string {
+    return this.#text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.replaceChildren();
+    this.#text = value;
+  }
   addEventListener(type: string, callback: (event: Partial<PointerEvent>) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }

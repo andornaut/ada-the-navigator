@@ -1,4 +1,5 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
 import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
@@ -29,9 +30,10 @@ import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { hudButtonTarget, STORY_SKIP } from "./layout/playView.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, FOCUS_STYLE } from "./modal.ts";
+import { FOCUS_STYLE } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 // The in-flight conversation box (layout/conversationBox.ts): one line at a time with the
 // speaker's name tab and portrait, over the play view and under the HUD controls and cards. The
@@ -391,7 +393,7 @@ export function createInteractionCard(
       },
       button,
     );
-  let actions: ReturnType<typeof bindAdaAction>[] = [];
+  let actions: ReturnType<typeof createStandardTextAction>[] = [];
   let leaveView: (() => void) | undefined;
   let returnFocus: HTMLElement | null = null;
   const state = new InteractionConversation();
@@ -431,15 +433,20 @@ export function createInteractionCard(
     const choices: HTMLButtonElement[] = [];
     const controls: HTMLButtonElement[] = [];
     const add = (label: string, callback: () => void, choice = false, primary = false) => {
-      const button = createButton(label, primary ? "primary" : "secondary");
-      button.classList.add("ada-story-button");
-      button.hidden = true;
-      nextActions.push(
-        bindAction(button, () => {
+      const action = createStandardTextAction(parent, label, {
+        availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
+        current: () => !disposed && action.element.isConnected,
+        run: () => {
           callback();
           draw();
-        }),
-      );
+        },
+      });
+      const { element: button } = action;
+      button.classList.add("ada-story-button");
+      button.classList.toggle("ada-primary", primary);
+      setButtonRole(primary ? "primary" : "secondary", button);
+      button.hidden = true;
+      nextActions.push(action);
       assertAdaActionMetadata(button);
       // The controls share a row with the primary rightmost: a secondary goes before it.
       const row = choice ? choices : controls;

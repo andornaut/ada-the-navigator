@@ -123,7 +123,7 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
 const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
   :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings],
-    .ada-cheats-card, .ada-map-navigation, .ada-ship-back)
+    .ada-cheats-card, .ada-map-navigation, .ada-ship-back, [data-dialog=conversation])
   .ada-button.ui-standard-button:not(:where(.ada-compact)):focus-visible`;
 const STORY_TEXT_FOCUS = ".ada-controls .ada-story .ada-button:focus-visible";
 const ENABLED_TEXT_CONTROL = `:where(
@@ -676,7 +676,9 @@ ${UI_SCOPE} .ada-cheat-resource-icon{
   background-repeat:no-repeat
 }
 
-${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON},.ada-story .ada-button)),
+${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
+  ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button
+)),
 ${UI_SCOPE} .ada-row:not([role=switch]):focus-visible{${FOCUS_STYLE}
 }
 

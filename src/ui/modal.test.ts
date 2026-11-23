@@ -71,7 +71,9 @@ describe("Settings control rows", () => {
 
   it("keeps the generic focus ring off switches, the close button and Storybook buttons", () => {
     const start = MODAL_STYLE.indexOf(
-      `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON},.ada-story .ada-button))`,
+      `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
+  ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button
+))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
