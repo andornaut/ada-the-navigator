@@ -184,30 +184,6 @@
       "once": []
     },
     {
-      "key": "icon-shop-engine-tuning",
-      "png": "sprites/icon-shop-engine-tuning.png",
-      "json": "sprites/icon-shop-engine-tuning.json",
-      "once": []
-    },
-    {
-      "key": "icon-shop-shield",
-      "png": "sprites/icon-shop-shield.png",
-      "json": "sprites/icon-shop-shield.json",
-      "once": []
-    },
-    {
-      "key": "icon-shop-ship-paint",
-      "png": "sprites/icon-shop-ship-paint.png",
-      "json": "sprites/icon-shop-ship-paint.json",
-      "once": []
-    },
-    {
-      "key": "icon-shop-tractor-beam",
-      "png": "sprites/icon-shop-tractor-beam.png",
-      "json": "sprites/icon-shop-tractor-beam.json",
-      "once": []
-    },
-    {
       "key": "icon-shop-weapon-heavyMissile",
       "png": "sprites/icon-shop-weapon-heavyMissile.png",
       "json": "sprites/icon-shop-weapon-heavyMissile.json",
