@@ -17,12 +17,14 @@ import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon, WeaponLevel } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { validActivity } from "./activities.ts";
 import { validAndromedaProgress } from "./andromeda.ts";
 import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
+import { validExplorationSites, validExplorationState } from "./explorationState.ts";
 import { flightWorldContext, validFlightTopology } from "./flightTopology.ts";
 import { validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
@@ -708,6 +710,10 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
+        (p.explorationSites !== undefined &&
+          (!record(p.geography) ||
+            typeof p.geography.seed !== "number" ||
+            !validExplorationSites(GALAXY_SIDE, id, p.geography.seed, p.explorationSites))) ||
         (p.requiredSites !== undefined &&
           !(
             record(p.requiredSites) &&
@@ -791,6 +797,15 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(f) ||
         !validFlightTopology(f.topology) ||
+        (f.exploration !== undefined &&
+          !validExplorationState(
+            {
+              chunkSize: content.tuning.chunkSize,
+              validRoleId: () => false,
+              worldSide: f.topology.side,
+            },
+            f.exploration,
+          )) ||
         (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||

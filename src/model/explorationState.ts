@@ -1,5 +1,7 @@
+import type { GalaxyNumber } from "../data/types.ts";
 import { type ExplorationPacing, ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import type { ExplorationRenewal } from "./explorationRenewal.ts";
+import { type ProceduralPoi, proceduralPoiById } from "./proceduralPois.ts";
 import { periodicWorldGrid } from "./worldCells.ts";
 import { canonicalCell } from "./worldGeometry.ts";
 
@@ -103,4 +105,54 @@ export function validExplorationState(
     const canonical = canonicalCell(period, { x, y });
     return Object.is(canonical.x, x) && Object.is(canonical.y, y);
   });
+}
+
+/** The values record an explicit Scan. An unscanned entry is a real admitted site. */
+export type ExplorationSites = Readonly<Record<string, boolean>>;
+
+const noOffers = { jobTemplates: [] };
+const siteCache = new WeakMap<
+  ExplorationSites,
+  {
+    galaxy: GalaxyNumber;
+    seed: number;
+    worldSide: number;
+    sites: readonly ProceduralPoi[];
+  }
+>();
+
+export function admittedExplorationSites(
+  worldSide: number,
+  galaxy: GalaxyNumber,
+  seed: number,
+  record: ExplorationSites,
+): readonly ProceduralPoi[] {
+  const known = siteCache.get(record);
+  if (known?.galaxy === galaxy && known.seed === seed && known.worldSide === worldSide) {
+    return known.sites;
+  }
+  const sites = Object.keys(record).flatMap((id) => {
+    const site = proceduralPoiById(
+      { opportunityEligibility: noOffers, worldSide },
+      galaxy,
+      seed,
+      id,
+    );
+    return site ? [site] : [];
+  });
+  siteCache.set(record, { galaxy, seed, sites, worldSide });
+  return sites;
+}
+
+export function validExplorationSites(
+  worldSide: number,
+  galaxy: GalaxyNumber,
+  seed: number,
+  value: unknown,
+): value is ExplorationSites {
+  if (!record(value) || !Object.values(value).every((scanned) => typeof scanned === "boolean")) {
+    return false;
+  }
+  const sites = admittedExplorationSites(worldSide, galaxy, seed, value as ExplorationSites);
+  return sites.length === Object.keys(value).length;
 }

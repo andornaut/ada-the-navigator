@@ -43,6 +43,7 @@ import { SCREEN } from "../data/screen.ts";
 import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import {
   ACHIEVEMENT_TOTALS,
@@ -95,6 +96,12 @@ import {
   quoteExchange,
 } from "./exchange.ts";
 import {
+  advanceExplorationPacing,
+  commitExplorationOpportunity,
+  EMPTY_EXPLORATION_PACING,
+} from "./explorationPacing.ts";
+import { admittedExplorationSites } from "./explorationState.ts";
+import {
   activateRequiredCartwheelRoute,
   activateRequiredWhirlpoolRoute,
   activateRouteEncounter,
@@ -108,6 +115,7 @@ import {
   ensureStation,
   pickupTouched,
   placeDestinationAhead,
+  placeExplorationSite,
   placeHuntingPack,
   planRequiredCartwheelRoute,
   planRequiredWhirlpoolRoutes,
@@ -161,7 +169,13 @@ import {
   stationKeeperPersonalName,
   worldStationKeeper,
 } from "./keepers.ts";
-import { flightLandmarkSites, landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
+import {
+  flightLandmarkSites,
+  landmarkById,
+  landmarkLabel,
+  type LandmarkSite,
+  landmarkSites,
+} from "./landmarks.ts";
 import { landmarkScanTarget } from "./landmarkScan.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
 import { recoverLegacyQuestGuards } from "./legacyGuardRecovery.ts";
@@ -840,7 +854,7 @@ export class GameModel {
       }
       return (
         Boolean(worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id)) ||
-        flightLandmarkSites(f).some((site) => site.id === id)
+        this.scannableSites(f).some((site) => site.id === id)
       );
     });
   }
@@ -856,7 +870,7 @@ export class GameModel {
       return null;
     }
     const object = resolved.state === "present" ? resolved.object : undefined;
-    const landmark = object ? undefined : flightLandmarkSites(f).find((site) => site.id === id);
+    const landmark = object ? undefined : this.scannableSites(f).find((site) => site.id === id);
     const station = object
       ? undefined
       : worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
@@ -881,10 +895,7 @@ export class GameModel {
         : object?.kind === "pickup" && object.role === "discovery"
           ? litCaches?.has(id) === true
           : true,
-      known:
-        progress.known.includes(id) ||
-        progress.stations.includes(id) ||
-        progress.charted.includes(id),
+      known: progress.known.includes(id) || progress.stations.includes(id) || this.scannedSite(id),
       symbol: hunt
         ? "job"
         : object?.kind === "enemy"
@@ -955,6 +966,9 @@ export class GameModel {
         ...progress.known,
         ...progress.stations,
         ...progress.charted,
+        ...this.explorationSites(f)
+          .filter(({ id }) => this.scannedSite(id))
+          .map(({ id }) => id),
         ...store.ids().filter((id) => store.get(id) === "identified"),
       ]),
     ];
@@ -1314,14 +1328,28 @@ export class GameModel {
       this.screen !== "space" ||
       this.state.dialogue ||
       this.state.docked ||
-      this.current.charted.includes(id) ||
-      !flightLandmarkSites(f).some((site) => site.id === id)
+      this.scannedSite(id) ||
+      !this.scannableSites(f).some((site) => site.id === id)
     ) {
       return;
     }
-    this.talk.requestScanLesson(
-      () => this.state.flight === f && !this.current.charted.includes(id),
-    );
+    this.talk.requestScanLesson(() => this.state.flight === f && !this.scannedSite(id));
+  }
+
+  private explorationSites(flight: FlightState) {
+    const { worldSide } = flightWorldContext(flight);
+    const sites = this.current.explorationSites;
+    return sites && worldSide !== undefined
+      ? admittedExplorationSites(worldSide, flight.galaxy, flight.seed, sites)
+      : [];
+  }
+
+  private scannableSites(flight: FlightState): readonly LandmarkSite[] {
+    return [...flightLandmarkSites(flight), ...this.explorationSites(flight)];
+  }
+
+  private scannedSite(id: string): boolean {
+    return this.current.charted.includes(id) || this.current.explorationSites?.[id] === true;
   }
 
   private nearestScan() {
@@ -1333,11 +1361,16 @@ export class GameModel {
     const site = landmarkScanTarget(
       {
         ...context,
-        charted: this.current.charted,
+        charted: [
+          ...this.current.charted,
+          ...this.explorationSites(f)
+            .filter(({ id }) => this.scannedSite(id))
+            .map(({ id }) => id),
+        ],
         player: f.player,
         range: this.content.tuning.talkRange,
       },
-      flightLandmarkSites(f),
+      this.scannableSites(f),
     );
     const placeId = this.nearest();
     const place = placeId && f.objects.find(({ id }) => id === placeId);
@@ -1548,8 +1581,8 @@ export class GameModel {
     targetId: string,
     source: ScanOutcome["source"],
     completions: readonly ScanCompletion[],
+    site = landmarkById(flight.galaxy, targetId),
   ): void {
-    const site = landmarkById(flight.galaxy, targetId);
     if (!site) {
       return;
     }
@@ -1568,6 +1601,7 @@ export class GameModel {
     this.talk.scanOutcome(outcome);
     if (
       source === "scan" &&
+      !Object.hasOwn(this.current.explorationSites ?? {}, targetId) &&
       !this.talk.poiDiscovered(
         { id: site.id, kind: "landmark", symbol: site.kind },
         this.poiNearby(flight, site),
@@ -2546,6 +2580,41 @@ export class GameModel {
     const held = holodisksHeld(this.state.progress);
     this.showScene(holodiskScene(holodiskInsertion(held, inserted), memories[held - 1] ?? ""));
   }
+  /**
+   * The authored route's actual site legs, projected in the ship's chart. Use the
+   * existing local marker envelope only for this near-route slice.
+   */
+  private explorationRoute(flight: FlightState): (point: Vec) => boolean {
+    const world = flightWorldContext(flight);
+    const progress = this.current;
+    const legs: { from: Vec; delta: Vec; squared: number }[] = [];
+    let from = flight.arrivals?.[0] ?? { x: 0, y: 0 };
+    for (const id of galaxyRoute(flight.galaxy)) {
+      const to =
+        flight.objects.find((object) => object.kind === "destination" && object.id === id) ??
+        flight.world.notables[id] ??
+        progress.requiredSites?.[id];
+      if (!to) {
+        break;
+      }
+      const delta = worldDelta(world, from, to);
+      legs.push({ delta, from, squared: delta.x ** 2 + delta.y ** 2 });
+      from = to;
+    }
+    return (point) =>
+      legs.some(({ delta, from, squared }) => {
+        const offset = worldDelta(world, from, point);
+        const projection =
+          squared === 0
+            ? 0
+            : Math.max(0, Math.min(1, (offset.x * delta.x + offset.y * delta.y) / squared));
+        return (
+          (offset.x - delta.x * projection) ** 2 + (offset.y - delta.y * projection) ** 2 <=
+          TARGET_MARKER_RANGE ** 2
+        );
+      });
+  }
+
   step(dt: number, input: FlightInput): void {
     this.flightEvents = [];
     const f = this.state.flight;
@@ -2574,7 +2643,49 @@ export class GameModel {
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
-    const events = stepFlight(this.content, dt, input, f);
+    const nearRoute =
+      f.topology &&
+      this.current.geography?.seed === f.seed &&
+      (input.move.x !== 0 || input.move.y !== 0)
+        ? this.explorationRoute(f)
+        : undefined;
+    let opportunity: number | undefined;
+    const events = stepFlight(
+      this.content,
+      dt,
+      input,
+      f,
+      nearRoute &&
+        ((distance, seconds, point) => {
+          if (!nearRoute(point)) {
+            return;
+          }
+          const next = advanceExplorationPacing(f.exploration?.pacing ?? EMPTY_EXPLORATION_PACING, {
+            freshDistance: distance,
+            piloting: true,
+            region: { kind: "nearRoute" },
+            seconds,
+          });
+          (f.exploration ??= { renewals: {}, version: 1 }).pacing = next.state;
+          opportunity = next.opportunity;
+        }),
+    );
+    if (opportunity !== undefined && nearRoute && nearRoute(f.player)) {
+      const admitted = this.current.explorationSites ?? {};
+      const site = placeExplorationSite(
+        this.content,
+        f,
+        opportunity,
+        admitted,
+        Object.values(this.current.requiredSites ?? {}),
+        nearRoute,
+      );
+      if (site) {
+        this.current.explorationSites = { ...admitted, [site.id]: false };
+        const pacing = f.exploration!.pacing!;
+        f.exploration!.pacing = commitExplorationOpportunity(pacing, opportunity);
+      }
+    }
     this.carryStoryPickups(dt, f);
     this.explore(f);
     this.flightEvents = events;
@@ -2728,7 +2839,7 @@ export class GameModel {
     const unknownPoi = pennyPoints(
       this.current,
       this.holodiskWaypoint,
-      landmarks.filter(({ id }) => !this.current.charted.includes(id)),
+      [...landmarks, ...this.explorationSites(f)].filter(({ id }) => !this.scannedSite(id)),
       f,
       flightWorldContext(f).worldSide,
     );
@@ -2960,6 +3071,9 @@ export class GameModel {
           }
         : {}),
       catalog: ECONOMY,
+      chartedPois: this.explorationSites(f)
+        .filter(({ id }) => this.scannedSite(id))
+        .map((site) => ({ ...site, label: this.label(site.name) })),
       chunkSize: this.content.tuning.chunkSize,
       destinations: galaxyRoute(f.galaxy),
       explored: this.current.explored,
@@ -3243,6 +3357,13 @@ export class GameModel {
     }
     const scan = this.nearestScan();
     if (scan) {
+      const sites = this.current.explorationSites;
+      if (sites && Object.hasOwn(sites, scan.id)) {
+        this.current.explorationSites = { ...sites, [scan.id]: true };
+        this.talk.completeScanLesson();
+        this.emitScanOutcome(this.state.flight, scan.id, "scan", [], scan);
+        return;
+      }
       this.current.charted.push(scan.id);
       this.talk.completeScanLesson();
       this.recordAchievement({
@@ -4074,9 +4195,9 @@ export class GameModel {
         hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
           ? { ...hunt.spot }
           : null,
-      landmarks: flightLandmarkSites(f).map((site) => ({
+      landmarks: this.scannableSites(f).map((site) => ({
         ...site,
-        charted: this.current.charted.includes(site.id),
+        charted: this.scannedSite(site.id),
       })),
       towing: Boolean(f.tow),
     };

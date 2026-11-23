@@ -38,6 +38,7 @@ import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import {
   BEAM,
@@ -85,6 +86,7 @@ import {
   stepEnemy,
 } from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
+import { type ProceduralPoi, proceduralPoisNear } from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
@@ -1054,6 +1056,95 @@ function placeOreFields(
 
 function combat(flight: FlightState) {
   return (flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
+}
+
+/** One bounded search per new cell while a pacing ordinal is pending. */
+const lastExplorationSearch = new WeakMap<FlightState, { cell: string; ordinal: number }>();
+
+export function placeExplorationSite(
+  content: GameContent,
+  flight: FlightState,
+  ordinal: number,
+  admitted: Readonly<Record<string, boolean>>,
+  protectedSites: readonly Vec[],
+  nearRoute: (point: Vec) => boolean,
+): ProceduralPoi | undefined {
+  const world = flightWorldContext(flight);
+  if (world.worldSide === undefined) {
+    return undefined;
+  }
+  const cell = chunk(flight, content, flight.player);
+  const previous = lastExplorationSearch.get(flight);
+  if (previous?.cell === cell && previous.ordinal === ordinal) {
+    return undefined;
+  }
+  lastExplorationSearch.set(flight, { cell, ordinal });
+  const stationContext = flightStationContext(flight);
+  const sites = proceduralPoisNear(
+    {
+      ...world,
+      isProtected: (point, clearance) =>
+        !nearRoute(point) ||
+        protectedSites.some(
+          (site) => worldDistance(world, point, site) < clearance + content.tuning.safeRadius,
+        ) ||
+        !requiredFootprintClear(content, flight, { center: point, radius: clearance }) ||
+        worldStationsNear(
+          stationContext,
+          ECONOMY,
+          flight.galaxy,
+          clearance + ECONOMY.station.safeRadius,
+          point,
+        ).length > 0 ||
+        stationPopulationObjects(flight).some((object) => {
+          const radius = protectedRadius(content, object);
+          return radius !== null && worldDistance(world, object, point) < radius + clearance;
+        }) ||
+        landmarkSites(flight.galaxy).some(
+          (site) => worldDistance(world, site, point) < LANDMARK_TUNING.spacing,
+        ),
+      opportunityEligibility: { jobTemplates: [] },
+    },
+    flight.galaxy,
+    flight.seed,
+    TARGET_MARKER_RANGE,
+    flight.player,
+  );
+  for (const site of sites) {
+    if (Object.hasOwn(admitted, site.id)) {
+      continue;
+    }
+    if (site.opportunity.kind === "salvage") {
+      const id = `${site.id}:salvage`;
+      const point = { x: site.x, y: site.y };
+      const policy = SPAWNER_POLICIES[flight.galaxy];
+      if (
+        !worldFitsEncounter(
+          hostileStationContext(flight),
+          policy,
+          worldSpawnerStage(world, policy, point),
+          content.tuning.flight.shipRadius,
+          requiredPopulation(flight),
+          point,
+          { archetype: "frigate", count: 1 },
+        )
+      ) {
+        continue;
+      }
+      const wreck = spawnEnemy(content, flight, "frigate", id, point);
+      if (
+        !clearOfSafeAreas(content, wreck, flight) ||
+        !stationFormationClear(questGuardPlacementContext(content, flight), [wreck])
+      ) {
+        continue;
+      }
+      wreck.enemy!.disabled = true;
+      flight.objects.push(wreck);
+      worldSyncFlightRegion(world, content, flight);
+    }
+    return site;
+  }
+  return undefined;
 }
 
 /** A new enemy with its galaxy's archetype changes, hit points and hardpoints. */
@@ -3347,26 +3438,30 @@ export function towing<
     turnSeconds: physics.turnSeconds * turnScale,
   };
 }
+type FreshTravel = (distance: number, seconds: number, point: Vec) => void;
+
 function move(
   content: GameContent,
   dt: number,
   input: FlightInput,
   events: FlightEvent[],
   flight: FlightState,
+  freshTravel?: FreshTravel,
 ): void {
   const magnitude = Math.min(1, length(input.move));
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
   const top = physics.maxSpeed;
+  const speedFraction =
+    input.throttle === undefined
+      ? movementSpeedFraction(content.tuning, magnitude)
+      : Math.min(1, Math.max(0, input.throttle));
   const motion = stepShipMotion(
     physics,
     dt,
     { maxSpeed: top },
     {
       direction: input.move,
-      speed:
-        (input.throttle === undefined
-          ? movementSpeedFraction(content.tuning, magnitude)
-          : Math.min(1, Math.max(0, input.throttle))) * top,
+      speed: speedFraction * top,
     },
     { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
   );
@@ -3404,7 +3499,12 @@ function move(
     canonicalPosition(flight, flight.player);
     const afterKey = chunk(flight, content, flight.player);
     if (flight.freshChunk === key) {
-      flight.freshDistance += worldDistance(flightWorldContext(flight), before, flight.player);
+      const distance = worldDistance(flightWorldContext(flight), before, flight.player);
+      const previous = flight.freshDistance;
+      flight.freshDistance += distance;
+      if (freshTravel && magnitude > 0 && speedFraction > 0 && flight.freshDistance > previous) {
+        freshTravel(flight.freshDistance - previous, dt / steps, flight.player);
+      }
     }
     if (afterKey !== key) {
       flight.freshChunk = visitedChunk(flight.visited, afterKey) ? null : afterKey;
@@ -5408,6 +5508,7 @@ export function stepFlight(
   dt: number,
   input: FlightInput,
   flight: FlightState,
+  freshTravel?: FreshTravel,
 ): FlightEvent[] {
   beginFlightStep(flight);
   reducedMotions.set(flight, input.reducedMotion ?? false);
@@ -5429,7 +5530,7 @@ export function stepFlight(
     flight.sinceDamage += slice;
     generate(content, flight.player, flight);
     moveDebris(content, slice, events, flight);
-    move(content, slice, input, events, flight);
+    move(content, slice, input, events, flight, freshTravel);
     worldSyncFlightRegion(flightWorldContext(flight), content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {

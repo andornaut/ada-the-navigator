@@ -1,0 +1,112 @@
+import { expect, it } from "vitest";
+
+import { CONTENT } from "../data/content.ts";
+import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
+import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
+import { flightWorldContext } from "./flightTopology.ts";
+import { GameModel } from "./game.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
+import { proceduralPoisNear } from "./proceduralPois.ts";
+import { restoreSave } from "./save.ts";
+import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
+
+const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+const pilot = { ...idle, move: { x: 1, y: 0 }, throttle: 0.25 };
+
+function fixture(kind: "resources" | "salvage") {
+  const world = { worldSide: GALAXY_SIDE };
+  for (let seed = 1; seed <= 64; seed++) {
+    const candidate = proceduralPoisNear(
+      { ...world, opportunityEligibility: { jobTemplates: [] } },
+      1,
+      seed,
+      TARGET_MARKER_RANGE,
+      { x: 0, y: 0 },
+    ).find((site) => site.opportunity.kind === kind);
+    if (!candidate) {
+      continue;
+    }
+    const model = new GameModel(CONTENT);
+    const progress = model.state.progress[1];
+    progress.geography = { seed, sitePolicy: "seeded", version: 1 };
+    model.state.prologueSeen = true;
+    model.startGalaxy(1);
+    const flight = model.state.flight!;
+    expect(flight.topology?.side).toBe(GALAXY_SIDE);
+    flight.player = { x: candidate.x - CONTENT.tuning.talkRange * 2, y: candidate.y };
+    const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
+    flight.freshChunk = worldCellKey(grid, worldCellAt(grid, flight.player));
+    flight.exploration = {
+      pacing: { freshSeconds: ROUTE_OPPORTUNITY_SECONDS - 0.001, nextOpportunity: 0 },
+      renewals: {},
+      version: 1,
+    };
+    // The fixture supplies a real near-threshold saved ledger. Content admission comes from step.
+    model.step(0.01, idle);
+    expect(progress.explorationSites).toBeUndefined();
+    expect(flight.exploration.pacing?.freshSeconds).toBe(ROUTE_OPPORTUNITY_SECONDS - 0.001);
+    model.step(0.01, pilot);
+    if (Object.hasOwn(progress.explorationSites ?? {}, candidate.id)) {
+      return { candidate, flight, model, progress };
+    }
+  }
+  throw new Error(`No admitted ${kind} on the fixed fixture seeds`);
+}
+
+it("admits an optional Scan from fresh piloting and retains its exact map identity without survey credit", () => {
+  const { candidate, flight, model, progress } = fixture("resources");
+  expect(flight.exploration?.pacing).toEqual({ freshSeconds: 0, nextOpportunity: 1 });
+  expect(model.map!.places.some(({ id }) => id === candidate.id)).toBe(false);
+  expect(model.jobScenery.landmarks.find(({ id }) => id === candidate.id)).toMatchObject({
+    charted: false,
+    x: candidate.x,
+    y: candidate.y,
+  });
+  const counter = model.map!.mapped;
+  const before = { charted: [...progress.charted], discoveries: progress.discoveries };
+  flight.player = { x: candidate.x, y: candidate.y };
+  expect(model.contextAction).toBe("scan");
+  model.interact();
+  expect(model.drainScanOutcomes()).toMatchObject([{ completions: [], targetId: candidate.id }]);
+  model.interact();
+  expect(model.drainScanOutcomes()).toEqual([]);
+  expect(progress.explorationSites?.[candidate.id]).toBe(true);
+  expect(progress).toMatchObject(before);
+  expect(model.map!.mapped).toBe(counter);
+  expect(model.map!.places.find(({ id }) => id === candidate.id)).toMatchObject({
+    travel: false,
+    x: candidate.x,
+    y: candidate.y,
+  });
+  const saved = model.saveDocument();
+  expect(restoreSave(saved)?.progress[1].explorationSites).toEqual(progress.explorationSites);
+  const resumed = new GameModel(CONTENT, model.save());
+  resumed.continueGame();
+  expect(resumed.state.flight?.exploration).toEqual(flight.exploration);
+  expect(resumed.map!.places.find(({ id }) => id === candidate.id)).toEqual(
+    model.map!.places.find(({ id }) => id === candidate.id),
+  );
+});
+
+it("materializes the actual disabled frigate and salvages once through contextual Use after Continue", () => {
+  const { candidate, flight, model } = fixture("salvage");
+  const id = `${candidate.id}:salvage`;
+  const wreck = stationPopulationObjects(flight).find((object) => object.id === id)!;
+  expect(wreck.enemy).toMatchObject({ archetype: "frigate", disabled: true });
+  const resumed = new GameModel(CONTENT, model.save());
+  resumed.continueGame();
+  const restored = resumed.state.flight!;
+  expect(stationPopulationObjects(restored).find((object) => object.id === id)).toEqual(wreck);
+  restored.player = { x: wreck.x - CONTENT.tuning.talkRange / 2, y: wreck.y };
+  resumed.step(0.001, idle);
+  expect(resumed.contextAction).toBe("salvage");
+  resumed.interact();
+  expect(restored.objects.find((object) => object.id === id)?.enemy?.salvaged).toBe(true);
+  const drops = restored.objects.filter(({ kind, role }) => kind === "pickup" && role === "drop");
+  expect(drops.length).toBeGreaterThan(0);
+  resumed.interact();
+  expect(restored.objects.filter(({ kind, role }) => kind === "pickup" && role === "drop")).toEqual(
+    drops,
+  );
+});
