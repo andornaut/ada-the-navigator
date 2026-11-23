@@ -1345,7 +1345,9 @@ export class GameModel {
   }
 
   private scannableSites(flight: FlightState): readonly LandmarkSite[] {
-    return [...flightLandmarkSites(flight), ...this.explorationSites(flight)];
+    const landmarks = flightLandmarkSites(flight);
+    const sites = this.explorationSites(flight);
+    return sites.length ? [...landmarks, ...sites] : landmarks;
   }
 
   private scannedSite(id: string): boolean {
@@ -2643,33 +2645,36 @@ export class GameModel {
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
-    const nearRoute =
-      f.topology &&
-      this.current.geography?.seed === f.seed &&
-      (input.move.x !== 0 || input.move.y !== 0)
-        ? this.explorationRoute(f)
-        : undefined;
-    let opportunity: number | undefined;
+    const travel: { nearRoute?: (point: Vec) => boolean; opportunity?: number } = {};
+    const pacingActive = f.topology && this.current.geography?.seed === f.seed;
     const events = stepFlight(
       this.content,
       dt,
       input,
       f,
-      nearRoute &&
-        ((distance, seconds, point) => {
-          if (!nearRoute(point)) {
-            return;
+      pacingActive
+        ? (distance, seconds, point) => {
+            const nearRoute = (travel.nearRoute ??= this.explorationRoute(f));
+            if (!nearRoute(point)) {
+              return;
+            }
+            const next = advanceExplorationPacing(
+              f.exploration?.pacing ?? EMPTY_EXPLORATION_PACING,
+              {
+                freshDistance: distance,
+                piloting: true,
+                region: { kind: "nearRoute" },
+                seconds,
+              },
+            );
+            (f.exploration ??= { renewals: {}, version: 1 }).pacing = next.state;
+            if (next.opportunity !== undefined) {
+              travel.opportunity = next.opportunity;
+            }
           }
-          const next = advanceExplorationPacing(f.exploration?.pacing ?? EMPTY_EXPLORATION_PACING, {
-            freshDistance: distance,
-            piloting: true,
-            region: { kind: "nearRoute" },
-            seconds,
-          });
-          (f.exploration ??= { renewals: {}, version: 1 }).pacing = next.state;
-          opportunity = next.opportunity;
-        }),
+        : undefined,
     );
+    const { nearRoute, opportunity } = travel;
     if (opportunity !== undefined && nearRoute && nearRoute(f.player)) {
       const admitted = this.current.explorationSites ?? {};
       const site = placeExplorationSite(
