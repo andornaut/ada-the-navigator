@@ -14989,7 +14989,7 @@
     },
     {
       "id": "craft-glider-0",
-      "path": "/art/needle/glider-0.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15000,11 +15000,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-1",
-      "path": "/art/needle/glider-1.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15015,11 +15016,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-2",
-      "path": "/art/needle/glider-2.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15030,11 +15032,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-3",
-      "path": "/art/needle/glider-3.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15045,11 +15048,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-4",
-      "path": "/art/needle/glider-4.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15060,11 +15064,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-5",
-      "path": "/art/needle/glider-5.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15075,11 +15080,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-6",
-      "path": "/art/needle/glider-6.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15090,11 +15096,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-7",
-      "path": "/art/needle/glider-7.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15105,11 +15112,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-8",
-      "path": "/art/needle/glider-8.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15120,11 +15128,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-9",
-      "path": "/art/needle/glider-9.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15135,11 +15144,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-10",
-      "path": "/art/needle/glider-10.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15150,11 +15160,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-11",
-      "path": "/art/needle/glider-11.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15165,11 +15176,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-12",
-      "path": "/art/needle/glider-12.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15180,11 +15192,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-13",
-      "path": "/art/needle/glider-13.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15195,11 +15208,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-14",
-      "path": "/art/needle/glider-14.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15210,11 +15224,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "craft-glider-15",
-      "path": "/art/needle/glider-15.svg",
+      "path": "/art/needle/glider-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -15225,7 +15240,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "glider"
+      "craft": "glider",
+      "svgSheet": true
     },
     {
       "id": "loom-portrait",

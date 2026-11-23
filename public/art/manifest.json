@@ -28792,7 +28792,7 @@
     },
     {
       "id": "craft-miner-0",
-      "path": "/art/cartwheel/miner-0.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28803,11 +28803,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-1",
-      "path": "/art/cartwheel/miner-1.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28818,11 +28819,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-2",
-      "path": "/art/cartwheel/miner-2.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28833,11 +28835,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-3",
-      "path": "/art/cartwheel/miner-3.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28848,11 +28851,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-4",
-      "path": "/art/cartwheel/miner-4.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28863,11 +28867,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-5",
-      "path": "/art/cartwheel/miner-5.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28878,11 +28883,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-6",
-      "path": "/art/cartwheel/miner-6.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28893,11 +28899,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-7",
-      "path": "/art/cartwheel/miner-7.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28908,11 +28915,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-8",
-      "path": "/art/cartwheel/miner-8.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28923,11 +28931,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-9",
-      "path": "/art/cartwheel/miner-9.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28938,11 +28947,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-10",
-      "path": "/art/cartwheel/miner-10.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28953,11 +28963,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-11",
-      "path": "/art/cartwheel/miner-11.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28968,11 +28979,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-12",
-      "path": "/art/cartwheel/miner-12.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28983,11 +28995,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-13",
-      "path": "/art/cartwheel/miner-13.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -28998,11 +29011,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-14",
-      "path": "/art/cartwheel/miner-14.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -29013,11 +29027,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-miner-15",
-      "path": "/art/cartwheel/miner-15.svg",
+      "path": "/art/cartwheel/miner-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -29028,11 +29043,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "miner"
+      "craft": "miner",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-0",
-      "path": "/art/andromeda/pip-0.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29043,11 +29059,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-1",
-      "path": "/art/andromeda/pip-1.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29058,11 +29075,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-2",
-      "path": "/art/andromeda/pip-2.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29073,11 +29091,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-3",
-      "path": "/art/andromeda/pip-3.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29088,11 +29107,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-4",
-      "path": "/art/andromeda/pip-4.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29103,11 +29123,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-5",
-      "path": "/art/andromeda/pip-5.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29118,11 +29139,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-6",
-      "path": "/art/andromeda/pip-6.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29133,11 +29155,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-7",
-      "path": "/art/andromeda/pip-7.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29148,11 +29171,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-8",
-      "path": "/art/andromeda/pip-8.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29163,11 +29187,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-9",
-      "path": "/art/andromeda/pip-9.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29178,11 +29203,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-10",
-      "path": "/art/andromeda/pip-10.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29193,11 +29219,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-11",
-      "path": "/art/andromeda/pip-11.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29208,11 +29235,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-12",
-      "path": "/art/andromeda/pip-12.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29223,11 +29251,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-13",
-      "path": "/art/andromeda/pip-13.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29238,11 +29267,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-14",
-      "path": "/art/andromeda/pip-14.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29253,11 +29283,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "craft-pip-15",
-      "path": "/art/andromeda/pip-15.svg",
+      "path": "/art/andromeda/pip-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -29268,7 +29299,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "pip"
+      "craft": "pip",
+      "svgSheet": true
     },
     {
       "id": "whale-whale-0-0",

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import * as m from "./andromeda-models.ts";
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
-import { mergeSidecars, replaceEntries } from "./manifest.ts";
+import { mergeSidecars, readManifest, replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { writeProjects } from "./projects.ts";
 import {
@@ -31,6 +31,7 @@ import {
   type Part,
   polygons,
 } from "./solid.ts";
+import { writeStoryHull } from "./story-hull-sheet.ts";
 
 const output = fileURLToPath(new URL("../../public/art/andromeda/", import.meta.url));
 const PATH = "/art/andromeda/";
@@ -283,12 +284,6 @@ function writeCraft(craft: m.StoryCraft) {
   const frame = craftFrame(craft);
   const centre = frame / 2;
   const square: Layout = { halfWidth: centre, above: centre, width: frame, height: frame };
-  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-    writeFileSync(
-      `${output}${craft.name}-${yaw}.svg`,
-      svgText(svgFile(`${craft.title} ${yaw}`, square, headingFaces(craft, yaw))),
-    );
-  }
   const half = craft.mouthWidth / 2;
   writeFileSync(
     `${output}${craft.name}-jets.json`,
@@ -305,18 +300,22 @@ function writeCraft(craft: m.StoryCraft) {
     ),
   );
   const display = round(frame * DISPLAY_SCALE);
-  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
-    id: `craft-${craft.name}-${yaw}`,
-    path: `${PATH}${craft.name}-${yaw}.svg`,
-    width: frame,
-    height: frame,
-    displayWidth: display,
-    displayHeight: display,
-    facing: `world-${yaw}`,
-    directionIndex: yaw,
-    pivot: { x: 0.5, y: 0.5 },
-    craft: craft.name,
+  const frames = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+    entry: {
+      id: `craft-${craft.name}-${yaw}`,
+      path: `${PATH}${craft.name}-${yaw}.svg`,
+      width: frame,
+      height: frame,
+      displayWidth: display,
+      displayHeight: display,
+      facing: `world-${yaw}`,
+      directionIndex: yaw,
+      pivot: { x: 0.5, y: 0.5 },
+      craft: craft.name,
+    },
+    root: svgText(svgFile(`${craft.title} ${yaw}`, square, headingFaces(craft, yaw))),
   }));
+  return writeStoryHull(readManifest("core").assets, output, craft.name, frames);
 }
 
 // Pip's scooter is also a Phantom finale ally, so its frames are shared art in core. Andromeda's

@@ -5,12 +5,13 @@ import { writeFileSync } from "node:fs";
 
 import { jetsFile, type JetColors } from "./crafts.ts";
 import { svgText } from "./svg-text.ts";
-import { mergeSidecars, replaceEntries } from "./manifest.ts";
+import { mergeSidecars, readManifest, replaceEntries } from "./manifest.ts";
 import { OUT, placed, PUBLIC, squareFrame, svgFile } from "./needle-common.ts";
 import { noses } from "./nose.ts";
 import { anchor, ENEMY_HEADINGS, type Point, rotate, round, vector } from "./projection.ts";
 import { saucer, SAUCER_LEVELS, SAUCER_MOUTH_WIDTH, SAUCER_MOUTHS } from "./saucer-model.ts";
 import { along, DISPLAY_SCALE, polygons } from "./solid.ts";
+import { writeStoryHull } from "./story-hull-sheet.ts";
 
 const uv = (u: number, v: number) => along(-Math.PI / 2, u, v);
 
@@ -52,12 +53,8 @@ writeFileSync(
 );
 
 const display = round(frame * DISPLAY_SCALE);
-const entries = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-  writeFileSync(
-    `${OUT}${NAME}-${yaw}.svg`,
-    svgText(svgFile(`${TITLE} ${yaw}`, frame, frame, placed(centre, centre, headingFaces(yaw)))),
-  );
-  return {
+const frames = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+  entry: {
     id: `craft-${NAME}-${yaw}`,
     path: `${PUBLIC}${NAME}-${yaw}.svg`,
     width: frame,
@@ -68,9 +65,13 @@ const entries = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
     directionIndex: yaw,
     pivot: { x: 0.5, y: 0.5 },
     craft: NAME,
-  };
-});
+  },
+  root: svgText(
+    svgFile(`${TITLE} ${yaw}`, frame, frame, placed(centre, centre, headingFaces(yaw))),
+  ),
+}));
 
+const entries = writeStoryHull(readManifest("needle").assets, OUT, NAME, frames);
 replaceEntries("needle", (id) => id.startsWith(`craft-${NAME}-`), entries);
 mergeSidecars("needle", (craft) => craft === NAME, {
   [NAME]: { jets: `${PUBLIC}${NAME}-jets.json` },

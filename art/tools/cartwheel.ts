@@ -10,7 +10,7 @@ import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cart
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
 import { cube, hcyl, part, scaleGroups } from "./hull-shapes.ts";
-import { mergeSidecars, replaceEntries, sidecarsIn, writeOnce } from "./manifest.ts";
+import { mergeSidecars, readManifest, replaceEntries, sidecarsIn, writeOnce } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { ORE_SOLID } from "./ore.ts";
 import {
@@ -23,6 +23,7 @@ import {
   round,
   vector,
 } from "./projection.ts";
+import { writeStoryHull } from "./story-hull-sheet.ts";
 import {
   along,
   BLINK_MS,
@@ -1156,32 +1157,34 @@ function craftJets(craft: Craft): string {
 }
 
 // Writes a craft's frames and returns their entries.
-function writeCraft(dir: string, craft: Craft) {
+function writeCraft(
+  dir: string,
+  craft: Craft,
+  installed: ReturnType<typeof readManifest>["assets"] = [],
+) {
   const frame = craftFrame(craft);
   const centre = frame / 2;
-  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-    writeFileSync(
-      `${dir}${craft.name}-${yaw}.svg`,
-      svgText(
-        svgFile(`${craft.title} ${yaw}`, frame, frame, headingFaces(craft, yaw), (point) =>
-          projectAt(centre, centre, point),
-        ),
-      ),
-    );
-  }
   const display = round(frame * DISPLAY_SCALE);
-  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
-    id: `craft-${craft.name}-${yaw}`,
-    path: `/art/cartwheel/${craft.name}-${yaw}.svg`,
-    width: frame,
-    height: frame,
-    displayWidth: display,
-    displayHeight: display,
-    facing: `world-${yaw}`,
-    directionIndex: yaw,
-    pivot: { x: 0.5, y: 0.5 },
-    craft: craft.name,
+  const frames = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+    entry: {
+      id: `craft-${craft.name}-${yaw}`,
+      path: `/art/cartwheel/${craft.name}-${yaw}.svg`,
+      width: frame,
+      height: frame,
+      displayWidth: display,
+      displayHeight: display,
+      facing: `world-${yaw}`,
+      directionIndex: yaw,
+      pivot: { x: 0.5, y: 0.5 },
+      craft: craft.name,
+    },
+    root: svgText(
+      svgFile(`${craft.title} ${yaw}`, frame, frame, headingFaces(craft, yaw), (point) =>
+        projectAt(centre, centre, point),
+      ),
+    ),
   }));
+  return writeStoryHull(installed, dir, craft.name, frames);
 }
 
 // ---------------------------------------------------------------- export
@@ -1227,7 +1230,14 @@ const buoyEntries = (["a", "b"] as const).map((letter) =>
 );
 
 const crafts = [miner, visitor1, visitor2, blockerRam];
-const craftEntries = crafts.flatMap((craft) => writeCraft(output, craft));
+const SHARED = ["miner"];
+const installed = {
+  core: readManifest("core").assets,
+  cartwheel: readManifest("cartwheel").assets,
+};
+const craftEntries = crafts.flatMap((craft) =>
+  writeCraft(output, craft, installed[SHARED.includes(craft.name) ? "core" : "cartwheel"]),
+);
 
 // Cartwheel's manifest opens with the hub and the buoy; the story craft follow the claim jumpers.
 replaceEntries(
@@ -1239,7 +1249,6 @@ replaceEntries(
 // The miner is also a Phantom finale ally, so its frames are shared art in core; the other
 // story craft are Cartwheel's alone. Cartwheel's entries go first, so no id is ever in both.
 const craftIds = (names: readonly string[]) => new RegExp(`^craft-(${names.join("|")})-\\d+$`);
-const SHARED = ["miner"];
 const isShared = (entry: { id: string }) => craftIds(SHARED).test(entry.id);
 replaceEntries(
   "cartwheel",

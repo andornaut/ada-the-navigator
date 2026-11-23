@@ -15964,7 +15964,7 @@
     },
     {
       "id": "craft-visitor1-0",
-      "path": "/art/cartwheel/visitor1-0.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15975,11 +15975,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-1",
-      "path": "/art/cartwheel/visitor1-1.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15990,11 +15991,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-2",
-      "path": "/art/cartwheel/visitor1-2.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16005,11 +16007,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-3",
-      "path": "/art/cartwheel/visitor1-3.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16020,11 +16023,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-4",
-      "path": "/art/cartwheel/visitor1-4.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16035,11 +16039,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-5",
-      "path": "/art/cartwheel/visitor1-5.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16050,11 +16055,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-6",
-      "path": "/art/cartwheel/visitor1-6.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16065,11 +16071,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-7",
-      "path": "/art/cartwheel/visitor1-7.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16080,11 +16087,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-8",
-      "path": "/art/cartwheel/visitor1-8.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16095,11 +16103,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-9",
-      "path": "/art/cartwheel/visitor1-9.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16110,11 +16119,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-10",
-      "path": "/art/cartwheel/visitor1-10.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16125,11 +16135,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-11",
-      "path": "/art/cartwheel/visitor1-11.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16140,11 +16151,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-12",
-      "path": "/art/cartwheel/visitor1-12.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16155,11 +16167,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-13",
-      "path": "/art/cartwheel/visitor1-13.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16170,11 +16183,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-14",
-      "path": "/art/cartwheel/visitor1-14.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16185,11 +16199,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-15",
-      "path": "/art/cartwheel/visitor1-15.svg",
+      "path": "/art/cartwheel/visitor1-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16200,11 +16215,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor1"
+      "craft": "visitor1",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-0",
-      "path": "/art/cartwheel/visitor2-0.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16215,11 +16231,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-1",
-      "path": "/art/cartwheel/visitor2-1.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16230,11 +16247,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-2",
-      "path": "/art/cartwheel/visitor2-2.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16245,11 +16263,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-3",
-      "path": "/art/cartwheel/visitor2-3.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16260,11 +16279,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-4",
-      "path": "/art/cartwheel/visitor2-4.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16275,11 +16295,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-5",
-      "path": "/art/cartwheel/visitor2-5.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16290,11 +16311,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-6",
-      "path": "/art/cartwheel/visitor2-6.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16305,11 +16327,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-7",
-      "path": "/art/cartwheel/visitor2-7.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16320,11 +16343,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-8",
-      "path": "/art/cartwheel/visitor2-8.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16335,11 +16359,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-9",
-      "path": "/art/cartwheel/visitor2-9.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16350,11 +16375,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-10",
-      "path": "/art/cartwheel/visitor2-10.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16365,11 +16391,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-11",
-      "path": "/art/cartwheel/visitor2-11.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16380,11 +16407,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-12",
-      "path": "/art/cartwheel/visitor2-12.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16395,11 +16423,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-13",
-      "path": "/art/cartwheel/visitor2-13.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16410,11 +16439,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-14",
-      "path": "/art/cartwheel/visitor2-14.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16425,11 +16455,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor2-15",
-      "path": "/art/cartwheel/visitor2-15.svg",
+      "path": "/art/cartwheel/visitor2-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -16440,11 +16471,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "visitor2"
+      "craft": "visitor2",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-0",
-      "path": "/art/cartwheel/blocker-0.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16455,11 +16487,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-1",
-      "path": "/art/cartwheel/blocker-1.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16470,11 +16503,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-2",
-      "path": "/art/cartwheel/blocker-2.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16485,11 +16519,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-3",
-      "path": "/art/cartwheel/blocker-3.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16500,11 +16535,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-4",
-      "path": "/art/cartwheel/blocker-4.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16515,11 +16551,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-5",
-      "path": "/art/cartwheel/blocker-5.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16530,11 +16567,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-6",
-      "path": "/art/cartwheel/blocker-6.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16545,11 +16583,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-7",
-      "path": "/art/cartwheel/blocker-7.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16560,11 +16599,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-8",
-      "path": "/art/cartwheel/blocker-8.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16575,11 +16615,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-9",
-      "path": "/art/cartwheel/blocker-9.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16590,11 +16631,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-10",
-      "path": "/art/cartwheel/blocker-10.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16605,11 +16647,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-11",
-      "path": "/art/cartwheel/blocker-11.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16620,11 +16663,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-12",
-      "path": "/art/cartwheel/blocker-12.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16635,11 +16679,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-13",
-      "path": "/art/cartwheel/blocker-13.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16650,11 +16695,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-14",
-      "path": "/art/cartwheel/blocker-14.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16665,11 +16711,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "craft-blocker-15",
-      "path": "/art/cartwheel/blocker-15.svg",
+      "path": "/art/cartwheel/blocker-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -16680,7 +16727,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "blocker"
+      "craft": "blocker",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-0",
