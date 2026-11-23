@@ -99,6 +99,15 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-footer [data-action=undock]{
   margin-left:auto
 }
+/* Station text actions already paint focus on the native button face. */
+.ada-controls :is(.ada-station-footer,[data-station-confirm])
+  :is([data-action=open-shop],[data-action=open-jobs],[data-action=open-exchange],
+    [data-action=undock],[data-action=confirm-cancel],[data-action=confirm-buy]):focus-visible
+  > .ui-button-face{
+  background-color:transparent;
+  color:inherit;
+  forced-color-adjust:inherit
+}
 /* Keyboard focus tints the face while keeping the ordinary button slices. */
 .ada-controls .ada-station-footer .ada-button:focus-visible{
   outline:none;

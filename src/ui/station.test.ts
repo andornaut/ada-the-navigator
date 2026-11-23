@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -23,6 +24,7 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import * as stationSource from "./station.ts";
 import {
   jobAction,
@@ -256,7 +258,14 @@ function strictStation() {
     type = "";
     disabled = false;
     className = "";
-    textContent = "";
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     dataset: Record<string, string> = {};
     clientWidth = 400;
     clientHeight = 300;
@@ -367,6 +376,13 @@ function strictStation() {
     }
     removeAttribute(name: string) {
       this.attributes.delete(name);
+    }
+    toggleAttribute(name: string, enabled: boolean) {
+      if (enabled) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
     }
     closest(selector: string): Node | null {
       return (selector.includes("hidden") && this.hidden) ||
@@ -843,7 +859,6 @@ function constructedStation(
     assertAdaActionMetadata,
     bindAdaAction,
     createActions: actions,
-    createButton: button,
     createCard: parts,
     createDialoguePanel: parts,
     createExchangeView: (host: InstanceType<typeof Node>) => {
@@ -852,6 +867,7 @@ function constructedStation(
       return { back: () => false, dispose: () => root.remove(), render: vi.fn(), root };
     },
     createModalLayer,
+    createStandardTextAction,
     createStationItemIcon: () => new Node("span", false),
     document: doc,
     fill,
@@ -864,6 +880,7 @@ function constructedStation(
     parent,
     readViewUnit,
     refuse: vi.fn(),
+    setButtonRole,
     setFooterAction: (intent: string, row: InstanceType<typeof Node>) => {
       row.dataset.footerAction = intent;
     },
@@ -1293,6 +1310,39 @@ it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchan
   f.station.layers.inner.back();
   expect(f.doc.activeElement).toBe(f.action("open-exchange"));
   expect(f.native.get("station-back")!.frame.contains(footer)).toBe(true);
+});
+
+it("uses one standard native click for footer and confirmation actions", () => {
+  const f = constructedStation();
+  const click = (node: StationFixtureNode) => node.dispatchEvent(new Event("click"));
+  const shop = f.action("open-shop");
+  click(shop);
+  expect(f.station.isOpen()).toBe(false);
+  f.station.setOpen(true);
+  for (const action of ["open-shop", "open-jobs", "open-exchange", "undock"]) {
+    expect(f.action(action).classList.contains("ui-standard-button")).toBe(true);
+  }
+  click(shop);
+  expect(f.native.get("shop-back")!.frame.hidden).toBe(false);
+  const row = f.parent.querySelector('[data-item="item-0"]')!;
+  f.activate(row);
+  const cancel = f.action("confirm-cancel");
+  const buy = f.action("confirm-buy");
+  expect(cancel.classList.contains("ui-standard-button")).toBe(true);
+  expect(buy.classList.contains("ui-standard-button")).toBe(true);
+  click(f.action("undock"));
+  expect(f.undock).not.toHaveBeenCalled();
+  click(cancel);
+  expect(f.doc.activeElement).toBe(row);
+  f.activate(row);
+  expect(f.action("confirm-buy")).toBe(buy);
+  click(buy);
+  expect(f.buy).toHaveBeenCalledExactlyOnceWith("item-0");
+  expect(f.doc.activeElement?.dataset.item).toBe("item-0");
+  f.station.dispose();
+  click(buy);
+  click(shop);
+  expect(f.buy).toHaveBeenCalledOnce();
 });
 
 it("gives each board heading one spoken Stardust hint", () => {

@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -19,10 +20,11 @@ import { keeperName } from "./keeperBlock.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, isTap } from "./modal.ts";
+import { createActions, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph } from "./stationItemIcon.ts";
 import { type StationJobRowSchema, stationJobRowTree } from "./stationJobsTree.ts";
@@ -267,7 +269,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       throw error;
     }
   };
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const bindings: { dispose(): void }[] = [];
   const shopBindings: ReturnType<typeof bindAdaAction>[] = [];
   const jobBindings: ReturnType<typeof bindAdaAction>[] = [];
   const clearBindings = (group: typeof bindings) => {
@@ -275,6 +277,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       binding.dispose();
     }
   };
+  const canUse = (element: HTMLButtonElement): boolean =>
+    !disposed &&
+    open &&
+    parent.contains(element) &&
+    inCurrentView(parent, element) &&
+    !element.hidden &&
+    !element.closest("[hidden], [inert]");
   const register = (element: HTMLButtonElement, run: () => void, group = bindings) => {
     group.push(
       bindAdaAction(
@@ -283,18 +292,29 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
             availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
             run,
           },
-          current: () =>
-            !disposed &&
-            open &&
-            parent.contains(element) &&
-            inCurrentView(parent, element) &&
-            !element.hidden &&
-            !element.closest("[hidden], [inert]"),
+          current: () => canUse(element),
           slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
         },
         element,
       ),
     );
+  };
+  const textAction = (label: string, role: "primary" | "secondary", run: () => void) => {
+    const action = createStandardTextAction(parent, label, {
+      availability: (button) =>
+        button?.disabled
+          ? { kind: "disabled" }
+          : button?.hidden
+            ? { kind: "omitted" }
+            : { kind: "available" },
+      current: (): boolean => canUse(action.element),
+      run,
+      separateFace: true,
+    });
+    bindings.push(action);
+    action.element.classList.toggle("ada-primary", role === "primary");
+    setButtonRole(role, action.element);
+    return action;
   };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
@@ -326,13 +346,20 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   }
   const footer = document.createElement("footer");
   footer.className = "ada-station-footer";
+  const menuActions: Record<StationMenuButton, () => void> = {
+    exchange: () => showExchange(),
+    jobs: () => showJobs(),
+    shop: () => showShop(),
+    undock: options.undock,
+  };
   const menuButtons = new Map<StationMenuButton, HTMLButtonElement>();
   const menuLayout = mountLayout<StationMenuSchema>(
     {
       components: {
         button: {
           create(initial) {
-            const button = createButton(initial.label, initial.role);
+            const action = textAction(initial.label, initial.role, menuActions[initial.id]);
+            const button = action.element;
             if (initial.actionId !== undefined) {
               button.dataset.action = initial.actionId;
             }
@@ -342,7 +369,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
               element: button,
               slots: {},
               update(data) {
-                button.textContent = data.label;
+                action.setLabel(data.label);
               },
             };
           },
@@ -400,9 +427,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     title: "",
   });
   confirmCard.card.dataset.dialog = "confirm";
-  const cancel = createButton(labels.confirmCancel);
+  const cancel = textAction(labels.confirmCancel, "secondary", () => back()).element;
   cancel.dataset.action = "confirm-cancel";
-  const buy = createButton(labels.confirmBuy, "primary");
+  const buyAction = textAction(labels.confirmBuy, "primary", () => buyConfirmed());
+  const buy = buyAction.element;
   buy.dataset.action = "confirm-buy";
   const confirmActions = createActions([
     { button: cancel, role: "secondary" },
@@ -870,7 +898,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     dropHost.hidden = true;
     confirmCard.title.textContent = title;
     confirmCard.frame.setAttribute("aria-label", title);
-    buy.textContent = action;
+    buyAction.setLabel(action);
     confirmCard.body.replaceChildren(...parts, confirmActions);
     audit(confirmCard.frame);
     confirmModal.hidden = false;
@@ -1061,36 +1089,33 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   };
 
-  register(openJobs, () => {
+  const showJobs = (): void => {
     if (!stationJobsShown(options.services())) {
       return;
     }
     view = "jobs";
     render();
     focusTarget(openJobs);
-  });
+  };
   register(jobsCard.close, back);
-  register(openExchange, () => {
+  const showExchange = (): void => {
     view = "exchange";
     render();
     focusTarget(openExchange);
-  });
+  };
   register(exchangeCard.close, back);
-
-  register(undock, options.undock);
-  register(openShop, () => {
+  const showShop = (): void => {
     if (!configuredStock()) {
       return;
     }
     view = "shop";
     render();
     focusTarget(openShop);
-  });
+  };
   register(stationCard.close, back);
   register(shopCard.close, back);
   register(confirmCard.close, back);
-  register(cancel, back);
-  register(buy, () => {
+  const buyConfirmed = (): void => {
     const pending = confirm;
     if (!pending || "drop" in pending) {
       return;
@@ -1146,7 +1171,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         focusShop(key, shopIndex);
       }
     }
-  });
+  };
 
   // A drag across a page must not activate the row where the gesture started.
   for (const group of [shopStock, jobList, projectList]) {
