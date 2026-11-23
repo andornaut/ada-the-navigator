@@ -367,7 +367,8 @@ describe("directional handling", () => {
     stepFlight(vectorOnly, 0.1, request, reference);
     const turned = degrees(damped.velocity, east);
     const referenceTurned = degrees(reference.velocity, east);
-    expect(referenceTurned).toBeCloseTo(17.8, 0);
+    const remaining = Math.exp(-0.1 / physics.accelerationSeconds);
+    expect(referenceTurned).toBeCloseTo(degrees({ x: remaining, y: remaining - 1 }, east), 8);
     expect(turned).toBeLessThanOrEqual(referenceTurned);
     expect(turned).toBeGreaterThan(4);
     expect(turned).toBeLessThan(9);
@@ -582,7 +583,8 @@ describe("analog movement speed", () => {
   function cruise(move: Vec): FlightState {
     const flight = empty();
     flight.player = { x: 256, y: 256 };
-    for (let frame = 0; frame < 180; frame++) {
+    // Let the level 1 acceleration curve settle to the speed assertions’ precision.
+    for (let frame = 0; frame < 210; frame++) {
       stepFlight(CONTENT, 1 / 60, { ...idle, move }, flight);
     }
     return flight;
