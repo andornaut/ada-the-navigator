@@ -11,7 +11,7 @@ import { vectorSheetKey } from "./svgSheet.ts";
 import { whaleFrameAsset, whaleViewBox } from "./whaleArt.ts";
 
 const names = new Set([
-  "queueCoreSvgSheets",
+  "queueEagerSvgSheets",
   "svgSheets",
   "loadGalaxyAsset",
   "queueWhaleSheetFrame",
@@ -87,7 +87,7 @@ function fixture() {
   };
   return {
     boot: (
-      context.queueCoreSvgSheets as (
+      context.queueEagerSvgSheets as (
         sourceScene: typeof scene,
         current: () => boolean,
         fail: (error: unknown) => void,
