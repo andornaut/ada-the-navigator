@@ -22,6 +22,7 @@ import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
+import { validFlightTopology } from "./flightTopology.ts";
 import { validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
 import {
@@ -89,7 +90,7 @@ function validEarthChoices(content: GameContent, galaxy: GalaxyNumber, value: un
 }
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 13;
+export const SAVE_VERSION: GameState["version"] = 14;
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -751,8 +752,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       const f = value.flight;
       if (
         !record(f) ||
-        // Save migration never opts a legacy chart into periodic geometry.
-        f.topology !== undefined ||
+        !validFlightTopology(f.topology) ||
         (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||

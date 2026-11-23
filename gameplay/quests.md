@@ -198,7 +198,7 @@ In-flight lines, each played once per save:
 
 Each galaxy targets roughly 200 landmarks for surveys to chart: nebulae, wrecks
 and beacons, drawn in the galaxy's own palette. Wrecks are old hulls with no one
-aboard. Seeded placements extend to a maximum radius of 100000 world units
+aboard. Seeded placements extend to a maximum radius of 80000 world units
 from the galaxy's origin, retaining 3000-world-unit landmark spacing and
 1500-world-unit clearance from stations and story destinations. Measure accepted
 safe placements after rejection; the target is not an unverified accepted count.

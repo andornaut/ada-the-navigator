@@ -301,6 +301,7 @@ import {
   type WeaponChoice,
 } from "./weapons.ts";
 import { worldDelta, worldDistance } from "./worldContacts.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
@@ -2211,6 +2212,7 @@ export class GameModel {
       this.state.economy,
       seed,
     );
+    flight.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
     if (flight.galaxy === 1 && !this.current.questComplete) {
       const sites = galaxyRoute(flight.galaxy).filter((id) => !this.current.known.includes(id));
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {

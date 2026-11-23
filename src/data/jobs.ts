@@ -159,7 +159,7 @@ export const LANDMARK_TUNING = {
   /** Clearance from stations and story destinations. */
   placeClearance: 1500,
   /** Within this distance of the galaxy's world origin. */
-  radius: 100000,
+  radius: 80000,
   retained: RETAINED_LANDMARKS,
   /** Apart from one another. */
   spacing: 3000,

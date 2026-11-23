@@ -417,7 +417,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** Current save format; only the explicitly supported prior geography format migrates. */
-  version: 13;
+  version: 14;
   mode: "home" | "space";
   selectedGalaxy: GalaxyNumber;
   unlocked: GalaxyNumber[];

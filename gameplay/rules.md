@@ -812,10 +812,15 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   stays centered on the galaxy origin and follows map projection, pan and zoom;
   it is not a gameplay boundary. Stations
   beyond the circle still show on the Map once discovered but do not count.
-  Landmarks extend independently to 100000 world units, targeting roughly 200
+  Landmarks extend independently to 80000 world units, targeting roughly 200
   safely placed sites per galaxy while preserving the original 12 identities and
   positions. Distant landmarks remain visible, scannable, chartable and mapped;
   the galactic-center mapping-progress and survey-area denominator stays 25000.
+- Each galaxy wraps on both axes across a square 240000 world units on a side.
+  Flight crosses to the opposite edge with its direction and speed intact.
+  Map, flight and placement queries use the same wrap geometry. The transition
+  resets old saves once. New saves retain their own discoveries and story
+  progress across later flights.
   Landmark labels use the stable shared [Quests](quests.md#landmarks) contract.
   Undiscovered places never appear. Map places keep at least
   1020 world units apart, so each stays separate at full zoom; placement
