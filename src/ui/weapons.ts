@@ -171,13 +171,6 @@ ${button}:focus-visible ${disc}{
   background:${HUD_DISC_STATES.selected.glyph};
   --disc-focus-glyph:${INK}
 }
-@media (forced-colors:active){
-  ${button}:focus-visible ${disc}{
-    forced-color-adjust:none;
-    background:Highlight;
-    --disc-focus-glyph:HighlightText
-  }
-}
 ${button} ${disc}::before{
   content:"";
   width:${units(HUD_BUTTON.glyph)};
@@ -185,6 +178,17 @@ ${button} ${disc}::before{
   background:var(--disc-focus-glyph,currentColor);
   -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
   mask:var(--glyph) center / 100% 100% no-repeat
+}
+@media (forced-colors:active){
+  ${button}:focus-visible ${disc}{
+    forced-color-adjust:none;
+    background:Highlight;
+    --disc-focus-glyph:HighlightText
+  }
+  ${button} ${disc}::before{
+    forced-color-adjust:none;
+    background:var(--disc-focus-glyph,ButtonText)
+  }
 }
 `;
 }

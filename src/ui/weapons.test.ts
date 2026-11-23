@@ -283,6 +283,7 @@ describe("HUD weapon buttons", () => {
     expect(focus[0]).toContain("--disc-focus-glyph:#181425");
     expect(focus[1]).toContain("background:Highlight");
     expect(focus[1]).toContain("--disc-focus-glyph:HighlightText");
+    expect(shared).toContain("background:var(--disc-focus-glyph,ButtonText)");
     expect(focus.join("")).not.toMatch(/outline|box-shadow/u);
   });
 
