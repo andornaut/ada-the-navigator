@@ -341,19 +341,17 @@ export function courierSchool(lit: boolean): Part[][] {
 export const HAMLET_DOCK = { face: 34, mouth: 18, collar: 26, height: 10 } as const;
 export const LAMPHOUSE_DOCK = { face: 30, mouth: 16, collar: 24, height: 10 } as const;
 
-// Hamlet is a compact habitation cluster with a lilac utility spine and a single solar bank.
+// Hamlet is a compact habitation cluster on a central spine and a paired collector truss.
 export function hamlet(lit: boolean): Part[][] {
   const { collar, face, height } = HAMLET_DOCK;
   return [
-    [part(orbitalBox(0, 0, 8, 52), 1, 5, ...truss), part(orbitalBox(5, 0, 50, 13), 1, 6, ...alloy)],
-    solarLeaf(-10, -20, 20, 16, 5),
-    habitat(0, 2, 24, 17, 6, 14, lilac),
-    habitat(4, 17, 22, 18, 5, 11, lilac),
-    habitat(10, -14, 16, 15, 5, 9, ice),
     [
-      part(orbitalBox(-6, 21, 10, 3), 5, 7, ...alloy),
-      part(orbitalBox(-6, 21, 6, 1.3), 7, 7.5, ...ice),
+      part(orbitalBox(-10, 0, 8, 52), 1, 5, ...truss),
+      part(orbitalBox(5, 0, 50, 13), 1, 6, ...alloy),
     ],
+    ...[-20, 20].map((across) => solarLeaf(-18, across, 20, 12, 5)),
+    habitat(0, 0, 24, 17, 6, 14, lilac),
+    ...[-16, 16].map((across) => habitat(6, across, 20, 15, 5, 11, ice)),
     [
       ...closedCollar(lit, face, collar, ...alloy, height),
       part(orbitalBox(face - 4, 0, 6, 15), height + 4, height + 6, ...lilac),
@@ -361,23 +359,22 @@ export function hamlet(lit: boolean): Part[][] {
   ];
 }
 
-// Lamp House is a tall relay satellite with offset solar leaves and an elevated antenna array.
+// Lamp House is a tall relay satellite with a centered antenna and paired solar wings.
 export function lampHouse(lit: boolean): Part[][] {
   const { collar, face, height } = LAMPHOUSE_DOCK;
   return [
     [
       part(orbitalBox(-4, 0, 7, 40), 2, 7, ...truss),
-      part(orbitalBox(3, 3, 39, 13), 0, 8, ...alloy),
+      part(orbitalBox(3, 0, 39, 13), 0, 8, ...alloy),
     ],
-    solarLeaf(-10, -15, 24, 13, 7),
-    solarLeaf(8, -15, 10, 13, 7),
-    habitat(-6, 6, 23, 19, 8, 12, ice),
+    ...[-15, 15].map((across) => solarLeaf(-4, across, 34, 10, 7)),
+    habitat(-6, 0, 23, 19, 8, 12, ice),
     [
-      part(orbitalBox(-5, 6, 5, 5), 22, 37, ...truss),
-      part(orbitalBox(-5, 4, 5, 26), 32, 38, ...alloy),
-      ...[-4, 4, 12].map((across) => part(orbitalBox(-2, across, 1, 6), 33, 37, ...ice)),
-      part(orbitalBox(-3, 4, 2, 20), 38, 38.65, ...truss),
-      cube(...along(DOCK, -3, 4), 38, 2.2, lit ? a.marker : a.markerDeep),
+      part(orbitalBox(-5, 0, 5, 5), 22, 37, ...truss),
+      part(orbitalBox(-5, 0, 5, 26), 32, 38, ...alloy),
+      ...[-8, 0, 8].map((across) => part(orbitalBox(-2, across, 1, 6), 33, 37, ...ice)),
+      part(orbitalBox(-3, 0, 2, 20), 38, 38.65, ...truss),
+      cube(...along(DOCK, -3, 0), 38, 2.2, lit ? a.marker : a.markerDeep),
     ],
     [
       ...closedCollar(lit, face, collar, ...alloy, height),

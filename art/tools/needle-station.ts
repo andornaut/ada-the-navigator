@@ -5,8 +5,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import {
-  blueDimSide,
-  blueSide,
   dockAt,
   glass,
   glassSide,
@@ -20,7 +18,6 @@ import {
   placed,
   PUBLIC,
   RIGHT,
-  rose,
   silver,
   silverSide,
   steel,
@@ -29,7 +26,6 @@ import {
 } from "./needle-common.ts";
 import { round } from "./projection.ts";
 import {
-  along,
   BLINK_MS,
   blue,
   blueDim,
@@ -38,8 +34,6 @@ import {
   DISPLAY_SCALE,
   dockCollar,
   type Face,
-  faces,
-  ngon,
   orientedPlan,
   type Part,
   type Plan,
@@ -61,227 +55,69 @@ const BERTHS = {
 } as const;
 
 const frame: Layout = { width: 480, height: 160, halfWidth: 240, above: 110 };
-const HABITAT_LIFT = 11;
 
 function hull(plan: Plan, z0: number, z1: number, top: string, side: string): Part {
   return { plan: orientedPlan(0, 0, RIGHT, plan), z0, z1, top, side };
 }
 
-function sparBrace(): Face[] {
-  const brace = hull(box(8, -4, 15, 4), -18, 22 + HABITAT_LIFT, silver, steelSide);
-  // Lean the upper attachment 30 units left of the spar attachment.
-  return faces(brace, ([x, y, z]) => {
-    const rise = (z - brace.z0) / (brace.z1 - brace.z0);
-    const [dx, dy] = along(RIGHT, -30 * rise, 0);
-    return [x + dx, y + dy, z];
-  });
+// Centred on the midpoint of the base berths. The funded right berth retains its longer reach.
+const HABITAT_AXIS = -28;
+const SUPPORT_OFFSET = 29;
+const POD_OFFSET = 72;
+const DECK_MARKER_PITCH = 10.4;
+
+function panel(
+  offset: number,
+  length: number,
+  width: number,
+  z0: number,
+  z1: number,
+  top: string,
+  side: string,
+): Part {
+  const u = HABITAT_AXIS + offset;
+  return hull(box(u - length / 2, -width / 2, u + length / 2, width / 2), z0, z1, top, side);
 }
 
-function habitat(): Part[] {
-  const shell = hull(
-    [
-      [-110, -4],
-      [-78, -21],
-      [7, -25],
-      [43, -14],
-      [58, 0],
-      [42, 10],
-      [-42, 17],
-      [-90, 12],
-    ],
-    22,
-    36,
-    pearl,
-    pearlSide,
-  );
-
-  const upperHull = [
-    shell,
-    hull(
-      [
-        [-101, -4],
-        [-75, -18],
-        [8, -22],
-        [39, -12],
-        [51, -1],
-        [39, 1],
-        [5, -10],
-        [-73, -8],
-      ],
-      36,
-      39,
-      lav,
-      lavSide,
-    ),
-    hull(
-      [
-        [-82, 1],
-        [-47, -6],
-        [7, -8],
-        [43, 2],
-        [37, 7],
-        [-45, 14],
-      ],
-      36,
-      39,
-      glass,
-      glassSide,
-    ),
-    ...wallWindows((nx, ny) => nx + ny > 1.3, 27, 29.4, 5, 4, shell.plan),
-    ...[-60, -43, -26, -9, 8, 25].map((u) =>
-      hull(
-        [
-          [u - 4, 1],
-          [u + 4, 0],
-          [u + 6, 2],
-          [u - 3, 4],
-        ],
-        39,
-        39.8,
-        rose,
-        lavSide,
-      ),
-    ),
-  ];
-  return upperHull.map((part) => ({
-    ...part,
-    z0: part.z0 + HABITAT_LIFT,
-    z1: part.z1 + HABITAT_LIFT,
-  }));
-}
-
-// A swept thermal blade cantilevers above the left approach and leaves the berth plane clear.
-function thermalBlade(): Part[] {
+function habitat(lit: boolean): Part[] {
+  const shell = panel(0, 104, 54, 42, 54, steel, steelSide);
+  // The two top equipment blocks sit inside a clearly visible deck plane.
   return [
-    hull(
-      [
-        [-185, -11],
-        [-162, -22],
-        [-105, -30],
-        [-62, -26],
-        [-54, -19],
-        [-91, -16],
-        [-148, -8],
-        [-174, -6],
-      ],
-      33,
-      42,
-      steel,
-      steelSide,
-    ),
-    hull(
-      [
-        [-176, -11],
-        [-159, -19],
-        [-106, -27],
-        [-74, -23],
-        [-105, -21],
-        [-151, -13],
-      ],
-      42,
-      44,
-      lav,
-      lavSide,
-    ),
-    ...[-159, -144, -129, -114, -99].map((u, i) => {
-      const v = -16 - i * 2.1;
-      return hull(
-        [
-          [u - 2, v - 2],
-          [u + 2, v - 2],
-          [u + 5, v + 2],
-          [u + 1, v + 2],
-        ],
-        44,
-        45.4,
-        glass,
-        glassSide,
-      );
+    shell,
+    panel(0, 84, 46, 54, 57, glass, glassSide),
+    ...[-24, 24].map((offset) => panel(offset, 29, 32, 57, 60, lav, lavSide)),
+    panel(0, 12, 19, 57, 62, pearl, pearlSide),
+    panel(0, 5, 9, 62, 63, lit ? blue : blueDim, glassSide),
+    ...Array.from({ length: 9 }, (_, index) => {
+      const centre = HABITAT_AXIS + (index - 4) * DECK_MARKER_PITCH;
+      const mark = lit ? blue : blueDim;
+      return hull(box(centre - 1.8, 24, centre + 1.8, 27), 54, 54, mark, mark);
     }),
   ];
 }
 
-function loomHall(): Part[] {
-  // An enlarged glazed chamber interlocks with the right-hand spine.
-  const chamber = hull(
-    [
-      [46, -3],
-      [56, -22],
-      [78, -26],
-      [100, -16],
-      [108, -1],
-      [98, 11],
-      [72, 14],
-      [55, 9],
-    ],
-    5,
-    20,
-    glass,
-    glassSide,
-  );
-  return [
-    chamber,
-    ...wallWindows((nx, ny) => nx + ny > 1.2, 10, 13, 3, 3.8, chamber.plan),
-    ...[55, 73, 91].map((u) =>
-      hull(
-        [
-          [u - 5, -15],
-          [u + 2, -19],
-          [u + 14, 6],
-          [u + 7, 11],
-        ],
-        19,
-        23,
-        lav,
-        lavSide,
-      ),
-    ),
-    hull(
-      [
-        [92, -23],
-        [112, -26],
-        [125, -22],
-        [128, -16],
-        [111, -15],
-        [98, -12],
-      ],
-      17,
-      24,
-      steel,
-      steelSide,
-    ),
-    hull(box(108, -22, 121, -19), 24, 25, pearl, pearlSide),
-  ];
+function sidePods(hall: boolean, lit: boolean): Part[] {
+  return [-1, 1].flatMap((side) => {
+    const offset = side * POD_OFFSET;
+    const shell = panel(offset, 30, 37, 28, 49, steel, steelSide);
+    return [
+      panel(side * 53, 20, 10, 42, 46, pearl, pearlSide),
+      shell,
+      panel(offset, 27, 31, 49, 53, lav, lavSide),
+      ...(hall
+        ? [
+            panel(offset, 25, 24, 53, 61, pearl, pearlSide),
+            ...[-7, 0, 7].map((rib) =>
+              panel(offset + rib, 3, 18, 61, 62, lit ? lav : glass, lavSide),
+            ),
+            ...wallWindows((nx, ny) => nx + ny > 1.4, 34, 37, 3, 3.5, shell.plan),
+          ]
+        : [panel(offset, 19, 21, 53, 55, glass, glassSide)]),
+    ];
+  });
 }
 
-function beacon(lit: boolean): Part[] {
-  const [x, y] = along(RIGHT, -66, 0);
-  return [
-    {
-      plan: ngon(6, 6, x, y),
-      z0: 39 + HABITAT_LIFT,
-      z1: 49 + HABITAT_LIFT,
-      top: steel,
-      side: steelSide,
-    },
-    {
-      plan: ngon(6, 2.2, x, y),
-      z0: 49 + HABITAT_LIFT,
-      z1: 78 + HABITAT_LIFT,
-      top: silver,
-      side: silverSide,
-    },
-    {
-      plan: box(x - 2.2, y - 2.2, x + 2.2, y + 2.2),
-      z0: 78 + HABITAT_LIFT,
-      z1: 81.4 + HABITAT_LIFT,
-      top: lit ? blue : blueDim,
-      side: lit ? blueSide : blueDimSide,
-    },
-  ];
-}
-
-function berth(lit: boolean, angle: number, face: number, shoulder: number): Part[] {
+function berth(lit: boolean, angle: number, face: number): Part[] {
   const [collar, ...mouth] = dockCollar(
     lit,
     face,
@@ -292,23 +128,10 @@ function berth(lit: boolean, angle: number, face: number, shoulder: number): Par
     10,
     angle,
   );
-  // Fair the collar into the spine and leave the mouth plane and lights in their original places.
   const half = (BERTH_WIDTH + 8) / 2;
+  // The mirrored housings keep the existing mouth plane and contacts.
   return [
-    {
-      ...collar!,
-      plan: orientedPlan(0, 0, angle, [
-        [face - 23, -4],
-        [face - 10, -9 + shoulder],
-        [face - 3, -half],
-        [face, -half],
-        [face, half],
-        [face - 3, half],
-        [face - 10, 9 + shoulder],
-        [face - 23, 4],
-      ]),
-      z1: 12,
-    },
+    { ...collar!, plan: orientedPlan(0, 0, angle, box(face - 18, -half, face, half)), z1: 12 },
     ...mouth,
   ];
 }
@@ -316,60 +139,18 @@ function berth(lit: boolean, angle: number, face: number, shoulder: number): Par
 function station(lit: boolean, hall: boolean): Face[] {
   const [left, right] = BERTHS[hall ? "hall" : "base"];
   const parts: Part[] = [
-    // An offset spar leaves open space between its length and the upper hull.
-    hull(
-      [
-        [-6, -8],
-        [14, -10],
-        [49, 10],
-        [43, 15],
-        [35, 14],
-        [2, 2],
-      ],
-      -23,
-      -14,
-      steel,
-      steelSide,
+    // A straight common spine keeps both fixed approaches clear at their original planes.
+    hull(box(-left[1] + 8, -6, right[1] - 8, 6), 0, 10, steel, steelSide),
+    ...[-SUPPORT_OFFSET, SUPPORT_OFFSET].map((offset) =>
+      panel(offset, 10, 14, 9, 43, silver, silverSide),
     ),
-    hull(
-      [
-        [21, -6],
-        [42, 8],
-        [37, 10],
-        [17, -2],
-      ],
-      -14,
-      -12.5,
-      lav,
-      lavSide,
-    ),
-    // The working mouths are recessed into the ends of the structure.
-    hull(
-      [
-        [-122, -5],
-        [-76, -10],
-        [-12, -8],
-        [right[1] - 8, -5],
-        [right[1] - 8, 4],
-        [17, 7],
-        [-13, 4],
-        [-68, 7],
-        [-122, 4],
-      ],
-      12,
-      17,
-      steel,
-      steelSide,
-    ),
-    ...(hall ? loomHall() : []),
-    ...berth(lit, ...left, -3),
-    ...berth(lit, ...right, 3),
-    ...thermalBlade(),
-    hull(box(-91, -13, -67, -1), 14, 34, steel, steelSide),
-    ...habitat(),
-    ...beacon(lit),
+    ...[-POD_OFFSET, POD_OFFSET].map((offset) => panel(offset, 7, 12, 8, 31, steel, steelSide)),
+    ...berth(lit, ...left),
+    ...berth(lit, ...right),
+    ...sidePods(hall, lit),
+    ...habitat(lit),
   ];
-  return [...sparBrace(), ...polygons([parts])];
+  return polygons([parts]);
 }
 
 const variants = { base: false, hall: true } as const;
