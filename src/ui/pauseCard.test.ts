@@ -8,6 +8,7 @@ import { fixtureActionRoot } from "./actionRootFixture.ts";
 import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels, type MapScreenState } from "./mapScreen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
+import { inCurrentView } from "./pressScope.ts";
 import type { ShipView } from "./shipCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.
@@ -371,6 +372,22 @@ const texts = (node: FakeElement): string[] => [
   ...(node.textContent ? [node.textContent] : []),
   ...node.children.flatMap(texts),
 ];
+
+it("admits the visible Pause X alongside Resume and excludes it under Ship", () => {
+  const { modal, pause, root } = cards();
+  const scoped = (element: FakeElement) =>
+    inCurrentView(root as unknown as HTMLElement, element as unknown as HTMLElement);
+  const close = button(modal, "close-pause");
+  pause.setState(state());
+  pause.open();
+  expect(scoped(button(modal, "pause-resume"))).toBe(true);
+  expect(scoped(close)).toBe(true);
+
+  button(modal, "pause-ship").click();
+  expect(scoped(button(modal, "close-ship"))).toBe(true);
+  expect(scoped(close)).toBe(false);
+  pause.dispose();
+});
 
 function standaloneMap(root = mountedRoot()) {
   const onClose = vi.fn();

@@ -254,7 +254,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     for (const [id, button] of buttons) {
       register(button, () => act(id));
     }
-    register(paused.close, () => setOpen(false));
+    register(paused.close, resume);
     register(ship.close, () => closeShip());
     assertAdaActionMetadata(paused.frame);
     assertAdaActionMetadata(ship.frame);
@@ -376,7 +376,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
       paused.close;
     layer = createModalLayer(modal);
-    leaveLayer = layer.open({ close: () => setOpen(false), focus }, paused.card);
+    leaveLayer = layer.open({ close: resume, focus }, paused.frame);
   };
   const restoreShip = () => {
     if (open && shipOpen()) {
@@ -486,6 +486,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     options.onOpenChange(value);
   };
+  function resume(): void {
+    setOpen(false);
+  }
   // What the card last showed. Rendering only on a change keeps each button's node across
   // frames, so a press is never lost to a rebuilt button.
   let shown: string | undefined;
@@ -572,7 +575,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       return;
     }
     if (id === "resume") {
-      setOpen(false);
+      resume();
     } else if (id === "map") {
       mapOpener = "map";
       show("map");
@@ -645,7 +648,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       if (quests.isOpen()) {
         quests.back();
       } else {
-        setOpen(false);
+        resume();
       }
     },
     closeMap,
