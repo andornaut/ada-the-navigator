@@ -289,8 +289,9 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   align-self:flex-end;
   justify-content:flex-end
 }
-/* Install retains the compact button's ring and authored face under native focus. */
-.ada-controls .ada-install-row > .ui-standard-button.ada-compact{
+/* Keep the secondary skin on both Settings actions when the Kit owns focus. */
+.ada-controls .ada-install-row > .ui-standard-button.ada-compact,
+.ada-controls [data-dialog=install-steps] .ada-button.ui-standard-button{
   --ui-button-focus-fill:${BUTTON_FACE.secondary};
   --ui-button-focus-text:${TEXT_TOKENS.buttonLabel}
 }
