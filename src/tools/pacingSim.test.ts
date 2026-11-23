@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   asteroidKillSeconds,
+  createScenarioRunner,
   DEFAULT_BEHAVIOUR,
   generateChunk,
   onScreen,
@@ -92,6 +93,7 @@ describe("pacing simulation world", () => {
 });
 
 describe("pacing simulation runs", () => {
+  const run = createScenarioRunner();
   const options = { behaviour: DEFAULT_BEHAVIOUR, galaxy: 1 as const, minutes: 15, seeds: 3 };
 
   it("is deterministic for the same seeds and values", () => {
@@ -117,7 +119,7 @@ describe("pacing simulation runs", () => {
     expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "heavyMissile", "huge")).toBeLessThan(
       asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", "huge"),
     );
-    const { runs, summary } = runScenario({
+    const { runs, summary } = run({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "time", prices: {} },
     });
@@ -156,7 +158,7 @@ describe("pacing simulation runs", () => {
         }
       }
     }
-    const { summary } = runScenario({
+    const { summary } = run({
       ...options,
       minutes: 60,
       scenario: { behaviour: {}, description: "", economy: {}, name: "sizes", prices: {} },
@@ -170,11 +172,11 @@ describe("pacing simulation runs", () => {
   it("applies value overrides to drops and caches", () => {
     const catalog = scenarioEconomy({ discoveryStardust: 3 });
     expect(catalog.discoveryStardust).toBe(3);
-    const base = runScenario({
+    const base = run({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "base", prices: {} },
     });
-    const richer = runScenario({
+    const richer = run({
       ...options,
       scenario: {
         behaviour: {},
@@ -193,7 +195,7 @@ describe("pacing simulation runs", () => {
 
   it("finds more stations by following the direction indicator than by sight alone", () => {
     const stations = (indicatorRange: number) =>
-      runScenario({
+      run({
         ...options,
         minutes: 60,
         scenario: {
@@ -222,14 +224,14 @@ describe("pacing simulation runs", () => {
       speedFraction,
     };
     const scenario = { behaviour: {}, description: "", economy: {}, name: "slow", prices: {} };
-    const { runs } = runScenario({ ...options, behaviour, minutes: 10, scenario, seeds: 6 });
+    const { runs } = run({ ...options, behaviour, minutes: 10, scenario, seeds: 6 });
     for (const run of runs) {
       expect(run.stationSeconds.length, `seed ${run.seed}`).toBeGreaterThan(0);
     }
   });
 
   it("collects upgrade pickups from destroyed small craft and salvaged heavies as gifts", () => {
-    const { runs, summary } = runScenario({
+    const { runs, summary } = run({
       ...options,
       galaxy: 2,
       minutes: 30,
@@ -251,7 +253,7 @@ describe("pacing simulation runs", () => {
   });
 
   it("fights galaxy three's capital route guards", () => {
-    const { runs } = runScenario({
+    const { runs } = run({
       ...options,
       galaxy: 3,
       scenario: { behaviour: {}, description: "", economy: {}, name: "three", prices: {} },
@@ -272,9 +274,9 @@ describe("pacing simulation runs", () => {
       cacheChase: 0,
       depletionChance: 0,
     };
-    const without = runScenario({ ...options, behaviour, minutes: 40, scenario, seeds: 6 });
+    const without = run({ ...options, behaviour, minutes: 40, scenario, seeds: 6 });
     expect(without.runs.every((run) => run.stardust.jobs === 0)).toBe(true);
-    const withJobs = runScenario({
+    const withJobs = run({
       ...options,
       behaviour: { ...behaviour, jobs: true },
       minutes: 40,
@@ -307,7 +309,7 @@ describe("pacing simulation runs", () => {
   });
 
   it("meets galaxy one's frigates and escorted capital battles from the catalog", () => {
-    const { summary } = runScenario({
+    const { summary } = run({
       ...options,
       minutes: 60,
       scenario: { behaviour: {}, description: "", economy: {}, name: "one", prices: {} },
@@ -320,7 +322,7 @@ describe("pacing simulation runs", () => {
   });
   it("spends Stardust on ammunition for upgrade weapons, in proportion to the pack price", () => {
     const armed = (ammoPackPrice: number, restockPacks = DEFAULT_BEHAVIOUR.restockPacks) =>
-      runScenario({
+      run({
         ...options,
         behaviour: { ...DEFAULT_BEHAVIOUR, restockPacks },
         minutes: 45,

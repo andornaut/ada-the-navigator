@@ -436,16 +436,35 @@ function respace(
     return fromScreen({ x: direction.x * step, y: direction.y * step });
   };
   const reach = (placement: ChunkPlacement) => drawnRock(placement)?.reach ?? 0;
+  // Unmoved pairs can recur across passes while other rocks keep shifting. Moving a slot
+  // replaces its placement, so a result is valid only for those exact two placements.
+  const stride = fixed.length + slots.length;
+  const firstChecked: ChunkPlacement[] = Array(slots.length * stride);
+  const secondChecked: ChunkPlacement[] = Array(slots.length * stride);
+  const overlaps: boolean[] = Array(slots.length * stride);
+  const overlap = (index: number, first: ChunkPlacement, second: ChunkPlacement): boolean => {
+    if (firstChecked[index] === first && secondChecked[index] === second) {
+      return overlaps[index]!;
+    }
+    const hit = rocksOverlap(first, second);
+    firstChecked[index] = first;
+    secondChecked[index] = second;
+    overlaps[index] = hit;
+    return hit;
+  };
   // Each rock starts inside its box, so its drawn rock stays in the chunk.
   for (const slot of slots) {
     move(slot, { x: 0, y: 0 });
   }
+  const start = slots.map((slot) => slot.placement);
   for (let pass = 0; pass < RESPACE_PASSES; pass++) {
     let moved = false;
     for (let a = 0; a < slots.length; a++) {
       const first = slots[a]!;
-      for (const rock of fixed) {
-        if (rocksOverlap(rock, first.placement)) {
+      const row = a * stride;
+      for (let f = 0; f < fixed.length; f++) {
+        const rock = fixed[f]!;
+        if (overlap(row + f, rock, first.placement)) {
           const by = apart(rock, first.placement, reach(rock) + reach(first.placement));
           moved = move(first, { x: 2 * by.x, y: 2 * by.y }) || moved;
         }
@@ -464,7 +483,7 @@ function respace(
       }
       for (let b = a + 1; b < slots.length; b++) {
         const second = slots[b]!;
-        if (!rocksOverlap(first.placement, second.placement)) {
+        if (!overlap(row + fixed.length + b, first.placement, second.placement)) {
           continue;
         }
         const by = apart(
@@ -476,9 +495,20 @@ function respace(
         moved = move(first, { x: -by.x, y: -by.y }) || pushed || moved;
       }
     }
-    if (!moved) {
+    // A pass can move a rock away and back. If the final positions match its starting
+    // positions, applying the same ordered adjustments again cannot change the result.
+    if (
+      !moved ||
+      slots.every(({ placement }, i) => {
+        const before = start[i]!;
+        return Object.is(placement.x, before.x) && Object.is(placement.y, before.y);
+      })
+    ) {
       return;
     }
+    slots.forEach((slot, i) => {
+      start[i] = slot.placement;
+    });
   }
 }
 

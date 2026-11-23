@@ -387,8 +387,8 @@ export interface WorldOptions {
   encounters: readonly EncounterEntry[];
 }
 
-// Only simulation-owned worlds enroll here; public generator callers may change their options.
-const flightPlans = new WeakMap<WorldOptions, Map<string, ReturnType<typeof planChunk>>>();
+type CellPlans = Map<string, ReturnType<typeof planChunk>>;
+type PlansForWorld = (world: WorldOptions) => CellPlans;
 
 /**
  * Gameplay's typical income per route position (gameplay/economy.md): Stardust per minute without
@@ -431,6 +431,7 @@ export function generateChunk(
   player: { x: number; y: number },
   x: number,
   y: number,
+  plans?: CellPlans,
 ): Chunk {
   const { catalog, galaxy, seed } = options;
   const flight = tuning.flight;
@@ -462,7 +463,6 @@ export function generateChunk(
       }
     }
   }
-  const plans = flightPlans.get(options);
   const key = `${x},${y}`;
   const plan =
     plans?.get(key) ??
@@ -651,7 +651,7 @@ export interface SimulationInput {
 const noSizes = () =>
   Object.fromEntries(ASTEROID_SIZES.map((size) => [size, 0])) as Record<AsteroidSize, number>;
 
-export function simulate(input: SimulationInput): RunResult {
+export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld): RunResult {
   const { behaviour, catalog, galaxy, prices } = input;
   const rng = mulberry(cellHash(0x51ed, input.seed, galaxy));
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng())) * Math.cos(2 * Math.PI * rng());
@@ -699,6 +699,7 @@ export function simulate(input: SimulationInput): RunResult {
   let time = 0;
   let flightSeed = 0;
   let world: WorldOptions;
+  let plans: CellPlans;
   let chunks = new Map<string, Chunk>();
   let position = { x: 0, y: 0 };
   let heading = rng() * Math.PI * 2;
@@ -796,7 +797,7 @@ export function simulate(input: SimulationInput): RunResult {
       spawnWeights: input.spawnWeights,
     };
     // Plans are immutable for this flight; player clearance and mutable pickups rebuild per visit.
-    flightPlans.set(world, new Map());
+    plans = plansForWorld?.(world) ?? new Map();
     chunks = new Map();
     position = { x: 0, y: 0 };
     target = null;
@@ -951,7 +952,7 @@ export function simulate(input: SimulationInput): RunResult {
       for (let y = cy - 2; y <= cy + 2; y++) {
         const key = `${x},${y}`;
         if (!chunks.has(key)) {
-          const chunk = generateChunk(world, position, x, y);
+          const chunk = generateChunk(world, position, x, y, plans);
           for (const rock of chunk.rocks) {
             result.asteroidSizes.seen[rock.size]++;
           }
@@ -1520,7 +1521,10 @@ export interface RunOptions {
   galaxy: GalaxyNumber;
   seeds: number;
 }
-export function runScenario(options: RunOptions): { runs: RunResult[]; summary: Summary } {
+export function runScenario(
+  options: RunOptions,
+  plansForWorld?: PlansForWorld,
+): { runs: RunResult[]; summary: Summary } {
   const { scenario } = options;
   const catalog = scenarioEconomy(scenario.economy);
   const prices: Prices = {
@@ -1547,19 +1551,46 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
         }),
   };
   const runs = Array.from({ length: options.seeds }, (_, index) =>
-    simulate({
-      behaviour: options.behaviour,
-      catalog,
-      minutes: options.minutes,
-      prices,
-      encounters: scenario.encounters?.[options.galaxy] ?? encounterTable(options.galaxy),
-      startWeapons: scenario.startWeapons ?? [],
-      galaxy: options.galaxy,
-      seed: index + 1,
-      spawnWeights,
-    }),
+    simulate(
+      {
+        behaviour: options.behaviour,
+        catalog,
+        minutes: options.minutes,
+        prices,
+        encounters: scenario.encounters?.[options.galaxy] ?? encounterTable(options.galaxy),
+        startWeapons: scenario.startWeapons ?? [],
+        galaxy: options.galaxy,
+        seed: index + 1,
+        spawnWeights,
+      },
+      plansForWorld,
+    ),
   );
   return { runs, summary: summarise(scenario.name, prices, catalog.ammo.packPrice, runs) };
+}
+
+/**
+ * Shares immutable authored cell plans across related scenario runs. Encounters, player
+ * clearance, drops and all mutable simulation state are still recomputed for each run.
+ */
+export function createScenarioRunner(): (options: RunOptions) => ReturnType<typeof runScenario> {
+  const worlds = new Map<string, CellPlans>();
+  const plansForWorld: PlansForWorld = ({ galaxy, seed, spawnWeights }) => {
+    const { enemy, pickup, resource, rock } = spawnWeights;
+    const key = `${galaxy}:${seed}:${enemy}:${pickup}:${resource}:${rock}`;
+    const existing = worlds.get(key);
+    if (existing) {
+      return existing;
+    }
+    const plans: CellPlans = new Map();
+    // Bound retained flights when a batch explores many seed and spawn-weight combinations.
+    if (worlds.size >= 32) {
+      worlds.delete(worlds.keys().next().value!);
+    }
+    worlds.set(key, plans);
+    return plans;
+  };
+  return (options) => runScenario(options, plansForWorld);
 }
 
 export interface RealLoopResult {
