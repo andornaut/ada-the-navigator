@@ -37,7 +37,7 @@ right 43, bottom 19) 43 to 677 and 16 to 341.
 | Footer | Quests, Galaxies, then Close, the last's right and every button's bottom on the page rect's bottom-right corner               |
 | Panel  | Left and bottom on the page rect's bottom-left corner                                                                         |
 | Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                                                    |
-| Quests | A modal card over the map: see [Quests modal](#quests-modal)                                                                  |
+| Quests | The shared [Quests screen](#shared-quests) opens over the Map                                                                 |
 
 ### Header
 
@@ -168,8 +168,9 @@ action `map-close`), the map's only primary button. Constants:
   focus restoration.
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region's
   bottom is `SPACING.gap` above the footer's top.
-- Quests opens the [Quests modal](#quests-modal). It is always available, in
-  danger and while towing too.
+- Quests opens [Shared Quests](#shared-quests) through the Pause controller.
+  It stays available in danger and while towing. After Locate, it resumes the
+  suspended quest detail.
 - Galaxies: Gameplay's action, with no confirm. It opens the
   [galaxy selector](layout.md#galaxy-selector), whose one destination action
   jumps to another galaxy or home to Earth, or returns here as "Stay in
@@ -251,13 +252,17 @@ unavailable.
 - The panel's chip and text are decorative to the pointer: a press on the panel
   outside Travel here does nothing and never reaches the field.
 
-### Quests modal
+### Shared Quests
 
-The Map footer opens the shared Quests list in `src/ui/questsScreen.ts`.
-It opens over the dimmed Map and dismissal returns to the Map's view and
-selection. The list groups story quests before station jobs and shows
+The Map footer's Quests action delegates from `src/ui/mapScreen.ts` through
+`src/ui/pauseCard.ts` to the shared screen in `src/ui/questsScreen.ts`.
+The list opens over the dimmed Map. Dismissing the list restores focus to
+the Map's Quests button and keeps the Map's view and selection.
+
+The shared list groups “Story quests” before “Station jobs” and shows
 `QUEST_LIST_PAGE_SIZE` (2) entries per page. Selecting a quest opens its
-detail in the shared card.
+detail in the shared card. An empty list shows “Explore to find something
+to do.”
 
 The following geometry applies to shared list rows from every opener.
 Measure from the row's left edge in logical px. The horizontal inset uses
@@ -630,10 +635,8 @@ here; Galaxies; Quests; "No destinations mapped yet."; "Unavailable
 while you are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
 the footer dismissal, Back from the Paused card and Close otherwise;
-"Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
-type line of the held job's target and on the Quests modal; the Quests modal's
-"Story complete.", "Station job boards have more to do." and "Explore to find
-something to do."; and the type line:
+and "Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under
+the type line of the held job's target. The type line uses:
 
 - Types: Station, Outpost, Story place, Holodisk, Nebula, Wreck, Beacon.
   Outposts say "Outpost" without their name.
