@@ -402,7 +402,7 @@ export function buildScene(scene: UiContext): void {
   const ship = scene.shipAssets.find((asset) => asset.id === "ship");
   scene.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
   scene.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
-  const apply = (action: () => void): void => {
+  const apply = (action: () => void, { preserveInput = false } = {}): void => {
     if (!scene.entryCurrent() || !requiredReady()) {
       return;
     }
@@ -412,7 +412,9 @@ export function buildScene(scene: UiContext): void {
     const before = scene.model.screen;
     action();
     observeFeedback(scene);
-    scene.controls.reset();
+    if (!preserveInput) {
+      scene.controls.reset();
+    }
     flushScene(scene);
     if (endsCheatSession(scene.cheatSession, before, scene.model.screen)) {
       void endCheatSession(scene);
@@ -664,9 +666,12 @@ export function buildScene(scene: UiContext): void {
       const state = scene.model.state;
       let refused = false;
       if (!scene.settingsOpen && state.mode === "space" && !state.dialogue && !state.docked) {
-        apply(() => {
-          refused = !scene.model.selectWeapon(weapon);
-        });
+        apply(
+          () => {
+            refused = !scene.model.selectWeapon(weapon);
+          },
+          { preserveInput: true },
+        );
       }
       return refused;
     },

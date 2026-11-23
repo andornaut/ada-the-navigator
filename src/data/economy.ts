@@ -100,8 +100,6 @@ export interface EconomyCatalog {
   defaultPaint: string;
   /** Stardust in a discovery cache. */
   discoveryStardust: number;
-  /** Seconds after a weapon switch before Ada can switch again (provisional). */
-  weaponSwitchSeconds: number;
   /**
    * Each archetype's destruction, from Art's destruction.json: the wreck releases its drops
    * at `releaseSeconds`, spread up to `spread` world units, and is gone at `durationSeconds`.
@@ -318,6 +316,5 @@ export const ECONOMY: EconomyCatalog = {
     rapidMissile: UPGRADE_PRICES.rapidMissile[0]!,
     scattershot: UPGRADE_PRICES.scattershot[0]!,
   },
-  weaponSwitchSeconds: 1,
   weaponUpgradePrices: UPGRADE_PRICES,
 };

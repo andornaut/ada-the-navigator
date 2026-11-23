@@ -58,7 +58,7 @@ function own(flight: FlightState, weapons: UpgradeWeapon[]): void {
 }
 
 describe("weapon switching", () => {
-  it("switches in combat, then refuses the next switch for the wait without a notice", () => {
+  it("switches repeatedly in combat without a notice or a cooldown reset", () => {
     const model = launched();
     const flight = model.state.flight!;
     own(flight, ["rapidMissile", "multiLaser"]);
@@ -68,20 +68,20 @@ describe("weapon switching", () => {
       { ammo: 900, id: "multiLaser", level: 1, selected: false },
       { ammo: 780, id: "rapidMissile", level: 1, selected: false },
     ]);
+    flight.fireCooldown = 0.24;
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");
-    expect(flight.weaponSwitchFor).toBe(ECONOMY.weaponSwitchSeconds);
-    expect(model.selectWeapon("multiLaser")).toBe(false);
-    expect(flight.weapon).toBe("rapidMissile");
+    expect(model.selectWeapon("multiLaser")).toBe(true);
+    expect(flight.weapon).toBe("multiLaser");
+    expect(model.selectWeapon("multiLaser")).toBe(true);
+    expect(flight.fireCooldown).toBe(0.24);
     expect(model.state.notice).toBeFalsy();
-    // Choosing the equipped weapon is never refused and does not restart the wait.
-    stepFlight(CONTENT, 0.4, idle, flight);
-    expect(model.selectWeapon("rapidMissile")).toBe(true);
-    expect(flight.weaponSwitchFor).toBeCloseTo(ECONOMY.weaponSwitchSeconds - 0.4);
+    model.step(0.01, { ...idle, aim: { x: 1, y: 0 } });
+    expect(flight.shots.filter((shot) => !shot.enemy)).toEqual([]);
+    expect(flight.fireCooldown).toBeCloseTo(0.23);
   });
 
-  it("waits 1 second after a switch, in or out of danger", () => {
-    expect(ECONOMY.weaponSwitchSeconds).toBe(1);
+  it("switches back to the unlimited Laser immediately, in or out of danger", () => {
     for (const dangerFor of [0, 1]) {
       const model = launched();
       const flight = model.state.flight!;
@@ -89,16 +89,12 @@ describe("weapon switching", () => {
       expect(model.selectWeapon("rapidMissile")).toBe(true);
       flight.objects = [];
       flight.dangerFor = dangerFor;
-      stepFlight(CONTENT, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
-      expect(model.selectWeapon("laser")).toBe(false);
-      stepFlight(CONTENT, 0.06, idle, flight);
-      expect(flight.weaponSwitchFor).toBe(0);
       expect(model.selectWeapon("laser")).toBe(true);
       expect(flight.weapon).toBe("laser");
     }
   });
 
-  it("auto-equips a found weapon at any time, unless the switch wait runs", () => {
+  it("auto-equips consecutive newly found weapons and retains their ownership", () => {
     const model = launched();
     const flight = model.state.flight!;
     flight.dangerFor = 1;
@@ -106,12 +102,10 @@ describe("weapon switching", () => {
     stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
     expect(flight.weapon).toBe("rapidMissile");
-    // Equipping is a switch, so a second find during the wait joins the roster unequipped.
     pickup(flight, "multiLaser");
     stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
-    expect(flight.weapon).toBe("rapidMissile");
-    flight.weaponSwitchFor = 0;
+    expect(flight.weapon).toBe("multiLaser");
     pickup(flight, "scattershot");
     stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.weapon).toBe("scattershot");
@@ -119,7 +113,7 @@ describe("weapon switching", () => {
 });
 
 describe("picked-up weapons", () => {
-  it("equip in combat through the game step unless the switch wait runs, then join unequipped", () => {
+  it("equips consecutive new weapons through the game step in combat", () => {
     const model = launched();
     const flight = model.state.flight!;
     // Fire in flight inside the battle square keeps Ada in danger for the whole check.
@@ -132,11 +126,10 @@ describe("picked-up weapons", () => {
     model.step(0.01, idle);
     expect(flight.dangerFor).toBeGreaterThan(0);
     expect(flight.weapon).toBe("phaser");
-    expect(flight.weaponSwitchFor).toBeGreaterThan(0);
     pickup(flight, "heavyMissile");
     model.step(0.01, idle);
     expect(flight.ownedWeapons).toEqual(["phaser", "heavyMissile"]);
-    expect(flight.weapon).toBe("phaser");
+    expect(flight.weapon).toBe("heavyMissile");
   });
 });
 
@@ -589,7 +582,7 @@ describe("shop through the model", () => {
 });
 
 describe("economy save", () => {
-  it("round-trips Stardust, purchases, levels, stations and the switch wait", () => {
+  it("round-trips Stardust, purchases, levels, stations and the ignored legacy switch timer", () => {
     const model = launched();
     const economy = model.state.economy;
     economy.stardust = 321;
@@ -625,7 +618,7 @@ describe("economy save", () => {
     ["a paint not owned", (save: GameState) => (save.economy.paint = "iris")],
     ["an unowned weapon", (save: GameState) => (save.economy.weapon = "rapidMissile")],
     ["an unknown station", (save: GameState) => save.progress[1].stations.push("station:bad")],
-    ["a negative switch wait", (save: GameState) => (save.flight!.weaponSwitchFor = -1)],
+    ["a negative legacy switch timer", (save: GameState) => (save.flight!.weaponSwitchFor = -1)],
     ["negative ammunition", (save: GameState) => (save.economy.ammo.phaser = -1)],
     ["fractional ammunition", (save: GameState) => (save.flight!.ammo.phaser = 0.5)],
     [

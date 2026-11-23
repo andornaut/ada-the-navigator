@@ -22,6 +22,7 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
+import { fanHeading } from "./playerProjectiles.ts";
 import { shipCircleContact } from "./shipBody.ts";
 import type { FlightInput, FlightState, GalaxyProgress, Vec } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
@@ -86,7 +87,7 @@ describe("flight boundaries", () => {
     expect(flight.freshDistance).toBe(before);
   });
 
-  it("keeps movement independent of aim and fires an upgrade only while aiming, one shot per volley", () => {
+  it("keeps movement independent of aim and spends Multi-Laser ammo per bolt only while aiming", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     stepFlight(CONTENT, 0.5, { ...idle, move: { x: 1, y: 0 } }, flight);
@@ -95,9 +96,8 @@ describe("flight boundaries", () => {
     flight.weapon = "multiLaser";
     flight.ammo.multiLaser = 5;
     stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
-    // A three-bolt fan is one shot.
     expect(flight.shots).toHaveLength(3);
-    expect(flight.ammo.multiLaser).toBe(4);
+    expect(flight.ammo.multiLaser).toBe(2);
     expect(flight.weapon).toBe("multiLaser");
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);
@@ -110,6 +110,60 @@ describe("flight boundaries", () => {
         flight.facing,
       ),
     ).toBeLessThan(1e-9);
+  });
+
+  it.each([
+    [1, 1, [0]],
+    [2, 1, [-8 / 3]],
+    [2, 3, [-8 / 3, 8 / 3, -8]],
+    [3, 4, [0, -4, 4, -8]],
+  ] as const)(
+    "fires the closest affordable level %i fan with %i ammo in stable order",
+    (level, ammo, angles) => {
+      const flight = empty();
+      flight.player = { x: 100, y: 100 };
+      flight.weapon = "multiLaser";
+      flight.levels.weapons.multiLaser = level;
+      flight.ammo.multiLaser = ammo;
+      const input = { ...idle, aim: { x: 0, y: -1 } };
+      const events = stepFlight(CONTENT, 0.01, input, flight);
+      expect(events.filter((event) => event.type === "outOfAmmo")).toHaveLength(1);
+      expect(flight.shots).toHaveLength(angles.length);
+      for (const [index, angle] of angles.entries()) {
+        const velocity = flight.shots[index]!.velocity;
+        const expected = fanHeading(flight.facing, angle);
+        expect(degrees(velocity, expected)).toBeLessThan(1e-9);
+      }
+      expect(flight.ammo.multiLaser).toBe(0);
+      expect(flight.weapon).toBe("laser");
+      expect(flight.fireCooldown).toBeCloseTo(
+        WEAPON_CATALOG.multiLaser[level - 1]!.intervalSeconds,
+      );
+      stepFlight(CONTENT, 0.01, input, flight);
+      expect(flight.shots).toHaveLength(angles.length);
+    },
+  );
+
+  it.each([1, 2, 3])("spends one unit for each bolt in a full level %i fan", (level) => {
+    const flight = empty();
+    flight.player = { x: 100, y: 100 };
+    flight.weapon = "multiLaser";
+    flight.levels.weapons.multiLaser = level;
+    flight.ammo.multiLaser = 10;
+    stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
+    expect(flight.shots).toHaveLength(level + 2);
+    expect(flight.ammo.multiLaser).toBe(10 - (level + 2));
+    expect(flight.weapon).toBe("multiLaser");
+  });
+
+  it("still spends one shell for a full Scattershot volley", () => {
+    const flight = empty();
+    flight.player = { x: 100, y: 100 };
+    flight.weapon = "scattershot";
+    flight.ammo.scattershot = 2;
+    stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
+    expect(flight.shots).toHaveLength(7);
+    expect(flight.ammo.scattershot).toBe(1);
   });
 
   it("blocks scenery with one bump's damage and accepts consecutive hits without invulnerability", () => {

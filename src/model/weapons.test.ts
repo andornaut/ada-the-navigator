@@ -61,14 +61,11 @@ describe("owned upgrade weapons", () => {
     pickup(model, "rapidMissile");
     pickup(model, "multiLaser");
     flight.fireCooldown = 0.25;
-    // Each switch waits out the one before it.
-    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.fireCooldown).toBe(0.25);
-    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("laser")).toBe(true);
-    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
+    expect(flight.fireCooldown).toBe(0.25);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     // Each found weapon includes its own starting ammo.
     expect(model.weapons()).toEqual([
@@ -183,11 +180,12 @@ describe("owned upgrade weapons", () => {
     expect(model.save()).toBe(saved);
     expect(model.selectWeapon("laser")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
-    // The switch wait is saved, so the resumed flight waits it out before switching back.
+    model.state.flight!.weaponSwitchFor = 0.75;
+    model.state.flight!.fireCooldown = 0.18;
     const resumed = relaunch(CONTENT, model.save());
-    expect(resumed.selectWeapon("scattershot")).toBe(false);
-    resumed.state.flight!.weaponSwitchFor = 0;
+    expect(resumed.state.flight!.weaponSwitchFor).toBe(0.75);
     expect(resumed.selectWeapon("scattershot")).toBe(true);
+    expect(resumed.state.flight!.fireCooldown).toBe(0.18);
     expect(restoreSave(resumed.save())).toEqual(resumed.state);
   });
 
@@ -261,13 +259,11 @@ it("collects every nearby cargo piece above the former limit and preserves large
 describe("ammunition", () => {
   const aim = { ...idle, aim: { x: 0, y: -1 } };
 
-  it("switches to Laser at once when the equipped weapon runs out, ignoring the switch wait", () => {
+  it("switches to Laser at once when the equipped weapon runs out", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     const flight = model.state.flight!;
     expect(flight.weapon).toBe("rapidMissile");
-    // The find just started the switch wait.
-    expect(flight.weaponSwitchFor).toBeGreaterThan(0);
     flight.ammo.rapidMissile = 1;
     model.step(0.01, aim);
     expect(flight.ammo.rapidMissile).toBe(0);
@@ -339,7 +335,7 @@ describe("ammunition", () => {
     const flight = model.state.flight!;
     flight.ammo.multiLaser = 123;
     flight.ammo.scattershot = 45;
-    expect(flight.weapon).toBe("multiLaser");
+    expect(flight.weapon).toBe("scattershot");
     flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);

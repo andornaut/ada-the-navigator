@@ -215,7 +215,7 @@ export interface FlightState {
   levels: UpgradeLevels;
   /** Shots left per upgrade weapon, mirrored from the economy; granted weapons keep their own. */
   ammo: AmmoCounts;
-  /** Seconds until Ada can switch weapons again; 0 when she can. */
+  /** Legacy save field. Weapon selection ignores it. */
   weaponSwitchFor: number;
   /** The towed craft's position while a rescue job's tow line is attached. */
   tow?: Vec;

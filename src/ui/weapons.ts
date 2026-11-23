@@ -408,7 +408,6 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
               click: {
                 availability,
                 run: () => {
-                  // A switch during the wait after the last one is refused with the shared cue.
                   if (enabled && !button.disabled && options.onSelect(choice.id)) {
                     refuse(button, options.reducedMotion());
                   }

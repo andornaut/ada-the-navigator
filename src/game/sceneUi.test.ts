@@ -140,6 +140,57 @@ function navigation(model: GameModel) {
   return { controls, jumpThen, localMapOpen: () => localMapOpen, onJump, scene };
 }
 
+describe("in-flight weapon selection", () => {
+  it("keeps the active controls through consecutive swaps and honors the modal and readiness fences", () => {
+    const model = flight();
+    const current = model.state.flight!;
+    current.ownedWeapons = ["rapidMissile", "multiLaser"];
+    current.ammo.rapidMissile = 2;
+    current.ammo.multiLaser = 3;
+    current.fireCooldown = 0.12;
+    const reset = vi.fn();
+    const flushScene = vi.fn();
+    const scene = {
+      cheatSession: NO_CHEAT_SESSION,
+      controls: { reset },
+      emergencyReturn: { active: false },
+      entryCurrent: () => true,
+      model,
+      settingsOpen: false,
+    };
+    const requiredReady = vi.fn(() => true);
+    const context = createContext({
+      endsCheatSession,
+      flushScene,
+      newer: false,
+      observeFeedback: vi.fn(),
+      refreshScene: vi.fn(),
+      requiredReady,
+      scene,
+    });
+    context.apply = runInContext(callback("apply"), context);
+    const select = runInContext(callback("onWeaponSelect"), context) as (
+      weapon: typeof current.weapon,
+    ) => boolean;
+    expect(select("rapidMissile")).toBe(false);
+    expect(current.weapon).toBe("rapidMissile");
+    expect(select("multiLaser")).toBe(false);
+    expect(current.weapon).toBe("multiLaser");
+    expect(current.fireCooldown).toBe(0.12);
+    expect(reset).not.toHaveBeenCalled();
+    expect(flushScene).toHaveBeenCalledTimes(2);
+
+    scene.settingsOpen = true;
+    select("laser");
+    expect(current.weapon).toBe("multiLaser");
+    scene.settingsOpen = false;
+    requiredReady.mockReturnValue(false);
+    select("laser");
+    expect(current.weapon).toBe("multiLaser");
+    expect(flushScene).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("conversation exposure under covering cards", () => {
   function covered(kind: "dialogue" | "docked" | "settings", emergency: boolean) {
     const model = flight();

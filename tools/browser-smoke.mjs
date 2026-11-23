@@ -3745,33 +3745,26 @@ try {
     "An unowned upgrade must not be offered",
   );
   await missileButton.click();
-  // The next switch waits after this one: a second switch inside that 1 s wait plays the refusal
-  // cue. The flight applies a switch on its next step, so the second press waits for the first to
-  // show, or both could land in one frame before the wait starts.
   await page.waitForFunction(
     () =>
       document.querySelector('[data-weapon="rapidMissile"]')?.getAttribute("aria-pressed") ===
       "true",
-    null,
+  );
+  const multiLaserButton = page.locator('[data-weapon="multiLaser"]');
+  await multiLaserButton.click();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "multiLaser",
+    storageKey,
     { timeout: 1000 },
   );
-  await page.locator('[data-weapon="multiLaser"]').click();
-  // The kit's refusal cue marks the pressed icon red with its data-ui-refusal-red attribute.
-  await page.waitForFunction(
-    () => document.querySelector('[data-weapon="multiLaser"]')?.hasAttribute("data-ui-refusal-red"),
-    null,
-    { timeout: 2000 },
-  );
+  assert.equal(await multiLaserButton.getAttribute("aria-pressed"), "true");
+  await missileButton.click();
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "rapidMissile",
     storageKey,
+    { timeout: 1000 },
   );
   assert.equal(await missileButton.getAttribute("aria-pressed"), "true");
-  assert.equal(
-    await page.locator('[data-weapon="multiLaser"]').getAttribute("aria-pressed"),
-    "false",
-    "A switch during the wait after the last one must be refused",
-  );
   assert.equal(
     await page.locator(".flight-hud").count(),
     0,
@@ -3830,8 +3823,6 @@ try {
     "A disabled weapon must not change selection behind the modal",
   );
   await closeSettings();
-  // The saved switch wait from the Rapid Missile switch runs out in play first.
-  await page.waitForTimeout(1200);
   await page.locator('[data-weapon="multiLaser"]').click();
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "multiLaser",
@@ -3923,12 +3914,12 @@ try {
   const savedAmmo = (await readSave()).flight.ammo;
   assert.ok(
     savedAmmo.rapidMissile === 600 && savedAmmo.multiLaser < 600,
-    `Saves carry each upgrade's ammunition, one shot spent per volley: ${JSON.stringify(savedAmmo)}`,
+    `Saves carry each upgrade's ammunition, Multi-Laser spends one unit per bolt: ${JSON.stringify(savedAmmo)}`,
   );
   save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
-    "Owned upgrade weapons support accessible selection, the switch wait's refusal, saved " +
+    "Owned upgrade weapons support accessible selection, consecutive switches, saved " +
       "ammunition, reload, modal guards and the bottom-centre shield meter",
   );
   // The status pill follows its count slots and cargo or tow bearing (art/layout.md "Status pill").

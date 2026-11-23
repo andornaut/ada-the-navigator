@@ -203,7 +203,7 @@ import {
   stardustPickupReach,
   stardustPickupSize,
 } from "./pickupBody.ts";
-import { planPlayerVolley } from "./playerProjectiles.ts";
+import { planPlayerVolley, type PlayerVolley } from "./playerProjectiles.ts";
 import { impactEntry, impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -244,7 +244,7 @@ import type {
 } from "./types.ts";
 import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
+import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendAmmo } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -2993,10 +2993,25 @@ function fire(
   events: FlightEvent[],
 ): void {
   ensureOwnedWeapons(flight);
-  const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
-  const family = impactFamily(flight.weapon);
-  // One shot uses one; emptying the weapon switches to Laser after this shot.
-  if (spendShot(flight)) {
+  const weapon = flight.weapon;
+  let definition = weaponAt(weapon, flight.levels.weapons[weapon]);
+  const family = impactFamily(weapon);
+  if (weapon === "multiLaser") {
+    const ammo = flight.ammo.multiLaser;
+    if (ammo === 0) {
+      spendAmmo(flight, 0);
+      events.push({ type: "outOfAmmo" });
+      return;
+    }
+    if (ammo < definition.anglesDegrees.length) {
+      // Preserve authored order for equal offsets (including roundoff in even fans).
+      const anglesDegrees = [...definition.anglesDegrees].sort((left, right) => {
+        const difference = Math.abs(left) - Math.abs(right);
+        return Math.abs(difference) < 1e-9 ? 0 : difference;
+      });
+      definition = { ...definition, anglesDegrees: anglesDegrees.slice(0, ammo) };
+    }
+  } else if (spendAmmo(flight, 1)) {
     events.push({ type: "outOfAmmo" });
   }
   // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
@@ -3007,7 +3022,7 @@ function fire(
     flight.fireCooldown += definition.intervalSeconds;
     return;
   }
-  flight.fireCooldown += releaseFriendlyVolley(
+  const volley = releaseFriendlyVolley(
     coverage,
     flight.velocity,
     family,
@@ -3019,6 +3034,10 @@ function fire(
     flight,
     events,
   );
+  flight.fireCooldown += volley.interval;
+  if (weapon === "multiLaser" && spendAmmo(flight, volley.projectiles.length)) {
+    events.push({ type: "outOfAmmo" });
+  }
 }
 
 /** The player's and an ally's shots share canonical damage, range and collision handling. */
@@ -3033,7 +3052,7 @@ function releaseFriendlyVolley(
   viewportWidth: number,
   flight: FlightState,
   events: FlightEvent[],
-): number {
+): PlayerVolley {
   const volley = planPlayerVolley(definition, {
     ...(coverage === undefined ? {} : { coverage }),
     ...(inheritedVelocity === undefined ? {} : { inheritedVelocity }),
@@ -3057,7 +3076,7 @@ function releaseFriendlyVolley(
     // A shot that starts inside an obstacle Ada is touching strikes it at once.
     strike(content, shot, flight, events);
   }
-  return volley.interval;
+  return volley;
 }
 
 /**
@@ -5398,9 +5417,6 @@ export function stepFlight(
     }
     flight.objects = flight.objects.filter((o) => o.hp > 0);
     flight.dangerFor = inDanger(content, viewportWidth, flight) ? flight.dangerFor + slice : 0;
-    // Snap the switch wait to zero within float error of its end.
-    const wait = flight.weaponSwitchFor - slice;
-    flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
     rechargeShield(ship, slice, flight);
     if (flight.shield <= 0) {
       events.push({ type: "depleted" });

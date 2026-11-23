@@ -144,12 +144,12 @@ describe("finite ammunition capacity", () => {
     },
   );
 
-  it("reports a one-shot refill even when firing leaves the frame's net ammo change at zero", () => {
+  it("reports the three-bolt refill when firing and pickup cancel the net ammo change", () => {
     const model = pickup(false, 9999);
     model.step(0.01, { ...idle, aim: { x: 1, y: 0 } });
-    expect(model.state.flight!.shots.length).toBeGreaterThan(0);
+    expect(model.state.flight!.shots).toHaveLength(3);
     expect(model.state.flight!.ammo.multiLaser).toBe(9999);
-    expect(model.drainPickupFeedback()).toEqual([{ added: 1, kind: "ammo", weapon: "multiLaser" }]);
+    expect(model.drainPickupFeedback()).toEqual([{ added: 3, kind: "ammo", weapon: "multiLaser" }]);
   });
 
   it("normalizes copied loadouts and both saved stores without mutating the source", () => {

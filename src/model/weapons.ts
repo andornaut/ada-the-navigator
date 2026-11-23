@@ -96,31 +96,20 @@ export function shotsLeft(weapon: Weapon, flight: Pick<FlightState, "ammo">): nu
 }
 
 /**
- * Spends one shot of the equipped weapon. When that empties it, Ada switches to Laser at once,
- * ignoring the switch wait, and this returns true.
+ * Spends ammunition from the equipped weapon. Returns true if it runs out and Ada switches
+ * to Laser.
  */
-export function spendShot(flight: FlightState): boolean {
+export function spendAmmo(flight: FlightState, count: number): boolean {
   if (flight.weapon === "laser") {
     return false;
   }
-  const left = Math.max(0, flight.ammo[flight.weapon] - 1);
+  const left = Math.max(0, flight.ammo[flight.weapon] - count);
   flight.ammo[flight.weapon] = left;
   if (left > 0) {
     return false;
   }
   flight.weapon = "laser";
   return true;
-}
-
-/** Whether a recent switch makes the next one wait (economy.weaponSwitchSeconds). */
-export function switchWaiting(flight: Pick<FlightState, "weaponSwitchFor">): boolean {
-  return flight.weaponSwitchFor > 0;
-}
-
-/** Equips weapon, which starts the wait before the next switch. */
-function switchTo(weapon: Weapon, flight: FlightState): void {
-  flight.weapon = weapon;
-  flight.weaponSwitchFor = ECONOMY.weaponSwitchSeconds;
 }
 
 /** Selection participates in the owned upgrade roster. */
@@ -149,8 +138,7 @@ export function ownedWeapons(flight: FlightState): WeaponChoice[] {
 
 /**
  * Switches to an owned weapon at any time, including in combat. Refused, changing nothing,
- * for an empty weapon or while the wait after the last switch runs; choosing the equipped
- * weapon always succeeds.
+ * for an empty or unowned weapon; choosing the equipped weapon always succeeds.
  */
 export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean {
   if (!ownedWeapons(flight).some((choice) => choice.id === weapon)) {
@@ -159,17 +147,17 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
   if (weapon === flight.weapon) {
     return true;
   }
-  if (switchWaiting(flight) || shotsLeft(weapon, flight) === 0) {
+  if (shotsLeft(weapon, flight) === 0) {
     return false;
   }
   ensureOwnedWeapons(flight);
-  switchTo(weapon, flight);
+  flight.weapon = weapon;
   return true;
 }
 
 /**
- * Adds a found weapon to the roster with its included packs and equips it unless the switch
- * wait runs. A weapon Ada already owns gives its duplicate ammo instead; this then returns false.
+ * Adds and equips a found weapon with its starting ammunition. A weapon Ada already owns
+ * gives its duplicate ammo instead and returns false.
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
   const owned = ensureOwnedWeapons(flight);
@@ -179,8 +167,6 @@ export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boole
   }
   owned.push(weapon);
   addWeaponGrant(ECONOMY, weapon, flight.ammo);
-  if (!switchWaiting(flight)) {
-    switchTo(weapon, flight);
-  }
+  flight.weapon = weapon;
   return true;
 }

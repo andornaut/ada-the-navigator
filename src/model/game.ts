@@ -1471,7 +1471,7 @@ export class GameModel {
   weapons(): WeaponChoice[] {
     return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];
   }
-  /** False when the switch is refused, as during the wait after the last switch. */
+  /** False when the current screen or loadout refuses the selection. */
   selectWeapon(weapon: Weapon): boolean {
     const flight = this.state.flight;
     if (this.state.mode !== "space" || this.state.dialogue || this.state.docked || !flight) {
@@ -1619,7 +1619,7 @@ export class GameModel {
   /**
    * Gives an upgrade pickup's gift, chosen from what Ada can use as she collects it and seeded
    * by the pickup; the HUD's item notice names it from what Ada then holds. A new weapon joins
-   * the roster with its packs and is equipped unless the switch wait runs.
+   * the roster with its packs and equips immediately.
    */
   private collectUpgrade(id: string, flight: FlightState): void {
     this.pullLoadout();
