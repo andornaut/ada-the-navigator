@@ -14,3 +14,4 @@ See [Ships](../../gameplay/ships.md) for physics, rosters and
 | ada-0264 | Use geographic encounter regions and atomic formations                   | [ada-0264.md](../work/ada-0264.md) |
 | ada-0265 | Apply part health, hit routing and heavy rewards                         | [ada-0265.md](../work/ada-0265.md) |
 | ada-0273 | Fire enemy weapons at their equipped level with per-archetype signatures | [ada-0273.md](../work/ada-0273.md) |
+| ada-0371 | Vary frigate and capital hull profiles                                   | [ada-0371.md](../work/ada-0371.md) |
