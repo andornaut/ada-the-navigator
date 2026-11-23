@@ -70,7 +70,7 @@ describe("owned upgrade weapons", () => {
     flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
-    // Each found weapon includes three packs: 3 of 300 and 3 of 260.
+    // Each found weapon includes its own starting ammo.
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
       { ammo: 900, id: "multiLaser", level: 1, selected: true },
@@ -295,7 +295,7 @@ describe("ammunition", () => {
     expect(flight.weapon).toBe("laser");
     const vendors = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 });
     model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "jobs")!.id;
-    model.state.economy.stardust = 10;
+    model.state.economy.stardust = 25;
     expect(model.stationServices?.jobs).toBe(true);
     expect(model.shopGroups()).toBeUndefined();
     expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
@@ -303,12 +303,12 @@ describe("ammunition", () => {
       reason: "notForSale",
     });
     expect(flight.ammo.multiLaser).toBe(0);
-    expect(model.state.economy.stardust).toBe(10);
+    expect(model.state.economy.stardust).toBe(25);
     model.state.docked = vendors.find((site) => stationSpecialty(1, site.id) === "weaponsAmmo")!.id;
     expect(model.stationServices?.weaponsAmmo).toBe(true);
     expect(model.buy({ kind: "ammo", weapon: "multiLaser" })).toEqual({
       kind: "bought",
-      price: 10,
+      price: 25,
     });
     expect(flight.ammo.multiLaser).toBe(300);
     expect(model.state.economy.stardust).toBe(0);

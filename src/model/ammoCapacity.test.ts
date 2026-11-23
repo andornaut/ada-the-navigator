@@ -89,7 +89,7 @@ describe("finite ammunition capacity", () => {
     expect(flight.ammo[weapon]).toBe(9999);
   });
 
-  it("charges the existing price for remaining capacity and refuses full-cap purchases without spending", () => {
+  it("charges the 25 Stardust for remaining capacity and refuses full-cap purchases without spending", () => {
     const economy = newEconomy(ECONOMY);
     economy.ownedWeapons = ["multiLaser"];
     economy.stardust = 100;
@@ -97,10 +97,10 @@ describe("finite ammunition capacity", () => {
     const item = { kind: "ammo", weapon: "multiLaser" } as const;
     expect(requestPurchase(ECONOMY, economy, item)).toEqual({
       kind: "confirm",
-      left: 90,
-      price: 10,
+      left: 75,
+      price: 25,
     });
-    expect(buy(ECONOMY, item, economy)).toEqual({ kind: "bought", price: 10 });
+    expect(buy(ECONOMY, item, economy)).toEqual({ kind: "bought", price: 25 });
     expect(economy.ammo.multiLaser).toBe(9999);
     expect(requestPurchase(ECONOMY, economy, item)).toEqual({
       kind: "refused",
@@ -111,7 +111,7 @@ describe("finite ammunition capacity", () => {
     expect(economy).toEqual(full);
     economy.ammo.multiLaser--;
     expect(buy(ECONOMY, item, economy).kind).toBe("bought");
-    expect(economy.stardust).toBe(80);
+    expect(economy.stardust).toBe(50);
   });
 
   it("rechecks capacity when Buy is confirmed and caps a new shop weapon's grant", () => {

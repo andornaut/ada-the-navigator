@@ -570,10 +570,9 @@ describe("Stardust drops", () => {
         type: "enemyDestroyed",
       });
       stepFlight(CONTENT, 0.15, idle, value);
-      const earned = pickups(value);
       return {
-        ammo: earned.filter(({ ammoPack }) => ammoPack),
-        stardust: earned.filter(({ amount }) => amount !== undefined),
+        ammo: value.objects.filter(({ ammoPack }) => ammoPack),
+        stardust: pickups(value),
       };
     };
     const winner = ids.find((id) => ammoRoll(id) < 0.1)!;
