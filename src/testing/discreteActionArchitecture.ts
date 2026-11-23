@@ -275,25 +275,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return [];
   };
-  const declarations: ts.NamedDeclaration[] = [];
-  const index = (node: ts.Node): void => {
-    if (
-      ts.isImportSpecifier(node) ||
-      ts.isImportClause(node) ||
-      ts.isNamespaceImport(node) ||
-      ts.isClassDeclaration(node) ||
-      ts.isClassExpression(node) ||
-      ts.isEnumDeclaration(node) ||
-      ts.isVariableDeclaration(node) ||
-      ts.isBindingElement(node) ||
-      ts.isParameter(node) ||
-      ts.isFunctionDeclaration(node)
-    ) {
-      declarations.push(node);
-    }
-    ts.forEachChild(node, index);
-  };
-  index(source);
   const scope = (node: ts.Node): ts.Node => {
     const functionScoped =
       ts.isVariableDeclaration(node) &&
@@ -316,15 +297,45 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return source;
   };
+  // Keep the first declaration in source order for each name at each scope, as the lexical
+  // lookup does when it walks outward. Parameters also match their owning function.
+  const declarations = new Map<ts.Node, Map<string, ts.NamedDeclaration>>();
+  const declare = (owner: ts.Node, name: string, node: ts.NamedDeclaration): void => {
+    let names = declarations.get(owner);
+    if (!names) {
+      names = new Map();
+      declarations.set(owner, names);
+    }
+    if (!names.has(name)) {
+      names.set(name, node);
+    }
+  };
+  const index = (node: ts.Node): void => {
+    if (
+      ts.isImportSpecifier(node) ||
+      ts.isImportClause(node) ||
+      ts.isNamespaceImport(node) ||
+      ts.isClassDeclaration(node) ||
+      ts.isClassExpression(node) ||
+      ts.isEnumDeclaration(node) ||
+      ts.isVariableDeclaration(node) ||
+      ts.isBindingElement(node) ||
+      ts.isParameter(node) ||
+      ts.isFunctionDeclaration(node)
+    ) {
+      if (node.name && ts.isIdentifier(node.name)) {
+        declare(scope(node), node.name.text, node);
+        if (ts.isParameter(node)) {
+          declare(node.parent, node.name.text, node);
+        }
+      }
+    }
+    ts.forEachChild(node, index);
+  };
+  index(source);
   const declaration = (node: ts.Identifier): ts.NamedDeclaration | undefined => {
     for (let at: ts.Node | undefined = node; at; at = at.parent) {
-      const found = declarations.find(
-        (entry) =>
-          entry.name &&
-          ts.isIdentifier(entry.name) &&
-          entry.name.text === node.text &&
-          (scope(entry) === at || (ts.isParameter(entry) && entry.parent === at)),
-      );
+      const found = declarations.get(at)?.get(node.text);
       if (found) {
         return found;
       }
