@@ -47,17 +47,23 @@ and Start still uses its fixed title width. See the
 [sizing implementation notes](layout.md#groups) for the current behavior
 and the remaining migration.
 
-Other game controls keep their authored visible focus treatment. The
+Focusable reading regions keep their authored visible focus treatment. The
 `ui-focus` sheet is a 16x16 nine-slice with 4px margins (1px ink, 2px cream,
-1px ink). Current HTML button focus still includes the shared 2px cream
-outline at 1px offset with 1px and 4px ink shadows, plus per-control variants.
-The primary, secondary and tile sprites keep their centre fill in the
-pressed frame (`#bfa06f`, `#9690b4` and `#46425e` respectively). Standard
-text button labels keep their ink on press. The ring and missing colour cue
-are pending migration. Game Kit owns shared button rendering and states.
-Tech owns Ada's skin and local overrides. Verify the shared defaults and
-Ada's buttons in source and rendered states, including forced colors and
-keyboard navigation.
+1px ink). The HTML equivalent uses a 2 px cream outline at 1 px offset
+with 1 px and 4 px ink shadows. Some button paths still use the fallback
+outline and remain pending migration.
+
+Enabled legacy text buttons with keyboard focus tint the centre cream with
+ink text and keep their existing sprite slices. Forced colors use
+`Highlight` and `HighlightText`. Focusable unavailable actions keep the flat
+disabled face and underline the label on focus. The primary, secondary and
+tile sprites keep their centre fill in the pressed frame (`#bfa06f`,
+`#9690b4` and `#46425e` respectively). A distinct press colour cue remains
+pending where the only change is the sprite's pressed geometry.
+
+Game Kit owns shared button rendering and states. Tech owns Ada's skin and
+local overrides. Verify the shared defaults and Ada's buttons in source
+and rendered states, including forced colors and keyboard navigation.
 
 ## Compact row action
 
@@ -135,7 +141,10 @@ colour and keeps the existing swell and held geometry.
 `ui-switch` is 32x16 with tags `on` and `off`. On places the knob right with a
 tick; off places it left with a cross. Off is an available value and never looks
 disabled. Settings exposes the row as a switch (`role="switch"`) on a
-native button. The authored switch focus ring remains its keyboard cue.
+native button. Keyboard focus and press give the enabled row a cream face
+(`#ead4aa`) with dark text and a dark leading icon. The switch track and knob
+keep their on or off art. In forced colors, the row uses `Highlight` with
+`HighlightText` and retains the authored icon colours.
 
 ## Refusal cue
 
@@ -698,27 +707,28 @@ sticks are unchanged.
 
 The context action is Chibi's touch Use button (`chibis-way-home`
 `src/ui/chrome/touchChrome.ts`, `art/style-guide.md` "Touch controls"): an
-open ring with no face and one symbol per action, drawn procedurally at screen
+ring with an open centre at rest and one symbol per action, drawn at screen
 resolution, at the sticks' 85% opacity in every state. Placement and press
 shape are `USE_DISC` in [Layout](layout.md#hud-and-overlays). It shows only
 while an interaction is available, on a touch screen, outside modals; desktop
 hides it with no hint, and Space activates the action. Its accessible name is
 the action's Gameplay string. A native button provides assistive activation
-over the canvas art. Its current exterior focus ring needs migration to a
-visible cue on the drawn symbol. Keep the authored ring in the disc art and
-its press geometry.
+over the canvas art. Keyboard focus fills the centre navy on the canvas in
+both normal and forced colors. The authored ring, action symbol and press
+geometry stay in place.
 
 Geometry is in the 75x75 frame's px, centre (37.5, 37.5), in Chibi's layer
 model: each disc, ring or stroke draws over an ink layer 1 px wider each side
 (a stroke's ink is 2 wider than its core), all ink before the cores where
 shapes touch, and coverage changes only within a texel of each edge.
 
-| Part        | Geometry                                                                            |
-| ----------- | ----------------------------------------------------------------------------------- |
-| Ring        | Ink from radius 36.5 to 31.5, the band from 35.5 to 32.5; no face inside            |
-| Symbol      | The action's layers below, cream `#ead4aa` cores at rest                            |
-| Press frame | The band and symbol white `#ffffff` and the ring's radii 1 larger, for 60 ms        |
-| Held        | The band and symbol white at the rest radii until release, which snaps back to rest |
+| Part        | Geometry                                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| Ring        | Ink from radius 36.5 to 31.5, the band from 35.5 to 32.5                                                    |
+| Symbol      | The action's layers below, cream `#ead4aa` cores at rest and on keyboard focus                              |
+| Focus       | Navy `#262b44` centre fill to radius 32.5, with cream band and symbol                                       |
+| Press frame | The band and symbol white `#ffffff` and the ring's radii 1 larger, for 60 ms                                |
+| Held        | The band and symbol white at the rest radii until release, then return to the applicable rest or focus pose |
 
 Every symbol's drawn bounds, ink included, are centred on the ring centre: each
 is authored, measured, and moved by a whole-px shift, leaving at most 0.5 px.
