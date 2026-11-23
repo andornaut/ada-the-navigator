@@ -6,7 +6,6 @@ import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
-export const STATION_SPRITES = "/art/ui/sprites/";
 export const STATION_ICONS = "/art/ui/icons/";
 const ICONS = STATION_ICONS;
 const { bottom, left, right, top } = BUTTON_SLICE;
@@ -471,29 +470,35 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   height:${units(CONFIRM_ITEM.well)}
 }
 
-/* Sheets hold the normal frame then the disabled one; glyphs scale by nearest neighbour. */
+/* Row glyphs share their authored display slot. */
 .ada-controls .ada-glyph{
   width:${scaled(SHOP_ROW.glyph.icon)};
-  height:${scaled(SHOP_ROW.glyph.icon)};
-  image-rendering:pixelated
+  height:${scaled(SHOP_ROW.glyph.icon)}
 }
-/* Fixed equipment glyphs have one SVG per state. */
-.ada-controls .ada-glyph-equipment{
-  background:var(--equipment-icon) 0 0 / 100% 100% no-repeat;
+/* Multicolour glyphs use the supplied SVG for each state. */
+.ada-controls .ada-glyph-state-vector{
+  background:var(--state-icon) 0 0 / 100% 100% no-repeat;
   image-rendering:auto
 }
-.ada-controls [data-state=unaffordable] .ada-glyph-equipment{
-  background-image:var(--equipment-icon-disabled)
+.ada-controls [data-state=unaffordable] .ada-glyph-state-vector{
+  background-image:var(--state-icon-disabled)
 }
 .ada-controls .ada-glyph-vector{
   background:var(--icon) 0 0 / 100% 100% no-repeat;
   image-rendering:auto
 }
-.ada-controls .ada-glyph-sprite{
-  background:var(--sheet) 0 0 / 200% 100% no-repeat
+.ada-controls .ada-glyph-mask{
+  background:currentColor;
+  mask:var(--icon) center / 100% 100% no-repeat
 }
-.ada-controls [data-state=unaffordable] .ada-glyph-sprite{
-  background-position:100% 0
+@media (forced-colors:active){
+  .ada-controls .ada-glyph-mask{
+    background:ButtonText;
+    forced-color-adjust:none
+  }
+  .ada-controls [data-state=unaffordable] .ada-glyph-mask{
+    background:GrayText
+  }
 }
 .ada-controls .ada-glyph-upgrade{
   position:relative;

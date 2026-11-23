@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
+import { JOB_TYPES } from "../data/jobs.ts";
+import { PROJECTS } from "../data/projects.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
@@ -54,6 +56,33 @@ describe("artUrls", () => {
       expect(urls).not.toContain(`/art/ui/sprites/icon-${key}.json`);
     }
     expect(urls).toContain("/art/ui/sprites/icon-holodisk-24.png");
+  });
+
+  it("precaches the station SVG glyphs without their retired nested sprites", () => {
+    const urls = artUrls(artFiles);
+    const ui = read("/art/ui/manifest.json") as { sprites: { png: string }[] };
+    const pairs = [
+      ...["activity", ...JOB_TYPES].map((type) => `icon-job-${type}`),
+      ...Object.values(PROJECTS).flatMap((projects) => projects?.map(({ icon }) => icon) ?? []),
+    ];
+    const masks = [
+      ...["heavyMissile", "laser", "multiLaser", "phaser", "rapidMissile", "scattershot"].map(
+        (weapon) => `weapon-${weapon}`,
+      ),
+      ...["energy", "missile", "shell"].map((ammo) => `ammo-${ammo}`),
+    ];
+    for (const key of pairs) {
+      expect(urls).toContain(`/art/ui/icons/${key}.svg`);
+      expect(urls).toContain(`/art/ui/icons/${key}-disabled.svg`);
+    }
+    for (const key of masks) {
+      expect(urls).toContain(`/art/ui/icons/${key}.svg`);
+    }
+    for (const key of [...pairs, ...masks.map((key) => `icon-shop-${key}`)]) {
+      expect(ui.sprites.some(({ png }) => png === `sprites/${key}.png`)).toBe(false);
+      expect(urls).not.toContain(`/art/ui/sprites/${key}.png`);
+      expect(urls).not.toContain(`/art/ui/sprites/${key}.json`);
+    }
   });
 
   it("lists only network-first URLs, so changed art changes the precache version", () => {

@@ -13,7 +13,6 @@ const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.
 
 describe("shop rows on the station view", () => {
   it("maps items to Art's shop glyphs", () => {
-    // Laser is never for sale; its sheet draws in its upgrade composite.
     for (const weapon of [
       "rapidMissile",
       "multiLaser",
@@ -21,15 +20,20 @@ describe("shop rows on the station view", () => {
       "scattershot",
       "phaser",
     ] as const) {
-      const key = `icon-shop-weapon-${weapon}`;
-      expect(itemGlyph(ECONOMY, { kind: "weapon", weapon })).toEqual({ key, kind: "sprite" });
-      expect(existsSync(publicFile(`/art/ui/sprites/${key}.png`))).toBe(true);
-      // Two frames: normal, then disabled for an unaffordable row.
-      const sheet = JSON.parse(readFileSync(publicFile(`/art/ui/sprites/${key}.json`), "utf8"));
-      expect(sheet.meta.frameTags.map(({ name }: { name: string }) => name)).toEqual([
-        "normal",
-        "disabled",
-      ]);
+      const path = `/art/ui/icons/weapon-${weapon}.svg`;
+      expect(itemGlyph(ECONOMY, { kind: "weapon", weapon })).toEqual({ kind: "mask", path });
+      expect(readFileSync(publicFile(path), "utf8")).toContain('viewBox="0 0 20 20"');
+    }
+    for (const [weapon, ammo] of [
+      ["rapidMissile", "missile"],
+      ["heavyMissile", "missile"],
+      ["multiLaser", "energy"],
+      ["phaser", "energy"],
+      ["scattershot", "shell"],
+    ] as const) {
+      const path = `/art/ui/icons/ammo-${ammo}.svg`;
+      expect(itemGlyph(ECONOMY, { kind: "ammo", weapon })).toEqual({ kind: "mask", path });
+      expect(readFileSync(publicFile(path), "utf8")).toContain('viewBox="0 0 20 20"');
     }
     expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "laser" })).toEqual({
       kind: "upgrade",
@@ -40,7 +44,7 @@ describe("shop rows on the station view", () => {
       ["engine", "icon-shop-engine-tuning"],
       ["tractor", "icon-shop-tractor-beam"],
     ] as const) {
-      expect(itemGlyph(ECONOMY, { kind: "track", track })).toEqual({ key, kind: "equipment" });
+      expect(itemGlyph(ECONOMY, { kind: "track", track })).toEqual({ key, kind: "stateVector" });
     }
   });
 
@@ -99,7 +103,7 @@ describe("shop rows on the station view", () => {
       stationRow(ECONOMY, CONTENT.labels, economy.stardust, row),
     );
     expect(rows[0]).toMatchObject({
-      glyph: { key: "icon-shop-shield", kind: "equipment" },
+      glyph: { key: "icon-shop-shield", kind: "stateVector" },
       group: "items",
       level: "Level 1 of 3",
       name: "Shield",

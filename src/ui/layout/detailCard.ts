@@ -12,13 +12,13 @@ export const DETAIL_CARD_STYLE = `
 .ada-controls .ada-detail-header>.ada-status-ore,
 .ada-controls .ada-detail-quantity>.ada-status-stardust,
 .ada-controls .ada-detail-quantity>.ada-status-ore{margin:0}
-.ada-controls .ada-detail-ammo-icon{
-  flex:none;width:${units(SHIP_CARD.icon)};height:${units(SHIP_CARD.icon)};
-  background-position:0 0;background-size:200% 100%;background-repeat:no-repeat;
-  image-rendering:pixelated
-}
-.ada-controls .ada-detail-unlimited-icon{
+.ada-controls .ada-detail-ammo-icon,.ada-controls .ada-detail-unlimited-icon{
   flex:none;width:${units(SHIP_CARD.icon)};height:${units(SHIP_CARD.icon)};
   background:currentColor;mask:var(--glyph) center/contain no-repeat
+}
+@media (forced-colors:active){
+  .ada-controls .ada-detail-ammo-icon{
+    background:CanvasText;forced-color-adjust:none
+  }
 }
 `;

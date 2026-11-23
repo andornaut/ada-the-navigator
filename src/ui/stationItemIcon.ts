@@ -1,19 +1,17 @@
 import type { Weapon } from "../data/types.ts";
-import { weaponShopSheet } from "../data/weaponGlyphs.ts";
-import { STATION_ICONS, STATION_SPRITES } from "./layout/stationStyle.ts";
-
-const SPRITES = STATION_SPRITES;
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { STATION_ICONS } from "./layout/stationStyle.ts";
 
 export type ItemGlyph =
-  | { readonly kind: "equipment"; readonly key: string }
-  | { readonly kind: "sprite"; readonly key: string }
+  | { readonly kind: "stateVector"; readonly key: string }
+  | { readonly kind: "mask"; readonly path: string }
   | { readonly kind: "vector"; readonly key: string }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
 
-/** A weapon's shop glyph: its two-frame shop sheet. */
+/** A weapon uses the same mask in its shop and flight controls. */
 export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
-  return { key: weaponShopSheet(weapon), kind: "sprite" };
+  return { kind: "mask", path: weaponGlyphPath(weapon) };
 }
 
 export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
@@ -36,11 +34,11 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
     node.append(createStationItemIcon(weaponItemGlyph(glyph.weapon)), badge);
     return node;
   }
-  if (glyph.kind === "equipment") {
+  if (glyph.kind === "stateVector") {
     const icon = `${STATION_ICONS}${glyph.key}`;
-    node.className = "ada-glyph ada-glyph-equipment";
-    node.style.setProperty("--equipment-icon", `url('${icon}.svg')`);
-    node.style.setProperty("--equipment-icon-disabled", `url('${icon}-disabled.svg')`);
+    node.className = "ada-glyph ada-glyph-state-vector";
+    node.style.setProperty("--state-icon", `url('${icon}.svg')`);
+    node.style.setProperty("--state-icon-disabled", `url('${icon}-disabled.svg')`);
     return node;
   }
   if (glyph.kind === "vector") {
@@ -48,8 +46,8 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
     node.style.setProperty("--icon", `url('${STATION_ICONS}${glyph.key}.svg')`);
     return node;
   }
-  node.className = "ada-glyph ada-glyph-sprite";
-  node.style.setProperty("--sheet", `url('${SPRITES}${glyph.key}.png')`);
+  node.className = "ada-glyph ada-glyph-mask";
+  node.style.setProperty("--icon", `url('${glyph.path}')`);
   return node;
 }
 

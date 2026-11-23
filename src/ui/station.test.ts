@@ -83,7 +83,7 @@ it("reserves space for all unfunded projects and then takes jobs in canonical or
   });
   const jobs = [job("held", "held"), job("featured"), job("first"), job("second"), job("third")];
   const project: stationSource.StationRow = {
-    glyph: { key: "project", kind: "sprite" },
+    glyph: { key: "icon-project-docking-bay", kind: "stateVector" },
     group: "items",
     key: "project",
     level: "",
@@ -124,7 +124,7 @@ describe("shop row taps", () => {
 });
 
 describe("weapon shop glyphs", () => {
-  it("draws every weapon's two-frame shop sheet", () => {
+  it("draws the canonical 20px mask for every weapon", () => {
     for (const weapon of [
       "laser",
       "rapidMissile",
@@ -134,14 +134,14 @@ describe("weapon shop glyphs", () => {
       "phaser",
     ] as const) {
       expect(weaponItemGlyph(weapon)).toEqual({
-        key: `icon-shop-weapon-${weapon}`,
-        kind: "sprite",
+        kind: "mask",
+        path: `/art/ui/icons/weapon-${weapon}.svg`,
       });
     }
-    expect(STATION_STYLE).not.toContain("ada-glyph-weapon");
+    expect(STATION_STYLE).toContain("mask:var(--icon) center / 100% 100% no-repeat");
   });
 
-  it("places an upgrade composite's weapon sheet at (0, 4) under its badge", () => {
+  it("places an upgrade composite's weapon mask at (0, 4) under its badge", () => {
     expect(STATION_STYLE).toContain(".ada-controls .ada-glyph-upgrade > .ada-glyph{");
     expect(STATION_STYLE).not.toContain(".ada-glyph-upgrade .ada-glyph-weapon{");
   });
@@ -180,11 +180,15 @@ describe("shop style", () => {
     expect(STATION_STYLE).not.toMatch(/[.]ada-shop-row[^{}]*\{[^}]*outline-offset/u);
   });
 
-  it("uses each job type's sheet and compact board rows", () => {
+  it("uses each job type's SVG states and compact board rows", () => {
     for (const type of ["survey", "delivery", "rescue", "hunt", "activity"]) {
-      expect(
-        existsSync(new URL(`../../public/art/ui/sprites/icon-job-${type}.png`, import.meta.url)),
-      ).toBe(true);
+      for (const suffix of ["", "-disabled"]) {
+        expect(
+          existsSync(
+            new URL(`../../public/art/ui/icons/icon-job-${type}${suffix}.svg`, import.meta.url),
+          ),
+        ).toBe(true);
+      }
     }
     expect(STATION_STYLE).toContain(".ada-controls .ada-station-panes .ada-shop-row{");
     // No row keeps a placeholder flat mark: the activity row takes its sheet too.
@@ -747,7 +751,7 @@ function constructedStation(
     ].map((key) => [key, key]),
   ) as unknown as stationSource.StationLabels;
   const rows: stationSource.StationRow[] = Array.from({ length: 8 }, (_, index) => ({
-    glyph: { key: "icon-shop-weapon-laser", kind: "sprite" },
+    glyph: { kind: "mask", path: "/art/ui/icons/weapon-laser.svg" },
     group: "items",
     key: `item-${index}`,
     level: "",
@@ -1424,7 +1428,7 @@ it("audits the completed welcome view before strict focus on reopening", () => {
 });
 
 const stockOffer = (key: string, name = key): stationSource.StationRow => ({
-  glyph: { key: "icon-shop-weapon-laser", kind: "sprite" },
+  glyph: { kind: "mask", path: "/art/ui/icons/weapon-laser.svg" },
   group: "items",
   key,
   level: "Offer details",

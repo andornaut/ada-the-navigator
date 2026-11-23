@@ -68,13 +68,11 @@ describe("item notice wording", () => {
     const level = notice({ kind: "weaponLevel", level: 2, weapon: "phaser" });
     expect([level.kind, level.icon, level.target]).toEqual([
       "weapon",
-      { frames: 2, sprite: "icon-shop-weapon-phaser" },
+      { mask: "/art/ui/icons/weapon-phaser.svg" },
       { kind: "weapon", weapon: "phaser" },
     ]);
-    // Laser's plain shop icon is the shipped icon-shop-weapon-laser sheet.
     expect(notice({ kind: "weaponLevel", level: 3, weapon: "laser" }).icon).toEqual({
-      frames: 2,
-      sprite: "icon-shop-weapon-laser",
+      mask: "/art/ui/icons/weapon-laser.svg",
     });
     const shield = notice({ kind: "level", level: 2, track: "shield" });
     expect([shield.kind, shield.icon, shield.target]).toEqual([
@@ -262,7 +260,6 @@ describe("item notice geometry", () => {
   it.each([
     [{ sprite: "icon-cargo-20" }, 5, 3],
     [{ sprite: "icon-tow-20" }, 3, 0],
-    [{ frames: 2, sprite: "icon-shop-weapon-rapidMissile" }, 7, 4],
     [{ mask: "/art/ui/icons/weapon-rapidMissile.svg" }, 7, 4],
     [{ sprite: "icon-holodisk-20" }, 8, 6],
   ] as const)("fits a notice around the displayed asset %j", (icon, left, gap) => {

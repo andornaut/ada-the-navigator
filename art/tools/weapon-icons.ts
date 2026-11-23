@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -11,8 +11,7 @@ import { prettify, writeSprites } from "./sprite-sheet.ts";
 // weapon writes both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
 // (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled; one grid per
 // ammunition kind writes ammo-<kind>.svg and icon-shop-ammo-<kind> the same way. A weapon in
-// HAND_AUTHORED keeps its hand-authored SVG: its grid must match that SVG's rectangles, and only
-// the sheet is written.
+// HAND_AUTHORED keeps its existing SVG and verifies its rectangles against the grid.
 const CREAM = "ead4aa";
 const DISABLED = "9a96ad";
 const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
@@ -292,7 +291,18 @@ function check(name: string, rows: readonly string[]): void {
   }
 }
 
-async function writeSheet(key: string, rows: readonly string[]): Promise<void> {
+const manifestPath = `${ui}manifest.json`;
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { sprites: Sprite[] };
+const registered = new Set(manifest.sprites.map(({ key }) => key));
+const emitted = new Set<string>();
+
+async function writeSheet(
+  key: string,
+  rows: readonly string[],
+  maskWasPresent: boolean,
+): Promise<void> {
+  // An absent row selects the mask only if it was present before this run emitted SVGs.
+  if (!registered.has(key) && maskWasPresent) return;
   await writeSprites(
     { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },
     { key },
@@ -302,35 +312,36 @@ async function writeSheet(key: string, rows: readonly string[]): Promise<void> {
     ],
   );
   await prettify(`${ui}sprites/${key}.json`);
+  emitted.add(key);
 }
 
 for (const [id, rows] of Object.entries(GLYPHS)) {
   check(id, rows);
   const file = `${ui}icons/weapon-${id}.svg`;
+  const maskWasPresent = existsSync(file);
   if (!HAND_AUTHORED.has(id)) {
     writeFileSync(file, svgText(svg(rows)));
-  } else if (rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")) {
+  } else if (
+    maskWasPresent &&
+    rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")
+  ) {
     throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
   }
-  await writeSheet(`icon-shop-weapon-${id}`, rows);
+  await writeSheet(`icon-shop-weapon-${id}`, rows, maskWasPresent);
 }
 
 for (const [kind, rows] of Object.entries(AMMO)) {
   check(`ammo ${kind}`, rows);
-  writeFileSync(`${ui}icons/ammo-${kind}.svg`, svgText(svg(rows)));
-  await writeSheet(`icon-shop-ammo-${kind}`, rows);
+  const file = `${ui}icons/ammo-${kind}.svg`;
+  const maskWasPresent = existsSync(file);
+  writeFileSync(file, svgText(svg(rows)));
+  await writeSheet(`icon-shop-ammo-${kind}`, rows, maskWasPresent);
 }
 
 // Register the shop sheets in the UI subset manifest, sorted by key.
-const manifestPath = `${ui}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { sprites: Sprite[] };
-const keys = new Set([
-  ...Object.keys(GLYPHS).map((id) => `icon-shop-weapon-${id}`),
-  ...Object.keys(AMMO).map((kind) => `icon-shop-ammo-${kind}`),
-]);
 manifest.sprites = [
-  ...manifest.sprites.filter(({ key }) => !keys.has(key)),
-  ...[...keys].map((key) => ({
+  ...manifest.sprites.filter(({ key }) => !emitted.has(key)),
+  ...[...emitted].map((key) => ({
     key,
     png: `sprites/${key}.png`,
     json: `sprites/${key}.json`,

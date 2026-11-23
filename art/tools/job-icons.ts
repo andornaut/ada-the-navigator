@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -32,12 +32,23 @@ async function prettify(file: string): Promise<void> {
   writeFileSync(file, await format(readFileSync(file, "utf8"), { ...options, filepath: file }));
 }
 
+const manifestPath = `${ui}manifest.json`;
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { sprites: Sprite[] };
+const registered = new Set(manifest.sprites.map(({ key }) => key));
 const keys: string[] = [];
 for (const [type, rows] of Object.entries(JOB_GLYPHS)) {
   if (rows.length !== 20 || rows.some((row) => row.length !== 20 || /[^#.]/.test(row))) {
     throw new Error(`${type}: the glyph must be 20 rows of 20 "#" or "." cells`);
   }
   const key = `icon-job-${type}`;
+  // Retire a sheet only once the manifest drops it and both vector states are present.
+  if (
+    !registered.has(key) &&
+    existsSync(`${ui}icons/${key}.svg`) &&
+    existsSync(`${ui}icons/${key}-disabled.svg`)
+  ) {
+    continue;
+  }
   await writeSpriteSheet(
     { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },
     { key },
@@ -51,8 +62,6 @@ for (const [type, rows] of Object.entries(JOB_GLYPHS)) {
 }
 
 // Register the sheets in the UI subset manifest, sorted by key.
-const manifestPath = `${ui}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { sprites: Sprite[] };
 const owned = new Set(keys);
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !owned.has(key)),

@@ -4,7 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
-import { ammoShopSheet, weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import { ammoGlyphPath, weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -138,7 +138,7 @@ export function createWeaponDetailCard(
         ammoIcon.style.setProperty("--glyph", `url('${weaponGlyphPath(identity.id)}')`);
       } else {
         ammoIcon.className = "ada-detail-ammo-icon";
-        ammoIcon.style.backgroundImage = `url('/art/ui/sprites/${ammoShopSheet(identity.id)}.png')`;
+        ammoIcon.style.setProperty("--glyph", `url('${ammoGlyphPath(identity.id)}')`);
       }
       amount =
         identity.ammo === null ? WEAPON_DETAIL_LABELS.detailUnlimited : detailCount(identity.ammo);

@@ -6,7 +6,7 @@ import { stationShopRowTree, stationShopTree } from "./stationShopTree.ts";
 
 const labels = { inUse: "In use", owned: "Owned", projectFunded: "Funded" };
 const row: StationRow = {
-  glyph: { key: "icon-shield", kind: "sprite" },
+  glyph: { key: "icon-shop-shield", kind: "stateVector" },
   group: "items",
   key: "opaque",
   level: "[2]",

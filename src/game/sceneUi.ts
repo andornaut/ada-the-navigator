@@ -874,7 +874,7 @@ export function buildScene(scene: UiContext): void {
     rows: () =>
       // Show an effect before funding and the remaining price and progress afterward.
       (scene.model.projects ?? []).map((project) => ({
-        glyph: { key: project.icon, kind: "sprite" },
+        glyph: { key: project.icon, kind: "stateVector" },
         group: "items",
         key: `project:${project.id}`,
         level:

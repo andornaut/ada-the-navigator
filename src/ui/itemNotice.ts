@@ -2,7 +2,7 @@ import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { HUD_ICON_BEARINGS } from "../data/hudIconBearings.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
 import { tierColour } from "../data/upgradeTiers.ts";
-import { weaponGlyphPath, weaponShopSheet } from "../data/weaponGlyphs.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
@@ -50,11 +50,9 @@ export interface Notice {
   readonly kind: NoticeKind;
   /** The label without its merged count, such as "+ Phaser". */
   readonly label: string;
-  /** Colour art (its first of `frames` frames across), or a weapon glyph in cream. */
+  /** Colour art, or a weapon glyph in cream. */
   readonly icon:
-    | { readonly frames?: number; readonly sprite: string }
-    | { readonly mask: string }
-    | { readonly vector: string };
+    { readonly sprite: string } | { readonly mask: string } | { readonly vector: string };
   readonly target: NoticeTarget;
 }
 
@@ -124,11 +122,9 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
         : name;
   const level = gain.kind === "weaponLevel";
   return {
-    // A weapon level shows the plain 20 px shop icon, its rim the level's tier.
+    // A weapon level keeps the weapon glyph and uses its tier colour for the rim.
     accent: level ? levelAccent(gain.level) : NOTICE_ACCENTS.weapon,
-    icon: level
-      ? { frames: 2, sprite: weaponShopSheet(gain.weapon) }
-      : { mask: weaponGlyphPath(gain.weapon) },
+    icon: { mask: weaponGlyphPath(gain.weapon) },
     key:
       gain.kind === "weaponLevel"
         ? `level:${gain.weapon}:${gain.level}`
@@ -150,8 +146,6 @@ export function noticeIconBearings(icon: Notice["icon"]) {
         // The outer ink matches the chip, and the label begins with a bearing before the plus.
         return { left: left + 1, right: right + 1 };
       }
-      case "icon-shop-weapon-rapidMissile":
-        return HUD_ICON_BEARINGS.rapidMissile;
     }
   } else if ("mask" in icon && icon.mask === weaponGlyphPath("rapidMissile")) {
     return HUD_ICON_BEARINGS.rapidMissile;
@@ -474,8 +468,7 @@ export function createItemNotices(
       } else {
         const vector = "vector" in art;
         const path = vector ? art.vector : spriteIconPath(art.sprite);
-        const across = vector ? 100 : 100 * (art.frames ?? 1);
-        icon.style.background = `url('${path}') 0 0 / ${across}% 100% no-repeat`;
+        icon.style.background = `url('${path}') 0 0 / 100% 100% no-repeat`;
         icon.style.imageRendering = vector ? "auto" : "";
         icon.style.removeProperty("mask");
         icon.style.removeProperty("-webkit-mask");

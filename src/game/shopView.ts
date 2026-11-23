@@ -1,5 +1,5 @@
 import type { EconomyCatalog, UpgradeTrack } from "../data/economy.ts";
-import { ammoShopSheet } from "../data/weaponGlyphs.ts";
+import { ammoGlyphPath } from "../data/weaponGlyphs.ts";
 import {
   fill,
   itemName,
@@ -28,11 +28,11 @@ export function itemGlyph(
       return weaponItemGlyph(item.weapon);
     case "weaponUpgrade":
       return { kind: "upgrade", weapon: item.weapon };
-    // The ammunition kind's sheet alone, never the weapon's sheet.
+    // An ammunition row uses the mask for its ammunition kind.
     case "ammo":
-      return { key: ammoShopSheet(item.weapon), kind: "sprite" };
+      return { kind: "mask", path: ammoGlyphPath(item.weapon) };
     case "track":
-      return { key: TRACK_ICONS[item.track], kind: "equipment" };
+      return { key: TRACK_ICONS[item.track], kind: "stateVector" };
     case "holodisk":
       return { key: "icon-holodisk", kind: "vector" };
     default:

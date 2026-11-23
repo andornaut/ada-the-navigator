@@ -18,7 +18,6 @@ import { createExchangeView, type ExchangePort } from "./exchange.ts";
 import { keeperName } from "./keeperBlock.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
-import { STATION_SPRITES } from "./layout/stationStyle.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -38,8 +37,6 @@ import { applyButtonSkin } from "./uiSkin.ts";
 // The station card, the shop, the job board and their confirms (art/shop.md,
 // gameplay/quests.md "Job board") on the shared card builder; every size comes from src/ui/layout
 // (layout.md "Shop item row").
-
-const SPRITES = STATION_SPRITES;
 
 export { STATION_STYLE } from "./layout/stationStyle.ts";
 export type { ItemGlyph } from "./stationItemIcon.ts";
@@ -750,14 +747,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
             },
             well: {
               create(initial) {
-                const glyph = document.createElement("span");
-                glyph.className = "ada-glyph ada-glyph-sprite ada-job-glyph";
+                const glyph = createStationItemIcon({
+                  key: `icon-job-${initial.glyphType}`,
+                  kind: "stateVector",
+                });
+                glyph.classList.add("ada-job-glyph");
                 glyph.dataset.type = initial.glyphType;
-                glyph.style.setProperty(
-                  "--sheet",
-                  `url('${SPRITES}icon-job-${glyph.dataset.type}.png')`,
-                );
-                glyph.setAttribute("aria-hidden", "true");
                 const jobWell = document.createElement("span");
                 jobWell.className = "ada-well";
                 jobWell.append(glyph);

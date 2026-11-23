@@ -342,6 +342,10 @@ it.each([1, 2, 3])(
     const row = fixture.card.body.children[1]!;
     expect(row.hidden).toBe(false);
     expect(row.children[0]!.className).toBe("ada-detail-ammo-icon");
+    expect(row.children[0]!.style.setProperty).toHaveBeenCalledWith(
+      "--glyph",
+      "url('/art/ui/icons/ammo-missile.svg')",
+    );
     expect(row.children[1]!.textContent).toBe("0");
     expect(lines.some((line) => line.startsWith("Level "))).toBe(false);
     detail.dispose();

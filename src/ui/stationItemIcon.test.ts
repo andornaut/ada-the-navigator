@@ -84,22 +84,25 @@ describe("station row and detail header item icons", () => {
     expect(rowIcon.attributes["aria-hidden"]).toBe("true");
     if (glyph.kind === "upgrade") {
       expect(rowIcon.children[1]!.className).toBe("ada-glyph-badge");
-      expect(rowIcon.children[0]!.properties["--sheet"]).toContain("icon-shop-weapon-laser.png");
+      expect(rowIcon.children[0]!.properties["--icon"]).toBe(
+        "url('/art/ui/icons/weapon-laser.svg')",
+      );
     } else if (glyph.kind === "swatch") {
       expect(rowIcon.src).toBe(glyph.path);
       expect(rowIcon.tagName).toBe("img");
-    } else if (glyph.kind === "equipment") {
+    } else if (glyph.kind === "stateVector") {
       const icon = `/art/ui/icons/${glyph.key}`;
-      expect(rowIcon.className).toBe("ada-glyph ada-glyph-equipment");
+      expect(rowIcon.className).toBe("ada-glyph ada-glyph-state-vector");
       expect(rowIcon.properties).toEqual({
-        "--equipment-icon": `url('${icon}.svg')`,
-        "--equipment-icon-disabled": `url('${icon}-disabled.svg')`,
+        "--state-icon": `url('${icon}.svg')`,
+        "--state-icon-disabled": `url('${icon}-disabled.svg')`,
       });
     } else if (item.kind === "holodisk") {
       expect(rowIcon.className).toBe("ada-glyph ada-glyph-vector");
       expect(rowIcon.properties).toEqual({ "--icon": "url('/art/ui/icons/icon-holodisk.svg')" });
-    } else {
-      expect(rowIcon.properties["--sheet"]).toBe(`url('/art/ui/sprites/${glyph.key}.png')`);
+    } else if (glyph.kind === "mask") {
+      expect(rowIcon.className).toBe("ada-glyph ada-glyph-mask");
+      expect(rowIcon.properties["--icon"]).toBe(`url('${glyph.path}')`);
     }
   });
 });

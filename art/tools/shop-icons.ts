@@ -569,16 +569,17 @@ const registered = new Set(manifest.sprites.map(({ key }) => key));
 const managedKeys: string[] = [];
 for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
   const equipment = EQUIPMENT_KEYS.has(key);
-  // A removed equipment row selects the SVGs only when both states exist.
+  const managed = equipment || key.startsWith("icon-project-");
+  // A removed row selects the SVGs only when both states exist.
   if (
-    equipment &&
+    managed &&
     !registered.has(key) &&
     existsSync(`${ui}icons/${key}.svg`) &&
     existsSync(`${ui}icons/${key}-disabled.svg`)
   ) {
     continue;
   }
-  if (equipment || key.startsWith("icon-project-")) managedKeys.push(key);
+  if (managed) managedKeys.push(key);
   const tags: Tag[] = disabled
     ? [
         ["normal", [frame(rows, CREAM)], 100],
