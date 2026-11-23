@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GameContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
@@ -622,34 +623,49 @@ describe("analog movement speed", () => {
     );
   });
 
-  it("requests no speed without input and brakes to a stop", () => {
-    expect(movementSpeedFraction(CONTENT.tuning, 0)).toBe(0);
-    const flight = cruise({ x: 1, y: 0 });
-    for (let frame = 0; frame < 160; frame++) {
-      stepFlight(CONTENT, 1 / 60, idle, flight);
-    }
-    expect(flight.velocity).toEqual({ x: 0, y: 0 });
-  });
+  it.each([
+    [1, 175, 0.95, 3.19],
+    [2, 200, 0.8, 2.79],
+    [3, 225, 0.65, 2.48],
+  ])(
+    "reaches 90%% speed on schedule and coasts about 120 units at engine level %i",
+    (level, top, t90, stop) => {
+      const dt = SIMULATION_STEP_SECONDS;
+      const flight = empty();
+      flight.levels.engine = level;
+      flight.player = { x: 256, y: 256 };
+      const input = { ...idle, move: { x: 1, y: 0 } };
+      for (let tick = 0; tick < Math.round(t90 / dt) - 1; tick++) {
+        stepFlight(CONTENT, dt, input, flight);
+      }
+      expect(speed(flight)).toBeLessThan(top * 0.9);
+      stepFlight(CONTENT, dt, input, flight);
+      expect(speed(flight)).toBeCloseTo(top * 0.9, 8);
+      expect(movementSpeedFraction(CONTENT.tuning, 0)).toBe(0);
 
-  it("comes to rest about 2.5 s after release from full speed, below 1% of maximum speed", () => {
-    const flight = cruise({ x: 1, y: 0 });
-    const brakingSeconds = CONTENT.tuning.physics.brakingSeconds;
-    let elapsed = 0;
-    let slowest = Infinity;
-    while (speed(flight) > 0 && elapsed < 5) {
-      slowest = Math.min(slowest, speed(flight));
-      stepFlight(CONTENT, 1 / 60, idle, flight);
-      elapsed += 1 / 60;
-    }
-    expect(elapsed).toBeCloseTo(brakingSeconds * Math.log(100), 1);
-    expect(elapsed).toBeGreaterThan(2.45);
-    expect(elapsed).toBeLessThan(2.6);
-    // The last moving frame is at Ada's 2 u/s rest threshold, not a sub-pixel crawl.
-    expect(slowest).toBeGreaterThanOrEqual(0.01 * maxSpeed);
-    const position = { ...flight.player };
-    stepFlight(CONTENT, 1, idle, flight);
-    expect(flight.player).toEqual(position);
-  });
+      // Start the coast at exactly the stated top speed without waiting for an asymptote.
+      flight.velocity = { x: top, y: 0 };
+      const start = { ...flight.player };
+      let ticks = 0;
+      let lastSpeed = top;
+      while (speed(flight) > 0 && ticks * dt < 4) {
+        lastSpeed = speed(flight);
+        stepFlight(CONTENT, dt, idle, flight);
+        ticks++;
+      }
+      const distance = flight.player.x - start.x;
+      expect(ticks * dt).toBeCloseTo(stop, 1);
+      expect(distance).toBeGreaterThan(117.5);
+      expect(distance).toBeLessThanOrEqual(120);
+      expect(flight.player.y).toBe(start.y);
+      expect(lastSpeed).toBeGreaterThanOrEqual(0.01 * top);
+      expect(lastSpeed).toBeLessThan(0.011 * top);
+      expect(flight.velocity).toEqual({ x: 0, y: 0 });
+      const position = { ...flight.player };
+      stepFlight(CONTENT, 1, idle, flight);
+      expect(flight.player).toEqual(position);
+    },
+  );
 
   it("keeps keyboard movement, including bounded diagonals, at maxSpeed", () => {
     expect(speed(cruise({ x: 1, y: 0 })) / maxSpeed).toBeCloseTo(1, 3);

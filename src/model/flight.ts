@@ -242,7 +242,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
+import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
@@ -5330,7 +5330,14 @@ export function stepFlight(
       stepRingEmissions(slice, flight);
     }
     if (flight.phantom?.allies.length) {
-      for (const intent of stepPhantomAllies(ship.physics, slice, flight, flight.phantom.allies)) {
+      const allyMotion = {
+        accelerationSeconds: leveledValue(
+          PHANTOM_TUNING.allyAccelerationSeconds,
+          Math.floor(flight.levels.engine),
+        ),
+        maxSpeed: ship.physics.maxSpeed,
+      };
+      for (const intent of stepPhantomAllies(allyMotion, slice, flight, flight.phantom.allies)) {
         const aim = direction(worldDelta(flightWorldContext(flight), intent.from, intent.target));
         releaseFriendlyVolley(
           undefined,

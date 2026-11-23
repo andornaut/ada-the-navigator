@@ -52,30 +52,27 @@ export function leveledValue(value: LeveledValue, level: number): number {
   return value.levels[Math.min(level - 1, value.levels.length) - 1]!;
 }
 
-/** A level's engine multiplier from its nonempty table; out-of-range levels clamp. */
-const multiplier = (table: readonly [number, ...number[]], level: number) =>
-  table[Math.min(table.length, Math.max(1, Math.floor(level))) - 1]!;
-
 export function shipTuning(
   catalog: EconomyCatalog,
   content: GameContent,
   levels: UpgradeLevels,
 ): ShipTuning {
-  const { effects } = catalog;
   const base = content.tuning.physics;
-  const seconds = multiplier(effects.engineSeconds, levels.engine);
   const capacity = leveledValue(
     { base: content.tuning.shieldMax, levels: catalog.shieldLevels.capacity },
     levels.shield,
   );
   const engineLevel = (value: keyof EconomyCatalog["engineLevels"]) =>
-    leveledValue({ base: base[value], levels: catalog.engineLevels[value] }, levels.engine);
+    leveledValue(
+      { base: base[value], levels: catalog.engineLevels[value] },
+      Math.floor(levels.engine),
+    );
   return {
     physics: {
       ...base,
-      accelerationSeconds: base.accelerationSeconds * seconds,
+      accelerationSeconds: engineLevel("accelerationSeconds"),
       aimTurnSeconds: engineLevel("aimTurnSeconds"),
-      brakingSeconds: base.brakingSeconds * seconds,
+      brakingSeconds: engineLevel("brakingSeconds"),
       maxSpeed: engineLevel("maxSpeed"),
       turnSeconds: engineLevel("turnSeconds"),
     },

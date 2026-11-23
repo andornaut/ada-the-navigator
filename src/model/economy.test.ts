@@ -1185,52 +1185,53 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 10, 25, 25, 175, 1, 0.08, 0.16],
-    [2, 15, 25, 25, 200, 0.9, 0.07, 0.14],
-    [3, 20, 25, 25, 225, 0.8, 0.06, 0.12],
+    [1, 10, 25, 25, 175, 0.41258, 0.69264, 0.08, 0.16],
+    [2, 15, 25, 25, 200, 0.34744, 0.60606, 0.07, 0.14],
+    [3, 20, 25, 25, 225, 0.28229, 0.53872, 0.06, 0.12],
   ])(
     "applies shield, recharge and engine level %i",
-    (level, shield, delay, fill, speed, seconds, aimTurn, turn) => {
+    (level, shield, delay, fill, speed, acceleration, braking, aimTurn, turn) => {
       const levels = { ...noLevels(), engine: level, shield: level };
       const tuning = shipTuning(ECONOMY, CONTENT, levels);
-      const base = CONTENT.tuning;
       expect(tuning.shieldMax).toBe(shield);
       expect(tuning.shieldRechargeDelay).toBe(delay);
-      // The shield refills from empty in its fill time, whatever its capacity.
+      // The shield refills from empty in its fill time whatever its capacity.
       expect(tuning.shieldMax / tuning.shieldRechargeRate).toBeCloseTo(fill, 9);
       expect(tuning.physics.maxSpeed).toBe(speed);
-      expect(tuning.physics.accelerationSeconds).toBeCloseTo(
-        base.physics.accelerationSeconds * seconds,
-        9,
-      );
-      expect(tuning.physics.brakingSeconds).toBeCloseTo(base.physics.brakingSeconds * seconds, 9);
+      expect(tuning.physics.accelerationSeconds).toBeCloseTo(acceleration, 5);
+      expect(tuning.physics.brakingSeconds).toBeCloseTo(braking, 5);
       expect(tuning.physics.aimTurnSeconds).toBe(aimTurn);
       expect(tuning.physics.turnSeconds).toBe(turn);
     },
   );
 
   it.each([
-    { acceleration: 9, braking: 18, level: 99, table: [1, 0.9] },
-    { acceleration: 7, braking: 14, level: 4, table: [1, 0.9, 0.8, 0.7] },
-    { acceleration: 7, braking: 14, level: 99, table: [1, 0.9, 0.8, 0.7] },
-    { acceleration: 9, braking: 18, level: 2.9, table: [1, 0.9, 0.8, 0.7] },
-    { acceleration: 10, braking: 20, level: 0, table: [1] },
-  ] as const)(
-    "clamps engine timing to its actual table at level $level with $table",
-    ({ acceleration, braking, level, table }) => {
-      const catalog = { ...ECONOMY, effects: { engineSeconds: table } };
-      const content = {
-        ...CONTENT,
-        tuning: {
-          ...CONTENT.tuning,
-          physics: { ...CONTENT.tuning.physics, accelerationSeconds: 10, brakingSeconds: 20 },
-        },
-      };
-      const tuning = shipTuning(catalog, content, { ...noLevels(), engine: level });
-      expect(tuning.physics.accelerationSeconds).toBe(acceleration);
-      expect(tuning.physics.brakingSeconds).toBe(braking);
-    },
-  );
+    [0, 10, 20],
+    [1, 10, 20],
+    [2, 9, 16],
+    [2.9, 9, 16],
+    [3, 7, 12],
+    [99, 7, 12],
+  ])("uses independent engine timings and clamps level %i", (level, acceleration, braking) => {
+    const catalog = {
+      ...ECONOMY,
+      engineLevels: {
+        ...ECONOMY.engineLevels,
+        accelerationSeconds: [9, 7],
+        brakingSeconds: [16, 12],
+      } as const,
+    };
+    const content = {
+      ...CONTENT,
+      tuning: {
+        ...CONTENT.tuning,
+        physics: { ...CONTENT.tuning.physics, accelerationSeconds: 10, brakingSeconds: 20 },
+      },
+    };
+    const tuning = shipTuning(catalog, content, { ...noLevels(), engine: level });
+    expect(tuning.physics.accelerationSeconds).toBe(acceleration);
+    expect(tuning.physics.brakingSeconds).toBe(braking);
+  });
 
   it.each([1, 2, 3])("fires Ada's level 1 Laser at 500 at engine level %i", (level) => {
     const value = flight();

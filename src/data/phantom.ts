@@ -8,6 +8,8 @@ export const PHANTOM_DESTINATIONS = [
 export const PHANTOM_FLAGSHIP = "phantomFlagship";
 export const PHANTOM_TUNING = {
   allies: 8,
+  // Preserve the ally response previously borrowed from Ada's old engine curve.
+  allyAccelerationSeconds: { base: 0.36, levels: [0.36 * 0.9, 0.36 * 0.8] },
   allyFireSeconds: 1.4,
   allyIntercept: 600,
   battleReach: 1500,

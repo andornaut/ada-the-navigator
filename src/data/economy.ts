@@ -1,5 +1,6 @@
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
+import type { ShipPhysics } from "./shipPhysics.ts";
 import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { Weapon } from "./types.ts";
 
@@ -79,12 +80,10 @@ export interface EconomyCatalog {
   weaponUpgradePrices: Readonly<Record<Weapon, readonly number[]>>;
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
   /**
-   * Ada's maximum speed and movement and aim turn time constants at engine levels 2 and 3; level 1
-   * is her ship physics' own.
+   * Ada's speed and independent response times at engine levels 2 and 3. Level 1 uses
+   * her base ship physics.
    */
-  engineLevels: Readonly<
-    Record<"aimTurnSeconds" | "maxSpeed" | "turnSeconds", readonly [number, number]>
-  >;
+  engineLevels: Readonly<Record<keyof ShipPhysics, readonly [number, number]>>;
   /**
    * The Shield at levels 2 and 3: capacity and seconds from empty to full; level 1 is the content
    * tuning's own. The recharge delay is the same at every level.
@@ -92,8 +91,6 @@ export interface EconomyCatalog {
   shieldLevels: { readonly capacity: readonly [number, number] };
   /** Maximum-capacity fraction funded per whole ore and the ore-free recharge floor. */
   shieldRecharge: Readonly<{ capacityPerOre: number; freeCapacity: number }>;
-  /** Multipliers on the base engine timing, one per level from level 1. */
-  effects: Readonly<Record<"engineSeconds", readonly [number, ...number[]]>>;
   tractorRadius: LeveledValue;
   tractorSpeed: LeveledValue;
   paints: Readonly<Record<string, PaintScheme>>;
@@ -253,14 +250,12 @@ export const ECONOMY: EconomyCatalog = {
     },
   },
   discoveryStardust: 5,
-  // Engine tuning: -10% acceleration and braking seconds per level.
-  effects: {
-    engineSeconds: [1, 0.9, 0.8],
-  },
-  // Engine levels 2 and 3 raise Ada's 175 to 200, then 225, and shorten her turns
-  // (gameplay/economy.md).
+  // Time to 90% is 0.80 / 0.65 s. Continuous coasting to 1% travels 120 world units
+  // at either top speed (gameplay/ships.md).
   engineLevels: {
+    accelerationSeconds: [0.8 / Math.log(10), 0.65 / Math.log(10)],
     aimTurnSeconds: [0.07, 0.06],
+    brakingSeconds: [120 / (0.99 * 200), 120 / (0.99 * 225)],
     maxSpeed: [200, 225],
     turnSeconds: [0.14, 0.12],
   },
