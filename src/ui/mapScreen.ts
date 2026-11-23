@@ -609,6 +609,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   background:var(--map-tool-face,${HUD_DISC_STATES.idle.face})
 }
 .ada-controls .ada-map-tool:focus-visible .ada-disc{
+  background:var(--map-tool-face,${HUD_DISC_STATES.idle.face});
+  color:inherit;
   outline:none;
   box-shadow:inset 0 0 0 var(--disc-edge) ${MAP_COLORS.ink}
 }

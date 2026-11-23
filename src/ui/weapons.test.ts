@@ -201,9 +201,8 @@ describe("HUD weapon buttons", () => {
     );
     expect(counts).toContain(`color:${AMMO_COUNT_TEXT.inactive}`);
     expect(WEAPON_STYLE).not.toContain(".ada-controls .ada-weapon[data-state=empty] .ada-ammo{");
-    expect(WEAPON_STYLE).toContain(
-      `.ada-controls .ada-weapon[data-state=selected] .ada-disc{\n  background:${HUD_DISC_STATES.selected.face}`,
-    );
+    const selected = ".ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc";
+    expect(WEAPON_STYLE).toContain(`${selected}{\n  background:${HUD_DISC_STATES.selected.face}`);
     // The pill overlaps the disc's lower edge, 7.5 + 33 = 40.5 below the target's top.
     expect(HUD_AMMO_COUNT.top - (HUD_BUTTON_INSET.disc + HUD_BUTTON.disc)).toBe(1.5);
     // In the view, the conversation box's top sits clearance (5) below the pill.
@@ -274,10 +273,17 @@ describe("HUD weapon buttons", () => {
     expect(ammo).toContain(`height:${units(HUD_AMMO_COUNT.height)}`);
     expect(ammo).toContain(`padding:0 ${units(HUD_AMMO_COUNT.padding)}`);
     expect(ammo).toContain(`border-radius:${units(HUD_AMMO_COUNT.radius)}`);
+  });
+
+  it("shows focus on the disc face without adding an outline or shadow", () => {
     const shared = hudDiscStyle(".shared-button", ".disc");
-    expect(shared).toContain(":focus-visible .disc{");
-    expect(shared).toContain("outline:");
-    expect(shared).toContain("outline-offset:");
+    const focus = shared.split("}").filter((rule) => rule.includes(":focus-visible .disc{"));
+    expect(focus).toHaveLength(2);
+    expect(focus[0]).toContain("background:#ead4aa");
+    expect(focus[0]).toContain("color:#181425");
+    expect(focus[1]).toContain("background:Highlight");
+    expect(focus[1]).toContain("color:HighlightText");
+    expect(focus.join("")).not.toMatch(/outline|box-shadow/u);
   });
 
   it.each([

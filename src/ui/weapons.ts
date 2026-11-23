@@ -5,7 +5,6 @@ import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { FOCUS_RING } from "./layout/controls.ts";
 import { EXPANDED_VIEWPORT, font, fromHudEdge, units } from "./layout/css.ts";
 import {
   EXPANDED_RAPID_DISC_INK_OFFSET,
@@ -114,20 +113,13 @@ export const AMMO_COUNT_TEXT = { inactive: "#b8b8b8", normal: "#ead4aa" } as con
 
 const INK = "#181425";
 
-// A disc's ink edge, its level's tier edge, halo and light-field outline (transparent at level 1
-// and on discs without a level), and with focus the shared focus ring outside it, round with the
-// disc.
+// Permanent disc edges. The level details are transparent on discs without a level.
 const { pip } = HUD_WEAPON_LEVEL;
 const LEVEL_SHADOWS = `inset 0 0 0 ${units(HUD_BUTTON.edge)} var(--level-edge, transparent)`;
 const LEVEL_HALO = `0 0 0 ${units(HUD_WEAPON_LEVEL.outline)} var(--level-outline, transparent),0 0 ${units(
   HUD_WEAPON_LEVEL.halo.blur,
 )} ${units(HUD_WEAPON_LEVEL.halo.spread)} var(--level-halo, transparent)`;
-const discShadow = (focused: boolean) =>
-  focused
-    ? `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},0 0 0 ${units(FOCUS_RING.fringe)} ${INK},0 0 0 ${units(
-        FOCUS_RING.outset,
-      )} ${INK},${LEVEL_HALO}`
-    : `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},${LEVEL_HALO}`;
+const DISC_SHADOW = `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},${LEVEL_HALO}`;
 
 /** A weapon level's pip colour (art/controls.md "Weapon level"): lavender at 1, then the tier. */
 export const LEVEL_PIPS = {
@@ -168,7 +160,7 @@ ${button} ${disc}{
   place-items:center;
   border-radius:50%;
   background:${HUD_DISC_STATES.idle.face};
-  box-shadow:${discShadow(false)};
+  box-shadow:${DISC_SHADOW};
   pointer-events:none
 }
 ${button}:focus-visible{
@@ -176,9 +168,15 @@ ${button}:focus-visible{
   box-shadow:none
 }
 ${button}:focus-visible ${disc}{
-  outline:${units(FOCUS_RING.band)} solid #ead4aa;
-  outline-offset:${units(FOCUS_RING.fringe)};
-  box-shadow:${discShadow(true)}
+  background:${HUD_DISC_STATES.selected.glyph};
+  color:${INK}
+}
+@media (forced-colors:active){
+  ${button}:focus-visible ${disc}{
+    forced-color-adjust:none;
+    background:Highlight;
+    color:HighlightText
+  }
 }
 ${button} ${disc}::before{
   content:"";
@@ -282,8 +280,11 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   color:${HUD_DISC_STATES.selected.glyph};
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
 }
-.ada-controls .ada-weapon[data-state=selected] .ada-disc{
+.ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
+}
+.ada-controls .ada-weapon[data-ui-refusal-red]:focus-visible .ada-disc{
+  color:inherit
 }
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{
