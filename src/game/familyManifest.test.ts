@@ -275,25 +275,24 @@ describe("source-family manifest readiness", () => {
   });
 
   it.each([
-    [1, sunflower, "/art/outposts/outposts-sheet.svg", false],
-    [5, andromeda, "/art/andromeda/hamlet-sheet.svg", true],
-    [5, andromeda, "/art/andromeda/settlers-school-sheet.svg", true],
-    [6, phantom, "/art/phantom/homes-cracked-sheet.svg", true],
+    ["/art/outposts/outposts-sheet.svg", sunflower, false],
+    ["/art/andromeda/hamlet-sheet.svg", andromeda, true],
+    ["/art/andromeda/settlers-school-sheet.svg", andromeda, true],
+    ["/art/phantom/homes-cracked-sheet.svg", phantom, true],
   ] as const)(
-    "loads galaxy %s station sheet %s at its authored dimensions",
-    (galaxy, manifest, path, displaySized) => {
+    "loads station sheet %s at its authored dimensions",
+    (path, manifest, displaySized) => {
       const f = fixture();
-      const key = galaxyManifestKey(galaxy);
-      f.loadWorld(f.scene, galaxy);
-      f.cache.set(key, manifest);
-      f.events.emit(`filecomplete-json-${key}`);
-      const sheet = vectorSheetKey(path);
-      const document = {};
-      f.documents.set(sheet, document);
-      f.events.emit(`filecomplete-xml-${sheet}`);
       const assets = (manifest.assets as readonly Asset[]).filter((asset) => asset.path === path);
       expect(assets.length).toBeGreaterThan(0);
-      expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([[sheet, path]]);
+      const fail = vi.fn();
+      f.queueCore(f.scene, () => true, fail, assets);
+      const sheet = vectorSheetKey(path);
+      expect(f.xml).toHaveBeenCalledExactlyOnceWith(sheet, path);
+      const document = {};
+      f.documents.set(sheet, document);
+      f.events.emit(`filecomplete-xml-${sheet}`, sheet, "xml", document);
+      expect(fail).not.toHaveBeenCalled();
       expect(f.extract.mock.calls).toEqual(
         assets.map((asset) => [
           document,
