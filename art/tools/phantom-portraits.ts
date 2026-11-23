@@ -4,6 +4,7 @@
 // Contract: art/conversation.md (Cast portraits) and art/phantom.md (Portraits).
 // Usage: node art/tools/phantom-portraits.ts [--packed-candidate]
 import { mkdirSync, writeFileSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import { decodePng } from "@andornaut/art-kit/build/png";
 import { spriteSheet } from "@andornaut/art-kit/build/spriteSheet";
@@ -26,6 +27,7 @@ import {
 } from "./bust.ts";
 import { type Portrait, portraitSheets, writePortraits } from "./bust-sheets.ts";
 import { packCastStrips } from "./cast-portrait-pages.ts";
+import { readManifest } from "./manifest.ts";
 
 type Goo = { base: string; shade: string; light: string };
 const ORCHID: Goo = { base: "e48fd4", light: "ffd6f4", shade: "b05aa6" };
@@ -128,30 +130,94 @@ const portraits: readonly Portrait[] = [
   { compact: [5, 3], frames: [["neutral", settler()]], key: "blurb-settler" },
 ];
 
-function writePackedCandidate(): void {
-  const output = new URL("../../.check-results/ada-0281-phantom-authored-pages/", import.meta.url);
+const folder = "phantom/portraits";
+const sizes = ["full", "compact"] as const;
+const legacyPaths = new Map(
+  portraits.flatMap(({ key }) => [
+    [`${key}-portrait`, `/art/${folder}/${key}.png`],
+    [`${key}-portrait-compact`, `/art/${folder}/${key}-compact.png`],
+  ]),
+);
+
+type PortraitRow = {
+  id: string;
+  path: string;
+  width?: number;
+  height?: number;
+  frameWidth?: number;
+  frameHeight?: number;
+  frames?: unknown;
+  portraitCrop?: unknown;
+};
+
+function packedPages() {
   const authored = portraits
     .toSorted((left, right) => left.key.localeCompare(right.key))
-    .map(portraitSheets);
-  mkdirSync(output, { recursive: true });
-  for (const [index, name] of ["full", "compact"].entries()) {
-    const strips = authored.map((sheets) => {
+    .map((portrait) => ({ key: portrait.key, sheets: portraitSheets(portrait) }));
+  return sizes.map((name, index) => {
+    const strips = authored.map(({ key, sheets }) => {
       const { sheet, tags } = sheets[index]!;
       const { sheet: png } = spriteSheet({ image: `${sheet}.png`, key: sheet }, tags);
-      return { image: decodePng(png), strip: { id: sheet } };
+      const id = name === "compact" ? `${key}-portrait-compact` : `${key}-portrait`;
+      return { image: decodePng(png), strip: { id } };
     });
-    const { bytes } = packCastStrips(strips);
-    writeFileSync(new URL(`phantom-${name}.png`, output), bytes);
+    const { bytes, height, origins, width } = packCastStrips(strips);
+    const members = strips.map(({ image, strip }) => ({
+      id: strip.id,
+      crop: { ...origins.get(strip.id)!, width: image.width, height: image.height },
+    }));
+    return { bytes, file: `phantom-${name}.png`, height, members, width };
+  });
+}
+
+type PackedPage = ReturnType<typeof packedPages>[number];
+
+function writePacked(output: URL, pages: readonly PackedPage[]): void {
+  mkdirSync(output, { recursive: true });
+  for (const { bytes, file } of pages) writeFileSync(new URL(file, output), bytes);
+}
+
+function validatePackedRows(rows: readonly PortraitRow[], pages: readonly PackedPage[]): void {
+  if (rows.length !== legacyPaths.size) throw new Error("Incomplete Phantom portrait selection");
+  for (const { file, height, members, width } of pages) {
+    for (const { crop, id } of members) {
+      const row = rows.find((entry) => entry.id === id);
+      if (
+        !row ||
+        row.path !== `/art/${folder}/${file}` ||
+        row.width !== width ||
+        row.height !== height ||
+        row.frameWidth !== undefined ||
+        row.frameHeight !== undefined ||
+        !isDeepStrictEqual(row.frames, { neutral: 0 }) ||
+        !isDeepStrictEqual(row.portraitCrop, crop)
+      ) {
+        throw new Error(`Invalid packed Phantom portrait selection: ${id}`);
+      }
+    }
   }
 }
 
 if (process.argv.length === 3 && process.argv[2] === "--packed-candidate") {
-  writePackedCandidate();
+  const output = new URL("../../.check-results/ada-0281-phantom-authored-pages/", import.meta.url);
+  writePacked(output, packedPages());
 } else {
   if (process.argv.length !== 2)
     throw new Error("Usage: node art/tools/phantom-portraits.ts [--packed-candidate]");
-  const ids = await writePortraits("phantom", "phantom/portraits", portraits, (id) =>
-    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+  const rows = (readManifest("phantom").assets as PortraitRow[]).filter(({ id }) =>
+    legacyPaths.has(id),
   );
-  console.log(`wrote ${ids.join(", ")}`);
+  if (
+    rows.some(
+      ({ id, path, portraitCrop }) => portraitCrop !== undefined || path !== legacyPaths.get(id),
+    )
+  ) {
+    const pages = packedPages();
+    validatePackedRows(rows, pages);
+    writePacked(new URL(`../../public/art/${folder}/`, import.meta.url), pages);
+    console.log("wrote the selected Phantom portrait pages");
+  } else {
+    const ids = await writePortraits("phantom", folder, portraits, (id) => legacyPaths.has(id));
+    console.log(`wrote ${ids.join(", ")}`);
+  }
 }
