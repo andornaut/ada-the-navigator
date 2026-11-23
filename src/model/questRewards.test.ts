@@ -27,6 +27,7 @@ const view = {
 describe("saved quest reward boundaries", () => {
   it("keeps saved offered rewards in base units before accepting and paying", () => {
     const game = new GameModel(CONTENT);
+    game.state.economy.stardust = 175;
     const station = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
     const offered = stationBoard(context, game.state, station);
     expect(offered).toHaveLength(3);
@@ -51,8 +52,8 @@ describe("saved quest reward boundaries", () => {
     const restored = restoreSave(game.save())!;
     expect(restored).not.toBeNull();
     expect(restored.tasks[1]?.reward).toBe(45);
-    expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe("100 Stardust");
-    expect(completeActivity(1, restored)).toBe(100);
+    expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe("200 Stardust");
+    expect(completeActivity(1, restored)).toBe(200);
     expect(completeActivity(1, restored)).toBe(0);
   });
 
