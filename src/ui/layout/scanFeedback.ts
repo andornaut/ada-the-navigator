@@ -4,29 +4,14 @@ import type { Vec } from "../../model/types.ts";
 import { hudRect, type Insets, playView, type Size } from "./playView.ts";
 import { SPACING } from "./tokens.ts";
 
-/** A start clamped to an edge needs at least minRise logical px of rise before its end. */
-export const SCAN_FEEDBACK = { minRise: 48 } as const;
-
 export interface ScanFeedbackLayout {
   readonly anchor: Vec;
   readonly area: Rect;
   /** The shown HUD and touch controls; the receipt keeps SPACING.gap clear of each. */
   readonly blocked: readonly Rect[];
-  /** The shown conversation box's parts: the receipt never overlaps one, and stops below it. */
   readonly dialogue: readonly Rect[];
   readonly height: number;
-  /** The shown HUD row's controls along the top: every rise ends SPACING.gap under the row. */
-  readonly hudRow: readonly Rect[];
-  readonly path?: ScanFeedbackPath;
-  readonly progress: number;
-  readonly reducedMotion: boolean;
   readonly width: number;
-}
-export interface ScanFeedbackPath {
-  readonly area: Rect;
-  readonly from: Rect;
-  /** The rise's end under the controls alone; the dialogue's is read each frame. */
-  readonly top: number;
 }
 
 /** The HUD controls' rect, the game area clamped by the safe rect, in game-area px. */
@@ -44,28 +29,8 @@ const grown = (box: Rect, by: number): Rect => ({
   x: box.x - by,
   y: box.y - by,
 });
-/** The boxes above from that its column meets. */
-const above = (boxes: readonly Rect[], from: Rect): Rect[] =>
-  boxes.filter(
-    (box) =>
-      box.x < from.x + from.width && box.x + box.width > from.x && box.y + box.height <= from.y,
-  );
-/** Where the rise ends SPACING.gap below the lowest of boxes above from, or -Infinity with none. */
-const below = (boxes: readonly Rect[], from: Rect): number =>
-  Math.max(-Infinity, ...above(boxes, from).map((box) => box.y + box.height + SPACING.gap));
-
-/** The rise's end for from: SPACING.gap below the controls and the shown dialogue above it. */
-export function scanFeedbackTop(path: ScanFeedbackPath, dialogue: readonly Rect[]): number {
-  return Math.min(path.from.y, Math.max(path.top, below(dialogue, path.from)));
-}
-
-/**
- * Choose the start once. A start clamped to an edge keeps the edge nearest the target and slides
- * along it toward the centre until it is clear and leaves SCAN_FEEDBACK.minRise of rise, else
- * takes the nearest such place on the bottom edge. An on-screen start takes the nearest clear
- * place at or above it. A start never overlaps the conversation box: it moves below it.
- */
-export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath | null {
+/** Choose a fixed position near the projected target, clear of the controls and dialogue. */
+export function scanFeedbackRect(context: ScanFeedbackLayout): Rect | null {
   const { anchor, area, dialogue, height, width } = context;
   if (!(width > 0 && height > 0) || width > area.width || height > area.height) {
     return null;
@@ -95,18 +60,6 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
     box.y <= maxY &&
     !controls.some((control) => overlaps(box, control)) &&
     !dialogue.some((part) => overlaps(box, part));
-  // Under the HUD row across the view, and under any other control above the start's column.
-  const row = (from: Rect) =>
-    Math.max(
-      -Infinity,
-      ...context.hudRow
-        .filter((box) => box.y + box.height <= from.y)
-        .map((box) => box.y + box.height + gap),
-    );
-  const top = (from: Rect) =>
-    Math.min(from.y, Math.max(area.y, row(from), below(context.blocked, from)));
-  const rise = (from: Rect) => from.y - Math.max(top(from), below(dialogue, from));
-  const path = (from: Rect): ScanFeedbackPath => ({ area: { ...area }, from, top: top(from) });
   const centred = at(anchor.x - width / 2, anchor.y - height / 2);
   const origin = at(clampX(centred.x), clampY(centred.y));
   // Each place along x or y where a control or the dialogue starts or stops meeting the start.
@@ -122,11 +75,10 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
   const edgeX = origin.x !== centred.x;
   const edgeY = origin.y !== centred.y;
   if (edgeX || edgeY) {
-    const qualifies = (box: Rect) => fits(box) && rise(box) >= SCAN_FEEDBACK.minRise - 1e-9;
     const nearest = (places: readonly Rect[], from: Rect) =>
       places
         .map(clearOfDialogue)
-        .filter(qualifies)
+        .filter(fits)
         .sort(
           (a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y),
         )[0];
@@ -151,7 +103,7 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
         bottom,
       );
     if (from) {
-      return path(from);
+      return from;
     }
   }
   const start = clearOfDialogue(origin);
@@ -160,16 +112,5 @@ export function scanFeedbackPath(context: ScanFeedbackLayout): ScanFeedbackPath 
     .flatMap((x) => [...ys, minY].map((y) => at(x, y)))
     .filter((box) => box.y <= start.y && fits(box))
     .sort((a, b) => distance(a) - distance(b) || a.y - b.y || a.x - b.x)[0];
-  return from ? path(from) : fits(start) ? path(start) : null;
-}
-
-/** Interpolate the retained path toward its end without moving sideways. */
-export function scanFeedbackRect(context: ScanFeedbackLayout): Rect | null {
-  const path = context.path ?? scanFeedbackPath(context);
-  if (!path) {
-    return null;
-  }
-  const progress = context.reducedMotion ? 0 : Math.max(0, Math.min(1, context.progress));
-  const end = scanFeedbackTop(path, context.dialogue);
-  return { ...path.from, y: path.from.y + (end - path.from.y) * progress };
+  return from ?? (fits(start) ? start : null);
 }

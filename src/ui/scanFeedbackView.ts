@@ -18,9 +18,6 @@ import {
 import { STATUS_COLOURS } from "./statusPill.ts";
 /** The touch controls a receipt keeps clear of: the sticks' targets and Use. */
 const TOUCH_CONTROLS = '.ada-use,[data-control="move-joystick"],[data-control="aim-joystick"]';
-/** The HUD row's controls along the top: pause, the status pill, weapons and their counts. */
-const HUD_ROW =
-  ".ada-pause,.ada-settings-open,.ada-status,.ada-status-tick,.ada-weapon-selector,.ada-ammo,.ada-pips,.ada-ammo-gain";
 /** The conversation box's parts: the panel, its name tab and its portrait. */
 const CONVERSATION_PARTS = ".ada-conversation,.ada-conversation-name,.ada-conversation-portrait";
 
@@ -39,12 +36,7 @@ export function scanFeedbackFootprints(doc: Document, host: HTMLElement | null):
   ];
 }
 
-/** The shown HUD row's controls, which every rise ends SPACING.gap under. */
-export function scanFeedbackHudRow(doc: Document, host: HTMLElement | null): Rect[] {
-  return markerFootprints(doc, host, HUD_ROW);
-}
-
-/** The shown conversation box's parts, which a receipt never overlaps and stops below. */
+/** The shown conversation box's parts, which initial receipt placement avoids. */
 export function scanFeedbackDialogue(doc: Document, host: HTMLElement | null): Rect[] {
   return markerFootprints(doc, host, CONVERSATION_PARTS);
 }
@@ -76,6 +68,8 @@ export function createScanFeedbackView(parent: HTMLElement) {
   parent.append(panel);
   const queue = new ScanFeedbackQueue();
   let current: ScanFeedbackContent | undefined;
+  let placed: Rect | undefined;
+  let opacity = "";
   const content = (value: ScanFeedbackContent): void => {
     if (value === current) {
       return;
@@ -133,19 +127,29 @@ export function createScanFeedbackView(parent: HTMLElement) {
         { ...context, measure: (value) => measure(value, context.area) },
         milliseconds,
       );
-      panel.hidden = frame === null;
-      panel.style.display = frame ? "flex" : "none";
+      const hidden = frame === null;
+      if (hidden !== panel.hidden) {
+        panel.hidden = hidden;
+        panel.style.display = hidden ? "none" : "flex";
+      }
       if (!frame) {
         return;
       }
-      Object.assign(panel.style, {
-        height: units(frame.rect.height),
-        left: fromAreaLeft(frame.rect.x),
-        opacity: String(frame.opacity),
-        top: fromAreaTop(frame.rect.y),
-        visibility: "visible",
-        width: units(frame.rect.width),
-      });
+      if (placed !== frame.rect) {
+        placed = frame.rect;
+        Object.assign(panel.style, {
+          height: units(placed.height),
+          left: fromAreaLeft(placed.x),
+          top: fromAreaTop(placed.y),
+          visibility: "visible",
+          width: units(placed.width),
+        });
+      }
+      const nextOpacity = String(frame.opacity);
+      if (opacity !== nextOpacity) {
+        opacity = nextOpacity;
+        panel.style.opacity = opacity;
+      }
     },
     reset(): void {
       queue.reset();

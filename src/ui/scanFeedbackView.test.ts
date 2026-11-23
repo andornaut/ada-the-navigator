@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
-import { NOTICE_TIMING } from "./itemNotice.ts";
 import { units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { SCAN_FEEDBACK_TIMING } from "./scanFeedback.ts";
 import {
   createScanFeedbackView,
   scanFeedbackDialogue,
@@ -56,8 +56,6 @@ const context = {
   blocked: () => [],
   covered: false,
   dialogue: () => [],
-  hudRow: () => [],
-  reducedMotion: false,
   resolveAnchor: () => ({ x: 360, y: 220 }),
 };
 function setup() {
@@ -144,51 +142,31 @@ describe("native scan receipt view", () => {
     view.render({ ...context, blocked: () => [context.area] }, 10000);
     expect(panel.hidden).toBe(true);
     expect(panel.style.display).toBe("none");
-    view.render(context, NOTICE_TIMING.holdMs);
+    view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
     expect(panel.style.opacity).toBe("1");
-    view.render(context, NOTICE_TIMING.fadeMs);
+    view.render(context, SCAN_FEEDBACK_TIMING.fadeMs);
     view.render(context, 0);
     expect(panel.hidden).toBe(true);
     view.enqueue([outcome]);
     view.render(context, 0);
     expect(panel.hidden).toBe(true);
   });
-  it("rises normally, remains static under reduced motion, and fades in both modes", () => {
-    for (const reducedMotion of [false, true]) {
-      const { panel, view } = setup();
-      view.enqueue([receipt()]);
-      const frame = { ...context, reducedMotion };
-      view.render(frame, NOTICE_TIMING.holdMs / 2);
-      const first = panel.style.top;
-      view.render(frame, NOTICE_TIMING.holdMs / 2);
-      const second = panel.style.top;
-      if (reducedMotion) {
-        expect(second).toBe(first);
-      } else {
-        expect(second).not.toBe(first);
-      }
-      view.render(frame, (reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs) / 2);
-      view.render(frame, 0);
-      expect(Number(panel.style.opacity)).toBeCloseTo(0.5);
-    }
-  });
-  it("retains its native node and x position as a dialogue opens, changes and closes", () => {
+  it("changes only opacity during the fade and keeps its native node and position through dialogue", () => {
     const { panel, view } = setup();
     view.enqueue([receipt()]);
-    view.render(context, 100);
+    view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
     const left = panel.style.left;
-    let top = panel.style.top;
-    for (const blocked of [
-      [{ height: 140, width: 320, x: 200, y: 80 }],
-      [{ height: 200, width: 500, x: 100, y: 60 }],
-      [],
-    ]) {
-      view.render({ ...context, blocked: () => blocked }, 100);
-      expect(panel.style.left).toBe(left);
-      expect(panel.style.top).not.toBe(top);
-      expect(panel.style.zIndex).toBe("1");
-      top = panel.style.top;
-    }
+    const top = panel.style.top;
+    const dialogue = () => [{ height: 140, width: 320, x: 200, y: 80 }];
+    view.render({ ...context, dialogue }, 250);
+    expect(panel.style.opacity).toBe("1");
+    view.render({ ...context, dialogue }, 250);
+    expect(panel.style.opacity).toBe("0.5");
+    expect(panel.style.left).toBe(left);
+    expect(panel.style.top).toBe(top);
+    expect(panel.style.zIndex).toBe("1");
+    view.render(context, 0);
+    expect(panel.hidden).toBe(true);
   });
   it("uses canonical HUD selection with only conversation paint excluded", () => {
     setup();

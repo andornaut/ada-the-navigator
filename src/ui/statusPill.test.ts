@@ -1091,9 +1091,9 @@ describe("status pill cargo segments", () => {
     expect(statusSegments({ aboard: carrying, ore: 3 })).toEqual(["ore", "aboard"]);
   });
 
-  it("draw Art's 20 px cargo, ore and tow sprites", () => {
+  it("draw Art's 20 px cargo, ore and tow vectors", () => {
     for (const url of Object.values(CARGO_ICONS)) {
-      expect(url).toMatch(/^\/art\/ui\/sprites\/icon-(cargo|ore|tow)-20\.png$/);
+      expect(url).toMatch(/^\/art\/ui\/icons\/icon-(cargo|ore|tow)-20\.svg$/);
       expect(existsSync(new URL(`../../public${url}`, import.meta.url))).toBe(true);
     }
   });

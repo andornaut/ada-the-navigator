@@ -2,9 +2,11 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
 import type { Vec } from "../model/types.ts";
-import { EASE_OUT, NOTICE_TIMING } from "./itemNotice.ts";
-import { type ScanFeedbackPath, scanFeedbackPath, scanFeedbackTop } from "./layout/scanFeedback.ts";
+import { scanFeedbackRect } from "./layout/scanFeedback.ts";
 import { chipGlyph } from "./mapScreen.ts";
+
+export const SCAN_FEEDBACK_TIMING = { fadeMs: 500, holdMs: 2000 } as const;
+
 export interface ScanFeedbackContent {
   readonly checkbox: boolean;
   readonly glyph: string | null;
@@ -76,15 +78,12 @@ export interface ScanFeedbackContext {
   readonly blocked: () => readonly Rect[];
   /** Covered includes paused, dialog, settings, unavailable renderer and loading states. */
   readonly covered: boolean;
-  /** The shown conversation box's parts, which the rise stops below. */
+  /** The shown conversation box's parts to avoid at placement. */
   readonly dialogue: () => readonly Rect[];
-  /** The shown HUD row's controls along the top, which every rise ends under. */
-  readonly hudRow: () => readonly Rect[];
   readonly measure: (content: ScanFeedbackContent) => {
     readonly height: number;
     readonly width: number;
   };
-  readonly reducedMotion: boolean;
   /** Native caller clock: repeated refreshes in one scene frame reuse the displayed position. */
   readonly time?: number;
   /** The caller uses the existing authoritative target resolver and scene projection. */
@@ -94,14 +93,7 @@ interface Pending {
   readonly content: ScanFeedbackContent;
   elapsed: number;
   anchor?: Vec;
-  path?: ScanFeedbackPath;
-  /**
-   * The rise now: from fromY at eased progress start to top. A conversation box shown or gone
-   * mid-rise starts a new segment from where the receipt is, so it never hops or moves down.
-   */
-  segment?: { readonly fromY: number; readonly start: number; readonly top: number };
-  /** The eased rise progress of the last shown frame. */
-  shownProgress?: number;
+  placement?: { readonly area: Rect; readonly rect: Rect };
   sampledAt?: number;
   sampledElapsed?: number;
 }
@@ -138,9 +130,8 @@ export class ScanFeedbackQueue {
     }
     const sameTime = context.time !== undefined && next.sampledAt === context.time;
     const elapsed = sameTime ? next.sampledElapsed! : next.elapsed;
-    const duration =
-      NOTICE_TIMING.holdMs +
-      (context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs);
+    const { fadeMs, holdMs } = SCAN_FEEDBACK_TIMING;
+    const duration = holdMs + fadeMs;
     if (elapsed >= duration) {
       this.pending.shift();
       return this.frame(context, 0);
@@ -149,8 +140,7 @@ export class ScanFeedbackQueue {
     if (!anchor) {
       return null;
     }
-    const dialogue = context.dialogue();
-    const retained = next.path?.area;
+    const retained = next.placement?.area;
     if (
       !retained ||
       retained.x !== context.area.x ||
@@ -158,47 +148,20 @@ export class ScanFeedbackQueue {
       retained.width !== context.area.width ||
       retained.height !== context.area.height
     ) {
-      const path = scanFeedbackPath({
+      const rect = scanFeedbackRect({
         anchor,
         area: context.area,
         blocked: context.blocked(),
-        dialogue,
-        hudRow: context.hudRow(),
+        dialogue: context.dialogue(),
         ...context.measure(next.content),
-        progress: 0,
-        reducedMotion: context.reducedMotion,
       });
-      if (!path) {
+      if (!rect) {
         return null;
       }
       next.anchor = { ...anchor };
-      next.path = path;
-      delete next.segment;
-      delete next.shownProgress;
+      next.placement = { area: { ...context.area }, rect };
     }
-    const path = next.path!;
-    const progress =
-      context.reducedMotion || elapsed === 0
-        ? 0
-        : EASE_OUT(Math.min(1, elapsed / NOTICE_TIMING.holdMs));
-    const end = scanFeedbackTop(path, dialogue);
-    const yAt = (segment: NonNullable<Pending["segment"]>, at: number) =>
-      segment.start >= 1
-        ? segment.fromY
-        : segment.fromY +
-          (segment.top - segment.fromY) * Math.max(0, (at - segment.start) / (1 - segment.start));
-    let segment = next.segment ?? { fromY: path.from.y, start: 0, top: end };
-    if (end !== segment.top) {
-      // From where the receipt was last shown, toward the new end, never down.
-      const shown = next.shownProgress ?? 0;
-      const y = yAt(segment, shown);
-      segment = { fromY: y, start: shown, top: Math.min(end, y) };
-    }
-    next.segment = segment;
-    next.shownProgress = progress;
-    const rect = { ...path.from, y: yAt(segment, progress) };
-    const fade = context.reducedMotion ? NOTICE_TIMING.reducedFadeMs : NOTICE_TIMING.fadeMs;
-    const opacity = Math.max(0, 1 - Math.max(0, elapsed - NOTICE_TIMING.holdMs) / fade);
+    const opacity = Math.max(0, 1 - Math.max(0, elapsed - holdMs) / fadeMs);
     if (context.time !== undefined) {
       next.sampledAt = context.time;
       next.sampledElapsed = elapsed;
@@ -206,6 +169,6 @@ export class ScanFeedbackQueue {
     if (!sameTime && Number.isFinite(milliseconds) && milliseconds > 0) {
       next.elapsed += milliseconds;
     }
-    return { anchor, content: next.content, opacity, rect };
+    return { anchor, content: next.content, opacity, rect: next.placement!.rect };
   }
 }
