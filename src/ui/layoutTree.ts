@@ -70,7 +70,7 @@ export interface AdaLayoutContext<A extends string> {
     props: AdaButtonProps<A>,
   ) => AdaButtonPresentation<A>;
   readonly onUnavailable?: (reason: string) => void;
-  readonly standardButton?: { readonly actionId: A; readonly root: HTMLElement };
+  readonly standardButtons?: { readonly actionIds: readonly A[]; readonly root: HTMLElement };
 }
 
 function standardButton<A extends string>(
@@ -127,8 +127,8 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
   const components: LayoutComponentPorts<AdaLayoutSchema<A>> = {
     button: {
       create(initial) {
-        if (context.standardButton?.actionId === initial.actionId) {
-          return standardButton(context, context.standardButton.root, initial, dispatch);
+        if (context.standardButtons?.actionIds.includes(initial.actionId)) {
+          return standardButton(context, context.standardButtons.root, initial, dispatch);
         }
         let current = initial;
         let disposed = false;

@@ -188,7 +188,16 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     ]),
     availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
     presentButton: presentAdaButton,
-    standardButton: { actionId: "menu-settings", root },
+    standardButtons: {
+      actionIds: [
+        "menu-achievements",
+        "menu-cheats",
+        "menu-settings",
+        "menu-backToTitle",
+        "menu-close",
+      ],
+      root,
+    },
   });
   const fixedBindings = [register(card.close, close)];
   try {

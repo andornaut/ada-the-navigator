@@ -448,9 +448,17 @@ it("uses one shared Settings click listener and keeps the live Ada root and disp
     const { menu, onAction, root, rows, setReady } = setup();
     menu.open();
     const settings = rows()[2]!;
-    expect(
-      rows().filter(({ className }) => className.split(" ").includes("ui-standard-button")),
-    ).toEqual([settings]);
+    expect(rows()).toHaveLength(5);
+    for (const button of rows()) {
+      expect(button.className.split(" ")).toContain("ui-standard-button");
+      expect(button.querySelector(".ui-control-label")?.textContent).toBe(button.textContent);
+      expect(
+        added.mock.calls.filter(
+          ([type], index) => type === "click" && added.mock.contexts[index] === button,
+        ),
+      ).toEqual([["click", expect.any(Function), true]]);
+    }
+    expect(fixture.card.close.className.split(" ")).not.toContain("ui-standard-button");
     const native = added.mock.calls.filter(
       ([type], index) => type === "click" && added.mock.contexts[index] === settings,
     );
