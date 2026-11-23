@@ -13,3 +13,4 @@ repeatable activities, achievements, markers and scan feedback.
 | ada-0247 | Triple job and activity rewards                                              | [ada-0247.md](../work/ada-0247.md) |
 | ada-0259 | Chart landmarks with an explicit Use Scan                                    | [ada-0259.md](../work/ada-0259.md) |
 | ada-0295 | Name delivery and supply run places by their sentence names in quest details | [ada-0295.md](../work/ada-0295.md) |
+| ada-0364 | Keep quest route text clear of Back                                          | [ada-0364.md](../work/ada-0364.md) |

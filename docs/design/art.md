@@ -118,3 +118,4 @@ Reference: [art](../../art/README.md).
 | ada-0345 | Redraw stations and points of interest                                    | [ada-0345.md](../work/ada-0345.md) |
 | ada-0347 | Distinguish combat, industrial, and rescue craft                          | [ada-0347.md](../work/ada-0347.md) |
 | ada-0354 | Improve and reuse Earth Storybook backgrounds                             | [ada-0354.md](../work/ada-0354.md) |
+| ada-0367 | Increase the Swarm hull and hit silhouette                                | [ada-0367.md](../work/ada-0367.md) |

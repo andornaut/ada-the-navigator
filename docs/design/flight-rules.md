@@ -52,3 +52,4 @@ and scan feedback.
 | ada-0353 | Consolidate Gameplay references                                                                            | [ada-0353.md](../work/ada-0353.md) |
 | ada-0362 | Spend one Multi-Laser ammo per emitted bolt                                                                | [ada-0362.md](../work/ada-0362.md) |
 | ada-0363 | Make in-flight weapon switching immediate                                                                  | [ada-0363.md](../work/ada-0363.md) |
+| ada-0365 | Recharge every shield tier at four percent per second                                                      | [ada-0365.md](../work/ada-0365.md) |
