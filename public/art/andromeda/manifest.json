@@ -14667,9 +14667,9 @@
     },
     {
       "id": "pip-portrait",
-      "path": "/art/andromeda/portraits/pip.png",
-      "width": 96,
-      "height": 32,
+      "path": "/art/andromeda/portraits/andromeda-full.png",
+      "width": 98,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -14681,13 +14681,19 @@
         "happy": 0,
         "neutral": 1,
         "worried": 2
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 33,
+        "width": 96,
+        "height": 32
       }
     },
     {
       "id": "settler-portrait",
-      "path": "/art/andromeda/portraits/settler.png",
-      "width": 96,
-      "height": 32,
+      "path": "/art/andromeda/portraits/andromeda-full.png",
+      "width": 98,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -14699,12 +14705,18 @@
         "happy": 0,
         "neutral": 1,
         "worried": 2
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 66,
+        "width": 96,
+        "height": 32
       }
     },
     {
       "id": "pip-portrait-compact",
-      "path": "/art/andromeda/portraits/pip-compact.png",
-      "width": 66,
+      "path": "/art/andromeda/portraits/andromeda-compact.png",
+      "width": 202,
       "height": 22,
       "displayWidth": 44,
       "displayHeight": 44,
@@ -14719,12 +14731,18 @@
         "happy": 0,
         "neutral": 1,
         "worried": 2
+      },
+      "portraitCrop": {
+        "x": 69,
+        "y": 0,
+        "width": 66,
+        "height": 22
       }
     },
     {
       "id": "settler-portrait-compact",
-      "path": "/art/andromeda/portraits/settler-compact.png",
-      "width": 66,
+      "path": "/art/andromeda/portraits/andromeda-compact.png",
+      "width": 202,
       "height": 22,
       "displayWidth": 44,
       "displayHeight": 44,
@@ -14739,13 +14757,19 @@
         "happy": 0,
         "neutral": 1,
         "worried": 2
+      },
+      "portraitCrop": {
+        "x": 136,
+        "y": 0,
+        "width": 66,
+        "height": 22
       }
     },
     {
       "id": "cog-portrait",
-      "path": "/art/andromeda/portraits/cog.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/andromeda/portraits/andromeda-full.png",
+      "width": 98,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -14755,13 +14779,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "dial-portrait",
-      "path": "/art/andromeda/portraits/dial.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/andromeda/portraits/andromeda-full.png",
+      "width": 98,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -14771,13 +14801,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 33,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "lumen-portrait",
-      "path": "/art/andromeda/portraits/lumen.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/andromeda/portraits/andromeda-full.png",
+      "width": 98,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -14787,6 +14823,12 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 66,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
@@ -14807,8 +14849,8 @@
     },
     {
       "id": "cog-portrait-compact",
-      "path": "/art/andromeda/portraits/cog-compact.png",
-      "width": 22,
+      "path": "/art/andromeda/portraits/andromeda-compact.png",
+      "width": 202,
       "height": 22,
       "displayWidth": 44,
       "displayHeight": 44,
@@ -14821,12 +14863,18 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "dial-portrait-compact",
-      "path": "/art/andromeda/portraits/dial-compact.png",
-      "width": 22,
+      "path": "/art/andromeda/portraits/andromeda-compact.png",
+      "width": 202,
       "height": 22,
       "displayWidth": 44,
       "displayHeight": 44,
@@ -14839,12 +14887,18 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 23,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "lumen-portrait-compact",
-      "path": "/art/andromeda/portraits/lumen-compact.png",
-      "width": 22,
+      "path": "/art/andromeda/portraits/andromeda-compact.png",
+      "width": 202,
       "height": 22,
       "displayWidth": 44,
       "displayHeight": 44,
@@ -14857,6 +14911,12 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 46,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {

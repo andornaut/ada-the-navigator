@@ -15341,9 +15341,9 @@
     },
     {
       "id": "loom-portrait",
-      "path": "/art/needle/portraits/loom.png",
-      "width": 64,
-      "height": 32,
+      "path": "/art/needle/portraits/needle-full.png",
+      "width": 65,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -15354,13 +15354,19 @@
       "frames": {
         "happy": 0,
         "neutral": 1
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 64,
+        "height": 32
       }
     },
     {
       "id": "loom-portrait-compact",
-      "path": "/art/needle/portraits/loom-compact.png",
-      "width": 44,
-      "height": 22,
+      "path": "/art/needle/portraits/needle-compact.png",
+      "width": 45,
+      "height": 68,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -15373,6 +15379,12 @@
       "frames": {
         "happy": 0,
         "neutral": 1
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 44,
+        "height": 22
       }
     },
     {
@@ -15409,9 +15421,9 @@
     },
     {
       "id": "marsh-portrait",
-      "path": "/art/needle/portraits/marsh.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/needle/portraits/needle-full.png",
+      "width": 65,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -15421,13 +15433,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 33,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "reed-portrait",
-      "path": "/art/needle/portraits/reed.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/needle/portraits/needle-full.png",
+      "width": 65,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -15437,13 +15455,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 33,
+        "y": 33,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "sedge-portrait",
-      "path": "/art/needle/portraits/sedge.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/needle/portraits/needle-full.png",
+      "width": 65,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -15453,13 +15477,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 66,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "willow-portrait",
-      "path": "/art/needle/portraits/willow.png",
-      "width": 32,
-      "height": 32,
+      "path": "/art/needle/portraits/needle-full.png",
+      "width": 65,
+      "height": 98,
       "facing": "front",
       "pivot": {
         "x": 0.5,
@@ -15469,13 +15499,19 @@
       "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 33,
+        "y": 66,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "marsh-portrait-compact",
-      "path": "/art/needle/portraits/marsh-compact.png",
-      "width": 22,
-      "height": 22,
+      "path": "/art/needle/portraits/needle-compact.png",
+      "width": 45,
+      "height": 68,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -15487,13 +15523,19 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 23,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "reed-portrait-compact",
-      "path": "/art/needle/portraits/reed-compact.png",
-      "width": 22,
-      "height": 22,
+      "path": "/art/needle/portraits/needle-compact.png",
+      "width": 45,
+      "height": 68,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -15505,13 +15547,19 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 23,
+        "y": 23,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "sedge-portrait-compact",
-      "path": "/art/needle/portraits/sedge-compact.png",
-      "width": 22,
-      "height": 22,
+      "path": "/art/needle/portraits/needle-compact.png",
+      "width": 45,
+      "height": 68,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -15523,13 +15571,19 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 46,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "willow-portrait-compact",
-      "path": "/art/needle/portraits/willow-compact.png",
-      "width": 22,
-      "height": 22,
+      "path": "/art/needle/portraits/needle-compact.png",
+      "width": 45,
+      "height": 68,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -15541,6 +15595,12 @@
       "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 23,
+        "y": 46,
+        "width": 22,
+        "height": 22
       }
     },
     {
