@@ -20,12 +20,14 @@ import {
   MODAL_STYLE,
   reserveScrollbar,
   setFooterAction,
+  SETTINGS_INSTALL_BUTTON,
   SWITCH_ROW_PARTS,
   switchState,
   TEXT_TOKENS,
   UI_SCOPE,
 } from "./modal.ts";
 import { mapCloseStyle } from "./modalClose.ts";
+import { SETTINGS_STYLE } from "./settings.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 const json = (path: string): unknown =>
@@ -72,7 +74,8 @@ describe("Settings control rows", () => {
   it("keeps the generic focus ring off switches, the close button and Storybook buttons", () => {
     const start = MODAL_STYLE.indexOf(
       `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
-  ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button
+  ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button,
+  ${SETTINGS_INSTALL_BUTTON}
 ))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
@@ -86,6 +89,23 @@ describe("Settings control rows", () => {
 });
 
 describe("modal buttons", () => {
+  it("uses the shared text focus face on the compact Settings Install action", () => {
+    const install = ".ada-install-row > .ui-standard-button.ada-compact[data-action=install]";
+    const focus = `${UI_SCOPE} [data-dialog=settings] ${install}:focus-visible`;
+    const enabled = `${focus}:where(
+  :not(:disabled,.ada-unavailable,[aria-disabled=true])
+)`;
+    expect(SETTINGS_STYLE).toContain(`${LEGACY_TEXT_BUTTON},${install}\n))`);
+    expect(MODAL_STYLE).toContain(`${focus},`);
+    const start = MODAL_STYLE.indexOf(`${enabled},`);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const cue = MODAL_STYLE.slice(MODAL_STYLE.indexOf("{", start), MODAL_STYLE.indexOf("}", start));
+    const { bottom, left, right, top } = BUTTON_SLICE;
+    expect(cue).toContain("background-clip:padding-box");
+    expect(cue).toContain(`border-image-slice:${top} ${right} ${bottom} ${left}\n`);
+    expect(cue).not.toContain("border-image-source");
+  });
+
   it("tints only the legacy face and keeps the normal and pressed border slices", () => {
     const focus = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
     expect(rule(focus)).toContain("outline:none");

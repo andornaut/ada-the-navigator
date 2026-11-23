@@ -41,6 +41,7 @@ import {
   MODAL_STYLE,
   setFooterAction,
   setScrollGroup,
+  SETTINGS_INSTALL_BUTTON,
   TEXT_TOKENS,
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -112,7 +113,7 @@ export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
   .ada-close,.ada-route-marker,.ada-use,.ada-row[role=switch],.ada-quest-endpoint,
-  ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON}
+  ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON},${SETTINGS_INSTALL_BUTTON}
 ))`;
 
 // The start screen while Exit shows: .ada-controls carries this attribute while it does.
@@ -300,19 +301,10 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   background:currentColor;
   mask:url('${uiIconUrl(SETTING_ICONS.install)}') center / contain no-repeat
 }
-/* Keep the secondary skin on both Settings actions when the Kit owns focus. */
-.ada-controls .ada-install-row > .ui-standard-button.ada-compact,
+/* Keep the secondary skin on the Install Steps action. */
 .ada-controls [data-dialog=install-steps] .ada-button.ui-standard-button{
   --ui-button-focus-fill:${BUTTON_FACE.secondary};
   --ui-button-focus-text:${TEXT_TOKENS.buttonLabel}
-}
-@media (forced-colors:active){
-  .ada-controls .ada-install-row > .ui-standard-button.ada-compact:focus-visible{
-    forced-color-adjust:auto;
-    background-color:${BUTTON_FACE.secondary};
-    border-color:${BUTTON_FACE.secondary} ${BUTTON_FACE.secondary} #5f5980;
-    color:${TEXT_TOKENS.buttonLabel}
-  }
 }
 .ada-controls [data-dialog=settings] .ada-build{align-self:stretch}
 
