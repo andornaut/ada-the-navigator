@@ -5,16 +5,19 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { type EncounterEntry, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import {
-  createFlight,
+  createUnpopulatedFlight,
   ensureDestination,
   ensureRouteEncounter,
+  populateFlight,
   routeGuardPlanResult,
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { GalaxyProgress, SpaceObject } from "./types.ts";
@@ -39,6 +42,13 @@ const progress: GalaxyProgress = {
   stage: 0,
   stations: [],
 };
+function chartFlight(content: typeof CONTENT, galaxy: GalaxyNumber, seed: number) {
+  const flight = createUnpopulatedFlight(content, galaxy, seed);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  populateFlight(content, progress, flight);
+  return flight;
+}
+
 function fixture() {
   const content = structuredClone(CONTENT);
   // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
@@ -47,7 +57,7 @@ function fixture() {
   // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
   content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
-    const flight = createFlight(content, 1, seed, progress);
+    const flight = chartFlight(content, 1, seed);
     // Retained four-member packs keep their survivor denominator under the current admission cap.
     const packId = "pack:0,0";
     const members = flight.objects.filter(
@@ -235,9 +245,9 @@ describe("casualty-preserving pack retention", () => {
     content.tuning.flight.objectsPerChunk = 0;
     // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
     content.tuning.flight.playerShotDamage = 1e-6;
-    let found: { flight: ReturnType<typeof createFlight>; packId: string } | undefined;
+    let found: { flight: ReturnType<typeof chartFlight>; packId: string } | undefined;
     for (let seed = 0; seed < 512 && !found; seed++) {
-      const flight = createFlight(content, 1, seed, progress);
+      const flight = chartFlight(content, 1, seed);
       const solo = flight.objects.find(
         (object) => object.enemy?.archetype === "fighter" && object.enemy.packId === "pack:0,0",
       );
@@ -436,7 +446,7 @@ describe("per-role encounter restore", () => {
       stages.forEach((stage) => {
         stage.roster = [...stage.roster, retired];
       });
-      const flight = createFlight(content, 3, 25, progress);
+      const flight = chartFlight(content, 3, 25);
       const region = stages[1]!;
       expect(region.localCap).toBeGreaterThanOrEqual(5);
       flight.player = {

@@ -6,7 +6,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { flightEncounterSeed } from "./flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
@@ -31,6 +31,7 @@ function fixture(id: "whale" | "family" | "holodisk" | "hub") {
   const progress = model.state.progress[galaxy];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, galaxy, 173, model.state.economy, 197);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
   model.state.flight = flight;
   flight.combat = { initialPackSizes: {}, routeEncounters: [] };
   const site: SpaceObject = { hp: 1, id, kind: "destination", radius: 30, x: 10000, y: 10000 };

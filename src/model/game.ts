@@ -44,7 +44,6 @@ import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
 import {
   ACHIEVEMENT_TOTALS,
   type AchievementEvent,
@@ -125,7 +124,11 @@ import {
   teleport as teleportFlight,
   undockFlight,
 } from "./flight.ts";
-import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightEncounterSeed,
+  flightWorldContext,
+} from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { liveEnemy } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
@@ -2212,7 +2215,7 @@ export class GameModel {
       this.state.economy,
       seed,
     );
-    flight.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
     if (flight.galaxy === 1 && !this.current.questComplete) {
       const sites = galaxyRoute(flight.galaxy).filter((id) => !this.current.known.includes(id));
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {

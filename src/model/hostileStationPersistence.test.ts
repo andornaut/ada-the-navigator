@@ -10,6 +10,7 @@ import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import {
@@ -38,6 +39,7 @@ function fixture(galaxy: GalaxyNumber = 2) {
   const progress = model.state.progress[galaxy];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, galaxy, 173, model.state.economy, 197);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
   model.state.flight = flight;
   const site = { id: `hostile-station:${galaxy}:173:0,0:0`, point: { x: 20000, y: 0 } };
   rememberHostileStationSite(progress, galaxy, site);

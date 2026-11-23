@@ -39,6 +39,7 @@ import {
 } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
@@ -259,6 +260,7 @@ describe("guaranteed destruction loot", () => {
       }
       for (const { id, loot, ore, packingOnly } of cases) {
         const value = flight(seed);
+        value.topology = CURRENT_FLIGHT_TOPOLOGY;
         const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
         const target: SpaceObject = {
           asteroid: shape.id,
@@ -380,6 +382,7 @@ describe("guaranteed destruction loot", () => {
       const model = new GameModel(CONTENT);
       model.state.mode = "space";
       const value = flight();
+      value.topology = CURRENT_FLIGHT_TOPOLOGY;
       const target: SpaceObject = { hp: 1, id: "saved-rock", kind, radius: 20, x: 600, y: 0 };
       value.objects.push(target);
       value.shots.push(killShot(target), killShot(target));
@@ -402,6 +405,7 @@ describe("guaranteed destruction loot", () => {
     const model = new GameModel(CONTENT);
     model.state.mode = "space";
     const value = flight();
+    value.topology = CURRENT_FLIGHT_TOPOLOGY;
     const target = enemy("fighter", "once-only", 600, 0);
     value.objects.push(target);
     value.shots.push(killShot(target));

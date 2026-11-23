@@ -8,6 +8,7 @@ import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId } from "./geography.ts";
 import type { PhantomFlight } from "./phantom.ts";
@@ -61,6 +62,7 @@ function fixture(kind: PendingPhantomEncounter["kind"]) {
   const progress = model.state.progress[6];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 197);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
   model.state.flight = flight;
   const state: PhantomFlight = {
     allies: [],

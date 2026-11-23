@@ -9,6 +9,12 @@ export interface FlightTopology {
   readonly version: 1;
 }
 
+export const CURRENT_FLIGHT_TOPOLOGY = Object.freeze<FlightTopology>({
+  kind: "torus",
+  side: GALAXY_SIDE,
+  version: 1,
+});
+
 export function validFlightTopology(value: unknown): value is FlightTopology {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;

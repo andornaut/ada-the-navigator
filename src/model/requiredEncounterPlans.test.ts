@@ -5,7 +5,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { flightEncounterSeed } from "./flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
@@ -24,6 +24,7 @@ function fixture(supportCount = 0) {
   const progress = model.state.progress[1];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, 1, 173, model.state.economy, 197);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
   model.state.flight = flight;
   model.state.mode = "space";
   model.state.started = true;
