@@ -33,9 +33,10 @@ vi.mock("./sceneSprites.ts", () => ({ objectSprite: vi.fn() }));
 vi.mock("./sceneHud.ts", () => ({ drawCraftJets: vi.fn(), keylineSprite: vi.fn() }));
 function scene(complete = false): ObjectsContext {
   return {
+    galaxyManifests: new Map([[6, phantomManifest]]),
     model: { state: { flight: { galaxy: 6 }, progress: { 6: { questComplete: complete } } } },
     project: (at: { x: number; y: number }) => at,
-    shipAssets: phantomManifest.assets,
+    shipAssets: [],
     textures: { exists: () => true },
   } as unknown as ObjectsContext;
 }

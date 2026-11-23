@@ -77,7 +77,7 @@ export function drawPhantomSettlement(scene: ObjectsContext, object: SpaceObject
     return false;
   }
   const state = scene.model.state.progress[6].questComplete ? "mended" : "cracked";
-  const frames = scene.shipAssets
+  const frames = (scene.galaxyManifests.get(6)?.assets ?? [])
     .filter(
       (asset) =>
         asset.outpost === "settlement" &&
