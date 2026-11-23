@@ -16732,7 +16732,7 @@
     },
     {
       "id": "cartwheel-debris-0",
-      "path": "/art/cartwheel/cartwheel-debris-0.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16743,11 +16743,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-1",
-      "path": "/art/cartwheel/cartwheel-debris-1.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16758,11 +16759,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-2",
-      "path": "/art/cartwheel/cartwheel-debris-2.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16773,11 +16775,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-3",
-      "path": "/art/cartwheel/cartwheel-debris-3.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16788,11 +16791,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-4",
-      "path": "/art/cartwheel/cartwheel-debris-4.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16803,11 +16807,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-5",
-      "path": "/art/cartwheel/cartwheel-debris-5.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16818,11 +16823,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-6",
-      "path": "/art/cartwheel/cartwheel-debris-6.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16833,11 +16839,12 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "cartwheel-debris-7",
-      "path": "/art/cartwheel/cartwheel-debris-7.svg",
+      "path": "/art/cartwheel/cartwheel-debris-sheet.svg",
       "width": 118,
       "height": 115,
       "displayWidth": 51.625,
@@ -16848,7 +16855,8 @@
         "x": 0.5,
         "y": 0.50435
       },
-      "debris": "cartwheel-debris"
+      "debris": "cartwheel-debris",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-ore-pod-0-a",

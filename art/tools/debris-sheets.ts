@@ -6,7 +6,7 @@ import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { GALAXIES, readManifest, writeOnce } from "./manifest.ts";
 
 const targets = ["needle", "whirlpool"] as const;
-type DebrisGalaxy = (typeof targets)[number];
+type DebrisGalaxy = "cartwheel" | (typeof targets)[number];
 type AssetRow = { id: string; path?: string } & Record<string, unknown>;
 const publicSvg = (path: string) => new URL(`../../public${path}`, import.meta.url);
 const svgRoot = (width: number, height: number, rawWidth = width, rawHeight = height) =>
@@ -23,9 +23,9 @@ function planSheets(
   const current = new Map(installed.map((row) => [row.id, row]));
   const input = new Map(entries.map((row) => [row.id, row]));
   const groups = [];
-  for (const piece of ["plate", "girder"]) {
-    const id = `${galaxy}-debris-${piece}`;
-    const stem = galaxy === "needle" ? `debris-${piece}` : id;
+  for (const suffix of galaxy === "cartwheel" ? [""] : ["-plate", "-girder"]) {
+    const id = `${galaxy}-debris${suffix}`;
+    const stem = galaxy === "needle" ? `debris${suffix}` : id;
     const names = Array.from({ length: 8 }, (_, index) => `${stem}-${index}.svg`);
     const ids = names.map((_, index) => `${id}-${index}`);
     const packed = ids.filter((name) => current.get(name)?.svgSheet === true).length;

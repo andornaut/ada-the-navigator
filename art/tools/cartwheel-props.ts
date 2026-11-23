@@ -27,6 +27,7 @@ import {
   TUMBLE_FRAMES,
   unit,
 } from "./debris.ts";
+import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, readManifest, replaceEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
 import { ORE_PICKUP, PICKUP_SIZE } from "./resource-glyphs.ts";
@@ -97,13 +98,21 @@ const BODY = bodyRamp(
 
 // ------------------------------------------------------------------ main
 
-const debris = exportDebris(dir, "/art/cartwheel/", BODY, CORAL, {
-  id: "cartwheel-debris",
-  title: "Cartwheel debris",
-  solid: bentPlate(),
-  axis: TUMBLE_AXIS,
-  scale: DEBRIS_SCALE,
-});
+const debrisSvg = new Map<string, string>();
+const debris = exportDebris(
+  dir,
+  "/art/cartwheel/",
+  BODY,
+  CORAL,
+  {
+    id: "cartwheel-debris",
+    title: "Cartwheel debris",
+    solid: bentPlate(),
+    axis: TUMBLE_AXIS,
+    scale: DEBRIS_SCALE,
+  },
+  (file, svg) => debrisSvg.set(`${file}.svg`, svg),
+);
 const installed = readManifest("cartwheel").assets;
 const craft = CRAFT.map((spec) => exportStranded(installed, spec, dir, "/art/cartwheel/"));
 
@@ -167,7 +176,7 @@ replaceEntries("core", (id) => id === "ore-nugget", [nugget]);
 const owned =
   /^cartwheel-debris-\d+$|^craft-stranded-hauler-\d+$|^craft-stranded-ore-pod-\d+-[ab]$/;
 replaceEntries("cartwheel", (id) => owned.test(id), [
-  ...debris.entries,
+  ...writeDebrisFrames("cartwheel", debris.entries, debrisSvg),
   ...craft.flatMap(({ entries }) => entries),
 ]);
 linkData("core", { tow: "/art/cartwheel/tow.json" });
