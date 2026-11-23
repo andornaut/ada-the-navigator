@@ -34,7 +34,7 @@ export function itemGlyph(
     case "track":
       return { key: TRACK_ICONS[item.track], kind: "equipment" };
     case "holodisk":
-      return { key: "icon-holodisk", kind: "sprite" };
+      return { key: "icon-holodisk", kind: "vector" };
     default:
       return {
         kind: "swatch",

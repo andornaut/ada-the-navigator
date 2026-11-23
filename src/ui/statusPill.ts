@@ -264,9 +264,9 @@ const ICON_OUTLINE = [
 
 /** The pill's cargo segment icons (art/controls.md "Cargo icons"), 20 px sprites. */
 export const CARGO_ICONS = {
-  carrying: "/art/ui/sprites/icon-cargo-20.png",
-  ore: "/art/ui/sprites/icon-ore-20.png",
-  towing: "/art/ui/sprites/icon-tow-20.png",
+  carrying: "/art/ui/icons/icon-cargo-20.svg",
+  ore: "/art/ui/icons/icon-ore-20.svg",
+  towing: "/art/ui/icons/icon-tow-20.svg",
 } as const;
 
 const cargoIcon = (url: string) => `background:url('${url}') 0 0 / 100% 100% no-repeat;
@@ -433,7 +433,7 @@ ${SHIELD_PILL.bars
   width:${units(STATUS_PILL.stardustIcon)};
   height:${units(STATUS_PILL.stardustIcon)};
   margin-right:${units(STATUS_PILL.iconGap)};
-  background:url('/art/ui/sprites/icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
+  background:url('/art/ui/icons/icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 .ada-controls .ada-status-cargo{

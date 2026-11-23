@@ -60,7 +60,7 @@ export function pennyGlyph(marker: PennyMarker): string | null {
     return "/art/ui/icons/map-hostile-station.svg";
   }
   if (marker.item === "stardust") {
-    return "/art/ui/sprites/icon-stardust-20.png";
+    return "/art/ui/icons/icon-stardust-20.svg";
   }
   const key = chipGlyph({
     ...(marker.jobType ? { jobType: marker.jobType } : {}),

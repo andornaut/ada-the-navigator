@@ -19,24 +19,6 @@
       "once": []
     },
     {
-      "key": "icon-cargo-20",
-      "png": "sprites/icon-cargo-20.png",
-      "json": "sprites/icon-cargo-20.json",
-      "once": []
-    },
-    {
-      "key": "icon-holodisk",
-      "png": "sprites/icon-holodisk.png",
-      "json": "sprites/icon-holodisk.json",
-      "once": []
-    },
-    {
-      "key": "icon-holodisk-20",
-      "png": "sprites/icon-holodisk-20.png",
-      "json": "sprites/icon-holodisk-20.json",
-      "once": []
-    },
-    {
       "key": "icon-holodisk-24",
       "png": "sprites/icon-holodisk-24.png",
       "json": "sprites/icon-holodisk-24.json",
@@ -70,12 +52,6 @@
       "key": "icon-job-survey",
       "png": "sprites/icon-job-survey.png",
       "json": "sprites/icon-job-survey.json",
-      "once": []
-    },
-    {
-      "key": "icon-ore-20",
-      "png": "sprites/icon-ore-20.png",
-      "json": "sprites/icon-ore-20.json",
       "once": []
     },
     {
@@ -271,18 +247,6 @@
       "key": "icon-shop-weapon-upgrade",
       "png": "sprites/icon-shop-weapon-upgrade.png",
       "json": "sprites/icon-shop-weapon-upgrade.json",
-      "once": []
-    },
-    {
-      "key": "icon-stardust-20",
-      "png": "sprites/icon-stardust-20.png",
-      "json": "sprites/icon-stardust-20.json",
-      "once": []
-    },
-    {
-      "key": "icon-tow-20",
-      "png": "sprites/icon-tow-20.png",
-      "json": "sprites/icon-tow-20.json",
       "once": []
     },
     {

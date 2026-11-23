@@ -10,6 +10,7 @@ import { ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
 import { statusCargoInset } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { spriteIconPath } from "./spriteIconPath.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 
 // Non-currency item gains name the actual item at the HUD's top centre, then fade in place.
@@ -34,8 +35,6 @@ export const NOTICE_ACCENTS = {
 // A level's rim: its tier's colour, which a level 2 or 3 always has.
 const levelAccent = (level: number) => tierColour(level) ?? NOTICE_ACCENTS.weapon;
 
-const SPRITES = "/art/ui/sprites/";
-
 /** Where a notice lands: the pill's cargo segment, a weapon's disc, the shield bar, or nowhere. */
 export type NoticeTarget =
   | { readonly kind: "cargo" }
@@ -51,7 +50,7 @@ export interface Notice {
   readonly kind: NoticeKind;
   /** The label without its merged count, such as "+ Phaser". */
   readonly label: string;
-  /** A sprite under SPRITES (its first of `frames` frames across), or a weapon glyph in cream. */
+  /** Colour art (its first of `frames` frames across), or a weapon glyph in cream. */
   readonly icon: { readonly frames?: number; readonly sprite: string } | { readonly mask: string };
   readonly target: NoticeTarget;
 }
@@ -464,7 +463,7 @@ export function createItemNotices(
       root.style.setProperty("--notice-accent", frame.notice.accent);
       if ("sprite" in frame.notice.icon) {
         const across = 100 * (frame.notice.icon.frames ?? 1);
-        icon.style.background = `url('${SPRITES}${frame.notice.icon.sprite}.png') 0 0 / ${across}% 100% no-repeat`;
+        icon.style.background = `url('${spriteIconPath(frame.notice.icon.sprite)}') 0 0 / ${across}% 100% no-repeat`;
         icon.style.removeProperty("mask");
         icon.style.removeProperty("-webkit-mask");
       } else {

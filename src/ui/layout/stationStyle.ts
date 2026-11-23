@@ -7,7 +7,6 @@ import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 export const STATION_SPRITES = "/art/ui/sprites/";
-const SPRITES = STATION_SPRITES;
 export const STATION_ICONS = "/art/ui/icons/";
 const ICONS = STATION_ICONS;
 const { bottom, left, right, top } = BUTTON_SLICE;
@@ -84,10 +83,10 @@ export const STATION_STYLE = `
   content:"";
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};
-  background:url('${SPRITES}icon-stardust-20.png') center / 100% 100% no-repeat
+  background:url('${ICONS}icon-stardust-20.svg') center / 100% 100% no-repeat
 }
 .ada-controls .ada-station-balances [data-balance=ore]::before{
-  background-image:url('${SPRITES}icon-ore-20.png')
+  background-image:url('${ICONS}icon-ore-20.svg')
 }
 .ada-controls .ada-station-footer{
   display:flex;
@@ -186,7 +185,7 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-pane-hint::after{
   content:")";
   padding-inline-start:${units(TYPE.count.size + SPACING.rowGap)};
-  background:url('${SPRITES}icon-stardust-20.png') ${units(SPACING.rowGap)} center /
+  background:url('${ICONS}icon-stardust-20.svg') ${units(SPACING.rowGap)} center /
     ${units(TYPE.count.size)} ${units(TYPE.count.size)} no-repeat;
   image-rendering:pixelated
 }
@@ -341,7 +340,7 @@ export const STATION_STYLE = `
   flex:none;
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};
-  background:url('${SPRITES}icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
+  background:url('${ICONS}icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 
@@ -486,6 +485,10 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
 .ada-controls [data-state=unaffordable] .ada-glyph-equipment{
   background-image:var(--equipment-icon-disabled)
 }
+.ada-controls .ada-glyph-vector{
+  background:var(--icon) 0 0 / 100% 100% no-repeat;
+  image-rendering:auto
+}
 .ada-controls .ada-glyph-sprite{
   background:var(--sheet) 0 0 / 200% 100% no-repeat
 }
@@ -567,7 +570,7 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   flex:none;
   width:${units(SHOP_ROW.pill.icon)};
   height:${units(SHOP_ROW.pill.icon)};
-  background:url('${SPRITES}icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
+  background:url('${ICONS}icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 .ada-controls .ada-owned{

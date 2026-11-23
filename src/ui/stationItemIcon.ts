@@ -7,6 +7,7 @@ const SPRITES = STATION_SPRITES;
 export type ItemGlyph =
   | { readonly kind: "equipment"; readonly key: string }
   | { readonly kind: "sprite"; readonly key: string }
+  | { readonly kind: "vector"; readonly key: string }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
 
@@ -40,6 +41,11 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
     node.className = "ada-glyph ada-glyph-equipment";
     node.style.setProperty("--equipment-icon", `url('${icon}.svg')`);
     node.style.setProperty("--equipment-icon-disabled", `url('${icon}-disabled.svg')`);
+    return node;
+  }
+  if (glyph.kind === "vector") {
+    node.className = "ada-glyph ada-glyph-vector";
+    node.style.setProperty("--icon", `url('${STATION_ICONS}${glyph.key}.svg')`);
     return node;
   }
   node.className = "ada-glyph ada-glyph-sprite";

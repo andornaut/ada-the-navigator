@@ -68,7 +68,7 @@ describe("Penny's existing marker art", () => {
     expect(pennyGlyph({ ...job, jobType: "hunt" })).toBeNull();
     expect(
       pennyGlyph({ ...marker, category: "discovery", identified: true, item: "stardust" }),
-    ).toBe("/art/ui/sprites/icon-stardust-20.png");
+    ).toBe("/art/ui/icons/icon-stardust-20.svg");
     expect(PENNY_MARKERS_STYLE).toContain("/art/ui/fonts/font-body.png");
   });
   it("retains the opaque paint baseline; protruding native glyph alpha is handled by the caller", () => {
@@ -261,7 +261,7 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     symbol: "destination",
     target: "workshop",
   });
-  expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.png");
+  expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.svg");
   expect(chip.style.background).toBe(TASK_COLORS.generic);
   for (const [category, symbol] of [
     ["station", "station"],

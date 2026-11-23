@@ -19,7 +19,7 @@ import {
 } from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { STATION_SPRITES } from "./layout/stationStyle.ts";
+import { STATION_ICONS } from "./layout/stationStyle.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -37,7 +37,7 @@ const paymentFor = (resource: ExchangeResource): ExchangeResource =>
 function exchangeIcon(resource: ExchangeResource): HTMLImageElement {
   const image = document.createElement("img");
   image.className = "ada-exchange-icon";
-  image.src = `${STATION_SPRITES}icon-${resource}-20.png`;
+  image.src = `${STATION_ICONS}icon-${resource}-20.svg`;
   image.alt = "";
   return image;
 }

@@ -95,6 +95,9 @@ describe("station row and detail header item icons", () => {
         "--equipment-icon": `url('${icon}.svg')`,
         "--equipment-icon-disabled": `url('${icon}-disabled.svg')`,
       });
+    } else if (item.kind === "holodisk") {
+      expect(rowIcon.className).toBe("ada-glyph ada-glyph-vector");
+      expect(rowIcon.properties).toEqual({ "--icon": "url('/art/ui/icons/icon-holodisk.svg')" });
     } else {
       expect(rowIcon.properties["--sheet"]).toBe(`url('/art/ui/sprites/${glyph.key}.png')`);
     }

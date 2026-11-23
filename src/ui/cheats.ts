@@ -95,7 +95,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
               const icon = document.createElement("span");
               icon.className = "ada-cheat-resource-icon";
               icon.setAttribute("aria-hidden", "true");
-              icon.style.backgroundImage = `url('/art/ui/sprites/icon-${resource}-20.png')`;
+              icon.style.backgroundImage = `url('/art/ui/icons/icon-${resource}-20.svg')`;
               button.append(icon);
             }
             update(data);

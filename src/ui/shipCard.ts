@@ -17,14 +17,13 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { type ShipHeadings, shipItemKey, type ShipLayoutSchema, shipTree } from "./shipTree.ts";
+import { spriteIconPath } from "./spriteIconPath.ts";
 import { stardustCount } from "./statusPill.ts";
 
 export { SHIP_CARD, SHIP_CARD_STYLE } from "./layout/shipCard.ts";
 export { shipItemKey } from "./shipTree.ts";
 
 // Cargo, Equipment and Weapons occupy three inventory columns.
-
-const SPRITES = "/art/ui/sprites/";
 
 export interface ShipWeapon {
   readonly id: Weapon;
@@ -208,7 +207,7 @@ export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
     node.style.setProperty("-webkit-mask", `url('${icon.mask}') center / 100% 100% no-repeat`);
     node.style.setProperty("mask", `url('${icon.mask}') center / 100% 100% no-repeat`);
   } else {
-    node.style.background = `url('${SPRITES}${icon.sprite}.png') 0 0 / ${icon.frames * 100}% 100% no-repeat`;
+    node.style.background = `url('${spriteIconPath(icon.sprite)}') 0 0 / ${icon.frames * 100}% 100% no-repeat`;
   }
   return node;
 }

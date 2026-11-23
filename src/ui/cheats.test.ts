@@ -326,7 +326,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     expect(button.getAttribute("aria-label")).toBe(label);
     expect(button.children[0]!.getAttribute("aria-hidden")).toBe("true");
     expect(button.children[0]!.style.backgroundImage).toBe(
-      `url('/art/ui/sprites/icon-${resource}-20.png')`,
+      `url('/art/ui/icons/icon-${resource}-20.svg')`,
     );
   }
   expect(selectiveButton!.tagName).toBe("BUTTON");
