@@ -59,6 +59,37 @@ it("retains actual required plans and complete flight clocks through valid Conti
   expect((await invalid.store.load()).save).toEqual(newGameState());
   expect(invalid.values.get(SAVE_KEYS.backup)).toBe(JSON.stringify(document));
 });
+it("rotates the campaign generation once when replacing an older save format", async () => {
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
+  const played = model.saveDocument();
+  const stamp = { generation: "previous-generation", revision: "previous-revision" };
+  const f = fixture(JSON.stringify({ ...played, adaSaveStamp: stamp }));
+  const campaign = { lock: async <T>(operation: () => T | Promise<T>) => operation() };
+  const stale = createAdaSaves(f.port, undefined, campaign);
+  const original = (await stale.load()).save;
+  const old = JSON.stringify({ ...played, version: SAVE_VERSION - 1, adaSaveStamp: stamp });
+  f.values.set(SAVE_KEYS.save, old);
+
+  const current = createAdaSaves(f.port, undefined, campaign);
+  expect(await current.load()).toMatchObject({ save: newGameState(), status: "loaded" });
+  const replaced = f.values.get(SAVE_KEYS.save)!;
+  const nextStamp = JSON.parse(replaced).adaSaveStamp;
+  expect(nextStamp.generation).toEqual(expect.any(String));
+  expect(nextStamp.generation).not.toBe(stamp.generation);
+  expect(nextStamp.revision).not.toBe(stamp.revision);
+  expect(f.values.get(SAVE_KEYS.backup)).toBe(old);
+  expect(await stale.save(original)).toMatchObject({ status: "unavailable" });
+  expect(f.values.get(SAVE_KEYS.save)).toBe(replaced);
+  expect(f.port.write).toHaveBeenCalledTimes(2);
+
+  expect(await current.load()).toMatchObject({ save: newGameState(), status: "loaded" });
+  expect(f.port.write).toHaveBeenCalledTimes(2);
+  expect(await current.save(played)).toEqual({ status: "saved" });
+  expect(JSON.parse(f.values.get(SAVE_KEYS.save)!).adaSaveStamp.generation).toBe(
+    nextStamp.generation,
+  );
+});
 it("keeps first-visit storage absent and the v1 true-newer write fence intact", async () => {
   const first = fixture(null);
   expect((await first.store.load()).status).toBe("new");

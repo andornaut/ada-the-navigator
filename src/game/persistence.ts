@@ -176,9 +176,16 @@ export function createAdaSaves(
               // The original read and both repair writes use the same lock as rewind.
               checkWriteFence();
               await storage.write(SAVE_KEYS.backup, raw!);
+              const generation =
+                participating() &&
+                typeof stored?.version === "number" &&
+                Number.isSafeInteger(stored.version) &&
+                stored.version < SAVE_VERSION
+                  ? crypto.randomUUID()
+                  : (stamp?.generation ?? null);
               const repaired = stampSave(
                 encoded.value,
-                participating() ? newerStamp(stamp?.generation ?? null) : stamp,
+                participating() ? newerStamp(generation) : stamp,
               );
               checkWriteFence();
               await storage.write(SAVE_KEYS.save, repaired);
