@@ -8382,7 +8382,7 @@
     },
     {
       "id": "enemy-frigate-0",
-      "path": "/art/enemies/frigate-0.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8393,11 +8393,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-1",
-      "path": "/art/enemies/frigate-1.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8408,11 +8409,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-2",
-      "path": "/art/enemies/frigate-2.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8423,11 +8425,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-3",
-      "path": "/art/enemies/frigate-3.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8438,11 +8441,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-4",
-      "path": "/art/enemies/frigate-4.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8453,11 +8457,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-5",
-      "path": "/art/enemies/frigate-5.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8468,11 +8473,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-6",
-      "path": "/art/enemies/frigate-6.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8483,11 +8489,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-7",
-      "path": "/art/enemies/frigate-7.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8498,11 +8505,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-8",
-      "path": "/art/enemies/frigate-8.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8513,11 +8521,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-9",
-      "path": "/art/enemies/frigate-9.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8528,11 +8537,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-10",
-      "path": "/art/enemies/frigate-10.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8543,11 +8553,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-11",
-      "path": "/art/enemies/frigate-11.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8558,11 +8569,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-12",
-      "path": "/art/enemies/frigate-12.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8573,11 +8585,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-13",
-      "path": "/art/enemies/frigate-13.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8588,11 +8601,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-14",
-      "path": "/art/enemies/frigate-14.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8603,11 +8617,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-15",
-      "path": "/art/enemies/frigate-15.svg",
+      "path": "/art/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -8618,7 +8633,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate"
+      "archetype": "frigate",
+      "svgSheet": true
     },
     {
       "id": "enemy-frigate-engine-intact-0",
@@ -12622,7 +12638,7 @@
     },
     {
       "id": "enemy-capital-0",
-      "path": "/art/enemies/capital-0.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12633,11 +12649,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-1",
-      "path": "/art/enemies/capital-1.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12648,11 +12665,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-2",
-      "path": "/art/enemies/capital-2.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12663,11 +12681,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-3",
-      "path": "/art/enemies/capital-3.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12678,11 +12697,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-4",
-      "path": "/art/enemies/capital-4.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12693,11 +12713,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-5",
-      "path": "/art/enemies/capital-5.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12708,11 +12729,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-6",
-      "path": "/art/enemies/capital-6.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12723,11 +12745,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-7",
-      "path": "/art/enemies/capital-7.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12738,11 +12761,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-8",
-      "path": "/art/enemies/capital-8.svg",
+      "path": "/art/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12753,11 +12777,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-9",
-      "path": "/art/enemies/capital-9.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12768,11 +12793,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-10",
-      "path": "/art/enemies/capital-10.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12783,11 +12809,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-11",
-      "path": "/art/enemies/capital-11.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12798,11 +12825,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-12",
-      "path": "/art/enemies/capital-12.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12813,11 +12841,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-13",
-      "path": "/art/enemies/capital-13.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12828,11 +12857,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-14",
-      "path": "/art/enemies/capital-14.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12843,11 +12873,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-15",
-      "path": "/art/enemies/capital-15.svg",
+      "path": "/art/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -12858,7 +12889,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "capital"
+      "archetype": "capital",
+      "svgSheet": true
     },
     {
       "id": "enemy-capital-command-intact-0",
@@ -20894,7 +20926,7 @@
     },
     {
       "id": "enemy-gadget-0",
-      "path": "/art/enemies/gadget-0.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20905,11 +20937,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-1",
-      "path": "/art/enemies/gadget-1.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20920,11 +20953,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-2",
-      "path": "/art/enemies/gadget-2.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20935,11 +20969,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-3",
-      "path": "/art/enemies/gadget-3.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20950,11 +20985,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-4",
-      "path": "/art/enemies/gadget-4.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20965,11 +21001,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-5",
-      "path": "/art/enemies/gadget-5.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20980,11 +21017,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-6",
-      "path": "/art/enemies/gadget-6.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -20995,11 +21033,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-7",
-      "path": "/art/enemies/gadget-7.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21010,11 +21049,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-8",
-      "path": "/art/enemies/gadget-8.svg",
+      "path": "/art/enemies/gadget-sheet.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21025,11 +21065,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-9",
-      "path": "/art/enemies/gadget-9.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21040,11 +21081,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-10",
-      "path": "/art/enemies/gadget-10.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21055,11 +21097,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-11",
-      "path": "/art/enemies/gadget-11.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21070,11 +21113,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-12",
-      "path": "/art/enemies/gadget-12.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21085,11 +21129,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-13",
-      "path": "/art/enemies/gadget-13.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21100,11 +21145,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-14",
-      "path": "/art/enemies/gadget-14.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21115,11 +21161,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-15",
-      "path": "/art/enemies/gadget-15.svg",
+      "path": "/art/enemies/gadget-sheet-2.svg",
       "width": 560,
       "height": 560,
       "displayWidth": 245,
@@ -21130,7 +21177,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "gadget"
+      "archetype": "gadget",
+      "svgSheet": true
     },
     {
       "id": "enemy-gadget-command-intact-0",

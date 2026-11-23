@@ -4,7 +4,8 @@
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
-// Use --noncore-capital-part-sheets or --frigate-part-sheets to pack retained frames only.
+// Use --noncore-capital-part-sheets or --frigate-part-sheets to pack retained parts.
+// Use --heavy-hull-sheets to write review sheets and print candidate manifest rows.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -1939,9 +1940,15 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
 
 const PART_GROUPS = { capital: 29, frigate: 14 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
+type HullCraft = SheetCraft | "gadget";
+type HeadingSelection =
+  { craft: SheetCraft; section: "part" } | { craft: HullCraft; section: "hull" };
 
-function isHeavyPart(craft: SheetCraft, entry: Entry): boolean {
-  return entry.archetype === craft && (entry.hardpoint !== undefined || entry.top !== undefined);
+// Use the checked Frigate viewport as the ceiling for hull sheet XML.
+const HULL_SHEET_EDGE = 1728;
+
+function hullCrafts(manifest: ManifestFile): readonly HullCraft[] {
+  return manifest === "core" ? ["capital", "frigate", "gadget"] : ["capital", "frigate"];
 }
 
 type HeavySheetTarget = { manifest: ManifestFile; prefix: string; directory: string };
@@ -1970,46 +1977,54 @@ const familyPartTargets = {
   },
 } satisfies Record<string, HeavySheetTarget>;
 
-const standaloneHeavyPart = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const publicHeavySvg = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
 // Pack the canonical standalone roots after SVG formatting, as in the enemy hull sheets.
 // Raw-sized cells leave room for each root's smaller intrinsic display dimensions.
-function heavyPartSheets(
+function heavyHeadingSheets(
   target: HeavySheetTarget,
-  craft: SheetCraft,
+  selection: HeadingSelection,
   text: (file: string) => string | undefined,
   entries: readonly Entry[],
   selecting: boolean,
 ) {
   const { manifest, prefix, directory } = target;
+  const { craft, section } = selection;
+  const expectedGroups = selection.section === "part" ? PART_GROUPS[selection.craft] : 1;
+  const owns = (entry: Entry) =>
+    entry.archetype === craft &&
+    (entry.hardpoint !== undefined || entry.top !== undefined) === (section === "part");
   const installed: Entry[] = readManifest(manifest).assets;
-  const current = installed.filter((entry) => isHeavyPart(craft, entry));
+  const current = installed.filter(owns);
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
   const packed = current.filter(({ svgSheet }) => svgSheet === true).length;
   if (!selecting && packed === 0) return undefined;
 
-  const selected = entries.filter((entry) => isHeavyPart(craft, entry));
+  const selected = entries.filter(owns);
   const groups = new Map<string, Entry[]>();
   for (const entry of selected) {
     const { id } = entry;
     const stem = id.slice(prefix.length);
     if (!id.startsWith(prefix) || !stem.startsWith(`${craft}-`) || !/^[\w-]+-\d+$/u.test(stem)) {
-      throw new Error(`Invalid ${craft} part id in ${manifest}: ${id}`);
+      throw new Error(`Invalid ${craft} ${section} id in ${manifest}: ${id}`);
     }
     const group = id.slice(prefix.length, id.lastIndexOf("-"));
+    if (section === "hull" && group !== craft) {
+      throw new Error(`Invalid ${craft} hull group in ${manifest}: ${group}`);
+    }
     const members = groups.get(group) ?? [];
     members.push(entry);
     groups.set(group, members);
   }
   if (
-    groups.size !== PART_GROUPS[craft] ||
-    selected.length !== PART_GROUPS[craft] * ENEMY_HEADINGS ||
+    groups.size !== expectedGroups ||
+    selected.length !== expectedGroups * ENEMY_HEADINGS ||
     current.length !== selected.length ||
     currentById.size !== current.length ||
     (packed !== 0 && packed !== selected.length)
   ) {
     throw new Error(
-      `${manifest} must own ${PART_GROUPS[craft]} complete ${craft} part groups, all standalone or all sheets`,
+      `${manifest} must own ${expectedGroups} complete ${craft} ${section} groups, all standalone or all sheets`,
     );
   }
 
@@ -2019,78 +2034,87 @@ function heavyPartSheets(
   const ownedPaths = new Set<string>();
   for (const [group, members] of groups) {
     const size = Number(members[0]!.width);
-    if (!Number.isInteger(size) || size <= 0)
-      throw new Error(`Invalid ${craft} part size: ${group}`);
-    const wide = size * 4;
-    const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
-      { rectangles: members.map(() => ({ width: size, height: size })), value: group },
-    ])?.pages[0];
-    if (!layout || members.length !== ENEMY_HEADINGS)
-      throw new Error(`Incomplete ${craft} part group: ${group}`);
-    const sheet = `${group}-sheet.svg`;
-    const path = directory + sheet;
-    ownedPaths.add(path);
-    const roots = members.map((row, index) => {
-      const id = `${prefix}${group}-${index}`;
-      const file = `${group}-${index}.svg`;
-      const source = text(file);
-      const standalone = source?.trimEnd();
-      const root = `<svg xmlns="http://www.w3.org/2000/svg" width="${row.displayWidth ?? size}" height="${row.displayHeight ?? size}" viewBox="0 0 ${size} ${size}">`;
-      if (
-        row.id !== id ||
-        (row.aimIndex ?? row.directionIndex) !== index ||
-        row.width !== size ||
-        row.height !== size ||
-        !standalone?.startsWith(root) ||
-        !standalone.endsWith("</svg>")
-      ) {
-        throw new Error(`Invalid ${craft} part frame: ${id}`);
-      }
-      const oldPath = directory + file;
-      const currentRow = currentById.get(id);
-      if (
-        !currentRow ||
-        row.path !== (row.svgSheet === true ? path : oldPath) ||
-        currentRow.path !== (packed ? path : oldPath) ||
-        (!packed && !isDeepStrictEqual(currentRow, row))
-      ) {
-        throw new Error(`${manifest} does not own the expected frame: ${id}`);
-      }
-      const original = standaloneHeavyPart(oldPath);
-      if (
-        craft === "capital" &&
-        manifest === "core" &&
-        (!packed || existsSync(original)) &&
-        readFileSync(original, "utf8") !== source
-      ) {
-        throw new Error(`The capital producer does not match the standalone frame: ${file}`);
-      }
-      retired.add(file);
-      ownedPaths.add(oldPath);
-      replacements.set(id, { ...row, path, svgSheet: true });
-      const { x, y } = layout.placed[0]!.at[index]!;
-      return `<svg id="${id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
-    });
-    sheets.set(
-      sheet,
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${layout.height}" viewBox="0 0 ${wide} ${layout.height}">${roots.join("")}</svg>\n`,
-    );
+    const columns = section === "hull" ? Math.min(4, Math.floor(HULL_SHEET_EDGE / size)) : 4;
+    if (!Number.isInteger(size) || size <= 0 || columns < 1 || members.length !== ENEMY_HEADINGS) {
+      throw new Error(`Invalid ${craft} ${section} group: ${group}`);
+    }
+    const capacity = columns * columns;
+    const wide = size * columns;
+    for (let first = 0; first < members.length; first += capacity) {
+      const page = members.slice(first, first + capacity);
+      const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
+        { rectangles: page.map(() => ({ width: size, height: size })), value: group },
+      ])?.pages[0];
+      if (!layout) throw new Error(`Cannot pack ${craft} ${section} group: ${group}`);
+      const sheet =
+        first === 0 ? `${group}-sheet.svg` : `${group}-sheet-${first / capacity + 1}.svg`;
+      const path = directory + sheet;
+      ownedPaths.add(path);
+      const roots = page.map((row, index) => {
+        const heading = first + index;
+        const id = `${prefix}${group}-${heading}`;
+        const file = `${group}-${heading}.svg`;
+        const source = text(file);
+        const standalone = source?.trimEnd();
+        const root = `<svg xmlns="http://www.w3.org/2000/svg" width="${row.displayWidth ?? size}" height="${row.displayHeight ?? size}" viewBox="0 0 ${size} ${size}">`;
+        if (
+          row.id !== id ||
+          (row.aimIndex ?? row.directionIndex) !== heading ||
+          row.width !== size ||
+          row.height !== size ||
+          !standalone?.startsWith(root) ||
+          !standalone.endsWith("</svg>")
+        ) {
+          throw new Error(`Invalid ${craft} ${section} frame: ${id}`);
+        }
+        const oldPath = directory + file;
+        const currentRow = currentById.get(id);
+        if (
+          !currentRow ||
+          row.path !== (row.svgSheet === true ? path : oldPath) ||
+          currentRow.path !== (packed ? path : oldPath) ||
+          (!packed && !isDeepStrictEqual(currentRow, row))
+        ) {
+          throw new Error(`${manifest} does not own the expected frame: ${id}`);
+        }
+        const original = publicHeavySvg(oldPath);
+        if (
+          section === "part" &&
+          craft === "capital" &&
+          manifest === "core" &&
+          (!packed || existsSync(original)) &&
+          readFileSync(original, "utf8") !== source
+        ) {
+          throw new Error(`The capital producer does not match the standalone frame: ${file}`);
+        }
+        retired.add(file);
+        ownedPaths.add(oldPath);
+        replacements.set(id, { ...row, path, svgSheet: true });
+        const { x, y } = layout.placed[0]!.at[index]!;
+        return `<svg id="${id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
+      });
+      sheets.set(
+        sheet,
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${layout.height}" viewBox="0 0 ${wide} ${layout.height}">${roots.join("")}</svg>\n`,
+      );
+    }
   }
   const manifestNames: ManifestFile[] = ["core", ...GALAXIES];
   const allAssets: Entry[] = manifestNames.flatMap((name) => readManifest(name).assets);
   const referrer = allAssets.find(
     ({ id, path }) => !replacements.has(id) && typeof path === "string" && ownedPaths.has(path),
   );
-  if (referrer) throw new Error(`${craft} part packing would replace art used by ${referrer.id}`);
+  if (referrer)
+    throw new Error(`${craft} ${section} packing would replace art used by ${referrer.id}`);
   return { sheets, replacements, retired };
 }
 
-type HeavyPartPack = ReturnType<typeof heavyPartSheets>;
+type HeavyPack = ReturnType<typeof heavyHeadingSheets>;
 
-function applyHeavyPartSheets(
+function applyHeavySheets(
   files: Map<string, string>,
   entries: readonly Entry[],
-  pack: HeavyPartPack,
+  pack: HeavyPack,
 ): readonly Entry[] {
   if (!pack) return entries;
   for (const file of pack.retired) files.delete(file);
@@ -2098,7 +2122,7 @@ function applyHeavyPartSheets(
   return entries.map((entry) => pack.replacements.get(entry.id) ?? entry);
 }
 
-/** Keep installed sheets and exclude their standalone frames from an ordinary export. */
+/** Keep installed part and hull sheets and exclude their loose frames from an ordinary export. */
 export function packInstalledHeavyParts(
   manifest: "core" | keyof typeof familyPartTargets,
   files: Map<string, string>,
@@ -2106,25 +2130,43 @@ export function packInstalledHeavyParts(
 ) {
   const target = manifest === "core" ? corePartTarget : familyPartTargets[manifest];
   const text = (file: string) => files.get(file);
-  const capitalPack = heavyPartSheets(target, "capital", text, entries, false);
-  const frigatePack = heavyPartSheets(target, "frigate", text, entries, false);
-  const capitals = applyHeavyPartSheets(files, entries, capitalPack);
-  return {
-    outputEntries: applyHeavyPartSheets(files, capitals, frigatePack),
-    retiredCapital: capitalPack?.retired ?? [],
-  };
+  const capitalPack = heavyHeadingSheets(
+    target,
+    { craft: "capital", section: "part" },
+    text,
+    entries,
+    false,
+  );
+  const frigatePack = heavyHeadingSheets(
+    target,
+    { craft: "frigate", section: "part" },
+    text,
+    entries,
+    false,
+  );
+  const hulls = hullCrafts(manifest).map((craft) =>
+    heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
+  );
+  let outputEntries = applyHeavySheets(files, entries, capitalPack);
+  outputEntries = applyHeavySheets(files, outputEntries, frigatePack);
+  for (const hull of hulls) outputEntries = applyHeavySheets(files, outputEntries, hull);
+  return { outputEntries, retiredCapital: capitalPack?.retired ?? [] };
+}
+
+function packRetainedHeavySheets(target: HeavySheetTarget, selection: HeadingSelection) {
+  return heavyHeadingSheets(
+    target,
+    selection,
+    (file) => readFileSync(publicHeavySvg(target.directory + file), "utf8"),
+    readManifest(target.manifest).assets,
+    true,
+  )!;
 }
 
 function packRetainedHeavyParts(craft: SheetCraft, targets: readonly HeavySheetTarget[]): void {
   const plans = targets.map((target) => ({
     target,
-    pack: heavyPartSheets(
-      target,
-      craft,
-      (file) => readFileSync(standaloneHeavyPart(target.directory + file), "utf8"),
-      readManifest(target.manifest).assets,
-      true,
-    )!,
+    pack: packRetainedHeavySheets(target, { craft, section: "part" }),
   }));
   for (const { target, pack } of plans) {
     const paths = writeOnce(target.directory, new Map(), pack.sheets);
@@ -2136,8 +2178,43 @@ function packRetainedHeavyParts(craft: SheetCraft, targets: readonly HeavySheetT
   }
 }
 
+function writeReviewHeavyHullSheets(): void {
+  const targets = [corePartTarget, ...Object.values(familyPartTargets)];
+  const plans = targets.map((target) => ({
+    target,
+    packs: hullCrafts(target.manifest).map((craft) =>
+      packRetainedHeavySheets(target, { craft, section: "hull" }),
+    ),
+  }));
+  for (const { target, packs } of plans) {
+    for (const pack of packs) {
+      for (const [file, text] of pack.sheets) {
+        const output = publicHeavySvg(target.directory + file);
+        if (existsSync(output) && readFileSync(output, "utf8") !== text) {
+          throw new Error(
+            `Review sheet already exists with different bytes: ${target.directory}${file}`,
+          );
+        }
+      }
+    }
+  }
+  for (const { target, packs } of plans) {
+    writeOnce(target.directory, new Map(), new Map(packs.flatMap(({ sheets }) => [...sheets])));
+  }
+  const rows = plans.map(({ target, packs }) => [
+    target.manifest,
+    packs.flatMap(({ replacements }) => [...replacements.values()]),
+  ]);
+  console.log(JSON.stringify(Object.fromEntries(rows), null, 2));
+}
+
 async function main() {
   const args = process.argv.slice(2);
+  if (args.includes("--heavy-hull-sheets")) {
+    if (args.length !== 1) throw new Error("--heavy-hull-sheets takes no other options");
+    writeReviewHeavyHullSheets();
+    return;
+  }
   const retained = args.find(
     (arg) => arg === "--noncore-capital-part-sheets" || arg === "--frigate-part-sheets",
   );
@@ -2193,9 +2270,9 @@ async function main() {
   if (out === undefined) {
     let retiredCapital: Iterable<string>;
     if (selecting) {
-      const pack = heavyPartSheets(
+      const pack = heavyHeadingSheets(
         corePartTarget,
-        "capital",
+        { craft: "capital", section: "part" },
         (file) => files.get(file),
         entries,
         true,

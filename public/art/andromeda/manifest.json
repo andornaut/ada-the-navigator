@@ -1369,7 +1369,7 @@
     },
     {
       "id": "enemy-garnet-frigate-0",
-      "path": "/art/andromeda/enemies/frigate-0.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1381,11 +1381,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-1",
-      "path": "/art/andromeda/enemies/frigate-1.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1397,11 +1398,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-2",
-      "path": "/art/andromeda/enemies/frigate-2.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1413,11 +1415,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-3",
-      "path": "/art/andromeda/enemies/frigate-3.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1429,11 +1432,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-4",
-      "path": "/art/andromeda/enemies/frigate-4.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1445,11 +1449,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-5",
-      "path": "/art/andromeda/enemies/frigate-5.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1461,11 +1466,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-6",
-      "path": "/art/andromeda/enemies/frigate-6.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1477,11 +1483,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-7",
-      "path": "/art/andromeda/enemies/frigate-7.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1493,11 +1500,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-8",
-      "path": "/art/andromeda/enemies/frigate-8.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1509,11 +1517,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-9",
-      "path": "/art/andromeda/enemies/frigate-9.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1525,11 +1534,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-10",
-      "path": "/art/andromeda/enemies/frigate-10.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1541,11 +1551,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-11",
-      "path": "/art/andromeda/enemies/frigate-11.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1557,11 +1568,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-12",
-      "path": "/art/andromeda/enemies/frigate-12.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1573,11 +1585,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-13",
-      "path": "/art/andromeda/enemies/frigate-13.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1589,11 +1602,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-14",
-      "path": "/art/andromeda/enemies/frigate-14.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1605,11 +1619,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-15",
-      "path": "/art/andromeda/enemies/frigate-15.svg",
+      "path": "/art/andromeda/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1621,7 +1636,8 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-engine-intact-0",
@@ -5849,7 +5865,7 @@
     },
     {
       "id": "enemy-garnet-capital-0",
-      "path": "/art/andromeda/enemies/capital-0.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5861,11 +5877,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-1",
-      "path": "/art/andromeda/enemies/capital-1.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5877,11 +5894,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-2",
-      "path": "/art/andromeda/enemies/capital-2.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5893,11 +5911,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-3",
-      "path": "/art/andromeda/enemies/capital-3.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5909,11 +5928,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-4",
-      "path": "/art/andromeda/enemies/capital-4.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5925,11 +5945,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-5",
-      "path": "/art/andromeda/enemies/capital-5.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5941,11 +5962,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-6",
-      "path": "/art/andromeda/enemies/capital-6.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5957,11 +5979,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-7",
-      "path": "/art/andromeda/enemies/capital-7.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5973,11 +5996,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-8",
-      "path": "/art/andromeda/enemies/capital-8.svg",
+      "path": "/art/andromeda/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5989,11 +6013,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-9",
-      "path": "/art/andromeda/enemies/capital-9.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6005,11 +6030,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-10",
-      "path": "/art/andromeda/enemies/capital-10.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6021,11 +6047,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-11",
-      "path": "/art/andromeda/enemies/capital-11.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6037,11 +6064,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-12",
-      "path": "/art/andromeda/enemies/capital-12.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6053,11 +6081,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-13",
-      "path": "/art/andromeda/enemies/capital-13.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6069,11 +6098,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-14",
-      "path": "/art/andromeda/enemies/capital-14.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6085,11 +6115,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-15",
-      "path": "/art/andromeda/enemies/capital-15.svg",
+      "path": "/art/andromeda/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6101,7 +6132,8 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-command-intact-0",

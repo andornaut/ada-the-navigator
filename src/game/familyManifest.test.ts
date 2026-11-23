@@ -217,7 +217,10 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
 }
 
 describe("source-family manifest readiness", () => {
-  it("loads a cold family's hull sheets once and republishes textures from a late retry", () => {
+  it.each([
+    ["/art/needle/enemies/fighter-sheet.svg", false],
+    ["/art/needle/enemies/frigate-sheet.svg", true],
+  ] as const)("loads a cold family once and publishes a late %s retry", (path, usesDisplaySize) => {
     const f = fixture();
     const key = galaxyManifestKey(4);
     f.loadWorld(f.scene, 4);
@@ -229,8 +232,15 @@ describe("source-family manifest readiness", () => {
       (asset) => asset.svgSheet && asset.family === "needle" && galaxyLoadsAtOnce(asset),
     );
     const paths = [...new Set(hulls.map((asset) => asset.path))];
-    expect(hulls).toHaveLength(48);
-    expect(paths).toHaveLength(3);
+    expect(hulls).toHaveLength(80);
+    expect([...paths].sort()).toEqual([
+      "/art/needle/enemies/capital-sheet-2.svg",
+      "/art/needle/enemies/capital-sheet.svg",
+      "/art/needle/enemies/fighter-sheet.svg",
+      "/art/needle/enemies/frigate-sheet.svg",
+      "/art/needle/enemies/interceptor-sheet.svg",
+      "/art/needle/enemies/swarm-sheet.svg",
+    ]);
     for (const path of paths) {
       expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([
         [vectorSheetKey(path), path],
@@ -240,13 +250,20 @@ describe("source-family manifest readiness", () => {
 
     f.events.emit("complete");
     expect(f.readArt).toHaveBeenCalledTimes(1);
-    const path = paths[0]!;
     const sheetKey = vectorSheetKey(path);
     const document = {};
     f.documents.set(sheetKey, document);
     f.events.emit(`filecomplete-xml-${sheetKey}`);
     const frames = hulls.filter((asset) => asset.path === path);
-    expect(f.extract.mock.calls).toEqual(frames.map((frame) => [document, path, frame]));
+    expect(f.extract.mock.calls).toEqual(
+      frames.map((frame) => [
+        document,
+        path,
+        usesDisplaySize
+          ? { ...frame, intrinsicHeight: frame.displayHeight, intrinsicWidth: frame.displayWidth }
+          : frame,
+      ]),
+    );
     expect(f.svg.mock.calls.slice(-frames.length)).toEqual(
       frames.map((frame) => [f.scene, { ...frame, path: `data:${frame.id}` }]),
     );
@@ -438,6 +455,27 @@ describe("deferred core capital sheets", () => {
       frames.map((asset) => [f.scene, { ...asset, path: `data:${asset.id}` }]),
     );
   });
+
+  it.each(["enemy-frigate-0", "enemy-capital-0", "enemy-gadget-0"])(
+    "passes the intrinsic size of the eager hull %s without rescaling its raw frame",
+    (id) => {
+      const f = fixture(undefined);
+      const hull = core.assets.find((asset) => asset.id === id) as Asset;
+      const fail = vi.fn();
+      const document = {};
+      const key = vectorSheetKey(hull.path);
+      f.queueCore(f.scene, () => true, fail, [hull]);
+      f.documents.set(key, document);
+      f.events.emit(`filecomplete-xml-${key}`);
+      expect(f.extract).toHaveBeenCalledExactlyOnceWith(document, hull.path, {
+        ...hull,
+        intrinsicHeight: hull.displayHeight,
+        intrinsicWidth: hull.displayWidth,
+      });
+      expect(f.svg).toHaveBeenCalledExactlyOnceWith(f.scene, { ...hull, path: `data:${id}` });
+      expect(fail).not.toHaveBeenCalled();
+    },
+  );
 
   it("queues the existing hull sheet at boot and leaves packed parts for the flight", () => {
     const f = fixture(undefined);

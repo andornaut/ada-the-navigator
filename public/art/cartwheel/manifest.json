@@ -1309,7 +1309,7 @@
     },
     {
       "id": "enemy-claim-frigate-0",
-      "path": "/art/cartwheel/enemies/frigate-0.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1321,11 +1321,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-1",
-      "path": "/art/cartwheel/enemies/frigate-1.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1337,11 +1338,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-2",
-      "path": "/art/cartwheel/enemies/frigate-2.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1353,11 +1355,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-3",
-      "path": "/art/cartwheel/enemies/frigate-3.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1369,11 +1372,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-4",
-      "path": "/art/cartwheel/enemies/frigate-4.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1385,11 +1389,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-5",
-      "path": "/art/cartwheel/enemies/frigate-5.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1401,11 +1406,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-6",
-      "path": "/art/cartwheel/enemies/frigate-6.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1417,11 +1423,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-7",
-      "path": "/art/cartwheel/enemies/frigate-7.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1433,11 +1440,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-8",
-      "path": "/art/cartwheel/enemies/frigate-8.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1449,11 +1457,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-9",
-      "path": "/art/cartwheel/enemies/frigate-9.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1465,11 +1474,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-10",
-      "path": "/art/cartwheel/enemies/frigate-10.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1481,11 +1491,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-11",
-      "path": "/art/cartwheel/enemies/frigate-11.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1497,11 +1508,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-12",
-      "path": "/art/cartwheel/enemies/frigate-12.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1513,11 +1525,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-13",
-      "path": "/art/cartwheel/enemies/frigate-13.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1529,11 +1542,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-14",
-      "path": "/art/cartwheel/enemies/frigate-14.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1545,11 +1559,12 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-15",
-      "path": "/art/cartwheel/enemies/frigate-15.svg",
+      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1561,7 +1576,8 @@
         "y": 0.5
       },
       "archetype": "frigate",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-frigate-engine-intact-0",
@@ -5789,7 +5805,7 @@
     },
     {
       "id": "enemy-claim-capital-0",
-      "path": "/art/cartwheel/enemies/capital-0.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5801,11 +5817,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-1",
-      "path": "/art/cartwheel/enemies/capital-1.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5817,11 +5834,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-2",
-      "path": "/art/cartwheel/enemies/capital-2.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5833,11 +5851,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-3",
-      "path": "/art/cartwheel/enemies/capital-3.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5849,11 +5868,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-4",
-      "path": "/art/cartwheel/enemies/capital-4.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5865,11 +5885,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-5",
-      "path": "/art/cartwheel/enemies/capital-5.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5881,11 +5902,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-6",
-      "path": "/art/cartwheel/enemies/capital-6.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5897,11 +5919,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-7",
-      "path": "/art/cartwheel/enemies/capital-7.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5913,11 +5936,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-8",
-      "path": "/art/cartwheel/enemies/capital-8.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5929,11 +5953,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-9",
-      "path": "/art/cartwheel/enemies/capital-9.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5945,11 +5970,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-10",
-      "path": "/art/cartwheel/enemies/capital-10.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5961,11 +5987,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-11",
-      "path": "/art/cartwheel/enemies/capital-11.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5977,11 +6004,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-12",
-      "path": "/art/cartwheel/enemies/capital-12.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5993,11 +6021,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-13",
-      "path": "/art/cartwheel/enemies/capital-13.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6009,11 +6038,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-14",
-      "path": "/art/cartwheel/enemies/capital-14.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6025,11 +6055,12 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-15",
-      "path": "/art/cartwheel/enemies/capital-15.svg",
+      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6041,7 +6072,8 @@
         "y": 0.5
       },
       "archetype": "capital",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-capital-command-intact-0",

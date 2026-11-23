@@ -178,15 +178,20 @@ function queueEagerSvgSheets(
       }
       try {
         const sources = frames.map((asset): Asset => {
-          // Craft and debris roots already carry their display size inside the raw viewBox.
-          const size =
-            asset.craft || asset.debris
-              ? {
-                  ...asset,
-                  intrinsicHeight: asset.displayHeight ?? asset.height,
-                  intrinsicWidth: asset.displayWidth ?? asset.width,
-                }
-              : asset;
+          // These roots carry their display size inside the raw viewBox.
+          const displaySized =
+            asset.craft ||
+            asset.debris ||
+            asset.archetype === "frigate" ||
+            asset.archetype === "capital" ||
+            asset.archetype === "gadget";
+          const size = displaySized
+            ? {
+                ...asset,
+                intrinsicHeight: asset.displayHeight ?? asset.height,
+                intrinsicWidth: asset.displayWidth ?? asset.width,
+              }
+            : asset;
           return { ...asset, path: vectorSheetSource(xml, path, size) };
         });
         for (const asset of sources) {
