@@ -44,7 +44,14 @@ class Element extends EventTarget {
   hidden = false;
   inert = false;
   disabled = false;
-  textContent = "";
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.replaceChildren();
+    this.text = value;
+  }
   clientWidth = 720;
   clientHeight = 360;
   scrollHeight = 360;
@@ -249,7 +256,7 @@ afterEach(() => {
 it("rejects a missing Storybook navigation binding before mounting the hidden layer", () => {
   const bind = actionBinding.bindAdaAction;
   vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
-    element.dataset.action === "story-previous"
+    action.nativeClickOwner === "factory" && element.textContent === "Previous"
       ? { activate: () => false, dispose() {}, update() {} }
       : bind(action, element),
   );
@@ -426,6 +433,36 @@ it("registers native navigation with default holds and current callbacks", () =>
     f.unregister();
   }
 });
+it("keeps the standard navigation buttons when their labels and availability change", () => {
+  const f = setup();
+  try {
+    const skip = f.button("story-skip");
+    const previous = f.button("story-previous");
+    const next = f.button("story-next");
+    for (const button of [skip, previous, next]) {
+      expect(button.tag).toBe("button");
+      expect(button.className.split(" ")).toContain("ui-standard-button");
+    }
+    f.story.show({ ...page, action: "Board", previousAction: "Back to room" });
+    expect(f.button("story-skip")).toBe(skip);
+    expect(f.button("story-previous")).toBe(previous);
+    expect(f.button("story-next")).toBe(next);
+    expect(previous.textContent).toBe("Back to room");
+    expect(next.textContent).toBe("Board");
+    f.story.show({ ...page, canGoBack: false, canSkip: false, next: false });
+    for (const button of [skip, previous, next]) {
+      expect(button.hidden).toBe(true);
+      button.dispatchEvent(new Event("click"));
+    }
+    expect(f.options.onPrevious).not.toHaveBeenCalled();
+    expect(f.options.onNext).not.toHaveBeenCalled();
+    expect(f.options.onSkip).not.toHaveBeenCalled();
+  } finally {
+    f.story.dispose();
+    f.unregister();
+  }
+});
+
 it("preserves live parent eligibility, native click dispatch and disposal without another root", () => {
   const f = setup();
   const button = f.button("story-next"),

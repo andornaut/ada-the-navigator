@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -44,6 +45,7 @@ import {
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import {
   breathKeyframes,
   loadStoryArt,
@@ -568,6 +570,13 @@ ${STORY_PORTRAIT_RULES}
   justify-self:center
 }
 
+/* Story navigation keeps its existing focus cue on the native button's painted face. */
+.ada-controls .ada-story .ui-standard-button:focus-visible > .ui-button-face{
+  background-color:transparent;
+  color:inherit;
+  forced-color-adjust:inherit
+}
+
 /* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or
    on the HUD rect's top-right corner while the settings button is hidden. */
 .ada-controls .ada-story-skip{
@@ -673,15 +682,36 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   choices.className = "ada-story-choices";
   const controls = document.createElement("div");
   controls.className = "ada-story-controls";
-  const skip = createButton(labels.skip);
+  let disposed = false;
+  const navigationAction = (id: "skip" | "previous" | "next", label: string, run: () => void) => {
+    const action = createStandardTextAction(root, label, {
+      availability: (button) =>
+        button?.disabled
+          ? { kind: "disabled" }
+          : button?.hidden
+            ? { kind: "omitted" }
+            : { kind: "available" },
+      current: () => !disposed,
+      run,
+      separateFace: true,
+    });
+    const button = action.element;
+    const primary = id === "next";
+    button.dataset.action = `story-${id}`;
+    button.classList.toggle("ada-primary", primary);
+    setButtonRole(primary ? "primary" : "secondary", button);
+    return action;
+  };
+  const skipAction = navigationAction("skip", labels.skip, () => options.onSkip());
+  const previousAction = navigationAction("previous", labels.previous, () => options.onPrevious());
+  const nextAction = navigationAction("next", labels.next, () => options.onNext());
+  const skip = skipAction.element;
+  const previous = previousAction.element;
+  const next = nextAction.element;
   skip.classList.add("ada-compact", "ada-story-skip");
-  skip.dataset.action = "story-skip";
-  const previous = createButton(labels.previous);
   previous.classList.add("ada-story-button");
-  previous.dataset.action = "story-previous";
-  const next = createButton(labels.next, "primary");
   next.classList.add("ada-story-button");
-  next.dataset.action = "story-next";
+  const navigationActions = [skipAction, previousAction, nextAction];
   // In focus order: the full-row named action before Previous, else Previous then Next.
   const panelContainers: Readonly<Record<StoryPanelContainer, HTMLElement>> = {
     body: text,
@@ -723,7 +753,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   );
   artWindow.append(background);
   layer.append(artWindow, panel, skip);
-  let disposed = false;
   let preload: StoryImagePreload = preloadStoryImages([]);
   // Bumped as each page shows, so a holodisk start that waited on its decodes plays only if its
   // page still shows.
@@ -743,11 +772,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       },
       button,
     );
-  const navigationActions = [
-    bindStoryAction(skip, () => options.onSkip()),
-    bindStoryAction(previous, () => options.onPrevious()),
-    bindStoryAction(next, () => options.onNext()),
-  ];
   try {
     assertAdaActionMetadata(layer);
     // Keep the page first in the controls layer so Settings draws and presses above it.
@@ -884,12 +908,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     choices.hidden = buttons.length === 0;
     previous.hidden = !page.canGoBack;
-    previous.textContent = page.previousAction ?? labels.previous;
+    previousAction.setLabel(page.previousAction ?? labels.previous);
     controls.hidden = !page.canGoBack && !page.next;
     controls.classList.toggle("ada-story-no-previous", !page.canGoBack);
     controls.classList.toggle("ada-story-no-next", !page.next);
     next.hidden = !page.next;
-    next.textContent = page.action ?? labels.next;
+    nextAction.setLabel(page.action ?? labels.next);
     // A named action too wide for its half sits beside Previous when both fit at their own widths,
     // else on the column's full row below it. Each face is measured at its label's width; the
     // press area's pseudo-element overflows the face, so the face's own box is measured.
