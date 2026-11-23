@@ -1540,14 +1540,14 @@ order.
 
 Panel and action (`GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS`):
 
-| Part        | Geometry                                                                                                                                                                                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the action; padding 8, the 2 px frame inside it (see Exceptions)                                                                                                            |
-| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                                            |
-| Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                                             |
-| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second                          |
-| Action      | One centred primary `TEXT_BUTTON` (`galaxy-jump`), 48 high, labelled for the selected destination. Size it to the label with standard insets. Current width is 192 (`GALAXY_MAP_ACTIONS.width`), or 192 to 614 (panel width) while unavailable, pending sizing migration. |
-| Action top  | Available rect bottom - 48                                                                                                                                                                                                                                                |
+| Part        | Geometry                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the action; padding 8, the 2 px frame inside it (see Exceptions)                                                                                   |
+| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                   |
+| Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                    |
+| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second |
+| Action      | One centred primary `TEXT_BUTTON` (`galaxy-jump`), 48 high. Fit the width to the single-line label with standard insets, up to the 614 px panel width.                                                                                           |
+| Action top  | Available rect bottom - 48                                                                                                                                                                                                                       |
 
 The chart anchors to the play view's top; the panel and action anchor to the
 available rect's bottom, so a taller view opens the gap between them.
@@ -1558,7 +1558,7 @@ available rect's bottom, so a taller view opens the gap between them.
 | Panel          | (53, 176) 614x112      | (53, 173) 614x112      |
 | Capture frame  | (61, 184) 182x92       | (61, 181) 182x92       |
 | Text column    | x 255, top 184, w 404  | x 255, top 181, w 404  |
-| Action         | (264, 296) 192x48      | (264, 293) 192x48      |
+| Action         | Centred, y 296, h 48   | Centred, y 293, h 48   |
 | End label gap  | 161 to 176: 15         | 161 to 173: 12         |
 
 Markers, labels, rules inside the frame and the ship are the same in both;
