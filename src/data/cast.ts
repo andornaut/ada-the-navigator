@@ -133,10 +133,11 @@ export function castFrames(key: CastKey): { frames: number; neutral: number } {
 export interface CastPortraitSheet {
   readonly frames: number;
   readonly url: string;
-  /** A single frame on a vertical portrait page, measured in source pixels. */
+  /** A complete authored strip on a portrait page, measured in source pixels. */
   readonly crop?: {
-    readonly frameSize: number;
-    readonly pageHeight: number;
+    readonly height: number;
+    readonly width: number;
+    readonly x: number;
     readonly y: number;
   };
 }
@@ -149,22 +150,71 @@ const VERTICAL_CAST_PAGES: Readonly<Partial<Record<CastHome, readonly CastKey[]>
   whirlpool: ["brine", "coral", "family", "marlo", "ripple"],
 };
 
+// The selected Andromeda and Needle manifests place whole authored strips.
+// Each pair gives the [x, y] offsets in the compact and full pages.
+type PortraitOrigin = readonly [x: number, y: number];
+const PLACED_CAST: Readonly<
+  Partial<Record<CastKey, readonly [compact: PortraitOrigin, full: PortraitOrigin]>>
+> = {
+  cog: [
+    [0, 0],
+    [0, 0],
+  ],
+  dial: [
+    [23, 0],
+    [33, 0],
+  ],
+  loom: [
+    [0, 0],
+    [0, 0],
+  ],
+  lumen: [
+    [46, 0],
+    [66, 0],
+  ],
+  marsh: [
+    [0, 23],
+    [0, 33],
+  ],
+  pip: [
+    [69, 0],
+    [0, 33],
+  ],
+  reed: [
+    [23, 23],
+    [33, 33],
+  ],
+  sedge: [
+    [0, 46],
+    [0, 66],
+  ],
+  settler: [
+    [136, 0],
+    [0, 66],
+  ],
+  willow: [
+    [23, 46],
+    [33, 66],
+  ],
+};
+
 /** The same portrait source is used by flight chatter, interaction cards and Storybook. */
 export function castPortrait(key: CastKey, compact: boolean): CastPortraitSheet {
   const { home } = CAST[key];
-  const rows = VERTICAL_CAST_PAGES[home];
-  const row = rows?.indexOf(key) ?? -1;
-  if (rows && row >= 0) {
-    // There is one transparent row between adjacent square crops.
-    const frameSize = compact ? 22 : 32;
-    const stride = frameSize + 1;
+  const { frames } = castFrames(key);
+  const height = compact ? 22 : 32;
+  const row = VERTICAL_CAST_PAGES[home]?.indexOf(key) ?? -1;
+  const origin =
+    PLACED_CAST[key]?.[compact ? 0 : 1] ?? (row >= 0 ? [0, row * (height + 1)] : undefined);
+  if (origin) {
+    const [x, y] = origin;
     return {
-      crop: { frameSize, pageHeight: rows.length * stride - 1, y: row * stride },
-      frames: 1,
+      crop: { height, width: height * frames, x, y },
+      frames,
       url: `/art/${home}/portraits/${home}-${compact ? "compact" : "full"}.png`,
     };
   }
-  return { frames: castFrames(key).frames, url: castSheet(key, compact) };
+  return { frames, url: castSheet(key, compact) };
 }
 
 /** A standalone authored strip, also used by the cast page producer. */

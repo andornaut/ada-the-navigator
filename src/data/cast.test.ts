@@ -59,15 +59,11 @@ describe("the cast", () => {
         expect(sheet!.path).toBe(url);
         expect(frames).toBe(castFrames(key).frames);
         if (crop) {
-          expect(sheet!.portraitCrop).toEqual({
-            height: crop.frameSize,
-            width: crop.frameSize,
-            x: 0,
-            y: crop.y,
-          });
-          expect(sheet!.width).toBe(crop.frameSize);
-          expect(sheet!.height).toBe(crop.pageHeight);
-          // A vertical DOM page is not a horizontal Phaser sprite strip.
+          expect(sheet!.portraitCrop).toEqual(crop);
+          expect(crop.width).toBe(crop.height * frames);
+          expect(crop.x + crop.width).toBeLessThanOrEqual(sheet!.width);
+          expect(crop.y + crop.height).toBeLessThanOrEqual(sheet!.height);
+          // A packed DOM page is not a Phaser sprite strip.
           expect(sheet!.frameWidth).toBeUndefined();
           expect(sheet!.frameHeight).toBeUndefined();
         } else {

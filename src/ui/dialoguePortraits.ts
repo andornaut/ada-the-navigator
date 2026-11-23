@@ -42,7 +42,7 @@ function readPortraitPage(document: Document, url: string): Promise<HTMLImageEle
   return loaded;
 }
 
-/** A packed crop is decoded at its original size before CSS scales the square, as for a strip. */
+/** A packed crop is decoded at its original size so CSS retains the authored frame offsets. */
 export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet | undefined): void {
   const crop = sheet?.crop;
   if (!sheet || !crop) {
@@ -55,18 +55,19 @@ export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet |
   selectedCrops.set(face, sheet);
   face.style.removeProperty(PORTRAIT_CROP_IMAGE);
   const document = face.ownerDocument;
-  const cropKey = `${sheet.url}#${crop.y}`;
+  const { height, width, x, y } = crop;
+  const cropKey = `${sheet.url}#${x},${y},${width},${height}`;
   let image = portraitCrops.get(cropKey);
   if (!image) {
     image = readPortraitPage(document, sheet.url).then((page) => {
       const canvas = document.createElement("canvas");
-      const { frameSize, y } = crop;
-      canvas.width = canvas.height = frameSize;
+      canvas.width = width;
+      canvas.height = height;
       const context = canvas.getContext("2d");
       if (!context) {
         throw new Error("Unable to read the portrait crop");
       }
-      context.drawImage(page, 0, y, frameSize, frameSize, 0, 0, frameSize, frameSize);
+      context.drawImage(page, x, y, width, height, 0, 0, width, height);
       return `url("${canvas.toDataURL()}")`;
     });
     portraitCrops.set(cropKey, image);

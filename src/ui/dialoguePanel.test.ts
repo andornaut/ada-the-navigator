@@ -392,58 +392,78 @@ describe("shared Earth and space dialogue presentation", () => {
     }
   });
 
-  it("reads both full Phantom crops from one page and paints only the current speaker", async () => {
-    setup();
-    const panel = createDialoguePanel({
-      closeAction: "close",
-      closeLabel: "Close",
-      title: "Dialogue",
-    });
-    const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
-    const setProperty = vi.fn();
-    Object.assign(face.style, { removeProperty: vi.fn(), setProperty });
-    let finishPage = () => {};
-    const loading = new Promise<void>((resolve) => {
-      finishPage = resolve;
-    });
-    const decode = vi.fn(() => loading);
-    const drawImage = vi.fn();
-    const createElement = document.createElement.bind(document);
-    const create = vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
-      const node = createElement(tag);
-      if (tag === "img") {
-        Object.assign(node, { decode });
-      } else if (tag === "canvas") {
-        Object.assign(node, {
-          getContext: () => ({ drawImage }),
-          toDataURL: () => `data:image/png;base64,${drawImage.mock.lastCall![2]}`,
-        });
+  it.each([
+    {
+      first: { key: "dollop", name: "Dollop", rect: [0, 33, 32, 32] },
+      home: "Phantom",
+      second: { key: "blurb-settler", name: "Blurbs", rect: [0, 0, 32, 32] },
+      url: "/art/phantom/portraits/phantom-full.png",
+    },
+    {
+      first: { key: "cog", name: "Cog", rect: [0, 0, 32, 32] },
+      home: "Andromeda",
+      second: { key: "dial", name: "Dial", rect: [33, 0, 32, 32] },
+      third: { key: "settler", name: "Wick", rect: [0, 66, 96, 32] },
+      url: "/art/andromeda/portraits/andromeda-full.png",
+    },
+  ])(
+    "shares the $home page and paints only the current speaker's whole strip",
+    async ({ first, second, third, url }) => {
+      setup();
+      const panel = createDialoguePanel({
+        closeAction: "close",
+        closeLabel: "Close",
+        title: "Dialogue",
+      });
+      const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
+      const setProperty = vi.fn();
+      Object.assign(face.style, { removeProperty: vi.fn(), setProperty });
+      let finishPage = () => {};
+      const loading = new Promise<void>((resolve) => {
+        finishPage = resolve;
+      });
+      const decode = vi.fn(() => loading);
+      const drawImage = vi.fn();
+      const createElement = document.createElement.bind(document);
+      const create = vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+        const node = createElement(tag);
+        if (tag === "img") {
+          Object.assign(node, { decode });
+        } else if (tag === "canvas") {
+          Object.assign(node, {
+            getContext: () => ({ drawImage }),
+            toDataURL: () => `data:image/png;base64,${drawImage.mock.lastCall![1]}`,
+          });
+        }
+        return node;
+      });
+      panel.showLine(first.name, "First line");
+      expect(face.dataset.speaker).toBe(first.key);
+      panel.showLine(second.name, "Second line");
+      expect(face.dataset.speaker).toBe(second.key);
+      expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe(second.name);
+      expect(decode).toHaveBeenCalledOnce();
+      const imageIndex = create.mock.calls.findIndex(([tag]) => tag === "img");
+      const image = create.mock.results[imageIndex]!.value as HTMLImageElement;
+      expect(image.src).toBe(url);
+      expect(setProperty).not.toHaveBeenCalled();
+      finishPage();
+      await vi.waitFor(() =>
+        expect(setProperty).toHaveBeenCalledExactlyOnceWith(
+          "--ada-portrait-crop-image",
+          `url("data:image/png;base64,${second.rect[0]}")`,
+        ),
+      );
+      const draw = ({ rect }: typeof first) => [image, ...rect, 0, 0, rect[2], rect[3]];
+      expect(drawImage.mock.calls).toEqual([draw(first), draw(second)]);
+      if (third) {
+        panel.showLine(third.name, "Third line");
+        expect(face.dataset.speaker).toBe(third.key);
+        await vi.waitFor(() => expect(drawImage.mock.lastCall).toEqual(draw(third)));
       }
-      return node;
-    });
-    panel.showLine("Dollop", "Thank you, Navigator.");
-    expect(face.dataset.speaker).toBe("dollop");
-    panel.showLine("Blurbs", "Blub! The drones are gone!");
-    expect(face.dataset.speaker).toBe("blurb-settler");
-    expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe("Blurbs");
-    expect(decode).toHaveBeenCalledOnce();
-    const imageIndex = create.mock.calls.findIndex(([tag]) => tag === "img");
-    const image = create.mock.results[imageIndex]!.value as HTMLImageElement;
-    expect(image.src).toBe("/art/phantom/portraits/phantom-full.png");
-    expect(setProperty).not.toHaveBeenCalled();
-    finishPage();
-    await vi.waitFor(() =>
-      expect(setProperty).toHaveBeenCalledExactlyOnceWith(
-        "--ada-portrait-crop-image",
-        'url("data:image/png;base64,0")',
-      ),
-    );
-    expect(drawImage.mock.calls).toEqual([
-      [image, 0, 33, 32, 32, 0, 0, 32, 32],
-      [image, 0, 0, 32, 32, 0, 0, 32, 32],
-    ]);
-    panel.dispose();
-  });
+      panel.dispose();
+    },
+  );
 
   it("changes portrait and name with the actual line speaker and leaves narration unnamed", () => {
     setup();
