@@ -53,7 +53,7 @@ function addAmmo(
   return Math.max(0, ammo[weapon] - before);
 }
 
-/** Adds full packs for shop purchases and weapon grants; returns the immediate ammo delta. */
+/** Adds packs at the shop quantity; returns the immediate ammo delta. */
 export function addPacks(
   catalog: Pick<EconomyCatalog, "ammo">,
   weapon: UpgradeWeapon,
@@ -61,6 +61,15 @@ export function addPacks(
   ammo: AmmoCounts,
 ): number {
   return addAmmo(catalog, weapon, packs * catalog.ammo.pack[weapon], ammo);
+}
+
+/** Adds the ammunition included with a new weapon. */
+export function addWeaponGrant(
+  catalog: Pick<EconomyCatalog, "ammo">,
+  weapon: UpgradeWeapon,
+  ammo: AmmoCounts,
+): number {
+  return addAmmo(catalog, weapon, catalog.ammo.grant[weapon], ammo);
 }
 
 /** Adds one world ammo item, returning its immediate grant delta even while Ada fires. */
@@ -76,7 +85,7 @@ export function addWorldAmmo(
 export function grantedAmmo(owned: readonly UpgradeWeapon[]): AmmoCounts {
   const ammo = noAmmo();
   for (const weapon of owned) {
-    addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, ammo);
+    addWeaponGrant(ECONOMY, weapon, ammo);
   }
   return ammo;
 }
@@ -160,16 +169,16 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
 
 /**
  * Adds a found weapon to the roster with its included packs and equips it unless the switch
- * wait runs. A weapon Ada already owns gives one pack instead; this then returns false.
+ * wait runs. A weapon Ada already owns gives its duplicate ammo instead; this then returns false.
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
   const owned = ensureOwnedWeapons(flight);
   if (owned.includes(weapon)) {
-    addPacks(ECONOMY, weapon, ECONOMY.ammo.duplicatePacks, flight.ammo);
+    addAmmo(ECONOMY, weapon, ECONOMY.ammo.duplicate[weapon], flight.ammo);
     return false;
   }
   owned.push(weapon);
-  addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, flight.ammo);
+  addWeaponGrant(ECONOMY, weapon, flight.ammo);
   if (!switchWaiting(flight)) {
     switchTo(weapon, flight);
   }

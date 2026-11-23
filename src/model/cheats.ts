@@ -2,7 +2,7 @@ import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { shopRow } from "./shop.ts";
 import type { EconomyState, GameState } from "./types.ts";
-import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
+import { addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The cheats in gameplay/cheats.md, in the Cheats modal's order. */
 export const CHEAT_IDS = [
@@ -69,11 +69,11 @@ export function applyEconomyCheat(
   const economy = state.economy;
   switch (id) {
     case "unlockAllWeapons":
-      // Each new weapon includes a purchase's packs, on top of ammunition kept from before.
+      // Each new weapon includes its starting ammunition, on top of ammunition kept from before.
       for (const weapon of UPGRADE_WEAPONS) {
         if (!economy.ownedWeapons.includes(weapon)) {
           economy.ownedWeapons.push(weapon);
-          addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, economy.ammo);
+          addWeaponGrant(ECONOMY, weapon, economy.ammo);
         }
       }
       return;

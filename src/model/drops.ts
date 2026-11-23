@@ -1,5 +1,6 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
+import type { EnemyActorKind } from "../data/enemyActors.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
@@ -58,10 +59,15 @@ function ownsAmmoWeapon(owned: readonly Weapon[]): boolean {
 export function rollAmmoDrop(
   catalog: EconomyCatalog,
   owned: readonly Weapon[],
-  archetype: EnemyArchetype,
+  archetype: EnemyActorKind,
   next: () => number,
 ): boolean {
-  return !HEAVIES.includes(archetype) && ownsAmmoWeapon(owned) && next() < catalog.ammo.dropChance;
+  const eligible =
+    archetype === "fighter" ||
+    archetype === "swarm" ||
+    archetype === "interceptor" ||
+    archetype === "retaliator";
+  return eligible && ownsAmmoWeapon(owned) && next() < catalog.ammo.dropChance;
 }
 
 /**

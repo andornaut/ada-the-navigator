@@ -83,7 +83,7 @@ import {
   type UpgradeGift,
 } from "../src/model/upgradeDrops.ts";
 import { newEconomy } from "../src/model/upgrades.ts";
-import { addPacks, addWorldAmmo, noAmmo } from "../src/model/weapons.ts";
+import { addPacks, addWeaponGrant, addWorldAmmo, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
   /** Cruise speed while exploring, as a fraction of Ada's base maximum speed (SHIP_PHYSICS.ada). */
@@ -711,7 +711,7 @@ export function simulate(input: SimulationInput): RunResult {
   let weapon: Weapon = owned[0] ?? "laser";
   const ammo = noAmmo();
   for (const each of owned) {
-    addPacks(catalog, each, catalog.ammo.grantPacks, ammo);
+    addWeaponGrant(catalog, each, ammo);
   }
   /**
    * Spends a volley's shot for each interval of `seconds` fired with the equipped weapon. An
@@ -853,7 +853,7 @@ export function simulate(input: SimulationInput): RunResult {
       }
       if (gift?.kind === "weapon") {
         owned.push(gift.weapon);
-        addPacks(catalog, gift.weapon, catalog.ammo.grantPacks, ammo);
+        addWeaponGrant(catalog, gift.weapon, ammo);
         result.weaponsFound.push(gift.weapon);
         result.weaponFoundSeconds ??= time;
         weapon = gift.weapon;

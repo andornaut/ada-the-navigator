@@ -51,13 +51,11 @@ export interface EconomyCatalog {
     readonly weapons: Readonly<Record<Weapon, number>>;
   };
   /**
-   * Ammunition for every upgrade weapon (Laser is unlimited): each shop pack's shots, fewer seconds of
-   * level 1 fire for each later weapon; one shot uses one. A new weapon includes `grantPacks`
-   * packs and a found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack. A
-   * destroyed small craft drops an ammo pack pickup at `dropChance`, and a destroyed asteroid or
-   * ore rock at its size's `rockDropChance`, once Ada owns a weapon other than Laser; its pack
-   * is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once nothing else is
-   * left. World ammo quantities derive from the shop pack through `worldPackFraction`.
+   * Ammunition for every upgrade weapon (Laser is unlimited). Shop packs, new weapons, found
+   * duplicates, and world pickups each award their own quantities. Eligible destroyed small craft
+   * roll at `dropChance`, and asteroids or ore rocks at their size's `rockDropChance`. Ada must own
+   * a weapon other than Laser. The pack's weapon is selected among eligible owned weapons by
+   * `dropWeights` on collection, including an upgrade pickup that falls back to ammo.
    */
   ammo: {
     /** Maximum stored shots per finite-ammunition weapon. */
@@ -65,12 +63,11 @@ export interface EconomyCatalog {
     dropChance: number;
     rockDropChance: Readonly<Record<AsteroidSize, number>>;
     dropWeights: Readonly<Record<UpgradeWeapon, number>>;
-    duplicatePacks: number;
-    grantPacks: number;
+    duplicate: Readonly<Record<UpgradeWeapon, number>>;
+    grant: Readonly<Record<UpgradeWeapon, number>>;
     pack: Readonly<Record<UpgradeWeapon, number>>;
     packPrice: number;
-    /** World ammo items contain this fraction of a shop pack, rounded to at least one shot. */
-    worldPackFraction: number;
+    worldPack: Readonly<Record<UpgradeWeapon, number>>;
   };
   /** Each upgrade weapon's purchase price: its level 2 upgrade price. */
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
@@ -155,12 +152,12 @@ export function unlockedWeapons(position: RoutePosition): UpgradeWeapon[] {
 
 /** Laser's level 2 and 3 upgrade prices, from which every weapon's derive. */
 export const LASER_UPGRADE_PRICES = [300, 600] as const;
-/** One world ammo item's shots, derived from its shop pack without changing weapon grants. */
+/** The units in one world ammo pickup. */
 export function worldAmmoPack(
   catalog: Pick<EconomyCatalog, "ammo">,
   weapon: UpgradeWeapon,
 ): number {
-  return Math.max(1, Math.round(catalog.ammo.pack[weapon] * catalog.ammo.worldPackFraction));
+  return catalog.ammo.worldPack[weapon];
 }
 
 /** Each later weapon in weapon order costs this much more to upgrade, compounded. */
@@ -190,16 +187,21 @@ export const ECONOMY: EconomyCatalog = {
   ammo: {
     capacity: 9999,
     // Separate ammo roll for destroyed small craft.
-    dropChance: 0.3,
+    dropChance: 0.1,
     // Each weapon about three quarters as likely as the one before it in weapon order.
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
-    duplicatePacks: 1,
-    grantPacks: 3,
-    // Shop pack sizes also apply to full packs included with weapon acquisitions.
-    pack: { heavyMissile: 40, multiLaser: 300, phaser: 40, rapidMissile: 260, scattershot: 60 },
-    packPrice: 10,
+    duplicate: {
+      heavyMissile: 40,
+      multiLaser: 300,
+      phaser: 40,
+      rapidMissile: 260,
+      scattershot: 60,
+    },
+    grant: { heavyMissile: 120, multiLaser: 900, phaser: 120, rapidMissile: 780, scattershot: 180 },
+    pack: { heavyMissile: 75, multiLaser: 300, phaser: 75, rapidMissile: 225, scattershot: 150 },
+    packPrice: 25,
     rockDropChance: { huge: 0.04, large: 0.02, medium: 0.01, small: 0.005 },
-    worldPackFraction: 0.25,
+    worldPack: { heavyMissile: 25, multiLaser: 100, phaser: 25, rapidMissile: 75, scattershot: 50 },
   },
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,

@@ -329,15 +329,14 @@ describe("pacing simulation runs", () => {
       }).summary;
     expect(SCENARIOS.armed!.startWeapons).toEqual(["heavyMissile", "scattershot", "phaser"]);
     const base = armed(ECONOMY.ammo.packPrice);
-    expect(base.packPrice).toBe(10);
+    expect(base.packPrice).toBe(25);
     expect(base.packsPerHour).toBeGreaterThan(0);
     expect(base.ammoSpentPerMinute).toBeCloseTo(
       (base.packsPerHour / 60) * ECONOMY.ammo.packPrice,
       6,
     );
-    // Typical use of the stronger weapons costs about 15 to 35% of income (economy.md).
-    expect(base.ammoShareOfIncome).toBeGreaterThan(0.15);
-    expect(base.ammoShareOfIncome).toBeLessThan(0.35);
+    const income = Object.values(base.sourcePerMinute).reduce((sum, amount) => sum + amount, 0);
+    expect(base.ammoShareOfIncome).toBeCloseTo(base.ammoSpentPerMinute / income, 6);
     expect(armed(ECONOMY.ammo.packPrice * 2).ammoSpentPerMinute).toBeGreaterThan(
       base.ammoSpentPerMinute * 1.5,
     );

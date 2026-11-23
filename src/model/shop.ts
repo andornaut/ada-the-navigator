@@ -8,7 +8,7 @@ import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
 import { stationShopSeed, type StationStockCategory } from "./stationServices.ts";
 import type { EconomyState } from "./types.ts";
-import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
+import { addPacks, addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
 
 export type ShopItem =
   | { kind: "weapon"; weapon: UpgradeWeapon }
@@ -307,8 +307,8 @@ export function buy(
   switch (item.kind) {
     case "weapon":
       economy.ownedWeapons.push(item.weapon);
-      // A new weapon includes its packs, on top of any ammunition kept from before.
-      addPacks(catalog, item.weapon, catalog.ammo.grantPacks, economy.ammo);
+      // A new weapon includes its starting ammo, on top of any ammunition kept from before.
+      addWeaponGrant(catalog, item.weapon, economy.ammo);
       break;
     case "ammo":
       addPacks(catalog, item.weapon, 1, economy.ammo);

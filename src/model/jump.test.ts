@@ -51,7 +51,7 @@ function pickup(flight: FlightState, weapon: UpgradeWeapon) {
   collectWeapon(weapon, flight);
 }
 
-/** Ada owns weapons, each with a new weapon's packs. */
+/** Ada owns weapons, each with a new weapon's starting ammo. */
 function own(flight: FlightState, weapons: UpgradeWeapon[]): void {
   flight.ownedWeapons = weapons;
   flight.ammo = grantedAmmo(weapons);
@@ -65,8 +65,8 @@ describe("weapon switching", () => {
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
-      { ammo: 3 * ECONOMY.ammo.pack.multiLaser, id: "multiLaser", level: 1, selected: false },
-      { ammo: 3 * ECONOMY.ammo.pack.rapidMissile, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 900, id: "multiLaser", level: 1, selected: false },
+      { ammo: 780, id: "rapidMissile", level: 1, selected: false },
     ]);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");

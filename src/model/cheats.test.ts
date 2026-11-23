@@ -2,12 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
-import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { playOpening, readStory } from "../testing/launch.ts";
 import { CHEAT_AMOUNT, CHEAT_IDS } from "./cheats.ts";
 import { GameModel } from "./game.ts";
-import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
+import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 function home(): GameModel {
   return new GameModel(CONTENT);
@@ -22,7 +21,7 @@ function launched(): GameModel {
 }
 
 describe("cheats", () => {
-  it("unlocks every weapon with a purchase's packs, keeping levels, selection and Stardust", () => {
+  it("unlocks every weapon with starting ammunition, keeping levels, selection and Stardust", () => {
     const model = home();
     const economy = model.state.economy;
     economy.ownedWeapons = ["multiLaser"];
@@ -31,10 +30,13 @@ describe("cheats", () => {
     expect(model.cheatAvailable("unlockAllWeapons")).toBe(true);
     expect(model.cheat("unlockAllWeapons")).toBe(true);
     expect([...economy.ownedWeapons].sort()).toEqual([...UPGRADE_WEAPONS].sort());
-    const ammo = structuredClone(before.ammo);
-    for (const weapon of UPGRADE_WEAPONS.filter((weapon) => weapon !== "multiLaser")) {
-      addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, ammo);
-    }
+    const ammo = {
+      heavyMissile: 120,
+      multiLaser: 5,
+      phaser: 120,
+      rapidMissile: 780,
+      scattershot: 180,
+    };
     expect(economy.ammo).toEqual(ammo);
     expect(economy).toMatchObject({
       levels: before.levels,

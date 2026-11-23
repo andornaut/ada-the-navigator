@@ -38,7 +38,7 @@ import {
   splitResourcePickup,
 } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
+import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
@@ -552,6 +552,40 @@ describe("Stardust drops", () => {
     );
     expect(drop.stardust).toBe(4);
     expect(pickups(value).map((object) => object.amount)).toEqual([1, 1, 1, 1]);
+  });
+
+  it("adds ammo on its own roll for a destroyed fighter escort without changing Stardust", () => {
+    const seed = 77;
+    const ids = Array.from({ length: 128 }, (_, index) => `escort:${index}`);
+    const ammoRoll = (id: string) => dropRandom(seed, `ammo:${wreckId(id)}`)();
+    const destroy = (id: string, owned: UpgradeWeapon[]) => {
+      const value = flight(seed);
+      value.ownedWeapons = owned;
+      const target = enemy("fighter", id, 600, 0);
+      target.enemy!.escortOf = "escort-leader";
+      value.objects.push(target);
+      value.shots.push(killShot(target));
+      expect(stepFlight(CONTENT, 1 / 60, idle, value)).toContainEqual({
+        id,
+        type: "enemyDestroyed",
+      });
+      stepFlight(CONTENT, 0.15, idle, value);
+      const earned = pickups(value);
+      return {
+        ammo: earned.filter(({ ammoPack }) => ammoPack),
+        stardust: earned.filter(({ amount }) => amount !== undefined),
+      };
+    };
+    const winner = ids.find((id) => ammoRoll(id) < 0.1)!;
+    const formerWinner = ids.find((id) => ammoRoll(id) >= 0.1 && ammoRoll(id) < 0.3)!;
+    const owned = destroy(winner, ["multiLaser"]);
+    const laserOnly = destroy(winner, []);
+    expect(owned.ammo).toMatchObject([{ ammoPack: true, role: "drop" }]);
+    expect(laserOnly.ammo).toEqual([]);
+    expect(owned.stardust).toEqual(laserOnly.stardust);
+    const rejected = destroy(formerWinner, ["multiLaser"]);
+    expect(rejected.ammo).toEqual([]);
+    expect(total(rejected.stardust)).toBe(enemyStardust(1, "fighter"));
   });
 
   it("breaks a destroyed enemy apart before it drops, instead of removing it at once", () => {
@@ -1196,7 +1230,7 @@ describe("tractor beam and pickup reach", () => {
     expect(value.objects.find((object) => object.id === "upgrade")!.x).toBeCloseTo(70 - 0.2, 6);
   });
 
-  it("turns a found weapon Ada already owns into one pack of its ammunition", () => {
+  it("turns a found weapon Ada already owns into its fixed duplicate ammo grant", () => {
     const value = flight();
     value.ownedWeapons = ["rapidMissile"];
     value.ammo.rapidMissile = 7;
@@ -1453,18 +1487,18 @@ describe("shop purchases", () => {
     });
     expect(economy.stardust).toBe(4600);
     expect(economy.ownedWeapons).toEqual(["multiLaser"]);
-    // A bought weapon includes three packs.
-    expect(economy.ammo.multiLaser).toBe(3 * 300);
+    // A bought weapon includes its own starting ammo.
+    expect(economy.ammo.multiLaser).toBe(900);
   });
 
   it("sells packs of an owned weapon's ammunition, never sold out, and none for others", () => {
     const economy = rich();
     expect(ECONOMY.ammo.pack).toEqual({
-      heavyMissile: 40,
+      heavyMissile: 75,
       multiLaser: 300,
-      phaser: 40,
-      rapidMissile: 260,
-      scattershot: 60,
+      phaser: 75,
+      rapidMissile: 225,
+      scattershot: 150,
     });
     const pack = { kind: "ammo", weapon: "phaser" } as const;
     expect(requestPurchase(ECONOMY, economy, pack)).toEqual({
@@ -1477,11 +1511,11 @@ describe("shop purchases", () => {
         kind: "bought",
         price: ECONOMY.ammo.packPrice,
       });
-      expect(economy.ammo.phaser).toBe(count * 40);
+      expect(economy.ammo.phaser).toBe(count * 75);
     }
-    expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 10 });
+    expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 25 });
     expect(itemName(ECONOMY, CONTENT.labels, pack)).toBe("Phaser ammo");
-    expect(packCount(ECONOMY, CONTENT.labels, "phaser")).toBe("×40");
+    expect(packCount(ECONOMY, CONTENT.labels, "phaser")).toBe("×75");
   });
 
   it.each([
@@ -1685,7 +1719,7 @@ describe("shop purchases", () => {
     expect(about("scattershot")).toBe("A shotgun spread, strongest up close.");
     expect(about("phaser")).toBe("An instant beam that strikes the first thing in its path.");
     expect(itemAbout(ECONOMY, labels, { kind: "track", track: "shield" })).toBe("");
-    expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×40");
+    expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×75");
     expect(labels.aboutMissiles).toBeUndefined();
     expect(labels.aboutTripleLaser).toBeUndefined();
   });

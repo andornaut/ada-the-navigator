@@ -7,7 +7,7 @@ import { rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { buy } from "./shop.ts";
+import { buy, itemAbout, onSale, packCount, shopRow } from "./shop.ts";
 import { applyUpgrade } from "./upgradeDrops.ts";
 import { newEconomy } from "./upgrades.ts";
 import {
@@ -20,11 +20,11 @@ import {
 } from "./weapons.ts";
 
 const PACKS = [
-  ["multiLaser", 300, 75, 900],
-  ["rapidMissile", 260, 65, 780],
-  ["heavyMissile", 40, 10, 120],
-  ["scattershot", 60, 15, 180],
-  ["phaser", 40, 10, 120],
+  ["multiLaser", 300, 100, 900, 300],
+  ["rapidMissile", 225, 75, 780, 260],
+  ["heavyMissile", 75, 25, 120, 40],
+  ["scattershot", 150, 50, 180, 60],
+  ["phaser", 75, 25, 120, 40],
 ] as const;
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -38,7 +38,7 @@ function launched() {
 }
 
 describe("world ammunition quantities", () => {
-  it.each(PACKS)("derives %s world ammo from its canonical shop pack", (weapon, shop, world) => {
+  it.each(PACKS)("adds the separate %s world and shop quantities", (weapon, shop, world) => {
     expect(ECONOMY.ammo.pack[weapon]).toBe(shop);
     expect(worldAmmoPack(ECONOMY, weapon)).toBe(world);
     const ammo = noAmmo();
@@ -49,27 +49,19 @@ describe("world ammunition quantities", () => {
     expect(ammo[weapon]).toBe(7 + world + shop);
   });
 
-  it.each([
-    [0, 1],
-    [1, 1],
-    [2, 1],
-    [6, 2],
-    [10, 3],
-    [7, 2],
-    [9, 2],
-    [14, 4],
-  ])("rounds a quarter of shop pack %i to %i with a one-shot minimum", (shop, world) => {
+  it("keeps world and shop quantities independent when either table changes", () => {
     const catalog = {
       ...ECONOMY,
-      ammo: { ...ECONOMY.ammo, pack: { ...ECONOMY.ammo.pack, heavyMissile: shop } },
+      ammo: {
+        ...ECONOMY.ammo,
+        pack: { ...ECONOMY.ammo.pack, heavyMissile: 99 },
+        worldPack: { ...ECONOMY.ammo.worldPack, phaser: 12 },
+      },
     };
-    expect(worldAmmoPack(catalog, "heavyMissile")).toBe(world);
-  });
-
-  it("reads the configured world fraction without a second world-ammo table", () => {
-    expect(ECONOMY.ammo.worldPackFraction).toBe(0.25);
-    const catalog = { ...ECONOMY, ammo: { ...ECONOMY.ammo, worldPackFraction: 0.5 } };
-    expect(worldAmmoPack(catalog, "phaser")).toBe(20);
+    expect(worldAmmoPack(catalog, "heavyMissile")).toBe(25);
+    expect(worldAmmoPack(catalog, "phaser")).toBe(12);
+    expect(addPacks(catalog, "heavyMissile", 1, noAmmo())).toBe(99);
+    expect(addPacks(catalog, "phaser", 1, noAmmo())).toBe(75);
   });
 
   it("returns the immediate grant rather than the net frame delta while firing", () => {
@@ -79,8 +71,8 @@ describe("world ammunition quantities", () => {
     economy.ammo.multiLaser--;
     const added = applyUpgrade(ECONOMY, { kind: "ammo", weapon: "multiLaser" }, economy);
     economy.ammo.multiLaser--;
-    expect(added).toBe(75);
-    expect(economy.ammo.multiLaser - beforeFrame).toBe(73);
+    expect(added).toBe(100);
+    expect(economy.ammo.multiLaser - beforeFrame).toBe(98);
     expect(applyUpgrade(ECONOMY, { kind: "track", level: 2, track: "shield" }, economy)).toBe(0);
   });
 
@@ -122,16 +114,24 @@ describe("world ammunition quantities", () => {
   });
 
   it.each(PACKS)(
-    "preserves %s shop purchases and full weapon-acquisition grants",
-    (weapon, shop, _world, grant) => {
+    "shows and sells %s shop packs for 25 Stardust while preserving acquisition and duplicate grants",
+    (weapon, shop, _world, grant, duplicate) => {
       const economy = newEconomy(ECONOMY);
       economy.stardust = 10000;
       expect(buy(ECONOMY, { kind: "weapon", weapon }, economy).kind).toBe("bought");
       expect(economy.ammo[weapon]).toBe(grant);
-      expect(buy(ECONOMY, { kind: "ammo", weapon }, economy)).toEqual({
-        kind: "bought",
-        price: 10,
-      });
+      const item = { kind: "ammo", weapon } as const;
+      expect(onSale(6, item)).toBe(true);
+      expect(packCount(ECONOMY, CONTENT.labels, weapon)).toBe(`×${shop}`);
+      expect(itemAbout(ECONOMY, CONTENT.labels, item)).toBe(`×${shop}`);
+      expect(shopRow(ECONOMY, economy, item)).toMatchObject({ price: 25 });
+      const before = economy.stardust;
+      expect(buy(ECONOMY, item, economy)).toEqual({ kind: "bought", price: 25 });
+      expect(economy.stardust).toBe(before - 25);
+      expect(economy.ammo[weapon]).toBe(grant + shop);
+      economy.stardust = 24;
+      expect(buy(ECONOMY, item, economy).kind).toBe("refused");
+      expect(economy.stardust).toBe(24);
       expect(economy.ammo[weapon]).toBe(grant + shop);
       const gift = newEconomy(ECONOMY);
       expect(applyUpgrade(ECONOMY, { kind: "weapon", weapon }, gift)).toBe(grant);
@@ -140,20 +140,22 @@ describe("world ammunition quantities", () => {
       expect(collectWeapon(weapon, flight)).toBe(true);
       expect(flight.ammo[weapon]).toBe(grant);
       expect(collectWeapon(weapon, flight)).toBe(false);
-      expect(flight.ammo[weapon]).toBe(grant + shop);
+      expect(flight.ammo[weapon]).toBe(grant + duplicate);
       expect(grantedAmmo([weapon])[weapon]).toBe(grant);
-      expect(ECONOMY.ammo.grantPacks).toBe(3);
-      expect(ECONOMY.ammo.duplicatePacks).toBe(1);
     },
   );
 });
 
 describe("world ammunition odds", () => {
-  it("preserves the strict 30 percent small-craft boundary", () => {
-    expect(ECONOMY.ammo.dropChance).toBe(0.3);
-    expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0.299999)).toBe(true);
-    expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0.3)).toBe(false);
-  });
+  it.each(["fighter", "swarm", "interceptor", "retaliator"] as const)(
+    "uses a strict 10 percent ammo boundary for the %s",
+    (archetype) => {
+      expect(ECONOMY.ammo.dropChance).toBe(0.1);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1 - Number.EPSILON)).toBe(true);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1)).toBe(false);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1 + Number.EPSILON)).toBe(false);
+    },
+  );
 
   it.each([
     ["small", 0.005],
@@ -172,8 +174,12 @@ describe("world ammunition odds", () => {
       expect(rollAmmoDrop(ECONOMY, owned, "fighter", () => 0)).toBe(false);
       expect(rollRockAmmoDrop(ECONOMY, owned, "huge", () => 0)).toBe(false);
     }
-    for (const archetype of ["frigate", "platform", "capital"] as const) {
-      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0)).toBe(false);
+    for (const archetype of ["frigate", "platform", "capital", "hostileStation"] as const) {
+      expect(
+        rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => {
+          throw new Error(`Ineligible ${archetype} consumed an ammo roll`);
+        }),
+      ).toBe(false);
     }
     expect(ECONOMY.ammo.dropWeights).toEqual({
       heavyMissile: 9,
