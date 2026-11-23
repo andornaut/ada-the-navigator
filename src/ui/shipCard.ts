@@ -52,9 +52,11 @@ export interface ShipView {
   readonly weapons: readonly ShipWeapon[];
 }
 
-/** A row's icon: a sprite sheet's first frame, or a vector glyph masked in cream. */
+/** A row's icon: colour art or a glyph masked in cream. */
 export type ShipIcon =
-  { readonly frames: number; readonly sprite: string } | { readonly mask: string };
+  | { readonly frames: number; readonly sprite: string }
+  | { readonly mask: string }
+  | { readonly vector: string };
 
 /** Canonical inventory identities route details without reading player-facing labels. */
 export type ShipItem =
@@ -89,7 +91,8 @@ export interface ShipSections {
 
 type Labels = Readonly<Record<string, string>>;
 
-const sprite = (name: string, frames = 1): ShipIcon => ({ frames, sprite: name });
+const sprite = (name: string): ShipIcon => ({ frames: 1, sprite: name });
+const equipmentIcon = (key: string): ShipIcon => ({ vector: `/art/ui/icons/icon-shop-${key}.svg` });
 
 /** "Carrying: {item}" or "Towing: {craft}", the Ship card's line and the status pill's label. */
 export function aboardLabel(labels: Labels, aboard: Aboard): string {
@@ -161,28 +164,28 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
   cargo.push(status("towing", towing));
   const left: ShipRow[] = [
     {
-      icon: sprite("icon-shop-engine-tuning", 2),
+      icon: equipmentIcon("engine-tuning"),
       item: { id: "engine", kind: "equipment" },
       label: labels.engine ?? "",
       level: level(view.engine, ECONOMY.trackPrices.engine.length + 1),
       tier: view.engine,
     },
     {
-      icon: sprite("icon-shop-shield", 2),
+      icon: equipmentIcon("shield"),
       item: { id: "shield", kind: "equipment" },
       label: labels.shield ?? "",
       level: level(view.shield, ECONOMY.trackPrices.shield.length + 1),
       tier: view.shield,
     },
     {
-      icon: sprite("icon-shop-tractor-beam", 2),
+      icon: equipmentIcon("tractor-beam"),
       item: { id: "tractor", kind: "equipment" },
       label: labels.tractorBeam ?? "",
       level: level(view.tractor, ECONOMY.trackPrices.tractor.length + 1),
       tier: view.tractor,
     },
     {
-      icon: sprite("icon-shop-ship-paint", 2),
+      icon: equipmentIcon("ship-paint"),
       item: { id: "paint", kind: "equipment" },
       label: fill(labels.shipPaintName ?? "", { paint: view.paint }),
     },
@@ -206,6 +209,9 @@ export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
     node.style.background = TEXT_TOKENS.label;
     node.style.setProperty("-webkit-mask", `url('${icon.mask}') center / 100% 100% no-repeat`);
     node.style.setProperty("mask", `url('${icon.mask}') center / 100% 100% no-repeat`);
+  } else if ("vector" in icon) {
+    node.style.background = `url('${icon.vector}') 0 0 / 100% 100% no-repeat`;
+    node.style.imageRendering = "auto";
   } else {
     node.style.background = `url('${spriteIconPath(icon.sprite)}') 0 0 / ${icon.frames * 100}% 100% no-repeat`;
   }
