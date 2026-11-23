@@ -23,9 +23,9 @@ const VARIANTS = ASTEROID_SIZES.map((size) =>
 );
 
 interface BallisticContext {
-  readonly encounterSeed: number;
   readonly galaxy: GalaxyNumber;
   readonly rockHp: number;
+  readonly worldSeed: number;
 }
 
 function velocity(next: () => number): Vec {
@@ -56,7 +56,7 @@ export function planBallisticAsteroids(
     return [];
   }
   const key = worldCellKey(grid, { x, y });
-  const next = randomStream(context.encounterSeed, `ballistic-encounter:${key}`);
+  const next = randomStream(context.worldSeed, `ballistic-encounter:${key}`);
   if (next() >= 3 * ORIGINAL_ENCOUNTERS.chance) {
     return [];
   }
@@ -68,7 +68,7 @@ export function planBallisticAsteroids(
   const group = { x: center.x + offset(halfPitch), y: center.y + offset(halfPitch) };
   return Array.from({ length: count }, (_, index) => {
     const id = `ballistic:${key}:${index}`;
-    const rock = randomStream(context.encounterSeed, `ballistic-shape:${id}`);
+    const rock = randomStream(context.worldSeed, `ballistic-shape:${id}`);
     const size = rock();
     const variants = VARIANTS[SIZE_LIMITS.findIndex((limit) => size < limit)]!;
     const shape = variants[Math.floor(rock() * variants.length)]!;
@@ -88,22 +88,19 @@ export function planBallisticAsteroids(
 }
 
 /** Assign motion once clearances have selected the survivors of this one cell's plan. */
-export function assignBallisticVelocities(
-  encounterSeed: number,
-  rocks: readonly SpaceObject[],
-): void {
+export function assignBallisticVelocities(worldSeed: number, rocks: readonly SpaceObject[]): void {
   const first = rocks[0];
   if (!first) {
     return;
   }
   const cell = first.id.slice(0, first.id.lastIndexOf(":"));
-  const group = velocity(randomStream(encounterSeed, `${cell}:group-motion`));
+  const group = velocity(randomStream(worldSeed, `${cell}:group-motion`));
   // Singletons are solo. Round groups up so low-count cells do not compound that loss.
   const groupCount = rocks.length > 1 ? Math.ceil(rocks.length * GROUP_SHARE) : 0;
   for (const [index, rock] of rocks.entries()) {
     rock.velocity =
       index < groupCount
         ? { ...group }
-        : velocity(randomStream(encounterSeed, `${rock.id}:solo-motion`));
+        : velocity(randomStream(worldSeed, `${rock.id}:solo-motion`));
   }
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { seedLaunches } from "../testing/launchSeeds.ts";
@@ -13,11 +12,7 @@ import {
   planBallisticAsteroids,
 } from "./ballisticAsteroids.ts";
 import { createFlight, ensureDestinationAt, stepFlight } from "./flight.ts";
-import {
-  CURRENT_FLIGHT_TOPOLOGY,
-  flightEncounterSeed,
-  flightWorldContext,
-} from "./flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { restoreSave } from "./save.ts";
@@ -43,14 +38,14 @@ describe("ballistic asteroid requests", () => {
     let mixed = 0;
     for (const galaxy of [1, 2, 6] as const) {
       const spacing = ballisticEncounterSpacing(chunkSize, galaxy);
-      for (const encounterSeed of [173, 182, 9471]) {
+      for (const worldSeed of [173, 182, 9471]) {
         for (let x = -83; x < 83; x++) {
           for (let y = 19; y < 140; y++) {
             if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
               continue;
             }
             eligible++;
-            const rocks = planBallisticAsteroids({ encounterSeed, galaxy, rockHp }, wrapped, {
+            const rocks = planBallisticAsteroids({ galaxy, rockHp, worldSeed }, wrapped, {
               x,
               y,
             });
@@ -59,7 +54,7 @@ describe("ballistic asteroid requests", () => {
             }
             encounters++;
             requested += rocks.length;
-            assignBallisticVelocities(encounterSeed, rocks);
+            assignBallisticVelocities(worldSeed, rocks);
             const first = rocks[0]!.velocity!;
             const groupSizes = new Set<string>();
             let cellGroup = 0;
@@ -111,8 +106,18 @@ describe("ballistic asteroid requests", () => {
     );
   });
 
+  it("keeps admitted shapes and velocities when only the enemy encounter seed changes", () => {
+    const first = createFlight(CONTENT, 6, 77, { known: [] }, undefined, 71);
+    const next = createFlight(CONTENT, 6, 77, { known: [] }, undefined, 72);
+    expect(first.seed).toBe(next.seed);
+    expect(first.encounterSeed).not.toBe(next.encounterSeed);
+    const movers = first.objects.filter(isBallistic);
+    expect(movers.length).toBeGreaterThan(0);
+    expect(next.objects.filter(isBallistic)).toEqual(movers);
+  });
+
   it("requests the same full states through either wrapped cell alias", () => {
-    const context = { encounterSeed: 173, galaxy: 1, rockHp } as const;
+    const context = { galaxy: 1, rockHp, worldSeed: 173 } as const;
     const cell = { x: 0, y: 0 };
     const requested = planBallisticAsteroids(context, wrapped, cell);
     expect(requested.length).toBeGreaterThan(0);
@@ -129,20 +134,23 @@ function requests(flight: FlightState): SpaceObject[] {
   const grid = periodicWorldGrid(flightWorldContext(flight), chunkSize);
   return flight.chunks.flatMap((key) => {
     const [x, y] = key.split(",").map(Number);
-    return planBallisticAsteroids(
-      { encounterSeed: flightEncounterSeed(flight), galaxy: flight.galaxy, rockHp },
-      grid,
-      { x: x!, y: y! },
-    );
+    return planBallisticAsteroids({ galaxy: flight.galaxy, rockHp, worldSeed: flight.seed }, grid, {
+      x: x!,
+      y: y!,
+    });
   });
 }
 
-it.each([1, 2, 6] as const)(
-  "reports actual wrapped-world admissions in galaxy %s",
-  (galaxy: GalaxyNumber) => {
+it.each([
+  [1, 173],
+  [2, 174],
+  [6, 173],
+] as const)(
+  "reports actual wrapped-world admissions in galaxy %s with world seed %s",
+  (galaxy, worldSeed) => {
     const start = performance.now();
     const point = { x: 119_800, y: -119_680 };
-    const flight = createFlight(CONTENT, galaxy, 173, { known: [] }, undefined, 9471);
+    const flight = createFlight(CONTENT, galaxy, worldSeed, { known: [] }, undefined, 9471);
     flight.topology = CURRENT_FLIGHT_TOPOLOGY;
     flight.player = point;
     ensureDestinationAt(CONTENT, "ballistic-fixture", point, flight);

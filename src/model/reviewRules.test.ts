@@ -56,7 +56,7 @@ describe("reviewed rules", () => {
       [173, "chunk:0,0:0", "rock:small"],
       [174, "chunk:0,0:feature", "rock:large"],
       [176, "chunk:0,-1:0", "resource:medium"],
-      [182, "ballistic:0,0:0", "drifting"],
+      [173, "ballistic:0,0:4", "drifting"],
     ] as const) {
       seedLaunches(seed);
       const model = new GameModel(CONTENT);

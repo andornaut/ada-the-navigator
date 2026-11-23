@@ -1767,12 +1767,11 @@ function generateBallisticRegion(
   clearance: BallisticClearance,
   flight: FlightState,
 ): void {
-  const encounterSeed = flightEncounterSeed(flight);
   const requested = planBallisticAsteroids(
     {
-      encounterSeed,
       galaxy: flight.galaxy,
       rockHp: content.tuning.flight.rockHp,
+      worldSeed: flight.seed,
     },
     grid,
     cell,
@@ -1814,7 +1813,7 @@ function generateBallisticRegion(
     occupied.push({ radius, x: object.x, y: object.y });
     clearance.existing.add(object.id);
   }
-  assignBallisticVelocities(encounterSeed, admitted);
+  assignBallisticVelocities(flight.seed, admitted);
 }
 
 function generateRegion(
