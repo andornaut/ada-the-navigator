@@ -133,12 +133,32 @@ class QuestNode extends EventTarget {
   readonly attributes = new Map<string, string>();
   readonly dataset: Record<string, string> = {};
   readonly style = { removeProperty: vi.fn(), setProperty: vi.fn() };
-  readonly classList = { add: vi.fn(), remove: vi.fn() };
+  readonly classList = {
+    add: (name: string) => this.classList.toggle(name, true),
+    remove: (name: string) => this.classList.toggle(name, false),
+    toggle: (name: string, enabled: boolean) => {
+      const classes = new Set(this.className.split(" ").filter(Boolean));
+      if (enabled) {
+        classes.add(name);
+      } else {
+        classes.delete(name);
+      }
+      this.className = [...classes].join(" ");
+      return enabled;
+    },
+  };
   attached = false;
   className = "";
   disabled = false;
   hidden = false;
-  textContent = "";
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.replaceChildren();
+    this.text = value;
+  }
   readonly tag: string;
   constructor(tag = "div") {
     super();
@@ -163,9 +183,30 @@ class QuestNode extends EventTarget {
     return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
   }
   matches(selector: string): boolean {
-    return selector === ":disabled"
-      ? this.disabled
-      : this.tag === "button" || this.attributes.has("data-action");
+    return selector.split(",").some((item) => {
+      const part = item.trim();
+      switch (part) {
+        case ":disabled":
+          return this.disabled;
+        case "[hidden]":
+          return this.hidden;
+        case "[data-action]":
+          return this.dataset.action !== undefined || this.attributes.has("data-action");
+        case '[aria-disabled="true" i]':
+          return this.getAttribute("aria-disabled")?.toLowerCase() === "true";
+        case '[role="button"]':
+          return this.getAttribute("role") === "button";
+        case "[inert]":
+          return this.attributes.has("inert");
+        default:
+          return part.startsWith(".")
+            ? this.className.split(" ").includes(part.slice(1))
+            : this.tag === part;
+      }
+    });
+  }
+  closest(selector: string): QuestNode | null {
+    return this.matches(selector) ? this : (this.parentElement?.closest(selector) ?? null);
   }
   querySelectorAll(selector: string): QuestNode[] {
     return this.children.flatMap((child) => [
@@ -207,6 +248,13 @@ class QuestNode extends EventTarget {
   }
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
+  }
+  toggleAttribute(name: string, enabled: boolean) {
+    if (enabled) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
@@ -251,6 +299,7 @@ function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
     createTextNode: (text: string) => Object.assign(new QuestNode("#text"), { textContent: text }),
     defaultView: { HTMLElement: QuestNode, Node: QuestNode },
   });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "" }));
   const root = new QuestNode();
   if (owned) {
     fixtureActionRoot(root);
@@ -390,6 +439,53 @@ it("keeps Back outside the quest detail's scroll group", () => {
   expect(body).toBe(detail);
   expect(footer?.className).toBe("ada-quest-footer");
   expect(footer?.querySelectorAll("button")[0]?.dataset.action).toBe("quest-back");
+  screen.dispose();
+});
+
+it("uses one standard native action for each footer control and keeps disabled or replaced pages inert", () => {
+  const { onClose, root, screen } = screenFixture();
+  screen.setState([entry, { ...entry, id: "extra" }, { ...entry, id: "last" }], [], 1);
+  screen.open();
+  const labels = mapScreenLabels(CONTENT.labels);
+  const buttons = () => root.querySelectorAll(".ui-standard-button");
+  const button = (label: string) => buttons().find((node) => node.textContent === label)!;
+  const hold = (node: QuestNode) =>
+    actionBinding.resolveAdaHoldAction(root as unknown as HTMLElement, node);
+  const click = (node: QuestNode) => node.dispatchEvent(new Event("click", { cancelable: true }));
+  expect(buttons().map(({ textContent }) => textContent)).toEqual([
+    labels.previous,
+    labels.next,
+    labels.close,
+  ]);
+  const previous = button(labels.previous);
+  const next = button(labels.next);
+  expect(previous.disabled).toBe(true);
+  expect(previous.hidden).toBe(false);
+  expect(hold(previous)?.available()).toBe(false);
+  click(previous);
+  expect(button(labels.next)).toBe(next);
+
+  const paging = hold(next)!;
+  expect(paging.available()).toBe(true);
+  paging.activate();
+  expect(paging.available()).toBe(false);
+  expect(button(labels.next).disabled).toBe(true);
+  click(next);
+  expect(
+    root
+      .querySelectorAll("button")
+      .filter(({ dataset }) => dataset.questId)
+      .map(({ dataset }) => dataset.questId),
+  ).toEqual(["last"]);
+  click(root.querySelectorAll("button").find(({ dataset }) => dataset.questId === "last")!);
+  click(button(labels.questBack ?? labels.close));
+  expect(producer.reveal.mock.lastCall?.[0].focus.dataset.questId).toBe("last");
+
+  const close = button(labels.close);
+  expect(close.getAttribute("data-ui-button-role")).toBe("primary");
+  click(close);
+  click(close);
+  expect(onClose).toHaveBeenCalledOnce();
   screen.dispose();
 });
 

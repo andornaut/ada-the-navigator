@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -26,6 +27,7 @@ import {
   questsTree,
 } from "./questsTree.ts";
 import { spriteIconPath } from "./spriteIconPath.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
@@ -499,24 +501,48 @@ export function createQuestsScreen(
         components: {
           button: {
             create(initial) {
-              const button = createButton(initial.label, initial.role);
-              if (initial.action === "dismiss") {
-                close = button;
-              }
-              const update = (data: QuestsFooterSchema["button"]["props"]) => {
-                button.textContent = data.label;
-                button.disabled = data.disabled ?? false;
-                if (data.actionId !== undefined) {
-                  button.dataset.action = data.actionId;
-                }
-              };
-              update(initial);
               const run = footerActions.get(initial.action);
               if (!run) {
                 throw new Error("Unregistered Quest footer action");
               }
-              register(button, run);
-              return { dispose() {}, element: button, slots: {}, update };
+              if (initial.action === "other") {
+                const button = createButton(initial.label, initial.role);
+                const update = (data: QuestsFooterSchema["button"]["props"]) => {
+                  button.textContent = data.label;
+                  button.disabled = data.disabled ?? false;
+                  if (data.actionId !== undefined) {
+                    button.dataset.action = data.actionId;
+                  }
+                };
+                update(initial);
+                register(button, run);
+                return { dispose() {}, element: button, slots: {}, update };
+              }
+
+              let props = initial;
+              const action = createStandardTextAction(root, initial.label, {
+                availability: () => (props.disabled ? { kind: "disabled" } : { kind: "available" }),
+                current: () => !disposed && !modal.hidden && inCurrentView(root, action.element),
+                run,
+              });
+              const button = action.element;
+              if (initial.action === "dismiss") {
+                close = button;
+              }
+              const update = (data: QuestsFooterSchema["button"]["props"]) => {
+                if (data.label !== props.label) {
+                  action.setLabel(data.label);
+                }
+                props = data;
+                button.classList.toggle("ada-primary", data.role === "primary");
+                setButtonRole(data.role, button);
+                if (data.actionId !== undefined) {
+                  button.dataset.action = data.actionId;
+                }
+                action.refresh();
+              };
+              update(initial);
+              return { dispose: action.dispose, element: button, slots: {}, update };
             },
             slots: [],
           },

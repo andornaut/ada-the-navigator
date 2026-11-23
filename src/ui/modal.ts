@@ -120,12 +120,13 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
   [data-station] *,[data-station-confirm] *
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
-const MENU_TEXT_FOCUS = `${UI_SCOPE} [data-dialog=menu] .ada-button.ui-standard-button:focus-visible`;
+const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
+  :is([data-dialog=menu], .ada-quest-footer) .ada-button.ui-standard-button:focus-visible`;
 const ENABLED_TEXT_CONTROL = `:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
 )`;
 const LEGACY_ENABLED_FOCUS = `${LEGACY_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
-const MENU_ENABLED_FOCUS = `${MENU_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
+const STANDARD_ENABLED_FOCUS = `${STANDARD_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const SPECIAL_BUTTON_SHAPES = `
   .ada-exchange-amount,.ada-quest-list [data-quest-id]
 `;
@@ -409,12 +410,12 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
 }
 
 /* Tint the centre and retain the existing sprite slices, including the active lip. */
-${MENU_TEXT_FOCUS},
+${STANDARD_TEXT_FOCUS},
 ${LEGACY_TEXT_FOCUS}{
   outline:none;
   box-shadow:none
 }
-${MENU_ENABLED_FOCUS},
+${STANDARD_ENABLED_FOCUS},
 ${LEGACY_ENABLED_FOCUS}{
   --ada-text-focus-face:${TEXT_TOKENS.label};
   --ada-text-focus-ink:${TEXT_TOKENS.buttonLabel};
@@ -429,7 +430,7 @@ ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
   text-underline-offset:.15em
 }
 @media (forced-colors:active){
-  ${MENU_ENABLED_FOCUS},
+  ${STANDARD_ENABLED_FOCUS},
   ${LEGACY_ENABLED_FOCUS}{
     forced-color-adjust:none;
     --ada-text-focus-face:Highlight;
