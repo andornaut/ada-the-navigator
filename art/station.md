@@ -41,12 +41,16 @@ plating. Ada enters by Use ([Destinations](destinations.md#use-callout)).
 
 ## Keepers
 
-Each galaxy's stations are kept by three keepers of its people (Gameplay
+In galaxies 1 to 5, stations are kept by three keepers of their people (Gameplay
 `gameplay/rules.md`): a station's keeper follows its rank by distance from
 the galaxy's origin, cycling through the three, and Cartwheel's mining hub is
-always Quartz's, its other stations cycling through Slate and Garnet. The
-[conversation card](layout.md#conversation-card) shows the keeper on each greeting page.
-Phantom's stations have no keeper and keep the generic welcome.
+always Quartz's, its other stations cycling through Slate and Garnet.
+
+The [Station welcome](shop.md#station-pages) shows the keeper's name tab and
+framed portrait beside a single greeting paragraph. The generic welcome
+shows the station title and available services. Phantom uses the generic
+welcome until the completed chapter and aftermath unlock Admiral Archie as
+keeper at its stations.
 
 Keeper portraits use the 32 px [conversation portrait](conversation.md) sheets,
 `public/art/{galaxy}/portraits/{key}.png`, manifest id
