@@ -5,7 +5,7 @@ import { GameObjects, Loader, Scene, Scenes } from "phaser";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { HIT_SHAKE } from "../data/layout.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -565,7 +565,7 @@ export class GameScene extends Scene {
           if (jets) {
             this.load.json(`enemy-jets-${archetype}`, jets);
           }
-          const hardpoints = composed.has(archetype)
+          const hardpoints = composed.has(heavyProfilePartClass(archetype) ?? archetype)
             ? enemyHardpointsPath(sidecars, archetype)
             : undefined;
           if (hardpoints) {

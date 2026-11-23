@@ -1,8 +1,12 @@
 import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
+import capitalCompact from "../../public/art/enemies/capitalCompact-hardpoints.json" with { type: "json" };
+import capitalNarrow from "../../public/art/enemies/capitalNarrow-hardpoints.json" with { type: "json" };
 import fighter from "../../public/art/enemies/fighter-jets.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
+import frigateCompact from "../../public/art/enemies/frigateCompact-hardpoints.json" with { type: "json" };
+import frigateNarrow from "../../public/art/enemies/frigateNarrow-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
@@ -230,6 +234,10 @@ for (const [archetype, outline] of [
   ["retaliator", smallOutline(retaliator as JetsFile)],
   ["frigate", heavyOutline(frigate as HardpointsFile)],
   ["capital", heavyOutline(capital as HardpointsFile)],
+  ["capitalCompact", heavyOutline(capitalCompact as HardpointsFile)],
+  ["capitalNarrow", heavyOutline(capitalNarrow as HardpointsFile)],
+  ["frigateCompact", heavyOutline(frigateCompact as HardpointsFile)],
+  ["frigateNarrow", heavyOutline(frigateNarrow as HardpointsFile)],
   ["gadget", heavyOutline(gadget as HardpointsFile)],
   ["hostileStation", heavyOutline(station as HardpointsFile)],
   ["hostileStationAndromeda", heavyOutline(ring as HardpointsFile)],
@@ -260,7 +268,8 @@ function index16(direction: Vec): number {
  * archetype without Art's outline, which keeps its hull circle.
  */
 export function enemyHull(
-  enemy: Pick<EnemyState, "archetype" | "facing"> & Partial<Pick<EnemyState, "id" | "aim">>,
+  enemy: Pick<EnemyState, "archetype" | "facing"> &
+    Partial<Pick<EnemyState, "id" | "aim" | "hullProfile">>,
   position?: RoutePosition,
 ): Parts | null {
   const key = enemyGeometryKey(enemy, position);
@@ -297,7 +306,7 @@ const PART_OUTLINES = new Map<string, Parts>();
  */
 export function enemyPartOutline(
   position: RoutePosition,
-  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
+  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "hullProfile" | "id">,
   id: string,
 ): Parts | null {
   const key = enemyGeometryKey(enemy, position);
@@ -356,7 +365,7 @@ function composedPart(
 /** Complete current assembled footprint for placement, including capped and damaged parts. */
 export function enemyPhysicalBody(
   position: RoutePosition,
-  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
+  enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "hullProfile" | "id">,
 ): Parts | null {
   const hull = enemyHull(enemy, position);
   const key = enemyGeometryKey(enemy, position);

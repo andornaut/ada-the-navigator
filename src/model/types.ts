@@ -2,6 +2,7 @@ import type { ActivityId } from "../data/activities.ts";
 import type { AndromedaProgress } from "../data/andromeda.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
+import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
@@ -53,6 +54,7 @@ export interface WreckState {
   archetype: EnemyArchetype;
   age: number;
   facing: Vec;
+  readonly hullProfile?: HeavyHullProfile;
   /** Whether the wreck has released its drops; it stays until its destruction ends. */
   released?: boolean;
   /** Whether a missile blast destroyed it, so the blast's flash stands in for its own. */

@@ -1,4 +1,4 @@
-import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import type { Vec } from "../model/types.ts";
 import { shipDirection } from "./shipArt.ts";
 import { type JetTriangle, jetTriangles, readShipJets, type ShipJets } from "./shipJets.ts";
@@ -152,7 +152,7 @@ export function galaxyFamily(
     (entry) =>
       (entry.galaxy === galaxy ||
         (galaxy === "phantom" && archetype === "platform" && entry.family === "claim")) &&
-      entry.wired.has(archetype),
+      entry.wired.has(heavyProfilePartClass(archetype) ?? archetype),
   );
 }
 
@@ -259,8 +259,9 @@ export function enemyPartsToLoad<T extends EnemyFrame>(
   parts: readonly T[],
   archetype: string,
 ): readonly T[] | null {
+  const partClass = heavyProfilePartClass(archetype) ?? archetype;
   return known
-    ? parts.filter((part) => enemyFrameKey(part) === archetype && !loaded(part.id))
+    ? parts.filter((part) => enemyFrameKey(part) === partClass && !loaded(part.id))
     : null;
 }
 
@@ -369,10 +370,12 @@ export function readHardpointLayout(
   value: unknown,
 ): HardpointLayout | undefined {
   const root = fields(value);
+  const layoutClass =
+    heavyProfilePartClass(archetype) ??
+    (INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype);
   if (
     root?.version !== 1 ||
-    root.archetype !==
-      (INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype) ||
+    root.archetype !== layoutClass ||
     typeof root.frame !== "number" ||
     !(root.frame > 0) ||
     !Array.isArray(root.hardpoints)
@@ -660,9 +663,13 @@ export function enemyArt<T extends EnemyFrame>(
       frames,
       jets: parsed?.headings.length === ENEMY_HEADINGS ? parsed : undefined,
     };
-    if (composed.has(archetype)) {
+    const profileClass = heavyProfilePartClass(archetype);
+    if (profileClass && !art.jets) {
+      continue;
+    }
+    if (profileClass || composed.has(archetype)) {
       const layout = readHardpointLayout(archetype, layouts(archetype));
-      const parts = layout && readPartArt(archetype, layout, assets, prefix);
+      const parts = layout && readPartArt(profileClass ?? archetype, layout, assets, prefix);
       if (!parts) {
         continue;
       }

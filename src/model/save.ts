@@ -5,6 +5,7 @@ import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { enemyActorAvailable, isEnemyActorKind } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { type HeavyHullProfile, isHeavyHullProfile, wreckEnemyId } from "../data/enemyIdentity.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
@@ -143,6 +144,8 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     !isEnemyActorKind(value.archetype) ||
     !enemyActorAvailable(galaxy, value.archetype) ||
     typeof value.id !== "string" ||
+    (value.hullProfile !== undefined &&
+      !isHeavyHullProfile({ archetype: value.archetype, id: value.id }, value.hullProfile)) ||
     (value.weaponLevel !== undefined &&
       value.weaponLevel !== 1 &&
       value.weaponLevel !== 2 &&
@@ -174,6 +177,7 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     value.archetype,
     value.id as string,
     (value.weaponLevel ?? 1) as WeaponLevel,
+    value.hullProfile as HeavyHullProfile | undefined,
   );
   const hardpoints: unknown[] = value.hardpoints;
   return (
@@ -252,11 +256,16 @@ function combatState(
         (value.huntingPacks as string[]).every((id) => HUNTING_PACKS.destinations.includes(id))))
   );
 }
-function wreckState(value: unknown): boolean {
+function wreckState(id: string, value: unknown): boolean {
   return (
     record(value) &&
-    typeof value.archetype === "string" &&
+    isEnemyActorKind(value.archetype) &&
     Object.hasOwn(enemyCatalog, value.archetype) &&
+    (value.hullProfile === undefined ||
+      isHeavyHullProfile(
+        { archetype: value.archetype, id: wreckEnemyId(id) },
+        value.hullProfile,
+      )) &&
     nonnegative(value.age) &&
     vector(value.facing) &&
     (value.released === undefined || typeof value.released === "boolean") &&
@@ -287,7 +296,7 @@ function spaceObject(
     !["__proto__", "prototype", "constructor"].includes(value.id) &&
     OBJECT_KINDS.includes(String(value.kind)) &&
     (value.kind !== "station" || stationById(ECONOMY, galaxy, value.id) !== null) &&
-    (value.kind === "wreck" ? wreckState(value.wreck) : value.wreck === undefined) &&
+    (value.kind === "wreck" ? wreckState(value.id, value.wreck) : value.wreck === undefined) &&
     (value.release === undefined ||
       (value.kind === "pickup" &&
         record(value.release) &&
@@ -329,6 +338,7 @@ function spaceObject(
       (value.kind === "enemy" &&
         enemyState(galaxy, value.enemy) &&
         record(value.enemy) &&
+        (value.routeId === undefined || value.enemy.hullProfile === undefined) &&
         value.enemy.id === value.id)) &&
     nonnegative(value.radius) &&
     finite(value.hp) &&

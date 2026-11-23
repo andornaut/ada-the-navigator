@@ -12,7 +12,7 @@ import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
-import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import {
@@ -164,6 +164,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     galaxyLoadsAtOnce,
     galaxyManifestKey,
     galaxyTowKey,
+    heavyProfilePartClass,
     loadingRockSheets: new WeakMap(),
     materialShipHeading: () => undefined,
     mergeEnemyAssets,

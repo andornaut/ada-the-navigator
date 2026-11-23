@@ -1,6 +1,11 @@
 import type { EnemyActorKind } from "./enemyActors.ts";
 import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
-import { enemyAssetKey, type EnemyGeometryKey, PHANTOM_FLAGSHIP_ID } from "./enemyIdentity.ts";
+import {
+  enemyAssetKey,
+  type EnemyGeometryKey,
+  type HeavyHullProfile,
+  PHANTOM_FLAGSHIP_ID,
+} from "./enemyIdentity.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
   HEAVY_SIGNATURES,
@@ -900,6 +905,7 @@ export function enemyDefinition(
   archetype: EnemyActorKind,
   shipId = "",
   weaponLevel: WeaponLevel = 1,
+  hullProfile?: HeavyHullProfile,
 ): EnemyDefinition {
   if (archetype === "hostileStation") {
     return hostileStationDefinition(
@@ -918,7 +924,11 @@ export function enemyDefinition(
     );
   }
   const route = ROUTE_POSITION[galaxy];
-  const assetKey = enemyAssetKey({ archetype, id: shipId });
+  const assetKey = enemyAssetKey({
+    archetype,
+    ...(hullProfile === undefined ? {} : { hullProfile }),
+    id: shipId,
+  });
   const loadout = heavyLoadout(archetype, route, shipId);
   const flagship = galaxy === 6 && archetype === "capital" && shipId === PHANTOM_FLAGSHIP_ID;
   const weapons = loadout ? [...loadout.values()].join(",") : "";

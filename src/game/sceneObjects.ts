@@ -9,7 +9,7 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { enemyAssetKey, wreckEnemyId } from "../data/enemyIdentity.ts";
+import { enemyAssetKey, heavyProfilePartClass, wreckEnemyId } from "../data/enemyIdentity.ts";
 import { resourceArtId } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
@@ -829,11 +829,12 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
     return;
   }
   const data = scene.destruction;
-  const key = enemyAssetKey({ archetype: wreck.archetype, id: wreckEnemyId(object.id) });
+  const id = wreckEnemyId(object.id);
+  const key = enemyAssetKey({ archetype: wreck.archetype, hullProfile: wreck.hullProfile, id });
   const family = familyOf(scene, key);
   const shards = (family ? scene.familyShards.get(family.family) : scene.shards)?.get(key);
   const timing = data?.archetypes[wreck.archetype];
-  const art = familyArt(scene, wreck.archetype, wreckEnemyId(object.id));
+  const art = familyArt(scene, wreck.archetype, id, wreck.hullProfile);
   if (!data || !shards || !timing || !art) {
     drawWreckPlaceholder(scene, wreck, point);
     return;
@@ -923,7 +924,10 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
   // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
   const assetKey = object.enemy && enemyAssetKey(object.enemy);
   const family = (assetKey && familyOf(scene, assetKey)?.family) ?? "coral";
-  if (assetKey && !scene.partLoads.has(`${family}:${assetKey}`)) {
+  if (
+    assetKey &&
+    !scene.partLoads.has(`${family}:${heavyProfilePartClass(assetKey) ?? assetKey}`)
+  ) {
     loadEnemyParts(scene, assetKey);
   }
   const point = scene.project(object);

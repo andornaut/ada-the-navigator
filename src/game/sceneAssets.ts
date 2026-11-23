@@ -11,7 +11,12 @@ import {
   RESOURCE_ART,
 } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import {
+  enemyAssetKey,
+  type HeavyHullProfile,
+  heavyProfilePartClass,
+  INDUSTRIAL_BODY_KEYS,
+} from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
@@ -190,6 +195,7 @@ function queueEagerSvgSheets(
             asset.outpost === "settlement" ||
             (asset.station === "settlers" && asset.overlay === true) ||
             asset.archetype === "frigate" ||
+            heavyProfilePartClass(asset.archetype ?? "") !== undefined ||
             asset.archetype === "capital" ||
             asset.archetype === "gadget";
           const size = displaySized
@@ -536,7 +542,8 @@ function queueGalaxyAssets(
   queuePhantomCraftJets(scene, packedCraft);
   for (const { family, prefix, wired } of GALAXY_FAMILIES) {
     for (const [archetype, frames] of enemyFrameSets(assets, prefix)) {
-      if (!wired.has(archetype)) {
+      const partClass = heavyProfilePartClass(archetype) ?? archetype;
+      if (!wired.has(partClass)) {
         continue;
       }
       const jets = frames.length > 1 ? enemyJetsPath(sidecars, archetype) : undefined;
@@ -555,7 +562,7 @@ function queueGalaxyAssets(
       if (shards) {
         scene.load.json(`${family}-shards-${archetype}`, shards);
       }
-      const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(archetype)
+      const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(partClass)
         ? enemyHardpointsPath(sidecars, archetype)
         : undefined;
       if (hardpoints) {
@@ -928,10 +935,11 @@ export function familyArt(
   scene: AssetsContext,
   archetype: string,
   id?: string,
+  hullProfile?: HeavyHullProfile,
 ): EnemyArt<Asset> | undefined {
   const key =
-    archetype === "capital" || archetype === "retaliator"
-      ? enemyAssetKey({ archetype, ...(id === undefined ? {} : { id }) })
+    archetype === "capital" || archetype === "frigate" || archetype === "retaliator"
+      ? enemyAssetKey({ archetype, hullProfile, id })
       : archetype;
   const family = familyOf(scene, key);
   return family ? scene.familyArts.get(family.family)?.get(key) : scene.enemyArt.get(key);
@@ -1067,7 +1075,7 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   if (parts === null) {
     return;
   }
-  const key = `${family?.family ?? "coral"}:${archetype}`;
+  const key = `${family?.family ?? "coral"}:${heavyProfilePartClass(archetype) ?? archetype}`;
   if (parts.some((part) => part.svgSheet)) {
     if (!scene.partLoads.has(key)) {
       scene.partLoads.add(key);

@@ -11,6 +11,7 @@ import {
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { ENEMY_STEERING, ENEMY_STRAFE } from "../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
@@ -78,6 +79,7 @@ export interface EnemyState {
   /** Smoothed movement heading; null at rest or with no movement request. */
   heading: Point | null;
   home: Point;
+  readonly hullProfile?: HeavyHullProfile;
   /** Hull hp; a heavy's is its hull HP (gameplay/ships.md "Heavy hull and disabling"). */
   hp: number;
   id: string;
@@ -352,6 +354,7 @@ export function createEnemy(
   identity: {
     archetype: EnemyActorKind;
     escortOf?: string | null;
+    hullProfile?: HeavyHullProfile;
     id: string;
     packId: string | null;
     phase: number;
