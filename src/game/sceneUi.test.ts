@@ -286,14 +286,14 @@ describe("conversation exposure under covering cards", () => {
 });
 
 describe("network-play notice", () => {
-  it("shows once per launch for a line's time from the first flight, timed only while shown", () => {
+  it("shows once per launch for the notice duration from the first flight, timed only while shown", () => {
     const networkPlays = new WeakMap<object, { reason: string; remaining?: number }>();
     const show = runInContext(
       callback("showNetworkPlay"),
       createContext({
         CONTENT,
-        noticeDuration: (text: string) => 5 + text.length * 0.05,
         networkPlays,
+        noticeDuration: (text: string) => 5 + text.length * 0.05,
       }),
     ) as (value: typeof scene, slotFree: boolean) => boolean;
     const scene = {

@@ -1292,7 +1292,7 @@ const networkPlays = new WeakMap<
 
 /**
  * Whether the network-play notice wants the save status slot: once per launch from the first
- * flight while the game plays from the network, for a line's time, which runs only while it
+ * flight while the game plays from the network, timed only while it
  * shows (slotFree: no line or game notice holds the slot). It shows with no control.
  */
 export function showNetworkPlay(

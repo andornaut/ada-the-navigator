@@ -11,8 +11,8 @@ import {
   GENERAL_NAMED,
   INTERACTION_COPY,
   type JobMoment,
-  noticeDuration,
   type Mood,
+  noticeDuration,
   SPEAKERS,
 } from "../data/conversations.ts";
 import { deliveryDestination, DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
