@@ -356,7 +356,7 @@ describe("galaxy map", () => {
 
   it("keeps the 25k survey circle separate from the expanded landmark extent", () => {
     expect(CHARTING_RADIUS).toBe(25000);
-    expect(LANDMARK_TUNING.radius).toBe(100000);
+    expect(LANDMARK_TUNING.radius).toBe(80000);
     for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const sites = landmarkSites(galaxy);
       expect(sites).toHaveLength(LANDMARK_TUNING.count);
