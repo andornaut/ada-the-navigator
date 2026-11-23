@@ -277,12 +277,6 @@
       "once": []
     },
     {
-      "key": "icon-stardust",
-      "png": "sprites/icon-stardust.png",
-      "json": "sprites/icon-stardust.json",
-      "once": []
-    },
-    {
       "key": "icon-stardust-20",
       "png": "sprites/icon-stardust-20.png",
       "json": "sprites/icon-stardust-20.json",

@@ -567,7 +567,7 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   flex:none;
   width:${units(SHOP_ROW.pill.icon)};
   height:${units(SHOP_ROW.pill.icon)};
-  background:url('${SPRITES}icon-stardust.png') 0 0 / 100% 100% no-repeat;
+  background:url('${SPRITES}icon-stardust-20.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 .ada-controls .ada-owned{

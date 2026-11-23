@@ -182,7 +182,7 @@ export const SHOP_ROW = {
   nameLine: TYPE.body.lineHeight,
   // The paint heading: a 20 icon, a mark gap and a label, on a 20 line, a gap above the paint rows.
   paintHeading: { gap: SPACING.gap, icon: 20, line: TYPE.label.lineHeight },
-  // Price pills: a PILL with the 16 icon-stardust and the price as a label.
+  // Price pills use the standard pill with a 16 px slot for the Stardust glyph.
   pill: { icon: 16, pill: PILL },
   rowGap: STACK_BUTTON_GAP,
   // The weapon upgrade composite: the 20 weapon glyph at (0, 4), the 12 badge at (12, 0).
