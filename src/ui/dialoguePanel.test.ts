@@ -464,6 +464,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
     expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.continue]);
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
+    expect(skip.className).toContain("ui-standard-button");
     expect(skip.className).toContain("ada-compact");
     expect(skip.className).toContain("ada-story-skip");
     expect(navigation.children).not.toContain(skip);
@@ -773,7 +774,11 @@ it.each(["dialogue-skip", "conversation-close"])(
     const attach = vi.spyOn(parent, "insertBefore");
     const bind = actionBinding.bindAdaAction;
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, button) =>
-      button.dataset.action === id
+      (
+        id === "dialogue-skip"
+          ? action.nativeClickOwner === "factory" && button.textContent === CONTENT.labels.skip
+          : button.dataset.action === id
+      )
         ? { activate: () => false, dispose() {}, update() {} }
         : bind(action, button),
     );

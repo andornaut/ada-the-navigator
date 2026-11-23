@@ -370,14 +370,41 @@ export function createInteractionCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal ada-interaction-modal";
   modal.hidden = true;
-  const card = createDialoguePanel({
-    closeAction: "conversation-close",
-    closeLabel: CONTENT.labels.close ?? "",
-    title: "",
+  let disposed = false;
+  const state = new InteractionConversation();
+  const skipAction = createStandardTextAction(parent, CONTENT.labels.skip ?? "", {
+    availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
+    current: () => !disposed && !state.atChoice,
+    run: () => {
+      if (state.atChoice) {
+        return;
+      }
+      state.skip();
+      const choices = state.choices;
+      if (choices.length === 1 && choices[0]?.id === "continue") {
+        options.skip();
+      }
+      draw();
+    },
   });
+  const skip = skipAction.element;
+  skip.classList.add("ada-compact", "ada-story-skip");
+  skip.dataset.action = "dialogue-skip";
+  skip.hidden = true;
+  let card: ReturnType<typeof createDialoguePanel>;
+  try {
+    card = createDialoguePanel({
+      closeAction: "conversation-close",
+      closeLabel: CONTENT.labels.close ?? "",
+      skip,
+      title: "",
+    });
+  } catch (error) {
+    skipAction.dispose();
+    throw error;
+  }
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
-  let disposed = false;
   const bindAction = (button: HTMLButtonElement, run: () => void) =>
     bindAdaAction(
       {
@@ -396,7 +423,6 @@ export function createInteractionCard(
   let actions: ReturnType<typeof createStandardTextAction>[] = [];
   let leaveView: (() => void) | undefined;
   let returnFocus: HTMLElement | null = null;
-  const state = new InteractionConversation();
   let signature = "";
   let checkedAttached = false;
   const hide = () => {
@@ -511,24 +537,13 @@ export function createInteractionCard(
     }
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
-    card.skip.hidden = state.atChoice;
+    skip.hidden = state.atChoice;
     if (reveal) {
       modal.hidden = false;
     }
     card.fit();
     defaultFocus()?.focus({ preventScroll: true });
   };
-  const skipAction = bindAction(card.skip, () => {
-    if (state.atChoice) {
-      return;
-    }
-    state.skip();
-    const choices = state.choices;
-    if (choices.length === 1 && choices[0]?.id === "continue") {
-      options.skip();
-    }
-    draw();
-  });
   const close = (): void => {
     state.skip();
     options.close();

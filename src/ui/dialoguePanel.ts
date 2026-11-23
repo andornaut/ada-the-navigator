@@ -1,6 +1,5 @@
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CONTENT } from "../data/content.ts";
 import {
   type DialoguePanelContainer,
   type DialoguePanelNative,
@@ -13,7 +12,6 @@ import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createButton } from "./modal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 export const DIALOGUE_PANEL_STYLE = `
@@ -80,6 +78,7 @@ export type DialogueSpeaker =
 export function createDialoguePanel(options: {
   readonly closeAction: string;
   readonly closeLabel: string;
+  readonly skip?: HTMLButtonElement;
   readonly title: string;
 }) {
   const frame = document.createElement("div");
@@ -116,10 +115,6 @@ export function createDialoguePanel(options: {
   close.type = "button";
   close.dataset.action = options.closeAction;
   close.setAttribute("aria-label", options.closeLabel);
-  const skip = createButton(CONTENT.labels.skip ?? "");
-  skip.classList.add("ada-compact", "ada-story-skip");
-  skip.dataset.action = "dialogue-skip";
-  skip.hidden = true;
   const containers: Readonly<Record<DialoguePanelContainer, HTMLElement>> = {
     body,
     card,
@@ -128,12 +123,11 @@ export function createDialoguePanel(options: {
     frame,
     portrait,
   };
-  const nativeNodes: Readonly<Record<DialoguePanelNative, HTMLElement>> = {
+  const nativeNodes: Readonly<Record<Exclude<DialoguePanelNative, "skip">, HTMLElement>> = {
     choices,
     close,
     controls,
     face,
-    skip,
     speaker,
     title,
     words,
@@ -151,13 +145,19 @@ export function createDialoguePanel(options: {
           slots: ["children"],
         },
         native: {
-          create: (id) => ({ dispose() {}, element: nativeNodes[id], slots: {}, update() {} }),
+          create: (id) => {
+            const element = id === "skip" ? options.skip : nativeNodes[id];
+            if (!element) {
+              throw new Error("Missing dialogue Skip button");
+            }
+            return { dispose() {}, element, slots: {}, update() {} };
+          },
           slots: [],
         },
       },
       host: document.createElement("div"),
     },
-    dialoguePanelTree(),
+    dialoguePanelTree(options.skip !== undefined),
   );
   let disposed = false;
   const fit = (): void => {
@@ -235,7 +235,6 @@ export function createDialoguePanel(options: {
         }
       }
     },
-    skip,
     title,
   };
 }

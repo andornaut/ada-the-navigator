@@ -26,7 +26,7 @@ const container = (
 });
 
 /** Arrangement only: caller-owned native ports retain text, Art, actions and lifecycle. */
-export function dialoguePanelTree(): ComponentNode<DialoguePanelSchema> {
+export function dialoguePanelTree(includeSkip: boolean): ComponentNode<DialoguePanelSchema> {
   return container("frame", [
     container("card", [
       container("copy", [
@@ -39,7 +39,7 @@ export function dialoguePanelTree(): ComponentNode<DialoguePanelSchema> {
       ]),
       container("column", [native("choices"), native("controls")]),
     ]),
-    native("skip"),
+    ...(includeSkip ? [native("skip")] : []),
     native("close"),
   ]);
 }

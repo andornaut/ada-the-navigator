@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { dialoguePanelTree, storyPanelTree } from "./dialoguePanelTree.ts";
 
 it("composes native copy, portrait, choices and navigation without introducing wrapper elements", () => {
-  const tree = dialoguePanelTree();
+  const tree = dialoguePanelTree(true);
   validateLayoutTree({ container: ["children"], native: [] }, tree);
   const shape = (node: typeof tree): unknown =>
     node.component === "native"
@@ -31,6 +31,10 @@ it("composes native copy, portrait, choices and navigation without introducing w
       "skip",
       "close",
     ],
+  ]);
+  expect(dialoguePanelTree(false).slots?.children?.map((node) => node.key)).toEqual([
+    "card",
+    "close",
   ]);
 });
 

@@ -128,6 +128,7 @@ const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
 export const SETTINGS_INSTALL_BUTTON =
   ".ada-install-row > .ui-standard-button.ada-compact[data-action=install]";
 const INSTALL_TEXT_FOCUS = `${UI_SCOPE} [data-dialog=settings] ${SETTINGS_INSTALL_BUTTON}:focus-visible`;
+const DIALOGUE_SKIP_FOCUS = `${UI_SCOPE} .ada-interaction-modal [data-action=dialogue-skip]:focus-visible`;
 const STORY_TEXT_FOCUS = ".ada-controls .ada-story .ada-button:focus-visible";
 const ENABLED_TEXT_CONTROL = `:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
@@ -135,6 +136,7 @@ const ENABLED_TEXT_CONTROL = `:where(
 const LEGACY_ENABLED_FOCUS = `${LEGACY_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const STANDARD_ENABLED_FOCUS = `${STANDARD_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const INSTALL_ENABLED_FOCUS = `${INSTALL_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
+const DIALOGUE_SKIP_ENABLED_FOCUS = `${DIALOGUE_SKIP_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const STORY_ENABLED_FOCUS = `${STORY_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const SPECIAL_BUTTON_SHAPES = `
   .ada-exchange-amount,.ada-quest-list [data-quest-id]
@@ -432,6 +434,7 @@ ${UI_SCOPE} .ada-ship-back [data-action=back-ship].ui-standard-button:focus-visi
 /* Tint the centre and retain the existing sprite slices, including the active lip. */
 ${STANDARD_TEXT_FOCUS},
 ${INSTALL_TEXT_FOCUS},
+${DIALOGUE_SKIP_FOCUS},
 ${STORY_TEXT_FOCUS},
 ${LEGACY_TEXT_FOCUS}{
   outline:none;
@@ -439,6 +442,7 @@ ${LEGACY_TEXT_FOCUS}{
 }
 ${STANDARD_ENABLED_FOCUS},
 ${INSTALL_ENABLED_FOCUS},
+${DIALOGUE_SKIP_ENABLED_FOCUS},
 ${STORY_ENABLED_FOCUS},
 ${LEGACY_ENABLED_FOCUS}{
   --ada-text-focus-face:${TEXT_TOKENS.label};
@@ -456,6 +460,7 @@ ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
 @media (forced-colors:active){
   ${STANDARD_ENABLED_FOCUS},
   ${INSTALL_ENABLED_FOCUS},
+  ${DIALOGUE_SKIP_ENABLED_FOCUS},
   ${STORY_ENABLED_FOCUS},
   ${LEGACY_ENABLED_FOCUS}{
     forced-color-adjust:none;

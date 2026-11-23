@@ -332,7 +332,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   stationCard.card.dataset.dialog = "station";
   stationCard.frame.classList.add("ada-station-frame");
-  stationCard.skip.remove();
   const balances = document.createElement("div");
   balances.className = "ada-station-balances";
   const balanceParts = {

@@ -697,7 +697,6 @@ function constructedStation(
     frame.append(card, close);
     if (options.closeAction === "station-back") {
       card.append(choices, controls);
-      frame.append(skip);
     }
     if (fault === options.closeAction) {
       frame.append(unbound());
@@ -1286,7 +1285,9 @@ it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchan
   const balances = f.parent.querySelector(".ada-station-balances")!;
   expect(f.native.get("station-back")!.title.textContent).toBe("Actual Station");
   expect(f.native.get("station-back")!.frame.contains(f.action("open-shop"))).toBe(true);
-  expect(f.native.get("station-back")!.skip.parentElement).toBeNull();
+  expect(f.native.get("station-back")!.frame.contains(f.native.get("station-back")!.skip)).toBe(
+    false,
+  );
   expect(
     f.parent.querySelectorAll("button").some((button) => button.textContent === f.labels.continue),
   ).toBe(false);
