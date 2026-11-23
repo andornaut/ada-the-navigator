@@ -1521,3 +1521,32 @@ it("keeps an unbound fixed Shop offer out of the mounted pane", () => {
   expect(shop.body.querySelectorAll("[data-item]")).toEqual([]);
   expect(f.request).not.toHaveBeenCalled();
 });
+
+it("reopens the Station welcome card after a final contribution undocks from Jobs", () => {
+  const f = constructedStation("", true, true, undefined, true);
+  const welcome = f.native.get("station-back")!.frame;
+  const jobs = f.native.get("jobs-back")!.frame;
+  const confirmation = f.native.get("confirm-cancel-x")!.frame;
+  f.station.setOpen(true);
+  f.activate(f.action("open-jobs"));
+  expect(welcome.hidden).toBe(true);
+  f.activate(f.parent.querySelector('[data-item="project:orchard"]')!);
+  expect(confirmation.getAttribute("aria-modal")).toBe("true");
+
+  f.buy.mockImplementationOnce(() => f.station.setOpen(false));
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).toHaveBeenCalledExactlyOnceWith("project:orchard");
+  expect(f.station.isOpen()).toBe(false);
+  expect(welcome.parentElement?.hidden).toBe(true);
+  expect(confirmation.parentElement?.hidden).toBe(true);
+
+  f.station.setOpen(true);
+  expect(welcome.hidden).toBe(false);
+  expect(welcome.getAttribute("aria-modal")).toBe("true");
+  expect(jobs.hidden).toBe(true);
+  expect(confirmation.getAttribute("aria-modal")).toBeNull();
+  expect(f.doc.activeElement).toBe(f.action("open-jobs"));
+
+  f.activate(f.action("open-jobs"));
+  expect(jobs.getAttribute("aria-modal")).toBe("true");
+});

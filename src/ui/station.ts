@@ -1249,10 +1249,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       open = value;
       modal.hidden = !open;
       view = "card";
-      closeConfirm();
       if (open) {
         render();
         focusWelcome();
+      } else {
+        closeConfirm();
       }
     },
     settleDetails: () => dropDetails?.settle() ?? Promise.resolve(),
