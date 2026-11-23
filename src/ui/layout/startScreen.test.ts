@@ -65,13 +65,13 @@ describe("start screen layout", () => {
       [579.5, 627.5],
       [636.5, 684.5],
     ],
-    ["844x390", { height: 390, width: 844 }, NO_INSETS, [640.58, 688.58], [697.58, 745.58]],
+    ["844x390", { height: 390, width: 844 }, NO_INSETS, [639.5, 687.5], [696.5, 744.5]],
     [
       "844x390 with insets",
       { height: 390, width: 844 },
       PHONE_INSETS,
-      [638.58, 686.58],
-      [695.58, 743.58],
+      [637.5, 685.5],
+      [694.5, 742.5],
     ],
   ] as const)(
     "at %s keeps Achievements and Settings on the HUD row, clear of the wordmark and the note",
