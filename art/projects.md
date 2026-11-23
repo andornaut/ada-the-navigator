@@ -1,26 +1,25 @@
 # Community projects
 
-The shop's Projects tab, the donation confirm, and the world change each funded
-project shows at its site. Gameplay owns the projects, prices, order, the
-donation rule and the strings ([Donations](../gameplay/economy.md)); keys below
-are Gameplay's player string keys, and keys marked placeholder await Gameplay
-strings. Project ids are Gameplay's (`greenhouseRing`, `workshopCrane`,
-`salvageBeacons`, `dockingBay`, `hubRepairs`, `nurseryBeacon`, `currentBuoys`,
-`courierSchool`, `spareBeacon`, `channelLights`, `loomHall`).
+This guide covers the Community projects pane, contribution details and the
+world change each funded project shows at its site. Gameplay owns project
+order, prices, eligibility and strings ([Donations](../gameplay/economy.md)).
 
-## Projects tab
+<a id="projects-tab"></a>
 
-The third shop tab, after Weapons and Ship ([Shop](shop.md#shop)), shown once
-the galaxy's projects are offered. It lists that galaxy's projects as one row
-group in Gameplay's order. Rows use the shop item row's parts, geometry and
-shared width ([Layout](layout.md#shop-item-row)), so the card keeps its width on
-every tab.
+## Jobs & Projects
+
+Open [Jobs & Projects](shop.md#jobs--projects) from the Station footer,
+including at project-only stations. Jobs sits on the left with a Rewards
+hint. Community projects sits on the right with a Contributions hint. Both
+hints use the Stardust icon and equivalent spoken text. The project pane
+lists the galaxy's projects in Gameplay order when the station offers them
+after chapter completion.
 
 ### Project row
 
 | Part          | Art                                                                                             |
 | ------------- | ----------------------------------------------------------------------------------------------- |
-| Well and icon | The 36 item well with the project's 20x20 `icon-project-*` glyph at 8                           |
+| Well and icon | The compact item well with the project's centred 20x20 `icon-project-*` glyph                   |
 | Name          | The project name, cream                                                                         |
 | Second line   | Row supporting `#c0bbd0`: the effect line, or `projectProgress` ("{paid} of {price}") once paid |
 | Price pill    | The item row's pill with what remains: `price - paid`                                           |
@@ -28,31 +27,29 @@ every tab.
 
 Row states:
 
-- **Available**: nothing paid and Ada can donate. The second line is the effect
-  line; the pill shows the full price. Activating opens the donation confirm.
-- **Part-paid**: some paid. The second line is `projectProgress`; the pill shows
-  what remains. Activating opens the donation confirm.
-- **Unaffordable**: Gameplay's donation rule refuses at the current balance.
-  The unaffordable shop row: the tile's disabled frame, well `#2f2d3d`, glyph
-  frame 1 (`#9a96ad`), name, second line and price in row disabled
-  `#a6a2b8`. It stays
-  focusable; activation plays the [refusal cue](controls.md#refusal-cue) on the
-  name and price.
-- **Funded**: the check and Funded, the effect line on the second line.
-  Activation does nothing.
+- **Available**. The effect line and full price are visible. Activating
+  opens the contribution detail.
+- **Part-paid**. The second line shows `projectProgress` and the pill
+  shows what remains. Activating opens the contribution detail.
+- **Unaffordable**. The tile and well use the flat `#2f2d3d` face.
+  The glyph uses its disabled frame (`#9a96ad`), and the row text uses
+  `#a6a2b8`. The row stays focusable and can open a guarded detail.
+- **Funded**. The check and Funded replace the price. The second line
+  retains the progress text and the row cannot activate.
 
-Focus and contrast are the item row's ([Shop](shop.md#item-row)).
+Use face, text or icon colour cues for focus, press and selection. Keep the
+ordinary tile border in every state.
 
-Effect lines, placeholder strings:
+Selected effect lines from Gameplay:
 
-| Project          | Key (placeholder)            | Text (placeholder)          |
+| Project          | Key                          | Text                        |
 | ---------------- | ---------------------------- | --------------------------- |
 | `greenhouseRing` | `projectEffectGreenhouse`    | Domes for more crops        |
 | `workshopCrane`  | `projectEffectCrane`         | A crane for heavy lifts     |
-| `salvageBeacons` | `projectEffectBeacons`       | Lights the scrap lanes      |
+| `salvageBeacons` | `projectEffectBeacons`       | Helps find lost things      |
 | `dockingBay`     | `projectEffectDockingBay`    | No miner waits alone        |
-| `hubRepairs`     | `projectEffectHubRepairs`    | Fixes the station's hub     |
-| `nurseryBeacon`  | `projectEffectNursery`       | Guides whale calves         |
+| `hubRepairs`     | `projectEffectHubRepairs`    | Repairs the mining hub      |
+| `nurseryBeacon`  | `projectEffectNursery`       | A light for resting calves  |
 | `currentBuoys`   | `projectEffectCurrentBuoys`  | Marks the currents          |
 | `courierSchool`  | `projectEffectCourierSchool` | Trains careful couriers     |
 | `spareBeacon`    | `projectEffectSpareBeacon`   | A backup guide light        |
@@ -61,25 +58,25 @@ Effect lines, placeholder strings:
 
 ## Donation confirm
 
-The [buy confirm](shop.md#buy-confirm) pattern, over the dimmed shop. The close
-X, an outside tap, back, Escape and Cancel all cancel. Gameplay's current rule
-pays each Donate press without a confirm; the confirm applies once Gameplay
-adopts it.
+Selecting a project opens its detail over the dimmed Jobs & Projects page.
+Cancel, the close X, outside tap, back and Escape dismiss one layer and
+return focus to the project row or an available board control.
 
-1. Header: `donateTitle` (placeholder, "Donate to {name}?").
-2. Item well: the confirm well with the project glyph at 2x.
-3. The project's description (placeholder, `projectAbout<Project>`; for example
-   "A ring of greenhouse domes around the growers."), body text, centred.
-4. Price: `icon-stardust-20` and the amount this donation pays, in cream.
-5. `confirmLeft` ("{amount} left after"), supporting text.
-6. When the donation leaves part unpaid: `donateStillNeeded` (placeholder,
-   "{amount} still needed after"), supporting text, below `confirmLeft`.
-7. Action group: Cancel (`confirmCancel`, secondary) left, Donate (`donate`,
-   primary) right.
+1. The header uses `donateTitle` ("Donate to {name}?") for an eligible
+   contribution. A guarded detail uses the project name.
+2. Centre the project glyph at 2x in the item well and show the project's
+   `projectAbout<Project>` description.
+3. Show Contribution with the Stardust icon, offered amount and equivalent
+   spoken text. The detail omits projected player balance and the amount
+   that would remain unfunded after the contribution.
+4. Place Cancel (secondary) on the left and Accept (primary) on the right.
+   Accept rechecks the live offer and uses the
+   [refusal cue](controls.md#refusal-cue) if the contribution is unavailable.
 
-After Donate the confirm closes and focus returns to the row in its new state.
-Funding the last part follows Gameplay: the card closes and the thank-you line
-plays.
+An eligible contribution pays as much of the remaining cost as Ada's
+Stardust covers. After a partial contribution, the detail closes and
+focus returns to the project row. Full funding undocks Ada and queues the
+keeper's thank-you line.
 
 ## World changes
 
