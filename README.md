@@ -137,7 +137,8 @@ evidence](docs/checks.md) and [container compatibility](docs/container-adoption.
 ## Deploying
 
 `delivery-kit.json` schedules Ada departures hourly at :00 America/Toronto using
-pinned delivery-kit 4.0.0. Only the existing bus deploys, after the isolated gate
+the Delivery Kit pin in [package.json](package.json) and [package-lock.json](package-lock.json).
+Only the existing bus deploys, after the isolated gate
 and required CI pass for the exact commit; a push that changes only Markdown,
 `art/` or `gameplay/` files does not deploy. The monitor schedule is unchanged.
 Persisted desired control governs scheduled delivery. Reports route to `game-coordinator`.
