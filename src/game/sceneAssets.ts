@@ -59,6 +59,7 @@ import {
   galaxyFamily,
   mergeEnemyAssets,
   readSidecars,
+  type Sidecars,
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
@@ -548,6 +549,13 @@ function queuePhantomCraftJets(scene: AssetsContext, craft: readonly string[]): 
   scene.load.json(PHANTOM_CRAFT_JETS_KEY, PHANTOM_CRAFT_JETS_PATH);
 }
 
+const enemyJetCacheKey = (path: string): string => `enemy-jet:${path}`;
+
+/** Let Phaser share the pending, in-flight or cached JSON for this exact manifest URL. */
+export function queueEnemyJets(scene: Pick<AssetsContext, "load">, path: string): void {
+  scene.load.json(enemyJetCacheKey(path), path);
+}
+
 function queueGalaxyAssets(
   scene: AssetsContext,
   familySubset: { readonly family: string; readonly archetype: string } | undefined,
@@ -640,7 +648,7 @@ function queueGalaxyAssets(
       }
       const jets = frames.length > 1 ? enemyJetsPath(sidecars, archetype) : undefined;
       if (jets) {
-        scene.load.json(`${family}-jets-${archetype}`, jets);
+        queueEnemyJets(scene, jets);
       }
       // Shards, as in coral, for the archetypes Art's destruction data covers.
       const shards =
@@ -986,19 +994,27 @@ export function rockFrameTexture(
 
 /** Archetypes without a complete loaded frame set keep their vector placeholders. */
 export function readEnemyArt(scene: AssetsContext): void {
+  const cachedJets = (sidecars: Sidecars | undefined, archetype: string): unknown => {
+    const path = sidecars && enemyJetsPath(sidecars, archetype);
+    return path === undefined ? undefined : scene.cache.json.get(enemyJetCacheKey(path));
+  };
+  const core = scene.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
+  const coreSidecars = readSidecars(core?.sidecars);
   scene.enemyArt = enemyArt(
-    (archetype) => scene.cache.json.get(`enemy-jets-${archetype}`),
+    (archetype) => cachedJets(coreSidecars, archetype),
     (archetype) => scene.cache.json.get(`enemy-hardpoints-${archetype}`),
     composedArchetypes(scene.partAssets),
     scene.shipAssets,
     enemyFrameSets(scene.shipAssets),
   );
-  for (const { family, prefix, wired } of GALAXY_FAMILIES) {
+  for (const { family, galaxy, prefix, wired } of GALAXY_FAMILIES) {
+    const owner = GALAXY_NUMBERS.find((id) => GALAXY_ID[id] === galaxy);
+    const sidecars = owner === undefined ? undefined : scene.galaxyManifests.get(owner)?.sidecars;
     const loaded = scene.manifest.assets.filter(
       (asset) => asset.family === family && scene.textures.exists(asset.id),
     );
     const art = enemyArt(
-      (archetype) => scene.cache.json.get(`${family}-jets-${archetype}`),
+      (archetype) => cachedJets(sidecars, archetype),
       (archetype) => scene.cache.json.get(`${family}-hardpoints-${archetype}`),
       composedArchetypes(scene.familyParts.get(family) ?? []),
       loaded,

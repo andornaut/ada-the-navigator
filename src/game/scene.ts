@@ -104,6 +104,7 @@ import {
   materialShipHeading,
   paintInUse,
   queueCoreSvgSheets,
+  queueEnemyJets,
   queueShipMaterialSources,
   queueSvg,
   rasterAgain,
@@ -563,7 +564,7 @@ export class GameScene extends Scene {
         for (const archetype of enemyFrameSets(manifest.assets).keys()) {
           const jets = enemyJetsPath(sidecars, archetype);
           if (jets) {
-            this.load.json(`enemy-jets-${archetype}`, jets);
+            queueEnemyJets(this, jets);
           }
           const hardpoints = composed.has(heavyProfilePartClass(archetype) ?? archetype)
             ? enemyHardpointsPath(sidecars, archetype)

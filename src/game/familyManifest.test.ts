@@ -17,6 +17,7 @@ import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import {
   galaxyLoadsAtOnce,
+  type GalaxyManifest,
   galaxyManifestKey,
   galaxyTowKey,
   readGalaxyManifest,
@@ -57,6 +58,7 @@ const source = ts.createSourceFile(
 const names = new Set([
   "PHANTOM_CRAFT_JETS_KEY",
   "PHANTOM_CRAFT_JETS_PATH",
+  "enemyJetCacheKey",
   "ensureEnemyFamilyManifest",
   "loadEnemyParts",
   "loadGalaxyArt",
@@ -70,6 +72,7 @@ const names = new Set([
   "queueGalaxyAssets",
   "queueEagerSvgSheets",
   "queueEnemyPartSheets",
+  "queueEnemyJets",
   "queuePhantomCraftJets",
   "svgSheets",
   "loadSvg",
@@ -120,6 +123,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     },
     children: { list: [] },
     destruction: { archetypes: { platform: {} } },
+    enemyArt: new Map<string, unknown>(),
     family: family as EnemyFamily | undefined,
     familyArts: new Map<string, Map<string, unknown>>(),
     familyParts: new Map(),
@@ -130,7 +134,9 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
       4: "/art/needle/manifest.json",
       6: "/art/phantom/manifest.json",
     },
-    galaxyManifests: new Map([[6, { assets: [], links: {}, sidecars: new Map() }]]),
+    galaxyManifests: new Map<number, Pick<GalaxyManifest<Asset>, "assets" | "links" | "sidecars">>([
+      [6, { assets: [], links: {}, sidecars: new Map() }],
+    ]),
     load: {
       json,
       off: events.off.bind(events),
@@ -228,6 +234,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
       fail: (error: unknown) => void,
       assets: readonly Asset[],
     ) => void,
+    queueJets: context.queueEnemyJets as (value: typeof scene, path: string) => void,
     rasterAgain: context.rasterAgain as (
       value: typeof scene,
       requests: readonly SvgRequest[],
@@ -408,10 +415,9 @@ describe("source-family manifest readiness", () => {
     );
     f.scene.manifest.assets.push(...assets);
     f.scene.familyParts.set(family.family, assets.filter(enemyPartFrame));
-    f.cache.set(
-      "needle-jets-frigateNarrow",
-      publicJson(enemyJetsPath(manifest.sidecars, profile)!),
-    );
+    f.scene.galaxyManifests.set(4, manifest);
+    const jetsPath = enemyJetsPath(manifest.sidecars, profile)!;
+    f.cache.set(`enemy-jet:${jetsPath}`, publicJson(jetsPath));
     f.cache.set(
       "needle-hardpoints-frigateNarrow",
       publicJson(enemyHardpointsPath(manifest.sidecars, profile)!),
@@ -428,27 +434,63 @@ describe("source-family manifest readiness", () => {
     expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(true);
   });
 
-  it("publishes the selected palette from a shared sidecar in the regional cache", () => {
+  it.each([false, true])("shares only matching Core and Needle jet URLs (legacy: %s)", (legacy) => {
     const family = GALAXY_FAMILIES.find(({ family }) => family === "needle")!;
     const f = fixture(family);
+    const corePath = core.sidecars.fighter.jets;
+    const needlePath = legacy ? "/art/needle/enemies/fighter-jets.json" : corePath;
+    const coreFrames = (core.assets as readonly Asset[]).filter(
+      ({ archetype }) => archetype === "fighter",
+    );
     const frames = readGalaxyManifest<Asset>(needle)!.assets.filter(
       ({ archetype }) => archetype === "fighter",
     );
-    f.scene.manifest.assets.push(...frames);
+    f.scene.shipAssets.push(...coreFrames);
+    f.cache.set("art-manifest", core);
+    f.cache.set(galaxyManifestKey(4), {
+      ...needle,
+      assets: frames,
+      sidecars: { fighter: { jets: needlePath } },
+    });
     for (const frame of frames) {
       f.textures.add(frame.id);
     }
-    const sidecar = publicJson("/art/enemies/fighter-jets.json") as Record<string, unknown>;
-    f.cache.set("needle-jets-fighter", {
+    f.queueJets(f.scene, corePath);
+    f.loadWorld(f.scene, 4);
+    f.events.emit(`filecomplete-json-${galaxyManifestKey(4)}`);
+    expect(f.json.mock.calls.filter(([, path]) => path.endsWith("-jets.json"))).toEqual([
+      [`enemy-jet:${corePath}`, corePath],
+      [`enemy-jet:${needlePath}`, needlePath],
+    ]);
+
+    const sidecar = publicJson(corePath) as {
+      layers: readonly Record<string, unknown>[];
+      familyColors: Record<string, unknown>;
+    };
+    const colors = [
+      ["#010203", "#040506"],
+      ["#070809", "#0a0b0c"],
+    ];
+    f.cache.set(`enemy-jet:${corePath}`, {
       ...sidecar,
-      familyColors: {
-        needle: [
-          ["#010203", "#040506"],
-          ["#070809", "#0a0b0c"],
-        ],
-      },
+      familyColors: { needle: colors },
     });
+    if (legacy) {
+      f.publishArt(f.scene);
+      expect(f.scene.familyArts.get(family.family)?.get("fighter")).toMatchObject({
+        jets: undefined,
+      });
+      const raw = {
+        ...sidecar,
+        layers: sidecar.layers.map((layer, index) => ({ ...layer, colors: colors[index] })),
+      };
+      Reflect.deleteProperty(raw, "familyColors");
+      f.cache.set(`enemy-jet:${needlePath}`, raw);
+    }
     f.publishArt(f.scene);
+    expect(f.scene.enemyArt.get("fighter")).toMatchObject({
+      jets: { layers: readShipJets(sidecar)?.layers },
+    });
     expect(f.scene.familyArts.get(family.family)?.get("fighter")).toMatchObject({
       jets: { layers: [{ colors: [0x010203, 0x040506] }, { colors: [0x070809, 0x0a0b0c] }] },
     });
@@ -502,6 +544,7 @@ describe("source-family manifest readiness", () => {
     expect(f.scene.galaxyLoads.has(2)).toBe(false);
     expect(f.scene.partLoads.size).toBe(0);
     expect(f.backdrop).not.toHaveBeenCalled();
+    expect(f.json.mock.calls.some(([key]) => key.startsWith("enemy-jet:"))).toBe(false);
     f.loadParts(f.scene, "platform");
     expect(f.scene.partLoads.has("claim:platform")).toBe(true);
     const selected = readGalaxyManifest<Asset>(cartwheel)!.assets.filter(
