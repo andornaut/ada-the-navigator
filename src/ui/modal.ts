@@ -658,7 +658,25 @@ ${UI_SCOPE} .ada-cheat-resource-icon{
 }
 
 ${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON})),
-${UI_SCOPE} .ada-row:focus-visible{${FOCUS_STYLE}
+${UI_SCOPE} .ada-row:not([role=switch]):focus-visible{${FOCUS_STYLE}
+}
+
+${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active){
+  outline:none;
+  --ada-switch-cue-ink:${TEXT_TOKENS.buttonLabel};
+  --ada-switch-cue-face:${TEXT_TOKENS.label};
+  color:var(--ada-switch-cue-ink);
+  background:var(--ada-switch-cue-face)
+}
+${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active) .ada-setting-note{
+  color:inherit
+}
+@media (forced-colors:active){
+  ${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active){
+    forced-color-adjust:none;
+    --ada-switch-cue-ink:HighlightText;
+    --ada-switch-cue-face:Highlight
+  }
 }
 
 ${UI_SCOPE} [hidden]{

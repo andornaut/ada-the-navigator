@@ -108,7 +108,8 @@ export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
-  .ada-close,.ada-route-marker,${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON}
+  .ada-close,.ada-route-marker,.ada-use,.ada-row[role=switch],.ada-quest-endpoint,
+  ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON}
 ))`;
 
 // The start screen while Exit shows: .ada-controls carries this attribute while it does.
@@ -207,7 +208,7 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
 }
 
 /* The Use disc's accessible button over its drawn frame (touchControls.ts useDiscLayout): it
-   draws nothing and takes no pointer input, so a press there reaches the canvas, where the disc's
+   takes no pointer input, so a press there reaches the canvas, where the disc's
    press circle takes it, or the conversation box above the canvas where the two overlap. Its name
    is the action's; assistive technology activates it. */
 .ada-controls .ada-use{
@@ -225,7 +226,22 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   pointer-events:none
 }
 
-.ada-controls .ada-use:focus-visible{${FOCUS_STYLE}
+/* Tint only the open disc interior so the existing canvas symbol and edge stay visible. */
+.ada-controls .ada-use:focus-visible{
+  outline:none
+}
+.ada-controls .ada-use:focus-visible::before{
+  content:"";
+  position:absolute;
+  inset:10%;
+  border-radius:50%;
+  background:color-mix(in srgb,${NAV_DISC_PRESSED.face} 55%,transparent)
+}
+@media (forced-colors:active){
+  .ada-controls .ada-use:focus-visible::before{
+    forced-color-adjust:none;
+    background:color-mix(in srgb,Highlight 40%,transparent)
+  }
 }
 
 .ada-controls .ada-setting-state{

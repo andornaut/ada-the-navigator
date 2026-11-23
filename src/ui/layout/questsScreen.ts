@@ -1,5 +1,5 @@
 import { BUTTON_SLICE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
-import { FOCUS_STYLE } from "../modal.ts";
+import { TEXT_TOKENS } from "../modal.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
@@ -70,11 +70,21 @@ export const QUESTS_SCREEN_STYLE = `
   cursor:pointer}
 .ada-controls .ada-quest-endpoint:disabled{opacity:1;
   cursor:default}
-.ada-controls .ada-quest-endpoint:focus-visible{${FOCUS_STYLE}
+.ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active){
+  outline:none;
+  --ada-endpoint-cue-ink:${TEXT_TOKENS.buttonLabel};
+  --ada-endpoint-cue-face:${TEXT_TOKENS.label};
+  color:var(--ada-endpoint-cue-ink);
+  background:var(--ada-endpoint-cue-face)
 }
-@media (forced-colors: active){
-  .ada-controls .ada-quest-endpoint:focus-visible{
-    outline-color:Highlight
+.ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active) small{
+  color:inherit
+}
+@media (forced-colors:active){
+  .ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active){
+    forced-color-adjust:none;
+    --ada-endpoint-cue-ink:HighlightText;
+    --ada-endpoint-cue-face:Highlight
   }
 }
 .ada-controls .ada-quest-endpoint>span{min-width:0;
