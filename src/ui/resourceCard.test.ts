@@ -33,7 +33,6 @@ const fixture = vi.hoisted(() => {
       }
       doc.activeElement ??= null;
       doc.defaultView ??= {
-        getComputedStyle: () => ({}),
         HTMLElement: Node,
         MutationObserver: class {
           disconnect() {}
@@ -43,6 +42,7 @@ const fixture = vi.hoisted(() => {
           }
         },
         Node,
+        getComputedStyle: () => ({}),
       };
       return document;
     }
