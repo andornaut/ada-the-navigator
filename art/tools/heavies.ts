@@ -54,6 +54,7 @@ import { traceEnemyFills } from "./enemy-outline.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
+import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
   GALAXIES,
@@ -2305,12 +2306,13 @@ async function main() {
     } else {
       const installed = packInstalledHeavyParts("core", files, entries);
       retiredCapital = installed.retiredCapital;
+      const outputEntries = packInstalledIndustrialTurrets("core", files, installed.outputEntries);
       // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
       const paths = writeOnce("/art/enemies/", new Map(), files);
       mergeEntries(
         "core",
         owns,
-        installed.outputEntries.map((entry) => storedAt(paths, entry)),
+        outputEntries.map((entry) => storedAt(paths, entry)),
       );
       mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
     }

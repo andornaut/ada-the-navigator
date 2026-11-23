@@ -18267,7 +18267,7 @@
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-0",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-0.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18281,11 +18281,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-1",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-1.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18299,11 +18300,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-2",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-2.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18317,11 +18319,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-3",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-3.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18335,11 +18338,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-4",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-4.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18353,11 +18357,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-5",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-5.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18371,11 +18376,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-6",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-6.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18389,11 +18395,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-7",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-7.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18407,11 +18414,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-8",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-8.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18425,11 +18433,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-9",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-9.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18443,11 +18452,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-10",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-10.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18461,11 +18471,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-11",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-11.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18479,11 +18490,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-12",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-12.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18497,11 +18509,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-13",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-13.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18515,11 +18528,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-14",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-14.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18533,11 +18547,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-intact-15",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-15.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18551,11 +18566,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-0",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-0.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18568,11 +18584,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-1",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-1.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18585,11 +18602,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-2",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-2.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18602,11 +18620,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-3",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-3.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18619,11 +18638,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-4",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-4.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18636,11 +18656,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-5",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-5.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18653,11 +18674,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-6",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-6.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18670,11 +18692,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-7",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-7.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18687,11 +18710,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-8",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-8.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18704,11 +18728,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-9",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-9.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18721,11 +18746,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-10",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-10.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18738,11 +18764,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-11",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-11.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18755,11 +18782,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-12",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-12.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18772,11 +18800,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-13",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-13.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18789,11 +18818,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-14",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-14.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18806,11 +18836,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorMiningFreighter-turret-top-15",
-      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-15.svg",
+      "path": "/art/needle/enemies/retaliatorMiningFreighter-turret-top-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -18823,7 +18854,8 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "needle-practice-berth-a",

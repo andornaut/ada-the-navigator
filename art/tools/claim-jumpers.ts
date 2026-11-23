@@ -33,6 +33,7 @@ import { shards } from "./destruction.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
+import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
 import {
   ADA_WIDTH,
@@ -494,7 +495,8 @@ async function main() {
   // another (the cargo hauler is the retaliator) uses that craft's files.
   const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
   const heavy = packInstalledHeavyParts("cartwheel", texts, entries);
-  const outputEntries = packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
+  const small = packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
+  const outputEntries = packInstalledIndustrialTurrets("cartwheel", texts, small);
   const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.

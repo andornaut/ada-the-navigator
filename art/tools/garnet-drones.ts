@@ -26,6 +26,7 @@ import { shards } from "./destruction.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
+import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
 import {
   build,
@@ -244,7 +245,8 @@ async function main() {
     }
   }
   const heavy = packInstalledHeavyParts("andromeda", texts, entries);
-  const outputEntries = packInstalledSmallHullSheets("andromeda", texts, heavy.outputEntries);
+  const small = packInstalledSmallHullSheets("andromeda", texts, heavy.outputEntries);
+  const outputEntries = packInstalledIndustrialTurrets("andromeda", texts, small);
   const paths = writeOnce(PATH, copies, texts);
   // In Andromeda's manifest after the destinations, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-garnet-hostileStation-`.

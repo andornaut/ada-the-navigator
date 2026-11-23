@@ -27,6 +27,7 @@ import { shards } from "./destruction.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
+import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
 import {
   build,
@@ -253,7 +254,8 @@ for (const file of texts.keys()) {
   }
 }
 const heavy = packInstalledHeavyParts("needle", texts, entries);
-const outputEntries = packInstalledSmallHullSheets("needle", texts, heavy.outputEntries);
+const small = packInstalledSmallHullSheets("needle", texts, heavy.outputEntries);
+const outputEntries = packInstalledIndustrialTurrets("needle", texts, small);
 const paths = writeOnce(PATH, copies, texts);
 // In Needle's manifest after the gates and debris, before the story craft.
 // Only these crafts' ids, not the whole `enemy-needle-` family prefix.
