@@ -66,9 +66,7 @@ export function cheatsTree(
                     } as const,
                   ]
                 : []),
-              ...row("showTipsAgain"),
               ...row("selectiveReset"),
-              ...row("resetSave"),
             ],
           },
         },

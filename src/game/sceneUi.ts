@@ -19,7 +19,7 @@ import { requiredLoading, requiredReady } from "../loading/required.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
-import { GameModel, withoutSeenLessons } from "../model/game.ts";
+import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
 import {
@@ -30,7 +30,7 @@ import {
   type ShopRow,
   weaponName,
 } from "../model/shop.ts";
-import type { FlightState, GameSave } from "../model/types.ts";
+import type { FlightState } from "../model/types.ts";
 import {
   exitGame,
   exitShown,
@@ -228,7 +228,6 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resetSaveCard"
     | "resourceFiles"
     | "resourceRocks"
     | "restartCard"
@@ -523,26 +522,10 @@ export function buildScene(scene: UiContext): void {
   saveBeforeUpdate(() => flushScene(scene));
   let rewindSource: CampaignSave | null = null;
   let rewindRequest = 0;
-  let hasSavedGame = false;
-  const canResetSave = () =>
-    !newer &&
-    requiredReady() &&
-    scene.entryCurrent() &&
-    scene.sys.isActive() &&
-    !scene.savingUnavailable &&
-    !scene.cheatSession.ending;
   const canRewind = () => !newer && campaignRewindAllowed(scene);
-  const authorizeSaveActions = (open: boolean) => {
+  const authorizeCampaignRewind = (open: boolean) => {
     const request = ++rewindRequest;
     rewindSource = null;
-    hasSavedGame = false;
-    if (open && canResetSave()) {
-      void saves.hasSavedGame().then((available) => {
-        if (request === rewindRequest && canResetSave()) {
-          hasSavedGame = available;
-        }
-      });
-    }
     if (open && canRewind()) {
       void saves.readCampaign().then((source) => {
         if (request === rewindRequest && canRewind()) {
@@ -580,16 +563,10 @@ export function buildScene(scene: UiContext): void {
     },
     cheats: {
       labels: CHEAT_COPY,
-      onOpenChange: authorizeSaveActions,
+      onOpenChange: authorizeCampaignRewind,
       rows: [
         ...CHEAT_IDS.map(cheat),
-        // Not cheats: they start no session (gameplay/cheats.md "Other actions").
-        {
-          available: () => !scene.cheatSession.ending,
-          id: "showTipsAgain",
-          label: CHEAT_COPY.showTipsAgain,
-          run: () => apply(() => showTipsAgain(scene)),
-        },
+        // Rewinding the stored campaign starts no cheat session.
         {
           available: () => rewindSource !== null && canRewind(),
           id: "selectiveReset",
@@ -607,16 +584,6 @@ export function buildScene(scene: UiContext): void {
                 }
               }
             });
-          },
-        },
-        {
-          available: () => hasSavedGame && canResetSave(),
-          id: "resetSave",
-          label: CHEAT_COPY.resetSave,
-          run: () => {
-            if (hasSavedGame && canResetSave()) {
-              scene.resetSaveCard.open();
-            }
           },
         },
       ],
@@ -1110,35 +1077,6 @@ export function buildScene(scene: UiContext): void {
     onRestart: () => apply(() => scene.model.restart()),
   });
   partial.push(() => scene.restartCard.dispose());
-  scene.resetSaveCard = createRestartCard(scene.controls.overlay, {
-    commit: async (current) => {
-      const model = scene.model;
-      const stillCurrent = () => canResetSave() && current() && scene.model === model;
-      if (!stillCurrent()) {
-        return null;
-      }
-      const available = await saves.hasSavedGame();
-      if (!stillCurrent()) {
-        return null;
-      }
-      hasSavedGame = available;
-      return available
-        ? (present) => {
-            if (present && canResetSave() && scene.model === model) {
-              resetSave(scene);
-            }
-          }
-        : null;
-    },
-    kind: "reset-save",
-    labels: {
-      cancel: CHEAT_COPY.cancel,
-      close: CHEAT_COPY.close,
-      restart: CHEAT_COPY.reset,
-      title: CHEAT_COPY.resetSaveTitle,
-    },
-  });
-  partial.push(() => scene.resetSaveCard.dispose());
   const rewindCard = createRestartCard(scene.controls.overlay, {
     commit: async (current) => {
       const source = rewindSource;
@@ -1180,10 +1118,6 @@ export function buildScene(scene: UiContext): void {
     scene.controls.registerBack({
       back: () => scene.restartCard.close(),
       isOpen: () => scene.restartCard.isOpen() && !scene.settingsOpen,
-    }),
-    scene.controls.registerBack({
-      back: () => scene.resetSaveCard.close(),
-      isOpen: () => scene.resetSaveCard.isOpen(),
     }),
     scene.controls.registerBack({
       back: rewindCard.close,
@@ -1761,40 +1695,12 @@ async function commitCampaignRewind(
 }
 
 /**
- * Show tips again (gameplay/cheats.md "Other actions") is not a cheat: in a cheat session it also
- * clears the seen first-flight lessons in the stored pre-cheat save, written past flushScene's
- * suspended seam, and in the session's own pre-cheat copy. Outside a session flushScene saves it.
- */
-export function showTipsAgain(scene: UiContext): void {
-  scene.model.showTipsAgain();
-  const session = scene.cheatSession;
-  if (!session.active || session.ending) {
-    return;
-  }
-  const written = (session.written ?? Promise.resolve())
-    .then(async () => {
-      const loaded = await saves.load({ bindModel: false });
-      if (loaded.status === "loaded") {
-        await saves.save(withoutSeenLessons(loaded.save));
-      }
-    })
-    .catch(() => undefined);
-  const before =
-    session.before === null
-      ? null
-      : JSON.stringify(withoutSeenLessons(JSON.parse(session.before) as GameSave));
-  scene.cheatSession = { ...session, before, written };
-}
-
-/**
  * Ends the cheat session back on the start screen: the pre-cheat save loads in place of the
- * session's play, so Continue resumes it. Saving and actions wait until it has loaded, and the
- * load waits for any Show tips again write to that save.
+ * session's play, so Continue resumes it. Saving and actions wait until it has loaded.
  */
 export async function endCheatSession(scene: UiContext): Promise<void> {
-  const { before, written } = scene.cheatSession;
+  const { before } = scene.cheatSession;
   scene.cheatSession = { ...scene.cheatSession, ending: true };
-  await written;
   restoreBeforeCheats(before, await saves.load(), scene);
 }
 
@@ -1810,20 +1716,4 @@ function restoreBeforeCheats(
       : loaded.save;
   scene.cheatSession = NO_CHEAT_SESSION;
   replaceModel(new GameModel(CONTENT, save ?? undefined), scene);
-}
-
-/**
- * Reset save (gameplay/cheats.md "Other actions"): ends any cheat session, clears the whole save,
- * achievements included, and returns to the start screen as on a first launch. Device settings
- * are stored apart from the save.
- */
-export function resetSave(scene: UiContext): void {
-  if (scene.cheatSession.ending) {
-    return;
-  }
-  scene.cheatSession = NO_CHEAT_SESSION;
-  scene.controls.closeSettings();
-  scene.controls.closePause();
-  replaceModel(new GameModel(CONTENT), scene);
-  void flushScene(scene);
 }

@@ -83,7 +83,6 @@ export interface CampaignSave {
 }
 
 interface AdaSaves extends SaveStore<GameSave> {
-  hasSavedGame(): Promise<boolean>;
   load(options?: { readonly bindModel?: boolean }): ReturnType<SaveStore<GameSave>["load"]>;
   readCampaign(): Promise<CampaignSave | null>;
   commitCampaign(
@@ -267,9 +266,6 @@ export function createAdaSaves(
       } catch {
         return null;
       }
-    },
-    async hasSavedGame() {
-      return (await readPlayableSave()) !== null;
     },
     async load({ bindModel = true } = {}) {
       const loaded = await store.load();

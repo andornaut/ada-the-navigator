@@ -7,7 +7,6 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
   const tree = cheatsTree("Back", [
     { id: "selectiveReset", label: "Selective" },
     { id: "addOre", label: "Add ore" },
-    { id: "showTipsAgain", label: "Show tips again" },
     { id: "addStardust", label: "Add Stardust" },
   ]);
   validateLayoutTree(
@@ -34,7 +33,6 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
                 component: "grants",
                 slots: { buttons: [{ key: "addStardust" }, { key: "addOre" }] },
               },
-              { component: "action", key: "showTipsAgain" },
               { component: "action", key: "selectiveReset" },
             ],
           },

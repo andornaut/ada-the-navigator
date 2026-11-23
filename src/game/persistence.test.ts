@@ -70,26 +70,26 @@ function pendingOffer(): GameModel {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("canonical Ada save storage", () => {
-  it("reports a real saved game without treating a boot record as playable or requiring rewind support", async () => {
+  it("authorizes selective rewind only for a playable save with campaign support", async () => {
     const { port, values } = storage();
-    const store = createAdaSaves(port);
+    const store = createAdaSaves(port, undefined, { lock: async (operation) => operation() });
     const fresh = new GameModel(CONTENT);
 
-    expect(await store.hasSavedGame()).toBe(false);
+    expect(await store.readCampaign()).toBeNull();
     values.set(SAVE_KEYS.save, fresh.save());
-    expect(await store.hasSavedGame()).toBe(false);
+    expect(await store.readCampaign()).toBeNull();
 
     const played = new GameModel(CONTENT);
     played.startGalaxy(1);
     values.set(SAVE_KEYS.save, played.save());
-    expect(await store.hasSavedGame()).toBe(true);
-    expect(await store.readCampaign()).toBeNull();
+    expect((await store.readCampaign())?.save).toEqual(played.saveDocument());
+    expect(await createAdaSaves(port).readCampaign()).toBeNull();
 
     values.set(SAVE_KEYS.save, "{broken");
-    expect(await store.hasSavedGame()).toBe(false);
+    expect(await store.readCampaign()).toBeNull();
     values.set(SAVE_KEYS.save, played.save());
     store.blockWrites("game crashed");
-    expect(await store.hasSavedGame()).toBe(false);
+    expect(await store.readCampaign()).toBeNull();
     expect(port.write).not.toHaveBeenCalled();
   });
 

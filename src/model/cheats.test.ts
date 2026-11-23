@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { playOpening, readStory } from "../testing/launch.ts";
@@ -137,19 +136,5 @@ describe("cheats", () => {
     expect(model.state.achievements).toEqual(achievements);
     expect(model.state.progress).toEqual(progress);
     expect(model.achievements.every(({ unlocked }) => !unlocked)).toBe(true);
-  });
-});
-
-describe("show tips again", () => {
-  it("clears only the seen first-flight lessons, in the list the director extends", () => {
-    const model = home();
-    const lessons = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(
-      ({ id }) => id,
-    );
-    const seen = model.state.seenConversations;
-    seen.push(...lessons, "meeting:4:avi");
-    model.showTipsAgain();
-    expect(model.state.seenConversations).toBe(seen);
-    expect(seen).toEqual(["meeting:4:avi"]);
   });
 });

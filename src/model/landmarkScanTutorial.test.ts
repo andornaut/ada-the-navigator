@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { ConversationDirector, type ConversationFacts } from "./conversations.ts";
-import { newGameState, withoutSeenLessons } from "./game.ts";
+import { newGameState } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
 const scanExposure = "poi:heard:scan-lesson";
@@ -136,9 +136,8 @@ describe("visible landmark Scan tutorial", () => {
     expect(restored.heard).toEqual(heard);
   });
 
-  it("rearms the tutorial without forgetting that the player heard it", () => {
-    const save = { ...newGameState(), seenConversations: ["lesson:scan", scanExposure] };
-    const { heard, talk } = reload(withoutSeenLessons(save).seenConversations);
+  it("keeps prior exposure distinct from the saved Scan lesson flag", () => {
+    const { heard, talk } = reload([scanExposure]);
     expect(heard).toEqual([scanExposure]);
     expect(talk.heardScanLesson).toBe(true);
 

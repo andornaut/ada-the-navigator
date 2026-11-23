@@ -13,7 +13,7 @@ import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
-import { GameModel, withoutSeenLessons } from "../model/game.ts";
+import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import type { GameSave } from "../model/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
@@ -836,7 +836,6 @@ function cheatScene(model: GameModel) {
       lock: async (operation) => operation(),
     }),
     scene,
-    withoutSeenLessons,
     writingCampaignRewinds: new WeakSet(),
   });
   for (const name of [
@@ -846,9 +845,7 @@ function cheatScene(model: GameModel) {
     "apply",
     "endCheatSession",
     "replaceModel",
-    "resetSave",
     "restoreBeforeCheats",
-    "showTipsAgain",
   ]) {
     context[name] = runInContext(callback(name), context);
   }
@@ -872,10 +869,6 @@ function cheatScene(model: GameModel) {
     port,
     scene,
     settle,
-    showTips: () =>
-      (context.apply as (action: () => void) => void)(() =>
-        (context.showTipsAgain as (value: typeof scene) => void)(scene),
-      ),
     stored,
     values,
   };
@@ -996,48 +989,11 @@ describe("cheat session", () => {
     expect(f.scene.model.state.unlocked).toEqual(played.state.unlocked);
   });
 
-  it("resets the whole save, ending the session, keeping device settings", async () => {
-    const model = flight();
-    model.state.achievements.unlocked.push("prologue");
-    const f = cheatScene(model);
-    f.cheat("addStardust").run();
-    await f.settle();
-    (f.context.resetSave as (value: typeof f.scene) => void)(f.scene);
-    await f.settle();
-    expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION);
-    expect(f.scene.controls.closeSettings).toHaveBeenCalledOnce();
-    expect(f.scene.model.screen).toBe("start");
-    expect(f.scene.model.state.started).toBe(false);
-    expect(f.stored()).toEqual(JSON.parse(new GameModel(CONTENT).save()));
-    expect(f.stored().achievements.unlocked).toEqual([]);
-    expect(f.values.get("ada-the-navigator.sound")).toBe("off");
-  });
-
-  // Show tips again is not a cheat: in a session it clears the lessons in the stored save too.
   const LESSONS = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "lesson").map(
     ({ id }) => id,
   );
 
-  it("clears the seen lessons in the stored pre-cheat save when Show tips again runs in a session", async () => {
-    const model = flight();
-    model.state.seenConversations.push(...LESSONS, "meeting:4:avi");
-    const f = cheatScene(model);
-    await f.flush();
-    f.cheat("addStardust").run();
-    await f.settle();
-    expect(f.stored().seenConversations).toEqual(expect.arrayContaining(LESSONS));
-    f.showTips();
-    await f.settle();
-    expect(f.scene.cheatSession.active).toBe(true);
-    expect(f.scene.model.state.seenConversations).not.toEqual(expect.arrayContaining([LESSONS[0]]));
-    expect(f.stored().seenConversations).toEqual(["meeting:4:avi"]);
-    // The session's own pre-cheat copy is cleared too.
-    expect((JSON.parse(f.scene.cheatSession.before!) as GameSave).seenConversations).toEqual([
-      "meeting:4:avi",
-    ]);
-  });
-
-  it("restores the pre-cheat save with only its lessons cleared after Back to title", async () => {
+  it("restores the pre-cheat save with its seen lessons intact after Back to title", async () => {
     const model = flight();
     model.state.seenConversations.push(...LESSONS, "meeting:4:avi");
     const f = cheatScene(model);
@@ -1046,19 +1002,15 @@ describe("cheat session", () => {
     f.cheat("addStardust").run();
     f.cheat("unlockAllWeapons").run();
     await f.settle();
-    f.showTips();
     f.apply(() => f.scene.model.backToTitle());
     await vi.waitFor(() => expect(f.scene.cheatSession).toEqual(NO_CHEAT_SESSION));
     const restored = JSON.parse(f.scene.model.save()) as GameSave;
-    expect(restored.seenConversations).toEqual(["meeting:4:avi"]);
-    expect({ ...restored, seenConversations: [] }).toEqual({
-      ...JSON.parse(new GameModel(CONTENT, before).save()),
-      seenConversations: [],
-    });
-    expect(f.stored()).toEqual({ ...before, seenConversations: ["meeting:4:avi"] });
+    expect(restored.seenConversations).toEqual([...LESSONS, "meeting:4:avi"]);
+    expect(restored).toEqual(JSON.parse(new GameModel(CONTENT, before).save()));
+    expect(f.stored()).toEqual(before);
   });
 
-  it("keeps the session's suspended save path, writing only Show tips again past it", () => {
+  it("routes normal save writes through the session-aware flush", () => {
     const writes = readdirSync(new URL("..", import.meta.url), { recursive: true })
       .map(String)
       .filter((path) => path.endsWith(".ts") && !path.endsWith(".test.ts"))
@@ -1069,9 +1021,8 @@ describe("cheat session", () => {
           ),
         ].map(() => path),
       );
-    expect(writes).toEqual(["game/sceneUi.ts", "game/sceneUi.ts"]);
+    expect(writes).toEqual(["game/sceneUi.ts"]);
     expect(callback("flushScene")).toContain("saves.save(");
-    expect(callback("showTipsAgain")).toContain("saves.save(withoutSeenLessons(");
   });
 });
 

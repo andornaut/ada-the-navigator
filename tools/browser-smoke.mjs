@@ -1991,13 +1991,7 @@ try {
         "unlockAllWeapons",
         "maxWeaponLevels",
       ]);
-      assert.deepEqual(right.ids, [
-        "addStardust",
-        "addOre",
-        "showTipsAgain",
-        "selectiveReset",
-        "resetSave",
-      ]);
+      assert.deepEqual(right.ids, ["addStardust", "addOre", "selectiveReset"]);
       assert.ok(!layout.scrolls && left.box.right < right.box.left, name);
       assert.ok(Math.abs(left.box.width - right.box.width) < 1, name);
       assert.deepEqual(
@@ -2049,21 +2043,23 @@ try {
   }
   await waitForRest(await position());
   const cheatsProof = () => page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
-  // The Reset save confirm, over Cheats, in its own fresh fixture: Cancel and Reset, then Cancel
-  // back to Cheats.
-  await seedOnce(safeSerialized, "ada-browser.cheats-reset-proof.v1");
+  // Selective rewind confirmation closes back to Cheats on Cancel and Escape.
+  await seedOnce(safeSerialized, "ada-browser.cheats-rewind-proof.v1");
   await openPause();
   await page.locator('[data-action="pause-cheats"]').click();
   await cheatsProof().waitFor({ state: "visible" });
-  await cheatsProof().locator('[data-cheat="resetSave"]').click();
-  const resetConfirm = page.locator('[data-dialog="reset-save"]');
-  await resetConfirm.waitFor({ state: "visible" });
-  await proofsAt("cheats-reset-confirm");
+  for (const name of ["Show tips again", "Reset save"]) {
+    assert.equal(await cheatsProof().getByRole("button", { exact: true, name }).count(), 0);
+  }
+  await cheatsProof().locator('[data-cheat="selectiveReset"]').click();
+  const rewindConfirm = page.locator('[data-dialog="rewind-quests"]');
+  await rewindConfirm.waitFor({ state: "visible" });
+  await proofsAt("cheats-rewind-confirm");
   // What takes a press at Cancel's centre once the proofs restore the view, recorded for review.
   save(
-    "cheats-reset-hit.json",
+    "cheats-rewind-hit.json",
     await page.evaluate(() => {
-      const cancel = document.querySelector('[data-action="reset-save-cancel"]');
+      const cancel = document.querySelector('[data-action="rewind-quests-cancel"]');
       const rect = cancel.getBoundingClientRect();
       const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
       const chain = [];
@@ -2086,13 +2082,13 @@ try {
   );
   // A click on Cancel cancels the confirm back to Cheats, the confirm on top of the shared modal
   // layer with Cheats inert under it; Escape cancels it too, as back does.
-  await page.locator('[data-action="reset-save-cancel"]').click();
-  await resetConfirm.waitFor({ state: "hidden" });
+  await page.locator('[data-action="rewind-quests-cancel"]').click();
+  await rewindConfirm.waitFor({ state: "hidden" });
   await cheatsProof().waitFor({ state: "visible" });
-  await cheatsProof().locator('[data-cheat="resetSave"]').click();
-  await resetConfirm.waitFor({ state: "visible" });
+  await cheatsProof().locator('[data-cheat="selectiveReset"]').click();
+  await rewindConfirm.waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
-  await resetConfirm.waitFor({ state: "hidden" });
+  await rewindConfirm.waitFor({ state: "hidden" });
   await cheatsProof().waitFor({ state: "visible" });
   await cheatsProof().locator('[data-action="dismiss-cheats"]').click();
   await page.locator('[data-action="pause-cheats"]:focus').waitFor();
@@ -4420,6 +4416,17 @@ try {
   order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
   await page.setViewportSize({ height: 720, width: 1280 });
   assert.deepEqual(order, ["menu", "restart"], "Tab follows Continue's lead");
+  const restart = page.locator('.ada-start-actions > [data-action="restart"]');
+  const restartConfirm = page.locator('[data-dialog="restart"]');
+  await restart.click();
+  await restartConfirm.waitFor({ state: "visible" });
+  await restartConfirm.locator('[data-action="restart-cancel"]').click();
+  await restartConfirm.waitFor({ state: "hidden" });
+  await page.locator('.ada-start-actions > [data-action="restart"]:focus').waitFor();
+  assert.equal(
+    await page.locator('.ada-start-actions > [data-action="continue"]').isVisible(),
+    true,
+  );
   // An open modal is the topmost layer: over the Menu disc, Achievements' card shows.
   await openMenu();
   await menuCard().locator('[data-action="menu-achievements"]').click();

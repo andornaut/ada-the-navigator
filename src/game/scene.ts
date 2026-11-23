@@ -418,7 +418,6 @@ export class GameScene extends Scene {
   // Each galaxy's route map marker hue and previews, from Art's galaxies.json and manifest.
   routeGalaxies: () => GalaxyMapView["galaxies"] = () => [];
   restartCard!: ReturnType<typeof createRestartCard>;
-  resetSaveCard!: ReturnType<typeof createRestartCard>;
   fpsCounter!: ReturnType<typeof createFpsCounter>;
   // The current cheat session: from the first cheat nothing is saved until play returns to Start.
   cheatSession: CheatSession = NO_CHEAT_SESSION;

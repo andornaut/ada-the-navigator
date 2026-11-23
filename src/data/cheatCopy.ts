@@ -11,15 +11,12 @@ export const CHEAT_COPY = {
   maxWeaponLevels: "Maximize weapon levels",
   progression: "Progression",
   reset: "Reset",
-  resetSave: "Reset save",
-  resetSaveTitle: "Reset save?",
   resourcesAndTools: "Resources & tools",
   selectiveReset: "Reset jobs, projects & quests",
   selectiveResetBody:
     "Start the story again in Sunflower. This clears your jobs, project funding and quest progress. " +
     "You keep your ship, currency, and map discoveries.",
   selectiveResetTitle: "Reset jobs, projects & quests?",
-  showTipsAgain: "Show tips again",
   title: "Cheats",
   unlockAllEquipment: "Unlock all equipment",
   unlockAllGalaxies: "Unlock all galaxies",

@@ -282,9 +282,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   const unlock = action("unlockAllEquipment", 1);
   const ore = { ...action("addOre"), label: "Add 1,000 ore" };
   const dust = { ...action("addStardust"), label: "Add 1,000 Stardust" };
-  const reset = action("resetSave");
   const selective = action("selectiveReset", 1);
-  const tips = { ...action("showTipsAgain", 1), label: CHEAT_COPY.showTipsAgain };
   const f = setup([
     ore,
     action("unlockAllWeapons"),
@@ -292,9 +290,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     action("unlockAllGalaxies"),
     action("maxWeaponLevels"),
     unlock,
-    reset,
     { ...selective, label: CHEAT_COPY.selectiveReset },
-    tips,
   ]);
   const nodes = descendants(f.root);
   const list = nodes.find((node) => node.className === "ada-cheat-items")!;
@@ -311,11 +307,9 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   expect(descendants(right!).flatMap((node) => node.dataset.cheat ?? [])).toEqual([
     "addStardust",
     "addOre",
-    "showTipsAgain",
     "selectiveReset",
-    "resetSave",
   ]);
-  const [grants, tipsButton, selectiveButton, resetButton] = right!.children[1]!.children;
+  const [grants, selectiveButton] = right!.children[1]!.children;
   const [dustButton, addButton] = grants!.children;
   const unlockButton = left!.children[1]!.children[0]!;
   for (const [button, resource, label] of [
@@ -348,12 +342,6 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   addButton!.dispatchEvent(new Event("click"));
   expect(ore.run).toHaveBeenCalledTimes(2);
   expect(addButton!.disabled).toBe(false);
-  expect(tipsButton!.textContent).toBe(CHEAT_COPY.showTipsAgain);
-  tipsButton!.dispatchEvent(new Event("click"));
-  expect(tips.run).toHaveBeenCalledOnce();
-  expect(tipsButton!.disabled).toBe(true);
-  tipsButton!.dispatchEvent(new Event("click"));
-  expect(tips.run).toHaveBeenCalledOnce();
   dustButton!.dispatchEvent(new Event("click"));
   expect(dust.run).toHaveBeenCalledOnce();
   selectiveButton!.dispatchEvent(new Event("click"));
@@ -361,9 +349,6 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   expect(selectiveButton!.disabled).toBe(true);
   selectiveButton!.dispatchEvent(new Event("click"));
   expect(selective.run).toHaveBeenCalledOnce();
-  expect(reset.run).not.toHaveBeenCalled();
-  resetButton!.dispatchEvent(new Event("click"));
-  expect(reset.run).toHaveBeenCalledOnce();
   f.cheats.dispose();
   addButton!.dispatchEvent(new Event("click"));
   expect(ore.run).toHaveBeenCalledTimes(2);

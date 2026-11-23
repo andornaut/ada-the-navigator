@@ -16,13 +16,12 @@ export interface RestartLabels {
 
 // A confirm covers the start screen's panel, which sits above the controls layer.
 export const RESTART_STYLE =
-  ".ada-controls.ada-restart-open,.ada-controls.ada-reset-save-open," +
-  ".ada-controls.ada-rewind-quests-open{z-index:30}";
+  ".ada-controls.ada-restart-open,.ada-controls.ada-rewind-quests-open{z-index:30}";
 
 /**
  * Restart's confirm, as Chibi's: "Restart?" with Cancel (secondary, left) and Restart (primary,
- * right); Reset save's is the same card. The close X, an outside tap, back and Escape (through the
- * back stack) cancel.
+ * right). Campaign rewind uses the same card. The close X, an outside tap, back and Escape
+ * (through the back stack) cancel.
  */
 export function createRestartCard(
   root: HTMLElement,
@@ -33,7 +32,7 @@ export function createRestartCard(
         readonly commit?: never;
       }
     | {
-        readonly kind: "reset-save" | "rewind-quests";
+        readonly kind: "rewind-quests";
         readonly commit: (current: () => boolean) => Promise<((present: boolean) => void) | null>;
         readonly onRestart?: never;
       }
