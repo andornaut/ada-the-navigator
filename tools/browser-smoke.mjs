@@ -2048,9 +2048,12 @@ try {
   await openPause();
   await page.locator('[data-action="pause-cheats"]').click();
   await cheatsProof().waitFor({ state: "visible" });
-  for (const name of ["Show tips again", "Reset save"]) {
-    assert.equal(await cheatsProof().getByRole("button", { exact: true, name }).count(), 0);
-  }
+  assert.equal(
+    await cheatsProof()
+      .getByRole("button", { name: /^(Show tips again|Reset save)$/ })
+      .count(),
+    0,
+  );
   await cheatsProof().locator('[data-cheat="selectiveReset"]').click();
   const rewindConfirm = page.locator('[data-dialog="rewind-quests"]');
   await rewindConfirm.waitFor({ state: "visible" });

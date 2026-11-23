@@ -5,7 +5,7 @@ The user approved this list on 2026-11-18, with cheats that never touch the save
 
 Choose **Cheats** directly from Menu or Pause in a browser tab or installed
 app. The modal fits two columns without scrolling. Progression actions are on
-the left. Resource grants and reset rows are on the right.
+the left. Resource grants and the selective reset are on the right.
 The centered primary **Back** button and top-right X return to the invoking
 Menu or Pause and restore focus to **Cheats**.
 
@@ -48,10 +48,8 @@ play ends it.
 
 ## Other actions
 
-These are not cheats and start no cheat session.
+The selective reset starts no cheat session.
 
-- **Show tips again** resets tutorial tip visibility without starting a cheat
-  session.
 - **Reset jobs, projects & quests** asks for confirmation before rewinding the
   stored campaign to the Earth opening of Sunflower and relocking later galaxies.
   It clears jobs, project funding and reveals, story progress, and holodisks.
@@ -60,11 +58,8 @@ These are not cheats and start no cheat session.
   and new repeatable jobs and activities still pay their usual rewards.
   Cancel or X returns to Cheats. A failed write leaves the save and current view
   in place. The action uses the stored save, so session-only cheats stay temporary.
-- **Reset save**, last, stays disabled until there is a valid saved game.
-  When available it asks first on a card titled "Reset save?" with Reset and
-  Cancel. Back and Escape cancel. Reset clears the whole save, achievements
-  included, ends any cheat session and returns to the start screen as on a first
-  launch. Device settings that are not part of the save stay.
+
+Open **Restart** from the Start screen to restart the entire game.
 
 ## Work items
 
