@@ -1,255 +1,186 @@
 # Station and shop
 
-The station pages, shop, buy confirm and job board have distinct groups and
-states. The shop, buy confirm and job board use their width family's modal
-card in [Layout](layout.md#modals). Item-row geometry is in
-[Layout](layout.md#shop-item-row). Gameplay owns the strings, prices, item
-order and behaviour; the keys below are Gameplay's player string keys.
+Station pages share a Large card footprint and common navigation. Purchase
+and task decisions use a separate dialog over the current page. Gameplay
+owns the strings, prices, stock order, eligibility and transaction rules.
 
 ## Shared parts
 
-| Part                | Asset or token                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------ |
-| Card, close, focus  | `ui-settings-card`, `ui-close`, `ui-focus`                                                       |
-| Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                                     |
-| Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                                  |
-| Stardust            | `icon-stardust` (16px) in price pills; `icon-stardust-20` in balances and the confirm price      |
-| Item glyphs         | `icon-shop-*` and `icon-project-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md) |
-| Job glyphs          | `icon-job-*` sheets; see [Shop icons](shop-icons.md#job-icons)                                   |
-| Owned and In use    | `icon-shop-check`, 12x8                                                                          |
-| Ship paint swatches | The scheme's `ship-48` frame: `ship-48` for Classic, `ship-<scheme>-48` for the others           |
+| Part                | Asset or token                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| Card and close      | `ui-settings-card`, `ui-close`                                                                        |
+| Footer controls     | `ui-button` for service pages and `ui-button-primary` for Undock                                      |
+| Item row            | `ui-button-tile` normal, pressed and disabled frames, nine-slice 2/4/2/6                              |
+| Resources           | `icon-stardust` (16 px) in row pills. `icon-stardust-20` and `icon-ore-20` for balances and Exchange. |
+| Item glyphs         | Shop weapon and Ammo sheets, equipment SVGs and project sheets. See [Shop icons](shop-icons.md).      |
+| Job glyphs          | `icon-job-*` sheets. See [Shop icons](shop-icons.md#job-icons).                                       |
+| Status mark         | `icon-shop-check.svg`, 12x8                                                                           |
+| Ship paint swatches | The scheme's 48-heading ship art, `ship-48` for Classic and `ship-<scheme>-48` for other schemes      |
 
-Text uses the [controls text tokens](controls.md#colour-tokens): titles white
-`#ffffff`, body and names cream `#ead4aa`, supporting text `#b8b3c9`, disabled
-text `#9a96ad`. Inside a tile row, shop, project and job rows alike, the
-second line and Owned take row supporting `#c0bbd0` and an unaffordable or
-busy row's text takes row disabled `#a6a2b8`, so every row's text is 5:1 or
-more. A balance's amount is cream.
+Text uses the [controls text tokens](controls.md#colour-tokens). Titles are
+white `#ffffff`, names and balance amounts are cream `#ead4aa`, and supporting
+text uses `#b8b3c9`. Tile rows use `#c0bbd0` for secondary lines and Owned,
+`#a6a2b8` for unaffordable and busy text, and `#9a96ad` for disabled glyphs.
 
 ## Station pages
 
-Dock opens the [conversation card](layout.md#conversation-card). The keeper's
-name tab, portrait and current greeting share the text column. Continue
-advances one greeting line. Skip opens the final page and shows only when
-it advances farther than Continue.
+Dock opens the station welcome with its title and, for an authored keeper, a
+name tab, portrait and one paragraph. Available services appear immediately.
+The ordinary welcome has no Continue or Skip. A station without a keeper
+opens on its title and services. Mandatory choices and guarded arrivals
+follow their existing [interaction path](layout.md#conversation-card).
 
-The final page shows the balance and Jobs where offered. The page-control
-row holds Undock and, where offered, Shop. Jobs is neutral and Shop
-is the only primary. A station without a keeper opens on the final page
-with the station title and its available actions. The close X, an outside
-tap, back and Escape act as Undock.
+The shared Stardust and Ore group anchors at the top left of each Station
+page. Its top and left margins match the content inset. Both icons have
+spoken resource names paired with their displayed amounts.
+
+The footer places available Shop and Jobs & Projects actions, then Exchange,
+on the left. Primary Undock sits on the right. The current service button
+uses the flat disabled face colour, yellow text and a thick underline in the
+primary colour. Keyboard focus remains visible on the face, with a brighter
+and thicker underline on the current page.
+
+On the welcome, the close X, outside tap, back and Escape undock. From Shop,
+Jobs & Projects or Exchange the same inputs return to the welcome and focus
+the service that opened the page. Undock remains available in the footer on
+every Station page.
 
 ## Shop
 
-1. Header: `shop`. The close X, an outside tap, back and Escape return to the
-   station's final page.
-2. Balance: the amount alone, without the word Stardust.
-3. Tabs: one action group, Weapons (`shopWeapons`), Ship (`shopShip`) and,
-   once the galaxy's projects are offered, Projects (`projects`), left to
-   right and sharing one width. The selected tab draws `ui-button-primary`, the
-   other `ui-button`; both keep the normal and pressed frames. Tabs are a tab
-   list; switching tabs starts the selected tab at page one.
-4. Item list: the selected tab's row groups, in fitting columns and height-based pages.
-
-The Weapons tab holds the [ammunition row group](#ammunition-rows), when Ada
-owns any non-Laser weapon, then its item row group. The Projects tab holds the
-galaxy's project rows ([Community projects](projects.md)). The Ship tab holds the
-upgrade row group, then the paint group: the paint heading
-(`icon-shop-ship-paint`, then `shipPaint` in white) and the paint row group.
-The heading is left-aligned to the paint row group.
-
-### Row group
-
-- A control grid ([Layout](layout.md#groups)). Rows fill left then right in
-  item order, and a group always starts a new line.
-- Every row in the shop shares one width across every tab, so the card keeps
-  its width when the tab changes. The group centres in the list.
+Two fixed, equal panes sit side by side under the Shop title, with compact
+headings and a divider. Each station chooses and orders two of Weapons,
+Equipment and Ammo. Each pane shows up to four offers in a single column.
+Sparse stock keeps the pane layout. Equipment includes paint alongside
+equipment tracks. Shop has no inner tabs, pagination or scrolling.
 
 ### Item row
 
-A `ui-button-tile`, the whole row one control, with the button face states.
+The whole tile is one control. A left well holds the glyph, the name and
+optional detail occupy the middle, and the right end holds a price or status
+mark. Long names and details truncate visually within the pane and retain
+their text in the spoken row label.
 
-| Part       | Art                                                                                     |
-| ---------- | --------------------------------------------------------------------------------------- |
-| Item well  | Ink `#181425` 2px edge with its four corner pixels clear, face navy `#262b44`           |
-| Glyph      | Centred in the well: 20x20 icons, the 24x24 upgrade composite or the 32x32 paint swatch |
-| Name       | Cream                                                                                   |
-| Level line | Levelled items only: `level` ("Level {level} of {max}"), row supporting `#c0bbd0`       |
-| Price pill | Ink `#181425` with `icon-stardust` and the price in cream                               |
-| Owned      | `icon-shop-check` and `owned` in row supporting `#c0bbd0`                               |
-| In use     | `icon-shop-check` and `inUse` in cream, plus the selection ring                         |
+| Part       | Art                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------ |
+| Item well  | Ink `#181425` 2 px edge with clear corners, navy face `#262b44`                      |
+| Glyph      | Centred in the well at 20x20, with a 24x24 upgrade composite or a 32x32 paint swatch |
+| Name       | Cream                                                                                |
+| Level line | `level` ("Level {level} of {max}") in row supporting                                 |
+| Price pill | Ink `#181425` with `icon-stardust` and the price in cream                            |
+| Owned      | Check mark and `owned` in row supporting                                             |
+| In use     | Check mark and `inUse` in cream on a navy in-face selection treatment                |
 
-Row states:
+- **Buy.** An affordable unowned item or an available upgrade opens Buy
+  confirm. The upgrade pill shows the next level's price.
+- **Owned.** Owned weapons and maxed tracks show Owned. Selecting an owned
+  paint scheme equips it immediately. The In use marker moves to that scheme.
+- **Unaffordable.** The flat `#2f2d3d` tile has no lip or press displacement.
+  The well uses the same face, the glyph uses its disabled art, and the ink
+  pill and Stardust icon remain visible. The row stays focusable and
+  activation plays the [refusal cue](controls.md#refusal-cue).
+- **Keyboard focus.** Shop stock tints the face inside the tile, keeping its
+  edges, lip and pressed art. Installed paint uses the supporting colour
+  when focused. An unaffordable focused row uses `#514b68` with white text.
 
-- **Buy**: affordable and not owned, or a levelled item below its maximum. The
-  pill shows the next level's price. Activating opens the buy confirm.
-- **Owned**: owned weapons and maxed levelled items show Owned and do nothing
-  on activation. An owned paint scheme not in use shows Owned; activating puts
-  it in use at once, with no confirm.
-- **In use**: the paint scheme in use, with the cream `#ead4aa` selection ring
-  outside the row's drawn rectangle. Exactly one paint row is in use; the ring
-  moves when another is chosen.
-- **Unaffordable**: the tile's disabled frame, a flat `#2f2d3d` face over the
-  full height with no lip and no press displacement, content centred on it. The
-  well face is `#2f2d3d`, the glyph uses its disabled colour `#9a96ad`, and the
-  name, level or pack line and price use row disabled `#a6a2b8`; the Stardust
-  icon and the ink pill are unchanged. Unlike a disabled control, the row stays
-  focusable and activatable: activation plays the
-  [refusal cue](controls.md#refusal-cue) on the row, tinting the name and the
-  price.
+On the normal `#46425e` face, names are 6.58:1 and secondary lines are 5.11:1.
+Disabled text is 5.42:1 on the resting `#2f2d3d` face. Cream and disabled
+prices on the ink pill are 12.44:1 and 7.27:1 respectively.
 
-Focus draws `ui-focus` outside the row in every state; it may overlap the
-selection ring. Contrast: names 6.58:1 and level lines 5.11:1 on the `#46425e`
-face, row disabled text 5.42:1 on `#2f2d3d`, the price 12.44:1 and a disabled
-price 7.27:1 on the pill.
+### Item glyph sources
 
-### Upgrade glyph
-
-A weapon upgrade row draws a 24x24 composite: the weapon's 20px glyph at (0, 4)
-and the 12x12 `icon-shop-upgrade-badge` at (12, 0), drawn over the glyph. In an
-unaffordable row both use their disabled colour.
+- Weapons use the two-frame `icon-shop-weapon-<id>.png` sheets under
+  `/art/ui/sprites/`. The separate `weapon-<id>.svg` in `/art/ui/icons/` is
+  the one-colour HUD mask. See [Shop icons](shop-icons.md) for the shared
+  glyph grid and disabled treatment.
+- A weapon upgrade adds a smooth 12x12 `icon-shop-upgrade-badge.svg` at
+  (12, 0) over the 20x20 weapon sheet frame at (0, 4). An unaffordable row
+  uses the sheet's disabled frame and `icon-shop-upgrade-badge-disabled.svg`.
+- Engine tuning, Shield and Tractor beam use `icon-shop-engine-tuning`,
+  `icon-shop-shield` and `icon-shop-tractor-beam` from `/art/ui/icons/`.
+  The row and confirm share the smooth SVG caller in
+  `src/ui/stationItemIcon.ts`. Each has a normal `.svg` and a
+  `-disabled.svg`, authored by `art/tools/shop-equipment-svg.ts`.
+  Paint rows use the scheme swatch.
 
 ### Ammunition rows
 
-One row per owned non-Laser weapon, in the HUD order (Multi-Laser,
-Rapid Missile, Heavy Missile, Scattershot, Phaser), in its own row group before
-the weapon rows, so the repeat purchase shows without scrolling.
+Ammo uses the ammunition-kind sheet (`icon-shop-ammo-missile`,
+`icon-shop-ammo-energy` or `icon-shop-ammo-shell`) by itself. The upright
+stock glyph sits next to the weapon-specific name and pack count. If Ada
+lacks the required weapon, the row keeps its pack count and requirement
+beneath the name, omits the price and disables activation. Once
+unlocked, an unaffordable pack uses the usual focusable refusal state.
 
-| Part       | Art                                                                                      |
-| ---------- | ---------------------------------------------------------------------------------------- |
-| Glyph      | The weapon's ammunition-kind icon alone, 20x20 at 8 in the well: `icon-shop-ammo-<kind>` |
-| Name       | `ammoPack` ("{weapon} ammo"), cream                                                      |
-| Pack line  | `ammoPackCount` ("×{count}", the pack size), supporting text, as the level line          |
-| Price pill | The pack price, as every price pill                                                      |
+## Jobs & Projects
 
-| Weapon        | Kind      | Glyph                    | Name                 | Pack line | Name width |
-| ------------- | --------- | ------------------------ | -------------------- | --------- | ---------- |
-| Rapid Missile | `missile` | `icon-shop-ammo-missile` | "Rapid Missile ammo" | "×200"    | 144.04     |
-| Multi-Laser   | `energy`  | `icon-shop-ammo-energy`  | "Multi-Laser ammo"   | "×200"    | 128.03     |
-| Heavy Missile | `missile` | `icon-shop-ammo-missile` | "Heavy Missile ammo" | "×50"     | 147.59     |
-| Scattershot   | `shell`   | `icon-shop-ammo-shell`   | "Scattershot ammo"   | "×130"    | 129.83     |
-| Phaser        | `energy`  | `icon-shop-ammo-energy`  | "Phaser ammo"        | "×55"     | 99.59      |
+The page and footer both say Jobs & Projects. A project-only station can
+open the page. Jobs-only stations hide the project pane.
 
-- Ammunition rows draw the ammunition-kind sheet, never the weapon's sheet or
-  an upgrade-style composite.
-- The row name names the weapon, so the glyph shows only the kind: upright
-  stock, distinct from the weapon glyphs' rightward fire and from the upgrade
-  composite.
-- The name block is two 20 lines, the name over the pack line, as a levelled
-  row's name over its level line. The pack line is row supporting `#c0bbd0`,
-  5.11:1 on the `#46425e` face, and row disabled `#a6a2b8` in an unaffordable
-  row.
-- An ammunition row is never Owned: it is Buy, or Unaffordable with the
-  disabled tile, the glyph's `disabled` frame and the shared refusal cue.
-- The buy confirm draws the ammunition glyph at 2x (40) in the confirm well,
-  with `confirmTitle` ("Buy Rapid Missile ammo?"); `ammoPackCount` ("×200")
-  takes the description's place, body text, centred.
-- Rows share the widest measured name and trailing slot across the available tabs.
-  Complete columns fill the available width without reducing text or control sizes.
+### Job board
 
-### Pages
+The fixed pane grid matches Shop, with Jobs on the left and Community
+projects on the right. The board reserves room for unfunded projects, keeps
+any held task at the top, and caps the offer selection at four without
+pagination. Completed jobs replenish through the Gameplay board.
 
-- The header, balance and tabs remain fixed. The list uses every complete column
-  that fits inside the card padding and focus-ring clearance.
-- Measured grid rows fill the remaining height in reading order. Names wrap only
-  when a complete natural-width row cannot fit; wrapped text grows its control.
-- A longer list uses Previous, the current page count and Next beneath the rows.
-  The pager appears only when needed, keeps its place during navigation and
-  preserves keyboard focus on a visible control. Previous is hidden on the first
-  page, and Next is hidden on the last page; the page count stays centered.
-- Ammunition precedes items, and paint follows ship equipment with its heading.
-  A heading stays with its first row. Changing tabs returns to page one.
-- Pages preserve every name, glyph, level, price, ownership state and action.
-  No scroll track or scroll reserve is needed.
+The Jobs heading pairs its category colour with Rewards and the Stardust
+icon. Community projects pairs its category colour with Contributions and
+the same icon. Both hints have equivalent spoken text. The job and project
+colours (`#feae34` and `#8f9cf0`) also tint the well edges.
 
-## Job board
+Each tile has one action. A job shows its type glyph, title, detail and
+reward pill. An activity uses `icon-job-activity`, its name and its goal. A
+held task shows Active in cream with the check. Project tiles show the
+project glyph, name, detail and contribution or Funded. Busy jobs use the
+flat disabled appearance and remain inspectable.
 
-Gameplay's job board (`gameplay/quests.md` "Job board"), opened by Jobs on
-the station's final page, on the shop's card pattern. The close X, an outside
-tap, back and Escape return to that page. Geometry is in
-[Layout](layout.md#job-board-row).
+Use changes in face fill, text or icon colour for focus, press and selection.
+Keep the tile's ordinary border in every state.
 
-1. Header: `jobBoard`.
-2. Balance: the amount alone, as in the shop.
-3. `jobBoardIntro`, supporting text, centred lines.
-4. The refusal line, `jobBusy` (or `activityBusy`), supporting text, centred,
-   shown after a busy row refuses and hidden when the board reopens.
-5. Job list: measured rows use as many complete columns as fit, retaining
-   `STACK_BUTTON_GAP` between rows. The held job or active activity heads it.
-   Rows that exceed the available height use the same fixed Previous, page count
-   and Next controls as the shop. The refusal line is included when measuring
-   the remaining height. Every title, detail, reward and action remains available.
+A job offer opens its details and Cancel and Accept. Reward shows the amount
+and Stardust icon with equivalent spoken text. Ore in descriptions stays
+text. A busy job shows the refusal reason in its dialog and retains the
+acceptance guard. A held task opens a Cancel and Drop confirmation. The
+non-Dock `activityDrop` model confirmation uses the
+[interaction material-choice path](layout.md#conversation-card).
 
-### Job row
+A project opens its details and the applicable guarded contribution action
+with Cancel. Contribution shows the offered Stardust amount, with no
+projected player balance or amount remaining to fund the project. Funded
+project rows cannot activate. See [Community projects](projects.md) for
+project art and scope. Closing a detail restores focus to its row or an
+available board control.
 
-A `ui-button-tile`, the whole row one control, as the item row.
+## Exchange
 
-| Part   | Art                                                                                                                |
-| ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Well   | The item well, with the job type's `icon-job-<type>` glyph at 8; an activity row shows `icon-job-activity`         |
-| Title  | Gameplay's title (`surveyTitle`, `deliveryTitle`, `rescueTitle`, `huntTitle`), cream                               |
-| Detail | Its one line (`surveyAbout` and the others), row supporting `#c0bbd0`                                              |
-| Reward | The price pill with the reward amount, as every pill                                                               |
-| Action | The [compact row action](controls.md#compact-row-action): Accept (`jobAccept`) primary, Drop (`jobDrop`) secondary |
-| Active | Held rows: `icon-shop-check` and `jobActive` in cream in the reward's place, plus the selection ring               |
+Buy Stardust and Buy ore each put the buy label and rate at the left, with
+1, 10 and 100 actions beside them. The rate uses both resource icons and
+equivalent spoken text. It uses the Gameplay unit cost, currently two of
+the spent resource for one received. Each quantity shows the received
+resource icon and speaks both the amount received and the cost.
 
-Row states:
-
-- **Offer**: the tile's normal frame; the action is Accept on the primary
-  compact face. Activating accepts at once, with no confirm.
-- **Held**: the held job or active activity, at the top of every board in its
-  galaxy, with the cream selection ring, Active, and Drop on the secondary
-  compact face. Activating opens the job-board Drop confirm (`jobDropTitle` or
-  `activityDrop`, Cancel and Drop). The non-Dock `activityDrop` model
-  confirmation uses the [Interaction material-choice path](layout.md#conversation-card).
-- **Busy**: an offer while the galaxy's task slot is taken: the tile's flat
-  disabled frame, the well `#2f2d3d`, the glyph's `disabled` frame, the title,
-  detail, reward and Accept in row disabled `#a6a2b8`, and the compact
-  action's disabled face. The disabled face is the tile's own colour, so only
-  the label shows. The row stays focusable; activation plays the
-  [refusal cue](controls.md#refusal-cue) on the row and shows the refusal
-  line.
-
-Contrast: titles 6.58:1 and details 5.11:1 on the `#46425e` face, busy text
-5.42:1 on `#2f2d3d`, the reward 12.44:1 (busy 7.27:1) on the pill, Accept ink
-7.26:1 on the primary face and Drop ink 5.95:1 on the secondary face. The
-primary and secondary faces are 3.84:1 and 3.15:1 against the tile.
-
-The Active activity row (`gameplay/quests.md` "Repeatable activities") shows
-the shared activity glyph, `icon-job-activity`'s normal frame, for every
-activity; its title is the activity's name and its detail line the goal.
+Quantity columns align between rows. The gaps before, between and after
+the visible quantity faces are equal. An unavailable quantity keeps a flat
+muted face lighter than the row, with readable icons and text. It stays in
+keyboard order and gives brief refusal feedback. A successful trade
+updates both header balances together. There is no quantity input,
+confirmation or success summary.
 
 ## Buy confirm
 
 Opens over the shop, which dims and stays inactive behind it. The top-right
 X invokes Cancel. An outside tap, back and Escape use the same one-layer
 path where dismissal is allowed. Keep the shop open and restore focus to
-the invoking item or a logical shop control.
+the invoking item, the nearest available offer after a stock change or
+the Shop footer action.
 
 1. `confirmTitle` ("Buy {name}?") and the top-right X.
-2. Item well: the confirm well, with the item well's edge and navy face and
-   the glyph at 2x by nearest neighbour or the paint swatch, centred.
-3. Weapons only: the weapon's description (`aboutRapidMissile`,
-   `aboutMultiLaser`, `aboutHeavyMissile`, `aboutScattershot`, `aboutPhaser`),
-   body text, centred lines.
+2. Item well with an ink edge and navy face. Centre the glyph at 2x, or use the
+   larger paint swatch. Raster glyphs use nearest-neighbour sampling and
+   equipment SVGs and the upgrade badge stay smooth.
+3. The offer's description where supplied, centred. A weapon offer uses
+   its description and an ammunition pack uses the pack count.
 4. Offered price, centred in cream with `icon-stardust-20`. Omit the
    projected remaining Stardust balance.
 5. Cancel (`confirmCancel`, secondary) left, Buy (`confirmBuy`, primary) right.
-   Cancel is the only dismissal button in this action row.
-
-## Differences from the approved mock-ups
-
-The shared card layout takes precedence over these mock-up measurements:
-
-- Cards take the shared width families rather than 400, 640 and 340 wide, and
-  action groups and tabs share the widest label's width instead of filling or
-  left-aligning in the card.
-- The shop balance is a centred group under the title, not inside the header's
-  top-left corner.
-- Item columns form one centred control grid, with the standard button gap.
-- Rows use the standard action height, not 50, and level lines and the Owned
-  and In use labels use the 16px text roles, not 14px.
-- Row insets are `SPACING.gap` throughout; the mock-up's well inset was 7, its
-  name gap 9 and its pill inset 10.
-- `icon-stardust` (16px) and `icon-stardust-20` replace the mock-up's 11px and 15px
-  sparkle, and the pills share a content-fitted width instead of a fixed 70px.
+   Buy is subject to the current purchase guard.
