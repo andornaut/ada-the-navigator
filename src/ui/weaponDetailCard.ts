@@ -97,6 +97,7 @@ export function createWeaponDetailCard(
     ]),
     availability,
     presentButton: presentAdaButton,
+    standardButtons: { actionIds: ["dismiss-weapon-detail"], root },
   });
   const renderContent = (data: WeaponDetailData) => {
     const { lines, title } = data;

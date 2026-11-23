@@ -78,6 +78,7 @@ export function createUpdateDialog(
     ]),
     availability,
     presentButton: presentAdaButton,
+    standardButtons: { actionIds: ["cancel-update", "accept-update"], root },
   });
   const tree = updateTree(labels);
   const mounted = mountLayout<UpdateSchema>(

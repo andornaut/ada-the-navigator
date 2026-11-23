@@ -43,6 +43,7 @@ const fixture = vi.hoisted(() => {
           }
         },
         Node,
+        getComputedStyle: () => ({}),
       };
       return document;
     }
@@ -68,6 +69,7 @@ const fixture = vi.hoisted(() => {
       };
     }
     classList = {
+      add: (name: string) => this.classList.toggle(name, true),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -112,15 +114,36 @@ const fixture = vi.hoisted(() => {
     className = "";
     dataset: Record<string, string> = {};
     hidden = false;
-    textContent = "";
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     attributes: Record<string, string> = {};
-    style = { display: "", setProperty: vi.fn() };
+    style = {
+      display: "",
+      getPropertyValue: () => "",
+      removeProperty: vi.fn(),
+      setProperty: vi.fn(),
+    };
     tabIndex = 0;
     focus = vi.fn(() => {
       (document as unknown as { activeElement: Node | null }).activeElement = this;
     });
     hasAttribute(name: string) {
       return name === "hidden" ? this.hidden : name in this.attributes;
+    }
+    toggleAttribute(name: string, force?: boolean) {
+      const enabled = force ?? (name === "hidden" ? !this.hidden : !(name in this.attributes));
+      if (enabled) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+      return enabled;
     }
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
@@ -178,6 +201,7 @@ const fixture = vi.hoisted(() => {
       for (const child of [...this.children]) {
         child.remove();
       }
+      this.text = "";
       this.append(...nodes);
     }
     removeAttribute(name: string) {
@@ -201,7 +225,8 @@ const fixture = vi.hoisted(() => {
   };
   return { Node, card };
 });
-vi.mock("./modal.ts", () => ({
+vi.mock("./modal.ts", async (original) => ({
+  ...(await original<typeof import("./modal.ts")>()),
   createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
     const row = new fixture.Node();
     row.append(...actions.map(({ button }) => button));
@@ -222,14 +247,6 @@ vi.mock("./modal.ts", () => ({
   setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
     row.dataset.footerAction = action;
   },
-}));
-vi.mock("./buttonPresentation.ts", () => ({
-  presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
-    dispose() {},
-    element: button,
-    reason: new fixture.Node(),
-    update() {},
-  }),
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
@@ -278,7 +295,10 @@ it("uses the shared card and reports exactly one pause/close transition, restori
   expect(fixture.card.body.children[0]!.children[0]!.textContent).toBe("Approved description");
   expect(onOpenChange).toHaveBeenLastCalledWith(true);
   expect(fixture.card.fit).toHaveBeenCalledOnce();
-  fixture.card.body.children.at(-1)!.children[0]!.dispatchEvent(new Event("click"));
+  fixture.card.body.children
+    .at(-1)!
+    .querySelector('[data-action="dismiss-weapon-detail"]')!
+    .dispatchEvent(new Event("click"));
   resource.close();
   expect(resource.isOpen()).toBe(false);
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
@@ -434,7 +454,8 @@ it("retains native content nodes and original close actions across current view,
     { ammo: 0, ammoLabel: "Ammo", id: "rapidMissile", level: 3 },
   );
   expect(beforeOpen()).toBe(false);
-  const dismiss = footer!.children[0]!;
+  const dismiss = footer!.querySelector('[data-action="dismiss-weapon-detail"]')!;
+  expect(dismiss.matches(".ui-standard-button")).toBe(true);
   const headerAction = resolveAdaHoldAction(root as unknown as HTMLElement, fixture.card.close);
   const dismissAction = resolveAdaHoldAction(root as unknown as HTMLElement, dismiss);
   expect(headerAction?.available()).toBe(true);
@@ -451,7 +472,7 @@ it("retains native content nodes and original close actions across current view,
     level: 1,
   });
   expect(fixture.card.body.children).toEqual([description, quantity, footer]);
-  expect(footer!.children[0]).toBe(dismiss);
+  expect(footer!.querySelector('[data-action="dismiss-weapon-detail"]')).toBe(dismiss);
   expect(quantity!.children[1]!.textContent).toBe("Unlimited");
   const cover = new fixture.Node();
   root.append(cover);

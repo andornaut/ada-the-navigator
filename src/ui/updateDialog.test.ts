@@ -43,6 +43,7 @@ const fixture = vi.hoisted(() => {
       };
     }
     classList = {
+      add: (name: string) => this.classList.toggle(name, true),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -113,9 +114,21 @@ const fixture = vi.hoisted(() => {
     className = "";
     dataset: Record<string, string> = {};
     hidden = false;
-    textContent = "";
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     attributes: Record<string, string> = {};
-    style = { display: "", setProperty: vi.fn() };
+    style = {
+      display: "",
+      getPropertyValue: () => "",
+      removeProperty: vi.fn(),
+      setProperty: vi.fn(),
+    };
     focus = vi.fn();
     remove = vi.fn(() => {
       if (this.parentElement) {
@@ -132,6 +145,7 @@ const fixture = vi.hoisted(() => {
       for (const child of [...this.children]) {
         child.remove();
       }
+      this.text = "";
       this.append(...nodes);
     }
     removeAttribute(name: string) {
@@ -139,6 +153,15 @@ const fixture = vi.hoisted(() => {
     }
     cloneNode(): Node {
       return Object.assign(new Node(), { className: this.className });
+    }
+    toggleAttribute(name: string, force?: boolean) {
+      const enabled = force ?? (name === "hidden" ? !this.hidden : !(name in this.attributes));
+      if (enabled) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+      return enabled;
     }
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
@@ -158,7 +181,8 @@ const fixture = vi.hoisted(() => {
   };
   return { Node, card, disposed: vi.fn(), left: vi.fn(), opened: vi.fn() };
 });
-vi.mock("./modal.ts", () => ({
+vi.mock("./modal.ts", async (original) => ({
+  ...(await original<typeof import("./modal.ts")>()),
   createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
     const row = new fixture.Node();
     row.append(...actions.map(({ button }) => button));
@@ -180,14 +204,6 @@ vi.mock("./modal.ts", () => ({
   setFooterAction: (action: string, row: { dataset: Record<string, string> }) => {
     row.dataset.footerAction = action;
   },
-}));
-vi.mock("./buttonPresentation.ts", () => ({
-  presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
-    dispose() {},
-    element: button,
-    reason: new fixture.Node(),
-    update() {},
-  }),
 }));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
@@ -233,6 +249,7 @@ function setup(initial = false, liveOffer?: UpdateOffer) {
       HTMLElement: fixture.Node,
       Node: fixture.Node,
       clearTimeout,
+      getComputedStyle: () => ({}),
       performance,
       setTimeout,
     }),
@@ -293,6 +310,8 @@ it("constructs typed Cancel/Update now with synchronous offer notification and p
   expect(fixture.card.fit).toHaveBeenCalledOnce();
   expect(f.button("accept").textContent).toBe(labels.accept);
   expect(f.button("cancel").textContent).toBe(labels.cancel);
+  expect(f.button("accept").matches(".ui-standard-button")).toBe(true);
+  expect(f.button("cancel").matches(".ui-standard-button")).toBe(true);
   expect(fixture.opened).toHaveBeenCalledWith(
     expect.objectContaining({ focus: f.button("accept"), live: [fixture.card.close] }),
     fixture.card.card,
