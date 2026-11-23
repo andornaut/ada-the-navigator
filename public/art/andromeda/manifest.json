@@ -15673,7 +15673,7 @@
     },
     {
       "id": "backdrop-decoration-andromeda-1",
-      "path": "/art/andromeda/decoration-1.svg",
+      "path": "/art/andromeda/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -15681,11 +15681,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-andromeda-2",
-      "path": "/art/andromeda/decoration-2.svg",
+      "path": "/art/andromeda/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -15693,11 +15694,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-andromeda-3",
-      "path": "/art/andromeda/decoration-3.svg",
+      "path": "/art/andromeda/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -15705,7 +15707,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-retaliatorCargoHauler-0",

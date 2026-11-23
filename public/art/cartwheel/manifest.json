@@ -18012,7 +18012,7 @@
     },
     {
       "id": "backdrop-decoration-cartwheel-1",
-      "path": "/art/cartwheel/decoration-1.svg",
+      "path": "/art/cartwheel/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -18020,11 +18020,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-cartwheel-2",
-      "path": "/art/cartwheel/decoration-2.svg",
+      "path": "/art/cartwheel/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -18032,11 +18033,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-cartwheel-3",
-      "path": "/art/cartwheel/decoration-3.svg",
+      "path": "/art/cartwheel/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -18044,7 +18046,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-0",

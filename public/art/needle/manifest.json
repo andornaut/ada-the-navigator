@@ -16333,7 +16333,7 @@
     },
     {
       "id": "backdrop-decoration-needle-1",
-      "path": "/art/needle/decoration-1.svg",
+      "path": "/art/needle/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -16341,11 +16341,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-needle-2",
-      "path": "/art/needle/decoration-2.svg",
+      "path": "/art/needle/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -16353,11 +16354,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-needle-3",
-      "path": "/art/needle/decoration-3.svg",
+      "path": "/art/needle/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -16365,7 +16367,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliatorCargoHauler-0",

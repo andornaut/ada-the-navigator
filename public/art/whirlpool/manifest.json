@@ -5795,7 +5795,7 @@
     },
     {
       "id": "backdrop-decoration-whirlpool-1",
-      "path": "/art/whirlpool/decoration-1.svg",
+      "path": "/art/whirlpool/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -5803,11 +5803,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-whirlpool-2",
-      "path": "/art/whirlpool/decoration-2.svg",
+      "path": "/art/whirlpool/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -5815,11 +5816,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-whirlpool-3",
-      "path": "/art/whirlpool/decoration-3.svg",
+      "path": "/art/whirlpool/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -5827,7 +5829,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     }
   ],
   "whales": "/art/whales.json",

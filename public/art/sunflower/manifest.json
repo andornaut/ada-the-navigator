@@ -1285,7 +1285,7 @@
     },
     {
       "id": "backdrop-decoration-sunflower-1",
-      "path": "/art/sunflower/decoration-1.svg",
+      "path": "/art/sunflower/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1293,11 +1293,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-sunflower-2",
-      "path": "/art/sunflower/decoration-2.svg",
+      "path": "/art/sunflower/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1305,11 +1306,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-sunflower-3",
-      "path": "/art/sunflower/decoration-3.svg",
+      "path": "/art/sunflower/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1317,7 +1319,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     }
   ],
   "backdrop": "/art/sunflower/backdrop.json",

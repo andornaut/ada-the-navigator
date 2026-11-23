@@ -2,7 +2,9 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { type ManifestFile, replaceEntries } from "./manifest.ts";
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
+import { type ManifestFile, readManifest, replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 
 type GalaxyId = Exclude<ManifestFile, "core">;
@@ -69,23 +71,70 @@ export function writeDecorations(
     ring: palette.ring!,
   };
   const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-  const entries = decorationRecipe(galaxy).sprites.map((sprite, variant) => {
-    const path = `/art/${galaxy}/decoration-${variant + 1}.svg`;
-    writeFileSync(
-      `${art}${path.slice("/art/".length)}`,
-      svgText(decorationSvg(colours, galaxy, variant)),
-    );
-    return {
+  const prefix = `backdrop-decoration-${galaxy}-`;
+  const directory = `/art/${galaxy}/`;
+  const sheet = `${directory}decoration-sheet.svg`;
+  const frames = decorationRecipe(galaxy).sprites.map((sprite, variant) => ({
+    entry: {
       id: sprite.asset,
-      path,
+      path: `${directory}decoration-${variant + 1}.svg`,
       width: 1024,
       height: 768,
       kind: "backdrop-decoration",
       facing: "fixed",
       pivot: { x: 0.5, y: 0.5 },
-    };
+    },
+    svg: svgText(decorationSvg(colours, galaxy, variant)),
+  }));
+  const owns = (id: string) => id.startsWith(prefix);
+  const installed: readonly { id: string; path?: unknown; svgSheet?: unknown }[] =
+    readManifest(galaxy).assets;
+  const rows = installed.filter(({ id, path }) => owns(id) || path === sheet);
+  const write = (path: string, svg: string) => writeFileSync(art + path.slice("/art/".length), svg);
+
+  if (!rows.some(({ path, svgSheet }) => path === sheet || svgSheet === true)) {
+    for (const { entry, svg } of frames) write(entry.path, svg);
+    replaceEntries(
+      galaxy,
+      owns,
+      frames.map(({ entry }) => entry),
+    );
+    return;
+  }
+  if (
+    rows.length !== frames.length ||
+    rows.some(
+      ({ id, path, svgSheet }, index) =>
+        id !== frames[index]!.entry.id || path !== sheet || svgSheet !== true,
+    )
+  ) {
+    throw new Error(`Invalid ${galaxy} backdrop decoration sheet selection`);
+  }
+
+  const width = 2048;
+  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: width, widths: [width] }, [
+    {
+      value: sheet,
+      rectangles: frames.map(({ entry }) => ({ width: entry.width, height: entry.height })),
+    },
+  ])?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== frames.length) {
+    throw new Error(`Cannot pack ${galaxy} backdrop decorations`);
+  }
+  const members = frames.map(({ entry, svg }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
   });
-  replaceEntries(galaxy, (id) => id.startsWith(`backdrop-decoration-${galaxy}-`), entries);
+  write(
+    sheet,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${page.height}" viewBox="0 0 ${width} ${page.height}">${members.join("")}</svg>\n`,
+  );
+  replaceEntries(
+    galaxy,
+    owns,
+    frames.map(({ entry }) => ({ ...entry, path: sheet, svgSheet: true })),
+  );
 }
 
 type Colours = { body: string; lit: string; night: string; ring: string };

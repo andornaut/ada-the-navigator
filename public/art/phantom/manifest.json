@@ -1089,7 +1089,7 @@
     },
     {
       "id": "backdrop-decoration-phantom-1",
-      "path": "/art/phantom/decoration-1.svg",
+      "path": "/art/phantom/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1097,11 +1097,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-phantom-2",
-      "path": "/art/phantom/decoration-2.svg",
+      "path": "/art/phantom/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1109,11 +1110,12 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-phantom-3",
-      "path": "/art/phantom/decoration-3.svg",
+      "path": "/art/phantom/decoration-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -1121,7 +1123,8 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "craft-grower-0",
