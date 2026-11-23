@@ -334,11 +334,31 @@ describe("source-family manifest readiness", () => {
     f.cache.set(key, needle);
     f.events.emit(`filecomplete-json-${key}`);
     const hulls = (needle.assets as readonly Asset[]).filter(
-      (asset) => asset.svgSheet && asset.family === "needle" && galaxyLoadsAtOnce(asset),
+      (asset) => asset.family === "needle" && galaxyLoadsAtOnce(asset),
     );
     const paths = [...new Set(hulls.map((asset) => asset.path))];
-    expect(hulls).toHaveLength(144);
+    const hullIds = [
+      "capital",
+      "capitalCompact",
+      "capitalNarrow",
+      "fighter",
+      "frigate",
+      "frigateCompact",
+      "frigateNarrow",
+      "interceptor",
+      "retaliator",
+      "retaliatorCargoHauler",
+      "retaliatorMiningFreighter",
+      "swarm",
+    ].flatMap((body) =>
+      Array.from({ length: ENEMY_HEADINGS }, (_, heading) => `enemy-needle-${body}-${heading}`),
+    );
+    expect(hulls).toHaveLength(192);
+    expect(hulls.map(({ id }) => id).sort()).toEqual(hullIds.sort());
+    expect(hulls.every(({ svgSheet }) => svgSheet)).toBe(true);
     expect([...paths].sort()).toEqual([
+      "/art/enemies/retaliator-sheet.svg",
+      "/art/enemies/retaliatorMiningFreighter-sheet.svg",
       "/art/needle/enemies/capital-sheet-2.svg",
       "/art/needle/enemies/capital-sheet.svg",
       "/art/needle/enemies/fighter-sheet.svg",
