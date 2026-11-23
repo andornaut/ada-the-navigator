@@ -464,7 +464,7 @@ describe("back gesture", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
     page.dispatchEvent(new Event("pointerup"));
     history.state = null;
     page.dispatchEvent(new Event("popstate"));
@@ -478,7 +478,7 @@ describe("back gesture", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
     expect(history.pushState).not.toHaveBeenCalled();
     page.dispatchEvent(new Event("pointerup"));
     expect(history.pushState).toHaveBeenCalledOnce();
@@ -495,7 +495,7 @@ describe("back gesture", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
     page.dispatchEvent(new Event("pointerup"));
     page.dispatchEvent(new Event("popstate"));
     expect(backs).not.toHaveBeenCalled();
@@ -507,7 +507,7 @@ describe("back gesture", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
     page.dispatchEvent(new Event("pointerup"));
     pwa.setBackArmed(false);
     // Back pops the guard entry; the game hears nothing, no guard returns and the browser steps
@@ -529,7 +529,7 @@ describe("back gesture", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
     pwa.setBackArmed(false);
     Object.assign(navigator, { userActivation: { isActive: true } });
     pwa.setBackArmed(true);
@@ -566,7 +566,7 @@ describe("back gesture", () => {
       const pwa = await import("./index.ts");
       pwa.setupPhoneApp();
       const backs = vi.fn();
-      page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+      page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
       page.dispatchEvent(new Event("pointerup"));
       page.dispatchEvent(new Event("popstate"));
       expect(history.pushState).not.toHaveBeenCalled();

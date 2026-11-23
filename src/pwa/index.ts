@@ -56,11 +56,11 @@ import {
   updateStateActivity,
 } from "../loading/progress.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
-import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
+import { dispatchPhoneBack } from "./events.ts";
 import { presentInstallationFailure } from "./installationPresentation.ts";
 import { createUpdateOffer } from "./updateOffer.ts";
 
-export { PHONE_EVENTS } from "./events.ts";
+export { PHONE_BACK_PRESSED } from "./events.ts";
 export type { InstallOutcome } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 export {
   type InstallState,
@@ -171,7 +171,7 @@ function releasedBack(): void {
   }
 }
 
-// Keeps back on the game, as in Chibi: each back dispatches PHONE_EVENTS.backPressed on window.
+// Keeps back on the game, as in Chibi: each back dispatches PHONE_BACK_PRESSED on window.
 // Before the player's first input, while released, and where the browser cannot hand back to the
 // game, back is the browser's own. Read before the guard pushes any entry: an installed app that
 // cannot close its window keeps its own back, as in Archie, so back never leaves it on a blank
@@ -192,7 +192,7 @@ function guardBack(): void {
       history: guardHistory,
       onBack: () => {
         if (backArmed) {
-          dispatchPhoneEvent(window, PHONE_EVENTS.backPressed);
+          dispatchPhoneBack(window);
         } else {
           releasedBack();
         }

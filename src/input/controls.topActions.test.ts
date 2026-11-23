@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { PHONE_EVENTS } from "../pwa/events.ts";
+import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
 import {
   assertAdaActionBindings,
   bindAdaAction,
@@ -83,7 +83,7 @@ function actualLeaves(): string {
   });
   const listen = [
     'window.addEventListener("keydown", keyDown);',
-    "window.addEventListener(PHONE_EVENTS.backPressed, onBack);",
+    "window.addEventListener(PHONE_BACK_PRESSED, onBack);",
   ];
   const listeners = statements.filter((node) => listen.includes(node.getText(source)));
   const cleanup =
@@ -298,7 +298,7 @@ function fixture(
       EXIT_SHOWN_ATTRIBUTE,
       Element,
       HTMLElement: Element,
-      PHONE_EVENTS,
+      PHONE_BACK_PRESSED,
       SCROLL,
       achievements,
       assertAdaActionBindings,
@@ -379,7 +379,7 @@ function fixture(
     openButton,
     openNavigation,
     options,
-    phoneBack: () => document.defaultView.dispatchEvent(new Event(PHONE_EVENTS.backPressed)),
+    phoneBack: () => document.defaultView.dispatchEvent(new Event(PHONE_BACK_PRESSED)),
     root,
     setReady(value: boolean) {
       ready = value;

@@ -29,7 +29,7 @@ import type { ItemGain } from "../model/itemGains.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";
 import type { UseAction } from "../model/types.ts";
-import { PHONE_EVENTS } from "../pwa/events.ts";
+import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import {
   type AchievementEntry,
@@ -880,7 +880,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       reset();
     }
   };
-  window.addEventListener(PHONE_EVENTS.backPressed, onBack);
+  window.addEventListener(PHONE_BACK_PRESSED, onBack);
   window.addEventListener("keydown", keyDown);
   window.addEventListener("keyup", keyUp);
   window.addEventListener("blur", reset);
@@ -1002,7 +1002,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       for (const part of stickParts) {
         part.destroy();
       }
-      window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
+      window.removeEventListener(PHONE_BACK_PRESSED, onBack);
       for (const leave of leaveBack) {
         leave();
       }
