@@ -19,6 +19,9 @@ ${UI_SCOPE} .ada-pause-column{
   gap:${units(STACK_BUTTON_GAP)}
 }
 ${UI_SCOPE} .ada-pause-column > .ada-button{width:100%}
+${UI_SCOPE} .ada-pause-grid:has([data-action="pause-map"][hidden]) [data-action="pause-resume"]{
+  translate:calc(-50% - ${units(BUTTON_GAP / 2)})
+}
 @media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
   ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
 }
