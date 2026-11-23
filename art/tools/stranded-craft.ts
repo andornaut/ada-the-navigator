@@ -425,7 +425,7 @@ const lampBuoy = (lit: boolean) => (): Part[][] => [
       roof,
       roofSide,
     ),
-    part(craftBox(-0.8, side * 8.2, 1.1, 2.2), 4.2, 4.6, marker, markerDark),
+    part(craftBox(-0.8, side * 8.2, 1.1, 2.2), 4.2, 4.6, roof, roofSide),
   ]),
   [
     part(

@@ -377,9 +377,9 @@ const barge: Craft = {
         part(craftBox(u, 0, 10.5, 16), 1.5, 7, cream, creamSide, creamRear),
         part(craftBox(u, 0, 9, 14.4), 7, 7.6, leaf, leafSide),
         ...[-4.8, -1.6, 1.6, 4.8].flatMap((v) => [
-          cube(u - 2.6, v, 7.6, 1.6, tuft),
-          cube(u + 0.4, v, 7.6, 1.6, tuft),
-          cube(u + 3, v, 7.6, 1.4, tuft),
+          cube(u - 2.6, v, 7.6, 1.6, leaf),
+          cube(u + 0.4, v, 7.6, 1.6, leaf),
+          cube(u + 3, v, 7.6, 1.4, leaf),
         ]),
       ]),
       [

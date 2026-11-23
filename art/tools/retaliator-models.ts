@@ -106,10 +106,11 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         cargoPaint,
         bilateral([
           [6, -38],
-          [11, -33],
-          [13, -22],
+          [10, -34],
+          [12, -24],
           [16, -9],
-          [11, 9],
+          [14, 4],
+          [10, 9],
         ]),
         deck,
         10,
@@ -149,18 +150,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         deck,
         deck + 0.2,
         cargoPaint.saddle,
-      ),
-      // This coplanar seam shares the saddle's plan centre so it draws over the floor.
-      solid(
-        cargoPaint,
-        bilateral([
-          [8, 20.8],
-          [10, 22],
-          [8, 23.2],
-        ]),
-        deck + 0.2,
-        deck + 0.2,
-        cargoPaint.recess,
       ),
       solid(
         cargoPaint,
@@ -336,9 +325,20 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         ],
         10,
         10.6,
+        miningPaint.armor,
+      ),
+      surface(
+        [
+          [-10, 18.6],
+          [10, 18.6],
+          [13.2, 20.7],
+          [11.6, 21.5],
+          [-11.6, 21.5],
+          [-13.2, 20.7],
+        ],
+        10.6,
         miningPaint.recess,
       ),
-      ...insignia(-15, 3, 4.5, deck),
       ...turret,
     ],
     mouths: [

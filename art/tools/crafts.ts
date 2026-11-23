@@ -201,13 +201,30 @@ const sourceCrafts: Craft[] = [
           [12, 0],
         ];
         const plan = armour.map(([x, y]) => [side * x, y] as const);
+        const face: Plan = [
+          [12.5, -16],
+          [16.2, -14],
+          [17.6, 4.2],
+          [14.3, 10.4],
+          [10, 10.4],
+          [11.6, 4],
+          [13.3, -1],
+        ];
         return [
           {
             plan,
             z0: 5,
             z1: 7.5,
-            top: "#718bd0",
+            top: "#4c64a0",
             side: "#4c64a0",
+          },
+          {
+            plan: face.map(([x, y]) => [side * x, y] as const),
+            z0: 7.5,
+            z1: 7.5,
+            top: "#718bd0",
+            side: "#718bd0",
+            decal: true,
           },
           {
             plan: box(side * 15 - 2.8, -34, side * 15 + 2.8, -14),
@@ -220,8 +237,19 @@ const sourceCrafts: Craft[] = [
             plan: box(side * 15 - 2.4, -34, side * 15 + 2.4, -26),
             z0: 6.5,
             z1: 6.7,
-            top: "#d5e0eb",
-            side: "#d5e0eb",
+            top: "#718bd0",
+            side: "#4c64a0",
+            topDetail: {
+              color: "#d5e0eb",
+              plan: [
+                [0.28, 0.24],
+                [0.72, 0.24],
+                [0.78, 0.46],
+                [0.64, 0.66],
+                [0.36, 0.66],
+                [0.22, 0.46],
+              ],
+            },
           },
         ];
       }),
@@ -345,6 +373,12 @@ const sourceCrafts: Craft[] = [
           [19, 19],
           [16, 16],
         ];
+        const lamp: Plan = [
+          [16.05, 12.5],
+          [17.05, 13.65],
+          [17.85, 16.6],
+          [16.7, 15.5],
+        ];
         return [
           {
             plan: nacelle.map(([x, y]) => [side * x, y] as const),
@@ -357,8 +391,16 @@ const sourceCrafts: Craft[] = [
             plan: stripe.map(([x, y]) => [side * x, y] as const),
             z0: 4.5,
             z1: 5.2,
+            top: "#8170cc",
+            side: "#4d427d",
+          },
+          {
+            plan: lamp.map(([x, y]) => [side * x, y] as const),
+            z0: 5.2,
+            z1: 5.2,
             top: "#a9d9ff",
-            side: "#596ccc",
+            side: "#a9d9ff",
+            decal: true,
           },
         ];
       }),

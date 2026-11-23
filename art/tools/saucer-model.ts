@@ -34,7 +34,7 @@ export function saucer(): Part[][] {
   return scaleGroups(SAUCER_SCALE, [
     ...[-1, 1].map((s) => hcyl(-21, -3, s * 13, 4.8, 2.6, hull)),
     ...[-1, 1].map((s) => [
-      part(orientedBox(...uv(-20.6, s * 13), FWD, 1.2, 5), 2.4, 7.2, lav, lavSide),
+      part(orientedBox(...uv(-20.6, s * 13), FWD, 1.2, 5), 2.4, 7.2, lavSide, lavSide),
     ]),
     ...[-1, 1].map((s) => [disc(-3.2, s * 13, 1.5, 3.6, 6, blue, blueSide, 8)]),
     ...[-1, 1].map((s) => [

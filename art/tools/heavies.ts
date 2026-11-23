@@ -748,23 +748,16 @@ export const frigate: HeavyCraft = normalizeHeavy({
         [40, -64],
         [17, -70],
       ];
-      const slit: Plan = [
-        [9, -68],
-        [24, -66],
-        [27, -63],
-        [10, -65],
-      ];
       return [
-        { plan: side < 0 ? flipX(facet) : facet, top: coral },
-        { plan: side < 0 ? flipX(slit) : slit, top: coralRear },
-      ].map(({ plan, top }) => ({
-        plan,
-        z0: FRIGATE_Z + 3,
-        z1: FRIGATE_Z + 3,
-        on: "hammerhead",
-        top,
-        side: top,
-      }));
+        {
+          plan: side < 0 ? flipX(facet) : facet,
+          z0: FRIGATE_Z + 3,
+          z1: FRIGATE_Z + 3,
+          on: "hammerhead",
+          top: coral,
+          side: coral,
+        },
+      ];
     }),
     // Tapered deck recesses run inward from the sponsons toward the centreline.
     ...[-1, 1].map((side): HeavyPart => {
@@ -1026,7 +1019,14 @@ export const capital: HeavyCraft = normalizeHeavy({
       key: "keel",
     },
     {
-      plan: box(-10, -146, 10, -112),
+      plan: mirror([
+        [0, -146],
+        [6, -146],
+        [10, -141],
+        [8, -116],
+        [4, -112],
+        [0, -112],
+      ]),
       on: "keel",
       z0: CAPITAL_Z + 11,
       z1: CAPITAL_Z + 11,
@@ -1094,20 +1094,6 @@ export const capital: HeavyCraft = normalizeHeavy({
       z1: CAPITAL_Z,
       top: coralRear,
       side: coralRear,
-    },
-    {
-      plan: [
-        [17, 77],
-        [19, 77],
-        [16, 118],
-        [19, 125],
-        [14, 120],
-      ],
-      on: "mine-recess",
-      z0: CAPITAL_Z,
-      z1: CAPITAL_Z,
-      top: visorSide,
-      side: visorSide,
     },
   ],
   sizeRatio: 5,
@@ -1270,9 +1256,24 @@ export const gadget: HeavyCraft = normalizeHeavy({
       side: coralSide,
       rear: coralRear,
     },
-    // Two wing patches and a raised dorsal ridge from the tower to the stern.
-    { plan: box(-86, 14, -60, 36), z0: GADGET_Z, z1: GADGET_Z + 1, top: plate, side: coralSide },
-    { plan: box(60, 14, 86, 36), z0: GADGET_Z, z1: GADGET_Z + 1, top: plate, side: coralSide },
+    // Chamfered wing panels sit proud of the deck before the dorsal ridge.
+    ...[-1, 1].map((side): HeavyPart => {
+      const panel: Plan = [
+        [60, 20],
+        [68, 14],
+        [82, 17],
+        [86, 23],
+        [79, 34],
+        [65, 36],
+      ];
+      return {
+        plan: side < 0 ? flipX(panel) : panel,
+        z0: GADGET_Z,
+        z1: GADGET_Z + 1,
+        top: coral,
+        side: coralSide,
+      };
+    }),
     { plan: box(-5, 30, 5, 78), z0: GADGET_Z, z1: GADGET_Z + 3, top: coralRear, side: coralSide },
     ...insignia(0, -36, 8, GADGET_Z),
   ],
