@@ -72,7 +72,11 @@ it("extracts the exact named sibling while rejecting missing and duplicate alias
     vectorSheetSource(root([validLogical]), path, { ...part, svgSheetMember: "" }),
   ).toThrow(`Invalid frame ${id}`);
   expect(() =>
-    vectorSheetSource(root([frame({ ...authored, viewBox: "0 0 52.5 52.5" }, memberId)]), path, alias),
+    vectorSheetSource(
+      root([frame({ ...authored, viewBox: "0 0 52.5 52.5" }, memberId)]),
+      path,
+      alias,
+    ),
   ).toThrow(`Invalid frame ${id}`);
 });
 
