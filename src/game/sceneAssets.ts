@@ -177,10 +177,18 @@ function queueEagerSvgSheets(
         return;
       }
       try {
-        const sources = frames.map((asset): Asset => ({
-          ...asset,
-          path: vectorSheetSource(xml, path, asset),
-        }));
+        const sources = frames.map((asset): Asset => {
+          // Craft and debris roots already carry their display size inside the raw viewBox.
+          const size =
+            asset.craft || asset.debris
+              ? {
+                  ...asset,
+                  intrinsicHeight: asset.displayHeight ?? asset.height,
+                  intrinsicWidth: asset.displayWidth ?? asset.width,
+                }
+              : asset;
+          return { ...asset, path: vectorSheetSource(xml, path, size) };
+        });
         for (const asset of sources) {
           loadSvg(scene, asset);
         }

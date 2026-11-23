@@ -416,6 +416,29 @@ const [first, second, top] = [
 ] as const;
 
 describe("deferred core capital sheets", () => {
+  it("extracts craft and debris at their authored intrinsic size and raw viewBox", () => {
+    const f = fixture(undefined);
+    const craft = core.assets.find(({ id }) => id === "craft-miner-0") as Asset;
+    const stranded = cartwheel.assets.find(({ id }) => id === "craft-stranded-hauler-0") as Asset;
+    const debris = cartwheel.assets.find(({ id }) => id === "cartwheel-debris-0") as Asset;
+    const frames = [craft, stranded, debris];
+    f.queueCore(f.scene, () => true, vi.fn(), frames);
+    const document = {};
+    for (const asset of frames) {
+      const key = vectorSheetKey(asset.path);
+      f.documents.set(key, document);
+      f.events.emit(`filecomplete-xml-${key}`);
+      expect(f.extract).toHaveBeenCalledWith(document, asset.path, {
+        ...asset,
+        intrinsicHeight: asset.displayHeight,
+        intrinsicWidth: asset.displayWidth,
+      });
+    }
+    expect(f.svg.mock.calls).toEqual(
+      frames.map((asset) => [f.scene, { ...asset, path: `data:${asset.id}` }]),
+    );
+  });
+
   it("queues the existing hull sheet at boot and leaves packed parts for the flight", () => {
     const f = fixture(undefined);
     const hull = core.assets.find(({ id }) => id === "enemy-fighter-0") as Asset;
