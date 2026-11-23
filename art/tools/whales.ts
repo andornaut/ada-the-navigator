@@ -3,8 +3,9 @@
 // (art/whales.md).
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
-import { linkData, placeEntries, replaceEntries } from "./manifest.ts";
+import { linkData, placeEntries, readManifest, replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import {
   depth,
@@ -16,6 +17,7 @@ import {
   rotate,
   round,
 } from "./projection.ts";
+import { packWhaleHeading } from "./whale-sheets.ts";
 
 const HEADINGS = ENEMY_HEADINGS;
 const FRAMES = 8;
@@ -540,9 +542,23 @@ function canvasFor(frames: readonly Poly[][]): Canvas {
 const FILES = "/art/whales/{kind}-{heading}-{frame}.svg";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-mkdirSync(`${art}whales/`, { recursive: true });
+const sheetsOnly = process.argv.includes("--emit-whale-sheets");
 
-const entries: object[] = [];
+// The whale and adult also appear in the Phantom finale, so their frames belong to Core.
+const shared = ({ kind }: { kind: string }) => kind === "whale" || kind === "adult";
+const selected = new Map<string, { owner: "core" | "whirlpool"; row: object }>();
+if (!sheetsOnly) {
+  for (const owner of ["core", "whirlpool"] as const) {
+    for (const row of readManifest(owner).assets) {
+      if (!row.id.startsWith("whale-") || !("svgSheet" in row) || row.svgSheet !== true) continue;
+      if (selected.has(row.id)) throw new Error(`Duplicate whale sheet selection: ${row.id}`);
+      selected.set(row.id, { owner, row });
+    }
+  }
+}
+
+const outputs = new Map<string, string>();
+const entries: { id: string; kind: string }[] = [];
 let pixels = 0;
 const kinds = KINDS.map(({ idleMs, kind, model, stationaryHeading, swimMs, title }) => {
   const posed = Array.from({ length: FRAMES }, (_, f) =>
@@ -551,33 +567,46 @@ const kinds = KINDS.map(({ idleMs, kind, model, stationaryHeading, swimMs, title
   const headings = Array.from({ length: HEADINGS }, (_, yaw) => {
     const frames = posed.map((parts) => polygons(parts, yaw));
     const canvas = canvasFor(frames);
-    const files = frames.map((polys, f) => {
-      const path = FILES.replace("{kind}", kind)
-        .replace("{heading}", `${yaw}`)
-        .replace("{frame}", `${f}`);
-      writeFileSync(
-        `${art}${path.slice(5)}`,
-        svgText(svgFrame(`${title} ${yaw} frame ${f}`, canvas, polys)),
-      );
-      return path;
-    });
+    const display = { width: canvas.width, height: canvas.height };
+    const frame = { width: round(canvas.frameWidth), height: round(canvas.frameHeight) };
+    const sources = frames.map((polys, f) =>
+      svgText(svgFrame(`${title} ${yaw} frame ${f}`, canvas, polys)),
+    );
     const pivot = { x: r5(-canvas.x0 / canvas.frameWidth), y: r5(-canvas.y0 / canvas.frameHeight) };
-    files.forEach((path, f) => {
-      pixels += canvas.width * canvas.height;
-      entries.push({
-        id: `whale-${kind}-${yaw}-${f}`,
-        path,
-        width: canvas.width,
-        height: canvas.height,
-        displayWidth: canvas.width,
-        displayHeight: canvas.height,
-        facing: `world-${yaw}`,
-        directionIndex: yaw,
-        pivot,
-        kind,
-        loopFrame: f,
-      });
-    });
+    const group = `${kind}-${yaw}`;
+    const sheetPath = `/art/whales/${group}-sheet.svg`;
+    const rows = sources.map((_, f) => ({
+      id: `whale-${group}-${f}`,
+      path: FILES.replace("{kind}", kind).replace("{heading}", `${yaw}`).replace("{frame}", `${f}`),
+      width: display.width,
+      height: display.height,
+      displayWidth: display.width,
+      displayHeight: display.height,
+      facing: `world-${yaw}`,
+      directionIndex: yaw,
+      pivot,
+      kind,
+      loopFrame: f,
+    }));
+    if (sheetsOnly || rows.some(({ id }) => selected.has(id))) {
+      if (!sheetsOnly) {
+        for (const row of rows) {
+          const packed = { ...row, path: sheetPath, svgSheet: true };
+          const existing = selected.get(row.id);
+          const owner = shared(row) ? "core" : "whirlpool";
+          if (existing?.owner !== owner || !isDeepStrictEqual(existing.row, packed)) {
+            throw new Error(`Incomplete or mismatched whale sheet selection: ${row.id}`);
+          }
+          selected.delete(row.id);
+          entries.push(packed);
+        }
+      }
+      outputs.set(sheetPath, packWhaleHeading(group, display, frame, sources));
+    } else {
+      rows.forEach(({ path }, index) => outputs.set(path, sources[index]!));
+      entries.push(...rows);
+    }
+    pixels += rows.length * display.width * display.height;
     // The plan straight down onto the world plane, over every loop frame.
     const footprintRadius = Math.max(
       ...posed.flatMap((parts) =>
@@ -589,8 +618,8 @@ const kinds = KINDS.map(({ idleMs, kind, model, stationaryHeading, swimMs, title
     );
     return {
       index: yaw,
-      frame: { width: round(canvas.frameWidth), height: round(canvas.frameHeight) },
-      display: { width: canvas.width, height: canvas.height },
+      frame,
+      display,
       pivot: [pivot.x, pivot.y],
       footprintRadius: r2(footprintRadius),
     };
@@ -607,43 +636,48 @@ const kinds = KINDS.map(({ idleMs, kind, model, stationaryHeading, swimMs, title
   };
 });
 
-writeFileSync(
-  `${art}whales.json`,
-  json({
-    version: 1,
-    displayScale: DISPLAY,
-    headings: HEADINGS,
-    files: FILES,
-    palette: {
-      hull: PALETTES.adult.body,
-      throat: PALETTES.adult.belly,
-      fin: PALETTES.adult.fin,
-      glow: PALETTES.adult.glowDim,
-      glowCore: PALETTES.adult.glow,
-      calfHull: PALETTES.calf.body,
-      calfThroat: PALETTES.calf.belly,
-      calfFin: PALETTES.calf.fin,
-      calfGlow: PALETTES.calf.glowDim,
-      calfGlowCore: PALETTES.calf.glow,
-    },
-    reducedMotion: { frame: 0 },
-    family: FAMILY,
-    kinds,
-  }),
-);
-// The whale and the smaller adult are also Phantom finale allies, so their frames are shared
-// art in core; the calves are Whirlpool's alone. Whirlpool's entries go first, so no id is ever in
-// both.
-const SHARED = ["whale", "adult"];
-const shared = (entry: object) => SHARED.includes((entry as { kind: string }).kind);
-// In place in Whirlpool's manifest, which the station opens.
-replaceEntries(
-  "whirlpool",
-  (id) => id.startsWith("whale-"),
-  entries.filter((entry) => !shared(entry)) as { id: string }[],
-);
-placeEntries("core", "whale-", entries.filter(shared) as { id: string }[]);
+if (selected.size) {
+  throw new Error(`Unknown whale sheet selection: ${[...selected.keys()].join(", ")}`);
+}
+mkdirSync(`${art}whales/`, { recursive: true });
+for (const [path, text] of outputs) writeFileSync(`${art}${path.slice(5)}`, text);
 
-// Whirlpool's manifest names the whale data.
-linkData("whirlpool", { whales: "/art/whales.json" });
-console.log(`${entries.length} frames, ${(pixels / 1e6).toFixed(3)} megapixels rasterized`);
+if (sheetsOnly) {
+  console.log(`${kinds.length * HEADINGS} whale sheets`);
+} else {
+  writeFileSync(
+    `${art}whales.json`,
+    json({
+      version: 1,
+      displayScale: DISPLAY,
+      headings: HEADINGS,
+      files: FILES,
+      palette: {
+        hull: PALETTES.adult.body,
+        throat: PALETTES.adult.belly,
+        fin: PALETTES.adult.fin,
+        glow: PALETTES.adult.glowDim,
+        glowCore: PALETTES.adult.glow,
+        calfHull: PALETTES.calf.body,
+        calfThroat: PALETTES.calf.belly,
+        calfFin: PALETTES.calf.fin,
+        calfGlow: PALETTES.calf.glowDim,
+        calfGlowCore: PALETTES.calf.glow,
+      },
+      reducedMotion: { frame: 0 },
+      family: FAMILY,
+      kinds,
+    }),
+  );
+  // Update Whirlpool first so the two manifests keep exclusive ownership of each ID.
+  replaceEntries(
+    "whirlpool",
+    (id) => id.startsWith("whale-"),
+    entries.filter((entry) => !shared(entry)),
+  );
+  placeEntries("core", "whale-", entries.filter(shared));
+
+  // Whirlpool's manifest names the whale data.
+  linkData("whirlpool", { whales: "/art/whales.json" });
+  console.log(`${entries.length} frames, ${(pixels / 1e6).toFixed(3)} megapixels rasterized`);
+}
