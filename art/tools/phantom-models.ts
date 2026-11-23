@@ -7,15 +7,15 @@ export type DockState = "cracked" | "mended";
 // The sealed plating retains the decorative dock's world-plane anchor and span.
 export const SETTLEMENT_DOCK = { face: 36, mouth: 18 } as const;
 
-type Palette = readonly [highlight: string, midtone: string, shade: string, underside: string];
+type Palette = readonly [light: string, plane: string, shadow: string];
 type Section = readonly [x: number, y: number, z: number, major: number, minor: number];
 type Axis = "horizontal" | "vertical";
 
-const PEARL: Palette = ["#e2c2f9", "#b892d9", "#8262a8", "#51406f"];
-const IRIS: Palette = ["#c6c5ff", "#9299eb", "#6567bd", "#3f458a"];
-const PLUM: Palette = ["#f1aad9", "#c972ae", "#8a4f91", "#573759"];
-const JADE: Palette = ["#a3eee0", "#65c6b5", "#368d96", "#2d556b"];
-const CERULEAN: Palette = ["#a1dff2", "#65adc8", "#3e7ba2", "#334e79"];
+const PEARL: Palette = ["#c4a7dc", "#a487be", "#694f8d"];
+const IRIS: Palette = ["#a9b2ed", "#7d89c7", "#4e5794"];
+const PLUM: Palette = ["#d9a5cb", "#a876a7", "#694c7e"];
+const JADE: Palette = ["#8bd8c6", "#54aeaa", "#356e80"];
+const CERULEAN: Palette = ["#92c9db", "#589fb6", "#3e688c"];
 
 const point = ([x, y, z]: Point): Point => [...along(DOCK, y, -x), z];
 
@@ -23,7 +23,11 @@ function surface(points: Point[], color: string): Face {
   return { points: points.map(point), color };
 }
 
-function facingFaces([p, q, r, s]: [Point, Point, Point, Point], palette: Palette): Face[] {
+function facingFaces(
+  [p, q, r, s]: [Point, Point, Point, Point],
+  palette: Palette,
+  balancedLight: boolean,
+): Face[] {
   const a = point(p);
   const b = point(q);
   const c = point(r);
@@ -38,13 +42,19 @@ function facingFaces([p, q, r, s]: [Point, Point, Point, Point], palette: Palett
     u[2] * v[0] - u[0] * v[2],
     u[0] * v[1] - u[1] * v[0],
   ] as const;
-  const light = (-0.25 * normal[0] + 0.45 * normal[1] + normal[2]) / Math.hypot(...normal);
-  const color = palette[light > 0.84 ? 0 : light > 0.55 ? 1 : light > 0.05 ? 2 : 3];
+  const [xLight, yLight] = balancedLight ? [0.1, 0.1] : [-0.25, 0.45];
+  const light = (xLight * normal[0] + yLight * normal[1] + normal[2]) / Math.hypot(...normal);
+  const color = palette[light > 0.6 ? 0 : light > 0.12 ? 1 : 2];
   return [{ color, points }];
 }
 
 // Each sculpted shell follows a sequence of elliptical rings, which can lean or flare.
-function shell(sections: readonly Section[], axis: Axis, palette: Palette): Face[] {
+function shell(
+  sections: readonly Section[],
+  axis: Axis,
+  palette: Palette,
+  balancedLight = false,
+): Face[] {
   const sides = 8;
   const rings = sections.map(([x, y, z, major, minor]) =>
     Array.from({ length: sides }, (_, i): Point => {
@@ -60,13 +70,14 @@ function shell(sections: readonly Section[], axis: Axis, palette: Palette): Face
       ring.flatMap((a, i) => {
         const k = (i + 1) % sides;
         const next = rings[j + 1]!;
-        return facingFaces([a, ring[k]!, next[k]!, next[i]!], palette);
+        return facingFaces([a, ring[k]!, next[k]!, next[i]!], palette, balancedLight);
       }),
     )
     .sort((a, b) => depth(b.points) - depth(a.points));
 }
 
-function aperture(x: number, y: number, z: number, lit: boolean, color: string): Face {
+// Existing inset facets stay in the shell with the surrounding material finish.
+function inset(x: number, y: number, z: number, color: string): Face {
   return surface(
     [
       [x - 4.5, y, z - 2],
@@ -74,7 +85,19 @@ function aperture(x: number, y: number, z: number, lit: boolean, color: string):
       [x + 5, y, z + 2.1],
       [x + 1.6, y + 1, z - 2.5],
     ],
-    lit ? color : "#655a92",
+    color,
+  );
+}
+
+function faceLamp(x: number, y: number, z: number, lit: boolean): Face {
+  return surface(
+    [
+      [x - 2, y, z - 1.5],
+      [x + 2, y, z - 1.5],
+      [x + 2, y, z + 1.5],
+      [x - 2, y, z + 1.5],
+    ],
+    lit ? "#c3e7e7" : "#53618c",
   );
 }
 
@@ -92,14 +115,14 @@ function standardSeam(state: DockState): Face[] {
         [8, 36, 2.5],
         [10, 35, 6.5],
       ],
-      cracked ? "#3c244f" : "#effff6",
+      cracked ? "#302842" : "#c8e5d9",
     ),
   ];
 }
 
 function pronouncedSeam(state: DockState): Face[] {
   if (state === "cracked") {
-    const dark = "#281735";
+    const dark = "#302842";
     return [
       surface(
         [
@@ -152,7 +175,7 @@ function pronouncedSeam(state: DockState): Face[] {
       [9, 35, 9],
       [13, 33, 10],
     ],
-    "#efffe4",
+    "#c8e5d9",
   );
   return [outline, seal];
 }
@@ -181,13 +204,19 @@ function repairPlate(
       palette[1],
     ),
     surface([[-22, 18, 8], [-5, 26, 14], edge, [3, 36, 9], [-11, 31, 6]], palette[0]),
+    inset(-12, 33, 4, palette[1]),
+    inset(13, 33, 3, palette[1]),
     ...seam(state),
-    aperture(-12, 33, 4, lit, "#9df1eb"),
-    aperture(13, 33, 3, lit && !cracked, "#9df1eb"),
+    ...[-7.5, 7.5].map((x) => faceLamp(x, 29, 10, lit)),
   ];
 }
 
 export function homes(lit: boolean, state: DockState): Face[] {
+  const pods = [
+    { x: -22, palette: PLUM },
+    { x: 0, palette: PEARL },
+    { x: 22, palette: IRIS },
+  ];
   return [
     ...shell(
       [
@@ -200,35 +229,19 @@ export function homes(lit: boolean, state: DockState): Face[] {
       "vertical",
       IRIS,
     ),
-    ...shell(
-      [
-        [0, -10, 1, 14, 13],
-        [-3, -12, 11, 15, 13],
-        [-6, -10, 17, 10, 10],
-        [-2, -9, 23, 0, 0],
-      ],
-      "vertical",
-      PEARL,
-    ),
-    ...shell(
-      [
-        [15, 1, 1, 14, 12],
-        [19, -1, 7, 14.5, 11],
-        [22, -1, 13, 10, 8],
-        [26, -3, 18, 0, 0],
-      ],
-      "vertical",
-      IRIS,
-    ),
-    ...shell(
-      [
-        [-14, 7, 0, 13, 13],
-        [-20, 4, 7, 15, 12],
-        [-23, 1, 14, 11, 9],
-        [-28, -2, 19, 0, 0],
-      ],
-      "vertical",
-      PLUM,
+    ...pods.flatMap(({ x, palette }) =>
+      shell(
+        [
+          [x, -6, 1, 9.4, 10.5],
+          [x, -7, 8, 9.8, 11.5],
+          [x, -8, 17, 8, 8.5],
+          [x, -9, 22, 4, 4],
+          [x, -9, 22, 0, 0],
+        ],
+        "vertical",
+        palette,
+        true,
+      ),
     ),
     ...shell(
       [
@@ -238,31 +251,25 @@ export function homes(lit: boolean, state: DockState): Face[] {
         [9, 10, 21, 0, 0],
       ],
       "vertical",
-      PEARL,
+      IRIS,
     ),
-    aperture(-18, 15, 9, lit, "#ffcbeb"),
-    aperture(24, 9, 10, lit, "#bdf3fe"),
-    aperture(4, 23, 12, lit, "#ffd4f2"),
+    ...pods.map(({ x }) => faceLamp(x, -1, 15, lit)),
     ...repairPlate(IRIS, lit, state, pronouncedSeam),
   ];
 }
 
 export function harbour(lit: boolean, state: DockState): Face[] {
+  const starboard: readonly Section[] = [
+    [8, 6, 7, 18, 7],
+    [20, 3, 8.5, 17, 5],
+    [31, -2, 11, 12, 3],
+    [40, -10, 14, 0, 0],
+  ];
+  const port = starboard
+    .toReversed()
+    .map(([x, y, z, major, minor]): Section => [-x, y, z, major, minor]);
   return [
-    ...shell(
-      [
-        [-40, -6, 13, 0, 0],
-        [-31, 1, 10, 12, 3],
-        [-21, 4, 7, 18, 5],
-        [-8, 7, 6, 18, 6],
-        [5, 5, 8, 18, 8],
-        [19, 2, 10, 17, 5],
-        [31, -4, 13, 12, 3],
-        [40, -13, 15, 0, 0],
-      ],
-      "horizontal",
-      JADE,
-    ),
+    ...shell([...port, ...starboard], "horizontal", JADE, true),
     ...shell(
       [
         [0, 7, -4, 9, 20],
@@ -274,26 +281,7 @@ export function harbour(lit: boolean, state: DockState): Face[] {
       "vertical",
       CERULEAN,
     ),
-    surface(
-      [
-        [-38, -5, 13],
-        [-29, 10, 13],
-        [-18, 16, 11],
-        [-22, 6, 13],
-      ],
-      "#c88ac1",
-    ),
-    surface(
-      [
-        [38, -11, 15],
-        [28, 6, 15],
-        [17, 13, 12],
-        [21, 2, 14],
-      ],
-      "#dc9fce",
-    ),
-    aperture(-22, 13, 11, lit, "#cbfbea"),
-    aperture(24, 8, 14, lit, "#cbfbea"),
+    ...[-24, 24].map((x) => faceLamp(x, 8, 11, lit)),
     ...repairPlate(JADE, lit, state),
   ];
 }
@@ -346,7 +334,7 @@ export function signal(lit: boolean, state: DockState): Face[] {
       "vertical",
       lit ? JADE : CERULEAN,
     ),
-    aperture(1, 5, 36, lit, "#e9fffc"),
+    inset(1, 5, 36, (lit ? JADE : CERULEAN)[0]),
     ...repairPlate(PLUM, lit, state, pronouncedSeam),
   ];
 }

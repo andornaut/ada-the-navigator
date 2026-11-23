@@ -136,14 +136,13 @@ type Outpost = {
 };
 
 // Growers: leaf-green planters radiating like a sunflower head around glass domes.
-const leaf = "#9ccc5a";
-const leafSide = "#6c9a3a";
-const leafDark = "#3d705e";
+const leaf = "#759a67";
+const leafDark = "#345e55";
 const podFrame = "#637985";
 const podSide = "#3b5260";
-const growersGlass = "#c9ecb4";
-const growersGlassSide = "#8fbf78";
-const growersGlassCap = "#eefbe2";
+const growersGlass = "#a6c998";
+const growersGlassSide = "#7ca374";
+const growersGlassCap = "#cee0bc";
 const bloom = "#f6d76b";
 const bloomSide = "#c9a94a";
 const bloomDim = "#8a7a3e";
@@ -160,23 +159,32 @@ function growers(lit: boolean): Part[][] {
     const bed = orientedBox(mid * Math.cos(a), mid * Math.sin(a), a, 26, 9.5);
     const parts: Part[] = [
       { plan, z0: 0, z1: 4, top: podFrame, side: podSide },
-      { plan: bed, z0: 4, z1: 6.5, top: leafDark, side: leafSide },
+      { plan: bed, z0: 4, z1: 6.5, top: leaf, side: leafDark },
     ];
-    // Three illuminated growth chambers along the module.
+    // The chambers and service line keep their relief under one flat green finish.
     for (const t of [-8, 0, 8]) {
       const [tx, ty] = [(mid + t) * Math.cos(a), (mid + t) * Math.sin(a)];
-      parts.push({ plan: ngon(6, 2.6, tx, ty), z0: 5.5, z1: 8, top: growersGlass, side: leafDark });
+      parts.push({ plan: ngon(6, 2.6, tx, ty), z0: 5.5, z1: 8, top: leaf, side: leaf });
     }
-    // A nutrient line beside each row of growth chambers.
     const sx = mid * Math.cos(a) - 3.75 * Math.sin(a);
     const sy = mid * Math.sin(a) + 3.75 * Math.cos(a);
     parts.push({
       plan: orientedBox(sx, sy, a, 19, 1.6),
       z0: 6.5,
       z1: 7.05,
-      top: growersGlassCap,
-      side: leafSide,
+      top: leaf,
+      side: leaf,
     });
+    for (const offset of [-4.5, 4.5]) {
+      const centre = mid + offset;
+      parts.push({
+        plan: orientedBox(centre * Math.cos(a), centre * Math.sin(a), a, 6, 4),
+        z0: 6.5,
+        z1: 6.5,
+        top: growersGlass,
+        side: growersGlass,
+      });
+    }
     // Tip lamp, lit in frame A.
     const [lx, ly] = [(mid + 16.5) * Math.cos(a), (mid + 16.5) * Math.sin(a)];
     const lamp = lit ? bloom : bloomDim;
@@ -208,7 +216,7 @@ function growers(lit: boolean): Part[][] {
       1,
       5,
       ngon(12, 15.3, 2, 2, Math.PI / 12),
-      leaf,
+      growersGlassSide,
     ),
   ]);
   // Beacon: a sunflower-yellow lamp on a short mast above the big dome.
@@ -274,7 +282,6 @@ function manipulator(
   tip: readonly [number, number],
   height: number,
   lit: boolean,
-  taper = 1,
 ): Part[] {
   const [x, y] = base;
   const [ex, ey] = elbow;
@@ -284,7 +291,6 @@ function manipulator(
     { plan: ngon(8, 9, x, y), z0: 1, z1: 11, ...rigDark },
     {
       plan: ngon(6, 6, x, y),
-      cap: ngon(6, 6 * taper, x, y),
       z0: 11,
       z1: height,
       ...rigPlate,
@@ -304,37 +310,48 @@ function manipulator(
   ];
 }
 
+// A closed repair collar with side equipment flanking the crane's working opening.
 function workshop(lit: boolean): Part[][] {
-  const core = at(WORKSHOP_PIVOT, 0);
-  const port = at(8, -46);
-  const starboard = at(-2, 40);
-  const stern = at(-9, 8);
-  const tank = at(WORKSHOP_PIVOT + 4, 28);
-  const bus = ngon(6, 15, ...core, DOCK);
+  const beam = (
+    distance: number,
+    across: number,
+    length: number,
+    width: number,
+    z0: number,
+    z1: number,
+    material = rigPlate,
+  ): Part => ({
+    plan: orientedBox(...at(distance, across), DOCK, length, width),
+    z0,
+    z1,
+    ...material,
+  });
   const groups: Part[][] = [
     [
-      armLink(port, core, 2, 9, 8, rigPlate),
-      armLink(port, stern, 4, 10, 4, rigDark),
-      armLink(stern, starboard, 3, 11, 5, rigDark),
-      armLink(starboard, core, 2, 9, 8, rigPlate),
+      beam(-23, 0, 10, 80, 3, 14, rigDark),
+      beam(-21, 0, 14, 32, 9, 26),
+      beam(-23, 0, 10, 22, 26, 40, rigDark),
     ],
-    [
-      { plan: ngon(8, 11, ...stern), z0: 0, z1: 17, ...coolingMetal },
-      { plan: ngon(6, 8, ...stern), z0: 17, z1: 21, ...rigPlate },
-    ],
-    [
-      { plan: bus, z0: 0, z1: 12, ...rigDark },
-      { plan: ngon(6, 12, ...core, DOCK), z0: 12, z1: 17, ...rigPlate },
-      ...wallWindows(facing, 4, 7, 2, 2.5, bus, lit ? warm : yellowDark),
-    ],
-    [
-      armLink(core, tank, 4, 8, 5, rigDark),
-      { plan: ngon(8, 6, ...tank), z0: 3, z1: 14, ...coolingMetal },
-      { plan: ngon(8, 4.5, ...tank), z0: 14, z1: 16, ...rigPlate },
-    ],
-    manipulator(port, at(-8, -25), at(2, -13), 49, lit, 0.72),
-    manipulator(starboard, at(-12, 24), at(2, 12), 41, lit),
   ];
+  for (const side of [-1, 1]) {
+    const rail = side * 34;
+    groups.push([
+      beam(0, rail, 52, 12, 3, 15),
+      beam(-4, rail, 26, 22, 9, 23),
+      beam(-4, side * 43, 18, 11.6, 7, 16, rigDark),
+      ...[-10, 0].map((distance) => beam(distance, rail, 6, 5, 23, 23, coolingMetal)),
+    ]);
+  }
+  groups.push([
+    beam(23, 0, 12, 80, 3, 13, rigDark),
+    beam(28, 0, 14, 30, 0, 17),
+    ...[-5, 5].map((across) =>
+      beam(WORKSHOP_PIVOT + 3, across, 4, 5, 17, 17, {
+        top: lit ? warm : yellowDark,
+        side: rigPlate.side,
+      }),
+    ),
+  ]);
   return groups;
 }
 
@@ -433,8 +450,8 @@ function greenhouseRing(lit: boolean): Part[][] {
         plan: annulusSegment(a0, a1, RING_INNER, RING_OUTER),
         z0: 0,
         z1: RING_BASE,
-        top: cream,
-        side: creamSide,
+        top: "#8c9c83",
+        side: "#596e61",
       },
       {
         plan: annulusSegment(a0, a1, 63, 68),
@@ -443,7 +460,13 @@ function greenhouseRing(lit: boolean): Part[][] {
         top: growersGlass,
         side: growersGlassSide,
       },
-      { plan: annulusSegment(a0, a1, 64.7, 66.3), z0: 5.5, z1: 6.1, top: leaf, side: leafSide },
+      {
+        plan: annulusSegment(a0, a1, 64.7, 66.3),
+        z0: 5.5,
+        z1: 6.1,
+        top: growersGlass,
+        side: growersGlassSide,
+      },
     ]);
   }
   const lamp = lit ? bloom : bloomDim;
@@ -456,8 +479,8 @@ function greenhouseRing(lit: boolean): Part[][] {
         plan: ngon(12, 9.2, cx, cy, Math.PI / 12),
         z0: 0,
         z1: RING_BASE + 0.5,
-        top: cream,
-        side: creamSide,
+        top: "#8c9c83",
+        side: "#596e61",
       },
       ...dome(cx, cy, 8, RING_BASE + 0.5, growersGlass, growersGlassSide, growersGlassCap),
       {

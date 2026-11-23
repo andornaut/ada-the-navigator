@@ -16,15 +16,13 @@ const FRAME_MS = 150;
 const frame = { halfWidth: 176, above: 117, width: 352, height: 144 };
 const MODEL_SCALE = 1.25;
 
-type Ramp = readonly [string, string, string, string, string];
+type Ramp = readonly [string, string, string];
 
-const MANTLE: Ramp = ["#a8f6dc", "#6ed5c5", "#389d9e", "#246d80", "#203e60"];
-const PLATE: Ramp = ["#76d8ca", "#50b3b0", "#367b8e", "#315772", "#272f50"];
-const FIN: Ramp = ["#6cddca", "#449fa4", "#356d88", "#3b466c", "#2b2d4d"];
-const ARM: Ramp = ["#f091cf", "#c560ae", "#96468f", "#6e366c", "#4b2b57"];
-const JOINT: Ramp = ["#87d9d1", "#569da9", "#496e91", "#454b76", "#352f56"];
+const MANTLE: Ramp = ["#86ded1", "#419e9e", "#28536c"];
+const FIN: Ramp = ["#60b7b6", "#3c7d90", "#344868"];
+const ARM: Ramp = ["#e78cc5", "#b35ba2", "#693d72"];
+const ARM_CUFF: Ramp = ["#81c7bd", "#4b8d9c", "#385775"];
 const LIGHT = unit([-0.25, 0.45, 1]);
-const STEPS = [0.9, 0.7, 0.45, 0.15];
 
 function tone(ramp: Ramp, points: readonly Point[]): string {
   let [nx, ny, nz] = [0, 0, 0];
@@ -36,20 +34,20 @@ function tone(ramp: Ramp, points: readonly Point[]): string {
   }
   const normal = unit([nx, ny, nz]);
   const light = normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2];
-  const index = STEPS.findIndex((step) => light >= step);
-  return ramp[index < 0 ? 4 : index]!;
+  return ramp[light >= 0.72 ? 0 : light >= 0.22 ? 1 : 2];
 }
 
 // The mantle points up and right. Sections give the centre along, across and above
 // its world-plane axis, then half-width and half-height. Arm sections follow the sweep.
-const AXIS = -Math.PI / 4 - 0.12;
+const ARM_AXIS = -Math.PI / 4;
+const AXIS = ARM_AXIS - 0.12;
 type Section = readonly [along: number, across: number, z: number, width: number, height: number];
 type Quad = readonly [Point, Point, Point, Point];
 
-function world(along: number, across: number, z: number): Point {
+function world(along: number, across: number, z: number, axis: number): Point {
   return [
-    along * Math.cos(AXIS) - across * Math.sin(AXIS),
-    along * Math.sin(AXIS) + across * Math.cos(AXIS),
+    along * Math.cos(axis) - across * Math.sin(axis),
+    along * Math.sin(axis) + across * Math.cos(axis),
     z,
   ];
 }
@@ -58,6 +56,7 @@ function loft(
   sections: readonly Section[],
   sides: number,
   shade: (band: number, facet: number, points: Quad) => Face[],
+  axis = AXIS,
 ): Face[] {
   const rings = sections.map(([along, across, z, width, height], i) => {
     const previous = sections[Math.max(i - 1, 0)]!;
@@ -70,6 +69,7 @@ function loft(
         along - span * Math.sin(tangent),
         across + span * Math.cos(tangent),
         z + height * Math.sin(angle),
+        axis,
       );
     });
   });
@@ -99,51 +99,38 @@ const profile: readonly Section[] = [
   [74, -7, 40, 0, 0],
 ];
 
-const arms: readonly (readonly Section[])[] = [
-  [
-    [-17, -16, 32, 14, 11],
-    [-39, -28, 38, 13, 9],
-    [-54, -43, 44, 9, 7],
-    [-69, -50, 43, 7, 5],
-    [-87, -50, 45, 5, 4],
-    [-104, -42, 43, 3, 3],
-    [-108, -32, 39, 0, 0],
-  ],
-  [
-    [-25, 0, 24, 13, 10],
-    [-51, -4, 24, 12, 8],
-    [-68, -5, 22, 9, 6],
-    [-88, 1, 22, 7, 5],
-    [-105, 9, 28, 4, 3],
-    [-112, 25, 40, 0, 0],
-  ],
-  [
-    [-12, 18, 28, 16, 11],
-    [-34, 35, 32, 14, 9],
-    [-51, 49, 34, 10, 7],
-    [-68, 59, 40, 8, 5],
-    [-86, 60, 41, 6, 4],
-    [-98, 50, 41, 4, 3],
-    [-93, 46, 43, 0, 0],
-  ],
-];
+// Matching outer appendages share section stations, radii and elevations. The third is axial.
+function reflect(sections: readonly Section[]): Section[] {
+  return sections.map(([u, v, z, width, height]) => [u, -v, z, width, height]);
+}
 
-const fins: readonly (readonly Section[])[] = [
-  [
-    [39, -13, 35, 12, 8],
-    [31, -30, 35, 16, 7],
-    [13, -44, 38, 13, 5],
-    [-11, -49, 39, 7, 3],
-    [-30, -45, 37, 0, 0],
-  ],
-  [
-    [39, 13, 31, 12, 8],
-    [32, 26, 34, 17, 7],
-    [14, 42, 35, 15, 5],
-    [-9, 50, 35, 8, 3],
-    [-30, 47, 35, 0, 0],
-  ],
+const outerArm: readonly Section[] = [
+  [-15, -18, 32, 15, 11],
+  [-37, -31, 34, 13, 9],
+  [-54, -46, 38, 10, 7],
+  [-70, -53, 41, 8, 5],
+  [-87, -53, 43, 6, 4],
+  [-101, -46, 42, 4, 3],
+  [-106, -39, 41, 0, 0],
 ];
+const centreArm: readonly Section[] = [
+  [-25, 0, 25, 12, 9],
+  [-47, 0, 28, 10, 8],
+  [-69, 0, 32, 8, 6],
+  [-89, 0, 36, 6, 4],
+  [-104, 0, 39, 3, 2],
+  [-111, 0, 40, 0, 0],
+];
+const arms = [outerArm, centreArm, reflect(outerArm)];
+
+const outerFin: readonly Section[] = [
+  [39, -13, 33, 12, 8],
+  [32, -28, 35, 16, 7],
+  [14, -43, 37, 14, 5],
+  [-10, -49, 38, 7, 3],
+  [-30, -46, 36, 0, 0],
+];
+const fins = [outerFin, reflect(outerFin)];
 
 function tinted(ramp: Ramp, points: Quad): Face {
   return { color: tone(ramp, points), points };
@@ -153,28 +140,29 @@ function mix(a: Point, b: Point, t: number): Point {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
-function inlay(points: Quad, color: string): Face {
-  const [a, b, c, d] = points;
+function facePanel(
+  [a, b, c, d]: Quad,
+  length: number,
+  width: number,
+  offset: number,
+  color: string,
+): Face {
+  const distance = (p: Point, q: Point) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+  const axis = distance(mix(a, b, 0.5), mix(d, c, 0.5));
+  const span = distance(mix(a, d, 0.5), mix(b, c, 0.5));
+  const along = (n: number) => 0.5 + n / axis;
+  const across = (n: number) => 0.5 + n / span;
+  const at = (u: number, v: number) => mix(mix(a, d, along(u)), mix(b, c, along(u)), across(v));
+  const lo = offset - length / 2;
+  const hi = offset + length / 2;
   return {
     color,
-    points: [mix(a, b, 0.24), mix(a, b, 0.48), mix(d, c, 0.68), mix(d, c, 0.38)].map(
-      (point, i, corners) => mix(point, corners[3 - i]!, 0.17),
-    ),
+    points: [at(lo, -width / 2), at(lo, width / 2), at(hi, width / 2), at(hi, -width / 2)],
   };
 }
 
-function habitationLights([a, b, c, d]: Quad): Face[] {
-  const onFacet = (along: number, across: number) =>
-    mix(mix(a, d, along), mix(b, c, along), across);
-  return [0.13, 0.42, 0.71].map((start) => ({
-    color: "#ffe5b9",
-    points: [
-      onFacet(start, 0.27),
-      onFacet(start, 0.73),
-      onFacet(start + 0.15, 0.73),
-      onFacet(start + 0.15, 0.27),
-    ],
-  }));
+function habitationLights(points: Quad): Face[] {
+  return [-3.8, 0, 3.8].map((offset) => facePanel(points, 2.3, 2.4, offset, "#ffe5b9"));
 }
 
 const WAVE = [
@@ -189,33 +177,26 @@ const WAVE = [
 ];
 
 function drawStation(rotation: number): Face[] {
-  const limbs = arms.map((arm, index) =>
-    loft(arm, 8, (band, facet, points) => {
-      const shell = tinted(band % 2 && facet < 5 ? JOINT : ARM, points);
-      // The inner face of the far arm carries three fixed habitation lights.
-      return index === 0 && band === 3 && facet === 3
-        ? [shell, ...habitationLights(points)]
-        : [shell];
-    }),
+  const limbs = arms.map((arm) =>
+    loft(
+      arm,
+      8,
+      (band, facet, points) => {
+        const shell = tinted(band === 1 ? ARM_CUFF : ARM, points);
+        return band === 1 && facet === 2 ? [shell, ...habitationLights(points)] : [shell];
+      },
+      ARM_AXIS,
+    ),
   );
-  const flanks = fins.map((fin, index) =>
-    loft(fin, 8, (band, facet, points) => {
-      const shell = tinted(band === 2 && facet < 5 ? ARM : FIN, points);
-      if (index === 1 && band === 0 && facet === 2) {
-        return [shell, ...habitationLights(points)];
-      }
-      return facet === 2 && (band === 1 || band === 3)
-        ? [shell, inlay(points, "#9ddbcc")]
-        : [shell];
-    }),
+  const flanks = fins.map((fin) =>
+    loft(fin, 8, (_band, _facet, points) => [tinted(FIN, points)], ARM_AXIS),
   );
   const mantle = loft(profile, 12, (band, facet, points) => {
-    const shell = tinted(facet === 1 || facet === 5 || band === 0 ? PLATE : MANTLE, points);
-    // Fixed warm windows sit between the moving mantle inlays.
+    const shell = tinted(MANTLE, points);
     if ((band === 2 || band === 4) && facet === 3) return [shell, ...habitationLights(points)];
-    if (band < 1 || band > 5 || (facet !== 1 && facet !== 4 && facet !== 5)) return [shell];
-    const color = WAVE[(rotation + band + 2 * facet) % ROTATION_FRAMES]!;
-    return [shell, inlay(points, color)];
+    if (band < 1 || band > 5 || facet !== 1) return [shell];
+    const color = WAVE[(rotation + band) % ROTATION_FRAMES]!;
+    return [shell, facePanel(points, 12, 3.5, 0, color)];
   });
 
   // Far limbs and fin root behind the mantle. The near fin overlaps the arm root.

@@ -1,4 +1,4 @@
-import type { Face } from "./crafts.ts";
+import { DISPLAY_SCALE, type Face } from "./crafts.ts";
 import { preparedStationHullSvg } from "./heavies.ts";
 import { ENEMY_HEADINGS, type Point, projectAt, rotate } from "./projection.ts";
 import { cameraFaces, concept, type Model, ringFaces } from "./station-model.ts";
@@ -7,8 +7,7 @@ type Sphere = Model["bodies"][number];
 type Ring = NonNullable<Model["ring"]>;
 type Palette = {
   dark: string;
-  armor: string;
-  alternate: string;
+  planes: readonly [string, string, string];
   seam: string;
   light: string;
   signal: string;
@@ -17,16 +16,14 @@ type Layer = { faces: readonly Face[]; mask?: string };
 
 const armored: Palette = {
   dark: "#182139",
-  armor: "#7788a8",
-  alternate: "#777b9c",
+  planes: ["#38445e", "#505d79", "#66738f"],
   seam: "#202c49",
   light: "#dbeaff",
   signal: "#a2bbdf",
 };
 const pods: Palette = {
   dark: "#15302e",
-  armor: "#67978e",
-  alternate: "#6b999b",
+  planes: ["#284547", "#3c5c5d", "#557772"],
   seam: "#233e43",
   light: "#dceff0",
   signal: "#96c9c5",
@@ -44,23 +41,31 @@ const view: Point = unit([1, 1, 1]);
 const lamp: Point = unit(add(scale(-0.39, right), add(scale(-0.51, down), scale(0.72, view))));
 const rotateTo = (yaw: number, p: Point) => rotate(ENEMY_HEADINGS, yaw, p);
 const fromReference = ([x, y, z]: Point): Point => [y, -x, z];
-const clamp = (value: number) => Math.min(1, Math.max(0, value));
-const rgb = (hex: string) =>
-  [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16));
-const mix = (a: string, b: string, k: number) =>
-  "#" +
-  rgb(a)
-    .map((channel, index) =>
-      Math.round(channel + (rgb(b)[index]! - channel) * clamp(k))
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("");
 const sample = (from: number, to: number, step = 3) => {
   const count = Math.max(1, Math.ceil(Math.abs(to - from) / step));
   return Array.from({ length: count + 1 }, (_, i) => from + ((to - from) * i) / count);
 };
-function spherePaint(yaw: number, body: Sphere, small: boolean, ordinal: number): Face[] {
+// Angles are model degrees. Every bank repeats at fixed pitch and shares its reflected latitude.
+export const stationLightPattern = {
+  sphere: {
+    service: { centres: [0, 90, 180, 270], latitudes: [-25, 25], count: 6, pitch: 8 },
+    outer: { centres: [45, 135, 225, 315], latitudes: [-50, 50], count: 3, pitch: 8 },
+    coverage: [
+      { centres: [0, 90, 180, 270], latitudes: [-9, 9], count: 6, pitch: 15 },
+      { centres: [45, 135, 225, 315], latitudes: [-38, 38], count: 5, pitch: 18 },
+    ],
+  },
+  pods: { centres: [0, 180], latitudes: [-24, 24], count: 3, pitch: 7 },
+  rail: { centres: [90, 210, 330], count: 3, pitch: 5 },
+} as const;
+
+function spherePaint(
+  yaw: number,
+  body: Sphere,
+  small: boolean,
+  ordinal: number,
+  frame: number,
+): Face[] {
   const palette = small ? pods : armored;
   const angle = rad(small ? (-Math.asin(concept.ringPlaneRatio) * 180) / Math.PI : 20);
   const roll = rad(small ? concept.ringRoll : -23);
@@ -143,34 +148,76 @@ function spherePaint(yaw: number, body: Sphere, small: boolean, ordinal: number)
     const lo = bands[row]!,
       hi = bands[row + 1]!;
     const latitude = (lo + hi) / 2;
-    const material =
-      Math.abs(latitude) > 23 && Math.abs(latitude) < 55 ? palette.alternate : palette.armor;
     for (let left = -135; left < 225; left += panelWidth) {
-      const light = (dot(normal(left + panelWidth / 2, latitude), lamp) + 1) / 2;
-      const shade = [0.24, 0.36, 0.49, 0.65, 0.81][Math.min(4, Math.floor(light * 5))]!;
-      const color = mix(palette.dark, material, shade);
+      const light = dot(normal(left + panelWidth / 2, latitude), lamp);
+      const color = palette.planes[light > 0.43 ? 2 : light > -0.2 ? 1 : 0];
       fill(left, left + panelWidth + 0.16, lo, Math.min(90, hi + 0.16), color, true);
     }
   }
+
+  // Place a hard-edged native pixel block at each authored window's projected centre.
+  // The lift back through the screen plane keeps the existing hull projection and occlusion.
+  const pivot = frame / 2;
+  const [cx, cy] = projectAt(pivot, pivot, centre);
+  const projection = Math.sqrt(1.5);
+  const pixelWindow = (
+    longitude: number,
+    latitude: number,
+    [w, h]: readonly [number, number],
+    color: string,
+  ) => {
+    const outward = normal(longitude, latitude);
+    const facing = dot(outward, view);
+    if (facing < 0.22) return;
+    const point = add(centre, scale(body.radius, outward));
+    const [x, y] = projectAt(pivot, pivot, point);
+    const left = Math.round(x * DISPLAY_SCALE - w / 2);
+    const top = Math.round(y * DISPLAY_SCALE - h / 2);
+    const corners = [
+      [left, top],
+      [left + w, top],
+      [left + w, top + h],
+      [left, top + h],
+    ];
+    // Do not overhang the sphere at the silhouette when rounding near the limb.
+    const radius = body.radius * projection - 0.5;
+    if (
+      corners.some(
+        ([u, v]) => Math.hypot(u! / DISPLAY_SCALE - cx, v! / DISPLAY_SCALE - cy) > radius,
+      )
+    )
+      return;
+    faces.push({
+      color,
+      points: corners.map(([u, v]) =>
+        add(
+          point,
+          add(
+            scale((u! / DISPLAY_SCALE - x) / projection, right),
+            scale((v! / DISPLAY_SCALE - y) / projection, down),
+          ),
+        ),
+      ),
+    });
+  };
 
   const windows = (
     center: number,
     latitude: number,
     count: number,
     pitch: number,
-    width: number,
-    height: number,
+    pixels: readonly [number, number],
     color: string,
-    trench = false,
+    trenchWidth = 0,
   ) => {
     const first = center - ((count - 1) * pitch) / 2;
-    if (trench) {
-      const half = ((count - 1) * pitch) / 2 + width / 2 + 4;
+    if (trenchWidth > 0) {
+      const half = ((count - 1) * pitch) / 2 + trenchWidth / 2 + 4;
       fill(center - half, center + half, latitude - 2.4, latitude + 2.4, palette.seam);
     }
     for (let i = 0; i < count; i++) {
       const lon = first + i * pitch;
-      fill(lon - width / 2, lon + width / 2, latitude - height / 2, latitude + height / 2, color);
+      pixelWindow(lon, latitude, pixels, color);
     }
   };
   if (small) {
@@ -178,18 +225,31 @@ function spherePaint(yaw: number, body: Sphere, small: boolean, ordinal: number)
       fill(from, from + 180, -4.6, 4.6, "#193039");
       fill(from, from + 180, -1.1, 1.1, "#aec0c7");
     }
-    // Each pod repeats the same centered bank on the outer and inner axes.
-    for (const center of [0, 180]) windows(center, 24, 3, 7, 3.9, 1.9, palette.light);
-  } else {
-    // Paired inset arcs share the panel axis. The shorter service run stays quiet.
-    for (const center of [0, 180]) {
-      windows(center, 25, 12, 9, 4.2, 1.2, palette.light, true);
-      windows(center, -25, 10, 9, 4.2, 1.2, palette.light, true);
-      windows(center, -50, 5, 8, 3.8, 1.25, palette.signal);
+    const { centres, latitudes, count, pitch } = stationLightPattern.pods;
+    for (const center of centres) {
+      for (const latitude of latitudes)
+        windows(center, latitude, count, pitch, [2, 1], palette.light);
     }
-    // Sparse banks on the open armor, staggered off the main service runs.
-    for (const center of [45, 135, 225, 315]) windows(center, 42, 2, 8, 2.6, 1.05, palette.signal);
-    for (const center of [90, 270]) windows(center, -5, 3, 7, 2.7, 1.1, palette.light);
+  } else {
+    const { service, outer, coverage } = stationLightPattern.sphere;
+    for (const center of service.centres) {
+      for (const latitude of service.latitudes) {
+        windows(center, latitude, service.count, service.pitch, [4, 2], palette.light, 4.2);
+      }
+    }
+    for (const center of outer.centres) {
+      for (const latitude of outer.latitudes) {
+        windows(center, latitude, outer.count, outer.pitch, [2, 1], palette.signal);
+      }
+    }
+    // Small square cells on continuous latitude runs fill the open armor between service banks.
+    for (const { centres, latitudes, count, pitch } of coverage) {
+      for (const center of centres) {
+        for (const latitude of latitudes) {
+          windows(center, latitude, count, pitch, [2, 2], "#bfd8f2");
+        }
+      }
+    }
   }
   return faces;
 }
@@ -217,11 +277,25 @@ function railPaint(ring: Ring, yaw: number): Face[] {
   const near = (Math.atan2(dot(basis[1]!, view), dot(basis[0]!, view)) * 180) / Math.PI;
   patch(near - 90, near + 90, -0.9, 0.9, "#4a7973");
   patch(near + 90, near + 270, -0.9, 0.9, "#34585d");
-  // Three equal banks sit on the bisectors of the open spans.
-  for (const angle of [90, 210, 330]) {
-    for (const offset of [-5, 0, 5]) {
-      const center = angle + offset;
-      patch(center - 1.4, center + 1.4, 0.28, 0.53, "#acd3d5");
+  const { centres, count, pitch } = stationLightPattern.rail;
+  for (const bank of centres) {
+    for (let i = 0; i < count; i++) {
+      const angle = bank + (i - (count - 1) / 2) * pitch;
+      const a = rad(angle);
+      const outward = add(scale(Math.cos(a), basis[0]!), scale(Math.sin(a), basis[1]!));
+      const tangent = add(scale(-Math.sin(a), basis[0]!), scale(Math.cos(a), basis[1]!));
+      const centre = point(ring.radius + 0.4 * ring.halfWidth, angle);
+      const x = scale(ring.radius * rad(1.05), tangent);
+      const y = scale(ring.halfWidth * 0.16, outward);
+      faces.push({
+        color: "#acd3d5",
+        points: [
+          sub(sub(centre, x), y),
+          sub(add(centre, x), y),
+          add(add(centre, x), y),
+          add(sub(centre, x), y),
+        ],
+      });
     }
   }
   return faces;
@@ -251,7 +325,7 @@ export function paintedStationHull(model: Model, frame: number, yaw: number, tit
   const bodyLayers = model.bodies
     .map((body, ordinal) => ({
       depth: dot(rotateTo(yaw, body.centre), view),
-      faces: spherePaint(yaw, body, Boolean(model.ring), ordinal),
+      faces: spherePaint(yaw, body, Boolean(model.ring), ordinal, frame),
     }))
     .sort((a, b) => a.depth - b.depth);
   const layers: Layer[] = [

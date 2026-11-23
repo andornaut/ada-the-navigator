@@ -65,37 +65,6 @@ const shift = (dx: number, dy: number, part: Part): Part => ({
 const degrees = (d: number) => (d * Math.PI) / 180;
 const polar = (angle: number, r: number) => [Math.cos(angle) * r, Math.sin(angle) * r] as const;
 
-// A cottage: cream walls with warm windows on facing walls and a two-step slate-blue roof.
-function cottage(
-  cx: number,
-  cy: number,
-  angle: number,
-  length: number,
-  width: number,
-  z: number,
-  height: number,
-): Part[] {
-  const walls = orientedBox(cx, cy, angle, length, width);
-  return [
-    { plan: walls, z0: z, z1: z + height, top: cream, side: creamSide },
-    ...wallWindows(facing, z + height * 0.35, z + height * 0.7, 2, 2.4, walls),
-    {
-      plan: orientedBox(cx, cy, angle, length + 1.5, width + 1.5),
-      z0: z + height,
-      z1: z + height + 2,
-      top: a.roof,
-      side: a.roofSide,
-    },
-    {
-      plan: orientedBox(cx, cy, angle, length + 1.5, width * 0.45),
-      z0: z + height + 2,
-      z1: z + height + 4,
-      top: a.roof,
-      side: a.roofSide,
-    },
-  ];
-}
-
 // A pearl float: a deck with a lighter inset top.
 function float(n: number, r: number, height: number, cx = 0, cy = 0): Part[] {
   return [
@@ -121,12 +90,20 @@ const orbitalBox = (distance: number, across: number, length: number, width: num
   orientedBox(...along(DOCK, distance, across), DOCK, length, width);
 
 // The cross-truss carries separate solar leaves, with the bus visible through the gaps.
-function solarLeaf(distance: number, across: number, length: number, width: number, z: number) {
+function solarLeaf(
+  distance: number,
+  across: number,
+  length: number,
+  width: number,
+  z: number,
+  panes = 3,
+) {
+  const step = length / panes;
   return [
     part(orbitalBox(distance, across, length, width), z, z + 1.3, ...truss),
-    ...[-1, 0, 1].map((row) =>
+    ...Array.from({ length: panes }, (_, row) =>
       part(
-        orbitalBox(distance + (row * length) / 3, across, length / 3 - 0.8, width - 1.3),
+        orbitalBox(distance + (row - (panes - 1) / 2) * step, across, step - 0.8, width - 1.3),
         z + 1.3,
         z + 1.7,
         ...cells,
@@ -144,6 +121,7 @@ function habitat(
   z: number,
   height: number,
   casing: readonly [string, string],
+  regularWindows = false,
 ): Part[] {
   const u = length / 2;
   const v = width / 2;
@@ -159,7 +137,11 @@ function habitat(
   ]);
   return [
     part(walls, z, z + height, ...alloy),
-    ...wallWindows(facing, z + 3, z + 6, 2, 2.8, walls),
+    ...(regularWindows
+      ? [-4.5, 0, 4.5].map((offset) =>
+          part(orbitalBox(distance + u + 0.2, across + offset, 0.4, 2.6), z + 3, z + 6, warm, warm),
+        )
+      : wallWindows(facing, z + 3, z + 6, 2, 2.8, walls)),
     part(
       orbitalBox(distance, across, length - 5, width - 5),
       z + height,
@@ -173,67 +155,36 @@ export const SCHOOL_LEVELS = [4.6] as const;
 
 const STATION_APPROACH = 90;
 
-// An occupied orbital complex with a cross-truss, a raised concourse and a sealed service spur.
+// Both solar wings and the paired pressure modules reflect across the sealed contact axis.
+const SOLAR_OFFSET = 36;
+const HABITAT_OFFSET = 19;
+
 export function station(lit: boolean): Part[][] {
   const groups: Part[][] = [
-    [
-      part(orbitalBox(0, 0, 3, 126), 3, 7, ...truss),
-      part(orbitalBox(-5, 0, 2, 126), 5, 8, ...alloy),
-      part(orbitalBox(5, 0, 2, 126), 5, 8, ...alloy),
-    ],
+    [part(orbitalBox(0, 0, 10, 90), 3, 7, ...truss), part(orbitalBox(0, 0, 8, 90), 7, 8, ...alloy)],
     [
       part(orbitalBox(5, 0, 76, 24), 0, 10, ...truss),
-      part(orbitalBox(-15, 0, 44, 32), 9, 14, ...alloy),
+      part(orbitalBox(-6, 0, 54, 32), 9, 14, ...alloy),
     ],
-    [
-      part(orbitalBox(-23, -20, 8, 29), 6, 11, ...truss),
-      part(orbitalBox(-25, -17, 8, 16), 17, 21, ...alloy),
-      ...habitat(-23, -30, 22, 19, 11, 13, lilac),
-      part(orbitalBox(-25, -36, 3, 3), 26, 37, ...truss),
-      part(orbitalBox(-25, -24, 3, 3), 26, 37, ...truss),
-      part(orbitalBox(-25, -30, 4, 17), 36, 39, ...alloy),
-      part(orbitalBox(-23, -30, 1, 9), 38, 43, ...ice),
-    ],
-    habitat(-19, 0, 32, 25, 14, 20, ice),
-    habitat(18, 22, 29, 24, 8, 14, lilac),
-    habitat(21, -23, 37, 24, 8, 17, ice),
-    habitat(29, 0, 24, 22, 10, 10, lilac),
+    habitat(-21, 0, 34, 27, 14, 20, ice, true),
+    habitat(27, 0, 24, 24, 10, 12, ice, true),
   ];
   for (const side of [-1, 1]) {
-    const across = side * 54;
-    groups.push(
-      [
-        part(orbitalBox(-4, across, 60, 3), 6, 9, ...alloy),
-        ...solarLeaf(-21, across - side, 26, 20, 9),
-        ...solarLeaf(17, across - side, 18, 20, 9),
-        part(orbitalBox(-21, across - side, 25, 1.2), 10.7, 11, ...ice),
-        part(orbitalBox(17, across - side, 17, 1.2), 10.7, 11, ...ice),
-      ],
-      [cube(...along(DOCK, 5, side * 61), 7, 3.8, lit ? blue : blueDim)],
-    );
+    const across = side * SOLAR_OFFSET;
+    groups.push(habitat(7, side * HABITAT_OFFSET, 28, 22, 8, 14, lilac, true), [
+      part(orbitalBox(0, across, 52, 3), 6, 9, ...alloy),
+      ...[-16, 16].flatMap((distance) => solarLeaf(distance, across, 21, 17, 9, 2)),
+      cube(...along(DOCK, 0, side * 44), 7, 3.8, lit ? blue : blueDim),
+    ]);
   }
-
   groups.push([
-    ...[-5, 0, 5].map((offset) => part(orbitalBox(-19 + offset, 0, 1.6, 16), 36, 36.5, ...truss)),
     part(orbitalBox(-24, 0, 4, 4), 36, 47, ...truss),
     part(orbitalBox(-24, 0, 4, 17), 46, 49, ...alloy),
     cube(...along(DOCK, -24, 0), 49, 4, lit ? blue : blueDim),
   ]);
-  // The school and its pier keep their site to port. Grow the station mainly to starboard.
-  const [dx, dy] = along(DOCK, 0, -22);
-  const body = scaleGroups(1.44, groups).map((group) => group.map((part) => shift(dx, dy, part)));
-
-  // Expand the pressure complex while keeping the sealed approach at its existing contact.
-  const boom = orientedPlan(0, 0, DOCK, [
-    [44, -28],
-    [58, -23],
-    [76, -7],
-    [85, -7],
-    [85, 7],
-    [76, 7],
-    [58, 2],
-    [44, -8],
-  ]);
+  const body = scaleGroups(1.44, groups);
+  // Keep the exact sealed lip and approach, connected by a straight centred spine.
+  const boom = orbitalBox(60, 0, 50, 14);
   const foot = orientedPlan(...along(DOCK, STATION_APPROACH, 0), DOCK, [
     [-7, -8],
     [-5, -13],
@@ -249,19 +200,6 @@ export function station(lit: boolean): Part[][] {
     part(orbitalBox(STATION_APPROACH - 0.125, 0, 0.25, width), z0, z1, color, color);
   body.push([
     part(boom, 1, 9, ...truss),
-    part(
-      orientedPlan(0, 0, DOCK, [
-        [49, -23],
-        [65, -11],
-        [80, -2],
-        [79, 3],
-        [64, -5],
-        [49, -15],
-      ]),
-      9,
-      11,
-      ...ice,
-    ),
     part(foot, -2, 10, ...alloy),
     contactPanel(13, 0, 8.3, "#526381"),
     contactPanel(11, 0.8, 1.9, "#a7b2c6"),
@@ -310,9 +248,8 @@ export function routeNoteRack(lit: boolean): Part[][] {
 
 // ---------------------------------------------------------------- courier school
 
-// Beside the station at the screen left: a training pad with a classroom, a short pier toward the
-// viewer with its own narrow collar, and a slalom of four training buoys whose lamps alternate
-// warm and marker. Plan positions are from the school's own pivot, the pad centre.
+// The training capsule has its own approach and alternating slalom lamps.
+// Plan positions are from the separate school's pad centre.
 export const SCHOOL = {
   // The pad centre from the station's pivot, plan units.
   site: polar(degrees(150), 104),
@@ -326,7 +263,32 @@ export const SCHOOL = {
 
 export function courierSchool(lit: boolean): Part[][] {
   const groups: Part[][] = [float(10, 19, 4)];
-  groups.push(cottage(-5, -4, DOCK + Math.PI / 2, 14, 10, 4.6, 8));
+  const moduleAxis = DOCK + Math.PI / 2;
+  const module = orientedPlan(-5, -4, moduleAxis, [
+    [-7, -3],
+    [-5, -5],
+    [5, -5],
+    [7, -3],
+    [7, 3],
+    [5, 5],
+    [-5, 5],
+    [-7, 3],
+  ]);
+  const window = lit ? "#c4fbef" : "#758ba8";
+  groups.push([
+    part(module, 4.6, 12.6, ...alloy),
+    ...[-2.25, 2.25].map((offset) =>
+      part(
+        orientedPlan(-5, -4, moduleAxis, box(offset - 1, -5.4, offset + 1, -5)),
+        7,
+        10,
+        window,
+        window,
+      ),
+    ),
+    part(orientedBox(-5, -4, moduleAxis, 15.5, 11.5), 12.6, 14.6, ...ice),
+    part(orientedBox(-5, -4, moduleAxis, 15.5, 4.5), 14.6, 16.6, ...ice),
+  ]);
   const pierAt = (distance: number, across: number) => along(DOCK, distance, across);
   const pier = orientedBox(...pierAt(22, SCHOOL.across), DOCK, 14, 11);
   groups.push([
@@ -336,8 +298,7 @@ export function courierSchool(lit: boolean): Part[][] {
       SCHOOL.pierFace,
       SCHOOL.mouth,
       SCHOOL.collar,
-      cream,
-      creamSide,
+      ...alloy,
       SCHOOL.height,
       DOCK,
       SCHOOL.across,
