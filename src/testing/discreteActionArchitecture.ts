@@ -84,6 +84,39 @@ function localValueImport(
   return { name: item.propertyName?.text ?? item.name.text, target };
 }
 
+// These pinned Phaser exports are library lifecycle notifications, outside the input lifecycle.
+const PHASER_LIFECYCLE_EVENTS = new Map([
+  ["Loader.Events.FILE_COMPLETE", "filecomplete"],
+  ["Scale.Events.RESIZE", "resize"],
+  ["Scenes.Events.PRE_RENDER", "prerender"],
+]);
+
+function phaserLifecycleEvent(context: ScanContext, node: ts.Expression): string | undefined {
+  if (
+    !ts.isPropertyAccessExpression(node) ||
+    !ts.isPropertyAccessExpression(node.expression) ||
+    node.expression.name.text !== "Events" ||
+    !ts.isIdentifier(node.expression.expression)
+  ) {
+    return undefined;
+  }
+  const declarations = context.lexicalDeclarations(node.expression.expression);
+  const item = declarations?.length === 1 ? declarations[0] : undefined;
+  if (!item || !ts.isImportSpecifier(item) || item.isTypeOnly || item.parent.parent.isTypeOnly) {
+    return undefined;
+  }
+  const statement = item.parent.parent.parent;
+  if (
+    !ts.isStringLiteral(statement.moduleSpecifier) ||
+    statement.moduleSpecifier.text !== "phaser"
+  ) {
+    return undefined;
+  }
+  return PHASER_LIFECYCLE_EVENTS.get(
+    `${item.propertyName?.text ?? item.name.text}.Events.${node.name.text}`,
+  );
+}
+
 function importedEventLiteral(context: ScanContext, node: ts.Identifier): string | undefined {
   const imported = localValueImport(context, node);
   if (!imported) {
@@ -356,7 +389,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
         return name === undefined ? [] : [name];
       }
     }
-    return strings(event);
+    const lifecycle = phaserLifecycleEvent(context, node);
+    return lifecycle === undefined ? strings(event) : [lifecycle];
   };
   const reference = (node: ts.Expression, seen = new Set<ts.Node>()): string => {
     if (

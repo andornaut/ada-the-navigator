@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join, posix } from "node:path";
+import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
@@ -353,6 +354,43 @@ it("resolves event aliases in their lexical scope and leaves unknown keyboard ac
     "gesture-review",
     "raw-discrete",
     "gesture-review",
+  ]);
+});
+
+it("resolves only the pinned Phaser lifecycle event exports", () => {
+  const require = createRequire(import.meta.url);
+  const phaser = dirname(require.resolve("phaser/package.json"));
+  for (const [path, name] of [
+    ["loader/events/FILE_COMPLETE_EVENT.js", "filecomplete"],
+    ["scale/events/RESIZE_EVENT.js", "resize"],
+    ["scene/events/PRE_RENDER_EVENT.js", "prerender"],
+  ] as const) {
+    const source = readFileSync(join(phaser, "src", path), "utf8");
+    expect(/module\.exports = '([^']+)';/u.exec(source)?.[1]).toBe(name);
+  }
+  const { findings } = scanDiscreteActionProject([
+    {
+      path: "src/game/scene.ts",
+      text: `
+        import { Loader as AssetLoader, Scale, Scenes, Input, type Loader as Erased } from "phaser";
+        import { Loader } from "./fake.ts";
+        scene.load.on(AssetLoader.Events.FILE_COMPLETE, draw);
+        scene.scale.on(Scale.Events.RESIZE, resize);
+        scene.events.on(Scenes.Events.PRE_RENDER, refresh);
+        shadow.on(Loader.Events.FILE_COMPLETE, activate);
+        surface.on(Erased.Events.FILE_COMPLETE, activate);
+        surface.on(Input.Events.POINTER_UP, select);
+        function local(Scale) { surface.on(Scale.Events.RESIZE, activate); }
+        surface.on(Scenes.Events[name], activate);
+      `,
+    },
+  ]);
+  expect(findings.map(({ kind, source }) => [kind, source])).toEqual([
+    ["unresolved-event", "shadow.on(Loader.Events.FILE_COMPLETE, activate)"],
+    ["unresolved-event", "surface.on(Erased.Events.FILE_COMPLETE, activate)"],
+    ["unresolved-event", "surface.on(Input.Events.POINTER_UP, select)"],
+    ["unresolved-event", "surface.on(Scale.Events.RESIZE, activate)"],
+    ["unresolved-event", "surface.on(Scenes.Events[name], activate)"],
   ]);
 });
 
