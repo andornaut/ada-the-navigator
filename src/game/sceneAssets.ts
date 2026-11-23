@@ -477,13 +477,14 @@ function queueGalaxyAssets(
     (asset) => asset.svgSheet && galaxyLoadsAtOnce(asset) && !scene.textures.exists(asset.id),
   );
   if (packed.length > 0) {
+    const current = () => scene.load.scene.sys.isActive();
     let batchFinished = false;
     scene.load.once(Loader.Events.COMPLETE, () => {
       batchFinished = true;
     });
     queueEagerSvgSheets(
       scene,
-      () => scene.entryCurrent(),
+      current,
       (error) => console.warn(error),
       packed,
       () => {
@@ -492,7 +493,9 @@ function queueGalaxyAssets(
           batchFinished = false;
           scene.load.once(Loader.Events.COMPLETE, () => {
             batchFinished = true;
-            readGalaxyArt(scene);
+            if (current()) {
+              readGalaxyArt(scene);
+            }
           });
         }
       },
