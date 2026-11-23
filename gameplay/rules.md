@@ -1033,11 +1033,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield of 10 HP, 15 and 20 at shield levels 2 and 3. No hull
   resource.
-- Recharge starts 30 seconds after Ada last took damage, at every shield level,
-  and refills from empty to full in 60 seconds at base. Shield levels 2 and 3
-  shorten the full refill to 45, then 30 seconds. Only damage restarts the
-  delay: enemies nearby, chasing or firing and missing do not hold it back, and
-  enemies keep their damage.
+- At every shield level, recharge starts 25 seconds after Ada last took damage
+  and restores 4% of maximum shield capacity per second. With enough ore, a
+  full refill takes 25 seconds once recharge begins. Only damage restarts the
+  delay.
 - Recharge burns carried ore: 1 ore per 1% of shield capacity restored, so 10
   ore per 10% and 100 for a full refill at every Shield level. With no ore
   aboard, the shield recharges free only up to 10% of capacity; above that it
@@ -1072,7 +1071,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   current and maximum shield HP and the recharge/depletion copy in
   [Player copy](player-copy.md). The delay comes from the current ship's
   `shieldRechargeDelay`; the free percentage comes from
-  `ECONOMY.shieldRecharge.freeCapacity` times 100 (currently 30 seconds and 10%).
+  `ECONOMY.shieldRecharge.freeCapacity` times 100 (currently 25 seconds and 10%).
   Preserve existing HP presentation and rounding. The sole primary Close button
   is centered. Close, the close X, Escape and other supported dismissals return
   to the same game or originating view, following other details' pause and

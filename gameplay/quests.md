@@ -104,8 +104,8 @@ or Back to title keeps the tow, and Continue resumes it exactly.
 
 A job pays Stardust and a lore line, on top of ordinary earnings from asteroids
 and drones met on the way. All existing Stardust quest-completion rewards use
-`questReward(base) = ceil(2 * base / 25) * 25`: double the base reward, then round
-up to the nearest 25. This covers station jobs, repeatable activities and any
+`questReward(base) = 2 * ceil(2 * base / 25) * 25`: double the payout after
+the existing calculation and rounding. This covers station jobs, repeatable activities and any
 existing story-quest Stardust payout. Current main-story outcomes do not award
 Stardust; this rule adds none. Ordinary drops, discovery caches, shop prices,
 Exchange, donations and nonquest achievement bonuses keep their own rules.
@@ -121,11 +121,11 @@ position below.
 
 | Job             | Typical minutes | Position 1 | Position 2 | Positions 3 to 5 | Position 6 |
 | --------------- | --------------: | ---------: | ---------: | ---------------: | ---------: |
-| Survey          |               2 |         75 |        100 |              125 |        125 |
-| Lost-item hunt  |               3 |        100 |        125 |              200 |          – |
-| Delivery, short |               3 |        100 |        125 |              200 |          – |
-| Delivery, long  |               4 |        150 |        225 |              300 |          – |
-| Rescue and tow  |               4 |        150 |        225 |              300 |        300 |
+| Survey          |               2 |        150 |        200 |              250 |        250 |
+| Lost-item hunt  |               3 |        200 |        250 |              400 |          – |
+| Delivery, short |               3 |        200 |        250 |              400 |          – |
+| Delivery, long  |               4 |        300 |        450 |              600 |          – |
+| Rescue and tow  |               4 |        300 |        450 |              600 |        600 |
 
 A short delivery is under 6000 world units; a long one is 6000 or more. Phantom
 boards offer only surveys and rescue and tow: travelers stranded by the blockades.
@@ -453,8 +453,8 @@ activity in a galaxy, never both. An accepted activity, its galaxy and its progr
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
 and is offered again on the next Talk. Phantom has no repeatable activity yet.
-Final activity rewards follow route position: 225 at the second, 300 at the
-third, 350 at the fourth and 375 at the fifth; the first galaxy's supply run pays
+Final activity rewards follow route position: 450 at the second, 600 at the
+third, 700 at the fourth and 750 at the fifth; the first galaxy's supply run pays
 the final delivery rewards. Stored base rewards use the same one-time
 `questReward` transform defined above.
 
@@ -477,11 +477,11 @@ the final delivery rewards. Stored base rewards use the same one-time
 
 | Galaxy    | Activity          | Offered by          | Goal                                                              |     Reward |
 | --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | ---------: |
-| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 100 or 150 |
-| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |        225 |
-| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |        300 |
-| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |        350 |
-| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |        375 |
+| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 200 or 300 |
+| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |        450 |
+| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |        600 |
+| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |        700 |
+| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |        750 |
 
 - **Supply run**: follows the delivery job rules in full, 3000 minimum
   included: the outpost's item goes to a known station at least 3000 world

@@ -179,8 +179,8 @@ combined resource unit, but neither ore nor Stardust is individually guaranteed.
 Loot is released once on destruction, never for an intact or indestructible rock.
 
 Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
-shield recharge after a 30-second delay, at the normal regeneration rate, not
-as an instant heal. Each ore funds restoration of 1% of maximum shield capacity,
+shield recharge starting 25 seconds after the last hit, at 4% of maximum
+shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
 so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge
 costs 100 ore at every Shield level. Carried ore stays integer-valued; unused
 fractions of paid recharge credit survive damage and save interruptions without
@@ -271,7 +271,7 @@ are the exception: they drop for every weapon Ada owns, in any galaxy (see
 | Scattershot    | Owned weapon                                                                                                                                        | 800               |
 | Phaser         | Owned weapon                                                                                                                                        | 1000              |
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                       | See below         |
-| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                                                   | 450, 900          |
+| Shield         | Levels 2 and 3: capacity 15, then 20. Full recharge takes 25 s at every level with enough ore.                                                       | 450, 900          |
 | Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds; aim turn 0.07, then 0.06 s and movement turn 0.14, then 0.12 s | 180, 360          |
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                  | 120, 240          |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                        | By purchase order |
