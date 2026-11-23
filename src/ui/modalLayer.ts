@@ -49,7 +49,7 @@ export function createModalLayer(root: HTMLElement): ModalLayer {
       }
       // The standard frame owns both the card body and its header Close button.
       const frame = dialog.parentElement;
-      const view = frame?.classList.contains("ada-card-frame") ? frame : dialog;
+      const view = frame && /(?:^|\s)ada-card-frame(?:\s|$)/.test(frame.className) ? frame : dialog;
       const release = enterPressView(
         parent,
         view,
