@@ -123,8 +123,7 @@ function retainsVariant(root: string, family: Family): boolean {
   return true;
 }
 
-// Match the capital sheet contract: 16 independent, intrinsically sized roots in raw-sized cells.
-function weaponBaseSheets(
+function weaponBaseFrames(
   family: Family,
   entries: readonly Entry[],
   standalone: (file: string) => string | undefined,
@@ -142,9 +141,7 @@ function weaponBaseSheets(
       `${family.manifest}: expected ${WEAPON_BASE_COUNT} station weapon bases, all standalone or all sheets`,
     );
   }
-  const sheets = new Map<string, string>();
-  const replacements = new Map<string, Entry>();
-  const sourceFiles = new Set<string>();
+  const groups = [];
   for (const hardpoint of STATION_FILL) {
     for (const state of WEAPON_STATES) {
       const group = `hostileStation-${hardpoint}-${state}`;
@@ -156,7 +153,7 @@ function weaponBaseSheets(
       if (typeof width !== "number" || width <= 0 || typeof height !== "number" || height <= 0) {
         throw new Error(`Missing station weapon base group: ${family.prefix}${group}`);
       }
-      const roots = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => {
+      const frames = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => {
         const id = `${family.prefix}${group}-${heading}`;
         const file = `${group}-${heading}.svg`;
         const entry = rows.get(id);
@@ -185,21 +182,137 @@ function weaponBaseSheets(
             `Station weapon base does not match its manifest dimensions: ${directory}${file}`,
           );
         }
-        const x = (heading % COLUMNS) * width;
-        const y = Math.floor(heading / COLUMNS) * height;
-        replacements.set(id, { ...entry, path, svgSheet: true });
-        sourceFiles.add(file);
-        return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+        return { entry, file, svg };
       });
-      const wide = width * COLUMNS;
-      const tall = height * Math.ceil(ENEMY_HEADINGS / COLUMNS);
-      sheets.set(
-        sheet,
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${tall}" viewBox="0 0 ${wide} ${tall}">${roots.join("")}</svg>\n`,
-      );
+      groups.push({ sheet, path, width, height, frames });
     }
   }
+  return groups;
+}
+
+function weaponBaseMember({ id }: Entry, x: number, y: number, svg: string): string {
+  return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+}
+
+function weaponBaseSheet(width: number, height: number, roots: readonly string[]): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${roots.join("")}</svg>\n`;
+}
+
+// Stock exports keep the named 16-frame groups until the manifest selects pages.
+function weaponBaseSheets(
+  family: Family,
+  entries: readonly Entry[],
+  standalone: (file: string) => string | undefined,
+) {
+  const sheets = new Map<string, string>();
+  const replacements = new Map<string, Entry>();
+  const sourceFiles = new Set<string>();
+  for (const { sheet, path, width, height, frames } of weaponBaseFrames(
+    family,
+    entries,
+    standalone,
+  )) {
+    const roots = frames.map(({ entry, file, svg }, heading) => {
+      const x = (heading % COLUMNS) * width;
+      const y = Math.floor(heading / COLUMNS) * height;
+      replacements.set(entry.id, { ...entry, path, svgSheet: true });
+      sourceFiles.add(file);
+      return weaponBaseMember(entry, x, y, svg);
+    });
+    sheets.set(
+      sheet,
+      weaponBaseSheet(width * COLUMNS, height * Math.ceil(ENEMY_HEADINGS / COLUMNS), roots),
+    );
+  }
   return { replacements, sheets, sourceFiles };
+}
+
+const WEAPON_PAGE_WIDTH = 1024;
+const WEAPON_PAGE_HEIGHT = 768;
+const WEAPON_BASE_SIZE = 64;
+const WEAPON_BASE_DISPLAY = 28;
+const WEAPON_PAGE_COUNT = 2;
+const WEAPON_PAGE_MEMBERS = WEAPON_BASE_COUNT / WEAPON_PAGE_COUNT;
+const weaponPageFile = (page: number) => `hostileStation-weapon-bases-page-${page}.svg`;
+const weaponPagePath = (family: Family, page: number) =>
+  `/art/${family.directory}/${weaponPageFile(page)}`;
+
+function weaponBasePages(
+  family: Family,
+  entries: readonly Entry[],
+  standalone: (file: string) => string | undefined,
+) {
+  const frames = new Map(
+    weaponBaseFrames(family, entries, standalone).flatMap(({ frames }) =>
+      frames.map((frame) => [frame.entry.id, frame] as const),
+    ),
+  );
+  const ids = [...frames.keys()].sort();
+  const replacements = new Map<string, Entry>();
+  const sheets = new Map<string, string>();
+  const sourceFiles = new Set<string>();
+  for (let page = 1; page <= WEAPON_PAGE_COUNT; page++) {
+    const pageIds = ids.slice((page - 1) * WEAPON_PAGE_MEMBERS, page * WEAPON_PAGE_MEMBERS);
+    const rectangles = pageIds.map((id) => {
+      const { width, height, displayWidth, displayHeight } = frames.get(id)!.entry;
+      if (
+        width !== WEAPON_BASE_SIZE ||
+        height !== WEAPON_BASE_SIZE ||
+        displayWidth !== WEAPON_BASE_DISPLAY ||
+        displayHeight !== WEAPON_BASE_DISPLAY
+      ) {
+        throw new Error(`Invalid station weapon page dimensions: ${id}`);
+      }
+      return { width, height };
+    });
+    const packed = packAtlas(
+      { compare: () => 0, extrude: 0, maxSize: WEAPON_PAGE_WIDTH, widths: [WEAPON_PAGE_WIDTH] },
+      [{ rectangles, value: page }],
+    )?.pages;
+    const layout = packed?.[0];
+    const slots = layout?.placed[0]?.at;
+    if (
+      packed?.length !== 1 ||
+      layout?.width !== WEAPON_PAGE_WIDTH ||
+      layout.height !== WEAPON_PAGE_HEIGHT ||
+      slots?.length !== WEAPON_PAGE_MEMBERS
+    ) {
+      throw new Error(`Station weapon page does not fit: ${family.manifest} ${page}`);
+    }
+    const path = weaponPagePath(family, page);
+    const roots = pageIds.map((id, index) => {
+      const { entry, file, svg } = frames.get(id)!;
+      const { x, y } = slots[index]!;
+      replacements.set(id, { ...entry, path, svgSheet: true });
+      sourceFiles.add(file);
+      return weaponBaseMember(entry, x, y, svg);
+    });
+    sheets.set(weaponPageFile(page), weaponBaseSheet(layout.width, layout.height, roots));
+  }
+  return { replacements, sheets, sourceFiles };
+}
+
+// The retained migration reads the installed group sheets, whose loose bases may be retired.
+function retainedWeaponBaseRoots(root: string, family: Family) {
+  const groups = new Map<string, Map<string, string>>();
+  return (file: string): string | undefined => {
+    const stem = file.replace(/-\d+\.svg$/u, "");
+    let roots = groups.get(stem);
+    if (!roots) {
+      const path = `${root}${family.directory}/${stem}-sheet.svg`;
+      const text = readFileSync(path, "utf8");
+      const members = Array.from(
+        text.matchAll(/<svg id="([^"]+)" x="\d+" y="\d+" ([\s\S]*?<\/svg>)/gu),
+        ([, id, svg]) => [id!, "<svg " + svg] as const,
+      );
+      roots = new Map(members);
+      if (members.length !== ENEMY_HEADINGS || roots.size !== ENEMY_HEADINGS) {
+        throw new Error(`Invalid retained station weapon bases: ${path}`);
+      }
+      groups.set(stem, roots);
+    }
+    return roots.get(family.prefix + file.slice(0, -".svg".length));
+  };
 }
 
 // Cartwheel alone retains the original 568-frame station hull. Keep the 9/7 split
@@ -438,16 +551,23 @@ async function main() {
     (option !== undefined &&
       option !== "--icon-only" &&
       option !== "--weapon-base-sheets" &&
+      option !== "--weapon-base-pages" &&
       option !== "--top-sheets" &&
       option !== "--variant-candidate" &&
       option !== "--claim-hull-sheets")
   ) {
     throw new Error(
-      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--top-sheets|--claim-hull-sheets|--variant-candidate]",
+      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--weapon-base-pages|--top-sheets|--claim-hull-sheets|--variant-candidate]",
     );
   }
   if (option === "--weapon-base-sheets") {
     packRetainedParts(root, weaponBaseSheets);
+    return;
+  }
+  if (option === "--weapon-base-pages") {
+    packRetainedParts(root, (family, entries) =>
+      weaponBasePages(family, entries, retainedWeaponBaseRoots(root, family)),
+    );
     return;
   }
   if (option === "--top-sheets") {
@@ -547,7 +667,19 @@ async function main() {
     if (packed && (installed.length !== WEAPON_BASE_COUNT || packed !== WEAPON_BASE_COUNT)) {
       throw new Error(`Partial station weapon sheet installation in ${family.manifest}`);
     }
-    const pack = packed ? weaponBaseSheets(family, entries, (file) => texts.get(file)) : undefined;
+    const paged = installed.some(
+      ({ path }) => path === weaponPagePath(family, 1) || path === weaponPagePath(family, 2),
+    );
+    if (paged && packed !== WEAPON_BASE_COUNT) {
+      throw new Error(`Partial station weapon page installation in ${family.manifest}`);
+    }
+    const packBases = paged ? weaponBasePages : weaponBaseSheets;
+    const pack = packed ? packBases(family, entries, (file) => texts.get(file)) : undefined;
+    if (paged && installed.some((row) => !isDeepStrictEqual(row, pack?.replacements.get(row.id)))) {
+      throw new Error(
+        `Station weapon page selection differs from canonical source: ${family.manifest}`,
+      );
+    }
     const installedHulls = family === claimFamily ? current.filter(claimHull) : [];
     const hullPack = installedHulls.some(({ svgSheet }) => svgSheet === true)
       ? claimHullSheets(entries, (file) => texts.get(file))
