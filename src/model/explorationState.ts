@@ -1,9 +1,11 @@
+import { type ExplorationPacing, ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import type { ExplorationRenewal } from "./explorationRenewal.ts";
 import { periodicWorldGrid } from "./worldCells.ts";
 import { canonicalCell } from "./worldGeometry.ts";
 
 export interface ExplorationState {
   version: 1;
+  pacing?: ExplorationPacing;
   renewals: Record<string, ExplorationRenewal>;
 }
 
@@ -36,6 +38,17 @@ function nonnegative(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
+function validPacing(value: unknown): value is ExplorationPacing {
+  return (
+    record(value) &&
+    exact(value, ["freshSeconds", "nextOpportunity"]) &&
+    nonnegative(value.freshSeconds) &&
+    value.freshSeconds <= ROUTE_OPPORTUNITY_SECONDS &&
+    nonnegative(value.nextOpportunity) &&
+    Number.isSafeInteger(value.nextOpportunity)
+  );
+}
+
 /** Saved renewal roles and footprints must already have their canonical identities. */
 export function validExplorationState(
   context: ExplorationStateContext,
@@ -43,7 +56,11 @@ export function validExplorationState(
 ): value is ExplorationState {
   if (
     !record(value) ||
-    !exact(value, ["version", "renewals"]) ||
+    !exact(
+      value,
+      Object.hasOwn(value, "pacing") ? ["version", "renewals", "pacing"] : ["version", "renewals"],
+    ) ||
+    (Object.hasOwn(value, "pacing") && !validPacing(value.pacing)) ||
     value.version !== 1 ||
     !record(value.renewals)
   ) {

@@ -33,6 +33,32 @@ describe("saved exploration state validation", () => {
     ).toBe(true);
   });
 
+  it("accepts optional pacing with a stable ordinal and rejects malformed persisted credit", () => {
+    const saved = { ...state(), pacing: { freshSeconds: 75, nextOpportunity: 17 } };
+    expect(validExplorationState(context, JSON.parse(JSON.stringify(saved)))).toBe(true);
+    expect(validExplorationState(context, state())).toBe(true);
+    const getter = vi.fn(() => 75);
+    const accessor = Object.defineProperty({ nextOpportunity: 17 }, "freshSeconds", {
+      get: getter,
+    });
+    for (const pacing of [
+      undefined,
+      null,
+      [],
+      {},
+      accessor,
+      { ...saved.pacing, extra: 1 },
+      ...[-1, 76, Infinity, NaN].map((freshSeconds) => ({ ...saved.pacing, freshSeconds })),
+      ...[-1, 0.5, Infinity, Number.MAX_SAFE_INTEGER + 1].map((nextOpportunity) => ({
+        ...saved.pacing,
+        nextOpportunity,
+      })),
+    ]) {
+      expect(validExplorationState(context, { ...saved, pacing })).toBe(false);
+    }
+    expect(getter).not.toHaveBeenCalled();
+  });
+
   it("requires exact root, renewal and footprint records", () => {
     const candidates: unknown[] = [
       null,
