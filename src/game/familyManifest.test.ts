@@ -299,7 +299,7 @@ describe("source-family manifest readiness", () => {
           document,
           path,
           displaySized
-            ? { ...asset, intrinsicWidth: asset.displayWidth, intrinsicHeight: asset.displayHeight }
+            ? { ...asset, intrinsicHeight: asset.displayHeight, intrinsicWidth: asset.displayWidth }
             : asset,
         ]),
       );
