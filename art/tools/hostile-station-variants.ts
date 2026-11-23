@@ -39,6 +39,9 @@ const variants = [
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 const round = (x: number) => Math.round(x * 1000) / 1000;
 
+const andromedaDisplaySheet = "hostileStation-andromeda-sheet-display-1.svg";
+const maxPageEdge = 1728;
+
 export async function exportStationVariants(art: string, output: string): Promise<void> {
   const legacy = read(art + "enemies/hostileStation-hardpoints.json") as LegacyLayout;
   for (const spec of variants) {
@@ -67,6 +70,24 @@ export async function exportStationVariants(art: string, output: string): Promis
       ({ hardpoint, top }) => hardpoint === undefined && top === undefined,
     );
     if (hulls.length !== ENEMY_HEADINGS) throw new Error(`Incomplete station hull: ${spec.key}`);
+    const displayPath = dir + andromedaDisplaySheet;
+    const packAtDisplaySize =
+      spec.key === "andromeda" && hulls.some(({ path }) => path === displayPath);
+    if (
+      packAtDisplaySize &&
+      hulls.some(
+        ({ path, width, height, displayWidth, displayHeight, svgSheet }) =>
+          path !== displayPath ||
+          width !== frame ||
+          height !== frame ||
+          displayWidth !== clearance.intrinsic ||
+          displayHeight !== clearance.intrinsic ||
+          svgSheet !== true,
+      )
+    ) {
+      throw new Error("Andromeda display sheet requires all existing hull frames");
+    }
+
     const rows = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => {
       const id = `${spec.prefix}hostileStation-${heading}`;
       const original = hulls.find((row) => row.id === id && row.directionIndex === heading);
@@ -88,14 +109,21 @@ export async function exportStationVariants(art: string, output: string): Promis
 
     const replacement = new Map<string, Entry>();
     const sheets = new Map<string, string>();
-    const perPage = clearance.columns ** 2;
-    const wide = clearance.columns * frame;
+    // This page stores display-intrinsic SVGs. Raw assembly clearance still uses frame.
+    const columns = packAtDisplaySize ? 4 : clearance.columns;
+    const cell = packAtDisplaySize ? Math.ceil(clearance.intrinsic) : frame;
+    const perPage = columns ** 2;
+    const wide = columns * cell;
+    if (packAtDisplaySize && (wide > maxPageEdge || rows.length !== perPage))
+      throw new Error("Andromeda display sheet exceeds its checked page layout");
     for (let start = 0; start < rows.length; start += perPage) {
       const page = rows.slice(start, start + perPage);
-      const name = `hostileStation-${spec.key}-sheet-${start / perPage + 1}.svg`;
+      const name = packAtDisplaySize
+        ? andromedaDisplaySheet
+        : `hostileStation-${spec.key}-sheet-${start / perPage + 1}.svg`;
       const layoutPage = packAtlas(
         { compare: () => 0, widths: [wide], maxSize: wide, extrude: 0 },
-        [{ value: name, rectangles: page.map(() => ({ width: frame, height: frame })) }],
+        [{ value: name, rectangles: page.map(() => ({ width: cell, height: cell })) }],
       )?.pages[0];
       if (!layoutPage) throw new Error(`Cannot pack ${name}`);
       const roots = page.map(({ original, svg }, index) => {
