@@ -108,7 +108,7 @@ describe("artUrls", () => {
     );
     const ui = read(manifest.ui.manifest) as {
       fonts: { fnt: string; png: string }[];
-      sprites: { json: string; png: string }[];
+      sprites: { json?: string; png: string }[];
     };
     const named = [
       "/art/manifest.json",
@@ -117,7 +117,7 @@ describe("artUrls", () => {
       ...(manifest.shipMaterials ? namedArtUrls(read(manifest.shipMaterials)) : []),
       ...[
         ...ui.fonts.flatMap(({ fnt, png }) => [fnt, png]),
-        ...ui.sprites.flatMap(({ json, png }) => [json, png]),
+        ...ui.sprites.flatMap(({ json, png }) => (json === undefined ? [png] : [png, json])),
       ].map((path) => `${manifest.ui.basePath}${path}`),
     ];
     expect(named.length).toBeGreaterThan(1);
