@@ -444,7 +444,13 @@ describe("per-role encounter restore", () => {
         y: 4 * content.tuning.chunkSize,
       };
       stepFlight(content, 0.001, idle, flight);
-      Object.assign(model.state, { flight, mode: "space", selectedGalaxy: 3, unlocked: [1, 3] });
+      Object.assign(model.state, {
+        flight,
+        mode: "space",
+        selectedGalaxy: 3,
+        started: true,
+        unlocked: [1, 3],
+      });
     } finally {
       stages.forEach((stage, index) => {
         stage.roster = currentRosters[index]!;
