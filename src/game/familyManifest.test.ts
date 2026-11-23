@@ -25,6 +25,7 @@ import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
 import {
   composedArchetypes,
   ENEMY_HEADINGS,
+  enemyArt,
   type EnemyFamily,
   enemyFrameSets,
   enemyHardpointsPath,
@@ -66,6 +67,7 @@ const names = new Set([
   "loadSvg",
   "queueSvg",
   "rasterAgain",
+  "readEnemyArt",
   "replaceImage",
   "rockTexture",
   "queueRockSheetFrame",
@@ -111,6 +113,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     children: { list: [] },
     destruction: { archetypes: { platform: {} } },
     family: family as EnemyFamily | undefined,
+    familyArts: new Map<string, Map<string, unknown>>(),
     familyParts: new Map(),
     galaxyLoads: new Set(),
     galaxyManifestPaths: {
@@ -131,7 +134,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
       xml,
     },
     loads: { waitFor: vi.fn() },
-    manifest: { assets: [] },
+    manifest: { assets: [] as Asset[] },
     model: { state: { flight: { galaxy: 6 } } },
     partAssets: [] as Asset[],
     partLoads: new Set<string>(),
@@ -154,6 +157,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
     composedArchetypes,
     craftFrameSets,
+    enemyArt,
     enemyFrameSets,
     enemyHardpointsPath,
     enemyJetsPath,
@@ -170,7 +174,6 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     mergeEnemyAssets,
     queueBackdrop: backdrop,
     readCraftNose,
-    readEnemyArt: readArt,
     readGalaxyArt: readArt,
     readGalaxyManifest,
     readShipJets,
@@ -185,6 +188,8 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     vectorSheetSource: extract,
   });
   runInContext(ts.transpile(code), context);
+  const publishArt = context.readEnemyArt as (value: typeof scene) => void;
+  context.readEnemyArt = readArt;
   if (!useRealSvg) {
     context.loadSvg = svg;
   }
@@ -199,6 +204,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     loadParts: context.loadEnemyParts as (value: typeof scene, archetype: string) => void,
     loadRaster,
     loadWorld: context.loadGalaxyArt as (value: typeof scene, galaxy: number) => void,
+    publishArt,
     queueCore: context.queueEagerSvgSheets as (
       value: typeof scene,
       current: () => boolean,
@@ -282,6 +288,36 @@ describe("source-family manifest readiness", () => {
     expect(f.readArt).toHaveBeenCalledTimes(1);
     f.events.emit("complete");
     expect(f.readArt).toHaveBeenCalledTimes(2);
+  });
+
+  it("publishes a regional profile only once the shared hardpoint textures are ready", () => {
+    const family = GALAXY_FAMILIES.find(({ family }) => family === "needle")!;
+    const f = fixture(family);
+    const manifest = readGalaxyManifest<Asset>(needle)!;
+    const profile = "frigateNarrow";
+    const assets = manifest.assets.filter(
+      ({ archetype }) => archetype === profile || archetype === "frigate",
+    );
+    f.scene.manifest.assets.push(...assets);
+    f.scene.familyParts.set(family.family, assets.filter(enemyPartFrame));
+    f.cache.set(
+      "needle-jets-frigateNarrow",
+      publicJson(enemyJetsPath(manifest.sidecars, profile)!),
+    );
+    f.cache.set(
+      "needle-hardpoints-frigateNarrow",
+      publicJson(enemyHardpointsPath(manifest.sidecars, profile)!),
+    );
+    for (const asset of assets.filter(({ archetype }) => archetype === profile)) {
+      f.textures.add(asset.id);
+    }
+    f.publishArt(f.scene);
+    expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(false);
+    for (const asset of assets.filter(enemyPartFrame)) {
+      f.textures.add(asset.id);
+    }
+    f.publishArt(f.scene);
+    expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(true);
   });
 
   it.each([

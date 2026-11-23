@@ -917,7 +917,12 @@ export function readEnemyArt(scene: AssetsContext): void {
       enemyFrameSets(loaded, prefix),
       prefix,
     );
-    scene.familyArts.set(family, new Map([...art].filter(([archetype]) => wired.has(archetype))));
+    scene.familyArts.set(
+      family,
+      new Map(
+        [...art].filter(([archetype]) => wired.has(heavyProfilePartClass(archetype) ?? archetype)),
+      ),
+    );
   }
 }
 

@@ -473,6 +473,10 @@ describe("per-role encounter restore", () => {
     const resumed = relaunch(content, model.save());
     expect(resumed.state.flight).toEqual(model.state.flight);
     expect(members(resumed, packId).map(({ id }) => id)).toEqual([leader]);
+    expect(resumed.state.flight!.combat!.profiledPacks?.[packId]).toBe("capital");
+    expect(members(resumed, packId)[0]!.enemy!.hullProfile).toBe(
+      ordinaryPackHullProfile({ archetype: "capital", id: leader }),
+    );
     expect(members(resumed, escorts)).toHaveLength(4);
     return { content, escorts, leader, model: resumed, packId };
   }
