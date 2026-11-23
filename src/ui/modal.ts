@@ -621,6 +621,9 @@ ${UI_SCOPE} .ada-cheats-card > .ada-card-body{
   gap:${units(SPACING.rowGap)};
   overflow:visible
 }
+${UI_SCOPE} .ada-cheats-card > .ada-card-body > [data-footer-action=back]{
+  margin-block-start:${units(SPACING.rowGap)}
+}
 ${UI_SCOPE} .ada-cheats-card > .ada-card-body::after{
   height:${units(SPACING.rowGap)}
 }
