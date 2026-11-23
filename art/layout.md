@@ -107,9 +107,9 @@ icon whose drawn pixels sit 3 inside its 20 box takes 3 less on that side.
 Type roles: `TYPE.heading` 24 bold on 28; `TYPE.body` 16 regular on 20;
 `TYPE.label` 16 bold on 20; `TYPE.story` 18 regular on 26, for the storybook
 text column only; `TYPE.count` 12 bold on 14, for the HUD weapon
-counts only (the one role below 16). Text never shrinks: wrap, grow the region,
-reflow or scroll. Colours per role are in
-[Controls](controls.md#colour-tokens).
+counts only. The [Quest detail](#quest-detail) route labels use 14 on 18.
+Text never shrinks to fit. Wrap, grow the region, reflow or scroll. Colours
+per role are in [Controls](controls.md#colour-tokens).
 
 ## Page bounds
 
@@ -1056,6 +1056,16 @@ every available height, so the card never scrolls.
 - Every condition fits two lines at both column widths; a condition that
   needed a third would be a copy change for Gameplay, not a taller entry.
 
+### Quest detail
+
+Inside the Quest detail card, the route panel's From and To labels and endpoint
+text use 14 px type on an 18 px line (`QUEST_ROUTE_TYPE`, logical px). Quest
+body copy keeps `TYPE.body` at 16 px on a 20 px line.
+
+When wrapped detail exceeds the available height, the body scrolls in one
+group. The title and close X stay above it. The footer, including Back when
+opened from the list, stays fixed below the scroll group.
+
 ### Ship card
 
 The Paused card's Ship opens the shared `large` card (`CARD_WIDTH_CAPS.large`
@@ -1781,7 +1791,9 @@ Tests:
   Check the centred, content-sized row against the
   [Start screen](#start-screen) sizing rule and measure Start on its own.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
-  available rect or scrolls only its scroll group; no text is below 16.
+  available rect or scrolls only its scroll group. Card text stays at 16 px
+  or above except for the 14 px route labels in [Quest detail](#quest-detail).
+  Check that the full route can scroll into view above the fixed footer.
 - The route panel keeps one size for every galaxy and state. At 720x360 with
   and without phone insets, every route map rect lies in the available rect,
   the lowest labels end at least `SPACING.gap` above the panel, and the
