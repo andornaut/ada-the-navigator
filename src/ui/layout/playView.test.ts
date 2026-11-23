@@ -164,10 +164,12 @@ describe("HUD rect", () => {
   });
 
   it.each([
-    [844, 390, NO_INSETS, { left: 41, right: 738.08, top: 12 }],
-    [844, 390, { bottom: 0, left: 43, right: 43, top: 0 }, { left: 43, right: 736.08, top: 12 }],
-    // A one-sided notch moves both sides in alike.
-    [844, 390, { bottom: 0, left: 47, right: 0, top: 0 }, { left: 47, right: 732.08, top: 12 }],
+    [844, 390, NO_INSETS, { left: 41, right: 737, top: 12 }],
+    [844, 390, { bottom: 0, left: 43, right: 43, top: 0 }, { left: 43, right: 735, top: 12 }],
+    // A one-sided notch sets a common clearance from the two play edges.
+    [844, 390, { bottom: 0, left: 47, right: 0, top: 0 }, { left: 47, right: 731, top: 12 }],
+    [844, 390, { bottom: 0, left: 0, right: 47, top: 0 }, { left: 46, right: 732, top: 12 }],
+    [1280, 575, NO_INSETS, { left: 52, right: 748, top: 12 }],
     [1280, 720, NO_INSETS, { left: 12, right: 708, top: 34 }],
     [720, 360, NO_INSETS, { left: 12, right: 708, top: 12 }],
   ])("at %ix%i with insets %o has the edges %o", (width, height, insets, expected) => {
@@ -181,8 +183,11 @@ describe("HUD rect", () => {
     const layout = playLayout({ height: 390, width: 844 });
     const properties = new Map(viewProperties(layout));
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("left"))!)).toBeCloseTo(41 * layout.s, 6);
-    // The right edge mirrors the left: the same distance in from the view's right.
-    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("right"))!)).toBeCloseTo(41 * layout.s, 6);
+    // The two viewport offsets account for their different band widths.
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("right"))!)).toBeCloseTo(
+      844 - 737 * layout.s,
+      6,
+    );
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("top"))!)).toBeCloseTo(12 * layout.s, 6);
     expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("bottom"))!)).toBeCloseTo(
       12 * layout.s,
@@ -252,8 +257,8 @@ describe("HUD anchors", () => {
         expect(target.y).toBe(hud.y - 7.5);
         const disc = { height: 33, width: 33, x: target.x + 7.5, y: target.y + 7.5 };
         expect(disc.y).toBe(hud.y);
-        // The right side mirrors the left from the view's edge, so the discs stay in the play view.
-        expect(inside(disc, play)).toBe(true);
+        expect(inside(disc, bounds)).toBe(true);
+        expect(inside(disc, safeRect(insets, HUD_EDGE, view))).toBe(true);
       }
       expect(fromRight(hudButtonTarget(0)).x + 7.5 + 33).toBeCloseTo(hud.x + hud.width, 9);
       const pause = fromLeft(PAUSE_BUTTON.hit);
@@ -398,7 +403,7 @@ describe("HUD anchors", () => {
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       { bottom: 19, left: 43, right: 43, top: 0 },
-      [311.54, 281.54, 251.54],
+      [311, 281, 251],
       313,
     ],
   ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, xs, y) => {
@@ -465,8 +470,8 @@ describe("HUD anchors", () => {
       logicalView({ height: 390, width: 844 }),
       PHONE,
       93.75,
-      410.58,
-      97.19,
+      409.5,
+      96.11,
     ],
   ] as const)(
     "keep the widest pill a page inset clear of six weapons at %s",
@@ -629,7 +634,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     PHONE,
     [116, 273],
     [662, 273],
-    311.54,
+    311,
     [313, 341],
     [585, 173],
   ],
@@ -649,7 +654,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [116, 273],
     [684, 273],
-    322.67,
+    322,
     [320, 348],
     [607, 173],
   ],
@@ -659,7 +664,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [116, 273],
     [736, 273],
-    348.67,
+    348,
     [320, 348],
     [659, 173],
   ],
@@ -837,21 +842,22 @@ describe("symmetric HUD on every view", () => {
         const label = `${css.width}x${css.height} ${JSON.stringify(cssInsets)}`;
         const hud = hudRect(insets, view);
         const gap = gameAreaGap(view);
-        const side = Math.ceil(Math.max(gap + HUD_EDGE, insets.left, insets.right));
+        const area = playView(view);
+        const playRight = area.x + area.width;
         expect(Number.isInteger(hud.x), label).toBe(true);
         expect(Number.isInteger(hud.y), label).toBe(true);
-        expect(hud.x, label).toBe(side);
-        const area = playView(view);
         expect(hud.y, label).toBe(Math.ceil(Math.max(area.y + HUD_EDGE, insets.top)));
         // Left: the pause disc's drawn edge, or with the pause button hidden the pill's.
         const pauseDisc = hud.x + PAUSE_BUTTON.art.x + 1;
         const pillAlone = hud.x + STATUS_PILL.xAlone;
-        expect(pauseDisc, label).toBe(side);
-        expect(pillAlone, label).toBe(side);
-        // Right: the rightmost disc's drawn edge, as far from the view's right edge.
+        expect(pauseDisc, label).toBeGreaterThanOrEqual(insets.left);
+        expect(pauseDisc - area.x, label).toBeGreaterThanOrEqual(HUD_EDGE);
+        expect(pillAlone, label).toBe(pauseDisc);
+        // The rightmost disc has the same drawn clearance from the other play edge.
         const target = hudButtonTarget(0);
         const discRight = hud.x + hud.width + target.x + HUD_BUTTON_INSET.disc + HUD_BUTTON.disc;
-        expect(view.width - discRight, label).toBeCloseTo(side, 9);
+        expect(view.width - discRight + 1e-9, label).toBeGreaterThanOrEqual(insets.right);
+        expect(playRight - discRight, label).toBeCloseTo(pauseDisc - area.x, 9);
         // Top: the pause disc and every weapon disc have the same drawn top.
         const pauseTop = hud.y + PAUSE_BUTTON.art.y + 1;
         for (const index of [0, 1, 2, 3]) {
@@ -950,7 +956,7 @@ describe("shield and pause game-area margins", () => {
     for (const level of [1, 2, 3]) {
       const shield = shieldPillRect(NO_INSETS, view, level);
       expect(area.y + area.height - (shield.y + shield.height)).toBe(pauseGap);
-      expect(shield.x + shield.width / 2).toBeCloseTo(view.width / 2, 9);
+      expect(shield.x + shield.width / 2).toBeCloseTo(area.x + area.width / 2, 9);
     }
   });
 });

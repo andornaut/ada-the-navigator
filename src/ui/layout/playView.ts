@@ -144,19 +144,23 @@ export function mirroredSide(insets: Insets, offset: number, view: Size): number
 }
 
 // The HUD rect (Chibi's topShift): the lines the HUD's drawn art meets, HUD_EDGE in from the game
-// area's four edges, each clamped by the safe inset on whole pixels, with both sides mirrored
-// (mirroredSide). The top controls anchor to its top, left and right edges and the shield pill
+// area's four edges, clamped by the safe insets on whole pixels. Both sides use the larger
+// clearance measured from the corresponding play edge. The top controls anchor to its top,
+// left and right edges and the shield pill
 // to its bottom, so at every aspect they sit inside the game area, clear of the bands, curved
 // corners and every inset.
 export function hudRect(insets: Insets, view: Size): Rect {
   const area = playView(view);
-  const side = mirroredSide(insets, HUD_EDGE, view);
+  const areaRight = area.x + area.width;
+  const side = Math.ceil(
+    Math.max(HUD_EDGE, insets.left - area.x, areaRight - (view.width - insets.right)),
+  );
   const top = Math.ceil(Math.max(area.y + HUD_EDGE, insets.top));
   const bottom = Math.min(
     area.y + area.height - HUD_EDGE,
     view.height - Math.ceil(Math.max(HUD_EDGE, insets.bottom)),
   );
-  return { height: bottom - top, width: view.width - 2 * side, x: side, y: top };
+  return { height: bottom - top, width: area.width - 2 * side, x: area.x + side, y: top };
 }
 
 export const PAUSE_BUTTON = { art: PAUSE_ART, hit: hitAround(HIT_RULE, PAUSE_ART) } as const;
