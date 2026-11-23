@@ -23,7 +23,7 @@ it("forwards the build identity, boot files and decoded pack limit to the kit's 
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
-  expect(options.packs).toEqual({ maxBytes: 1024 * 1024 });
+  expect(options.packs).toEqual({ maxBytes: 1536 * 1024 });
   expect(options).not.toHaveProperty("groups");
   expect(options.verifiedJsonBodies).toBeUndefined();
   options.hashedFiles!((url) =>
