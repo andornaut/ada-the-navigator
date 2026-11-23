@@ -59,6 +59,7 @@ class FakeElement extends EventTarget {
       : (this.parent?.closest(selector) ?? null);
   }
   readonly attributes = new Map<string, string>();
+  readonly style = { removeProperty: vi.fn(), setProperty: vi.fn() };
   children: FakeElement[] = [];
   className = "";
   readonly dataset: Record<string, string> = {};
@@ -149,7 +150,10 @@ const disposals: (() => void)[] = [];
 // An event target, where the kit's focusTarget tracks the last input.
 const fakeDocument = Object.assign(new EventTarget(), {
   activeElement: null as FakeElement | null,
-  createElement: (tag: string) => new FakeElement(tag),
+  createElement: (tag: string) =>
+    Object.assign(new FakeElement(tag), {
+      decode: () => Promise.reject(new Error("This fixture does not decode images")),
+    }),
   defaultView: Object.assign(new EventTarget(), {
     HTMLElement: FakeElement,
     Node: FakeElement,

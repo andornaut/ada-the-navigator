@@ -118,7 +118,10 @@ class Element {
     });
   }
   readonly listeners = new Map<string, ((event: Partial<PointerEvent>) => void)[]>();
-  readonly style: Record<string, string> = {};
+  readonly style = Object.assign({} as Record<string, string>, {
+    removeProperty: vi.fn(),
+    setProperty: vi.fn(),
+  });
   #text = "";
   get textContent(): string {
     return this.#text + this.children.map((child) => child.textContent).join("");
@@ -227,7 +230,10 @@ const setup = (host?: Element) => {
     Object.assign(new EventTarget(), {
       activeElement: null,
       body,
-      createElement: (tag: string) => new Element(tag),
+      createElement: (tag: string) =>
+        Object.assign(new Element(tag), {
+          decode: () => Promise.reject(new Error("This fixture does not decode images")),
+        }),
       defaultView: Object.assign(new EventTarget(), {
         HTMLElement: Element,
         MutationObserver: class {

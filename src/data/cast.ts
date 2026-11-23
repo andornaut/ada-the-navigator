@@ -141,15 +141,27 @@ export interface CastPortraitSheet {
   };
 }
 
+// These rows follow the selected compact and full manifests' top-to-bottom order.
+const VERTICAL_CAST_PAGES: Readonly<Partial<Record<CastHome, readonly CastKey[]>>> = {
+  cartwheel: ["garnet", "jasper", "mica", "opal", "quartz", "slate"],
+  phantom: ["blurb-settler", "dollop"],
+  sunflower: ["bramble", "clover", "nectar", "patch", "rivet", "saffron"],
+  whirlpool: ["brine", "coral", "family", "marlo", "ripple"],
+};
+
 /** The same portrait source is used by flight chatter, interaction cards and Storybook. */
 export function castPortrait(key: CastKey, compact: boolean): CastPortraitSheet {
-  if (key === "blurb-settler" || key === "dollop") {
-    // Both pages have one transparent row between the two authored square crops.
+  const { home } = CAST[key];
+  const rows = VERTICAL_CAST_PAGES[home];
+  const row = rows?.indexOf(key) ?? -1;
+  if (rows && row >= 0) {
+    // There is one transparent row between adjacent square crops.
     const frameSize = compact ? 22 : 32;
+    const stride = frameSize + 1;
     return {
-      crop: { frameSize, pageHeight: 2 * frameSize + 1, y: key === "dollop" ? frameSize + 1 : 0 },
+      crop: { frameSize, pageHeight: rows.length * stride - 1, y: row * stride },
       frames: 1,
-      url: `/art/phantom/portraits/phantom-${compact ? "compact" : "full"}.png`,
+      url: `/art/${home}/portraits/${home}-${compact ? "compact" : "full"}.png`,
     };
   }
   return { frames: castFrames(key).frames, url: castSheet(key, compact) };

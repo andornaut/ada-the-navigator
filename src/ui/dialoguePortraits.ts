@@ -26,7 +26,7 @@ export const SPEAKING_FRAME_MS = 120;
 
 const PORTRAIT_CROP_IMAGE = "--ada-portrait-crop-image";
 const portraitPages = new Map<string, Promise<HTMLImageElement>>();
-const portraitCrops = new Map<CastPortraitSheet, Promise<string>>();
+const portraitCrops = new Map<string, Promise<string>>();
 const selectedCrops = new WeakMap<HTMLElement, CastPortraitSheet>();
 
 function readPortraitPage(document: Document, url: string): Promise<HTMLImageElement> {
@@ -55,7 +55,8 @@ export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet |
   selectedCrops.set(face, sheet);
   face.style.removeProperty(PORTRAIT_CROP_IMAGE);
   const document = face.ownerDocument;
-  let image = portraitCrops.get(sheet);
+  const cropKey = `${sheet.url}#${crop.y}`;
+  let image = portraitCrops.get(cropKey);
   if (!image) {
     image = readPortraitPage(document, sheet.url).then((page) => {
       const canvas = document.createElement("canvas");
@@ -68,8 +69,8 @@ export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet |
       context.drawImage(page, 0, y, frameSize, frameSize, 0, 0, frameSize, frameSize);
       return `url("${canvas.toDataURL()}")`;
     });
-    portraitCrops.set(sheet, image);
-    void image.catch(() => portraitCrops.delete(sheet));
+    portraitCrops.set(cropKey, image);
+    void image.catch(() => portraitCrops.delete(cropKey));
   }
   void image.then(
     (url) => {

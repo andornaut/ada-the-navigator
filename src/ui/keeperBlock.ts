@@ -1,6 +1,6 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
-import { CAST, CAST_FRAMES, castSheet } from "../data/cast.ts";
+import { CAST, castPortrait } from "../data/cast.ts";
 import { GENERAL_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
@@ -9,7 +9,13 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+import {
+  COMPACT_PORTRAITS,
+  portraitBackground,
+  portraitFrame,
+  selectPortraitCrop,
+  TAB_COLOURS,
+} from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units } from "./layout/css.ts";
@@ -34,14 +40,16 @@ export function keeperName(key: KeeperKey): string {
 }
 
 // Each keeper's portrait sheet and tab fill; data-keeper names the keeper on the block.
-const KEEPER_RULES = Object.values(KEEPERS)
-  .flatMap(({ keepers }) => keepers)
+const KEEPER_PORTRAITS = new Map(
+  Object.values(KEEPERS)
+    .flatMap(({ keepers }) => keepers)
+    .map((key) => [key, castPortrait(key, true)] as const),
+);
+const KEEPER_RULES = [...KEEPER_PORTRAITS]
   .map(
-    (key) => `
+    ([key, sheet]) => `
 .ada-controls .ada-keeper[data-keeper="${key}"] .ada-keeper-portrait{
-  background:url('${castSheet(key, true)}') 0 0 / ${units(
-    CAST_FRAMES.frames * portrait.art,
-  )} ${units(portrait.art)} no-repeat
+  background:${portraitBackground(sheet, portrait.art)}
 }
 .ada-controls .ada-keeper[data-keeper="${key}"] .ada-keeper-name{
   background:${CAST[key].tab}
@@ -259,6 +267,7 @@ export function createKeeperBlock(options: {
   return {
     dispose() {
       disposed = true;
+      selectPortraitCrop(face, undefined);
       advanceAction?.dispose();
       advanceAction = undefined;
     },
@@ -297,6 +306,11 @@ export function createKeeperBlock(options: {
         }
       }
       line.textContent = greeting?.line ?? options.labels.welcome;
+      const keeper = greeting?.keeper;
+      selectPortraitCrop(
+        face,
+        keeper && keeper !== "general" ? KEEPER_PORTRAITS.get(keeper) : undefined,
+      );
       if (greeting) {
         next.dataset.keeper = greeting.keeper;
         name.textContent = keeperName(greeting.keeper);
