@@ -25,7 +25,7 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
-import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
 import { wrappedDelta, wrappedDistance } from "./worldGeometry.ts";
 
 const half = GALAXY_SIDE / 2;
@@ -43,8 +43,8 @@ function fixture(player: Vec, galaxy: GalaxyNumber = 1) {
   flight.objects = [];
   flight.shots = [];
   flight.freshChunk = null;
-  const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
-  flight.chunks = [...worldCellsNear(grid, CONTENT.tuning.chunkSize * 2, player)].map((cell) =>
+  const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
+  flight.chunks = [...worldCellsNear(grid, grid.pitch * 2, player)].map((cell) =>
     worldCellKey(grid, cell),
   );
   return flight;
@@ -67,12 +67,14 @@ describe("explicit flight seam callers", () => {
       const player = { x: 0, y: 0 };
       player[axis] = half - 1;
       const flight = fixture(player);
+      flight.freshChunk = axis === "x" ? "233,0" : "0,233";
       flight.velocity[axis] = 100;
       const move = { x: 0, y: 0 };
       move[axis] = 1;
       stepFlight(CONTENT, 0.05, { ...idle, move, throttle: 1 }, flight);
       expect(flight.player[axis]).toBeLessThan(-half + 20);
       expect(flight.velocity[axis]).toBeGreaterThan(0);
+      expect(flight.freshDistance).toBeGreaterThan(0);
       expect(flight.freshDistance).toBeLessThan(20);
       expect(new Set(flight.chunks).size).toBe(flight.chunks.length);
     }

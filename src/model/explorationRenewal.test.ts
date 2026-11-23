@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { encounterQuiet } from "../data/enemyCatalog.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
 import {
   explorationRenewal,
   explorationRenewalReady,
   stepExplorationRenewal,
 } from "./explorationRenewal.ts";
 
-const context = { chunkSize: 512, galaxy: 1 as const, worldSide: GALAXY_SIDE };
+// This standalone renewal helper takes an exact grid, so the fixture uses a divisible side.
+const context = { chunkSize: 512, galaxy: 1 as const, worldSide: 1_152_000 };
 
 describe("ordinary exploration renewal", () => {
   it("retains a defeated footprint through nearby cells and a seam lap", () => {
-    const edge = GALAXY_SIDE / 2;
+    const edge = context.worldSide / 2;
     const state = explorationRenewal(context, { x: edge - 1, y: 0 });
     for (const x of [-edge, -edge + 512, -edge + 1024]) {
       stepExplorationRenewal(context, { from: { x, y: 0 }, seconds: 100, to: { x, y: 0 } }, state);

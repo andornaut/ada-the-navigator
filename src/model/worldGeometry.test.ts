@@ -17,9 +17,14 @@ import {
 
 describe("finite torus coordinates", () => {
   it("uses the approved extent without coupling density or active budgets to its area", () => {
-    expect(GALAXY_SIDE / CONTENT.tuning.chunkSize).toBe(2250);
-    expect(GALAXY_SIDE % ECONOMY.station.cellSize).toBe(0);
-    expect(GALAXY_SIDE % ORE_FIELDS.cellSize).toBe(0);
+    expect(GALAXY_SIDE).toBe(240_000);
+    expect(CONTENT.tuning.chunkSize).toBe(512);
+    expect(ECONOMY.station.cellSize).toBe(12_000);
+    expect(ORE_FIELDS.cellSize).toBe(4500);
+    expect(wrapPoint(GALAXY_SIDE, { x: 120_000, y: -120_001 })).toEqual({
+      x: -120_000,
+      y: 119_999,
+    });
   });
 
   it.each([

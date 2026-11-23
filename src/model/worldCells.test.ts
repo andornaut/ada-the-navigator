@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CURRENTS } from "../data/galaxyFeatures.ts";
+import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { CURRENTS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import {
   periodicWorldGrid,
@@ -10,8 +12,13 @@ import {
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
+  type WorldGrid,
   worldGrid,
 } from "./worldCells.ts";
+
+const exactGridSide = 1_152_000;
+const keyAt = (grid: WorldGrid, x: number, y: number) =>
+  worldCellKey(grid, worldCellAt(grid, { x, y }));
 
 describe("explicit world placement grids", () => {
   it("keeps legacy coordinates and occupancy unchanged instead of inferring an extent", () => {
@@ -23,10 +30,15 @@ describe("explicit world placement grids", () => {
     expect(worldCellAt(grid, { x: -1, y: 12000 })).toEqual({ x: -1, y: 1 });
   });
 
-  it("keeps station and ore identities periodic while preserving their exact pitch", () => {
-    for (const pitch of [12000, 4500, 512]) {
-      const grid = worldGrid({ worldSide: GALAXY_SIDE }, pitch);
+  it("keeps periodic identities at compatible exact station, ore and chunk pitches", () => {
+    for (const [pitch, count] of [
+      [12000, 96],
+      [4500, 256],
+      [512, 2250],
+    ] as const) {
+      const grid = worldGrid({ worldSide: exactGridSide }, pitch);
       expect(grid.pitch).toBe(pitch);
+      expect(grid.periodCells).toBe(count);
       expect(worldCellKey(grid, { x: 1, y: -1 })).toBe(
         worldCellKey(grid, { x: 1 + grid.periodCells!, y: -1 - grid.periodCells! }),
       );
@@ -34,19 +46,43 @@ describe("explicit world placement grids", () => {
     }
   });
 
-  it("requires explicit resampling for currents and preserves expected density per area", () => {
-    expect(() => worldGrid({ worldSide: GALAXY_SIDE }, CURRENTS.cellSize)).toThrow(RangeError);
-    const grid = periodicWorldGrid({ worldSide: GALAXY_SIDE }, CURRENTS.cellSize);
-    expect(grid.periodCells).toBe(338);
-    expect(grid.pitch * grid.periodCells!).toBe(GALAXY_SIDE);
+  it("aliases station, chunk and ore cells at the approved chart seam", () => {
+    const context = { worldSide: GALAXY_SIDE };
+    const edge = GALAXY_SIDE / 2;
+    const station = worldGrid(context, ECONOMY.station.cellSize);
+    expect(station.periodCells).toBe(20);
+    expect(station.pitch).toBe(12000);
+    expect(keyAt(station, edge, -edge - 1)).toBe("-10,9");
+
+    for (const [nominal, count, key] of [
+      [CONTENT.tuning.chunkSize, 468, "-234,233"],
+      [ORE_FIELDS.cellSize, 53, "-26,26"],
+    ] as const) {
+      expect(() => worldGrid(context, nominal)).toThrow(RangeError);
+      const grid = periodicWorldGrid(context, nominal);
+      expect(grid.periodCells).toBe(count);
+      expect(grid.pitch).toBe(GALAXY_SIDE / count);
+      expect(keyAt(grid, edge, -edge - 1)).toBe(key);
+      expect(keyAt(grid, -edge, edge - 1)).toBe(key);
+    }
+  });
+
+  it.each([
+    [exactGridSide, 338],
+    [GALAXY_SIDE, 70],
+  ])("requires resampling for currents and preserves density at side %s", (worldSide, count) => {
+    expect(() => worldGrid({ worldSide }, CURRENTS.cellSize)).toThrow(RangeError);
+    const grid = periodicWorldGrid({ worldSide }, CURRENTS.cellSize);
+    expect(grid.periodCells).toBe(count);
+    expect(grid.pitch * count).toBe(worldSide);
     expect(grid.pitch).toBeGreaterThanOrEqual(CURRENTS.cellSize);
     expect(worldCellChance(grid, CURRENTS.chance) / grid.pitch ** 2).toBeCloseTo(
       CURRENTS.chance / CURRENTS.cellSize ** 2,
       16,
     );
-    expect(worldCellOrigin(grid, { x: -169, y: 168 })).toEqual({
-      x: -GALAXY_SIDE / 2,
-      y: 168 * grid.pitch,
+    expect(worldCellOrigin(grid, { x: -count / 2, y: count / 2 - 1 })).toEqual({
+      x: -worldSide / 2,
+      y: (count / 2 - 1) * grid.pitch,
     });
     expect(() => worldCellChance(periodicWorldGrid({ worldSide: 10000 }, 3400), 1)).toThrow(
       RangeError,

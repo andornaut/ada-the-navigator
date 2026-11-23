@@ -11,6 +11,7 @@ import {
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { displayMarkerFixtures, markerEdges, markerModel } from "../testing/markerModel.ts";
 import { logicalView, NO_INSETS, playView, safeGameArea } from "../ui/layout/playView.ts";
 import { edgeMarkerKind, edgePoint, GAME_AREA } from "./edgeMarkers.ts";
@@ -321,7 +322,7 @@ describe("edge markers inside the safe game area", () => {
 });
 
 it("retains one identity across a seam only with actual topology metadata", () => {
-  const side = 1_152_000;
+  const side = GALAXY_SIDE;
   const object = enemy("fighter", { x: -side / 2 + 50, y: 0 });
   const current = flight([object]);
   current.player.x = side / 2 - 200;
