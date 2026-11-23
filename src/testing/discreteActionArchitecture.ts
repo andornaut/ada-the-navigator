@@ -299,12 +299,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
   };
   // Keep the first declaration in source order for each name at each scope, as the lexical
   // lookup does when it walks outward. Parameters also match their owning function.
-  const declarations = new Map<ts.Node, Map<string, ts.NamedDeclaration>>();
+  const declarations: ts.NamedDeclaration[] = [];
+  const declarationsByScope = new Map<ts.Node, Map<string, ts.NamedDeclaration>>();
   const declare = (owner: ts.Node, name: string, node: ts.NamedDeclaration): void => {
-    let names = declarations.get(owner);
+    let names = declarationsByScope.get(owner);
     if (!names) {
       names = new Map();
-      declarations.set(owner, names);
+      declarationsByScope.set(owner, names);
     }
     if (!names.has(name)) {
       names.set(name, node);
@@ -323,6 +324,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ts.isParameter(node) ||
       ts.isFunctionDeclaration(node)
     ) {
+      declarations.push(node);
       if (node.name && ts.isIdentifier(node.name)) {
         declare(scope(node), node.name.text, node);
         if (ts.isParameter(node)) {
@@ -335,7 +337,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
   index(source);
   const declaration = (node: ts.Identifier): ts.NamedDeclaration | undefined => {
     for (let at: ts.Node | undefined = node; at; at = at.parent) {
-      const found = declarations.get(at)?.get(node.text);
+      const found = declarationsByScope.get(at)?.get(node.text);
       if (found) {
         return found;
       }
