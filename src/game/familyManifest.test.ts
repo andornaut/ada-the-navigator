@@ -226,7 +226,7 @@ describe("source-family manifest readiness", () => {
     f.cache.set(key, needle);
     f.events.emit(`filecomplete-json-${key}`);
     const hulls = (needle.assets as readonly Asset[]).filter(
-      (asset) => asset.svgSheet && galaxyLoadsAtOnce(asset),
+      (asset) => asset.svgSheet && asset.family === "needle" && galaxyLoadsAtOnce(asset),
     );
     const paths = [...new Set(hulls.map((asset) => asset.path))];
     expect(hulls).toHaveLength(48);
