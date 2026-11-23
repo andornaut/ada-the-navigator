@@ -143,7 +143,7 @@ function setAvailable(button: HTMLButtonElement, available: boolean): void {
 export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
   let disposed = false;
-  const actionBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const actionBindings: { dispose(): void }[] = [];
   const register = (element: HTMLElement, run: () => void) => {
     actionBindings.push(
       bindAdaAction(
@@ -272,7 +272,20 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   ship.card.dataset.dialog = "ship";
   ship.frame.hidden = true;
-  const shipBack = createButton(labels.mapScreen.questBack ?? labels.close, "primary");
+  const shipBackAction = createStandardTextAction(
+    root,
+    labels.mapScreen.questBack ?? labels.close,
+    {
+      availability: () => ({ kind: "available" }),
+      current: () => !disposed,
+      run: closeShip,
+      separateFace: true,
+    },
+  );
+  actionBindings.push(shipBackAction);
+  const shipBack = shipBackAction.element;
+  shipBack.classList.add("ada-primary");
+  setButtonRole("primary", shipBack);
   shipBack.dataset.action = "back-ship";
   const shipFooter = document.createElement("footer");
   shipFooter.className = "ada-ship-back";
@@ -280,7 +293,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   ship.card.append(shipFooter);
   modal.append(paused.frame, ship.frame);
   try {
-    register(shipBack, () => closeShip());
     register(paused.close, resume);
     register(ship.close, () => closeShip());
     assertAdaActionMetadata(paused.frame);

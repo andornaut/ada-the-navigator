@@ -123,7 +123,7 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
 const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
   :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings],
-    .ada-cheats-card, .ada-map-navigation)
+    .ada-cheats-card, .ada-map-navigation, .ada-ship-back)
   .ada-button.ui-standard-button:not(:where(.ada-compact)):focus-visible`;
 const STORY_TEXT_FOCUS = ".ada-controls .ada-story .ada-button:focus-visible";
 const ENABLED_TEXT_CONTROL = `:where(
@@ -416,6 +416,13 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
 
 ${UI_SCOPE} :is(.ada-cheats-card,.ada-map-navigation) .ada-button.ui-standard-button:not(.ada-primary){
   --ui-button-focus-fill:${BUTTON_FACE.secondary}
+}
+
+/* Ship Back keeps the existing focus fill on the native button's painted face. */
+${UI_SCOPE} .ada-ship-back [data-action=back-ship].ui-standard-button:focus-visible > .ui-button-face{
+  background-color:transparent;
+  color:inherit;
+  forced-color-adjust:inherit
 }
 
 /* Tint the centre and retain the existing sprite slices, including the active lip. */

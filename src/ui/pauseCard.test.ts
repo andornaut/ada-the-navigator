@@ -1268,6 +1268,9 @@ it.each(["back-ship", "close-ship", "Escape", "back"])(
     const footer = ship.querySelectorAll().find((button) => button.dataset.action === "back-ship")!;
     expect(footer.textContent).toBe("Back");
     expect(footer.className).toContain("ada-primary");
+    expect(footer.className).toContain("ui-standard-button");
+    expect(footer.tagName).toBe("BUTTON");
+    expect(footer.listeners.get("click")).toHaveLength(1);
     if (method === "Escape") {
       const event = new Event("keydown", { cancelable: true });
       Object.defineProperty(event, "key", { value: "Escape" });
@@ -1285,6 +1288,7 @@ it.each(["back-ship", "close-ship", "Escape", "back"])(
     expect(options.onOpenChange.mock.calls).toEqual([[true]]);
     expect(focused()).toBe(opener);
     pause.dispose();
+    expect(footer.listeners.get("click")).toHaveLength(0);
   },
 );
 
