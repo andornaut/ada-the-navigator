@@ -133,7 +133,7 @@ const scanViews = new WeakMap<
   {
     view: ReturnType<typeof createScanFeedbackView>;
     state: GameModel["state"];
-    time: number;
+    time: number | undefined;
   }
 >();
 
@@ -1187,6 +1187,10 @@ export function buildScene(scene: UiContext): void {
   ];
   partial.push(() => homeLayers.forEach((unregister) => unregister()));
   const hide = (): void => {
+    const scan = scanViews.get(scene);
+    if (scan) {
+      scan.time = undefined;
+    }
     scene.controls.reset();
     flushScene(scene);
   };
@@ -1364,22 +1368,24 @@ export function renderConversation(scene: UiContext): void {
       scan.state = scene.model.state;
     }
     scan.view.enqueue(scene.model.drainScanOutcomes());
-    const elapsed = Math.max(0, Math.min(50, scene.time.now - scan.time));
-    scan.time = scene.time.now;
+    const scanCovered =
+      covered ||
+      Boolean(emergency) ||
+      scene.controls.navigationCovered() ||
+      scene.jumping ||
+      scene.startShown ||
+      !scene.enabled ||
+      document.hidden ||
+      scene.model.state.mode !== "space" ||
+      !flight;
+    const now = scene.time.now;
+    const elapsed = scanCovered || scan.time === undefined ? 0 : Math.max(0, now - scan.time);
+    scan.time = scanCovered ? undefined : now;
     scan.view.render(
       {
         area: scanFeedbackArea(insets, view),
         blocked: () => scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
-        covered:
-          covered ||
-          Boolean(emergency) ||
-          scene.controls.navigationCovered() ||
-          scene.jumping ||
-          scene.startShown ||
-          !scene.enabled ||
-          document.hidden ||
-          scene.model.state.mode !== "space" ||
-          !flight,
+        covered: scanCovered,
         dialogue: () => scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
         resolveAnchor: (outcome) => {
           if (flight?.galaxy !== outcome.galaxy) {
@@ -1388,7 +1394,7 @@ export function renderConversation(scene: UiContext): void {
           const target = landmarkById(outcome.galaxy, outcome.targetId);
           return target ? scene.project(target) : undefined;
         },
-        time: scene.time.now,
+        time: now,
       },
       elapsed,
     );

@@ -85,7 +85,7 @@ it("retains production scan receipts under cover and resolves only the receipt g
   expect(view.enqueue).toHaveBeenCalledWith([receipt]);
   const first = view.render.mock.calls[0]!;
   expect(first[0].covered).toBe(true);
-  expect(first[1]).toBe(20);
+  expect(first[1]).toBe(0);
   expect(first[0].time).toBe(20);
   // The HUD footprint, then the same node read as a touch control.
   expect(first[0].blocked()).toEqual([
@@ -111,6 +111,10 @@ it("retains production scan receipts under cover and resolves only the receipt g
   render(scene);
   expect(view.render.mock.calls[1]![0].covered).toBe(false);
   expect(view.render.mock.calls[1]![0].time).toBe(40);
+  expect(view.render.mock.calls[1]![1]).toBe(0);
+  scene.time.now = 140;
+  render(scene);
+  expect(view.render.mock.calls[2]![1]).toBe(100);
   expect(view.reset).not.toHaveBeenCalled();
   scene.model.state = { ...state };
   render(scene);
