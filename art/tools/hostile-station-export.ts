@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { format, resolveConfig } from "prettier";
@@ -18,6 +18,7 @@ import {
   mergeEntries,
   mergeSidecars,
   readManifest,
+  type Sidecars,
   sidecarCopies,
   sidecarsIn,
   storedAt,
@@ -63,6 +64,49 @@ const stationWeaponBase = ({ archetype, hardpoint, top }: Entry) =>
   top === undefined &&
   typeof hardpoint === "string" &&
   STATION_FILL.some((mount) => mount === hardpoint);
+
+const stationVariants = new Map<ManifestFile, string>([
+  ["core", "phantom"],
+  ["andromeda", "andromeda"],
+]);
+
+// A selected variant owns its hull and layout as a pair. Leave that family to its exporter.
+function retainsVariant(root: string, family: Family): boolean {
+  const variant = stationVariants.get(family.manifest);
+  if (!variant) return false;
+
+  const manifest = readManifest(family.manifest);
+  const sidecar = (manifest.sidecars as Sidecars | undefined)?.hostileStation?.hardpoints;
+  const base = `/art/${family.directory}/hostileStation-${variant}`;
+  const layout = `${base}-hardpoints.json`;
+  const usesVariantSheet = (row: Entry) => row.path?.startsWith(`${base}-sheet-`) === true;
+  const hulls: Entry[] = manifest.assets.filter(
+    (row: Entry) =>
+      row.archetype === "hostileStation" && row.top === undefined && row.hardpoint === undefined,
+  );
+  if (sidecar !== layout && !hulls.some(usesVariantSheet)) return false;
+
+  const rows = new Map(hulls.map((row) => [row.id, row]));
+  const exists = (url: string) => existsSync(root + url.slice("/art/".length));
+  if (
+    sidecar !== layout ||
+    !exists(layout) ||
+    hulls.length !== ENEMY_HEADINGS ||
+    rows.size !== ENEMY_HEADINGS ||
+    Array.from({ length: ENEMY_HEADINGS }, (_, heading) => {
+      const row = rows.get(`${family.prefix}hostileStation-${heading}`);
+      return (
+        row?.directionIndex === heading &&
+        row.svgSheet === true &&
+        usesVariantSheet(row) &&
+        exists(row.path!)
+      );
+    }).includes(false)
+  ) {
+    throw new Error(`Incomplete hostile station variant selection: ${family.manifest}`);
+  }
+  return true;
+}
 
 // Match the capital sheet contract: 16 independent, intrinsically sized roots in raw-sized cells.
 function weaponBaseSheets(
@@ -199,6 +243,9 @@ async function main() {
   }
   const craft = hostileStation();
   const iconOnly = option === "--icon-only";
+  const retained = new Set(
+    iconOnly ? [] : families.filter((family) => retainsVariant(root, family)),
+  );
   const result = iconOnly ? undefined : build(craft, place({ version: 1, archetypes: {} }, craft));
   const iconDirectory = `${root}ui/icons/`;
   mkdirSync(iconDirectory, { recursive: true });
@@ -209,7 +256,9 @@ async function main() {
   const hullFiles = new Set(
     hullEntries(craft.name, craft.frame).map(({ path }) => path.split("/").at(-1)!),
   );
+  const coreRetained = retained.has(families[0]!);
   for (const family of families) {
+    if (retained.has(family)) continue;
     const directory = `${root}${family.directory}/`;
     mkdirSync(directory, { recursive: true });
     const texts = new Map<string, string>();
@@ -236,12 +285,13 @@ async function main() {
             : text,
       );
     }
-    // The layout carries no colour: the recoloured families use the coral family's copy,
-    // which the first family writes.
+    // Unselected recolours share the legacy layout, even when core selects a variant.
     const shared =
       family.manifest === "core"
         ? new Map<string, string>()
-        : sidecarCopies("core", "hardpoints", [craft.name]);
+        : coreRetained
+          ? new Map([[layoutFile, `/art/enemies/${layoutFile}`]])
+          : sidecarCopies("core", "hardpoints", [craft.name]);
     const publicDir = `/art/${family.directory}/`;
     const entries = result.entries.map((entry): Entry => {
       const file = typeof entry.path === "string" ? entry.path.split("/").at(-1) : undefined;
@@ -280,7 +330,7 @@ async function main() {
     mergeSidecars(family.manifest, (name) => name === craft.name, sidecarsIn(paths));
   }
   console.log(
-    `${craft.name}: three existing families, ${result.files.size} native files per family`,
+    `${craft.name}: ${families.length - retained.size} legacy families, ${retained.size} retained variants`,
   );
 }
 
