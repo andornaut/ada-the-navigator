@@ -182,6 +182,8 @@ function queueEagerSvgSheets(
           const displaySized =
             asset.craft ||
             asset.debris ||
+            asset.outpost === "settlement" ||
+            (asset.station === "settlers" && asset.overlay === true) ||
             asset.archetype === "frigate" ||
             asset.archetype === "capital" ||
             asset.archetype === "gadget";

@@ -5,10 +5,12 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import andromeda from "../../public/art/andromeda/manifest.json";
 import cartwheel from "../../public/art/cartwheel/manifest.json";
 import core from "../../public/art/manifest.json";
 import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
+import sunflower from "../../public/art/sunflower/manifest.json";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
@@ -271,6 +273,38 @@ describe("source-family manifest readiness", () => {
     f.events.emit("complete");
     expect(f.readArt).toHaveBeenCalledTimes(2);
   });
+
+  it.each([
+    [1, sunflower, "/art/outposts/outposts-sheet.svg", false],
+    [5, andromeda, "/art/andromeda/hamlet-sheet.svg", true],
+    [5, andromeda, "/art/andromeda/settlers-school-sheet.svg", true],
+    [6, phantom, "/art/phantom/homes-cracked-sheet.svg", true],
+  ] as const)(
+    "loads galaxy %s station sheet %s at its authored dimensions",
+    (galaxy, manifest, path, displaySized) => {
+      const f = fixture();
+      const key = galaxyManifestKey(galaxy);
+      f.loadWorld(f.scene, galaxy);
+      f.cache.set(key, manifest);
+      f.events.emit(`filecomplete-json-${key}`);
+      const sheet = vectorSheetKey(path);
+      const document = {};
+      f.documents.set(sheet, document);
+      f.events.emit(`filecomplete-xml-${sheet}`);
+      const assets = (manifest.assets as readonly Asset[]).filter((asset) => asset.path === path);
+      expect(assets.length).toBeGreaterThan(0);
+      expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([[sheet, path]]);
+      expect(f.extract.mock.calls).toEqual(
+        assets.map((asset) => [
+          document,
+          path,
+          displaySized
+            ? { ...asset, intrinsicWidth: asset.displayWidth, intrinsicHeight: asset.displayHeight }
+            : asset,
+        ]),
+      );
+    },
+  );
 
   it("waits for Claim's Cartwheel metadata in a direct Phantom flight, then queues only platform parts", () => {
     const f = fixture();
