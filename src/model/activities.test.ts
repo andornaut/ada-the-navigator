@@ -252,7 +252,7 @@ describe("repeatable activities", () => {
       reward: 150,
     });
     expect(activityOffer(4, chapter, book, "elderLoom")).toBeUndefined();
-    expect(completeActivity(4, book)).toBe(300);
+    expect(completeActivity(4, book)).toBe(600);
     expect(completeActivity(4, book)).toBe(0);
     expect(activityOffer(4, chapter, book, "elderLoom")?.id).toBe("threadNeedle");
   });
@@ -390,7 +390,7 @@ describe("repeatable activities", () => {
       expect(rows[0]).toMatchObject({
         detail: "Deposit 30 ore at the hub.",
         kind: "activity",
-        reward: 375,
+        reward: 750,
         state: "held",
         title: "Mining contract",
       });
