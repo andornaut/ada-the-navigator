@@ -524,12 +524,24 @@ function mapMeasurement() {
   vi.stubGlobal("devicePixelRatio", 1);
 }
 
+function isMapTravelBinding(
+  options: actionBinding.AdaActionOptions,
+  element: HTMLElement,
+): boolean {
+  // The factory binds the labelled button before Map assigns data-action.
+  return (
+    options.nativeClickOwner === "factory" &&
+    options.ownAriaDisabled === "refusal-feedback" &&
+    element.textContent === LABELS.mapScreen.travelHere
+  );
+}
+
 it.each(["map-zoomIn", "map-travel"])(
   "rejects missing %s metadata in the completed Map layout before publication",
   (id) => {
     const bind = actionBinding.bindAdaAction;
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
-      element.dataset.action === id
+      (id === "map-travel" ? isMapTravelBinding(options, element) : element.dataset.action === id)
         ? { activate: () => false, dispose() {}, update() {} }
         : bind(options, element),
     );
@@ -626,7 +638,7 @@ it("rejects a missing Map chrome binding before publication and releases owned b
   const disposals: (() => void)[] = [];
   const bind = actionBinding.bindAdaAction;
   vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
-    if (element.dataset.action === "map-travel") {
+    if (isMapTravelBinding(options, element)) {
       return { activate: () => false, dispose() {}, update() {} };
     }
     const binding = bind(options, element);
