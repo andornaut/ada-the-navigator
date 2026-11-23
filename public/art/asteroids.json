@@ -9165,7 +9165,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     },
     {
       "id": "asteroid-l2",
@@ -9257,7 +9258,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     },
     {
       "id": "asteroid-l3",
@@ -9336,7 +9338,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     },
     {
       "id": "asteroid-h1",
@@ -9431,7 +9434,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     },
     {
       "id": "asteroid-h2",
@@ -9522,7 +9526,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     },
     {
       "id": "asteroid-h3",
@@ -9642,7 +9647,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/asteroid-static-sheet.svg"
     }
   ],
   "backdrop": {

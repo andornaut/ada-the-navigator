@@ -7762,7 +7762,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-static-sheet.svg"
     },
     {
       "id": "resource-l2",
@@ -7887,7 +7888,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-static-sheet.svg"
     },
     {
       "id": "resource-l3",
@@ -7966,7 +7968,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-static-sheet.svg"
     }
   ]
 }
