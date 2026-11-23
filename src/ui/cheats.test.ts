@@ -176,7 +176,6 @@ vi.mock("./modal.ts", () => ({
     row.append(...items.map((item) => item.button));
     return row;
   },
-  createButton: (label: string) => Object.assign(new Element("button"), { textContent: label }),
   createCard: ({ closeAction, closeLabel }: { closeAction: string; closeLabel: string }) => {
     const body = new Element(),
       card = new Element(),
@@ -306,7 +305,7 @@ it("does not add an entry to Settings and only removes its own card", () => {
 it("builds the two columns in keyboard order and keeps selective reset separate and guarded", () => {
   const unlock = action("unlockAllEquipment", 1);
   const ore = { ...action("addOre"), label: "Add 1,000 ore" };
-  const dust = { ...action("addStardust"), label: "Add 1,000 Stardust" };
+  const dust = { ...action("addStardust", 1), label: "Add 1,000 Stardust" };
   const selective = action("selectiveReset", 1);
   const f = setup([
     ore,
@@ -342,12 +341,16 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     [addButton!, "ore", ore.label],
   ] as const) {
     expect(button.textContent).toBe("+1,000");
-    expect(button.matches(".ui-standard-button")).toBe(false);
+    expect(button.matches(".ui-standard-button")).toBe(true);
     expect(button.getAttribute("aria-label")).toBe(label);
-    expect(button.children[0]!.getAttribute("aria-hidden")).toBe("true");
-    expect(button.children[0]!.style.backgroundImage).toBe(
-      `url('${uiIconUrl(`icon-${resource}-20`)}')`,
-    );
+    const [amount, decoration] = button.children;
+    expect(amount!.matches(".ui-control-label")).toBe(true);
+    expect(amount!.getAttribute("aria-hidden")).toBeNull();
+    expect(decoration!.getAttribute("aria-hidden")).toBeNull();
+    const [icon] = decoration!.children;
+    expect(icon!.matches(".ada-cheat-resource-icon")).toBe(true);
+    expect(icon!.getAttribute("aria-hidden")).toBe("true");
+    expect(icon!.style.backgroundImage).toBe(`url('${uiIconUrl(`icon-${resource}-20`)}')`);
   }
   expect(maximizeButton!.dataset.cheat).toBe("maxWeaponLevels");
   expect(selectiveButton!.tagName).toBe("BUTTON");
@@ -370,6 +373,10 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   addButton!.dispatchEvent(new Event("click"));
   expect(ore.run).toHaveBeenCalledTimes(2);
   expect(addButton!.disabled).toBe(false);
+  dustButton!.dispatchEvent(new Event("click"));
+  expect(dust.run).toHaveBeenCalledOnce();
+  expect(dustButton!.disabled).toBe(true);
+  expect(dustButton!.hidden).toBe(false);
   dustButton!.dispatchEvent(new Event("click"));
   expect(dust.run).toHaveBeenCalledOnce();
   selectiveButton!.dispatchEvent(new Event("click"));
@@ -409,51 +416,54 @@ it("uses Back and X on the same guarded return path", () => {
   expect(f.changed.mock.calls).toEqual([[true], [false], [true], [false], [true], [false]]);
 });
 
-it.each(["addOre", "unlockAllEquipment"])("runs a held %s action just once", (id) => {
-  vi.useFakeTimers();
-  const add = action(id);
-  const f = setup([add], true);
-  const button = descendants(f.root).find((node) => node.dataset.cheat === id)!;
-  const event = (type: string, target: Element) => {
-    const value = new Event(type, { cancelable: true });
-    Object.defineProperties(
-      value,
-      Object.fromEntries(
-        Object.entries({
-          button: 0,
-          clientX: 0,
-          clientY: 0,
-          detail: type === "click" ? 1 : 0,
-          isPrimary: true,
-          pointerId: 7,
-          target,
-        }).map(([key, property]) => [key, { value: property }]),
-      ),
-    );
-    return value;
-  };
-  const down = (target: Element) => {
-    document.dispatchEvent(event("pointerdown", target));
-    f.root.dispatchEvent(event("pointerdown", target));
-  };
-  const release = (target: Element) => {
-    document.dispatchEvent(event("pointerup", target));
-    const click = event("click", target);
-    f.root.dispatchEvent(click);
-    if (!click.defaultPrevented) {
-      target.dispatchEvent(event("click", target));
-    }
-    return click;
-  };
-  f.cheats.open();
-  down(button);
-  vi.advanceTimersByTime(500);
-  expect(add.run).toHaveBeenCalledOnce();
-  expect(release(button).defaultPrevented).toBe(true);
-  expect(add.run).toHaveBeenCalledOnce();
-  f.cheats.dispose();
-  expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, button)).toBeNull();
-});
+it.each(["addOre", "addStardust", "unlockAllEquipment"])(
+  "runs a held %s action just once",
+  (id) => {
+    vi.useFakeTimers();
+    const add = action(id);
+    const f = setup([add], true);
+    const button = descendants(f.root).find((node) => node.dataset.cheat === id)!;
+    const event = (type: string, target: Element) => {
+      const value = new Event(type, { cancelable: true });
+      Object.defineProperties(
+        value,
+        Object.fromEntries(
+          Object.entries({
+            button: 0,
+            clientX: 0,
+            clientY: 0,
+            detail: type === "click" ? 1 : 0,
+            isPrimary: true,
+            pointerId: 7,
+            target,
+          }).map(([key, property]) => [key, { value: property }]),
+        ),
+      );
+      return value;
+    };
+    const down = (target: Element) => {
+      document.dispatchEvent(event("pointerdown", target));
+      f.root.dispatchEvent(event("pointerdown", target));
+    };
+    const release = (target: Element) => {
+      document.dispatchEvent(event("pointerup", target));
+      const click = event("click", target);
+      f.root.dispatchEvent(click);
+      if (!click.defaultPrevented) {
+        target.dispatchEvent(event("click", target));
+      }
+      return click;
+    };
+    f.cheats.open();
+    down(button);
+    vi.advanceTimersByTime(500);
+    expect(add.run).toHaveBeenCalledOnce();
+    expect(release(button).defaultPrevented).toBe(true);
+    expect(add.run).toHaveBeenCalledOnce();
+    f.cheats.dispose();
+    expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, button)).toBeNull();
+  },
+);
 
 it("rechecks a button that became busy since the last refresh before running its callback", () => {
   const run = vi.fn();

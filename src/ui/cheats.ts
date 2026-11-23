@@ -13,7 +13,7 @@ import { type CheatAction, runCheatAction } from "./cheatActions.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createButton, createCard, setFooterAction } from "./modal.ts";
+import { createActions, createCard, setFooterAction } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
@@ -70,18 +70,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   const closeBindings = [closeBinding, dismissButton];
   const rows = new Map(options.rows.map((row) => [row.id, row]));
   const buttons = new Map<HTMLButtonElement, CheatAction>();
-  const bindRow = (element: HTMLButtonElement, run: () => void, enabled: () => boolean) =>
-    bindAdaAction(
-      {
-        click: {
-          availability: () => (open && enabled() ? { kind: "available" } : { kind: "omitted" }),
-          run,
-        },
-        current: () => element.isConnected && current(element),
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-      },
-      element,
-    );
   const items = document.createElement("div");
   items.className = "ada-cheat-items";
   const mounted = mountLayout<CheatsSchema>(
@@ -98,40 +86,42 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
                 refresh();
               }
             };
-            const textAction = resource
-              ? undefined
-              : createStandardTextAction(parent, data.label, {
-                  availability: (button) =>
-                    button?.disabled ? { kind: "disabled" } : { kind: "available" },
-                  current: () => current(button),
-                  run,
-                });
-            const button: HTMLButtonElement =
-              textAction?.element ?? createButton(CHEAT_COPY.amount);
-            if (textAction) {
-              setButtonRole("secondary", button);
-            }
+            const textAction = createStandardTextAction(
+              parent,
+              resource ? CHEAT_COPY.amount : data.label,
+              {
+                availability: (button) =>
+                  button?.disabled ? { kind: "disabled" } : { kind: "available" },
+                current: () => current(button),
+                run,
+              },
+            );
+            const button: HTMLButtonElement = textAction.element;
+            setButtonRole("secondary", button);
             button.dataset.cheat = data.id;
             const update = (next: CheatsSchema["action"]["props"]) => {
-              if (textAction) {
-                textAction.setLabel(next.label);
-              } else {
+              if (resource) {
                 button.setAttribute("aria-label", next.label);
+              } else {
+                textAction.setLabel(next.label);
               }
             };
             if (resource) {
+              // Keep the art decorative without dimming it as an icon-only button on focus.
+              const decoration = document.createElement("span");
+              decoration.style.display = "flex";
               const icon = document.createElement("span");
               icon.className = "ada-cheat-resource-icon";
               icon.setAttribute("aria-hidden", "true");
               icon.style.backgroundImage = `url('${uiIconUrl(`icon-${resource}-20`)}')`;
-              button.append(icon);
+              decoration.append(icon);
+              button.append(decoration);
             }
             update(data);
-            const binding = textAction ?? bindRow(button, run, () => !button.disabled);
             buttons.set(button, action);
             return {
               dispose() {
-                binding.dispose();
+                textAction.dispose();
                 buttons.delete(button);
               },
               element: button,
