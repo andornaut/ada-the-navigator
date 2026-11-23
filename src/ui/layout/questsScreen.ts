@@ -15,6 +15,8 @@ export const QUEST_LIST_PAGE_SIZE = 2;
 /** A quest icon's drawn disc. */
 export const QUEST_ICON = 24;
 
+const QUEST_ROUTE_TYPE = { lineHeight: 18, size: 14 } as const;
+
 const { chip, inset, markGap } = MAP_SCREEN_LAYOUT.quests;
 
 export const QUESTS_SCREEN_STYLE = `
@@ -50,6 +52,8 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-description{margin-top:${units(8)}!important;
   color:#c0bbd0}
 .ada-controls .ada-quest-route{display:grid;
+  font-size:${units(QUEST_ROUTE_TYPE.size)};
+  line-height:${units(QUEST_ROUTE_TYPE.lineHeight)};
   grid-template-columns:minmax(0,1fr) ${units(46)} minmax(0,1fr);
   gap:${units(4)};
   align-items:center;
