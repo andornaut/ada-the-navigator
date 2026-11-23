@@ -121,8 +121,12 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
   [data-station] *,[data-station-confirm] *
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
-export const STANDARD_CARD_TEXT_BUTTON =
-  ".ada-card .ada-button.ui-standard-button:not(:where(.ada-compact,[data-station] *,[data-station-confirm] *))";
+export const STANDARD_CARD_TEXT_BUTTON = `
+  .ada-card .ada-button.ui-standard-button:not(:where(.ada-compact,[data-station] *,[data-station-confirm] *)),
+  .ada-card .ada-button.ui-standard-button:where(
+    [data-station-confirm] :is([data-action=drop-cancel],[data-action=drop-confirm])
+  )
+`;
 const STANDARD_TEXT_FOCUS = `${UI_SCOPE} :is(
   ${STANDARD_CARD_TEXT_BUTTON},
   :is(.ada-map-navigation,.ada-ship-back,[data-dialog=conversation])
