@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -12,7 +12,14 @@ import { prettify, writeSprites } from "./sprite-sheet.ts";
 const CREAM = "ead4aa";
 const DISABLED = "9a96ad";
 const INK = "181425";
-const output = fileURLToPath(new URL("../../public/art/ui/sprites/", import.meta.url));
+const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
+const output = `${ui}sprites/`;
+const EQUIPMENT_KEYS = new Set([
+  "icon-shop-engine-tuning",
+  "icon-shop-shield",
+  "icon-shop-ship-paint",
+  "icon-shop-tractor-beam",
+]);
 
 interface Icon {
   readonly disabled: boolean;
@@ -554,7 +561,24 @@ function frame(rows: readonly string[], colour: string): Frame {
   );
 }
 
+const manifestPath = `${ui}manifest.json`;
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+  sprites: { key: string; png: string; json: string; once: string[] }[];
+};
+const registered = new Set(manifest.sprites.map(({ key }) => key));
+const managedKeys: string[] = [];
 for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
+  const equipment = EQUIPMENT_KEYS.has(key);
+  // A removed equipment row selects the SVGs only when both states exist.
+  if (
+    equipment &&
+    !registered.has(key) &&
+    existsSync(`${ui}icons/${key}.svg`) &&
+    existsSync(`${ui}icons/${key}-disabled.svg`)
+  ) {
+    continue;
+  }
+  if (equipment || key.startsWith("icon-project-")) managedKeys.push(key);
   const tags: Tag[] = disabled
     ? [
         ["normal", [frame(rows, CREAM)], 100],
@@ -564,16 +588,11 @@ for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
   await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, tags);
 }
 
-// Register project glyph sheets in the UI subset, preserving all other sprite entries.
-const manifestPath = fileURLToPath(new URL("../../public/art/ui/manifest.json", import.meta.url));
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
-  sprites: { key: string; png: string; json: string; once: string[] }[];
-};
-const projectKeys = Object.keys(ICONS).filter((key) => key.startsWith("icon-project-"));
-const projectSet = new Set(projectKeys);
+// Register emitted equipment and project glyph sheets, preserving all other sprite entries.
+const managed = new Set(managedKeys);
 manifest.sprites = [
-  ...manifest.sprites.filter(({ key }) => !projectSet.has(key)),
-  ...projectKeys.map((key) => ({
+  ...manifest.sprites.filter(({ key }) => !managed.has(key)),
+  ...managedKeys.map((key) => ({
     key,
     png: `sprites/${key}.png`,
     json: `sprites/${key}.json`,
