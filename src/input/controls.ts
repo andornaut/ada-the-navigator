@@ -332,7 +332,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         restoreParent(reopen);
       } else if (!open && returnToPause === "achievements") {
         returnToPause = undefined;
-        restoreParent(() => pause.restorePaused("achievements"));
+        pause.restorePaused("achievements");
       }
       syncModal();
     },
