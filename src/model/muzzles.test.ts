@@ -188,28 +188,34 @@ describe("drawn muzzles", () => {
   it("reads every hardpoints file Art exports, at Art's enemy display scale", () => {
     // The claim family shares the coral hardpoints files and adds the platform's; the cargo
     // hauler reads the retaliator's.
-    const files = ["../../public/art/enemies/", "../../public/art/cartwheel/enemies/"].flatMap(
-      (dir) =>
-        readdirSync(new URL(dir, import.meta.url)).filter((name) =>
-          name.endsWith("-hardpoints.json"),
-        ),
+    const variants = new Map([
+      ["hostileStation-andromeda", "hostileStationAndromeda"],
+      ["hostileStation-phantom", "hostileStationPhantom"],
+    ]);
+    const files = ["enemies", "andromeda/enemies", "cartwheel/enemies"].flatMap((dir) =>
+      readdirSync(new URL(`../../public/art/${dir}/`, import.meta.url))
+        .filter((name) => name.endsWith("-hardpoints.json"))
+        .map((name) => name.replace("-hardpoints.json", "")),
     );
     expect(Object.keys(MUZZLE_ART).sort()).toEqual(
       [
-        ...new Set([
-          ...files.map((name) => name.replace("-hardpoints.json", "")),
-          "retaliatorCargoHauler",
-        ]),
+        ...new Set([...files.map((name) => variants.get(name) ?? name), "retaliatorCargoHauler"]),
       ].sort(),
     );
     expect(Object.keys(MUZZLE_ART)).toContain("gadget");
     const manifest = ART_MANIFEST as unknown as {
       assets: { displayWidth?: number; id: string; width: number }[];
     };
+    const stations = new Map([
+      ["hostileStation", "enemy-claim-hostileStation-0"],
+      ["hostileStationAndromeda", "enemy-garnet-hostileStation-0"],
+      ["hostileStationPhantom", "enemy-hostileStation-0"],
+    ]);
     for (const archetype of Object.keys(MUZZLE_ART)) {
-      const hull = manifest.assets.find((asset) =>
-        [`enemy-${archetype}-0`, `enemy-claim-${archetype}`].includes(asset.id),
-      )!;
+      const station = stations.get(archetype);
+      const ids =
+        station === undefined ? [`enemy-${archetype}-0`, `enemy-claim-${archetype}`] : [station];
+      const hull = manifest.assets.find((asset) => ids.includes(asset.id))!;
       expect(hull.displayWidth! / hull.width).toBe(ENEMY_DISPLAY_SCALE);
     }
   });

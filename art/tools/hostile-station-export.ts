@@ -189,7 +189,7 @@ async function main() {
   }
   if (option === "--variant-candidate") {
     const { exportStationVariants } = await import("./hostile-station-variants.ts");
-    exportStationVariants(
+    await exportStationVariants(
       root,
       fileURLToPath(
         new URL("../../.check-results/hostile-station-variant-output/", import.meta.url),

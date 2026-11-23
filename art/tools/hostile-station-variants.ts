@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { format, resolveConfig } from "prettier";
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { HOSTILE_STATION_SIGNATURE } from "../../src/data/enemySignatures.ts";
 import { models } from "./station-model.ts";
@@ -38,7 +39,7 @@ const variants = [
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 const round = (x: number) => Math.round(x * 1000) / 1000;
 
-export function exportStationVariants(art: string, output: string): void {
+export async function exportStationVariants(art: string, output: string): Promise<void> {
   const legacy = read(art + "enemies/hostileStation-hardpoints.json") as LegacyLayout;
   for (const spec of variants) {
     const dir = `/art/${spec.directory}/`;
@@ -153,7 +154,12 @@ export function exportStationVariants(art: string, output: string): void {
     mkdirSync(files, { recursive: true });
     mkdirSync(evidence, { recursive: true });
     for (const [name, svg] of sheets) writeFileSync(files + name, svg);
-    writeFileSync(files + sidecar, JSON.stringify(layout) + "\n");
+    const sidecarPath = files + sidecar;
+    const sidecarText = await format(JSON.stringify(layout), {
+      ...(await resolveConfig(sidecarPath)),
+      filepath: sidecarPath,
+    });
+    writeFileSync(sidecarPath, sidecarText);
     writeFileSync(
       evidence + "selection.json",
       JSON.stringify(
