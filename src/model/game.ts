@@ -44,6 +44,7 @@ import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import {
   ACHIEVEMENT_TOTALS,
   type AchievementEvent,
@@ -301,7 +302,6 @@ import {
   type WeaponChoice,
 } from "./weapons.ts";
 import { worldDelta, worldDistance } from "./worldContacts.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
