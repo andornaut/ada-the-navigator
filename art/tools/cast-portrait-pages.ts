@@ -1,6 +1,7 @@
 // Stages CAST portrait pages without changing the authored sheets or their manifest rows.
 // Usage: node art/tools/cast-portrait-pages.ts --candidate
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 import { constants } from "node:zlib";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
@@ -8,8 +9,11 @@ import { encodeIndexedPng } from "@andornaut/art-kit/build/indexedPng";
 import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/build/png";
 import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 import { filledImage, paste } from "@andornaut/art-kit/build/raster";
+import { spriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 
 import { CAST, type CastKey, castFrames, castSheet } from "../../src/data/cast.ts";
+import { type Portrait, portraitSheets, writePortraits } from "./bust-sheets.ts";
+import { readManifest } from "./manifest.ts";
 
 type Point = { x: number; y: number };
 type SheetRow = {
@@ -100,6 +104,96 @@ export function packCastStrips(strips: readonly Strip[]) {
   }
   if (!best) throw new Error("Cast strips exceed the checked page envelope");
   return best;
+}
+
+export function authoredCastPages(home: string, portraits: readonly Portrait[]) {
+  const authored = portraits
+    .toSorted((a, b) => byId(a.key, b.key))
+    .map((portrait) => ({
+      key: portrait.key,
+      sheets: portraitSheets(portrait),
+    }));
+  return (["full", "compact"] as const).map((size, index) => {
+    const strips = authored.map(({ key, sheets }) => {
+      const { names, sheet, tags } = sheets[index]!;
+      const { sheet: png } = spriteSheet({ image: `${sheet}.png`, key: sheet }, tags);
+      const id = size === "compact" ? `${key}-portrait-compact` : `${key}-portrait`;
+      return { image: decodePng(png), names, strip: { id } };
+    });
+    const { bytes, height, origins, width } = packCastStrips(strips);
+    const members = strips.map(({ image, names, strip }) => ({
+      crop: { ...origins.get(strip.id)!, height: image.height, width: image.width },
+      frames: Object.fromEntries(names.map((name, i) => [name, i])),
+      id: strip.id,
+    }));
+    return { bytes, file: `${home}-${size}.png`, height, members, size, width };
+  });
+}
+
+type VerticalHome = "cartwheel" | "sunflower" | "whirlpool";
+type PortraitSelectionRow = {
+  id: string;
+  path?: string;
+  width?: number;
+  height?: number;
+  displayWidth?: number;
+  displayHeight?: number;
+  frameWidth?: number;
+  frameHeight?: number;
+  frames?: unknown;
+  portraitCrop?: unknown;
+};
+
+export async function writeVerticalCast(home: VerticalHome, portraits: readonly Portrait[]) {
+  const folder = `${home}/portraits`;
+  const prefix = `/art/${folder}/`;
+  const legacyPaths = new Map(
+    portraits.flatMap(({ key }) => [
+      [`${key}-portrait`, `${prefix}${key}.png`],
+      [`${key}-portrait-compact`, `${prefix}${key}-compact.png`],
+    ]),
+  );
+  const rows = (readManifest(home).assets as PortraitSelectionRow[]).filter(({ id }) =>
+    legacyPaths.has(id),
+  );
+  const packed = rows.some(
+    ({ id, path, portraitCrop }) => portraitCrop !== undefined || path !== legacyPaths.get(id),
+  );
+  if (!packed) {
+    const ids = await writePortraits(home, folder, portraits, (id) => legacyPaths.has(id));
+    console.log(`wrote ${ids.join(", ")}`);
+    return;
+  }
+
+  if (rows.length !== legacyPaths.size) throw new Error(`Incomplete ${home} portrait selection`);
+  const pages = authoredCastPages(home, portraits);
+  for (const { file, height, members, size, width } of pages) {
+    const displaySize = size === "compact" ? 44 : undefined;
+    for (const { crop, frames, id } of members) {
+      const row = rows.find((entry) => entry.id === id);
+      if (
+        !row ||
+        row.path !== prefix + file ||
+        row.width !== width ||
+        row.height !== height ||
+        crop.x !== 0 ||
+        !isDeepStrictEqual(frames, { neutral: 0 }) ||
+        row.frameWidth !== undefined ||
+        row.frameHeight !== undefined ||
+        row.displayWidth !== displaySize ||
+        row.displayHeight !== displaySize ||
+        !isDeepStrictEqual(row.frames, frames) ||
+        !isDeepStrictEqual(row.portraitCrop, crop)
+      ) {
+        throw new Error(`Invalid packed ${home} portrait selection: ${id}`);
+      }
+    }
+  }
+
+  const output = new URL(`art/${folder}/`, art);
+  mkdirSync(output, { recursive: true });
+  for (const { bytes, file } of pages) writeFileSync(new URL(file, output), bytes);
+  console.log(`wrote the selected ${home} portrait pages`);
 }
 
 function writeCandidate(): void {

@@ -29,7 +29,8 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { type Portrait, writePortraits } from "./bust-sheets.ts";
+import type { Portrait } from "./bust-sheets.ts";
+import { writeVerticalCast } from "./cast-portrait-pages.ts";
 
 type Fur = { base: string; shade: string; light: string };
 const YELLOW: Fur = { base: "fee761", light: "fff4b8", shade: "f4b93a" };
@@ -368,10 +369,4 @@ export const sunflowerPortraits: readonly Portrait[] = [
   { compact: [5, 2], frames: [["neutral", nectar()]], key: "nectar" },
 ];
 
-if (import.meta.main) {
-  const portraits = sunflowerPortraits;
-  const ids = await writePortraits("sunflower", "sunflower/portraits", portraits, (id) =>
-    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-  );
-  console.log(`wrote ${ids.join(", ")}`);
-}
+if (import.meta.main) await writeVerticalCast("sunflower", sunflowerPortraits);

@@ -2,14 +2,11 @@
 // Usage: node art/tools/cast-portrait-authored.ts --single-frame|--multi-frame
 import { mkdirSync, writeFileSync } from "node:fs";
 
-import { decodePng } from "@andornaut/art-kit/build/png";
-import { spriteSheet } from "@andornaut/art-kit/build/spriteSheet";
-
 import { CAST, type CastKey } from "../../src/data/cast.ts";
 import { andromedaPortraits } from "./andromeda-portraits.ts";
-import { type Portrait, portraitSheets } from "./bust-sheets.ts";
+import type { Portrait } from "./bust-sheets.ts";
 import { cartwheelPortraits } from "./cartwheel-portraits.ts";
-import { packCastStrips } from "./cast-portrait-pages.ts";
+import { authoredCastPages } from "./cast-portrait-pages.ts";
 import { needlePortraits } from "./needle-portraits.ts";
 import { sunflowerPortraits } from "./sunflower-portraits.ts";
 import { whirlpoolPortraits } from "./whirlpool-portraits.ts";
@@ -37,15 +34,8 @@ for (const home of homes) {
   const authored = keys.map((key) => {
     const portrait = sources[home].find((portrait) => portrait.key === key);
     if (!portrait) throw new Error(`Missing authored portrait: ${home}/${key}`);
-    return portraitSheets(portrait);
+    return portrait;
   });
-  for (const [index, size] of ["full", "compact"].entries()) {
-    const strips = authored.map((sheets) => {
-      const { sheet, tags } = sheets[index]!;
-      const { sheet: png } = spriteSheet({ image: `${sheet}.png`, key: sheet }, tags);
-      return { image: decodePng(png), strip: { id: sheet } };
-    });
-    const { bytes } = packCastStrips(strips);
-    writeFileSync(new URL(`${home}-${size}.png`, output), bytes);
-  }
+  for (const { bytes, file } of authoredCastPages(home, authored))
+    writeFileSync(new URL(file, output), bytes);
 }
