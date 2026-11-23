@@ -50,6 +50,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
@@ -2242,7 +2243,10 @@ async function main() {
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
   const craftsToBuild = selecting ? [capital] : drawn;
-  const results = craftsToBuild.map((craft) => build(craft, place(offsets, craft)));
+  const results = craftsToBuild.map((craft) => {
+    const styled = restrainHeavyHull(craft);
+    return build(styled, place(offsets, styled));
+  });
   if (!selecting) {
     const layoutOf = (name: string) =>
       results[drawn.findIndex((craft) => craft.name === name)]!.files.get(

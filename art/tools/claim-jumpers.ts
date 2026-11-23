@@ -29,6 +29,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
+import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
@@ -440,13 +441,15 @@ async function main() {
     entries.push(...hullEntries(craft.name, craft.frame).map(claimEntry));
   }
   for (const craft of [...heavies, ...industrialHeavies]) {
-    const result = build(craft, place(offsets, craft));
+    const styled = restrainHeavyHull(craft);
+    const result = build(styled, place(offsets, styled));
     for (const [file, content] of result.files) {
       files.set(file, content);
     }
     entries.push(...result.entries.map(claimEntry));
   }
-  const built = build(platform, place(offsets, platform));
+  const styledPlatform = restrainHeavyHull(platform, { platformPaint: claim });
+  const built = build(styledPlatform, place(offsets, styledPlatform));
   const turning = /^platform-\d+$/;
   for (const [file, content] of built.files) {
     if (file === "platform-0.svg") {
