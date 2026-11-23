@@ -830,6 +830,206 @@ it("distinguishes direct live-root and metadata assertion sites from unresolved 
   ]);
 });
 
+const recoveryAdapter = {
+  path: "src/ui/holdActionsAdapter.ts",
+  text: readFileSync(new URL("../ui/holdActionsAdapter.ts", import.meta.url), "utf8"),
+};
+
+const recoveryRegistry = {
+  path: "src/ui/actionRegistry.ts",
+  text: readFileSync(new URL("../ui/actionRegistry.ts", import.meta.url), "utf8"),
+};
+const recoveryStartup = {
+  path: "src/loading/startup.ts",
+  text: readFileSync(new URL("../loading/startup.ts", import.meta.url), "utf8"),
+};
+
+it("associates the eager Startup recovery assertion and leaves the lazy Crash receiver unresolved", () => {
+  const { path } = recoveryStartup;
+  const crash = "src/crash/crashScreen.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    recoveryRegistry,
+    recoveryAdapter,
+    recoveryStartup,
+    {
+      path: crash,
+      text: readFileSync(new URL("../crash/crashScreen.ts", import.meta.url), "utf8"),
+    },
+  ]);
+  expect(result.runtimeAssertions).toContainEqual(
+    expect.objectContaining({ kind: "live-root", path, source: "recovery.assertBindings()" }),
+  );
+  expect(result.unresolvedRuntimeAssertions).toEqual([
+    expect.objectContaining({ path: crash, source: "recovery.root.assertBindings()" }),
+  ]);
+});
+
+it.each([
+  [
+    "root guard redirects the delegated argument",
+    recoveryAdapter,
+    "if (!root.contains(completedSubtree))",
+    "if ((completedSubtree = document.body, false))",
+  ],
+  [
+    "adapter redirects the construction root",
+    recoveryAdapter,
+    "function bindRoot(policy: RootPolicy, root: HTMLElement) {",
+    "function bindRoot(policy: RootPolicy, root: HTMLElement) { root = root.ownerDocument.body;",
+  ],
+  [
+    "adapter destructures a replacement construction root",
+    recoveryAdapter,
+    "const options = policy.options;",
+    "const options = policy.options; ({root} = {root: root.ownerDocument.body});",
+  ],
+  [
+    "registration takes a different root",
+    recoveryAdapter,
+    "    root,\n  );\n  const resolve",
+    "    root.ownerDocument.body,\n  );\n  const resolve",
+  ],
+  [
+    "caller redirects the document owner",
+    recoveryStartup,
+    'const frame = root.ownerDocument.createElement("div");',
+    'root = root.ownerDocument.body; const frame = root.ownerDocument.createElement("div");',
+  ],
+  [
+    "construction passes a shadowed root",
+    recoveryStartup,
+    'const frame = root.ownerDocument.createElement("div");',
+    "const other = () => { const root = document.body;" +
+      ' return root.ownerDocument.createElement("div"); }; const frame = other();',
+  ],
+])("leaves Startup unresolved when the %s", (_label, input, original, replacement) => {
+  const mutated = { ...input, text: input.text.replace(original, replacement) };
+  expect(mutated.text).not.toBe(input.text);
+  const { path } = recoveryStartup;
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    recoveryRegistry,
+    ...[recoveryAdapter, recoveryStartup].map((source) =>
+      source.path === input.path ? mutated : source,
+    ),
+  ]);
+  expect(result.runtimeAssertions.filter((site) => site.path === path)).toEqual([]);
+  expect(result.unresolvedRuntimeAssertions).toEqual([
+    expect.objectContaining({ path, source: "recovery.assertBindings()" }),
+  ]);
+});
+
+it("keeps recovery method calls unresolved when their binding or eager lifetime is ambiguous", () => {
+  const path = "src/recovery.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    recoveryRegistry,
+    recoveryAdapter,
+    {
+      path: "src/lookalike.ts",
+      text: "export function bindAdaRecoveryActionRoot(options, root) { return root; }",
+    },
+    {
+      path,
+      text: `
+        import {bindAdaRecoveryActionRoot as bind} from "./ui/holdActionsAdapter.ts";
+        import {bindAdaRecoveryActionRoot as fake} from "./lookalike.ts";
+        function wrongModule(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = fake(options, panel);
+          recovery.assertBindings();
+        }
+        function shadow(root, bind) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          recovery.assertBindings();
+        }
+        function replace(root) {
+          const panel = root.ownerDocument.createElement("div");
+          let recovery = bind(options, panel);
+          recovery = replacement;
+          recovery.assertBindings();
+        }
+        function fakeType(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = replacement as ReturnType<typeof bind>;
+          recovery.assertBindings();
+        }
+        function redefine(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          recovery.assertBindings = replacement;
+          recovery.assertBindings();
+        }
+        function disposed(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          recovery.dispose();
+          recovery.assertBindings();
+        }
+        function escaped(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          publish({ recovery });
+          recovery.assertBindings();
+        }
+        function deferred(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          publish(() => recovery.assertBindings());
+          recovery.dispose();
+        }
+        function beforeAudit(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          mount(() => recovery.dispose());
+          recovery.assertBindings();
+        }
+        function hoisted(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const recovery = bind(options, panel);
+          mount(teardown);
+          recovery.assertBindings();
+          function teardown() { recovery.dispose(); }
+        }
+      `,
+    },
+  ]);
+  expect(result.runtimeAssertions.filter((site) => site.path === path)).toEqual([]);
+  expect(result.unresolvedRuntimeAssertions.filter((site) => site.path === path)).toHaveLength(10);
+});
+
+it("requires the adapter method to delegate to the canonical assertion import", () => {
+  const path = "src/caller.ts";
+  const result = scanDiscreteActionProject([
+    canonicalRegistry,
+    recoveryRegistry,
+    {
+      ...recoveryAdapter,
+      text: recoveryAdapter.text.replace(
+        "assertAdaActionBindings(completedSubtree);",
+        "log(completedSubtree);",
+      ),
+    },
+    {
+      path,
+      text: `
+        import {bindAdaRecoveryActionRoot} from "./ui/holdActionsAdapter.ts";
+        function construct(root) {
+          const panel = root.ownerDocument.createElement("div");
+          const audit = bindAdaRecoveryActionRoot(options, panel);
+          audit.assertBindings();
+        }
+      `,
+    },
+  ]);
+  expect(result.runtimeAssertions.filter((site) => site.path === path)).toEqual([]);
+  expect(result.unresolvedRuntimeAssertions).toEqual([
+    expect.objectContaining({ path, source: "audit.assertBindings()" }),
+  ]);
+});
+
 it("does not authenticate a wrong module, lexical shadow, bare name or indirect assertion call", () => {
   const path = "src/ui/assertionConsumer.ts";
   const result = scanDiscreteActionProject([

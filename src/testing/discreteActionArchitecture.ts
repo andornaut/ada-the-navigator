@@ -48,6 +48,7 @@ interface AssertionSite {
 interface ScanContext {
   readonly assertions: ReadonlyMap<ts.FunctionDeclaration, RuntimeAssertionKind>;
   readonly actionBinding: ts.FunctionDeclaration | undefined;
+  readonly recoveryRoot: ts.FunctionDeclaration | undefined;
   readonly lexicalDeclarations: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
   readonly sources: ReadonlyMap<string, ts.SourceFile>;
@@ -196,10 +197,216 @@ function inertRegistrationOptions(node: ts.Expression): boolean {
   );
 }
 
+/** Follow a binding through direct reads. Reject writes, aliases and opaque syntax. */
+function directRecoveryReads(
+  context: ScanContext,
+  scope: ts.Node,
+  binding: ts.FunctionDeclaration | ts.ParameterDeclaration | ts.VariableDeclaration,
+): boolean {
+  const name = binding.name;
+  if (!name || !ts.isIdentifier(name)) {
+    return false;
+  }
+  const unsafe = (node: ts.Node): true | undefined => {
+    if (ts.isWithStatement(node) || (ts.isIdentifier(node) && node.text === "eval")) {
+      return true;
+    }
+    if (ts.isIdentifier(node) && node !== name && node.text === name.text) {
+      const parent = node.parent;
+      if (ts.isShorthandPropertyAssignment(parent)) {
+        const literal = parent.parent;
+        const call = literal.parent;
+        // At a call argument the shorthand is a read. In a destructuring target it is a write.
+        if (!ts.isCallExpression(call) || !call.arguments.some((arg) => arg === literal)) {
+          return true;
+        }
+      }
+      if (context.lexicalDeclarations(node)?.includes(binding)) {
+        const read =
+          (ts.isPropertyAccessExpression(parent) && parent.expression === node) ||
+          (ts.isCallExpression(parent) &&
+            (parent.expression === node || parent.arguments.some((arg) => arg === node))) ||
+          (ts.isParameter(parent) && parent.initializer === node);
+        if (!read) {
+          return true;
+        }
+      }
+    }
+    return ts.forEachChild(node, unsafe);
+  };
+  return !unsafe(scope);
+}
+
+/** Authenticate the actual returned method and its default subtree, through the local wrapper. */
+function recoveryAssertionFactory(
+  context: ScanContext,
+  factory: ts.FunctionDeclaration,
+  live: ts.FunctionDeclaration,
+): boolean {
+  const lexical = (node: ts.Expression | undefined) => {
+    const declarations = node && ts.isIdentifier(node) && context.lexicalDeclarations(node);
+    return declarations && declarations.length === 1 ? declarations[0] : undefined;
+  };
+  const forward = factory.body?.statements[0];
+  if (
+    factory.body?.statements.length !== 1 ||
+    !forward ||
+    !ts.isReturnStatement(forward) ||
+    !forward.expression ||
+    !ts.isCallExpression(forward.expression) ||
+    !factory.parameters[1]
+  ) {
+    return false;
+  }
+  const call = forward.expression;
+  const implementation = lexical(call.expression);
+  if (
+    call.questionDotToken ||
+    call.arguments.length !== 2 ||
+    lexical(call.arguments[1]) !== factory.parameters[1] ||
+    !implementation ||
+    !ts.isFunctionDeclaration(implementation) ||
+    implementation.parent !== factory.parent ||
+    !implementation.body ||
+    implementation.asteriskToken ||
+    implementation.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.AsyncKeyword)
+  ) {
+    return false;
+  }
+  const root = implementation.parameters[1];
+  if (
+    !root ||
+    !directRecoveryReads(context, factory, factory.parameters[1]) ||
+    !directRecoveryReads(context, implementation.getSourceFile(), implementation) ||
+    !directRecoveryReads(context, implementation, root)
+  ) {
+    return false;
+  }
+  const registry = context.sources.get("src/ui/actionRegistry.ts");
+  const registrations = implementation.body.statements
+    .flatMap((statement) =>
+      ts.isVariableStatement(statement) ? [...statement.declarationList.declarations] : [],
+    )
+    .flatMap(({ initializer }) => {
+      if (
+        !initializer ||
+        !ts.isCallExpression(initializer) ||
+        !ts.isIdentifier(initializer.expression)
+      ) {
+        return [];
+      }
+      const target = localValueImport(context, initializer.expression);
+      return target?.name === "registerAdaActionRoot" && target.target === registry
+        ? [initializer]
+        : [];
+    });
+  if (
+    registrations.length !== 1 ||
+    registrations[0]!.questionDotToken ||
+    registrations[0]!.arguments.length !== 2 ||
+    lexical(registrations[0]!.arguments[1]) !== root
+  ) {
+    return false;
+  }
+  const returned = implementation.body.statements.at(-1);
+  if (
+    !returned ||
+    !ts.isReturnStatement(returned) ||
+    !returned.expression ||
+    !ts.isObjectLiteralExpression(returned.expression)
+  ) {
+    return false;
+  }
+  let otherReturn = false;
+  const inspect = (node: ts.Node): void => {
+    if (!ts.isFunctionLike(node)) {
+      otherReturn ||= ts.isReturnStatement(node) && node !== returned;
+      ts.forEachChild(node, inspect);
+    }
+  };
+  inspect(implementation.body);
+  const properties = returned.expression.properties;
+  if (
+    otherReturn ||
+    properties.some((property) => !property.name || !ts.isIdentifier(property.name))
+  ) {
+    return false;
+  }
+  const methods = properties.filter((property) => property.name?.getText() === "assertBindings");
+  const method = methods.length === 1 ? methods[0] : undefined;
+  if (
+    !method ||
+    !ts.isMethodDeclaration(method) ||
+    method.asteriskToken ||
+    method.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.AsyncKeyword) ||
+    method.parameters.length !== 1 ||
+    lexical(method.parameters[0]?.initializer) !== root
+  ) {
+    return false;
+  }
+  const [lifetimeGuard, rootGuard, tail] = method.body?.statements ?? [];
+  if (
+    method.body?.statements.length !== 3 ||
+    !tail ||
+    !ts.isExpressionStatement(tail) ||
+    !ts.isCallExpression(tail.expression)
+  ) {
+    return false;
+  }
+  const throwCondition = (statement: ts.Statement | undefined) =>
+    statement &&
+    ts.isIfStatement(statement) &&
+    !statement.elseStatement &&
+    ts.isBlock(statement.thenStatement) &&
+    statement.thenStatement.statements.length === 1 &&
+    ts.isThrowStatement(statement.thenStatement.statements[0]!)
+      ? statement.expression
+      : undefined;
+  const flag = lexical(throwCondition(lifetimeGuard));
+  const outside = throwCondition(rootGuard);
+  const contains =
+    outside &&
+    ts.isPrefixUnaryExpression(outside) &&
+    outside.operator === ts.SyntaxKind.ExclamationToken
+      ? outside.operand
+      : undefined;
+  // Only the scalar lifetime read and the original root/argument containment check can reach
+  // the assertion. An arbitrary condition could redirect its argument before it falls through.
+  if (
+    !flag ||
+    !ts.isVariableDeclaration(flag) ||
+    flag.parent.parent.parent !== implementation.body ||
+    !contains ||
+    !ts.isCallExpression(contains) ||
+    contains.questionDotToken ||
+    !ts.isPropertyAccessExpression(contains.expression) ||
+    contains.expression.questionDotToken ||
+    contains.expression.name.text !== "contains" ||
+    lexical(contains.expression.expression) !== root ||
+    contains.arguments.length !== 1 ||
+    lexical(contains.arguments[0]) !== method.parameters[0]
+  ) {
+    return false;
+  }
+  const delegated = tail.expression;
+  const target =
+    ts.isIdentifier(delegated.expression) && localValueImport(context, delegated.expression);
+  return Boolean(
+    !delegated.questionDotToken &&
+    delegated.arguments.length === 1 &&
+    lexical(delegated.arguments[0]) === method.parameters[0] &&
+    target &&
+    target.target === live.getSourceFile() &&
+    target.name === live.name?.text,
+  );
+}
+
 function scanContext(sources: ScanContext["sources"]): ScanContext {
   const registry = sources.get("src/ui/actionBinding.ts");
-  const directExport = (name: string): ts.FunctionDeclaration | undefined => {
-    const declarations = registry?.statements.filter(
+  const adapter = sources.get("src/ui/holdActionsAdapter.ts");
+  const lexicalDeclarations = localDeclarations(sources);
+  const directExport = (module: ts.SourceFile | undefined, name: string) => {
+    const declarations = module?.statements.filter(
       (node): node is ts.FunctionDeclaration =>
         ts.isFunctionDeclaration(node) &&
         node.name?.text === name &&
@@ -216,20 +423,27 @@ function scanContext(sources: ScanContext["sources"]): ScanContext {
     return declarations?.length === 1 ? declarations[0] : undefined;
   };
   const assertions = new Map<ts.FunctionDeclaration, RuntimeAssertionKind>();
-  const live = directExport("assertAdaActionBindings");
-  const metadata = directExport("assertAdaActionMetadata");
+  const live = directExport(registry, "assertAdaActionBindings");
+  const metadata = directExport(registry, "assertAdaActionMetadata");
   if (live) {
     assertions.set(live, "live-root");
   }
   if (metadata) {
     assertions.set(metadata, "metadata");
   }
-  return {
-    actionBinding: directExport("bindAdaAction"),
+  const context: ScanContext = {
+    actionBinding: directExport(registry, "bindAdaAction"),
     assertions,
     factories: new Map(),
-    lexicalDeclarations: localDeclarations(sources),
+    lexicalDeclarations,
+    recoveryRoot: undefined,
     sources,
+  };
+  const factory = directExport(adapter, "bindAdaRecoveryActionRoot");
+  return {
+    ...context,
+    recoveryRoot:
+      live && factory && recoveryAssertionFactory(context, factory, live) ? factory : undefined,
   };
 }
 
@@ -243,7 +457,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
   const lexicalIdentity = (node: ts.Expression, expected: ts.Declaration): boolean =>
     lexicalDeclaration(node) === expected;
   const exported = new Map<string, ts.FunctionDeclaration>();
-  for (const item of [context.actionBinding, ...context.assertions.keys()]) {
+  for (const item of [context.actionBinding, context.recoveryRoot, ...context.assertions.keys()]) {
     if (item?.name) {
       exported.set(item.name.text, item);
     }
@@ -1974,6 +2188,149 @@ function scanSource(context: ScanContext, path: string, text: string) {
       source: node.getText(source),
     });
   };
+  // Only eager construction in the handle's own block can precede its teardown.
+  const recoveryAssertion = (call: ts.CallExpression, member: ts.PropertyAccessExpression) => {
+    const handle = member.expression;
+    const value = lexicalDeclaration(handle);
+    if (
+      call.questionDotToken ||
+      member.questionDotToken ||
+      call.arguments.length ||
+      !value ||
+      !ts.isVariableDeclaration(value) ||
+      !(value.parent.flags & ts.NodeFlags.Const) ||
+      !ts.isIdentifier(handle) ||
+      !value.initializer ||
+      !ts.isCallExpression(value.initializer) ||
+      value.initializer.arguments.length !== 2 ||
+      value.initializer.arguments.some(ts.isSpreadElement) ||
+      !context.recoveryRoot ||
+      canonicalCall(value.initializer) !== context.recoveryRoot ||
+      !ts.isExpressionStatement(call.parent)
+    ) {
+      return false;
+    }
+    const declaration = value.parent.parent;
+    const block = declaration.parent;
+    if (!ts.isVariableStatement(declaration) || !ts.isBlock(block)) {
+      return false;
+    }
+    const host = lexicalDeclaration(value.initializer.arguments[1]!);
+    const created = host && ts.isVariableDeclaration(host) ? host.initializer : undefined;
+    const creator = created && ts.isCallExpression(created) ? created.expression : undefined;
+    const hostDocument =
+      creator && ts.isPropertyAccessExpression(creator) ? creator.expression : undefined;
+    const owner =
+      hostDocument && ts.isPropertyAccessExpression(hostDocument)
+        ? lexicalDeclaration(hostDocument.expression)
+        : undefined;
+    if (
+      !host ||
+      !ts.isVariableDeclaration(host) ||
+      !(host.parent.flags & ts.NodeFlags.Const) ||
+      host.parent.parent.parent !== block ||
+      host.end >= declaration.getStart(source) ||
+      !created ||
+      !ts.isCallExpression(created) ||
+      created.questionDotToken ||
+      created.arguments.length !== 1 ||
+      !ts.isStringLiteralLike(created.arguments[0]!) ||
+      !creator ||
+      !ts.isPropertyAccessExpression(creator) ||
+      creator.questionDotToken ||
+      creator.name.text !== "createElement" ||
+      !hostDocument ||
+      !ts.isPropertyAccessExpression(hostDocument) ||
+      hostDocument.questionDotToken ||
+      hostDocument.name.text !== "ownerDocument" ||
+      !owner ||
+      !ts.isParameter(owner) ||
+      owner.parent !== block.parent ||
+      !directRecoveryReads(context, block, host) ||
+      !directRecoveryReads(context, block.parent, owner)
+    ) {
+      return false;
+    }
+    let statement: ts.Statement = call.parent;
+    const tryBlock = statement.parent;
+    const attempt = tryBlock.parent;
+    const cleanup =
+      ts.isBlock(tryBlock) && ts.isTryStatement(attempt) && attempt.tryBlock === tryBlock
+        ? attempt.catchClause
+        : undefined;
+    if (ts.isBlock(tryBlock) && ts.isTryStatement(attempt) && attempt.tryBlock === tryBlock) {
+      statement = attempt;
+    }
+    if (statement.parent !== block) {
+      const body = statement.parent;
+      const fn = body.parent;
+      if (
+        !ts.isBlock(body) ||
+        !ts.isArrowFunction(fn) ||
+        fn.body !== body ||
+        fn.modifiers?.length ||
+        fn.parameters.length ||
+        !ts.isParenthesizedExpression(fn.parent)
+      ) {
+        return false;
+      }
+      const invoke = fn.parent.parent;
+      const result = invoke.parent;
+      if (
+        !ts.isCallExpression(invoke) ||
+        invoke.expression !== fn.parent ||
+        invoke.questionDotToken ||
+        invoke.arguments.length ||
+        !ts.isVariableDeclaration(result) ||
+        result.initializer !== invoke ||
+        !ts.isVariableStatement(result.parent.parent)
+      ) {
+        return false;
+      }
+      statement = result.parent.parent;
+    }
+    if (statement.parent !== block || declaration.end >= statement.getStart(source)) {
+      return false;
+    }
+    let safe = true;
+    const inspect = (node: ts.Node): void => {
+      if (!safe) {
+        return;
+      }
+      if (ts.isWithStatement(node) || (ts.isIdentifier(node) && node.text === "eval")) {
+        safe = false;
+      } else if (
+        ts.isIdentifier(node) &&
+        node !== value.name &&
+        node.text === handle.text &&
+        (lexicalIdentity(node, value) || ts.isShorthandPropertyAssignment(node.parent))
+      ) {
+        const use = node.parent;
+        if (
+          !ts.isPropertyAccessExpression(use) ||
+          use.expression !== node ||
+          !ts.isCallExpression(use.parent) ||
+          use.parent.expression !== use ||
+          !["assertBindings", "invalidate", "dispose"].includes(use.name.text)
+        ) {
+          safe = false;
+        } else if (use.name.text === "dispose") {
+          // A sibling catch can only run after the attempt has thrown. Later closure
+          // declarations may tear down the handle, but a hoisted function can run earlier.
+          const inCatch = cleanup && node.pos >= cleanup.pos && node.end <= cleanup.end;
+          const later = node.getStart(source) >= statement.end;
+          let owner: ts.Node | undefined = node;
+          while (owner && owner.parent !== block && !ts.isFunctionDeclaration(owner)) {
+            owner = owner.parent;
+          }
+          safe = Boolean(inCatch || (later && owner && !ts.isFunctionDeclaration(owner)));
+        }
+      }
+      ts.forEachChild(node, inspect);
+    };
+    inspect(block);
+    return safe;
+  };
   const nativeBridgeCandidate = (call: ts.CallExpression): boolean => {
     const registry = context.actionBinding;
     const callee = call.expression;
@@ -2061,7 +2418,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
       if (ts.isPropertyAccessExpression(callee) && callee.name.text === "assertBindings") {
-        unresolvedRuntimeAssertions.push(assertionSite(node));
+        if (recoveryAssertion(node, callee)) {
+          runtimeAssertions.push({ ...assertionSite(node), kind: "live-root" });
+        } else {
+          unresolvedRuntimeAssertions.push(assertionSite(node));
+        }
       } else if (node.arguments.length === 1 && !ts.isSpreadElement(node.arguments[0]!)) {
         const target = canonicalCall(node);
         const kind = target && context.assertions.get(target);
