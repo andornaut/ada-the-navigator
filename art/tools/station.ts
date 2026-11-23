@@ -22,12 +22,12 @@ import {
 } from "./solid.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-const armour = { top: "#829fb7", side: "#43596f" };
-const frameMetal = { top: "#afc4d0", side: "#647b90" };
-const hull = { top: "#c9d5dc", side: "#738d9d" };
-const dark = { top: "#52677f", side: "#343f55" };
-const jointMetal = { top: "#a8a2ba", side: "#625e77" };
-const cyan = { top: "#7fd6cc", side: "#4fa59d" };
+const sand = { top: "#dac69b", side: "#9a815f" };
+const insetSand = { top: "#c5b086", side: "#9a815f" };
+const ivory = { top: "#ebd8ae", side: "#aa9370" };
+const frameMetal = { top: "#59646a", side: "#35434b" };
+const dark = { top: "#3d494f", side: "#2c373d" };
+
 const angle = (degrees: number) => (degrees * Math.PI) / 180;
 
 function at(degrees: number, radius: number): readonly [number, number] {
@@ -39,129 +39,95 @@ function arc(start: number, end: number, inner: number, outer: number): Plan {
   return [at(start, outer), at(end, outer), at(end, inner), at(start, inner)];
 }
 
-// Split habitat arcs. The open sectors expose their trusses and leave two clear gaps.
-function habitat(start: number, end: number, raised: boolean): Part[][] {
+const front = (x: number, y: number) => x + y > 0.55;
+
+// Paired open arcs with wide deck sectors and a single light on every other segment.
+function habitat(start: number, end: number, floor: number, lit: boolean): Part[][] {
   const groups: Part[][] = [];
-  const floor = raised ? 10 : 3;
   for (let segment = start; segment < end; segment += 15) {
+    const index = (segment - start) / 15;
     const plan = arc(segment, segment + 15, 48, 65);
-    const joint = segment === start || segment + 15 === end;
-    const parts: Part[] = [
+    groups.push([
       { plan, z0: floor - 3, z1: floor, ...dark },
-      { plan, z0: floor, z1: floor + 8, ...(joint ? jointMetal : armour) },
-      ...wallWindows((x, y) => x + y > 0.45, floor + 2, floor + 5, 2, 2, plan),
-      { plan: arc(segment + 1, segment + 14, 50, 57), z0: floor + 8, z1: floor + 9, ...frameMetal },
+      { plan, z0: floor, z1: floor + 9, ...dark },
       {
-        plan: arc(segment + 2, segment + 13, 59, 63),
-        z0: floor + 8,
-        z1: floor + 9,
-        ...(joint ? cyan : dark),
-      },
-    ];
-    if ((segment - start) % 30 === 0) {
-      parts.push({
-        plan: arc(segment + 6, segment + 9, 58, 64),
+        plan: arc(segment, segment + 15, 49.4, 63.3),
         z0: floor + 9,
-        z1: floor + 10,
-        ...armour,
-      });
-    }
-    groups.push(parts);
+        z1: floor + 9,
+        ...(Math.floor(index / 2) % 2 ? insetSand : sand),
+      },
+      ...(index % 2 === 0
+        ? wallWindows(front, floor + 2, floor + 5, 1, 4.4, plan, lit ? warm : "#998968")
+        : []),
+    ]);
   }
   return groups;
 }
 
 function model(lit: boolean): Part[][] {
-  const groups = [...habitat(60, 210, true), ...habitat(245, 380, false)];
+  const groups = [...habitat(60, 210, 10, lit), ...habitat(245, 380, 3, lit)];
 
-  // Four skinny diagonal ribs tie the half rings to the hub and leave the centre open.
-  for (const degrees of [86, 172, 260, 344]) {
+  // Identical spars in mirrored pairs around the station's forward axis.
+  for (const degrees of [92, 178, 272, 358]) {
     const [x, y] = at(degrees, 36);
-    const a = angle(degrees);
     const z = degrees < 200 ? 9 : 4;
-    const plan = orientedBox(x, y, a, 32, 6);
     groups.push([
-      { plan, z0: z - 4, z1: z, ...dark },
-      { plan: orientedBox(x, y, a, 30, 2.4), z0: z, z1: z + 2, ...frameMetal },
+      { plan: orientedBox(x, y, angle(degrees), 32, 6), z0: z - 4, z1: z, ...frameMetal },
     ]);
   }
 
-  const facing = (x: number, y: number) => x + y > 0.4;
   const base = ngon(6, 23, 0, 0, Math.PI / 6);
-  const head = orientedPlan(0, 0, angle(30), [
-    [-18, -10],
-    [11, -10],
-    [20, -3],
-    [17, 7],
-    [-10, 11],
-    [-18, 6],
-  ]);
+  const lid = ngon(6, 18, 0, 0, Math.PI / 6);
   groups.push([
     { plan: base, z0: 0, z1: 19, ...dark },
-    ...wallWindows(facing, 8, 13, 2, 3, base, cyan.top),
-    { plan: head, z0: 19, z1: 29, ...hull },
-    ...wallWindows(facing, 22, 25, 3, 2.6, head, warm),
-    ...[-8, -3, 2].map((offset) => ({
-      plan: orientedBox(offset, -6, angle(30), 9, 1.5),
-      z0: 29,
-      z1: 30,
-      ...dark,
-    })),
-    { plan: ngon(6, 8, -2, 4, Math.PI / 6), z0: 29, z1: 35, ...armour },
-    { plan: ngon(4, 2, -2, 4), z0: 35, z1: 49, ...frameMetal },
+    { plan: lid, z0: 19, z1: 29, ...ivory },
+    ...wallWindows(front, 22, 25.5, 1, 6.4, lid, lit ? warm : creamSide),
+    { plan: ngon(6, 8, 0, 0, Math.PI / 6), z0: 29, z1: 35, ...sand },
+    { plan: orientedBox(-2, 4, angle(45), 3.2, 3.2), z0: 35, z1: 49, ...frameMetal },
     {
       plan: ngon(6, 2.7, -2, 4),
       z0: 49,
       z1: 52,
       top: lit ? blue : blueDim,
-      side: lit ? cyan.side : dark.side,
+      side: lit ? "#57888b" : dark.side,
     },
   ]);
 
-  // Three tapered, raised radiator pylons give the station a distinct skyline. They are sealed.
-  for (const [heading, low, high] of [
-    [102, 18, 37],
-    [201, 18, 26],
-    [286, 10, 32],
+  // Matched rear end caps follow the same axis as the ring supports.
+  const endCap = (plan: Plan) => orientedPlan(...at(201, 55), angle(201), plan);
+  const cap = endCap([
+    [-8, -12],
+    [4.5, -12],
+    [4.5, 0.75],
+    [-8, 0.75],
+  ]);
+  const plating = endCap([
+    [-6.6, -10.6],
+    [3.1, -10.6],
+    [3.1, -0.65],
+    [-6.6, -0.65],
+  ]);
+  const mirror = (plan: Plan): Plan => plan.map(([x, y]) => [y, x]);
+  for (const [shell, plate, floor] of [
+    [cap, plating, 18],
+    [mirror(cap), mirror(plating), 12],
   ] as const) {
-    const a = angle(heading);
-    const [x, y] = at(heading, 55);
-    const plan = orientedPlan(x, y, a, [
-      [-7, -5],
-      [7, -3],
-      [9, 1],
-      [2, 5],
-      [-7, 3],
-    ]);
     groups.push([
-      { plan, z0: low, z1: high - 5, ...armour },
-      { plan: orientedBox(x, y, a, 12, 3), z0: high - 5, z1: high, ...jointMetal },
-      { plan: orientedBox(x, y, a, 9, 1.5), z0: high, z1: high + 1.2, ...cyan },
+      { plan: shell, z0: floor, z1: 27.2, ...dark },
+      { plan: plate, z0: 27.2, z1: 27.2, ...sand },
     ]);
   }
 
-  // Detached-looking utility pods are linked to the habitat by a narrow exposed truss.
-  const [outX, outY] = at(317, 70);
-  const [trussX, trussY] = at(317, 65);
+  // The outboard end stays sealed within its existing reach.
+  const outboard = orientedBox(...at(317, 70), angle(317), 11, 18);
   groups.push([
-    { plan: orientedBox(trussX, trussY, angle(317), 20, 4), z0: 2, z1: 6, ...frameMetal },
-    { plan: orientedBox(outX, outY, angle(317), 11, 18), z0: 4, z1: 11, ...dark },
-    {
-      plan: orientedBox(outX, outY, angle(317), 8, 15),
-      z0: 11,
-      z1: 14,
-      ...hull,
-    },
-    {
-      plan: orientedBox(...at(317, 74), angle(317), 4, 12),
-      z0: 14,
-      z1: 15,
-      ...jointMetal,
-    },
+    { plan: orientedBox(...at(317, 65), angle(317), 20, 4), z0: 2, z1: 6, ...frameMetal },
+    { plan: outboard, z0: 4, z1: 11, ...dark },
+    { plan: orientedBox(...at(317, 70), angle(317), 8, 15), z0: 11, z1: 14, ...sand },
+    { plan: orientedBox(...at(317, 74), angle(317), 4, 12), z0: 14, z1: 15, ...ivory },
   ]);
 
-  // Sealed service module toward the viewer. The angled nose reads as hull plating.
-  const module = orientedPlan(...at(45, 39), angle(45), [
+  const nose = orientedPlan(...at(45, 39), angle(45), [
     [-17, -7],
     [10, -8],
     [17, -4],
@@ -170,10 +136,9 @@ function model(lit: boolean): Part[][] {
     [-17, 7],
   ]);
   groups.push([
-    { plan: module, z0: 2, z1: 10, ...dark },
-    { plan: module, z0: 10, z1: 16, ...hull },
-    ...wallWindows(facing, 12, 14.5, 2, 2.6, module, lit ? warm : creamSide),
-    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...jointMetal },
+    { plan: nose, z0: 2, z1: 10, ...dark },
+    { plan: nose, z0: 10, z1: 16, ...sand },
+    { plan: orientedBox(...at(45, 43), angle(45), 14, 4), z0: 16, z1: 18, ...ivory },
   ]);
 
   return groups;
