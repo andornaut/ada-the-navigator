@@ -14572,7 +14572,7 @@
     },
     {
       "id": "enemy-claim-platform-port-intact-0",
-      "path": "/art/cartwheel/enemies/platform-port-intact-0.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14586,11 +14586,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-1",
-      "path": "/art/cartwheel/enemies/platform-port-intact-1.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14604,11 +14605,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-2",
-      "path": "/art/cartwheel/enemies/platform-port-intact-2.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14622,11 +14624,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-3",
-      "path": "/art/cartwheel/enemies/platform-port-intact-3.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14640,11 +14643,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-4",
-      "path": "/art/cartwheel/enemies/platform-port-intact-4.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14658,11 +14662,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-5",
-      "path": "/art/cartwheel/enemies/platform-port-intact-5.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14676,11 +14681,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-6",
-      "path": "/art/cartwheel/enemies/platform-port-intact-6.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14694,11 +14700,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-7",
-      "path": "/art/cartwheel/enemies/platform-port-intact-7.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14712,11 +14719,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-8",
-      "path": "/art/cartwheel/enemies/platform-port-intact-8.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14730,11 +14738,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-9",
-      "path": "/art/cartwheel/enemies/platform-port-intact-9.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14748,11 +14757,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-10",
-      "path": "/art/cartwheel/enemies/platform-port-intact-10.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14766,11 +14776,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-11",
-      "path": "/art/cartwheel/enemies/platform-port-intact-11.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14784,11 +14795,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-12",
-      "path": "/art/cartwheel/enemies/platform-port-intact-12.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14802,11 +14814,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-13",
-      "path": "/art/cartwheel/enemies/platform-port-intact-13.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14820,11 +14833,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-14",
-      "path": "/art/cartwheel/enemies/platform-port-intact-14.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14838,11 +14852,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-intact-15",
-      "path": "/art/cartwheel/enemies/platform-port-intact-15.svg",
+      "path": "/art/cartwheel/enemies/platform-port-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14856,11 +14871,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-0",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-0.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14874,11 +14890,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-1",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-1.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14892,11 +14909,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-2",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-2.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14910,11 +14928,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-3",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-3.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14928,11 +14947,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-4",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-4.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14946,11 +14966,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-5",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-5.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14964,11 +14985,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-6",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-6.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14982,11 +15004,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-7",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-7.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15000,11 +15023,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-8",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-8.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15018,11 +15042,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-9",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-9.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15036,11 +15061,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-10",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-10.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15054,11 +15080,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-11",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-11.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15072,11 +15099,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-12",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-12.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15090,11 +15118,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-13",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-13.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15108,11 +15137,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-14",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-14.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15126,11 +15156,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-destroyed-15",
-      "path": "/art/cartwheel/enemies/platform-port-destroyed-15.svg",
+      "path": "/art/cartwheel/enemies/platform-port-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15144,11 +15175,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-0",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-0.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15162,11 +15194,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-1",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-1.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15180,11 +15213,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-2",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-2.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15198,11 +15232,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-3",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-3.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15216,11 +15251,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-4",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-4.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15234,11 +15270,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-5",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-5.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15252,11 +15289,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-6",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-6.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15270,11 +15308,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-7",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-7.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15288,11 +15327,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-8",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-8.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15306,11 +15346,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-9",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-9.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15324,11 +15365,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-10",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-10.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15342,11 +15384,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-11",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-11.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15360,11 +15403,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-12",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-12.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15378,11 +15422,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-13",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-13.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15396,11 +15441,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-14",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-14.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15414,11 +15460,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-intact-15",
-      "path": "/art/cartwheel/enemies/platform-starboard-intact-15.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15432,11 +15479,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-0",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-0.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15450,11 +15498,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-1",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-1.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15468,11 +15517,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-2",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-2.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15486,11 +15536,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-3",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-3.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15504,11 +15555,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-4",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-4.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15522,11 +15574,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-5",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-5.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15540,11 +15593,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-6",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-6.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15558,11 +15612,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-7",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-7.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15576,11 +15631,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-8",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-8.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15594,11 +15650,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-9",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-9.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15612,11 +15669,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-10",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-10.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15630,11 +15688,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-11",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-11.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15648,11 +15707,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-12",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-12.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15666,11 +15726,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-13",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-13.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15684,11 +15745,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-14",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-14.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15702,11 +15764,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-destroyed-15",
-      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-15.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15720,11 +15783,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-0",
-      "path": "/art/cartwheel/enemies/platform-turret-top-0.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15737,11 +15801,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-1",
-      "path": "/art/cartwheel/enemies/platform-turret-top-1.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15754,11 +15819,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-2",
-      "path": "/art/cartwheel/enemies/platform-turret-top-2.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15771,11 +15837,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-3",
-      "path": "/art/cartwheel/enemies/platform-turret-top-3.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15788,11 +15855,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-4",
-      "path": "/art/cartwheel/enemies/platform-turret-top-4.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15805,11 +15873,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-5",
-      "path": "/art/cartwheel/enemies/platform-turret-top-5.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15822,11 +15891,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-6",
-      "path": "/art/cartwheel/enemies/platform-turret-top-6.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15839,11 +15909,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-7",
-      "path": "/art/cartwheel/enemies/platform-turret-top-7.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15856,11 +15927,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-8",
-      "path": "/art/cartwheel/enemies/platform-turret-top-8.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15873,11 +15945,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-9",
-      "path": "/art/cartwheel/enemies/platform-turret-top-9.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15890,11 +15963,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-10",
-      "path": "/art/cartwheel/enemies/platform-turret-top-10.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15907,11 +15981,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-11",
-      "path": "/art/cartwheel/enemies/platform-turret-top-11.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15924,11 +15999,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-12",
-      "path": "/art/cartwheel/enemies/platform-turret-top-12.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15941,11 +16017,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-13",
-      "path": "/art/cartwheel/enemies/platform-turret-top-13.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15958,11 +16035,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-14",
-      "path": "/art/cartwheel/enemies/platform-turret-top-14.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15975,11 +16053,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-turret-top-15",
-      "path": "/art/cartwheel/enemies/platform-turret-top-15.svg",
+      "path": "/art/cartwheel/enemies/platform-turret-top-sheet.svg",
       "width": 120,
       "height": 120,
       "displayWidth": 52.5,
@@ -15992,7 +16071,8 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "craft-visitor1-0",
@@ -20412,7 +20492,7 @@
     },
     {
       "id": "enemy-claim-platform-port-capped-0",
-      "path": "/art/cartwheel/enemies/platform-port-capped-0.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20426,11 +20506,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-1",
-      "path": "/art/cartwheel/enemies/platform-port-capped-1.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20444,11 +20525,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-2",
-      "path": "/art/cartwheel/enemies/platform-port-capped-2.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20462,11 +20544,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-3",
-      "path": "/art/cartwheel/enemies/platform-port-capped-3.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20480,11 +20563,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-4",
-      "path": "/art/cartwheel/enemies/platform-port-capped-4.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20498,11 +20582,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-5",
-      "path": "/art/cartwheel/enemies/platform-port-capped-5.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20516,11 +20601,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-6",
-      "path": "/art/cartwheel/enemies/platform-port-capped-6.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20534,11 +20620,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-7",
-      "path": "/art/cartwheel/enemies/platform-port-capped-7.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20552,11 +20639,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-8",
-      "path": "/art/cartwheel/enemies/platform-port-capped-8.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20570,11 +20658,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-9",
-      "path": "/art/cartwheel/enemies/platform-port-capped-9.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20588,11 +20677,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-10",
-      "path": "/art/cartwheel/enemies/platform-port-capped-10.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20606,11 +20696,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-11",
-      "path": "/art/cartwheel/enemies/platform-port-capped-11.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20624,11 +20715,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-12",
-      "path": "/art/cartwheel/enemies/platform-port-capped-12.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20642,11 +20734,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-13",
-      "path": "/art/cartwheel/enemies/platform-port-capped-13.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20660,11 +20753,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-14",
-      "path": "/art/cartwheel/enemies/platform-port-capped-14.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20678,11 +20772,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-port-capped-15",
-      "path": "/art/cartwheel/enemies/platform-port-capped-15.svg",
+      "path": "/art/cartwheel/enemies/platform-port-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20696,11 +20791,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-0",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-0.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20714,11 +20810,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-1",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-1.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20732,11 +20829,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-2",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-2.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20750,11 +20848,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-3",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-3.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20768,11 +20867,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-4",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-4.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20786,11 +20886,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-5",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-5.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20804,11 +20905,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-6",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-6.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20822,11 +20924,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-7",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-7.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20840,11 +20943,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-8",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-8.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20858,11 +20962,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-9",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-9.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20876,11 +20981,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-10",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-10.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20894,11 +21000,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-11",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-11.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20912,11 +21019,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-12",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-12.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20930,11 +21038,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-13",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-13.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20948,11 +21057,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-14",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-14.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20966,11 +21076,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-starboard-capped-15",
-      "path": "/art/cartwheel/enemies/platform-starboard-capped-15.svg",
+      "path": "/art/cartwheel/enemies/platform-starboard-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -20984,11 +21095,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-0",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-0.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21002,11 +21114,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-1",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-1.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21020,11 +21133,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-2",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-2.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21038,11 +21152,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-3",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-3.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21056,11 +21171,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-4",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-4.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21074,11 +21190,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-5",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-5.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21092,11 +21209,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-6",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-6.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21110,11 +21228,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-7",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-7.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21128,11 +21247,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-8",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-8.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21146,11 +21266,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-9",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-9.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21164,11 +21285,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-10",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-10.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21182,11 +21304,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-11",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-11.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21200,11 +21323,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-12",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-12.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21218,11 +21342,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-13",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-13.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21236,11 +21361,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-14",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-14.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21254,11 +21380,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-intact-15",
-      "path": "/art/cartwheel/enemies/platform-aft-intact-15.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-intact-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21272,11 +21399,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-0",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-0.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21290,11 +21418,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-1",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-1.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21308,11 +21437,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-2",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-2.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21326,11 +21456,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-3",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-3.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21344,11 +21475,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-4",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-4.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21362,11 +21494,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-5",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-5.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21380,11 +21513,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-6",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-6.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21398,11 +21532,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-7",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-7.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21416,11 +21551,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-8",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-8.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21434,11 +21570,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-9",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-9.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21452,11 +21589,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-10",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-10.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21470,11 +21608,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-11",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-11.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21488,11 +21627,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-12",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-12.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21506,11 +21646,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-13",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-13.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21524,11 +21665,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-14",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-14.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21542,11 +21684,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-destroyed-15",
-      "path": "/art/cartwheel/enemies/platform-aft-destroyed-15.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-destroyed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21560,11 +21703,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-0",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-0.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21578,11 +21722,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-1",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-1.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21596,11 +21741,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-2",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-2.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21614,11 +21760,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-3",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-3.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21632,11 +21779,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-4",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-4.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21650,11 +21798,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-5",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-5.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21668,11 +21817,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-6",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-6.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21686,11 +21836,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-7",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-7.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21704,11 +21855,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-8",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-8.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21722,11 +21874,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-9",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-9.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21740,11 +21893,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-10",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-10.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21758,11 +21912,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-11",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-11.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21776,11 +21931,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-12",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-12.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21794,11 +21950,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-13",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-13.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21812,11 +21969,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-14",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-14.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21830,11 +21988,12 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-platform-aft-capped-15",
-      "path": "/art/cartwheel/enemies/platform-aft-capped-15.svg",
+      "path": "/art/cartwheel/enemies/platform-aft-capped-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -21848,7 +22007,8 @@
         "y": 0.5
       },
       "archetype": "platform",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-0",

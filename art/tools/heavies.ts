@@ -4,7 +4,8 @@
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
-// Use --noncore-capital-part-sheets or --frigate-part-sheets to pack retained parts.
+// Pack retained parts with --noncore-capital-part-sheets, --frigate-part-sheets,
+// --gadget-part-sheets or --platform-part-sheets.
 // Use --heavy-hull-sheets to write review sheets and print candidate manifest rows.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -1939,9 +1940,9 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-const PART_GROUPS = { capital: 29, frigate: 14 } as const;
+const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29, platform: 10 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
-type HullCraft = SheetCraft | "gadget";
+type HullCraft = Exclude<SheetCraft, "platform">;
 type HeadingSelection =
   { craft: SheetCraft; section: "part" } | { craft: HullCraft; section: "hull" };
 
@@ -2145,11 +2146,16 @@ export function packInstalledHeavyParts(
     entries,
     false,
   );
+  const extra = manifest === "core" ? "gadget" : manifest === "cartwheel" ? "platform" : undefined;
+  const extraPack = extra
+    ? heavyHeadingSheets(target, { craft: extra, section: "part" }, text, entries, false)
+    : undefined;
   const hulls = hullCrafts(manifest).map((craft) =>
     heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
   );
   let outputEntries = applyHeavySheets(files, entries, capitalPack);
   outputEntries = applyHeavySheets(files, outputEntries, frigatePack);
+  outputEntries = applyHeavySheets(files, outputEntries, extraPack);
   for (const hull of hulls) outputEntries = applyHeavySheets(files, outputEntries, hull);
   return { outputEntries, retiredCapital: capitalPack?.retired ?? [] };
 }
@@ -2217,12 +2223,20 @@ async function main() {
     return;
   }
   const retained = args.find(
-    (arg) => arg === "--noncore-capital-part-sheets" || arg === "--frigate-part-sheets",
+    (arg) =>
+      arg === "--noncore-capital-part-sheets" ||
+      arg === "--frigate-part-sheets" ||
+      arg === "--gadget-part-sheets" ||
+      arg === "--platform-part-sheets",
   );
   if (retained) {
     if (args.length !== 1) throw new Error(`${retained} takes no other options`);
     const families = Object.values(familyPartTargets);
-    if (retained === "--frigate-part-sheets") {
+    if (retained === "--gadget-part-sheets") {
+      packRetainedHeavyParts("gadget", [corePartTarget]);
+    } else if (retained === "--platform-part-sheets") {
+      packRetainedHeavyParts("platform", [familyPartTargets.cartwheel]);
+    } else if (retained === "--frigate-part-sheets") {
       packRetainedHeavyParts("frigate", [corePartTarget, ...families]);
     } else {
       packRetainedHeavyParts("capital", families);
