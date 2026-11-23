@@ -164,7 +164,7 @@ export function mountLoading(parent: HTMLElement): () => void {
   }
   window.addEventListener("resize", fit);
   window.addEventListener(VIEW_SCALE_EVENT, fit);
-  const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
+  const bar = createDomProgressBar({ frame: FRAME, style: BAR_STYLE, timing: BAR_TIMING }, host);
   // The opaque ink rule under the band: inside the kit's bar, so it fades and hides with it.
   const rule = document.createElement("div");
   rule.className = "ada-loading-rule";

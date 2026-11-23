@@ -275,13 +275,13 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
             }
             bootedGame.canvas.setAttribute("aria-hidden", "true");
             stopFrameTurn = followFrameTurn(
-              FRAME_TURN,
-              bootedGame.scale.gameSize,
-              parent,
-              bootedGame,
               {
                 deviceResolution: { max: MAX_RENDER_SCALE },
+                gameSize: bootedGame.scale.gameSize,
+                parent,
+                watch: FRAME_TURN,
               },
+              bootedGame,
             );
             scene.events.once(Scenes.Events.CREATE, created);
             stopCreate = () => scene.events.off(Scenes.Events.CREATE, created);

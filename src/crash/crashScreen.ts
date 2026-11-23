@@ -109,13 +109,16 @@ if (import.meta.hot) {
   import.meta.hot.dispose(disposeRecovery);
 }
 
-const pageCrash = installCrashScreen(window, {
-  bindHoldAction,
-  buildLabel: BUILD_LABEL,
-  colours: CRASH_COLOURS,
-  dev: new URLSearchParams(window.location.search).get("dev") === "1",
-  words: CRASH_COPY,
-});
+const pageCrash = installCrashScreen(
+  {
+    bindHoldAction,
+    buildLabel: BUILD_LABEL,
+    colours: CRASH_COLOURS,
+    dev: new URLSearchParams(window.location.search).get("dev") === "1",
+    words: CRASH_COPY,
+  },
+  window,
+);
 
 // Save fencing runs before the earlier loading teardown; the Kit owns crash admission/rendering.
 const crashStops = new Set<() => void>();

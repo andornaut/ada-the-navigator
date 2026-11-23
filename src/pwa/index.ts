@@ -188,6 +188,8 @@ function guardBack(): void {
   backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
   guardBackNavigation(
     {
+      createCloseWatcher,
+      history: guardHistory,
       onBack: () => {
         if (backArmed) {
           dispatchPhoneEvent(window, PHONE_EVENTS.backPressed);
@@ -196,11 +198,9 @@ function guardBack(): void {
         }
       },
       stateKey: BACK_GUARD_KEY,
+      timer: window,
     },
     window,
-    window,
-    createCloseWatcher,
-    guardHistory,
   );
 }
 
