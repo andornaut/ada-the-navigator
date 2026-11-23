@@ -162,21 +162,21 @@ function svgSheets(assets: readonly Asset[]): Map<string, Asset[]> {
   return sheets;
 }
 
-/** Load a core vector sheet once, keeping the scale and lifetime of each named texture. */
-export function queueCoreSvgSheets(
+/** Load a vector sheet once, keeping the scale and lifetime of each named texture. */
+function queueEagerSvgSheets(
   scene: AssetsContext,
   current: () => boolean,
   fail: (error: unknown) => void,
   assets: readonly Asset[],
+  queued?: () => void,
 ): void {
   for (const [path, frames] of svgSheets(assets.filter(galaxyLoadsAtOnce))) {
     const key = vectorSheetKey(path);
-    scene.load.once(`filecomplete-xml-${key}`, () => {
+    const queue = (xml: Document | undefined): void => {
       if (!current()) {
         return;
       }
       try {
-        const xml = scene.cache.xml.get(key) as Document | undefined;
         const sources = frames.map((asset): Asset => ({
           ...asset,
           path: vectorSheetSource(xml, path, asset),
@@ -184,13 +184,24 @@ export function queueCoreSvgSheets(
         for (const asset of sources) {
           loadSvg(scene, asset);
         }
+        queued?.();
       } catch (error) {
         fail(error);
       }
-    });
+    };
+    const xml = scene.cache.xml.get(key) as Document | undefined;
+    if (xml) {
+      queue(xml);
+      continue;
+    }
+    scene.load.once(`filecomplete-xml-${key}`, () =>
+      queue(scene.cache.xml.get(key) as Document | undefined),
+    );
     scene.load.xml(key, path);
   }
 }
+
+export { queueEagerSvgSheets as queueCoreSvgSheets };
 
 /** Stable material-generated source URLs for the selected paint, including the route map. */
 export function materialShipFrames(scene: object, paint: string | null): readonly string[] {
@@ -358,7 +369,7 @@ export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void 
 
 /** Queues one of a galaxy manifest's SVGs or sheets; whale frames and part frames wait. */
 export function loadGalaxyAsset(scene: AssetsContext, asset: Asset): void {
-  if (!galaxyLoadsAtOnce(asset) || scene.textures.exists(asset.id)) {
+  if (asset.svgSheet || !galaxyLoadsAtOnce(asset) || scene.textures.exists(asset.id)) {
     return;
   }
   if (asset.path.endsWith(".svg")) {
@@ -461,6 +472,31 @@ function queueGalaxyAssets(
     : manifest.assets;
   for (const asset of assets) {
     loadGalaxyAsset(scene, asset);
+  }
+  const packed = assets.filter(
+    (asset) => asset.svgSheet && galaxyLoadsAtOnce(asset) && !scene.textures.exists(asset.id),
+  );
+  if (packed.length > 0) {
+    let batchFinished = false;
+    scene.load.once(Loader.Events.COMPLETE, () => {
+      batchFinished = true;
+    });
+    queueEagerSvgSheets(
+      scene,
+      () => scene.entryCurrent(),
+      (error) => console.warn(error),
+      packed,
+      () => {
+        if (batchFinished) {
+          // A transport retry can deliver the sheet after the first galaxy read.
+          batchFinished = false;
+          scene.load.once(Loader.Events.COMPLETE, () => {
+            batchFinished = true;
+            readGalaxyArt(scene);
+          });
+        }
+      },
+    );
   }
   // Data files come from the manifest's own sidecars map; a Phantom platform subset reads
   // Cartwheel's.

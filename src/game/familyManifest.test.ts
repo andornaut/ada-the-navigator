@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import cartwheel from "../../public/art/cartwheel/manifest.json";
 import core from "../../public/art/manifest.json";
+import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
@@ -56,7 +57,7 @@ const names = new Set([
   "loadGalaxyAsset",
   "queueGalaxyArt",
   "queueGalaxyAssets",
-  "queueCoreSvgSheets",
+  "queueEagerSvgSheets",
   "queueEnemyPartSheets",
   "queuePhantomCraftJets",
   "svgSheets",
@@ -107,10 +108,15 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     },
     children: { list: [] },
     destruction: { archetypes: { platform: {} } },
+    entryCurrent: () => true,
     family: family as EnemyFamily | undefined,
     familyParts: new Map(),
     galaxyLoads: new Set(),
-    galaxyManifestPaths: { 2: "/art/cartwheel/manifest.json", 6: "/art/phantom/manifest.json" },
+    galaxyManifestPaths: {
+      2: "/art/cartwheel/manifest.json",
+      4: "/art/needle/manifest.json",
+      6: "/art/phantom/manifest.json",
+    },
     galaxyManifests: new Map([[6, { assets: [], links: {}, sidecars: new Map() }]]),
     load: {
       json,
@@ -191,7 +197,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     loadParts: context.loadEnemyParts as (value: typeof scene, archetype: string) => void,
     loadRaster,
     loadWorld: context.loadGalaxyArt as (value: typeof scene, galaxy: number) => void,
-    queueCore: context.queueCoreSvgSheets as (
+    queueCore: context.queueEagerSvgSheets as (
       value: typeof scene,
       current: () => boolean,
       fail: (error: unknown) => void,
@@ -212,6 +218,44 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
 }
 
 describe("source-family manifest readiness", () => {
+  it("loads a cold family's hull sheets once and republishes textures from a late retry", () => {
+    const f = fixture();
+    const key = galaxyManifestKey(4);
+    f.loadWorld(f.scene, 4);
+    expect(f.json).toHaveBeenCalledWith(key, "/art/needle/manifest.json");
+    expect(f.xml).not.toHaveBeenCalled();
+    f.cache.set(key, needle);
+    f.events.emit(`filecomplete-json-${key}`);
+    const hulls = (needle.assets as readonly Asset[]).filter(
+      (asset) => asset.svgSheet && galaxyLoadsAtOnce(asset),
+    );
+    const paths = [...new Set(hulls.map((asset) => asset.path))];
+    expect(hulls).toHaveLength(48);
+    expect(paths).toHaveLength(3);
+    for (const path of paths) {
+      expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([
+        [vectorSheetKey(path), path],
+      ]);
+    }
+    expect(f.svg.mock.calls.some(([, asset]) => paths.includes(asset.path))).toBe(false);
+
+    f.events.emit("complete");
+    expect(f.readArt).toHaveBeenCalledTimes(1);
+    const path = paths[0]!;
+    const sheetKey = vectorSheetKey(path);
+    const document = {};
+    f.documents.set(sheetKey, document);
+    f.events.emit(`filecomplete-xml-${sheetKey}`);
+    const frames = hulls.filter((asset) => asset.path === path);
+    expect(f.extract.mock.calls).toEqual(frames.map((frame) => [document, path, frame]));
+    expect(f.svg.mock.calls.slice(-frames.length)).toEqual(
+      frames.map((frame) => [f.scene, { ...frame, path: `data:${frame.id}` }]),
+    );
+    expect(f.readArt).toHaveBeenCalledTimes(1);
+    f.events.emit("complete");
+    expect(f.readArt).toHaveBeenCalledTimes(2);
+  });
+
   it("waits for Claim's Cartwheel metadata in a direct Phantom flight, then queues only platform parts", () => {
     const f = fixture();
     f.loadParts(f.scene, "platform");
