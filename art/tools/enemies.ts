@@ -29,6 +29,9 @@ const output = `${art}enemies/`;
 const SHEET_COLUMNS = 4;
 const SHEET_HULLS = ["fighter", "interceptor", "swarm"] as const;
 const sheetFile = (craft: Craft) => `${craft.name}-sheet.svg`;
+const SMALL_FAMILIES = { andromeda: "garnet", cartwheel: "claim", needle: "needle" } as const;
+type SmallFamilyManifest = keyof typeof SMALL_FAMILIES;
+type AssetRow = { id: string; path?: string } & Record<string, unknown>;
 // Douglas-Peucker tolerance for the hull silhouettes, in frame px. At 0.5 the small swarm and
 // interceptor frames fall below the intersection-over-union floor.
 const SILHOUETTE_TOLERANCE = 0.4;
@@ -93,17 +96,30 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
   );
 }
 
+function packHullRoots(frame: number, sources: readonly { id: string; svg: string }[]): string {
+  const namespace = 'xmlns="http://www.w3.org/2000/svg"';
+  const root = (size: number) =>
+    `<svg ${namespace} width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+  if (sources.length !== ENEMY_HEADINGS) throw new Error("A hull sheet needs 16 headings");
+  const roots = sources.map(({ id, svg }, heading) => {
+    if (!svg.startsWith(root(frame)) || !svg.endsWith("</svg>")) {
+      throw new Error(`Invalid raw SVG dimensions for ${id}`);
+    }
+    const x = (heading % SHEET_COLUMNS) * frame;
+    const y = Math.floor(heading / SHEET_COLUMNS) * frame;
+    return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+  });
+  return `${root(frame * SHEET_COLUMNS)}${roots.join("")}</svg>\n`;
+}
+
 function hullSheet(craft: Craft, traced: ReturnType<typeof silhouettes>) {
   const rows = hullEntries(craft.name, craft.frame);
-  const size = craft.frame * SHEET_COLUMNS;
-  const roots = rows.map(({ id, directionIndex: heading }) => {
-    const standalone = svgText(svg(craft, heading, traced[heading]!.tips));
-    const x = (heading % SHEET_COLUMNS) * craft.frame;
-    const y = Math.floor(heading / SHEET_COLUMNS) * craft.frame;
-    return `<svg id="${id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
-  });
+  const sources = rows.map(({ id, directionIndex: heading }) => ({
+    id,
+    svg: svgText(svg(craft, heading, traced[heading]!.tips)),
+  }));
   return {
-    text: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${roots.join("")}</svg>\n`,
+    text: packHullRoots(craft.frame, sources),
     entries: rows.map(({ id, path, ...metadata }) => ({
       id,
       path: path.replace(/[^/]+$/u, sheetFile(craft)),
@@ -111,6 +127,127 @@ function hullSheet(craft: Craft, traced: ReturnType<typeof silhouettes>) {
       ...metadata,
     })),
   };
+}
+
+function familyHullSheets(
+  manifest: SmallFamilyManifest,
+  entries: readonly AssetRow[],
+  source: (file: string) => string | undefined,
+  selecting: boolean,
+) {
+  const directory = `/art/${manifest}/enemies/`;
+  const installed: AssetRow[] = readManifest(manifest).assets;
+  const registered = new Map(installed.map((row) => [row.id, row]));
+  const input = new Map(entries.map((row) => [row.id, row]));
+  const groups = [];
+  for (const name of SHEET_HULLS) {
+    const family = SMALL_FAMILIES[manifest];
+    const prefix = `enemy-${family}-${name}-`;
+    const file = `${name}-sheet.svg`;
+    const path = directory + file;
+    const ids = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => prefix + heading);
+    const packed = ids.filter((id) => registered.get(id)?.svgSheet === true).length;
+    if (!selecting && packed === 0) continue;
+    if (packed !== (selecting ? 0 : ENEMY_HEADINGS)) {
+      throw new Error(`Unexpected sheet selection for ${manifest} ${name}`);
+    }
+    const frame = input.get(ids[0]!)?.width;
+    if (typeof frame !== "number" || !Number.isInteger(frame) || frame <= 0) {
+      throw new Error(`Invalid raw frame for ${manifest} ${name}`);
+    }
+    const loose = ids.map((_, heading) => `${name}-${heading}.svg`);
+    const originals = new Set(loose.map((file) => directory + file));
+    const members = ids.map((id, heading) => {
+      const entry = input.get(id);
+      const original = directory + loose[heading]!;
+      if (
+        entry?.path !== original ||
+        entry.directionIndex !== heading ||
+        entry.family !== family ||
+        entry.archetype !== name ||
+        entry.width !== frame ||
+        entry.height !== frame ||
+        registered.get(id)?.path !== (selecting ? original : path)
+      ) {
+        throw new Error(`Unexpected family hull frame: ${id}`);
+      }
+      const svg = source(loose[heading]!);
+      if (svg === undefined) throw new Error(`Missing family hull source: ${original}`);
+      return { entry, svg };
+    });
+    const owned = new Set(ids);
+    const other = [
+      ...installed.filter(({ id }) => !owned.has(id)),
+      ...["core" as const, ...GALAXIES]
+        .filter((name) => name !== manifest)
+        .flatMap((name): AssetRow[] => readManifest(name).assets),
+    ];
+    const referrer = other.find(
+      ({ path: candidate }) => candidate === path || (candidate && originals.has(candidate)),
+    );
+    if (referrer) throw new Error(`Family hull art is also used by ${referrer.id}`);
+    groups.push({
+      file,
+      loose,
+      text: packHullRoots(
+        frame,
+        members.map(({ entry, svg }) => ({ id: entry.id, svg })),
+      ),
+      rows: members.map(({ entry }) => ({ ...entry, path, svgSheet: true })),
+    });
+  }
+  return { directory, groups };
+}
+
+export function packInstalledSmallHullSheets(
+  manifest: SmallFamilyManifest,
+  files: Map<string, string>,
+  entries: readonly AssetRow[],
+): readonly AssetRow[] {
+  const { groups } = familyHullSheets(manifest, entries, (file) => files.get(file), false);
+  if (!groups.length) return entries;
+  const replacements = new Map(groups.flatMap(({ rows }) => rows.map((row) => [row.id, row])));
+  for (const { file, loose, text } of groups) {
+    for (const name of loose) files.delete(name);
+    files.set(file, text);
+  }
+  return entries.map((row) => replacements.get(row.id) ?? row);
+}
+
+function writeReviewFamilySheets(): void {
+  const manifests = Object.keys(SMALL_FAMILIES) as SmallFamilyManifest[];
+  const plans = manifests.map((manifest) => {
+    const directory = `/art/${manifest}/enemies/`;
+    return {
+      manifest,
+      ...familyHullSheets(
+        manifest,
+        readManifest(manifest).assets,
+        (file) => readFileSync(art + directory.slice("/art/".length) + file, "utf8"),
+        true,
+      ),
+    };
+  });
+  for (const { directory, groups } of plans) {
+    for (const { file, text } of groups) {
+      const target = art + directory.slice("/art/".length) + file;
+      if (existsSync(target) && readFileSync(target, "utf8") !== text) {
+        throw new Error(`Review sheet already exists with different bytes: ${target}`);
+      }
+    }
+  }
+  for (const { directory, groups } of plans) {
+    writeOnce(directory, new Map(), new Map(groups.map(({ file, text }) => [file, text])));
+  }
+  console.log(
+    JSON.stringify(
+      Object.fromEntries(
+        plans.map(({ manifest, groups }) => [manifest, groups.flatMap(({ rows }) => rows)]),
+      ),
+      null,
+      2,
+    ),
+  );
 }
 
 function removeStandaloneHulls(craft: Craft) {
@@ -158,10 +295,14 @@ function sheetInstalled(core: CoreAssets, selecting: boolean, craft: Craft): boo
 
 function main() {
   const args = process.argv.slice(2);
+  if (args.length === 1 && args[0] === "--family-small-hull-sheets") {
+    writeReviewFamilySheets();
+    return;
+  }
   const selectedName = SHEET_HULLS.find((name) => args[0] === `--${name}-sheet`);
   if (args.length !== (selectedName ? 1 : 0)) {
     throw new Error(
-      "Usage: node art/tools/enemies.ts [--fighter-sheet|--interceptor-sheet|--swarm-sheet]",
+      "Usage: node art/tools/enemies.ts [--fighter-sheet|--interceptor-sheet|--swarm-sheet|--family-small-hull-sheets]",
     );
   }
   const core = readManifest("core").assets;
