@@ -12,7 +12,7 @@ import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 
 // Decoded bytes per envelope. Use the lower end of Game Kit's transport trial range.
-const PACK_MAX_BYTES = 1024 * 1024;
+const PACK_MAX_BYTES = 1536 * 1024;
 
 interface PrecachePluginOptions {
   // The game page's file name in the build output, which is its path under Vite's root, e.g.
