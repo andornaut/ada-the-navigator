@@ -533,7 +533,14 @@ export class GameScene extends Scene {
               return;
             }
             const galaxy = readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(1)));
-            for (const asset of galaxy?.assets ?? []) {
+            const assets = galaxy?.assets ?? [];
+            queueCoreSvgSheets(
+              this,
+              () => this.entryCurrent(),
+              (error) => console.warn(error),
+              assets,
+            );
+            for (const asset of assets) {
               loadGalaxyAsset(this, asset);
             }
           });
