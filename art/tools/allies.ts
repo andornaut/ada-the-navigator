@@ -5,13 +5,15 @@
 // Usage: node art/tools/allies.ts
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { andromeda } from "./andromeda-models.ts";
 import { jetsFile, type JetColors } from "./crafts.ts";
 import { ball, hcyl, part, pill, ring } from "./hull-shapes.ts";
-import { craftIds, linkData, mergeSidecars, replaceEntries } from "./manifest.ts";
+import { craftIds, linkData, mergeSidecars, readManifest, replaceEntries } from "./manifest.ts";
 import {
   glass,
   glassSide,
@@ -977,6 +979,9 @@ function svgFile(title: string, frame: number, faces: readonly Face[]) {
 const ratio = (x: string, y: string) => contrast(x.slice(1), y.slice(1));
 
 const jetsByCraft = new Map<string, unknown>();
+const installed = readManifest("phantom").assets;
+const rowsById = new Map(installed.map((entry) => [entry.id, entry]));
+const sprites = new Map<string, string>();
 const entries = CRAFTS.flatMap((craft) => {
   const build = builder(craft);
   const facesAt = (yaw: number) =>
@@ -1024,12 +1029,8 @@ const entries = CRAFTS.flatMap((craft) => {
     `${craft.name} frame ${frame}, display ${display}, hull ${hull.top} ` +
       `${ratio(hull.top, FIELD).toFixed(2)}:1, nose ${nose.map(({ distance }) => distance).join(" ")}`,
   );
-  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-    writeFileSync(
-      `${OUT}${craft.name}-${yaw}.svg`,
-      svgText(svgFile(`${craft.title} ${yaw}`, frame, facesAt(yaw)), 2),
-    );
-    return {
+  const headings = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
+    const entry = {
       id: `craft-${craft.name}-${yaw}`,
       path: `${PUBLIC}${craft.name}-${yaw}.svg`,
       width: frame,
@@ -1041,8 +1042,45 @@ const entries = CRAFTS.flatMap((craft) => {
       pivot: { x: 0.5, y: 0.5 },
       craft: craft.name,
     };
+    return { entry, svg: svgText(svgFile(`${craft.title} ${yaw}`, frame, facesAt(yaw)), 2) };
   });
+  const sheet = `${craft.name}-sheet.svg`;
+  const path = PUBLIC + sheet;
+  const selected = headings.some(({ entry }) => {
+    const row = rowsById.get(entry.id);
+    return row?.svgSheet === true || row?.path === path;
+  });
+  if (!selected) {
+    for (const { entry, svg } of headings) sprites.set(entry.path.slice(PUBLIC.length), svg);
+    return headings.map(({ entry }) => entry);
+  }
+  const replacements = headings.map(({ entry }) => ({ ...entry, path, svgSheet: true }));
+  const selectedIds = new Set(replacements.map(({ id }) => id));
+  if (
+    replacements.some((entry) => !isDeepStrictEqual(rowsById.get(entry.id), entry)) ||
+    installed.some((entry) => entry.path === path && !selectedIds.has(entry.id))
+  ) {
+    throw new Error(`Invalid packed ally selection: ${craft.name}`);
+  }
+  const edge = frame * 4;
+  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: edge, widths: [edge] }, [
+    {
+      rectangles: headings.map(() => ({ width: frame, height: frame })),
+      value: craft.name,
+    },
+  ])?.pages[0];
+  if (page?.height !== edge) throw new Error(`Ally sheet does not fit: ${sheet}`);
+  const roots = headings.map(({ entry, svg }, index) => {
+    const { x, y } = page.placed[0]!.at[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${svg.trimEnd().slice("<svg ".length)}`;
+  });
+  sprites.set(
+    sheet,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${edge}" height="${edge}" viewBox="0 0 ${edge} ${edge}">${roots.join("")}</svg>\n`,
+  );
+  return replacements;
 });
+for (const [file, svg] of sprites) writeFileSync(OUT + file, svg);
 
 writeFileSync(`${OUT}allies.json`, json({ version: 1, roster: ROSTER, song: SONG, jump: JUMP }));
 

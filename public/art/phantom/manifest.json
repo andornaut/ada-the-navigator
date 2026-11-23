@@ -1125,7 +1125,7 @@
     },
     {
       "id": "craft-grower-0",
-      "path": "/art/phantom/grower-0.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1136,11 +1136,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-1",
-      "path": "/art/phantom/grower-1.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1151,11 +1152,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-2",
-      "path": "/art/phantom/grower-2.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1166,11 +1168,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-3",
-      "path": "/art/phantom/grower-3.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1181,11 +1184,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-4",
-      "path": "/art/phantom/grower-4.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1196,11 +1200,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-5",
-      "path": "/art/phantom/grower-5.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1211,11 +1216,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-6",
-      "path": "/art/phantom/grower-6.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1226,11 +1232,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-7",
-      "path": "/art/phantom/grower-7.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1241,11 +1248,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-8",
-      "path": "/art/phantom/grower-8.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1256,11 +1264,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-9",
-      "path": "/art/phantom/grower-9.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1271,11 +1280,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-10",
-      "path": "/art/phantom/grower-10.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1286,11 +1296,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-11",
-      "path": "/art/phantom/grower-11.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1301,11 +1312,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-12",
-      "path": "/art/phantom/grower-12.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1316,11 +1328,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-13",
-      "path": "/art/phantom/grower-13.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1331,11 +1344,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-14",
-      "path": "/art/phantom/grower-14.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1346,11 +1360,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-grower-15",
-      "path": "/art/phantom/grower-15.svg",
+      "path": "/art/phantom/grower-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -1361,11 +1376,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "grower"
+      "craft": "grower",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-0",
-      "path": "/art/phantom/crane-0.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1376,11 +1392,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-1",
-      "path": "/art/phantom/crane-1.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1391,11 +1408,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-2",
-      "path": "/art/phantom/crane-2.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1406,11 +1424,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-3",
-      "path": "/art/phantom/crane-3.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1421,11 +1440,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-4",
-      "path": "/art/phantom/crane-4.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1436,11 +1456,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-5",
-      "path": "/art/phantom/crane-5.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1451,11 +1472,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-6",
-      "path": "/art/phantom/crane-6.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1466,11 +1488,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-7",
-      "path": "/art/phantom/crane-7.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1481,11 +1504,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-8",
-      "path": "/art/phantom/crane-8.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1496,11 +1520,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-9",
-      "path": "/art/phantom/crane-9.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1511,11 +1536,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-10",
-      "path": "/art/phantom/crane-10.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1526,11 +1552,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-11",
-      "path": "/art/phantom/crane-11.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1541,11 +1568,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-12",
-      "path": "/art/phantom/crane-12.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1556,11 +1584,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-13",
-      "path": "/art/phantom/crane-13.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1571,11 +1600,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-14",
-      "path": "/art/phantom/crane-14.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1586,11 +1616,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-crane-15",
-      "path": "/art/phantom/crane-15.svg",
+      "path": "/art/phantom/crane-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1601,11 +1632,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "crane"
+      "craft": "crane",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-0",
-      "path": "/art/phantom/salvager-0.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1616,11 +1648,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-1",
-      "path": "/art/phantom/salvager-1.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1631,11 +1664,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-2",
-      "path": "/art/phantom/salvager-2.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1646,11 +1680,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-3",
-      "path": "/art/phantom/salvager-3.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1661,11 +1696,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-4",
-      "path": "/art/phantom/salvager-4.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1676,11 +1712,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-5",
-      "path": "/art/phantom/salvager-5.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1691,11 +1728,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-6",
-      "path": "/art/phantom/salvager-6.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1706,11 +1744,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-7",
-      "path": "/art/phantom/salvager-7.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1721,11 +1760,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-8",
-      "path": "/art/phantom/salvager-8.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1736,11 +1776,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-9",
-      "path": "/art/phantom/salvager-9.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1751,11 +1792,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-10",
-      "path": "/art/phantom/salvager-10.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1766,11 +1808,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-11",
-      "path": "/art/phantom/salvager-11.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1781,11 +1824,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-12",
-      "path": "/art/phantom/salvager-12.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1796,11 +1840,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-13",
-      "path": "/art/phantom/salvager-13.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1811,11 +1856,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-14",
-      "path": "/art/phantom/salvager-14.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1826,11 +1872,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-salvager-15",
-      "path": "/art/phantom/salvager-15.svg",
+      "path": "/art/phantom/salvager-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1841,11 +1888,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "salvager"
+      "craft": "salvager",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-0",
-      "path": "/art/phantom/buoytender-0.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1856,11 +1904,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-1",
-      "path": "/art/phantom/buoytender-1.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1871,11 +1920,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-2",
-      "path": "/art/phantom/buoytender-2.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1886,11 +1936,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-3",
-      "path": "/art/phantom/buoytender-3.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1901,11 +1952,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-4",
-      "path": "/art/phantom/buoytender-4.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1916,11 +1968,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-5",
-      "path": "/art/phantom/buoytender-5.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1931,11 +1984,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-6",
-      "path": "/art/phantom/buoytender-6.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1946,11 +2000,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-7",
-      "path": "/art/phantom/buoytender-7.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1961,11 +2016,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-8",
-      "path": "/art/phantom/buoytender-8.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1976,11 +2032,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-9",
-      "path": "/art/phantom/buoytender-9.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1991,11 +2048,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-10",
-      "path": "/art/phantom/buoytender-10.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2006,11 +2064,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-11",
-      "path": "/art/phantom/buoytender-11.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2021,11 +2080,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-12",
-      "path": "/art/phantom/buoytender-12.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2036,11 +2096,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-13",
-      "path": "/art/phantom/buoytender-13.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2051,11 +2112,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-14",
-      "path": "/art/phantom/buoytender-14.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2066,11 +2128,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-buoytender-15",
-      "path": "/art/phantom/buoytender-15.svg",
+      "path": "/art/phantom/buoytender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -2081,11 +2144,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "buoytender"
+      "craft": "buoytender",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-0",
-      "path": "/art/phantom/voronguide-0.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2096,11 +2160,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-1",
-      "path": "/art/phantom/voronguide-1.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2111,11 +2176,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-2",
-      "path": "/art/phantom/voronguide-2.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2126,11 +2192,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-3",
-      "path": "/art/phantom/voronguide-3.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2141,11 +2208,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-4",
-      "path": "/art/phantom/voronguide-4.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2156,11 +2224,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-5",
-      "path": "/art/phantom/voronguide-5.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2171,11 +2240,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-6",
-      "path": "/art/phantom/voronguide-6.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2186,11 +2256,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-7",
-      "path": "/art/phantom/voronguide-7.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2201,11 +2272,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-8",
-      "path": "/art/phantom/voronguide-8.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2216,11 +2288,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-9",
-      "path": "/art/phantom/voronguide-9.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2231,11 +2304,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-10",
-      "path": "/art/phantom/voronguide-10.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2246,11 +2320,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-11",
-      "path": "/art/phantom/voronguide-11.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2261,11 +2336,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-12",
-      "path": "/art/phantom/voronguide-12.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2276,11 +2352,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-13",
-      "path": "/art/phantom/voronguide-13.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2291,11 +2368,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-14",
-      "path": "/art/phantom/voronguide-14.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2306,11 +2384,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-voronguide-15",
-      "path": "/art/phantom/voronguide-15.svg",
+      "path": "/art/phantom/voronguide-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2321,11 +2400,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "voronguide"
+      "craft": "voronguide",
+      "svgSheet": true
     },
     {
       "id": "craft-student-0",
-      "path": "/art/phantom/student-0.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2336,11 +2416,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-1",
-      "path": "/art/phantom/student-1.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2351,11 +2432,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-2",
-      "path": "/art/phantom/student-2.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2366,11 +2448,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-3",
-      "path": "/art/phantom/student-3.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2381,11 +2464,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-4",
-      "path": "/art/phantom/student-4.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2396,11 +2480,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-5",
-      "path": "/art/phantom/student-5.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2411,11 +2496,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-6",
-      "path": "/art/phantom/student-6.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2426,11 +2512,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-7",
-      "path": "/art/phantom/student-7.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2441,11 +2528,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-8",
-      "path": "/art/phantom/student-8.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2456,11 +2544,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-9",
-      "path": "/art/phantom/student-9.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2471,11 +2560,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-10",
-      "path": "/art/phantom/student-10.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2486,11 +2576,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-11",
-      "path": "/art/phantom/student-11.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2501,11 +2592,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-12",
-      "path": "/art/phantom/student-12.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2516,11 +2608,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-13",
-      "path": "/art/phantom/student-13.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2531,11 +2624,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-14",
-      "path": "/art/phantom/student-14.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2546,11 +2640,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-student-15",
-      "path": "/art/phantom/student-15.svg",
+      "path": "/art/phantom/student-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2561,11 +2656,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "student"
+      "craft": "student",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-0",
-      "path": "/art/phantom/loomship-0.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2576,11 +2672,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-1",
-      "path": "/art/phantom/loomship-1.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2591,11 +2688,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-2",
-      "path": "/art/phantom/loomship-2.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2606,11 +2704,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-3",
-      "path": "/art/phantom/loomship-3.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2621,11 +2720,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-4",
-      "path": "/art/phantom/loomship-4.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2636,11 +2736,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-5",
-      "path": "/art/phantom/loomship-5.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2651,11 +2752,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-6",
-      "path": "/art/phantom/loomship-6.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2666,11 +2768,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-7",
-      "path": "/art/phantom/loomship-7.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2681,11 +2784,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-8",
-      "path": "/art/phantom/loomship-8.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2696,11 +2800,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-9",
-      "path": "/art/phantom/loomship-9.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2711,11 +2816,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-10",
-      "path": "/art/phantom/loomship-10.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2726,11 +2832,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-11",
-      "path": "/art/phantom/loomship-11.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2741,11 +2848,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-12",
-      "path": "/art/phantom/loomship-12.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2756,11 +2864,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-13",
-      "path": "/art/phantom/loomship-13.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2771,11 +2880,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-14",
-      "path": "/art/phantom/loomship-14.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2786,11 +2896,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-loomship-15",
-      "path": "/art/phantom/loomship-15.svg",
+      "path": "/art/phantom/loomship-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -2801,11 +2912,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "loomship"
+      "craft": "loomship",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-0",
-      "path": "/art/phantom/avipracticeglider-0.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2816,11 +2928,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-1",
-      "path": "/art/phantom/avipracticeglider-1.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2831,11 +2944,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-2",
-      "path": "/art/phantom/avipracticeglider-2.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2846,11 +2960,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-3",
-      "path": "/art/phantom/avipracticeglider-3.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2861,11 +2976,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-4",
-      "path": "/art/phantom/avipracticeglider-4.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2876,11 +2992,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-5",
-      "path": "/art/phantom/avipracticeglider-5.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2891,11 +3008,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-6",
-      "path": "/art/phantom/avipracticeglider-6.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2906,11 +3024,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-7",
-      "path": "/art/phantom/avipracticeglider-7.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2921,11 +3040,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-8",
-      "path": "/art/phantom/avipracticeglider-8.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2936,11 +3056,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-9",
-      "path": "/art/phantom/avipracticeglider-9.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2951,11 +3072,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-10",
-      "path": "/art/phantom/avipracticeglider-10.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2966,11 +3088,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-11",
-      "path": "/art/phantom/avipracticeglider-11.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2981,11 +3104,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-12",
-      "path": "/art/phantom/avipracticeglider-12.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -2996,11 +3120,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-13",
-      "path": "/art/phantom/avipracticeglider-13.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3011,11 +3136,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-14",
-      "path": "/art/phantom/avipracticeglider-14.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3026,11 +3152,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-avipracticeglider-15",
-      "path": "/art/phantom/avipracticeglider-15.svg",
+      "path": "/art/phantom/avipracticeglider-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3041,11 +3168,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "avipracticeglider"
+      "craft": "avipracticeglider",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-0",
-      "path": "/art/phantom/trainee-0.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3056,11 +3184,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-1",
-      "path": "/art/phantom/trainee-1.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3071,11 +3200,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-2",
-      "path": "/art/phantom/trainee-2.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3086,11 +3216,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-3",
-      "path": "/art/phantom/trainee-3.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3101,11 +3232,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-4",
-      "path": "/art/phantom/trainee-4.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3116,11 +3248,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-5",
-      "path": "/art/phantom/trainee-5.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3131,11 +3264,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-6",
-      "path": "/art/phantom/trainee-6.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3146,11 +3280,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-7",
-      "path": "/art/phantom/trainee-7.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3161,11 +3296,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-8",
-      "path": "/art/phantom/trainee-8.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3176,11 +3312,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-9",
-      "path": "/art/phantom/trainee-9.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3191,11 +3328,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-10",
-      "path": "/art/phantom/trainee-10.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3206,11 +3344,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-11",
-      "path": "/art/phantom/trainee-11.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3221,11 +3360,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-12",
-      "path": "/art/phantom/trainee-12.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3236,11 +3376,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-13",
-      "path": "/art/phantom/trainee-13.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3251,11 +3392,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-14",
-      "path": "/art/phantom/trainee-14.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3266,11 +3408,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-trainee-15",
-      "path": "/art/phantom/trainee-15.svg",
+      "path": "/art/phantom/trainee-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -3281,11 +3424,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "trainee"
+      "craft": "trainee",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-0",
-      "path": "/art/phantom/beacontender-0.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3296,11 +3440,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-1",
-      "path": "/art/phantom/beacontender-1.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3311,11 +3456,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-2",
-      "path": "/art/phantom/beacontender-2.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3326,11 +3472,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-3",
-      "path": "/art/phantom/beacontender-3.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3341,11 +3488,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-4",
-      "path": "/art/phantom/beacontender-4.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3356,11 +3504,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-5",
-      "path": "/art/phantom/beacontender-5.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3371,11 +3520,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-6",
-      "path": "/art/phantom/beacontender-6.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3386,11 +3536,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-7",
-      "path": "/art/phantom/beacontender-7.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3401,11 +3552,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-8",
-      "path": "/art/phantom/beacontender-8.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3416,11 +3568,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-9",
-      "path": "/art/phantom/beacontender-9.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3431,11 +3584,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-10",
-      "path": "/art/phantom/beacontender-10.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3446,11 +3600,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-11",
-      "path": "/art/phantom/beacontender-11.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3461,11 +3616,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-12",
-      "path": "/art/phantom/beacontender-12.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3476,11 +3632,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-13",
-      "path": "/art/phantom/beacontender-13.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3491,11 +3648,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-14",
-      "path": "/art/phantom/beacontender-14.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3506,11 +3664,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-beacontender-15",
-      "path": "/art/phantom/beacontender-15.svg",
+      "path": "/art/phantom/beacontender-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3521,11 +3680,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "beacontender"
+      "craft": "beacontender",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-0",
-      "path": "/art/phantom/courierrunner-0.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3536,11 +3696,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-1",
-      "path": "/art/phantom/courierrunner-1.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3551,11 +3712,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-2",
-      "path": "/art/phantom/courierrunner-2.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3566,11 +3728,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-3",
-      "path": "/art/phantom/courierrunner-3.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3581,11 +3744,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-4",
-      "path": "/art/phantom/courierrunner-4.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3596,11 +3760,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-5",
-      "path": "/art/phantom/courierrunner-5.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3611,11 +3776,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-6",
-      "path": "/art/phantom/courierrunner-6.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3626,11 +3792,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-7",
-      "path": "/art/phantom/courierrunner-7.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3641,11 +3808,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-8",
-      "path": "/art/phantom/courierrunner-8.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3656,11 +3824,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-9",
-      "path": "/art/phantom/courierrunner-9.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3671,11 +3840,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-10",
-      "path": "/art/phantom/courierrunner-10.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3686,11 +3856,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-11",
-      "path": "/art/phantom/courierrunner-11.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3701,11 +3872,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-12",
-      "path": "/art/phantom/courierrunner-12.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3716,11 +3888,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-13",
-      "path": "/art/phantom/courierrunner-13.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3731,11 +3904,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-14",
-      "path": "/art/phantom/courierrunner-14.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3746,11 +3920,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-courierrunner-15",
-      "path": "/art/phantom/courierrunner-15.svg",
+      "path": "/art/phantom/courierrunner-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -3761,11 +3936,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "courierrunner"
+      "craft": "courierrunner",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-0",
-      "path": "/art/phantom/driller-0.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3776,11 +3952,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-1",
-      "path": "/art/phantom/driller-1.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3791,11 +3968,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-2",
-      "path": "/art/phantom/driller-2.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3806,11 +3984,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-3",
-      "path": "/art/phantom/driller-3.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3821,11 +4000,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-4",
-      "path": "/art/phantom/driller-4.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3836,11 +4016,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-5",
-      "path": "/art/phantom/driller-5.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3851,11 +4032,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-6",
-      "path": "/art/phantom/driller-6.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3866,11 +4048,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-7",
-      "path": "/art/phantom/driller-7.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3881,11 +4064,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-8",
-      "path": "/art/phantom/driller-8.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3896,11 +4080,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-9",
-      "path": "/art/phantom/driller-9.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3911,11 +4096,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-10",
-      "path": "/art/phantom/driller-10.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3926,11 +4112,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-11",
-      "path": "/art/phantom/driller-11.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3941,11 +4128,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-12",
-      "path": "/art/phantom/driller-12.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3956,11 +4144,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-13",
-      "path": "/art/phantom/driller-13.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3971,11 +4160,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-14",
-      "path": "/art/phantom/driller-14.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -3986,11 +4176,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-driller-15",
-      "path": "/art/phantom/driller-15.svg",
+      "path": "/art/phantom/driller-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -4001,11 +4192,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "driller"
+      "craft": "driller",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-0",
-      "path": "/art/phantom/tug-0.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4016,11 +4208,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-1",
-      "path": "/art/phantom/tug-1.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4031,11 +4224,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-2",
-      "path": "/art/phantom/tug-2.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4046,11 +4240,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-3",
-      "path": "/art/phantom/tug-3.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4061,11 +4256,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-4",
-      "path": "/art/phantom/tug-4.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4076,11 +4272,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-5",
-      "path": "/art/phantom/tug-5.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4091,11 +4288,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-6",
-      "path": "/art/phantom/tug-6.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4106,11 +4304,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-7",
-      "path": "/art/phantom/tug-7.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4121,11 +4320,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-8",
-      "path": "/art/phantom/tug-8.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4136,11 +4336,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-9",
-      "path": "/art/phantom/tug-9.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4151,11 +4352,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-10",
-      "path": "/art/phantom/tug-10.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4166,11 +4368,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-11",
-      "path": "/art/phantom/tug-11.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4181,11 +4384,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-12",
-      "path": "/art/phantom/tug-12.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4196,11 +4400,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-13",
-      "path": "/art/phantom/tug-13.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4211,11 +4416,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-14",
-      "path": "/art/phantom/tug-14.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4226,11 +4432,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-tug-15",
-      "path": "/art/phantom/tug-15.svg",
+      "path": "/art/phantom/tug-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4241,11 +4448,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "tug"
+      "craft": "tug",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-0",
-      "path": "/art/phantom/barge-0.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4256,11 +4464,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-1",
-      "path": "/art/phantom/barge-1.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4271,11 +4480,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-2",
-      "path": "/art/phantom/barge-2.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4286,11 +4496,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-3",
-      "path": "/art/phantom/barge-3.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4301,11 +4512,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-4",
-      "path": "/art/phantom/barge-4.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4316,11 +4528,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-5",
-      "path": "/art/phantom/barge-5.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4331,11 +4544,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-6",
-      "path": "/art/phantom/barge-6.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4346,11 +4560,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-7",
-      "path": "/art/phantom/barge-7.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4361,11 +4576,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-8",
-      "path": "/art/phantom/barge-8.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4376,11 +4592,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-9",
-      "path": "/art/phantom/barge-9.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4391,11 +4608,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-10",
-      "path": "/art/phantom/barge-10.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4406,11 +4624,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-11",
-      "path": "/art/phantom/barge-11.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4421,11 +4640,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-12",
-      "path": "/art/phantom/barge-12.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4436,11 +4656,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-13",
-      "path": "/art/phantom/barge-13.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4451,11 +4672,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-14",
-      "path": "/art/phantom/barge-14.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4466,11 +4688,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-barge-15",
-      "path": "/art/phantom/barge-15.svg",
+      "path": "/art/phantom/barge-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -4481,11 +4704,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "barge"
+      "craft": "barge",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-0",
-      "path": "/art/phantom/reed-0.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4496,11 +4720,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-1",
-      "path": "/art/phantom/reed-1.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4511,11 +4736,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-2",
-      "path": "/art/phantom/reed-2.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4526,11 +4752,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-3",
-      "path": "/art/phantom/reed-3.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4541,11 +4768,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-4",
-      "path": "/art/phantom/reed-4.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4556,11 +4784,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-5",
-      "path": "/art/phantom/reed-5.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4571,11 +4800,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-6",
-      "path": "/art/phantom/reed-6.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4586,11 +4816,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-7",
-      "path": "/art/phantom/reed-7.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4601,11 +4832,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-8",
-      "path": "/art/phantom/reed-8.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4616,11 +4848,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-9",
-      "path": "/art/phantom/reed-9.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4631,11 +4864,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-10",
-      "path": "/art/phantom/reed-10.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4646,11 +4880,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-11",
-      "path": "/art/phantom/reed-11.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4661,11 +4896,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-12",
-      "path": "/art/phantom/reed-12.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4676,11 +4912,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-13",
-      "path": "/art/phantom/reed-13.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4691,11 +4928,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-14",
-      "path": "/art/phantom/reed-14.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4706,11 +4944,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     },
     {
       "id": "craft-reed-15",
-      "path": "/art/phantom/reed-15.svg",
+      "path": "/art/phantom/reed-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4721,7 +4960,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "craft": "reed"
+      "craft": "reed",
+      "svgSheet": true
     }
   ],
   "backdrop": "/art/phantom/backdrop.json",
