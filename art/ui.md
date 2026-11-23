@@ -149,7 +149,9 @@ Prettier on the written JSON.
 `ui-close` is not recoloured: `art/tools/card-close.ts` draws its PNG from the
 map's close glyph (`art/tools/close-glyph.ts`, the grid of `map-close.svg`) at
 (2, 2) in each 24 frame, so every card's close X is the same X on whole pixels.
-The local map has no close X; its footer Close button closes it. Normal: the X in cream `#ead4aa`, no face.
+The Local Map uses the shared Close X at the safe top-right. It and the footer
+button invoke the same dismissal action.
+Normal: the X in cream `#ead4aa`, no face.
 Pressed: the X in white on `#403d55`, a 24 square without its corner pixels.
 Its JSON stays Chibi's; the PNG's SHA-256 is
 `b9f916e64acb30350a480936169c025682f4d371c138108cd08c21b21912def1`.
