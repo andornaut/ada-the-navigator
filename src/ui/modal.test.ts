@@ -75,7 +75,7 @@ describe("Settings control rows", () => {
     const start = MODAL_STYLE.indexOf(
       `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
   ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button,
-  ${SETTINGS_INSTALL_BUTTON}
+  ${SETTINGS_INSTALL_BUTTON},[data-dialog=pause] .ada-pause-grid .ui-standard-button
 ))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
@@ -104,6 +104,17 @@ describe("modal buttons", () => {
     expect(cue).toContain("background-clip:padding-box");
     expect(cue).toContain(`border-image-slice:${top} ${right} ${bottom} ${left}\n`);
     expect(cue).not.toContain("border-image-source");
+  });
+
+  it("keeps Pause cursor focus on the face and leaves unavailable controls flat", () => {
+    const focus = `${UI_SCOPE} [data-dialog=pause] .ada-pause-grid .ui-standard-button:focus-visible`;
+    expect(MODAL_STYLE).toContain(`${focus},`);
+    expect(MODAL_STYLE).toContain(`${focus} > .ui-button-face,`);
+    expect(MODAL_STYLE).toContain(`${focus}[aria-disabled=true],`);
+    const enabled = `${focus}:where(
+  :not(:disabled,.ada-unavailable,[aria-disabled=true])
+)`;
+    expect(MODAL_STYLE.split(enabled)).toHaveLength(3);
   });
 
   it("tints only the legacy face and keeps the normal and pressed border slices", () => {
