@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { playOpening, readStory } from "../testing/launch.ts";
 import { CHEAT_AMOUNT, CHEAT_IDS } from "./cheats.ts";
