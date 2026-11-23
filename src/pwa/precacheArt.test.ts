@@ -187,31 +187,48 @@ describe("artUrls", () => {
   it("lists each core enemy heading set and every jets file", () => {
     const urls = artUrls(artFiles);
     const core = read("/art/manifest.json") as {
-      assets: readonly { id: string; path: string; svgSheet?: true }[];
+      assets: readonly { id: string; path: string; svgSheet?: true; svgSheetMember?: string }[];
     };
-    for (const archetype of ["swarm", "fighter", "interceptor"]) {
+    const headings = (archetype: string) =>
+      Array.from({ length: 16 }, (_, index) => `enemy-${archetype}-${index}`);
+    for (const [archetype, alias] of [
+      ["swarm"],
+      ["fighter"],
+      ["interceptor"],
+      ["retaliator", "retaliatorCargoHauler"],
+      ["retaliatorMiningFreighter"],
+    ] as const) {
       const sheet = `/art/enemies/${archetype}-sheet.svg`;
-      const ids = Array.from({ length: 16 }, (_, index) => `enemy-${archetype}-${index}`);
+      const ids = headings(archetype);
       const svg = readFileSync(join(publicDir, sheet), "utf8");
       const sheetFrames = Array.from(
-        svg.matchAll(/<svg\b[^>]*\bid="(enemy-[a-z]+-\d+)"/gu),
+        svg.matchAll(/<svg\b[^>]*\bid="(enemy-[a-zA-Z]+-\d+)"/gu),
         ([, id]) => id,
       );
+      const expected = [
+        ...ids.map((id) => ({ id, svgSheet: true, svgSheetMember: undefined })),
+        ...(alias === undefined
+          ? []
+          : headings(alias).map((id, index) => ({
+              id,
+              svgSheet: true,
+              svgSheetMember: ids[index],
+            }))),
+      ];
       expect(urls.filter((url) => url === sheet)).toEqual([sheet]);
       expect(
         core.assets
           .filter((asset) => asset.path === sheet)
-          .map(({ id, svgSheet }) => ({ id, svgSheet })),
-      ).toEqual(ids.map((id) => ({ id, svgSheet: true })));
+          .map(({ id, svgSheet, svgSheetMember }) => ({ id, svgSheet, svgSheetMember })),
+      ).toEqual(expected);
       expect(sheetFrames).toEqual(ids);
       expect(urls).toContain(`/art/enemies/${archetype}-jets.json`);
       for (let index = 0; index < 16; index++) {
         expect(urls).not.toContain(`/art/enemies/${archetype}-${index}.svg`);
+        if (alias) {
+          expect(urls).not.toContain(`/art/enemies/${alias}-${index}.svg`);
+        }
       }
-    }
-    expect(urls).toContain("/art/enemies/retaliator-jets.json");
-    for (let index = 0; index < 16; index++) {
-      expect(urls).toContain(`/art/enemies/retaliator-${index}.svg`);
     }
   });
 
