@@ -606,8 +606,6 @@ export function buildScene(scene: UiContext): void {
       close: CONTENT.labels.close ?? "",
       controlsNote: CONTENT.labels.controlsNote ?? "",
       install: CONTENT.labels.install ?? "",
-      installButton: CONTENT.labels.installButton ?? "",
-      installNote: CONTENT.labels.installNote ?? "",
       motionNote: CONTENT.labels.motionNote ?? "",
       moveControls: CONTENT.labels.moveControls ?? "",
       reducedMotion: CONTENT.labels.reducedMotion ?? "",

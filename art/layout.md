@@ -919,9 +919,9 @@ the controls.
 Switch rows show a 16 px [icon](settings-icons.md), label and any supporting
 note, then a 32 by 16 switch above its state label. Move and Aim use Shown
 and Hidden. Other switches use On and Off. FPS starts Off each session and
-uses the bottom-right readout. The Install row ends in a standard 48 px
-secondary action. Closing Install Steps returns to Settings and restores
-focus to Install.
+uses the bottom-right readout. Install is a right-aligned standard 48 px
+secondary action with a decorative down-arrow and tray. Closing Install
+Steps returns to Settings and restores focus to Install.
 
 ### Cheats card
 

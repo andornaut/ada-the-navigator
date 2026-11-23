@@ -65,8 +65,6 @@ export interface SettingsLabels {
   /** The Move and Aim controls rows' note: hiding a stick hides only its drawing. */
   readonly controlsNote: string;
   readonly install: string;
-  readonly installButton: string;
-  readonly installNote: string;
   readonly motionNote: string;
   readonly moveControls: string;
   readonly reducedMotion: string;
@@ -289,6 +287,18 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   align-self:flex-end;
   justify-content:flex-end
 }
+.ada-controls .ada-install-row{
+  justify-content:flex-end;
+  cursor:default
+}
+.ada-controls .ada-install-icon{
+  flex:none;
+  width:${units(CONTROL_ROW.icon)};
+  height:${units(CONTROL_ROW.icon)};
+  forced-color-adjust:none;
+  background:currentColor;
+  mask:url('/art/ui/icons/${SETTING_ICONS.install}.svg') center / contain no-repeat
+}
 /* Keep the secondary skin on both Settings actions when the Kit owns focus. */
 .ada-controls .ada-install-row > .ui-standard-button.ada-compact,
 .ada-controls [data-dialog=install-steps] .ada-button.ui-standard-button{
@@ -362,15 +372,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     setButtonRole(role, button);
     return button;
   };
-  const registerAction = (
-    element: HTMLElement,
-    run: () => void,
-    beforeClick?: (event: MouseEvent) => boolean | void,
-  ) => {
+  const registerAction = (element: HTMLElement, run: () => void) => {
     actionBindings.push(
       bindAdaAction(
         {
-          ...(beforeClick ? { beforeClick } : {}),
           click: { availability: () => ({ kind: "available" }), run },
           current: () => !disposed,
           slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
@@ -479,26 +484,19 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const build = document.createElement("p");
   build.className = "ada-build";
   build.textContent = options.build;
-  // The Install row, as in Archie: its label and note, and a button that asks for the browser's
-  // prompt or opens that browser's menu steps in the Settings card's place.
+  // The button asks for the native prompt or opens the browser's steps in place of Settings.
   const installRow = document.createElement("div");
   installRow.className = "ada-row ada-install-row";
   installRow.hidden = true;
-  const installText = document.createElement("span");
-  installText.className = "ada-setting-text";
-  const installCaption = document.createElement("span");
-  installCaption.textContent = options.labels.install;
-  const installNote = document.createElement("span");
-  installNote.className = "ada-setting-note";
-  installNote.textContent = options.labels.installNote;
-  installText.append(installCaption, installNote);
-  const installButton = textAction("install", options.labels.installButton, "secondary", () =>
+  const installButton = textAction("install", options.labels.install, "secondary", () =>
     requestInstall(),
   );
   installButton.classList.add("ada-compact");
-  installButton.setAttribute("aria-label", options.labels.install);
-  installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
-  // The whole row presses its button, as every control row does.
+  const installIcon = document.createElement("span");
+  installIcon.className = "ada-install-icon";
+  installIcon.setAttribute("aria-hidden", "true");
+  installButton.insertBefore(installIcon, installButton.firstChild);
+  installRow.append(installButton);
 
   const stepsParts = createCard({
     closeAction: "close-install-steps",
@@ -706,11 +704,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       void startInstall(options.install.port, openSteps, () => open && !disposed);
     }
   };
-  registerAction(
-    installRow,
-    requestInstall,
-    (event) => !(event.target instanceof Node && installButton.contains(event.target)),
-  );
   registerAction(stepsX, closeSteps);
   const setOpen = (value: boolean) => {
     if (disposed || value === open) {

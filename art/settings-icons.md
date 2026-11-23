@@ -1,9 +1,10 @@
 # Settings row icons
 
-Settings uses a decorative 16 by 16 SVG at the start of each row. Switch rows
-use Chibi's recoloured `ui-switch` sheet with its `on` and `off` tags at the
-trailing edge, above the visible state label. The Install row uses its action
-button in that slot. See the [Settings card](layout.md#settings-card) and
+Each Settings switch row starts with a decorative 16 by 16 SVG. It uses Chibi's
+recoloured `ui-switch` sheet with its `on` and `off` tags at the trailing
+edge, above the visible state label. The right-aligned Install button has a
+decorative down-arrow and tray before its label. See the
+[Settings card](layout.md#settings-card) and
 [UI assets](ui.md).
 
 | Settings row   | Icon key              |

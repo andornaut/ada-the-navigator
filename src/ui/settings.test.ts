@@ -225,8 +225,6 @@ const labels: SettingsLabels = {
   close: "Close",
   controlsNote: "Touch still works when hidden",
   install: "Install",
-  installButton: "Install",
-  installNote: "Install help",
   motionNote: "Motion help",
   moveControls: "Move controls",
   reducedMotion: "Reduced motion",
@@ -550,7 +548,7 @@ it("registers the actual Settings switch callback for held activation and remove
   expect(resolveAdaHoldAction(settings.root, row as unknown as HTMLElement)).toBeNull();
 });
 
-it("keeps Install button and row activation distinct and cancels a deferred guide after closing", async () => {
+it("offers one Install button and cancels a deferred guide after closing Settings", async () => {
   let finish!: (outcome: "steps") => void;
   const pending = new Promise<"steps">((resolve) => {
     finish = resolve;
@@ -569,7 +567,7 @@ it("keeps Install button and row activation distinct and cancels a deferred guid
       },
       steps: CONTENT.installSteps,
     },
-    labels: { ...labels, installButton: "Install now" },
+    labels,
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
   });
@@ -578,12 +576,14 @@ it("keeps Install button and row activation distinct and cancels a deferred guid
   const card = settings.card as unknown as Element;
   const button = card.querySelector('[data-action="install"]')!;
   const row = button.parent!;
-  const label = button.children[0]!;
+  const [icon, label] = button.children;
   const event = new Event("click", { cancelable: true });
   Object.defineProperty(event, "target", { value: label });
   expect(button.matches(".ui-standard-button")).toBe(true);
-  expect(button.textContent).toBe("Install now");
-  expect(button.getAttribute("aria-label")).toBe(labels.install);
+  expect(row.children).toEqual([button]);
+  expect(icon?.className).toBe("ada-install-icon");
+  expect(icon?.getAttribute("aria-hidden")).toBe("true");
+  expect(row.textContent).toBe(labels.install);
 
   const held = resolveAdaHoldAction(settings.root, button as unknown as HTMLElement);
   button.disabled = true;
@@ -591,6 +591,8 @@ it("keeps Install button and row activation distinct and cancels a deferred guid
   expect(held?.available()).toBe(false);
   expect(install).not.toHaveBeenCalled();
   button.disabled = false;
+  row.click();
+  expect(install).not.toHaveBeenCalled();
   button.dispatchEvent(event);
   row.dispatchEvent(event);
   expect(install).toHaveBeenCalledOnce();

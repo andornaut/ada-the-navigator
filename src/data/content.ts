@@ -436,7 +436,6 @@ export const CONTENT: GameContent = {
     inUse: "In use",
     install: "Install",
     installButton: "Install",
-    installNote: "Full screen, offline",
     itemAmmo: "{weapon} ammo",
     itemEngineLevel: "Engine level {n}",
     itemHolodisk: "Holodisk",
