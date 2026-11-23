@@ -9,12 +9,18 @@ export function vectorSheetSource(
   xml: Document | undefined,
   path: string,
   {
+    archetype,
+    displayHeight,
+    displayWidth,
     height,
     id,
     intrinsicHeight,
     intrinsicWidth,
     width,
   }: {
+    readonly archetype?: string;
+    readonly displayHeight?: number;
+    readonly displayWidth?: number;
     readonly height: number;
     readonly id: string;
     readonly intrinsicHeight?: number;
@@ -33,6 +39,10 @@ export function vectorSheetSource(
     ?.trim()
     .split(/[\s,]+/u)
     .map(Number);
+  // Station hull roots retain their authored display size within the raw frame viewBox.
+  const station = archetype === "hostileStation";
+  const expectedWidth = intrinsicWidth ?? (station ? displayWidth : undefined) ?? width;
+  const expectedHeight = intrinsicHeight ?? (station ? displayHeight : undefined) ?? height;
   if (
     matches.length !== 1 ||
     frame?.localName !== "svg" ||
@@ -42,8 +52,8 @@ export function vectorSheetSource(
     viewBox[1] !== 0 ||
     viewBox[2] !== width ||
     viewBox[3] !== height ||
-    Number(frame.getAttribute("width")) !== (intrinsicWidth ?? width) ||
-    Number(frame.getAttribute("height")) !== (intrinsicHeight ?? height)
+    Number(frame.getAttribute("width")) !== expectedWidth ||
+    Number(frame.getAttribute("height")) !== expectedHeight
   ) {
     throw new Error(`Invalid frame ${id} in vector sheet: ${path}`);
   }

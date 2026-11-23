@@ -174,14 +174,27 @@ async function main() {
   const [option, ...extra] = process.argv.slice(2);
   if (
     extra.length ||
-    (option !== undefined && option !== "--icon-only" && option !== "--weapon-base-sheets")
+    (option !== undefined &&
+      option !== "--icon-only" &&
+      option !== "--weapon-base-sheets" &&
+      option !== "--variant-candidate")
   ) {
     throw new Error(
-      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets]",
+      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--variant-candidate]",
     );
   }
   if (option === "--weapon-base-sheets") {
     packRetainedWeaponBases(root);
+    return;
+  }
+  if (option === "--variant-candidate") {
+    const { exportStationVariants } = await import("./hostile-station-variants.ts");
+    exportStationVariants(
+      root,
+      fileURLToPath(
+        new URL("../../.check-results/hostile-station-variant-output/", import.meta.url),
+      ),
+    );
     return;
   }
   const craft = hostileStation();

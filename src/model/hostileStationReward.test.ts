@@ -1,7 +1,10 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
+import { fromScreen } from "./convex.ts";
 import { damageEnemy } from "./enemyAi.ts";
+import { enemyHull } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation, stepFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -92,6 +95,17 @@ it("does not claim from an active station, detached copy or missing body", () =>
 
 it("emits the existing Stardust event from real station hull destruction before cleanup", () => {
   const { body, flight } = fixture();
+  // The Andromeda ring's open center is flyable. Hit one of its solid convex faces.
+  const part = enemyHull(body.enemy!, ROUTE_POSITION[flight.galaxy])![0]!;
+  const solid = fromScreen(
+    part.reduce(
+      (point, vertex) => ({
+        x: point.x + vertex.x / part.length,
+        y: point.y + vertex.y / part.length,
+      }),
+      { x: 0, y: 0 },
+    ),
+  );
   flight.shots.push({
     damage: 999,
     enemy: false,
@@ -101,8 +115,8 @@ it("emits the existing Stardust event from real station hull destruction before 
     piercing: false,
     projectile: "bolt",
     velocity: { x: 0, y: 0 },
-    x: body.x,
-    y: body.y,
+    x: body.x + solid.x,
+    y: body.y + solid.y,
   });
   const events = stepFlight(
     CONTENT,

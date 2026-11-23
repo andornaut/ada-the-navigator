@@ -1531,21 +1531,42 @@ function fills(size: number, pivotZ: number, list: readonly Face[]): Fill[] {
 }
 
 // `tips` fill notch tips under the faces, as the drawn silhouette cuts them.
-function svg(size: number, title: string, list: readonly Fill[], tips: readonly Fill[]): string {
-  const polygons = [...tips, ...list].map(({ color, points }) => {
+function svgPolygons(fills: readonly Fill[]): string[] {
+  return fills.map(({ color, points }) => {
     const projected = points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
+}
+
+function svgFrame(size: number, title: string, content: readonly string[]): string {
   // The viewBox stays in frame px; the intrinsic size is the display size, so browsers
   // rasterize the frame at the size it is drawn.
   const display = size * DISPLAY_SCALE;
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${display}" height="${display}" viewBox="0 0 ${size} ${size}">`,
     `  <title>${title}</title>`,
-    ...polygons,
+    ...content,
     "</svg>",
     "",
   ].join("\n");
+}
+
+function svg(size: number, title: string, list: readonly Fill[], tips: readonly Fill[]): string {
+  return svgFrame(size, title, svgPolygons([...tips, ...list]));
+}
+
+/** The usual heavy viewport and polygon writer with explicit layers for a prepared curved hull. */
+export function preparedStationHullSvg(
+  size: number,
+  title: string,
+  layers: readonly { faces: readonly Face[]; mask?: string }[],
+  definitions: readonly string[] = [],
+): string {
+  const content = layers.flatMap(({ faces, mask }) => {
+    const polygons = svgPolygons(fills(size, 0, faces));
+    return mask ? [`<g mask="url(#${mask})">`, ...polygons, "</g>"] : polygons;
+  });
+  return svgFrame(size, title, [...definitions, ...content]);
 }
 
 // ---------------------------------------------------------------- export

@@ -2,10 +2,12 @@ import { afterEach, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
+import { fromScreen } from "./convex.ts";
+import { enemyHull } from "./enemyBody.ts";
 import { createUnpopulatedFlight, populateFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
@@ -112,6 +114,17 @@ it("queries generated cells, retains encounters on Continue and credits a real h
   const saved = relaunch(CONTENT, model.save());
   expect(saved.state.flight).toEqual(flight);
   const balance = model.state.economy.stardust;
+  // The Andromeda ring's open center is flyable. Hit one of its solid convex faces.
+  const part = enemyHull(body.enemy!, ROUTE_POSITION[flight.galaxy])![0]!;
+  const solid = fromScreen(
+    part.reduce(
+      (point, vertex) => ({
+        x: point.x + vertex.x / part.length,
+        y: point.y + vertex.y / part.length,
+      }),
+      { x: 0, y: 0 },
+    ),
+  );
   flight.shots.push({
     damage: 999,
     enemy: false,
@@ -121,8 +134,8 @@ it("queries generated cells, retains encounters on Continue and credits a real h
     piercing: false,
     projectile: "bolt",
     velocity: { x: 0, y: 0 },
-    x: body.x,
-    y: body.y,
+    x: body.x + solid.x,
+    y: body.y + solid.y,
   });
   model.step(0.001, idle);
   expect(model.state.economy.stardust).toBe(balance + 100);

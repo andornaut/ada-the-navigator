@@ -1,9 +1,11 @@
+import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
 import fighter from "../../public/art/enemies/fighter-jets.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
+import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
 import interceptor from "../../public/art/enemies/interceptor-jets.json" with { type: "json" };
 import retaliatorParts from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-jets.json" with { type: "json" };
@@ -11,7 +13,7 @@ import miningParts from "../../public/art/enemies/retaliatorMiningFreighter-hard
 import miningJets from "../../public/art/enemies/retaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/swarm-jets.json" with { type: "json" };
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
-import { type EnemyAssetKey, enemyAssetKey } from "../data/enemyIdentity.ts";
+import { type EnemyGeometryKey, enemyGeometryKey } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Parts } from "./convex.ts";
@@ -220,7 +222,7 @@ function carriedTop(
   return (weapon && outline.weaponTops.get(weapon)) || null;
 }
 
-const OUTLINES: Partial<Record<EnemyAssetKey, EnemyOutline>> = {};
+const OUTLINES: Partial<Record<EnemyGeometryKey, EnemyOutline>> = {};
 for (const [archetype, outline] of [
   ["swarm", smallOutline(swarm as JetsFile)],
   ["fighter", smallOutline(fighter as JetsFile)],
@@ -230,6 +232,8 @@ for (const [archetype, outline] of [
   ["capital", heavyOutline(capital as HardpointsFile)],
   ["gadget", heavyOutline(gadget as HardpointsFile)],
   ["hostileStation", heavyOutline(station as HardpointsFile)],
+  ["hostileStationAndromeda", heavyOutline(ring as HardpointsFile)],
+  ["hostileStationPhantom", heavyOutline(phantomStation as HardpointsFile)],
   ["platform", heavyOutline(platform as HardpointsFile)],
   [
     "retaliatorCargoHauler",
@@ -257,8 +261,9 @@ function index16(direction: Vec): number {
  */
 export function enemyHull(
   enemy: Pick<EnemyState, "archetype" | "facing"> & Partial<Pick<EnemyState, "id" | "aim">>,
+  position?: RoutePosition,
 ): Parts | null {
-  const key = enemyAssetKey(enemy);
+  const key = enemyGeometryKey(enemy, position);
   const outline = OUTLINES[key];
   if (!outline) {
     return null;
@@ -295,7 +300,8 @@ export function enemyPartOutline(
   enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
   id: string,
 ): Parts | null {
-  const outline = OUTLINES[enemyAssetKey(enemy)];
+  const key = enemyGeometryKey(enemy, position);
+  const outline = OUTLINES[key];
   const hardpoint = outline?.hardpoints.get(id);
   if (!outline || !hardpoint) {
     return null;
@@ -318,11 +324,11 @@ export function enemyPartOutline(
         ? (heading + HEADINGS / 2) % HEADINGS
         : index16(state?.aim ?? enemy.aim ?? enemy.facing)
       : -1;
-  return composedPart(enemyAssetKey(enemy), outline, hardpoint, id, heading, intact, carried, aim);
+  return composedPart(key, outline, hardpoint, id, heading, intact, carried, aim);
 }
 
 function composedPart(
-  assetKey: EnemyAssetKey,
+  assetKey: EnemyGeometryKey,
   outline: EnemyOutline,
   hardpoint: HardpointOutline,
   id: string,
@@ -352,8 +358,9 @@ export function enemyPhysicalBody(
   position: RoutePosition,
   enemy: Pick<EnemyState, "aim" | "archetype" | "facing" | "hardpoints" | "id">,
 ): Parts | null {
-  const hull = enemyHull(enemy);
-  const outline = OUTLINES[enemyAssetKey(enemy)];
+  const hull = enemyHull(enemy, position);
+  const key = enemyGeometryKey(enemy, position);
+  const outline = OUTLINES[key];
   if (!hull || !outline) {
     return null;
   }

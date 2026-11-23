@@ -18113,11 +18113,11 @@
     },
     {
       "id": "enemy-garnet-hostileStation-0",
-      "path": "/art/andromeda/enemies/hostileStation-0.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-1.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
@@ -18125,15 +18125,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-1",
-      "path": "/art/andromeda/enemies/hostileStation-1.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-2.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
@@ -18141,15 +18142,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-2",
-      "path": "/art/andromeda/enemies/hostileStation-2.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-3.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
@@ -18157,15 +18159,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-3",
-      "path": "/art/andromeda/enemies/hostileStation-3.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-4.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
@@ -18173,15 +18176,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-4",
-      "path": "/art/andromeda/enemies/hostileStation-4.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-5.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
@@ -18189,15 +18193,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-5",
-      "path": "/art/andromeda/enemies/hostileStation-5.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-6.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
@@ -18205,15 +18210,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-6",
-      "path": "/art/andromeda/enemies/hostileStation-6.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-7.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
@@ -18221,15 +18227,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-7",
-      "path": "/art/andromeda/enemies/hostileStation-7.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-8.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
@@ -18237,15 +18244,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-8",
-      "path": "/art/andromeda/enemies/hostileStation-8.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-9.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
@@ -18253,15 +18261,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-9",
-      "path": "/art/andromeda/enemies/hostileStation-9.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-10.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
@@ -18269,15 +18278,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-10",
-      "path": "/art/andromeda/enemies/hostileStation-10.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-11.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
@@ -18285,15 +18295,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-11",
-      "path": "/art/andromeda/enemies/hostileStation-11.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-12.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
@@ -18301,15 +18312,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-12",
-      "path": "/art/andromeda/enemies/hostileStation-12.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-13.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
@@ -18317,15 +18329,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-13",
-      "path": "/art/andromeda/enemies/hostileStation-13.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-14.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
@@ -18333,15 +18346,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-14",
-      "path": "/art/andromeda/enemies/hostileStation-14.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-15.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
@@ -18349,15 +18363,16 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-15",
-      "path": "/art/andromeda/enemies/hostileStation-15.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/andromeda/enemies/hostileStation-andromeda-sheet-16.svg",
+      "width": 904,
+      "height": 904,
+      "displayWidth": 395.5,
+      "displayHeight": 395.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
@@ -18365,7 +18380,8 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "garnet"
+      "family": "garnet",
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-hostileStation-weapon-0-intact-0",
@@ -26256,7 +26272,7 @@
     },
     "hostileStation": {
       "jets": "/art/andromeda/enemies/hostileStation-jets.json",
-      "hardpoints": "/art/enemies/hostileStation-hardpoints.json"
+      "hardpoints": "/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json"
     },
     "interceptor": {
       "jets": "/art/andromeda/enemies/interceptor-jets.json",

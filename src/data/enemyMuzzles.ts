@@ -1,12 +1,14 @@
+import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
+import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
 import mining from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
-import { type EnemyAssetKey } from "./enemyIdentity.ts";
+import { type EnemyGeometryKey } from "./enemyIdentity.ts";
 
 /** One turret's drawn pivot per hull heading and its top design's barrel tips. */
 export interface MuzzleTurret {
@@ -109,11 +111,13 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
 }
 
 /** Art's drawn mounts for every archetype with a hardpoints file, Gadget's capital included. */
-export const MUZZLE_ART: Partial<Record<EnemyAssetKey, MuzzleArt>> = {
+export const MUZZLE_ART: Partial<Record<EnemyGeometryKey, MuzzleArt>> = {
   capital: readMuzzleArt(capital),
   frigate: readMuzzleArt(frigate),
   gadget: readMuzzleArt(gadget),
   hostileStation: readMuzzleArt(station),
+  hostileStationAndromeda: readMuzzleArt(ring),
+  hostileStationPhantom: readMuzzleArt(phantomStation),
   platform: readMuzzleArt(platform),
   retaliator: readMuzzleArt(retaliator),
   retaliatorCargoHauler: readMuzzleArt(retaliator),

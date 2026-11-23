@@ -1,5 +1,6 @@
 import type { EnemyActorKind } from "./enemyActors.ts";
 import { enemyRandom } from "./enemyRandom.ts";
+import type { RoutePosition } from "./galaxies.ts";
 import type { SHIP_PHYSICS } from "./shipPhysics.ts";
 
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
@@ -11,6 +12,8 @@ export type EnemyAssetKey =
   | "gadget"
   | "hostileStation"
   | (typeof INDUSTRIAL_BODY_KEYS)[number];
+export type EnemyGeometryKey = EnemyAssetKey | "hostileStationAndromeda" | "hostileStationPhantom";
+
 export interface EnemyIdentity {
   readonly archetype: EnemyActorKind;
   readonly id?: string;
@@ -32,6 +35,22 @@ export function retaliatorVariant(identity: EnemyIdentity): IndustrialBodyKey | 
   return INDUSTRIAL_BODY_KEYS[
     Math.floor(enemyRandom(`retaliator-body:${identity.id}`)() * INDUSTRIAL_BODY_KEYS.length)
   ];
+}
+
+/** The art family supplies station geometry while the actor and texture identities stay stable. */
+export function enemyGeometryKey(
+  identity: EnemyIdentity,
+  position?: RoutePosition,
+): EnemyGeometryKey {
+  if (identity.archetype === "hostileStation") {
+    if (position === 4) {
+      return "hostileStationAndromeda";
+    }
+    if (position === 6) {
+      return "hostileStationPhantom";
+    }
+  }
+  return enemyAssetKey(identity);
 }
 
 export function wreckEnemyId(id: string): string {

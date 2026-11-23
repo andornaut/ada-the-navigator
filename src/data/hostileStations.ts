@@ -1,6 +1,7 @@
 import { CONTENT } from "./content.ts";
 import type { EnemyDefinition, FireProfile, WeaponMounts } from "./enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
+import { enemyGeometryKey } from "./enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_ART } from "./enemyMuzzles.ts";
 import {
   HOSTILE_STATION_SIGNATURE,
@@ -35,7 +36,8 @@ export function hostileStationDefinition(
     return cached;
   }
   const signature = HOSTILE_STATION_SIGNATURE;
-  const art = MUZZLE_ART.hostileStation!;
+  const assetKey = enemyGeometryKey({ archetype: "hostileStation" }, position);
+  const art = MUZZLE_ART[assetKey]!;
   const sizeRatio = ENEMY_SIZE_RATIOS.hostileStation;
   const width = sizeRatio * CONTENT.tuning.flight.shipRadius * 2;
   const offsets = Object.fromEntries(
@@ -67,7 +69,7 @@ export function hostileStationDefinition(
   const fire = (id: string) => context.fire(weapon(id));
   const definition: EnemyDefinition = {
     ...context.base,
-    assetKey: "hostileStation",
+    assetKey,
     fire: fire(signature.fill[0]),
     fireClockPolicy: "continuous",
     hardpoints: signature.fill.flatMap((id) =>

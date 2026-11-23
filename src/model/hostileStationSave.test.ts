@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import * as profiles from "../data/enemyActorDefinition.ts";
 import { ROUTE } from "../data/galaxies.ts";
 import { SWARM_GROUP_MINIMUM } from "../data/spawnerCatalog.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
@@ -16,16 +17,16 @@ import {
 import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
-function fixture() {
+function fixture(galaxy: GalaxyNumber = 2) {
   const game = new GameModel(CONTENT);
   game.state.unlocked = [...ROUTE];
-  game.startGalaxy(2);
+  game.startGalaxy(galaxy);
   playOpening(game);
   const saved = structuredClone(game.saveDocument());
   const flight = saved.flight!;
   const pack = "hostile-station:planned";
   const defenders = escortPackId(pack);
-  const definition = profiles.enemyActorDefinition(2, "hostileStation", "planned", 3);
+  const definition = profiles.enemyActorDefinition(galaxy, "hostileStation", "planned", 3);
   const state = createEnemy(
     definition,
     { archetype: "platform", id: "planned", packId: pack, phase: 0.75, weaponLevel: 3 },
@@ -52,7 +53,7 @@ function fixture() {
     ...Array.from({ length: SWARM_GROUP_MINIMUM }, (_, index): SpaceObject => {
       const id = `planned:defender:${index}`;
       const point = { x: 20300 + index * 100, y: 20000 };
-      const profile = profiles.enemyActorDefinition(2, "swarm", id, 3);
+      const profile = profiles.enemyActorDefinition(galaxy, "swarm", id, 3);
       const enemy = createEnemy(
         profile,
         { archetype: "swarm", id, packId: defenders, phase: 0.5, weaponLevel: 3 },
@@ -71,38 +72,57 @@ function fixture() {
   return { actors, defenders, flight, pack, saved, station };
 }
 
-it("pages a station and defenders through Continue once with exact clocks and bursts", () => {
-  const { actors, defenders, flight, pack, saved, station } = fixture();
-  expect(restoreSave(saved)).toEqual(saved);
-  const before = structuredClone(actors);
-  worldSyncFlightRegion({}, CONTENT, flight);
-  expect(flight.objects).toEqual([]);
-  expect(Object.values(flight.world.notables)).toEqual(before);
-  expect(worldRetainedPackMembers({}, CONTENT, flight)).toEqual({
-    [defenders]: SWARM_GROUP_MINIMUM,
-    [pack]: 1,
-  });
-  expect(flight.combat!.unloadedPackMembers).toBeUndefined();
-  const random = vi.spyOn(crypto, "getRandomValues");
-  random.mockClear();
-  try {
-    const resumed = new GameModel(CONTENT, saved);
-    resumed.continueGame();
-    const continued = resumed.state.flight!;
-    expect(continued).toEqual(flight);
-    expect(random).not.toHaveBeenCalled();
-    continued.player = { x: station.x, y: station.y };
-    worldSyncFlightRegion({}, CONTENT, continued);
-    worldSyncFlightRegion({}, CONTENT, continued);
-    expect([...continued.objects].sort((a, b) => a.id.localeCompare(b.id))).toEqual(
-      [...before].sort((a, b) => a.id.localeCompare(b.id)),
-    );
-    expect(continued.world.notables).toEqual({});
-    expect(new Set(continued.objects.map(({ id }) => id)).size).toBe(before.length);
-  } finally {
-    random.mockRestore();
-  }
-});
+it.each([2, 5, 6] as const)(
+  "pages a galaxy %i station through Continue with exact clocks and bursts",
+  (galaxy) => {
+    const { actors, defenders, flight, pack, saved, station } = fixture(galaxy);
+    expect(restoreSave(saved)).toEqual(saved);
+    const before = structuredClone(actors);
+    worldSyncFlightRegion({}, CONTENT, flight);
+    expect(flight.objects).toEqual([]);
+    expect(Object.values(flight.world.notables)).toEqual(before);
+    expect(worldRetainedPackMembers({}, CONTENT, flight)).toEqual({
+      [defenders]: SWARM_GROUP_MINIMUM,
+      [pack]: 1,
+    });
+    expect(flight.combat!.unloadedPackMembers).toBeUndefined();
+    const random = vi.spyOn(crypto, "getRandomValues");
+    random.mockClear();
+    try {
+      const resumed = new GameModel(CONTENT, saved);
+      resumed.continueGame();
+      const continued = resumed.state.flight!;
+      if (galaxy === 2) {
+        expect(continued).toEqual(flight);
+      }
+      // Andromeda may initialize unrelated chapter actors when resuming this pared-down fixture.
+      expect(continued.combat!.initialPackSizes).toMatchObject(flight.combat!.initialPackSizes);
+      expect(continued.combat!.routeEncounters).toEqual(flight.combat!.routeEncounters);
+      expect(continued.encounterSeed).toBe(flight.encounterSeed);
+      for (const actor of before) {
+        expect(continued.world.notables[actor.id]).toEqual(actor);
+      }
+      expect(random).not.toHaveBeenCalled();
+      continued.player = { x: station.x, y: station.y };
+      worldSyncFlightRegion({}, CONTENT, continued);
+      worldSyncFlightRegion({}, CONTENT, continued);
+      const ids = new Set(before.map(({ id }) => id));
+      const loaded = continued.objects.filter(({ id }) => ids.has(id));
+      expect(loaded.sort((a, b) => a.id.localeCompare(b.id))).toEqual(
+        [...before].sort((a, b) => a.id.localeCompare(b.id)),
+      );
+      if (galaxy === 2) {
+        expect(continued.world.notables).toEqual({});
+        expect(continued.objects).toHaveLength(before.length);
+      }
+      for (const id of ids) {
+        expect(continued.world.notables[id]).toBeUndefined();
+      }
+    } finally {
+      random.mockRestore();
+    }
+  },
+);
 
 it("keeps defender casualty tombstones and role denominators through paging and Continue", () => {
   const { actors, defenders, flight, saved, station } = fixture();

@@ -1,6 +1,6 @@
 import type { EnemyActorKind } from "./enemyActors.ts";
 import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
-import { type EnemyAssetKey, enemyAssetKey, PHANTOM_FLAGSHIP_ID } from "./enemyIdentity.ts";
+import { enemyAssetKey, type EnemyGeometryKey, PHANTOM_FLAGSHIP_ID } from "./enemyIdentity.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
   HEAVY_SIGNATURES,
@@ -133,7 +133,7 @@ export const ENEMY_NAVIGATION: EnemyNavigation = {
 };
 
 export interface EnemyDefinition {
-  readonly assetKey?: EnemyAssetKey;
+  readonly assetKey?: EnemyGeometryKey;
   aggression: "sight" | "retaliate";
   behaviour: Behaviour;
   /** An escort's behaviour once its capital is gone or disabled (gameplay/ships.md "Behaviours"). */

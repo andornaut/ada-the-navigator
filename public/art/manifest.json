@@ -36367,243 +36367,259 @@
     },
     {
       "id": "enemy-hostileStation-0",
-      "path": "/art/enemies/hostileStation-0.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-1.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-1",
-      "path": "/art/enemies/hostileStation-1.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-1.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-2",
-      "path": "/art/enemies/hostileStation-2.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-1.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-3",
-      "path": "/art/enemies/hostileStation-3.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-1.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-4",
-      "path": "/art/enemies/hostileStation-4.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-2.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-5",
-      "path": "/art/enemies/hostileStation-5.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-2.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-6",
-      "path": "/art/enemies/hostileStation-6.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-2.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-7",
-      "path": "/art/enemies/hostileStation-7.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-2.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-8",
-      "path": "/art/enemies/hostileStation-8.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-3.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-9",
-      "path": "/art/enemies/hostileStation-9.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-3.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-10",
-      "path": "/art/enemies/hostileStation-10.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-3.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-11",
-      "path": "/art/enemies/hostileStation-11.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-3.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-12",
-      "path": "/art/enemies/hostileStation-12.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-4.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-13",
-      "path": "/art/enemies/hostileStation-13.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-4.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-14",
-      "path": "/art/enemies/hostileStation-14.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-4.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-15",
-      "path": "/art/enemies/hostileStation-15.svg",
-      "width": 568,
-      "height": 568,
-      "displayWidth": 248.5,
-      "displayHeight": 248.5,
+      "path": "/art/enemies/hostileStation-phantom-sheet-4.svg",
+      "width": 824,
+      "height": 824,
+      "displayWidth": 360.5,
+      "displayHeight": 360.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "hostileStation"
+      "archetype": "hostileStation",
+      "svgSheet": true
     },
     {
       "id": "enemy-hostileStation-weapon-0-intact-0",
@@ -44069,7 +44085,7 @@
     },
     "hostileStation": {
       "jets": "/art/enemies/hostileStation-jets.json",
-      "hardpoints": "/art/enemies/hostileStation-hardpoints.json"
+      "hardpoints": "/art/enemies/hostileStation-phantom-hardpoints.json"
     },
     "interceptor": {
       "jets": "/art/enemies/interceptor-jets.json",

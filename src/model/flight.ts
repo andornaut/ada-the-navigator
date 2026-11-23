@@ -72,6 +72,7 @@ import {
   damageEnemy,
   enemyDefeated,
   enemyFireLine,
+  type EnemyState,
   type FireIntent,
   hardpointOffset,
   stepDebris,
@@ -477,7 +478,7 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
   const enemy = object.enemy;
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   // The enemy's drawn hull, or its hull circle without Art's outline, against Ada's drawn ship.
-  const outline = enemy && enemyHull(enemy);
+  const outline = enemy && enemyHull(enemy, ROUTE_POSITION[flight.galaxy]);
   const contact =
     enemy &&
     (outline
@@ -1054,14 +1055,31 @@ function spawnEnemy(
     id,
   );
   const definition = enemyActorDefinition(flight.galaxy, archetype, id, weaponLevel);
+  const enemy = createEnemy(
+    definition,
+    { archetype, escortOf, id, packId, phase, weaponLevel },
+    point,
+  );
   return {
     ...point,
-    enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase, weaponLevel }, point),
+    enemy,
     hp: definition.hp,
     id,
     kind: "enemy",
-    radius: content.tuning.flight.shipRadius * definition.sizeRatio,
+    radius: enemyRadiusForFlight(
+      flight,
+      enemy,
+      content.tuning.flight.shipRadius * definition.sizeRatio,
+    ),
   };
+}
+
+function enemyRadiusForFlight(flight: FlightState, enemy: EnemyState, radius: number): number {
+  if (enemy.archetype !== "hostileStation" || flight.galaxy === 2) {
+    return radius;
+  }
+  const body = enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], enemy);
+  return body ? Math.max(radius, partsReach(worldParts(body))) : radius;
 }
 
 /** Canonical scenery and arrivals for read-only guard planning and explicit formation admission. */
@@ -3344,7 +3362,11 @@ function enemies(
       object.enemy.hp = object.hp;
     }
     // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
-    object.radius = content.tuning.flight.shipRadius * ENEMY_SIZE_RATIOS[object.enemy.archetype];
+    object.radius = enemyRadiusForFlight(
+      flight,
+      object.enemy,
+      content.tuning.flight.shipRadius * ENEMY_SIZE_RATIOS[object.enemy.archetype],
+    );
   }
   const loadedPeers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   const loadedPackMembers: Record<string, number> = Object.create(null);
@@ -3549,7 +3571,7 @@ function enemies(
         }
       }
       const point = { x: object.x, y: object.y };
-      const hull = enemyHull(object.enemy);
+      const hull = enemyHull(object.enemy, ROUTE_POSITION[flight.galaxy]);
       resolveScenery(
         flight,
         (obstacle, position, frame, drawn) =>
@@ -3631,7 +3653,12 @@ function enemies(
     }
     for (const [delay, origins] of rings) {
       const emissions = ringEmissions.get(flight) ?? [];
-      emissions.push({ age: -delay, at: { ...before }, origins, spawnRadius: object.radius });
+      emissions.push({
+        age: -delay,
+        at: { ...before },
+        origins,
+        spawnRadius: content.tuning.flight.shipRadius * definition.sizeRatio,
+      });
       ringEmissions.set(flight, emissions);
     }
   }
@@ -4038,7 +4065,7 @@ function projectileContact(
     const outlines = enemy
       ? [
           ...(part ? [enemyPartOutline(ROUTE_POSITION[flight.galaxy], enemy, part)] : []),
-          enemyHull(enemy),
+          enemyHull(enemy, ROUTE_POSITION[flight.galaxy]),
           ...enemy.hardpoints.map((part) =>
             enemyPartOutline(ROUTE_POSITION[flight.galaxy], enemy, part.id),
           ),
@@ -4166,7 +4193,7 @@ function enemyTouched(
 ): boolean {
   const localPoint = worldPoint(flightWorldContext(flight), object, point);
   const enemy = object.enemy;
-  const hull = enemy && enemyHull(enemy);
+  const hull = enemy && enemyHull(enemy, position);
   if (!enemy || !hull) {
     return worldDistance(flightWorldContext(flight), localPoint, object) <= object.radius + reach;
   }
@@ -4396,7 +4423,7 @@ function blastCover(
   if (nearest) {
     return { part: nearest.id };
   }
-  const hull = enemyHull(enemy);
+  const hull = enemyHull(enemy, position);
   const covered = hull
     ? screenOutlineContact(hull, object, local, radius) !== null ||
       enemy.hardpoints.some((part) => {
@@ -4697,7 +4724,7 @@ function fireBeam(
           consider(object, part.id, part, partReach(content));
         }
       }
-      const hull = enemyHull(object.enemy);
+      const hull = enemyHull(object.enemy, ROUTE_POSITION[flight.galaxy]);
       if (hull) {
         drawn(object, null, hull);
       } else {

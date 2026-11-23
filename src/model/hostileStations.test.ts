@@ -1,14 +1,28 @@
 import { expect, it } from "vitest";
 
+import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
+import garnetManifest from "../../public/art/andromeda/manifest.json" with { type: "json" };
+import claimManifest from "../../public/art/cartwheel/manifest.json" with { type: "json" };
+import claimStation from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
+import coralStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
+import coralManifest from "../../public/art/manifest.json" with { type: "json" };
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
+import { ENEMY_DISPLAY_SCALE, MUZZLE_ART } from "../data/enemyMuzzles.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOSTILE_LOCAL_ALLOWANCE, SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { worldParts } from "./convex.ts";
-import { createEnemy, damageEnemy } from "./enemyAi.ts";
+import {
+  composeEnemy,
+  enemyArt,
+  type EnemyFrame,
+  enemyFrameSets,
+  selectEnemyFrame,
+} from "../game/enemyArt.ts";
+import { fromScreen, partsReach, worldParts } from "./convex.ts";
+import { createEnemy, damageEnemy, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createFlight, salvage, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -18,6 +32,7 @@ import {
   worldSyncFlightRegion,
 } from "./geography.ts";
 import { hostileStationContext, type PlannedHostileStation } from "./hostileStations.ts";
+import { drawnIndex } from "./muzzles.ts";
 import { worldRegionalEngagementAdmissions, worldSpawnerStage } from "./spawner.ts";
 import type { FlightState } from "./types.ts";
 
@@ -68,7 +83,9 @@ it("materializes one persistent body and only the explicit swarm plan, then repe
     "hostileStation",
     72,
   ]);
-  expect(result.station.radius).toBe(7 * CONTENT.tuning.flight.shipRadius);
+  const outline = enemyPhysicalBody(ROUTE_POSITION[f.galaxy], result.station.enemy!)!;
+  expect(result.station.radius).toBe(partsReach(worldParts(outline)));
+  expect(result.station.radius).toBeGreaterThan(7 * CONTENT.tuning.flight.shipRadius);
   expect(result.station.enemy?.hardpoints).toHaveLength(6);
   expect(result.defenders.map(({ id }) => id)).toEqual(plan.defenders.map(({ id }) => id));
   expect(
@@ -154,12 +171,22 @@ it("rejects whole footprints at friendly protection, outer hulls and overlapping
   const blockedBefore = structuredClone(blocked);
   expect(spawnPlannedHostileStation(CONTENT, blocked, plan).status).toBe("rejected");
   expect(blocked).toEqual(blockedBefore);
+  const openCenter = flight();
+  expect(
+    spawnPlannedHostileStation(CONTENT, openCenter, {
+      ...plan,
+      defenders: [{ ...plan.defenders[0]!, point: plan.point }, plan.defenders[1]!],
+    }).status,
+  ).toBe("created");
   const overlap = flight();
   const overlapBefore = structuredClone(overlap);
   expect(
     spawnPlannedHostileStation(CONTENT, overlap, {
       ...plan,
-      defenders: [{ ...plan.defenders[0]!, point: plan.point }, plan.defenders[1]!],
+      defenders: [
+        { ...plan.defenders[0]!, point: { x: plan.point.x + edge.x, y: plan.point.y + edge.y } },
+        plan.defenders[1]!,
+      ],
     }).status,
   ).toBe("rejected");
   expect(overlap).toEqual(overlapBefore);
@@ -269,3 +296,96 @@ it("rejects unsupported galaxies and invalid plans before mutation, and never re
   expect(spawnPlannedHostileStation(CONTENT, unresolved, plan).status).toBe("unresolved");
   expect(unresolved).toEqual(before);
 });
+
+it.each([
+  [2, "hostileStation", 7, claimManifest, claimStation, "enemy-claim-"],
+  [5, "hostileStationAndromeda", 6, garnetManifest, ring, "enemy-garnet-"],
+  [6, "hostileStationPhantom", 8, coralManifest, coralStation, "enemy-"],
+] as const)(
+  "uses the selected galaxy %i family for every firing mount",
+  (galaxy, key, count, manifest, sidecar, prefix) => {
+    const definition = enemyActorDefinition(galaxy, "hostileStation", plan.id, 1);
+    expect(definition.assetKey).toBe(key);
+    const enemy = createEnemy(
+      definition,
+      { archetype: "hostileStation", id: plan.id, packId: null, phase: 0, weaponLevel: 1 },
+      plan.point,
+    );
+    for (const part of enemy.hardpoints) {
+      part.cooldown = 0;
+    }
+    const intent = stepEnemy(
+      definition,
+      {
+        adaWidth: CONTENT.tuning.flight.shipRadius * 2,
+        dt: 0.01,
+        inPlayView: true,
+        initialPackSizes: {},
+        lead: 1,
+        peers: [enemy],
+        player: { x: plan.point.x + 300, y: plan.point.y },
+        playerVelocity: { x: 0, y: 0 },
+        targetable: true,
+        visibility: "visible",
+      },
+      enemy,
+    );
+    const art = MUZZLE_ART[key]!;
+    const assets = manifest.assets as readonly EnemyFrame[];
+    const renderer = enemyArt(
+      () => undefined,
+      () => sidecar,
+      new Set(["hostileStation"]),
+      assets,
+      enemyFrameSets(assets, prefix),
+      prefix,
+    ).get("hostileStation")!;
+    const frame = selectEnemyFrame(renderer, enemy.facing);
+    expect(frame.displayWidth).toBe(sidecar.frame * ENEMY_DISPLAY_SCALE);
+    const sprites = composeEnemy(
+      renderer,
+      {
+        aim: (id) => intent.state.hardpoints.find((part) => part.id === id)?.aim ?? enemy.facing,
+        intact: () => true,
+        position: ROUTE_POSITION[galaxy],
+        weapon: (id) => {
+          const part = definition.hardpoints.find((part) => part.id === id);
+          return part?.kind === "weapon" ? part.fire.weapon : undefined;
+        },
+      },
+      frame,
+    );
+    expect(sprites.filter(({ layer }) => layer === "top")).toHaveLength(count);
+    expect(new Set(intent.fire.map(({ hardpointId }) => hardpointId)).size).toBe(count);
+    const ringShots = intent.fire.filter((shot) => shot.weapon === "ringBurst");
+    expect(ringShots).toHaveLength(8);
+    for (const shot of ringShots) {
+      const radius = CONTENT.tuning.flight.shipRadius * definition.sizeRatio;
+      expect(shot.hardpointId).toBe("weapon-5");
+      expect(shot.origin).toEqual({
+        x: plan.point.x + shot.aim.x * radius,
+        y: plan.point.y + shot.aim.y * radius,
+      });
+    }
+    for (const shot of intent.fire.filter(({ weapon }) => weapon !== "ringBurst")) {
+      const id = shot.hardpointId!;
+      const mount = art.weaponTops.get(shot.weapon)!;
+      const heading = drawnIndex(enemy.facing);
+      const aim = drawnIndex(intent.state.hardpoints.find((part) => part.id === id)!.aim!);
+      const pivot = art.pivots.get(id)![heading]!;
+      const tips = art.tops.get(mount.top)![mount.aft ? (heading + 8) % 16 : aim]!;
+      const tip = tips[shot.volley % tips.length]!;
+      const top = sprites.find((sprite) => sprite.layer === "top" && sprite.hardpoint === id)!;
+      expect(top.offset).toEqual({
+        x: pivot.x * ENEMY_DISPLAY_SCALE,
+        y: pivot.y * ENEMY_DISPLAY_SCALE,
+      });
+      const delta = fromScreen({
+        x: top.offset.x + tip.x * ENEMY_DISPLAY_SCALE,
+        y: top.offset.y + tip.y * ENEMY_DISPLAY_SCALE,
+      });
+      expect(shot.origin.x).toBeCloseTo(plan.point.x + delta.x, 9);
+      expect(shot.origin.y).toBeCloseTo(plan.point.y + delta.y, 9);
+    }
+  },
+);
