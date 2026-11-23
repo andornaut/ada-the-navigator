@@ -1986,11 +1986,7 @@ try {
       });
       assert.equal(layout.footerText, "Back");
       const [left, right] = layout.columns;
-      assert.deepEqual(left.ids, [
-        "unlockAllEquipment",
-        "unlockAllGalaxies",
-        "unlockAllWeapons",
-      ]);
+      assert.deepEqual(left.ids, ["unlockAllEquipment", "unlockAllGalaxies", "unlockAllWeapons"]);
       assert.deepEqual(right.ids, ["addStardust", "addOre", "maxWeaponLevels", "selectiveReset"]);
       assert.equal(left.rows.length, 3, name);
       assert.equal(right.rows.length, 3, name);

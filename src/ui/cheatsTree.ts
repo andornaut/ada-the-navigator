@@ -13,11 +13,7 @@ export type CheatsSchema = {
   action: { props: { readonly id: string; readonly label: string }; slots: never };
 };
 
-const progressionIds = [
-  "unlockAllEquipment",
-  "unlockAllGalaxies",
-  "unlockAllWeapons",
-] as const;
+const progressionIds = ["unlockAllEquipment", "unlockAllGalaxies", "unlockAllWeapons"] as const;
 const grantIds = ["addStardust", "addOre"] as const;
 
 /** Columns follow DOM order. The resource pair shares a row inside the second column. */
