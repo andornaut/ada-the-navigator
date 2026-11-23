@@ -942,7 +942,7 @@ function shuttle(
         ...[-1, 1].map((s) => hcyl(-15.5, -9, s * 5.4, 5.2, 2.4, engine)),
         [
           part(body, 1.5, 8.4, top, side, rear),
-          ...wallWindows(visible, 5, 7.4, 3, 2.6, body, warm),
+          ...wallWindows(visible, 5, 7.4, 1, 4.4, body, warm),
         ],
         [part(upper, 8.4, 9.4, top, side, rear)],
         [
@@ -962,7 +962,7 @@ function shuttle(
           ),
         ],
         [part(craftBox(13.3, 0, 1, 7), 5.6, 8, warm, warm)],
-        [part(craftBox(-3, 0, 7, 6), 10.2, 11.6, top, side), cube(-5, 0, 11.6, 1.4, blue)],
+        [part(craftBox(-3, 0, 7, 6), 10.2, 11.6, roof, side)],
         [cube(-12.6, -6.4, 7.4, 1.2, blue)],
         [cube(-12.6, 6.4, 7.4, 1.2, blue)],
       ]);
@@ -1037,20 +1037,12 @@ const blockerRam: Craft = {
     const groups: Part[][] = [
       ...[-1, 1].map((s): Part[] => [
         { plan: craftBox(-14, s * 15, 24, 8), z0: 2.5, z1: 11, top: graphite, side: graphiteSide },
-        {
-          plan: craftBox(-14, s * 15, 6, 8.6),
-          z0: 2.2,
-          z1: 11.3,
-          top: chartreuse,
-          side: chartreuseSide,
-        },
       ]),
       [{ plan: hull, z0: 2, z1: 9.5, top: chartreuse, side: chartreuseSide, rear: chartreuseRear }],
       [
         { plan: cab, z0: 9.5, z1: 14, top: chartreuse, side: chartreuseSide, rear: chartreuseRear },
         ...wallWindows((nx, ny) => visible(nx, ny) && ny < -0.5, 10.3, 13, 1, 6, cab),
       ],
-      [{ plan: craftBox(-16, 0, 12, 2), z0: 9.5, z1: 17, top: graphite, side: graphiteSide }],
       ...[-1, 1].map((s): Part[] => [
         { plan: craftBox(19.5, s * 7, 5, 3), z0: 3, z1: 7, top: graphite, side: graphiteSide },
       ]),

@@ -2,7 +2,7 @@
 // heading convention (crafts.ts): the settlers' station and its courier school, the settlements,
 // the guide beacons and the spare beacon, and Pip's mail scooter. Contract: art/andromeda.md.
 import { tiers } from "./cartwheel-craft.ts";
-import { ball, craftBox, cube as hsCube, disc, hcyl, part, scaleGroups } from "./hull-shapes.ts";
+import { craftBox, disc, hcyl, part, scaleGroups } from "./hull-shapes.ts";
 import {
   along,
   blue,
@@ -611,6 +611,20 @@ export type StoryCraft = {
 const PIP_SCALE = 1.5;
 const capCream = "#f7f0e2";
 const podCap = "#a9b3f4";
+const mailPod = (
+  u: number,
+  v: number,
+  z: number,
+  r: number,
+  top: string,
+  side: string,
+  cap: string,
+  facets: number,
+) => [
+  disc(u, v, r * 0.62, z - r, z - r * 0.72, top, side, facets),
+  disc(u, v, r, z - r * 0.72, z + r * 0.3, top, side, facets),
+  disc(u, v, r * 0.72, z + r * 0.3, z + r, cap, side, facets),
+];
 export const pip: StoryCraft = {
   name: "pip",
   title: "Pip's mail scooter",
@@ -633,15 +647,10 @@ export const pip: StoryCraft = {
       ...[-1, 1].map((s) => hcyl(-11, -5, s * 2.6, 5.4, 1.9, engine)),
       ...[-1, 1].map((s) => [part(craftBox(-1, s * 6.5, 2, 4), 4.6, 6.4, creamSide, creamSide)]),
       [
-        ...ball(2.5, 0, 6.6, 6.6, cream, creamSide, capCream),
+        ...mailPod(2.5, 0, 6.6, 6.6, cream, creamSide, capCream, 12),
         ...[-1, 1].map((s) => part(craftBox(7.2, s * 1.8, 0.7, 2.2), 8.4, 10.2, warm, warm)),
       ],
-      ...[-1, 1].map((s) => [
-        ...ball(-1.5, s * 10, 6, 4, a.markerDim, a.markerDark, podCap, 10),
-        part(craftBox(-1.5, s * 10, 5.4, 1.2), 9.4, 10.2, podCap, a.markerDark),
-      ]),
-      [hsCube(8, -3.4, 4.6, 1.2, warm)],
-      [hsCube(8, 3.4, 4.6, 1.2, warm)],
+      ...[-1, 1].map((s) => mailPod(-1.5, s * 10, 6, 4, a.markerDim, a.markerDark, podCap, 10)),
       [
         part(craftBox(1, 0, 0.8, 0.8), 13, 16.4, a.steelDark, a.steelDark),
         disc(1, 0, 1.4, 16.4, 18.4, a.marker, a.markerDark, 8),

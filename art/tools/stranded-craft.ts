@@ -42,7 +42,6 @@ const blueDim = "#3f5878";
 const steel = "#b8bfc9";
 const steelSide = "#8a919c";
 // Sunflower
-const leaf = "#9ccc5a";
 const leafSide = "#6c9a3a";
 const bloom = "#f6d76b";
 const bloomDim = "#8a7a3e";
@@ -120,7 +119,6 @@ const seedPod = (lit: boolean) => (): Part[][] => {
         leafSide,
         seedDarkSide,
       ),
-      part(craftBox(-4.8, side * 7, 2.3, 2.3), 5.5, 5.8, leaf, leafSide),
     ]),
     [
       part(shell, 1.8, 5.4, cream, creamRear),
@@ -138,7 +136,6 @@ const seedPod = (lit: boolean) => (): Part[][] => {
         creamSide,
       ),
       part(craftBox(2, 0, 3.2, 5.2), 8, 8.5, glassOff, glassOffSide),
-      part(craftBox(-5.2, 0, 2, 6.3), 8, 8.5, leaf, leafSide),
       disc(-6.3, 0, 1.1, 8.5, 9.8, lit ? bloom : bloomDim, seedDarkSide, 8),
     ],
     [lug(9, 5.4)],
@@ -164,7 +161,6 @@ const scrapBarge =
       [part(hull, 1.5, 5.5, olive, oliveSide, oliveRear)],
       ...[-1, 1].map((s) => [
         part(craftBox(-0.5, s * 8.4, 31, 1.2), 5.5, 8, yellow, yellowSide, yellowDark),
-        ...[-10, -2, 6].map((u) => part(craftBox(u, s * 8.4, 2.4, 1.3), 8, 8.2, rubber, rubber)),
       ]),
       [part(craftBox(14.9, 0, 1.2, 9), 5.5, 8, yellow, yellowSide, yellowDark)],
       [part(craftBox(-15.4, 0, 1.2, 16), 5.5, 8, yellow, yellowSide, yellowDark)],
@@ -175,8 +171,6 @@ const scrapBarge =
         disc(8, 3.5, 2.6, 5.5, 10, rubber, rubber, 10),
         disc(8, 3.5, 1, 10, 10.3, steelDark, steelDark, 6),
       ],
-      [part(orientedBox(...uv(1, -4), FWD + 1.1, 11, 1.2), 9.4, 10.6, rust, rustSide)],
-      [part(orientedBox(...uv(-5, 4), FWD - 0.6, 5, 4), 9.4, 11, olive, oliveSide)],
       [
         part(cab, 8, 12.5, cream, creamSide, creamRear),
         ...wallWindows(visible, 9.4, 11.4, 1, 3, cab, glassOff),
@@ -205,25 +199,14 @@ const skimmer = () => (): Part[][] => [
   ...[-1, 1].map((s) => [part(craftBox(-17, s * 2.6, 3, 2.6), 2.4, 5, steelDark, steelDarkSide)]),
   ...[-1, 1].map((s) => [part(craftBox(-2, s * 9, 2, 5), 3, 4.4, lilacSide, lilacRear)]),
   ...[-1, 1].map((s) => [
-    ...hcyl(-8, 6, s * 11.5, 3.6, 2.2, {
-      top: cream,
-      side: creamSide,
-      rear: creamRear,
-      front: "point",
-      back: "point",
-    }),
-    part(craftBox(-1, s * 11.5, 2.4, 4.6), 1.4, 5.8, glow, lilacSide),
+    part(pill(-8, 6, s * 11.5, 2.2, "blunt", "blunt"), 1.4, 5.8, cream, creamSide, creamRear),
   ]),
   [
     part(ellipse(0, 0, 16, 7.5), 1.5, 3.2, lilac, lilacSide, lilacRear),
     part(ellipse(0, 0, 16.4, 7.9), 3.2, 4.2, glow, lilacSide),
-    part(ellipse(0, 0, 15, 7), 4.2, 5.6, lilac, lilacSide, lilacRear),
-    part(ellipse(-1, 0, 11.5, 5), 5.6, 6.4, lilacCap, lilacSide),
+    part(pill(-14, 14, 0, 6.8, "blunt", "blunt"), 4.2, 6.4, lilacCap, lilacSide),
   ],
-  [
-    disc(4, 0, 3.4, 6.4, 7.6, glassOff, glassOffSide, 10),
-    disc(4, 0, 2.4, 7.6, 8.6, glassOff, glassOffSide, 10),
-  ],
+  [part(pill(0.6, 7.4, 0, 3, "blunt", "blunt"), 6.4, 8.6, glassOff, glassOffSide)],
   [lug(16.2, 3.6)],
 ];
 
@@ -238,13 +221,10 @@ const whirlPod = (lit: boolean) => (): Part[][] => {
       [5, side * 2],
     ]);
   return [
-    ...[-1, 1].map((side) => [
-      part(shield(side), 1.6, 3.4, lilacSide, lilacRear),
-      part(craftBox(-0.8, side * 6.4, 4.8, 1.2), 3.4, 4.3, glow, lilac),
-    ]),
+    ...[-1, 1].map((side) => [part(shield(side), 1.6, 3.4, lilacSide, lilacRear)]),
     [
-      part(ellipse(-0.4, 0, 6.9, 4.7, 12), 2.2, 7.2, lilac, lilacSide, lilacRear),
-      part(ellipse(-1.2, 0, 5.1, 3.8, 10), 7.2, 10.4, lilacCap, lilacSide),
+      part(pill(-7.3, 6.5, 0, 4.7, "blunt", "blunt"), 2.2, 7.2, lilac, lilacSide, lilacRear),
+      part(pill(-6.3, 3.9, 0, 3.8, "blunt", "blunt"), 7.2, 10.4, lilacCap, lilacSide),
       part(craftBox(3.3, 0, 2.4, 3.2), 8.2, 9.2, glassOff, glassOffSide),
       disc(-2, 0, 1.4, 10.4, 12, lit ? glow : glowDim, lilacRear, 8),
     ],
@@ -280,17 +260,7 @@ const stuckGlider = () => (): Part[][] => {
       disc(-2, 0, 2.8, 9.2, 9.8, lav, lavSide, 12),
       disc(-2, 0, 3.6, 11, 11.8, pearl, pearlSide, 12),
     ],
-    ...[0.5, -0.7, 1.3].map((a, i) => [
-      part(
-        orientedBox(...uv(-2 + i * 2, 0), FWD + a, 15 - i * 2, 0.8),
-        7.3 + i * 0.6,
-        7.9 + i * 0.6,
-        lav,
-        lavSide,
-      ),
-    ]),
-    [cube(-9, -4.2, 5, 1, blueDim)],
-    [cube(-9, 4.2, 5, 1, blueDim)],
+    [part(orientedBox(...uv(-3, 0), FWD + 0.5, 11, 1.2), 7.3, 7.9, lav, lavSide)],
     [lug(16, 4.4)],
   ];
 };
@@ -333,7 +303,7 @@ const spoolPod = (lit: boolean) => (): Part[][] => [
       pearlSide,
       silverRear,
     ),
-    disc(-3.9, 0, 1.15, 6.8, 7.05, steelDark, steelDarkSide, 10),
+    part(craftBox(-3.9, 0, 2.3, 2.3), 6.8, 7.05, steelDark, steelDarkSide),
     part(
       craftPlan([
         [1.8, -2],
@@ -395,17 +365,7 @@ const lostCourier =
         : []),
     ],
     [part(craftBox(-3, 0, 14, 8), 11, 11.6, steelDark, steelDarkSide)],
-    ...[-8, -3, 2].flatMap((u, i) =>
-      [-1, 1].map((s) => [
-        part(
-          craftBox(u, s * 2, 4, 3.4),
-          11.6,
-          14,
-          (i + s) % 2 ? cream : markerDim,
-          (i + s) % 2 ? creamSide : markerDark,
-        ),
-      ]),
-    ),
+    [part(craftBox(-4, 0, 10, 6.8), 11.6, 14, markerDim, markerDark)],
     [part(orientedBox(...uv(4, 9), FWD + 0.7, 3.6, 3), 9, 11.6, cream, creamSide)],
     [
       part(craftBox(6, 0, 0.8, 0.8), 11.2, 16, steelDark, steelDark),
@@ -425,7 +385,6 @@ const lampBuoy = (lit: boolean) => (): Part[][] => [
       roof,
       roofSide,
     ),
-    part(craftBox(-0.8, side * 8.2, 1.1, 2.2), 4.2, 4.6, roof, roofSide),
   ]),
   [
     part(
@@ -461,13 +420,12 @@ const travelerPod =
     [
       part(ellipse(-0.5, 0, 8.7, 5.4, 12), 1.2, 4.3, bandSide, mauveRear),
       part(ellipse(0, 0, 8.3, 5.3, 12), 4.3, 8, mauve, mauveSide),
-      part(ellipse(0.4, 0, 6.8, 3.9, 10), 8, 10.4, mauve, band),
+      part(pill(-6.4, 7.2, 0, 3.9, "blunt", "blunt"), 8, 10.4, mauve, band),
       part(craftBox(-1, 0, 3.1, 4.2), 10.4, 11.2, glassOff, glassOffSide),
-      ...wallWindows(visible, 5, 6.2, 2, 1.6, ellipse(0, 0, 8.3, 5.3, 12), warmDim),
+      ...wallWindows(visible, 5, 6.2, 1, 2.2, ellipse(0, 0, 8.3, 5.3, 12), warmDim),
     ],
     ...[-1, 1].map((side) => [
-      part(ellipse(-3.6, side * 5.2, 4.3, 1.7, 10), 2.3, 4.8, "#599a9f", "#397078"),
-      part(craftBox(-3, side * 5.1, 2.2, 2), 4.8, 5.3, band, bandSide),
+      part(pill(-7.9, 0.7, side * 5.2, 1.7, "blunt", "blunt"), 2.3, 5.3, "#599a9f", "#397078"),
     ]),
     [lug(8, 6)],
     [disc(-5.8, 0, 1.1, 10, 12, lit ? lampLit : lampDim, bandSide, 8)],

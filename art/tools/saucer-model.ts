@@ -1,9 +1,7 @@
-// Elder Loom's saucer (needle-craft.ts): a pearl saucer with a lavender thread band round its rim,
-// a raised upper deck and a smoked bridge dome with a warm pane, two short nacelles slung low on
-// struts from the rear flanks with lavender tail bands and blue bow lamps, and a small stern pod
-// between them. No wings or tail. Design units, built at SAUCER_SCALE. Contract: art/needle.md
+// Elder Loom's saucer (needle-craft.ts): a pearl saucer with a lavender rim, a faceted bridge,
+// and two short nacelles. Design units, built at SAUCER_SCALE. Contract: art/needle.md
 // (Elder Loom's saucer).
-import { FWD, cube, disc, hcyl, part, scaleGroups, uv } from "./hull-shapes.ts";
+import { FWD, disc, hcyl, part, scaleGroups, uv } from "./hull-shapes.ts";
 import {
   blueSide,
   glass,
@@ -46,12 +44,10 @@ export function saucer(): Part[][] {
       disc(4, 0, 17.4, 7.6, 8.8, lav, lavSide, 24),
       disc(4, 0, 17, 8.8, 9.5, pearl, pearlSide, 24),
     ],
-    [disc(4, 0, 11, 9.5, 10.7, pearl, pearlSide, 20)],
+    [disc(4, 0, 11, 9.5, 10.7, pearl, pearlSide, 12)],
     [
-      disc(6, 0, 4, 10.7, 12.4, glass, glassSide, 12),
+      disc(6, 0, 4, 10.7, 12.4, glass, glassSide, 8),
       part(orientedBox(...uv(9.4, 0), FWD, 0.8, 3.2), 11, 12, warm, warm),
     ],
-    [cube(4, -17.2, 9.5, 1.4, blue)],
-    [cube(4, 17.2, 9.5, 1.4, blue)],
   ]);
 }

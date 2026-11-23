@@ -151,7 +151,6 @@ const slateSide = "#6a7c9e";
 const slateDark = "#4e5d7a";
 const ore = "#65c9bf";
 const oreSide = "#3f9890";
-const oreLit = "#a5ece4";
 const stone = "#b3a68a";
 const stoneSide = "#857a62";
 const stoneRear = "#6b6250";
@@ -184,13 +183,9 @@ function bandedBall(
 ): Part[] {
   const [lo, hi] = [zc - 0.07 * r, zc + 0.07 * r];
   return [
-    disc(u, v, r * 0.62, zc - r, zc - 0.72 * r, top, side, n),
-    disc(u, v, r * 0.92, zc - 0.72 * r, zc - 0.3 * r, top, side, n),
-    disc(u, v, r, zc - 0.3 * r, lo, top, side, n),
+    disc(u, v, r, zc - 0.72 * r, lo, top, side, n),
     disc(u, v, r * 1.04, lo, hi, band, bandSide, n),
-    disc(u, v, r, hi, zc + 0.3 * r, top, side, n),
-    disc(u, v, r * 0.92, zc + 0.3 * r, zc + 0.72 * r, top, side, n),
-    disc(u, v, r * 0.62, zc + 0.72 * r, zc + r, cap, side, n),
+    disc(u, v, r * 0.76, hi, zc + r, cap, side, n),
   ];
 }
 
@@ -210,8 +205,7 @@ type Craft = {
 
 // ---------------------------------------------------------------- Sunflower
 
-// Grower ship (Greenhouse ring): a round leaf-green float under a stepped glass dome with a
-// bloom lamp, two planter pods on the flanks and a steel engine block.
+// Grower ship (Greenhouse ring): a glass greenhouse between two leaf-green planter pods.
 const grower: Craft = {
   name: "grower",
   title: "Grower ship",
@@ -226,7 +220,7 @@ const grower: Craft = {
     [{ plan: craftBox(-14, 0, 6, 12), z0: 2.5, z1: 7, top: steelDark, side: steelDarkSide }],
     ...[-1, 1].map((s): Part[] => [
       disc(-2, s * 14, 4.6, 3, 7.5, leaf, leafSide, 8),
-      ...[0, 1, 2].map((i) => cube(-4 + i * 2, s * 14, 7.5, 1.8, tuft)),
+      part(craftBox(-2, s * 14, 4.8, 4.8), 7.5, 7.8, tuft, leafSide),
     ]),
     [disc(0, 0, 13, 2, 8, leaf, leafSide, 14), disc(0, 0, 13.6, 4.4, 5.6, cream, creamSide, 14)],
     tiers(
@@ -235,16 +229,14 @@ const grower: Craft = {
       10,
       8,
       [
-        [1, 0, 3],
-        [0.82, 3, 6],
-        [0.56, 6, 8.5],
-        [0.28, 8.5, 9.5],
+        [1, 0, 5],
+        [0.64, 5, 9.5],
       ],
       greenGlass,
       greenGlassSide,
       greenGlassCap,
     ),
-    [cube(0, 0, 17.5, 2.6, bloom)],
+    [part(craftBox(0, 0, 3, 6), 17.5, 17.9, bloom, bloomSide)],
     [cube(12.2, 0, 4.5, 2.4, warm)],
   ],
 };
@@ -270,7 +262,7 @@ const crane: Craft = {
       [part(craftBox(-11.25, 0, 3.5, 17), 2, 8, yellow, yellowSide, yellowDark)],
       [
         part(craftBox(11.25, 0, 3.5, 17), 2, 8, yellow, yellowSide, yellowDark),
-        ...[-5, 0, 5].map((v) => part(craftBox(11.25, v, 2.4, 1.8), 8, 8.4, rubber, rubber)),
+        part(craftBox(11.25, 0, 2.4, 6), 8, 8.4, rubber, rubber),
       ],
       ...[-1, 1].map((s) => [
         part(craftBox(0, s * 10.25, 26, 3.5), 2, 8, yellow, yellowSide, yellowDark),
@@ -286,7 +278,7 @@ const crane: Craft = {
       ]),
       [
         part(craftBox(1, 0, 3.4, 23.5), 15, 17.4, yellow, yellowSide, yellowDark),
-        ...[-8, -2, 4, 9].map((v) => part(craftBox(1, v, 3.4, 1.6), 17.4, 17.6, rubber, rubber)),
+        part(craftBox(1, 0, 2, 14), 17.4, 17.6, yellowDark, yellowDark),
       ],
       [part(craftBox(1, -3, 4, 4.6), 17.6, 19.6, steel, steelSide)],
       ...[-1, 1].map((s) => [cube(12, s * 10.6, 8, 1.6, blue)]),
@@ -335,9 +327,6 @@ const salvager: Craft = {
     ball(8, 0, 6, 6.2, olive, oliveSide),
     ball(-6, -7.5, 6, 6.2, steel, steelSide),
     ball(-6, 7.5, 6, 6.2, rust, rustSide),
-    [part(craftBox(9, -2, 3, 3), 11.9, 12.4, rust, rust)],
-    [part(craftBox(-7, -6, 2.6, 3.2), 11.9, 12.4, olive, olive)],
-    [part(craftBox(-5, 8.5, 3, 2.4), 11.9, 12.4, steel, steel)],
     [
       disc(0, 0, 3.4, 9.5, 11.5, glass, glassSide, 8),
       part(craftBox(2.2, 0, 1, 3), 9.8, 11, warm, warm),
@@ -375,12 +364,7 @@ const barge: Craft = {
       [part(craftBox(-3, 0, 42, 3.4), 3, 5, steelDarkSide, rubber)],
       ...[-15.5, -3, 9.5].map((u) => [
         part(craftBox(u, 0, 10.5, 16), 1.5, 7, cream, creamSide, creamRear),
-        part(craftBox(u, 0, 9, 14.4), 7, 7.6, leaf, leafSide),
-        ...[-4.8, -1.6, 1.6, 4.8].flatMap((v) => [
-          cube(u - 2.6, v, 7.6, 1.6, leaf),
-          cube(u + 0.4, v, 7.6, 1.6, leaf),
-          cube(u + 3, v, 7.6, 1.4, leaf),
-        ]),
+        part(craftBox(u, 0, 9, 14.4), 7, 8.7, leaf, leafSide),
       ]),
       [
         part(cab, 1.5, 9.5, cream, creamSide, creamRear),
@@ -418,7 +402,7 @@ const buoyTender: Craft = {
       hcyl(-21, 21, 0, 6.6, 6.6, { top: lilac, side: lilacSide, rear: lilacRear, back: "point" }),
       [
         part(sail, 12.6, 19.5, cream, creamSide, creamRear),
-        ...wallWindows(visible, 15.4, 17.8, 2, 1.8, sail, warm),
+        ...wallWindows(visible, 15.4, 17.8, 1, 3, sail, warm),
       ],
       [part(pill(0, 9, 0, 2.4), 19.5, 20.4, cream, creamSide)],
       [
@@ -427,15 +411,9 @@ const buoyTender: Craft = {
       ],
       ...[-8, -15].map((u) => [
         part(craftBox(u, 0, 5, 7), 12.6, 13.6, steelDark, steelDarkSide),
-        disc(u, 0, 1.8, 13.6, 14.8, cream, creamSide, 8),
-        disc(u, 0, 2.7, 14.8, 17.2, glow, lilacSide, 8),
-        disc(u, 0, 1.8, 17.2, 18.8, cream, creamSide, 8),
-        disc(u, 0, 0.9, 18.8, 20.6, glow, lilacSide, 6),
+        disc(u, 0, 2.7, 13.6, 17.2, glow, lilacSide, 8),
+        disc(u, 0, 1.8, 17.2, 20.6, cream, creamSide, 8),
       ]),
-      [
-        part(craftBox(-3.5, 3.4, 0.9, 0.9), 12.6, 18.6, steelDark, steelDark),
-        part(craftBox(-6, 3.4, 5, 0.9), 17.8, 18.6, steelDark, steelDark),
-      ],
       [cube(19.6, -3.6, 6, 1.5, warm)],
       [cube(19.6, 3.6, 6, 1.5, warm)],
     ];
@@ -460,9 +438,7 @@ const student: Craft = {
   build: () => {
     const [r, h] = [12.5, 16];
     return [
-      ...ring(0, 0, r, r - 3.2, 3.6, 7.4, 16, (i) =>
-        i % 4 === 1 || i % 4 === 2 ? [rose, roseSide] : [lav, lavSide],
-      ),
+      ...ring(0, 0, r, r - 3.2, 3.6, 7.4, 16, () => [rose, roseSide]),
       ...[0, 1, 2, 3].map((i) => {
         const angle = Math.PI / 4 + (i * Math.PI) / 2;
         const mid = (r + 1) / 2;
@@ -514,8 +490,6 @@ const reed: Craft = {
         ...bandedBall(8, 0, 6.6, 7, sage, sageSide, sageCap, rose, roseSide, 14),
         ...[-1, 1].map((s) => part(craftBox(14.4, s * 1.8, 0.8, 2.2), 8, 10, warm, warm)),
       ],
-      [cube(8, -7.6, 6, 1.1, blue)],
-      [cube(8, 7.6, 6, 1.1, blue)],
     ];
   },
 };
@@ -568,12 +542,8 @@ const loomShip: Craft = {
       ...[-9, 1].map((u): Part[] => [
         { plan: craftBox(u, 0, 2, 25.2), z0: 14.5, z1: 16.3, top: silver, side: silverSide },
       ]),
-      ...[-7.5, -3.75, 0, 3.75, 7.5].map((v): Part[] => [
-        { plan: craftBox(-8.6, v, 0.5, 0.5), z0: 7, z1: 14.5, top: silver, side: silver },
-      ]),
-      [{ plan: craftBox(1, 0, 1.2, 21), z0: 8.6, z1: 13.4, top: lav, side: lavSide }],
-      [{ plan: craftBox(1, 0, 1.3, 21), z0: 11.6, z1: 12.4, top: rose, side: rose }],
-      [{ plan: craftBox(1, 0, 1.3, 21), z0: 9.8, z1: 10.6, top: sage, side: sage }],
+      [{ plan: craftBox(-4, 0, 9, 19), z0: 10.7, z1: 11.4, top: lav, side: lavSide }],
+      [{ plan: craftBox(-1, 0, 2, 19), z0: 11.4, z1: 11.6, top: rose, side: rose }],
     ];
   },
 };
@@ -607,10 +577,7 @@ const trainee: Craft = {
         ...ball(2.5, 0, 6.6, 6.6, a.roof, a.roofSide, roofCap),
         ...[-1, 1].map((s) => part(craftBox(7.2, s * 1.8, 0.7, 2.2), 8.4, 10.2, warm, warm)),
       ],
-      ...[-1, 1].map((s) => [
-        ...ball(-1.5, s * 10, 6, 4, cream, creamSide, creamCap, 10),
-        part(craftBox(-1.5, s * 10, 5.4, 1.2), 9.4, 10.2, creamCap, creamSide),
-      ]),
+      ...[-1, 1].map((s) => [...ball(-1.5, s * 10, 6, 4, cream, creamSide, creamCap, 10)]),
       [cube(8, -3.4, 4.6, 1.2, warm)],
       [cube(8, 3.4, 4.6, 1.2, warm)],
       [
@@ -665,11 +632,8 @@ const beaconTender: Craft = {
       [
         disc(0, 0, 4, 9.8, 11.4, a.roof, a.roofSide, 8),
         disc(0, 0, 2.6, 11.4, 17.5, a.roof, a.roofSide, 8),
-        disc(0, 0, 2.8, 14, 15.4, a.markerDark, a.markerDeep, 8),
-        disc(0, 0, 3.2, 17.5, 18.4, cream, creamSide, 8),
-        disc(0, 0, 2.2, 18.4, 21.4, a.marker, a.markerDark, 8),
-        disc(0, 0, 1.1, 21.4, 21.8, a.white, a.white, 6),
-        disc(0, 0, 2.6, 21.8, 23, a.roof, a.roofSide, 8),
+        disc(0, 0, 2.2, 17.5, 21.8, a.marker, a.markerDark, 8),
+        disc(0, 0, 2.2, 21.8, 23, a.roof, a.roofSide, 8),
       ],
       [cube(9.2, -2.6, 4, 1.3, warm)],
       [cube(9.2, 2.6, 4, 1.3, warm)],
@@ -701,10 +665,8 @@ const driller: Craft = {
       ),
       hcyl(-15, 9, 0, 6.6, 6.4, { top: slate, side: slateSide, rear: slateDark, back: "flat" }),
       hcyl(8, 10, 0, 6.6, 7.4, { top: steelDark, side: steelDarkSide, ...flat }),
-      hcyl(10, 14, 0, 6.6, 7, { top: steel, side: steelSide, ...flat }),
-      hcyl(14, 18, 0, 6.6, 5.4, { top: steelFlute, side: steelSide, ...flat }),
-      hcyl(18, 21.5, 0, 6.6, 3.8, { top: steel, side: steelSide, ...flat }),
-      hcyl(21.5, 24.5, 0, 6.6, 2.2, { top: steelFlute, side: steelSide, ...flat }),
+      hcyl(10, 17, 0, 6.6, 7, { top: steel, side: steelSide, ...flat }),
+      hcyl(17, 24.5, 0, 6.6, 4.2, { top: steelFlute, side: steelSide, ...flat }),
       hcyl(24.5, 27, 0, 6.6, 1, { top: steel, side: steelSide, ...flat, front: "point" }),
       [
         part(cab, 12, 16, slate, slateSide, slateDark),
@@ -713,8 +675,6 @@ const driller: Craft = {
       [
         part(craftBox(-9, 0, 7, 7), 12, 14.6, steelDark, steelDarkSide),
         part(craftBox(-9, 0, 5.6, 5.6), 14.6, 15.2, ore, oreSide),
-        cube(-10, -1, 15.2, 1.4, oreLit),
-        cube(-8, 1.2, 15.2, 1.2, oreLit),
       ],
       [cube(4.5, -5.6, 9.4, 1.3, blue)],
       [cube(4.5, 5.6, 9.4, 1.3, blue)],
@@ -772,7 +732,7 @@ const tug: Craft = {
       [part(craftPlan(ngon(8, 9, 0, 0, Math.PI / 8)), 9, 9.6, stoneCap, stoneSide)],
       [
         part(wheel, 9.6, 14.6, slate, slateSide, slateDark),
-        ...wallWindows(visible, 11, 13.4, 2, 2, wheel, warm),
+        ...wallWindows(visible, 11, 13.4, 1, 3, wheel, warm),
       ],
       [part(craftBox(-2, 0, 0.9, 0.9), 14.6, 19, steelDark, steelDark), cube(-2, 0, 19, 2.4, blue)],
     ];
@@ -792,16 +752,16 @@ const voronGuide: Craft = {
       part(
         craftPlan([
           [17, 0],
-          [4, 8],
+          [2, 7],
           [-10, 12],
-          [-15, 8],
-          [-10, 4],
+          [-15, 9],
+          [-12, 4],
           [-16, 3],
           [-16, -3],
-          [-10, -4],
-          [-15, -8],
+          [-12, -4],
+          [-15, -9],
           [-10, -12],
-          [4, -8],
+          [2, -7],
         ]),
         1,
         7,
@@ -810,9 +770,8 @@ const voronGuide: Craft = {
         lilacRear,
       ),
     ],
-    [part(pill(-7, 10, 0, 4), 7, 11, cream, creamSide)],
-    [part(pill(1, 8, 0, 2.9), 11, 13, glass, glassSide)],
-    [cube(-10, -8, 7, 1.7, glow), cube(-10, 8, 7, 1.7, glow)],
+    [part(pill(-7, 10, 0, 4, "blunt", "flat"), 7, 11, cream, creamSide)],
+    [part(pill(1, 8, 0, 2.9, "blunt", "flat"), 11, 13, glass, glassSide)],
   ],
 };
 
@@ -829,16 +788,16 @@ const aviPracticeGlider: Craft = {
       part(
         craftPlan([
           [12, 0],
-          [2, 4],
+          [2, 3],
           [-7, 15],
           [-13, 13],
-          [-10, 5],
+          [-11, 4],
           [-14, 2],
           [-14, -2],
-          [-10, -5],
+          [-11, -4],
           [-13, -13],
           [-7, -15],
-          [2, -4],
+          [2, -3],
         ]),
         2.5,
         5.5,
@@ -847,9 +806,8 @@ const aviPracticeGlider: Craft = {
         pearlRear,
       ),
     ],
-    [part(pill(-10, 15, 0, 2.9), 5.5, 8, lav, lavSide, lavRear)],
-    [part(pill(1, 8, 0, 1.8), 8, 10, glass, glassSide)],
-    ...[-1, 1].map((side) => [part(craftBox(-9, side * 11.5, 4, 1.5), 5.5, 6, rose, roseSide)]),
+    [part(pill(-10, 15, 0, 2.9, "point", "flat"), 5.5, 8, lav, lavSide, lavRear)],
+    [part(pill(1, 8, 0, 1.8, "blunt", "flat"), 8, 10, glass, glassSide)],
   ],
 };
 
@@ -873,14 +831,10 @@ const courierRunner: Craft = {
         back: "flat",
       }),
     ),
-    [part(pill(-11, 15, 0, 4.7), 2, 6.5, roofCap, a.roofSide)],
-    [part(pill(1, 12, 0, 3.2), 6.5, 10, a.roof, a.roofSide)],
-    [part(pill(4, 9, 0, 2.1), 10, 11.5, glass, glassSide)],
-    ...[-1, 1].map((side) => [
-      part(craftBox(-3, side * 6.9, 10, 4.7), 3, 7.7, cream, creamSide),
-      part(craftBox(-2, side * 6.9, 5, 0.9), 7.7, 8.1, a.marker, a.markerDark),
-    ]),
-    [cube(-9, 0, 6.5, 1.4, warm)],
+    [part(pill(-11, 15, 0, 4.7, "point", "flat"), 2, 6.5, roofCap, a.roofSide)],
+    [part(pill(1, 12, 0, 3.2, "blunt", "flat"), 6.5, 10, a.roof, a.roofSide)],
+    [part(pill(4, 9, 0, 2.1, "blunt", "flat"), 10, 11.5, glass, glassSide)],
+    ...[-1, 1].map((side) => [part(craftBox(-3, side * 6.9, 10, 4.7), 3, 7.7, cream, creamSide)]),
   ],
 };
 
