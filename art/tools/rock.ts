@@ -1,14 +1,19 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import { spriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 
 import { BAYER, IN_BETWEEN, INK } from "./palette.ts";
 import { Random, roundHalfEven } from "./random.ts";
-import { prettify, writeSprites } from "./sprite-sheet.ts";
+import { prettify } from "./sprite-sheet.ts";
 
 const sprites = fileURLToPath(new URL("../../public/art/ui/sprites/", import.meta.url));
+const authorData = fileURLToPath(new URL("../.check-results/rock/", import.meta.url));
 const uiManifest = fileURLToPath(new URL("../../public/art/ui/manifest.json", import.meta.url));
+type Sprite = { key: string; png: string; json?: string; once: string[] };
+const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 
 // Endesga greys of the reused Archie sprites, light to dark, and the dirt specks.
 const GREY = ["c0cbdc", "8b9bb4", "5a6988", "3a4466"] as const;
@@ -195,16 +200,39 @@ const padded = (frame: Frame) => aura(frame, 0);
 
 async function sheet(name: string, frames: readonly [Frame, Frame, Frame, Frame]) {
   const [raw, polished, dim, bright] = frames;
-  await writeSprites(
-    { data: `${sprites}${name}.json`, sheet: `${sprites}${name}.png` },
-    { key: name },
-    [
-      ["raw", [raw], 100],
-      ["polished", [polished], 100],
-      ["glow", [dim, bright], PULSE_MS],
-    ],
-  );
-  await prettify(`${sprites}${name}.json`);
+  const entry = manifest.sprites.find(({ key }) => key === name);
+  // A bitmap-only entry keeps the Aseprite data in the local authoring output.
+  const publicData = entry === undefined || entry.json !== undefined;
+  const image = `${name}.png`;
+  const packed = spriteSheet({ key: name, image }, [
+    ["raw", [raw], 100],
+    ["polished", [polished], 100],
+    ["glow", [dim, bright], PULSE_MS],
+  ]);
+  const png = `${sprites}${image}`;
+  const existing = existsSync(png) ? decodePng(readFileSync(png)) : undefined;
+  const generated = decodePng(packed.sheet);
+  // Keep the published encoding if the frame grid and pixels are unchanged.
+  if (
+    !existing ||
+    existing.width !== generated.width ||
+    existing.height !== generated.height ||
+    !Buffer.from(existing.data).equals(generated.data)
+  ) {
+    mkdirSync(sprites, { recursive: true });
+    writeFileSync(png, packed.sheet);
+  }
+  const dataDir = publicData ? sprites : authorData;
+  mkdirSync(dataDir, { recursive: true });
+  const data = `${dataDir}${name}.json`;
+  writeFileSync(data, packed.data);
+  await prettify(data);
+  return {
+    key: name,
+    png: `sprites/${name}.png`,
+    ...(publicData ? { json: `sprites/${name}.json` } : {}),
+    once: [],
+  } satisfies Sprite;
 }
 
 const ITEMS = [
@@ -212,31 +240,33 @@ const ITEMS = [
   ["icon-rock-24", 24],
   ["icon-rock-32", 32],
 ] as const;
+const entries: Sprite[] = [];
 for (const [name, n] of ITEMS) {
-  await sheet(name, [rock(n, "raw"), rock(n, "polished"), rock(n, "glow", false), rock(n, "glow")]);
+  entries.push(
+    await sheet(name, [
+      rock(n, "raw"),
+      rock(n, "polished"),
+      rock(n, "glow", false),
+      rock(n, "glow"),
+    ]),
+  );
 }
 // The 64 px close-up uses its own seed; glowing frames carry the outer aura.
 const CLOSE = 64;
 const CLOSE_SEED = 8;
-await sheet("rock-closeup", [
-  padded(rock(CLOSE, "raw", true, CLOSE_SEED)),
-  padded(rock(CLOSE, "polished", true, CLOSE_SEED)),
-  aura(rock(CLOSE, "glow", false, CLOSE_SEED), 0.5),
-  aura(rock(CLOSE, "glow", true, CLOSE_SEED), 1),
-]);
+entries.push(
+  await sheet("rock-closeup", [
+    padded(rock(CLOSE, "raw", true, CLOSE_SEED)),
+    padded(rock(CLOSE, "polished", true, CLOSE_SEED)),
+    aura(rock(CLOSE, "glow", false, CLOSE_SEED), 0.5),
+    aura(rock(CLOSE, "glow", true, CLOSE_SEED), 1),
+  ]),
+);
 
 // UI subset entries stay sorted by key.
-type Sprite = { key: string; png: string; json: string; once: string[] };
-const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
-const names = [...ITEMS.map(([name]) => name), "rock-closeup"];
-manifest.sprites = [
-  ...manifest.sprites.filter(({ key }) => !names.includes(key)),
-  ...names.map((name) => ({
-    key: name,
-    png: `sprites/${name}.png`,
-    json: `sprites/${name}.json`,
-    once: [],
-  })),
-].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+const names = new Set(entries.map(({ key }) => key));
+manifest.sprites = [...manifest.sprites.filter(({ key }) => !names.has(key)), ...entries].sort(
+  (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+);
 writeFileSync(uiManifest, `${JSON.stringify(manifest, null, 2)}\n`);
 await prettify(uiManifest);
