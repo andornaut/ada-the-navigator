@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 
@@ -21,18 +25,41 @@ class Element {
   readonly attributes = new Map<string, string>();
   readonly children: Element[] = [];
   className = "";
+  readonly classList = {
+    add: (...names: string[]) => {
+      this.className = [...new Set([...this.className.split(" "), ...names])]
+        .filter(Boolean)
+        .join(" ");
+    },
+    toggle: (name: string, enabled: boolean) => {
+      if (enabled) {
+        this.classList.add(name);
+      } else {
+        this.className = this.className
+          .split(" ")
+          .filter((value) => value !== name)
+          .join(" ");
+      }
+    },
+  };
   clientHeight = 360;
   clientWidth = 720;
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly listeners = new Map<string, (() => void)[]>();
+  readonly listeners = new Map<string, ((event: Event) => void)[]>();
   parent: Element | undefined;
   readonly style = { getPropertyValue: () => "", removeProperty: vi.fn(), setProperty: vi.fn() };
-  textContent = "";
-  addEventListener(type: string, callback: () => void) {
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map((child) => child.textContent).join("");
+  }
+  set textContent(value: string) {
+    this.text = value;
+  }
+  addEventListener(type: string, callback: (event: Event) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
   }
-  removeEventListener(type: string, callback: () => void) {
+  removeEventListener(type: string, callback: (event: Event) => void) {
     this.listeners.set(
       type,
       (this.listeners.get(type) ?? []).filter((item) => item !== callback),
@@ -71,7 +98,11 @@ class Element {
     }
   }
   click() {
-    this.listeners.get("click")?.forEach((callback) => callback());
+    const event = new Event("click", { cancelable: true });
+    this.listeners.get("click")?.forEach((callback) => callback(event));
+  }
+  closest(selector: string): Element | null {
+    return this.matches(selector) ? this : (this.parent?.closest(selector) ?? null);
   }
   remove() {
     this.parent?.children.splice(this.parent.children.indexOf(this), 1);
@@ -92,6 +123,15 @@ class Element {
   matches(selector: string): boolean {
     return selector.split(",").some((part) => {
       const value = part.trim();
+      if (value === "[hidden]") {
+        return this.hidden;
+      }
+      if (value === "[inert]") {
+        return this.attributes.has("inert");
+      }
+      if (value === '[aria-disabled="true" i]') {
+        return this.getAttribute("aria-disabled") === "true";
+      }
       if (value === ":disabled") {
         return this.disabled;
       }
@@ -130,6 +170,13 @@ class Element {
   removeAttribute(key: string) {
     this.attributes.delete(key);
   }
+  toggleAttribute(key: string, enabled: boolean) {
+    if (enabled) {
+      this.setAttribute(key, "");
+    } else {
+      this.removeAttribute(key);
+    }
+  }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
   }
@@ -143,7 +190,6 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
 vi.mock("./layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
-  createButton: (label: string) => Object.assign(new Element("button"), { textContent: label }),
   createCard: (options: { closeAction: string }) => {
     const frame = new Element();
     const card = new Element();
@@ -171,6 +217,7 @@ beforeEach(() => {
       return active;
     },
     createElement: (tag: string) => new Element(tag),
+    defaultView: { HTMLElement: Element, Node: Element },
   });
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
   vi.stubGlobal("getComputedStyle", () => ({
@@ -229,6 +276,7 @@ function setup(onPublish?: (modal: Element) => void) {
     onOpenChange,
     pager,
     previous: previous!,
+    root,
   };
 }
 
@@ -254,6 +302,32 @@ describe("Achievements page actions", () => {
       expect(controls.some((item: Element) => item === button)).toBe(true);
     }
     card.dispose();
+  });
+
+  it("shares the existing registry while leaving one native click owner per text button", () => {
+    const { card, count, dismiss, next, previous, root } = setup();
+    for (const control of [previous, next, dismiss]) {
+      expect(control.matches(".ui-standard-button")).toBe(true);
+      expect(control.listeners.get("click")).toHaveLength(1);
+    }
+    const resolve = (button: Element) =>
+      resolveAdaHoldAction(root as unknown as HTMLElement, button as unknown as HTMLElement);
+    expect(resolve(previous)?.available()).toBe(false);
+    next.disabled = true;
+    next.click();
+    expect(count.textContent).toBe("1/2");
+    expect(resolve(next)?.available()).toBe(false);
+    next.disabled = false;
+    resolve(next)?.activate();
+    expect(count.textContent).toBe("2/2");
+    expect(resolve(next)?.available()).toBe(false);
+    expect(resolve(previous)?.available()).toBe(true);
+    expect(resolve(dismiss)?.available()).toBe(true);
+    card.dispose();
+    for (const button of [previous, next, dismiss]) {
+      expect(resolve(button)).toBeNull();
+      expect(button.listeners.get("click")).toEqual([]);
+    }
   });
 
   it("hides Previous on the first page and ignores its unavailable action", () => {

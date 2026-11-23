@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -15,15 +16,9 @@ import { TEXT_BUTTON } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import {
-  createActions,
-  createButton,
-  createCard,
-  setFooterAction,
-  TEXT_TOKENS,
-  UI_SCOPE,
-} from "./modal.ts";
+import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
 import { enterPressView } from "./pressScope.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 // The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
 // entry in Gameplay's order, two columns of a badge beside the name, a locked counted entry's
@@ -211,18 +206,30 @@ export function createAchievementsCard(
   const { labels } = options;
   let disposed = false;
   let leavePressView: (() => void) | undefined;
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
-  const register = (element: HTMLElement, run: () => void) => {
-    bindings.push(
-      bindAdaAction(
-        {
-          click: { availability: () => ({ kind: "available" }), run },
-          current: () => !disposed,
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-        },
-        element,
-      ),
-    );
+  const bindings: { dispose(): void }[] = [];
+  const textAction = (
+    id: "achievements-previous" | "achievements-next" | "achievements-close-footer",
+    label: string,
+    run: () => void,
+  ) => {
+    const action = createStandardTextAction(root, label, {
+      availability: (button) =>
+        button?.disabled
+          ? { kind: "disabled" }
+          : button?.hidden
+            ? { kind: "omitted" }
+            : { kind: "available" },
+      current: () => !disposed,
+      run,
+      separateFace: true,
+    });
+    bindings.push(action);
+    const button = action.element;
+    button.dataset.action = id;
+    const primary = id === "achievements-close-footer";
+    button.classList.toggle("ada-primary", primary);
+    setButtonRole(primary ? "primary" : "secondary", button);
+    return action;
   };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
@@ -253,13 +260,19 @@ export function createAchievementsCard(
   const pager = document.createElement("div");
   pager.className = "ada-achievement-pager";
   pager.dataset.inkTop = "0";
-  const previous = createButton(labels.previous);
-  previous.dataset.action = "achievements-previous";
+  const previousAction = textAction("achievements-previous", labels.previous, () => {
+    page = Math.max(0, page - 1);
+    render();
+  });
+  const previous = previousAction.element;
   const pageCount = document.createElement("p");
-  const next = createButton(labels.next);
-  next.dataset.action = "achievements-next";
-  const dismiss = createButton(labels.close, "primary");
-  dismiss.dataset.action = "achievements-close-footer";
+  const nextAction = textAction("achievements-next", labels.next, () => {
+    page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
+    render();
+  });
+  const next = nextAction.element;
+  const dismissAction = textAction("achievements-close-footer", labels.close, () => close());
+  const dismiss = dismissAction.element;
   const actions = createActions([{ button: dismiss, role: "primary" }]);
   setFooterAction("close", actions);
   actions.style.gridRow = "1";
@@ -315,13 +328,15 @@ export function createAchievementsCard(
           },
           pagerAction: {
             create(initial) {
-              const button = initial.actionId === "achievements-previous" ? previous : next;
+              const action =
+                initial.actionId === "achievements-previous" ? previousAction : nextAction;
               const update = (data: AchievementsLayoutSchema["pagerAction"]["props"]) => {
-                button.textContent = data.label;
-                button.hidden = data.hidden;
+                action.setLabel(data.label);
+                action.element.hidden = data.hidden;
+                action.refresh();
               };
               update(initial);
-              return { dispose() {}, element: button, slots: {}, update };
+              return { dispose() {}, element: action.element, slots: {}, update };
             },
             slots: [],
           },
@@ -415,22 +430,16 @@ export function createAchievementsCard(
     modal.remove();
   };
   try {
-    register(previous, () => {
-      if (previous.hidden) {
-        return;
-      }
-      page = Math.max(0, page - 1);
-      render();
-    });
-    register(next, () => {
-      if (next.hidden) {
-        return;
-      }
-      page = Math.min(achievementPages(entries.length, perPage) - 1, page + 1);
-      render();
-    });
-    register(card.close, close);
-    register(dismiss, close);
+    bindings.push(
+      bindAdaAction(
+        {
+          click: { availability: () => ({ kind: "available" }), run: close },
+          current: () => !disposed,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
+        },
+        card.close,
+      ),
+    );
     mounted = mount();
     assertAdaActionMetadata(modal);
     root.append(modal);
@@ -450,7 +459,7 @@ export function createAchievementsCard(
       if (!modal.hidden) {
         return;
       }
-      dismiss.textContent = dismissal?.label ?? labels.close;
+      dismissAction.setLabel(dismissal?.label ?? labels.close);
       setFooterAction(dismissal?.intent ?? "close", actions);
       setOpen(true);
     },
