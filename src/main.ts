@@ -293,12 +293,12 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
         // (src/game/scene.ts).
         loader: LOADER_CONFIG,
         parent,
-        // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
-        // waiting on the page compositor, and the high-performance GPU where there is a choice.
+        // A desynchronized WebGL context can present the cleared drawing buffer between frames.
+        // Present completed frames through the compositor.
         render: {
           antialias: false,
           antialiasGL: false,
-          desynchronized: true,
+          desynchronized: false,
           powerPreference: "high-performance",
           roundPixels: true,
         },
