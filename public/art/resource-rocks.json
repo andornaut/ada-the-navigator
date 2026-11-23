@@ -1710,7 +1710,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-m1-sheet.svg"
     },
     {
       "id": "resource-m2",
@@ -3698,7 +3699,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-m2-sheet.svg"
     },
     {
       "id": "resource-m3",
@@ -5877,7 +5879,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-m3-sheet.svg"
     },
     {
       "id": "resource-m4",
@@ -7616,7 +7619,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "svgSheet": "/art/asteroids/resource-m4-sheet.svg"
     },
     {
       "id": "resource-l1",
