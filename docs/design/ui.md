@@ -77,4 +77,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0350 | Use fill, text or icon cues for button states                                   | [ada-0350.md](../work/ada-0350.md) |
 | ada-0352 | Standardize rectangular action button sizing                                    | [ada-0352.md](../work/ada-0352.md) |
 | ada-0360 | Unify modal header and footer dismissal                                         | [ada-0360.md](../work/ada-0360.md) |
-| ada-0361 | Move FPS counter to Settings and the viewport corner                            | [ada-0361.md](../work/ada-0361.md) |
+| ada-0361 | Move FPS counter setting into Settings                                          | [ada-0361.md](../work/ada-0361.md) |
