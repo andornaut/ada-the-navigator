@@ -238,8 +238,9 @@ const labels = {
   close: "Close",
   title: "Update available",
 };
-function setup(initial = false, liveOffer?: UpdateOffer) {
+function setup(initial = false, liveOffer?: UpdateOffer, applicationScope = false) {
   const root = new fixture.Node();
+  const app = applicationScope ? new fixture.Node() : root;
   const doc = Object.assign(new EventTarget(), {
     activeElement: null as unknown,
     body: new fixture.Node(),
@@ -257,19 +258,25 @@ function setup(initial = false, liveOffer?: UpdateOffer) {
     hitTarget: null as InstanceType<typeof fixture.Node> | null,
   });
   vi.stubGlobal("document", doc);
-  doc.body.append(root);
+  doc.body.append(app);
+  if (applicationScope) {
+    app.append(root);
+  }
+  for (const node of applicationScope ? [app, root] : [root]) {
+    const host = node as unknown as HTMLElement;
+    rootReleases.push(
+      bindAdaActionRoot(
+        {
+          guard: rootPressGuard(host),
+          pointerRelease: { resolvePointer: () => undefined },
+          requiredReady: () => true,
+          subscribeRequired: () => () => {},
+        },
+        host,
+      ).dispose,
+    );
+  }
   const guard = rootPressGuard(root as unknown as HTMLElement);
-  rootReleases.push(
-    bindAdaActionRoot(
-      {
-        guard,
-        pointerRelease: { resolvePointer: () => undefined },
-        requiredReady: () => true,
-        subscribeRequired: () => () => {},
-      },
-      root as unknown as HTMLElement,
-    ).dispose,
-  );
   let notify: (visible: boolean) => void = vi.fn();
   const stop = vi.fn();
   const offer = {
@@ -285,6 +292,7 @@ function setup(initial = false, liveOffer?: UpdateOffer) {
   const changed = vi.fn();
   const dialog = createUpdateDialog(
     root as unknown as HTMLElement,
+    app as unknown as HTMLElement,
     labels,
     liveOffer ?? offer,
     restore,
@@ -292,6 +300,7 @@ function setup(initial = false, liveOffer?: UpdateOffer) {
   );
   const button = (id: string) => root.querySelector(`[data-action="${id}-update"]`)!;
   return {
+    app,
     button,
     changed,
     dialog,
@@ -448,6 +457,22 @@ it("requires an outside pointer origin and a tap, refusing inside-origin release
   event("pointerup", 0);
   event("click", 0);
   expect(f.offer.defer).toHaveBeenCalledOnce();
+});
+
+it("owns the whole Update offer in the application action scope", () => {
+  const f = setup(true, undefined, true);
+  const app = f.app as unknown as HTMLElement;
+  const controls = f.root as unknown as HTMLElement;
+  const backdrop = f.root.children[0]!;
+  for (const target of [f.button("accept"), f.button("cancel"), fixture.card.close, backdrop]) {
+    expect(resolveAdaHoldAction(controls, target)).toBeNull();
+    expect(resolveAdaHoldAction(app, target)?.available()).toBe(true);
+  }
+  f.button("cancel").dispatchEvent(new Event("click", { cancelable: true }));
+  expect(f.offer.defer).toHaveBeenCalledOnce();
+  expect(f.offer.accept).not.toHaveBeenCalled();
+  f.dialog.dispose();
+  expect(resolveAdaHoldAction(app, backdrop)).toBeNull();
 });
 
 it("checks completed offer reconciliation before exposing unbound controls", () => {

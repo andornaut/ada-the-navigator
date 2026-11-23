@@ -199,6 +199,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   if (!parent) {
     throw new Error("Controls require a mounted game canvas");
   }
+  const host = parent.closest<HTMLElement>(`#${VIEW_HOST_ID}`);
   const previousPosition = parent.style.position;
   const ownsPosition = getComputedStyle(parent).position === "static";
   if (ownsPosition) {
@@ -617,6 +618,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const update = options.update
     ? createUpdateDialog(
         settings.root,
+        host ?? settings.root,
         options.update.labels,
         options.update.offer,
         options.update.restoreFocus,
@@ -647,8 +649,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   fitCanvasCamera(scene, camera);
   // The play area's view scale (src/ui/layout/viewScale.ts): the DOM UI's logical px, the safe
   // insets and the nine-slice edges, from the canvas's display size.
-  const host = parent.closest<HTMLElement>(`#${VIEW_HOST_ID}`) ?? parent;
-  const view = createViewScaleBridge(host, scene.scale.displaySize);
+  const view = createViewScaleBridge(host ?? parent, scene.scale.displaySize);
   let layout = view.update();
   // Keep each joystick's pointer target over its drawn rest ring, in logical canvas px.
   let placedTargets = "";

@@ -7,6 +7,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { registerAdaAncestorActionScope } from "./actionRegistry.ts";
 import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -32,6 +33,7 @@ export interface UpdateLabels {
 // restoreFocus. Styled by Settings' sheet in the same root.
 export function createUpdateDialog(
   root: HTMLElement,
+  actionRoot: HTMLElement,
   labels: UpdateLabels,
   offer: Pick<UpdateOffer, "accept" | "defer" | "subscribe">,
   restoreFocus: () => void,
@@ -53,6 +55,8 @@ export function createUpdateDialog(
   body.append(actions);
   modal.append(frame);
   root.append(modal);
+  const releaseActionScope =
+    root === actionRoot ? undefined : registerAdaAncestorActionScope(modal, actionRoot);
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
   let open = false;
@@ -78,7 +82,7 @@ export function createUpdateDialog(
     ]),
     availability,
     presentButton: presentAdaButton,
-    standardButtons: { actionIds: ["cancel-update", "accept-update"], root },
+    standardButtons: { actionIds: ["cancel-update", "accept-update"], root: actionRoot },
   });
   const tree = updateTree(labels);
   const mounted = mountLayout<UpdateSchema>(
@@ -144,6 +148,7 @@ export function createUpdateDialog(
       layer?.dispose();
       headerBinding.dispose();
       mounted.dispose();
+      releaseActionScope?.();
       modal.remove();
     },
     isOpen: () => open,

@@ -6,6 +6,7 @@ interface RootEntry {
   active: boolean;
 }
 const roots = new WeakMap<HTMLElement, RootEntry>();
+const ancestorScopes = new WeakMap<HTMLElement, { readonly root: HTMLElement }>();
 
 /** Registers eligibility only; the published input dispatcher owns every gesture. */
 export function registerAdaActionRoot(policy: ActionRootPolicy, root: HTMLElement): () => void {
@@ -47,9 +48,32 @@ export function adaActionHasRoot(element: HTMLElement): boolean {
   return found;
 }
 
-/** A nested registered root owns its subtree, including while disposed. */
+/** Let an app-wide control group share input ownership with the UI it restores focus to. */
+export function registerAdaAncestorActionScope(scope: HTMLElement, root: HTMLElement): () => void {
+  if (
+    scope === root ||
+    !root.contains(scope) ||
+    !roots.get(root)?.active ||
+    ancestorScopes.has(scope)
+  ) {
+    throw new Error("Invalid ancestor action scope");
+  }
+  const entry = { root };
+  ancestorScopes.set(scope, entry);
+  return () => {
+    if (ancestorScopes.get(scope) === entry) {
+      ancestorScopes.delete(scope);
+    }
+  };
+}
+
+/** A nested registered root owns its subtree unless a group explicitly shares an ancestor root. */
 export function adaActionOwnedBy(root: HTMLElement, element: HTMLElement): boolean {
   for (let owner: HTMLElement | null = element; owner; owner = owner.parentElement) {
+    const ancestor = ancestorScopes.get(owner);
+    if (ancestor) {
+      return root === ancestor.root && root.contains(owner) && roots.get(root)?.active === true;
+    }
     const entry = roots.get(owner);
     if (entry) {
       return owner === root && entry.active;
