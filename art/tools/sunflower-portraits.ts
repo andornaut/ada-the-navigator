@@ -29,7 +29,7 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
+import { type Portrait, writePortraits } from "./bust-sheets.ts";
 
 type Fur = { base: string; shade: string; light: string };
 const YELLOW: Fur = { base: "fee761", light: "fff4b8", shade: "f4b93a" };
@@ -359,18 +359,19 @@ function nectar(): Frame {
   return frame;
 }
 
-const KEYS = ["clover", "rivet", "patch", "saffron", "bramble", "nectar"];
-const ids = await writePortraits(
-  "sunflower",
-  "sunflower/portraits",
-  [
-    { compact: [5, 1], frames: [["neutral", clover()]], key: "clover" },
-    { compact: [5, 3], frames: [["neutral", rivet()]], key: "rivet" },
-    { compact: [5, 3], frames: [["neutral", patch()]], key: "patch" },
-    { compact: [5, 2], frames: [["neutral", saffron()]], key: "saffron" },
-    { compact: [5, 2], frames: [["neutral", bramble()]], key: "bramble" },
-    { compact: [5, 2], frames: [["neutral", nectar()]], key: "nectar" },
-  ],
-  (id) => KEYS.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${ids.join(", ")}`);
+export const sunflowerPortraits: readonly Portrait[] = [
+  { compact: [5, 1], frames: [["neutral", clover()]], key: "clover" },
+  { compact: [5, 3], frames: [["neutral", rivet()]], key: "rivet" },
+  { compact: [5, 3], frames: [["neutral", patch()]], key: "patch" },
+  { compact: [5, 2], frames: [["neutral", saffron()]], key: "saffron" },
+  { compact: [5, 2], frames: [["neutral", bramble()]], key: "bramble" },
+  { compact: [5, 2], frames: [["neutral", nectar()]], key: "nectar" },
+];
+
+if (import.meta.main) {
+  const portraits = sunflowerPortraits;
+  const ids = await writePortraits("sunflower", "sunflower/portraits", portraits, (id) =>
+    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+  );
+  console.log(`wrote ${ids.join(", ")}`);
+}

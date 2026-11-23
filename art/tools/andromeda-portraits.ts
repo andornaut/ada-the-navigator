@@ -4,17 +4,11 @@
 // bobble hat, and the station keepers Lumen, Dial and Cog, one neutral frame each.
 // Contract: art/andromeda.md (Portraits) and art/conversation.md (Cast portraits).
 // Usage: node art/tools/andromeda-portraits.ts
-import { mkdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import type { Frame } from "@andornaut/art-kit/build/grid";
-import type { Tag } from "@andornaut/art-kit/build/raster";
 
 import {
   above,
   blank,
-  COMPACT,
-  crop,
   dots,
   ellipse,
   fill,
@@ -33,11 +27,7 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
-import { replaceEntries } from "./manifest.ts";
-import { writeSheet } from "./sprite-sheet.ts";
-
-const output = fileURLToPath(new URL("../../public/art/andromeda/portraits/", import.meta.url));
+import { type Portrait, writePortraits } from "./bust-sheets.ts";
 
 const PEARL = { base: "e9e3da", light: "ffffff", shade: "b3aba1" };
 const PERI = { base: "8f9cf0", light: "b9c2f7", shade: "5b6093" };
@@ -228,48 +218,11 @@ function munix(role: Role, mood: Mood): Frame {
 
 // The 22 px window's origin: the antenna ball's lower half and the hat or cap to the chin.
 const CROP: Point = [5, 2];
-const FRAME_MS = 1000;
-const PORTRAITS = [
-  { id: "pip-portrait", key: "pip", role: "pip" },
-  { id: "settler-portrait", key: "settler", role: "settler" },
-] as const;
-
-function entry(id: string, key: string, size: number) {
-  return {
-    id,
-    path: `/art/andromeda/portraits/${key}.png`,
-    width: size * MOODS.length,
-    height: size,
-    ...(size === COMPACT ? { displayWidth: size * 2, displayHeight: size * 2 } : {}),
-    facing: "front",
-    pivot: { x: 0.5, y: 0.5 },
-    frameWidth: size,
-    frameHeight: size,
-    frames: Object.fromEntries(MOODS.map((name, i) => [name, i])),
-  };
-}
-
-mkdirSync(output, { recursive: true });
-const entries: ReturnType<typeof entry>[] = [];
-for (const { id, key, role } of PORTRAITS) {
-  const frames = MOODS.map((mood) => munix(role, mood));
-  for (const [sheet, size, list] of [
-    [key, FULL, frames],
-    [`${key}-compact`, COMPACT, frames.map((frame) => crop(frame, CROP))],
-  ] as const) {
-    const tags: Tag[] = MOODS.map((name, i) => [name, [list[i]!], FRAME_MS]);
-    writeSheet(`${output}${sheet}.png`, { key: sheet }, tags);
-    entries.push(entry(size === FULL ? id : `${id}-compact`, sheet, size));
-  }
-}
-
-// Full sheets then compact sheets, last in Andromeda's manifest.
-const ordered = entries.toSorted(
-  (p, q) =>
-    Number(p.id.endsWith("-compact")) - Number(q.id.endsWith("-compact")) ||
-    p.id.localeCompare(q.id),
-);
-replaceEntries("andromeda", (id) => /^(pip|settler)-portrait(-compact)?$/.test(id), ordered);
+const chapterPortraits: readonly Portrait[] = (["pip", "settler"] as const).map((key) => ({
+  compact: CROP,
+  frames: MOODS.map((mood) => [mood, munix(key, mood)] as const),
+  key,
+}));
 
 // The Munix cast --------------------------------------------------------------------------
 
@@ -460,16 +413,22 @@ function greeter(): Frame {
   return frame;
 }
 
-const CAST = ["settler-greeter", "lumen", "dial", "cog"];
-const cast = await writePortraits(
-  "andromeda",
-  "andromeda/portraits",
-  [
-    { compact: [5, 1], frames: [["neutral", greeter()]], key: "settler-greeter" },
-    { compact: [5, 1], frames: [["neutral", lumen()]], key: "lumen" },
-    { compact: [5, 2], frames: [["neutral", dial()]], key: "dial" },
-    { compact: [5, 1], frames: [["neutral", cog()]], key: "cog" },
-  ],
-  (id) => CAST.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${cast.join(", ")}`);
+const communityPortraits: readonly Portrait[] = [
+  { compact: [5, 1], frames: [["neutral", greeter()]], key: "settler-greeter" },
+  { compact: [5, 1], frames: [["neutral", lumen()]], key: "lumen" },
+  { compact: [5, 2], frames: [["neutral", dial()]], key: "dial" },
+  { compact: [5, 1], frames: [["neutral", cog()]], key: "cog" },
+];
+export const andromedaPortraits = [...chapterPortraits, ...communityPortraits];
+
+if (import.meta.main) {
+  await writePortraits("andromeda", "andromeda/portraits", chapterPortraits, (id) =>
+    /^(pip|settler)-portrait(-compact)?$/.test(id),
+  );
+  const ids = await writePortraits("andromeda", "andromeda/portraits", communityPortraits, (id) =>
+    communityPortraits.some(
+      ({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`,
+    ),
+  );
+  console.log(`wrote ${ids.join(", ")}`);
+}

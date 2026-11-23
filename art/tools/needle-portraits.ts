@@ -4,17 +4,11 @@
 // station keepers Sedge, Willow and Marsh: one neutral frame each.
 // Contract: art/needle.md (Elder Loom's portrait) and art/conversation.md (Cast portraits).
 // Usage: node art/tools/needle-portraits.ts
-import { mkdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import type { Frame } from "@andornaut/art-kit/build/grid";
-import type { Tag } from "@andornaut/art-kit/build/raster";
 
 import {
   blank,
   blush,
-  COMPACT,
-  crop,
   dots,
   ellipse,
   eyeHappy,
@@ -36,13 +30,8 @@ import {
   tilted,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
-import { replaceEntries } from "./manifest.ts";
-import { writeSheet } from "./sprite-sheet.ts";
+import { type Portrait, writePortraits } from "./bust-sheets.ts";
 
-const output = fileURLToPath(new URL("../../public/art/needle/portraits/", import.meta.url));
-
-const MS = 1000;
 const FRAMES = ["happy", "neutral"] as const;
 type Mood = (typeof FRAMES)[number];
 // The compact crop's top-left in the 32 frame: the crest's base to the beak's tip.
@@ -149,32 +138,9 @@ function loom(mood: Mood): Frame {
   return frame;
 }
 
-const sheets = [
-  { key: "loom", make: loom, size: FULL },
-  { key: "loom-compact", make: (mood: Mood) => crop(loom(mood), CROP), size: COMPACT },
-] as const;
-
-mkdirSync(output, { recursive: true });
-const entries = [];
-for (const { key, make, size } of sheets) {
-  const tags: Tag[] = FRAMES.map((name) => [name, [make(name)], [MS]]);
-  writeSheet(`${output}${key}.png`, { key }, tags);
-  entries.push({
-    id: size === FULL ? "loom-portrait" : "loom-portrait-compact",
-    path: `/art/needle/portraits/${key}.png`,
-    width: size * FRAMES.length,
-    height: size,
-    ...(size === COMPACT ? { displayWidth: size * 2, displayHeight: size * 2 } : {}),
-    facing: "front",
-    pivot: { x: 0.5, y: 0.5 },
-    frameWidth: size,
-    frameHeight: size,
-    frames: Object.fromEntries(FRAMES.map((name, i) => [name, i])),
-  });
-}
-
-replaceEntries("needle", (id) => id.startsWith("loom-portrait"), entries);
-console.log(`wrote ${entries.map(({ id }) => id).join(", ")}`);
+const chapterPortraits: readonly Portrait[] = [
+  { compact: CROP, frames: FRAMES.map((mood) => [mood, loom(mood)] as const), key: "loom" },
+];
 
 // The Avi cast ----------------------------------------------------------------------------
 
@@ -336,16 +302,19 @@ function marsh(): Frame {
   return frame;
 }
 
-const CAST = ["reed", "sedge", "willow", "marsh"];
-const cast = await writePortraits(
-  "needle",
-  "needle/portraits",
-  [
-    { compact: [5, 2], frames: [["neutral", reed()]], key: "reed" },
-    { compact: [5, 2], frames: [["neutral", sedge()]], key: "sedge" },
-    { compact: [5, 2], frames: [["neutral", willow()]], key: "willow" },
-    { compact: [5, 2], frames: [["neutral", marsh()]], key: "marsh" },
-  ],
-  (id) => CAST.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${cast.join(", ")}`);
+const communityPortraits: readonly Portrait[] = [
+  { compact: [5, 2], frames: [["neutral", reed()]], key: "reed" },
+  { compact: [5, 2], frames: [["neutral", sedge()]], key: "sedge" },
+  { compact: [5, 2], frames: [["neutral", willow()]], key: "willow" },
+  { compact: [5, 2], frames: [["neutral", marsh()]], key: "marsh" },
+];
+export const needlePortraits = [...chapterPortraits, ...communityPortraits];
+
+if (import.meta.main) {
+  for (const portraits of [chapterPortraits, communityPortraits]) {
+    const ids = await writePortraits("needle", "needle/portraits", portraits, (id) =>
+      portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+    );
+    console.log(`wrote ${ids.join(", ")}`);
+  }
+}

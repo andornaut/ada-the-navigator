@@ -24,7 +24,7 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
+import { type Portrait, writePortraits } from "./bust-sheets.ts";
 
 type Stone = { base: string; shade: string; light: string; top: string; edge: string };
 const STONES = {
@@ -194,18 +194,19 @@ function jasper(): Frame {
   return frame;
 }
 
-const KEYS = ["quartz", "slate", "garnet", "mica", "opal", "jasper"];
-const ids = await writePortraits(
-  "cartwheel",
-  "cartwheel/portraits",
-  [
-    { compact: [5, 2], frames: [["neutral", quartz()]], key: "quartz" },
-    { compact: [5, 4], frames: [["neutral", slate()]], key: "slate" },
-    { compact: [5, 3], frames: [["neutral", garnet()]], key: "garnet" },
-    { compact: [5, 3], frames: [["neutral", mica()]], key: "mica" },
-    { compact: [5, 4], frames: [["neutral", opal()]], key: "opal" },
-    { compact: [5, 3], frames: [["neutral", jasper()]], key: "jasper" },
-  ],
-  (id) => KEYS.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${ids.join(", ")}`);
+export const cartwheelPortraits: readonly Portrait[] = [
+  { compact: [5, 2], frames: [["neutral", quartz()]], key: "quartz" },
+  { compact: [5, 4], frames: [["neutral", slate()]], key: "slate" },
+  { compact: [5, 3], frames: [["neutral", garnet()]], key: "garnet" },
+  { compact: [5, 3], frames: [["neutral", mica()]], key: "mica" },
+  { compact: [5, 4], frames: [["neutral", opal()]], key: "opal" },
+  { compact: [5, 3], frames: [["neutral", jasper()]], key: "jasper" },
+];
+
+if (import.meta.main) {
+  const portraits = cartwheelPortraits;
+  const ids = await writePortraits("cartwheel", "cartwheel/portraits", portraits, (id) =>
+    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+  );
+  console.log(`wrote ${ids.join(", ")}`);
+}

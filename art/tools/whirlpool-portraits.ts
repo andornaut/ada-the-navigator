@@ -28,7 +28,7 @@ import {
   union,
   WHITE,
 } from "./bust.ts";
-import { writePortraits } from "./bust-sheets.ts";
+import { type Portrait, writePortraits } from "./bust-sheets.ts";
 
 // The Voron --------------------------------------------------------------------------------
 
@@ -353,27 +353,28 @@ function whale(colours: WhaleColours, shape: WhaleShape): Frame {
   return frame;
 }
 
-const KEYS = ["marlo", "family", "ripple", "coral", "brine"];
-const ids = await writePortraits(
-  "whirlpool",
-  "whirlpool/portraits",
-  [
-    {
-      compact: [5, 5],
-      frames: [["neutral", whale(MARLO, SHAPES.marlo)]],
-      key: "marlo",
-      small: [whale(MARLO, SHAPES.marloCompact)],
-    },
-    {
-      compact: [5, 5],
-      frames: [["neutral", whale(FAMILY, SHAPES.family)]],
-      key: "family",
-      small: [whale(FAMILY, SHAPES.familyCompact)],
-    },
-    { compact: [5, 2], frames: [["neutral", ripple()]], key: "ripple" },
-    { compact: [5, 2], frames: [["neutral", coral()]], key: "coral" },
-    { compact: [5, 2], frames: [["neutral", brine()]], key: "brine" },
-  ],
-  (id) => KEYS.some((key) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
-);
-console.log(`wrote ${ids.join(", ")}`);
+export const whirlpoolPortraits: readonly Portrait[] = [
+  {
+    compact: [5, 5],
+    frames: [["neutral", whale(MARLO, SHAPES.marlo)]],
+    key: "marlo",
+    small: [whale(MARLO, SHAPES.marloCompact)],
+  },
+  {
+    compact: [5, 5],
+    frames: [["neutral", whale(FAMILY, SHAPES.family)]],
+    key: "family",
+    small: [whale(FAMILY, SHAPES.familyCompact)],
+  },
+  { compact: [5, 2], frames: [["neutral", ripple()]], key: "ripple" },
+  { compact: [5, 2], frames: [["neutral", coral()]], key: "coral" },
+  { compact: [5, 2], frames: [["neutral", brine()]], key: "brine" },
+];
+
+if (import.meta.main) {
+  const portraits = whirlpoolPortraits;
+  const ids = await writePortraits("whirlpool", "whirlpool/portraits", portraits, (id) =>
+    portraits.some(({ key }) => id === `${key}-portrait` || id === `${key}-portrait-compact`),
+  );
+  console.log(`wrote ${ids.join(", ")}`);
+}
