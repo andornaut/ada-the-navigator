@@ -340,10 +340,7 @@ describe("pacing simulation runs", () => {
     // A higher price can change the number of packs the pilot can afford to buy.
     const dearer = armed(base.packPrice * 2);
     expect(dearer.packPrice).toBe(50);
-    expect(dearer.ammoSpentPerMinute).toBeCloseTo(
-      (dearer.packsPerHour / 60) * dearer.packPrice,
-      6,
-    );
+    expect(dearer.ammoSpentPerMinute).toBeCloseTo((dearer.packsPerHour / 60) * dearer.packPrice, 6);
     expect(dearer.ammoSpentPerMinute).toBeGreaterThan(base.ammoSpentPerMinute);
     // A player who never restocks spends nothing and runs out to Laser.
     const unstocked = armed(ECONOMY.ammo.packPrice, 0);
