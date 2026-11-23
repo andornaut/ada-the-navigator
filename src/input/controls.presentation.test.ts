@@ -28,7 +28,7 @@ function actual(name: string): ts.ArrowFunction {
 }
 function render(enabled: boolean, covered: boolean, coarse = true, map = false, foreground = true) {
   const target = { hidden: false, inert: false };
-  const button = { hidden: false, inert: false };
+  const button = Object.assign({ hidden: false, inert: false }, { matches: () => false });
   const navigation = { setMode: vi.fn() };
   const status = { setShown: vi.fn() };
   const notices = { update: vi.fn() };
@@ -88,7 +88,7 @@ describe("actual controls paint under modal covers", () => {
     expect(view.notices.update).toHaveBeenCalledWith(0, true, { x: 0, y: 0 });
     expect(view.weapons.setShown).toHaveBeenCalledWith(true);
     expect(view.target).toEqual({ hidden: false, inert: covered });
-    expect(view.button).toEqual({ hidden: false, inert: covered });
+    expect(view.button).toMatchObject({ hidden: false, inert: covered });
     expect(view.useDisc.setVisible).toHaveBeenCalledWith(true);
   });
   it("does not reveal scene-ineligible flight controls behind a story modal", () => {

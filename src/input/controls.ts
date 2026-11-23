@@ -909,12 +909,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     settings.useButton.inert = modalOpen();
     useDisc.setVisible(useShown);
     if (context) {
-      const held = usePress
+      const pose = usePress
         ? performance.now() - usePress.since < USE_PRESS_MS
           ? "press"
           : "held"
-        : "rest";
-      useDisc.setFrame(useDiscFrame(context.questIcon ? "quest" : context.action, held));
+        : useShown && !settings.useButton.inert && settings.useButton.matches(":focus-visible")
+          ? "focus"
+          : "rest";
+      useDisc.setFrame(useDiscFrame(context.questIcon ? "quest" : context.action, pose));
     }
     const size = canvasSize(sceneFit(scene));
     const views = stickViews(

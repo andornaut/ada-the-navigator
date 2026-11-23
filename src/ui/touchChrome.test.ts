@@ -109,8 +109,15 @@ describe("Use disc chrome", () => {
     expect(TOUCH_CHROME_ALPHA).toBe(0.85);
   });
 
+  it("fills the existing ring only on focus and keeps the authored glyph and border", () => {
+    const rest = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "rest");
+    const focus = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "focus");
+    expect(focus.slice(1)).toEqual(rest);
+    expect(touchChromePixel(4, focus, { x: 37.5, y: 17.5 })).toEqual([38, 43, 68, 255]);
+  });
+
   it("whitens band and symbol while pressed, the press frame's ring 1 larger for 60 ms", () => {
-    expect(USE_DISC_POSES).toEqual(["rest", "press", "held"]);
+    expect(USE_DISC_POSES).toEqual(["rest", "focus", "press", "held"]);
     expect(USE_PRESS_MS).toBe(60);
     const press = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "press");
     const held = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "held");

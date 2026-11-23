@@ -138,9 +138,9 @@ export function touchChromeLayers(
   return layers;
 }
 
-/** The Use disc's poses: at rest, the 60 ms press frame, then held until release. */
-export type UseDiscPose = "held" | "press" | "rest";
-export const USE_DISC_POSES: readonly UseDiscPose[] = ["rest", "press", "held"];
+/** The Use disc's poses: at rest or focused, the 60 ms press frame, then held until release. */
+export type UseDiscPose = "focus" | "held" | "press" | "rest";
+export const USE_DISC_POSES: readonly UseDiscPose[] = ["rest", "focus", "press", "held"];
 /** The press frame's length before the disc shows held. */
 export const USE_PRESS_MS = 60;
 
@@ -293,12 +293,16 @@ export function useDiscLayers(
   action: UseAction | "quest",
   pose: UseDiscPose,
 ): readonly TouchChromeLayer[] {
-  const core = pose === "rest" ? colours.cream : colours.white;
+  const core = pose === "press" || pose === "held" ? colours.white : colours.cream;
   const outer = 36.5 + (pose === "press" ? 1 : 0);
-  const layers: TouchChromeLayer[] = [
+  const layers: TouchChromeLayer[] = [];
+  if (pose === "focus") {
+    layers.push({ centre: CENTRE, colour: USE_CALLOUT_FACE, kind: "disc", radius: outer - 4 });
+  }
+  layers.push(
     { centre: CENTRE, colour: colours.ink, inner: outer - 5, kind: "ring", outer },
     { centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 },
-  ];
+  );
   const parts = action === "quest" ? [] : USE_SYMBOLS[action];
   const paint = (part: SymbolPart, colour: number, grow: number): TouchChromeLayer =>
     part.kind === "disc"

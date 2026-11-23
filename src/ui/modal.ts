@@ -671,7 +671,13 @@ ${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active){
 ${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active) .ada-setting-note{
   color:inherit
 }
+${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active) > .ada-icon{
+  filter:brightness(0)
+}
 @media (forced-colors:active){
+  ${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active) > .ada-icon{
+    filter:none
+  }
   ${UI_SCOPE} .ada-row[role=switch]:not(:disabled):is(:focus-visible,:active){
     forced-color-adjust:none;
     --ada-switch-cue-ink:HighlightText;

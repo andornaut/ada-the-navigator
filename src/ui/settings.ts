@@ -226,22 +226,8 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   pointer-events:none
 }
 
-/* Tint only the open disc interior so the existing canvas symbol and edge stay visible. */
 .ada-controls .ada-use:focus-visible{
   outline:none
-}
-.ada-controls .ada-use:focus-visible::before{
-  content:"";
-  position:absolute;
-  inset:10%;
-  border-radius:50%;
-  background:color-mix(in srgb,${NAV_DISC_PRESSED.face} 55%,transparent)
-}
-@media (forced-colors:active){
-  .ada-controls .ada-use:focus-visible::before{
-    forced-color-adjust:none;
-    background:color-mix(in srgb,Highlight 40%,transparent)
-  }
 }
 
 .ada-controls .ada-setting-state{
