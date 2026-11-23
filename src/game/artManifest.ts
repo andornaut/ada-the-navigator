@@ -79,10 +79,12 @@ const LINKS: readonly (keyof GalaxyLinks)[] = [
 
 /**
  * Whether a galaxy manifest's asset loads with the galaxy's first flight: hull headings, props and
- * sheets do; hardpoint and turret frames wait for their craft, and whale frames for a whale.
+ * sheets do. Hardpoints and whale frames load on demand. DOM portraits load through their reader.
  */
-export function galaxyLoadsAtOnce(asset: EnemyFrame & { readonly kind?: unknown }): boolean {
-  return !enemyPartFrame(asset) && !whaleFrameAsset(asset);
+export function galaxyLoadsAtOnce(
+  asset: EnemyFrame & { readonly kind?: unknown; readonly portraitCrop?: unknown },
+): boolean {
+  return asset.portraitCrop === undefined && !enemyPartFrame(asset) && !whaleFrameAsset(asset);
 }
 
 /** The loader's cache key for a galaxy's manifest. */

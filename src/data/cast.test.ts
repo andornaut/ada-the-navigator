@@ -63,9 +63,11 @@ describe("the cast", () => {
           expect(crop.width).toBe(crop.height * frames);
           expect(crop.x + crop.width).toBeLessThanOrEqual(sheet!.width);
           expect(crop.y + crop.height).toBeLessThanOrEqual(sheet!.height);
-          // A packed DOM page is not a Phaser sprite strip.
-          expect(sheet!.frameWidth).toBeUndefined();
-          expect(sheet!.frameHeight).toBeUndefined();
+          // The placed strips keep their authored frame metadata. Vertical pages omit it.
+          const placed = CAST[key].home === "andromeda" || CAST[key].home === "needle";
+          const frameSize = placed ? crop.height : undefined;
+          expect(sheet!.frameWidth).toBe(frameSize);
+          expect(sheet!.frameHeight).toBe(frameSize);
         } else {
           expect(sheet!.width / sheet!.frameWidth!).toBe(frames);
           expect(sheet!.portraitCrop).toBeUndefined();

@@ -20,6 +20,8 @@ export interface Asset extends ShipAsset, EnemyFrame {
   /** An explicit same-sheet member when its ID differs from this asset's logical ID. */
   svgSheetMember?: string;
   frameWidth?: number;
+  /** Rectangle consumed by the DOM portrait reader. */
+  portraitCrop?: { height: number; width: number; x: number; y: number };
   frameHeight?: number;
   dock?: NonNullable<StationFrame["dock"]>;
   frameMs?: number;

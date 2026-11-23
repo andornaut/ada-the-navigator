@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
+  galaxyLoadsAtOnce,
   galaxyManifestKey,
   galaxyManifestPaths,
   galaxyTowKey,
@@ -94,6 +95,16 @@ describe("split art manifest", () => {
       tow: "/art/x/tow.json",
     });
     expect(galaxyTowKey(4)).toBe("tow-galaxy-4");
+  });
+
+  it("keeps placed DOM portrait strips out of the flight texture queue", () => {
+    const portrait = GALAXY_MANIFESTS.get(5)!.assets.find(({ id }) => id === "pip-portrait")!;
+    expect(portrait).toMatchObject({
+      frameHeight: 32,
+      frameWidth: 32,
+      portraitCrop: { height: 32, width: 96, x: 0, y: 33 },
+    });
+    expect(galaxyLoadsAtOnce(portrait)).toBe(false);
   });
 
   it("keeps every id in exactly one manifest", () => {
