@@ -46,6 +46,16 @@ describe("artUrls", () => {
     ).toEqual(["/art/manifest.json", "/art/ship.svg", "/art/ui/sprites/ui-close.png"]);
   });
 
+  it("precaches the six resource SVGs without their retired sprites and metadata", () => {
+    const urls = artUrls(artFiles);
+    for (const key of ["cargo-20", "holodisk", "holodisk-20", "ore-20", "stardust-20", "tow-20"]) {
+      expect(urls).toContain(`/art/ui/icons/icon-${key}.svg`);
+      expect(urls).not.toContain(`/art/ui/sprites/icon-${key}.png`);
+      expect(urls).not.toContain(`/art/ui/sprites/icon-${key}.json`);
+    }
+    expect(urls).toContain("/art/ui/sprites/icon-holodisk-24.png");
+  });
+
   it("lists only network-first URLs, so changed art changes the precache version", () => {
     expect(artUrls(artFiles).filter((url) => isHashedAssetUrl(CACHE_POLICY, url))).toEqual([]);
   });
