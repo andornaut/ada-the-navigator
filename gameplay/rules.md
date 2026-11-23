@@ -924,8 +924,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   [Economy](economy.md#weapon-unlocks). The shared upgrade pickup, presented like Chibi's
   power-ups, gives its upgrade on collection (see
   [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
-  once unless the switch wait is running, when it is added without equipping;
-  other owned weapons are kept.
+  once. Ada keeps her other owned weapons.
 - Every weapon and the shield have three levels. The shield's capacity is 10,
   15 and 20. Weapons grow only along these dimensions:
   - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
@@ -1018,8 +1017,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   as it does today; at levels 2 and 3 its ring turns orange, then purple, and one
   to three pips under the icon give the level, so it never relies on colour alone.
   Orange and purple mark level 2 and level 3 the same way on the jets. Switching preserves
-  ownership of the other weapons. Ada can switch at any time, including in combat;
-  after a switch the next switch waits 1 second (provisional).
+  ownership of the other weapons. In flight, Ada can immediately switch to Laser
+  or any owned weapon with ammo, including in combat and between consecutive taps.
 - Pressing and holding a weapon icon pauses play and opens that weapon's detail
   card instead of selecting it; shop weapon and upgrade rows open their cards
   the same way (see [Economy](economy.md#detail-cards)).

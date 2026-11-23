@@ -44,7 +44,7 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 
 | Ship          | Size (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------- | ----------------: | ---------: | --------------------: | ---------------: | ------------: | ---------------: |
-| Ada           |                 1 |        175 |                  0.36 |             0.55 |          0.16 |             0.08 |
+| Ada           |                 1 |        175 |                 0.413 |            0.693 |          0.16 |             0.08 |
 | `swarm`       |              0.65 |        160 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`     |                 1 |        140 |                  0.40 |             0.50 |          0.30 |             0.15 |
 | `interceptor` |              0.75 |        200 |                  0.90 |             1.20 |          0.60 |             0.12 |
@@ -53,15 +53,19 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | `capital`     |                 5 |         40 |                   2.5 |              3.0 |           2.0 |             0.50 |
 | `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
 
-Ada's 175 is her base engine; engine levels 2 and 3 raise it to 200 and 225.
+Ada's top speeds are 175, 200 and 225 world units per second. From rest with
+full throttle in a straight line, she reaches 90% speed in 0.95, 0.80 and
+0.65 seconds. Releasing movement from full speed coasts about 120 world units
+at every level in clear space, taking about 3.19, 2.79 or 2.48 seconds to
+reach the existing 1% rest threshold. The time constants derive from
+`timeTo90 / ln(10)` for acceleration and `120 / (0.99 * topSpeed)` for braking.
 Her aim turns with `aimTurnSeconds` 0.08, 0.07 and 0.06 at engine levels 1, 2
 and 3, and her movement heading turns twice as slowly, with `turnSeconds` 0.16,
 0.14 and 0.12.
 Enemy speeds are fixed and the same in every galaxy: a new Ada outruns the swarm
 and the interceptor outruns her, engine level 2 keeps pace with the interceptor
-and outruns every other enemy, and level 3 outruns them all. Ada's ship has noticeable momentum: it takes about a second to reach full speed,
-coasts for about a second and a half when the stick is released, and swings wide on sharp
-turns. Small enemies are nimble, the interceptor is fast but carries its momentum
+and outruns every other enemy, and level 3 outruns them all. Ada swings wide
+on sharp turns. Small enemies are nimble, the interceptor is fast but carries its momentum
 through overshooting passes, and larger ships are progressively heavier.
 The `platform` is fixed in place and only turns its turrets.
 
@@ -430,16 +434,17 @@ galaxy below has its own roster. All values are provisional playtest tuning.
 Whirlpool's drones are hunters tracking the whale family, which knows where the
 holodisk drifted. They chase rather than hit and run.
 
-| Archetype      | Encounter    | Group | Weight | Behaviours                                   |
-| -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   2–8 |   0.25 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Hunting pack |     4 |   0.30 | `chase`; a group shares pack morale          |
-| `interceptor`  | Solo or pair |   1–2 |   0.15 | `chase`                                      |
-| `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo         |     1 |   0.15 | `siege`; size 4 Ada widths                   |
-| Capital battle | Group        |     1 |   0.05 | A `capital` with 4 `escort` fighters         |
+| Archetype     | Encounter    | Group | Weight | Behaviours                                   |
+| ------------- | ------------ | ----: | -----: | -------------------------------------------- |
+| `swarm`       | Pack         |   2–8 |   0.25 | `swarm`; packs `flee` after losses           |
+| `fighter`     | Hunting pack |     4 |   0.30 | `chase`; a group shares pack morale          |
+| `interceptor` | Solo or pair |   1–2 |   0.15 | `chase`                                      |
+| `retaliator`  | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`     | Solo         |     1 |   0.15 | `siege`; size 4 Ada widths                   |
 
-Hunting packs are placed near whale destinations and along the calf-guiding
+The whale and family sites each keep their authored capital guard. Whirlpool's
+ambient roster has no capitals. Hunting packs are placed near whale destinations
+and along the calf-guiding
 route. Hunters never target or damage whales; their shots pass through them.
 Space currents push small craft and leave frigates and capitals unaffected (see
 [the version one rules](rules.md#galaxy-two-whirlpool-whale-family)). Whirlpool adds no new

@@ -136,7 +136,7 @@ never enters the upgrade pool. Removing only Paint renormalizes the remaining
 category weights without changing their ratios; this does not select new
 absolute weight values:
 
-- Weapons: one weapon's next step, the weapon itself with three packs of its
+- Weapons: one weapon's next step, the weapon itself with its starting
   ammunition if Ada does not own it, otherwise its next level. Each weapon is
   half as likely as the one before it: Laser 64, Multi-Laser 32, Rapid Missile
   16, Heavy Missile 8, Scattershot 4 and Phaser 2. Only the weapons unlocked in
@@ -160,15 +160,15 @@ moment. Its notice names what it gave:
 | Tractor beam  | + Tractor beam level {n} |
 | Ammunition    | + {weapon} ammo          |
 
-Destroyed small craft also drop an ammo pack 30% of the time, and destroyed
-asteroids and ore rocks 4% of the time, separately from
-upgrades, while Ada owns a weapon other than Laser, bought or picked up,
-equipped or not, in any galaxy. Like the upgrade pickup, its contents are chosen when Ada collects it:
-one pack for such a weapon, each weapon about three quarters as likely as the one before it in
-weapon order (Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7, Phaser 5, among
-those weapons). Each world pack contains one quarter of its shop pack: Multi-Laser 75,
-Rapid Missile 65, Heavy Missile 10, Scattershot 15 and Phaser 10. Its feedback shows
-+N beside the corresponding weapon icon, using the actual ammunition added.
+Each destroyed fighter, fighter escort, swarm ship, interceptor and retaliator
+rolls a 10% chance to drop an ammo pack in addition to its Stardust.
+Destroyed asteroids and ore rocks roll by size: 0.5% for small, 1% for medium,
+2% for large and 4% for huge. Ammo drops require owning a weapon other than
+Laser. The pack's contents are chosen when Ada collects it, using the weights
+Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and Phaser 5
+among eligible weapons. A world pickup gives 100 Multi-Laser bolts, 75 Rapid
+Missiles, 25 Heavy Missiles, 50 Scattershot volleys or 25 Phaser shots.
+The HUD shows +N by the weapon icon using the actual ammunition added.
 
 Every destroyed asteroid, including an ore rock, uses the size-based yields
 above when it does not release ammunition. An asteroid that drops an ammo pack
@@ -263,18 +263,18 @@ are the exception: they drop for every weapon Ada owns, in any galaxy (see
 
 ### Prices
 
-| Item           | Effect                                                                                                                                              | Prices            |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| Multi-Laser    | Owned weapon                                                                                                                                        | 400               |
-| Rapid Missile  | Owned weapon                                                                                                                                        | 500               |
-| Heavy Missile  | Owned weapon                                                                                                                                        | 600               |
-| Scattershot    | Owned weapon                                                                                                                                        | 800               |
-| Phaser         | Owned weapon                                                                                                                                        | 1000              |
-| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                       | See below         |
-| Shield         | Levels 2 and 3: capacity 15, then 20. Full recharge takes 25 s at every level with enough ore.                                                      | 450, 900          |
-| Engine tuning  | Levels 2 and 3: top speed 200, then 225; each −10% acceleration and braking seconds; aim turn 0.07, then 0.06 s and movement turn 0.14, then 0.12 s | 180, 360          |
-| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                  | 120, 240          |
-| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                        | By purchase order |
+| Item           | Effect                                                                                                                                               | Prices            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Multi-Laser    | Owned weapon                                                                                                                                         | 400               |
+| Rapid Missile  | Owned weapon                                                                                                                                         | 500               |
+| Heavy Missile  | Owned weapon                                                                                                                                         | 600               |
+| Scattershot    | Owned weapon                                                                                                                                         | 800               |
+| Phaser         | Owned weapon                                                                                                                                         | 1000              |
+| Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                        | See below         |
+| Shield         | Levels 2 and 3: capacity 15, then 20. Full recharge takes 25 s at every level with enough ore.                                                       | 450, 900          |
+| Engine tuning  | Levels 2 and 3: top speeds 200 and 225. Reach 90% speed in 0.80 and 0.65 s. Both coast about 120 units from top speed. See [Ships](ships.md#values). | 180, 360          |
+| Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                   | 120, 240          |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                         | By purchase order |
 
 Weapon upgrades cost 25% more for each later weapon in weapon order, compounded
 from Laser's and rounded up to the next 100. Each weapon's purchase price
@@ -312,20 +312,22 @@ not advance that order. Paint is a shop-only endgame savings goal.
 Laser fire is unlimited. Each finite-ammunition weapon holds at most 9,999 shots.
 Rapid Missile and Heavy Missile use missiles, Multi-Laser and
 Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
-count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
-one, so a Multi-Laser fan or a Scattershot spread costs one.
+count, so Phaser energy is separate from Multi-Laser energy. Multi-Laser spends
+one unit per bolt, so a full fan costs 3, 4 or 5 units by level. If the count
+is lower, it fires only the affordable bolts, taking the angles closest to aim
+first. This higher ammo cost balances the fan's easier aiming. Other weapons
+spend one unit per volley, including a full Scattershot spread.
 
-Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust:
-Multi-Laser 300 shots, Rapid Missile 260, Heavy Missile 40, Scattershot 60
-and Phaser 40. Buying or finding a weapon includes
-three packs. A pack's shop row shows its name, such as "Rapid Missile
-ammo", with the pack size, such as "×300", on a second line, as levelled rows
-show their level. Typical use of the stronger weapons costs about 15 to 35% of Stardust income,
-depending on the galaxy's fighting, checked by the pacing simulation. Ammunition persists across flights and the
-jump home.
+Ammunition is sold per weapon in the shop. Every pack costs 25 Stardust and
+gives three world pickups' worth: Multi-Laser 300 bolts, Rapid Missile 225
+missiles, Heavy Missile 75 missiles, Scattershot 150 volleys and Phaser 75
+shots. A new weapon includes its own starting ammo: 900, 780, 120, 180 and
+120 units respectively. The shop shows the ammo name and its pack size on
+separate lines, for example "Rapid Missile ammo" and "×225". Ammunition
+persists across flights and the jump home.
 
-When the selected weapon runs out, Ada switches to Laser at once, ignoring the
-switch wait, and Astra's notice says "Out of ammo." An empty weapon's icon shows
+When the selected weapon runs out, Ada switches to Laser at once and Astra's
+notice says "Out of ammo." An empty weapon's icon shows
 its empty state and refuses selection until ammunition is bought.
 
 Each weapon icon shows its remaining count below it in at most four characters:
@@ -336,11 +338,10 @@ grouped; Laser's label is its name.
 
 ## Weapon switching
 
-Ada can switch weapons at any time, including in combat. After a switch, the next
-switch waits 1 second (provisional); during that wait the other weapon icons
-refuse with the shared refusal feedback. Equipping a picked-up weapon counts as a
-switch and starts the wait; the out-of-ammo switch to Laser does not. The selected weapon's icon has a treatment
-like Chibi's power-ups.
+In flight, tapping Laser or an owned weapon with ammo equips it immediately,
+including while moving, aiming or fighting. Consecutive switches have no delay.
+Switching preserves the regular firing cooldown. A newly collected weapon equips
+immediately. The selected weapon's icon has a treatment like Chibi's power-ups.
 
 ## Detail cards
 
@@ -349,7 +350,7 @@ plain description with no exact figures. Holding 500 ms, the shared hold
 duration for discrete controls in every game, opens the card instead of acting; a shorter tap acts as before.
 
 - In flight, holding a top-right weapon icon pauses play and opens that
-  weapon's card without selecting it or starting the switch wait. The card's
+  weapon's card without selecting it. The card's
   Close button, close X, an outside tap, back and Escape close it and resume
   play.
 - In the shop, holding a weapon row or an upgrade row (weapon upgrades, Shield,
