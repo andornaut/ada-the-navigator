@@ -69,13 +69,13 @@ describe("Settings control rows", () => {
     }
   });
 
-  it("keeps the existing focus ring outside focused rows and specialised buttons", () => {
+  it("keeps the existing focus ring off switch rows and the close button", () => {
     const start = MODAL_STYLE.indexOf(
       `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON}))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
-    expect(focus).toContain(`${UI_SCOPE} .ada-row:focus-visible`);
+    expect(focus).toContain(`${UI_SCOPE} .ada-row:not([role=switch]):focus-visible`);
     expect(focus).not.toContain(`${UI_SCOPE} .ada-close:focus-visible`);
     expect(focus).toContain(`outline:${units(FOCUS_RING.band)} solid #ead4aa`);
     expect(focus).toContain(`outline-offset:${units(FOCUS_RING.fringe)}`);
