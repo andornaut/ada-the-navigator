@@ -1,8 +1,9 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";
-import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
-import type { GalaxyNumber, Weapon } from "../data/types.ts";
+import { ENEMY_STARDUST_RANGES, type EnemyArchetype, HEAVIES } from "../data/enemyCatalog.ts";
+import { wreckEnemyId } from "../data/enemyIdentity.ts";
+import type { Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
 /** Stardust pickups, from drops or discovery caches, carry an amount. */
@@ -28,22 +29,36 @@ export function dropRandom(seed: number, id: string): () => number {
   };
 }
 
-/**
- * A destroyed enemy's drop: a small craft's Stardust plus, at the small-craft chance, an
- * upgrade pickup; a destroyed heavy's twice its Stardust and no upgrade.
- */
+interface EnemyPayoutIdentity {
+  readonly id: string;
+  readonly seed: number;
+}
+
+/** One payout per original actor and flight seed, independent of the upgrade and ammo streams. */
+export function enemyStardust(identity: EnemyPayoutIdentity, archetype: EnemyArchetype): number {
+  const [low, high] = ENEMY_STARDUST_RANGES[archetype];
+  const count = high - low + 1;
+  const next = dropRandom(identity.seed, `enemy-stardust:${wreckEnemyId(identity.id)}`);
+  // Reject the short final bucket so each integer has exactly the same number of source draws.
+  const range = 2 ** 32;
+  const bucket = Math.floor(range / count);
+  let offset: number;
+  do {
+    offset = Math.floor((next() * range) / bucket);
+  } while (offset >= count);
+  return low + offset;
+}
+
+/** A destroyed enemy's full payout; only small craft roll for an upgrade. */
 export function rollEnemyDrop(
   catalog: EconomyCatalog,
-  galaxy: GalaxyNumber,
+  identity: EnemyPayoutIdentity,
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
-  if (HEAVIES.includes(archetype)) {
-    return { stardust: enemyStardust(galaxy, archetype) * 2, upgrade: false };
-  }
   return {
-    stardust: enemyStardust(galaxy, archetype),
-    upgrade: next() < catalog.upgradeDropChance.small,
+    stardust: enemyStardust(identity, archetype),
+    upgrade: !HEAVIES.includes(archetype) && next() < catalog.upgradeDropChance.small,
   };
 }
 
@@ -89,12 +104,12 @@ export function rollRockAmmoDrop(
  */
 export function rollSalvageDrop(
   catalog: EconomyCatalog,
-  galaxy: GalaxyNumber,
+  identity: EnemyPayoutIdentity,
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
   return {
-    stardust: enemyStardust(galaxy, archetype),
+    stardust: Math.floor(enemyStardust(identity, archetype) / 2),
     upgrade: next() < catalog.upgradeDropChance.heavy,
   };
 }

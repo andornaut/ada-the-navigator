@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyStardust } from "../data/enemyCatalog.ts";
 import { playOpening } from "../testing/launch.ts";
-import { rollEnemyDrop } from "./drops.ts";
+import { rollEnemyDrop, rollSalvageDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
@@ -120,8 +119,12 @@ describe("job board review decisions", () => {
     expect(model.state.tasks[1]).toBeUndefined();
   });
 
-  it("drops 4 Stardust from a salvaged turret platform at position 1, twice that destroyed", () => {
-    expect(enemyStardust(1, "platform")).toBe(4);
-    expect(rollEnemyDrop(ECONOMY, 1, "platform", () => 0.999).stardust).toBe(8);
+  it("pays the full platform roll on destruction and half on salvage", () => {
+    const identity = { id: "field:platform", seed: 1 };
+    const destroyed = rollEnemyDrop(ECONOMY, identity, "platform", () => 0.999);
+    const salvaged = rollSalvageDrop(ECONOMY, identity, "platform", () => 0.999);
+    expect(destroyed.stardust).toBeGreaterThanOrEqual(4);
+    expect(destroyed.stardust).toBeLessThanOrEqual(10);
+    expect(salvaged.stardust).toBe(Math.floor(destroyed.stardust / 2));
   });
 });

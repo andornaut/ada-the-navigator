@@ -51,30 +51,26 @@ one pickup rule (see [Rules](rules.md)). Base pull radius is 60 world units and
 base pull speed is 120 world units per second; levels 2 and 3 raise them to 90
 and 160, then 120 and 200. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
-its Stardust. A heavy is destroyed when its hull HP reaches 0. Destroying or salvaging a heavy
-is a trade-off: destroying it drops twice its Stardust and no upgrade, and
-salvaging it drops its Stardust and has the heavy upgrade chance (see
-[Ships](ships.md#heavy-hull-and-disabling)).
+its Stardust. A heavy is destroyed when its hull HP reaches 0.
+Each whole-number payout in the listed destruction range is equally likely.
+The range is the same in every galaxy. Fighter escorts use the fighter range.
 
-| Source          | Stardust |
-| --------------- | -------: |
-| Discovery cache |        4 |
-| `swarm`         |        1 |
-| `fighter`       |        2 |
-| `interceptor`   |        1 |
-| `retaliator`    |        4 |
-| `frigate`       |  12 or 6 |
-| `capital`       | 28 or 14 |
-| `platform`      |   8 or 4 |
+| Enemy           | Destruction range | Average |
+| --------------- | ----------------: | ------: |
+| Swarm ship      |               1–3 |       2 |
+| Fighter         |               2–5 |     3.5 |
+| Interceptor     |               2–5 |     3.5 |
+| Retaliator      |               2–5 |     3.5 |
+| Frigate         |              4–10 |       7 |
+| Capital ship    |             10–20 |      15 |
+| Turret platform |              4–10 |       7 |
 
-Small-craft Stardust is half its unscaled hull hit points, rounded down, and at
-least 1. Heavy salvage rewards are fixed by route position, independent of hull
-HP, part HP and mount count. A destroyed heavy releases twice its salvage reward.
-The rewards at route positions 1 through 6 are frigate 6/6/10/10/15/15,
-capital 14/14/22/22/33/33 and platform 4/4/5/5/6/6. The table shows position 1,
-with each heavy's destroyed reward followed by its salvaged reward. Every defeated
-enemy releases at least 1 Stardust, with existing larger rewards and eligible
-pickups preserved. Disabling a heavy does not destroy it. Fleeing, unloading,
+For a frigate, capital ship or turret platform, salvage pays half the rolled
+value, rounded down, and retains the existing upgrade chance. Destroying the
+hull pays the full roll. The finale flagship pays 44 on salvage. Hostile
+stations use their separate encounter rewards above. A discovery cache pays 4.
+
+Disabling a heavy does not destroy it. Fleeing, unloading,
 despawning or restoring a survivor does not grant defeat loot, and a released
 wreck never pays again.
 Discovery caches are rare. Resource-yield asteroids first roll a total using

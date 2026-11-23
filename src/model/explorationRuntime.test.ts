@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyStardust } from "../data/enemyCatalog.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { enemyStardust } from "./drops.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -119,7 +119,7 @@ it("materializes the actual disabled frigate and salvages once through contextua
     );
   const drops = stardust();
   expect(drops.reduce((total, pickup) => total + (pickup.amount ?? 0), 0)).toBe(
-    enemyStardust(restored.galaxy, "frigate"),
+    Math.floor(enemyStardust({ id, seed: restored.seed }, "frigate") / 2),
   );
   resumed.choose("continue");
   expect(resumed.contextAction).not.toBe("salvage");

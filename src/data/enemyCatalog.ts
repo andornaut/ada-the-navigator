@@ -776,20 +776,16 @@ export function unscaledHullHp(galaxy: GalaxyNumber, archetype: EnemyArchetype):
 /** Frigates, capitals and platforms: hull HP and hardpoints, disabled and salvaged. */
 export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
 
-/** Heavy salvage rewards by route position, independent of hull, part HP and mount count. */
-export const HEAVY_STARDUST = {
-  capital: [14, 14, 22, 22, 33, 33],
-  frigate: [6, 6, 10, 10, 15, 15],
-  platform: [4, 4, 5, 5, 6, 6],
-} as const;
-
-/** Small craft use half their unscaled hull HP; heavies use their fixed salvage rewards. */
-export function enemyStardust(galaxy: GalaxyNumber, archetype: EnemyArchetype): number {
-  if (Object.hasOwn(HEAVY_STARDUST, archetype)) {
-    return HEAVY_STARDUST[archetype as keyof typeof HEAVY_STARDUST][ROUTE_POSITION[galaxy] - 1]!;
-  }
-  return Math.max(1, Math.floor(unscaledHullHp(galaxy, archetype) / 2));
-}
+/** Inclusive whole-number destruction payouts, regardless of route position or HP. */
+export const ENEMY_STARDUST_RANGES = {
+  capital: [10, 20],
+  fighter: [2, 5],
+  frigate: [4, 10],
+  interceptor: [2, 5],
+  platform: [4, 10],
+  retaliator: [2, 5],
+  swarm: [1, 3],
+} as const satisfies Record<EnemyArchetype, readonly [number, number]>;
 
 /** A galaxy's encounter rate: its position's, times difficultyScale. */
 export function encounterRate(galaxy: GalaxyNumber): number {

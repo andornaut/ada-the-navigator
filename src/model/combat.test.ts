@@ -13,7 +13,6 @@ import {
   enemyDefinition,
   enemyFire,
   enemyFireRate,
-  enemyStardust,
   escortTuning,
   galaxyEncounters,
   heavyLoadout,
@@ -26,7 +25,7 @@ import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { sceneryBodyContact } from "./asteroids.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
-import { carriesStardust } from "./drops.ts";
+import { carriesStardust, enemyStardust } from "./drops.ts";
 import { createEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -385,7 +384,9 @@ describe("integrated combat", () => {
     const stardust = flight.objects
       .filter(carriesStardust)
       .reduce((sum, object) => sum + object.amount!, 0);
-    expect(stardust).toBe(enemyStardust(1, "frigate"));
+    expect(stardust).toBe(
+      Math.floor(enemyStardust({ id: target.id, seed: flight.seed }, "frigate") / 2),
+    );
     expect(salvageTarget(CONTENT, flight)).toBeUndefined();
     expect(salvage(CONTENT, flight)).toBe(false);
     // Shots and Ada pass through the spared ship, which neither moves nor fires.

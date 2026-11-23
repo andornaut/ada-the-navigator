@@ -7,7 +7,6 @@ import {
   enemyCatalog,
   enemyDefinition,
   enemyFire,
-  enemyStardust,
   fireDamageRatio,
   type FireProfile,
   heavyLoadout,
@@ -229,17 +228,12 @@ describe("enemy fire profiles", () => {
 });
 
 describe("approved heavy health and independent rewards", () => {
-  it("applies route part HP without changing hull HP or salvage rewards", () => {
+  it("applies route part HP alongside the approved hull HP", () => {
     const partHp = [5, 5, 6, 6, 7, 7];
     const hulls = {
       capital: [40, 44, 60, 64, 88, 96],
       frigate: [20, 22, 30, 32, 44, 48],
       platform: [10, 11, 15, 16, 22, 24],
-    };
-    const salvage = {
-      capital: [14, 14, 22, 22, 33, 33],
-      frigate: [6, 6, 10, 10, 15, 15],
-      platform: [4, 4, 5, 5, 6, 6],
     };
     for (const galaxy of GALAXY_NUMBERS) {
       const index = ROUTE_POSITION[galaxy] - 1;
@@ -248,7 +242,6 @@ describe("approved heavy health and independent rewards", () => {
         expect(definition.hardpoints.length).toBeGreaterThan(0);
         expect(definition.hardpoints.every((part) => part.hp === partHp[index])).toBe(true);
         expect(definition.hp).toBe(hulls[archetype][index]);
-        expect(enemyStardust(galaxy, archetype)).toBe(salvage[archetype][index]);
       }
     }
   });

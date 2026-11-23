@@ -833,7 +833,8 @@ export function simulate(input: SimulationInput): RunResult {
    */
   const loot = (archetype: EnemyArchetype, id: string, source: Source, salvaged = false) => {
     const next = dropRandom(flightSeed, wreckId(id));
-    const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, galaxy, archetype, next);
+    const identity = { id, seed: flightSeed };
+    const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, identity, archetype, next);
     const pieces = splitResourcePickup(drop.stardust);
     // Changing the number of pickup pieces must not perturb the pilot's decision stream.
     const collected = pieces.reduce(

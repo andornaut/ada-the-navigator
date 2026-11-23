@@ -5414,8 +5414,8 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
 }
 
 /**
- * Salvages the disabled heavy nearest Ada within Talk range: it drops its Stardust and twice the
- * heavy weapon chance around its hull, then powers down, spared. Returns whether one was.
+ * Salvages the disabled heavy nearest Ada within Talk range: it drops half its rolled Stardust
+ * and rolls for a heavy upgrade, then powers down, spared. Returns whether one was.
  */
 export function salvage(content: GameContent, flight: FlightState): boolean {
   const object = salvageTarget(content, flight);
@@ -5427,7 +5427,12 @@ export function salvage(content: GameContent, flight: FlightState): boolean {
   enemy.engaged = false;
   enemy.velocity = { x: 0, y: 0 };
   const next = dropRandom(flight.seed, `salvage:${object.id}`);
-  const drop = rollSalvageDrop(ECONOMY, flight.galaxy, enemy.archetype, next);
+  const drop = rollSalvageDrop(
+    ECONOMY,
+    { id: object.id, seed: flight.seed },
+    enemy.archetype,
+    next,
+  );
   releaseStardust(
     [],
     object,
@@ -5474,7 +5479,12 @@ function stepWrecks(
     }
     object.wreck.released = true;
     const next = dropRandom(flight.seed, object.id);
-    const drop = rollEnemyDrop(ECONOMY, flight.galaxy, object.wreck.archetype, next);
+    const drop = rollEnemyDrop(
+      ECONOMY,
+      { id: object.id, seed: flight.seed },
+      object.wreck.archetype,
+      next,
+    );
     releaseStardust(
       [],
       object,

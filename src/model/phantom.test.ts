@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
+import { carriesStardust } from "./drops.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import {
@@ -297,8 +298,13 @@ describe("Phantom chapter", () => {
     const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
     expect(choosePhantom(context, panel, "invalid")).toEqual({});
     expect(flagship.enemy!.salvaged).toBe(false);
+    const existing = new Set(context.flight.objects.map(({ id }) => id));
     expect(choosePhantom(context, panel, "continue")).toEqual({ complete: true, holodisk: {} });
     expect(flagship.enemy!.salvaged).toBe(true);
+    const released = context.flight.objects.filter(
+      (object) => !existing.has(object.id) && carriesStardust(object),
+    );
+    expect(released.reduce((sum, object) => sum + object.amount!, 0)).toBe(44);
     expect(state(context).allies).toEqual([]);
     expect(state(context).phase).toBe("salvaged");
   });

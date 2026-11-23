@@ -13,13 +13,7 @@ import {
   type UpgradeWeapon,
   weaponUpgradePrices,
 } from "../data/economy.ts";
-import {
-  type EnemyArchetype,
-  enemyCatalog,
-  enemyDefinition,
-  enemyStardust,
-  HEAVIES,
-} from "../data/enemyCatalog.ts";
+import { type EnemyArchetype, enemyCatalog, HEAVIES } from "../data/enemyCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
@@ -32,6 +26,7 @@ import { planChunk } from "./chunkTemplates.ts";
 import { type Parts, toScreen, worldParts } from "./convex.ts";
 import {
   dropRandom,
+  enemyStardust,
   rollEnemyDrop,
   rollRockAmmoDrop,
   rollSalvageDrop,
@@ -367,7 +362,12 @@ describe("guaranteed destruction loot", () => {
   it("keeps every enemy archetype and route position above zero without relying on an optional pickup roll", () => {
     for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-        const drop = rollEnemyDrop(ECONOMY, galaxy, archetype, () => 1);
+        const drop = rollEnemyDrop(
+          ECONOMY,
+          { id: `sample:${galaxy}`, seed: 11 },
+          archetype,
+          () => 1,
+        );
         expect(drop.stardust, `${galaxy}:${archetype}`).toBeGreaterThanOrEqual(1);
         expect(splitResourcePickup(drop.stardust).reduce((sum, amount) => sum + amount, 0)).toBe(
           drop.stardust,
@@ -410,7 +410,18 @@ describe("guaranteed destruction loot", () => {
     value.objects.push(target);
     value.shots.push(killShot(target));
     stepFlight(CONTENT, 1 / 60, idle, value);
+    model.state.flight = value;
+    const beforeRelease = restoreSave(model.save());
+    expect(beforeRelease).not.toBeNull();
+    expect(
+      beforeRelease!.flight!.objects.find((object) => object.kind === "wreck")?.wreck?.released,
+    ).toBeFalsy();
+    stepFlight(CONTENT, 0.15, idle, beforeRelease!.flight!);
     stepFlight(CONTENT, 0.15, idle, value);
+    expect(pickups(beforeRelease!.flight!)).toEqual(pickups(value));
+    expect(total(pickups(value))).toBe(
+      enemyStardust({ id: target.id, seed: value.seed }, "fighter"),
+    );
     const before = pickups(value).map((object) => object.id);
     expect(before.length).toBeGreaterThan(0);
     expect(value.objects.find((object) => object.kind === "wreck")?.wreck?.released).toBe(true);
@@ -423,66 +434,49 @@ describe("guaranteed destruction loot", () => {
 });
 
 describe("Stardust drops", () => {
-  it("releases the documented Stardust per destroyed enemy archetype at position 1", () => {
-    const expected: Record<EnemyArchetype, number> = {
-      capital: 28,
-      fighter: 2,
-      frigate: 12,
-      interceptor: 1,
-      platform: 8,
-      retaliator: 4,
-      swarm: 1,
+  it("reaches every approved galaxy-independent integer endpoint with even frequencies", () => {
+    const ranges = {
+      capital: [10, 20],
+      fighter: [2, 5],
+      frigate: [4, 10],
+      interceptor: [2, 5],
+      platform: [4, 10],
+      retaliator: [2, 5],
+      swarm: [1, 3],
     };
-    for (const [archetype, amount] of Object.entries(expected)) {
-      // A roll of 0.999 never meets the upgrade drop chance.
-      expect(rollEnemyDrop(ECONOMY, 1, archetype as EnemyArchetype, () => 0.999)).toEqual({
-        stardust: amount,
-        upgrade: false,
-      });
-    }
-  });
-
-  it("keeps heavy rewards independent of part HP and small-craft rewards tied to hull HP", () => {
-    const rewards = {
-      capital: [14, 33, 14, 22, 22, 33],
-      frigate: [6, 15, 6, 10, 10, 15],
-      platform: [4, 6, 4, 5, 5, 6],
-    };
-    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
-      for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-        const expected = HEAVIES.includes(archetype)
-          ? rewards[archetype as keyof typeof rewards][galaxy - 1]
-          : Math.max(1, Math.floor(enemyDefinition(galaxy, archetype).hp / 2));
-        expect(enemyStardust(galaxy, archetype)).toBe(expected);
+    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+      const [low, high] = ranges[archetype]!;
+      const counts = new Map<number, number>();
+      const samples = 4096;
+      for (let index = 0; index < samples; index++) {
+        const amount = enemyStardust({ id: `sample:${index}`, seed: 173 }, archetype);
+        counts.set(amount, (counts.get(amount) ?? 0) + 1);
+      }
+      expect([...counts.keys()].sort((a, b) => a - b)).toEqual(
+        Array.from({ length: high! - low! + 1 }, (_, index) => index + low!),
+      );
+      for (const count of counts.values()) {
+        expect(Math.abs(count / samples - 1 / counts.size)).toBeLessThan(0.025);
       }
     }
-    // Position 1 (gameplay/economy.md): a heavy's salvaged value; destroying it pays double.
-    expect(
-      Object.fromEntries(
-        (Object.keys(enemyCatalog) as EnemyArchetype[]).map((a) => [a, enemyStardust(1, a)]),
-      ),
-    ).toEqual({
-      capital: 14,
-      fighter: 2,
-      frigate: 6,
-      interceptor: 1,
-      platform: 4,
-      retaliator: 4,
-      swarm: 1,
-    });
   });
 
-  it("drops twice a destroyed heavy's Stardust and never an upgrade", () => {
+  it("shares one heavy roll between original and wreck IDs, flooring odd salvage payouts", () => {
+    let odd = 0;
     for (const archetype of HEAVIES) {
       for (let index = 0; index < 400; index++) {
-        expect(rollEnemyDrop(ECONOMY, 2, archetype, dropRandom(3, `h:${index}`))).toEqual({
-          stardust: enemyStardust(2, archetype) * 2,
-          upgrade: false,
-        });
+        const id = `h:${index}`;
+        const next = vi.fn(() => 0);
+        const destroyed = rollEnemyDrop(ECONOMY, { id: wreckId(id), seed: 3 }, archetype, next);
+        expect(next).not.toHaveBeenCalled();
+        expect(destroyed.upgrade).toBe(false);
+        const salvaged = rollSalvageDrop(ECONOMY, { id, seed: 3 }, archetype, next);
+        expect(next).toHaveBeenCalledOnce();
+        expect(salvaged).toEqual({ stardust: Math.floor(destroyed.stardust / 2), upgrade: true });
+        odd += destroyed.stardust % 2;
       }
     }
-    expect(rollEnemyDrop(ECONOMY, 1, "frigate", dropRandom(1, "f")).stardust).toBe(12);
-    expect(rollEnemyDrop(ECONOMY, 1, "capital", dropRandom(1, "c")).stardust).toBe(28);
+    expect(odd).toBeGreaterThan(0);
   });
 
   it.each([
@@ -496,9 +490,11 @@ describe("Stardust drops", () => {
     (galaxy, archetype) => {
       const draws = 200000;
       let dropped = 0;
+      const identity = { id: `route-fixture:${galaxy}`, seed: 11 };
+      const reward = enemyStardust(identity, archetype);
       for (let index = 0; index < draws; index++) {
-        const drop = rollEnemyDrop(ECONOMY, galaxy, archetype, dropRandom(11, `wreck:${index}`));
-        expect(drop.stardust).toBe(enemyStardust(galaxy, archetype));
+        const drop = rollEnemyDrop(ECONOMY, identity, archetype, dropRandom(11, `wreck:${index}`));
+        expect(drop.stardust).toBe(reward);
         dropped += drop.upgrade ? 1 : 0;
       }
       expect(Math.abs(dropped / draws - 0.0025)).toBeLessThan(0.0025 * 0.15);
@@ -515,15 +511,14 @@ describe("Stardust drops", () => {
     "drops an upgrade pickup from galaxy %i's %s 10% of the time when salvaged, never when destroyed",
     (galaxy, archetype) => {
       let dropped = 0;
+      const identity = { id: `route-fixture:${galaxy}`, seed: 5 };
+      const reward = enemyStardust(identity, archetype);
       for (let index = 0; index < 20000; index++) {
-        const salvaged = rollSalvageDrop(ECONOMY, galaxy, archetype, dropRandom(5, `s:${index}`));
-        expect(salvaged.stardust).toBe(enemyStardust(galaxy, archetype));
+        const salvaged = rollSalvageDrop(ECONOMY, identity, archetype, dropRandom(5, `s:${index}`));
+        expect(salvaged.stardust).toBe(Math.floor(reward / 2));
         dropped += salvaged.upgrade ? 1 : 0;
-        const destroyed = rollEnemyDrop(ECONOMY, galaxy, archetype, dropRandom(5, `d:${index}`));
-        expect(destroyed).toEqual({
-          stardust: enemyStardust(galaxy, archetype) * 2,
-          upgrade: false,
-        });
+        const destroyed = rollEnemyDrop(ECONOMY, identity, archetype, dropRandom(5, `d:${index}`));
+        expect(destroyed).toEqual({ stardust: reward, upgrade: false });
       }
       expect(Math.abs(dropped / 20000 - 0.1)).toBeLessThan(0.006);
     },
@@ -533,13 +528,20 @@ describe("Stardust drops", () => {
     expect(splitResourcePickup(0)).toEqual([]);
     expect(splitResourcePickup(1)).toEqual([1]);
     expect(splitResourcePickup(12)).toEqual([5, 5, 1, 1]);
-    const reward = enemyStardust(1, "capital") * 2;
+    const [min, max] = [10, 20];
+    const seed = 1;
+    const id = Array.from({ length: 64 }, (_, index) => `capital:${index}`).find(
+      (candidate) => enemyStardust({ id: candidate, seed }, "capital") === max,
+    )!;
+    expect(id).toBeDefined();
+    const reward = enemyStardust({ id, seed }, "capital");
+    expect(reward).toBeGreaterThanOrEqual(min);
     const pieces = splitResourcePickup(reward);
-    expect(pieces).toEqual([5, 5, 5, 5, 5, 1, 1, 1]);
+    expect(pieces).toEqual([5, 5, 5, 5]);
     expect(pieces.reduce((sum, amount) => sum + amount, 0)).toBe(reward);
   });
 
-  it("releases a destroyed retaliator as four pickups carrying 4 Stardust", () => {
+  it("releases a destroyed retaliator in bundles and singles for its keyed payout", () => {
     const value = flight();
     const target = enemy("retaliator", "retaliator", 500, 0);
     target.enemy!.hp = 1;
@@ -550,12 +552,15 @@ describe("Stardust drops", () => {
     stepFlight(CONTENT, 0.6, idle, value);
     const drop = rollEnemyDrop(
       ECONOMY,
-      value.galaxy,
+      { id: target.id, seed: value.seed },
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),
     );
-    expect(drop.stardust).toBe(4);
-    expect(pickups(value).map((object) => object.amount)).toEqual([1, 1, 1, 1]);
+    expect(drop.stardust).toBeGreaterThanOrEqual(2);
+    expect(drop.stardust).toBeLessThanOrEqual(5);
+    expect(pickups(value).map((object) => object.amount)).toEqual(
+      splitResourcePickup(drop.stardust),
+    );
   });
 
   it("adds ammo on its own roll for a destroyed fighter escort without changing Stardust", () => {
@@ -588,7 +593,7 @@ describe("Stardust drops", () => {
     expect(owned.stardust).toEqual(laserOnly.stardust);
     const rejected = destroy(formerWinner, ["multiLaser"]);
     expect(rejected.ammo).toEqual([]);
-    expect(total(rejected.stardust)).toBe(enemyStardust(1, "fighter"));
+    expect(total(rejected.stardust)).toBe(enemyStardust({ id: formerWinner, seed }, "fighter"));
   });
 
   it("breaks a destroyed enemy apart before it drops, instead of removing it at once", () => {
@@ -604,7 +609,9 @@ describe("Stardust drops", () => {
     expect(pickups(value)).toEqual([]);
     // Art's fighter timing: drops leave at 150 ms and the wreck is gone at 450 ms.
     stepFlight(CONTENT, 0.15, idle, value);
-    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
+    expect(total(pickups(value))).toBe(
+      enemyStardust({ id: target.id, seed: value.seed }, "fighter"),
+    );
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(true);
     for (const pickup of pickups(value)) {
       expect(pickup.release?.from).toEqual({ x: wreck!.x, y: wreck!.y });
@@ -614,7 +621,9 @@ describe("Stardust drops", () => {
     }
     stepFlight(CONTENT, 0.3, idle, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
-    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
+    expect(total(pickups(value))).toBe(
+      enemyStardust({ id: target.id, seed: value.seed }, "fighter"),
+    );
   });
 
   it("times each shard-drawn destruction from Art's destruction data", () => {
@@ -654,7 +663,9 @@ describe("Stardust drops", () => {
     stepFlight(CONTENT, 0.2, reduced, value);
     expect(pickups(value)).toEqual([]);
     stepFlight(CONTENT, 0.05, reduced, value);
-    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
+    expect(total(pickups(value))).toBe(
+      enemyStardust({ id: target.id, seed: value.seed }, "fighter"),
+    );
     const released = pickups(value);
     const spread = ECONOMY.destruction.fighter.reduced.spread;
     const spacing =
@@ -681,7 +692,7 @@ describe("Stardust drops", () => {
     expect(pickups(value).map(({ id, x, y }) => ({ id, x, y }))).toEqual(positions);
   });
 
-  it("destroys a heavy whose hull reaches 0 and drops twice its Stardust", () => {
+  it("destroys a heavy whose hull reaches 0 and drops its full rolled Stardust", () => {
     const value = flight();
     const frigate = enemy("frigate", "frigate", 600, 0);
     frigate.enemy!.hp = 0;
@@ -689,7 +700,9 @@ describe("Stardust drops", () => {
     stepFlight(CONTENT, 1 / 60, idle, value);
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
     stepFlight(CONTENT, 0.6, idle, value);
-    expect(total(pickups(value))).toBe(enemyStardust(1, "frigate") * 2);
+    expect(total(pickups(value))).toBe(
+      enemyStardust({ id: frigate.id, seed: value.seed }, "frigate"),
+    );
   });
 
   it("releases a huge asteroid's bounded combined loot where it breaks", () => {
