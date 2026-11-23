@@ -56,16 +56,6 @@ describe("Ship card", () => {
     expect(sections.cargo[2]!.label).toBe("Holodisks: 3 of 6");
   });
 
-  it("uses the same colour SVG equipment icons as the Shop", () => {
-    const { equipment } = shipSections(LABELS, VIEW);
-    expect(equipment[0].map(({ icon }) => icon)).toEqual([
-      { vector: "/art/ui/icons/icon-shop-engine-tuning.svg" },
-      { vector: "/art/ui/icons/icon-shop-shield.svg" },
-      { vector: "/art/ui/icons/icon-shop-tractor-beam.svg" },
-      { vector: "/art/ui/icons/icon-shop-ship-paint.svg" },
-    ]);
-  });
-
   it("lists Stardust and ore with exact grouped counts, then the holodisks, under Cargo", () => {
     const { cargo } = shipSections(LABELS, VIEW);
     expect(labels(cargo)).toEqual([
@@ -178,9 +168,12 @@ describe("Ship card", () => {
       "Level 3 of 3",
       undefined,
     ]);
-    expect(left.slice(0, 3).every((row) => "sprite" in row.icon && row.icon.frames === 2)).toBe(
-      true,
-    );
+    expect(left.map(({ icon }) => icon)).toEqual([
+      { vector: "/art/ui/icons/icon-shop-engine-tuning.svg" },
+      { vector: "/art/ui/icons/icon-shop-shield.svg" },
+      { vector: "/art/ui/icons/icon-shop-tractor-beam.svg" },
+      { vector: "/art/ui/icons/icon-shop-ship-paint.svg" },
+    ]);
     expect(right.map((row) => row.level)).toEqual(["Level 2 of 3", "Level 1 of 3"]);
     expect(right.map((row) => "mask" in row.icon)).toEqual([true, true]);
   });
