@@ -417,7 +417,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   exchangeCard.card.dataset.dialog = "exchange";
   exchangeCard.frame.hidden = true;
-  const exchange = createExchangeView(exchangeCard.body, options.exchange, () => render());
+  const exchange = createExchangeView(parent, exchangeCard.body, options.exchange, () => render());
 
   const confirmCard = createCard({
     closeAction: "confirm-cancel-x",

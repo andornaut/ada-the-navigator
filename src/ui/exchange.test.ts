@@ -66,7 +66,21 @@ const dom = vi.hoisted(() => {
     hidden = false;
     disabled = false;
     className = "";
-    textContent = "";
+    readonly classList = {
+      add: (name: string) => {
+        this.className = [...new Set([...this.className.split(" "), name])]
+          .filter(Boolean)
+          .join(" ");
+      },
+    };
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     value = "";
     focus = vi.fn();
     remove = vi.fn(() => {
@@ -130,6 +144,16 @@ const dom = vi.hoisted(() => {
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
+    removeAttribute(name: string) {
+      delete this.attributes[name];
+    }
+    toggleAttribute(name: string, on: boolean) {
+      if (on) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+    }
   }
   const state = { corruptFactory: false };
   return { Node, mountedRoots, state };
@@ -142,11 +166,6 @@ vi.mock("./modal.ts", async () => ({
     if (dom.state.corruptFactory) {
       node.append(new dom.Node("button"));
     }
-    return node;
-  },
-  createButton: (label: string) => {
-    const node = new dom.Node("button");
-    node.textContent = label;
     return node;
   },
 }));
@@ -175,7 +194,8 @@ function fixture(placement: "connected" | "detached" | "unowned" = "connected") 
     dom.mountedRoots.add(root);
   }
   const foreign = new dom.Node("button");
-  root.append(foreign);
+  const body = new dom.Node("section");
+  root.append(foreign, body);
   let balances = { ore: 20, stardust: 100 };
   const commit = vi.fn((order: ImmediateExchangeOrder) => {
     const result = previewImmediateExchange(balances, order);
@@ -188,6 +208,7 @@ function fixture(placement: "connected" | "detached" | "unowned" = "connected") 
   const onChange = vi.fn();
   const view = createExchangeView(
     root as unknown as HTMLElement,
+    body as unknown as HTMLElement,
     {
       exchangeImmediately: commit,
       preview: (order) => previewImmediateExchange(balances, order),
@@ -285,9 +306,10 @@ describe("immediate fixed Exchange actions", () => {
             ? `Spend ${amount * 2} Stardust to get ${amount} ore`
             : `Spend ${amount * 2} ore to get ${amount} Stardust`,
         );
-        expect(action.children).toHaveLength(1);
-        expect(action.children[0]!.tagName).toBe("IMG");
-        const receivedIcon = action.children[0] as unknown as HTMLImageElement;
+        expect(action.matches(".ui-standard-button")).toBe(true);
+        expect(action.children.map((child) => child.tagName)).toEqual(["SPAN", "IMG"]);
+        expect(action.children[0]!.textContent).toBe(String(amount));
+        const receivedIcon = action.children[1] as unknown as HTMLImageElement;
         expect(receivedIcon.src).toBe(uiIconUrl(`icon-${resource}-20`));
         expect(receivedIcon.alt).toBe("");
       }
@@ -332,7 +354,7 @@ describe("immediate fixed Exchange actions", () => {
   it("revalidates live balances rather than spending an old preview", () => {
     const f = fixture();
     const button = f.action("exchange-ore-10");
-    expect(button.getAttribute("aria-disabled")).toBe("false");
+    expect(button.getAttribute("aria-disabled")).toBeNull();
     f.setBalances({ ore: 20, stardust: 0 });
     f.click("exchange-ore-10");
     expect(f.commit).not.toHaveBeenCalled();

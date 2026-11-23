@@ -13,16 +13,11 @@ import {
   type ImmediateExchangeResult,
 } from "../model/exchange.ts";
 import { fill } from "../model/shop.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createButton } from "./modal.ts";
+import { createActions } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface ExchangePort {
   readonly exchangeImmediately: (order: ImmediateExchangeOrder) => ImmediateExchangeResult;
@@ -43,7 +38,12 @@ function exchangeIcon(resource: ExchangeResource): HTMLImageElement {
 }
 
 /** Fixed actions use live model validation and a single atomic transaction per activation. */
-export function createExchangeView(parent: HTMLElement, port: ExchangePort, onChange: () => void) {
+export function createExchangeView(
+  actionRoot: HTMLElement,
+  parent: HTMLElement,
+  port: ExchangePort,
+  onChange: () => void,
+) {
   const root = document.createElement("section");
   root.className = "ada-exchange";
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
@@ -51,8 +51,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
   status.setAttribute("role", "status");
   const containers = { ore: createActions([]), root, stardust: createActions([]) };
   let disposed = false;
-  const actions: { button: HTMLButtonElement; order: ImmediateExchangeOrder }[] = [];
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const actions: ReturnType<typeof createStandardTextAction>[] = [];
   const refusal = (value: ImmediateExchangePreview | ImmediateExchangeResult): string =>
     value.kind !== "refused"
       ? ""
@@ -86,10 +85,8 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
       : { kind: "omitted" };
   };
   const render = () => {
-    for (const { button, order } of actions) {
-      const state = availability(order);
-      button.disabled = state.kind === "omitted";
-      button.setAttribute("aria-disabled", String(state.kind === "unavailable"));
+    for (const action of actions) {
+      action.refresh();
     }
   };
   const reportRefusal = (reason: string) => {
@@ -116,8 +113,18 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
         action: {
           create(initial) {
             const order = initial;
-            const button = createButton(String(order.amount));
-            button.className += " ada-exchange-amount";
+            const action = createStandardTextAction(actionRoot, String(order.amount), {
+              availability: () => {
+                const state = availability(order);
+                return state.kind === "omitted" ? { kind: "disabled" } : state;
+              },
+              current: (): boolean =>
+                !disposed && !root.hidden && inCurrentView(parent, action.element),
+              refuse: reportRefusal,
+              run: (): void => execute(action.element, order),
+            });
+            const button = action.element;
+            button.classList.add("ada-exchange-amount");
             const give = resourceName[paymentFor(order.resource)];
             const receive = resourceName[order.resource];
             const cost = IMMEDIATE_EXCHANGE_UNIT_COST * order.amount;
@@ -126,21 +133,7 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
             button.title = label;
             button.append(exchangeIcon(order.resource));
             button.dataset.action = `exchange-${order.resource}-${order.amount}`;
-            const binding = bindAdaAction(
-              {
-                click: {
-                  availability: () => availability(order),
-                  refuse: reportRefusal,
-                  run: () => execute(button, order),
-                },
-                current: () => !disposed && !root.hidden && inCurrentView(parent, button),
-                ownAriaDisabled: "refusal-feedback",
-                slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-              },
-              button,
-            );
-            actions.push({ button, order });
-            bindings.push(binding);
+            actions.push(action);
             return { dispose() {}, element: button, slots: {}, update() {} };
           },
           slots: [],
@@ -205,10 +198,10 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     audit();
   } catch (error) {
     disposed = true;
-    for (const binding of bindings) {
-      binding.dispose();
+    for (const action of actions) {
+      action.dispose();
     }
-    bindings.length = 0;
+    actions.length = 0;
     mounted.dispose();
     throw error;
   }
@@ -217,10 +210,10 @@ export function createExchangeView(parent: HTMLElement, port: ExchangePort, onCh
     back: () => false,
     dispose() {
       disposed = true;
-      for (const binding of bindings) {
-        binding.dispose();
+      for (const action of actions) {
+        action.dispose();
       }
-      bindings.length = 0;
+      actions.length = 0;
       mounted.dispose();
     },
     isConfirming: () => false,

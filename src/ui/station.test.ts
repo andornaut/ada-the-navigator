@@ -861,7 +861,11 @@ function constructedStation(
     createActions: actions,
     createCard: parts,
     createDialoguePanel: parts,
-    createExchangeView: (host: InstanceType<typeof Node>) => {
+    createExchangeView: (
+      actionRoot: InstanceType<typeof Node>,
+      host: InstanceType<typeof Node>,
+    ) => {
+      expect(actionRoot).toBe(parent);
       const root = new Node("section", false);
       host.append(root);
       return { back: () => false, dispose: () => root.remove(), render: vi.fn(), root };
