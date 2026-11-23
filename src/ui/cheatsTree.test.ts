@@ -6,6 +6,10 @@ import { cheatsTree } from "./cheatsTree.ts";
 it("builds separate typed slots for the equal grant pair and footer", () => {
   const tree = cheatsTree("Back", [
     { id: "selectiveReset", label: "Selective" },
+    { id: "maxWeaponLevels", label: "Maximize weapon levels" },
+    { id: "unlockAllWeapons", label: "Unlock all weapons" },
+    { id: "unlockAllEquipment", label: "Unlock all equipment" },
+    { id: "unlockAllGalaxies", label: "Unlock all galaxies" },
     { id: "addOre", label: "Add ore" },
     { id: "addStardust", label: "Add Stardust" },
   ]);
@@ -23,7 +27,17 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
     component: "layout",
     slots: {
       columns: [
-        { component: "column", key: "progression" },
+        {
+          component: "column",
+          key: "progression",
+          slots: {
+            rows: [
+              { key: "unlockAllEquipment" },
+              { key: "unlockAllGalaxies" },
+              { key: "unlockAllWeapons" },
+            ],
+          },
+        },
         {
           component: "column",
           key: "tools",
@@ -33,6 +47,7 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
                 component: "grants",
                 slots: { buttons: [{ key: "addStardust" }, { key: "addOre" }] },
               },
+              { component: "action", key: "maxWeaponLevels" },
               { component: "action", key: "selectiveReset" },
             ],
           },

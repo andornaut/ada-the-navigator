@@ -1973,6 +1973,7 @@ try {
           columns: columns.map((column) => ({
             box: box(column),
             ids: [...column.querySelectorAll("[data-cheat]")].map((node) => node.dataset.cheat),
+            rows: [...column.querySelectorAll(".ada-cheat-rows > *")].map(box),
           })),
           grants: [...dialog.querySelectorAll(".ada-cheat-grants button")].map((node) => ({
             box: box(node),
@@ -1989,9 +1990,17 @@ try {
         "unlockAllEquipment",
         "unlockAllGalaxies",
         "unlockAllWeapons",
-        "maxWeaponLevels",
       ]);
-      assert.deepEqual(right.ids, ["addStardust", "addOre", "selectiveReset"]);
+      assert.deepEqual(right.ids, ["addStardust", "addOre", "maxWeaponLevels", "selectiveReset"]);
+      assert.equal(left.rows.length, 3, name);
+      assert.equal(right.rows.length, 3, name);
+      for (const [index, row] of left.rows.entries()) {
+        assert.ok(
+          Math.abs(row.top - right.rows[index].top) < 1 &&
+            Math.abs(row.height - right.rows[index].height) < 1,
+          name,
+        );
+      }
       assert.ok(!layout.scrolls && left.box.right < right.box.left, name);
       assert.ok(Math.abs(left.box.width - right.box.width) < 1, name);
       assert.deepEqual(

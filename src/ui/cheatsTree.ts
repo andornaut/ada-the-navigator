@@ -17,7 +17,6 @@ const progressionIds = [
   "unlockAllEquipment",
   "unlockAllGalaxies",
   "unlockAllWeapons",
-  "maxWeaponLevels",
 ] as const;
 const grantIds = ["addStardust", "addOre"] as const;
 
@@ -66,6 +65,7 @@ export function cheatsTree(
                     } as const,
                   ]
                 : []),
+              ...row("maxWeaponLevels"),
               ...row("selectiveReset"),
             ],
           },

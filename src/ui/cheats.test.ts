@@ -302,14 +302,14 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     "unlockAllEquipment",
     "unlockAllGalaxies",
     "unlockAllWeapons",
-    "maxWeaponLevels",
   ]);
   expect(descendants(right!).flatMap((node) => node.dataset.cheat ?? [])).toEqual([
     "addStardust",
     "addOre",
+    "maxWeaponLevels",
     "selectiveReset",
   ]);
-  const [grants, selectiveButton] = right!.children[1]!.children;
+  const [grants, maximizeButton, selectiveButton] = right!.children[1]!.children;
   const [dustButton, addButton] = grants!.children;
   const unlockButton = left!.children[1]!.children[0]!;
   for (const [button, resource, label] of [
@@ -323,6 +323,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
       `url('/art/ui/icons/icon-${resource}-20.svg')`,
     );
   }
+  expect(maximizeButton!.dataset.cheat).toBe("maxWeaponLevels");
   expect(selectiveButton!.tagName).toBe("BUTTON");
   expect(selectiveButton!.textContent).toBe(CHEAT_COPY.selectiveReset);
   const footer = nodes.find((node) => node.dataset.footerAction === "back")!;
