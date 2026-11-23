@@ -16,10 +16,11 @@ const pilot = { ...idle, move: { x: 1, y: 0 }, throttle: 0.25 };
 
 function fixture(kind: "resources" | "salvage") {
   const world = { worldSide: GALAXY_SIDE };
+  const galaxy = kind === "resources" ? 1 : 5;
   for (let seed = 1; seed <= 64; seed++) {
     const candidate = proceduralPoisNear(
       { ...world, opportunityEligibility: { jobTemplates: [] } },
-      1,
+      galaxy,
       seed,
       TARGET_MARKER_RANGE,
       { x: 0, y: 0 },
@@ -28,10 +29,11 @@ function fixture(kind: "resources" | "salvage") {
       continue;
     }
     const model = new GameModel(CONTENT);
-    const progress = model.state.progress[1];
+    const progress = model.state.progress[galaxy];
     progress.geography = { seed, sitePolicy: "seeded", version: 1 };
     model.state.prologueSeen = true;
-    model.startGalaxy(1);
+    model.state.unlocked = [1, 5];
+    model.startGalaxy(galaxy);
     const flight = model.state.flight!;
     expect(flight.topology?.side).toBe(GALAXY_SIDE);
     flight.player = { x: candidate.x - CONTENT.tuning.talkRange * 2, y: candidate.y };
