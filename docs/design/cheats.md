@@ -5,9 +5,13 @@ The user approved this list on 2026-11-18, with cheats that never touch the save
 
 Choose **Cheats** directly from Menu or Pause in a browser tab or installed
 app. The modal fits two columns without scrolling. Progression actions are on
-the left. The FPS counter, resource grants, and reset rows are on the right.
+the left. Resource grants and reset rows are on the right.
 The centered primary **Back** button and top-right X return to the invoking
 Menu or Pause and restore focus to **Cheats**.
+
+The session-only **FPS counter** switch is at the top of the right column in
+Settings. Its readout stays at the bottom right of the device viewport, inside
+the safe area and above the game and letterbox bands.
 
 ## Cheat session
 
@@ -46,10 +50,8 @@ play ends it.
 
 These are not cheats and start no cheat session.
 
-- **FPS counter** toggles a frames-per-second readout, Off by default. When On,
-  it shows in the bottom-right corner of the device viewport, inset from the
-  safe area and drawn above everything, letterbox bands included, so on a wide
-  phone it can sit in a band. It is a display toggle, not part of the save.
+- **Show tips again** resets tutorial tip visibility without starting a cheat
+  session.
 - **Reset jobs, projects & quests** asks for confirmation before rewinding the
   stored campaign to the Earth opening of Sunflower and relocking later galaxies.
   It clears jobs, project funding and reveals, story progress, and holodisks.

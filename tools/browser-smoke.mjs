@@ -1992,9 +1992,9 @@ try {
         "maxWeaponLevels",
       ]);
       assert.deepEqual(right.ids, [
-        "fpsCounter",
         "addStardust",
         "addOre",
+        "showTipsAgain",
         "selectiveReset",
         "resetSave",
       ]);
@@ -2049,40 +2049,6 @@ try {
   }
   await waitForRest(await position());
   const cheatsProof = () => page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
-  // Keep the FPS icon ink check independent of the retired scrolling layout.
-  await seedOnce(safeSerialized, "ada-browser.cheats-proofs.v1");
-  await openPause();
-  await page.locator('[data-action="pause-cheats"]').click();
-  const { SETTING_ICON_INK_TOP } = await import(
-    new URL("../src/ui/settingsIcons.ts", import.meta.url)
-  );
-  await proofsAt("cheats-fps-ink", async (_insets, _view, name) => {
-    const fpsInk = await cheatsProof().evaluate((dialog, iconInkTop) => {
-      const row = dialog.querySelector('[data-cheat="fpsCounter"]');
-      const caption = row.querySelector(".ada-setting-text").firstElementChild;
-      const icon = row.querySelector(".ada-icon");
-      const unit = Number(
-        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
-      );
-      const style = getComputedStyle(caption);
-      const measure = document.createElement("canvas").getContext("2d");
-      measure.font = style.font;
-      const metrics = measure.measureText(caption.textContent);
-      const box = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
-      const baseline =
-        caption.getBoundingClientRect().top +
-        (parseFloat(style.lineHeight) - box) / 2 +
-        metrics.fontBoundingBoxAscent;
-      return {
-        icon: icon.getBoundingClientRect().top / unit + iconInkTop,
-        label: (baseline - metrics.actualBoundingBoxAscent) / unit,
-      };
-    }, SETTING_ICON_INK_TOP.get("icon-fps-counter"));
-    assert.ok(
-      Math.abs(fpsInk.icon - fpsInk.label) <= 1,
-      `${name}: FPS icon ink aligns with the label: ${JSON.stringify(fpsInk)}`,
-    );
-  });
   // The Reset save confirm, over Cheats, in its own fresh fixture: Cancel and Reset, then Cancel
   // back to Cheats.
   await seedOnce(safeSerialized, "ada-browser.cheats-reset-proof.v1");
@@ -2132,16 +2098,56 @@ try {
   await page.locator('[data-action="pause-cheats"]:focus').waitFor();
   await resumeIfPaused();
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
-  // The FPS counter, in a fresh fixture: Off by default, then in the device viewport's
-  // bottom-right corner, 8 px inside the game's safe-area insets and above every game layer.
+  // The FPS counter starts Off in Settings and paints above the game's layers.
   await openPause();
-  await page.locator('[data-action="pause-cheats"]').click();
-  const fpsSwitch = page.getByRole("switch", { name: CHEAT_COPY.fpsCounter, exact: true });
+  await page.locator('[data-action="pause-settings"]').click();
+  const { FPS_COUNTER_LABEL } = await import(
+    new URL("../src/data/settingsCopy.ts", import.meta.url)
+  );
+  const fpsSwitch = page.getByRole("switch", { name: FPS_COUNTER_LABEL, exact: true });
+  const { SETTING_ICON_INK_TOP } = await import(
+    new URL("../src/ui/settingsIcons.ts", import.meta.url)
+  );
+  await proofsAt("settings-fps-ink", async (_insets, _view, name) => {
+    const fpsInk = await fpsSwitch.evaluate((row, iconInkTop) => {
+      const caption = row.querySelector(".ada-setting-text").firstElementChild;
+      const icon = row.querySelector(".ada-icon");
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      const style = getComputedStyle(caption);
+      const measure = document.createElement("canvas").getContext("2d");
+      measure.font = style.font;
+      const metrics = measure.measureText(caption.textContent);
+      const box = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+      const baseline =
+        caption.getBoundingClientRect().top +
+        (parseFloat(style.lineHeight) - box) / 2 +
+        metrics.fontBoundingBoxAscent;
+      return {
+        icon: icon.getBoundingClientRect().top / unit + iconInkTop,
+        label: (baseline - metrics.actualBoundingBoxAscent) / unit,
+      };
+    }, SETTING_ICON_INK_TOP.get("icon-fps-counter"));
+    assert.ok(
+      Math.abs(fpsInk.icon - fpsInk.label) <= 1,
+      `${name}: FPS icon ink aligns with the label: ${JSON.stringify(fpsInk)}`,
+    );
+  });
+  assert.equal(
+    await fpsSwitch.evaluate(
+      (row) =>
+        row.parentElement.dataset.settingsColumn === "right" &&
+        row.parentElement.firstElementChild === row,
+    ),
+    true,
+    "The FPS counter is the first switch in the right column",
+  );
   assert.equal(await fpsSwitch.getAttribute("aria-checked"), "false", "The FPS counter starts Off");
   await fpsSwitch.click();
   assert.equal(await fpsSwitch.getAttribute("aria-checked"), "true");
-  await page.locator('[data-action="dismiss-cheats"]').click();
-  await page.locator('[data-action="pause-cheats"]:focus').waitFor();
+  await page.locator('[data-action="settings-close"]').click();
+  await page.locator('[data-action="pause-settings"]:focus').waitFor();
   await resumeIfPaused();
   const fpsCounter = page.locator("#app > .ada-fps");
   await fpsCounter.waitFor({ state: "visible" });

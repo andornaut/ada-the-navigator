@@ -2,7 +2,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CONTENT } from "../data/content.ts";
-import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
+import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   assertAdaActionBindings,
@@ -12,7 +12,6 @@ import {
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
-  type DeviceSetting,
   pageStorage,
   prefersReducedMotion,
   readDeviceSettings,
@@ -25,11 +24,7 @@ import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
 import { NAVIGATION_DISCS } from "./layout/navigationButton.ts";
 import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
-import {
-  SETTINGS_OUTER_PADDING,
-  SETTINGS_TITLE_INK_TOP,
-  settingsColumns,
-} from "./layout/settings.ts";
+import { SETTINGS_TITLE_INK_TOP, settingsColumns } from "./layout/settings.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
@@ -47,7 +42,12 @@ import {
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
-import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
+import {
+  type SettingsLayoutSchema,
+  type SettingsNative,
+  type SettingsSwitch,
+  settingsTree,
+} from "./settingsTree.ts";
 import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
@@ -88,6 +88,7 @@ export type InstallSteps = Readonly<
 export interface SettingsOptions {
   // The build's version and commit (src/buildLabel.ts), the card's last line.
   readonly build: string;
+  readonly fpsCounter: { readonly shown: () => boolean; readonly set: (on: boolean) => void };
   // The Install row's install functions and each menu browser's steps; without them no row.
   readonly install?: { readonly port: InstallPort; readonly steps: InstallSteps } | undefined;
   readonly labels: SettingsLabels;
@@ -235,7 +236,7 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   white-space:nowrap;
   text-align:center
 }
-/* Every switch row, in Settings and Cheats: the switch over its On or Off state, and the row icon
+/* Every Settings switch row: the switch over its current state, and the row icon
    level with the label's ink. */
 .ada-controls .ada-setting-toggle{
   display:flex;
@@ -253,8 +254,10 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
     var(--setting-title-ink-top,${units(SETTINGS_TITLE_INK_TOP)}) - var(--setting-icon-ink-top,0px)
   )
 }
+.ada-controls [data-dialog=settings] .ada-card-body{
+  gap:${units(SPACING.rowGap)}
+}
 .ada-controls [data-dialog=settings] .ada-settings-rows{
-  padding:0 ${units(SETTINGS_OUTER_PADDING - SPACING.panelPadding)};
   box-sizing:border-box;
   grid-auto-rows:max-content;
   align-self:stretch
@@ -366,9 +369,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const visibility = () => ({ aim: settings.aim, move: settings.move });
   const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });
   // A control row, as in Chibi: icon, label (and note) and switch; the whole row is the switch.
-  const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
+  const switchRow = (setting: SettingsSwitch, label: string, note?: string) => {
     const { row, show } = createSwitchRow({
-      align: note ? "top" : "center",
+      align: "top",
       icon: settingsIcon(SETTING_ICONS[setting]),
       id: setting,
       label,
@@ -384,8 +387,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     toggleStack.className = "ada-setting-toggle";
     toggleStack.append(toggle, currentState);
     row.append(toggleStack);
+    const isOn = () => (setting === "fpsCounter" ? options.fpsCounter.shown() : settings[setting]);
     const update = () => {
-      const on = settings[setting];
+      const on = isOn();
       show(on);
       currentState.textContent =
         setting === "aim" || setting === "move"
@@ -398,6 +402,12 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     };
     update();
     registerAction(row, () => {
+      if (setting === "fpsCounter") {
+        options.fpsCounter.set(!isOn());
+        update();
+        fitSettings();
+        return;
+      }
       settings[setting] = !settings[setting];
       update();
       writeSetting(storage, setting, settings[setting]);
@@ -418,6 +428,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   rightColumn.dataset.settingsColumn = "right";
   const switches = {
     aim: switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
+    fpsCounter: switchRow("fpsCounter", FPS_COUNTER_LABEL),
     move: switchRow("move", options.labels.moveControls, options.labels.controlsNote),
     reducedMotion: switchRow(
       "reducedMotion",

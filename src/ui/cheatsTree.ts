@@ -3,9 +3,7 @@ import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 
 /** One actionable row supplied by the game. */
-export type CheatRowData =
-  | { readonly id: string; readonly kind: "action"; readonly label: string }
-  | { readonly id: string; readonly kind: "switch"; readonly label: string };
+export type CheatRowData = { readonly id: string; readonly label: string };
 
 export type CheatsSchema = {
   layout: { props: Record<string, never>; slots: "columns" | "footer" };
@@ -13,7 +11,6 @@ export type CheatsSchema = {
   grants: { props: Record<string, never>; slots: "buttons" };
   footer: { props: { readonly label: string }; slots: never };
   action: { props: { readonly id: string; readonly label: string }; slots: never };
-  switch: { props: { readonly id: string; readonly label: string }; slots: never };
 };
 
 const progressionIds = [
@@ -33,7 +30,7 @@ export function cheatsTree(
   const row = (id: string): LayoutNode<CheatsSchema>[] => {
     const data = byId.get(id);
     return data
-      ? [{ component: data.kind, key: id, kind: "component", props: { id, label: data.label } }]
+      ? [{ component: "action", key: id, kind: "component", props: { id, label: data.label } }]
       : [];
   };
   const buttons = grantIds.flatMap(row);
@@ -58,7 +55,6 @@ export function cheatsTree(
           props: { title: CHEAT_COPY.resourcesAndTools },
           slots: {
             rows: [
-              ...row("fpsCounter"),
               ...(buttons.length
                 ? [
                     {
@@ -70,6 +66,7 @@ export function cheatsTree(
                     } as const,
                   ]
                 : []),
+              ...row("showTipsAgain"),
               ...row("selectiveReset"),
               ...row("resetSave"),
             ],

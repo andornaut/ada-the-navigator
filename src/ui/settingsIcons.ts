@@ -1,11 +1,12 @@
 import type { InstallStepsKind } from "../pwa/index.ts";
-import type { DeviceSetting } from "./deviceSettings.ts";
 import { units } from "./layout/css.ts";
+import type { SettingsSwitch } from "./settingsTree.ts";
 
 // Art's Settings icons use 16 by 16 frames, drawn at their own size in each row.
 
-export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> = {
+export const SETTING_ICONS: Readonly<Record<SettingsSwitch | "install", string>> = {
   aim: "icon-aim-controls",
+  fpsCounter: "icon-fps-counter",
   install: "icon-install",
   move: "icon-move-controls",
   reducedMotion: "icon-reduced-motion",
@@ -20,7 +21,7 @@ export const SETTING_ICON_INK_TOP: ReadonlyMap<string, number> = new Map([
   [SETTING_ICONS.move, 0.84],
   [SETTING_ICONS.reducedMotion, 2.44],
   [SETTING_ICONS.sound, 2.04],
-  ["icon-fps-counter", 1.64],
+  [SETTING_ICONS.fpsCounter, 1.64],
 ]);
 
 // The glyph of the button each browser's install steps start from, as in Chibi: Share on Apple

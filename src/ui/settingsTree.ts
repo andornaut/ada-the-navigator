@@ -3,7 +3,8 @@ import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import type { DeviceSetting } from "./deviceSettings.ts";
 import { settingsColumnArrangement } from "./layout/settings.ts";
 
-export type SettingsNative = DeviceSetting | "actions" | "build" | "divider" | "install";
+export type SettingsSwitch = DeviceSetting | "fpsCounter";
+export type SettingsNative = SettingsSwitch | "actions" | "build" | "divider" | "install";
 export type SettingsLayoutSchema = {
   settings: { props: Record<string, never>; slots: "body" };
   column: { props: "left" | "right"; slots: "rows" };
@@ -38,9 +39,7 @@ export function settingsTree(data: SettingsLayoutData): LayoutNode<SettingsLayou
               key: "left",
               kind: "component",
               props: "left",
-              slots: {
-                rows: [native("move"), native("aim"), ...(data.install ? [native("install")] : [])],
-              },
+              slots: { rows: [native("move"), native("aim"), native("sound")] },
             },
             native("divider"),
             {
@@ -48,7 +47,13 @@ export function settingsTree(data: SettingsLayoutData): LayoutNode<SettingsLayou
               key: "right",
               kind: "component",
               props: "right",
-              slots: { rows: [native("sound"), native("reducedMotion")] },
+              slots: {
+                rows: [
+                  native("fpsCounter"),
+                  native("reducedMotion"),
+                  ...(data.install ? [native("install")] : []),
+                ],
+              },
             },
           ],
           key: "rows",

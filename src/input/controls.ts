@@ -38,7 +38,7 @@ import {
 import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
-import { type CheatLabels, type CheatSwitch, createCheats } from "../ui/cheats.ts";
+import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
@@ -95,11 +95,12 @@ export interface ControlsOptions {
   readonly cheats: {
     readonly labels: CheatLabels;
     readonly onOpenChange?: (open: boolean) => void;
-    readonly rows: readonly (CheatAction | CheatSwitch)[];
+    readonly rows: readonly CheatAction[];
   };
   // The start screen's Exit where the game offers to leave (exitShown), or undefined where it
   // does not, which makes no Exit at all.
   readonly exit?: { readonly label: string; readonly onExit: () => void } | undefined;
+  readonly fpsCounter: SettingsOptions["fpsCounter"];
   readonly install?: SettingsOptions["install"];
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
@@ -236,6 +237,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let menuContext: "start" | "nonplay" = "nonplay";
   const settings = createSettings(parent, {
     build: BUILD_LABEL,
+    fpsCounter: options.fpsCounter,
     install: options.install,
     labels: options.labels,
     onFeedbackChange(value) {

@@ -4,7 +4,7 @@ import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import type { CheatAction } from "./cheatActions.ts";
-import { type CheatSwitch, createCheats } from "./cheats.ts";
+import { createCheats } from "./cheats.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
@@ -218,7 +218,7 @@ afterEach(() => {
 });
 
 function setup(
-  rows: readonly (CheatAction | CheatSwitch)[] = [],
+  rows: readonly CheatAction[] = [],
   hold = false,
   placement: "connected" | "detached" | "unowned" = "connected",
 ) {
@@ -284,10 +284,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   const dust = { ...action("addStardust"), label: "Add 1,000 Stardust" };
   const reset = action("resetSave");
   const selective = action("selectiveReset", 1);
-  let fps = false;
-  const set = vi.fn((on: boolean) => {
-    fps = on;
-  });
+  const tips = { ...action("showTipsAgain", 1), label: CHEAT_COPY.showTipsAgain };
   const f = setup([
     ore,
     action("unlockAllWeapons"),
@@ -297,8 +294,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     unlock,
     reset,
     { ...selective, label: CHEAT_COPY.selectiveReset },
-    action("showTipsAgain"),
-    { id: "fpsCounter", isOn: () => fps, label: "FPS counter", set },
+    tips,
   ]);
   const nodes = descendants(f.root);
   const list = nodes.find((node) => node.className === "ada-cheat-items")!;
@@ -313,13 +309,13 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     "maxWeaponLevels",
   ]);
   expect(descendants(right!).flatMap((node) => node.dataset.cheat ?? [])).toEqual([
-    "fpsCounter",
     "addStardust",
     "addOre",
+    "showTipsAgain",
     "selectiveReset",
     "resetSave",
   ]);
-  const [fpsRow, grants, selectiveButton, resetButton] = right!.children[1]!.children;
+  const [grants, tipsButton, selectiveButton, resetButton] = right!.children[1]!.children;
   const [dustButton, addButton] = grants!.children;
   const unlockButton = left!.children[1]!.children[0]!;
   for (const [button, resource, label] of [
@@ -352,14 +348,12 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   addButton!.dispatchEvent(new Event("click"));
   expect(ore.run).toHaveBeenCalledTimes(2);
   expect(addButton!.disabled).toBe(false);
-  // The FPS counter's switch row shows its setting icon, keyed outside the device settings.
-  const icon = fpsRow!.children.find((node) => node.className === "ada-icon")!;
-  expect(icon.dataset.icon).toBe("icon-fps-counter");
-  expect(icon.style.backgroundImage).toBe("url('/art/ui/icons/icon-fps-counter.svg')");
-  expect(fpsRow!.getAttribute("aria-checked")).toBe("false");
-  fpsRow!.dispatchEvent(new Event("click"));
-  expect(set).toHaveBeenCalledExactlyOnceWith(true);
-  expect(fpsRow!.getAttribute("aria-checked")).toBe("true");
+  expect(tipsButton!.textContent).toBe(CHEAT_COPY.showTipsAgain);
+  tipsButton!.dispatchEvent(new Event("click"));
+  expect(tips.run).toHaveBeenCalledOnce();
+  expect(tipsButton!.disabled).toBe(true);
+  tipsButton!.dispatchEvent(new Event("click"));
+  expect(tips.run).toHaveBeenCalledOnce();
   dustButton!.dispatchEvent(new Event("click"));
   expect(dust.run).toHaveBeenCalledOnce();
   selectiveButton!.dispatchEvent(new Event("click"));

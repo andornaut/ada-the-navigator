@@ -2,7 +2,6 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
-import { SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -12,17 +11,9 @@ import { type CheatAction, runCheatAction } from "./cheatActions.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import {
-  createActions,
-  createButton,
-  createCard,
-  createSwitchRow,
-  setFooterAction,
-} from "./modal.ts";
+import { createActions, createButton, createCard, setFooterAction } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
-import { settingsIcon } from "./settingsIcons.ts";
-import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 
 export interface CheatLabels {
   readonly back: string;
@@ -30,22 +21,10 @@ export interface CheatLabels {
   readonly title: string;
 }
 
-/** The FPS counter's switch row: a display toggle, not part of the save. */
-export interface CheatSwitch {
-  readonly id: string;
-  readonly label: string;
-  readonly isOn: () => boolean;
-  readonly set: (on: boolean) => void;
-}
-
 interface CheatOptions {
-  readonly rows: readonly (CheatAction | CheatSwitch)[];
+  readonly rows: readonly CheatAction[];
   readonly labels: CheatLabels;
   readonly onOpenChange: (open: boolean) => void;
-}
-
-function isSwitch(row: CheatAction | CheatSwitch): row is CheatSwitch {
-  return "set" in row;
 }
 
 /** The Cheats card owns its actions. Navigation owns the entry and return focus. */
@@ -59,16 +38,8 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
     size: "large",
     title: options.labels.title,
   });
-  const { body, card, close, frame } = parts;
+  const { body, card, close, fit, frame } = parts;
   card.className += " ada-cheats-card";
-  // The FPS counter row's icon follows its label's ink, as every switch row's does.
-  const inkMeasure = createInkMeasure();
-  const fit = () => {
-    parts.fit();
-    if (!modal.hidden) {
-      alignSwitchRowIcons(inkMeasure, body.querySelectorAll<HTMLElement>(".ada-row[role=switch]"));
-    }
-  };
   const dismiss = createButton(options.labels.back, "primary");
   dismiss.dataset.action = "dismiss-cheats";
   const footer = createActions([{ button: dismiss, role: "primary" }]);
@@ -89,7 +60,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   );
   const rows = new Map(options.rows.map((row) => [row.id, row]));
   const buttons = new Map<HTMLButtonElement, CheatAction>();
-  const switches: (() => void)[] = [];
   const bindRow = (element: HTMLButtonElement, run: () => void, enabled: () => boolean) =>
     bindAdaAction(
       {
@@ -196,52 +166,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
           },
           slots: ["columns", "footer"],
         },
-        switch: {
-          create(data) {
-            const toggle = rows.get(data.id) as CheatSwitch;
-            const { row, show } = createSwitchRow({
-              align: "center",
-              // The FPS counter is a display toggle, not a DeviceSetting, so its icon is keyed here.
-              icon: settingsIcon("icon-fps-counter"),
-              id: data.id,
-              label: data.label,
-            });
-            row.dataset.cheat = data.id;
-            const state = document.createElement("span");
-            state.className = "ada-setting-state";
-            state.setAttribute("aria-hidden", "true");
-            const stack = document.createElement("span");
-            stack.className = "ada-setting-toggle";
-            stack.append(row.lastElementChild!, state);
-            row.append(stack);
-            const paint = () => {
-              show(toggle.isOn());
-              state.textContent = toggle.isOn()
-                ? SETTINGS_STATE_LABELS.on
-                : SETTINGS_STATE_LABELS.off;
-            };
-            paint();
-            switches.push(paint);
-            const binding = bindRow(
-              row,
-              () => {
-                toggle.set(!toggle.isOn());
-                paint();
-              },
-              () => true,
-            );
-            return {
-              dispose() {
-                binding.dispose();
-                switches.splice(switches.indexOf(paint), 1);
-              },
-              element: row,
-              slots: {},
-              update() {},
-            };
-          },
-          slots: [],
-        },
       },
       host: card,
     },
@@ -249,7 +173,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
       options.labels.back,
       options.rows.map((row): CheatRowData => ({
         id: row.id,
-        kind: isSwitch(row) ? "switch" : "action",
         label: row.label,
       })),
     ),
@@ -293,9 +216,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   function refresh(): void {
     for (const [button, action] of buttons) {
       button.disabled = !action.available();
-    }
-    for (const paint of switches) {
-      paint();
     }
   }
   try {

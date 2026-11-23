@@ -1259,10 +1259,10 @@ or replay rewards.
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
+- Settings: FPS counter (On or Off), Off by default for each session.
 - Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
-  with the action labels in [Cheats](../docs/design/cheats.md), Show tips again, FPS counter
-  (On or Off), Reset save and Close. Reset save card: Reset save? with Reset and
-  Cancel.
+  with the action labels in [Cheats](../docs/design/cheats.md), Show tips again,
+  Reset save and Close. Reset save card: Reset save? with Reset and Cancel.
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,

@@ -584,10 +584,10 @@ export function buildScene(scene: UiContext): void {
         ...CHEAT_IDS.map(cheat),
         // Not cheats: they start no session (gameplay/cheats.md "Other actions").
         {
-          id: "fpsCounter",
-          isOn: () => scene.fpsCounter.shown(),
-          label: CHEAT_COPY.fpsCounter,
-          set: (on) => scene.fpsCounter.set(on),
+          available: () => !scene.cheatSession.ending,
+          id: "showTipsAgain",
+          label: CHEAT_COPY.showTipsAgain,
+          run: () => apply(() => showTipsAgain(scene)),
         },
         {
           available: () => rewindSource !== null && canRewind(),
@@ -622,6 +622,7 @@ export function buildScene(scene: UiContext): void {
     },
     contextQuestDetails: () => scene.model.contextQuestDetails,
     exit: exitShown() ? { label: CONTENT.labels.exit ?? "", onExit: exitGame } : undefined,
+    fpsCounter: scene.fpsCounter,
     install: {
       port: {
         install: installApp,

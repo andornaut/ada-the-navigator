@@ -256,13 +256,25 @@ function fixtureParent(): HTMLElement {
   return parent as unknown as HTMLElement;
 }
 
+function fpsPreference() {
+  let on = false;
+  return {
+    set: vi.fn((value: boolean) => {
+      on = value;
+    }),
+    shown: () => on,
+  };
+}
+
 function setup(copy: SettingsLabels = labels, detached = false) {
   const onFeedbackChange = vi.fn();
   const onVisibilityChange = vi.fn();
+  const fpsCounter = fpsPreference();
   const settings = createSettings(
     detached ? (new Element() as unknown as HTMLElement) : fixtureParent(),
     {
       build: "test-build",
+      fpsCounter,
       labels: copy,
       onFeedbackChange,
       onOpenChange: vi.fn(),
@@ -272,7 +284,7 @@ function setup(copy: SettingsLabels = labels, detached = false) {
   fixtureActionRoot(settings.root);
   const columns = (settings.card as unknown as Element).children[0]!.children;
   const rows = [...columns[0]!.children, ...columns[2]!.children];
-  return { columns, onFeedbackChange, onVisibilityChange, rows, settings };
+  return { columns, fpsCounter, onFeedbackChange, onVisibilityChange, rows, settings };
 }
 
 const toggleStack = (row: Element) =>
@@ -282,7 +294,7 @@ const state = (row: Element) => toggleStack(row).children[1]!;
 describe("Settings current-state labels", () => {
   it("places each state below its switch inside one shared-width stack", () => {
     const { rows, settings } = setup();
-    for (const row of rows.slice(0, 4)) {
+    for (const row of rows.filter((row) => row.dataset.setting !== "fpsCounter")) {
       const stack = toggleStack(row);
       expect(stack.children[0]!.className).toBe("ada-switch");
       expect(stack.children[1]!.className).toBe("ada-setting-state");
@@ -296,18 +308,21 @@ describe("Settings current-state labels", () => {
     expect(dividers).toHaveLength(1);
     expect(dividers[0]!.hidden).toBe(true);
     expect(dividers[0]!.properties.size).toBe(0);
-    expect(rows.slice(0, 4).map((row) => row.attributes.get("data-ui-placement"))).toEqual([
-      "top",
-      "top",
-      "top",
-      "top",
-    ]);
-    expect(columns[0]!.children.map((row) => row.dataset.setting)).toEqual(["move", "aim"]);
-    expect(columns[2]!.children.map((row) => row.dataset.setting)).toEqual([
+    expect(
+      rows
+        .filter((row) => row.dataset.setting !== "fpsCounter")
+        .map((row) => row.attributes.get("data-ui-placement")),
+    ).toEqual(["top", "top", "top", "top"]);
+    expect(columns[0]!.children.map((row) => row.dataset.setting)).toEqual([
+      "move",
+      "aim",
       "sound",
+    ]);
+    expect(columns[2]!.children.map((row) => row.dataset.setting)).toEqual([
+      "fpsCounter",
       "reducedMotion",
     ]);
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
     const root = settings.root as unknown as Element;
     expect(root.properties.get("--ui-page-divider-thickness")).toBe(
       String(PAGE_DIVIDER_STYLE.thickness),
@@ -324,7 +339,7 @@ describe("Settings current-state labels", () => {
     settings.dispose();
   });
 
-  it("shares the switch-row icon and state styles with every switch row, Cheats included", () => {
+  it("shares the switch-row icon and state styles with every Settings switch", () => {
     expect(SETTINGS_STYLE).toContain(".ada-controls .ada-setting-toggle{");
     expect(SETTINGS_STYLE).not.toContain("[data-dialog=settings] .ada-setting-toggle");
     expect(SETTINGS_STYLE).toContain(".ada-controls .ada-row[role=switch] > .ada-icon{");
@@ -369,24 +384,47 @@ describe("Settings current-state labels", () => {
 
   it("names settings separately from their initial current state and preserves switch semantics", () => {
     const { rows, settings } = setup();
-    expect(rows.slice(0, 4).map((row) => state(row).textContent)).toEqual([
-      "Shown",
-      "Shown",
-      "On",
-      "Off",
-    ]);
-    expect(rows.slice(0, 4).map((row) => row.attributes.get("aria-label"))).toEqual([
-      "Move controls",
-      "Aim controls",
-      "Sound effects",
-      "Reduced motion",
-    ]);
-    for (const row of rows.slice(0, 4)) {
+    expect(
+      rows
+        .filter((row) => row.dataset.setting !== "fpsCounter")
+        .map((row) => state(row).textContent),
+    ).toEqual(["Shown", "Shown", "On", "Off"]);
+    expect(
+      rows
+        .filter((row) => row.dataset.setting !== "fpsCounter")
+        .map((row) => row.attributes.get("aria-label")),
+    ).toEqual(["Move controls", "Aim controls", "Sound effects", "Reduced motion"]);
+    for (const row of rows.filter((row) => row.dataset.setting !== "fpsCounter")) {
       expect(row.attributes.get("role")).toBe("switch");
       expect(row.attributes.get("aria-describedby")).toBe(`ada-note-${row.dataset.setting}`);
       expect(state(row).attributes.get("aria-hidden")).toBe("true");
     }
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
+    settings.dispose();
+  });
+
+  it("toggles the session FPS readout without writing preferences or changing feedback", () => {
+    const { fpsCounter, onFeedbackChange, onVisibilityChange, rows, settings } = setup();
+    const row = rows.find((node) => node.dataset.setting === "fpsCounter")!;
+    expect(row.attributes.get("aria-label")).toBe("FPS counter");
+    expect(row.attributes.get("role")).toBe("switch");
+    expect(row.attributes.get("aria-checked")).toBe("false");
+    expect(state(row).textContent).toBe("Off");
+    expect(row.children[0]!.dataset.icon).toBe("icon-fps-counter");
+    const priorStored = [...stored];
+    const priorFeedbackCalls = onFeedbackChange.mock.calls.length;
+    const priorVisibilityCalls = onVisibilityChange.mock.calls.length;
+    row.click();
+    expect(fpsCounter.set).toHaveBeenCalledExactlyOnceWith(true);
+    expect(row.attributes.get("aria-checked")).toBe("true");
+    expect(state(row).textContent).toBe("On");
+    row.click();
+    expect(fpsCounter.set).toHaveBeenLastCalledWith(false);
+    expect(row.attributes.get("aria-checked")).toBe("false");
+    expect(state(row).textContent).toBe("Off");
+    expect([...stored]).toEqual(priorStored);
+    expect(onFeedbackChange).toHaveBeenCalledTimes(priorFeedbackCalls);
+    expect(onVisibilityChange).toHaveBeenCalledTimes(priorVisibilityCalls);
     settings.dispose();
   });
 
@@ -488,6 +526,7 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
   const stop = vi.fn();
   const settings = createSettings(fixtureParent(), {
     build: "test-build",
+    fpsCounter: fpsPreference(),
     install: {
       port: {
         install: async () => "dismissed",
@@ -514,14 +553,21 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
   const initial = nodes(settings.card as unknown as Element);
   const install = initial.find((node) => node.className.includes("ada-install-row"))!;
   const move = initial.find((node) => node.dataset.setting === "move")!;
+  const fps = initial.find((node) => node.dataset.setting === "fpsCounter")!;
+  expect(fps.parent?.dataset.settingsColumn).toBe("right");
   expect(install).toBeDefined();
   installed = true;
   notify!();
   expect(nodes(settings.card as unknown as Element)).not.toContain(install);
+  expect(nodes(settings.card as unknown as Element)).toContain(fps);
+  expect(fps.parent?.dataset.settingsColumn).toBe("right");
   expect(nodes(settings.card as unknown as Element)).toContain(move);
   installed = false;
   notify!();
   expect(nodes(settings.card as unknown as Element)).toContain(install);
+  expect(nodes(settings.card as unknown as Element)).toContain(fps);
+  expect(fps.parent?.dataset.settingsColumn).toBe("right");
+  expect(fps.listeners.get("click")).toHaveLength(1);
   expect(nodes(settings.card as unknown as Element)).toContain(move);
   expect(move.listeners.get("click")).toHaveLength(1);
   expect(modal.children[0]).toBe(frame);
@@ -585,6 +631,7 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
   });
   const settings = createSettings(parent, {
     build: "test-build",
+    fpsCounter: fpsPreference(),
     install: {
       port: {
         install: async () => "steps",
@@ -654,6 +701,7 @@ it.each(["settings", "close-settings", "close-install-steps"])(
     expect(() =>
       createSettings(parent, {
         build: "test-build",
+        fpsCounter: fpsPreference(),
         labels,
         onOpenChange: vi.fn(),
         onVisibilityChange: vi.fn(),
@@ -697,6 +745,7 @@ it("rejects an externally inserted unbound Settings launcher before entry focus"
 it("audits Settings and Install Steps entry scopes while retaining external binding ownership", async () => {
   const settings = createSettings(fixtureParent(), {
     build: "test-build",
+    fpsCounter: fpsPreference(),
     install: {
       port: {
         install: async () => "steps",

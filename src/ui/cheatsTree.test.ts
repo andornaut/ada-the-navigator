@@ -5,10 +5,10 @@ import { cheatsTree } from "./cheatsTree.ts";
 
 it("builds separate typed slots for the equal grant pair and footer", () => {
   const tree = cheatsTree("Back", [
-    { id: "selectiveReset", kind: "action", label: "Selective" },
-    { id: "addOre", kind: "action", label: "Add ore" },
-    { id: "fpsCounter", kind: "switch", label: "FPS counter" },
-    { id: "addStardust", kind: "action", label: "Add Stardust" },
+    { id: "selectiveReset", label: "Selective" },
+    { id: "addOre", label: "Add ore" },
+    { id: "showTipsAgain", label: "Show tips again" },
+    { id: "addStardust", label: "Add Stardust" },
   ]);
   validateLayoutTree(
     {
@@ -17,7 +17,6 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
       footer: [],
       grants: ["buttons"],
       layout: ["columns", "footer"],
-      switch: [],
     },
     tree,
   );
@@ -31,11 +30,11 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
           key: "tools",
           slots: {
             rows: [
-              { component: "switch", key: "fpsCounter" },
               {
                 component: "grants",
                 slots: { buttons: [{ key: "addStardust" }, { key: "addOre" }] },
               },
+              { component: "action", key: "showTipsAgain" },
               { component: "action", key: "selectiveReset" },
             ],
           },

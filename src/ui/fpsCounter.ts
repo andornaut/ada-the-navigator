@@ -2,7 +2,7 @@
 const REFRESH_MS = 500;
 
 /**
- * The FPS counter (gameplay/cheats.md "Other actions"): Off by default, a display toggle that is
+ * The Settings FPS counter is Off by default, a display toggle that is
  * not part of the save. `fps` reads the game loop's measured frame rate.
  */
 export function createFpsCounter(host: HTMLElement, fps: () => number) {
