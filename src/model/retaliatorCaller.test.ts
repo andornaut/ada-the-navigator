@@ -167,6 +167,7 @@ it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
       expect(plan.mock.calls.some(([context]) => context.asteroids.length > 0)).toBe(true);
     }
     for (const [context] of plan.mock.calls) {
+      expect(context.pursuit.homeRadius).toBe(2000);
       for (const asteroid of context.asteroids) {
         const actual = flight.objects.find((o) => o.id === asteroid.id)!;
         expect(["rock", "resource"]).toContain(actual.kind);

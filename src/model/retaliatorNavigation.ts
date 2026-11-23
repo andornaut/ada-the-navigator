@@ -3,6 +3,9 @@ import { type EnemyIdentity, retaliatorVariant } from "../data/enemyIdentity.ts"
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { type WorldContext, worldDistance, worldPoint } from "./worldContacts.ts";
 
+/** Peaceful industrial routes keep their existing extent independently of combat pursuit. */
+export const INDUSTRIAL_HOME_RADIUS = 2000;
+
 export interface RetaliatorAsteroid {
   readonly id: string;
   readonly position: Point;

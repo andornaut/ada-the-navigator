@@ -466,6 +466,8 @@ export const SMALL_CRAFT_WEAPONS = {
   swarm: armed(SMALL_CRAFT_SIGNATURES.swarm),
 };
 
+export const AUTHORED_PURSUIT_HOME_RADIUS = 2000;
+
 /** Shared ship-sized defaults; each archetype states its own physics. */
 const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
@@ -479,7 +481,12 @@ const base: Omit<EnemyDefinition, "physics"> = {
   morale: { individualHpRatio: 0.3, packLossRatio: 0.5 },
   navigation: ENEMY_NAVIGATION,
   perception: 650,
-  pursuit: { homeRadius: 2000, maxSeconds: 30, rearmSeconds: 2, unseenSeconds: 6 },
+  pursuit: {
+    homeRadius: AUTHORED_PURSUIT_HOME_RADIUS,
+    maxSeconds: 30,
+    rearmSeconds: 2,
+    unseenSeconds: 8,
+  },
   retreats: { hitAndRun: ENEMY_RETREAT, morale: ENEMY_RETREAT },
   sizeRatio: ENEMY_SIZE_RATIOS.fighter,
   steering: { separation: 70, wobble: 0 },
@@ -505,12 +512,14 @@ export const enemyCatalog = {
     mounts: capitalMounts,
     perception: 1100,
     physics: SHIP_PHYSICS.capital,
+    pursuit: { ...base.pursuit, homeRadius: 1000 },
     sizeRatio: ENEMY_SIZE_RATIOS.capital,
   },
   fighter: {
     ...base,
     behaviour: { burstVolleys: 3, kind: "hitAndRun" },
     physics: SHIP_PHYSICS.fighter,
+    pursuit: { ...base.pursuit, homeRadius: 2500 },
     standoff: { far: 350, near: 250 },
   },
   frigate: {
@@ -527,6 +536,7 @@ export const enemyCatalog = {
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     mounts: frigateMounts,
     physics: SHIP_PHYSICS.frigate,
+    pursuit: { ...base.pursuit, homeRadius: 1500 },
     sizeRatio: ENEMY_SIZE_RATIOS.frigate,
   },
   interceptor: {
@@ -536,6 +546,7 @@ export const enemyCatalog = {
     fire: enemyFire("interceptor", SMALL_CRAFT_WEAPONS.interceptor),
     hp: 3,
     physics: SHIP_PHYSICS.interceptor,
+    pursuit: { ...base.pursuit, homeRadius: 3000 },
     sizeRatio: ENEMY_SIZE_RATIOS.interceptor,
     // Its band when a roster gives it chase or hitAndRun.
     standoff: { far: 250, near: 150 },
@@ -559,6 +570,7 @@ export const enemyCatalog = {
     fire: enemyFire("retaliator", SMALL_CRAFT_WEAPONS.retaliator),
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
+    pursuit: { ...base.pursuit, homeRadius: 1000 },
     sizeRatio: ENEMY_SIZE_RATIOS.retaliator,
     standoff: { far: 350, near: 250 },
   },
@@ -569,6 +581,7 @@ export const enemyCatalog = {
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,
+    pursuit: { ...base.pursuit, homeRadius: 2500 },
     sizeRatio: ENEMY_SIZE_RATIOS.swarm,
     standoff: { far: 300, near: 200 },
     steering: { separation: 85, wobble: 0.65 },
@@ -987,7 +1000,6 @@ export function enemyDefinition(
         hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: FLAGSHIP_PART_HP })),
         hp: 160,
         hullFloor: 1,
-        pursuit: { ...definition.pursuit, homeRadius: 800 },
         sizeRatio: ENEMY_SIZE_RATIOS.flagship,
       };
     }

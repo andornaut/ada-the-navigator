@@ -97,9 +97,12 @@ it("investigates only fixed last-seen knowledge after hidden retreat, then retur
   expect(state).toMatchObject({ engaged: false, fleeing: false, returning: false });
   expect(state.lastSeen).toEqual(known);
   expect(Math.hypot(state.velocity.x, state.velocity.y)).toBeGreaterThan(0);
-  for (let frame = 0; frame < 300; frame++) {
+  const framesBeforeCutoff = Math.ceil((8 - state.lastSeenAge) / dt) - 1;
+  for (let frame = 0; frame < framesBeforeCutoff; frame++) {
     state = step(state, hidden).state;
+    expect(state.returning).toBe(false);
   }
+  state = step(state, hidden).state;
   expect(state.returning).toBe(true);
   expect(state.lastSeen).toEqual(known);
 });

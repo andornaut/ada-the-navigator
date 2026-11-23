@@ -204,7 +204,7 @@ describe("Phantom chapter", () => {
     expect(definition.hardpoints).toHaveLength(11);
     expect(definition.hardpoints.every((part) => part.hp === 9)).toBe(true);
     expect(definition.behaviour).toEqual({ kind: "siege", speedFraction: 0.25 });
-    expect(definition.pursuit.homeRadius).toBe(800);
+    expect(definition.pursuit.homeRadius).toBe(1000);
     let enemy = createEnemy(
       definition,
       { archetype: "capital", id: PHANTOM_FLAGSHIP_ID, packId: null, phase: 0 },

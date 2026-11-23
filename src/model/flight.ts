@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";
 import {
+  AUTHORED_PURSUIT_HOME_RADIUS,
   type EncounterEntry,
   encounterRate,
   ENEMY_AIM,
@@ -24,6 +25,7 @@ import {
   type HeavyHullProfile,
   ordinaryHeavy,
   ordinaryPackHullProfile,
+  PHANTOM_FLAGSHIP_ID,
   retaliatorVariant,
   WRECK_ID_PREFIX,
 } from "../data/enemyIdentity.ts";
@@ -155,6 +157,7 @@ import {
   type RequiredWorldReservation,
 } from "./requiredWorldReservations.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
+import { INDUSTRIAL_HOME_RADIUS } from "./retaliatorNavigation.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import {
   discoveryStardustId,
@@ -2336,6 +2339,28 @@ function insidePlayView(viewportWidth: number, flight: FlightState, point: Vec):
   return onScreen(view, flight.player, { radius: 0, x: image.x, y: image.y });
 }
 
+function phantomBlockade(galaxy: GalaxyNumber, object: SpaceObject): boolean {
+  return galaxy === 6 && PHANTOM_DESTINATIONS.some((id) => id === object.routeId);
+}
+
+/** Authored encounters and fighters attached to a leader retain their previous leash. */
+function actorPursuitHomeRadius(
+  galaxy: GalaxyNumber,
+  homeRadius: number,
+  blockade: boolean,
+  object: SpaceObject,
+): number {
+  if (blockade) {
+    return PHANTOM_TUNING.blockadeReach;
+  }
+  if (galaxy === 6 && object.id === PHANTOM_FLAGSHIP_ID && object.enemy?.archetype === "capital") {
+    return homeRadius;
+  }
+  return persistentObject(object) || object.enemy?.escortOf != null
+    ? AUTHORED_PURSUIT_HOME_RADIUS
+    : homeRadius;
+}
+
 /**
  * A summoned guard holds fire until it is inside the current play view (insidePlayView), then
  * fights as usual; disabled, destroyed or gone, it is released too.
@@ -2354,11 +2379,13 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
     }
     const context = flightWorldContext(flight);
     if (guard.enemy) {
-      const pursuit = enemyEquipmentDefinition(flight.galaxy, guard.enemy).pursuit;
+      const { homeRadius } = enemyEquipmentDefinition(flight.galaxy, guard.enemy).pursuit;
+      // Preserve the summons handoff before the separate in-fight blockade tether applies.
+      const radius = actorPursuitHomeRadius(flight.galaxy, homeRadius, false, guard);
       // A remote summons starts its local fight here instead of immediately leashing back.
       if (
-        worldDistance(context, guard.enemy.home, guard) >= pursuit.homeRadius ||
-        worldDistance(context, guard.enemy.home, flight.player) > pursuit.homeRadius
+        worldDistance(context, guard.enemy.home, guard) >= radius ||
+        worldDistance(context, guard.enemy.home, flight.player) > radius
       ) {
         guard.enemy.home = { x: guard.x, y: guard.y };
       }
@@ -3447,7 +3474,7 @@ function move(
   events: FlightEvent[],
   flight: FlightState,
   freshTravel?: FreshTravel,
-): void {
+): Vec {
   const magnitude = Math.min(1, length(input.move));
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
   const top = physics.maxSpeed;
@@ -3533,6 +3560,7 @@ function move(
       needleRims(flight),
     );
   }
+  return start;
 }
 /**
  * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
@@ -3567,6 +3595,7 @@ function enemies(
   viewport: Readonly<Pick<PlayerWeaponCoverageContext, "viewportHeight" | "viewportWidth">>,
   content: GameContent,
   dt: number,
+  playerDisplacement: Vec,
   flight: FlightState,
   events: FlightEvent[],
   shotDelays: Map<string, number>,
@@ -3658,22 +3687,12 @@ function enemies(
   for (const object of objects) {
     const state = object.enemy!;
     const base = enemyEquipmentDefinition(flight.galaxy, state);
-    const blockade =
-      flight.galaxy === 6 && PHANTOM_DESTINATIONS.some((id) => id === object.routeId);
+    const blockade = phantomBlockade(flight.galaxy, object);
     const song = phantomSongSpeed(activeSong, object);
     const definition =
-      blockade || song !== 1
-        ? {
-            ...base,
-            physics:
-              song === 1
-                ? base.physics
-                : { ...base.physics, maxSpeed: base.physics.maxSpeed * song },
-            pursuit: blockade
-              ? { ...base.pursuit, homeRadius: PHANTOM_TUNING.blockadeReach }
-              : base.pursuit,
-          }
-        : base;
+      song === 1
+        ? base
+        : { ...base, physics: { ...base.physics, maxSpeed: base.physics.maxSpeed * song } };
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
@@ -3708,11 +3727,15 @@ function enemies(
                     flightWorldContext(flight),
                     content.tuning.chunkSize,
                     flight.objects,
-                  ))(definition.pursuit.homeRadius, state.home)
+                  ))(INDUSTRIAL_HOME_RADIUS, state.home)
                 : [],
             physicalReach: partsReach(worldParts(industrialBody)),
           }
         : undefined;
+    // Small craft drift with a current; frigates, capitals and platforms are too heavy.
+    const drift = DRIFT_PROOF.includes(state.archetype)
+      ? { x: 0, y: 0 }
+      : worldFlowAt(flightWorldContext(flight), flight.galaxy, object);
     const intent = stepEnemy(
       definition,
       {
@@ -3720,6 +3743,7 @@ function enemies(
         adaWidth: content.tuning.flight.shipRadius * 2,
         dormantPackMembers: worldRetainedPackMembers(flightWorldContext(flight), content, flight),
         dt,
+        enemyDrift: drift,
         engagementAdmitted: admissions.has(object.id),
         // An enemy fires only while it is inside the visible game area.
         inPlayView: insidePlayView(viewport.viewportWidth, flight, object),
@@ -3729,7 +3753,14 @@ function enemies(
         ...(navigationQuery ? { navigationQuery } : {}),
         peers,
         player: flight.player,
+        playerDisplacement,
         playerVelocity: aimVelocity,
+        pursuitHomeRadius: actorPursuitHomeRadius(
+          flight.galaxy,
+          definition.pursuit.homeRadius,
+          blockade,
+          object,
+        ),
         ...(industrialInput ? { retaliatorNavigation: industrialInput } : {}),
         ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
         summoned: flight.summonedGuards?.includes(object.id) ?? false,
@@ -3766,10 +3797,6 @@ function enemies(
       velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, velocity);
       object.enemy!.velocity = { ...velocity };
     };
-    // Small craft drift with a current; frigates, capitals and platforms are too heavy.
-    const drift = DRIFT_PROOF.includes(state.archetype)
-      ? { x: 0, y: 0 }
-      : worldFlowAt(flightWorldContext(flight), flight.galaxy, object);
     const steps = Math.max(
       1,
       Math.ceil((Math.hypot(velocity.x + drift.x, velocity.y + drift.y) * dt) / 4),
@@ -5530,7 +5557,7 @@ export function stepFlight(
     flight.sinceDamage += slice;
     generate(content, flight.player, flight);
     moveDebris(content, slice, events, flight);
-    move(content, slice, input, events, flight, freshTravel);
+    const playerBeforeMove = move(content, slice, input, events, flight, freshTravel);
     worldSyncFlightRegion(flightWorldContext(flight), content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
@@ -5565,6 +5592,7 @@ export function stepFlight(
       { viewportHeight: input.viewportHeight ?? SCREEN.height, viewportWidth },
       content,
       slice,
+      worldDelta(flightWorldContext(flight), playerBeforeMove, flight.player),
       flight,
       events,
       shotDelays,

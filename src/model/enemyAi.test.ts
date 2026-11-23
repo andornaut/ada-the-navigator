@@ -76,6 +76,61 @@ const observation = (state: EnemyState): EnemyContext => ({
   visibility: "visible",
 });
 
+it("uses the approved speed and free-roaming leash for each archetype", () => {
+  const physics = Object.fromEntries(
+    Object.entries(enemyCatalog).map(([kind, ship]) => [
+      kind,
+      [ship.physics.maxSpeed, ship.pursuit.homeRadius, ship.pursuit.unseenSeconds],
+    ]),
+  );
+  expect(physics).toEqual({
+    capital: [50, 1000, 8],
+    fighter: [160, 2500, 8],
+    frigate: [100, 1500, 8],
+    interceptor: [240, 3000, 8],
+    platform: [0, 2000, 8],
+    retaliator: [120, 1000, 8],
+    swarm: [175, 2500, 8],
+  });
+});
+
+it("chases an opening target across the seam using actual motion instead of aim lead", () => {
+  const definition = enemyCatalog.interceptor;
+  const state: EnemyState = {
+    ...spawn("interceptor"),
+    engaged: true,
+    facing: { x: 1, y: 0 },
+    home: { x: 119900, y: 0 },
+    position: { x: 119900, y: 0 },
+  };
+  const context: EnemyContext = {
+    ...observation(state),
+    player: { x: -119700, y: 0 },
+    playerDisplacement: { x: 2, y: 0 },
+    playerVelocity: { x: -200, y: 0 },
+    worldSide: 240000,
+  };
+  const direct = stepEnemy(definition, context, state);
+  expect(direct.velocity.x).toBeGreaterThan(0);
+  expect(direct.velocity.y).toBeCloseTo(0, 10);
+  expect(direct.state.lastSeen).toEqual(context.player);
+
+  const verifyNormal = (patch: Partial<EnemyContext>, actor = state) => {
+    const overridden = { ...context, ...patch };
+    expect(stepEnemy(definition, overridden, actor)).toEqual(
+      stepEnemy(definition, { ...overridden, playerDisplacement: { x: 0, y: 0 } }, actor),
+    );
+  };
+  verifyNormal({ player: { x: -119950, y: 0 } });
+  verifyNormal({ playerDisplacement: { x: -2, y: 0 }, playerVelocity: { x: 200, y: 0 } });
+  verifyNormal({ enemyDrift: { x: 160, y: 0 } });
+  verifyNormal({}, { ...state, velocity: { x: 180, y: 0 } });
+  verifyNormal({}, { ...state, escortOf: "leader" });
+  verifyNormal({ visibility: "occluded" });
+  verifyNormal({ targetable: false });
+  verifyNormal({}, { ...state, returning: true });
+});
+
 describe("enemy rules", () => {
   it("uses a summon detour only for steering while retaining Ada's actual observation", () => {
     const state = { ...spawn("frigate"), facing: { x: 0, y: 1 } };
@@ -416,7 +471,7 @@ describe("enemy rules", () => {
       };
       elapsed += hidden.dt;
     }
-    expect(definition.pursuit.unseenSeconds).toBe(6);
+    expect(definition.pursuit.unseenSeconds).toBe(8);
     expect(state.returning).toBe(true);
     expect(state.engaged).toBe(false);
     expect(elapsed).toBeCloseTo(definition.pursuit.unseenSeconds, 1);

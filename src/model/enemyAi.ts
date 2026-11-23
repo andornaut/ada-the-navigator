@@ -25,7 +25,11 @@ import {
 } from "./ai/stationGuardPatrol.ts";
 import { hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
-import { retaliatorNavigation, type RetaliatorNavigationContext } from "./retaliatorNavigation.ts";
+import {
+  INDUSTRIAL_HOME_RADIUS,
+  retaliatorNavigation,
+  type RetaliatorNavigationContext,
+} from "./retaliatorNavigation.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
@@ -117,6 +121,8 @@ export interface EnemyContext extends WorldContext {
   navigationQuery?: NavigationQuery;
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
   engagementAdmitted?: boolean;
+  /** Local current velocity, in addition to the hull's retained physics velocity. */
+  enemyDrift?: Point;
   dormantPackMembers?: Readonly<Record<string, number>>;
   adaWidth: number;
   dt: number;
@@ -129,8 +135,12 @@ export interface EnemyContext extends WorldContext {
   lead: number;
   peers: readonly EnemyState[];
   player: Point;
+  /** Ada's actual wrapped displacement in this simulation slice, including current drift. */
+  playerDisplacement?: Point;
   /** Ada's velocity averaged for aim (ENEMY_AIM.velocitySeconds). */
   playerVelocity: Point;
+  /** Existing authored or escort leash for this actor. */
+  pursuitHomeRadius?: number;
   /**
    * A cued route guard (flight.ts cueGuards): it approaches Ada at full speed, past its
    * pursuit limits and holding its fire, until it is inside the current play view.
@@ -693,7 +703,7 @@ function steering(
             {
               ...context.retaliatorNavigation,
               navigation: definition.navigation,
-              pursuit: definition.pursuit,
+              pursuit: { homeRadius: INDUSTRIAL_HOME_RADIUS },
               ...(context.worldSide === undefined ? {} : { worldSide: context.worldSide }),
             },
             state,
@@ -735,6 +745,22 @@ function steering(
     const search = arrive(definition, context, maxSpeed, state.lastSeen, state);
     const pace = behaviour.kind === "siege" ? behaviour.speedFraction : 1;
     return { x: search.x * pace, y: search.y * pace };
+  }
+  const travel = context.playerDisplacement;
+  if (
+    state.archetype === "interceptor" &&
+    state.escortOf === null &&
+    distance > definition.engagement &&
+    travel
+  ) {
+    const outward = aim.x * travel.x + aim.y * travel.y;
+    const { enemyDrift } = context;
+    const enemyMotionX = state.velocity.x + (enemyDrift?.x ?? 0);
+    const enemyMotionY = state.velocity.y + (enemyDrift?.y ?? 0);
+    const closing = (aim.x * enemyMotionX + aim.y * enemyMotionY) * context.dt;
+    if (outward > 0 && outward > closing) {
+      return aim;
+    }
   }
   const push = separation(definition, context, state);
   const toward = (scale: number): Point =>
@@ -913,7 +939,8 @@ export function stepEnemy(
   const homeDistance = worldDistance(context, state.home, state.position);
   const pursuit = definition.pursuit;
   /** The ship is beyond its home radius, or sees Ada beyond it: a chase cannot go on. */
-  const leashed = homeDistance >= pursuit.homeRadius || playerHomeDistance > pursuit.homeRadius;
+  const homeRadius = context.pursuitHomeRadius ?? pursuit.homeRadius;
+  const leashed = homeDistance >= homeRadius || playerHomeDistance > homeRadius;
   const returnSeconds = state.returning ? (state.returnSeconds ?? 0) + context.dt : 0;
   if (summoned) {
     next.returning = false;
