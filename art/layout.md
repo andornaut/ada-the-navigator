@@ -863,7 +863,7 @@ token above; strings are Gameplay's.
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                           | None         |
 | Cheats        | Header with top-right X. Two logical columns ([Cheats card](#cheats-card)). Centred Back (primary)                                                                                                         | None         |
 | Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Cheats, Settings; then Back to title (not on the Start screen); then primary Close                                                     | None         |
-| Paused        | Header, close. Full-width Cheats, then the two-column command grid. Separate full-width stack: Back to title directly above primary Resume                                                                 | None         |
+| Paused        | Header, close. Two top-aligned action columns of equal width, ending with primary Resume                                                                                                                   | None         |
 | Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                | None         |
 | Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))                         | Text column  |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                        | Item list    |
@@ -871,16 +871,28 @@ token above; strings are Gameplay's.
 | Buy confirm   | Header with top-right X. Item well. Description (weapons). Offered price. Action row with Cancel (secondary, left) and Buy (primary, right). The X invokes Cancel. See [Buy confirm](shop.md#buy-confirm). | None         |
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                    | None         |
 
-The Paused card shows no objective or job lines. Full-width Cheats sits above
-the grid. Its actions sort by label: Map and Quests, then Settings and Ship.
-Two equal columns place the grid commands, and each button fits its own content. An
-unpaired grid action keeps its intrinsic width and centres across both
-columns. The final stack shares the full width, with Back to title directly
-above primary Resume. Map is hidden
-when its canonical permission is false, and opens the local map. The Map
-and Resume buttons have a 44 logical px face over a 4 px lip. At viewport
-widths of 720 CSS px or less or heights of 360 CSS px or less, their labels
-move down 1 logical px to centre the cap bands on those faces.
+The Paused card shows no objective or job lines. Both columns start at the same
+height, with `BUTTON_GAP` between columns and `STACK_BUTTON_GAP` between
+buttons. Each button is one column wide and uses the standard 48 logical px
+height. Reading and keyboard order run down the left column, then down the
+right.
+
+| Column | Order from top to bottom                                                         |
+| ------ | -------------------------------------------------------------------------------- |
+| Left   | Sort by displayed label. In English, Cheats, Map when available, Quests, Ship    |
+| Right  | Achievements, Settings, Back to title, then Resume (primary) when Map is visible |
+
+Map opens the local map when permitted. When Map is hidden, Quests and Ship
+move up and primary Resume sits alone in a centred final row, one column wide.
+Both columns keep their positions and widths. The Map and Resume buttons
+have a 44 logical px face over a 4 px lip. At viewport widths of 720 CSS px
+or less or heights of 360 CSS px or less, their labels move down 1 logical px
+to centre the cap bands on those faces.
+
+Achievements opens the shared [Achievements card](#achievements-card). Its
+Back button, close X and Escape return to the Paused card and restore focus to
+the Achievements button. The Start screen keeps its own Achievements
+dismissal.
 
 The Start screen and Ada's room open the Menu card. Its stack starts with
 Achievements, Cheats and Settings, then Back to title away from the Start
