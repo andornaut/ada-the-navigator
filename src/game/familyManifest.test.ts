@@ -523,6 +523,38 @@ describe("deferred core capital sheets", () => {
     },
   );
 
+  it("uses authored intrinsics for eager field sheets and preserves raw outpost project frames", () => {
+    const f = fixture(undefined);
+    const fieldAssets = [
+      andromeda.assets.find(({ id }) => id === "beacon-guide-lit-a"),
+      cartwheel.assets.find(({ id }) => id === "mooring-buoy-a"),
+      needle.assets.find(({ id }) => id === "needle-gate-dark-0-back"),
+      needle.assets.find(({ id }) => id === "needle-practice-berth-a"),
+    ].map((asset) => ({ ...(asset as Asset), svgSheet: true as const }));
+    const outpost = sunflower.assets.find(({ id }) => id === "outpost-growers-ring-a") as Asset;
+    const document = {};
+    const fail = vi.fn();
+    f.queueCore(f.scene, () => true, fail, [...fieldAssets, outpost]);
+    for (const asset of [...fieldAssets, outpost]) {
+      const key = vectorSheetKey(asset.path);
+      f.documents.set(key, document);
+      f.events.emit(`filecomplete-xml-${key}`);
+    }
+    expect(f.extract.mock.calls).toEqual([
+      ...fieldAssets.map((asset) => [
+        document,
+        asset.path,
+        { ...asset, intrinsicHeight: asset.displayHeight, intrinsicWidth: asset.displayWidth },
+      ]),
+      [document, outpost.path, outpost],
+    ]);
+    expect(f.svg.mock.calls.map(([, asset]) => asset.id)).toEqual([
+      ...fieldAssets.map(({ id }) => id),
+      outpost.id,
+    ]);
+    expect(fail).not.toHaveBeenCalled();
+  });
+
   it("queues the existing hull sheet at boot and leaves packed parts for the flight", () => {
     const f = fixture(undefined);
     const hull = core.assets.find(({ id }) => id === "enemy-fighter-0") as Asset;

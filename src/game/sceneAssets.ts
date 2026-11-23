@@ -178,8 +178,13 @@ function queueEagerSvgSheets(
       }
       try {
         const sources = frames.map((asset): Asset => {
-          // These roots carry their display size inside the raw viewBox.
+          // Field props and non-outpost project sheets retain authored display intrinsics.
+          // Authored outpost project overlays have the ordinary raw-intrinsic contract.
           const displaySized =
+            (asset.project !== undefined && asset.outpost === undefined) ||
+            ("beacon" in asset && asset.beacon === "guide") ||
+            ("gate" in asset && (asset.gate === "dark" || asset.gate === "lit")) ||
+            ("moorings" in asset && Array.isArray(asset.moorings)) ||
             asset.craft ||
             asset.debris ||
             asset.outpost === "settlement" ||
