@@ -215,9 +215,9 @@ the face of each state, never the press area.
   its 16-pixel margins when no larger safe-area inset applies.
 - Families: every modal takes one family's width, never a content-fitted
   width. Large: Settings in two columns, Ship, Achievements, Cheats, Quests,
-  Map Quests, the station Shop and Jobs. Medium: Paused, Settings in one column,
+  Map Quests and the Station pages. Medium: Paused, Settings in one column,
   install steps. Small: Menu, Restart, the two Cheats reset confirmations,
-  Update offer, resource and weapon details, station drop, the buy confirm. A
+  Update offer, resource and weapon details and Station decision dialogs. A
   card created without a family is Medium. Settings is Large when its rows fit
   two columns and Medium when they take one.
 - Header balance: with line boxes, the title starts at 16 and the first group
@@ -229,7 +229,7 @@ the face of each state, never the press area.
   fully into view, including any authored non-button focus treatment.
 - Every modal dims the whole view and takes input exclusively; outside taps
   never activate controls underneath. One card shows at a time over one dim,
-  except the buy confirm over the dimmed shop.
+  except a Station decision dialog over the dimmed Station page.
 - Keep the top-right X in every modal. Where cancellation is allowed, the
   X invokes the existing Cancel, Back or Close action exactly once, dismisses
   one layer and restores focus to the invoking control or a logical control
@@ -865,9 +865,11 @@ token above; strings are Gameplay's.
 | Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Cheats, Settings; then Back to title (not on the Start screen); then primary Close                                                     | None         |
 | Paused        | Header, close. Two top-aligned action columns of equal width, ending with primary Resume                                                                                                                   | None         |
 | Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                | None         |
-| Conversation  | Speaker tab, portrait and line. Topic choices and page controls, or the Dock greeting and final actions. Skip and close X on the HUD row ([Conversation card](#conversation-card))                         | Text column  |
-| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                        | Item list    |
-| Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                  | Job list     |
+| Conversation  | Speaker tab, portrait and line. Topic choices and page controls. Skip and close X on the HUD row ([Conversation card](#conversation-card))                                                                 | Text column  |
+| Station       | Header and close X, shared balances, single keeper greeting when authored, shared footer ([Station pages](#station-pages))                                                                                 | None         |
+| Shop          | Header and close X, shared balances, two fixed stock panes, shared footer                                                                                                                                  | None         |
+| Job board     | Jobs & Projects title and close X, shared balances, fixed Jobs and Community projects panes, shared footer                                                                                                 | None         |
+| Exchange      | Header and close X, shared balances, two rate and quantity rows, shared footer                                                                                                                             | None         |
 | Buy confirm   | Header with top-right X. Item well. Description (weapons). Offered price. Action row with Cancel (secondary, left) and Buy (primary, right). The X invokes Cancel. See [Buy confirm](shop.md#buy-confirm). | None         |
 | Achievements  | Header, close. Entry list, two columns ([Achievements card](#achievements-card)). Pager: Previous, the page count, Next                                                                                    | None         |
 
@@ -957,20 +959,18 @@ top-right X return to Start. Restart is the primary action on the right.
 
 ### Conversation card
 
-Talk, Astra's Salvage, Deposit and Tow briefs, and Dock share the
+Talk and Astra's Salvage, Deposit and Tow briefs share the
 [storybook panel](#storybook-page)'s bottom anchor, safe insets, two columns,
 portrait frame and text roles over paused, dimmed space. Each spoken line
 shows its actual speaker and portrait. The speaker tab stays on one line.
 Narration has no portrait or tab. The close X is the only Close control. Mom and Dad keep their authored family
 addresses in text; their tabs and portraits identify Trista and Bin.
 
-| Page          | Choice column                                                                                                                        |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Line          | Ask more (secondary) and Continue (primary) when topics remain. Otherwise Continue alone.                                            |
-| Topics        | Remaining topics as neutral choices above Continue alone. Continue advances without selecting a topic.                               |
-| Brief         | Continue alone when the page has no optional topics. When topics remain, use Ask more (secondary) and Continue (primary).            |
-| Dock greeting | Continue alone until the final page.                                                                                                 |
-| Dock final    | Balance, then Jobs as a neutral full-width choice where offered, then Undock (secondary) and Shop (the only primary, where offered). |
+| Page   | Choice column                                                                                                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Line   | Ask more (secondary) and Continue (primary) when topics remain. Otherwise Continue alone.                                 |
+| Topics | Remaining topics as neutral choices above Continue alone. Continue advances without selecting a topic.                    |
+| Brief  | Continue alone when the page has no optional topics. When topics remain, use Ask more (secondary) and Continue (primary). |
 
 The card fits the visible groups. Choices and page controls are separate
 groups with a 24 logical px gap when both show. The page-control row has at
@@ -987,21 +987,33 @@ is `(column width - 24) / 2`.
 
 At 720×360 with phone insets, Ask more and Continue stack in the 228 logical
 px choice column, with both labels on one line. They sit side by side at
-844×390 with phone insets and at 1280×720. Undock and Shop sit side by side
-at all three sizes when both are offered.
+844×390 with phone insets and at 1280×720.
 
-Talk and Dock put the close X in the Settings slot of the HUD row. Its 48
+Talk puts the close X in the Settings slot of the HUD row. Its 48
 press area is `hudButtonTarget(0)`, with the 24 face centred in it. Skip uses
 the compact style at `STORY_SKIP.right.besideSettings` (57 from the HUD rect's
-right). Dock shows Skip only when it advances farther than Continue. It
-opens the final greeting page without selecting an action. In Talk, Skip
-can omit optional background topics and leaves material decisions pending.
+right). In Talk, Skip can omit optional background topics and leaves
+material decisions pending.
 
 The Interaction material-choice path includes the non-Dock `activityDrop`
 confirmation. Its Cancel and Drop choices require a selection and hide
 Skip. Station job-board drop confirmations and the existing Small
 confirmation and detail cards use their own layouts. The ambient in-flight
 [conversation box](#conversation-box) has no Skip.
+
+### Station pages
+
+The welcome, Shop, Jobs & Projects and Exchange use the Large width cap and
+fill the available modal height. Dock shows the station title and a single
+keeper paragraph with name and portrait when authored. The ordinary welcome
+shows services immediately with no Continue or Skip.
+
+The shared Stardust and Ore balances sit at `SPACING.panelPadding` (16) from
+the top and left. Each 20 px resource icon is `BALANCE.markGap` (6) from its
+amount, and the two balances are `SPACING.gap` (8) apart. The footer anchors
+at the bottom with a 1 px separator, 8 px vertical padding and 8 px between
+service buttons. Primary Undock aligns to the right. See
+[Station and shop](shop.md#station-pages) for service order and dismissal.
 
 ### Achievements card
 
@@ -1208,45 +1220,35 @@ Clearances, smallest at 720x360 with insets:
 
 ### Shop item row
 
-A `ui-button-tile` at `TEXT_BUTTON.height`, content centred on each state's
-face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
+Shop uses two fixed equal-width panes with an 8 px gap. The second pane
+has a 1 px left separator and 8 px left padding. Each `TYPE.label` heading
+sits 8 px above its list. Rows fill the pane's inner width, with up to four
+offers and a `SPACING.rowGap` (4) between rows.
 
-| Part          | Geometry                                                                                                       |
-| ------------- | -------------------------------------------------------------------------------------------------------------- |
-| Row inset     | `SPACING.gap` from both row ends                                                                               |
-| Item well     | 36x36 at the left inset                                                                                        |
-| Glyph offset  | 20 icons at 8, the 24 upgrade composite at 6, the 32 paint swatch at 2, inside the well                        |
-| Name block    | `SPACING.gap` right of the well; one 20 line, or two with the level or pack line                               |
-| Trailing slot | Right inset, centred vertically; one width for every row: the widest price pill, Owned or In use               |
-| Price pill    | `PILL` with `icon-stardust`, `SPACING.markGap`, the price in `TYPE.label`; every pill one width                |
-| Owned, In use | `icon-shop-check` (12x8), `SPACING.markGap`, the label in `TYPE.label`, right-aligned                          |
-| Row width     | inset + well + gap + widest name, level or pack line + gap + slot + inset; one width across every tab          |
-| Paint heading | `icon-shop-ship-paint` (20), `SPACING.markGap`, `TYPE.label`, on a 20 line, `SPACING.gap` above the paint rows |
-| Confirm well  | 56x56; glyph at 2x by nearest neighbour (40, or 48 for the upgrade composite), swatch 48, centred              |
-| Confirm price | `icon-stardust-20`, `SPACING.markGap`, the price in `TYPE.heading`                                             |
+Each `ui-button-tile` is one control. Geometry uses `SHOP_ROW` and the
+Station pane rules in `src/ui/layout/stationStyle.ts`.
+
+| Part          | Geometry                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| Row           | `SHOP_ROW.height - SPACING.gap` (40), with 8 px side insets                                           |
+| Item well     | `SHOP_ROW.well - SPACING.rowGap` (32 square). Centre the 20 px glyph, 24 px composite or 32 px swatch |
+| Text          | 8 px from the well, on 16 px line boxes. The flexible column truncates long lines                     |
+| Trailing slot | Content-width price or status, 8 px from the text and aligned to the right inset                      |
+| Price pill    | 28 px high, with 8 px side padding and a 16 px icon 6 px from the price                               |
+| Status        | 12x8 check with a 6 px gap to its label                                                               |
+| Confirm well  | 56 square. Centre the glyph at 2x (40, or 48 for the composite) or a 48 px swatch                     |
+| Confirm price | 20 px Stardust icon, 6 px gap and price in `TYPE.heading`                                             |
+
+See [Station and shop](shop.md#shop) for stock, row states and icon sources.
 
 ### Job board row
 
-A `ui-button-tile` at `TEXT_BUTTON.height`, the item row's parts with a
-[compact row action](controls.md#compact-row-action) in the trailing slot.
-Constants: `SHOP_ROW` and the job list's style in `src/ui/station.ts`.
-
-| Part           | Geometry                                                                                             |
-| -------------- | ---------------------------------------------------------------------------------------------------- |
-| Row inset      | `SPACING.gap` from both row ends                                                                     |
-| Well           | 36x36 at the left inset, the 20 job glyph at 8                                                       |
-| Text block     | `SPACING.gap` right of the well: the title over the detail, two 20 lines                             |
-| Trailing slot  | Right inset, centred vertically: the reward pill (or Active), `SPACING.gap`, then the compact action |
-| Compact action | 72 x 28, or the label plus 8 px insets when wider; every row's action one width                      |
-| Row width      | inset + well + gap + widest title or detail + gap + slot + inset; one width for every row            |
-| List           | One column, rows `STACK_BUTTON_GAP` apart, with the 4 px clip reserve and the scroll reserve kept    |
-
-At 720x360 the Jobs card is Large, 688 (634 with phone insets); the widest
-Sunflower row, "Deliver spare parts to the salvagers' yard" with a two-digit
-reward, is about 495 wide; the job list keeps that row width, centred in the
-card. Three offers fit without scrolling. At 844x390 with phone
-insets a held job, three busy offers and the refusal line exceed the 325
-available, and the job list scrolls.
+Jobs & Projects uses the same fixed panes and compact tile geometry. Jobs
+occupy the left pane and Community projects the right where offered.
+Each tile keeps the glyph and text beside a trailing reward, contribution or
+status. Decisions use a separate detail dialog. The board has no pager or
+scrolling list. See [Jobs & Projects](shop.md#job-board) and
+[Donation confirm](projects.md#donation-confirm) for row and detail behaviour.
 
 ### Storybook page
 
