@@ -15,3 +15,4 @@ See [Ships](../../gameplay/ships.md) for physics, rosters and
 | ada-0265 | Apply part health, hit routing and heavy rewards                         | [ada-0265.md](../work/ada-0265.md) |
 | ada-0273 | Fire enemy weapons at their equipped level with per-archetype signatures | [ada-0273.md](../work/ada-0273.md) |
 | ada-0371 | Vary frigate and capital hull profiles                                   | [ada-0371.md](../work/ada-0371.md) |
+| ada-0373 | Tune enemy pursuit speed and chase limits                                | [ada-0373.md](../work/ada-0373.md) |
