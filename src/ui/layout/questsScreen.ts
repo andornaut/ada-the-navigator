@@ -1,4 +1,5 @@
 import { BUTTON_SLICE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import { TEXT_TOKENS } from "../modal.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
@@ -63,6 +64,9 @@ export const QUESTS_SCREEN_STYLE = `
   padding:${units(8)};
   background:#262b44;
   border:1px solid #55516b}
+@media (width < ${SCREEN.height}px){
+  .ada-controls .ada-quest-route{padding-block:${units(7)}}
+}
 .ada-controls .ada-quest-endpoint{display:flex;
   align-items:center;
   gap:${units(4)};
