@@ -42,6 +42,25 @@ function defeat(model: GameModel, id: string): void {
     return;
   }
   placePlayer(model, { x: initial.x + 600, y: initial.y });
+  const flight = model.state.flight!;
+  const phase = flight.phantom!;
+  const required = new Set([
+    PHANTOM_FLAGSHIP,
+    ...phase.enemyIds,
+    ...Object.values(phase.blockades).flat(),
+  ]);
+  // The synthetic shot excludes other targets by ID. Keep the chapter actors
+  // and landmarks without making each impact simulate the surrounding traffic
+  // and debris. Travel and reload still use their normal world paths.
+  flight.objects = flight.objects.filter(
+    (object) =>
+      object.kind === "destination" ||
+      object.kind === "station" ||
+      object.kind === "pickup" ||
+      required.has(object.id) ||
+      required.has(object.enemy?.escortOf ?? ""),
+  );
+  expect(represented(model, id), `fixture must retain ${id}`).toBeDefined();
   for (let impact = 0; impact < 32; impact++) {
     const object = represented(model, id);
     if (!object || object.hp <= 0 || object.enemy?.disabled) {
@@ -67,7 +86,6 @@ function defeat(model: GameModel, id: string): void {
       : part
         ? hardpointOffset(definition, CONTENT.tuning.flight.shipRadius * 2, enemy.facing, part)
         : { x: 0, y: 0 };
-    const flight = model.state.flight!;
     flight.shots.push({
       damage: before,
       enemy: false,
