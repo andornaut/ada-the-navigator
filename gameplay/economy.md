@@ -396,17 +396,17 @@ An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `detailNextLevel` and what the next level adds, from the table below. At level 3
 it shows `detailMaxed` instead.
 
-| Upgrade       | Level 2 adds                                              | Level 3 adds                                     |
-| ------------- | --------------------------------------------------------- | ------------------------------------------------ |
-| Laser         | "Fires faster and hits harder."                           | Same as level 2                                  |
-| Multi-Laser   | "One more bolt, and faster bolts."                        | Same as level 2                                  |
-| Rapid Missile | "Fires faster."                                           | Same as level 2                                  |
-| Heavy Missile | "Hits harder."                                            | Same as level 2                                  |
-| Scattershot   | "Two more shots that hit harder."                         | Same as level 2                                  |
-| Phaser        | "Hits harder."                                            | Same as level 2                                  |
-| Shield        | "A bigger shield that refills faster."                    | Same as level 2                                  |
-| Engine tuning | "Fly faster and turn more quickly."                       | Same as level 2                                  |
-| Tractor beam  | "Pulls from farther away, and faster."                    | Same as level 2                                  |
+| Upgrade       | Level 2 adds                           | Level 3 adds    |
+| ------------- | -------------------------------------- | --------------- |
+| Laser         | "Fires faster and hits harder."        | Same as level 2 |
+| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2 |
+| Rapid Missile | "Fires faster."                        | Same as level 2 |
+| Heavy Missile | "Hits harder."                         | Same as level 2 |
+| Scattershot   | "Two more shots that hit harder."      | Same as level 2 |
+| Phaser        | "Hits harder."                         | Same as level 2 |
+| Shield        | "A bigger shield that refills faster." | Same as level 2 |
+| Engine tuning | "Fly faster and turn more quickly."    | Same as level 2 |
+| Tractor beam  | "Pulls from farther away, and faster." | Same as level 2 |
 
 ## Donations
 

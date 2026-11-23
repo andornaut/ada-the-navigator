@@ -48,8 +48,8 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | `swarm`       |              0.65 |        175 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`     |                 1 |        160 |                  0.40 |             0.50 |          0.30 |             0.15 |
 | `interceptor` |              0.75 |        240 |                  0.90 |             1.20 |          0.60 |             0.12 |
-| `retaliator`  |                 2 |         120 |                  1.20 |             1.50 |          0.90 |             0.35 |
-| `frigate`     |                 4 |         100 |                   1.5 |              2.0 |           1.2 |             0.40 |
+| `retaliator`  |                 2 |        120 |                  1.20 |             1.50 |          0.90 |             0.35 |
+| `frigate`     |                 4 |        100 |                   1.5 |              2.0 |           1.2 |             0.40 |
 | `capital`     |                 5 |         50 |                   2.5 |              3.0 |           2.0 |             0.50 |
 | `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
 
