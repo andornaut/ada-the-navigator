@@ -614,11 +614,7 @@ ${UI_SCOPE} .ada-steps{
 }
 
 /* Cheats keeps the two approved columns and its Back footer in one compact card. */
-${UI_SCOPE} .ada-cheats-card > header{
-  margin-top:${units(SPACING.rowGap)}
-}
 ${UI_SCOPE} .ada-cheats-card > .ada-card-body{
-  margin-top:${units(SPACING.rowGap)};
   gap:${units(SPACING.rowGap)};
   overflow:visible
 }
