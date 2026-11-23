@@ -15,6 +15,7 @@ import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
+import { enemyHull } from "../model/enemyBody.ts";
 import { orePickupSize, stardustPickupSize } from "../model/pickupBody.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
@@ -836,7 +837,7 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
   const timing = data?.archetypes[wreck.archetype];
   const art = familyArt(scene, wreck.archetype, id, wreck.hullProfile);
   if (!data || !shards || !timing || !art) {
-    drawWreckPlaceholder(scene, wreck, point);
+    drawWreckPlaceholder(scene, object.id, wreck, point);
     return;
   }
   const time = wreck.age * 1000;
@@ -899,23 +900,38 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
 /** Fallback without shard art: hull fragments flying outward. */
 export function drawWreckPlaceholder(
   scene: ObjectsContext,
+  objectId: string,
   wreck: NonNullable<SpaceObject["wreck"]>,
   point: Vec,
 ): void {
   const timing = ECONOMY.destruction[wreck.archetype];
   const progress = Math.min(1, wreck.age / timing.durationSeconds);
   const size = Math.max(6, enemyCatalog[wreck.archetype].sizeRatio * 10);
+  let spreadX = 1;
+  let spreadY = 1;
+  if (wreck.hullProfile !== undefined) {
+    const { archetype, facing, hullProfile } = wreck;
+    const identity = { archetype, facing, id: wreckEnemyId(objectId) };
+    const stock = enemyHull(identity)?.flat();
+    const profile = enemyHull({ ...identity, hullProfile })?.flat();
+    if (stock?.length && profile?.length) {
+      const reach = (points: Vec[], axis: keyof Vec) =>
+        Math.max(...points.map((vertex) => Math.abs(vertex[axis])));
+      spreadX = reach(profile, "x") / (reach(stock, "x") || 1);
+      spreadY = reach(profile, "y") / (reach(stock, "y") || 1);
+    }
+  }
   scene.ink.lineStyle(1.5, scene.palette.obstacle, 1 - progress);
   for (let i = 0; i < 6; i++) {
     const angle = (i * Math.PI) / 3 + Math.atan2(wreck.facing.y, wreck.facing.x);
     const reach = size * (0.3 + progress * 1.4);
-    const x = point.x + Math.cos(angle) * reach;
-    const y = point.y + Math.sin(angle) * reach * 0.5;
+    const x = point.x + Math.cos(angle) * reach * spreadX;
+    const y = point.y + Math.sin(angle) * reach * 0.5 * spreadY;
     scene.ink.lineBetween(
-      x - Math.cos(angle + 1) * size * 0.3,
-      y - Math.sin(angle + 1) * size * 0.15,
-      x + Math.cos(angle + 1) * size * 0.3,
-      y + Math.sin(angle + 1) * size * 0.15,
+      x - Math.cos(angle + 1) * size * 0.3 * spreadX,
+      y - Math.sin(angle + 1) * size * 0.15 * spreadY,
+      x + Math.cos(angle + 1) * size * 0.3 * spreadX,
+      y + Math.sin(angle + 1) * size * 0.15 * spreadY,
     );
   }
 }

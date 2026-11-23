@@ -23,7 +23,7 @@ import { settlementById } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { holodisksHeld } from "./conversations.ts";
 import { enemyDefeated } from "./enemyAi.ts";
-import { validFlightTopology } from "./flightTopology.ts";
+import { flightWorldContext, validFlightTopology } from "./flightTopology.ts";
 import { validGalaxyGeography } from "./galaxyGeography.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
 import {
@@ -58,6 +58,7 @@ import type {
 import { shipTuning } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
+import { periodicWorldGrid, worldCellKey } from "./worldCells.ts";
 
 export function canReplayEarthChapter(
   content: GameContent,
@@ -224,7 +225,32 @@ function tacticState(value: unknown): boolean {
 function nullableVector(value: unknown): boolean {
   return value === null || vector(value);
 }
+function validProfiledPacks(
+  flight: Pick<FlightState, "topology">,
+  content: GameContent,
+  sizes: Record<string, unknown>,
+  value: unknown,
+): boolean {
+  if (!record(value)) {
+    return false;
+  }
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  return Object.entries(value).every(([id, kind]) => {
+    if (
+      (kind !== "frigate" && kind !== "capital") ||
+      !Object.hasOwn(sizes, id) ||
+      !(typeof sizes[id] === "number" && sizes[id] > 0)
+    ) {
+      return false;
+    }
+    const cell = id.startsWith("pack:") ? chunkCoordinates(id.slice("pack:".length)) : null;
+    return cell !== null && id === `pack:${worldCellKey(grid, cell)}`;
+  });
+}
+
 function combatState(
+  flight: Pick<FlightState, "topology">,
+  content: GameContent,
   routes: readonly string[],
   value: unknown,
 ): value is NonNullable<FlightState["combat"]> {
@@ -238,6 +264,8 @@ function combatState(
         Number.isSafeInteger(size) &&
         nonnegative(size),
     ) &&
+    (value.profiledPacks === undefined ||
+      validProfiledPacks(flight, content, value.initialPackSizes, value.profiledPacks)) &&
     (value.unloadedPackMembers === undefined ||
       (record(value.unloadedPackMembers) &&
         Object.entries(value.unloadedPackMembers).every(
@@ -808,7 +836,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         return null;
       }
       const routes = destinationIds[value.selectedGalaxy as number] ?? [];
-      if (f.combat !== undefined && !combatState(routes, f.combat)) {
+      if (f.combat !== undefined && !combatState(markerContext, content, routes, f.combat)) {
         return null;
       }
       if (

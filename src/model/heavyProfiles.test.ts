@@ -122,3 +122,25 @@ it("restores explicit actors and wrecks in v14 while absent profiles keep stock 
   Object.assign(invalid.flight!.objects.at(-1)!.wreck!, { hullProfile: "giant" });
   expect(restoreGameSave(CONTENT, invalid)).toBeNull();
 });
+
+it("rejects a profile ledger for aliased, unrepresented or nonordinary pack IDs", () => {
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
+  const saved = model.saveDocument();
+  const flight = saved.flight!;
+  const combat = (flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
+  combat.initialPackSizes["pack:0,0"] = 1;
+  combat.profiledPacks = { "pack:0,0": "capital" };
+  expect(restoreGameSave(CONTENT, saved)?.flight?.combat?.profiledPacks).toEqual(
+    combat.profiledPacks,
+  );
+  for (const id of ["pack:00,0", "pack:1000,0", "route:growers", "pack:0,0:escorts", "pack:1,1"]) {
+    const invalid = structuredClone(saved);
+    const state = invalid.flight!.combat!;
+    if (id !== "pack:1,1") {
+      state.initialPackSizes[id] = 1;
+    }
+    state.profiledPacks = { [id]: "capital" };
+    expect(restoreGameSave(CONTENT, invalid)).toBeNull();
+  }
+});

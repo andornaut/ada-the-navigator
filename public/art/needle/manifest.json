@@ -19006,6 +19006,1094 @@
       "frameMs": 700,
       "project": "practiceBerth",
       "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-0",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-1",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-2",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-3",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-4",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-5",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-6",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-7",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-8",
+      "path": "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-9",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-10",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-11",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-12",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-13",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-14",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateNarrow-15",
+      "path": "/art/needle/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-0",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-1",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-2",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-3",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-4",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-5",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-6",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-7",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-8",
+      "path": "/art/needle/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-9",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-10",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-11",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-12",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-13",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-14",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-frigateCompact-15",
+      "path": "/art/needle/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-0",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-1",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-2",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-3",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-4",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-5",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-6",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-7",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-8",
+      "path": "/art/needle/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-9",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-10",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-11",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-12",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-13",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-14",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalNarrow-15",
+      "path": "/art/needle/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-0",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-1",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-2",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-3",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-4",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-5",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-6",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-7",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-8",
+      "path": "/art/needle/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-9",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-10",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-11",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-12",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-13",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-14",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
+    },
+    {
+      "id": "enemy-needle-capitalCompact-15",
+      "path": "/art/needle/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true,
+      "family": "needle"
     }
   ],
   "needleGates": "/art/needle/gates.json",
@@ -19015,6 +20103,22 @@
   "backdrop": "/art/needle/backdrop.json",
   "tow": "/art/needle/tow.json",
   "sidecars": {
+    "frigateNarrow": {
+      "hardpoints": "/art/enemies/frigateNarrow-hardpoints.json",
+      "jets": "/art/needle/enemies/frigateNarrow-jets.json"
+    },
+    "frigateCompact": {
+      "hardpoints": "/art/enemies/frigateCompact-hardpoints.json",
+      "jets": "/art/needle/enemies/frigateCompact-jets.json"
+    },
+    "capitalNarrow": {
+      "hardpoints": "/art/enemies/capitalNarrow-hardpoints.json",
+      "jets": "/art/needle/enemies/capitalNarrow-jets.json"
+    },
+    "capitalCompact": {
+      "hardpoints": "/art/enemies/capitalCompact-hardpoints.json",
+      "jets": "/art/needle/enemies/capitalCompact-jets.json"
+    },
     "capital": {
       "jets": "/art/needle/enemies/capital-jets.json",
       "hardpoints": "/art/enemies/capital-hardpoints.json"

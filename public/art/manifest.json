@@ -44716,6 +44716,1030 @@
       },
       "archetype": "hostileStation",
       "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-0",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-1",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-2",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-3",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-4",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-5",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-6",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-7",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-8",
+      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-9",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-10",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-11",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-12",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-13",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-14",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateNarrow-15",
+      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-0",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-1",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-2",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-3",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-4",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-5",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-6",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-7",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-8",
+      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-9",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-10",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-11",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-12",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-13",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-14",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateCompact-15",
+      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "width": 432,
+      "height": 432,
+      "displayWidth": 189,
+      "displayHeight": 189,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigateCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-0",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-1",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-2",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-3",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-4",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-5",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-6",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-7",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-8",
+      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-9",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-10",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-11",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-12",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-13",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-14",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalNarrow-15",
+      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalNarrow",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-0",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-1",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-2",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-3",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-4",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-5",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-6",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-7",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-8",
+      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-9",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-10",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-11",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-12",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-13",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-14",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-capitalCompact-15",
+      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "width": 480,
+      "height": 480,
+      "displayWidth": 210,
+      "displayHeight": 210,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capitalCompact",
+      "svgSheet": true
     }
   ],
   "spacePalette": "/art/space-palette.json",
@@ -44739,6 +45763,22 @@
   "shipMaterials": "/art/ship-materials.json",
   "storyCompositions": "/art/story-compositions.json",
   "sidecars": {
+    "frigateNarrow": {
+      "hardpoints": "/art/enemies/frigateNarrow-hardpoints.json",
+      "jets": "/art/enemies/frigateNarrow-jets.json"
+    },
+    "frigateCompact": {
+      "hardpoints": "/art/enemies/frigateCompact-hardpoints.json",
+      "jets": "/art/enemies/frigateCompact-jets.json"
+    },
+    "capitalNarrow": {
+      "hardpoints": "/art/enemies/capitalNarrow-hardpoints.json",
+      "jets": "/art/enemies/capitalNarrow-jets.json"
+    },
+    "capitalCompact": {
+      "hardpoints": "/art/enemies/capitalCompact-hardpoints.json",
+      "jets": "/art/enemies/capitalCompact-jets.json"
+    },
     "capital": {
       "jets": "/art/enemies/capital-jets.json",
       "hardpoints": "/art/enemies/capital-hardpoints.json"

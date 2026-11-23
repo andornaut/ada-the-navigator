@@ -14,6 +14,7 @@ export const HEAVY_PROFILE_PART_CLASSES = {
   frigateNarrow: "frigate",
 } as const;
 export type HeavyProfileAssetKey = keyof typeof HEAVY_PROFILE_PART_CLASSES;
+export type OrdinaryHeavy = (typeof HEAVY_PROFILE_PART_CLASSES)[HeavyProfileAssetKey];
 export type HeavyHullProfile = "compact" | "narrow";
 export type EnemyAssetKey =
   | Exclude<keyof typeof SHIP_PHYSICS, "ada">
@@ -30,9 +31,20 @@ export interface EnemyIdentity {
   readonly hullProfile?: HeavyHullProfile | undefined;
 }
 
+export function ordinaryHeavy(kind: EnemyActorKind): kind is OrdinaryHeavy {
+  return kind === "capital" || kind === "frigate";
+}
+
+const ordinaryProfiles = [undefined, "compact", "narrow"] as const;
+
+/** The paired manifests supply all three profiles in each regional palette and the core fallback. */
+export function ordinaryPackHullProfile(identity: EnemyIdentity): HeavyHullProfile | undefined {
+  return selectOrdinaryHeavyProfile(ordinaryProfiles, identity);
+}
+
 function canCarryHeavyProfile({ archetype, id }: EnemyIdentity): boolean {
   return (
-    (archetype === "frigate" || archetype === "capital") &&
+    ordinaryHeavy(archetype) &&
     Boolean(id && id !== PHANTOM_FLAGSHIP_ID && !id.startsWith("route:"))
   );
 }

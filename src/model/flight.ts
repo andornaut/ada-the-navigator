@@ -20,7 +20,13 @@ import {
   PHASER_AIM_SECONDS,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { retaliatorVariant, WRECK_ID_PREFIX } from "../data/enemyIdentity.ts";
+import {
+  type HeavyHullProfile,
+  ordinaryHeavy,
+  ordinaryPackHullProfile,
+  retaliatorVariant,
+  WRECK_ID_PREFIX,
+} from "../data/enemyIdentity.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
@@ -1060,15 +1066,24 @@ function spawnEnemy(
   packId: string | null = null,
   phase = 0,
   escortOf: string | null = null,
+  hullProfile?: HeavyHullProfile,
 ): SpaceObject {
   const weaponLevel = rollEnemyWeaponLevel(
     { encounterSeed: flightEncounterSeed(flight), galaxy: flight.galaxy },
     id,
   );
-  const definition = enemyActorDefinition(flight.galaxy, archetype, id, weaponLevel);
+  const definition = enemyActorDefinition(flight.galaxy, archetype, id, weaponLevel, hullProfile);
   const enemy = createEnemy(
     definition,
-    { archetype, escortOf, id, packId, phase, weaponLevel },
+    {
+      archetype,
+      escortOf,
+      ...(hullProfile === undefined ? {} : { hullProfile }),
+      id,
+      packId,
+      phase,
+      weaponLevel,
+    },
     point,
   );
   return {
@@ -1793,14 +1808,17 @@ function generateRegion(
   }
   if (archetype === "frigate" && !initialized) {
     const leaders = Array.from({ length: count }, (_, index) => {
+      const id = `${packId}:${index}`;
       const leader = spawnEnemy(
         content,
         flight,
         "frigate",
-        `${packId}:${index}`,
+        id,
         memberPosition(policy.memberSpacing, count, center, index),
         packId,
         next() * Math.PI * 2,
+        null,
+        ordinaryPackHullProfile({ archetype, id }),
       );
       leader.persistent = false;
       return leader;
@@ -1841,8 +1859,10 @@ function generateRegion(
       canonicalObject(flight, member);
       flight.objects.push(member);
     }
-    combat(flight).initialPackSizes[packId] = leaders.length;
-    combat(flight).initialPackSizes[escortPackId(packId)] = followers.length;
+    const state = combat(flight);
+    state.initialPackSizes[packId] = leaders.length;
+    state.initialPackSizes[escortPackId(packId)] = followers.length;
+    (state.profiledPacks ??= {})[packId] = archetype;
     return;
   }
   admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) =>
@@ -1894,6 +1914,10 @@ function admitGroup(
   const { archetype, count, escortOf, packId } = group;
   const state = combat(flight);
   const initialized = Object.hasOwn(state.initialPackSizes, packId);
+  const profiled =
+    escortOf === null &&
+    ordinaryHeavy(archetype) &&
+    (initialized ? state.profiledPacks?.[packId] === archetype : true);
   let budget = initialized ? (state.unloadedPackMembers?.[packId] ?? 0) : count;
   let admitted = 0;
   const existing = flight.objects.filter(
@@ -1903,15 +1927,17 @@ function admitGroup(
   const slots = initialized ? Math.max(count, state.initialPackSizes[packId] ?? 0) : count;
   for (let i = 0; i < slots && budget > 0; i++) {
     const phase = next() * Math.PI * 2;
+    const id = `${packId}:${i}`;
     const object = spawnEnemy(
       content,
       flight,
       archetype,
-      `${packId}:${i}`,
+      id,
       place(i, phase),
       packId,
       phase,
       typeof escortOf === "function" ? escortOf(i) : escortOf,
+      profiled ? ordinaryPackHullProfile({ archetype, id }) : undefined,
     );
     if (group.role) {
       object.role = group.role;
@@ -1933,6 +1959,9 @@ function admitGroup(
   }
   if (!initialized) {
     state.initialPackSizes[packId] = existing + admitted;
+    if (profiled && admitted > 0) {
+      (state.profiledPacks ??= {})[packId] = archetype;
+    }
   } else if (admitted && state.unloadedPackMembers) {
     if (budget > 0) {
       state.unloadedPackMembers[packId] = budget;
@@ -5181,6 +5210,7 @@ function destroyEnemy(object: SpaceObject, flight: FlightState): void {
       age: 0,
       archetype,
       facing: { ...(object.enemy?.facing ?? { x: 0, y: -1 }) },
+      ...(object.enemy?.hullProfile === undefined ? {} : { hullProfile: object.enemy.hullProfile }),
     },
     x: object.x,
     y: object.y,

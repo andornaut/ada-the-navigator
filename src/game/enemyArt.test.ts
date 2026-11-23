@@ -13,6 +13,7 @@ import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { HEAVY_PROFILE_PART_CLASSES } from "../data/enemyIdentity.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
 import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
@@ -109,8 +110,12 @@ describe("enemy frame sets", () => {
   it("reads sixteen sized headings for each coral archetype from Art's manifest", () => {
     expect([...art.keys()].sort()).toEqual([
       "capital",
+      "capitalCompact",
+      "capitalNarrow",
       "fighter",
       "frigate",
+      "frigateCompact",
+      "frigateNarrow",
       "gadget",
       "hostileStation",
       "interceptor",
@@ -128,8 +133,12 @@ describe("enemy frame sets", () => {
     );
     expect(sizes).toEqual({
       capital: 210,
+      capitalCompact: 210,
+      capitalNarrow: 210,
       fighter: 45.5,
       frigate: 189,
+      frigateCompact: 189,
+      frigateNarrow: 189,
       gadget: 245,
       hostileStation: 360.5,
       interceptor: 38.5,
@@ -150,7 +159,11 @@ describe("enemy frame sets", () => {
         .sort(),
     ).toEqual([
       "capital",
+      "capitalCompact",
+      "capitalNarrow",
       "frigate",
+      "frigateCompact",
+      "frigateNarrow",
       "gadget",
       "hostileStation",
       "retaliator",
@@ -723,6 +736,7 @@ describe("claim jumper art", () => {
         "retaliatorCargoHauler",
         "retaliatorMiningFreighter",
         "swarm",
+        ...Object.keys(HEAVY_PROFILE_PART_CLASSES),
       ].sort(),
     );
     for (const name of ["swarm", "fighter", "interceptor", "retaliator"]) {
@@ -776,7 +790,9 @@ describe("claim jumper art", () => {
   });
 
   it("composes the claim frigate and capital, drawing a destroyed hardpoint's destroyed base", () => {
-    expect([...CLAIM_WIRED].sort()).toEqual([...sets.keys()].sort());
+    expect([...sets.keys()].sort()).toEqual(
+      [...CLAIM_WIRED, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
+    );
     for (const name of ["frigate", "capital"]) {
       const art = claim.get(name)!;
       expect(art.frames).toHaveLength(16);
@@ -811,7 +827,35 @@ describe("galaxy enemy families", () => {
       (asset) => asset.family === "garnet",
     );
     expect([...enemyFrameSets(assets, garnet.prefix).keys()].sort()).toEqual(
-      [...garnet.wired].sort(),
+      [...garnet.wired, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
     );
   });
 });
+
+it.each([undefined, "andromeda", "cartwheel", "needle"])(
+  "registers every ordinary heavy profile and composes the exact %s palette",
+  (galaxy) => {
+    const keys = Object.keys(HEAVY_PROFILE_PART_CLASSES);
+    const family = galaxyFamily(galaxy, keys[0]!);
+    const own = assets.filter((frame) => frame.family === family?.family);
+    const sidecars = (galaxy && galaxySidecars.get(galaxy)) || coreSidecars;
+    const sets = enemyFrameSets(own, family?.prefix);
+    const art = enemyArt(
+      (key) => json(enemyJetsPath(sidecars, key)),
+      (key) => json(enemyHardpointsPath(sidecars, key)),
+      composedArchetypes(own),
+      own,
+      sets,
+      family?.prefix,
+    );
+    for (const [key, partClass] of Object.entries(HEAVY_PROFILE_PART_CLASSES)) {
+      expect(galaxyFamily(galaxy, key)).toBe(family);
+      const profile = art.get(key);
+      expect(profile?.frames).toHaveLength(16);
+      expect(profile?.jets?.headings).toHaveLength(16);
+      expect(profile?.parts?.layout.headings).toHaveLength(16);
+      expect(profile?.parts?.bases).toEqual(art.get(partClass)?.parts?.bases);
+      expect(profile?.parts?.tops).toEqual(art.get(partClass)?.parts?.tops);
+    }
+  },
+);

@@ -2,7 +2,7 @@ import type { ActivityId } from "../data/activities.ts";
 import type { AndromedaProgress } from "../data/andromeda.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
-import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
+import type { HeavyHullProfile, OrdinaryHeavy } from "../data/enemyIdentity.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
@@ -175,6 +175,8 @@ export interface FlightState {
   visited: Record<string, string>;
   combat?: {
     initialPackSizes: Record<string, number>;
+    /** New ordinary leader packs use stable profiles. Older count-only packs stay stock. */
+    profiledPacks?: Record<string, OrdinaryHeavy>;
     routeEncounters: string[];
     /**
      * CLEANUP (added 2026-11-15): Retain only empty legacy journals until supported saves

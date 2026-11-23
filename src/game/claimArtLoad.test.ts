@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { HEAVY_PROFILE_PART_CLASSES } from "../data/enemyIdentity.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { galaxyLoadsAtOnce } from "./artManifest.ts";
 import {
@@ -27,7 +28,9 @@ const present = (path: string) => existsSync(new URL(`../../public${path}`, impo
 describe("claim jumper art loading", () => {
   it("resolves every claim archetype's hull frames from Cartwheel's manifest", () => {
     const hulls = enemyFrameSets(claim, CLAIM);
-    expect([...hulls.keys()].sort()).toEqual([...CLAIM_WIRED].sort());
+    expect([...hulls.keys()].sort()).toEqual(
+      [...CLAIM_WIRED, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
+    );
     for (const [archetype, frames] of hulls) {
       expect(frames.length, archetype).toBe(archetype === "platform" ? 1 : 16);
       for (const frame of frames) {

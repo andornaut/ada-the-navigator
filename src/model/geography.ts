@@ -442,10 +442,16 @@ export function worldPrunePackState(context: GeographyContext, flight: FlightSta
     for (const id of Object.keys(flight.combat.initialPackSizes)) {
       if (!encounters.has(encounterOf(id)) && !context.retainedEncounters?.has(encounterOf(id))) {
         delete flight.combat.initialPackSizes[id];
+        if (flight.combat.profiledPacks) {
+          delete flight.combat.profiledPacks[id];
+        }
         if (flight.combat.unloadedPackMembers) {
           delete flight.combat.unloadedPackMembers[id];
         }
       }
+    }
+    if (flight.combat.profiledPacks && !Object.keys(flight.combat.profiledPacks).length) {
+      delete flight.combat.profiledPacks;
     }
     if (
       flight.combat.unloadedPackMembers &&
