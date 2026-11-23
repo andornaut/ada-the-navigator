@@ -643,7 +643,9 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
     detail.open("Ore", "Current", origin as unknown as HTMLElement);
     expect(afterParentDismissal()).toBe(false);
     const resourcePress = guard.gate.capture();
-    const dismiss = fixture.card.body.children[2]!.querySelector('[data-action="dismiss-resource"]')!;
+    const dismiss = fixture.card.body.children[2]!.querySelector(
+      '[data-action="dismiss-resource"]',
+    )!;
     resolveAdaHoldAction(host, dismiss)?.activate();
     expect(resourcePress()).toBe(false);
     expect(transitions).toEqual([true, false]);
