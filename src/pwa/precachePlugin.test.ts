@@ -24,7 +24,16 @@ it("forwards the build identity, boot files and decoded pack limit to the kit's 
   const options = captured.options!;
   expect(options.buildId).toBe(full);
   expect(options.packs).toEqual({ maxBytes: 1536 * 1024 });
-  expect(options).not.toHaveProperty("groups");
+  expect(options.wholeBuild).toBeUndefined();
+  const updateGroup = options.updateGroup!;
+  expect(updateGroup("/assets/main-Abc012_-.js")).toBe(updateGroup("/assets/main-wxy98745.js"));
+  expect(updateGroup("/assets/launch-Abc012_-.js")).not.toBe(
+    updateGroup("/assets/main-Abc012_-.js"),
+  );
+  expect(updateGroup("/assets/art/app-icon/mask-Abc012_-.svg")).toBe("app-icons");
+  expect(updateGroup("/previews/sunflower.png")).toBe("preview");
+  expect(updateGroup("/art/manifest.json")).toMatch(/^art:core:[0-2]$/u);
+  expect(updateGroup("/art/whales/whale-0.svg")).toMatch(/^art:whales:[0-3]$/u);
   expect(options.verifiedJsonBodies).toBeUndefined();
   options.hashedFiles!((url) =>
     url === "/art/manifest.json"

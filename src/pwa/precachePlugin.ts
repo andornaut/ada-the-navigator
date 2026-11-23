@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
@@ -10,6 +11,36 @@ import type { Plugin } from "vite";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
+
+const UPDATE_ART_BUCKETS: Readonly<Record<string, number>> = {
+  andromeda: 4,
+  asteroids: 2,
+  cartwheel: 3,
+  core: 3,
+  enemies: 4,
+  needle: 2,
+  phantom: 2,
+  whales: 4,
+};
+
+// Keep build outputs in stable groups when only their content hashes change.
+function updateGroup(url: string): string {
+  if (url.startsWith("/previews/")) {
+    return "preview";
+  }
+  if (url.startsWith("/assets/art/app-icon/")) {
+    return "app-icons";
+  }
+  const parts = url.split("/").filter(Boolean);
+  if (parts[0] !== "art") {
+    const stableName = url.replace(/-[A-Za-z0-9_-]{8}(?=\.[^.]+$)/u, "");
+    return `entry:${createHash("sha256").update(stableName).digest("hex").slice(0, 16)}`;
+  }
+  const area = parts.length > 2 ? parts[1]! : "core";
+  const bucketCount = UPDATE_ART_BUCKETS[area] ?? 1;
+  const bucket = createHash("sha256").update(url).digest().readUInt32BE() % bucketCount;
+  return `art:${area}:${bucket}`;
+}
 
 // Decoded bytes per envelope. Use the lower end of Game Kit's transport trial range.
 const PACK_MAX_BYTES = 1536 * 1024;
@@ -86,7 +117,7 @@ export function precachePlugin({
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,
-      wholeBuild: true,
+      updateGroup,
     }),
   ];
 }
