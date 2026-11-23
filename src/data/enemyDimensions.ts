@@ -8,5 +8,5 @@ export const ENEMY_SIZE_RATIOS = {
   interceptor: 1,
   platform: 4,
   retaliator: 3,
-  swarm: 0.65,
+  swarm: 0.8,
 } as const;

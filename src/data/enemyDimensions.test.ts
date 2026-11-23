@@ -12,6 +12,6 @@ it("keeps the accepted assembled-body size targets including the seven-width hos
     interceptor: 1,
     platform: 4,
     retaliator: 3,
-    swarm: 0.65,
+    swarm: 0.8,
   });
 });
