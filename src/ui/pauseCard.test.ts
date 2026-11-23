@@ -7,6 +7,7 @@ import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import * as mapUI from "./mapScreen.ts";
 import { mapScreenLabels, type MapScreenState } from "./mapScreen.ts";
+import * as pauseActions from "./pause.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 import { inCurrentView } from "./pressScope.ts";
 import type { ShipView } from "./shipCard.ts";
@@ -27,7 +28,15 @@ function createDocument() {
     createElementNS: (): FakeElement => new FakeElement(),
     createTextNode: (text: string): FakeElement =>
       Object.assign(new FakeElement(), { nodeType: 3, nodeValue: text }),
-    defaultView: null,
+    defaultView: {
+      get HTMLElement() {
+        return FakeElement;
+      },
+      get Node() {
+        return FakeElement;
+      },
+      getComputedStyle: () => ({}),
+    },
     fonts: Object.assign(new EventTarget(), { status: "loaded" }),
   });
 }
@@ -75,15 +84,26 @@ class FakeElement {
   }
   className = "";
   readonly classList = {
-    add: (name: string) => this.classes.add(name),
-    remove: (name: string) => this.classes.delete(name),
-    toggle: (name: string, on: boolean) =>
-      on ? this.classes.add(name) : this.classes.delete(name),
+    add: (name: string) => {
+      this.className = [...new Set([...this.className.split(" "), name])].filter(Boolean).join(" ");
+    },
+    remove: (name: string) => {
+      this.className = this.className
+        .split(" ")
+        .filter((value) => value !== name)
+        .join(" ");
+    },
+    toggle: (name: string, on: boolean) => {
+      if (on) {
+        this.classList.add(name);
+      } else {
+        this.classList.remove(name);
+      }
+    },
   };
-  readonly classes = new Set<string>();
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly listeners = new Map<string, (() => void)[]>();
+  readonly listeners = new Map<string, ((event: Event) => void)[]>();
   readonly ownerDocument = PAGE;
   readonly style: Record<string, unknown> = {
     getPropertyValue: () => "",
@@ -91,10 +111,10 @@ class FakeElement {
     setProperty: vi.fn(),
   };
   type = "";
-  addEventListener(type: string, listener: () => void): void {
+  addEventListener(type: string, listener: (event: Event) => void): void {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
-  removeEventListener(type: string, listener: () => void): void {
+  removeEventListener(type: string, listener: (event: Event) => void): void {
     this.listeners.set(
       type,
       (this.listeners.get(type) ?? []).filter((item) => item !== listener),
@@ -135,8 +155,9 @@ class FakeElement {
     }
   }
   click(): void {
+    const event = new Event("click", { cancelable: true });
     for (const listener of this.listeners.get("click") ?? []) {
-      listener();
+      listener(event);
     }
   }
   closest(selector: string): FakeElement | null {
@@ -164,7 +185,7 @@ class FakeElement {
         return Boolean((this as unknown as HTMLButtonElement).disabled);
       }
       if (rule.startsWith(".")) {
-        return this.classes.has(rule.slice(1)) || this.className.split(" ").includes(rule.slice(1));
+        return this.className.split(" ").includes(rule.slice(1));
       }
       const attribute = /^\[([^=\]]+)(?:="([^"]*)")?\]$/.exec(rule);
       if (attribute) {
@@ -298,6 +319,7 @@ beforeEach(() => {
   );
   vi.stubGlobal("Image", FakeImage);
   vi.stubGlobal("document", PAGE);
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "" }));
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
 });
 
@@ -372,6 +394,62 @@ const texts = (node: FakeElement): string[] => [
   ...(node.textContent ? [node.textContent] : []),
   ...node.children.flatMap(texts),
 ];
+
+it("uses the standard parent actions with stable nodes, hidden Map and one native listener", () => {
+  const { modal, pause, root } = cards();
+  const map = button(modal, "pause-map");
+  const resume = button(modal, "pause-resume");
+  const resolve = (target: FakeElement) =>
+    actionBinding.resolveAdaHoldAction(
+      root as unknown as HTMLElement,
+      target as unknown as HTMLElement,
+    );
+  pause.setState(state());
+  pause.open();
+  for (const control of [map, resume]) {
+    expect(control.matches(".ui-standard-button")).toBe(true);
+    expect(control.querySelector(".ada-pause-cap-label")?.textContent).toBe(control.textContent);
+    expect(control.listeners.get("click")).toHaveLength(1);
+    expect(resolve(control)?.available()).toBe(true);
+  }
+  pause.setState(state({ canMap: false }));
+  expect(button(modal, "pause-map")).toBe(map);
+  expect(button(modal, "pause-resume")).toBe(resume);
+  expect(map.hidden).toBe(true);
+  expect(resolve(map)?.available()).toBe(false);
+  map.click();
+  expect(pause.isOpen()).toBe(true);
+  expect(pause.mapOpen()).toBe(false);
+  pause.dispose();
+  expect(resume.listeners.get("click")).toEqual([]);
+  expect(resolve(resume)).toBeNull();
+});
+
+it("keeps a declared unavailable action focusable and refuses native and held dispatch", () => {
+  const ordered = pauseActions.pauseActions;
+  vi.spyOn(pauseActions, "pauseActions").mockImplementation((labels) =>
+    ordered(labels).map((action) =>
+      action.id === "backToTitle" ? { ...action, available: false } : action,
+    ),
+  );
+  const { modal, options, pause, root } = cards();
+  pause.setState(state());
+  pause.open();
+  const exit = button(modal, "pause-backToTitle");
+  expect(exit.matches(".ui-standard-button")).toBe(false);
+  expect(exit.getAttribute("aria-disabled")).toBe("true");
+  expect(exit.matches(":disabled")).toBe(false);
+  exit.click();
+  const held = actionBinding.resolveAdaHoldAction(
+    root as unknown as HTMLElement,
+    exit as unknown as HTMLElement,
+  );
+  expect(held?.available()).toBe(true);
+  held?.activate();
+  expect(options.onBackToTitle).not.toHaveBeenCalled();
+  expect(pause.isOpen()).toBe(true);
+  pause.dispose();
+});
 
 it("admits the visible Pause X alongside Resume and excludes it under Ship", () => {
   const { modal, pause, root } = cards();
@@ -821,6 +899,7 @@ describe("Paused card", () => {
   it("keeps every action, Back to title included, available in danger", () => {
     const { body, options, pause } = cards();
     pause.setState(state({ inDanger: true }));
+    pause.open();
     const actions = buttonsOf(body.children[0]!);
     expect(actions.map((node) => node.getAttribute("aria-disabled"))).toEqual([
       null,
@@ -1526,7 +1605,7 @@ it("audits completed Ship rows after parent attachment and only when sections ch
   const original = actionBinding.assertAdaActionBindings;
   const audit = vi.fn();
   vi.spyOn(actionBinding, "assertAdaActionBindings").mockImplementation((scope) => {
-    if ((scope as unknown as FakeElement).classes.has("ada-ship-sections")) {
+    if ((scope as unknown as FakeElement).matches(".ada-ship-sections")) {
       audit(scope);
     }
     expect(scope.isConnected).toBe(true);
@@ -1561,7 +1640,7 @@ it("rejects attached Ship rows outside an owning root before parent focus", () =
     ...nodes
   ) {
     original.apply(this, nodes);
-    if (nodes.length === 1 && nodes[0]?.classes.has("ada-ship-sections")) {
+    if (nodes.length === 1 && nodes[0]?.matches(".ada-ship-sections")) {
       outside.append(nodes[0]);
     }
   });
@@ -1625,7 +1704,11 @@ it.each(["pause-resume", "close-ship"])(
     const original = actionBinding.bindAdaAction;
     const bound: HTMLElement[] = [];
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
-      if (element.dataset.action === id) {
+      const resumeFactory =
+        id === "pause-resume" &&
+        options.nativeClickOwner === "factory" &&
+        element.textContent === LABELS.resume;
+      if (element.dataset.action === id || resumeFactory) {
         return { activate: () => false, dispose() {}, update() {} };
       }
       bound.push(element);

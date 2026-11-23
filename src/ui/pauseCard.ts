@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -32,6 +33,7 @@ import {
   shipSections,
   type ShipView,
 } from "./shipCard.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 export interface PauseLabels {
@@ -211,21 +213,49 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         },
         pauseButton: {
           create(initial) {
-            const button = createButton(initial.label, initial.role);
+            // Availability is fixed by pauseActions for this button's lifetime. Keep the
+            // existing reasonless refusal path for any unavailable action, including keyboard.
+            const standard = initial.available
+              ? createStandardTextAction(root, initial.label, {
+                  availability: (button) =>
+                    button?.disabled
+                      ? { kind: "disabled" }
+                      : button?.hidden
+                        ? { kind: "omitted" }
+                        : { kind: "available" },
+                  current: () => !disposed,
+                  run: () => act(initial.id),
+                  separateFace: true,
+                })
+              : undefined;
+            const button = standard?.element ?? createButton(initial.label, initial.role);
             button.dataset.action = `pause-${initial.id}`;
-            if (initial.id === "map" || initial.id === "resume") {
-              const label = document.createElement("span");
-              label.className = "ada-pause-cap-label";
-              label.textContent = initial.label;
-              button.replaceChildren(label);
+            if (standard) {
+              button.classList.toggle("ada-primary", initial.role === "primary");
+              setButtonRole(initial.role, button);
+              if (initial.id === "map" || initial.id === "resume") {
+                button.querySelector(".ui-control-label")!.classList.add("ada-pause-cap-label");
+              }
+            } else {
+              if (initial.id === "map" || initial.id === "resume") {
+                const label = document.createElement("span");
+                label.className = "ada-pause-cap-label";
+                label.textContent = initial.label;
+                button.replaceChildren(label);
+              }
+              register(button, () => act(initial.id));
             }
             buttons.set(initial.id, button);
             const update = (data: PauseTreeAction) => {
               button.hidden = data.hidden;
-              setAvailable(button, data.available);
+              if (standard) {
+                standard.refresh();
+              } else {
+                setAvailable(button, data.available);
+              }
             };
             update(initial);
-            return { dispose() {}, element: button, slots: {}, update };
+            return { dispose: standard?.dispose ?? (() => {}), element: button, slots: {}, update };
           },
           slots: [],
         },
@@ -251,9 +281,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.append(paused.frame, ship.frame);
   try {
     register(shipBack, () => closeShip());
-    for (const [id, button] of buttons) {
-      register(button, () => act(id));
-    }
     register(paused.close, resume);
     register(ship.close, () => closeShip());
     assertAdaActionMetadata(paused.frame);
