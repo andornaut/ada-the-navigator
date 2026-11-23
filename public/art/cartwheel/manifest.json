@@ -237,7 +237,7 @@
     },
     {
       "id": "enemy-claim-swarm-0",
-      "path": "/art/cartwheel/enemies/swarm-0.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -249,11 +249,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-1",
-      "path": "/art/cartwheel/enemies/swarm-1.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -265,11 +266,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-2",
-      "path": "/art/cartwheel/enemies/swarm-2.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -281,11 +283,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-3",
-      "path": "/art/cartwheel/enemies/swarm-3.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -297,11 +300,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-4",
-      "path": "/art/cartwheel/enemies/swarm-4.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -313,11 +317,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-5",
-      "path": "/art/cartwheel/enemies/swarm-5.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -329,11 +334,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-6",
-      "path": "/art/cartwheel/enemies/swarm-6.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -345,11 +351,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-7",
-      "path": "/art/cartwheel/enemies/swarm-7.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -361,11 +368,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-8",
-      "path": "/art/cartwheel/enemies/swarm-8.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -377,11 +385,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-9",
-      "path": "/art/cartwheel/enemies/swarm-9.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -393,11 +402,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-10",
-      "path": "/art/cartwheel/enemies/swarm-10.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -409,11 +419,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-11",
-      "path": "/art/cartwheel/enemies/swarm-11.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -425,11 +436,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-12",
-      "path": "/art/cartwheel/enemies/swarm-12.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -441,11 +453,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-13",
-      "path": "/art/cartwheel/enemies/swarm-13.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -457,11 +470,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-14",
-      "path": "/art/cartwheel/enemies/swarm-14.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -473,11 +487,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-15",
-      "path": "/art/cartwheel/enemies/swarm-15.svg",
+      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -489,11 +504,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-0",
-      "path": "/art/cartwheel/enemies/fighter-0.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -505,11 +521,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-1",
-      "path": "/art/cartwheel/enemies/fighter-1.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -521,11 +538,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-2",
-      "path": "/art/cartwheel/enemies/fighter-2.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -537,11 +555,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-3",
-      "path": "/art/cartwheel/enemies/fighter-3.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -553,11 +572,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-4",
-      "path": "/art/cartwheel/enemies/fighter-4.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -569,11 +589,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-5",
-      "path": "/art/cartwheel/enemies/fighter-5.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -585,11 +606,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-6",
-      "path": "/art/cartwheel/enemies/fighter-6.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -601,11 +623,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-7",
-      "path": "/art/cartwheel/enemies/fighter-7.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -617,11 +640,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-8",
-      "path": "/art/cartwheel/enemies/fighter-8.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -633,11 +657,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-9",
-      "path": "/art/cartwheel/enemies/fighter-9.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -649,11 +674,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-10",
-      "path": "/art/cartwheel/enemies/fighter-10.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -665,11 +691,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-11",
-      "path": "/art/cartwheel/enemies/fighter-11.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -681,11 +708,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-12",
-      "path": "/art/cartwheel/enemies/fighter-12.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -697,11 +725,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-13",
-      "path": "/art/cartwheel/enemies/fighter-13.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -713,11 +742,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-14",
-      "path": "/art/cartwheel/enemies/fighter-14.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -729,11 +759,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-fighter-15",
-      "path": "/art/cartwheel/enemies/fighter-15.svg",
+      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -745,11 +776,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-0",
-      "path": "/art/cartwheel/enemies/interceptor-0.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -761,11 +793,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-1",
-      "path": "/art/cartwheel/enemies/interceptor-1.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -777,11 +810,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-2",
-      "path": "/art/cartwheel/enemies/interceptor-2.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -793,11 +827,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-3",
-      "path": "/art/cartwheel/enemies/interceptor-3.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -809,11 +844,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-4",
-      "path": "/art/cartwheel/enemies/interceptor-4.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -825,11 +861,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-5",
-      "path": "/art/cartwheel/enemies/interceptor-5.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -841,11 +878,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-6",
-      "path": "/art/cartwheel/enemies/interceptor-6.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -857,11 +895,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-7",
-      "path": "/art/cartwheel/enemies/interceptor-7.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -873,11 +912,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-8",
-      "path": "/art/cartwheel/enemies/interceptor-8.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -889,11 +929,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-9",
-      "path": "/art/cartwheel/enemies/interceptor-9.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -905,11 +946,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-10",
-      "path": "/art/cartwheel/enemies/interceptor-10.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -921,11 +963,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-11",
-      "path": "/art/cartwheel/enemies/interceptor-11.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -937,11 +980,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-12",
-      "path": "/art/cartwheel/enemies/interceptor-12.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -953,11 +997,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-13",
-      "path": "/art/cartwheel/enemies/interceptor-13.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -969,11 +1014,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-14",
-      "path": "/art/cartwheel/enemies/interceptor-14.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -985,11 +1031,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-interceptor-15",
-      "path": "/art/cartwheel/enemies/interceptor-15.svg",
+      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1001,7 +1048,8 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-0",

@@ -685,7 +685,7 @@
     },
     {
       "id": "enemy-needle-swarm-0",
-      "path": "/art/needle/enemies/swarm-0.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -697,11 +697,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-1",
-      "path": "/art/needle/enemies/swarm-1.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -713,11 +714,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-2",
-      "path": "/art/needle/enemies/swarm-2.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -729,11 +731,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-3",
-      "path": "/art/needle/enemies/swarm-3.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -745,11 +748,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-4",
-      "path": "/art/needle/enemies/swarm-4.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -761,11 +765,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-5",
-      "path": "/art/needle/enemies/swarm-5.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -777,11 +782,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-6",
-      "path": "/art/needle/enemies/swarm-6.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -793,11 +799,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-7",
-      "path": "/art/needle/enemies/swarm-7.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -809,11 +816,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-8",
-      "path": "/art/needle/enemies/swarm-8.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -825,11 +833,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-9",
-      "path": "/art/needle/enemies/swarm-9.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -841,11 +850,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-10",
-      "path": "/art/needle/enemies/swarm-10.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -857,11 +867,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-11",
-      "path": "/art/needle/enemies/swarm-11.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -873,11 +884,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-12",
-      "path": "/art/needle/enemies/swarm-12.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -889,11 +901,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-13",
-      "path": "/art/needle/enemies/swarm-13.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -905,11 +918,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-14",
-      "path": "/art/needle/enemies/swarm-14.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -921,11 +935,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-15",
-      "path": "/art/needle/enemies/swarm-15.svg",
+      "path": "/art/needle/enemies/swarm-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -937,11 +952,12 @@
         "y": 0.5
       },
       "archetype": "swarm",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-0",
-      "path": "/art/needle/enemies/fighter-0.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -953,11 +969,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-1",
-      "path": "/art/needle/enemies/fighter-1.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -969,11 +986,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-2",
-      "path": "/art/needle/enemies/fighter-2.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -985,11 +1003,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-3",
-      "path": "/art/needle/enemies/fighter-3.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1001,11 +1020,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-4",
-      "path": "/art/needle/enemies/fighter-4.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1017,11 +1037,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-5",
-      "path": "/art/needle/enemies/fighter-5.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1033,11 +1054,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-6",
-      "path": "/art/needle/enemies/fighter-6.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1049,11 +1071,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-7",
-      "path": "/art/needle/enemies/fighter-7.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1065,11 +1088,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-8",
-      "path": "/art/needle/enemies/fighter-8.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1081,11 +1105,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-9",
-      "path": "/art/needle/enemies/fighter-9.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1097,11 +1122,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-10",
-      "path": "/art/needle/enemies/fighter-10.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1113,11 +1139,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-11",
-      "path": "/art/needle/enemies/fighter-11.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1129,11 +1156,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-12",
-      "path": "/art/needle/enemies/fighter-12.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1145,11 +1173,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-13",
-      "path": "/art/needle/enemies/fighter-13.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1161,11 +1190,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-14",
-      "path": "/art/needle/enemies/fighter-14.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1177,11 +1207,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-fighter-15",
-      "path": "/art/needle/enemies/fighter-15.svg",
+      "path": "/art/needle/enemies/fighter-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -1193,11 +1224,12 @@
         "y": 0.5
       },
       "archetype": "fighter",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-0",
-      "path": "/art/needle/enemies/interceptor-0.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1209,11 +1241,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-1",
-      "path": "/art/needle/enemies/interceptor-1.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1225,11 +1258,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-2",
-      "path": "/art/needle/enemies/interceptor-2.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1241,11 +1275,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-3",
-      "path": "/art/needle/enemies/interceptor-3.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1257,11 +1292,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-4",
-      "path": "/art/needle/enemies/interceptor-4.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1273,11 +1309,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-5",
-      "path": "/art/needle/enemies/interceptor-5.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1289,11 +1326,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-6",
-      "path": "/art/needle/enemies/interceptor-6.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1305,11 +1343,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-7",
-      "path": "/art/needle/enemies/interceptor-7.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1321,11 +1360,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-8",
-      "path": "/art/needle/enemies/interceptor-8.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1337,11 +1377,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-9",
-      "path": "/art/needle/enemies/interceptor-9.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1353,11 +1394,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-10",
-      "path": "/art/needle/enemies/interceptor-10.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1369,11 +1411,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-11",
-      "path": "/art/needle/enemies/interceptor-11.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1385,11 +1428,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-12",
-      "path": "/art/needle/enemies/interceptor-12.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1401,11 +1445,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-13",
-      "path": "/art/needle/enemies/interceptor-13.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1417,11 +1462,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-14",
-      "path": "/art/needle/enemies/interceptor-14.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1433,11 +1479,12 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-interceptor-15",
-      "path": "/art/needle/enemies/interceptor-15.svg",
+      "path": "/art/needle/enemies/interceptor-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1449,7 +1496,8 @@
         "y": 0.5
       },
       "archetype": "interceptor",
-      "family": "needle"
+      "family": "needle",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-retaliator-0",
