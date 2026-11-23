@@ -10,6 +10,8 @@ import {
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { enemyJetsPath, readSidecars } from "../game/enemyArt.ts";
+import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -49,8 +51,12 @@ describe("Art's collision data", () => {
   it.each(["swarm", "fighter", "interceptor", "retaliator"])(
     "gives the %s a hull silhouette at all 16 headings in both families",
     (archetype) => {
-      for (const family of ["enemies", "cartwheel/enemies"]) {
-        const file = json(`${family}/${archetype}-jets.json`) as {
+      const coral = readSidecars(CORE_MANIFEST.sidecars)!;
+      const claim = GALAXY_MANIFESTS.get(2)!.sidecars;
+      for (const sidecars of [coral, claim]) {
+        const path = enemyJetsPath(sidecars, archetype);
+        expect(path).toBeDefined();
+        const file = publicJson(path!) as {
           headings: { collision: unknown }[];
         };
         expect(file.headings).toHaveLength(16);

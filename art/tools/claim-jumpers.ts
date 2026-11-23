@@ -3,6 +3,7 @@
 // art/heavies.md (Cartwheel claim jumpers).
 // Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
 import { packInstalledClaimHullPage } from "./claim-hull-page.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { claimStationPaint } from "./claim-station-paint.ts";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -68,7 +69,6 @@ import {
   sidecarCopies,
   sidecarsIn,
   storedAt,
-  writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 import { isIndustrialHullColor } from "./retaliator-models.ts";
@@ -512,7 +512,7 @@ async function main() {
   const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets, copies, {
     packClaimRetaliator: !claimHulls,
   });
-  const paths = writeOnce(PATH, copies, texts);
+  const paths = writeEnemyAssets("cartwheel", PATH, copies, texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
   mergeEntries(

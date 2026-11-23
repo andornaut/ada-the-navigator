@@ -23,6 +23,7 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { shards } from "./shard-geometry.ts";
 import { installedShardPacks, linkShardPacks } from "./shard-palette-pack.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
@@ -52,7 +53,6 @@ import {
   sidecarCopies,
   sidecarsIn,
   storedAt,
-  writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 import { isIndustrialHullColor } from "./retaliator-models.ts";
@@ -266,7 +266,7 @@ async function main() {
   const small = packInstalledSmallHullSheets("needle", texts, heavy.outputEntries);
   const turrets = packInstalledIndustrialTurrets("needle", texts, small);
   const outputEntries = packInstalledIndustrialHulls("needle", texts, turrets, copies);
-  const paths = writeOnce(PATH, copies, texts);
+  const paths = writeEnemyAssets("needle", PATH, copies, texts);
   // In Needle's manifest after the gates and debris, before the story craft.
   // Only these crafts' ids, not the whole `enemy-needle-` family prefix.
   mergeEntries(

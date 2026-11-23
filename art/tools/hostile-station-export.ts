@@ -7,6 +7,7 @@ import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { format, resolveConfig } from "prettier";
 
 import { recolour, recolourJets } from "./claim-jumpers.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { DISPLAY_SCALE, hullEntries } from "./crafts.ts";
 import { svgText } from "./svg-text.ts";
 import { writeUiIcon } from "./ui-icon-sources.ts";
@@ -32,7 +33,7 @@ import { ENEMY_HEADINGS } from "./projection.ts";
 
 type Entry = { id: string; path?: string } & Record<string, unknown>;
 type Family = {
-  manifest: ManifestFile;
+  manifest: "core" | "andromeda" | "cartwheel";
   directory: string;
   prefix: string;
   family?: string;
@@ -771,7 +772,7 @@ async function main() {
       for (const file of selected.sourceFiles) texts.delete(file);
       for (const [file, svg] of selected.sheets) texts.set(file, svg);
     }
-    const paths = writeOnce(publicDir, shared, texts);
+    const paths = writeEnemyAssets(family.manifest, publicDir, shared, texts);
     mergeEntries(
       family.manifest,
       craftIds(family.prefix, [craft.name]),

@@ -1,7 +1,8 @@
 import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import type { Vec } from "../model/types.ts";
+import { type EnemyJetFamily, readEnemyJets } from "./enemyJetPalette.ts";
 import { shipDirection } from "./shipArt.ts";
-import { type JetTriangle, jetTriangles, readShipJets, type ShipJets } from "./shipJets.ts";
+import { type JetTriangle, jetTriangles, type ShipJets } from "./shipJets.ts";
 
 /** An enemy hull heading, hardpoint base or turret top frame from Art's root manifest. */
 export interface EnemyFrame {
@@ -126,7 +127,7 @@ const RECOLOURED: ReadonlySet<string> = new Set([
 
 /** A galaxy's own enemy family: its manifest's entries with `family` and the `prefix` ids. */
 export interface EnemyFamily {
-  readonly family: string;
+  readonly family: Exclude<EnemyJetFamily, "coral">;
   /** The galaxy that flies it, by stable galaxy id. */
   readonly galaxy: string;
   readonly prefix: string;
@@ -655,10 +656,11 @@ export function enemyArt<T extends EnemyFrame>(
   assets: readonly T[],
   sets: ReadonlyMap<string, readonly T[]>,
   prefix = CORAL,
+  family: EnemyJetFamily = "coral",
 ): Map<string, EnemyArt<T>> {
   const result = new Map<string, EnemyArt<T>>();
   for (const [archetype, frames] of sets) {
-    const parsed = readShipJets(jets(archetype));
+    const parsed = readEnemyJets(family, jets(archetype));
     const art: EnemyArt<T> = {
       frames,
       jets: parsed?.headings.length === ENEMY_HEADINGS ? parsed : undefined,

@@ -1,89 +1,37 @@
 {
   "version": 1,
   "frame": 400,
-  "length": {
-    "base": 12.247,
-    "scale": 48.99,
-    "exponent": 2
-  },
+  "length": { "base": 12.247, "scale": 48.99, "exponent": 2 },
   "layers": [
-    {
-      "name": "outer",
-      "colors": ["#b8644c", "#f0a07c"],
-      "width": 1.6,
-      "length": 1
-    },
-    {
-      "name": "core",
-      "colors": ["#d68b72", "#ffe2c8"],
-      "width": 0.8,
-      "length": 0.55
-    }
+    { "name": "outer", "colors": ["#b8644c", "#f0a07c"], "width": 1.6, "length": 1 },
+    { "name": "core", "colors": ["#d68b72", "#ffe2c8"], "width": 0.8, "length": 0.55 }
   ],
   "headings": [
-    {
-      "index": 0,
-      "mouths": []
-    },
-    {
-      "index": 1,
-      "mouths": []
-    },
-    {
-      "index": 2,
-      "mouths": []
-    },
-    {
-      "index": 3,
-      "mouths": []
-    },
-    {
-      "index": 4,
-      "mouths": []
-    },
-    {
-      "index": 5,
-      "mouths": []
-    },
-    {
-      "index": 6,
-      "mouths": []
-    },
-    {
-      "index": 7,
-      "mouths": []
-    },
-    {
-      "index": 8,
-      "mouths": []
-    },
-    {
-      "index": 9,
-      "mouths": []
-    },
-    {
-      "index": 10,
-      "mouths": []
-    },
-    {
-      "index": 11,
-      "mouths": []
-    },
-    {
-      "index": 12,
-      "mouths": []
-    },
-    {
-      "index": 13,
-      "mouths": []
-    },
-    {
-      "index": 14,
-      "mouths": []
-    },
-    {
-      "index": 15,
-      "mouths": []
-    }
-  ]
+    { "index": 0, "mouths": [] },
+    { "index": 1, "mouths": [] },
+    { "index": 2, "mouths": [] },
+    { "index": 3, "mouths": [] },
+    { "index": 4, "mouths": [] },
+    { "index": 5, "mouths": [] },
+    { "index": 6, "mouths": [] },
+    { "index": 7, "mouths": [] },
+    { "index": 8, "mouths": [] },
+    { "index": 9, "mouths": [] },
+    { "index": 10, "mouths": [] },
+    { "index": 11, "mouths": [] },
+    { "index": 12, "mouths": [] },
+    { "index": 13, "mouths": [] },
+    { "index": 14, "mouths": [] },
+    { "index": 15, "mouths": [] }
+  ],
+  "familyColors": {
+    "garnet": [
+      ["#c1445c", "#fb8898"],
+      ["#e47485", "#ffe0e0"]
+    ],
+    "claim": [
+      ["#bc4524", "#fa6d38"],
+      ["#fa6d38", "#ffebda"]
+    ]
+  }
 }

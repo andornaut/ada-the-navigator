@@ -428,6 +428,32 @@ describe("source-family manifest readiness", () => {
     expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(true);
   });
 
+  it("publishes the selected palette from a shared sidecar in the regional cache", () => {
+    const family = GALAXY_FAMILIES.find(({ family }) => family === "needle")!;
+    const f = fixture(family);
+    const frames = readGalaxyManifest<Asset>(needle)!.assets.filter(
+      ({ archetype }) => archetype === "fighter",
+    );
+    f.scene.manifest.assets.push(...frames);
+    for (const frame of frames) {
+      f.textures.add(frame.id);
+    }
+    const sidecar = publicJson("/art/enemies/fighter-jets.json") as Record<string, unknown>;
+    f.cache.set("needle-jets-fighter", {
+      ...sidecar,
+      familyColors: {
+        needle: [
+          ["#010203", "#040506"],
+          ["#070809", "#0a0b0c"],
+        ],
+      },
+    });
+    f.publishArt(f.scene);
+    expect(f.scene.familyArts.get(family.family)?.get("fighter")).toMatchObject({
+      jets: { layers: [{ colors: [0x010203, 0x040506] }, { colors: [0x070809, 0x0a0b0c] }] },
+    });
+  });
+
   it.each([
     ["/art/outposts/outposts-sheet.svg", sunflower, false],
     ["/art/andromeda/hamlet-sheet.svg", andromeda, true],

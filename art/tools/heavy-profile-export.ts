@@ -6,7 +6,10 @@ import { dirname, join, resolve } from "node:path";
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { format, resolveConfig } from "prettier";
 
+import { selectEnemyJetPalette } from "../../src/game/enemyJetPalette.ts";
+
 import { hullEntries, type JetColors, jetsFile } from "./crafts.ts";
+import { installedEnemyJetOutput } from "./enemy-jet-output.ts";
 import { heavyProfile } from "./heavy-profile-models.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
@@ -128,25 +131,23 @@ function familySheetInstalled(family: Family, manifest: ReturnType<typeof readMa
   return true;
 }
 
-type StockJets = { layers: { name: string; colors: [string, string] }[] };
-
 // The installed family jet data is the palette input. The variant model supplies the complete
 // jet geometry and the generator supplies the rest of the v1 sidecar as for stock heavies.
-function stockJetColors(manifest: ReturnType<typeof readManifest>, kind: PartClass): JetColors {
+function stockJetColors(
+  family: Family,
+  manifest: ReturnType<typeof readManifest>,
+  kind: PartClass,
+): JetColors {
   const sidecars = manifest.sidecars as Record<string, { jets?: string }>;
   const path = sidecars[kind]?.jets;
   if (!path?.startsWith("/art/")) throw new Error(`Missing stock jets for ${kind}`);
-  const stock = JSON.parse(
+  const stock: unknown = JSON.parse(
     readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"),
-  ) as StockJets;
-  const layer = (name: keyof JetColors): [string, string] => {
-    const colors = stock.layers.find((entry) => entry.name === name)?.colors;
-    if (colors?.length !== 2 || colors.some((color) => !/^#[0-9a-f]{6}$/i.test(color))) {
-      throw new Error(`Invalid ${name} jet palette in ${path}`);
-    }
-    return colors;
-  };
-  return { outer: layer("outer"), core: layer("core") };
+  );
+  const target = families[family];
+  const palette = selectEnemyJetPalette("family" in target ? target.family : "coral", stock);
+  if (!palette) throw new Error(`Invalid ${family} jet palette in ${path}`);
+  return palette;
 }
 
 type Selection = {
@@ -163,6 +164,7 @@ export async function buildHeavyProfileBundle(reviewFamilySheets = false) {
   const installed = new Map(
     familyNames.map((name) => [name, new Set(manifests.get(name)!.assets.map(({ id }) => id))]),
   );
+  const selectJets = installedEnemyJetOutput();
   const familyBodies = new Map<Family, Body[]>();
   for (const family of familyNames) {
     if (familySheetInstalled(family, manifests.get(family)!) || reviewFamilySheets) {
@@ -221,15 +223,17 @@ export async function buildHeavyProfileBundle(reviewFamilySheets = false) {
       }
 
       const jets = `${target.directory}${profile}-jets.json`;
-      const colors = stockJetColors(manifests.get(family)!, kind);
+      const colors = stockJetColors(family, manifests.get(family)!, kind);
       const jetSidecar = jetsFile(
         craft.frame,
         (heading) => jetMouths(craft.frame, heading, placed),
         colors,
       );
-      files.set(jets, await formatSidecar(jetSidecar));
+      const generated = await formatSidecar(jetSidecar);
+      const selected = selectJets(family, `${profile}-jets.json`, generated);
+      if (!selected || family === "core") files.set(jets, selected?.content ?? generated);
       selection.assets.push(...rows);
-      selection.sidecars[profile] = { hardpoints, jets };
+      selection.sidecars[profile] = { hardpoints, jets: selected?.path ?? jets };
       selection.partClasses[profile] = kind;
     }
   }

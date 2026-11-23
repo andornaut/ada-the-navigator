@@ -27691,57 +27691,57 @@
   "sidecars": {
     "frigateNarrow": {
       "hardpoints": "/art/enemies/frigateNarrow-hardpoints.json",
-      "jets": "/art/andromeda/enemies/frigateNarrow-jets.json"
+      "jets": "/art/enemies/frigateNarrow-jets.json"
     },
     "frigateCompact": {
       "hardpoints": "/art/enemies/frigateCompact-hardpoints.json",
-      "jets": "/art/andromeda/enemies/frigateCompact-jets.json"
+      "jets": "/art/enemies/frigateCompact-jets.json"
     },
     "capitalNarrow": {
       "hardpoints": "/art/enemies/capitalNarrow-hardpoints.json",
-      "jets": "/art/andromeda/enemies/capitalNarrow-jets.json"
+      "jets": "/art/enemies/capitalNarrow-jets.json"
     },
     "capitalCompact": {
       "hardpoints": "/art/enemies/capitalCompact-hardpoints.json",
-      "jets": "/art/andromeda/enemies/capitalCompact-jets.json"
+      "jets": "/art/enemies/capitalCompact-jets.json"
     },
     "capital": {
-      "jets": "/art/andromeda/enemies/capital-jets.json",
+      "jets": "/art/enemies/capital-jets.json",
       "hardpoints": "/art/enemies/capital-hardpoints.json"
     },
     "fighter": {
-      "jets": "/art/andromeda/enemies/fighter-jets.json",
+      "jets": "/art/enemies/fighter-jets.json",
       "shards": "/art/enemies/fighter-shards-packed.json"
     },
     "frigate": {
-      "jets": "/art/andromeda/enemies/frigate-jets.json",
+      "jets": "/art/enemies/frigate-jets.json",
       "hardpoints": "/art/enemies/frigate-hardpoints.json"
     },
     "hostileStation": {
-      "jets": "/art/andromeda/enemies/hostileStation-jets.json",
+      "jets": "/art/enemies/hostileStation-jets.json",
       "hardpoints": "/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json"
     },
     "interceptor": {
-      "jets": "/art/andromeda/enemies/interceptor-jets.json",
+      "jets": "/art/enemies/interceptor-jets.json",
       "shards": "/art/enemies/interceptor-shards-packed.json"
     },
     "retaliator": {
-      "jets": "/art/andromeda/enemies/retaliator-jets.json",
+      "jets": "/art/enemies/retaliator-jets.json",
       "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/enemies/retaliator-shards-packed.json"
     },
     "retaliatorCargoHauler": {
-      "jets": "/art/andromeda/enemies/retaliator-jets.json",
+      "jets": "/art/enemies/retaliator-jets.json",
       "hardpoints": "/art/enemies/retaliator-hardpoints.json",
       "shards": "/art/enemies/retaliatorCargoHauler-shards-packed.json"
     },
     "retaliatorMiningFreighter": {
-      "jets": "/art/andromeda/enemies/retaliatorMiningFreighter-jets.json",
+      "jets": "/art/enemies/retaliatorMiningFreighter-jets.json",
       "hardpoints": "/art/enemies/retaliatorMiningFreighter-hardpoints.json",
       "shards": "/art/enemies/retaliatorMiningFreighter-shards-packed.json"
     },
     "swarm": {
-      "jets": "/art/andromeda/enemies/swarm-jets.json",
+      "jets": "/art/enemies/swarm-jets.json",
       "shards": "/art/enemies/swarm-shards-packed.json"
     }
   }

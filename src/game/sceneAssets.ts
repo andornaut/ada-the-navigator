@@ -1004,6 +1004,7 @@ export function readEnemyArt(scene: AssetsContext): void {
       loaded,
       enemyFrameSets(loaded, prefix),
       prefix,
+      family,
     );
     scene.familyArts.set(
       family,

@@ -50,6 +50,7 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
@@ -2437,7 +2438,7 @@ async function main() {
       retiredCapital = installed.retiredCapital;
       const outputEntries = packInstalledIndustrialTurrets("core", files, installed.outputEntries);
       // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
-      const paths = writeOnce("/art/enemies/", new Map(), files);
+      const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
       mergeEntries(
         "core",
         owns,

@@ -44,7 +44,8 @@ import {
   selectEnemyFrame,
   turretMuzzles,
 } from "./enemyArt.ts";
-import { jetLength } from "./shipJets.ts";
+import { readEnemyJets, selectEnemyJetPalette } from "./enemyJetPalette.ts";
+import { jetLength, readShipJets } from "./shipJets.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string | undefined): unknown => {
@@ -230,6 +231,61 @@ describe("enemy frame selection", () => {
 });
 
 describe("enemy jets", () => {
+  const claimColors = [
+    ["#010203", "#040506"],
+    ["#070809", "#0a0b0c"],
+  ];
+  const sharedFighter = { ...fighterJets, familyColors: { claim: claimColors } };
+
+  it("selects the named family ramps while retaining geometry and the Coral base", () => {
+    expect(selectEnemyJetPalette("claim", sharedFighter)).toEqual({
+      core: claimColors[1],
+      outer: claimColors[0],
+    });
+    expect(readEnemyJets("claim", sharedFighter)).toEqual(
+      readShipJets({
+        ...fighterJets,
+        layers: fighterJets.layers.map((layer, index) => ({
+          ...layer,
+          colors: claimColors[index],
+        })),
+      }),
+    );
+    expect(readEnemyJets("coral", sharedFighter)).toEqual(readShipJets(fighterJets));
+    const legacy = { ...fighterJets };
+    Reflect.deleteProperty(legacy, "familyColors");
+    expect(readEnemyJets("claim", legacy)).toEqual(readShipJets(legacy));
+  });
+
+  it.each([
+    undefined,
+    null,
+    { claim: [["#010203", "#040506"]] },
+    {
+      claim: [
+        ["#010203", "#040506"],
+        ["#070809", "not-a-color"],
+      ],
+    },
+    { garnet: claimColors },
+    { claim: claimColors, unknown: claimColors },
+  ])("rejects an invalid or absent selected palette without painting Coral", (familyColors) => {
+    expect(readEnemyJets("claim", { ...sharedFighter, familyColors })).toBeUndefined();
+  });
+
+  it("requires the packed sidecar's named outer/core layers and a known family", () => {
+    expect(selectEnemyJetPalette("unknown", sharedFighter)).toBeUndefined();
+    expect(
+      readEnemyJets("claim", { ...sharedFighter, layers: [...fighterJets.layers].reverse() }),
+    ).toBeUndefined();
+    expect(
+      readEnemyJets("claim", {
+        ...sharedFighter,
+        layers: fighterJets.layers.map((layer) => ({ ...layer, color: "#ffffff" })),
+      }),
+    ).toBeUndefined();
+  });
+
   it.each([
     ["swarm", 1, 80],
     ["fighter", 2, 104],
@@ -721,6 +777,7 @@ describe("claim jumper art", () => {
     assets,
     sets,
     CLAIM,
+    "claim",
   );
 
   it("reads the claim family apart from the coral one, with ember jets", () => {
@@ -847,6 +904,7 @@ it.each([undefined, "andromeda", "cartwheel", "needle"])(
       own,
       sets,
       family?.prefix,
+      family?.family,
     );
     for (const [key, partClass] of Object.entries(HEAVY_PROFILE_PART_CLASSES)) {
       expect(galaxyFamily(galaxy, key)).toBe(family);

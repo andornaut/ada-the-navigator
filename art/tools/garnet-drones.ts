@@ -22,6 +22,7 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { shards } from "./shard-geometry.ts";
 import { installedShardPacks, linkShardPacks } from "./shard-palette-pack.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
@@ -51,7 +52,6 @@ import {
   sidecarCopies,
   sidecarsIn,
   storedAt,
-  writeOnce,
 } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 import { isIndustrialHullColor } from "./retaliator-models.ts";
@@ -253,7 +253,7 @@ async function main() {
   const small = packInstalledSmallHullSheets("andromeda", texts, heavy.outputEntries);
   const turrets = packInstalledIndustrialTurrets("andromeda", texts, small);
   const outputEntries = packInstalledIndustrialHulls("andromeda", texts, turrets, copies);
-  const paths = writeOnce(PATH, copies, texts);
+  const paths = writeEnemyAssets("andromeda", PATH, copies, texts);
   // In Andromeda's manifest after the destinations, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-garnet-hostileStation-`.
   mergeEntries(

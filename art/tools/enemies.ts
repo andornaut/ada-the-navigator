@@ -10,6 +10,7 @@ import {
   hullEntries,
   jetsFile,
 } from "./crafts.ts";
+import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { packInstalledIndustrialHulls } from "./industrial-sheets.ts";
 import { svgText } from "./svg-text.ts";
@@ -345,7 +346,7 @@ function main() {
   }
   // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
   const outputEntries = packInstalledIndustrialHulls("core", files, entries);
-  const paths = writeOnce("/art/enemies/", new Map(), files);
+  const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
 
   // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
   const names = crafts.map(({ name }) => name).join("|");
