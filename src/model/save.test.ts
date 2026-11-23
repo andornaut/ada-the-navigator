@@ -21,14 +21,15 @@ describe("save boundary", () => {
     expect(restored).toEqual(model.state);
     expect(restored?.flight).not.toBe(model.state.flight);
   });
-  it("keeps the current schema flat and rejects explicit periodic metadata before its atomic reader release", () => {
+  it("roundtrips the canonical periodic chart and rejects a different side length", () => {
     const model = new GameModel(CONTENT);
     model.startGalaxy(1);
     playOpening(model);
     const original = model.saveDocument();
     expect(original.version).toBe(SAVE_VERSION);
     expect(restoreSave(original)).toEqual(original);
-    original.flight!.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
+    expect(original.flight?.topology).toEqual({ kind: "torus", side: GALAXY_SIDE, version: 1 });
+    original.flight!.topology = { kind: "torus", side: GALAXY_SIDE + 1, version: 1 };
     expect(restoreSave(original)).toBeNull();
   });
   it("rejects truncated, corrupt and unsupported data without throwing", () => {

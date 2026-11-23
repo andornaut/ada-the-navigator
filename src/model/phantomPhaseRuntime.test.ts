@@ -17,7 +17,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
 import { restoreSave } from "./save.ts";
 import { shipTuning } from "./upgrades.ts";
-import { worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 const originallyBuilt = BUILT.has(6);
@@ -170,7 +170,7 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
       0,
       ...fixedBlockers(model).map((actor) => worldDistance(world, flight.player, actor)),
     );
-    const departure = (ACTIVE_CHUNK_RADIUS + 1) * worldGrid(world, CONTENT.tuning.chunkSize).pitch;
+    const departure = (ACTIVE_CHUNK_RADIUS + 1) * periodicWorldGrid(world, CONTENT.tuning.chunkSize).pitch;
     const frameLimit = Math.ceil(
       ((approach + departure) / physics.maxSpeed +
         physics.accelerationSeconds * 2 +

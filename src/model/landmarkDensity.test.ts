@@ -31,14 +31,14 @@ describe("expanded landmark placement", () => {
   it.each([1, 2, 3, 4, 5, 6] as const)("accepts the target safely in galaxy %i", (galaxy) => {
     const sites = landmarkSites(galaxy);
     expect(LANDMARK_TUNING.count).toBe(200);
-    expect(LANDMARK_TUNING.radius).toBe(100000);
+    expect(LANDMARK_TUNING.radius).toBe(80000);
     expect(sites).toHaveLength(200);
     expect(sites.slice(0, 12)).toEqual(retainedLandmarkSites(galaxy));
     expect(new Set(sites.map(({ id }) => id)).size).toBe(200);
     expect(new Set(sites.map((site) => landmarkLabel(label, site))).size).toBe(200);
     for (const [index, site] of sites.entries()) {
       expect(site.id).toBe(`landmark:${galaxy}:${index}`);
-      expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(100000);
+      expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(80000);
       expect(stationsNear(ECONOMY, galaxy, 1500, site)).toEqual([]);
       for (const other of sites.slice(index + 1)) {
         expect(Math.hypot(site.x - other.x, site.y - other.y)).toBeGreaterThanOrEqual(3000);
