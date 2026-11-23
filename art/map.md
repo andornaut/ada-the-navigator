@@ -139,35 +139,25 @@ rect's top-right corner, so target `i` (0 to 2) is at
 
 ### Footer
 
-Three `TEXT_BUTTON`s in one action row on the page rect's bottom-right
-corner, left to right: Quests and Galaxies (secondary), then Close (primary,
-action `map-close`), the map's only primary button. Constants:
-`MAP_SCREEN.hudRow`, and the rects `mapQuestsRect`, `mapGalaxiesRect` and
-`mapCloseRect` in `src/ui/layout/mapScreen.ts`.
+Three standard text actions sit at the page rect's bottom-right corner.
+From left to right they are Quests and Galaxies (secondary), then the
+primary dismissal (`map-close`). Its label is “Back” when the Map opens
+from Paused (`questBack`) and “Close” otherwise. The top X uses the same
+context-specific return and focus restoration.
 
-| Token                              | Value | Rule                                                                                                                                   |
-| ---------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `MAP_SCREEN.hudRow.height`         | 48    | `TEXT_BUTTON.height`                                                                                                                   |
-| `MAP_SCREEN.hudRow.close.width`    | 98    | The wider label (`MAP_HUD_LABEL_WIDTHS`, `TYPE.label` up to the quarter pixel: Galaxies 66, Quests 54.25) plus `2 * TEXT_BUTTON.inset` |
-| `MAP_SCREEN.hudRow.galaxies.width` | 98    | As Close                                                                                                                               |
-| `MAP_SCREEN.hudRow.quests.width`   | 98    | As Close                                                                                                                               |
-| `MAP_SCREEN.hudRow.gap`            | 16    | `BUTTON_GAP`, face to face                                                                                                             |
+Each action sizes to its label plus 16 logical px on each side, subject to
+the standard button minimum. A single-line action is 48 logical px high
+and its whole box is the press area. Faces are 16 logical px apart
+(`MAP_SCREEN.hudRow.gap`). The footer dismissal's right edge aligns with
+the top X target's right edge. The fit region stops `SPACING.gap` above
+the footer.
 
-- Close: `x = page right - 98`, `y = page bottom - 48`. Galaxies ends
-  `BUTTON_GAP` left of Close, and Quests `BUTTON_GAP` left of Galaxies.
+Measured at 720x360, opened from Paused, in logical px:
 
-| View, logical            | Quests     | Galaxies   | Close      | Down       |
-| ------------------------ | ---------- | ---------- | ---------- | ---------- |
-| 720x360                  | 378 to 476 | 492 to 590 | 606 to 704 | 296 to 344 |
-| 720x360, phone insets 43 | 351 to 449 | 465 to 563 | 579 to 677 | 293 to 341 |
+| Quests           | Galaxies         | Back          | Down       |
+| ---------------- | ---------------- | ------------- | ---------- |
+| 397.88 to 490.91 | 506.91 to 612.97 | 628.97 to 704 | 296 to 344 |
 
-- Close's right is the tool row's right, so the two right-align.
-- Keep the footer dismissal visible. Its label is "Back" when the Map
-  opens from Paused (`questBack`) and "Close" otherwise. The width stays 98
-  for either label. The modal X uses the same context-specific return and
-  focus restoration.
-- Each button is its press area (48, `HIT_RULE.minTarget`). The fit region's
-  bottom is `SPACING.gap` above the footer's top.
 - Quests opens [Shared Quests](#shared-quests) through the Pause controller.
   It stays available in danger and while towing. After Locate, it resumes the
   suspended quest detail.
@@ -229,11 +219,10 @@ unavailable.
   `text` is the widest of its lines. `reason` is the widest reason string
   while a reason shows (both share one cell), and absent otherwise. Text
   wraps inside `maxWidth` and the panel's measured height grows with it.
-- `maxWidth` (`panelMaxWidth`) is `Quests left - SPACING.gap - page left`, so
-  the panel always ends at least `SPACING.gap` left of the footer: 354 at the
-  720 base (`378 - 8 - 16`) and 300 with phone insets (`351 - 8 - 43`).
-  `floor` is `min(minWidth, maxWidth)`. Both caps are under 360, so at the 720
-  base the panel is 354 wide in every state (300 with phone insets).
+- `maxWidth` (`panelMaxWidth`) is `Quests left - SPACING.gap - page left`,
+  using the measured footer row. The panel ends at least `SPACING.gap`
+  left of the footer. In the 720x360 example above, the cap is 373.88
+  (`397.875 - 8 - 16`). `floor` remains `min(minWidth, maxWidth)`.
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
   line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
   width `clamp(floor, maxWidth, text + 32)`.
