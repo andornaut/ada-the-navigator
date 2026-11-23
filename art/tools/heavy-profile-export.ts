@@ -1,5 +1,5 @@
 // Emit an inactive heavy-profile bundle with the established family materials and stock part IDs.
-// Usage: node art/tools/heavy-profile-export.ts --out <scratch directory>
+// Usage: node art/tools/heavy-profile-export.ts --out <scratch directory> [--family-sheets]
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
@@ -39,6 +39,15 @@ const pageCapacity = columns * columns;
 
 type BodyRow = ReturnType<typeof hullEntries>[number] & { family?: string; svgSheet: true };
 
+function memberSvg(row: BodyRow, source: string, { x, y }: { x: number; y: number }): string {
+  const svg = source.trimEnd();
+  const root = `<svg xmlns="${namespace}" width="${row.displayWidth}" height="${row.displayHeight}" viewBox="0 0 ${row.width} ${row.height}">`;
+  if (!svg.startsWith(root) || !svg.endsWith("</svg>")) {
+    throw new Error(`Invalid body sheet member: ${row.id}`);
+  }
+  return `<svg id="${row.id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+}
+
 function packBody(rows: readonly BodyRow[], roots: readonly string[]): Map<string, string> {
   const size = rows[0]!.width;
   const edge = columns * size;
@@ -57,18 +66,10 @@ function packBody(rows: readonly BodyRow[], roots: readonly string[]): Map<strin
 
     const members = page.map((row, index) => {
       const heading = first + index;
-      const source = roots[heading]!.trimEnd();
-      const root = `<svg xmlns="${namespace}" width="${row.displayWidth}" height="${row.displayHeight}" viewBox="0 0 ${size} ${size}">`;
-      if (
-        row.directionIndex !== heading ||
-        row.path !== path ||
-        !source.startsWith(root) ||
-        !source.endsWith("</svg>")
-      ) {
+      if (row.directionIndex !== heading || row.path !== path) {
         throw new Error(`Invalid body sheet member: ${row.id}`);
       }
-      const { x, y } = layout.placed[0]!.at[index]!;
-      return `<svg id="${row.id}" x="${x}" y="${y}" ${source.slice("<svg ".length)}`;
+      return memberSvg(row, roots[heading]!, layout.placed[0]!.at[index]!);
     });
     files.set(
       path,
@@ -76,6 +77,55 @@ function packBody(rows: readonly BodyRow[], roots: readonly string[]): Map<strin
     );
   }
   return files;
+}
+
+type Body = { row: BodyRow; source: string };
+
+function packFamilyBodies(path: string, bodies: readonly Body[]): string {
+  const rectangles = bodies.map(({ row }) => ({
+    width: row.displayWidth,
+    height: row.displayHeight,
+  }));
+  const width = 8 * Math.max(...rectangles.map((rect) => rect.width));
+  if (bodies.length !== profiles.length * ENEMY_HEADINGS || width > sheetEdge) {
+    throw new Error(`Invalid family body group: ${path}`);
+  }
+  const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: sheetEdge, widths: [width] }, [
+    { rectangles, value: path },
+  ])?.pages[0];
+  const cells = layout?.placed[0]?.at;
+  if (!layout || cells?.length !== bodies.length) {
+    throw new Error(`Cannot pack family body sheet ${path}`);
+  }
+  const members = bodies.map(({ row, source }, index) => memberSvg(row, source, cells[index]!));
+  const { height } = layout;
+  return `<svg xmlns="${namespace}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${members.join("")}</svg>\n`;
+}
+
+function familySheetPath(family: Family): string {
+  return `${families[family].directory}heavy-profiles-sheet.svg`;
+}
+
+function familySheetInstalled(family: Family, manifest: ReturnType<typeof readManifest>): boolean {
+  const path = familySheetPath(family);
+  const entries: { id: string; path?: unknown; svgSheet?: unknown }[] = manifest.assets;
+  const selected = entries.filter((entry) => entry.path === path);
+  if (!selected.length) return false;
+  const expected = new Set(
+    profiles.flatMap(([profile]) =>
+      Array.from(
+        { length: ENEMY_HEADINGS },
+        (_, heading) => `${families[family].prefix}${profile}-${heading}`,
+      ),
+    ),
+  );
+  if (
+    selected.length !== expected.size ||
+    selected.some(({ id, svgSheet }) => svgSheet !== true || !expected.delete(id))
+  ) {
+    throw new Error(`Incomplete heavy profile family sheet selection: ${family}`);
+  }
+  return true;
 }
 
 type StockJets = { layers: { name: string; colors: [string, string] }[] };
@@ -105,7 +155,7 @@ type Selection = {
   partClasses: Partial<Record<Profile, PartClass>>;
 };
 
-export async function buildHeavyProfileBundle() {
+export async function buildHeavyProfileBundle(reviewFamilySheets = false) {
   const files = new Map<string, string>();
   const selections: Partial<Record<Family, Selection>> = {};
   const familyNames = Object.keys(families) as Family[];
@@ -113,6 +163,12 @@ export async function buildHeavyProfileBundle() {
   const installed = new Map(
     familyNames.map((name) => [name, new Set(manifests.get(name)!.assets.map(({ id }) => id))]),
   );
+  const familyBodies = new Map<Family, Body[]>();
+  for (const family of familyNames) {
+    if (familySheetInstalled(family, manifests.get(family)!) || reviewFamilySheets) {
+      familyBodies.set(family, []);
+    }
+  }
   const options = await resolveConfig(new URL("../../package.json", import.meta.url).pathname);
   const formatSidecar = (source: string) => format(source, { ...options, parser: "json" });
 
@@ -144,7 +200,9 @@ export async function buildHeavyProfileBundle() {
           ...entry,
           archetype: profile,
           id: `${target.prefix}${profile}-${entry.directionIndex}`,
-          path: `${target.directory}${profile}-sheet${page}.svg`,
+          path: familyBodies.has(family)
+            ? familySheetPath(family)
+            : `${target.directory}${profile}-sheet${page}.svg`,
           svgSheet: true,
           ...("family" in target ? { family: target.family } : {}),
         };
@@ -155,7 +213,12 @@ export async function buildHeavyProfileBundle() {
         if (!painted) throw new Error(`Missing ${family} armour material for ${filename}`);
         return svgText(painted);
       });
-      for (const [path, sheet] of packBody(rows, roots)) files.set(path, sheet);
+      const bodies = familyBodies.get(family);
+      if (bodies) {
+        bodies.push(...rows.map((row, index) => ({ row, source: roots[index]! })));
+      } else {
+        for (const [path, sheet] of packBody(rows, roots)) files.set(path, sheet);
+      }
 
       const jets = `${target.directory}${profile}-jets.json`;
       const colors = stockJetColors(manifests.get(family)!, kind);
@@ -170,15 +233,21 @@ export async function buildHeavyProfileBundle() {
       selection.partClasses[profile] = kind;
     }
   }
+  for (const [family, bodies] of familyBodies) {
+    const path = familySheetPath(family);
+    files.set(path, packFamilyBodies(path, bodies));
+  }
   return { files, selections };
 }
 
 if (import.meta.main) {
-  const [flag, output, ...extra] = process.argv.slice(2);
-  if (flag !== "--out" || !output || extra.length) {
-    throw new Error("Usage: node art/tools/heavy-profile-export.ts --out <scratch directory>");
+  const [flag, output, review, ...extra] = process.argv.slice(2);
+  if (flag !== "--out" || !output || (review && review !== "--family-sheets") || extra.length) {
+    throw new Error(
+      "Usage: node art/tools/heavy-profile-export.ts --out <scratch directory> [--family-sheets]",
+    );
   }
-  const { files, selections } = await buildHeavyProfileBundle();
+  const { files, selections } = await buildHeavyProfileBundle(review === "--family-sheets");
   const root = resolve(output);
   mkdirSync(root, { recursive: true });
   for (const [path, data] of files) {
