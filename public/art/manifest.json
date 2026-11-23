@@ -44719,7 +44719,7 @@
     },
     {
       "id": "enemy-frigateNarrow-0",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44735,7 +44735,7 @@
     },
     {
       "id": "enemy-frigateNarrow-1",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44751,7 +44751,7 @@
     },
     {
       "id": "enemy-frigateNarrow-2",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44767,7 +44767,7 @@
     },
     {
       "id": "enemy-frigateNarrow-3",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44783,7 +44783,7 @@
     },
     {
       "id": "enemy-frigateNarrow-4",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44799,7 +44799,7 @@
     },
     {
       "id": "enemy-frigateNarrow-5",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44815,7 +44815,7 @@
     },
     {
       "id": "enemy-frigateNarrow-6",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44831,7 +44831,7 @@
     },
     {
       "id": "enemy-frigateNarrow-7",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44847,7 +44847,7 @@
     },
     {
       "id": "enemy-frigateNarrow-8",
-      "path": "/art/enemies/frigateNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44863,7 +44863,7 @@
     },
     {
       "id": "enemy-frigateNarrow-9",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44879,7 +44879,7 @@
     },
     {
       "id": "enemy-frigateNarrow-10",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44895,7 +44895,7 @@
     },
     {
       "id": "enemy-frigateNarrow-11",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44911,7 +44911,7 @@
     },
     {
       "id": "enemy-frigateNarrow-12",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44927,7 +44927,7 @@
     },
     {
       "id": "enemy-frigateNarrow-13",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44943,7 +44943,7 @@
     },
     {
       "id": "enemy-frigateNarrow-14",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44959,7 +44959,7 @@
     },
     {
       "id": "enemy-frigateNarrow-15",
-      "path": "/art/enemies/frigateNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44975,7 +44975,7 @@
     },
     {
       "id": "enemy-frigateCompact-0",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -44991,7 +44991,7 @@
     },
     {
       "id": "enemy-frigateCompact-1",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45007,7 +45007,7 @@
     },
     {
       "id": "enemy-frigateCompact-2",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45023,7 +45023,7 @@
     },
     {
       "id": "enemy-frigateCompact-3",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45039,7 +45039,7 @@
     },
     {
       "id": "enemy-frigateCompact-4",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45055,7 +45055,7 @@
     },
     {
       "id": "enemy-frigateCompact-5",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45071,7 +45071,7 @@
     },
     {
       "id": "enemy-frigateCompact-6",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45087,7 +45087,7 @@
     },
     {
       "id": "enemy-frigateCompact-7",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45103,7 +45103,7 @@
     },
     {
       "id": "enemy-frigateCompact-8",
-      "path": "/art/enemies/frigateCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45119,7 +45119,7 @@
     },
     {
       "id": "enemy-frigateCompact-9",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45135,7 +45135,7 @@
     },
     {
       "id": "enemy-frigateCompact-10",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45151,7 +45151,7 @@
     },
     {
       "id": "enemy-frigateCompact-11",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45167,7 +45167,7 @@
     },
     {
       "id": "enemy-frigateCompact-12",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45183,7 +45183,7 @@
     },
     {
       "id": "enemy-frigateCompact-13",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45199,7 +45199,7 @@
     },
     {
       "id": "enemy-frigateCompact-14",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45215,7 +45215,7 @@
     },
     {
       "id": "enemy-frigateCompact-15",
-      "path": "/art/enemies/frigateCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -45231,7 +45231,7 @@
     },
     {
       "id": "enemy-capitalNarrow-0",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45247,7 +45247,7 @@
     },
     {
       "id": "enemy-capitalNarrow-1",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45263,7 +45263,7 @@
     },
     {
       "id": "enemy-capitalNarrow-2",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45279,7 +45279,7 @@
     },
     {
       "id": "enemy-capitalNarrow-3",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45295,7 +45295,7 @@
     },
     {
       "id": "enemy-capitalNarrow-4",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45311,7 +45311,7 @@
     },
     {
       "id": "enemy-capitalNarrow-5",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45327,7 +45327,7 @@
     },
     {
       "id": "enemy-capitalNarrow-6",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45343,7 +45343,7 @@
     },
     {
       "id": "enemy-capitalNarrow-7",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45359,7 +45359,7 @@
     },
     {
       "id": "enemy-capitalNarrow-8",
-      "path": "/art/enemies/capitalNarrow-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45375,7 +45375,7 @@
     },
     {
       "id": "enemy-capitalNarrow-9",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45391,7 +45391,7 @@
     },
     {
       "id": "enemy-capitalNarrow-10",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45407,7 +45407,7 @@
     },
     {
       "id": "enemy-capitalNarrow-11",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45423,7 +45423,7 @@
     },
     {
       "id": "enemy-capitalNarrow-12",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45439,7 +45439,7 @@
     },
     {
       "id": "enemy-capitalNarrow-13",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45455,7 +45455,7 @@
     },
     {
       "id": "enemy-capitalNarrow-14",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45471,7 +45471,7 @@
     },
     {
       "id": "enemy-capitalNarrow-15",
-      "path": "/art/enemies/capitalNarrow-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45487,7 +45487,7 @@
     },
     {
       "id": "enemy-capitalCompact-0",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45503,7 +45503,7 @@
     },
     {
       "id": "enemy-capitalCompact-1",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45519,7 +45519,7 @@
     },
     {
       "id": "enemy-capitalCompact-2",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45535,7 +45535,7 @@
     },
     {
       "id": "enemy-capitalCompact-3",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45551,7 +45551,7 @@
     },
     {
       "id": "enemy-capitalCompact-4",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45567,7 +45567,7 @@
     },
     {
       "id": "enemy-capitalCompact-5",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45583,7 +45583,7 @@
     },
     {
       "id": "enemy-capitalCompact-6",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45599,7 +45599,7 @@
     },
     {
       "id": "enemy-capitalCompact-7",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45615,7 +45615,7 @@
     },
     {
       "id": "enemy-capitalCompact-8",
-      "path": "/art/enemies/capitalCompact-sheet.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45631,7 +45631,7 @@
     },
     {
       "id": "enemy-capitalCompact-9",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45647,7 +45647,7 @@
     },
     {
       "id": "enemy-capitalCompact-10",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45663,7 +45663,7 @@
     },
     {
       "id": "enemy-capitalCompact-11",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45679,7 +45679,7 @@
     },
     {
       "id": "enemy-capitalCompact-12",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45695,7 +45695,7 @@
     },
     {
       "id": "enemy-capitalCompact-13",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45711,7 +45711,7 @@
     },
     {
       "id": "enemy-capitalCompact-14",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -45727,7 +45727,7 @@
     },
     {
       "id": "enemy-capitalCompact-15",
-      "path": "/art/enemies/capitalCompact-sheet-2.svg",
+      "path": "/art/enemies/heavy-profiles-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,

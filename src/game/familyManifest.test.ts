@@ -229,7 +229,7 @@ describe("source-family manifest readiness", () => {
   it.each([
     ["/art/needle/enemies/fighter-sheet.svg", false],
     ["/art/needle/enemies/frigate-sheet.svg", true],
-    ["/art/needle/enemies/frigateNarrow-sheet-2.svg", true],
+    ["/art/needle/enemies/heavy-profiles-sheet.svg", true],
   ] as const)("loads a cold family once and publishes a late %s retry", (path, usesDisplaySize) => {
     const f = fixture();
     const key = galaxyManifestKey(4);
@@ -246,16 +246,9 @@ describe("source-family manifest readiness", () => {
     expect([...paths].sort()).toEqual([
       "/art/needle/enemies/capital-sheet-2.svg",
       "/art/needle/enemies/capital-sheet.svg",
-      "/art/needle/enemies/capitalCompact-sheet-2.svg",
-      "/art/needle/enemies/capitalCompact-sheet.svg",
-      "/art/needle/enemies/capitalNarrow-sheet-2.svg",
-      "/art/needle/enemies/capitalNarrow-sheet.svg",
       "/art/needle/enemies/fighter-sheet.svg",
       "/art/needle/enemies/frigate-sheet.svg",
-      "/art/needle/enemies/frigateCompact-sheet-2.svg",
-      "/art/needle/enemies/frigateCompact-sheet.svg",
-      "/art/needle/enemies/frigateNarrow-sheet-2.svg",
-      "/art/needle/enemies/frigateNarrow-sheet.svg",
+      "/art/needle/enemies/heavy-profiles-sheet.svg",
       "/art/needle/enemies/interceptor-sheet.svg",
       "/art/needle/enemies/swarm-sheet.svg",
     ]);
