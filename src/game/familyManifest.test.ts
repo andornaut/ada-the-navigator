@@ -124,7 +124,6 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     familyArts: new Map<string, Map<string, unknown>>(),
     familyParts: new Map(),
     familyShards: new Map(),
-    shards: new Map(),
     galaxyLoads: new Set(),
     galaxyManifestPaths: {
       2: "/art/cartwheel/manifest.json",
@@ -152,6 +151,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     resourceFiles: new Set<string>(),
     rockQueued: false,
     rockRequests: new Set<string>(),
+    shards: new Map(),
     shipAssets: [] as Asset[],
     textures: { exists: (key: string) => textures.has(key) },
   };
@@ -182,14 +182,14 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     loadingRockSheets: new WeakMap(),
     materialShipHeading: () => undefined,
     mergeEnemyAssets,
-    readShardPalettePack,
-    readShards,
-    readSidecars,
     queueBackdrop: backdrop,
     readCraftNose,
     readGalaxyArt: readArt,
     readGalaxyManifest,
+    readShardPalettePack,
+    readShards,
     readShipJets,
+    readSidecars,
     rockSheetFrames: new Map(
       m1.frames.map(({ file }, index) => [
         file,
