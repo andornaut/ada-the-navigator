@@ -30,7 +30,7 @@ import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { hudButtonTarget, STORY_SKIP } from "./layout/playView.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { FOCUS_STYLE } from "./modal.ts";
+import { TEXT_TOKENS } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
@@ -169,7 +169,18 @@ export const CONVERSATION_STYLE = `
   flex-direction:row-reverse
 }
 
-.ada-conversation:focus-visible{${FOCUS_STYLE}
+.ada-conversation:focus-visible{
+  outline:none;
+  box-shadow:none;
+  background:${TEXT_TOKENS.label};
+  color:${TEXT_TOKENS.buttonLabel}
+}
+@media (forced-colors:active){
+  .ada-conversation:focus-visible{
+    forced-color-adjust:none;
+    background:Highlight;
+    color:HighlightText
+  }
 }
 
 .ada-conversation-frame{

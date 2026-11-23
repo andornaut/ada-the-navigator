@@ -54,6 +54,17 @@ describe("conversation box style", () => {
     expect(notices.get("#game-status,\n#save-status")).toContain("background:#181425a6");
   });
 
+  it("shows keyboard focus inside the dialogue face in normal and forced colors", () => {
+    const selector = ".ada-conversation:focus-visible";
+    const [normal, forced] = CONVERSATION_STYLE.split("@media (forced-colors:active){");
+    expect(rules(normal ?? "").get(selector)).toBe(
+      "outline:none;box-shadow:none;background:#ead4aa;color:#181425",
+    );
+    expect(rules(forced ?? "").get(selector)).toBe(
+      "forced-color-adjust:none;background:Highlight;color:HighlightText",
+    );
+  });
+
   it("keeps only the emergency warning above the warp canvas", () => {
     const layer = (selector: string) => Number(/z-index:(\d+)/u.exec(css.get(selector) ?? "")?.[1]);
     expect(layer(".ada-conversation")).toBeLessThan(EMERGENCY_RETURN.layers.jump);
