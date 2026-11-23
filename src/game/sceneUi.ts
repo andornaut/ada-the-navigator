@@ -419,7 +419,7 @@ export function buildScene(scene: UiContext): void {
       void endCheatSession(scene);
     }
     refreshScene(scene);
-    if (before !== "start" && scene.model.screen === "start") {
+    if ((before === "start") !== (scene.model.screen === "start")) {
       requestUpdateCheck();
     }
   };

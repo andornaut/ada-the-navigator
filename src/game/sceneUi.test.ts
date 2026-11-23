@@ -911,22 +911,38 @@ it("commits the stored campaign without a live cheat balance and only then hands
   expect(f.values.get("ada-the-navigator.sound")).toBe("off");
 });
 
-it("checks for an update only when scene navigation returns to Start", async () => {
+it("checks for updates when Continue leaves Start and when play returns to it", async () => {
   const f = cheatScene(new GameModel(CONTENT, flight().save()));
   const leave = runInContext(callback("onBackToTitle"), f.context) as () => void;
+  const resume = runInContext(callback("continueGame"), f.context) as () => void;
   const check = f.context.requestUpdateCheck;
   await f.flush();
   leave();
-  f.apply(() => f.scene.model.continueGame());
   expect(check).not.toHaveBeenCalled();
-  expect(f.scene.model.screen).toBe("space");
 
+  resume();
+  expect(f.scene.model.screen).toBe("space");
+  expect(check).toHaveBeenCalledOnce();
+
+  f.apply(() => {});
+  expect(check).toHaveBeenCalledOnce();
   leave();
   expect(f.scene.model.screen).toBe("start");
-  expect(check).toHaveBeenCalledOnce();
+  expect(check).toHaveBeenCalledTimes(2);
+
   leave();
   await f.settle();
-  expect(check).toHaveBeenCalledOnce();
+  expect(check).toHaveBeenCalledTimes(2);
+});
+
+it("checks for updates when starting a new game from Start", async () => {
+  const f = cheatScene(new GameModel(CONTENT));
+  const start = runInContext(callback("start"), f.context) as () => void;
+  expect(f.scene.model.screen).toBe("start");
+  start();
+  await f.settle();
+  expect(f.scene.model.screen).not.toBe("start");
+  expect(f.context.requestUpdateCheck).toHaveBeenCalledOnce();
 });
 
 describe("cheat session", () => {
