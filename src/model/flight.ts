@@ -245,6 +245,7 @@ import type {
   GalaxyProgress,
   Mine,
   PickupRelease,
+  RequiredRoleEncounterPlan,
   Shot,
   SpaceObject,
   Vec,
@@ -2518,12 +2519,41 @@ export function ensureDestination(
     x: flight.player.x + heading.x * span - heading.y * offset,
     y: flight.player.y + heading.y * span + heading.x * offset,
   };
-  // Story destinations keep storySpacing from each other and clear of the galaxy's fixed
-  // stations and landmarks.
-  const crowded = (point: Vec) =>
+  while (destinationCrowded(content, flight, target)) {
+    target.x -= heading.y * spacing;
+    target.y += heading.x * spacing;
+  }
+  // A nearby clear point keeps the destination in its original region.
+  for (const point of destinationCandidates(target)) {
+    if (destinationClear(content, flight, point)) {
+      return ensureDestinationAt(content, id, point, flight);
+    }
+  }
+  return ensureDestinationAt(content, id, target, flight);
+}
+
+/** Story sites and their formations share the same bounded, ordered placement search. */
+function* destinationCandidates(target: Vec): Iterable<Vec> {
+  yield target;
+  const step = CURRENTS.width[1] / 2;
+  for (let ring = 1; ring <= 8; ring++) {
+    for (let spoke = 0; spoke < 16; spoke++) {
+      const angle = (spoke * Math.PI) / 8;
+      yield {
+        x: target.x + Math.cos(angle) * ring * step,
+        y: target.y + Math.sin(angle) * ring * step,
+      };
+    }
+  }
+}
+
+function destinationCrowded(content: GameContent, flight: FlightState, point: Vec): boolean {
+  const world = flightWorldContext(flight);
+  return (
     flight.objects.some(
-      (o) =>
-        o.kind === "destination" && worldDistance(flightWorldContext(flight), o, point) < spacing,
+      (object) =>
+        object.kind === "destination" &&
+        worldDistance(world, object, point) < content.tuning.storySpacing,
     ) ||
     worldStationsNear(
       flightStationContext(flight),
@@ -2533,36 +2563,16 @@ export function ensureDestination(
       point,
     ).length > 0 ||
     landmarkSites(flight.galaxy).some(
-      (site) =>
-        worldDistance(flightWorldContext(flight), site, point) < LANDMARK_TUNING.placeClearance,
-    );
-  while (crowded(target)) {
-    target.x -= heading.y * spacing;
-    target.y += heading.x * spacing;
-  }
-  // They also keep a current's clearance: the nearest clear point within a short reach, so
-  // the destination stays near where it would have been and its chunks stay in one region.
-  if (worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, target)) {
-    const step = CURRENTS.width[1] / 2;
-    search: for (let ring = 1; ring <= 8; ring++) {
-      for (let spoke = 0; spoke < 16; spoke++) {
-        const angle = (spoke * Math.PI) / 8;
-        const point = {
-          x: target.x + Math.cos(angle) * ring * step,
-          y: target.y + Math.sin(angle) * ring * step,
-        };
-        if (
-          !worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, point) &&
-          !crowded(point)
-        ) {
-          target.x = point.x;
-          target.y = point.y;
-          break search;
-        }
-      }
-    }
-  }
-  return ensureDestinationAt(content, id, target, flight);
+      (site) => worldDistance(world, site, point) < LANDMARK_TUNING.placeClearance,
+    )
+  );
+}
+
+function destinationClear(content: GameContent, flight: FlightState, point: Vec): boolean {
+  return (
+    !worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, point) &&
+    !destinationCrowded(content, flight, point)
+  );
 }
 
 /** A seeded chapter site uses the same destination creation and safe-area clearance as exploration. */
@@ -2753,6 +2763,74 @@ export function populateRequiredChapterFlight(
   populateFlight(content, progress, flight);
 }
 
+/** Test the final site and rigid formation in a detached chart before committing that move. */
+function placeWhirlpoolFormation(
+  content: GameContent,
+  projection: FlightState,
+  site: SpaceObject,
+  actors: readonly SpaceObject[],
+): { site: SpaceObject; actors: readonly SpaceObject[] } | null {
+  const world = flightWorldContext(projection);
+  const reach = questGuardFormationReach(questGuardPlacementContext(content, projection), actors);
+  const span = requiredSiteSpan(content, reach);
+  const heading = direction(length(projection.facing) ? projection.facing : { x: 0, y: -1 });
+  const fromLaunch = worldDelta(world, projection.player, site);
+  const distance = Math.max(0, span - fromLaunch.x * heading.x - fromLaunch.y * heading.y);
+  const preferred = { x: site.x + heading.x * distance, y: site.y + heading.y * distance };
+  const moving = new Set([site.id, ...actors.map(({ id }) => id)]);
+  const occupants = [
+    ...stationPopulationObjects(projection),
+    ...Object.values(projection.requiredPlans ?? {}).flatMap((plan) => [
+      plan.site,
+      ...requiredPlanActors(plan),
+    ]),
+  ].filter(({ id }) => !moving.has(id));
+  const placement = {
+    ...projection,
+    objects: occupants,
+    world: { ...projection.world, notables: {} },
+  };
+  for (const point of destinationCandidates(preferred)) {
+    const retry = worldDelta(world, preferred, point);
+    if (
+      retry.x * heading.x + retry.y * heading.y < 0 ||
+      !destinationClear(content, placement, point)
+    ) {
+      continue;
+    }
+    const delta = worldDelta(world, site, point);
+    const shiftedSite = { ...site, ...point };
+    canonicalObject(projection, shiftedSite);
+    const shifted = actors.map((actor) => {
+      const next = structuredClone(actor);
+      for (const part of [next, next.enemy!.position, next.enemy!.home]) {
+        part.x += delta.x;
+        part.y += delta.y;
+      }
+      canonicalObject(projection, next);
+      return next;
+    });
+    if (
+      !stationFormationClear(
+        questGuardPlacementContext(content, { ...placement, objects: [...occupants, shiftedSite] }),
+        shifted,
+      ) ||
+      shifted.some(
+        (actor) =>
+          capital(actor) &&
+          occupants.some(
+            (other) =>
+              capital(other) && worldDistance(world, actor, other) < enemySpacing(actor, other),
+          ),
+      )
+    ) {
+      continue;
+    }
+    return { actors: shifted, site: shiftedSite };
+  }
+  return null;
+}
+
 /** Reserve the existing G3 route roles on a detached world before optional population. */
 export function planRequiredWhirlpoolRoutes(
   content: GameContent,
@@ -2780,6 +2858,7 @@ export function planRequiredWhirlpoolRoutes(
       projection,
     );
     const population = stationPopulationObjects(projection);
+    const plans: RequiredRoleEncounterPlan[] = [];
     for (const site of sites) {
       const leader = population.find((actor) => actor.id === `route:${site.id}`)!;
       const actors = [
@@ -2791,36 +2870,24 @@ export function planRequiredWhirlpoolRoutes(
               (site.id === "holodisk" && actor.enemy?.packId === "route:holodisk:pack")),
         ),
       ];
-      if (!progress.requiredSites?.[site.id]) {
-        const reach = questGuardFormationReach(
-          questGuardPlacementContext(content, projection),
-          actors,
-        );
-        const span = requiredSiteSpan(content, reach);
-        const heading = direction(length(flight.facing) ? flight.facing : { x: 0, y: -1 });
-        const offset = worldDelta(flightWorldContext(flight), flight.player, site);
-        const distance = Math.max(0, span - offset.x * heading.x - offset.y * heading.y);
-        const delta = { x: heading.x * distance, y: heading.y * distance };
-        site.x += delta.x;
-        site.y += delta.y;
-        canonicalObject(flight, site);
-        for (const actor of actors) {
-          actor.x += delta.x;
-          actor.y += delta.y;
-          if (actor.enemy) {
-            actor.enemy.position.x += delta.x;
-            actor.enemy.position.y += delta.y;
-            actor.enemy.home.x += delta.x;
-            actor.enemy.home.y += delta.y;
-          }
-          canonicalObject(flight, actor);
-        }
+      const placed = progress.requiredSites?.[site.id]
+        ? { actors, site }
+        : placeWhirlpoolFormation(content, projection, site, actors);
+      if (!placed) {
+        throw new RangeError(`No clear formation for required Whirlpool site ${site.id}`);
       }
-      storeRequiredRolePlan(progress, flight, {
+      Object.assign(site, placed.site);
+      for (const [index, actor] of actors.entries()) {
+        Object.assign(actor, placed.actors[index]);
+      }
+      plans.push({
         actors,
         role: site.id === "holodisk" ? "whirlpool-holodisk" : "whirlpool-capital",
         site,
       });
+    }
+    for (const plan of plans) {
+      storeRequiredRolePlan(progress, flight, plan);
     }
   } finally {
     planningRequiredWorld.delete(projection);
