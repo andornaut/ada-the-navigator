@@ -14797,7 +14797,7 @@
     },
     {
       "id": "craft-stranded-courier-0",
-      "path": "/art/andromeda/stranded-courier-0.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14808,11 +14808,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-1",
-      "path": "/art/andromeda/stranded-courier-1.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14823,11 +14824,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-2",
-      "path": "/art/andromeda/stranded-courier-2.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14838,11 +14840,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-3",
-      "path": "/art/andromeda/stranded-courier-3.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14853,11 +14856,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-4",
-      "path": "/art/andromeda/stranded-courier-4.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14868,11 +14872,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-5",
-      "path": "/art/andromeda/stranded-courier-5.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14883,11 +14888,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-6",
-      "path": "/art/andromeda/stranded-courier-6.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14898,11 +14904,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-7",
-      "path": "/art/andromeda/stranded-courier-7.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14913,11 +14920,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-8",
-      "path": "/art/andromeda/stranded-courier-8.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14928,11 +14936,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-9",
-      "path": "/art/andromeda/stranded-courier-9.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14943,11 +14952,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-10",
-      "path": "/art/andromeda/stranded-courier-10.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14958,11 +14968,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-11",
-      "path": "/art/andromeda/stranded-courier-11.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14973,11 +14984,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-12",
-      "path": "/art/andromeda/stranded-courier-12.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -14988,11 +15000,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-13",
-      "path": "/art/andromeda/stranded-courier-13.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15003,11 +15016,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-14",
-      "path": "/art/andromeda/stranded-courier-14.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15018,11 +15032,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {
       "id": "craft-stranded-courier-15",
-      "path": "/art/andromeda/stranded-courier-15.svg",
+      "path": "/art/andromeda/stranded-courier-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -15033,6 +15048,7 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-courier"
     },
     {

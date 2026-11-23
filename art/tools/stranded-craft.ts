@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import type { Facing, Part } from "./cartwheel-craft.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { ball, craftBox, craftPlan, cube, disc, FWD, hcyl, part, pill, uv } from "./hull-shapes.ts";
-import { type GALAXIES, linkData, replaceEntries } from "./manifest.ts";
+import { type GALAXIES, linkData, readManifest, replaceEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
 import { orientedBox, wallWindows } from "./solid.ts";
 import { prettify } from "./sprite-sheet.ts";
@@ -604,7 +604,8 @@ for (const galaxy of [...new Set(CRAFT.map((c) => c.galaxy))]) {
   const path = `/art/${galaxy}/`;
   mkdirSync(dir, { recursive: true });
   const specs = CRAFT.filter((c) => c.galaxy === galaxy);
-  const craft = specs.map((spec) => exportStranded(spec, dir, path));
+  const installed = readManifest(galaxy).assets;
+  const craft = specs.map((spec) => exportStranded(installed, spec, dir, path));
   // The tow line itself is shared: the core manifest's `tow` link (art/cartwheel-props.md).
   const tow = `${dir}tow.json`;
   writeFileSync(

@@ -4,8 +4,9 @@
 // and the tow point per heading. Contract: art/cartwheel-props.md "Stranded craft".
 import { writeFileSync } from "node:fs";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
 import type { Facing, Part, Plan } from "./cartwheel-craft.ts";
-import { svgText } from "./svg-text.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
   depth,
@@ -16,6 +17,7 @@ import {
   rotate,
   round,
 } from "./projection.ts";
+import { svgText } from "./svg-text.ts";
 
 type Face = { color: string; points: Point[] };
 
@@ -126,9 +128,32 @@ export interface CraftSpec {
 
 export const BLINK_MS = 700;
 
+type InstalledFrame = { id: string; path?: unknown; svgSheet?: unknown };
+
 // Writes the frames to `dir` (public path `path`) and returns the tow data entry and the
 // manifest entries.
-export function exportStranded(spec: CraftSpec, dir: string, path: string) {
+export function exportStranded(
+  installed: readonly InstalledFrame[],
+  spec: CraftSpec,
+  dir: string,
+  path: string,
+) {
+  const prefix = `craft-${spec.id}-`;
+  const sheet = `${spec.id}-sheet.svg`;
+  const current = installed.filter(({ id }) => id.startsWith(prefix));
+  const packed = current.some(({ svgSheet }) => svgSheet === true);
+  if (
+    packed &&
+    (spec.frames.length !== 1 ||
+      spec.frames[0]!.name !== "" ||
+      current.length !== ENEMY_HEADINGS ||
+      current.some(
+        ({ id, path: framePath, svgSheet }, yaw) =>
+          id !== `${prefix}${yaw}` || framePath !== path + sheet || svgSheet !== true,
+      ))
+  ) {
+    throw new Error(`Incomplete stranded sheet selection: ${spec.id}`);
+  }
   const poses = Array.from({ length: ENEMY_HEADINGS }, (_, yaw): Pose => ({
     pitch: spec.pitch,
     roll: spec.roll,
@@ -153,6 +178,7 @@ export function exportStranded(spec: CraftSpec, dir: string, path: string) {
   const c = size / 2;
   const entries = [];
   const headings = [];
+  const roots: string[] = [];
   for (const [yaw, frames] of drawn.entries()) {
     for (const { faces, name } of frames) {
       const file = name ? `${spec.id}-${yaw}-${name}` : `${spec.id}-${yaw}`;
@@ -160,13 +186,17 @@ export function exportStranded(spec: CraftSpec, dir: string, path: string) {
         ({ color, points: list }) =>
           `  <polygon fill="${color}" points="${points(list.map((p) => projectAt(c, c, p)))}"/>`,
       );
-      writeFileSync(
-        `${dir}${file}.svg`,
-        svgText(svg(`${spec.title} ${yaw}${name ? ` ${name}` : ""}`, size, size, polygons)),
+      const root = svgText(
+        svg(`${spec.title} ${yaw}${name ? ` ${name}` : ""}`, size, size, polygons),
       );
+      if (packed) {
+        roots.push(root.trimEnd());
+      } else {
+        writeFileSync(`${dir}${file}.svg`, root);
+      }
       entries.push({
         id: `craft-${file}`,
-        path: `${path}${file}.svg`,
+        path: packed ? path + sheet : `${path}${file}.svg`,
         width: size,
         height: size,
         displayWidth: size * DISPLAY_SCALE,
@@ -174,12 +204,31 @@ export function exportStranded(spec: CraftSpec, dir: string, path: string) {
         facing: `world-${yaw}`,
         directionIndex: yaw,
         pivot: { x: 0.5, y: 0.5 },
+        ...(packed ? { svgSheet: true as const } : {}),
         ...(name ? { blink: name, frameMs: BLINK_MS } : {}),
         craft: spec.id,
       });
     }
     const [tx, ty] = projectAt(c, c, posed(poses[yaw]!, spec.tow));
     headings.push({ index: yaw, tow: [round(tx), round(ty)] });
+  }
+  if (packed) {
+    // Raw-sized cells keep each nested root at its standalone intrinsic size.
+    const wide = size * 4;
+    const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
+      { rectangles: roots.map(() => ({ width: size, height: size })), value: spec.id },
+    ])?.pages[0];
+    if (!layout || layout.placed[0]?.at.length !== ENEMY_HEADINGS) {
+      throw new Error(`Cannot pack stranded sheet: ${spec.id}`);
+    }
+    const frames = roots.map((root, yaw) => {
+      const { x, y } = layout.placed[0]!.at[yaw]!;
+      return `<svg id="${prefix}${yaw}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+    });
+    writeFileSync(
+      dir + sheet,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${layout.height}" viewBox="0 0 ${wide} ${layout.height}">${frames.join("")}</svg>\n`,
+    );
   }
   const data = {
     id: spec.id,

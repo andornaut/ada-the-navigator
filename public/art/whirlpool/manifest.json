@@ -4959,7 +4959,7 @@
     },
     {
       "id": "craft-stranded-current-skimmer-0",
-      "path": "/art/whirlpool/stranded-current-skimmer-0.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4970,11 +4970,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-1",
-      "path": "/art/whirlpool/stranded-current-skimmer-1.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -4985,11 +4986,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-2",
-      "path": "/art/whirlpool/stranded-current-skimmer-2.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5000,11 +5002,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-3",
-      "path": "/art/whirlpool/stranded-current-skimmer-3.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5015,11 +5018,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-4",
-      "path": "/art/whirlpool/stranded-current-skimmer-4.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5030,11 +5034,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-5",
-      "path": "/art/whirlpool/stranded-current-skimmer-5.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5045,11 +5050,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-6",
-      "path": "/art/whirlpool/stranded-current-skimmer-6.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5060,11 +5066,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-7",
-      "path": "/art/whirlpool/stranded-current-skimmer-7.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5075,11 +5082,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-8",
-      "path": "/art/whirlpool/stranded-current-skimmer-8.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5090,11 +5098,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-9",
-      "path": "/art/whirlpool/stranded-current-skimmer-9.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5105,11 +5114,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-10",
-      "path": "/art/whirlpool/stranded-current-skimmer-10.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5120,11 +5130,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-11",
-      "path": "/art/whirlpool/stranded-current-skimmer-11.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5135,11 +5146,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-12",
-      "path": "/art/whirlpool/stranded-current-skimmer-12.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5150,11 +5162,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-13",
-      "path": "/art/whirlpool/stranded-current-skimmer-13.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5165,11 +5178,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-14",
-      "path": "/art/whirlpool/stranded-current-skimmer-14.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5180,11 +5194,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {
       "id": "craft-stranded-current-skimmer-15",
-      "path": "/art/whirlpool/stranded-current-skimmer-15.svg",
+      "path": "/art/whirlpool/stranded-current-skimmer-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -5195,6 +5210,7 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-current-skimmer"
     },
     {

@@ -17396,7 +17396,7 @@
     },
     {
       "id": "craft-stranded-hauler-0",
-      "path": "/art/cartwheel/stranded-hauler-0.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17407,11 +17407,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-1",
-      "path": "/art/cartwheel/stranded-hauler-1.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17422,11 +17423,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-2",
-      "path": "/art/cartwheel/stranded-hauler-2.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17437,11 +17439,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-3",
-      "path": "/art/cartwheel/stranded-hauler-3.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17452,11 +17455,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-4",
-      "path": "/art/cartwheel/stranded-hauler-4.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17467,11 +17471,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-5",
-      "path": "/art/cartwheel/stranded-hauler-5.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17482,11 +17487,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-6",
-      "path": "/art/cartwheel/stranded-hauler-6.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17497,11 +17503,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-7",
-      "path": "/art/cartwheel/stranded-hauler-7.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17512,11 +17519,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-8",
-      "path": "/art/cartwheel/stranded-hauler-8.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17527,11 +17535,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-9",
-      "path": "/art/cartwheel/stranded-hauler-9.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17542,11 +17551,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-10",
-      "path": "/art/cartwheel/stranded-hauler-10.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17557,11 +17567,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-11",
-      "path": "/art/cartwheel/stranded-hauler-11.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17572,11 +17583,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-12",
-      "path": "/art/cartwheel/stranded-hauler-12.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17587,11 +17599,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-13",
-      "path": "/art/cartwheel/stranded-hauler-13.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17602,11 +17615,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-14",
-      "path": "/art/cartwheel/stranded-hauler-14.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17617,11 +17631,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {
       "id": "craft-stranded-hauler-15",
-      "path": "/art/cartwheel/stranded-hauler-15.svg",
+      "path": "/art/cartwheel/stranded-hauler-sheet.svg",
       "width": 128,
       "height": 128,
       "displayWidth": 56,
@@ -17632,6 +17647,7 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-hauler"
     },
     {

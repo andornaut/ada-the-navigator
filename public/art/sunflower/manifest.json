@@ -985,7 +985,7 @@
     },
     {
       "id": "craft-stranded-scrap-barge-0",
-      "path": "/art/sunflower/stranded-scrap-barge-0.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -996,11 +996,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-1",
-      "path": "/art/sunflower/stranded-scrap-barge-1.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1011,11 +1012,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-2",
-      "path": "/art/sunflower/stranded-scrap-barge-2.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1026,11 +1028,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-3",
-      "path": "/art/sunflower/stranded-scrap-barge-3.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1041,11 +1044,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-4",
-      "path": "/art/sunflower/stranded-scrap-barge-4.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1056,11 +1060,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-5",
-      "path": "/art/sunflower/stranded-scrap-barge-5.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1071,11 +1076,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-6",
-      "path": "/art/sunflower/stranded-scrap-barge-6.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1086,11 +1092,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-7",
-      "path": "/art/sunflower/stranded-scrap-barge-7.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1101,11 +1108,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-8",
-      "path": "/art/sunflower/stranded-scrap-barge-8.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1116,11 +1124,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-9",
-      "path": "/art/sunflower/stranded-scrap-barge-9.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1131,11 +1140,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-10",
-      "path": "/art/sunflower/stranded-scrap-barge-10.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1146,11 +1156,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-11",
-      "path": "/art/sunflower/stranded-scrap-barge-11.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1161,11 +1172,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-12",
-      "path": "/art/sunflower/stranded-scrap-barge-12.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1176,11 +1188,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-13",
-      "path": "/art/sunflower/stranded-scrap-barge-13.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1191,11 +1204,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-14",
-      "path": "/art/sunflower/stranded-scrap-barge-14.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1206,11 +1220,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {
       "id": "craft-stranded-scrap-barge-15",
-      "path": "/art/sunflower/stranded-scrap-barge-15.svg",
+      "path": "/art/sunflower/stranded-scrap-barge-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -1221,6 +1236,7 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-scrap-barge"
     },
     {

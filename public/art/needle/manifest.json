@@ -15447,7 +15447,7 @@
     },
     {
       "id": "craft-stranded-glider-0",
-      "path": "/art/needle/stranded-glider-0.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15458,11 +15458,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-1",
-      "path": "/art/needle/stranded-glider-1.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15473,11 +15474,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-2",
-      "path": "/art/needle/stranded-glider-2.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15488,11 +15490,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-3",
-      "path": "/art/needle/stranded-glider-3.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15503,11 +15506,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-4",
-      "path": "/art/needle/stranded-glider-4.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15518,11 +15522,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-5",
-      "path": "/art/needle/stranded-glider-5.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15533,11 +15538,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-6",
-      "path": "/art/needle/stranded-glider-6.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15548,11 +15554,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-7",
-      "path": "/art/needle/stranded-glider-7.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15563,11 +15570,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-8",
-      "path": "/art/needle/stranded-glider-8.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15578,11 +15586,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-9",
-      "path": "/art/needle/stranded-glider-9.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15593,11 +15602,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-10",
-      "path": "/art/needle/stranded-glider-10.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15608,11 +15618,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-11",
-      "path": "/art/needle/stranded-glider-11.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15623,11 +15634,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-12",
-      "path": "/art/needle/stranded-glider-12.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15638,11 +15650,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-13",
-      "path": "/art/needle/stranded-glider-13.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15653,11 +15666,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-14",
-      "path": "/art/needle/stranded-glider-14.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15668,11 +15682,12 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {
       "id": "craft-stranded-glider-15",
-      "path": "/art/needle/stranded-glider-15.svg",
+      "path": "/art/needle/stranded-glider-sheet.svg",
       "width": 112,
       "height": 112,
       "displayWidth": 49,
@@ -15683,6 +15698,7 @@
         "x": 0.5,
         "y": 0.5
       },
+      "svgSheet": true,
       "craft": "stranded-glider"
     },
     {

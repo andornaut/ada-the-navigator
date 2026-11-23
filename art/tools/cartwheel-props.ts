@@ -27,7 +27,7 @@ import {
   TUMBLE_FRAMES,
   unit,
 } from "./debris.ts";
-import { linkData, replaceEntries } from "./manifest.ts";
+import { linkData, readManifest, replaceEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
 import { ORE_PICKUP, PICKUP_SIZE } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
@@ -104,7 +104,8 @@ const debris = exportDebris(dir, "/art/cartwheel/", BODY, CORAL, {
   axis: TUMBLE_AXIS,
   scale: DEBRIS_SCALE,
 });
-const craft = CRAFT.map((spec) => exportStranded(spec, dir, "/art/cartwheel/"));
+const installed = readManifest("cartwheel").assets;
+const craft = CRAFT.map((spec) => exportStranded(installed, spec, dir, "/art/cartwheel/"));
 
 await writeSprites(
   { data: `${dir}ore-nugget.json`, sheet: `${dir}ore-nugget.png` },
