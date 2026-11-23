@@ -1,48 +1,62 @@
 # Settings row icons
 
-Each Settings row draws a 16 by 16 icon at its left and Chibi's `ui-switch`
-sheet at its right, as Chibi's Settings card does. Ada's `ui-switch.png` is
-Chibi's, recoloured (see [UI assets](ui.md)); use it for every row's switch, with
-its `on` and `off` tags. Row layout follows [Controls](controls.md).
+Settings uses a decorative 16 by 16 SVG at the start of each row. Switch rows
+use Chibi's recoloured `ui-switch` sheet with its `on` and `off` tags at the
+trailing edge, above the visible state label. The Install row uses its action
+button in that slot. See the [Settings card](layout.md#settings-card) and
+[UI assets](ui.md).
 
-| Settings row   | UI manifest key       | Origin            |
-| -------------- | --------------------- | ----------------- |
-| Move controls  | `icon-move-controls`  | Authored for Ada  |
-| Aim controls   | `icon-aim-controls`   | Authored for Ada  |
-| Sound          | `icon-sound`          | Authored for Ada  |
-| Reduced motion | `icon-reduced-motion` | Authored for Ada  |
-| Install        | `icon-install`        | Chibi, recoloured |
-| FPS counter    | `icon-fps-counter`    | Authored for Ada  |
+| Settings row   | Icon key              |
+| -------------- | --------------------- |
+| Move controls  | `icon-move-controls`  |
+| Aim controls   | `icon-aim-controls`   |
+| Sound effects  | `icon-sound`          |
+| FPS counter    | `icon-fps-counter`    |
+| Reduced motion | `icon-reduced-motion` |
+| Install        | `icon-install`        |
 
-The FPS counter row is in the [Cheats card](layout.md#cheats-card), drawn as
-a Settings switch row with `icon-fps-counter`.
-
-`icon-use-control` is not a Settings row: it is the Use disc's
-[inline drawing](#inline-controls), authored with the other grids.
-
-Chibi's install steps card shows the browser's own button glyph beside the
-first step, `icon-ios-share` on iOS and `icon-browser-menu` on Firefox for
-Android, and `icon-install` beside the second. Both glyphs are Chibi's, recoloured.
+The Install Steps card places the browser glyph and `icon-install` before
+its instructions. Apple browsers use `icon-ios-share`. Other browsers use
+`icon-browser-menu`, with a text-only exception for Firefox on desktop.
 
 ## Geometry
 
-- Public paths: `/art/ui/sprites/<key>.png` and matching `.json`; manifest
-  entries use paths relative to `/art/ui/` and the existing sprite schema.
-- Every sheet is one untrimmed, unrotated 16 by 16 frame named
-  `<key>.aseprite`, tag `rest` index 0, duration 100 ms. No nine-slice margins.
-- One colour, cream `#ead4aa`, fully opaque on a clear ground, in 2-pixel
-  strokes (the control icons' chevrons and Use symbol ring are 1 pixel),
-  replacing Chibi's card ink `#3a4466`. The icons are drawn for the
-  dark lavender card `#3b3850` (7.76:1); they are not tinted at runtime.
+- Settings and Install Steps load `/art/ui/icons/<key>.svg` by URL. These
+  decorative images draw at 16 by 16 logical px with smooth sampling from a
+  20 by 20 viewBox.
+- The SVGs carry cream ink `#ead4aa` on a clear ground. The switch rows align
+  the icon's visible top edge with the label ink on the dark lavender
+  `#3b3850` card (7.76:1). The offset comes from `SETTING_ICON_INK_TOP` and
+  the measured title ink top in `src/ui/settingsIcons.ts` and `src/ui/settings.ts`.
+- Move uses a ring and paired chevrons. Aim uses a ring and centre dot. Use
+  uses two concentric rings. Sound uses a speaker with two waves, Reduced
+  motion a wave over a straight line, and FPS counter a display with three
+  bars.
 
-## Reused Chibi icons
+## Inline controls
 
-- Source: `andornaut/chibis-way-home`, commit `04720cc115c6db655e4b25a9cfa6630e54ce10c7`.
-- Source paths: `public/art/sprites/<key>.png` and matching `.json`.
-- `art/tools/controls.ts` recolours each PNG from `#3a4466` to `#ead4aa`, keeping
-  alpha and geometry (see [UI assets](ui.md#dark-lavender-recolour)). JSON data
-  is unchanged; whitespace follows Ada's formatter.
-- Source files remain untouched. Reuse is explicitly authorized by the project owner.
+In first-flight and landing-page help, `icon-move-controls` follows “left
+stick”, `icon-aim-controls` follows “right stick”, and `icon-use-control`
+follows “Use”.
+
+- The 16 by 16 icon starts 4 px after the name and sits centred on the line
+  box, with 2 px above and below on the game's 20 px line and 3.2 px above
+  and below on the landing page's 22.4 px line. The name and icon wrap as one.
+- Game help and landing markup load the same smoothly sampled SVGs. When the
+  name is already written, the image is decorative. Standalone Use icons
+  carry the control name as alternative text.
+
+## Archived raster references
+
+The retired Ada PNG and JSON files are preserved at
+`587b8e1d08375975e488af5647b8199307c96b32` under
+`public/art/ui/sprites/`. The tables identify those archived bytes.
+
+Install, Share and browser menu were reused with the project owner's
+authorization from `andornaut/chibis-way-home` at
+`04720cc115c6db655e4b25a9cfa6630e54ce10c7`, under
+`public/art/sprites/`. The Ada recolour replaced `#3a4466` with `#ead4aa`
+and kept alpha and frame geometry.
 
 | File                     | Source SHA-256                                                     | Destination SHA-256                                                |
 | ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
@@ -53,13 +67,7 @@ Android, and `icon-install` beside the second. Both glyphs are Chibi's, recolour
 | `icon-browser-menu.png`  | `ba45788960096b0551b0b3ff0bbaa561373eed1f3c3b8a1caece4547816fe094` | `8e562dde7fe224618e8047b3f284326124dc9d9d6894e1659943c10fbd5fdbe6` |
 | `icon-browser-menu.json` | `ae9c969f26ac55fb6e8df6ad61cbf88546d8ab6e8518eba723d8177a198a1d39` | `374e32b88affc8057ebe911c5f6f61be1cf2507e22348070249ee9a8444b46e1` |
 
-## Authored icons
-
-`art/tools/settings-icons.ts` holds the authored icons as pixel grids and
-writes them with art-kit's `writeSpriteSheet`, which emits the same PNG and
-JSON bytes as Chibi's Aseprite exports (it reproduces the three reused icons
-exactly). The grids emit cream directly. Rebuild with
-`node art/tools/settings-icons.ts`, then run Prettier on the written JSON.
+### Authored Ada raster references
 
 | PNG                       | SHA-256                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -69,44 +77,3 @@ exactly). The grids emit cream directly. Rebuild with
 | `icon-sound.png`          | `39581b60d8fb7a6fd3954a64a38909384da42126381c86bf46c2061b1a858b91` |
 | `icon-reduced-motion.png` | `3b45c9a4e7325cc703ebffd8917417581ef329b5a9fdeeb422d157a875c1a8d5` |
 | `icon-fps-counter.png`    | `b2a318e4297fd772f3c5aa83dc15e59a101a3acf3e4a78998589597c221137ab` |
-
-- `icon-move-controls`: the move stick, the aim stick's ring and knob with a
-  1-pixel chevron each side between them, as the move ring's chevrons.
-- `icon-aim-controls`: the aim stick, the touch ring as a 2-pixel ring (pixel
-  centres 6.1 to 8.2 from the frame centre) around the knob, a 4 by 4 disc with
-  its corners clear.
-- `icon-use-control`: the Use disc with the generic Use symbol, the 2-pixel
-  ring around a 1-pixel symbol ring (pixel centres 3.0 to 4.1 from the centre)
-  and a 2 by 2 centre dot.
-- `icon-sound`: a filled speaker with two concentric sound waves.
-- `icon-reduced-motion`: a wave over a down chevron over a flat line, read as
-  motion settling.
-- `icon-fps-counter`: a frame-rate readout, a 16 by 14 frame (rows 1 to 14,
-  as `icon-sound`) with its outer corners clear around three 2-wide
-  frame-time bars, 2 apart on a shared baseline and 1 clear of the frame. Its
-  ink starts 1 below the frame top, as `icon-sound`'s.
-
-The three control icons span the whole frame and mirror on both axes, so their
-drawn bounds centre on the frame exactly. Each draws from the live control's
-shapes (the ring, the knob, the move ring's chevrons, the Use symbol) on whole
-pixels, because the live drawing scaled to 16 leaves its ink edges and 3-pixel
-band under 1 device pixel.
-
-## Inline controls
-
-Wherever player text names an on-screen control (the first-flight lessons, the
-landing page's mobile line), its icon follows the name: `icon-move-controls`
-after "left stick", `icon-aim-controls` after "right stick", `icon-use-control`
-after "Use".
-
-- The icon's left edge is 4 px after the name's last glyph; the following text
-  keeps its own space advance.
-- 16 by 16, centred on the line box: 2 px above and below on the 20 line
-  (`TYPE.body` and `TYPE.label`), 3.2 on the landing page's 22.4 line.
-- Full opacity, unlike the live controls' 85%; cream on the conversation panel,
-  the card and the landing page's `#292734`.
-- Nearest-neighbour scaling (`image-rendering: pixelated`) at every density, 2x
-  and above included. The landing page loads the same sheets: each PNG is its
-  one 16 by 16 frame, so `/art/ui/sprites/<key>.png` serves as the image.
-- The icon is decorative (`alt=""`, `aria-hidden`); the name stays in the text.
-  Keep the name and its icon on one line when wrapping.

@@ -12,8 +12,8 @@ owns the strings, prices, stock order, eligibility and transaction rules.
 | Footer controls     | `ui-button` for service pages and `ui-button-primary` for Undock                                      |
 | Item row            | `ui-button-tile` normal, pressed and disabled frames, nine-slice 2/4/2/6                              |
 | Resources           | `icon-stardust-20` at 16 px in pills. `icon-stardust-20` and `icon-ore-20` for balances and Exchange. |
-| Item glyphs         | Shop weapon and Ammo sheets, equipment SVGs and project sheets. See [Shop icons](shop-icons.md).      |
-| Job glyphs          | `icon-job-*` sheets. See [Shop icons](shop-icons.md#job-icons).                                       |
+| Item glyphs         | Weapon and ammo SVG masks, equipment and project SVGs. See [Shop icons](shop-icons.md).               |
+| Job glyphs          | `icon-job-*.svg` and disabled counterparts. See [Shop icons](shop-icons.md#job-icons).                |
 | Status mark         | `icon-shop-check.svg`, 12x8                                                                           |
 | Ship paint swatches | The scheme's 48-heading ship art, `ship-48` for Classic and `ship-<scheme>-48` for other schemes      |
 
@@ -75,8 +75,8 @@ their text in the spoken row label.
 - **Owned.** Owned weapons and maxed tracks show Owned. Selecting an owned
   paint scheme equips it immediately. The In use marker moves to that scheme.
 - **Unaffordable.** The flat `#2f2d3d` tile has no lip or press displacement.
-  The well uses the same face, the glyph uses its disabled art, and the ink
-  pill and Stardust icon remain visible. The row stays focusable and
+  The well uses the same face. The glyph uses muted mask ink or its disabled
+  SVG, and the ink pill and Stardust icon remain visible. The row stays focusable and
   activation plays the [refusal cue](controls.md#refusal-cue).
 - **Keyboard focus.** Shop stock tints the face inside the tile, keeping its
   edges, lip and pressed art. Installed paint uses the supporting colour
@@ -88,13 +88,12 @@ prices on the ink pill are 12.44:1 and 7.27:1 respectively.
 
 ### Item glyph sources
 
-- Weapons use the two-frame `icon-shop-weapon-<id>.png` sheets under
-  `/art/ui/sprites/`. The separate `weapon-<id>.svg` in `/art/ui/icons/` is
-  the one-colour HUD mask. See [Shop icons](shop-icons.md) for the shared
-  glyph grid and disabled treatment.
-- A weapon upgrade adds a smooth 12x12 `icon-shop-upgrade-badge.svg` at
-  (12, 0) over the 20x20 weapon sheet frame at (0, 4). An unaffordable row
-  uses the sheet's disabled frame and `icon-shop-upgrade-badge-disabled.svg`.
+- Weapons use `weapon-<id>.svg` in `/art/ui/icons/`, the same mask as the HUD.
+  The item well supplies the normal or unaffordable ink. See
+  [Shop icons](shop-icons.md).
+- A weapon upgrade adds a 12x12 `icon-shop-upgrade-badge.svg` at (12, 0) over
+  the 20x20 weapon mask at (0, 4). An unaffordable row uses muted mask ink
+  and `icon-shop-upgrade-badge-disabled.svg`.
 - Engine tuning, Shield and Tractor beam use `icon-shop-engine-tuning`,
   `icon-shop-shield` and `icon-shop-tractor-beam` from `/art/ui/icons/`.
   The row and confirm share the smooth SVG caller in
@@ -104,8 +103,8 @@ prices on the ink pill are 12.44:1 and 7.27:1 respectively.
 
 ### Ammunition rows
 
-Ammo uses the ammunition-kind sheet (`icon-shop-ammo-missile`,
-`icon-shop-ammo-energy` or `icon-shop-ammo-shell`) by itself. The upright
+Ammo uses its kind's mask (`ammo-missile.svg`, `ammo-energy.svg` or
+`ammo-shell.svg`) alone in the well, with the well's state colour. The upright
 stock glyph sits next to the weapon-specific name and pack count. If Ada
 lacks the required weapon, the row keeps its pack count and requirement
 beneath the name, omits the price and disables activation. Once
@@ -176,8 +175,8 @@ the Shop footer action.
 
 1. `confirmTitle` ("Buy {name}?") and the top-right X.
 2. Item well with an ink edge and navy face. Centre the glyph at 2x, or use the
-   larger paint swatch. Raster glyphs use nearest-neighbour sampling and
-   equipment SVGs and the upgrade badge stay smooth.
+   larger paint swatch. SVG masks and painted vectors draw with smooth
+   sampling. Paint swatches retain nearest-neighbour sampling.
 3. The offer's description where supplied, centred. A weapon offer uses
    its description and an ammunition pack uses the pack count.
 4. Offered price, centred in cream with `icon-stardust-20`. Omit the

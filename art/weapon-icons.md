@@ -9,9 +9,9 @@ Laser strokes and scatter dots are 2 px thick.
 
 ## Current roster
 
-Six weapons, each with a 20 px mask SVG and a [shop sheet](shop-icons.md)
-`icon-shop-weapon-<id>`. IDs match Tech's weapon IDs. Filename case matches the
-direct DOM URL `weapon-${id}.svg`.
+Six weapons share their 20 px SVG masks across the HUD, [Shop](shop-icons.md),
+and weapon details. Filename case follows the runtime IDs in
+`src/data/weaponGlyphs.ts`.
 
 | ID             | Path                                          | Icon semantics                                        |
 | -------------- | --------------------------------------------- | ----------------------------------------------------- |
@@ -25,10 +25,8 @@ direct DOM URL `weapon-${id}.svg`.
 ## Pixel grids
 
 Every weapon and ammunition glyph is a 20 × 20 pixel grid in
-`art/tools/weapon-icons.ts`. Each grid writes its shop sheet and registers it
-in the UI manifest. The ammunition grids and five weapon grids also write their
-HUD SVG as one path of whole-pixel runs; Scattershot's SVG is
-hand-authored, and the tool checks that its grid matches that SVG's rectangles.
+`art/tools/weapon-icons.ts`. The ammunition grids and five weapon grids
+write the SVG masks as whole-pixel runs. Scattershot retains its authored SVG.
 Rebuild with `node art/tools/weapon-icons.ts`.
 
 | SVG                       | SHA-256                                                            |
@@ -45,9 +43,9 @@ Rebuild with `node art/tools/weapon-icons.ts`.
 
 ## Ammunition icons
 
-Three ammunition kinds, each a 20 px mask SVG and a [shop sheet](shop-icons.md)
-`icon-shop-ammo-<kind>`, on the same grid rules. Ammunition stands upright as
-stock; every weapon glyph is fire travelling right, so the two never read alike.
+Three ammunition kinds use 20 px SVG masks on the same grid rules.
+Ammunition stands upright as stock, while weapon glyphs show fire travelling
+right.
 
 | Kind      | Path                                   | Weapons                      | Icon semantics                                                   |
 | --------- | -------------------------------------- | ---------------------------- | ---------------------------------------------------------------- |
@@ -56,9 +54,9 @@ stock; every weapon glyph is fire travelling right, so the two never read alike.
 | `shell`   | `public/art/ui/icons/ammo-shell.svg`   | Scattershot                  | Two upright shells: crimped tops, hull seam over the brass, rims |
 
 Each grid is centred with 2 px padding and is symmetric about the vertical
-centre line. The shop's [ammunition rows](shop.md#ammunition-rows) draw the
-sheet alone in the item well; the SVGs are the masks for any DOM or HUD use, in
-the state colours of [Controls](controls.md#top-right-hud-icon-buttons).
+centre line. Shop [ammunition rows](shop.md#ammunition-rows) draw the mask in
+the item well, using the well's ink. Weapon detail ammo rows use the same
+kind mapping.
 
 ## HUD glyphs
 

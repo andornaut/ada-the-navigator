@@ -15,9 +15,10 @@ relative paths, sorted by key.
 The [settings navigation icon](settings-icon.md) supplies `icon-settings-nav`
 from its separately pinned source. Its entry uses the same sprite schema.
 The [touch joystick sheets](touch-joystick.md) supply `ui-move-hint` and
-`ui-move-knob` the same way. The [Settings row icons](settings-icons.md) supply
-one `icon-*` sheet per Settings row and the install steps glyphs the same way.
-The [shop icons](shop-icons.md) supply the `icon-shop-*` sheets the same way.
+`ui-move-knob` the same way. Settings rows and Install Steps load their
+[icons](settings-icons.md) directly from `/art/ui/icons/` as SVGs.
+The [Shop and Jobs & Projects icons](shop-icons.md) load SVGs directly from
+`/art/ui/icons/`.
 The [24px gear](settings-icon.md#24px-gear) supplies `icon-settings-nav-24` the same way.
 The [Achievements navigation icon](achievements-icon.md) supplies `icon-achievements` the same way.
 [Stardust](stardust.md#hud-icon) supplies `icon-stardust` and `icon-stardust-20` the same way.

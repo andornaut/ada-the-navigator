@@ -460,10 +460,9 @@ On the light fields the ore, cargo and tow icons read against their own ink edge
 as the shield icon does against its outline.
 
 `public/art/ui/icons/shield.svg` is the HUD shield glyph: a 20x20 single-colour
-vector of the `icon-shop-shield` silhouette (a heater shield with its left
-half filled), cream `#ead4aa` like the [weapon icons](weapon-icons.md), drawn
-as a CSS mask with smooth sampling. `icon-shop-shield` stays the shop's pixel
-glyph; at 20 px the two differ only in edge pixels.
+heater shield with its left half filled, drawn as a smooth CSS mask like the
+[weapon icons](weapon-icons.md). Shop uses its own smooth shield SVG pair,
+`icon-shop-shield.svg` and `icon-shop-shield-disabled.svg`.
 
 ## Item notice
 
@@ -479,17 +478,17 @@ and Gameplay's label: "+ {item}", "+ {weapon}", "+ {weapon} ammo",
 after a merged label. The label is `TYPE.label`,
 cream, with the "+" in the rim's accent colour.
 
-| Gain                           | Icon                                                                             | Rim and "+"                                      | Lands on                      |
-| ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------- |
-| Job, story or lost item        | `icon-cargo-20`                                                                  | `#feae34`                                        | The pill's cargo segment      |
-| Towed craft                    | `icon-tow-20`                                                                    | `#b8bfc9`                                        | The pill's cargo segment      |
-| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask                                        | `#bfa06f`                                        | That weapon's disc            |
-| Holodisk                       | `icon-holodisk-20`                                                               | `#e868c8`                                        | Nothing: it fades in place    |
-| Weapon level                   | `icon-shop-weapon-<id>` (`icon-shop-weapon-laser` for the Laser), frame `normal` | The level's tier: `#ff8f1f` at 2, `#a66bff` at 3 | That weapon's disc            |
-| Shield level                   | `icon-shop-shield`, frame `normal`                                               | The level's tier                                 | The shield pill's shield icon |
-| Engine level                   | `icon-shop-engine-tuning`, frame `normal`                                        | The level's tier                                 | Nothing: it fades in place    |
-| Tractor beam level             | `icon-shop-tractor-beam`, frame `normal`                                         | The level's tier                                 | Nothing: it fades in place    |
-| Paint scheme                   | `icon-shop-ship-paint`, frame `normal`                                           | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
+| Gain                           | Icon                                      | Rim and "+"                                      | Lands on                      |
+| ------------------------------ | ----------------------------------------- | ------------------------------------------------ | ----------------------------- |
+| Job, story or lost item        | `icon-cargo-20`                           | `#feae34`                                        | The pill's cargo segment      |
+| Towed craft                    | `icon-tow-20`                             | `#b8bfc9`                                        | The pill's cargo segment      |
+| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask | `#bfa06f`                                        | That weapon's disc            |
+| Holodisk                       | `icon-holodisk-20`                        | `#e868c8`                                        | Nothing: it fades in place    |
+| Weapon level                   | `weapon-<id>.svg`, a cream `#ead4aa` mask | The level's tier: `#ff8f1f` at 2, `#a66bff` at 3 | That weapon's disc            |
+| Shield level                   | `icon-shop-shield.svg`                    | The level's tier                                 | The shield pill's shield icon |
+| Engine level                   | `icon-shop-engine-tuning.svg`             | The level's tier                                 | Nothing: it fades in place    |
+| Tractor beam level             | `icon-shop-tractor-beam.svg`              | The level's tier                                 | Nothing: it fades in place    |
+| Paint scheme                   | `icon-shop-ship-paint.svg`                | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
 
 The accents are the job orange and tow steel of the cargo icons, the selected
 weapon disc's gold and the holodisk's pink. A level reached by an upgrade drop
@@ -498,12 +497,9 @@ show at that level: orange `#ff8f1f` at level 2 and
 purple `#a66bff` at level 3, for a weapon, the Shield, the Engine or the
 Tractor beam alike, so a level always reads in one colour. A newly gained
 weapon keeps the gold; its ammunition is unchanged. A paint scheme takes its
-own top colour; every scheme's passes, so none is substituted. The shop icons
-are 20 by 20, the chip's icon size, and draw nearest neighbour at 1x; the
-shop's 24 by 24 upgrade composite (glyph plus badge) does not fit the chip's
-20 slot, so a weapon level shows the plain weapon icon and the rim carries the
-level. Pixel icons draw nearest
-neighbour; the weapon glyph is the HUD disc's mask with smooth sampling.
+own top colour. Equipment notices draw their normal 20 by 20 SVGs with
+smooth sampling. A weapon level uses the plain 20 by 20 HUD mask, and the
+rim shows the tier. Shop rows use the 24 by 24 badge composite.
 
 | Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Andromeda | Needle | Phantom | `#ffffff` |
 | ------------ | --------- | ------: | --------: | --------: | --------: | --------: | -----: | ------: | --------: |

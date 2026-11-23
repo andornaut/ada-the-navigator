@@ -175,7 +175,7 @@ largest padded width. The runtime rows size through CSS.
 | Action inset          | 16 horizontal, 12 vertical                                              | Content inset per side; a wrapped label grows the face by 20 per line                                                                                            | `TEXT_BUTTON.inset`, `TEXT_BUTTON.verticalInset`                    |
 | Compact height        | 28                                                                      | Row actions and pills: the native 16x28 nine-slice frame                                                                                                         | `TEXT_BUTTON.compactHeight`, `controls.ts`                          |
 | Story action          | 36: a 32 face over the 4 lip, pressed sink 2                            | Storybook choices and page controls; label inset 16 across and 6 down; a wrapped label grows the face by 20 per line (56 for two lines); press `hitAround(face)` | `STORY_BUTTON`, `controls.ts`                                       |
-| Compact width         | 72, or the label plus 8 px insets when that is wider                    | Install row action (Chibi's 72x28 face)                                                                                                                          | `cardActionsSize`, `contentCard.ts`                                 |
+| Compact width         | 72, or the label plus 8 px insets when that is wider                    | Compact button face                                                                                                                                              | `cardActionsSize`, `contentCard.ts`                                 |
 | Control row           | 48 high, 16 icon, 8, label, 8, action                                   | Whole row is one control; action at the row's right end                                                                                                          | `CONTROL_ROW`, `controls.ts`                                        |
 | Row growth            | `max(48, text + 2 * SPACING.rowGap)`                                    | A row with a wrapped note grows by 20 per line                                                                                                                   | `CONTROL_ROW`, `controls.ts`                                        |
 | Switch                | 32x16                                                                   | `ui-switch` frame                                                                                                                                                | `CONTROL_ROW.switch`                                                |
@@ -216,7 +216,7 @@ the face of each state, never the press area.
 - Families: every modal takes one family's width, never a content-fitted
   width. Large: Settings in two columns, Ship, Achievements, Cheats, Quests,
   Map Quests and the Station pages. Medium: Paused, Settings in one column,
-  install steps. Small: Menu, Restart, the two Cheats reset confirmations,
+  install steps. Small: Menu, Restart, the Cheats selective reset confirmation,
   Update offer, resource and weapon details and Station decision dialogs. A
   card created without a family is Medium. Settings is Large when its rows fit
   two columns and Medium when they take one.
@@ -858,10 +858,10 @@ token above; strings are Gameplay's.
 
 | Screen        | Groups (top to bottom)                                                                                                                                                                                     | Scroll group |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Build label, supporting. Centred Back (primary)                                                                   | Rows         |
-| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                           | Steps        |
+| Settings      | Header and close X. Control columns ([Settings card](#settings-card)), supporting build label, centred primary Back                                                                                        | Rows         |
+| Install steps | Header and close X. Browser and Install glyphs where applicable, wrapped instructions, centred secondary Back                                                                                              | Instructions |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                           | None         |
-| Cheats        | Header with top-right X. Two logical columns ([Cheats card](#cheats-card)). Centred Back (primary)                                                                                                         | None         |
+| Cheats        | Header and close X. Two headingless columns of three aligned rows ([Cheats card](#cheats-card)), centred primary Back                                                                                      | None         |
 | Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Cheats, Settings; then Back to title (not on the Start screen); then primary Close                                                     | None         |
 | Paused        | Header, close. Two top-aligned action columns of equal width, ending with primary Resume                                                                                                                   | None         |
 | Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                | None         |
@@ -904,58 +904,73 @@ as its X, Escape and back. Quests list Close restores its actual opener; detail 
 the list, while a directly opened HUD detail Close returns to gameplay. The X,
 Escape and back match the primary footer action.
 
+### Settings card
+
+Settings uses two columns when the labels fit the Large card and stacks the
+left column above the right in the Medium card. Only the two-column layout
+shows the centre divider. The build label and centred primary **Back** follow
+the controls.
+
+| Column | Rows in order                                     |
+| ------ | ------------------------------------------------- |
+| Left   | Move controls, Aim controls, Sound effects        |
+| Right  | FPS counter, Reduced motion, Install when offered |
+
+Switch rows show a 16 px [icon](settings-icons.md), label and any supporting
+note, then a 32 by 16 switch above its state label. Move and Aim use Shown
+and Hidden. Other switches use On and Off. FPS starts Off each session and
+uses the bottom-right readout. The Install row ends in a standard 48 px
+secondary action. Closing Install Steps returns to Settings and restores
+focus to Install.
+
 ### Cheats card
 
 Offer **Cheats** directly in the active Menu or Pause in browser tabs and
-installed apps. The Large card is titled "Cheats" and fits two logical columns
-without scrolling. The top-right X and centred bottom primary **Back** use
-the same one-layer dismissal and restore focus to Cheats in the invoking
-Menu or Pause. Escape, back and backdrop dismissal follow that path. Keep
-the parent's pause state.
+installed apps. The Large card uses two columns without headings, with three
+aligned rows in each, fitted without scrolling. The top-right X and centred
+primary **Back** dismiss
+one layer, restore focus to Cheats in the invoking Menu or Pause, and preserve
+the parent's pause state. Escape, back and backdrop dismissal follow that path.
 
-| Column            | Visible controls in order                                                             |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| Progression       | Unlock all equipment, Unlock all galaxies, Unlock all weapons, Maximize weapon levels |
-| Resources & tools | FPS counter, the two +1,000 grants, Reset jobs, projects & quests, Reset save         |
+| Row    | Left                 | Right                         |
+| ------ | -------------------- | ----------------------------- |
+| Top    | Unlock all equipment | Stardust and Ore grants       |
+| Middle | Unlock all galaxies  | Maximize weapon levels        |
+| Bottom | Unlock all weapons   | Reset jobs, projects & quests |
 
 `cheatsTree` in `src/ui/cheatsTree.ts` sets the order and `createCheats`
-in `src/ui/cheats.ts` mounts the card. The grants form an equal-width pair. Stardust comes before Ore in visual and
-keyboard order. Show the matching resource glyphs beside +1,000 and use the
-spoken labels "Add 1,000 Stardust" and "Add 1,000 ore".
+in `src/ui/cheats.ts` mounts the card. The equal-width +1,000 grants put
+Stardust before Ore in visual and keyboard order. Each grant draws its 20 px
+resource SVG beside the amount. The spoken labels are “Add 1,000 Stardust”
+and “Add 1,000 ore”.
 
 | Part            | Rule                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Padding         | `SPACING.panelPadding` (16), with the 2 px frame inside it                                                                                             |
 | Ordinary action | `TEXT_BUTTON` at 48 high, with a 44 face over the 4 px lip. Preserve action availability and the disabled face when a cheat has nothing left to grant. |
-| FPS counter     | A 48-high switch row with `icon-fps-counter` (16), `CONTROL_ROW.gap` (8), the label, then the switch over its On or Off state.                         |
 | Back            | Centre at label width plus `2 * TEXT_BUTTON.inset`.                                                                                                    |
 
-**Reset jobs, projects & quests** sits directly above **Reset save** and
-opens a Small "Reset jobs, projects & quests?" confirmation with an
-explanatory body. It rewinds the stored campaign to Earth's opening in Sunflower, relocks later galaxies and
-clears jobs, project funding and reveals, holodisks and story progress. Ada
-keeps her ship, equipment, resources, map discoveries and achievements.
-Past contributions stay spent and earned one-time rewards stay recorded.
-Repeatable jobs and activities still pay their usual rewards. Preserve the
-save and current view when the write fails, and keep the live action and
-save guards.
+**Reset jobs, projects & quests** opens a Small “Reset jobs, projects &
+quests?” confirmation with an explanatory body, top-right X, secondary
+**Cancel** on the left and primary **Reset** on the right. X, back, Escape and backdrop use Cancel's one-layer
+path where allowed. On cancellation, restore focus to the invoking action or
+a logical control in Cheats. Keep the dismissal guard during the write.
 
-**Reset save** opens a separate Small "Reset save?" confirmation. Reset
-clears the whole save, including achievements, ends the cheat session and
-returns to Start. Device settings are retained.
-
-Both confirmations have a top-right X, secondary Cancel on the left and
-primary Reset on the right. X, back, Escape and backdrop use Cancel's
-one-layer path where allowed. Return focus to the invoking reset action or
-a logical control in Cheats. Keep the selective confirmation's dismissal
-guard during its write.
+The reset rewinds the stored campaign to Earth's opening in Sunflower,
+relocks later galaxies and clears jobs, project funding and reveals,
+holodisks and story progress. Ada keeps her ship, equipment, resources,
+map discoveries and achievements. Past contributions stay spent and earned
+one-time rewards stay recorded. Repeatable jobs and activities still pay
+their usual rewards. Preserve the save and current view when the write
+fails, and keep the live action and save guards.
 
 [Gameplay's Cheats guide](../gameplay/cheats.md) covers cheat effects.
 [Reset and save details](../docs/design/cheats.md#other-actions) cover the
 stored campaign and reward rules.
 
-Restart from Start uses the same confirmation layout. Cancel and the
-top-right X return to Start. Restart is the primary action on the right.
+The Start screen owns the full-save **Restart** action. Its Small “Restart?”
+confirmation keeps secondary **Cancel** on the left and primary **Restart**
+on the right. Cancel and the top-right X return to Start with the save intact.
 
 ### Conversation card
 

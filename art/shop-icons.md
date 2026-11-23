@@ -1,107 +1,96 @@
 # Shop icons
 
-Glyphs for the [station and shop](shop.md) and
-[community project](projects.md) rows: cream `#ead4aa` pixel art on a
-clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
-`#3b3850` (7.76:1). Each shop item maps to one glyph:
+The [Shop](shop.md) and Jobs & Projects draw their glyphs from
+`/art/ui/icons/`. The normal ink is cream `#ead4aa` on the navy
+`#262b44` item well. Shop rows and their confirm dialogs share
+`src/ui/stationItemIcon.ts`.
 
-| Item               | Glyph                                        | Size  |
-| ------------------ | -------------------------------------------- | ----- |
-| Laser              | `icon-shop-weapon-laser`                     | 20x20 |
-| Rapid Missile      | `icon-shop-weapon-rapidMissile`              | 20x20 |
-| Multi-Laser        | `icon-shop-weapon-multiLaser`                | 20x20 |
-| Heavy Missile      | `icon-shop-weapon-heavyMissile`              | 20x20 |
-| Scattershot        | `icon-shop-weapon-scattershot`               | 20x20 |
-| Phaser             | `icon-shop-weapon-phaser`                    | 20x20 |
-| `{weapon}` upgrade | Upgrade composite of that weapon's glyph     | 24x24 |
-| `{weapon}` ammo    | `icon-shop-ammo-<kind>` for that weapon      | 20x20 |
-| Generic upgrade    | `icon-shop-weapon-upgrade`                   | 20x20 |
-| Shield             | `icon-shop-shield`                           | 20x20 |
-| Engine tuning      | `icon-shop-engine-tuning`                    | 20x20 |
-| Tractor beam       | `icon-shop-tractor-beam`                     | 20x20 |
-| Ship paint heading | `icon-shop-ship-paint`                       | 20x20 |
-| Paint scheme rows  | The scheme's idle frame 12, drawn 32x32      | 32x32 |
-| Owned and In use   | `icon-shop-check`                            | 12x8  |
-| Upgrade badge      | `icon-shop-upgrade-badge`, inside composites | 12x12 |
-| Greenhouse ring    | `icon-project-greenhouse-ring`               | 20x20 |
-| Workshop crane     | `icon-project-workshop-crane`                | 20x20 |
-| Salvage beacons    | `icon-project-salvage-beacons`               | 20x20 |
-| Second docking bay | `icon-project-docking-bay`                   | 20x20 |
-| Hub repairs        | `icon-project-hub-repairs`                   | 20x20 |
-| Nursery beacon     | `icon-project-nursery-beacon`                | 20x20 |
-| Current-map buoys  | `icon-project-current-buoys`                 | 20x20 |
-| Channel lights     | `icon-project-channel-lights`                | 20x20 |
-| Loom hall          | `icon-project-loom-hall`                     | 20x20 |
-| Courier school     | `icon-project-courier-school`                | 20x20 |
-| Spare beacon       | `icon-project-spare-beacon`                  | 20x20 |
+| Item                      | Asset or treatment                                      | Size  |
+| ------------------------- | ------------------------------------------------------- | ----- |
+| Weapons                   | `weapon-<id>.svg`, shared with the HUD                  | 20x20 |
+| Ammunition                | `ammo-<kind>.svg`, upright stock glyph                  | 20x20 |
+| Weapon upgrade            | Weapon glyph with its upgrade badge                     | 24x24 |
+| Shield                    | `icon-shop-shield.svg`, a half-filled shield            | 20x20 |
+| Engine tuning             | `icon-shop-engine-tuning.svg`, a gauge                  | 20x20 |
+| Tractor beam              | `icon-shop-tractor-beam.svg`, a beam with a caught mote | 20x20 |
+| Ship paint equipment icon | `icon-shop-ship-paint.svg`, a paint roller              | 20x20 |
+| Shop paint swatch         | The paint scheme's idle frame 12                        | 32x32 |
+| Owned and In use          | `icon-shop-check.svg`                                   | 12x8  |
+| Upgrade badge             | `icon-shop-upgrade-badge.svg`                           | 12x12 |
 
-Each weapon sheet is the same pixel grid as its [weapon icon](weapon-icons.md),
-and each ammunition sheet the same grid as its
-[ammunition icon](weapon-icons.md#ammunition-icons), written by
-`art/tools/weapon-icons.ts`: `missile` for Rapid Missile and Heavy Missile,
-`energy` for Multi-Laser and Phaser, `shell` for Scattershot. The plain double
-chevron is the generic upgrade glyph, for any place that names upgrades without
-a weapon.
+[Weapon icons](weapon-icons.md) lists each weapon and ammunition mask.
+Shop ammunition uses the stock glyph by itself in the well. Ship uses the
+equipment SVGs for its equipment rows. Paint schemes in Shop retain their
+ship swatches.
 
 ## Job icons
 
-The [job board](shop.md#job-board) rows' glyphs, one per Gameplay job type and
-one shared by every repeatable activity, cream on the navy well and `#9a96ad`
-in busy rows. Each job type's grid is also the Map's job glyph,
-`map-job-<type>.svg`, ink on the job-orange chip ([Map](map.md#symbols)), as
-each weapon glyph serves the HUD and the shop. The activity glyph has no Map
-mask: Gameplay shows an active activity on the Map only as the Quests modal's
-"Job:" line, with its target's own chip.
+Each [job row](shop.md#job-board) uses its job type's 20x20 station SVG.
+Repeatable activities share the Activity glyph. The Map's
+[separate job symbols](map.md#symbols) use `map-job-<type>.svg`.
+Active activities use the target's map chip and the Quests “Job:” line.
 
-| Job type       | Sheet               | Glyph                                                                        |
-| -------------- | ------------------- | ---------------------------------------------------------------------------- |
-| Survey         | `icon-job-survey`   | A folded chart, its middle panel raised, an X knocked out                    |
-| Delivery       | `icon-job-delivery` | A parcel: a lid over the box with a knocked-out label                        |
-| Rescue and tow | `icon-job-rescue`   | A tow hook hanging from its eye                                              |
-| Lost-item hunt | `icon-job-hunt`     | A magnifier with a glint in the lens                                         |
-| Activity       | `icon-job-activity` | A circular repeat arrow, its head at the top pointing clockwise into the gap |
+| Job type       | SVG key             | Glyph                      |
+| -------------- | ------------------- | -------------------------- |
+| Survey         | `icon-job-survey`   | Folded chart with an X     |
+| Delivery       | `icon-job-delivery` | Parcel with a cutout label |
+| Rescue and tow | `icon-job-rescue`   | Tow hook and eye           |
+| Lost-item hunt | `icon-job-hunt`     | Magnifier                  |
+| Activity       | `icon-job-activity` | Circular repeat arrow      |
 
-The grids are in `art/tools/job-glyphs.ts`, every pixel inside the Map chip's
-13 px face (reach 8.60 to 11.40). Each glyph's drawn bounds are centred on its
-20 x 20 frame within 0.5 px on both axes, so it sits centred in the row well:
-the rescue hook is half a pixel left of centre, the others exact. `art/tools/job-icons.ts` writes the sheets
-with tags `normal` (frame 0, cream) and `disabled` (frame 1, `#9a96ad`) and
-registers them in the UI subset manifest; rebuild with
-`node art/tools/job-icons.ts`, and the Map masks with
-`node art/tools/map-icons.ts`.
+## Project icons
+
+Each [community project](projects.md) uses its 20x20 glyph in the row well
+and reuses it in the contribution dialog.
+
+| Project            | SVG key                        |
+| ------------------ | ------------------------------ |
+| Greenhouse ring    | `icon-project-greenhouse-ring` |
+| Workshop crane     | `icon-project-workshop-crane`  |
+| Salvage beacons    | `icon-project-salvage-beacons` |
+| Second docking bay | `icon-project-docking-bay`     |
+| Hub repairs        | `icon-project-hub-repairs`     |
+| Nursery beacon     | `icon-project-nursery-beacon`  |
+| Current-map buoys  | `icon-project-current-buoys`   |
+| Quiet crossing     | `icon-project-quiet-crossing`  |
+| Channel lights     | `icon-project-channel-lights`  |
+| Loom hall          | `icon-project-loom-hall`       |
+| Practice berth     | `icon-project-practice-berth`  |
+| Courier school     | `icon-project-courier-school`  |
+| Spare beacon       | `icon-project-spare-beacon`    |
+| Route exchange     | `icon-project-route-exchange`  |
 
 ## Upgrade composite
 
-A weapon upgrade row draws the weapon's 20px glyph at (0, 4) of a 24x24 box and
-`icon-shop-upgrade-badge` at (12, 0) over it. The badge is a cream face with an
-ink `#181425` edge, its corners cut by one pixel, and an ink chevron, so it stays
-separate from the glyph it overlaps.
+The 24x24 box places the 20x20 weapon mask at (0, 4) and the 12x12 badge at
+(12, 0). The badge's ink face and outline separate its chevron from the
+overlapped weapon mark.
 
 ## States
 
-- `icon-shop-check` has one `rest` frame, cream: Owned and In use rows are
-  never disabled.
-- The other `icon-shop-*` sheets and the `icon-project-*` sheets have tags `normal` (frame 0, cream) and
-  `disabled` (frame 1, `#9a96ad`) for unaffordable rows. They are not tinted at
-  runtime. The badge keeps its ink edge and chevron in both.
-- Weapon SVGs are one colour. In an unaffordable row, use the weapon's sheet
-  `disabled` frame, or draw the SVG as a CSS
-  mask (`mask: url(...) center / 20px 20px no-repeat`) over a `#9a96ad`
-  background; the integer-grid paths stay crisp at any device pixel ratio.
+- Weapon and ammo masks inherit the well's ink. Normal wells use `#ead4aa`
+  and unaffordable wells use `#9a96ad`.
+- Equipment, Jobs and Projects use `<key>.svg` and `<key>-disabled.svg`.
+  These assets supply their own cream and muted ink. The unaffordable row
+  state selects the disabled file. Shop upgrades also swap to the disabled
+  badge.
+- The check mark has one cream SVG for Owned and In use. The active glyphs
+  draw with smooth sampling. Paint swatches retain pixelated sampling.
 
-## Geometry
+`art/tools/jobs-projects-svg.ts` writes the Jobs and Projects vectors.
+`art/tools/shop-equipment-svg.ts` writes equipment vectors, and
+`art/tools/weapon-icons.ts` writes the shared weapon and ammo masks.
 
-- Public paths: `/art/ui/sprites/<key>.png` and matching `.json`; manifest
-  entries use paths relative to `/art/ui/` and the existing sprite schema,
-  sorted by key.
-- Frames are untrimmed and unrotated, named `<key> <index>.aseprite` for
-  two-frame sheets and `<key>.aseprite` for one, 100 ms each. No nine-slice
-  margins.
-- Fully opaque pixels only, in 2-pixel strokes, matching the settings icons.
+## Raster references
 
-`art/tools/shop-icons.ts` holds the glyphs as pixel grids and writes them with
-art-kit's `writeSpriteSheet`. Rebuild with `node art/tools/shop-icons.ts`, then
-run Prettier on the written JSON.
+The UI manifest retains the generic double-chevron `icon-shop-weapon-upgrade`
+sheet. Weapon upgrade rows use the weapon and badge composite.
+
+The following original PNG hashes identify source art for the retired sheets
+and the retained generic upgrade sheet. Their PNG and JSON bytes are preserved
+under `public/art/ui/sprites/` in Git. Use the parent of `199128c0` for the
+weapon, ammo, Jobs and Projects rasters, the parent of `9fccb8f8` for equipment,
+and the parent of `ebc39cac` for the check and badge.
 
 | PNG                                 | SHA-256                                                            |
 | ----------------------------------- | ------------------------------------------------------------------ |
@@ -133,29 +122,3 @@ run Prettier on the written JSON.
 | `icon-shop-weapon-rapidMissile.png` | `20bac149a5ca5e1f4b8fd1f74894f9afc571b931f73bd58dfe7757c9f82e97fe` |
 | `icon-shop-weapon-scattershot.png`  | `c9a03fc49da03bed20e21eb493694d9eca461e4351f7ebfc64af652a9a6ebf37` |
 | `icon-shop-weapon-upgrade.png`      | `bbb8df92ae714b76ccc4e144b9e67ab752f8d71579ad24fa8f95d7b25d4496aa` |
-
-- `icon-shop-shield`: a heater shield with its left half filled.
-- `icon-shop-engine-tuning`: an engine nozzle over a tapering exhaust plume.
-- `icon-shop-tractor-beam`: an emitter over a widening beam around a caught mote.
-- `icon-shop-ship-paint`: a paint roller.
-- `icon-shop-weapon-laser`, `icon-shop-weapon-rapidMissile`,
-  `icon-shop-weapon-multiLaser`, `icon-shop-weapon-heavyMissile`,
-  `icon-shop-weapon-scattershot` and `icon-shop-weapon-phaser`: the weapon's
-  HUD glyph.
-- `icon-shop-weapon-upgrade`: two stacked chevrons.
-- `icon-project-greenhouse-ring`: a greenhouse dome with a sprout, inside a ring.
-- `icon-project-workshop-crane`: a tower crane lifting a crate.
-- `icon-project-salvage-beacons`: a beacon lamp on a post over a float, between
-  two signal arcs.
-- `icon-project-docking-bay`: a dock collar with two mouths and their lit floor
-  strips.
-- `icon-project-hub-repairs`: an open-ended wrench.
-- `icon-project-nursery-beacon`: a lantern with a lit core over a cradle.
-- `icon-project-current-buoys`: buoys along a current that ends in an arrow.
-- `icon-shop-ammo-missile`, `icon-shop-ammo-energy` and `icon-shop-ammo-shell`:
-  the ammunition kind's HUD glyph, upright stock.
-
-- `icon-project-channel-lights`: paired lamps around a dashed channel lane.
-- `icon-project-loom-hall`: a stepped hall roof over an open doorway.
-- `icon-project-courier-school`: an open training book beneath a graduation cap.
-- `icon-project-spare-beacon`: a reserve lantern with a plus sign.
