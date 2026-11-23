@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { validExplorationState } from "./explorationState.ts";
 
 const context = {
@@ -129,6 +131,27 @@ describe("saved exploration state validation", () => {
     ).toBe(true);
   });
 
+  it("accepts only canonical ownership cells on both seams of the 240000-unit chart", () => {
+    const chart = { ...context, chunkSize: CONTENT.tuning.chunkSize, worldSide: GALAXY_SIDE };
+    const validate = (x: number, y: number) =>
+      validExplorationState(chart, {
+        renewals: { "ordinary:one": { ...renewal(), footprint: { x, y } } },
+        version: 1,
+      });
+    expect(validate(-234, 233)).toBe(true);
+    expect(validate(233, -234)).toBe(true);
+    for (const [x, y] of [
+      [234, 233],
+      [-235, -234],
+      [233, 234],
+      [-234, -235],
+      [468, 0],
+      [0, -468],
+    ] as const) {
+      expect(validate(x, y), `${x},${y}`).toBe(false);
+    }
+  });
+
   it("requires boolean departure and finite nonnegative counters, with zero counters before departure", () => {
     const candidates = [
       ...[undefined, null, "false", 0, 1].map((departed) => ({ ...renewal(), departed })),
@@ -146,11 +169,12 @@ describe("saved exploration state validation", () => {
     }
   });
 
-  it("rejects invalid grid contexts rather than accepting an unbounded or partial grid", () => {
-    for (const worldSide of [0, -1, Infinity, NaN, 201]) {
+  it("accepts a resampled synthetic side and rejects invalid or cell-less grid contexts", () => {
+    expect(validExplorationState({ ...context, worldSide: 201 }, state())).toBe(true);
+    for (const worldSide of [0, -1, Infinity, NaN, 19]) {
       expect(validExplorationState({ ...context, worldSide }, state())).toBe(false);
     }
-    for (const chunkSize of [0, -1, Infinity, NaN, 21]) {
+    for (const chunkSize of [0, -1, Infinity, NaN, 201]) {
       expect(validExplorationState({ ...context, chunkSize }, state())).toBe(false);
     }
   });

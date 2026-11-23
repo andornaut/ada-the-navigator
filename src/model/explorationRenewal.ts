@@ -2,7 +2,7 @@ import { encounterQuiet } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import type { Vec } from "./types.ts";
-import { worldCellAt, type WorldCellContext, worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellAt, type WorldCellContext } from "./worldCells.ts";
 import { wrappedDelta } from "./worldGeometry.ts";
 
 /** Retained after the final ordinary member disappears, until actual departure. */
@@ -26,7 +26,7 @@ export function explorationRenewal(
   return {
     departed: false,
     distance: 0,
-    footprint: worldCellAt(worldGrid(context, context.chunkSize), point),
+    footprint: worldCellAt(periodicWorldGrid(context, context.chunkSize), point),
     seconds: 0,
   };
 }
@@ -40,7 +40,7 @@ export function stepExplorationRenewal(
   if (!Number.isFinite(sample.seconds) || sample.seconds <= 0) {
     return;
   }
-  const grid = worldGrid(context, context.chunkSize);
+  const grid = periodicWorldGrid(context, context.chunkSize);
   const at = worldCellAt(grid, sample.to);
   const delta =
     grid.periodCells === undefined

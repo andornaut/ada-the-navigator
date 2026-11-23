@@ -1,5 +1,5 @@
 import type { ExplorationRenewal } from "./explorationRenewal.ts";
-import { worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid } from "./worldCells.ts";
 import { canonicalCell } from "./worldGeometry.ts";
 
 export interface ExplorationState {
@@ -51,7 +51,7 @@ export function validExplorationState(
   }
   let period: number;
   try {
-    period = worldGrid(context, context.chunkSize).periodCells!;
+    period = periodicWorldGrid(context, context.chunkSize).periodCells!;
     if (!Number.isSafeInteger(period) || period < 1) {
       return false;
     }
