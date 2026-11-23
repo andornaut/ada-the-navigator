@@ -2,7 +2,7 @@
 // and a towed craft, 20 by 20 pixel art from character grids, each inside its own ink edge so it
 // reads on every field. Writes the UI subset sheets and their ui/manifest.json entries.
 // Usage: node art/tools/cargo-icons.ts
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -10,6 +10,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { ORE_PICKUP, resourceIcon } from "./resource-glyphs.ts";
+import { hasUiIcon } from "./ui-icon-sources.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -83,8 +84,7 @@ type Sprite = { key: string; png: string; json: string; once: string[] };
 const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 const registered = new Set(manifest.sprites.map(({ key }) => key));
 // Tech selects a vector by removing its raster row after pairing the callers.
-const emitsRaster = (key: string) =>
-  registered.has(key) || !existsSync(`${art}ui/icons/${key}.svg`);
+const emitsRaster = (key: string) => registered.has(key) || !hasUiIcon(key);
 
 const oreKey = "icon-ore-20";
 const frames: Record<string, Frame> = {};

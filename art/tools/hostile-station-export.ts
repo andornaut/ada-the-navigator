@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
@@ -9,6 +9,7 @@ import { format, resolveConfig } from "prettier";
 import { recolour, recolourJets } from "./claim-jumpers.ts";
 import { DISPLAY_SCALE, hullEntries } from "./crafts.ts";
 import { svgText } from "./svg-text.ts";
+import { writeUiIcon } from "./ui-icon-sources.ts";
 import { recolourGarnet, recolourGarnetJets } from "./garnet-drones.ts";
 import { build, place, STATION_FILL } from "./heavies.ts";
 import { hostileStation } from "./hostile-station.ts";
@@ -646,9 +647,7 @@ async function main() {
   );
   const result = iconOnly ? undefined : build(craft, place({ version: 1, archetypes: {} }, craft));
   if (!claimHullsOnly) {
-    const iconDirectory = `${root}ui/icons/`;
-    mkdirSync(iconDirectory, { recursive: true });
-    writeFileSync(`${iconDirectory}map-hostile-station.svg`, svgText(hostileStationIcon(craft)));
+    writeUiIcon("map-hostile-station", svgText(hostileStationIcon(craft)));
   }
   if (!result) return;
   const layoutFile = `${craft.name}-hardpoints.json`;

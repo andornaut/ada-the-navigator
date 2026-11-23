@@ -1,11 +1,9 @@
-import { writeFileSync } from "node:fs";
-
 import { ORE_PALETTE } from "./ore.ts";
 import { INK } from "./palette.ts";
 import { STARDUST_PALETTE } from "./resource-glyphs.ts";
 import { svgText } from "./svg-text.ts";
+import { writeUiIcon } from "./ui-icon-sources.ts";
 
-const output = new URL("../../public/art/ui/icons/", import.meta.url);
 const size = 20;
 
 // Trace the four tips and the concave shoulders of the shared idle Stardust star.
@@ -34,7 +32,7 @@ function emit(key: string, outline: string, colour: string, facets: string): voi
     <path d="${outline}" fill="#${colour}" stroke="#${INK}" stroke-width="2" stroke-linejoin="round" paint-order="stroke"/>
     <g clip-path="url(#body)">${facets}</g>
   </svg>`;
-  writeFileSync(new URL(`icon-${key}-20.svg`, output), svgText(svg));
+  writeUiIcon(`icon-${key}-20`, svgText(svg));
 }
 
 emit("stardust", stardustOutline, STARDUST_PALETTE.M, stardust);

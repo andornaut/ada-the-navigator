@@ -1,9 +1,7 @@
-import { writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import { CLOSE_GLYPH } from "./close-glyph.ts";
 import { svgText } from "./svg-text.ts";
 import { JOB_GLYPHS } from "./job-glyphs.ts";
+import { writeUiIcon } from "./ui-icon-sources.ts";
 
 // Map glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per map symbol
 // and map tool writes its mask SVG (public/art/ui/icons/map-<id>.svg). Symbols draw in ink on
@@ -11,7 +9,6 @@ import { JOB_GLYPHS } from "./job-glyphs.ts";
 // each file's default colour only, since the runtime draws every glyph as a mask.
 const INK = "181425";
 const CREAM = "ead4aa";
-const icons = fileURLToPath(new URL("../../public/art/ui/icons/", import.meta.url));
 const E = "....................";
 
 // Every opaque pixel lies inside this radius of the grid's centre, so a symbol glyph stays on its
@@ -377,10 +374,10 @@ for (const [id, rows] of Object.entries({ ...SYMBOLS, ...JOB_SYMBOLS })) {
   if (reach(rows) > FACE_RADIUS) {
     throw new Error(`${id}: a pixel reaches ${reach(rows).toFixed(2)} past the chip face`);
   }
-  writeFileSync(`${icons}map-${id}.svg`, svgText(svg(rows, INK)));
+  writeUiIcon(`map-${id}`, svgText(svg(rows, INK)));
 }
 
 for (const [id, rows] of Object.entries(TOOLS)) {
   check(id, rows);
-  writeFileSync(`${icons}map-${id}.svg`, svgText(svg(rows, CREAM)));
+  writeUiIcon(`map-${id}`, svgText(svg(rows, CREAM)));
 }

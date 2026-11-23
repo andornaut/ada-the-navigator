@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { editManifest } from "./manifest.ts";
+import { hasUiIcon } from "./ui-icon-sources.ts";
 import { PICKUP_SIZE, resourceIcon, STARDUST_PALETTE, STARDUST_REST } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
@@ -60,10 +61,7 @@ const uiManifest = JSON.parse(readFileSync(`${art}ui/manifest.json`, "utf8")) as
   sprites: { key: string }[];
 };
 // Keep the UI raster until Tech selects its vector. The world glint emits every time.
-if (
-  uiManifest.sprites.some((entry) => entry.key === key) ||
-  !existsSync(`${art}ui/icons/${key}.svg`)
-) {
+if (uiManifest.sprites.some((entry) => entry.key === key) || !hasUiIcon(key)) {
   await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
     ["rest", [resourceIcon(STARDUST_REST, 20)], 100],
   ]);

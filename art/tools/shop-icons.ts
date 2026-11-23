@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import type { Tag } from "@andornaut/art-kit/build/raster";
 import { json } from "./projection.ts";
+import { hasUiIcon, usesUiIconSheet } from "./ui-icon-sources.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Shop item glyphs for the dark lavender card. "#" is the glyph colour, "o" is ink and "." is clear.
@@ -570,12 +571,10 @@ const managedKeys: string[] = [];
 for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
   const equipment = EQUIPMENT_KEYS.has(key);
   const managed = equipment || key.startsWith("icon-project-");
-  // A removed row selects the SVGs only when both states exist.
+  // The loose path still checks both states for managed icons. Selected sheets also own check and badge.
   if (
-    managed &&
     !registered.has(key) &&
-    existsSync(`${ui}icons/${key}.svg`) &&
-    existsSync(`${ui}icons/${key}-disabled.svg`)
+    (usesUiIconSheet(key) || (managed && hasUiIcon(key) && hasUiIcon(`${key}-disabled`)))
   ) {
     continue;
   }

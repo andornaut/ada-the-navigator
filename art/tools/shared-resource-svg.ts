@@ -1,8 +1,6 @@
-import { writeFileSync } from "node:fs";
-
 import { svgText } from "./svg-text.ts";
+import { writeUiIcon } from "./ui-icon-sources.ts";
 
-const output = new URL("../../public/art/ui/icons/", import.meta.url);
 const ink = "#181425";
 
 function stroked(path: string, colour: string, width: number): string {
@@ -11,7 +9,7 @@ function stroked(path: string, colour: string, width: number): string {
 
 function writeIcon(key: string, shapes: string, size = 20): void {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 20 20" aria-hidden="true">${shapes}</svg>`;
-  writeFileSync(new URL(`icon-${key}.svg`, output), svgText(svg));
+  writeUiIcon(`icon-${key}`, svgText(svg));
 }
 
 const holodisk = `<circle cx="10" cy="10" r="8.3" fill="#d9dff0" stroke="${ink}" stroke-width="1.5"/><circle cx="10" cy="10" r="4.9" fill="#e868c8"/><circle cx="10" cy="10" r="2" fill="${ink}"/><path d="M4.1 9a6 6 0 0 1 5.4-5.2" fill="none" stroke="#fff" stroke-width="1.45" stroke-linecap="round"/>`;

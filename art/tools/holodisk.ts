@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { placeEntries } from "./manifest.ts";
+import { hasUiIcon } from "./ui-icon-sources.ts";
 import { INK } from "./palette.ts";
 import { roundHalfEven } from "./random.ts";
 import { prettify, writeSheet, writeSprites } from "./sprite-sheet.ts";
@@ -98,7 +99,7 @@ const ICONS = [
 ] as const;
 // Tech's selection covers the Shop and shared resource slots. Keep the 24 px raster.
 const emittedIcons = ICONS.filter(
-  ([key, size]) => size === 24 || registered.has(key) || !existsSync(`${art}ui/icons/${key}.svg`),
+  ([key, size]) => size === 24 || registered.has(key) || !hasUiIcon(key),
 );
 for (const [key, n] of emittedIcons) {
   await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [

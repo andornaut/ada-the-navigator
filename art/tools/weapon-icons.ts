@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { json } from "./projection.ts";
+import { hasUiIcon, readUiIcon, writeUiIcon } from "./ui-icon-sources.ts";
 import { svgText } from "./svg-text.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
@@ -317,14 +318,11 @@ async function writeSheet(
 
 for (const [id, rows] of Object.entries(GLYPHS)) {
   check(id, rows);
-  const file = `${ui}icons/weapon-${id}.svg`;
-  const maskWasPresent = existsSync(file);
+  const icon = `weapon-${id}`;
+  const maskWasPresent = hasUiIcon(icon);
   if (!HAND_AUTHORED.has(id)) {
-    writeFileSync(file, svgText(svg(rows)));
-  } else if (
-    maskWasPresent &&
-    rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")
-  ) {
+    writeUiIcon(icon, svgText(svg(rows)));
+  } else if (maskWasPresent && rectangles(readUiIcon(icon)).join("\n") !== rows.join("\n")) {
     throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
   }
   await writeSheet(`icon-shop-weapon-${id}`, rows, maskWasPresent);
@@ -332,9 +330,9 @@ for (const [id, rows] of Object.entries(GLYPHS)) {
 
 for (const [kind, rows] of Object.entries(AMMO)) {
   check(`ammo ${kind}`, rows);
-  const file = `${ui}icons/ammo-${kind}.svg`;
-  const maskWasPresent = existsSync(file);
-  writeFileSync(file, svgText(svg(rows)));
+  const icon = `ammo-${kind}`;
+  const maskWasPresent = hasUiIcon(icon);
+  writeUiIcon(icon, svgText(svg(rows)));
   await writeSheet(`icon-shop-ammo-${kind}`, rows, maskWasPresent);
 }
 

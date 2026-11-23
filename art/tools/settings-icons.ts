@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
+import { readUiIcon, writeUiIcon } from "./ui-icon-sources.ts";
 
 // Cream ink for the live achievements and HUD settings sheets and the 20 by 20 nav glyphs.
 const INK = "ead4aa";
@@ -114,13 +115,13 @@ for (const [name, shapes] of Object.entries(NAV_GLYPHS)) {
     "</svg>",
     "",
   ];
-  writeFileSync(`${ui}icons/${name}.svg`, svgText(svg.join("\n"), SVG_DECIMALS.navGlyphs));
+  writeUiIcon(name, svgText(svg.join("\n"), SVG_DECIMALS.navGlyphs));
 }
 
 // The installed-app Exit uses the existing Pause chrome for each pose. The native-size
 // door and arrow balance around the disc centre by painted area, with no pose-specific offset.
 for (const suffix of ["", "-press", "-held"]) {
-  const pause = readFileSync(`${ui}icons/pause${suffix}.svg`, "utf8");
+  const pause = readUiIcon(`pause${suffix}`);
   const disc = pause.replace(
     /<path fill="([^"]+)" d="[^"]+"\s*\/>/u,
     `<path fill="$1" d="${EXIT_PATH}" transform="translate(8.6 7.5)" />`,
@@ -128,7 +129,7 @@ for (const suffix of ["", "-press", "-held"]) {
   if (disc === pause) {
     throw new Error(`Pause${suffix} is missing its disc glyph path`);
   }
-  writeFileSync(`${ui}icons/exit-disc${suffix}.svg`, disc);
+  writeUiIcon(`exit-disc${suffix}`, disc);
 }
 
 // The UI manifest's entries for these sheets, in the existing sprite schema, sorted by key.

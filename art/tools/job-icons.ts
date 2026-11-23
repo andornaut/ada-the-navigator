@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -6,6 +6,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { JOB_GLYPHS } from "./job-glyphs.ts";
+import { hasUiIcon } from "./ui-icon-sources.ts";
 import { json } from "./projection.ts";
 
 // The job board's row icons (art/shop-icons.md "Job icons"): one icon-job-<type> sheet per job
@@ -42,11 +43,7 @@ for (const [type, rows] of Object.entries(JOB_GLYPHS)) {
   }
   const key = `icon-job-${type}`;
   // Retire a sheet only once the manifest drops it and both vector states are present.
-  if (
-    !registered.has(key) &&
-    existsSync(`${ui}icons/${key}.svg`) &&
-    existsSync(`${ui}icons/${key}-disabled.svg`)
-  ) {
+  if (!registered.has(key) && hasUiIcon(key) && hasUiIcon(`${key}-disabled`)) {
     continue;
   }
   await writeSpriteSheet(

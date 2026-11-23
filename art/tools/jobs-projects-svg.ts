@@ -1,8 +1,5 @@
-import { writeFileSync } from "node:fs";
-
 import { svgText } from "./svg-text.ts";
-
-const output = new URL("../../public/art/ui/icons/", import.meta.url);
+import { writeUiIcon } from "./ui-icon-sources.ts";
 
 const jobs = {
   activity: "M17 7a7.4 7.4 0 1 0 0 6m0-10v4.5h-4.5",
@@ -45,7 +42,7 @@ for (const [family, glyphs] of Object.entries({ job: jobs, project: projects }))
           ? `<path fill="${colour}" fill-rule="evenodd" d="M3 8h14v9H3Zm4 2.5v1.6h6v-1.6Z"/>`
           : "";
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">${outline}${detail}</svg>`;
-      writeFileSync(new URL(`icon-${family}-${key}${suffix}.svg`, output), svgText(svg));
+      writeUiIcon(`icon-${family}-${key}${suffix}`, svgText(svg));
     }
   }
 }
