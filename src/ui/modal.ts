@@ -668,7 +668,7 @@ ${UI_SCOPE} .ada-cheat-resource-icon{
   background-repeat:no-repeat
 }
 
-${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON})),
+${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(${LEGACY_TEXT_BUTTON},.ada-story .ada-button)),
 ${UI_SCOPE} .ada-row:not([role=switch]):focus-visible{${FOCUS_STYLE}
 }
 
