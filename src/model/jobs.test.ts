@@ -143,11 +143,16 @@ function calm(flight: FlightState): void {
   flight.dangerFor = 0;
 }
 /**
- * Holds Ada at a point for seconds in calm space, tapping through each line; returns the
- * instances heard. The space around the point is generated first and its drones cleared, so a
- * drone warning in the launch's world never takes the box's slot from the line listened for.
+ * Holds Ada at a point in calm space, tapping through each line until the time limit or terminal
+ * instance. Generates the area before clearing its drones so a drone warning in the launch's
+ * world never takes the box's slot from the line listened for.
  */
-function listen(model: GameModel, point: Vec, seconds: number): string[] {
+function listen(
+  model: GameModel,
+  point: Vec,
+  seconds: number,
+  terminalInstance?: string,
+): string[] {
   const flight = model.state.flight!;
   flight.player = { ...point };
   stepFlight(CONTENT, 0.05, idle, flight);
@@ -162,6 +167,9 @@ function listen(model: GameModel, point: Vec, seconds: number): string[] {
         heard.push(instance);
       }
       model.dismissConversation();
+      if (instance === terminalInstance) {
+        break;
+      }
     }
   }
   return heard;
@@ -569,7 +577,7 @@ describe("jobs in play", () => {
     // The lore line waits under the notice, then shows after the new place's reaction, which was
     // asked for first; a world's drone warning and Penny may each come before both.
     model.dismissNotice();
-    const heard = listen(model, held.target, 120);
+    const heard = listen(model, held.target, 120, "jobLore:1:0");
     expect(heard).toContain("jobLore:1:0");
     const discovery = heard.findIndex((instance) =>
       /^poi:1:(?:namedLandmark|generatedLandmark):/u.test(instance),
