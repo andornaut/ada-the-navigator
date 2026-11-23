@@ -608,12 +608,6 @@ export const galaxyEncounters: Readonly<Partial<Record<RoutePosition, readonly E
       { archetype: "interceptor", groupSize: [1, 2], weight: 0.15 },
       { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
       { archetype: "frigate", groupSize: [1, 1], weight: 0.15 },
-      {
-        archetype: "capital",
-        escorts: { archetype: "fighter", count: 4 },
-        groupSize: [1, 1],
-        weight: 0.05,
-      },
     ],
     3: [
       { archetype: "swarm", groupSize: [6, 8], weight: 0.2 },

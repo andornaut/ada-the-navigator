@@ -257,8 +257,8 @@ describe("pacing simulation runs", () => {
       scenario: { behaviour: {}, description: "", economy: {}, name: "three", prices: {} },
     });
     for (const run of runs) {
-      // Both route guards, plus any capital battle met in open space.
-      expect(run.destroyed.capital).toBeGreaterThanOrEqual(2);
+      // Both authored route guards are the only capitals in Whirlpool.
+      expect(run.destroyed.capital).toBe(2);
       expect(run.stardust.guards).toBeGreaterThan(0);
     }
   });

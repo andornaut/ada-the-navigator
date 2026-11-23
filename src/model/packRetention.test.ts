@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
-import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { type EncounterEntry, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
@@ -415,7 +415,7 @@ describe("casualty-preserving pack retention", () => {
 });
 
 describe("per-role encounter restore", () => {
-  /** A middle Whirlpool region admits a capital and its whole four-fighter escort pack. */
+  /** Materialize the last roster's seed before exercising the current roster and save path. */
   function battle() {
     const content = structuredClone(CONTENT);
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
@@ -423,37 +423,41 @@ describe("per-role encounter restore", () => {
     content.tuning.flight.objectsPerChunk = 0;
     // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
     content.tuning.flight.playerShotDamage = 1e-6;
-    for (let seed = 0; seed < 4000; seed++) {
-      const flight = createFlight(content, 3, seed, progress);
-      const region = SPAWNER_POLICIES[3].stages[1]!;
+    const stages = SPAWNER_POLICIES[3].stages;
+    const currentRosters = stages.map(({ roster }) => roster);
+    const retired: EncounterEntry = {
+      archetype: "capital",
+      escorts: { archetype: "fighter", count: 4 },
+      groupSize: [1, 1],
+      weight: 0.05,
+    };
+    const model = new GameModel(content);
+    try {
+      stages.forEach((stage) => {
+        stage.roster = [...stage.roster, retired];
+      });
+      const flight = createFlight(content, 3, 25, progress);
+      const region = stages[1]!;
       expect(region.localCap).toBeGreaterThanOrEqual(5);
       flight.player = {
         x: region.centerDistance + 4 * content.tuning.chunkSize,
         y: 4 * content.tuning.chunkSize,
       };
       stepFlight(content, 0.001, idle, flight);
-      const escort = flight.objects.find(
-        (object) =>
-          flight.objects.find((parent) => parent.id === object.enemy?.escortOf)?.enemy
-            ?.archetype === "capital",
-      );
-      if (escort?.enemy?.packId) {
-        const model = new GameModel(content);
-        model.state.flight = flight;
-        model.state.selectedGalaxy = flight.galaxy;
-        model.state.unlocked = [1, 3];
-        model.state.mode = "space";
-        const leader = escort.enemy.escortOf!;
-        return {
-          content,
-          escorts: escort.enemy.packId,
-          leader,
-          model,
-          packId: leader.slice(0, -2),
-        };
-      }
+      Object.assign(model.state, { flight, mode: "space", selectedGalaxy: 3, unlocked: [1, 3] });
+    } finally {
+      stages.forEach((stage, index) => {
+        stage.roster = currentRosters[index]!;
+      });
     }
-    throw new Error("No capital battle fixture");
+    const packId = "pack:23,2";
+    const leader = `${packId}:0`;
+    const escorts = `${packId}:escorts`;
+    const resumed = relaunch(content, model.save());
+    expect(resumed.state.flight).toEqual(model.state.flight);
+    expect(members(resumed, packId).map(({ id }) => id)).toEqual([leader]);
+    expect(members(resumed, escorts)).toHaveLength(4);
+    return { content, escorts, leader, model: resumed, packId };
   }
   const destroy = (model: GameModel, object: SpaceObject) => {
     const definition = shipCatalogEntry(object.enemy!.archetype)!;

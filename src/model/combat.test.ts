@@ -1124,7 +1124,6 @@ describe("galaxy encounter tables", () => {
     [
       3,
       {
-        capital: [1, 1, 0.05],
         fighter: [3, 4, 0.3],
         frigate: [1, 1, 0.15],
         interceptor: [1, 2, 0.15],
@@ -1138,10 +1137,9 @@ describe("galaxy encounter tables", () => {
       encounters.map((entry) => [entry.archetype, [...entry.groupSize, entry.weight]]),
     );
     expect(table).toEqual(roster);
-    expect(encounters.find((entry) => entry.escorts)?.escorts).toEqual({
-      archetype: "fighter",
-      count: 4,
-    });
+    expect(encounters.find((entry) => entry.escorts)?.escorts).toEqual(
+      galaxy === 3 ? undefined : { archetype: "fighter", count: 4 },
+    );
     // Every roll lands in the chosen archetype's group range.
     const next = rolls(galaxy * 7919);
     for (let i = 0; i < 2000; i++) {

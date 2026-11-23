@@ -76,6 +76,27 @@ it("activates the saved capital only at the authored distance gate with stable s
   expect(resumed.state.flight).toEqual(flight);
 });
 
+it("materializes the authored family capital when that story stage becomes eligible", () => {
+  const model = launch();
+  const flight = model.state.flight!;
+  const family = readRequiredRolePlan(flight, "family")!;
+  const leader = family.actors[0]!;
+  const expected = structuredClone(leader);
+  const progress = model.state.progress[3];
+  Object.assign(progress, { introduced: true, known: ["whale"], stage: 3 });
+  const limit = CONTENT.tuning.introFreshDistance + 3 * CONTENT.tuning.encounterFreshDistance;
+  flight.freshDistance = limit - 1;
+  model.step(0.001, idle);
+  expect(readRequiredRolePlan(flight, "family")?.actors[0]).toBe(leader);
+  flight.freshDistance = limit;
+  model.step(0.001, idle);
+  expect(readRequiredRolePlan(flight, "family")).toBeNull();
+  expect(stationPopulationObjects(flight).find(({ id }) => id === leader.id)).toBe(leader);
+  expect(leader).toEqual(expected);
+  expect(leader.enemy?.archetype).toBe("capital");
+  expect(routeBlocked("family", flight)).toBe(true);
+});
+
 it("preserves hidden sites on fresh entry while resetting encounter identity and initialized clocks", () => {
   const model = launch();
   const old = model.state.flight!;

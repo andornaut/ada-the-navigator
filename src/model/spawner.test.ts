@@ -318,7 +318,8 @@ describe("spawner admission", () => {
     } as const;
     expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), 10, [], centre, plan)).toBe(true);
     expect(fitsEncounter(laterPolicy, stage, 10, [], centre, plan)).toBe(true);
-    const capital = stage.roster.find(({ archetype }) => archetype === "capital")!;
+    // Exercise admission with an explicit capital entry even though Whirlpool no longer rolls it.
+    const capital = encounterTable(5).find(({ archetype }) => archetype === "capital")!;
     expect(
       selectEncounter(
         laterPolicy,
@@ -351,6 +352,18 @@ describe("spawner admission", () => {
     expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(false);
     edge.x += edge.radius;
     expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(true);
+  });
+
+  it("uses Whirlpool's remaining ambient weights at every stage and transition", () => {
+    const whirlpool = SPAWNER_POLICIES[3];
+    for (const distance of [0, 9500, 10000, 20000, 24500, 25000, 40000]) {
+      const stage = spawnerStage(3, distance);
+      expect(stage.roster.some(({ archetype }) => archetype === "capital")).toBe(false);
+      expect(stage.roster.reduce((total, { weight }) => total + weight, 0)).toBeCloseTo(0.95);
+      const last = selectEncounter(whirlpool, stage, 10, [], centre, 0, 1 - Number.EPSILON);
+      expect(last?.archetype).toBe("frigate");
+      expect(last?.escorts).toEqual({ archetype: "fighter", count: 2 });
+    }
   });
 
   it("keeps complete symmetric groups within their reserved footprint", () => {
