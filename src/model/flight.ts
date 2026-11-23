@@ -4164,7 +4164,8 @@ function moveDebris(
   flight: FlightState,
 ): void {
   const world = flightWorldContext(flight);
-  let protectedAreas: { area: SpaceObject; radius: number }[] | undefined;
+  let protectedAreas: { area: Vec; radius: number }[] | undefined;
+  let arrivalDisks: typeof protectedAreas;
   for (const object of flight.objects) {
     if (object.river) {
       // River debris follows its current and bumps Ada on contact like other traveling debris.
@@ -4185,7 +4186,7 @@ function moveDebris(
       continue;
     }
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
-    // Protected regions absorb traveling debris without changing its ballistic heading.
+    // Existing protected objects absorb all moving debris. Only ballistic encounters use arrival disks.
     if (!protectedAreas) {
       protectedAreas = [];
       for (const area of flight.objects) {
@@ -4196,11 +4197,15 @@ function moveDebris(
       }
     }
     const reach = placementRadius(object);
+    const crosses = ({ area, radius }: { area: Vec; radius: number }): boolean =>
+      segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach;
     if (
-      protectedAreas.some(
-        ({ area, radius }) =>
-          segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach,
-      )
+      protectedAreas.some(crosses) ||
+      (object.id.startsWith("ballistic:") &&
+        (arrivalDisks ??= arrivalPoints(flight).map((area) => ({
+          area,
+          radius: content.tuning.safeRadius,
+        }))).some(crosses))
     ) {
       object.hp = 0;
       continue;

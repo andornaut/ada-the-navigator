@@ -4,14 +4,20 @@ import { CONTENT } from "../data/content.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { seedLaunches } from "../testing/launchSeeds.ts";
-import { asteroidSize, placementRadius } from "./asteroids.ts";
+import { ASTEROID_SHAPES, asteroidSize, placementRadius } from "./asteroids.ts";
 import {
   assignBallisticVelocities,
   ballisticEncounterSpacing,
   hostsEncounterCell,
   planBallisticAsteroids,
 } from "./ballisticAsteroids.ts";
-import { createFlight, ensureDestinationAt, stepFlight } from "./flight.ts";
+import {
+  createFlight,
+  createUnpopulatedFlight,
+  ensureDestinationAt,
+  populateFlight,
+  stepFlight,
+} from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
@@ -19,6 +25,7 @@ import { restoreSave } from "./save.ts";
 import { type FlightState, type SpaceObject } from "./types.ts";
 import { periodicWorldGrid } from "./worldCells.ts";
 import { worldDistance } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 const chunkSize = CONTENT.tuning.chunkSize;
 const rockHp = CONTENT.tuning.flight.rockHp;
@@ -222,4 +229,49 @@ it("restores a live mover and continues straight across a seam without changing 
     Math.hypot(original.velocity!.x, original.velocity!.y) * 0.02,
     6,
   );
+});
+
+it.each([
+  ["flight start", { x: 0, y: 0 }],
+  ["Travel arrival across the X seam", { x: GALAXY_SIDE / 2 - 10, y: 31_800 }],
+] as const)("absorbs only the mover entering the %s safety disk", (label, center) => {
+  const flight = createUnpopulatedFlight(CONTENT, 1, 173);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  flight.player = wrapPoint(GALAXY_SIDE, { x: center.x, y: center.y + chunkSize });
+  if (label !== "flight start") {
+    flight.arrivals = [center];
+  }
+  populateFlight(CONTENT, { known: [] }, flight);
+  const shape = ASTEROID_SHAPES.get("asteroid-m1")!;
+  const mover = {
+    asteroid: shape.id,
+    hp: rockHp,
+    kind: "debris",
+    radius: shape.radius,
+    velocity: { x: -60, y: 0 },
+  } as const;
+  const exclusion = CONTENT.tuning.safeRadius + placementRadius(mover);
+  const entering = {
+    ...mover,
+    ...wrapPoint(GALAXY_SIDE, { x: center.x + exclusion + 0.5, y: center.y }),
+    id: "ballistic:entering",
+  };
+  const passing = {
+    ...mover,
+    ...wrapPoint(GALAXY_SIDE, { x: center.x + 0.5, y: center.y + exclusion + 1 }),
+    id: "ballistic:passing",
+  };
+  flight.objects = [entering, passing];
+  const world = flightWorldContext(flight);
+  expect(worldDistance(world, center, entering)).toBeGreaterThan(exclusion);
+  const start = { x: passing.x, y: passing.y };
+  const dt = 1 / 60;
+  const events = stepFlight(CONTENT, dt, idle, flight);
+  expect(flight.objects).not.toContain(entering);
+  expect(flight.objects).toContain(passing);
+  expect(passing.hp).toBe(rockHp);
+  expect(passing.velocity).toEqual({ x: -60, y: 0 });
+  expect(worldDistance(world, start, passing)).toBeCloseTo(1, 8);
+  expect(flight.lastBump).toBeUndefined();
+  expect(events).toEqual([]);
 });
