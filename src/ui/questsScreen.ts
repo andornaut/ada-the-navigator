@@ -17,7 +17,7 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard, setFooterAction, setScrollGroup } from "./modal.ts";
+import { createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { type QuestsBodyData, type QuestsBodySchema, questsBodyTree } from "./questsBodyTree.ts";
@@ -373,21 +373,24 @@ export function createQuestsScreen(
           quest: {
             create(initial) {
               const item = initial.entry;
-              const button = createButton(item.line.text, "secondary");
+              const action = createStandardTextAction(root, item.line.text, {
+                availability: (button) =>
+                  button?.disabled ? { kind: "disabled" } : { kind: "available" },
+                current: () => !disposed && !modal.hidden && inCurrentView(root, action.element),
+                run: () => {
+                  selected = item.id;
+                  origin = "list";
+                  render();
+                },
+              });
+              const button = action.element;
               button.dataset.questId = item.id;
+              setButtonRole("secondary", button);
               if (item.id === focusQuestId) {
                 questFocus = button;
               }
-              const image = icon(item);
-              if (image) {
-                button.prepend(image);
-              }
-              register(button, () => {
-                selected = item.id;
-                origin = "list";
-                render();
-              });
-              return { dispose() {}, element: button, slots: {}, update() {} };
+              button.prepend(icon(item));
+              return { dispose: action.dispose, element: button, slots: {}, update() {} };
             },
             slots: [],
           },

@@ -448,7 +448,8 @@ it("uses one standard native action for each footer control and keeps disabled o
   screen.setState([entry, { ...entry, id: "extra" }, { ...entry, id: "last" }], [], 1);
   screen.open();
   const labels = mapScreenLabels(CONTENT.labels);
-  const buttons = () => root.querySelectorAll(".ui-standard-button");
+  const buttons = () =>
+    root.querySelectorAll(".ada-quest-footer")[0]!.querySelectorAll(".ui-standard-button");
   const button = (label: string) => buttons().find((node) => node.textContent === label)!;
   const hold = (node: QuestNode) =>
     actionBinding.resolveAdaHoldAction(root as unknown as HTMLElement, node);
@@ -478,7 +479,12 @@ it("uses one standard native action for each footer control and keeps disabled o
       .filter(({ dataset }) => dataset.questId)
       .map(({ dataset }) => dataset.questId),
   ).toEqual(["last"]);
-  click(root.querySelectorAll("button").find(({ dataset }) => dataset.questId === "last")!);
+  const row = root.querySelectorAll("button").find(({ dataset }) => dataset.questId === "last")!;
+  expect(row.matches(".ui-standard-button")).toBe(true);
+  expect(row.children[0]?.className).toBe("ada-quest-icon");
+  expect(row.querySelectorAll(".ui-control-label")[0]?.textContent).toBe(entry.line.text);
+  click(row);
+  expect(hold(row)).toBeNull();
   click(button(labels.questBack ?? labels.close));
   expect(producer.reveal.mock.lastCall?.[0].focus.dataset.questId).toBe("last");
 
@@ -570,6 +576,9 @@ it("left-aligns a quest line button's chip and label from the button's inset", (
   )?.[1];
   expect(rule).toContain("justify-content:flex-start");
   expect(rule).toContain("text-align:left");
+  expect(QUESTS_SCREEN_STYLE).toMatch(
+    /\[data-quest-id\]>.ui-control-label\{[^}]*text-align:inherit/u,
+  );
 });
 
 it("starts a quest line's label on the 42 text column, its disc centred in the 28 slot", () => {
