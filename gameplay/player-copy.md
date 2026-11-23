@@ -1259,7 +1259,7 @@ or replay rewards.
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
-- Settings: FPS counter (On or Off), Off by default for each session.
+- Settings: FPS counter (On or Off), Off by default. The choice stays on the device across sessions and updates.
 - Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
   with the action labels in [Cheats](../docs/design/cheats.md), Show tips again,
   Reset save and Close. Reset save card: Reset save? with Reset and Cancel.
