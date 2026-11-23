@@ -6,6 +6,7 @@ import {
   CONVERSATIONS,
   INTERACTION_COPY,
   lineDuration,
+  noticeDuration,
 } from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -759,7 +760,7 @@ describe("conversations in the game", () => {
   }
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   // Steps the travel notice shows for.
-  const noticeSteps = lineSteps(lineDuration(CONTENT.labels.travelUnavailable ?? ""));
+  const noticeSteps = lineSteps(noticeDuration(CONTENT.labels.travelUnavailable ?? ""));
 
   it("show the touch and desktop wording with the speaker's name tab and side", () => {
     const model = flying();

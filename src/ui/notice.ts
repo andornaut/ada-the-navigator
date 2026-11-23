@@ -31,12 +31,16 @@ const PAGE_WIDTH = `calc(100% - 2 * max(var(${VIEW_PROPERTIES.safe("left")}),var
   "right",
 )}),${units(SAFE_MARGIN.page)}))`;
 
-// The translucent ink panel, as #rrggbbaa.
-export const PANEL_BACKGROUND = `${panel.ink}${Math.round(panel.alpha * 255)
-  .toString(16)
-  .padStart(2, "0")}`;
+const backgroundAt = (alpha: number): string =>
+  `${panel.ink}${Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0")}`;
 
-// The conversation box's slot and panel, shared by the box and notices.
+// The in-flight speech and game notice share one panel. Station and save surfaces retain theirs.
+export const PANEL_BACKGROUND = backgroundAt(panel.alpha);
+export const FLIGHT_PANEL_BACKGROUND = backgroundAt(0.55);
+
+// The conversation box's slot, shared by the box and notices.
 export const CONVERSATION_SLOT = `
   position:absolute;
   left:50%;
@@ -48,12 +52,12 @@ export const CONVERSATION_SLOT = `
   display:flex;
   align-items:center;
   font:${font(CONVERSATION_BOX.text)};
-  color:#ead4aa;
-  background:${PANEL_BACKGROUND}`;
+  color:#ead4aa`;
 
 export const NOTICE_STYLE = `
 #game-status,
 #save-status{${CONVERSATION_SLOT};
+  background:${PANEL_BACKGROUND};
   padding:0 ${units(noticeInset)};
   justify-content:center;
   text-align:center;
@@ -62,6 +66,7 @@ export const NOTICE_STYLE = `
 }
 
 #game-status{
+  background:${FLIGHT_PANEL_BACKGROUND};
   z-index:6;
   cursor:pointer;
   pointer-events:auto;

@@ -292,7 +292,7 @@ describe("network-play notice", () => {
       callback("showNetworkPlay"),
       createContext({
         CONTENT,
-        lineDuration: (text: string) => 5 + text.length * 0.05,
+        noticeDuration: (text: string) => 5 + text.length * 0.05,
         networkPlays,
       }),
     ) as (value: typeof scene, slotFree: boolean) => boolean;

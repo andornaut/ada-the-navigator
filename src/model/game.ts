@@ -11,7 +11,7 @@ import {
   GENERAL_NAMED,
   INTERACTION_COPY,
   type JobMoment,
-  lineDuration,
+  noticeDuration,
   type Mood,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -2734,7 +2734,7 @@ export class GameModel {
     // A game notice's time runs only while it shows, not under a warning or scan receipt.
     if (this.state.notice && !this.talk.overNoticeShowing) {
       this.noticeShownFor += dt;
-      if (this.noticeShownFor >= lineDuration(this.state.notice) - 1e-9) {
+      if (this.noticeShownFor >= noticeDuration(this.state.notice) - 1e-9) {
         this.state.notice = "";
       }
     }

@@ -6,7 +6,7 @@ import { Scale, type Scene, Scenes } from "phaser";
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
-import { lineDuration } from "../data/conversations.ts";
+import { noticeDuration } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
@@ -1307,7 +1307,7 @@ export function showNetworkPlay(
   const now = scene.time.now;
   if (notice.remaining === undefined && mode === "space" && flight) {
     const label = notice.reason === "quota" ? "networkPlayQuota" : "networkPlayUnsupported";
-    notice.remaining = lineDuration(CONTENT.labels[label] ?? "") * 1000;
+    notice.remaining = noticeDuration(CONTENT.labels[label] ?? "") * 1000;
   }
   if (notice.shownAt !== undefined && notice.remaining !== undefined) {
     notice.remaining -= now - notice.shownAt;

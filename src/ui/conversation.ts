@@ -30,7 +30,7 @@ import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { hudButtonTarget, STORY_SKIP } from "./layout/playView.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, FOCUS_STYLE } from "./modal.ts";
-import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
+import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
 import { refuse } from "./refusal.ts";
 
 // The in-flight conversation box (layout/conversationBox.ts): one line at a time with the
@@ -137,6 +137,7 @@ export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
 
 export const CONVERSATION_STYLE = `
 .ada-conversation{${CONVERSATION_SLOT};
+  background:${FLIGHT_PANEL_BACKGROUND};
   z-index:5;
   padding:${units(padding)};
   gap:${units(textGap)};
@@ -156,7 +157,7 @@ export const CONVERSATION_STYLE = `
   z-index:${EMERGENCY_RETURN.layers.dialogue}
 }
 .ada-conversation:hover{
-  background:${PANEL_BACKGROUND}
+  background:${FLIGHT_PANEL_BACKGROUND}
 }
 
 .ada-conversation[hidden]{

@@ -21,3 +21,4 @@ explicit answer.
 | ada-0262 | Rename the antagonist Admiral Archie and the cat Gadget     | [ada-0262.md](../work/ada-0262.md) |
 | ada-0275 | Adopt the shared loading-failure presentation and copy      | [ada-0275.md](../work/ada-0275.md) |
 | ada-0337 | Give points of interest varied galaxy-specific lore         | [ada-0337.md](../work/ada-0337.md) |
+| ada-0370 | Shorten ordinary in-flight speech and lighten its panel     | [ada-0370.md](../work/ada-0370.md) |

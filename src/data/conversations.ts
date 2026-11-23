@@ -145,10 +145,17 @@ export const SPEAKERS: Readonly<
 /** The General's name tab once the third holodisk is inserted, from whichever galaxy. */
 export const GENERAL_NAMED = { holodisks: 3, name: "Admiral Archie" } as const;
 
-/** How long a line or notice of this text shows unless tapped (rules.md): 5 s plus 50 ms a character. */
+/** Seconds an ordinary in-flight speech line shows unless dismissed. */
 export function lineDuration(text: string): number {
   return (
     CONVERSATION_TUNING.lineSeconds + CONVERSATION_TUNING.lineSecondsPerCharacter * text.length
+  );
+}
+
+/** Seconds a game or network notice shows while it owns the slot. */
+export function noticeDuration(text: string): number {
+  return (
+    CONVERSATION_TUNING.noticeSeconds + CONVERSATION_TUNING.lineSecondsPerCharacter * text.length
   );
 }
 
@@ -157,8 +164,9 @@ export const CONVERSATION_TUNING = {
   /** Seconds between ordinary conversations; warnings bypass it. */
   cooldownSeconds: 20,
   /** Seconds each line shows unless tapped, plus lineSecondsPerCharacter per character. */
-  lineSeconds: 5,
+  lineSeconds: 3,
   lineSecondsPerCharacter: 0.05,
+  noticeSeconds: 5,
   /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
   pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */

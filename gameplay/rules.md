@@ -1307,9 +1307,9 @@ in a tab above the box, with one portrait per line for its speaker: Ada's on the
 left, Astra's, Penny's and the Admiral's on the right. Each line wraps to at most
 two lines. This speech box and notices never pause play, and the pause button
 and weapon icons stay live while it shows; Talk conversations and cards do
-pause play. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
-stays readable over the brightest space signals; text, tab and portrait stay
-opaque. Each line shows for 5 seconds plus 50 ms per character of the line, or
+pause play. The shared in-flight speech and notice panel uses ink #181425 at
+0.55 alpha. Text, tabs and portraits stay opaque. Each speech line shows for
+3 seconds plus 50 ms per character of the line, or
 until the box (tab included) is tapped. Tapping the box dismisses the whole
 conversation and skips its remaining lines, for every in-flight line: Ada's,
 Astra's and Penny's lines, drone warnings and the Admiral's broadcasts. The box

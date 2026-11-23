@@ -45,6 +45,15 @@ const squash = (value: string): string => value.replace(/\s+/gu, "");
 describe("conversation box style", () => {
   const css = rules(CONVERSATION_STYLE);
 
+  it("uses the new ink only for in-flight speech and game notices", () => {
+    expect(css.get(".ada-conversation")).toContain("background:#1814258c");
+    expect(css.get(".ada-conversation:hover")).toContain("background:#1814258c");
+    expect(css.get(".ada-conversation")).not.toContain("opacity:");
+    const notices = rules(NOTICE_STYLE);
+    expect(notices.get("#game-status")).toContain("background:#1814258c");
+    expect(notices.get("#game-status,\n#save-status")).toContain("background:#181425a6");
+  });
+
   it("keeps only the emergency warning above the warp canvas", () => {
     const layer = (selector: string) => Number(/z-index:(\d+)/u.exec(css.get(selector) ?? "")?.[1]);
     expect(layer(".ada-conversation")).toBeLessThan(EMERGENCY_RETURN.layers.jump);

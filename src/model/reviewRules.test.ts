@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { CONVERSATION_TUNING, lineDuration } from "../data/conversations.ts";
+import { lineDuration, noticeDuration } from "../data/conversations.ts";
 import { playOpening, seedLaunches } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight.ts";
@@ -97,10 +97,11 @@ describe("reviewed rules", () => {
     expect(kinds).toEqual(new Set(["drifting", "resource:medium", "rock:large", "rock:small"]));
   });
 
-  it("shows each line for 5 s plus 50 ms per character", () => {
-    expect(CONVERSATION_TUNING.lineSeconds).toBe(5);
-    expect(lineDuration("")).toBe(5);
-    expect(lineDuration("x".repeat(40))).toBeCloseTo(7, 9);
+  it("uses a shorter base time for ordinary speech while preserving notice time", () => {
+    expect(lineDuration("")).toBe(3);
+    expect(lineDuration("x".repeat(40))).toBeCloseTo(5, 9);
+    expect(noticeDuration("")).toBe(5);
+    expect(noticeDuration("x".repeat(40))).toBeCloseTo(7, 9);
   });
 
   it("places Cartwheel's story milestones at 10, 20 and 30 ore", () => {
