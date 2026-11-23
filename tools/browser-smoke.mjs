@@ -2386,8 +2386,19 @@ try {
   ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card shows Cheats, Map, Quests, Settings and Ship by label, then Back to title over
-  // Resume, every one available in danger.
+  // The grid has an alphabetical left column and a fixed right column, including in danger.
+  const pauseLeft = [
+    ["pause-cheats", CHEAT_COPY.title, null],
+    ["pause-map", CONTENT.labels.map, null],
+    ["pause-quests", CONTENT.labels.quests, null],
+    ["pause-ship", CONTENT.labels.ship, null],
+  ];
+  const pauseRight = [
+    ["pause-achievements", CONTENT.labels.achievements, null],
+    ["pause-settings", CONTENT.labels.settings, null],
+    ["pause-backToTitle", CONTENT.labels.backToTitle, null],
+    ["pause-resume", CONTENT.labels.resume, null],
+  ];
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
     await pauseActions().evaluateAll((buttons) =>
@@ -2397,21 +2408,10 @@ try {
         button.getAttribute("aria-disabled"),
       ]),
     ),
-    [
-      ["pause-cheats", CHEAT_COPY.title, null],
-      ["pause-map", CONTENT.labels.map, null],
-      ["pause-quests", CONTENT.labels.quests, null],
-      ["pause-settings", CONTENT.labels.settings, null],
-      ["pause-ship", CONTENT.labels.ship, null],
-      ["pause-backToTitle", CONTENT.labels.backToTitle, null],
-      ["pause-resume", CONTENT.labels.resume, null],
-    ],
-    "The in-flight Paused card shows Cheats, Map, Quests, Settings, Ship, Back to title and Resume, all " +
-      "available in danger",
+    [...pauseLeft, ...pauseRight],
+    "Pause keeps its column reading order and all actions available in danger",
   );
-  // Cheats spans the first row. Map and Quests, then Settings and Ship share two columns. Back to title spans the grid
-  // directly above the full-width primary Resume. Proofs at 1280x720 and at 720x360 with phone
-  // insets.
+  // Proofs at 1280x720 and at 720x360 with phone insets.
   const within = (a, b) => Math.abs(a - b) <= 0.5;
   const pauseGridAt = async (name, size, insets) => {
     await page.setViewportSize(size);
@@ -2445,34 +2445,37 @@ try {
             box(button),
           ]),
         );
-        return { buttons, grid: box(grid), rowGap: parseFloat(getComputedStyle(grid).rowGap) };
+        const columns = [...grid.querySelectorAll(".ada-pause-column")].map((column) => ({
+          box: box(column),
+          rowGap: parseFloat(getComputedStyle(column).rowGap),
+        }));
+        return { buttons, columns, grid: box(grid) };
       });
-    const { buttons: boxes, grid, rowGap } = pauseGrid;
+    const { buttons: boxes, columns, grid } = pauseGrid;
     const detail = `${name}: ${JSON.stringify(pauseGrid)}`;
-    for (const [left, right] of [
-      ["pause-map", "pause-quests"],
-      ["pause-settings", "pause-ship"],
-    ]) {
-      assert.ok(
-        within(boxes[left].top, boxes[right].top) &&
-          within(boxes[left].left, grid.left) &&
-          within(boxes[right].right, grid.right),
-        `Paused: ${left} and ${right} share a row across the two columns: ${detail}`,
-      );
-    }
-    for (const action of ["pause-cheats", "pause-backToTitle", "pause-resume"]) {
-      assert.ok(
-        within(boxes[action].left, grid.left) && within(boxes[action].right, grid.right),
-        `Paused: ${action} spans the grid's full width: ${detail}`,
-      );
-    }
+    assert.equal(columns.length, 2);
+    const [left, right] = columns;
     assert.ok(
-      within(boxes["pause-cheats"].top, grid.top) &&
-        within(boxes["pause-map"].top, boxes["pause-cheats"].bottom + rowGap) &&
-        within(boxes["pause-backToTitle"].top, boxes["pause-ship"].bottom + rowGap) &&
-        within(boxes["pause-resume"].top, boxes["pause-backToTitle"].bottom + rowGap),
-      `Paused: Back to title sits directly above Resume, under the grid: ${detail}`,
+      within(left.box.left, grid.left) &&
+        within(right.box.right, grid.right) &&
+        within(left.box.top, right.box.top) &&
+        within(left.box.right - left.box.left, right.box.right - right.box.left),
+      `Pause columns are aligned and equally wide: ${detail}`,
     );
+    for (const [index, entries] of [pauseLeft, pauseRight].entries()) {
+      const { box: column, rowGap } = columns[index];
+      let expectedTop = column.top;
+      for (const [action] of entries) {
+        const button = boxes[action];
+        assert.ok(
+          within(button.left, column.left) &&
+            within(button.right, column.right) &&
+            within(button.top, expectedTop),
+          `Paused: ${action} fills its column at the expected position: ${detail}`,
+        );
+        expectedTop = button.bottom + rowGap;
+      }
+    }
     return pauseGrid;
   };
   const pauseFlightProof = { 1280: await pauseGridAt("1280", { height: 720, width: 1280 }, {}) };
