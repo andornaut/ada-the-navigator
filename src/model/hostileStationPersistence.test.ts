@@ -9,8 +9,8 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
+import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import {

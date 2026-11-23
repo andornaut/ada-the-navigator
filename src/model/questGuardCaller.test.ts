@@ -10,7 +10,7 @@ import {
   spawnChapterEnemy,
   stepFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import * as placement from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
@@ -20,6 +20,9 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function fixture(wrapped: boolean) {
   const flight = createFlight(CONTENT, 1, 173, { known: [] });
+  if (wrapped) {
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  }
   flight.objects = [];
   flight.world = { notables: {}, version: 1 };
   const site: SpaceObject = {
