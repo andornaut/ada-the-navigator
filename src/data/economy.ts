@@ -1,3 +1,4 @@
+import type { AsteroidSize } from "./asteroidCatalog.ts";
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { ShipPhysics } from "./shipPhysics.ts";
@@ -54,7 +55,7 @@ export interface EconomyCatalog {
    * level 1 fire for each later weapon; one shot uses one. A new weapon includes `grantPacks`
    * packs and a found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack. A
    * destroyed small craft drops an ammo pack pickup at `dropChance`, and a destroyed asteroid or
-   * ore rock at `rockDropChance`, once Ada owns a weapon other than Laser, in any galaxy; its pack
+   * ore rock at its size's `rockDropChance`, once Ada owns a weapon other than Laser; its pack
    * is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once nothing else is
    * left. World ammo quantities derive from the shop pack through `worldPackFraction`.
    */
@@ -62,7 +63,7 @@ export interface EconomyCatalog {
     /** Maximum stored shots per finite-ammunition weapon. */
     capacity: number;
     dropChance: number;
-    rockDropChance: number;
+    rockDropChance: Readonly<Record<AsteroidSize, number>>;
     dropWeights: Readonly<Record<UpgradeWeapon, number>>;
     duplicatePacks: number;
     grantPacks: number;
@@ -188,8 +189,7 @@ const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_S
 export const ECONOMY: EconomyCatalog = {
   ammo: {
     capacity: 9999,
-    // Ammo pack drops: destroyed small craft 30%, destroyed asteroids and ore rocks 4%
-    // (gameplay/economy.md "Earning Stardust").
+    // Separate ammo roll for destroyed small craft.
     dropChance: 0.3,
     // Each weapon about three quarters as likely as the one before it in weapon order.
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
@@ -198,7 +198,7 @@ export const ECONOMY: EconomyCatalog = {
     // Shop pack sizes also apply to full packs included with weapon acquisitions.
     pack: { heavyMissile: 40, multiLaser: 300, phaser: 40, rapidMissile: 260, scattershot: 60 },
     packPrice: 10,
-    rockDropChance: 0.04,
+    rockDropChance: { huge: 0.04, large: 0.02, medium: 0.01, small: 0.005 },
     worldPackFraction: 0.25,
   },
   defaultPaint: "classic",

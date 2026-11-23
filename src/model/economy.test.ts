@@ -706,19 +706,42 @@ describe("Stardust drops", () => {
     }
   });
 
-  it.each(["rock", "resource"] as const)(
-    "replaces all %s resources with an eligible ammo pack",
-    (kind) => {
+  it.each([
+    ["rock", "small", 0, 0.005, 0.01],
+    ["rock", "medium", 0.005, 0.01, 0.02],
+    ["rock", "large", 0.01, 0.02, 0.04],
+    ["rock", "huge", 0.02, 0.04, 0.05],
+    ["resource", "medium", 0.005, 0.01, 0.02],
+    ["resource", "large", 0.01, 0.02, 0.04],
+  ] as const)(
+    "uses the canonical %s %s shot-destruction cutoff and releases a single outcome",
+    (kind, size, previousChance, chance, nextChance) => {
       const seed = 77;
+      const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === size)!;
       for (const result of [true, false]) {
-        const id = Array.from({ length: 2000 }, (_, index) => `exclusive:${index}`).find(
-          (id) => rollRockAmmoDrop(ECONOMY, ["phaser"], dropRandom(seed, `ammo:${id}`)) === result,
-        )!;
+        // Raw seed witnesses distinguish this size from its neighbours without calling the drop rule.
+        const id = Array.from({ length: 2000 }, (_, index) => `exclusive:${index}`).find((id) => {
+          const roll = dropRandom(seed, `ammo:${id}`)();
+          return result
+            ? roll >= previousChance && roll < chance
+            : roll >= chance && roll < nextChance;
+        })!;
         expect(id).toBeDefined();
         for (const ownership of ["owned", "none"] as const) {
           const value = flight(seed);
           value.ownedWeapons = ownership === "none" ? [] : ["phaser"];
-          const target: SpaceObject = { hp: 1, id, kind, radius: 20, x: 600, y: 0 };
+          const target: SpaceObject = {
+            asteroid: shape.id,
+            hp: 1,
+            id,
+            kind,
+            radius: shape.radius,
+            ...(kind === "resource" && (size === "medium" || size === "large")
+              ? { resource: size }
+              : {}),
+            x: 600,
+            y: 0,
+          };
           value.objects.push(target);
           value.shots.push(killShot(target), killShot(target));
           stepFlight(CONTENT, 1 / 60, idle, value);
@@ -729,8 +752,8 @@ describe("Stardust drops", () => {
             expect(drops[0]!.upgrade).not.toBe(true);
           } else {
             expect(drops.some((object) => object.ammoPack)).toBe(false);
-            const expected = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(seed, id));
-            expect(drops.filter((object) => object.role === "cargo")).toHaveLength(expected.ore);
+            const expected = rollAsteroidLoot(ASTEROID_LOOT, size, dropRandom(seed, id));
+            expect(total(drops.filter((object) => object.role === "cargo"))).toBe(expected.ore);
             expect(total(pickups(value))).toBe(expected.stardust);
           }
           const ids = drops.map((object) => object.id);
@@ -749,7 +772,7 @@ describe("Stardust drops", () => {
     const owned = ["phaser"] as const;
     const ids = Array.from({ length: 2000 }, (_, index) => `rock:${index}`);
     const dropsAmmo = (id: string) =>
-      rollRockAmmoDrop(ECONOMY, owned, dropRandom(seed, `ammo:${id}`));
+      rollRockAmmoDrop(ECONOMY, owned, "small", dropRandom(seed, `ammo:${id}`));
     const destroy = (weapons: UpgradeWeapon[], ...rockIds: string[]) => {
       const value = flight(seed);
       value.ownedWeapons = weapons;

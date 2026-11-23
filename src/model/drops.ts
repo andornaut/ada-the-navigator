@@ -1,3 +1,4 @@
+import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
@@ -65,14 +66,15 @@ export function rollAmmoDrop(
 
 /**
  * Whether a destroyed asteroid or ore rock drops an ammo pack pickup: at the rock ammo drop
- * chance while Ada owns a weapon other than Laser. Rocks never drop an upgrade pickup.
+ * chance for its size while Ada owns a weapon other than Laser.
  */
 export function rollRockAmmoDrop(
   catalog: EconomyCatalog,
   owned: readonly Weapon[],
+  size: AsteroidSize,
   next: () => number,
 ): boolean {
-  return ownsAmmoWeapon(owned) && next() < catalog.ammo.rockDropChance;
+  return ownsAmmoWeapon(owned) && next() < catalog.ammo.rockDropChance[size];
 }
 
 /**

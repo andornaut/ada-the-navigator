@@ -220,17 +220,14 @@ describe("ammo pack drops", () => {
     expect(rolls(["scattershot"], "frigate")).toBe(0);
   });
 
-  it("drops from a destroyed asteroid or ore rock at 4% while Ada owns a weapon other than Laser", () => {
+  it("retains the existing seeded huge rock odds while Ada owns an upgrade weapon", () => {
     const rolls = (owned: readonly Weapon[]) =>
       Array.from({ length: 100000 }, (_, index) =>
-        rollRockAmmoDrop(ECONOMY, owned, dropRandom(9, `ammo:rock:${index}`)),
+        rollRockAmmoDrop(ECONOMY, owned, "huge", dropRandom(9, `ammo:rock:${index}`)),
       ).filter(Boolean).length / 100000;
-    expect(ECONOMY.ammo.rockDropChance).toBe(0.04);
     expect(Math.abs(rolls(["phaser"]) - 0.04)).toBeLessThan(0.0015);
     expect(rolls([])).toBe(0);
     expect(rolls(["laser"])).toBe(0);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.0399)).toBe(true);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.04)).toBe(false);
   });
 
   it("holds a pack for any owned weapon other than Laser, by the weights among those", () => {
@@ -249,7 +246,7 @@ describe("ammo pack drops", () => {
   it("drops packs for an owned weapon the galaxy does not unlock, which its shop still does not sell", () => {
     // Sunflower unlocks only Multi-Laser; Phaser unlocks in Phantom.
     expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0)).toBe(true);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0)).toBe(true);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], "small", () => 0)).toBe(true);
     expect(chooseAmmoPack(ECONOMY, ["phaser"], () => 0.5)).toBe("phaser");
     expect(onSale(1, { kind: "ammo", weapon: "phaser" })).toBe(false);
     expect(onSale(1, { kind: "weapon", weapon: "phaser" })).toBe(false);

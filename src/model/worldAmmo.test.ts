@@ -149,19 +149,28 @@ describe("world ammunition quantities", () => {
 });
 
 describe("world ammunition odds", () => {
-  it("uses the approved 30 percent small-craft and 4 percent rock odds with strict boundaries", () => {
+  it("preserves the strict 30 percent small-craft boundary", () => {
     expect(ECONOMY.ammo.dropChance).toBe(0.3);
-    expect(ECONOMY.ammo.rockDropChance).toBe(0.04);
     expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0.299999)).toBe(true);
     expect(rollAmmoDrop(ECONOMY, ["phaser"], "fighter", () => 0.3)).toBe(false);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.039999)).toBe(true);
-    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], () => 0.04)).toBe(false);
+  });
+
+  it.each([
+    ["small", 0.005],
+    ["medium", 0.01],
+    ["large", 0.02],
+    ["huge", 0.04],
+  ] as const)("uses the strict %s asteroid boundary at %f", (size, chance) => {
+    expect(ECONOMY.ammo.rockDropChance[size]).toBe(chance);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], size, () => chance - Number.EPSILON)).toBe(true);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], size, () => chance)).toBe(false);
+    expect(rollRockAmmoDrop(ECONOMY, ["phaser"], size, () => chance + Number.EPSILON)).toBe(false);
   });
 
   it("preserves real ownership eligibility, heavy exclusions, weapon weights and upgrade odds", () => {
     for (const owned of [[], ["laser"]] as const) {
       expect(rollAmmoDrop(ECONOMY, owned, "fighter", () => 0)).toBe(false);
-      expect(rollRockAmmoDrop(ECONOMY, owned, () => 0)).toBe(false);
+      expect(rollRockAmmoDrop(ECONOMY, owned, "huge", () => 0)).toBe(false);
     }
     for (const archetype of ["frigate", "platform", "capital"] as const) {
       expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0)).toBe(false);

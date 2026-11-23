@@ -4298,12 +4298,15 @@ function hit(
 
 /** An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
-  if (rollRockAmmoDrop(ECONOMY, ammoOwned(flight), dropRandom(flight.seed, `ammo:${object.id}`))) {
+  const size = asteroidSize(object);
+  if (
+    rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${object.id}`))
+  ) {
     pushAmmoPack(content, object, flight);
     return;
   }
   const next = dropRandom(flight.seed, object.id);
-  const loot = rollAsteroidLoot(ASTEROID_LOOT, asteroidSize(object), next);
+  const loot = rollAsteroidLoot(ASTEROID_LOOT, size, next);
   const amounts = splitResourcePickup(loot.ore);
   const orePieces = amounts.length;
   const widths = amounts.map(orePickupSize);

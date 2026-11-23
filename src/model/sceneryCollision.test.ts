@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
 import type { GameContent } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { dropRandom, rollRockAmmoDrop } from "./drops.ts";
+import { dropRandom } from "./drops.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import type { FlightEvent, FlightState, SpaceObject } from "./types.ts";
 
@@ -117,16 +116,22 @@ describe("scenery collision damage", () => {
     expect(flight.objects.filter(({ kind }) => kind === "rock")).toHaveLength(1);
   });
 
-  it.each([false, true])(
-    "releases the existing seeded rock drops once (same-frame Laser: %s)",
-    (sameFrameShot) => {
-      const collision = fixture("rock", 1);
-      const laser = fixture("rock", 1);
+  it.each([
+    ["rock", false],
+    ["rock", true],
+    ["resource", false],
+    ["resource", true],
+  ] as const)(
+    "releases the existing seeded medium %s ammo once (same-frame Laser: %s)",
+    (kind, sameFrameShot) => {
+      const collision = fixture(kind, 1);
+      const laser = fixture(kind, 1);
       // Select an existing deterministic ammo-drop outcome so the shared drop path is exercised.
       let id = "";
       for (let index = 0; index < 5000; index++) {
         const candidate = `ammo-rock:${index}`;
-        if (rollRockAmmoDrop(ECONOMY, ["multiLaser"], dropRandom(7, `ammo:${candidate}`))) {
+        const roll = dropRandom(7, `ammo:${candidate}`)();
+        if (roll >= 0.005 && roll < 0.01) {
           id = candidate;
           break;
         }
