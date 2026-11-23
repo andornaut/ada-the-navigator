@@ -18,16 +18,6 @@ function fixture(kind: "resources" | "salvage") {
   const world = { worldSide: GALAXY_SIDE };
   const galaxy = kind === "resources" ? 1 : 5;
   for (let seed = 1; seed <= 64; seed++) {
-    const candidate = proceduralPoisNear(
-      { ...world, opportunityEligibility: { jobTemplates: [] } },
-      galaxy,
-      seed,
-      TARGET_MARKER_RANGE,
-      { x: 0, y: 0 },
-    ).find((site) => site.opportunity.kind === kind);
-    if (!candidate) {
-      continue;
-    }
     const model = new GameModel(CONTENT);
     const progress = model.state.progress[galaxy];
     progress.geography = { seed, sitePolicy: "seeded", version: 1 };
@@ -36,6 +26,18 @@ function fixture(kind: "resources" | "salvage") {
     model.startGalaxy(galaxy);
     const flight = model.state.flight!;
     expect(flight.topology?.side).toBe(GALAXY_SIDE);
+    const beacon = progress.requiredSites?.darkBeacon;
+    const center = beacon ? { x: beacon.x / 2, y: beacon.y / 2 } : { x: 0, y: 0 };
+    const candidate = proceduralPoisNear(
+      { ...world, opportunityEligibility: { jobTemplates: [] } },
+      galaxy,
+      seed,
+      TARGET_MARKER_RANGE,
+      center,
+    ).find((site) => site.opportunity.kind === kind);
+    if (!candidate) {
+      continue;
+    }
     flight.player = { x: candidate.x - CONTENT.tuning.talkRange * 2, y: candidate.y };
     const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
     flight.freshChunk = worldCellKey(grid, worldCellAt(grid, flight.player));
@@ -50,6 +52,7 @@ function fixture(kind: "resources" | "salvage") {
     expect(flight.exploration.pacing?.freshSeconds).toBe(ROUTE_OPPORTUNITY_SECONDS - 0.001);
     model.step(0.01, pilot);
     if (Object.hasOwn(progress.explorationSites ?? {}, candidate.id)) {
+      console.log("fixture seed", kind, seed, candidate.id);
       return { candidate, flight, model, progress };
     }
   }
