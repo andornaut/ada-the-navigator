@@ -6,6 +6,7 @@ import {
   type PressArea,
   pressedArea,
 } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -94,6 +95,7 @@ import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { HUD_DISC_STATES, hudDiscStyle } from "./weapons.ts";
 
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
@@ -866,7 +868,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   screen.setAttribute("aria-label", labels.map);
   screen.hidden = true;
   let disposed = false;
-  const actionBindings = new Set<ReturnType<typeof bindAdaAction>>();
+  const actionBindings = new Set<{ dispose(): void }>();
   const registerAction = (
     action: Pick<
       AdaActionOptions,
@@ -1035,14 +1037,41 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   // Travel here.
   const hudRow = document.createElement("div");
   hudRow.className = "ada-map-hud-row ada-map-navigation";
-  const questsButton = createButton(labels.quests, "secondary");
-  questsButton.dataset.action = "map-quests";
+  const navigationAction = (
+    id: string,
+    label: string,
+    role: "primary" | "secondary",
+    run: () => void,
+  ) => {
+    const action = createStandardTextAction(root, label, {
+      availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
+      current: () =>
+        !disposed &&
+        !screen.hidden &&
+        !action.element.closest("[hidden], [inert]") &&
+        inCurrentView(root, action.element),
+      run,
+    });
+    const button = action.element;
+    button.dataset.action = id;
+    button.classList.toggle("ada-primary", role === "primary");
+    setButtonRole(role, button);
+    actionBindings.add(action);
+    return button;
+  };
+  const questsButton = navigationAction("map-quests", labels.quests, "secondary", () =>
+    options.onQuests(),
+  );
   questsButton.setAttribute("aria-haspopup", "dialog");
   const galaxies = createButton(labels.galaxies, "secondary");
   galaxies.dataset.action = "map-galaxies";
   galaxies.setAttribute("aria-haspopup", "dialog");
-  const closeButton = createButton(options.closeLabel ?? labels.close, "primary");
-  closeButton.dataset.action = "map-close";
+  const closeButton = navigationAction(
+    "map-close",
+    options.closeLabel ?? labels.close,
+    "primary",
+    () => options.onClose(),
+  );
   const closeX = createModalClose("map-close-x", labels.close);
   const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
     column,
@@ -1479,9 +1508,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  for (const button of [closeButton, closeX]) {
-    registerAction({ run: () => options.onClose() }, button);
-  }
+  registerAction({ run: () => options.onClose() }, closeX);
   registerAction(
     { run: () => zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")) },
     toolButtons.get("zoomIn")!,
@@ -1530,7 +1557,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       focusTarget(chip);
     }
   };
-  registerAction({ run: () => options.onQuests() }, questsButton);
   registerAction(
     {
       run: () => {
