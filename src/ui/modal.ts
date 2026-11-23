@@ -122,7 +122,7 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
 const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
-  :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings])
+  :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings], .ada-cheats-card)
   .ada-button.ui-standard-button:not(:where(.ada-compact)):focus-visible`;
 const ENABLED_TEXT_CONTROL = `:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
@@ -409,6 +409,10 @@ ${UI_SCOPE} .ada-button[aria-disabled="true"]:active{
   border-color:${BUTTON_FACE.disabled};
   border-image-source:var(--ui-button-disabled);
   cursor:default
+}
+
+${UI_SCOPE} .ada-cheats-card .ada-button.ui-standard-button:not(.ada-primary){
+  --ui-button-focus-fill:${BUTTON_FACE.secondary}
 }
 
 /* Tint the centre and retain the existing sprite slices, including the active lip. */

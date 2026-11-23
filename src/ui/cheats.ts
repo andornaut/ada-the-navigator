@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -14,6 +15,7 @@ import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, setFooterAction } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface CheatLabels {
   readonly back: string;
@@ -40,24 +42,31 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   });
   const { body, card, close, fit, frame } = parts;
   card.className += " ada-cheats-card";
-  const dismiss = createButton(options.labels.back, "primary");
+  const dismissAction = () => setOpen(false);
+  const current = (element: HTMLElement) => !disposed && open && inCurrentView(parent, element);
+  const closeBinding = bindAdaAction(
+    {
+      click: {
+        availability: () => (open ? { kind: "available" } : { kind: "omitted" }),
+        run: dismissAction,
+      },
+      current: () => current(close),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(close),
+    },
+    close,
+  );
+  const dismissButton = createStandardTextAction(parent, options.labels.back, {
+    availability: () => ({ kind: "available" }),
+    current: () => current(dismissButton.element),
+    run: dismissAction,
+  });
+  const dismiss = dismissButton.element;
+  dismiss.classList.add("ada-primary");
+  setButtonRole("primary", dismiss);
   dismiss.dataset.action = "dismiss-cheats";
   const footer = createActions([{ button: dismiss, role: "primary" }]);
   setFooterAction("back", footer);
-  const dismissAction = () => setOpen(false);
-  const closeBindings = [close, dismiss].map((element) =>
-    bindAdaAction(
-      {
-        click: {
-          availability: () => (open ? { kind: "available" } : { kind: "omitted" }),
-          run: dismissAction,
-        },
-        current: () => !disposed && open && inCurrentView(parent, element),
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-      },
-      element,
-    ),
-  );
+  const closeBindings = [closeBinding, dismissButton];
   const rows = new Map(options.rows.map((row) => [row.id, row]));
   const buttons = new Map<HTMLButtonElement, CheatAction>();
   const bindRow = (element: HTMLButtonElement, run: () => void, enabled: () => boolean) =>
@@ -67,7 +76,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
           availability: () => (open && enabled() ? { kind: "available" } : { kind: "omitted" }),
           run,
         },
-        current: () => !disposed && open && element.isConnected && inCurrentView(parent, element),
+        current: () => element.isConnected && current(element),
         slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
       },
       element,
@@ -82,13 +91,31 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
             const action = rows.get(data.id) as CheatAction;
             const resource =
               action.id === "addStardust" ? "stardust" : action.id === "addOre" ? "ore" : null;
-            const button = createButton(resource ? CHEAT_COPY.amount : data.label);
+            const run = () => {
+              if (open && !button.disabled) {
+                runCheatAction(action);
+                refresh();
+              }
+            };
+            const textAction = resource
+              ? undefined
+              : createStandardTextAction(parent, data.label, {
+                  availability: (button) =>
+                    button?.disabled ? { kind: "disabled" } : { kind: "available" },
+                  current: () => current(button),
+                  run,
+                });
+            const button: HTMLButtonElement =
+              textAction?.element ?? createButton(CHEAT_COPY.amount);
+            if (textAction) {
+              setButtonRole("secondary", button);
+            }
             button.dataset.cheat = data.id;
             const update = (next: CheatsSchema["action"]["props"]) => {
-              if (resource) {
-                button.setAttribute("aria-label", next.label);
+              if (textAction) {
+                textAction.setLabel(next.label);
               } else {
-                button.textContent = next.label;
+                button.setAttribute("aria-label", next.label);
               }
             };
             if (resource) {
@@ -99,16 +126,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
               button.append(icon);
             }
             update(data);
-            const binding = bindRow(
-              button,
-              () => {
-                if (open && !button.disabled) {
-                  runCheatAction(action);
-                  refresh();
-                }
-              },
-              () => !button.disabled,
-            );
+            const binding = textAction ?? bindRow(button, run, () => !button.disabled);
             buttons.set(button, action);
             return {
               dispose() {
@@ -136,7 +154,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
         footer: {
           create(data) {
             const update = (next: CheatsSchema["footer"]["props"]) => {
-              dismiss.textContent = next.label;
+              dismissButton.setLabel(next.label);
             };
             update(data);
             return { dispose() {}, element: footer, slots: {}, update };

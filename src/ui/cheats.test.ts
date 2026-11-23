@@ -107,6 +107,11 @@ class Element extends EventTarget {
   }
   readonly children: Element[] = [];
   className = "";
+  readonly classList = {
+    add: (name: string) => {
+      this.className = [...new Set([...this.className.split(" "), name])].filter(Boolean).join(" ");
+    },
+  };
   readonly dataset: Record<string, string> = {};
   hidden = false;
   parent: Element | undefined;
@@ -115,7 +120,16 @@ class Element extends EventTarget {
     backgroundImage: "",
     setProperty: (name: string, value: string) => this.properties.set(name, value),
   };
-  textContent = "";
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map(({ textContent }) => textContent).join("");
+  }
+  set textContent(text: string) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.text = text;
+  }
   append(...nodes: Element[]) {
     for (const node of nodes) {
       this.insertBefore(node, null);
@@ -131,6 +145,16 @@ class Element extends EventTarget {
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, on: boolean) {
+    if (on) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
 }
 
@@ -317,6 +341,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     [addButton!, "ore", ore.label],
   ] as const) {
     expect(button.textContent).toBe("+1,000");
+    expect(button.matches(".ui-standard-button")).toBe(false);
     expect(button.getAttribute("aria-label")).toBe(label);
     expect(button.children[0]!.getAttribute("aria-hidden")).toBe("true");
     expect(button.children[0]!.style.backgroundImage).toBe(
@@ -325,6 +350,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   }
   expect(maximizeButton!.dataset.cheat).toBe("maxWeaponLevels");
   expect(selectiveButton!.tagName).toBe("BUTTON");
+  expect(selectiveButton!.matches(".ui-standard-button")).toBe(true);
   expect(selectiveButton!.textContent).toBe(CHEAT_COPY.selectiveReset);
   const footer = nodes.find((node) => node.dataset.footerAction === "back")!;
   expect(footer.parent).toBe(list.parent);
@@ -362,6 +388,7 @@ it("uses Back and X on the same guarded return path", () => {
   const x = descendants(f.root).find((node) => node.dataset.action === "close-cheats")!;
   expect(x.getAttribute("aria-label")).toBe("Close");
   expect(dismiss.textContent).toBe("Back");
+  expect(dismiss.matches(".ui-standard-button")).toBe(true);
   expect(dismiss.dataset.action).toBe("dismiss-cheats");
   expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, dismiss)?.available()).toBe(false);
   f.cheats.open();
@@ -381,11 +408,11 @@ it("uses Back and X on the same guarded return path", () => {
   expect(f.changed.mock.calls).toEqual([[true], [false], [true], [false], [true], [false]]);
 });
 
-it("runs a held action once through the original binding", () => {
+it.each(["addOre", "unlockAllEquipment"])("runs a held %s action just once", (id) => {
   vi.useFakeTimers();
-  const add = action("addOre");
+  const add = action(id);
   const f = setup([add], true);
-  const button = descendants(f.root).find((node) => node.dataset.cheat === "addOre")!;
+  const button = descendants(f.root).find((node) => node.dataset.cheat === id)!;
   const event = (type: string, target: Element) => {
     const value = new Event(type, { cancelable: true });
     Object.defineProperties(
@@ -425,6 +452,31 @@ it("runs a held action once through the original binding", () => {
   expect(add.run).toHaveBeenCalledOnce();
   f.cheats.dispose();
   expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, button)).toBeNull();
+});
+
+it("rechecks a button that became busy since the last refresh before running its callback", () => {
+  const run = vi.fn();
+  let busy = false;
+  const available = vi.fn(() => !busy);
+  const id = "selectiveReset";
+  const f = setup([{ available, id, label: CHEAT_COPY.selectiveReset, run }]);
+  const button = descendants(f.root).find((node) => node.dataset.cheat === id)!;
+  expect(available).toHaveBeenCalledOnce();
+  f.cheats.open();
+  expect(available).toHaveBeenCalledTimes(2);
+  const held = resolveAdaHoldAction(f.root as unknown as HTMLElement, button)!;
+  expect(held.available()).toBe(true);
+  busy = true;
+  held.activate();
+  expect(run).not.toHaveBeenCalled();
+  expect(button.disabled).toBe(true);
+  expect(available).toHaveBeenCalledTimes(4);
+  busy = false;
+  f.cheats.refresh();
+  expect(button.disabled).toBe(false);
+  button.dispatchEvent(new Event("click"));
+  expect(run).toHaveBeenCalledOnce();
+  f.cheats.dispose();
 });
 
 it("rejects an unregistered hidden disabled control in the completed Cheats modal", () => {
