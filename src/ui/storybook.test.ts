@@ -301,6 +301,20 @@ describe("story page portraits", () => {
     );
   });
 
+  it("uses the full Phantom portrait page with the correct source row for each speaker", () => {
+    for (const [name, key, y] of [
+      ["Blurbs", "blurb-settler", "0"],
+      ["Dollop", "dollop", units(-66)],
+    ] as const) {
+      const portrait = storyPortrait(name)!;
+      expect(portrait.speaker).toBe(key);
+      expect(storyPortraitFrame(false, portrait, 1)).toBe(0);
+      expect(rule(`.ada-controls .ada-story-portrait[data-speaker="${key}"]`)).toContain(
+        `background:url('/art/phantom/portraits/phantom-full.png') 0 ${y} / ${units(64)} ${units(130)} no-repeat`,
+      );
+    }
+  });
+
   it("put Ada at the left and every other speaker at the right, never mirrored", () => {
     expect(storyPortrait("Ada")?.side).toBe("left");
     for (const name of ["Astra", "Penny", "Unknown voice", GENERAL_NAMED.name]) {

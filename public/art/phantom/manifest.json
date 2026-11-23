@@ -469,41 +469,49 @@
     },
     {
       "id": "blurb-settler-portrait",
-      "path": "/art/phantom/portraits/blurb-settler.png",
+      "path": "/art/phantom/portraits/phantom-full.png",
       "width": 32,
-      "height": 32,
+      "height": 65,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "dollop-portrait",
-      "path": "/art/phantom/portraits/dollop.png",
+      "path": "/art/phantom/portraits/phantom-full.png",
       "width": 32,
-      "height": 32,
+      "height": 65,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 33,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "blurb-settler-portrait-compact",
-      "path": "/art/phantom/portraits/blurb-settler-compact.png",
+      "path": "/art/phantom/portraits/phantom-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 45,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -511,17 +519,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "dollop-portrait-compact",
-      "path": "/art/phantom/portraits/dollop-compact.png",
+      "path": "/art/phantom/portraits/phantom-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 45,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -529,10 +541,14 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 23,
+        "width": 22,
+        "height": 22
       }
     },
     {

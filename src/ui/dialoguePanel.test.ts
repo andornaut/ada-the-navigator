@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CAST, castSheet } from "../data/cast.ts";
+import { CAST, castPortrait } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
@@ -350,7 +350,7 @@ describe("shared Earth and space dialogue presentation", () => {
       const portrait = storyPortrait(member.name)!;
       expect(portrait.speaker).toBe(key);
       expect(STORY_PORTRAITS[portrait.speaker]?.url).toBe(
-        castSheet(key as keyof typeof CAST, false),
+        castPortrait(key as keyof typeof CAST, false).url,
       );
       expect(
         existsSync(
@@ -384,6 +384,29 @@ describe("shared Earth and space dialogue presentation", () => {
         true,
       );
     }
+  });
+
+  it("paints the correct full-size row for Blurbs and Dollop in the shared portrait slot", () => {
+    setup();
+    const panel = createDialoguePanel({
+      closeAction: "close",
+      closeLabel: "Close",
+      title: "Dialogue",
+    });
+    for (const [name, key, y] of [
+      ["Dollop", "dollop", "calc(var(--ada-unit) * -66px)"],
+      ["Blurbs", "blurb-settler", "0"],
+    ] as const) {
+      panel.showLine(name, name);
+      const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
+      expect(face.dataset.speaker).toBe(key);
+      const size = "calc(var(--ada-unit) * 64px) calc(var(--ada-unit) * 130px)";
+      expect(face.style.background).toBe(
+        `url('/art/phantom/portraits/phantom-full.png') 0 ${y} / ${size} no-repeat`,
+      );
+      expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe(name);
+    }
+    panel.dispose();
   });
 
   it("changes portrait and name with the actual line speaker and leaves narration unnamed", () => {

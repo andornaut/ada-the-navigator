@@ -1,6 +1,7 @@
-import { CAST, castFrames, SPEAKER_CAST } from "../data/cast.ts";
+import { CAST, castFrames, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
 import type { ConversationLineView } from "./conversation.ts";
+import { units } from "./layout/css.ts";
 
 export const COMPACT_PORTRAITS = {
   ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },
@@ -22,6 +23,17 @@ export const AWAITING_TAB = "#b8b3c9";
 
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
+
+/** Scale the source to the existing square portrait slot, keeping the Art crop at its origin. */
+export function portraitBackground(sheet: CastPortraitSheet, image: number, frame = 0): string {
+  const { crop, frames, url } = sheet;
+  const scale = crop ? image / crop.frameSize : 1;
+  const x = frame ? units(-frame * image) : "0";
+  const y = crop?.y ? units(-crop.y * scale) : "0";
+  const width = crop ? image : frames * image;
+  const height = crop ? crop.pageHeight * scale : image;
+  return `url('${url}') ${x} ${y} / ${units(width)} ${units(height)} no-repeat`;
+}
 
 /**
  * The sheet frame the box shows for line: Ada's or Penny's mood (neutral where the sheet has no

@@ -6,7 +6,7 @@ import {
   type DialoguePanelSchema,
   dialoguePanelTree,
 } from "./dialoguePanelTree.ts";
-import { storySpeakerName } from "./dialoguePortraits.ts";
+import { portraitBackground, storySpeakerName } from "./dialoguePortraits.ts";
 import { font, units } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
@@ -228,10 +228,11 @@ export function createDialoguePanel(options: {
         const sheet = STORY_PORTRAITS[resolved.speaker];
         if (sheet) {
           face.dataset.speaker = resolved.speaker;
-          const image = STORY_PANEL.portrait.image;
-          const x = units(-storyPortraitFrame(true, resolved, 0) * image);
-          const size = `${units(sheet.frames * image)} ${units(image)}`;
-          face.style.background = `url('${sheet.url}') ${x} 0 / ${size} no-repeat`;
+          face.style.background = portraitBackground(
+            sheet,
+            STORY_PANEL.portrait.image,
+            storyPortraitFrame(true, resolved, 0),
+          );
         }
       }
     },

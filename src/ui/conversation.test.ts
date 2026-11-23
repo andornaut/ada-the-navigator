@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { CAST, castPortrait, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
@@ -155,6 +155,19 @@ describe("conversation box style", () => {
     );
   });
 
+  it("uses the two native compact crops without sampling their separator row", () => {
+    for (const [speaker, y] of [
+      ["blurbs", "0"],
+      ["dollop", units(-46)],
+    ] as const) {
+      expect(css.get(`.ada-conversation-portrait[data-speaker="${speaker}"]`)).toBe(
+        squash(
+          `background:url('/art/phantom/portraits/phantom-compact.png') 0 ${y} / ${units(44)} ${units(90)} no-repeat`,
+        ),
+      );
+    }
+  });
+
   it("gives every speaker a tab colour and a compact portrait sheet that exists", () => {
     for (const speaker of Object.keys(SPEAKERS)) {
       expect(TAB_COLOURS).toHaveProperty(speaker);
@@ -163,7 +176,7 @@ describe("conversation box style", () => {
       );
       const cast = SPEAKER_CAST[speaker as keyof typeof SPEAKER_CAST];
       const url = cast
-        ? castSheet(cast, true)
+        ? castPortrait(cast, true).url
         : COMPACT_PORTRAITS[speaker as keyof typeof COMPACT_PORTRAITS].url;
       expect(css.get(`.ada-conversation-portrait[data-speaker="${speaker}"]`), speaker).toContain(
         `url('${url}')`,
@@ -249,7 +262,7 @@ describe("conversation portraits", () => {
       const sheet = (manifest.assets as typeof MANIFEST.assets).find(
         ({ id }) => id === `${key}-portrait-compact`,
       );
-      expect(sheet?.path, key).toBe(castSheet(key, true));
+      expect(sheet?.path, key).toBe(castPortrait(key, true).url);
       expect(
         portraitFrame(false, { ...line, elapsed: 0.25, speaker: speaker as keyof typeof SPEAKERS }),
       ).toBe(sheet!.frames!.neutral);

@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
-import { castFrames, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { castPortrait, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import type { Mood, Speaker } from "../data/conversations.ts";
@@ -14,7 +14,12 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
-import { COMPACT_PORTRAITS, portraitFrame, TAB_COLOURS } from "./dialoguePortraits.ts";
+import {
+  COMPACT_PORTRAITS,
+  portraitBackground,
+  portraitFrame,
+  TAB_COLOURS,
+} from "./dialoguePortraits.ts";
 import { createModalLayer } from "./modalLayer.ts";
 export {
   AWAITING_TAB,
@@ -64,20 +69,15 @@ const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATI
 // one speaking, so neither shows them.
 // The cast speakers' compact sheets (data/cast.ts), each its one neutral frame.
 const CAST_COMPACT = Object.fromEntries(
-  Object.entries(SPEAKER_CAST).map(([speaker, key]) => [
-    speaker,
-    { frames: castFrames(key).frames, url: castSheet(key, true) },
-  ]),
-) as Readonly<Record<string, { readonly frames: number; readonly url: string }>>;
+  Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, castPortrait(key, true)]),
+) as Readonly<Record<string, CastPortraitSheet>>;
 
 // Each speaker's sheet, sized so one frame fills the portrait; portraitFrame picks the frame.
 const PORTRAIT_RULES = Object.entries({ ...COMPACT_PORTRAITS, ...CAST_COMPACT })
   .map(
     ([speaker, sheet]) => `
 .ada-conversation-portrait[data-speaker="${speaker}"]{
-  background:url('${sheet.url}') 0 0 / ${units(sheet.frames * portrait.art)} ${units(
-    portrait.art,
-  )} no-repeat
+  background:${portraitBackground(sheet, portrait.art)}
 }`,
   )
   .join("");

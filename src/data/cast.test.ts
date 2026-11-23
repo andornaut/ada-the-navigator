@@ -7,7 +7,7 @@ import {
   CAST,
   castFrames,
   type CastKey,
-  castSheet,
+  castPortrait,
   CHAPTER_CAST,
   SPEAKER_CAST,
   STORY_CAST,
@@ -32,10 +32,18 @@ function homeManifest(key: CastKey): { assets: readonly { id: string; path: stri
 }
 
 type Sheet = {
-  frameWidth: number;
+  frameHeight?: number;
+  frameWidth?: number;
   frames: Record<string, number>;
+  height: number;
   id: string;
   path: string;
+  portraitCrop?: {
+    readonly height: number;
+    readonly width: number;
+    readonly x: number;
+    readonly y: number;
+  };
   width: number;
 };
 
@@ -47,8 +55,25 @@ describe("the cast", () => {
         const sheet = homeManifest(key).assets.find((asset) => asset.id === id) as
           Sheet | undefined;
         expect(sheet, id).toBeDefined();
-        expect(sheet!.path).toBe(castSheet(key, compact));
-        expect(sheet!.width / sheet!.frameWidth).toBe(castFrames(key).frames);
+        const { crop, frames, url } = castPortrait(key, compact);
+        expect(sheet!.path).toBe(url);
+        expect(frames).toBe(castFrames(key).frames);
+        if (crop) {
+          expect(sheet!.portraitCrop).toEqual({
+            height: crop.frameSize,
+            width: crop.frameSize,
+            x: 0,
+            y: crop.y,
+          });
+          expect(sheet!.width).toBe(crop.frameSize);
+          expect(sheet!.height).toBe(crop.pageHeight);
+          // A vertical DOM page is not a horizontal Phaser sprite strip.
+          expect(sheet!.frameWidth).toBeUndefined();
+          expect(sheet!.frameHeight).toBeUndefined();
+        } else {
+          expect(sheet!.width / sheet!.frameWidth!).toBe(frames);
+          expect(sheet!.portraitCrop).toBeUndefined();
+        }
         expect(sheet!.frames.neutral, id).toBe(castFrames(key).neutral);
         // No other galaxy carries the key's sheets.
         expect(ART_MANIFEST.assets.filter((asset) => asset.id === id)).toHaveLength(1);

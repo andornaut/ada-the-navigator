@@ -2,7 +2,14 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CAST, castFrames, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
+import {
+  CAST,
+  castFrames,
+  type CastKey,
+  castPortrait,
+  type CastPortraitSheet,
+  STORY_CAST,
+} from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
@@ -24,6 +31,7 @@ import {
   COMPACT_PORTRAITS,
   FAMILY_PORTRAITS,
   familyPortrait,
+  portraitBackground,
   portraitFrame,
   SPEAKING_FRAME_MS,
   storySpeakerName,
@@ -141,20 +149,13 @@ const STORY_CAST_KEYS = Object.keys(CAST) as CastKey[];
 
 // Each speaker's 32 portrait sheet for the storybook panel (art/conversation.md "Sizes"): the same
 // frames as the compact sheet, drawn at 2x in the 68 frame.
-export const STORY_PORTRAITS: Readonly<
-  Partial<Record<StoryPortraitId, { readonly frames: number; readonly url: string }>>
-> = {
+export const STORY_PORTRAITS: Readonly<Partial<Record<StoryPortraitId, CastPortraitSheet>>> = {
   ada: { frames: 2, url: "/art/portraits/ada.png" },
   astra: { frames: 5, url: "/art/portraits/astra.png" },
   general: { frames: 10, url: "/art/portraits/gadget.png" },
   penny: { frames: 3, url: "/art/portraits/penny.png" },
   ...FAMILY_PORTRAITS,
-  ...Object.fromEntries(
-    STORY_CAST_KEYS.map((key) => [
-      key,
-      { frames: castFrames(key).frames, url: castSheet(key, false) },
-    ]),
-  ),
+  ...Object.fromEntries(STORY_CAST_KEYS.map((key) => [key, castPortrait(key, false)])),
 };
 
 /** A story page speaker with a portrait, on its side, with whether the General is named. */
@@ -278,9 +279,7 @@ const STORY_PORTRAIT_RULES = Object.entries(STORY_PORTRAITS)
   .map(
     ([speaker, sheet]) => `
 .ada-controls .ada-story-portrait[data-speaker="${speaker}"]{
-  background:url('${sheet.url}') 0 0 / ${units(sheet.frames * PORTRAIT_IMAGE)} ${units(
-    PORTRAIT_IMAGE,
-  )} no-repeat
+  background:${portraitBackground(sheet, PORTRAIT_IMAGE)}
 }`,
   )
   .join("");

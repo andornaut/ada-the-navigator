@@ -130,7 +130,32 @@ export function castFrames(key: CastKey): { frames: number; neutral: number } {
   };
 }
 
-/** A key's storybook sheet, or its compact sheet for the conversation box. */
+export interface CastPortraitSheet {
+  readonly frames: number;
+  readonly url: string;
+  /** A single frame on a vertical portrait page, measured in source pixels. */
+  readonly crop?: {
+    readonly frameSize: number;
+    readonly pageHeight: number;
+    readonly y: number;
+  };
+}
+
+/** The same portrait source is used by flight chatter, interaction cards and Storybook. */
+export function castPortrait(key: CastKey, compact: boolean): CastPortraitSheet {
+  if (key === "blurb-settler" || key === "dollop") {
+    // Both pages have one transparent row between the two authored square crops.
+    const frameSize = compact ? 22 : 32;
+    return {
+      crop: { frameSize, pageHeight: 2 * frameSize + 1, y: key === "dollop" ? frameSize + 1 : 0 },
+      frames: 1,
+      url: `/art/phantom/portraits/phantom-${compact ? "compact" : "full"}.png`,
+    };
+  }
+  return { frames: castFrames(key).frames, url: castSheet(key, compact) };
+}
+
+/** A standalone authored strip, also used by the cast page producer. */
 export function castSheet(key: CastKey, compact: boolean): string {
   const { home } = CAST[key];
   const folder = home === "core" ? "/art/portraits" : `/art/${home}/portraits`;
