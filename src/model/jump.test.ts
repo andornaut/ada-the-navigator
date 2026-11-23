@@ -181,7 +181,7 @@ describe("quantum jump home", () => {
     expect(model.state.flight!.levels.weapons.rapidMissile).toBe(3);
   });
 
-  it("loses the flight's layout, enemies, pickups and half its ore, keeping quests and the story's item", () => {
+  it("loses the flight and its undeposited ore, preserving quest progress and the story item", () => {
     const model = launched();
     const flight = model.state.flight!;
     const seed = flight.seed;
@@ -219,8 +219,7 @@ describe("quantum jump home", () => {
     const next = model.state.flight!;
     expect(next.seed).toBe(seed);
     expect(next.encounterSeed).not.toBe(encounterSeed);
-    // Of 3 ore, the jump keeps ceil(3 / 2).
-    expect(next.cargo).toBe(2);
+    expect(next.cargo).toBe(0);
     expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);
   });
 

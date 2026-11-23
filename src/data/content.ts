@@ -463,7 +463,7 @@ export const CONTENT: GameContent = {
     jump: "Jump",
     jumpHome: "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     jumpHomeOreLost:
-      'Astra: "We\'re safe, and that matters most. We lost half the ore we were carrying."',
+      'Astra: "We\'re safe, and that matters most. We lost all the ore we were carrying."',
     landmark1Beacon1: "Daisy Beacon",
     landmark1Beacon2: "Bee Light",
     landmark1Beacon3: "Sunrise Buoy",

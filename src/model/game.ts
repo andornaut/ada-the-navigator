@@ -2371,30 +2371,33 @@ export class GameModel {
     this.closeSelection();
     this.launch();
   }
-  private home(forced: boolean, keptOre?: (ore: number) => number): void {
+  private home(forced: boolean): void {
     if (!forced && this.inDanger) {
       this.notify(this.label("travelUnavailable"));
       return;
     }
-    this.endFlight(keptOre);
+    this.endFlight(forced ? "lose" : "keep");
     this.beginVisit();
   }
   /**
    * Ends the flight for Earth, Jump or the shield-failure jump (rules.md "What each event
-   * keeps"): the held job keeps its carried item and the story its item, undeposited ore (all of
-   * it unless `keptOre` says less) stays aboard for the next flight in any galaxy, pickups
+   * keeps"): the held job keeps its carried item and the story its item. Undeposited ore stays
+   * aboard for the next flight after voluntary travel and is lost on shield failure. Pickups
    * go with the flight, a towed craft returns to where it was stranded, a guided calf and Pip
    * return to their starts with the activity still held, and a scene still due its line replays
    * at the hub next time. An in-flight notice ends with its flight.
    */
-  private endFlight(keptOre: (ore: number) => number = (ore) => ore): void {
+  private endFlight(cargo: "keep" | "lose" = "keep"): void {
     this.pickupFeedback = [];
     this.queuedNeedleTalk = false;
     this.closeGalaxyMapInFlight();
     const flight = this.state.flight;
-    const ore = flight ? keptOre(flight.cargo) : 0;
-    if (flight && ore > 0) {
-      this.state.economy.cargo = ore;
+    if (flight) {
+      if (cargo === "keep" && flight.cargo > 0) {
+        this.state.economy.cargo = flight.cargo;
+      } else {
+        delete this.state.economy.cargo;
+      }
     }
     this.resetActivity(this.state.selectedGalaxy);
     // A story scene still due its line replays at the hub on the next flight.
@@ -2493,8 +2496,8 @@ export class GameModel {
     this.explore(f);
   }
   /**
-   * Shield depletion quantum jumps Ada home and costs only the flight: its layout, open-space
-   * enemies, pickups and the smaller half of its undeposited ore, so she keeps ceil(n / 2) of n.
+   * Shield depletion quantum jumps Ada home and ends the flight. Its open-space enemies,
+   * pickups and all undeposited ore are lost.
    * Weapons, levels, Stardust, purchases, accepted quests and story progress stay. She lands at
    * night and sleeps while Astra recharges overnight. The jump-home line shows on its page only,
    * never as a notice carried into the next flight.
@@ -2503,10 +2506,8 @@ export class GameModel {
     if (!this.state.flight) {
       return;
     }
-    const kept = (ore: number) => Math.ceil(ore / 2);
-    const carried = this.state.flight.cargo;
-    const oreLost = kept(carried) < carried;
-    this.home(true, kept);
+    const oreLost = this.state.flight.cargo > 0;
+    this.home(true);
     const line = this.label("jumpHome");
     const page = oreLost ? `${line}\n${this.label("jumpHomeOreLost")}` : line;
     this.depletionContinuation = true;

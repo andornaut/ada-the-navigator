@@ -17,7 +17,7 @@ it.each([
       text:
         "Recharges after 17 seconds without damage. " +
         `Ore fuels recharge above ${ECONOMY.shieldRecharge.freeCapacity * 100}%. ` +
-        "If depleted, Astra jumps you home and you lose half your ore.",
+        "If depleted, Astra jumps you home and you lose all carried ore.",
       title,
     });
     expect(view).toEqual(before);

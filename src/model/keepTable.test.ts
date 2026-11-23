@@ -53,23 +53,28 @@ describe("what each event keeps (rules.md)", () => {
     expect(model.state.progress[1].questItem).toBe("food");
   });
 
-  it("keeps the held job's item, the story's item and all ore on Earth, losing the tow", () => {
-    const model = loaded();
-    model.returnHome();
-    expect(model.state.flight).toBeNull();
-    expect(model.state.tasks[1]).toMatchObject({ carrying: true });
-    expect(model.state.progress[1].questItem).toBe("food");
-    // The ore stays aboard with Ada through a save.
-    expect(JSON.parse(model.save())).toMatchObject({ economy: { cargo: 3 } });
-    readStory(model);
-    model.startGalaxy(1);
-    // The next flight starts with the ore and no tow, the items still aboard.
-    expect(model.state.flight!.cargo).toBe(3);
-    expect(model.state.economy.cargo).toBeUndefined();
-    expect(model.state.flight!.tow).toBeUndefined();
-    expect(model.state.progress[1].questItem).toBe("food");
-    expect(model.state.tasks[1]).toMatchObject({ carrying: true });
-  });
+  it.each([0, 3])(
+    "keeps the held job's item, the story's item and all %i ore on Earth, losing the tow",
+    (ore) => {
+      const model = loaded();
+      model.state.flight!.cargo = ore;
+      model.state.economy.cargo = 19;
+      model.returnHome();
+      expect(model.state.flight).toBeNull();
+      expect(model.state.tasks[1]).toMatchObject({ carrying: true });
+      expect(model.state.progress[1].questItem).toBe("food");
+      // The ore stays aboard with Ada through a save.
+      expect(JSON.parse(model.save()).economy.cargo).toBe(ore || undefined);
+      readStory(model);
+      model.startGalaxy(1);
+      // The next flight starts with the ore and no tow, the items still aboard.
+      expect(model.state.flight!.cargo).toBe(ore);
+      expect(model.state.economy.cargo).toBeUndefined();
+      expect(model.state.flight!.tow).toBeUndefined();
+      expect(model.state.progress[1].questItem).toBe("food");
+      expect(model.state.tasks[1]).toMatchObject({ carrying: true });
+    },
+  );
 
   /** An enemy shot depletes the shield where Ada is, as jump.test.ts does. */
   const deplete = (model: GameModel) => {
@@ -101,27 +106,22 @@ describe("what each event keeps (rules.md)", () => {
     expect(model.state.economy.cargo).toBeUndefined();
   });
 
-  it.each([
-    [1, 1],
-    [2, 1],
-    [3, 2],
-    [11, 6],
-  ])("keeps ceil(n / 2) of %i ore on a shield-failure jump: %i", (carried, kept) => {
+  it.each([1, 2, 3, 11])("loses all %i ore on a shield-failure jump", (carried) => {
     const model = loaded();
     model.state.flight!.cargo = carried;
     const stardust = model.state.economy.stardust;
     deplete(model);
-    expect(model.state.economy.cargo).toBe(kept);
+    expect(model.state.economy.cargo).toBeUndefined();
     expect(model.state.economy.stardust).toBe(stardust);
     const page = model.storyView?.page;
     expect(page?.id).toBe("jumpHome");
     // The page names lost ore only when some was lost.
-    expect(page?.text.includes(CONTENT.labels.jumpHomeOreLost ?? "")).toBe(kept < carried);
+    expect(page?.text).toContain(CONTENT.labels.jumpHomeOreLost);
     readStory(model);
-    // The kept ore travels with Ada, so another galaxy's flight starts with it.
+    // A new galaxy starts with an empty hold.
     model.state.unlocked.push(2);
     model.startGalaxy(2);
-    expect(model.state.flight!.cargo).toBe(kept);
+    expect(model.state.flight!.cargo).toBe(0);
   });
 
   it("says on the jump-home page when ore was lost, and keeps the job's item", () => {
@@ -131,7 +131,7 @@ describe("what each event keeps (rules.md)", () => {
     expect(page?.id).toBe("jumpHome");
     expect(page?.text).toContain(CONTENT.labels.jumpHomeOreLost);
     expect(CONTENT.labels.jumpHomeOreLost).toBe(
-      'Astra: "We\'re safe, and that matters most. We lost half the ore we were carrying."',
+      'Astra: "We\'re safe, and that matters most. We lost all the ore we were carrying."',
     );
     expect(model.state.tasks[1]).toMatchObject({ carrying: true });
     // Without ore aboard the page keeps its one line.

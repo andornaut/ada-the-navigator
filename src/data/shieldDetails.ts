@@ -2,6 +2,6 @@
 export const SHIELD_DETAILS = {
   description:
     "Recharges after {delay} seconds without damage. Ore fuels recharge above {freePercent}%. " +
-    "If depleted, Astra jumps you home and you lose half your ore.",
+    "If depleted, Astra jumps you home and you lose all carried ore.",
   quantity: "{current} / {maximum} HP",
 } as const;
