@@ -3,7 +3,7 @@
 // (frame, display, pivot, drawn collision parts, world footprints, drift and spin data, backdrop
 // tints), resource-rocks.json (the medium and large shapes with an ore crystal cluster) and
 // links both from the root manifest.
-// Usage: node art/tools/asteroids.ts [--backdrop-only|--m1-sheet|--rotating-sheets]
+// Usage: node art/tools/asteroids.ts [--backdrop-only|--m1-sheet|--rotating-sheets|--resource-sheets]
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -34,6 +34,7 @@ import {
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const svgDir = `${art}asteroids/`;
 const catalogPath = `${art}asteroids.json`;
+const resourcePath = `${art}resource-rocks.json`;
 const M1_ID = "asteroid-m1";
 const sheetFile = (id: string) => `${id}-sheet.svg`;
 const sheetUrl = (id: string) => `/art/asteroids/${sheetFile(id)}`;
@@ -157,6 +158,8 @@ const BACKDROP: readonly { id: string; width: number; seed: number; aspect: numb
 const RESOURCES = SHAPES.filter(({ size }) => size === "medium" || size === "large").map(
   (shape) => ({ ...shape, id: shape.id.replace("asteroid-", "resource-"), shape: shape.id }),
 );
+
+const ROTATING_RESOURCES = RESOURCES.filter(({ size }) => size === "medium" && CLASSES[size].spin);
 
 // ------------------------------------------------------------------ maths
 
@@ -673,14 +676,14 @@ function rock(write: FrameWriter, resource: boolean, shape: (typeof SHAPES)[numb
 
 type Shape = (typeof SHAPES)[number];
 
-function rockSheet(shape: Shape) {
+function rockSheet(shape: Shape, resource = false) {
   const { id } = shape;
   const frames: { file: string; source: string }[] = [];
   const entry = rock(
     (file, source) => {
       frames.push({ file, source });
     },
-    false,
+    resource,
     shape,
   );
   const { width, height } = entry.frame;
@@ -695,7 +698,8 @@ function rockSheet(shape: Shape) {
     throw new Error(`Invalid rotating asteroid sheet: ${id}`);
   }
   const namespace = "http://www.w3.org/2000/svg";
-  const root = `<svg xmlns="${namespace}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+  const intrinsicScale = resource ? DISPLAY : 1;
+  const root = `<svg xmlns="${namespace}" width="${width * intrinsicScale}" height="${height * intrinsicScale}" viewBox="0 0 ${width} ${height}">`;
   const roots = frames.map(({ file, source }, k) => {
     if (file !== `${id}-${k}.svg` || !source.startsWith(root) || !source.endsWith("</svg>")) {
       throw new Error(`Invalid rotating asteroid frame: ${file}`);
@@ -713,50 +717,95 @@ function writeChanged(path: string, text: string) {
   }
 }
 
-type Catalog = {
-  asteroids: { id: string; svgSheet?: string }[];
-};
+type CatalogRow = { id: string; svgSheet?: string };
+type Catalog = { asteroids: CatalogRow[] };
+type ResourceCatalog = { displayScale: number; rocks: CatalogRow[] };
 
-async function catalogText(data: unknown) {
-  return format(json(data), { ...(await resolveConfig(catalogPath)), filepath: catalogPath });
+async function catalogText(data: unknown, path = catalogPath) {
+  return format(json(data), { ...(await resolveConfig(path)), filepath: path });
 }
 
-async function selectRockSheets(catalog: Catalog, shapes: readonly Shape[], retireM1: boolean) {
+function resourceSheetRows(catalog: ResourceCatalog) {
+  const rows = catalog.rocks.filter(({ svgSheet }) => svgSheet !== undefined);
+  const selected = new Map(rows.map((row) => [row.id, row]));
+  if (
+    rows.length &&
+    (catalog.displayScale !== DISPLAY ||
+      rows.length !== ROTATING_RESOURCES.length ||
+      ROTATING_RESOURCES.some(({ id }) => selected.get(id)?.svgSheet !== sheetUrl(id)))
+  ) {
+    throw new Error("Select the complete rotating Medium resource sheet set at its authored scale");
+  }
+  return selected;
+}
+
+function checkedRockSheet(row: CatalogRow, shape: Shape, resource: boolean, requireLoose: boolean) {
+  const { id } = shape;
+  const { entry, frames, text } = rockSheet(shape, resource);
+  const original = { ...row };
+  delete original.svgSheet;
+  if (!isDeepStrictEqual(JSON.parse(json(entry)), original)) {
+    throw new Error(`The ${id} model differs from the installed catalog`);
+  }
+  const standalone = frames.filter(({ file }) => existsSync(svgDir + file));
+  if (requireLoose && standalone.length !== frames.length) {
+    throw new Error(`Missing standalone frames for ${id}`);
+  }
+  for (const { file, source } of standalone) {
+    if (readFileSync(svgDir + file, "utf8") !== source) {
+      throw new Error(`${file} differs from the ${id} model`);
+    }
+  }
+  return { entry, standalone, text };
+}
+
+async function selectRockSheets(
+  catalog: Catalog | ResourceCatalog,
+  shapes: readonly Shape[],
+  retireM1 = false,
+) {
+  const resource = "rocks" in catalog;
+  const rows = resource ? catalog.rocks : catalog.asteroids;
+  const catalogFile = resource ? resourcePath : catalogPath;
+  if (resource) {
+    if (catalog.displayScale !== DISPLAY) throw new Error("Unexpected resource rock display scale");
+    resourceSheetRows(catalog);
+  }
   const sheets = shapes.map((shape) => {
     const { id } = shape;
-    const row = catalog.asteroids.find((candidate) => candidate.id === id);
+    const row = rows.find((candidate) => candidate.id === id);
     const path = sheetUrl(id);
     if (!row || (row.svgSheet !== undefined && row.svgSheet !== path)) {
       throw new Error(`The asteroid catalog must own ${id}`);
     }
-    const { entry, frames, text } = rockSheet(shape);
-    const original = { ...row };
-    delete original.svgSheet;
-    if (!isDeepStrictEqual(JSON.parse(json(entry)), original)) {
-      throw new Error(`The ${id} model differs from the installed catalog`);
-    }
-    const standalone = frames.filter(({ file }) => existsSync(svgDir + file));
-    if (!retireM1 && row.svgSheet === undefined && standalone.length !== frames.length) {
-      throw new Error(`Missing standalone frames for ${id}`);
-    }
-    for (const { file, source } of standalone) {
-      if (readFileSync(svgDir + file, "utf8") !== source) {
-        throw new Error(`${file} differs from the ${id} model`);
-      }
-    }
-    return { id, path, row, standalone, text };
+    return {
+      id,
+      path,
+      row,
+      ...checkedRockSheet(row, shape, resource, !retireM1 && row.svgSheet === undefined),
+    };
   });
 
   for (const { path, row } of sheets) row.svgSheet = path;
-  const updated = await catalogText(catalog);
+  const updated = await catalogText(catalog, catalogFile);
   for (const { id, text } of sheets) writeChanged(svgDir + sheetFile(id), text);
-  writeChanged(catalogPath, updated);
+  writeChanged(catalogFile, updated);
   if (retireM1) {
     for (const { file } of sheets[0]!.standalone) rmSync(svgDir + file, { force: true });
   }
 }
 
 async function rebuild(catalog: Catalog, backdropOnly: boolean) {
+  const selectedResources =
+    !backdropOnly && existsSync(resourcePath)
+      ? resourceSheetRows(JSON.parse(readFileSync(resourcePath, "utf8")) as ResourceCatalog)
+      : new Map<string, CatalogRow>();
+  const packedResources = new Map(
+    ROTATING_RESOURCES.flatMap((shape) => {
+      const row = selectedResources.get(shape.id);
+      return row ? [[shape.id, checkedRockSheet(row, shape, true, false)] as const] : [];
+    }),
+  );
   const selected = new Set(
     catalog.asteroids.filter(({ id, svgSheet }) => svgSheet === sheetUrl(id)).map(({ id }) => id),
   );
@@ -773,7 +822,10 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
 
   // A resource rock stands on its plain shape's base: the footprints must match exactly.
   const resources = (backdropOnly ? [] : RESOURCES).map((shape) => {
-    const entry = rock(writeFrame, true, shape);
+    const packed = packedResources.get(shape.id);
+    const entry = packed
+      ? { ...packed.entry, svgSheet: sheetUrl(shape.id) }
+      : rock(writeFrame, true, shape);
     const plain = asteroids.find(({ id }) => id === shape.shape)!;
     const same =
       entry.footprintRadius === plain.footprintRadius &&
@@ -782,6 +834,7 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
           JSON.stringify(frame.footprint) === JSON.stringify(plain.frames[k]!.footprint),
       );
     if (!same) throw new Error(`${shape.id} footprints differ from ${shape.shape}`);
+    if (packed) writeChanged(svgDir + sheetFile(shape.id), packed.text);
     return entry;
   });
 
@@ -824,15 +877,11 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
 
   // Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
   if (!backdropOnly) {
-    const resourcePath = `${art}resource-rocks.json`;
     writeFileSync(
       resourcePath,
-      await format(
-        json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
-        {
-          ...(await resolveConfig(resourcePath)),
-          filepath: resourcePath,
-        },
+      await catalogText(
+        { version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources },
+        resourcePath,
       ),
     );
 
@@ -848,18 +897,24 @@ const args = process.argv.slice(2);
 const backdropOnly = args.includes("--backdrop-only");
 const m1Only = args.includes("--m1-sheet");
 const rotatingOnly = args.includes("--rotating-sheets");
-if ([backdropOnly, m1Only, rotatingOnly].filter(Boolean).length > 1) {
-  throw new Error("Choose one of --backdrop-only, --m1-sheet or --rotating-sheets");
+const resourceOnly = args.includes("--resource-sheets");
+if ([backdropOnly, m1Only, rotatingOnly, resourceOnly].filter(Boolean).length > 1) {
+  throw new Error("Choose one asteroid export mode");
 }
-const catalog =
-  m1Only || rotatingOnly || backdropOnly || existsSync(catalogPath)
-    ? (JSON.parse(readFileSync(catalogPath, "utf8")) as Catalog)
-    : { asteroids: [] };
-if (m1Only || rotatingOnly) {
-  const shapes = SHAPES.filter(({ id, size }) =>
-    m1Only ? id === M1_ID : id !== M1_ID && Boolean(CLASSES[size].spin),
-  );
-  await selectRockSheets(catalog, shapes, m1Only);
+if (resourceOnly) {
+  const catalog = JSON.parse(readFileSync(resourcePath, "utf8")) as ResourceCatalog;
+  await selectRockSheets(catalog, ROTATING_RESOURCES);
 } else {
-  await rebuild(catalog, backdropOnly);
+  const catalog =
+    m1Only || rotatingOnly || backdropOnly || existsSync(catalogPath)
+      ? (JSON.parse(readFileSync(catalogPath, "utf8")) as Catalog)
+      : { asteroids: [] };
+  if (m1Only || rotatingOnly) {
+    const shapes = SHAPES.filter(({ id, size }) =>
+      m1Only ? id === M1_ID : id !== M1_ID && Boolean(CLASSES[size].spin),
+    );
+    await selectRockSheets(catalog, shapes, m1Only);
+  } else {
+    await rebuild(catalog, backdropOnly);
+  }
 }
