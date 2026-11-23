@@ -6,9 +6,9 @@ import { GameObjects, Loader, Scenes } from "phaser";
 
 import {
   ASTEROID_ART,
-  RESOURCE_ART,
   type AsteroidArt,
   readResourceRocks,
+  RESOURCE_ART,
 } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
@@ -721,12 +721,12 @@ function registerRockSheets(rocks: readonly AsteroidArt[], intrinsicScale: numbe
     const { height, width } = rock.frame;
     rock.frames.forEach(({ file }, index) => {
       rockSheetFrames.set(file, {
-        id: `${rock.id}-${index}`,
-        path,
         height,
-        width,
+        id: `${rock.id}-${index}`,
         intrinsicHeight: height * intrinsicScale,
         intrinsicWidth: width * intrinsicScale,
+        path,
+        width,
       });
     });
   }
