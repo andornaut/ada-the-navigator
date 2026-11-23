@@ -89,7 +89,7 @@ export interface EconomyCatalog {
    * The Shield at levels 2 and 3: capacity and seconds from empty to full; level 1 is the content
    * tuning's own. The recharge delay is the same at every level.
    */
-  shieldLevels: Readonly<Record<"capacity" | "fill", readonly [number, number]>>;
+  shieldLevels: { readonly capacity: readonly [number, number] };
   /** Maximum-capacity fraction funded per whole ore and the ore-free recharge floor. */
   shieldRecharge: Readonly<{ capacityPerOre: number; freeCapacity: number }>;
   /** Multipliers on the base engine timing, one per level from level 1. */
@@ -276,7 +276,7 @@ export const ECONOMY: EconomyCatalog = {
   },
   // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
   // Every level waits 30 s after damage (gameplay/economy.md).
-  shieldLevels: { capacity: [15, 20], fill: [45, 30] },
+  shieldLevels: { capacity: [15, 20] },
   shieldRecharge: { capacityPerOre: 0.01, freeCapacity: 0.1 },
   stardustPickupGap: 2,
   stardustPickupRadius: 5,

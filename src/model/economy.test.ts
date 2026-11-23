@@ -1185,9 +1185,9 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 10, 30, 60, 175, 1, 0.08, 0.16],
-    [2, 15, 30, 45, 200, 0.9, 0.07, 0.14],
-    [3, 20, 30, 30, 225, 0.8, 0.06, 0.12],
+    [1, 10, 25, 25, 175, 1, 0.08, 0.16],
+    [2, 15, 25, 25, 200, 0.9, 0.07, 0.14],
+    [3, 20, 25, 25, 225, 0.8, 0.06, 0.12],
   ])(
     "applies shield, recharge and engine level %i",
     (level, shield, delay, fill, speed, seconds, aimTurn, turn) => {
@@ -1322,12 +1322,12 @@ describe("upgrade effects", () => {
     value.shield = 5;
     value.cargo = 100;
     value.sinceDamage = 0;
-    // Level 2 waits 30 s, as every level does, then refills 15 HP in 45 s.
-    stepFlight(CONTENT, 30 - 0.05, idle, value);
+    // Level 2 waits 25 s, then refills 4% of its 15 HP capacity per second.
+    stepFlight(CONTENT, 25 - 0.05, idle, value);
     expect(value.shield).toBe(5);
     stepFlight(CONTENT, 0.05 + 9, idle, value);
     // Within one 1/60 s step of the refill rate.
-    expect(Math.abs(value.shield - (5 + (15 / 45) * 9))).toBeLessThan(15 / 45 / 60 + 1e-9);
+    expect(Math.abs(value.shield - (5 + (15 / 25) * 9))).toBeLessThan(15 / 25 / 60 + 1e-9);
   });
 
   it("raises Ada's top speed and acceleration with engine tuning", () => {

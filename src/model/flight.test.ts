@@ -740,12 +740,12 @@ describe("shield in battle", () => {
     flight.cargo = 100;
     flight.sinceDamage = CONTENT.tuning.shieldRechargeDelay;
     // Battle alone never holds the recharge: with its shots cleared before they land, the
-    // shield refills 10 HP over 60 seconds beside the attacker.
+    // shield refills at 4% per second beside the attacker.
     for (let step = 0; step < 30; step++) {
       flight.shots = [];
       stepFlight(CONTENT, 0.1, idle, flight);
     }
-    expect(flight.shield).toBeCloseTo(4 + (10 / 60) * 3, 1);
+    expect(flight.shield).toBeCloseTo(4 + (10 / 25) * 3, 1);
     // A hit restarts the full delay.
     flight.objects = [];
     flight.shots = [];
@@ -754,7 +754,7 @@ describe("shield in battle", () => {
     stepFlight(CONTENT, CONTENT.tuning.shieldRechargeDelay - 0.1, idle, flight);
     expect(flight.shield).toBeCloseTo(held, 3);
     stepFlight(CONTENT, 0.1 + 6, idle, flight);
-    expect(flight.shield).toBeCloseTo(held + (10 / 60) * 6, 1);
+    expect(flight.shield).toBeCloseTo(held + (10 / 25) * 6, 1);
   });
 });
 
