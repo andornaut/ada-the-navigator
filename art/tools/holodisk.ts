@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -88,12 +88,19 @@ function beacon(colour: string): Frame {
   return px;
 }
 
+type Sprite = { key: string; png: string; json: string; once: string[] };
+const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
+const registered = new Set(manifest.sprites.map(({ key }) => key));
 const ICONS = [
   ["icon-holodisk", 16],
   ["icon-holodisk-20", 20],
   ["icon-holodisk-24", 24],
 ] as const;
-for (const [key, n] of ICONS) {
+// Tech's selection covers the Shop and shared resource slots. Keep the 24 px raster.
+const emittedIcons = ICONS.filter(
+  ([key, size]) => size === 24 || registered.has(key) || !existsSync(`${art}ui/icons/${key}.svg`),
+);
+for (const [key, n] of emittedIcons) {
   await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
     ["rest", [holodisk(n)], 100],
   ]);
@@ -133,10 +140,8 @@ placeEntries("core", "holodisk", [
 ]);
 
 // UI subset entries stay sorted by key.
-type Sprite = { key: string; png: string; json: string; once: string[] };
-const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 const keys: readonly (readonly [string, string[]])[] = [
-  ...ICONS.map(([key]) => [key, []] as const),
+  ...emittedIcons.map(([key]) => [key, []] as const),
 ];
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.some(([k]) => k === key)),

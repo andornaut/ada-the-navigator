@@ -2,7 +2,7 @@
 // and a towed craft, 20 by 20 pixel art from character grids, each inside its own ink edge so it
 // reads on every field. Writes the UI subset sheets and their ui/manifest.json entries.
 // Usage: node art/tools/cargo-icons.ts
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -79,8 +79,14 @@ async function prettify(path: string): Promise<void> {
   writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
 }
 
+type Sprite = { key: string; png: string; json: string; once: string[] };
+const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
+const registered = new Set(manifest.sprites.map(({ key }) => key));
+
 const frames: Record<string, Frame> = { "icon-ore-20": resourceIcon(ORE_PICKUP, 20) };
 for (const [key, { palette, rows }] of Object.entries(ICONS)) {
+  // Tech selects the vector by removing the paired raster's manifest row.
+  if (!registered.has(key) && existsSync(`${art}ui/icons/${key}.svg`)) continue;
   if (rows.length !== 20 || rows.some((row) => row.length !== 20)) {
     throw new Error(`${key} is not 20 by 20`);
   }
@@ -99,8 +105,6 @@ for (const [key, frame] of Object.entries(frames)) {
 }
 
 // UI subset entries stay sorted by key.
-type Sprite = { key: string; png: string; json: string; once: string[] };
-const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 const keys = Object.keys(frames);
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.includes(key)),
