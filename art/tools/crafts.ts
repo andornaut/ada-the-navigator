@@ -289,12 +289,12 @@ const sourceCrafts: Craft[] = [
       {
         plan: mirror([
           [0, -31],
-          [8, -10],
-          [5, 3],
-          [12, 8],
-          [19.5, 18],
-          [17, 22],
-          [8, 16],
+          [7.6, -10],
+          [5.1, 1.5],
+          [12.7, 6.4],
+          [19.5, 16.7],
+          [17.4, 20.9],
+          [8, 15.5],
           [4, 14],
           [3.5, 22],
         ]),
@@ -318,18 +318,13 @@ const sourceCrafts: Craft[] = [
         side: "#514575",
         loose: true,
         topDetail: {
-          // The narrow Phaser trace opens into the angled housing.
           color: "#474582",
           plan: [
-            [0.5, 0.15],
-            [0.57, 0.26],
-            [0.57, 0.33],
-            [0.65, 0.39],
-            [0.59, 0.49],
-            [0.41, 0.49],
-            [0.35, 0.39],
-            [0.43, 0.33],
-            [0.43, 0.26],
+            [0.5, 0.13],
+            [0.55, 0.22],
+            [0.55, 0.4],
+            [0.45, 0.4],
+            [0.45, 0.22],
           ],
         },
       },
@@ -347,59 +342,47 @@ const sourceCrafts: Craft[] = [
         loose: true,
       },
       {
-        plan: mirror([
+        plan: [
           [0, -10],
-          [3.7, -7],
-          [2.7, 2],
+          [3.25, -3.2],
           [0, 7],
-        ]),
+          [-3.25, -3.2],
+        ],
         z0: 5.5,
         z1: 7,
-        top: "#474582",
-        side: visorSide,
+        top: visor,
+        side: visor,
       },
       ...[-1, 1].flatMap((side): Part[] => {
-        const nacelle: Plan = [
-          [12, -1],
-          [18, 5],
-          [21.44, 19],
-          [18, 25],
-          [13, 19],
-          [10, 9],
-        ];
-        const stripe: Plan = [
-          [14, 7],
-          [17, 10],
-          [19, 19],
-          [16, 16],
-        ];
-        const lamp: Plan = [
-          [16.05, 12.5],
-          [17.05, 13.65],
-          [17.85, 16.6],
-          [16.7, 15.5],
-        ];
+        const wing = (plan: Plan): Plan => plan.map(([x, y]) => [side * x, y] as const);
         return [
           {
-            plan: nacelle.map(([x, y]) => [side * x, y] as const),
+            plan: wing([
+              [11.4, -1.5],
+              [17.2, 3.15],
+              [21.44, 16.9],
+              [18.15, 23],
+              [13.25, 18.9],
+              [9.85, 7.6],
+            ]),
             z0: 0.5,
             z1: 4.5,
             top: "#8170cc",
             side: "#4d427d",
           },
           {
-            plan: stripe.map(([x, y]) => [side * x, y] as const),
+            plan: wing([
+              [12, -0.45],
+              [16.95, 3.5],
+              [20.85, 16.55],
+              [19.4, 16.75],
+              [15.72, 4.35],
+              [12.45, 1.1],
+            ]),
             z0: 4.5,
-            z1: 5.2,
-            top: "#8170cc",
-            side: "#4d427d",
-          },
-          {
-            plan: lamp.map(([x, y]) => [side * x, y] as const),
-            z0: 5.2,
-            z1: 5.2,
-            top: "#a9d9ff",
-            side: "#a9d9ff",
+            z1: 4.5,
+            top: "#bcaac1",
+            side: "#bcaac1",
             decal: true,
           },
         ];

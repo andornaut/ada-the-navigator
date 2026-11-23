@@ -123,6 +123,24 @@ const family = new Set<string>([
   wreckEmber,
 ]);
 
+// Preserve the Interceptor's pale spine against dark blue slate and cool wing bevels.
+const interceptorSwap = {
+  ...swap,
+  "#282644": "#202a40",
+  "#342d58": "#2a3854",
+  "#474582": "#3a4d73",
+  "#4d427d": "#354662",
+  "#514575": "#3e5273",
+  "#596ccc": "#4c74b2",
+  "#8170cc": "#58729f",
+  "#a9d9ff": "#b5e4ff",
+  "#bcaac1": "#d8eaff",
+  "#f1e5c9": "#d9e1ea",
+  [amber]: "#94aaca",
+  [visor]: "#253952",
+};
+const interceptorPalette = new Set([...family, ...Object.values(interceptorSwap)]);
+
 // Speed jets, slow to fast: a deep crimson tail opening to rose, round a crimson core that runs to
 // a near-white warm centre.
 const needleJets: JetColors = {
@@ -201,10 +219,17 @@ for (const [file, content] of files) {
   const path = `${dir}${file}`;
   // Hardpoint layouts carry no colour.
   const drawn = file.endsWith(".svg") || file.endsWith("-shards.json");
+  const interceptor = file.startsWith("interceptor-");
   const text = file.endsWith("-jets.json")
     ? swapColours(jetSwap, jetFamily, file, content)
     : drawn
-      ? (heavySurface("needle", file, content) ?? swapColours(swap, family, file, content))
+      ? (heavySurface("needle", file, content) ??
+        swapColours(
+          interceptor ? interceptorSwap : swap,
+          interceptor ? interceptorPalette : family,
+          file,
+          content,
+        ))
       : content;
   texts.set(
     file,
