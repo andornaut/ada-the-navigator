@@ -3,7 +3,7 @@
   "assets": [
     {
       "id": "phantom-station-0",
-      "path": "/art/phantom/station-0.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -15,11 +15,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 0
+      "frameIndex": 0,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-1",
-      "path": "/art/phantom/station-1.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -31,11 +34,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 1
+      "frameIndex": 1,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-2",
-      "path": "/art/phantom/station-2.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -47,11 +53,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 2
+      "frameIndex": 2,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-3",
-      "path": "/art/phantom/station-3.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -63,11 +72,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 3
+      "frameIndex": 3,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-4",
-      "path": "/art/phantom/station-4.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -79,11 +91,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 4
+      "frameIndex": 4,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-5",
-      "path": "/art/phantom/station-5.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -95,11 +110,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 5
+      "frameIndex": 5,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-6",
-      "path": "/art/phantom/station-6.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -111,11 +129,14 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 6
+      "frameIndex": 6,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "phantom-station-7",
-      "path": "/art/phantom/station-7.svg",
+      "path": "/art/phantom/station-sheet.svg",
       "width": 352,
       "height": 144,
       "displayWidth": 231,
@@ -127,7 +148,10 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "frameIndex": 7
+      "frameIndex": 7,
+      "svgSheet": true,
+      "intrinsicWidth": 231,
+      "intrinsicHeight": 94.5
     },
     {
       "id": "outpost-homes-cracked-a",

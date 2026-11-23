@@ -17,6 +17,18 @@ type Row = { id: string; path?: string } & Record<string, unknown>;
 const svgRoot = (size: number, intrinsic = size) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${intrinsic}" height="${intrinsic}" viewBox="0 0 ${size} ${size}">`;
 
+function headingOrigins(name: string, size: number) {
+  const wide = size * 4;
+  const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
+    {
+      value: name,
+      rectangles: Array.from({ length: ENEMY_HEADINGS }, () => ({ width: size, height: size })),
+    },
+  ])?.pages[0];
+  if (!layout || layout.height !== wide) throw new Error(`Cannot pack ${name}`);
+  return layout.placed[0]!.at;
+}
+
 function planSheets(family: IndustrialFamily, entries: readonly Row[], files: Map<string, string>) {
   const directory = family === "core" ? "/art/enemies/" : `/art/${family}/enemies/`;
   const manifest: Row[] = readManifest(family).assets;
@@ -56,11 +68,7 @@ function planSheets(family: IndustrialFamily, entries: readonly Row[], files: Ma
       if (typeof size !== "number" || !Number.isInteger(size) || size <= 0) {
         throw new Error(`Invalid raw frame for ${name}`);
       }
-      const wide = size * 4;
-      const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
-        { value: name, rectangles: names.map(() => ({ width: size, height: size })) },
-      ])?.pages[0];
-      if (!layout || layout.height !== wide) throw new Error(`Cannot pack ${name}`);
+      const origins = headingOrigins(name, size);
 
       const rows: Row[] = [];
       const selectedRow = (member: string, source: Row, frame: string, sheetMember?: string) => {
@@ -107,10 +115,10 @@ function planSheets(family: IndustrialFamily, entries: readonly Row[], files: Ma
           }
           selectedRow(aliasName, aliasRow, svg, id);
         }
-        const { x, y } = layout.placed[0]!.at[i]!;
+        const { x, y } = origins[i]!;
         return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
       });
-      groups.push({ filenames, sheet, rows, svg: `${svgRoot(wide)}${roots.join("")}</svg>\n` });
+      groups.push({ filenames, sheet, rows, svg: `${svgRoot(size * 4)}${roots.join("")}</svg>\n` });
     }
   }
   return groups;
@@ -129,4 +137,124 @@ export function packInstalledIndustrialTurrets(
     files.set(sheet, svg);
   }
   return entries.map((row) => replacements.get(row.id) ?? row);
+}
+
+const industrialHulls = ["retaliator", "retaliatorMiningFreighter"] as const;
+const coreHullConsumers = ["core", "andromeda", "needle"] as const;
+const directoryOf = (family: IndustrialFamily) =>
+  family === "core" ? "/art/enemies/" : `/art/${family}/enemies/`;
+const hullId = (family: IndustrialFamily, name: string, heading: number) =>
+  `enemy-${prefixes[family]}${name}-${heading}`;
+
+export function packInstalledIndustrialHulls(
+  family: IndustrialFamily,
+  files: Map<string, string>,
+  entries: readonly Row[],
+  copies?: Map<string, string>,
+): readonly Row[] {
+  const owner = family === "cartwheel" ? family : "core";
+  const consumers: readonly IndustrialFamily[] = owner === "core" ? coreHullConsumers : [owner];
+  const installed: Row[] = (["core", ...GALAXIES] as const).flatMap(
+    (key) => readManifest(key).assets,
+  );
+  const registered = new Map(installed.map((row) => [row.id, row]));
+  const input = new Map(entries.map((row) => [row.id, row]));
+  const output = new Map<string, Row>();
+  const directory = directoryOf(owner);
+  const groups = [];
+
+  for (const craft of industrialHulls) {
+    const names = craft === "retaliator" ? [craft, "retaliatorCargoHauler"] : [craft];
+    const headings = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => heading);
+    const ids = new Set(
+      consumers.flatMap((key) =>
+        names.flatMap((name) => headings.map((i) => hullId(key, name, i))),
+      ),
+    );
+    const sheet = `${craft}-sheet.svg`;
+    const path = directory + sheet;
+    if (
+      ![...ids].some(
+        (id) => registered.get(id)?.svgSheet === true || registered.get(id)?.path === path,
+      )
+    ) {
+      continue;
+    }
+
+    const filenames = names.flatMap((name) => headings.map((i) => `${name}-${i}.svg`));
+    const paths = new Set([path, ...filenames.map((file) => directory + file)]);
+    const referrer = installed.find((row) => row.path && paths.has(row.path) && !ids.has(row.id));
+    if (referrer) throw new Error(`Industrial hull is also used by ${referrer.id}`);
+
+    const size = input.get(hullId(family, craft, 0))?.width;
+    if (typeof size !== "number" || !Number.isInteger(size) || size <= 0) {
+      throw new Error(`Invalid raw frame for ${family} ${craft}`);
+    }
+    const origins = headingOrigins(craft, size);
+    const roots = headings.map((i) => {
+      const id = hullId(family, craft, i);
+      const row = input.get(id);
+      const svg = files.get(`${craft}-${i}.svg`);
+      if (
+        !row ||
+        row.archetype !== "retaliator" ||
+        row.directionIndex !== i ||
+        row.width !== size ||
+        row.height !== size ||
+        !svg?.startsWith(svgRoot(size)) ||
+        !svg.endsWith("</svg>")
+      ) {
+        throw new Error(`Invalid industrial hull root for ${id}`);
+      }
+
+      const member = hullId(owner, craft, i);
+      const metadata = { ...row };
+      delete metadata.family;
+      for (const key of consumers) {
+        for (const name of names) {
+          const id = hullId(key, name, i);
+          const family = prefixes[key].slice(0, -1);
+          const source: Row = { ...metadata, id, path, ...(family && { family }) };
+          const selected = {
+            ...source,
+            svgSheet: true,
+            ...(id !== member && { svgSheetMember: member }),
+          };
+          if (!isDeepStrictEqual(registered.get(id), selected)) {
+            throw new Error(`Invalid industrial hull selection for ${id}`);
+          }
+        }
+      }
+      for (const name of names) {
+        const id = hullId(family, name, i);
+        const file = `${name}-${i}.svg`;
+        const original = { ...row, id, path: directoryOf(family) + file };
+        if (!isDeepStrictEqual(input.get(id), original) || files.get(file) !== svg) {
+          throw new Error(`Industrial hull alias source differs for ${id}`);
+        }
+        output.set(id, registered.get(id)!);
+      }
+
+      const { x, y } = origins[i]!;
+      return `<svg id="${member}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+    });
+    groups.push({
+      filenames,
+      sheet,
+      path,
+      svg: `${svgRoot(size * 4)}${roots.join("")}</svg>
+`,
+    });
+  }
+
+  for (const { filenames, sheet, path, svg } of groups) {
+    if (family !== owner) {
+      if (!copies) throw new Error(`No shared hull output for ${family}`);
+      // writeOnce compares the complete sheet against the core output before registering its path.
+      copies.set(sheet, path);
+    }
+    for (const file of filenames) files.delete(file);
+    files.set(sheet, svg);
+  }
+  return output.size ? entries.map((row) => output.get(row.id) ?? row) : entries;
 }

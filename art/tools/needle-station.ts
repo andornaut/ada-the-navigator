@@ -1,8 +1,9 @@
 // The Weavers' station and its Loom hall replacement frames. Contract: art/needle.md.
 // Usage: node art/tools/needle-station.ts
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 
 import { replaceEntries } from "./manifest.ts";
+import { writeStationFrames } from "./primary-station-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import {
   dockAt,
@@ -156,7 +157,7 @@ function station(lit: boolean, hall: boolean): Face[] {
 const variants = { base: false, hall: true } as const;
 
 mkdirSync(OUT, { recursive: true });
-const entries = Object.entries(variants).flatMap(([variant, hall]) => {
+const frames = Object.entries(variants).flatMap(([variant, hall]) => {
   const name = hall ? "station-hall" : "station";
   const berths = BERTHS[variant as keyof typeof BERTHS].map(([angle, face]) =>
     dockAt(frame, angle, face, BERTH_WIDTH),
@@ -169,24 +170,23 @@ const entries = Object.entries(variants).flatMap(([variant, hall]) => {
       }
     }
     const title = `Weavers' station${hall ? ", Loom hall" : ""} ${letter.toUpperCase()}`;
-    writeFileSync(
-      `${OUT}${name}-${letter}.svg`,
-      svgText(svgFile(title, frame.width, frame.height, artwork, DESTINATION_SCALE)),
-    );
     return {
-      id: `needle-${name}-${letter}`,
-      path: `${PUBLIC}${name}-${letter}.svg`,
-      width: frame.width,
-      height: frame.height,
-      displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
-      displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
-      facing: "fixed",
-      pivot: { x: 0.5, y: frame.above / frame.height },
-      frameMs: BLINK_MS,
-      berths,
-      destination: "station",
-      variant: hall ? "loom-hall" : "base",
-      ...(hall ? { project: "loomHall" } : {}),
+      root: svgText(svgFile(title, frame.width, frame.height, artwork, DESTINATION_SCALE)),
+      entry: {
+        id: `needle-${name}-${letter}`,
+        path: `${PUBLIC}${name}-${letter}.svg`,
+        width: frame.width,
+        height: frame.height,
+        displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
+        displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
+        facing: "fixed",
+        pivot: { x: 0.5, y: frame.above / frame.height },
+        frameMs: BLINK_MS,
+        berths,
+        destination: "station",
+        variant: hall ? "loom-hall" : "base",
+        ...(hall ? { project: "loomHall" } : {}),
+      },
     };
   });
 });
@@ -195,7 +195,7 @@ const entries = Object.entries(variants).flatMap(([variant, hall]) => {
 replaceEntries(
   "needle",
   (id) => id.startsWith("needle-station-"),
-  entries,
+  writeStationFrames("needle", OUT, PUBLIC, 2, frames),
   () => true,
 );
 console.log(

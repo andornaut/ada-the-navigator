@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
+import { withStationDisplayIntrinsics } from "./primary-station-sheets.ts";
+
 import * as m from "./andromeda-models.ts";
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
@@ -241,9 +243,8 @@ mkdirSync(output, { recursive: true });
 // Every Andromeda station draws this pair in place of the trading station.
 const station = pair("station-settlers", "settlers-station", "Settlers' station", m.station);
 const stationFrame = fixedLayout(allFaces(station), 304, 240, 123);
-for (const item of station) writeFixed(stationFrame, item);
-const stationEntries = station.map((item) =>
-  fixedEntry(stationFrame, item, { station: "settlers" }),
+const stationEntries = writeFixedPair(stationFrame, station, { station: "settlers" }).map(
+  withStationDisplayIntrinsics,
 );
 replaceEntries(
   "andromeda",

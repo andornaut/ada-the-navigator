@@ -22,11 +22,15 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
-import { shards } from "./destruction.ts";
+import { shards } from "./shard-geometry.ts";
+import { installedShardPacks, linkShardPacks } from "./shard-palette-pack.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
-import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
+import {
+  packInstalledIndustrialHulls,
+  packInstalledIndustrialTurrets,
+} from "./industrial-sheets.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
 import {
   build,
@@ -182,6 +186,7 @@ const garnetEntry = (entry: Entry): Entry => ({
 });
 
 async function main() {
+  const packs = installedShardPacks();
   const args = process.argv.slice(2);
   const at = args.indexOf("--offsets");
   const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -200,7 +205,7 @@ async function main() {
       `${craft.name}-jets.json`,
       jets(craft, (yaw) => traced[yaw]!.collision),
     );
-    files.set(`${craft.name}-shards.json`, shards(craft));
+    if (!packs.has(craft.name)) files.set(`${craft.name}-shards.json`, shards(craft));
     entries.push(...hullEntries(craft.name, craft.frame).map(garnetEntry));
   }
   for (const craft of [...heavies, ...industrialHeavies]) {
@@ -246,7 +251,8 @@ async function main() {
   }
   const heavy = packInstalledHeavyParts("andromeda", texts, entries);
   const small = packInstalledSmallHullSheets("andromeda", texts, heavy.outputEntries);
-  const outputEntries = packInstalledIndustrialTurrets("andromeda", texts, small);
+  const turrets = packInstalledIndustrialTurrets("andromeda", texts, small);
+  const outputEntries = packInstalledIndustrialHulls("andromeda", texts, turrets, copies);
   const paths = writeOnce(PATH, copies, texts);
   // In Andromeda's manifest after the destinations, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-garnet-hostileStation-`.
@@ -260,6 +266,7 @@ async function main() {
     (id) => id.startsWith("craft-") || id.includes("portrait"),
   );
   const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));
+  linkShardPacks(paths, packs);
   mergeSidecars("andromeda", (craft) => names.has(craft), sidecarsIn(paths));
   console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
 }

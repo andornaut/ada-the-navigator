@@ -3,7 +3,7 @@
   "assets": [
     {
       "id": "whirlpool-station-0",
-      "path": "/art/whirlpool/station-0.svg",
+      "path": "/art/whirlpool/station-sheet.svg",
       "width": 304,
       "height": 208,
       "displayWidth": 199.5,
@@ -15,11 +15,14 @@
       },
       "frameMs": 350,
       "destination": "station",
-      "frameIndex": 0
+      "frameIndex": 0,
+      "svgSheet": true,
+      "intrinsicWidth": 199.5,
+      "intrinsicHeight": 136.5
     },
     {
       "id": "whirlpool-station-1",
-      "path": "/art/whirlpool/station-1.svg",
+      "path": "/art/whirlpool/station-sheet.svg",
       "width": 304,
       "height": 208,
       "displayWidth": 199.5,
@@ -31,11 +34,14 @@
       },
       "frameMs": 350,
       "destination": "station",
-      "frameIndex": 1
+      "frameIndex": 1,
+      "svgSheet": true,
+      "intrinsicWidth": 199.5,
+      "intrinsicHeight": 136.5
     },
     {
       "id": "whirlpool-station-2",
-      "path": "/art/whirlpool/station-2.svg",
+      "path": "/art/whirlpool/station-sheet.svg",
       "width": 304,
       "height": 208,
       "displayWidth": 199.5,
@@ -47,11 +53,14 @@
       },
       "frameMs": 350,
       "destination": "station",
-      "frameIndex": 2
+      "frameIndex": 2,
+      "svgSheet": true,
+      "intrinsicWidth": 199.5,
+      "intrinsicHeight": 136.5
     },
     {
       "id": "whirlpool-station-3",
-      "path": "/art/whirlpool/station-3.svg",
+      "path": "/art/whirlpool/station-sheet.svg",
       "width": 304,
       "height": 208,
       "displayWidth": 199.5,
@@ -63,7 +72,10 @@
       },
       "frameMs": 350,
       "destination": "station",
-      "frameIndex": 3
+      "frameIndex": 3,
+      "svgSheet": true,
+      "intrinsicWidth": 199.5,
+      "intrinsicHeight": 136.5
     },
     {
       "id": "whale-calf-0-0",

@@ -139,10 +139,9 @@ const sourceCrafts: Craft[] = [
       },
       {
         plan: mirror([
-          [0, -7],
-          [2.7, -4],
-          [4.7, 2],
-          [2.6, 7],
+          [0, -6],
+          [4.1, 1],
+          [2.65, 7],
         ]),
         z0: 3.5,
         z1: 6,
@@ -151,13 +150,17 @@ const sourceCrafts: Craft[] = [
         loose: true,
       },
       {
-        plan: box(-2.4, -16, 2.4, -5),
+        plan: mirror([
+          [2.4, -16],
+          [2.4, -9],
+          [1.55, -5],
+        ]),
         z0: 3.5,
         z1: 5.7,
         top: amber,
         side: amberSide,
       },
-      ...insignia(0, 11, 3.5, 3.5),
+      ...insignia(0, 11, 2.4, 3.5),
     ],
     mouths: [[0, 16]],
     mouthWidth: 4,
@@ -201,30 +204,13 @@ const sourceCrafts: Craft[] = [
           [12, 0],
         ];
         const plan = armour.map(([x, y]) => [side * x, y] as const);
-        const face: Plan = [
-          [12.5, -16],
-          [16.2, -14],
-          [17.6, 4.2],
-          [14.3, 10.4],
-          [10, 10.4],
-          [11.6, 4],
-          [13.3, -1],
-        ];
         return [
           {
             plan,
             z0: 5,
             z1: 7.5,
             top: "#4c64a0",
-            side: "#4c64a0",
-          },
-          {
-            plan: face.map(([x, y]) => [side * x, y] as const),
-            z0: 7.5,
-            z1: 7.5,
-            top: "#718bd0",
-            side: "#718bd0",
-            decal: true,
+            side: "#2e4065",
           },
           {
             plan: box(side * 15 - 2.8, -34, side * 15 + 2.8, -14),
@@ -237,41 +223,25 @@ const sourceCrafts: Craft[] = [
             plan: box(side * 15 - 2.4, -34, side * 15 + 2.4, -26),
             z0: 6.5,
             z1: 6.7,
-            top: "#718bd0",
+            top: "#d5e0eb",
             side: "#4c64a0",
-            topDetail: {
-              color: "#d5e0eb",
-              plan: [
-                [0.28, 0.24],
-                [0.72, 0.24],
-                [0.78, 0.46],
-                [0.64, 0.66],
-                [0.36, 0.66],
-                [0.22, 0.46],
-              ],
-            },
           },
         ];
       }),
       {
-        plan: box(-2.7, -9, 2.7, 4),
+        plan: mirror([
+          [1.65, -9],
+          [2.7, -6],
+          [2.7, 1.75],
+          [1.8, 4],
+        ]),
         z0: 5,
         z1: 7,
-        top: "#374b73",
+        top: "#405785",
         side: "#2e4065",
         loose: true,
-        topDetail: {
-          color: "#405785",
-          plan: [
-            [0.5, 0.15],
-            [0.82, 0.35],
-            [0.7, 0.84],
-            [0.3, 0.84],
-            [0.18, 0.35],
-          ],
-        },
       },
-      ...insignia(11, 15, 2.8, 5),
+      ...insignia(11, 15, 2.2, 5),
     ],
     mouths: [
       [-8, 18],

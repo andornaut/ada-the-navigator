@@ -1,11 +1,12 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
-import { editManifest, replaceEntries } from "./manifest.ts";
+import { editManifest, readManifest, replaceEntries } from "./manifest.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { hex, rgb } from "./oklab.ts";
 import { json } from "./projection.ts";
@@ -376,12 +377,64 @@ function beacon(frame: keyof typeof ARCS): string {
   ].join("\n");
 }
 
+const beaconFrames = (["a", "b"] as const).map((frame) => ({
+  id: `landmark-beacon-${frame}`,
+  file: `beacon-${frame}.svg`,
+  root: svgText(beacon(frame), SVG_DECIMALS.landmarks),
+}));
+const beaconSheetFile = "beacon-sheet.svg";
+const beaconSheetPath = `/art/landmarks/${beaconSheetFile}`;
+const installed = readManifest("core").assets.filter(
+  (row): row is { id: string; path?: unknown; svgSheet?: unknown } =>
+    beaconFrames.some(({ id }) => id === row.id),
+);
+const packedBeacon = installed.some(
+  ({ path, svgSheet }) => path === beaconSheetPath || svgSheet === true,
+);
+if (
+  packedBeacon &&
+  (installed.length !== beaconFrames.length ||
+    installed.some(
+      ({ id, path, svgSheet }, index) =>
+        id !== beaconFrames[index]!.id || path !== beaconSheetPath || svgSheet !== true,
+    ))
+) {
+  throw new Error("The landmark beacon sheet selection must include both phases in source order");
+}
+
+function writeBeaconFrames(): void {
+  if (!packedBeacon) {
+    for (const { file, root } of beaconFrames) writeFileSync(dir + file, root);
+    return;
+  }
+
+  // Reserve whole-pixel cells around the intrinsic viewports. The SVG roots retain their
+  // authored fractional height and independent viewBox.
+  const cell = { width: Math.ceil(BEACON.displayWidth), height: Math.ceil(BEACON.displayHeight) };
+  const sheetWidth = cell.width * beaconFrames.length;
+  const layout = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: sheetWidth, widths: [sheetWidth] },
+    [{ rectangles: beaconFrames.map(() => cell), value: beaconSheetFile }],
+  );
+  const page = layout?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (layout?.pages.length !== 1 || !page || slots?.length !== beaconFrames.length) {
+    throw new Error("Cannot pack the landmark beacon sheet");
+  }
+  const roots = beaconFrames.map(({ id, root }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+  });
+  const { width, height } = page;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+  writeFileSync(dir + beaconSheetFile, `${svg}${roots.join("")}</svg>\n`);
+}
+
 writeFileSync(`${dir}nebula-outer.svg`, svgText(mass(OUTER, 10), SVG_DECIMALS.landmarks));
 writeFileSync(`${dir}nebula-core.svg`, svgText(mass(CORE, 7), SVG_DECIMALS.landmarks));
 writeFileSync(`${dir}nebula-stars.svg`, svgText(stars(), SVG_DECIMALS.landmarks));
 writeFileSync(`${dir}wreck.svg`, svgText(wreck(), SVG_DECIMALS.landmarks));
-writeFileSync(`${dir}beacon-a.svg`, svgText(beacon("a"), SVG_DECIMALS.landmarks));
-writeFileSync(`${dir}beacon-b.svg`, svgText(beacon("b"), SVG_DECIMALS.landmarks));
+writeBeaconFrames();
 
 // The lost item's glint: a 15 x 15 sparkle, lavender rays and shade around a white core, on
 // Stardust's loop. "W" white, "L" lavender, "D" shade, "." clear.
@@ -525,28 +578,24 @@ const entries = [
     WRECK.displayWidth,
     WRECK.displayHeight,
   ),
-  {
+  ...beaconFrames.map(({ id, file }) => ({
     ...svgEntry(
-      "landmark-beacon-a",
-      "beacon-a.svg",
-      BEACON.displayWidth,
-      BEACON.displayHeight,
+      id,
+      packedBeacon ? beaconSheetFile : file,
+      packedBeacon ? BEACON.width : BEACON.displayWidth,
+      packedBeacon ? BEACON.height : BEACON.displayHeight,
       BEACON.displayWidth,
       BEACON.displayHeight,
     ),
     frameMs: BLINK_MS,
-  },
-  {
-    ...svgEntry(
-      "landmark-beacon-b",
-      "beacon-b.svg",
-      BEACON.displayWidth,
-      BEACON.displayHeight,
-      BEACON.displayWidth,
-      BEACON.displayHeight,
-    ),
-    frameMs: BLINK_MS,
-  },
+    ...(packedBeacon
+      ? {
+          svgSheet: true,
+          intrinsicWidth: BEACON.displayWidth,
+          intrinsicHeight: BEACON.displayHeight,
+        }
+      : {}),
+  })),
   {
     id: "hunt-glint",
     path: "/art/hunt-glint.png",

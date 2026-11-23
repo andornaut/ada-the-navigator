@@ -1,7 +1,7 @@
-import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { replaceEntries } from "./manifest.ts";
+import { writeStationFrames } from "./primary-station-sheets.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { projectAt, round } from "./projection.ts";
 import {
@@ -163,27 +163,26 @@ function svg(frame: "a" | "b"): string {
   ].join("\n");
 }
 
-const entries = (["a", "b"] as const).map((frame) => ({
-  id: `station-${frame}`,
-  path: `/art/station-${frame}.svg`,
-  width,
-  height,
-  displayWidth: round(width * DISPLAY_SCALE * DESTINATION_SCALE),
-  displayHeight: round(height * DISPLAY_SCALE * DESTINATION_SCALE),
-  facing: "fixed",
-  pivot: { x: 0.5, y: above / height },
-  frameMs: BLINK_MS,
+const frames = (["a", "b"] as const).map((frame) => ({
+  root: svgText(svg(frame), SVG_DECIMALS.station),
+  entry: {
+    id: `station-${frame}`,
+    path: `/art/station-${frame}.svg`,
+    width,
+    height,
+    displayWidth: round(width * DISPLAY_SCALE * DESTINATION_SCALE),
+    displayHeight: round(height * DISPLAY_SCALE * DESTINATION_SCALE),
+    facing: "fixed",
+    pivot: { x: 0.5, y: above / height },
+    frameMs: BLINK_MS,
+  },
 }));
-
-for (const frame of ["a", "b"] as const) {
-  writeFileSync(`${art}station-${frame}.svg`, svgText(svg(frame), SVG_DECIMALS.station));
-}
 
 // Station entries keep their place; without any, they go before the discovery cache and the
 // enemy entries.
 replaceEntries(
   "core",
   (id) => id.startsWith("station-"),
-  entries,
+  writeStationFrames("core", art, "/art/", 2, frames),
   (id) => id === "discovery-cache" || id.startsWith("enemy-"),
 );

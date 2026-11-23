@@ -1,11 +1,12 @@
 // The Eddy: an open spiral with an inward current chase and a layered ocean-coloured core.
 // Contract: art/whirlpool.md (Station). Usage: node art/tools/whirlpool-station.ts
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { contrast } from "@andornaut/art-kit/build/colour";
 
 import { replaceEntries } from "./manifest.ts";
+import { writeStationFrames } from "./primary-station-sheets.ts";
 import { floorColour } from "./palette.ts";
 import { placed, RIGHT, svgFile } from "./needle-common.ts";
 import { round } from "./projection.ts";
@@ -216,31 +217,30 @@ const frames = Array.from({ length: FRAMES }, (_, k) => {
 });
 const scale = DISPLAY_SCALE * DESTINATION_SCALE;
 mkdirSync(OUT, { recursive: true });
-const entries = frames.map((faces, k) => {
+const stationFrames = frames.map((faces, k) => {
   const artwork = placed(frame.halfWidth, frame.above, faces);
   for (const { points } of artwork) {
     if (points.some(([x, y]) => x < 4 || x > frame.width - 4 || y < 4 || y > frame.height - 4)) {
       throw new Error("Eddy station exceeds its fixed frame");
     }
   }
-  writeFileSync(
-    `${OUT}station-${k}.svg`,
-    svgText(
+  return {
+    root: svgText(
       svgFile(`Whirlpool station ${k}`, frame.width, frame.height, artwork, DESTINATION_SCALE),
     ),
-  );
-  return {
-    id: `whirlpool-station-${k}`,
-    path: `${PATH}station-${k}.svg`,
-    width: frame.width,
-    height: frame.height,
-    displayWidth: round(frame.width * scale),
-    displayHeight: round(frame.height * scale),
-    facing: "fixed",
-    pivot: { x: 0.5, y: frame.above / frame.height },
-    frameMs: FRAME_MS,
-    destination: "station",
-    frameIndex: k,
+    entry: {
+      id: `whirlpool-station-${k}`,
+      path: `${PATH}station-${k}.svg`,
+      width: frame.width,
+      height: frame.height,
+      displayWidth: round(frame.width * scale),
+      displayHeight: round(frame.height * scale),
+      facing: "fixed",
+      pivot: { x: 0.5, y: frame.above / frame.height },
+      frameMs: FRAME_MS,
+      destination: "station",
+      frameIndex: k,
+    },
   };
 });
 
@@ -248,7 +248,7 @@ const entries = frames.map((faces, k) => {
 replaceEntries(
   "whirlpool",
   (id) => id.startsWith("whirlpool-station-"),
-  entries,
+  writeStationFrames("whirlpool", OUT, PATH, 4, stationFrames),
   () => true,
 );
 console.log(

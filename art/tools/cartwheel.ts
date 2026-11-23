@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
+import { withStationDisplayIntrinsics } from "./primary-station-sheets.ts";
+
 import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
@@ -416,12 +418,6 @@ function fixedSvg(frame: Layout, item: Fixed, letter: "a" | "b"): string {
       item.scale,
     ),
   );
-}
-
-function writeFixed(dir: string, frame: Layout, item: Fixed) {
-  for (const letter of ["a", "b"] as const) {
-    writeFileSync(`${dir}${item.path}-${letter}.svg`, fixedSvg(frame, item, letter));
-  }
 }
 
 function writeFixedPair(
@@ -839,9 +835,6 @@ function writeCraft(
 
 // ---------------------------------------------------------------- export
 mkdirSync(output, { recursive: true });
-for (const item of [hubWorn, hubRepaired]) {
-  writeFixed(output, hubFrame, item);
-}
 
 const installed = {
   core: readManifest("core").assets,
@@ -851,21 +844,17 @@ const installed = {
 // Free berths left then right on screen.
 const berths = [1, -1].map((s) => dockAt(hubFrame, DOCK + s * SPREAD, SIDE_FACE, SIDE_MOUTH));
 const hubEntries = [
-  ...(["a", "b"] as const).map((letter) =>
-    fixedEntry(hubFrame, hubWorn, letter, {
-      berths,
-      destination: "hub",
-      variant: "worn",
-    }),
-  ),
-  ...(["a", "b"] as const).map((letter) =>
-    fixedEntry(hubFrame, hubRepaired, letter, {
-      berths,
-      destination: "hub",
-      variant: "repaired",
-      project: "hub-repairs",
-    }),
-  ),
+  ...writeFixedPair(installed.cartwheel, hubFrame, hubWorn, {
+    berths,
+    destination: "hub",
+    variant: "worn",
+  }).map(withStationDisplayIntrinsics),
+  ...writeFixedPair(installed.cartwheel, hubFrame, hubRepaired, {
+    berths,
+    destination: "hub",
+    variant: "repaired",
+    project: "hub-repairs",
+  }).map(withStationDisplayIntrinsics),
   ...writeFixedPair(installed.cartwheel, hubFrame, hubBay, {
     overlay: true,
     destination: "hub",

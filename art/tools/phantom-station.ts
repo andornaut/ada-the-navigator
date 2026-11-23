@@ -1,9 +1,10 @@
 // Phantom's undocked station. Build with node art/tools/phantom-station.ts.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { unit } from "./debris.ts";
 import { replaceEntries } from "./manifest.ts";
+import { writeStationFrames } from "./primary-station-sheets.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 import { DESTINATION_SCALE, DISPLAY_SCALE, type Face } from "./solid.ts";
 import { svgText } from "./svg-text.ts";
@@ -220,7 +221,7 @@ for (const { points } of frames.flat()) {
 
 const scale = DISPLAY_SCALE * DESTINATION_SCALE;
 mkdirSync(output, { recursive: true });
-const entries = frames.map((faces, k) => {
+const stationFrames = frames.map((faces, k) => {
   const shapes = faces.map(({ color, points }) => {
     const pts = points
       .map((p) => projectAt(frame.halfWidth, frame.above, p))
@@ -228,9 +229,8 @@ const entries = frames.map((faces, k) => {
       .join(" ");
     return `  <polygon fill="${color}" points="${pts}"/>`;
   });
-  writeFileSync(
-    `${output}station-${k}.svg`,
-    svgText(
+  return {
+    root: svgText(
       [
         `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * scale)}" height="${round(frame.height * scale)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
         `  <title>Phantom station ${k}</title>`,
@@ -239,19 +239,19 @@ const entries = frames.map((faces, k) => {
         "",
       ].join("\n"),
     ),
-  );
-  return {
-    id: `phantom-station-${k}`,
-    path: `${PATH}station-${k}.svg`,
-    width: frame.width,
-    height: frame.height,
-    displayWidth: round(frame.width * scale),
-    displayHeight: round(frame.height * scale),
-    facing: "fixed",
-    pivot: { x: 0.5, y: frame.above / frame.height },
-    frameMs: FRAME_MS,
-    destination: "station",
-    frameIndex: k,
+    entry: {
+      id: `phantom-station-${k}`,
+      path: `${PATH}station-${k}.svg`,
+      width: frame.width,
+      height: frame.height,
+      displayWidth: round(frame.width * scale),
+      displayHeight: round(frame.height * scale),
+      facing: "fixed",
+      pivot: { x: 0.5, y: frame.above / frame.height },
+      frameMs: FRAME_MS,
+      destination: "station",
+      frameIndex: k,
+    },
   };
 });
 
@@ -259,7 +259,7 @@ const entries = frames.map((faces, k) => {
 replaceEntries(
   "phantom",
   (id) => id.startsWith("phantom-station-"),
-  entries,
+  writeStationFrames("phantom", output, PATH, 4, stationFrames),
   () => true,
 );
 console.log(

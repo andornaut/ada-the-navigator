@@ -11,6 +11,7 @@ import {
   jetsFile,
 } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { packInstalledIndustrialHulls } from "./industrial-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import {
   GALAXIES,
@@ -343,6 +344,7 @@ function main() {
     }
   }
   // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
+  const outputEntries = packInstalledIndustrialHulls("core", files, entries);
   const paths = writeOnce("/art/enemies/", new Map(), files);
 
   // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
@@ -351,7 +353,7 @@ function main() {
   mergeEntries(
     "core",
     (id) => hull.test(id),
-    entries.map((entry) => storedAt(paths, entry)),
+    outputEntries.map((entry) => storedAt(paths, entry)),
   );
   for (const craft of installed) removeStandaloneHulls(craft);
   // These crafts' jets; heavies.ts writes the hardpoints and destruction.ts the shards.

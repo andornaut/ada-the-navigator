@@ -51,10 +51,6 @@ function solid(
   return { plan, z0, z1, top, side: paint.side, rear: paint.rear };
 }
 
-function surface(plan: Plan, z: number, top: string): Part {
-  return { plan, z0: z, z1: z, top, side: top, decal: true };
-}
-
 const signed = (sign: number, plan: Plan): Plan => plan.map(([x, y]) => [sign * x, y]);
 const bilateral = (half: Plan): Plan => [...half, ...signed(-1, half).toReversed()];
 
@@ -87,21 +83,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         deck,
         cargoPaint.hull,
       ),
-      ...[-1, 1].map((sign) =>
-        surface(
-          signed(sign, [
-            [17, -8],
-            [28, 0],
-            [38, 12],
-            [27, 22],
-            [20, 26],
-            [22, 13],
-            [16, 3],
-          ]),
-          deck,
-          cargoPaint.shoulder,
-        ),
-      ),
       solid(
         cargoPaint,
         bilateral([
@@ -128,24 +109,14 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         10.7,
         cargoPaint.glass,
       ),
-      // The sloped-looking rim and darker floor keep the storage saddle visually inboard.
-      surface(
-        bilateral([
-          [13, 8],
-          [20, 16],
-          [16, 26],
-          [9, 37],
-        ]),
-        deck,
-        cargoPaint.recess,
-      ),
+      // One uninterrupted storage saddle between the bridge and the drive.
       solid(
         cargoPaint,
         bilateral([
-          [11, 11],
-          [16, 17],
-          [12, 25],
-          [7, 35],
+          [11, 9],
+          [18, 16],
+          [15, 25],
+          [8, 36],
         ]),
         deck,
         deck + 0.2,
@@ -161,30 +132,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         deck,
         10,
         cargoPaint.armor,
-      ),
-      solid(
-        cargoPaint,
-        bilateral([
-          [6, 45],
-          [7, 49],
-        ]),
-        10,
-        10.2,
-        cargoPaint.rear,
-      ),
-      ...[-1, 1].map((sign) =>
-        solid(
-          cargoPaint,
-          signed(sign, [
-            [8, 39],
-            [12.5, 43],
-            [11, 48],
-            [8, 45],
-          ]),
-          10,
-          10.2,
-          cargoPaint.shoulder,
-        ),
       ),
       ...insignia(0, -44, 3.2, deck),
       ...turret,
@@ -233,20 +180,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         miningPaint.hull,
       ),
       ...[-1, 1].flatMap((sign) => [
-        surface(
-          signed(sign, [
-            [29, -34],
-            [36, -31],
-            [44, -9],
-            [44, 11],
-            [36, 16],
-            [22, 18],
-            [26, 4],
-            [24, -17],
-          ]),
-          deck,
-          miningPaint.bevel,
-        ),
         solid(
           miningPaint,
           signed(sign, [
@@ -261,19 +194,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
           deck,
           10,
           miningPaint.armor,
-        ),
-        solid(
-          miningPaint,
-          signed(sign, [
-            [29, -30],
-            [32, -28],
-            [34, -22],
-            [31, -17],
-            [26, -23],
-          ]),
-          10,
-          10.25,
-          miningPaint.scoop,
         ),
         solid(
           miningPaint,
@@ -314,30 +234,6 @@ export function industrialRetaliators({ insignia }: Materials, source: Craft) {
         deck,
         10,
         miningPaint.armor,
-      ),
-      solid(
-        miningPaint,
-        [
-          [-13, 18],
-          [13, 18],
-          [16, 22],
-          [-16, 22],
-        ],
-        10,
-        10.6,
-        miningPaint.armor,
-      ),
-      surface(
-        [
-          [-10, 18.6],
-          [10, 18.6],
-          [13.2, 20.7],
-          [11.6, 21.5],
-          [-11.6, 21.5],
-          [-13.2, 20.7],
-        ],
-        10.6,
-        miningPaint.recess,
       ),
       ...turret,
     ],

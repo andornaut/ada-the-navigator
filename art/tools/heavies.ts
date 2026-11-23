@@ -1982,6 +1982,63 @@ const familyPartTargets = {
 
 const publicHeavySvg = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
+const batchSheetPrefix = (craft: SheetCraft) => `${craft}-parts-batch-`;
+
+// Keep raw cells square and separate by size within a single family/archetype load batch.
+function comparePartMembers(a: Entry, b: Entry): number {
+  const left = a.id.slice(0, a.id.lastIndexOf("-"));
+  const right = b.id.slice(0, b.id.lastIndexOf("-"));
+  if (left !== right) return left < right ? -1 : 1;
+  return Number(a.aimIndex ?? a.directionIndex) - Number(b.aimIndex ?? b.directionIndex);
+}
+
+export function heavyPartPageLayout(craft: SheetCraft, entries: readonly Entry[]) {
+  const bySize = new Map<number, Entry[]>();
+  for (const row of entries) {
+    const width = row.width;
+    if (
+      typeof width !== "number" ||
+      !Number.isInteger(width) ||
+      width < 1 ||
+      width > HULL_SHEET_EDGE ||
+      row.height !== width
+    ) {
+      throw new Error(`Invalid ${craft} part cell: ${row.id}`);
+    }
+    const members = bySize.get(width) ?? [];
+    members.push(row);
+    bySize.set(width, members);
+  }
+
+  return [...bySize]
+    .sort(([a], [b]) => a - b)
+    .flatMap(([size, members]) => {
+      const capacity = Math.floor(HULL_SHEET_EDGE / size) ** 2;
+      members.sort(comparePartMembers);
+      const pages = [];
+      for (let first = 0; first < members.length; first += capacity) {
+        const rows = members.slice(first, first + capacity);
+        const width = Math.ceil(Math.sqrt(rows.length)) * size;
+        const file = `${batchSheetPrefix(craft)}${size}-${first / capacity + 1}.svg`;
+        const layout = packAtlas(
+          { compare: () => 0, extrude: 0, maxSize: HULL_SHEET_EDGE, widths: [width] },
+          [{ rectangles: rows.map(() => ({ width: size, height: size })), value: file }],
+        )?.pages[0];
+        const positions = layout?.placed[0]?.at;
+        if (!layout || positions?.length !== rows.length) {
+          throw new Error(`Cannot pack ${file}`);
+        }
+        pages.push({
+          file,
+          width,
+          height: layout.height,
+          members: rows.map((row, index) => ({ row, ...positions[index]! })),
+        });
+      }
+      return pages;
+    });
+}
+
 // Pack the canonical standalone roots after SVG formatting, as in the enemy hull sheets.
 // Raw-sized cells leave room for each root's smaller intrinsic display dimensions.
 function heavyHeadingSheets(
@@ -2001,7 +2058,14 @@ function heavyHeadingSheets(
   const current = installed.filter(owns);
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
   const packed = current.filter(({ svgSheet }) => svgSheet === true).length;
-  if (!selecting && packed === 0) return undefined;
+  const batch =
+    !selecting &&
+    section === "part" &&
+    installed.some(
+      ({ path }) =>
+        typeof path === "string" && path.startsWith(directory + batchSheetPrefix(craft)),
+    );
+  if (!selecting && !batch && packed === 0) return undefined;
 
   const selected = entries.filter(owns);
   const groups = new Map<string, Entry[]>();
@@ -2035,6 +2099,75 @@ function heavyHeadingSheets(
   const replacements = new Map<string, Entry>();
   const retired = new Set<string>();
   const ownedPaths = new Set<string>();
+  const finish = () => {
+    const manifestNames: ManifestFile[] = ["core", ...GALAXIES];
+    const allAssets: Entry[] = manifestNames.flatMap((name) => readManifest(name).assets);
+    const referrer = allAssets.find(
+      ({ id, path }) => !replacements.has(id) && typeof path === "string" && ownedPaths.has(path),
+    );
+    if (referrer) {
+      throw new Error(`${craft} ${section} packing would replace art used by ${referrer.id}`);
+    }
+    return { sheets, replacements, retired };
+  };
+
+  if (batch) {
+    for (const [group, members] of groups) {
+      const size = members[0]!.width;
+      if (
+        members.length !== ENEMY_HEADINGS ||
+        members.some(
+          (row, heading) =>
+            row.id !== `${prefix}${group}-${heading}` ||
+            (row.aimIndex ?? row.directionIndex) !== heading ||
+            row.width !== size ||
+            row.height !== size,
+        )
+      ) {
+        throw new Error(`Invalid ${manifest} ${craft} part group: ${group}`);
+      }
+      ownedPaths.add(`${directory}${group}-sheet.svg`);
+    }
+    for (const page of heavyPartPageLayout(craft, selected)) {
+      const path = directory + page.file;
+      ownedPaths.add(path);
+      const roots = page.members.map(({ row, x, y }) => {
+        const file = `${row.id.slice(prefix.length)}.svg`;
+        const source = text(file);
+        const standalone = source?.trimEnd();
+        const root = `<svg xmlns="http://www.w3.org/2000/svg" width="${row.displayWidth}" height="${row.displayHeight}" viewBox="0 0 ${row.width} ${row.height}">`;
+        const replacement = { ...row, path, svgSheet: true };
+        if (
+          row.path !== directory + file ||
+          !standalone?.startsWith(root) ||
+          !standalone.endsWith("</svg>") ||
+          !isDeepStrictEqual(currentById.get(row.id), replacement)
+        ) {
+          throw new Error(`Invalid ${manifest} ${craft} part batch selection or source: ${row.id}`);
+        }
+        const original = publicHeavySvg(directory + file);
+        if (
+          manifest === "core" &&
+          craft === "capital" &&
+          existsSync(original) &&
+          readFileSync(original, "utf8") !== source
+        ) {
+          throw new Error(`The capital producer does not match the standalone frame: ${file}`);
+        }
+        retired.add(file);
+        ownedPaths.add(directory + file);
+        replacements.set(row.id, replacement);
+        return `<svg id="${row.id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
+      });
+      const { width, height } = page;
+      sheets.set(
+        page.file,
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${roots.join("")}</svg>\n`,
+      );
+    }
+    return finish();
+  }
+
   for (const [group, members] of groups) {
     const size = Number(members[0]!.width);
     const columns = section === "hull" ? Math.min(4, Math.floor(HULL_SHEET_EDGE / size)) : 4;
@@ -2102,14 +2235,7 @@ function heavyHeadingSheets(
       );
     }
   }
-  const manifestNames: ManifestFile[] = ["core", ...GALAXIES];
-  const allAssets: Entry[] = manifestNames.flatMap((name) => readManifest(name).assets);
-  const referrer = allAssets.find(
-    ({ id, path }) => !replacements.has(id) && typeof path === "string" && ownedPaths.has(path),
-  );
-  if (referrer)
-    throw new Error(`${craft} ${section} packing would replace art used by ${referrer.id}`);
-  return { sheets, replacements, retired };
+  return finish();
 }
 
 type HeavyPack = ReturnType<typeof heavyHeadingSheets>;

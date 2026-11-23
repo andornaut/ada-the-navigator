@@ -29,11 +29,15 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
-import { shards } from "./destruction.ts";
+import { shards } from "./shard-geometry.ts";
+import { installedShardPacks, linkShardPacks } from "./shard-palette-pack.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
-import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
+import {
+  packInstalledIndustrialHulls,
+  packInstalledIndustrialTurrets,
+} from "./industrial-sheets.ts";
 import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
 import {
   ADA_WIDTH,
@@ -423,6 +427,7 @@ const fixedHull = (entry: Entry): Entry => {
 };
 
 async function main() {
+  const packs = installedShardPacks();
   const args = process.argv.slice(2);
   const at = args.indexOf("--offsets");
   const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -440,7 +445,7 @@ async function main() {
       `${craft.name}-jets.json`,
       jets(craft, (yaw) => traced[yaw]!.collision),
     );
-    files.set(`${craft.name}-shards.json`, shards(craft));
+    if (!packs.has(craft.name)) files.set(`${craft.name}-shards.json`, shards(craft));
     entries.push(...hullEntries(craft.name, craft.frame).map(claimEntry));
   }
   for (const craft of [...heavies, ...industrialHeavies]) {
@@ -496,7 +501,8 @@ async function main() {
   const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
   const heavy = packInstalledHeavyParts("cartwheel", texts, entries);
   const small = packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
-  const outputEntries = packInstalledIndustrialTurrets("cartwheel", texts, small);
+  const turrets = packInstalledIndustrialTurrets("cartwheel", texts, small);
+  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets);
   const paths = writeOnce(PATH, sidecarCopies("core", "hardpoints", shared), texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
@@ -512,6 +518,7 @@ async function main() {
   const names = new Set(
     [...crafts, ...heavies, ...industrialHeavies, platform].map(({ name }) => name),
   );
+  linkShardPacks(paths, packs);
   mergeSidecars("cartwheel", (craft) => names.has(craft), sidecarsIn(paths));
   console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
 }
