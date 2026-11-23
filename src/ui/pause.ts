@@ -1,8 +1,7 @@
-// Pause stays available during active flight. Its grid actions sort by label, then Back to title,
-// then the primary Resume last.
+// Pause stays available during active flight, with fixed Settings and exit actions on the right.
 
 export type PauseAction =
-  "backToTitle" | "cheats" | "map" | "quests" | "resume" | "settings" | "ship";
+  "achievements" | "backToTitle" | "cheats" | "map" | "quests" | "resume" | "settings" | "ship";
 
 /** Where the Paused card opens: only in flight. */
 export type PausePlace = "flight";
@@ -22,23 +21,27 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
   return !inDanger;
 }
 
-// Cheats keeps its full-width row. Back to title and Resume are the fixed footer rows.
-export const PAUSE_FULL_WIDTH: readonly PauseAction[] = ["cheats", "backToTitle", "resume"];
+export const PAUSE_RIGHT_ACTIONS: readonly PauseAction[] = [
+  "achievements",
+  "settings",
+  "backToTitle",
+  "resume",
+];
 
-// Sort all ordinary actions by their labels, then place Back to title and the primary Resume.
+// DOM and keyboard order run down the alphabetical left column, then down the fixed right column.
 // Back to title stays available in danger; Map still opens, where Travel here and Galaxies are
 // unavailable instead.
 export function pauseActions(
   labels: Readonly<Record<PauseAction, string>>,
 ): readonly PauseActionView[] {
-  const grid = (["cheats", "map", "quests", "settings", "ship"] as const)
-    .map((id) => ({ available: true, id, role: "secondary" as const }))
-    .sort((a, b) => labels[a.id].localeCompare(labels[b.id]));
-  return [
-    ...grid,
-    { available: true, id: "backToTitle", role: "secondary" },
-    { available: true, id: "resume", role: "primary" },
-  ];
+  const left = (["cheats", "map", "quests", "ship"] as const)
+    .slice()
+    .sort((a, b) => labels[a].localeCompare(labels[b]));
+  return [...left, ...PAUSE_RIGHT_ACTIONS].map((id) => ({
+    available: true,
+    id,
+    role: id === "resume" ? "primary" : "secondary",
+  }));
 }
 
 // The Map card says no destinations are mapped yet until a place is discovered.

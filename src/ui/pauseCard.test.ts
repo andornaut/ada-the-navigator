@@ -250,6 +250,7 @@ class FakeImage extends FakeElement {
 }
 
 const LABELS: PauseLabels = {
+  achievements: "Achievements",
   backToTitle: "Back to title",
   cheats: "Cheats",
   close: "Close",
@@ -338,6 +339,7 @@ function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
   beforeCreate?.(root);
   const options = {
     labels: LABELS,
+    onAchievements: vi.fn(),
     onBackToTitle: vi.fn(),
     onCheats: vi.fn(),
     onGalaxies: vi.fn(),
@@ -354,8 +356,7 @@ function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
 }
 
 // The grid's buttons in reading order, with Resume last.
-const buttonsOf = (actions: FakeElement) =>
-  actions.children.flatMap((node) => (node.dataset.action ? [node] : node.children));
+const buttonsOf = (actions: FakeElement) => actions.querySelectorAll("button");
 
 const shownActions = (actions: FakeElement) =>
   buttonsOf(actions)
@@ -764,7 +765,7 @@ describe("Paused card", () => {
     expect(remove).toHaveBeenCalledWith("loadingdone", add.mock.calls[0]![1]);
   });
 
-  it("sorts the grid by label, then full-width Back to title above primary Resume, with no objective", () => {
+  it("builds the alphabetical and fixed columns in native focus order with Resume primary", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
@@ -772,32 +773,32 @@ describe("Paused card", () => {
     expect(actions.className).toContain("ada-stack");
     expect(actions.children[0]!.className).toContain("ada-pause-grid");
     expect(actions.children).toHaveLength(1);
-    expect(actions.children[0]!.children.at(-1)!.dataset.action).toBe("pause-resume");
-    expect(actions.children[0]!.children.at(-1)!.className).toContain("ada-primary");
-    expect(shownActions(actions)).toEqual([
+    const [left, right] = actions.children[0]!.children;
+    expect(left?.dataset.pauseColumn).toBe("left");
+    expect(right?.dataset.pauseColumn).toBe("right");
+    expect(shownActions(left!)).toEqual([
       "pause-cheats",
       "pause-map",
       "pause-quests",
-      "pause-settings",
       "pause-ship",
+    ]);
+    expect(shownActions(right!)).toEqual([
+      "pause-achievements",
+      "pause-settings",
       "pause-backToTitle",
       "pause-resume",
     ]);
+    expect(right?.children.at(-1)?.className).toContain("ada-primary");
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
       "Cheats",
       "Map",
       "Quests",
-      "Settings",
       "Ship",
+      "Achievements",
+      "Settings",
       "Back to title",
       "Resume",
     ]);
-    // Cheats keeps its existing width. Map, Quests, Settings and Ship share the two columns.
-    expect(
-      buttonsOf(actions)
-        .filter((node) => node.classes.has("ada-pause-full"))
-        .map((node) => node.dataset.action),
-    ).toEqual(["pause-cheats", "pause-backToTitle", "pause-resume"]);
   });
 
   it("keeps every action, Back to title included, available in danger", () => {
@@ -805,6 +806,7 @@ describe("Paused card", () => {
     pause.setState(state({ inDanger: true }));
     const actions = buttonsOf(body.children[0]!);
     expect(actions.map((node) => node.getAttribute("aria-disabled"))).toEqual([
+      null,
       null,
       null,
       null,
@@ -1132,11 +1134,11 @@ it("hides Map without canonical permission and shows it once permitted", () => {
   const { body, options, pause } = cards();
   const actions = body.children[0]!;
   pause.setState(state({ canMap: false }));
-  expect(shownActions(actions)).toEqual([
-    "pause-cheats",
-    "pause-quests",
+  const [left, right] = actions.children[0]!.children;
+  expect(shownActions(left!)).toEqual(["pause-cheats", "pause-quests", "pause-ship"]);
+  expect(shownActions(right!)).toEqual([
+    "pause-achievements",
     "pause-settings",
-    "pause-ship",
     "pause-backToTitle",
     "pause-resume",
   ]);
@@ -1148,7 +1150,13 @@ it("hides Map without canonical permission and shows it once permitted", () => {
   pause.setState(withoutPermission);
   expect(shownActions(actions)).not.toContain("pause-map");
   pause.setState(state({ canMap: true }));
-  expect(shownActions(actions).slice(0, 2)).toEqual(["pause-cheats", "pause-map"]);
+  expect(shownActions(left!).slice(0, 2)).toEqual(["pause-cheats", "pause-map"]);
+  expect(shownActions(right!)).toEqual([
+    "pause-achievements",
+    "pause-settings",
+    "pause-backToTitle",
+    "pause-resume",
+  ]);
   expect(button(actions, "pause-map").getAttribute("aria-disabled")).toBe(null);
   pause.dispose();
 });
@@ -1459,6 +1467,23 @@ it("retains a real label node through native presentation moves and action queri
   expect(presentation.firstChild).toBe(label);
 });
 
+it("opens the shared Achievements child and restores the invoking Pause action", () => {
+  const { body, modal, options, pause } = cards();
+  pause.setState(state());
+  pause.open();
+  const achievement = button(body.children[0]!, "pause-achievements");
+  achievement.click();
+  expect(options.onAchievements).toHaveBeenCalledOnce();
+  expect(options.onBackToTitle).not.toHaveBeenCalled();
+  expect(modal.hidden).toBe(true);
+  expect(pause.isOpen()).toBe(true);
+  pause.restorePaused("achievements");
+  expect(modal.hidden).toBe(false);
+  expect(focused()).toBe(achievement);
+  expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+  pause.dispose();
+});
+
 it("retains native Pause button identities across Map permission updates", () => {
   const { body, options, pause } = cards();
   pause.setState(state());
@@ -1560,6 +1585,7 @@ it("publishes the hidden Pause and Ship controls already bound before Map and Qu
         "back-ship",
         "close-pause",
         "close-ship",
+        "pause-achievements",
         "pause-backToTitle",
         "pause-cheats",
         "pause-map",
@@ -1599,7 +1625,7 @@ it.each(["pause-resume", "close-ship"])(
       }),
     ).toThrow("no registered action binding");
     expect(published).not.toHaveBeenCalled();
-    expect(bound).toHaveLength(9);
+    expect(bound).toHaveLength(10);
     for (const element of bound) {
       expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
         "no registered action binding",

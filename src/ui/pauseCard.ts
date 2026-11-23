@@ -19,7 +19,7 @@ import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScree
 import { createButton, createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
-import { PAUSE_FULL_WIDTH, type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
+import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
@@ -35,6 +35,7 @@ import {
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 export interface PauseLabels {
+  readonly achievements: string;
   readonly backToTitle: string;
   readonly cheats: string;
   readonly close: string;
@@ -60,6 +61,7 @@ export interface PauseLabels {
 export interface PauseOptions {
   readonly shipFrame?: (heading: number) => string | undefined;
   readonly labels: PauseLabels;
+  readonly onAchievements: () => void;
   readonly onBackToTitle: () => void;
   readonly onCheats: () => void;
   readonly onOpenChange: (open: boolean) => void;
@@ -156,6 +158,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.className = "ada-modal";
   modal.hidden = true;
   const text: Record<PauseAction, string> = {
+    achievements: labels.achievements,
     backToTitle: labels.backToTitle,
     cheats: labels.cheats,
     map: labels.map,
@@ -185,11 +188,20 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const pauseLayout = mountLayout<PauseLayoutSchema>(
     {
       components: {
-        actionGrid: {
-          create() {
-            return { dispose() {}, element: others, slots: { buttons: others }, update() {} };
+        actionColumn: {
+          create({ side }) {
+            const column = document.createElement("div");
+            column.className = "ada-pause-column";
+            column.dataset.pauseColumn = side;
+            return { dispose() {}, element: column, slots: { buttons: column }, update() {} };
           },
           slots: ["buttons"],
+        },
+        actionGrid: {
+          create() {
+            return { dispose() {}, element: others, slots: { columns: others }, update() {} };
+          },
+          slots: ["columns"],
         },
         pause: {
           create() {
@@ -207,7 +219,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
               label.textContent = initial.label;
               button.replaceChildren(label);
             }
-            button.classList.toggle("ada-pause-full", PAUSE_FULL_WIDTH.includes(initial.id));
             buttons.set(initial.id, button);
             const update = (data: PauseTreeAction) => {
               button.hidden = data.hidden;
@@ -569,6 +580,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       openQuests("quests");
     } else if (id === "ship") {
       show("ship");
+    } else if (id === "achievements") {
+      hidePause(true);
+      options.onAchievements();
     } else if (id === "cheats") {
       hidePause(true);
       options.onCheats();

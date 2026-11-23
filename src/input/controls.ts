@@ -107,7 +107,7 @@ export interface ControlsOptions {
   readonly pause: {
     readonly buttonLabel: string;
     readonly menuLabel?: string;
-    readonly labels: Omit<PauseLabels, "cheats">;
+    readonly labels: Omit<PauseLabels, "achievements" | "cheats">;
     readonly shipFrame?: (heading: number) => string | undefined;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
@@ -219,7 +219,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
   let returnToMenu: (() => void) | undefined;
-  let returnToPause: "cheats" | "settings" | undefined;
+  let returnToPause: "achievements" | "cheats" | "settings" | undefined;
   let returningToParent = false;
   function restoreParent(parent: () => void): void {
     returningToParent = true;
@@ -294,7 +294,18 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   const pause = createPauseCards(settings.root, {
-    labels: { ...options.pause.labels, cheats: options.cheats.labels.title },
+    labels: {
+      ...options.pause.labels,
+      achievements: options.achievements.title,
+      cheats: options.cheats.labels.title,
+    },
+    onAchievements: () => {
+      returnToPause = "achievements";
+      achievements.open({
+        intent: "back",
+        label: options.pause.labels.mapScreen.questBack ?? options.pause.labels.close,
+      });
+    },
     onBackToTitle: () => options.pause.onBackToTitle(),
     onCheats: () => {
       returnToPause = "cheats";
@@ -319,6 +330,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         const reopen = returnToMenu;
         returnToMenu = undefined;
         restoreParent(reopen);
+      } else if (!open && returnToPause === "achievements") {
+        returnToPause = undefined;
+        restoreParent(() => pause.restorePaused("achievements"));
       }
       syncModal();
     },

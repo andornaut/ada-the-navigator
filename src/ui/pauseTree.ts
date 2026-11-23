@@ -1,6 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { PauseActionView } from "./pause.ts";
+import { PAUSE_RIGHT_ACTIONS, type PauseActionView } from "./pause.ts";
 
 export interface PauseTreeAction extends PauseActionView {
   readonly hidden: boolean;
@@ -14,7 +14,8 @@ export interface PauseTreeData {
 }
 
 export type PauseLayoutSchema = {
-  actionGrid: { props: Readonly<Record<string, never>>; slots: "buttons" };
+  actionColumn: { props: { readonly side: "left" | "right" }; slots: "buttons" };
+  actionGrid: { props: Readonly<Record<string, never>>; slots: "columns" };
   pause: {
     props: {
       readonly closeAction: "close-pause";
@@ -49,11 +50,21 @@ export function pauseTree(
           kind: "component",
           props: {},
           slots: {
-            buttons: data.actions.map((action) => ({
-              component: "pauseButton",
-              key: action.id,
+            columns: (["left", "right"] as const).map((side) => ({
+              component: "actionColumn",
+              key: side,
               kind: "component",
-              props: action,
+              props: { side },
+              slots: {
+                buttons: data.actions
+                  .filter(({ id }) => PAUSE_RIGHT_ACTIONS.includes(id) === (side === "right"))
+                  .map((action) => ({
+                    component: "pauseButton",
+                    key: action.id,
+                    kind: "component",
+                    props: action,
+                  })),
+              },
             })),
           },
         },

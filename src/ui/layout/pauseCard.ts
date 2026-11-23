@@ -4,28 +4,21 @@ import { CARD_CONTENT, SCROLL } from "./contentCard.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./tokens.ts";
 
-const VISIBLE_GRID_ACTION = ".ada-button:not(.ada-pause-full,[hidden])";
-
-/**
- * The Paused card's grid: Map, Quests, Settings and Ship in two equal columns, then Back to title
- * and the primary Resume, each across both columns, Resume at the bottom.
- */
+/** Two stable, equal-width action columns, with native reading order down each column. */
 export const PAUSE_GRID_STYLE = `
 ${UI_SCOPE} .ada-actions.ada-pause-grid{
+  align-items:start;
   grid-auto-flow:row;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  justify-items:center;
   column-gap:${units(BUTTON_GAP)};
-  row-gap:${units(STACK_BUTTON_GAP)};
   width:auto
 }
-/* The grid is nested in a stack, but its horizontal actions size to their own labels. */
-${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-button:not(.ada-pause-full){width:max-content}
-${UI_SCOPE} .ada-actions.ada-pause-grid >
-  :nth-child(odd of ${VISIBLE_GRID_ACTION}):nth-last-child(1 of ${VISIBLE_GRID_ACTION}){
-  grid-column:1 / -1
+${UI_SCOPE} .ada-pause-column{
+  min-width:0;
+  display:grid;
+  gap:${units(STACK_BUTTON_GAP)}
 }
-${UI_SCOPE} .ada-actions.ada-pause-grid > .ada-pause-full{grid-column:1 / -1;width:100%}
+${UI_SCOPE} .ada-pause-column > .ada-button{width:100%}
 @media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
   ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
 }

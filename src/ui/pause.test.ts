@@ -9,7 +9,6 @@ import {
   galaxiesAvailable,
   mapShowsEmpty,
   PAUSE_ART,
-  PAUSE_FULL_WIDTH,
   pauseActions,
   pauseButtonShown,
   pauseFrames,
@@ -21,6 +20,7 @@ const json = (path: string): unknown =>
 
 describe("Paused card", () => {
   const LABELS = {
+    achievements: "Achievements",
     backToTitle: "Back to title",
     cheats: "Cheats",
     map: "Map",
@@ -30,22 +30,23 @@ describe("Paused card", () => {
     ship: "Ship",
   };
 
-  it("sorts Cheats, Map, Quests, Settings and Ship by label before the fixed footer", () => {
+  it("orders the alphabetical left column ahead of the fixed right column", () => {
     expect(pauseActions(LABELS)).toEqual([
       { available: true, id: "cheats", role: "secondary" },
       { available: true, id: "map", role: "secondary" },
       { available: true, id: "quests", role: "secondary" },
-      { available: true, id: "settings", role: "secondary" },
       { available: true, id: "ship", role: "secondary" },
+      { available: true, id: "achievements", role: "secondary" },
+      { available: true, id: "settings", role: "secondary" },
       { available: true, id: "backToTitle", role: "secondary" },
       { available: true, id: "resume", role: "primary" },
     ]);
-    expect(PAUSE_FULL_WIDTH).toEqual(["cheats", "backToTitle", "resume"]);
   });
 
-  it("sorts by translated labels while keeping both footer rows last", () => {
+  it("sorts translated labels in the left column while Settings stays first on the right", () => {
     const labels = {
       ...LABELS,
+      achievements: "Succès",
       cheats: "Triches",
       map: "Carte",
       quests: "Quêtes",
@@ -54,10 +55,11 @@ describe("Paused card", () => {
     };
     expect(pauseActions(labels).map(({ id }) => id)).toEqual([
       "map",
-      "settings",
       "quests",
       "cheats",
       "ship",
+      "achievements",
+      "settings",
       "backToTitle",
       "resume",
     ]);
