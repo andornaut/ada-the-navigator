@@ -6,6 +6,7 @@ import {
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_COUNT } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
@@ -92,7 +93,7 @@ export interface ShipSections {
 type Labels = Readonly<Record<string, string>>;
 
 const sprite = (name: string): ShipIcon => ({ frames: 1, sprite: name });
-const equipmentIcon = (key: string): ShipIcon => ({ vector: `/art/ui/icons/icon-shop-${key}.svg` });
+const equipmentIcon = (key: string): ShipIcon => ({ vector: uiIconUrl(`icon-shop-${key}`) });
 
 /** "Carrying: {item}" or "Towing: {craft}", the Ship card's line and the status pill's label. */
 export function aboardLabel(labels: Labels, aboard: Aboard): string {

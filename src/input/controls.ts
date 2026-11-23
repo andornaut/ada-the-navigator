@@ -11,6 +11,7 @@ import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
@@ -586,7 +587,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       const details = shieldDetails(options.shieldLabel, statusView);
       const icon = document.createElement("span");
       icon.className = "ada-detail-unlimited-icon";
-      icon.style.setProperty("--glyph", "url('/art/ui/icons/shield.svg')");
+      icon.style.setProperty("--glyph", `url('${uiIconUrl("shield")}')`);
       icon.setAttribute("aria-hidden", "true");
       resource.open(details.title, details.text, origin, {
         icon,

@@ -4,6 +4,7 @@ import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui
 import { describe, expect, it } from "vitest";
 
 import type { GalaxyNumber } from "../../data/types.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import {
@@ -104,7 +105,7 @@ describe("map screen tokens", () => {
     expect(new Set(glyphs).size).toBe(14);
     for (const glyph of glyphs) {
       const svg = readFileSync(
-        new URL(`../../../public/art/ui/icons/${glyph}.svg`, import.meta.url),
+        new URL(`../../../public${uiIconUrl(glyph)}`, import.meta.url),
         "utf8",
       );
       expect(svg, glyph).toContain('aria-hidden="true"');

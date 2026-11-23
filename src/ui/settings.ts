@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CONTENT } from "../data/content.ts";
 import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   assertAdaActionBindings,
@@ -100,11 +101,11 @@ export interface SettingsOptions {
 
 // The start screen's Settings glyph (art/settings-icon.md): the 20 vector gear, a mask drawn with
 // smooth sampling, as the Achievements trophy is.
-export const SETTINGS_GLYPH = "/art/ui/icons/settings.svg";
+export const SETTINGS_GLYPH = uiIconUrl("settings");
 
 // The start screen's Achievements glyph (art/achievements-icon.md): the 20 vector trophy, a mask
 // drawn with smooth sampling.
-export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
+export const ACHIEVEMENTS_GLYPH = uiIconUrl("achievements");
 
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
 export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
@@ -297,7 +298,7 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   height:${units(CONTROL_ROW.icon)};
   forced-color-adjust:none;
   background:currentColor;
-  mask:url('/art/ui/icons/${SETTING_ICONS.install}.svg') center / contain no-repeat
+  mask:url('${uiIconUrl(SETTING_ICONS.install)}') center / contain no-repeat
 }
 /* Keep the secondary skin on both Settings actions when the Kit owns focus. */
 .ada-controls .ada-install-row > .ui-standard-button.ada-compact,

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+import { uiIconUrl } from "../src/data/uiIconUrl.ts";
 import { SHIPPED_TITLE_SHIP } from "../src/testing/shippedShipSources.ts";
 import {
   asteroidFixture,
@@ -142,11 +143,7 @@ function assertInlineIcons(icons, controls, scale, lineHeight, where) {
     assert.deepEqual(icon.natural, [16, 16], `The icon loads its 16 by 16 frame: ${detail}`);
     assert.equal(icon.opacity, "1", `The icon is at full opacity: ${detail}`);
     const key = icon.control === "use" ? "icon-use-control" : `icon-${icon.control}-controls`;
-    assert.equal(
-      icon.source,
-      `/art/ui/icons/${key}.svg`,
-      `The icon loads the approved SVG: ${detail}`,
-    );
+    assert.equal(icon.source, uiIconUrl(key), `The icon loads the approved SVG: ${detail}`);
     assert.equal(icon.rendering, "auto", `The vector renders smoothly: ${detail}`);
     assert.equal(icon.wrap, "nowrap", `The name and icon wrap as one: ${detail}`);
     assert.ok(icon.sameLine, `The icon is on its name's line: ${detail}`);
@@ -1131,8 +1128,9 @@ try {
     [
       await menuDisc().getAttribute("aria-label"),
       await menuDisc().getAttribute("data-navigation"),
-      await menuDisc().evaluate((button) =>
-        getComputedStyle(button, "::before").backgroundImage.includes("/art/ui/icons/menu.svg"),
+      await menuDisc().evaluate(
+        (button, source) => getComputedStyle(button, "::before").backgroundImage.includes(source),
+        uiIconUrl("menu"),
       ),
     ],
     ["Menu", "menu", true],
@@ -3904,11 +3902,11 @@ try {
     (node) => getComputedStyle(node, "::before").backgroundImage,
   );
   assert.ok(
-    pauseImage.includes("/art/ui/icons/pause.svg"),
+    pauseImage.includes(uiIconUrl("pause")),
     `Pause must draw its vector art: ${pauseImage}`,
   );
   assert.equal(
-    (await page.request.get("http://ada-preview:4173/art/ui/icons/pause.svg")).status(),
+    (await page.request.get(new URL(uiIconUrl("pause"), "http://ada-preview:4173").href)).status(),
     200,
     "The real pause button resource must be served",
   );

@@ -6,6 +6,7 @@ import { CONTROL_WORDS } from "../data/controlWords.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { HOME_COPY } from "../data/homeCopy.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
   CONTROL_ICONS,
   controlHelpMarkup,
@@ -50,7 +51,6 @@ const fakeDocument = {
 
 const LESSON_MOVE = CONVERSATIONS.find(({ id }) => id === "lesson:move")!.lines[0]!;
 const LESSON_AIM = CONVERSATIONS.find(({ id }) => id === "lesson:aim")!.lines[0]!;
-const ICONS = new URL("../../public/art/ui/icons/", import.meta.url);
 
 describe("control help tokens", () => {
   it("splits copy into text and control tokens, and refuses an unknown token", () => {
@@ -81,7 +81,7 @@ describe("control help tokens", () => {
 describe("control icons", () => {
   it("uses Art's 16 by 16 vectors, 4 after the name and centred on the line", () => {
     for (const key of Object.values(CONTROL_ICONS)) {
-      const svg = readFileSync(new URL(`${key}.svg`, ICONS), "utf8");
+      const svg = readFileSync(new URL(`../../public${uiIconUrl(key)}`, import.meta.url), "utf8");
       expect(svg).toMatch(/<svg\b[^>]*\bwidth="16"[^>]*\bheight="16"/u);
     }
     expect(INLINE_CONTROL).toEqual({ gap: 4, icon: 16, inset: 2 });
@@ -104,7 +104,7 @@ describe("control icons", () => {
       alt: "",
       className: "ada-control-icon",
       dataset: { control: "move" },
-      src: "/art/ui/icons/icon-move-controls.svg",
+      src: uiIconUrl("icon-move-controls"),
       tag: "img",
     });
     expect(icon.getAttribute("aria-hidden")).toBe("true");
@@ -117,7 +117,7 @@ describe("control icons", () => {
       (["move", "aim", "use"] as const).map(
         (control) =>
           `<img class="ada-control-icon" data-control="${control}" ` +
-          `src="/art/ui/icons/${CONTROL_ICONS[control]}.svg" alt="" aria-hidden="true" ` +
+          `src="${uiIconUrl(CONTROL_ICONS[control])}" alt="" aria-hidden="true" ` +
           'width="16" height="16">',
       ),
     );
@@ -137,7 +137,7 @@ it("renders the approved Scan instruction with the actual icon only and an acces
   expect(nodes[0]!.textContent).toBe("Fly closer, then press ");
   expect(nodes[1]!.children).toHaveLength(1);
   const icon = nodes[1]!.children[0]!;
-  expect(icon.src).toBe("/art/ui/icons/icon-use-control.svg");
+  expect(icon.src).toBe(uiIconUrl("icon-use-control"));
   expect(icon.alt).toBe(CONTROL_WORDS.use);
   expect(icon.getAttribute("aria-hidden")).not.toBe("true");
   expect(nodes[2]!.textContent).toBe(" to scan it.");

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { homePageHtml, prebootShipHtml, webManifestJson } from "./html.ts";
 
@@ -19,7 +20,7 @@ describe("the landing page's and manifest's copy", () => {
   it("follows each control named in the Mobile line with its icon", () => {
     expect(homePageHtml(copy, "<p>%HOME_MOBILE%</p>")).toBe(
       '<p>Tap <span class="ada-control-help">Use<img class="ada-control-icon" data-control="use" ' +
-        'src="/art/ui/icons/icon-use-control.svg" alt="" aria-hidden="true" width="16" ' +
+        `src="${uiIconUrl("icon-use-control")}" alt="" aria-hidden="true" width="16" ` +
         'height="16"></span> &amp; go.</p>',
     );
   });

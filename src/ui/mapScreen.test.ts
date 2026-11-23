@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import { MAP_FACES, MAP_GLYPHS } from "./layout/mapScreen.ts";
 import {
@@ -201,15 +202,13 @@ describe("map screen place panel", () => {
     expect(MAP_SCREEN_STYLE).not.toMatch(/\[data-job\]\{[^}]*--face/u);
     expect(chipGlyph(place("station", { job: true }))).toBe(MAP_GLYPHS.station);
     expect(chipGlyph(place("job", { job: true, kind: "job" }))).toBe("map-job");
-    expect(existsSync(new URL("../../public/art/ui/icons/map-job.svg", import.meta.url))).toBe(
-      true,
-    );
+    expect(existsSync(new URL(`../../public${uiIconUrl("map-job")}`, import.meta.url))).toBe(true);
     for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
       expect(chipGlyph(place("job", { job: true, jobType: type, kind: "job" }))).toBe(
         `map-job-${type}`,
       );
       expect(
-        existsSync(new URL(`../../public/art/ui/icons/map-job-${type}.svg`, import.meta.url)),
+        existsSync(new URL(`../../public${uiIconUrl(`map-job-${type}`)}`, import.meta.url)),
       ).toBe(true);
     }
     // The job spot is a round chip like every other: no diamond, one ring rule for every chip.

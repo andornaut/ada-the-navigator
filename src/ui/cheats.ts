@@ -3,6 +3,7 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -122,7 +123,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
               const icon = document.createElement("span");
               icon.className = "ada-cheat-resource-icon";
               icon.setAttribute("aria-hidden", "true");
-              icon.style.backgroundImage = `url('/art/ui/icons/icon-${resource}-20.svg')`;
+              icon.style.backgroundImage = `url('${uiIconUrl(`icon-${resource}-20`)}')`;
               button.append(icon);
             }
             update(data);

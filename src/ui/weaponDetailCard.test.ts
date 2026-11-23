@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
@@ -354,7 +355,7 @@ it.each([1, 2, 3])(
     expect(icon!.dataset).toEqual({ level: String(level), state: "idle", weapon: "rapidMissile" });
     expect(icon!.children[0]!.style.setProperty).toHaveBeenCalledWith(
       "--glyph",
-      "url('/art/ui/icons/weapon-rapidMissile.svg')",
+      `url('${uiIconUrl("weapon-rapidMissile")}')`,
     );
     expect(icon!.children[1]!.children).toHaveLength(level === 1 ? 0 : level);
     const lines = fixture.card.body.children[0]!.children.map((node) => node.textContent);
@@ -364,7 +365,7 @@ it.each([1, 2, 3])(
     expect(row.children[0]!.className).toBe("ada-detail-ammo-icon");
     expect(row.children[0]!.style.setProperty).toHaveBeenCalledWith(
       "--glyph",
-      "url('/art/ui/icons/ammo-missile.svg')",
+      `url('${uiIconUrl("ammo-missile")}')`,
     );
     expect(row.children[1]!.textContent).toBe("0");
     expect(lines.some((line) => line.startsWith("Level "))).toBe(false);

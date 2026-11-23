@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
@@ -169,10 +170,10 @@ describe("Ship card", () => {
       undefined,
     ]);
     expect(left.map(({ icon }) => icon)).toEqual([
-      { vector: "/art/ui/icons/icon-shop-engine-tuning.svg" },
-      { vector: "/art/ui/icons/icon-shop-shield.svg" },
-      { vector: "/art/ui/icons/icon-shop-tractor-beam.svg" },
-      { vector: "/art/ui/icons/icon-shop-ship-paint.svg" },
+      { vector: uiIconUrl("icon-shop-engine-tuning") },
+      { vector: uiIconUrl("icon-shop-shield") },
+      { vector: uiIconUrl("icon-shop-tractor-beam") },
+      { vector: uiIconUrl("icon-shop-ship-paint") },
     ]);
     expect(right.map((row) => row.level)).toEqual(["Level 2 of 3", "Level 1 of 3"]);
     expect(right.map((row) => "mask" in row.icon)).toEqual([true, true]);

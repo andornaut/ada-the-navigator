@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
   EXCHANGE_AMOUNTS,
   type ExchangeResource,
@@ -19,7 +20,6 @@ import {
 } from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { STATION_ICONS } from "./layout/stationStyle.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -37,7 +37,7 @@ const paymentFor = (resource: ExchangeResource): ExchangeResource =>
 function exchangeIcon(resource: ExchangeResource): HTMLImageElement {
   const image = document.createElement("img");
   image.className = "ada-exchange-icon";
-  image.src = `${STATION_ICONS}icon-${resource}-20.svg`;
+  image.src = uiIconUrl(`icon-${resource}-20`);
   image.alt = "";
   return image;
 }

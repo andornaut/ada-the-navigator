@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
   EXCHANGE_AMOUNTS,
   type ImmediateExchangeOrder,
@@ -261,8 +262,8 @@ describe("immediate fixed Exchange actions", () => {
       ).toEqual(["1", "costs 2"]);
       const rateIcons = visual!.children.filter((part) => part.tagName === "IMG");
       expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).src)).toEqual([
-        `/art/ui/icons/icon-${received}-20.svg`,
-        `/art/ui/icons/icon-${payment}-20.svg`,
+        uiIconUrl(`icon-${received}-20`),
+        uiIconUrl(`icon-${payment}-20`),
       ]);
       expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).alt)).toEqual(["", ""]);
       expect(row.children.map((part) => part.tagName)).toEqual(["DIV", "DIV"]);
@@ -287,7 +288,7 @@ describe("immediate fixed Exchange actions", () => {
         expect(action.children).toHaveLength(1);
         expect(action.children[0]!.tagName).toBe("IMG");
         const receivedIcon = action.children[0] as unknown as HTMLImageElement;
-        expect(receivedIcon.src).toBe(`/art/ui/icons/icon-${resource}-20.svg`);
+        expect(receivedIcon.src).toBe(uiIconUrl(`icon-${resource}-20`));
         expect(receivedIcon.alt).toBe("");
       }
     }

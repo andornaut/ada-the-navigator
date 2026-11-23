@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { type ShopRow, shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
@@ -20,7 +21,7 @@ describe("shop rows on the station view", () => {
       "scattershot",
       "phaser",
     ] as const) {
-      const path = `/art/ui/icons/weapon-${weapon}.svg`;
+      const path = uiIconUrl(`weapon-${weapon}`);
       expect(itemGlyph(ECONOMY, { kind: "weapon", weapon })).toEqual({ kind: "mask", path });
       expect(readFileSync(publicFile(path), "utf8")).toContain('viewBox="0 0 20 20"');
     }
@@ -31,7 +32,7 @@ describe("shop rows on the station view", () => {
       ["phaser", "energy"],
       ["scattershot", "shell"],
     ] as const) {
-      const path = `/art/ui/icons/ammo-${ammo}.svg`;
+      const path = uiIconUrl(`ammo-${ammo}`);
       expect(itemGlyph(ECONOMY, { kind: "ammo", weapon })).toEqual({ kind: "mask", path });
       expect(readFileSync(publicFile(path), "utf8")).toContain('viewBox="0 0 20 20"');
     }
@@ -56,7 +57,7 @@ describe("shop rows on the station view", () => {
       "icon-shop-tractor-beam",
     ]) {
       for (const suffix of ["", "-disabled"]) {
-        expect(readFileSync(publicFile(`/art/ui/icons/${key}${suffix}.svg`), "utf8")).toContain(
+        expect(readFileSync(publicFile(uiIconUrl(`${key}${suffix}`)), "utf8")).toContain(
           'width="20" height="20"',
         );
       }

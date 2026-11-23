@@ -3,6 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
@@ -57,16 +58,16 @@ export function pennyGlyph(marker: PennyMarker): string | null {
     return null;
   }
   if (marker.symbol === "hostileStation") {
-    return "/art/ui/icons/map-hostile-station.svg";
+    return uiIconUrl("map-hostile-station");
   }
   if (marker.item === "stardust") {
-    return "/art/ui/icons/icon-stardust-20.svg";
+    return uiIconUrl("icon-stardust-20");
   }
   const key = chipGlyph({
     ...(marker.jobType ? { jobType: marker.jobType } : {}),
     symbol: marker.symbol,
   });
-  return key ? `/art/ui/icons/${key}.svg` : null;
+  return key ? uiIconUrl(key) : null;
 }
 /** Opaque paint only; native placement also unions any protruding glyph alpha. */
 export function pennyMarkerInkExtent(marker: PennyMarker, light: boolean) {

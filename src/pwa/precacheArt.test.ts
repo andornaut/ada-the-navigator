@@ -11,6 +11,7 @@ import { GALAXY_ID } from "../data/galaxies.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
@@ -51,7 +52,7 @@ describe("artUrls", () => {
   it("precaches the six resource SVGs without their retired sprites and metadata", () => {
     const urls = artUrls(artFiles);
     for (const key of ["cargo-20", "holodisk", "holodisk-20", "ore-20", "stardust-20", "tow-20"]) {
-      expect(urls).toContain(`/art/ui/icons/icon-${key}.svg`);
+      expect(urls).toContain(uiIconUrl(`icon-${key}`).split("#")[0]);
       expect(urls).not.toContain(`/art/ui/sprites/icon-${key}.png`);
       expect(urls).not.toContain(`/art/ui/sprites/icon-${key}.json`);
     }
@@ -72,11 +73,11 @@ describe("artUrls", () => {
       ...["energy", "missile", "shell"].map((ammo) => `ammo-${ammo}`),
     ];
     for (const key of pairs) {
-      expect(urls).toContain(`/art/ui/icons/${key}.svg`);
-      expect(urls).toContain(`/art/ui/icons/${key}-disabled.svg`);
+      expect(urls).toContain(uiIconUrl(key).split("#")[0]);
+      expect(urls).toContain(uiIconUrl(`${key}-disabled`).split("#")[0]);
     }
     for (const key of masks) {
-      expect(urls).toContain(`/art/ui/icons/${key}.svg`);
+      expect(urls).toContain(uiIconUrl(key).split("#")[0]);
     }
     for (const key of [...pairs, ...masks.map((key) => `icon-shop-${key}`)]) {
       expect(ui.sprites.some(({ png }) => png === `sprites/${key}.png`)).toBe(false);

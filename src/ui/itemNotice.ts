@@ -1,6 +1,7 @@
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { HUD_ICON_BEARINGS } from "../data/hudIconBearings.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { tierColour } from "../data/upgradeTiers.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
@@ -60,9 +61,9 @@ type Labels = Readonly<Record<string, string>>;
 
 /** Each upgrade track's shop icon and its level's item label. */
 const TRACK_NOTICES: Readonly<Record<UpgradeTrack, { label: string; vector: string }>> = {
-  engine: { label: "itemEngineLevel", vector: "/art/ui/icons/icon-shop-engine-tuning.svg" },
-  shield: { label: "itemShieldLevel", vector: "/art/ui/icons/icon-shop-shield.svg" },
-  tractor: { label: "itemTractorLevel", vector: "/art/ui/icons/icon-shop-tractor-beam.svg" },
+  engine: { label: "itemEngineLevel", vector: uiIconUrl("icon-shop-engine-tuning") },
+  shield: { label: "itemShieldLevel", vector: uiIconUrl("icon-shop-shield") },
+  tractor: { label: "itemTractorLevel", vector: uiIconUrl("icon-shop-tractor-beam") },
 };
 
 /** A gain's notice: its label, icon, accent and landing place. */
@@ -106,7 +107,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     const name = labels[ECONOMY.paints[gain.scheme]?.label ?? ""] ?? gain.scheme;
     return {
       accent: ECONOMY.paints[gain.scheme]?.top ?? NOTICE_ACCENTS.weapon,
-      icon: { vector: "/art/ui/icons/icon-shop-ship-paint.svg" },
+      icon: { vector: uiIconUrl("icon-shop-ship-paint") },
       key: `paint:${gain.scheme}`,
       kind: "upgrade",
       label: label(fill(labels.itemPaint ?? "", { paint: name })),

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import type { Weapon } from "../data/types.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { conversationBoxRect } from "./layout/conversationBox.ts";
 import { units } from "./layout/css.ts";
@@ -287,7 +288,7 @@ describe("HUD weapon buttons", () => {
     "scattershot",
     "phaser",
   ] as const)("draws %s's own single-colour 20px glyph as a mask on its disc", (weapon) => {
-    expect(weaponGlyphPath(weapon)).toBe(`/art/ui/icons/weapon-${weapon}.svg`);
+    expect(weaponGlyphPath(weapon)).toBe(uiIconUrl(`weapon-${weapon}`));
     const file = new URL(`../../public${weaponGlyphPath(weapon)}`, import.meta.url);
     expect(existsSync(file)).toBe(true);
   });

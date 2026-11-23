@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import type { CheatAction } from "./cheatActions.ts";
@@ -345,7 +346,7 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     expect(button.getAttribute("aria-label")).toBe(label);
     expect(button.children[0]!.getAttribute("aria-hidden")).toBe("true");
     expect(button.children[0]!.style.backgroundImage).toBe(
-      `url('/art/ui/icons/icon-${resource}-20.svg')`,
+      `url('${uiIconUrl(`icon-${resource}-20`)}')`,
     );
   }
   expect(maximizeButton!.dataset.cheat).toBe("maxWeaponLevels");

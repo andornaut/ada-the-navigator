@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { tierColour, UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import {
   centredNoticeLeft,
@@ -68,16 +69,16 @@ describe("item notice wording", () => {
     const level = notice({ kind: "weaponLevel", level: 2, weapon: "phaser" });
     expect([level.kind, level.icon, level.target]).toEqual([
       "weapon",
-      { mask: "/art/ui/icons/weapon-phaser.svg" },
+      { mask: uiIconUrl("weapon-phaser") },
       { kind: "weapon", weapon: "phaser" },
     ]);
     expect(notice({ kind: "weaponLevel", level: 3, weapon: "laser" }).icon).toEqual({
-      mask: "/art/ui/icons/weapon-laser.svg",
+      mask: uiIconUrl("weapon-laser"),
     });
     const shield = notice({ kind: "level", level: 2, track: "shield" });
     expect([shield.kind, shield.icon, shield.target]).toEqual([
       "shield",
-      { vector: "/art/ui/icons/icon-shop-shield.svg" },
+      { vector: uiIconUrl("icon-shop-shield") },
       { kind: "shield" },
     ]);
     for (const [gain, icon] of [
@@ -88,7 +89,7 @@ describe("item notice wording", () => {
       const upgrade = notice(gain);
       expect([upgrade.kind, upgrade.icon, upgrade.target]).toEqual([
         "upgrade",
-        { vector: `/art/ui/icons/${icon}.svg` },
+        { vector: uiIconUrl(icon) },
         { kind: "none" },
       ]);
     }
@@ -260,7 +261,7 @@ describe("item notice geometry", () => {
   it.each([
     [{ sprite: "icon-cargo-20" }, 5, 3],
     [{ sprite: "icon-tow-20" }, 3, 0],
-    [{ mask: "/art/ui/icons/weapon-rapidMissile.svg" }, 7, 4],
+    [{ mask: uiIconUrl("weapon-rapidMissile") }, 7, 4],
     [{ sprite: "icon-holodisk-20" }, 8, 6],
   ] as const)("fits a notice around the displayed asset %j", (icon, left, gap) => {
     const layout = noticeIconLayout(noticeIconBearings(icon));

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
@@ -37,7 +38,7 @@ const marker: PennyMarker = {
 describe("Penny's existing marker art", () => {
   it("uses the native hostile-station icon without revealing an unknown actor", () => {
     expect(pennyGlyph({ ...marker, identified: true, symbol: "hostileStation" })).toBe(
-      "/art/ui/icons/map-hostile-station.svg",
+      uiIconUrl("map-hostile-station"),
     );
     expect(pennyGlyph({ ...marker, identified: false, symbol: "hostileStation" })).toBeNull();
     expect(PENNY_MARKERS_STYLE).toContain('data-symbol="hostileStation"');
@@ -51,24 +52,20 @@ describe("Penny's existing marker art", () => {
       ["nebula", "map-nebula"],
       ["growers", "map-growers"],
     ] as const) {
-      expect(pennyGlyph({ ...marker, identified: true, symbol })).toBe(
-        `/art/ui/icons/${glyph}.svg`,
-      );
+      expect(pennyGlyph({ ...marker, identified: true, symbol })).toBe(uiIconUrl(glyph));
       expect(pennyGlyph({ ...marker, identified: false, symbol })).toBeNull();
-      expect(existsSync(new URL(`../../public/art/ui/icons/${glyph}.svg`, import.meta.url))).toBe(
-        true,
-      );
+      expect(existsSync(new URL(`../../public${uiIconUrl(glyph)}`, import.meta.url))).toBe(true);
     }
     const job: PennyMarker = { ...marker, category: "objective", symbol: "job" };
-    expect(pennyGlyph({ ...job, identified: true })).toBe("/art/ui/icons/map-job.svg");
+    expect(pennyGlyph({ ...job, identified: true })).toBe(uiIconUrl("map-job"));
     expect(pennyGlyph(job)).toBeNull();
     expect(pennyGlyph({ ...job, identified: true, jobType: "hunt" })).toBe(
-      "/art/ui/icons/map-job-hunt.svg",
+      uiIconUrl("map-job-hunt"),
     );
     expect(pennyGlyph({ ...job, jobType: "hunt" })).toBeNull();
     expect(
       pennyGlyph({ ...marker, category: "discovery", identified: true, item: "stardust" }),
-    ).toBe("/art/ui/icons/icon-stardust-20.svg");
+    ).toBe(uiIconUrl("icon-stardust-20"));
     expect(PENNY_MARKERS_STYLE).toContain("/art/ui/fonts/font-body.png");
   });
   it("retains the opaque paint baseline; protruding native glyph alpha is handled by the caller", () => {
@@ -261,7 +258,7 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     symbol: "destination",
     target: "workshop",
   });
-  expect(chip.properties.get("--glyph")).toContain("icon-stardust-20.svg");
+  expect(chip.properties.get("--glyph")).toContain(uiIconUrl("icon-stardust-20"));
   expect(chip.style.background).toBe(TASK_COLORS.generic);
   for (const [category, symbol] of [
     ["station", "station"],

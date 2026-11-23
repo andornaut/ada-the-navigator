@@ -1,3 +1,4 @@
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import { units } from "./layout/css.ts";
 import type { SettingsSwitch } from "./settingsTree.ts";
@@ -42,7 +43,7 @@ export const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>
 export function showIcon(icon: HTMLElement, key: string): void {
   icon.dataset.icon = key;
   icon.style.setProperty("--setting-icon-ink-top", units(SETTING_ICON_INK_TOP.get(key) ?? 0));
-  icon.style.backgroundImage = `url('/art/ui/icons/${key}.svg')`;
+  icon.style.backgroundImage = `url('${uiIconUrl(key)}')`;
   icon.style.imageRendering = "auto";
 }
 

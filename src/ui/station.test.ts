@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import {
@@ -137,7 +138,7 @@ describe("weapon shop glyphs", () => {
     ] as const) {
       expect(weaponItemGlyph(weapon)).toEqual({
         kind: "mask",
-        path: `/art/ui/icons/weapon-${weapon}.svg`,
+        path: uiIconUrl(`weapon-${weapon}`),
       });
     }
     expect(STATION_STYLE).toContain("mask:var(--icon) center / 100% 100% no-repeat");
@@ -187,7 +188,7 @@ describe("shop style", () => {
       for (const suffix of ["", "-disabled"]) {
         expect(
           existsSync(
-            new URL(`../../public/art/ui/icons/icon-job-${type}${suffix}.svg`, import.meta.url),
+            new URL(`../../public${uiIconUrl(`icon-job-${type}${suffix}`)}`, import.meta.url),
           ),
         ).toBe(true);
       }
@@ -767,7 +768,7 @@ function constructedStation(
     ].map((key) => [key, key]),
   ) as unknown as stationSource.StationLabels;
   const rows: stationSource.StationRow[] = Array.from({ length: 8 }, (_, index) => ({
-    glyph: { kind: "mask", path: "/art/ui/icons/weapon-laser.svg" },
+    glyph: { kind: "mask", path: uiIconUrl("weapon-laser") },
     group: "items",
     key: `item-${index}`,
     level: "",
@@ -1478,7 +1479,7 @@ it("audits the completed welcome view before strict focus on reopening", () => {
 });
 
 const stockOffer = (key: string, name = key): stationSource.StationRow => ({
-  glyph: { kind: "mask", path: "/art/ui/icons/weapon-laser.svg" },
+  glyph: { kind: "mask", path: uiIconUrl("weapon-laser") },
   group: "items",
   key,
   level: "Offer details",

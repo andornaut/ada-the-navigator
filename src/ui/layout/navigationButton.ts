@@ -1,13 +1,14 @@
 import { HUD_BUTTON } from "../../data/layout.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { MENU_ART, type PausePose } from "../pause.ts";
 import { units } from "./css.ts";
 import { PAUSE_BUTTON } from "./playView.ts";
 
 export const EXIT_ART: Readonly<Record<PausePose, string>> = {
-  held: "/art/ui/icons/exit-disc-held.svg",
-  press: "/art/ui/icons/exit-disc-press.svg",
-  rest: "/art/ui/icons/exit-disc.svg",
+  held: uiIconUrl("exit-disc-held"),
+  press: uiIconUrl("exit-disc-press"),
+  rest: uiIconUrl("exit-disc"),
 };
 
 export const NAVIGATION_DISCS = ":is(.ada-pause,.ada-exit-open)";

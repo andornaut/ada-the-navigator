@@ -1,6 +1,6 @@
 import type { Weapon } from "../data/types.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { STATION_ICONS } from "./layout/stationStyle.ts";
 
 export type ItemGlyph =
   | { readonly kind: "stateVector"; readonly key: string }
@@ -35,15 +35,14 @@ export function createStationItemIcon(glyph: ItemGlyph): HTMLElement {
     return node;
   }
   if (glyph.kind === "stateVector") {
-    const icon = `${STATION_ICONS}${glyph.key}`;
     node.className = "ada-glyph ada-glyph-state-vector";
-    node.style.setProperty("--state-icon", `url('${icon}.svg')`);
-    node.style.setProperty("--state-icon-disabled", `url('${icon}-disabled.svg')`);
+    node.style.setProperty("--state-icon", `url('${uiIconUrl(glyph.key)}')`);
+    node.style.setProperty("--state-icon-disabled", `url('${uiIconUrl(`${glyph.key}-disabled`)}')`);
     return node;
   }
   if (glyph.kind === "vector") {
     node.className = "ada-glyph ada-glyph-vector";
-    node.style.setProperty("--icon", `url('${STATION_ICONS}${glyph.key}.svg')`);
+    node.style.setProperty("--icon", `url('${uiIconUrl(glyph.key)}')`);
     return node;
   }
   node.className = "ada-glyph ada-glyph-mask";

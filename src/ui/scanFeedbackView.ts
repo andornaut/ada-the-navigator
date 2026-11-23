@@ -1,5 +1,6 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
@@ -95,7 +96,7 @@ export function createScanFeedbackView(parent: HTMLElement) {
           background: "currentColor",
           flex: "none",
           height: units(ITEM_NOTICE.icon),
-          mask: `url('/art/ui/icons/${part.glyph}.svg') center / contain no-repeat`,
+          mask: `url('${uiIconUrl(part.glyph)}') center / contain no-repeat`,
           width: units(ITEM_NOTICE.icon),
         });
         panel.append(icon);

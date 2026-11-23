@@ -1,3 +1,4 @@
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { BUTTON_FACE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
@@ -6,8 +7,6 @@ import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
 import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
-export const STATION_ICONS = "/art/ui/icons/";
-const ICONS = STATION_ICONS;
 const { bottom, left, right, top } = BUTTON_SLICE;
 const TILE_SLICE = `${top} ${right} ${bottom} ${left}`;
 const TILE_WIDTHS = `${slice(top)} ${slice(right)} ${slice(bottom)} ${slice(left)}`;
@@ -78,10 +77,10 @@ export const STATION_STYLE = `
   content:"";
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};
-  background:url('${ICONS}icon-stardust-20.svg') center / 100% 100% no-repeat
+  background:url('${uiIconUrl("icon-stardust-20")}') center / 100% 100% no-repeat
 }
 .ada-controls .ada-station-balances [data-balance=ore]::before{
-  background-image:url('${ICONS}icon-ore-20.svg')
+  background-image:url('${uiIconUrl("icon-ore-20")}')
 }
 .ada-controls .ada-station-footer{
   display:flex;
@@ -189,7 +188,7 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-pane-hint::after{
   content:")";
   padding-inline-start:${units(TYPE.count.size + SPACING.rowGap)};
-  background:url('${ICONS}icon-stardust-20.svg') ${units(SPACING.rowGap)} center /
+  background:url('${uiIconUrl("icon-stardust-20")}') ${units(SPACING.rowGap)} center /
     ${units(TYPE.count.size)} ${units(TYPE.count.size)} no-repeat;
   image-rendering:pixelated
 }
@@ -344,7 +343,7 @@ export const STATION_STYLE = `
   flex:none;
   width:${units(BALANCE.icon)};
   height:${units(BALANCE.icon)};
-  background:url('${ICONS}icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
+  background:url('${uiIconUrl("icon-stardust-20")}') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 
@@ -521,11 +520,11 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   top:0;
   width:${scaled(SHOP_ROW.upgrade.badge)};
   height:${scaled(SHOP_ROW.upgrade.badge)};
-  background:url('${ICONS}icon-shop-upgrade-badge.svg') 0 0 / 100% 100% no-repeat;
+  background:url('${uiIconUrl("icon-shop-upgrade-badge")}') 0 0 / 100% 100% no-repeat;
   image-rendering:auto
 }
 .ada-controls [data-state=unaffordable] .ada-glyph-badge{
-  background-image:url('${ICONS}icon-shop-upgrade-badge-disabled.svg')
+  background-image:url('${uiIconUrl("icon-shop-upgrade-badge-disabled")}')
 }
 .ada-controls .ada-glyph-swatch{
   width:${units(SHOP_ROW.glyph.swatch)};
@@ -580,7 +579,7 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   flex:none;
   width:${units(SHOP_ROW.pill.icon)};
   height:${units(SHOP_ROW.pill.icon)};
-  background:url('${ICONS}icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
+  background:url('${uiIconUrl("icon-stardust-20")}') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 .ada-controls .ada-owned{
@@ -599,7 +598,7 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   flex:none;
   width:${units(SHOP_ROW.check.width)};
   height:${units(SHOP_ROW.check.height)};
-  background:url('${ICONS}icon-shop-check.svg') 0 0 / 100% 100% no-repeat;
+  background:url('${uiIconUrl("icon-shop-check")}') 0 0 / 100% 100% no-repeat;
   image-rendering:auto
 }
 

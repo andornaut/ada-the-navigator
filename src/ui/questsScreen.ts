@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
 import {
@@ -85,10 +86,10 @@ export function questObjectiveIcon(entry: QuestEntry, objective: QuestObjective)
   );
   if (location?.symbol) {
     const glyph = chipGlyph({ symbol: location.symbol });
-    return glyph ? `/art/ui/icons/${glyph}.svg` : null;
+    return glyph ? uiIconUrl(glyph) : null;
   }
   if (objective.location === undefined && entry.jobType) {
-    return `/art/ui/icons/map-job-${entry.jobType}.svg`;
+    return uiIconUrl(`map-job-${entry.jobType}`);
   }
   return null;
 }
@@ -103,7 +104,7 @@ export function questContextIcon(
   const [entry] = context.quests;
   if (context.quests.length === 1 && entry) {
     if (entry.jobType) {
-      return `/art/ui/icons/${chipGlyph({ jobType: entry.jobType, symbol: "job" })}.svg`;
+      return uiIconUrl(chipGlyph({ jobType: entry.jobType, symbol: "job" })!);
     }
     const step = questChecklist(entry).find((row) => !row.checked);
     if (step) {
@@ -113,7 +114,7 @@ export function questContextIcon(
       }
     }
   }
-  return `/art/ui/icons/${chipGlyph({ symbol: "destination" })}.svg`;
+  return uiIconUrl(chipGlyph({ symbol: "destination" })!);
 }
 
 export function createQuestsScreen(
@@ -202,7 +203,7 @@ export function createQuestsScreen(
       symbol === undefined
         ? questContextIcon({ quests: [entry] })
         : glyph
-          ? `/art/ui/icons/${glyph}.svg`
+          ? uiIconUrl(glyph)
           : null;
     if (path) {
       image.src = path;

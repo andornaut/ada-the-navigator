@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { BUTTON_SLICE } from "../data/layout.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import * as actionBinding from "./actionBinding.ts";
@@ -85,7 +86,7 @@ describe("quest objective presentation", () => {
     expect(questObjectiveIcon(current, objectives[0]!)).toBe(CARGO_ICONS.ore);
     expect(
       questObjectiveIcon(current, { checked: false, label: "Visit", location: "growers" }),
-    ).toBe("/art/ui/icons/map-growers.svg");
+    ).toBe(uiIconUrl("map-growers"));
     expect(
       questObjectiveIcon(current, { checked: false, label: "Visit", location: "unrevealed" }),
     ).toBeNull();
@@ -104,7 +105,7 @@ it("uses the shipped holodisk SVG only for the revealed current item", async () 
     },
   };
   const row = questChecklist(current)[0]!;
-  expect(questObjectiveIcon(current, row)).toBe("/art/ui/icons/icon-holodisk-20.svg");
+  expect(questObjectiveIcon(current, row)).toBe(uiIconUrl("icon-holodisk-20"));
   expect(
     questObjectiveIcon(
       { ...current, line: { kind: "story", target: null, text: "Explore" } },
@@ -118,13 +119,13 @@ it("presents only canonical supplied quest identities and never uses a label dic
   expect(questContextIcon(null)).toBeNull();
   expect(questContextIcon({ quests: [] })).toBeNull();
   expect(questContextIcon({ quests: [{ ...entry, jobType: "survey" }] })).toBe(
-    "/art/ui/icons/map-job-survey.svg",
+    uiIconUrl("map-job-survey"),
   );
   expect(questContextIcon({ quests: [entry, { ...entry, id: "other" }] })).toBe(
-    "/art/ui/icons/map-destination.svg",
+    uiIconUrl("map-destination"),
   );
   const unknown = { ...entry, line: { kind: "story" as const, target: null, text: "Explore" } };
-  expect(questContextIcon({ quests: [unknown] })).toBe("/art/ui/icons/map-destination.svg");
+  expect(questContextIcon({ quests: [unknown] })).toBe(uiIconUrl("map-destination"));
 });
 
 class QuestNode extends EventTarget {

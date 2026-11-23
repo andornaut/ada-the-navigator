@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { itemGlyph } from "../game/shopView.ts";
 import type { ShopItem } from "../model/shop.ts";
 import { createStationItemIcon, setStationItemTitle } from "./stationItemIcon.ts";
@@ -84,22 +85,19 @@ describe("station row and detail header item icons", () => {
     expect(rowIcon.attributes["aria-hidden"]).toBe("true");
     if (glyph.kind === "upgrade") {
       expect(rowIcon.children[1]!.className).toBe("ada-glyph-badge");
-      expect(rowIcon.children[0]!.properties["--icon"]).toBe(
-        "url('/art/ui/icons/weapon-laser.svg')",
-      );
+      expect(rowIcon.children[0]!.properties["--icon"]).toBe(`url('${uiIconUrl("weapon-laser")}')`);
     } else if (glyph.kind === "swatch") {
       expect(rowIcon.src).toBe(glyph.path);
       expect(rowIcon.tagName).toBe("img");
     } else if (glyph.kind === "stateVector") {
-      const icon = `/art/ui/icons/${glyph.key}`;
       expect(rowIcon.className).toBe("ada-glyph ada-glyph-state-vector");
       expect(rowIcon.properties).toEqual({
-        "--state-icon": `url('${icon}.svg')`,
-        "--state-icon-disabled": `url('${icon}-disabled.svg')`,
+        "--state-icon": `url('${uiIconUrl(glyph.key)}')`,
+        "--state-icon-disabled": `url('${uiIconUrl(`${glyph.key}-disabled`)}')`,
       });
     } else if (item.kind === "holodisk") {
       expect(rowIcon.className).toBe("ada-glyph ada-glyph-vector");
-      expect(rowIcon.properties).toEqual({ "--icon": "url('/art/ui/icons/icon-holodisk.svg')" });
+      expect(rowIcon.properties).toEqual({ "--icon": `url('${uiIconUrl("icon-holodisk")}')` });
     } else if (glyph.kind === "mask") {
       expect(rowIcon.className).toBe("ada-glyph ada-glyph-mask");
       expect(rowIcon.properties["--icon"]).toBe(`url('${glyph.path}')`);

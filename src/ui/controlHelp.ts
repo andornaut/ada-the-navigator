@@ -1,3 +1,4 @@
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { INLINE_CONTROL } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 
@@ -21,7 +22,7 @@ export const CONTROL_ICONS: Readonly<Record<HelpControl, string>> = {
 
 /** The shared image URL for game DOM and landing markup. */
 export const controlIconSource = (control: HelpControl): string =>
-  `/art/ui/icons/${CONTROL_ICONS[control]}.svg`;
+  uiIconUrl(CONTROL_ICONS[control]);
 
 /**
  * The name and its icon wrap as one; the icon starts a gap after the name, centred on the line

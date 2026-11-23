@@ -1,4 +1,5 @@
 import type { StatusAboardKind } from "../data/hudIconBearings.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import {
   assertAdaActionBindings,
@@ -264,9 +265,9 @@ const ICON_OUTLINE = [
 
 /** The pill's cargo segment icons (art/controls.md "Cargo icons"), 20 px sprites. */
 export const CARGO_ICONS = {
-  carrying: "/art/ui/icons/icon-cargo-20.svg",
-  ore: "/art/ui/icons/icon-ore-20.svg",
-  towing: "/art/ui/icons/icon-tow-20.svg",
+  carrying: uiIconUrl("icon-cargo-20"),
+  ore: uiIconUrl("icon-ore-20"),
+  towing: uiIconUrl("icon-tow-20"),
 } as const;
 
 const cargoIcon = (url: string) => `background:url('${url}') 0 0 / 100% 100% no-repeat;
@@ -369,8 +370,8 @@ ${SHIELD_PILL.bars
   width:${units(SHIELD_PILL.icon)};
   height:${units(SHIELD_PILL.icon)};
   background:var(--shield-mark);
-  -webkit-mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat;
-  mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat
+  -webkit-mask:url('${uiIconUrl("shield")}') center / 100% 100% no-repeat;
+  mask:url('${uiIconUrl("shield")}') center / 100% 100% no-repeat
 }
 .ada-controls .ada-status-bar{
   position:relative;
@@ -433,7 +434,7 @@ ${SHIELD_PILL.bars
   width:${units(STATUS_PILL.stardustIcon)};
   height:${units(STATUS_PILL.stardustIcon)};
   margin-right:${units(STATUS_PILL.iconGap)};
-  background:url('/art/ui/icons/icon-stardust-20.svg') 0 0 / 100% 100% no-repeat;
+  background:url('${uiIconUrl("icon-stardust-20")}') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
 .ada-controls .ada-status-cargo{

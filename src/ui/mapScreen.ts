@@ -13,6 +13,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { HUD_BUTTON } from "../data/layout.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { readMapArea } from "../game/jobArt.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -101,8 +102,6 @@ import { HUD_DISC_STATES, hudDiscStyle } from "./weapons.ts";
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input
 // exclusively while it shows; the Paused card and its dim hide under it.
-
-const ICONS = "/art/ui/icons/";
 
 export interface MapScreenLabels {
   /** The recentre tool's accessible label. */
@@ -837,7 +836,7 @@ function dressChip(chip: HTMLElement, place: MapPlace): void {
     delete chip.dataset.jobType;
   }
   if (glyph) {
-    chip.style.setProperty("--glyph", `url('${ICONS}${glyph}.svg')`);
+    chip.style.setProperty("--glyph", `url('${uiIconUrl(glyph)}')`);
   } else {
     chip.style.removeProperty("--glyph");
   }
@@ -1005,7 +1004,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     button.setAttribute("aria-label", toolLabels[id]);
     const disc = document.createElement("span");
     disc.className = "ada-disc";
-    disc.style.setProperty("--glyph", `url('${ICONS}${glyph}.svg')`);
+    disc.style.setProperty("--glyph", `url('${uiIconUrl(glyph)}')`);
     button.append(disc);
     toolButtons.set(id, button);
   }
