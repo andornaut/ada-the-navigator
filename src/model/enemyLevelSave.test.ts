@@ -62,7 +62,7 @@ describe("saved equipped enemy levels", () => {
           expect(restored).toEqual(saved);
           expect(restored!.version).toBe(SAVE_VERSION);
           expect(random).not.toHaveBeenCalled();
-          expect(definition).toHaveBeenCalledWith(1, "capital", "guard", level ?? 1);
+          expect(definition).toHaveBeenCalledWith(1, "capital", "guard", level ?? 1, undefined);
           expect(restored!.flight).not.toBe(saved.flight);
         } finally {
           definition.mockRestore();

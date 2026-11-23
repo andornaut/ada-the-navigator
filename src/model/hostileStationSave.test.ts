@@ -159,7 +159,7 @@ it("restores an absent legacy station level as L1 without inserting it or reroll
   try {
     const restored = restoreSave(saved)!;
     expect(restored).toEqual(saved);
-    expect(resolve).toHaveBeenCalledWith(2, "hostileStation", station.id, 1);
+    expect(resolve).toHaveBeenCalledWith(2, "hostileStation", station.id, 1, undefined);
     expect(Object.hasOwn(restored.flight!.objects[0]!.enemy!, "weaponLevel")).toBe(false);
     expect(random).not.toHaveBeenCalled();
   } finally {
