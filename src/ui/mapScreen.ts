@@ -1398,15 +1398,19 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         return frameSize(ink).width / unit;
       }
       const style = getComputedStyle(box);
+      // Forced colors can leave the computed shorthand empty.
+      const inkFont =
+        style.font ||
+        `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
       const text = ink.textContent ?? "";
-      const key = `${style.font}:${density}:${text}`;
+      const key = `${inkFont}:${density}:${text}`;
       const cached = inkMeasurements.get(key);
       if (cached) {
         box.style.width = pixels(cached.width / density);
         ink.style.transform = `translateX(${pixels(cached.offset / density)})`;
         return cached.width / pixelUnit;
       }
-      measure.font = style.font;
+      measure.font = inkFont;
       const em = parseFloat(style.fontSize);
       const metrics = measure.measureText(text);
       const advance = metrics.width;
@@ -1416,7 +1420,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       const descent = Math.ceil(metrics.actualBoundingBoxDescent * density);
       measure.canvas.height = baseline + descent + origin;
       measure.scale(density, density);
-      measure.font = style.font;
+      measure.font = inkFont;
       measure.fillStyle = "white";
       measure.fillText(text, origin / density, baseline / density);
       const raster = measure.getImageData(0, 0, measure.canvas.width, measure.canvas.height);

@@ -65,6 +65,63 @@ function actual(name: string): string {
   }
   return found.getText(source);
 }
+it("measures and paints header ink with its computed font when shorthand is empty", () => {
+  let computed = {
+    font: "",
+    fontFamily: "AdaUI, sans-serif",
+    fontSize: "24px",
+    fontStyle: "normal",
+    fontWeight: "700",
+  };
+  const fonts: string[] = [];
+  const measure = {
+    canvas: {
+      set height(_value: number) {
+        measure.font = "10px sans-serif";
+      },
+      width: 0,
+    },
+    fillText: () => fonts.push(measure.font),
+    font: "10px sans-serif",
+    getImageData: () => ({ data: [0, 0, 0, 255], height: 1, width: 1 }),
+    measureText: () => {
+      fonts.push(measure.font);
+      return { actualBoundingBoxAscent: 2, actualBoundingBoxDescent: 1, width: 3 };
+    },
+    scale: () => {},
+  };
+  const context = createContext({
+    density: 1,
+    getComputedStyle: () => computed,
+    inkMeasurements: new Map(),
+    pixelUnit: 1,
+    pixels: (value: number) => `${value}px`,
+    textMeasure: measure,
+  });
+  const measureInk = runInContext(
+    ts.transpileModule(`(${actual("measureInk")})`, {
+      compilerOptions: { target: ts.ScriptTarget.ES2023 },
+    }).outputText,
+    context,
+  ) as (box: { style: object }, ink: { textContent: string; style: object }) => number;
+  const box = { style: {} };
+  const ink = { style: {}, textContent: "Sunflower" };
+  expect(measureInk(box, ink)).toBe(1);
+  expect(measureInk(box, ink)).toBe(1);
+  computed = { ...computed, fontSize: "42.6667px" };
+  expect(measureInk(box, ink)).toBe(1);
+  computed = { ...computed, font: "700 24px / 28px AdaUI, sans-serif" };
+  expect(measureInk(box, ink)).toBe(1);
+  expect(fonts).toEqual([
+    "normal 700 24px AdaUI, sans-serif",
+    "normal 700 24px AdaUI, sans-serif",
+    "normal 700 42.6667px AdaUI, sans-serif",
+    "normal 700 42.6667px AdaUI, sans-serif",
+    "700 24px / 28px AdaUI, sans-serif",
+    "700 24px / 28px AdaUI, sans-serif",
+  ]);
+});
+
 class Element extends EventTarget {
   parentElement: Element | null = null;
   readonly classList = { add() {} };
