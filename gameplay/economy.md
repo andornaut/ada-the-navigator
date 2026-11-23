@@ -289,9 +289,9 @@ matches its level 2 upgrade:
 | Scattershot   |     800 |    1500 |
 | Phaser        |    1000 |    1900 |
 
-Enemy speeds are fixed, so engine tuning lets Ada keep pace with the
-interceptor and outrun every other enemy at level 2, and outrun all of them at
-level 3. Owned weapons retain upgrade rows, and maxed items remain visible.
+Engine tuning raises Ada's top speed. See [ship speeds](ships.md#values) for
+how it compares with enemy craft. Owned weapons retain upgrade rows, and maxed
+items remain visible.
 Unowned ammunition stays visible with “Requires {weapon}” and its purchase
 guard. Names, prices and unlocks follow the canonical catalogue.
 
@@ -405,7 +405,7 @@ it shows `detailMaxed` instead.
 | Scattershot   | "Two more shots that hit harder."                         | Same as level 2                                  |
 | Phaser        | "Hits harder."                                            | Same as level 2                                  |
 | Shield        | "A bigger shield that refills faster."                    | Same as level 2                                  |
-| Engine tuning | "Faster, and turns quicker. Keep pace with interceptors." | "Faster, and turns quicker. Outrun every drone." |
+| Engine tuning | "Fly faster and turn more quickly."                       | Same as level 2                                  |
 | Tractor beam  | "Pulls from farther away, and faster."                    | Same as level 2                                  |
 
 ## Donations

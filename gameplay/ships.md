@@ -45,12 +45,12 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | Ship          | Size (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------- | ----------------: | ---------: | --------------------: | ---------------: | ------------: | ---------------: |
 | Ada           |                 1 |        175 |                 0.413 |            0.693 |          0.16 |             0.08 |
-| `swarm`       |              0.65 |        160 |                  0.20 |             0.25 |          0.12 |             0.10 |
-| `fighter`     |                 1 |        140 |                  0.40 |             0.50 |          0.30 |             0.15 |
-| `interceptor` |              0.75 |        200 |                  0.90 |             1.20 |          0.60 |             0.12 |
-| `retaliator`  |                 2 |         90 |                  1.20 |             1.50 |          0.90 |             0.35 |
-| `frigate`     |                 4 |         80 |                   1.5 |              2.0 |           1.2 |             0.40 |
-| `capital`     |                 5 |         40 |                   2.5 |              3.0 |           2.0 |             0.50 |
+| `swarm`       |              0.65 |        175 |                  0.20 |             0.25 |          0.12 |             0.10 |
+| `fighter`     |                 1 |        160 |                  0.40 |             0.50 |          0.30 |             0.15 |
+| `interceptor` |              0.75 |        240 |                  0.90 |             1.20 |          0.60 |             0.12 |
+| `retaliator`  |                 2 |         120 |                  1.20 |             1.50 |          0.90 |             0.35 |
+| `frigate`     |                 4 |         100 |                   1.5 |              2.0 |           1.2 |             0.40 |
+| `capital`     |                 5 |         50 |                   2.5 |              3.0 |           2.0 |             0.50 |
 | `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
 
 Ada's top speeds are 175, 200 and 225 world units per second. From rest with
@@ -62,11 +62,12 @@ reach the existing 1% rest threshold. The time constants derive from
 Her aim turns with `aimTurnSeconds` 0.08, 0.07 and 0.06 at engine levels 1, 2
 and 3, and her movement heading turns twice as slowly, with `turnSeconds` 0.16,
 0.14 and 0.12.
-Enemy speeds are fixed and the same in every galaxy: a new Ada outruns the swarm
-and the interceptor outruns her, engine level 2 keeps pace with the interceptor
-and outruns every other enemy, and level 3 outruns them all. Ada swings wide
-on sharp turns. Small enemies are nimble, the interceptor is fast but carries its momentum
-through overshooting passes, and larger ships are progressively heavier.
+Enemy base top speeds are the same in every galaxy. A swarm matches Ada's
+level-one top speed. The interceptor's top speed exceeds Ada's at every engine
+level. The finale flagship shares the capital's 50-unit top speed and moves at
+its existing siege fraction. Ada swings wide on sharp turns. Small enemies are
+nimble, interceptors carry momentum through passes, and larger ships are
+progressively heavier.
 The `platform` is fixed in place and only turns its turrets.
 
 ## Behaviours
@@ -407,7 +408,7 @@ bring ships together. They do not freeze or despawn existing enemies.
 New sight-triggered engagement is admitted separately, reserving required and
 persistent enemies and already engaged enemies first. Only the new sighted
 engagement term is gated; existing engaged AI, damage and summons, and returning
-ships' rearm behaviour remain unchanged. Speeds and damage are unchanged.
+ships' rearm behaviour remain unchanged.
 
 ## Sunflower roster
 
@@ -551,7 +552,7 @@ his fleet.
   hardpoint 8 HP. Its weapons follow the capital signature at position 6, as for any
   capital ([Enemy weapons](#enemy-weapons)). Its hull never drops below 1 HP, so
   it is beaten only by disabling.
-- **Movement:** `siege` at a quarter of its top speed, staying within 800 world
+- **Movement:** `siege` at a quarter of its top speed, staying within 1000 world
   units of the waypoint.
 - **Escorts:** 8 `escort` fighters, which hold back with it until the third wave
   is gone.
@@ -783,12 +784,21 @@ Combat speed, pursuit limits, weapon intent and damage remain unchanged.
 
 ### Finite pursuit
 
-`pursuit.homeRadius`, `maxSeconds`, `unseenSeconds` and `rearmSeconds` are
-provisional finite tuning. The current shared values are 2000 world units, 30
-seconds, 6 seconds and 2 seconds. Home is fixed at creation.
+The home radius is 2500 units for free-roaming swarms and fighters, 3000 for
+interceptors, 1500 for frigates, and 1000 for retaliators, capitals and the
+finale flagship. Escorts keep their leader-relative behavior.
+Keep authored guard patrols, blockade limits and industrial noncombat navigation.
+Use the ship's established home and retain existing authored home handling.
 
-The pursuit clock counts only time while Ada is unseen or beyond the ship's
-firing range, and resets to zero while the ship is fighting her. While Ada is
+The pursuit clock, sight-loss cutoff and rearm delay are 30, 8 and 2 seconds,
+respectively. During an active chase, an interceptor steers directly toward
+Ada when she is visible and targetable, outside its engagement range, and the
+gap is widening. When that condition ends it uses its normal steering again,
+including its usual attack passes in range. Existing retreat, navigation and
+return-to-home guards still apply.
+
+The pursuit clock counts only time while Ada is unseen or outside the ship's
+engagement range, and resets to zero while the ship is fighting her. While Ada is
 unseen after actual line-of-sight loss, an engaged mobile ship investigates her
 fixed last-seen position at a slower pace, then patrols around it. It does not
 follow her hidden position. A chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
