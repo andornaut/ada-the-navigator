@@ -170,7 +170,8 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
       0,
       ...fixedBlockers(model).map((actor) => worldDistance(world, flight.player, actor)),
     );
-    const departure = (ACTIVE_CHUNK_RADIUS + 1) * periodicWorldGrid(world, CONTENT.tuning.chunkSize).pitch;
+    const departure =
+      (ACTIVE_CHUNK_RADIUS + 1) * periodicWorldGrid(world, CONTENT.tuning.chunkSize).pitch;
     const frameLimit = Math.ceil(
       ((approach + departure) / physics.maxSpeed +
         physics.accelerationSeconds * 2 +
