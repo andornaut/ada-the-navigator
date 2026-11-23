@@ -42,8 +42,13 @@ function updateGroup(url: string): string {
   return `art:${area}:${bucket}`;
 }
 
-// Decoded bytes per envelope. Use the lower end of Game Kit's transport trial range.
-const PACK_MAX_BYTES = 1536 * 1024;
+// The landing page and play shell use these before a service worker controls the page.
+const DIRECT_ART = new Set([
+  "/art/portraits/ada.png",
+  "/art/ui/fonts/adaui/AdaUI-Bold.woff2",
+  "/art/ui/fonts/adaui/AdaUI-Regular.woff2",
+  "/art/ui/icons/icons-16x16.svg",
+]);
 
 interface PrecachePluginOptions {
   // The game page's file name in the build output, which is its path under Vite's root, e.g.
@@ -67,6 +72,7 @@ export function precachePlugin({
   serviceWorkerSource,
 }: PrecachePluginOptions): Plugin[] {
   let urls: string[] = [];
+  let deferredOutputs = new Set<string>();
   let emitted: ((url: string) => Uint8Array | undefined) | undefined;
   const readJson = (url: string): unknown => {
     const source = emitted?.(url);
@@ -77,8 +83,41 @@ export function precachePlugin({
   };
   const emitArt: Plugin = {
     apply: "build",
-    async generateBundle() {
+    async generateBundle(_options, bundle) {
       const { publicDir } = this.environment.config;
+      // Keep the static dependencies of both HTML entry points. The game itself loads
+      // after the install, so dynamic imports and their own dependencies can be archived.
+      const direct = new Set<string>();
+      const pending = Object.values(bundle).flatMap((file) =>
+        file.type === "chunk" && file.isEntry ? [file.fileName] : [],
+      );
+      for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
+        const file = bundle[name];
+        if (!file || direct.has(name)) {
+          continue;
+        }
+        direct.add(name);
+        if (file.type === "chunk") {
+          pending.push(
+            ...file.imports,
+            ...(file.viteMetadata?.importedAssets ?? []),
+            ...(file.viteMetadata?.importedCss ?? []),
+          );
+        }
+      }
+      deferredOutputs = new Set(
+        Object.keys(bundle).filter(
+          (name) =>
+            name.startsWith("assets/") &&
+            !name.startsWith("assets/art/app-icon/") &&
+            !direct.has(name),
+        ),
+      );
+      this.emitFile({
+        fileName: "site.css",
+        source: await readFile(join(publicDir, "site.css")),
+        type: "asset",
+      });
       // A directory not there yet (the previews before their first capture) lists nothing.
       const listed = async (directory: string) => {
         const root = join(publicDir, directory);
@@ -109,11 +148,15 @@ export function precachePlugin({
     kitPrecachePlugin({
       boot: (files) => bootUrls(readJson, files),
       buildId,
+      groupedFirstInstall: {
+        archiveOnly: (url) =>
+          deferredOutputs.has(url.slice(1)) ||
+          ((url.startsWith("/art/") || url.startsWith("/previews/")) && !DIRECT_ART.has(url)),
+      },
       hashedFiles: (bundleFile) => {
         emitted = bundleFile;
         return { sounds: {}, urls };
       },
-      packs: { maxBytes: PACK_MAX_BYTES },
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,

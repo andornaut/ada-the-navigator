@@ -10,7 +10,7 @@ vi.mock("@andornaut/game-kit/build/precachePlugin", () => ({
 }));
 import { bootUrls, precachePlugin } from "./precachePlugin.ts";
 
-it("forwards the build identity, boot files and decoded pack limit to the kit's producer", () => {
+it("forwards the build identity, boot files and grouped first install to the kit's producer", () => {
   const full = "1".repeat(40);
   const discovery = {
     sounds: {},
@@ -23,8 +23,23 @@ it("forwards the build identity, boot files and decoded pack limit to the kit's 
   });
   const options = captured.options!;
   expect(options.buildId).toBe(full);
-  expect(options.packs).toEqual({ maxBytes: 1536 * 1024 });
+  expect(options.packs).toBeUndefined();
   expect(options.wholeBuild).toBeUndefined();
+  expect(options.emitUpdateGroupRecipes).toBeUndefined();
+  const archiveOnly = options.groupedFirstInstall!.archiveOnly;
+  expect(archiveOnly("/art/manifest.json")).toBe(true);
+  expect(archiveOnly("/previews/sunflower.png")).toBe(true);
+  for (const direct of [
+    "/play/",
+    "/sw.js",
+    "/site.css",
+    "/art/portraits/ada.png",
+    "/art/ui/fonts/adaui/AdaUI-Bold.woff2",
+    "/art/ui/fonts/adaui/AdaUI-Regular.woff2",
+    "/art/ui/icons/icons-16x16.svg",
+  ]) {
+    expect(archiveOnly(direct)).toBe(false);
+  }
   const updateGroup = options.updateGroup!;
   expect(updateGroup("/assets/main-Abc012_-.js")).toBe(updateGroup("/assets/main-wxy98745.js"));
   expect(updateGroup("/assets/launch-Abc012_-.js")).not.toBe(

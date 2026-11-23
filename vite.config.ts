@@ -50,6 +50,9 @@ export default ({ command }: ConfigEnv) =>
     testTimeout: 10_000,
   }).then((config) => ({
     ...config,
+    // The precache producer owns emitted public assets. A second public copy would
+    // expose original files selected for the grouped archives.
+    build: { ...config.build, copyPublicDir: false },
     test: {
       ...config.test,
       maxWorkers: 4,
