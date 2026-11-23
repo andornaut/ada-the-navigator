@@ -42,7 +42,7 @@ import {
 } from "./cartwheelArt.ts";
 import { readStreakSpec } from "./currentStreaks.ts";
 import { type DebrisArt, readDebrisArt } from "./debrisArt.ts";
-import { readShards } from "./destructionArt.ts";
+import { readShards, type ShardData } from "./destructionArt.ts";
 import {
   composedArchetypes,
   ENEMY_HEADINGS,
@@ -58,6 +58,7 @@ import {
   GALAXY_FAMILIES,
   galaxyFamily,
   mergeEnemyAssets,
+  readSidecars,
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
@@ -67,6 +68,7 @@ import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
 import { type Asset } from "./sceneShared.ts";
+import { readShardPalettePack } from "./shardPalettePack.ts";
 import { paintFrames } from "./shipArt.ts";
 import { readShipJets } from "./shipJets.ts";
 import {
@@ -357,6 +359,94 @@ export function loadAsteroidArt(scene: AssetsContext): void {
   scene.load.once(Loader.Events.COMPLETE, ready);
 }
 
+type ShardScene = Pick<GameScene, "cache" | "familyShards" | "load" | "shards">;
+const shardPacks = new WeakMap<
+  object,
+  { archetype: string; pack: NonNullable<ReturnType<typeof readShardPalettePack>> }
+>();
+
+function loadedShardView(value: unknown, archetype: string, family: string): ShardData | undefined {
+  const legacy = readShards(value);
+  if (legacy) {
+    return legacy;
+  }
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    (family !== "coral" && family !== "claim" && family !== "garnet" && family !== "needle")
+  ) {
+    return undefined;
+  }
+  const held = shardPacks.get(value);
+  if (held) {
+    return held.archetype === archetype ? held.pack.forFamily(family) : undefined;
+  }
+  const pack = readShardPalettePack(value, archetype);
+  if (!pack) {
+    return undefined;
+  }
+  shardPacks.set(value, { archetype, pack });
+  return pack.forFamily(family);
+}
+
+function publishShards(
+  scene: Pick<ShardScene, "cache" | "load">,
+  key: string,
+  destination: Map<string, ShardData>,
+  archetype: string,
+  family: string,
+): void {
+  const read = () => {
+    const shards = loadedShardView(scene.cache.json.get(key), archetype, family);
+    if (shards) {
+      destination.set(archetype, shards);
+    }
+  };
+  if (scene.cache.json.exists(key)) {
+    read();
+    return;
+  }
+  // The loader owns optional transport retries, including batches after its first COMPLETE.
+  const fileEvent = `filecomplete-json-${key}`;
+  const events = scene.load.scene.events;
+  const cleanup = () => {
+    scene.load.off(fileEvent, loaded);
+    events.off(Scenes.Events.SHUTDOWN, cleanup);
+    events.off(Scenes.Events.DESTROY, cleanup);
+  };
+  const loaded = () => {
+    cleanup();
+    read();
+  };
+  scene.load.once(fileEvent, loaded);
+  events.once(Scenes.Events.SHUTDOWN, cleanup);
+  events.once(Scenes.Events.DESTROY, cleanup);
+}
+
+export function publishCoreShards(scene: ShardScene, archetype: string): void {
+  publishShards(scene, `shards-${archetype}`, scene.shards, archetype, "coral");
+}
+
+function queueFamilyShards(
+  scene: Pick<ShardScene, "cache" | "familyShards" | "load">,
+  family: string,
+  archetype: string,
+  path: string,
+  corePath: string | undefined,
+): void {
+  let destination = scene.familyShards.get(family);
+  if (!destination) {
+    destination = new Map();
+    scene.familyShards.set(family, destination);
+  }
+  const shared = path === corePath;
+  const key = shared ? `shards-${archetype}` : `${family}-shards-${archetype}`;
+  publishShards(scene, key, destination, archetype, family);
+  if (!shared && !scene.cache.json.exists(key)) {
+    scene.load.json(key, path);
+  }
+}
+
 /**
  * Loads a galaxy's own art the first time one of its flights draws: SVGs (loadSvg), the nugget
  * sheet and the data files, then reads them. Until then its objects keep their placeholders.
@@ -530,6 +620,8 @@ function queueGalaxyAssets(
   // Data files come from the manifest's own sidecars map; a Phantom platform subset reads
   // Cartwheel's.
   const { sidecars } = manifest;
+  const core = scene.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
+  const coreSidecars = readSidecars(core?.sidecars);
   const packedCraft: string[] = [];
   for (const craft of craftFrameSets(assets).keys()) {
     const jets = enemyJetsPath(sidecars, craft);
@@ -560,7 +652,13 @@ function queueGalaxyAssets(
           ? enemyShardsPath(sidecars, archetype)
           : undefined;
       if (shards) {
-        scene.load.json(`${family}-shards-${archetype}`, shards);
+        queueFamilyShards(
+          scene,
+          family,
+          archetype,
+          shards,
+          coreSidecars && enemyShardsPath(coreSidecars, archetype),
+        );
       }
       const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(partClass)
         ? enemyHardpointsPath(sidecars, archetype)
@@ -699,16 +797,6 @@ export function queueBand(
 export function readGalaxyArt(scene: AssetsContext): void {
   scene.backdropRules ??= readBackdropRules(scene.cache.json.get("backdrop-layers"));
   readEnemyArt(scene);
-  for (const { family, wired } of GALAXY_FAMILIES) {
-    const read = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
-    for (const archetype of wired) {
-      const shards = readShards(scene.cache.json.get(`${family}-shards-${archetype}`));
-      if (shards) {
-        read.set(archetype, shards);
-      }
-    }
-    scene.familyShards.set(family, read);
-  }
   const loaded = scene.manifest.assets.filter((asset) => scene.textures.exists(asset.id));
   for (const [galaxy, manifest] of scene.galaxyManifests) {
     const own = manifest.assets.filter((asset) => scene.textures.exists(asset.id));

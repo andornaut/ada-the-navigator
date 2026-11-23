@@ -12,11 +12,19 @@ import {
   shardPolygons,
   wreckFlashAt,
 } from "./destructionArt.ts";
+import { readShardPalettePack } from "./shardPalettePack.ts";
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/enemies/${path}`, import.meta.url), "utf8"));
 const data = readDestruction(read("destruction.json"))!;
-const fighterSource = read("fighter-shards.json") as { halfSpan: number };
+const shardSource = (archetype: string) => {
+  const value = read(`${archetype}-shards-packed.json`) as {
+    core: { archetype: string; halfSpan: number };
+  };
+  expect(readShardPalettePack(value, archetype)?.core).toBe(value.core);
+  return value.core;
+};
+const fighterSource = shardSource("fighter");
 const fighter = readShards(fighterSource)!;
 // The producer sizes the flash from the raw model half-span, rounded to three decimals.
 const fighterFlashWidth = Math.round(fighterSource.halfSpan * 1.98 * 1000) / 1000;
@@ -39,7 +47,7 @@ describe("enemy destruction art", () => {
       "swarm",
     ]);
     for (const [archetype, timing] of Object.entries(data.archetypes)) {
-      const source = read(`${archetype}-shards.json`) as { archetype: string; halfSpan: number };
+      const source = shardSource(archetype);
       expect(source.archetype).toBe(archetype);
       expect(readShards(source), archetype).toBeDefined();
       expect(timing.flashWidth, archetype).toBe(Math.round(source.halfSpan * 1.98 * 1000) / 1000);

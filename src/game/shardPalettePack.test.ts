@@ -5,12 +5,6 @@ import { describe, expect, it } from "vitest";
 import { readDestruction, readShards, shardPolygons } from "./destructionArt.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 
-const FOLDERS = {
-  claim: "cartwheel/enemies",
-  coral: "enemies",
-  garnet: "andromeda/enemies",
-  needle: "needle/enemies",
-} as const;
 const BODIES = [
   "fighter",
   "interceptor",
@@ -19,36 +13,33 @@ const BODIES = [
   "retaliatorMiningFreighter",
   "swarm",
 ] as const;
-type Family = keyof typeof FOLDERS;
+type Recolor = "claim" | "garnet" | "needle";
+type Family = "coral" | Recolor;
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/${path}`, import.meta.url), "utf8"));
 const destruction = readDestruction(read("enemies/destruction.json"))!;
 
 function fixture(body: (typeof BODIES)[number]) {
-  const sources = Object.fromEntries(
-    (Object.entries(FOLDERS) as [Family, string][]).map(([family, folder]) => [
-      family,
-      readShards(read(`${folder}/${body}-shards.json`))!,
-    ]),
-  ) as Record<Family, NonNullable<ReturnType<typeof readShards>>>;
-  const polygons = (family: Family) =>
-    sources[family].headings.flatMap((heading) =>
-      heading.shards.flatMap((shard) => shard.polygons),
-    );
-  const original = polygons("coral");
-  const palette = (family: Exclude<Family, "coral">) => {
-    const expected = polygons(family);
-    return Object.fromEntries(original.map(({ color }, index) => [color, expected[index]!.color]));
+  const wrapper = read(`enemies/${body}-shards-packed.json`) as {
+    core: NonNullable<ReturnType<typeof readShards>>;
+    palettes: Record<Recolor, Record<string, string>>;
+    version: number;
   };
-  return {
-    sources,
-    wrapper: {
-      core: sources.coral,
-      palettes: { claim: palette("claim"), garnet: palette("garnet"), needle: palette("needle") },
-      version: 2,
-    },
-  };
+  // Independently materialize the v1 objects represented by the selected production bytes.
+  const sources = { coral: wrapper.core } as Record<Family, typeof wrapper.core>;
+  for (const family of ["claim", "garnet", "needle"] as const) {
+    const source = JSON.parse(JSON.stringify(wrapper.core)) as typeof wrapper.core;
+    for (const heading of source.headings) {
+      for (const shard of heading.shards) {
+        for (const polygon of shard.polygons) {
+          Object.assign(polygon, { color: wrapper.palettes[family][polygon.color] });
+        }
+      }
+    }
+    sources[family] = readShards(source)!;
+  }
+  return { sources, wrapper };
 }
 
 describe("candidate shard palette pack", () => {

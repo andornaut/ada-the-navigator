@@ -80,7 +80,7 @@ import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { beginCheatSession, endsCheatSession, NO_CHEAT_SESSION } from "./cheatSession.ts";
-import { readDestruction, readShards } from "./destructionArt.ts";
+import { readDestruction } from "./destructionArt.ts";
 import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
@@ -100,6 +100,7 @@ import {
   materialShipSwatch,
   materialWarpPoses,
   paintInUse,
+  publishCoreShards,
   readEnemyArt,
 } from "./sceneAssets.ts";
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
@@ -392,10 +393,7 @@ export function buildScene(scene: UiContext): void {
     ...Object.keys(scene.destruction?.archetypes ?? {}),
     ...INDUSTRIAL_BODY_KEYS,
   ]) {
-    const shards = readShards(scene.cache.json.get(`shards-${archetype}`));
-    if (shards) {
-      scene.shards.set(archetype, shards);
-    }
+    publishCoreShards(scene, archetype);
   }
   scene.paintAssets = (manifest?.assets ?? []).filter((asset) => asset.paint !== undefined);
   const ship = scene.shipAssets.find((asset) => asset.id === "ship");

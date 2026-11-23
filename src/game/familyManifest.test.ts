@@ -22,6 +22,7 @@ import {
   readGalaxyManifest,
 } from "./artManifest.ts";
 import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
+import { readShards } from "./destructionArt.ts";
 import {
   composedArchetypes,
   ENEMY_HEADINGS,
@@ -35,9 +36,11 @@ import {
   enemyShardsPath,
   GALAXY_FAMILIES,
   mergeEnemyAssets,
+  readSidecars,
 } from "./enemyArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import type { Asset } from "./sceneShared.ts";
+import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readShipJets } from "./shipJets.ts";
 import { SvgRasters, type SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey } from "./svgSheet.ts";
@@ -58,6 +61,11 @@ const names = new Set([
   "loadEnemyParts",
   "loadGalaxyArt",
   "loadGalaxyAsset",
+  "loadedShardView",
+  "publishCoreShards",
+  "publishShards",
+  "queueFamilyShards",
+  "shardPacks",
   "queueGalaxyArt",
   "queueGalaxyAssets",
   "queueEagerSvgSheets",
@@ -115,6 +123,8 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     family: family as EnemyFamily | undefined,
     familyArts: new Map<string, Map<string, unknown>>(),
     familyParts: new Map(),
+    familyShards: new Map(),
+    shards: new Map(),
     galaxyLoads: new Set(),
     galaxyManifestPaths: {
       2: "/art/cartwheel/manifest.json",
@@ -172,6 +182,9 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     loadingRockSheets: new WeakMap(),
     materialShipHeading: () => undefined,
     mergeEnemyAssets,
+    readShardPalettePack,
+    readShards,
+    readSidecars,
     queueBackdrop: backdrop,
     readCraftNose,
     readGalaxyArt: readArt,
@@ -205,6 +218,10 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     loadRaster,
     loadWorld: context.loadGalaxyArt as (value: typeof scene, galaxy: number) => void,
     publishArt,
+    publishCoreShards: context.publishCoreShards as (
+      value: typeof scene,
+      archetype: string,
+    ) => void,
     queueCore: context.queueEagerSvgSheets as (
       value: typeof scene,
       current: () => boolean,
@@ -224,6 +241,84 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     xml,
   };
 }
+
+describe("shard publication", () => {
+  const path = "/art/enemies/fighter-shards-packed.json";
+  const key = "shards-fighter";
+  const event = `filecomplete-json-${key}`;
+  const packSource = () =>
+    publicJson(path) as {
+      core: object;
+      palettes: { needle: object };
+    };
+  const visitAndromeda = (f: ReturnType<typeof fixture>, manifest = andromeda) => {
+    Object.assign(f.scene.destruction.archetypes, { fighter: {} });
+    f.cache.set("art-manifest", core);
+    f.cache.set(galaxyManifestKey(5), manifest);
+    f.loadWorld(f.scene, 5);
+  };
+
+  it("publishes core and only the requested regional view after a shared optional retry", () => {
+    const f = fixture();
+    const value = packSource();
+    const expected = readShardPalettePack(value, "fighter")!;
+    f.publishCoreShards(f.scene, "fighter");
+    visitAndromeda(f);
+    expect(f.json).not.toHaveBeenCalledWith("garnet-shards-fighter", path);
+    f.events.emit("complete");
+    expect(f.scene.shards.size).toBe(0);
+    expect(f.scene.familyShards.get("garnet").size).toBe(0);
+    f.cache.set(key, value);
+    f.events.emit(event);
+    expect(f.scene.shards.get("fighter")).toBe(value.core);
+    expect(f.scene.familyShards.get("garnet").get("fighter")).toStrictEqual(
+      expected.forFamily("garnet"),
+    );
+    expect([...f.scene.familyShards.keys()]).toEqual(["garnet"]);
+    expect(f.events.listenerCount(event)).toBe(0);
+    expect(f.life.listenerCount("shutdown")).toBe(0);
+  });
+
+  it("keeps a distinct regional v1 transport and publishes it without recoloring", () => {
+    const f = fixture();
+    const legacy = "/art/andromeda/enemies/fighter-shards.json";
+    const value = packSource();
+    const regional = {
+      ...andromeda,
+      sidecars: {
+        ...andromeda.sidecars,
+        fighter: { ...andromeda.sidecars.fighter, shards: legacy },
+      },
+    };
+    const old = readShardPalettePack(value, "fighter")!.forFamily("garnet");
+    f.cache.set(key, value);
+    f.publishCoreShards(f.scene, "fighter");
+    visitAndromeda(f, regional);
+    expect(f.json).toHaveBeenCalledWith("garnet-shards-fighter", legacy);
+    f.cache.set("garnet-shards-fighter", old);
+    f.events.emit("filecomplete-json-garnet-shards-fighter");
+    expect(f.scene.shards.get("fighter")).toBe(value.core);
+    expect(f.scene.familyShards.get("garnet").get("fighter")).toBe(old);
+  });
+
+  it("does not publish a partial pack or publish a retry after shutdown", () => {
+    const f = fixture();
+    f.cache.set(key, { ...packSource(), palettes: { needle: {} } });
+    f.publishCoreShards(f.scene, "fighter");
+    visitAndromeda(f);
+    expect(f.scene.shards.size).toBe(0);
+    expect(f.scene.familyShards.get("garnet").size).toBe(0);
+    f.cache.delete(key);
+    f.publishCoreShards(f.scene, "fighter");
+    expect(f.events.listenerCount(event)).toBe(1);
+    f.life.emit("shutdown");
+    expect(f.events.listenerCount(event)).toBe(0);
+    expect(f.life.listenerCount("destroy")).toBe(0);
+    f.cache.set(key, packSource());
+    f.events.emit(event);
+    expect(f.scene.shards.size).toBe(0);
+  });
+});
 
 describe("source-family manifest readiness", () => {
   it.each([
