@@ -55,3 +55,4 @@ and scan feedback.
 | ada-0365 | Recharge every shield tier at four percent per second                                                      | [ada-0365.md](../work/ada-0365.md) |
 | ada-0368 | Wrap galaxy charts at 240000 units                                                                         | [ada-0368.md](../work/ada-0368.md) |
 | ada-0375 | Roll enemy Stardust from fixed ranges                                                                      | [ada-0375.md](../work/ada-0375.md) |
+| ada-0376 | Lose carried Ore on shield depletion                                                                       | [ada-0376.md](../work/ada-0376.md) |

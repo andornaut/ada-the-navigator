@@ -1292,7 +1292,7 @@ or replay rewards.
   suffix at level 1 and `[2]` or `[3]` at upgraded levels. Show live current/max
   HP using the existing numeric presentation. Description: "Recharges after
   {delay} seconds without damage. Ore fuels recharge above {freePercent}%. If
-  depleted, Astra jumps you home and you lose half your ore." Derive `{delay}`
+  depleted, Astra jumps you home and you lose all carried ore." Derive `{delay}`
   from the current ship's `shieldRechargeDelay` and `{freePercent}` from
   `ECONOMY.shieldRecharge.freeCapacity` times 100 (currently 30 and 10). The sole
   primary button is "Close", centered; dismissal returns to the same origin
@@ -1373,7 +1373,7 @@ or replay rewards.
 - Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
 - Shield depletion that loses ore, after that line on the same page: Astra:
-  "We're safe, and that matters most. We lost half the ore we were carrying."
+  "We're safe, and that matters most. We lost all the ore we were carrying."
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again, and Gadget and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
