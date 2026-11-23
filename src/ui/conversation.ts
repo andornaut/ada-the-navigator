@@ -18,6 +18,7 @@ import {
   COMPACT_PORTRAITS,
   portraitBackground,
   portraitFrame,
+  selectPortraitCrop,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -317,6 +318,7 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
   return {
     dispose: () => {
       disposed = true;
+      selectPortraitCrop(face, undefined);
       action.dispose();
       root.remove();
     },
@@ -340,6 +342,7 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
           root.dataset.speaker = line.speaker;
           root.toggleAttribute("data-named", line.named);
           face.dataset.speaker = line.speaker;
+          selectPortraitCrop(face, CAST_COMPACT[line.speaker]);
           name.textContent = line.name;
           // Keyboard wording is words alone; touch wording follows each named control with its icon.
           if (desktop && !line.text.includes("{useIcon}")) {
@@ -347,6 +350,8 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
           } else {
             words.replaceChildren(...createControlHelp(document, CONTROL_WORDS, line.text));
           }
+        } else {
+          selectPortraitCrop(face, undefined);
         }
         shownFrame = -1;
       }

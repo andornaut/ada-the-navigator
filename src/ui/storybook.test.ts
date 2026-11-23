@@ -301,16 +301,16 @@ describe("story page portraits", () => {
     );
   });
 
-  it("uses the full Phantom portrait page with the correct source row for each speaker", () => {
-    for (const [name, key, y] of [
-      ["Blurbs", "blurb-settler", "0"],
-      ["Dollop", "dollop", units(-66)],
+  it("scales the extracted full Phantom crops in the existing square slot", () => {
+    for (const [name, key] of [
+      ["Blurbs", "blurb-settler"],
+      ["Dollop", "dollop"],
     ] as const) {
       const portrait = storyPortrait(name)!;
       expect(portrait.speaker).toBe(key);
       expect(storyPortraitFrame(false, portrait, 1)).toBe(0);
       expect(rule(`.ada-controls .ada-story-portrait[data-speaker="${key}"]`)).toContain(
-        `background:url('/art/phantom/portraits/phantom-full.png') 0 ${y} / ${units(64)} ${units(130)} no-repeat`,
+        `background:var(--ada-portrait-crop-image, none) 0 0 / ${units(64)} ${units(64)} no-repeat`,
       );
     }
   });

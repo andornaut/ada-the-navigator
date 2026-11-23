@@ -24,15 +24,69 @@ export const AWAITING_TAB = "#b8b3c9";
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
 
-/** Scale the source to the existing square portrait slot, keeping the Art crop at its origin. */
+const PORTRAIT_CROP_IMAGE = "--ada-portrait-crop-image";
+const portraitPages = new Map<string, Promise<HTMLImageElement>>();
+const portraitCrops = new Map<CastPortraitSheet, Promise<string>>();
+const selectedCrops = new WeakMap<HTMLElement, CastPortraitSheet>();
+
+function readPortraitPage(document: Document, url: string): Promise<HTMLImageElement> {
+  const existing = portraitPages.get(url);
+  if (existing) {
+    return existing;
+  }
+  const page = document.createElement("img");
+  page.src = url;
+  const loaded = page.decode().then(() => page);
+  portraitPages.set(url, loaded);
+  void loaded.catch(() => portraitPages.delete(url));
+  return loaded;
+}
+
+/** A packed crop is decoded at its original size before CSS scales the square, as for a strip. */
+export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet | undefined): void {
+  const crop = sheet?.crop;
+  if (!sheet || !crop) {
+    selectedCrops.delete(face);
+    return;
+  }
+  if (selectedCrops.get(face) === sheet) {
+    return;
+  }
+  selectedCrops.set(face, sheet);
+  face.style.removeProperty(PORTRAIT_CROP_IMAGE);
+  const document = face.ownerDocument;
+  let image = portraitCrops.get(sheet);
+  if (!image) {
+    image = readPortraitPage(document, sheet.url).then((page) => {
+      const canvas = document.createElement("canvas");
+      const { frameSize, y } = crop;
+      canvas.width = canvas.height = frameSize;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("Unable to read the portrait crop");
+      }
+      context.drawImage(page, 0, y, frameSize, frameSize, 0, 0, frameSize, frameSize);
+      return `url("${canvas.toDataURL()}")`;
+    });
+    portraitCrops.set(sheet, image);
+    void image.catch(() => portraitCrops.delete(sheet));
+  }
+  void image.then(
+    (url) => {
+      if (selectedCrops.get(face) === sheet) {
+        face.style.setProperty(PORTRAIT_CROP_IMAGE, url);
+      }
+    },
+    () => undefined,
+  );
+}
+
+/** Scale a source frame to the existing square portrait slot. */
 export function portraitBackground(sheet: CastPortraitSheet, image: number, frame = 0): string {
   const { crop, frames, url } = sheet;
-  const scale = crop ? image / crop.frameSize : 1;
+  const source = crop ? `var(${PORTRAIT_CROP_IMAGE}, none)` : `url('${url}')`;
   const x = frame ? units(-frame * image) : "0";
-  const y = crop?.y ? units(-crop.y * scale) : "0";
-  const width = crop ? image : frames * image;
-  const height = crop ? crop.pageHeight * scale : image;
-  return `url('${url}') ${x} ${y} / ${units(width)} ${units(height)} no-repeat`;
+  return `${source} ${x} 0 / ${units(frames * image)} ${units(image)} no-repeat`;
 }
 
 /**

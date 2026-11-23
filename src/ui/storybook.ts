@@ -33,6 +33,7 @@ import {
   familyPortrait,
   portraitBackground,
   portraitFrame,
+  selectPortraitCrop,
   SPEAKING_FRAME_MS,
   storySpeakerName,
   TAB_COLOURS,
@@ -854,11 +855,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     text.dataset.side = portrait?.side ?? "right";
     if (portrait) {
       face.dataset.speaker = portrait.speaker;
+      selectPortraitCrop(face, STORY_PORTRAITS[portrait.speaker]);
       const index = storyPortraitFrame(options.reducedMotion(), portrait, 0);
       face.dataset.frame = String(index);
       face.style.backgroundPositionX = units(-index * PORTRAIT_IMAGE);
     } else {
       delete face.dataset.speaker;
+      selectPortraitCrop(face, undefined);
     }
     panel.setAttribute("aria-label", page.heading ?? page.speaker ?? page.text);
     const actions: typeof choiceActions = [];
@@ -1330,6 +1333,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       previous.hidden = true;
       panel.hidden = true;
       stopPortrait();
+      selectPortraitCrop(face, undefined);
       if (backdrop) {
         setBackground(backdrop, false);
       }
@@ -1458,6 +1462,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       stop();
       stopNight();
       stopPortrait();
+      selectPortraitCrop(face, undefined);
       window.removeEventListener(VIEW_SCALE_EVENT, relayout);
       panelArrangement.dispose();
       layer.remove();

@@ -386,26 +386,56 @@ describe("shared Earth and space dialogue presentation", () => {
     }
   });
 
-  it("paints the correct full-size row for Blurbs and Dollop in the shared portrait slot", () => {
+  it("reads both full Phantom crops from one page and paints only the current speaker", async () => {
     setup();
     const panel = createDialoguePanel({
       closeAction: "close",
       closeLabel: "Close",
       title: "Dialogue",
     });
-    for (const [name, key, y] of [
-      ["Dollop", "dollop", "calc(var(--ada-unit) * -66px)"],
-      ["Blurbs", "blurb-settler", "0"],
-    ] as const) {
-      panel.showLine(name, name);
-      const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
-      expect(face.dataset.speaker).toBe(key);
-      const size = "calc(var(--ada-unit) * 64px) calc(var(--ada-unit) * 130px)";
-      expect(face.style.background).toBe(
-        `url('/art/phantom/portraits/phantom-full.png') 0 ${y} / ${size} no-repeat`,
-      );
-      expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe(name);
-    }
+    const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
+    const setProperty = vi.fn();
+    Object.assign(face.style, { removeProperty: vi.fn(), setProperty });
+    let finishPage = () => {};
+    const loading = new Promise<void>((resolve) => {
+      finishPage = resolve;
+    });
+    const decode = vi.fn(() => loading);
+    const drawImage = vi.fn();
+    const createElement = document.createElement.bind(document);
+    const create = vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      const node = createElement(tag);
+      if (tag === "img") {
+        Object.assign(node, { decode });
+      } else if (tag === "canvas") {
+        Object.assign(node, {
+          getContext: () => ({ drawImage }),
+          toDataURL: () => `data:image/png;base64,${drawImage.mock.lastCall![2]}`,
+        });
+      }
+      return node;
+    });
+    panel.showLine("Dollop", "Thank you, Navigator.");
+    expect(face.dataset.speaker).toBe("dollop");
+    panel.showLine("Blurbs", "Blub! The drones are gone!");
+    expect(face.dataset.speaker).toBe("blurb-settler");
+    expect(panel.body.querySelector(".ada-story-tab")?.textContent).toBe("Blurbs");
+    expect(decode).toHaveBeenCalledOnce();
+    const imageIndex = create.mock.calls.findIndex(([tag]) => tag === "img");
+    const image = create.mock.results[imageIndex]!.value as HTMLImageElement;
+    expect(image.src).toBe("/art/phantom/portraits/phantom-full.png");
+    expect(setProperty).not.toHaveBeenCalled();
+    finishPage();
+    await vi.waitFor(() =>
+      expect(setProperty).toHaveBeenCalledExactlyOnceWith(
+        "--ada-portrait-crop-image",
+        'url("data:image/png;base64,0")',
+      ),
+    );
+    expect(drawImage.mock.calls).toEqual([
+      [image, 0, 33, 32, 32, 0, 0, 32, 32],
+      [image, 0, 0, 32, 32, 0, 0, 32, 32],
+    ]);
     panel.dispose();
   });
 

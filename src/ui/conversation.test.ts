@@ -156,13 +156,10 @@ describe("conversation box style", () => {
   });
 
   it("uses the two native compact crops without sampling their separator row", () => {
-    for (const [speaker, y] of [
-      ["blurbs", "0"],
-      ["dollop", units(-46)],
-    ] as const) {
+    for (const speaker of ["blurbs", "dollop"]) {
       expect(css.get(`.ada-conversation-portrait[data-speaker="${speaker}"]`)).toBe(
         squash(
-          `background:url('/art/phantom/portraits/phantom-compact.png') 0 ${y} / ${units(44)} ${units(90)} no-repeat`,
+          `background:var(--ada-portrait-crop-image, none) 0 0 / ${units(44)} ${units(44)} no-repeat`,
         ),
       );
     }
@@ -175,11 +172,15 @@ describe("conversation box style", () => {
         `background:${TAB_COLOURS[speaker as keyof typeof TAB_COLOURS]}`,
       );
       const cast = SPEAKER_CAST[speaker as keyof typeof SPEAKER_CAST];
-      const url = cast
-        ? castPortrait(cast, true).url
-        : COMPACT_PORTRAITS[speaker as keyof typeof COMPACT_PORTRAITS].url;
+      const sheet = cast
+        ? castPortrait(cast, true)
+        : COMPACT_PORTRAITS[speaker as keyof typeof COMPACT_PORTRAITS];
+      const source =
+        "crop" in sheet && sheet.crop
+          ? "var(--ada-portrait-crop-image, none)"
+          : `url('${sheet.url}')`;
       expect(css.get(`.ada-conversation-portrait[data-speaker="${speaker}"]`), speaker).toContain(
-        `url('${url}')`,
+        squash(source),
       );
     }
     for (const sheet of Object.values(COMPACT_PORTRAITS)) {

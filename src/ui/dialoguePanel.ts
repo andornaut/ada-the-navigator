@@ -6,7 +6,7 @@ import {
   type DialoguePanelSchema,
   dialoguePanelTree,
 } from "./dialoguePanelTree.ts";
-import { portraitBackground, storySpeakerName } from "./dialoguePortraits.ts";
+import { portraitBackground, selectPortraitCrop, storySpeakerName } from "./dialoguePortraits.ts";
 import { font, units } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
@@ -207,6 +207,7 @@ export function createDialoguePanel(options: {
     controls,
     dispose(): void {
       disposed = true;
+      selectPortraitCrop(face, undefined);
       view?.removeEventListener(VIEW_SCALE_EVENT, fit);
       arrangement.dispose();
     },
@@ -224,8 +225,9 @@ export function createDialoguePanel(options: {
       words.textContent = text;
       words.hidden = text === "";
       body.dataset.side = resolved?.side ?? "right";
+      const sheet = resolved ? STORY_PORTRAITS[resolved.speaker] : undefined;
+      selectPortraitCrop(face, sheet);
       if (resolved) {
-        const sheet = STORY_PORTRAITS[resolved.speaker];
         if (sheet) {
           face.dataset.speaker = resolved.speaker;
           face.style.background = portraitBackground(
