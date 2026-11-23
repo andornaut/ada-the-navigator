@@ -51,17 +51,20 @@ export interface Notice {
   /** The label without its merged count, such as "+ Phaser". */
   readonly label: string;
   /** Colour art (its first of `frames` frames across), or a weapon glyph in cream. */
-  readonly icon: { readonly frames?: number; readonly sprite: string } | { readonly mask: string };
+  readonly icon:
+    | { readonly frames?: number; readonly sprite: string }
+    | { readonly mask: string }
+    | { readonly vector: string };
   readonly target: NoticeTarget;
 }
 
 type Labels = Readonly<Record<string, string>>;
 
 /** Each upgrade track's shop icon and its level's item label. */
-const TRACK_NOTICES: Readonly<Record<UpgradeTrack, { label: string; sprite: string }>> = {
-  engine: { label: "itemEngineLevel", sprite: "icon-shop-engine-tuning" },
-  shield: { label: "itemShieldLevel", sprite: "icon-shop-shield" },
-  tractor: { label: "itemTractorLevel", sprite: "icon-shop-tractor-beam" },
+const TRACK_NOTICES: Readonly<Record<UpgradeTrack, { label: string; vector: string }>> = {
+  engine: { label: "itemEngineLevel", vector: "/art/ui/icons/icon-shop-engine-tuning.svg" },
+  shield: { label: "itemShieldLevel", vector: "/art/ui/icons/icon-shop-shield.svg" },
+  tractor: { label: "itemTractorLevel", vector: "/art/ui/icons/icon-shop-tractor-beam.svg" },
 };
 
 /** A gain's notice: its label, icon, accent and landing place. */
@@ -94,7 +97,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     const shield = gain.track === "shield";
     return {
       accent: levelAccent(gain.level),
-      icon: { frames: 2, sprite: track.sprite },
+      icon: { vector: track.vector },
       key: `level:${gain.track}:${gain.level}`,
       kind: shield ? "shield" : "upgrade",
       label: label(fill(labels[track.label] ?? "", { n: gain.level })),
@@ -105,7 +108,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     const name = labels[ECONOMY.paints[gain.scheme]?.label ?? ""] ?? gain.scheme;
     return {
       accent: ECONOMY.paints[gain.scheme]?.top ?? NOTICE_ACCENTS.weapon,
-      icon: { frames: 2, sprite: "icon-shop-ship-paint" },
+      icon: { vector: "/art/ui/icons/icon-shop-ship-paint.svg" },
       key: `paint:${gain.scheme}`,
       kind: "upgrade",
       label: label(fill(labels.itemPaint ?? "", { paint: name })),
@@ -150,7 +153,7 @@ export function noticeIconBearings(icon: Notice["icon"]) {
       case "icon-shop-weapon-rapidMissile":
         return HUD_ICON_BEARINGS.rapidMissile;
     }
-  } else if (icon.mask === weaponGlyphPath("rapidMissile")) {
+  } else if ("mask" in icon && icon.mask === weaponGlyphPath("rapidMissile")) {
     return HUD_ICON_BEARINGS.rapidMissile;
   }
   return undefined;
@@ -461,21 +464,21 @@ export function createItemNotices(
     if (shown?.notice !== frame.notice) {
       shown = { count: 0, notice: frame.notice, width: 0 };
       root.style.setProperty("--notice-accent", frame.notice.accent);
-      if ("sprite" in frame.notice.icon) {
-        const across = 100 * (frame.notice.icon.frames ?? 1);
-        icon.style.background = `url('${spriteIconPath(frame.notice.icon.sprite)}') 0 0 / ${across}% 100% no-repeat`;
+      const art = frame.notice.icon;
+      if ("mask" in art) {
+        icon.style.background = STATUS_COLOURS.count;
+        icon.style.imageRendering = "";
+        const mask = `url('${art.mask}') center / 100% 100% no-repeat`;
+        icon.style.setProperty("-webkit-mask", mask);
+        icon.style.setProperty("mask", mask);
+      } else {
+        const vector = "vector" in art;
+        const path = vector ? art.vector : spriteIconPath(art.sprite);
+        const across = vector ? 100 : 100 * (art.frames ?? 1);
+        icon.style.background = `url('${path}') 0 0 / ${across}% 100% no-repeat`;
+        icon.style.imageRendering = vector ? "auto" : "";
         icon.style.removeProperty("mask");
         icon.style.removeProperty("-webkit-mask");
-      } else {
-        icon.style.background = STATUS_COLOURS.count;
-        icon.style.setProperty(
-          "-webkit-mask",
-          `url('${frame.notice.icon.mask}') center / 100% 100% no-repeat`,
-        );
-        icon.style.setProperty(
-          "mask",
-          `url('${frame.notice.icon.mask}') center / 100% 100% no-repeat`,
-        );
       }
     }
     if (shown.count !== frame.count) {

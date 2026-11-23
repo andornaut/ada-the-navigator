@@ -79,10 +79,10 @@ describe("item notice wording", () => {
     const shield = notice({ kind: "level", level: 2, track: "shield" });
     expect([shield.kind, shield.icon, shield.target]).toEqual([
       "shield",
-      { frames: 2, sprite: "icon-shop-shield" },
+      { vector: "/art/ui/icons/icon-shop-shield.svg" },
       { kind: "shield" },
     ]);
-    for (const [gain, sprite] of [
+    for (const [gain, icon] of [
       [{ kind: "level", level: 2, track: "engine" }, "icon-shop-engine-tuning"],
       [{ kind: "level", level: 2, track: "tractor" }, "icon-shop-tractor-beam"],
       [{ kind: "paint", scheme: "cobalt" }, "icon-shop-ship-paint"],
@@ -90,7 +90,7 @@ describe("item notice wording", () => {
       const upgrade = notice(gain);
       expect([upgrade.kind, upgrade.icon, upgrade.target]).toEqual([
         "upgrade",
-        { frames: 2, sprite },
+        { vector: `/art/ui/icons/${icon}.svg` },
         { kind: "none" },
       ]);
     }
