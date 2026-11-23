@@ -86,6 +86,7 @@ export function precachePlugin({
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,
+      wholeBuild: true,
     }),
   ];
 }
