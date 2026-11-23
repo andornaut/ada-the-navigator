@@ -33,6 +33,7 @@ const fixture = vi.hoisted(() => {
       }
       doc.activeElement ??= null;
       doc.defaultView ??= {
+        getComputedStyle: () => ({}),
         HTMLElement: Node,
         MutationObserver: class {
           disconnect() {}
@@ -67,6 +68,7 @@ const fixture = vi.hoisted(() => {
       };
     }
     classList = {
+      add: (name: string) => this.classList.toggle(name, true),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -111,15 +113,35 @@ const fixture = vi.hoisted(() => {
     className = "";
     dataset: Record<string, string> = {};
     hidden = false;
-    textContent = "";
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     attributes: Record<string, string> = {};
-    style: Record<string, string> = {};
+    style = {
+      getPropertyValue: () => "",
+      removeProperty: vi.fn(),
+      setProperty: vi.fn(),
+    };
     tabIndex = 0;
     focus = vi.fn(() => {
       (document as unknown as { activeElement: Node | null }).activeElement = this;
     });
     hasAttribute(name: string) {
       return name === "hidden" ? this.hidden : name in this.attributes;
+    }
+    toggleAttribute(name: string, force?: boolean) {
+      const enabled = force ?? !this.hasAttribute(name);
+      if (enabled) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
+      return enabled;
     }
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
@@ -177,6 +199,7 @@ const fixture = vi.hoisted(() => {
       for (const child of [...this.children]) {
         child.remove();
       }
+      this.text = "";
       this.append(...nodes);
     }
     removeAttribute(name: string) {
@@ -200,7 +223,8 @@ const fixture = vi.hoisted(() => {
   };
   return { Node, card };
 });
-vi.mock("./modal.ts", () => ({
+vi.mock("./modal.ts", async (original) => ({
+  ...(await original<typeof import("./modal.ts")>()),
   createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
     const row = new fixture.Node();
     row.append(...actions.map(({ button }) => button));
@@ -222,7 +246,8 @@ vi.mock("./modal.ts", () => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./buttonPresentation.ts", () => ({
+vi.mock("./buttonPresentation.ts", async (original) => ({
+  ...(await original<typeof import("./buttonPresentation.ts")>()),
   presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
     dispose() {},
     element: button,
@@ -335,19 +360,26 @@ it("shows canonical supplied content and secondary Quests before primary Close w
   expect(description!.textContent).toBe("Canonical quest description");
   expect(fixture.card.frame.attributes["aria-label"]).toBe("Toolkit");
   expect(actions!.dataset.footerAction).toBe("close");
-  expect(actions!.children.map((button) => [button.textContent, button.dataset.role])).toEqual([
+  const buttons = actions!.querySelectorAll("button");
+  expect(
+    buttons.map((button) => [
+      button.textContent,
+      button.getAttribute("data-ui-button-role") ?? button.dataset.role,
+    ]),
+  ).toEqual([
     ["Quests", "secondary"],
     ["Close", "primary"],
   ]);
-  actions!.children[0]!.dispatchEvent(new Event("click"));
+  expect(buttons[1]!.matches(".ui-standard-button")).toBe(true);
+  buttons[0]!.dispatchEvent(new Event("click"));
   expect(lifecycle).toEqual(["paused", "quests-open", "closed"]);
   expect(origin.focus).not.toHaveBeenCalled();
   resource.open("Ore", "Ore use", origin as unknown as HTMLElement);
   expect(quantity!.hidden).toBe(true);
   expect(quantity!.children).toEqual([]);
   expect(fixture.card.title.children).toHaveLength(1);
-  expect(actions!.children[0]!.hidden).toBe(true);
-  actions!.children[1]!.dispatchEvent(new Event("click"));
+  expect(buttons[0]!.hidden).toBe(true);
+  buttons[1]!.dispatchEvent(new Event("click"));
   expect(origin.focus).toHaveBeenCalledOnce();
   expect(resource.isOpen()).toBe(false);
   resource.dispose();
@@ -434,13 +466,13 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
     quests: { label: "Quests", onOpen: first },
   });
   const footer = fixture.card.body.children[2]!;
-  const [quests, dismiss] = footer.children;
+  const [quests, dismiss] = footer.querySelectorAll("button");
   const captured = resolveAdaHoldAction(root as unknown as HTMLElement, quests!);
   expect(captured?.available()).toBe(true);
   detail.open("Toolkit", "Second", origin as unknown as HTMLElement, {
     quests: { label: "Current quests", onOpen: second },
   });
-  expect(footer.children).toEqual([quests, dismiss]);
+  expect(footer.querySelectorAll("button")).toEqual([quests, dismiss]);
   captured?.activate();
   expect(first).not.toHaveBeenCalled();
   expect(second).toHaveBeenCalledOnce();
@@ -561,7 +593,7 @@ it("reports Resource scope and excludes a registered background action", () => {
     action?.activate();
     expect(run).not.toHaveBeenCalled();
     const footer = fixture.card.body.children[2]!;
-    for (const node of [fixture.card.close, ...footer.children]) {
+    for (const node of [fixture.card.close, ...footer.querySelectorAll("button")]) {
       expect(inCurrentView(host, node as unknown as HTMLElement)).toBe(true);
       expect(resolveAdaHoldAction(host, node)?.available()).toBe(true);
     }
@@ -611,7 +643,7 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
     detail.open("Ore", "Current", origin as unknown as HTMLElement);
     expect(afterParentDismissal()).toBe(false);
     const resourcePress = guard.gate.capture();
-    const dismiss = fixture.card.body.children[2]!.children[1]!;
+    const dismiss = fixture.card.body.children[2]!.querySelector('[data-action="dismiss-resource"]')!;
     resolveAdaHoldAction(host, dismiss)?.activate();
     expect(resourcePress()).toBe(false);
     expect(transitions).toEqual([true, false]);

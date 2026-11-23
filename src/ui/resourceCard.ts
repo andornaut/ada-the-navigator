@@ -104,6 +104,7 @@ export function createResourceCard(
     ]),
     availability,
     presentButton: presentAdaButton,
+    standardButtons: { actionIds: ["dismiss-resource"], root },
   });
   const renderContent = (data: ResourceLayoutData) => {
     card.title.textContent = data.title;
