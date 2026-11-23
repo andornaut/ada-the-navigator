@@ -25,7 +25,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
-import { BUTTON_SLICE, CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
+import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
   font,
@@ -398,7 +398,7 @@ export const MAP_SCREEN_STYLE = `
   border:0;
   border-radius:50%;
   background:var(--face);
-  box-shadow:inset 0 0 0 ${units(MAP_SYMBOL.edge)} ${MAP_COLORS.ink};
+  box-shadow:inset 0 0 0 ${units(MAP_SYMBOL.edge)} var(--map-place-rim,${MAP_COLORS.ink});
   color:${MAP_COLORS.ink};
   pointer-events:none
 }
@@ -414,28 +414,39 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-screen .ada-map-place[data-kind="job"]:not([data-job-type])::before{
   content:none
 }
-/* Selected: the cream ring with an ink fringe on each side, outside the face. */
-.ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]::after{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:${units(2 * (MAP_SYMBOL.ring.radius + MAP_SYMBOL.ring.band / 2))};
-  height:${units(2 * (MAP_SYMBOL.ring.radius + MAP_SYMBOL.ring.band / 2))};
-  box-sizing:border-box;
-  transform:translate(-50%, -50%);
-  border:${units(MAP_SYMBOL.ring.band)} solid ${MAP_COLORS.cream};
-  border-radius:50%;
-  box-shadow:0 0 0 ${units(MAP_SYMBOL.ring.fringe)} ${MAP_COLORS.ink},inset 0 0 0 ${units(
-    MAP_SYMBOL.ring.fringe,
-  )} ${MAP_COLORS.ink}
-}
+/* Keep the place hue in all states, including a job spot with no glyph. */
 .ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--face) 35%,${MAP_COLORS.ink});
+  color:${MAP_COLORS.cream};
   z-index:2
 }
 .ada-controls .ada-map-screen .ada-map-place:focus-visible{
-  outline:${units(FOCUS_RING.band)} solid ${MAP_COLORS.cream};
-  outline-offset:${units(FOCUS_RING.fringe)}
+  outline:none;
+  background:color-mix(in srgb,var(--face) 65%,${MAP_COLORS.hull})
+}
+.ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]:focus-visible{
+  background:color-mix(in srgb,var(--face) 48%,${MAP_COLORS.ink});
+  color:${MAP_COLORS.hull}
+}
+@media (forced-colors:active){
+  .ada-controls .ada-map-screen button.ada-map-place{
+    forced-color-adjust:none;
+    --map-place-rim:ButtonText;
+    background:ButtonFace;
+    color:ButtonText
+  }
+  .ada-controls .ada-map-screen button.ada-map-place[aria-pressed="true"]{
+    background:ButtonText;
+    color:ButtonFace
+  }
+  .ada-controls .ada-map-screen button.ada-map-place:focus-visible{
+    background:Highlight;
+    color:HighlightText
+  }
+  .ada-controls .ada-map-screen button.ada-map-place[aria-pressed="true"]:focus-visible{
+    background:color-mix(in srgb,ButtonFace 55%,Highlight);
+    color:ButtonText
+  }
 }
 .ada-controls .ada-map-screen .ada-map-objective{
   position:absolute;
