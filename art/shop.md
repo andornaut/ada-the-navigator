@@ -11,7 +11,7 @@ owns the strings, prices, stock order, eligibility and transaction rules.
 | Card and close      | `ui-settings-card`, `ui-close`                                                                        |
 | Footer controls     | `ui-button` for service pages and `ui-button-primary` for Undock                                      |
 | Item row            | `ui-button-tile` normal, pressed and disabled frames, nine-slice 2/4/2/6                              |
-| Resources           | `icon-stardust` (16 px) in row pills. `icon-stardust-20` and `icon-ore-20` for balances and Exchange. |
+| Resources           | `icon-stardust-20` at 16 px in pills. `icon-stardust-20` and `icon-ore-20` for balances and Exchange. |
 | Item glyphs         | Shop weapon and Ammo sheets, equipment SVGs and project sheets. See [Shop icons](shop-icons.md).      |
 | Job glyphs          | `icon-job-*` sheets. See [Shop icons](shop-icons.md#job-icons).                                       |
 | Status mark         | `icon-shop-check.svg`, 12x8                                                                           |
@@ -66,7 +66,7 @@ their text in the spoken row label.
 | Glyph      | Centred in the well at 20x20, with a 24x24 upgrade composite or a 32x32 paint swatch |
 | Name       | Cream                                                                                |
 | Level line | `level` ("Level {level} of {max}") in row supporting                                 |
-| Price pill | Ink `#181425` with `icon-stardust` and the price in cream                            |
+| Price pill | Ink `#181425` with `icon-stardust-20` and the price in cream                         |
 | Owned      | Check mark and `owned` in row supporting                                             |
 | In use     | Check mark and `inUse` in cream on a navy in-face selection treatment                |
 
