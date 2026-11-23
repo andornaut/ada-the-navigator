@@ -1,10 +1,12 @@
 // Needle's community project world changes: the Channel lights lamp buoy, placed along the
 // practice channel by a path anchor, and the Loom hall, which replaces the Weavers' station
 // frames (drawn by needle-station.ts). Contract: art/needle.md (World changes).
-// Usage: node art/tools/needle-projects.ts
+// Usage: node art/tools/needle-projects.ts [--pack-projects]
 import { writeFileSync } from "node:fs";
 
-import { replaceEntries } from "./manifest.ts";
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
+import { readManifest, replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import {
   glassSide,
@@ -22,6 +24,25 @@ import {
 import { type Point, projectAt, round } from "./projection.ts";
 import { BLINK_MS, box, DISPLAY_SCALE, ngon, type Part, polygons } from "./solid.ts";
 import { writeProjects } from "./projects.ts";
+
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 1 || args[0] !== "--pack-projects")) {
+  throw new Error("Usage: node art/tools/needle-projects.ts [--pack-projects]");
+}
+const sheet = "projects-sheet.svg";
+const sheetPath = PUBLIC + sheet;
+const ownsLamp = (id: string) => /^needle-lamp-[ab]$/.test(id);
+const ownsBerth = (id: string) => /^needle-practice-berth-[ab]$/.test(id);
+const installed = readManifest("needle").assets.filter(
+  ({ id }) => ownsLamp(id) || ownsBerth(id),
+) as {
+  id: string;
+  path: string;
+  svgSheet?: boolean;
+}[];
+const selected = installed.some(({ path, svgSheet }) => path === sheetPath || svgSheet === true);
+const packed = args.length === 1 || selected;
+const files = new Map<string, string>();
 
 const LAMP_GROWTH = 1.5;
 const LAMP_DIM = "#8c7c60";
@@ -76,13 +97,14 @@ const lamps = (["a", "b"] as const).map((letter) => {
     },
     ...placed(frame.halfWidth, frame.above, lampFaces(lit)),
   ];
-  writeFileSync(
-    `${OUT}lamp-${letter}.svg`,
+  files.set(
+    `lamp-${letter}.svg`,
     svgText(svgFile(`Channel light ${letter.toUpperCase()}`, frame.width, frame.height, shapes)),
   );
   return {
     id: `needle-lamp-${letter}`,
-    path: `${PUBLIC}lamp-${letter}.svg`,
+    path: packed ? sheetPath : `${PUBLIC}lamp-${letter}.svg`,
+    ...(packed ? { svgSheet: true } : {}),
     width: frame.width,
     height: frame.height,
     displayWidth: round(frame.width * DISPLAY_SCALE),
@@ -93,7 +115,6 @@ const lamps = (["a", "b"] as const).map((letter) => {
     project: "channelLights",
   };
 });
-replaceEntries("needle", (id) => id.startsWith("needle-lamp-"), lamps);
 
 // A small deck with an open viewing edge and low lights on the two corners.
 function observationDeck(lit: boolean): Part[][] {
@@ -135,8 +156,8 @@ const berthFrame = layout(berthFaces.flat());
 const berth = (["a", "b"] as const).map((letter, index) => {
   const id = `needle-practice-berth-${letter}`;
   const file = `practice-berth-${letter}.svg`;
-  writeFileSync(
-    OUT + file,
+  files.set(
+    file,
     svgText(
       svgFile(
         `Practice berth ${letter.toUpperCase()}`,
@@ -148,7 +169,8 @@ const berth = (["a", "b"] as const).map((letter, index) => {
   );
   return {
     id,
-    path: PUBLIC + file,
+    path: packed ? sheetPath : PUBLIC + file,
+    ...(packed ? { svgSheet: true } : {}),
     width: berthFrame.width,
     height: berthFrame.height,
     displayWidth: round(berthFrame.width * DISPLAY_SCALE),
@@ -159,7 +181,44 @@ const berth = (["a", "b"] as const).map((letter, index) => {
     project: "practiceBerth",
   };
 });
-replaceEntries("needle", (id) => /^needle-practice-berth-[ab]$/.test(id), berth);
+if (packed) {
+  const entries = [...lamps, ...berth];
+  const ids = new Set(entries.map(({ id }) => id));
+  if (
+    selected &&
+    (installed.length !== entries.length ||
+      installed.some(
+        ({ id, path, svgSheet }) => !ids.has(id) || path !== sheetPath || svgSheet !== true,
+      ))
+  ) {
+    throw new Error("Needle project sheet selection must include both complete A/B pairs");
+  }
+  const rectangles = entries.map(({ width, height }) => ({ width, height }));
+  const width = rectangles.reduce((total, rectangle) => total + rectangle.width, 0);
+  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: width, widths: [width] }, [
+    { rectangles, value: sheet },
+  ])?.pages[0];
+  if (!page) throw new Error("Cannot pack Needle project sheet");
+  const namespace = "http://www.w3.org/2000/svg";
+  const roots = [...files.values()].map((svg, index) => {
+    const row = entries[index]!;
+    const root = `<svg xmlns="${namespace}" width="${row.displayWidth}" height="${row.displayHeight}" viewBox="0 0 ${row.width} ${row.height}">`;
+    const source = svg.trimEnd();
+    if (!source.startsWith(root) || !source.endsWith("</svg>")) {
+      throw new Error(`Unexpected Needle project root: ${row.id}`);
+    }
+    const { x, y } = page.placed[0]!.at[index]!;
+    return `<svg id="${row.id}" x="${x}" y="${y}" ${source.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    OUT + sheet,
+    `<svg xmlns="${namespace}" width="${width}" height="${page.height}" viewBox="0 0 ${width} ${page.height}">${roots.join("")}</svg>\n`,
+  );
+} else {
+  for (const [file, svg] of files) writeFileSync(OUT + file, svg);
+}
+replaceEntries("needle", ownsLamp, lamps);
+replaceEntries("needle", ownsBerth, berth);
 
 writeProjects({
   channelLights: {

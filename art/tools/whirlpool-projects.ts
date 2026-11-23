@@ -4,7 +4,10 @@
 // manifest entries and the placement data Tech reads (projects.json).
 import { writeFileSync } from "node:fs";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
 import { DISPLAY_SCALE } from "./crafts.ts";
+import { readManifest } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import { depth, facesViewer, type Point, round } from "./projection.ts";
 
@@ -443,25 +446,70 @@ export function exportProject(
   frameMs?: number,
 ) {
   const [width, height] = spec.frame;
-  return (["a", "b"] as const).map((frame) => {
+  const frames = (["a", "b"] as const).map((frame) => {
     const file = `${spec.id}-${frame}.svg`;
-    writeFileSync(
-      `${dir}${file}`,
-      svgText(svg(spec, frame, polygons(spec.model(frame), spec.scale))),
-    );
     return {
-      id: `${spec.id}-${frame}`,
-      path: `${publicDir}${file}`,
-      width,
-      height,
-      displayWidth: round(width * DISPLAY_SCALE * spec.displayGrowth),
-      displayHeight: round(height * DISPLAY_SCALE * spec.displayGrowth),
-      facing: "fixed",
-      pivot: { x: r2(spec.pivot[0]), y: r2(spec.pivot[1]) },
-      ...(frameMs === undefined ? {} : { frameMs }),
-      project,
+      file,
+      root: svgText(svg(spec, frame, polygons(spec.model(frame), spec.scale))),
+      entry: {
+        id: `${spec.id}-${frame}`,
+        path: `${publicDir}${file}`,
+        width,
+        height,
+        displayWidth: round(width * DISPLAY_SCALE * spec.displayGrowth),
+        displayHeight: round(height * DISPLAY_SCALE * spec.displayGrowth),
+        facing: "fixed",
+        pivot: { x: r2(spec.pivot[0]), y: r2(spec.pivot[1]) },
+        ...(frameMs === undefined ? {} : { frameMs }),
+        project,
+      },
     };
   });
+
+  const chaseBacked = spec === BUOY && project === "currentBuoys";
+  const packable = chaseBacked || (spec === WAITING_LIGHTS && project === "quietCrossing");
+  const ids = new Set(frames.map(({ entry }) => entry.id));
+  const installed = readManifest("whirlpool").assets.filter(
+    (row): row is { id: string; path?: unknown; svgSheet?: unknown } => ids.has(row.id),
+  );
+  if (!packable || !installed.some(({ svgSheet }) => svgSheet === true)) {
+    for (const { file, root } of frames) {
+      writeFileSync(dir + file, root);
+    }
+    return frames.map(({ entry }) => entry);
+  }
+
+  const file = `${spec.id}-sheet.svg`;
+  const path = publicDir + file;
+  // Current buoys take their phase from the chase sidecar instead of a per-frame cadence.
+  if (
+    (frameMs === undefined && !chaseBacked) ||
+    installed.length !== ids.size ||
+    new Set(installed.map(({ id }) => id)).size !== ids.size ||
+    installed.some((row) => row.svgSheet !== true || row.path !== path)
+  ) {
+    throw new Error(`Invalid Whirlpool project sheet selection: ${spec.id}`);
+  }
+
+  const wide = width * frames.length;
+  const page = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: Math.max(wide, height), widths: [wide] },
+    [{ rectangles: frames.map(() => ({ width, height })), value: spec.id }],
+  )?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== frames.length) {
+    throw new Error(`Cannot pack Whirlpool project frames: ${spec.id}`);
+  }
+  // Keep each root's authored intrinsic dimensions and raw viewBox for independent extraction.
+  const children = frames.map(({ entry, root }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    dir + file,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
+  );
+  return frames.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
 }
 
 // Placement Tech reads. Offsets and lengths are world units.

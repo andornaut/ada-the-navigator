@@ -1,12 +1,14 @@
 // Needle's ring gates: an upright hoop with its axis along the channel, dark and lit, in eight
 // orientations, each split into a back layer (under a passing ship) and a front layer (over it),
 // with gates.json for the runtime. Contract: art/needle.md (Ring gates).
-// Usage: node art/tools/needle-gates.ts
+// Usage: node art/tools/needle-gates.ts [--pack-gates]
 import { mkdirSync, writeFileSync } from "node:fs";
+
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
 import { unit } from "./debris.ts";
 import { svgText } from "./svg-text.ts";
-import { linkData, replaceEntries } from "./manifest.ts";
+import { linkData, readManifest, replaceEntries } from "./manifest.ts";
 import {
   floorEdge,
   lamp,
@@ -226,8 +228,20 @@ if (litEdge < LIT_FLOOR) {
   throw new Error(`lit gate edge median ${litEdge.toFixed(2)} is under ${LIT_FLOOR}:1`);
 }
 
-mkdirSync(OUT, { recursive: true });
-const entries: Record<string, unknown>[] = [];
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 1 || args[0] !== "--pack-gates")) {
+  throw new Error("Usage: node art/tools/needle-gates.ts [--pack-gates]");
+}
+const sheet = "gates-sheet.svg";
+const sheetPath = PUBLIC + sheet;
+const installed = readManifest("needle").assets.filter(({ id }) =>
+  id.startsWith("needle-gate-"),
+) as { id: string; path: string; svgSheet?: boolean }[];
+const selected = installed.some(({ path, svgSheet }) => path === sheetPath || svgSheet === true);
+const packed = args.length === 1 || selected;
+const display = round(frame * DISPLAY_SCALE);
+const files = new Map<string, string>();
+const entries: ({ id: string; path: string } & Record<string, unknown>)[] = [];
 for (const state of ["dark", "lit"] as const) {
   for (const o of USED) {
     const quads = hoop(o, state === "lit", DARK);
@@ -239,17 +253,18 @@ for (const state of ["dark", "lit"] as const) {
       const name = `gate-${state}-${o}-${layer}`;
       const structure = draw(quads, centre, layer);
       const art = layer === "back" ? [...field, ...structure] : structure;
-      writeFileSync(
-        `${OUT}${name}.svg`,
+      files.set(
+        `${name}.svg`,
         svgText(svgFile(`Ring gate ${state} ${o} ${layer}`, frame, frame, art)),
       );
       entries.push({
         id: `needle-${name}`,
-        path: `${PUBLIC}${name}.svg`,
+        path: packed ? sheetPath : `${PUBLIC}${name}.svg`,
+        ...(packed ? { svgSheet: true } : {}),
         width: frame,
         height: frame,
-        displayWidth: round(frame * DISPLAY_SCALE),
-        displayHeight: round(frame * DISPLAY_SCALE),
+        displayWidth: display,
+        displayHeight: display,
         facing: `axis-${o}`,
         pivot: { x: 0.5, y: 0.5 },
         gate: state,
@@ -294,6 +309,42 @@ const data = {
     veil: { color: lamp, alpha: VEIL_ALPHA },
   },
 };
+mkdirSync(OUT, { recursive: true });
+if (packed) {
+  if (
+    selected &&
+    (installed.length !== entries.length ||
+      installed.some(
+        ({ id, path, svgSheet }, i) =>
+          id !== entries[i]!.id || path !== sheetPath || svgSheet !== true,
+      ))
+  ) {
+    throw new Error("Needle gate sheet selection must include every gate frame in source order");
+  }
+  const width = frame * USED.length;
+  const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: width, widths: [width] }, [
+    { rectangles: entries.map(() => ({ width: frame, height: frame })), value: sheet },
+  ])?.pages[0];
+  if (!layout) throw new Error("Cannot pack Needle gate sheet");
+  const namespace = "http://www.w3.org/2000/svg";
+  const standaloneRoot = `<svg xmlns="${namespace}" width="${display}" height="${display}" viewBox="0 0 ${frame} ${frame}">`;
+  const roots = [...files.values()].map((svg, index) => {
+    const id = entries[index]!.id;
+    const source = svg.trimEnd();
+    if (!source.startsWith(standaloneRoot) || !source.endsWith("</svg>")) {
+      throw new Error(`Unexpected Needle gate root: ${id}`);
+    }
+    const { x, y } = layout.placed[0]!.at[index]!;
+    return `<svg id="${id}" x="${x}" y="${y}" ${source.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    OUT + sheet,
+    `<svg xmlns="${namespace}" width="${width}" height="${layout.height}" viewBox="0 0 ${width} ${layout.height}">${roots.join("")}</svg>
+`,
+  );
+} else {
+  for (const [name, svg] of files) writeFileSync(OUT + name, svg);
+}
 writeFileSync(`${OUT}gates.json`, json(data));
 
 replaceEntries("needle", (id) => id.startsWith("needle-gate-"), entries);

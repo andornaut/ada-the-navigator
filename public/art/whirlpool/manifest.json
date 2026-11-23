@@ -4705,7 +4705,7 @@
     },
     {
       "id": "whirlpool-current-buoy-a",
-      "path": "/art/whirlpool/whirlpool-current-buoy-a.svg",
+      "path": "/art/whirlpool/whirlpool-current-buoy-sheet.svg",
       "width": 48,
       "height": 64,
       "displayWidth": 31.5,
@@ -4715,11 +4715,12 @@
         "x": 0.5,
         "y": 0.8
       },
-      "project": "currentBuoys"
+      "project": "currentBuoys",
+      "svgSheet": true
     },
     {
       "id": "whirlpool-current-buoy-b",
-      "path": "/art/whirlpool/whirlpool-current-buoy-b.svg",
+      "path": "/art/whirlpool/whirlpool-current-buoy-sheet.svg",
       "width": 48,
       "height": 64,
       "displayWidth": 31.5,
@@ -4729,11 +4730,12 @@
         "x": 0.5,
         "y": 0.8
       },
-      "project": "currentBuoys"
+      "project": "currentBuoys",
+      "svgSheet": true
     },
     {
       "id": "whirlpool-quiet-crossing-a",
-      "path": "/art/whirlpool/whirlpool-quiet-crossing-a.svg",
+      "path": "/art/whirlpool/whirlpool-quiet-crossing-sheet.svg",
       "width": 112,
       "height": 48,
       "displayWidth": 63.7,
@@ -4744,11 +4746,12 @@
         "y": 0.6
       },
       "frameMs": 1000,
-      "project": "quietCrossing"
+      "project": "quietCrossing",
+      "svgSheet": true
     },
     {
       "id": "whirlpool-quiet-crossing-b",
-      "path": "/art/whirlpool/whirlpool-quiet-crossing-b.svg",
+      "path": "/art/whirlpool/whirlpool-quiet-crossing-sheet.svg",
       "width": 112,
       "height": 48,
       "displayWidth": 63.7,
@@ -4759,7 +4762,8 @@
         "y": 0.6
       },
       "frameMs": 1000,
-      "project": "quietCrossing"
+      "project": "quietCrossing",
+      "svgSheet": true
     },
     {
       "id": "brine-portrait",

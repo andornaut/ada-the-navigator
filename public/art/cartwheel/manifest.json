@@ -125,7 +125,7 @@
     },
     {
       "id": "outpost-hub-bay-a",
-      "path": "/art/cartwheel/hub-bay-a.svg",
+      "path": "/art/cartwheel/hub-bay-sheet.svg",
       "width": 304,
       "height": 320,
       "displayWidth": 166.25,
@@ -146,11 +146,12 @@
           "outward": [-0.612, 0.791],
           "width": 36.742
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "outpost-hub-bay-b",
-      "path": "/art/cartwheel/hub-bay-b.svg",
+      "path": "/art/cartwheel/hub-bay-sheet.svg",
       "width": 304,
       "height": 320,
       "displayWidth": 166.25,
@@ -171,11 +172,12 @@
           "outward": [-0.612, 0.791],
           "width": 36.742
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "mooring-buoy-a",
-      "path": "/art/cartwheel/mooring-buoy-a.svg",
+      "path": "/art/cartwheel/mooring-buoy-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -202,11 +204,12 @@
           "y": 42.409,
           "outward": [0.534, -0.845]
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "mooring-buoy-b",
-      "path": "/art/cartwheel/mooring-buoy-b.svg",
+      "path": "/art/cartwheel/mooring-buoy-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -233,7 +236,8 @@
           "y": 42.409,
           "outward": [0.534, -0.845]
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-swarm-0",
@@ -18844,7 +18848,7 @@
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-0",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18858,11 +18862,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-1",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18876,11 +18881,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-2",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18894,11 +18900,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-3",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18912,11 +18919,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-4",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18930,11 +18938,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-5",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18948,11 +18957,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-6",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18966,11 +18976,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-7",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -18984,11 +18995,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-8",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19002,11 +19014,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-9",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19020,11 +19033,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-10",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19038,11 +19052,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-11",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19056,11 +19071,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-12",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19074,11 +19090,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-13",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19092,11 +19109,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-14",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19110,11 +19128,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-intact-15",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19128,11 +19147,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-0",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19145,11 +19165,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-1",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19162,11 +19183,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-2",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19179,11 +19201,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-3",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19196,11 +19219,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-4",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19213,11 +19237,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-5",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19230,11 +19255,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-6",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19247,11 +19273,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-7",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19264,11 +19291,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-8",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19281,11 +19309,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-9",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19298,11 +19327,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-10",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19315,11 +19345,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-11",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19332,11 +19363,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-12",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19349,11 +19381,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-13",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19366,11 +19399,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-14",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19383,11 +19417,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliator-turret-top-15",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19400,11 +19435,12 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-0",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19418,11 +19454,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-0"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-1",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19436,11 +19474,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-1"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-2",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19454,11 +19494,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-2"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-3",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19472,11 +19514,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-3"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-4",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19490,11 +19534,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-4"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-5",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19508,11 +19554,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-5"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-6",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19526,11 +19574,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-6"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-7",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19544,11 +19594,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-7"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-8",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19562,11 +19614,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-8"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-9",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19580,11 +19634,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-9"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-10",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19598,11 +19654,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-10"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-11",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19616,11 +19674,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-11"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-12",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19634,11 +19694,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-12"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-13",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19652,11 +19714,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-13"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-14",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19670,11 +19734,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-14"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-intact-15",
-      "path": "/art/cartwheel/enemies/retaliator-turret-intact-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-intact-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -19688,11 +19754,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-intact-15"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-0",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-0.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19705,11 +19773,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-0"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-1",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-1.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19722,11 +19792,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-1"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-2",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-2.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19739,11 +19811,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-2"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-3",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-3.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19756,11 +19830,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-3"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-4",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-4.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19773,11 +19849,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-4"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-5",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-5.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19790,11 +19868,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-5"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-6",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-6.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19807,11 +19887,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-6"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-7",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-7.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19824,11 +19906,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-7"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-8",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-8.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19841,11 +19925,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-8"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-9",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-9.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19858,11 +19944,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-9"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-10",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-10.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19875,11 +19963,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-10"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-11",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-11.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19892,11 +19982,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-11"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-12",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-12.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19909,11 +20001,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-12"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-13",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-13.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19926,11 +20020,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-13"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-14",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-14.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19943,11 +20039,13 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-14"
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-turret-top-15",
-      "path": "/art/cartwheel/enemies/retaliator-turret-top-15.svg",
+      "path": "/art/cartwheel/enemies/retaliator-turret-top-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 42,
@@ -19960,7 +20058,9 @@
         "y": 0.5
       },
       "archetype": "retaliator",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true,
+      "svgSheetMember": "enemy-claim-retaliator-turret-top-15"
     },
     {
       "id": "enemy-claim-retaliatorMiningFreighter-turret-intact-0",
@@ -29644,7 +29744,7 @@
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-0",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-0.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29657,11 +29757,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-1",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-1.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29674,11 +29775,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-2",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-2.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29691,11 +29793,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-3",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-3.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29708,11 +29811,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-4",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-4.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29725,11 +29829,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-5",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-5.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29742,11 +29847,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-6",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-6.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29759,11 +29865,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-7",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-7.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29776,11 +29883,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-8",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-8.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29793,11 +29901,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-9",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-9.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29810,11 +29919,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-10",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-10.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29827,11 +29937,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-11",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-11.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29844,11 +29955,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-12",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-12.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29861,11 +29973,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-13",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-13.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29878,11 +29991,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-14",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-14.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29895,11 +30009,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-pod-top-15",
-      "path": "/art/cartwheel/enemies/hostileStation-pod-top-15.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-pod-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29912,11 +30027,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-0",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-0.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29929,11 +30045,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-1",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-1.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29946,11 +30063,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-2",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-2.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29963,11 +30081,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-3",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-3.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29980,11 +30099,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-4",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-4.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -29997,11 +30117,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-5",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-5.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30014,11 +30135,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-6",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-6.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30031,11 +30153,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-7",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-7.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30048,11 +30171,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-8",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-8.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30065,11 +30189,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-9",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-9.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30082,11 +30207,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-10",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-10.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30099,11 +30225,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-11",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-11.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30116,11 +30243,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-12",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-12.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30133,11 +30261,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-13",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-13.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30150,11 +30279,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-14",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-14.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30167,11 +30297,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-dome-top-15",
-      "path": "/art/cartwheel/enemies/hostileStation-dome-top-15.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-dome-top-sheet.svg",
       "width": 48,
       "height": 48,
       "displayWidth": 21,
@@ -30184,7 +30315,8 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     }
   ],
   "cartwheelDebris": "/art/cartwheel/debris.json",

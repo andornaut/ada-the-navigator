@@ -18,7 +18,6 @@ import {
   craftIds,
   GALAXIES,
   type ManifestFile,
-  type Sidecars,
   mergeEntries,
   mergeSidecars,
   readManifest,
@@ -72,6 +71,8 @@ const families: Family[] = [
 
 const WEAPON_STATES = ["intact", "destroyed", "capped"] as const;
 const COLUMNS = 4;
+const TOPS = ["pod", "dome"] as const;
+const TOP_COUNT = TOPS.length * ENEMY_HEADINGS;
 const WEAPON_BASE_COUNT = STATION_FILL.length * WEAPON_STATES.length * ENEMY_HEADINGS;
 const stationWeaponBase = ({ archetype, hardpoint, top }: Entry) =>
   archetype === "hostileStation" &&
@@ -317,21 +318,108 @@ function packRetainedClaimHulls(root: string): void {
   );
 }
 
-// A selected variant owns that family's hull and layout. Its normal candidate exporter is
-// separate, so the legacy walk must skip the family once the variant sidecar is selected.
-function packRetainedWeaponBases(root: string): void {
+const stationTop = ({ archetype, top }: Entry) =>
+  archetype === "hostileStation" && top !== undefined;
+
+function stationTopSheets(
+  family: Family,
+  entries: readonly Entry[],
+  standalone: (file: string) => string | undefined,
+) {
+  const directory = `/art/${family.directory}/`;
+  const selected = entries.filter(stationTop);
+  const rows = new Map(selected.map((entry) => [entry.id, entry]));
+  const packed = selected.filter(({ svgSheet }) => svgSheet === true).length;
+  if (
+    selected.length !== TOP_COUNT ||
+    rows.size !== TOP_COUNT ||
+    (packed && packed !== TOP_COUNT)
+  ) {
+    throw new Error(
+      `${family.manifest}: expected ${TOP_COUNT} station tops, all standalone or all sheets`,
+    );
+  }
+
+  const replacements = new Map<string, Entry>();
+  const sheets = new Map<string, string>();
+  const sourceFiles = new Set<string>();
+  for (const top of TOPS) {
+    const group = `hostileStation-${top}-top`;
+    const sheet = `${group}-sheet.svg`;
+    const path = directory + sheet;
+    const first = rows.get(`${family.prefix}${group}-0`);
+    const width = first?.width;
+    const height = first?.height;
+    if (typeof width !== "number" || width <= 0 || typeof height !== "number" || height <= 0) {
+      throw new Error(`Missing station top group: ${family.prefix}${group}`);
+    }
+    const wide = width * COLUMNS;
+    const tall = height * (ENEMY_HEADINGS / COLUMNS);
+    const layout = packAtlas(
+      { compare: () => 0, extrude: 0, maxSize: Math.max(wide, tall), widths: [wide] },
+      [
+        {
+          rectangles: Array.from({ length: ENEMY_HEADINGS }, () => ({ width, height })),
+          value: group,
+        },
+      ],
+    )?.pages[0];
+    if (!layout || layout.height !== tall)
+      throw new Error(`Station top group does not fit: ${group}`);
+
+    const roots = Array.from({ length: ENEMY_HEADINGS }, (_, aim) => {
+      const id = `${family.prefix}${group}-${aim}`;
+      const file = `${group}-${aim}.svg`;
+      const entry = rows.get(id);
+      if (
+        !entry ||
+        entry.path !== (packed ? path : directory + file) ||
+        entry.family !== family.family ||
+        entry.top !== top ||
+        entry.hardpoint !== undefined ||
+        entry.aimIndex !== aim ||
+        entry.width !== width ||
+        entry.height !== height ||
+        typeof entry.displayWidth !== "number" ||
+        entry.displayWidth <= 0 ||
+        entry.displayWidth > width ||
+        typeof entry.displayHeight !== "number" ||
+        entry.displayHeight <= 0 ||
+        entry.displayHeight > height
+      ) {
+        throw new Error(`Invalid station top: ${id}`);
+      }
+      const svg = standalone(file);
+      const root = `<svg xmlns="http://www.w3.org/2000/svg" width="${entry.displayWidth}" height="${entry.displayHeight}" viewBox="0 0 ${width} ${height}">`;
+      if (!svg?.startsWith(root) || !svg.endsWith("</svg>")) {
+        throw new Error(`Station top does not match its manifest dimensions: ${directory}${file}`);
+      }
+      const { x, y } = layout.placed[0]!.at[aim]!;
+      replacements.set(id, { ...entry, path, svgSheet: true });
+      sourceFiles.add(file);
+      return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+    });
+    sheets.set(
+      sheet,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${tall}" viewBox="0 0 ${wide} ${tall}">${roots.join("")}</svg>\n`,
+    );
+  }
+  return { replacements, sheets, sourceFiles };
+}
+
+function packRetainedParts(root: string, pack: typeof weaponBaseSheets): void {
   const manifests: ManifestFile[] = ["core", ...GALAXIES];
   const allAssets: Entry[] = manifests.flatMap((name) => readManifest(name).assets);
   const plans = families.map((family) => {
     const directory = `/art/${family.directory}/`;
-    const plan = weaponBaseSheets(family, readManifest(family.manifest).assets, (file) =>
+    const plan = pack(family, readManifest(family.manifest).assets, (file) =>
       readFileSync(`${root}${family.directory}/${file}`, "utf8"),
     );
     const owned = new Set([...plan.sheets.keys()].map((file) => directory + file));
     const referrer = allAssets.find(
       ({ id, path }) => path !== undefined && owned.has(path) && !plan.replacements.has(id),
     );
-    if (referrer) throw new Error(`Station weapon sheet path is already used by ${referrer.id}`);
+    if (referrer) throw new Error(`Station part sheet path is already used by ${referrer.id}`);
     return { ...plan, family, directory };
   });
   for (const { directory, family, replacements, sheets } of plans) {
@@ -353,15 +441,20 @@ async function main() {
     (option !== undefined &&
       option !== "--icon-only" &&
       option !== "--weapon-base-sheets" &&
+      option !== "--top-sheets" &&
       option !== "--variant-candidate" &&
       option !== "--claim-hull-sheets")
   ) {
     throw new Error(
-      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--claim-hull-sheets|--variant-candidate]",
+      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--top-sheets|--claim-hull-sheets|--variant-candidate]",
     );
   }
   if (option === "--weapon-base-sheets") {
-    packRetainedWeaponBases(root);
+    packRetainedParts(root, weaponBaseSheets);
+    return;
+  }
+  if (option === "--top-sheets") {
+    packRetainedParts(root, stationTopSheets);
     return;
   }
   if (option === "--claim-hull-sheets") {
@@ -466,7 +559,26 @@ async function main() {
     ) {
       throw new Error("CLAIM hull selection differs from the generated rows");
     }
-    for (const selected of [pack, hullPack]) {
+    const installedTops = current.filter(stationTop);
+    const topSelected = installedTops.some(
+      (row) => row.svgSheet === true || row.path?.endsWith("-sheet.svg"),
+    );
+    let topPack: ReturnType<typeof stationTopSheets> | undefined;
+    if (topSelected) {
+      if (
+        installedTops.length !== TOP_COUNT ||
+        installedTops.some(({ svgSheet }) => svgSheet !== true)
+      ) {
+        throw new Error(`Partial station top sheet installation in ${family.manifest}`);
+      }
+      topPack = stationTopSheets(family, entries, (file) => texts.get(file));
+      for (const row of installedTops) {
+        if (!isDeepStrictEqual(row, topPack.replacements.get(row.id))) {
+          throw new Error(`Station top selection differs from the canonical source: ${row.id}`);
+        }
+      }
+    }
+    for (const selected of [pack, hullPack, topPack]) {
       if (!selected) continue;
       for (const file of selected.sourceFiles) texts.delete(file);
       for (const [file, svg] of selected.sheets) texts.set(file, svg);
@@ -478,7 +590,10 @@ async function main() {
       entries.map((entry) =>
         storedAt(
           paths,
-          hullPack?.replacements.get(entry.id) ?? pack?.replacements.get(entry.id) ?? entry,
+          hullPack?.replacements.get(entry.id) ??
+            topPack?.replacements.get(entry.id) ??
+            pack?.replacements.get(entry.id) ??
+            entry,
         ),
       ),
     );

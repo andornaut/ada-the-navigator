@@ -6,6 +6,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
 import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
@@ -403,22 +405,72 @@ function fixedEntry(frame: Layout, item: Fixed, letter: "a" | "b", extra: Record
   };
 }
 
+function fixedSvg(frame: Layout, item: Fixed, letter: "a" | "b"): string {
+  return svgText(
+    svgFile(
+      `${item.title} ${letter.toUpperCase()}`,
+      frame.width,
+      frame.height,
+      item.frames[letter],
+      (point) => frameXY(frame, point),
+      item.scale,
+    ),
+  );
+}
+
 function writeFixed(dir: string, frame: Layout, item: Fixed) {
   for (const letter of ["a", "b"] as const) {
-    writeFileSync(
-      `${dir}${item.path}-${letter}.svg`,
-      svgText(
-        svgFile(
-          `${item.title} ${letter.toUpperCase()}`,
-          frame.width,
-          frame.height,
-          item.frames[letter],
-          (point) => frameXY(frame, point),
-          item.scale,
-        ),
-      ),
-    );
+    writeFileSync(`${dir}${item.path}-${letter}.svg`, fixedSvg(frame, item, letter));
   }
+}
+
+function writeFixedPair(
+  installed: readonly { id: string; path?: unknown; svgSheet?: unknown }[],
+  frame: Layout,
+  item: Fixed,
+  extra: Record<string, unknown>,
+) {
+  const frames = (["a", "b"] as const).map((letter) => ({
+    entry: fixedEntry(frame, item, letter, extra),
+    root: fixedSvg(frame, item, letter),
+  }));
+  const ids = new Set(frames.map(({ entry }) => entry.id));
+  const rows = installed.filter(({ id }) => ids.has(id));
+  if (!rows.some(({ svgSheet }) => svgSheet === true)) {
+    for (const { entry, root } of frames) {
+      writeFileSync(output + entry.path.slice("/art/cartwheel/".length), root);
+    }
+    return frames.map(({ entry }) => entry);
+  }
+
+  const file = `${item.path}-sheet.svg`;
+  const path = `/art/cartwheel/${file}`;
+  if (
+    rows.length !== frames.length ||
+    new Set(rows.map(({ id }) => id)).size !== frames.length ||
+    rows.some((row) => row.svgSheet !== true || row.path !== path)
+  ) {
+    throw new Error(`Invalid Cartwheel blink sheet selection: ${file}`);
+  }
+  const { width, height } = frame;
+  const wide = width * frames.length;
+  const page = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: Math.max(wide, height), widths: [wide] },
+    [{ rectangles: frames.map(() => ({ width, height })), value: file }],
+  )?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== frames.length) {
+    throw new Error(`Cannot pack Cartwheel blink sheet: ${file}`);
+  }
+  const children = frames.map(({ entry, root }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    output + file,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
+  );
+  return frames.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
 }
 
 const blink = (build: (lit: boolean) => Part[][]) => ({
@@ -787,10 +839,14 @@ function writeCraft(
 
 // ---------------------------------------------------------------- export
 mkdirSync(output, { recursive: true });
-for (const item of [hubWorn, hubRepaired, hubBay]) {
+for (const item of [hubWorn, hubRepaired]) {
   writeFixed(output, hubFrame, item);
 }
-writeFixed(output, buoyFrame, buoy);
+
+const installed = {
+  core: readManifest("core").assets,
+  cartwheel: readManifest("cartwheel").assets,
+};
 
 // Free berths left then right on screen.
 const berths = [1, -1].map((s) => dockAt(hubFrame, DOCK + s * SPREAD, SIDE_FACE, SIDE_MOUTH));
@@ -810,29 +866,21 @@ const hubEntries = [
       project: "hub-repairs",
     }),
   ),
-  ...(["a", "b"] as const).map((letter) =>
-    fixedEntry(hubFrame, hubBay, letter, {
-      overlay: true,
-      destination: "hub",
-      project: "second-docking-bay",
-      berths: [bayBerth],
-    }),
-  ),
+  ...writeFixedPair(installed.cartwheel, hubFrame, hubBay, {
+    overlay: true,
+    destination: "hub",
+    project: "second-docking-bay",
+    berths: [bayBerth],
+  }),
 ];
 const moorings = BUOY_ARMS.map((angle) => {
   const [x, y] = frameXY(buoyFrame, [...along(angle, ARM_END, 0), 0]);
   return { x: round(x), y: round(y), outward: screenAxis(angle) };
 });
-const buoyEntries = (["a", "b"] as const).map((letter) =>
-  fixedEntry(buoyFrame, buoy, letter, { moorings }),
-);
+const buoyEntries = writeFixedPair(installed.cartwheel, buoyFrame, buoy, { moorings });
 
 const crafts = [miner, visitor1, visitor2, blockerRam];
 const SHARED = ["miner"];
-const installed = {
-  core: readManifest("core").assets,
-  cartwheel: readManifest("cartwheel").assets,
-};
 const craftEntries = crafts.flatMap((craft) =>
   writeCraft(output, craft, installed[SHARED.includes(craft.name) ? "core" : "cartwheel"]),
 );

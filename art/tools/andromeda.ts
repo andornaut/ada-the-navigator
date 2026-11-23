@@ -289,25 +289,28 @@ replaceEntries(
 
 // The chain's beacons share one frame and pivot, so a state change swaps sprites in place. Lit and
 // relit beacons blink; the dark, dented beacon is a single frame.
-const beacons: (Fixed & { state: m.BeaconState; blink: boolean })[] = [
-  ...(["lit", "relit"] as const).flatMap((state) =>
-    pair(`beacon-guide-${state}`, `beacon-${state}`, `Guide beacon, ${state}`, (lit) =>
-      m.beacon(state, lit),
-    ).map((item) => ({ ...item, state, blink: true })),
+const beaconPairs = (["lit", "relit"] as const).map((state) => ({
+  state,
+  items: pair(`beacon-guide-${state}`, `beacon-${state}`, `Guide beacon, ${state}`, (lit) =>
+    m.beacon(state, lit),
   ),
-  {
-    id: "beacon-guide-dented",
-    file: "beacon-dented",
-    title: "Guide beacon, dark and dented",
-    faces: polygons(m.beacon("dented", false)),
-    state: "dented",
-    blink: false,
-  },
-];
-const beaconFrame = layout(allFaces(beacons));
-for (const item of beacons) writeFixed(beaconFrame, item, GUIDE_SCALE);
-const beaconEntries = beacons.map((item) =>
-  fixedEntry(beaconFrame, item, { beacon: "guide", state: item.state }, item.blink, GUIDE_SCALE),
+}));
+const dented: Fixed = {
+  id: "beacon-guide-dented",
+  file: "beacon-dented",
+  title: "Guide beacon, dark and dented",
+  faces: polygons(m.beacon("dented", false)),
+};
+const beaconFrame = layout([
+  ...beaconPairs.flatMap(({ items }) => allFaces(items)),
+  ...dented.faces,
+]);
+const beaconEntries = beaconPairs.flatMap(({ state, items }) =>
+  writeFixedPair(beaconFrame, items, { beacon: "guide", state }, GUIDE_SCALE),
+);
+writeFixed(beaconFrame, dented, GUIDE_SCALE);
+beaconEntries.push(
+  fixedEntry(beaconFrame, dented, { beacon: "guide", state: "dented" }, false, GUIDE_SCALE),
 );
 replaceEntries(
   "andromeda",
@@ -482,15 +485,11 @@ for (const lit of [true, false])
   checkClear("spare beacon", polygons(m.beacon("relit", lit)), m.spareBeacon(lit), m.SPARE_SITE);
 const spare = pair("beacon-guide-spare", "beacon-spare", "Spare guide beacon", m.spareBeacon);
 const spareFrame = layout(allFaces(spare));
-for (const item of spare) writeFixed(spareFrame, item, GUIDE_SCALE);
-const spareEntries = spare.map((item) =>
-  fixedEntry(
-    spareFrame,
-    item,
-    { overlay: true, beacon: "guide", project: "spareBeacon" },
-    true,
-    GUIDE_SCALE,
-  ),
+const spareEntries = writeFixedPair(
+  spareFrame,
+  spare,
+  { overlay: true, beacon: "guide", project: "spareBeacon" },
+  GUIDE_SCALE,
 );
 replaceEntries(
   "andromeda",
@@ -508,10 +507,7 @@ const rack = pair(
 );
 const rackFrame = layout(allFaces(rack));
 const RACK_SCALE = 1.2;
-for (const item of rack) writeFixed(rackFrame, item, RACK_SCALE);
-const rackEntries = rack.map((item) =>
-  fixedEntry(rackFrame, item, { project: "routeExchange" }, true, RACK_SCALE),
-);
+const rackEntries = writeFixedPair(rackFrame, rack, { project: "routeExchange" }, RACK_SCALE);
 replaceEntries("andromeda", (id) => /^andromeda-route-exchange-[ab]$/.test(id), rackEntries);
 
 // Both sit behind their base: their sites are farther from the viewer than the base pivot.
