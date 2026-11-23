@@ -79,12 +79,17 @@ describe("periodic chunk plans and retention", () => {
     expect(planChunk(CHUNK_CATALOG, { ...options, x: 4, y: 3 })).toEqual(
       planChunk(CHUNK_CATALOG, { ...options, ...context, x: 4, y: 3 }),
     );
-    expect(() => planChunk(CHUNK_CATALOG, { ...options, worldSide: 1152001 })).toThrow(RangeError);
+    expect(() => planChunk(CHUNK_CATALOG, { ...options, worldSide: 511 })).toThrow(RangeError);
   });
   it("keeps cross-seam drawn rocks separate using one image of the canonical neighbour", () => {
     for (const y of [-2, 0, 2]) {
       const left = planChunk(CHUNK_CATALOG, { ...options, ...context, y });
-      const right = planChunk(CHUNK_CATALOG, { ...options, ...context, x: -1125, y });
+      const right = planChunk(CHUNK_CATALOG, {
+        ...options,
+        ...context,
+        x: -1125,
+        y,
+      });
       const east = nearestImage(
         context.worldSide,
         left.ports.east.center,

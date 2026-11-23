@@ -4,11 +4,12 @@ import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 import {
+  periodicWorldGrid,
   worldCell,
+  worldCellChance,
   type WorldCellContext,
   worldCellOrigin,
   worldCellsNear,
-  worldGrid,
 } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
@@ -22,7 +23,11 @@ export interface OreField extends Vec {
   guard: Vec | null;
   id: string;
   /** Each rock's class, the plain asteroid shape it collides on and its start spin frame. */
-  rocks: readonly (Vec & { asteroid: string; resource: ResourceClass; spinStart: number })[];
+  rocks: readonly (Vec & {
+    asteroid: string;
+    resource: ResourceClass;
+    spinStart: number;
+  })[];
   /** Recomputed from the placement cell; not stored in flight or save state. */
   variantId: string;
 }
@@ -53,7 +58,7 @@ export function worldOreFieldInCell(
   galaxy: GalaxyNumber,
   rawCell: Vec,
 ): OreField | null {
-  const grid = worldGrid(context, ORE_FIELDS.cellSize);
+  const grid = periodicWorldGrid(context, ORE_FIELDS.cellSize);
   const cell = worldCell(grid, rawCell);
   const origin = worldCellOrigin(grid, cell);
   const { chance, clearance, count, diameter, guardChance, guardGap, jitter } = ORE_FIELDS;
@@ -62,7 +67,7 @@ export function worldOreFieldInCell(
   }
   const seed = GALAXY_SEEDS[galaxy]!;
   const roll = (salt: number) => unit(mix(seed ^ salt, cell.x, cell.y));
-  if (roll(0) >= chance) {
+  if (roll(0) >= worldCellChance(grid, chance)) {
     return null;
   }
   const margin = (grid.pitch - jitter) / 2;
@@ -86,8 +91,11 @@ export function worldOreFieldInCell(
     x: x + rock.position.x * cos - rock.position.y * sin,
     y: y + rock.position.x * sin + rock.position.y * cos,
   }));
-  // A checkerboard keeps guarded fields to at most half; the seed picks among them.
-  const eligible = (((cell.x + cell.y) % 2) + 2) % 2 === 0;
+  // An odd ring cannot alternate across its seam. Leave its final row and column unguarded
+  // so eligible guard cells still form a checkerboard across every represented edge.
+  const guardEdge =
+    grid.periodCells && grid.periodCells % 2 ? Math.floor(grid.periodCells / 2) : Infinity;
+  const eligible = cell.x < guardEdge && cell.y < guardEdge && (cell.x + cell.y) % 2 === 0;
   let guard: OreField["guard"] = null;
   if (eligible && roll(0x6a09) < guardChance) {
     const angle = roll(0x3c6e) * Math.PI * 2;
@@ -125,7 +133,7 @@ export function worldOreFieldsNear(
   radius: number,
   point: Vec,
 ): OreField[] {
-  const grid = worldGrid(context, ORE_FIELDS.cellSize);
+  const grid = periodicWorldGrid(context, ORE_FIELDS.cellSize);
   const fields: OreField[] = [];
   for (const cell of worldCellsNear(grid, radius, point)) {
     const field = worldOreFieldInCell(context, galaxy, cell);

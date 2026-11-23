@@ -12,7 +12,7 @@ import {
 import { scheduleHostileStations } from "./hostileStationSchedule.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
-import { worldCellOrigin, worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellOrigin } from "./worldCells.ts";
 
 /** The caller represents all required occupants before admitting optional station encounters. */
 export function materializeHostileStationRegion(
@@ -66,7 +66,7 @@ export function materializeGeneratedHostileStations(
   ) {
     return;
   }
-  const grid = worldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
   const before = flight.objects.length;
   for (const key of [...flight.chunks]) {
     const [x, y] = key.split(",").map(Number);

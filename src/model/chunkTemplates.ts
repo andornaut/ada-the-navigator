@@ -7,7 +7,14 @@ import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
 import { fromScreen, toScreen } from "./convex.ts";
 import { drawnRock, loopReach, rocksOverlap } from "./rockSpacing.ts";
 import type { Vec } from "./types.ts";
-import { worldCell, worldCellKey, worldCellOrigin, worldGrid } from "./worldCells.ts";
+import {
+  periodicWorldGrid,
+  worldCell,
+  worldCellCenter,
+  worldCellKey,
+  worldCellOrigin,
+  type WorldGrid,
+} from "./worldCells.ts";
 
 /** Asteroid variants and the galaxy's field weights; without them rocks use `rockRadius`. */
 export interface ChunkAsteroids {
@@ -245,6 +252,7 @@ function variantOf(
  */
 function rolledFeature(
   options: ChunkPlanOptions,
+  grid: WorldGrid,
   id: ChunkTemplateId,
   seed: number,
 ): { readonly placement: ChunkPlacement; readonly shape: AsteroidShape } | undefined {
@@ -262,18 +270,15 @@ function rolledFeature(
     return undefined;
   }
   const quadrant = mix(seed, 991) % 4;
+  const origin = worldCellOrigin(grid, options);
   return {
     placement: {
       asteroid: chosen.shape.id,
       id: `chunk:${options.x},${options.y}:feature`,
       kind: "rock",
       radius: chosen.shape.radius,
-      x:
-        worldCellOrigin(worldGrid(options, options.size), options).x +
-        (quadrant % 2 ? 0.75 : 0.25) * options.size,
-      y:
-        worldCellOrigin(worldGrid(options, options.size), options).y +
-        (quadrant < 2 ? 0.25 : 0.75) * options.size,
+      x: origin.x + (quadrant % 2 ? 0.75 : 0.25) * options.size,
+      y: origin.y + (quadrant < 2 ? 0.25 : 0.75) * options.size,
     },
     shape: chosen.shape,
   };
@@ -317,9 +322,12 @@ function spacedFeature(
 }
 
 /** The rolled features of the eight chunks around this one. */
-function neighbourFeatures(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlacement[] {
+function neighbourFeatures(
+  catalog: ChunkCatalog,
+  options: ChunkPlanOptions,
+  grid: WorldGrid,
+): ChunkPlacement[] {
   const features: ChunkPlacement[] = [];
-  const grid = worldGrid(options, options.size);
   const seen = new Set([worldCellKey(grid, options)]);
   for (const dx of [-1, 0, 1]) {
     for (const dy of [-1, 0, 1]) {
@@ -333,7 +341,7 @@ function neighbourFeatures(catalog: ChunkCatalog, options: ChunkPlanOptions): Ch
         seen.add(identity);
         const around = { ...options, ...cell };
         const { id, seed } = chunkTemplate(catalog, around);
-        const feature = rolledFeature(around, id, seed);
+        const feature = rolledFeature(around, grid, id, seed);
         if (feature) {
           features.push({
             ...feature.placement,
@@ -375,7 +383,10 @@ function slotBox(
   origin: Vec,
   placement: ChunkPlacement,
   extra = 0,
-): { readonly x: readonly [number, number]; readonly y: readonly [number, number] } {
+): {
+  readonly x: readonly [number, number];
+  readonly y: readonly [number, number];
+} {
   const half = options.size / 2;
   const halfWidth = options.shipRadius + options.clearance;
   const corridor = placement.radius + halfWidth;
@@ -497,22 +508,27 @@ function blocked(
 /** Pure plans use normalized authored slots and return world coordinates without retaining visits. */
 export function planChunk(catalog: ChunkCatalog, rawOptions: ChunkPlanOptions): ChunkPlan {
   validate(rawOptions);
-  const options = {
-    ...rawOptions,
-    ...worldCell(worldGrid(rawOptions, rawOptions.size), rawOptions),
-  };
+  const grid = periodicWorldGrid(rawOptions, rawOptions.size);
+  return planCell(
+    catalog,
+    { ...rawOptions, ...worldCell(grid, rawOptions), size: grid.pitch },
+    grid,
+  );
+}
+
+function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldGrid): ChunkPlan {
   const { id, seed } = chunkTemplate(catalog, options);
-  const origin = worldCellOrigin(worldGrid(options, options.size), options);
-  const center = { x: origin.x + options.size / 2, y: origin.y + options.size / 2 };
+  const origin = worldCellOrigin(grid, options);
+  const center = worldCellCenter(grid, options);
   const halfWidth = options.shipRadius + options.clearance;
   const templateSlots = TEMPLATES[id];
   const count = Math.min(options.objectsPerChunk, templateSlots.length);
   const weights = options.spawnWeights;
   const totalSpawn = weights.resource + weights.rock + weights.enemy + weights.pickup;
   const asteroids = options.asteroids;
-  const around = asteroids ? neighbourFeatures(catalog, options) : [];
+  const around = asteroids ? neighbourFeatures(catalog, options, grid) : [];
   // At most one large feature per chunk sits at a quadrant center, clear of edges and corridors.
-  const rolled = rolledFeature(options, id, seed);
+  const rolled = rolledFeature(options, grid, id, seed);
   const feature = spacedFeature(options, rolled, around);
   const slots: Slot[] = [];
   const pickups: ChunkPlacement[] = [];
@@ -707,12 +723,15 @@ export function planChunk(catalog: ChunkCatalog, rawOptions: ChunkPlanOptions): 
     let added = 0;
     // Only unused authored slots provide additions. Existing geometry, drift and cache rolls stay fixed.
     for (let budget = count + 1; budget <= templateSlots.length && added < wanted; budget++) {
-      const candidates = planChunk(catalog, {
+      const spawnWeights = { ...options.spawnWeights, enemy: 0, pickup: 0 };
+      const cell = {
         ...options,
         asteroidDensity: 1,
         objectsPerChunk: budget,
-        spawnWeights: { ...options.spawnWeights, enemy: 0, pickup: 0 },
-      });
+        spawnWeights,
+      };
+      validate(cell);
+      const candidates = planCell(catalog, cell, grid);
       for (const candidate of candidates.placements) {
         if (added >= wanted) {
           break;

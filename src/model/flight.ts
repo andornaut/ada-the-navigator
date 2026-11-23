@@ -157,7 +157,14 @@ import {
 } from "./stardustPlacement.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
-import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
+import {
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellCenter,
+  worldCellKey,
+  worldCellsNear,
+  type WorldGrid,
+} from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
@@ -294,7 +301,7 @@ function random(seed: number): () => number {
   };
 }
 function chunk(flight: FlightState, content: GameContent, point: Vec): string {
-  const grid = worldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
   return worldCellKey(grid, worldCellAt(grid, point));
 }
 
@@ -711,7 +718,8 @@ function ensureDebrisRivers(content: GameContent, point: Vec, flight: FlightStat
   if (!CURRENTS.galaxies.includes(flight.galaxy)) {
     return;
   }
-  const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  const reach = (ACTIVE_CHUNK_RADIUS + 1) * grid.pitch;
   const ids = new Set(flight.objects.map((object) => object.id));
   for (const current of worldCurrentsNear(
     flightWorldContext(flight),
@@ -782,7 +790,8 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
 
 /** Station sites within the active region become persistent station objects. */
 function ensureStations(content: GameContent, point: Vec, flight: FlightState): void {
-  const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  const reach = (ACTIVE_CHUNK_RADIUS + 1) * grid.pitch;
   for (const site of worldStationsNear(
     flightStationContext(flight),
     ECONOMY,
@@ -870,9 +879,10 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
   const existing = new Set(flight.objects.map((object) => object.id));
-  const grid = worldGrid(flightWorldContext(flight), size);
-  for (const { x, y } of worldCellsNear(grid, size * 2, point)) {
-    const key = `${x},${y}`;
+  const grid = periodicWorldGrid(flightWorldContext(flight), size);
+  for (const cell of worldCellsNear(grid, grid.pitch * 2, point)) {
+    const key = worldCellKey(grid, cell);
+    const { x, y } = cell;
     if (generated.has(key)) {
       continue;
     }
@@ -895,7 +905,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
       x,
       y,
     });
-    generateRegion(content, x, y, flight);
+    generateRegion(content, grid, cell, flight);
     for (const placement of plan.placements) {
       const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
       const object: SpaceObject = {
@@ -958,7 +968,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
         existing.add(object.id);
       }
     }
-    placeOreFields(content, x, y, existing, flight);
+    placeOreFields(content, grid, cell, existing, flight);
   }
 }
 
@@ -975,15 +985,15 @@ export const PLATFORM_FACING: Readonly<Vec> = { x: 1, y: 0 };
  */
 function placeOreFields(
   content: GameContent,
-  x: number,
-  y: number,
+  grid: WorldGrid,
+  cell: Vec,
   existing: Set<string>,
   flight: FlightState,
 ): void {
-  const size = content.tuning.chunkSize;
-  const centre = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-  for (const field of worldOreFieldsNear(flightWorldContext(flight), flight.galaxy, size, centre)) {
-    if (Math.floor(field.x / size) !== x || Math.floor(field.y / size) !== y) {
+  const center = worldCellCenter(grid, cell);
+  for (const field of worldOreFieldsNear(grid, flight.galaxy, grid.pitch, center)) {
+    const owner = worldCellAt(grid, field);
+    if (owner.x !== cell.x || owner.y !== cell.y) {
       continue;
     }
     const reach = ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2;
@@ -1519,7 +1529,12 @@ export function spawnChapterEnemy(
   id: string,
   point: Vec,
   flight: FlightState,
-  options: { packId?: string; escortOf?: string; home?: Vec; routeId?: string } = {},
+  options: {
+    packId?: string;
+    escortOf?: string;
+    home?: Vec;
+    routeId?: string;
+  } = {},
 ): SpaceObject | null {
   if (Object.hasOwn(flight.world.notables, id)) {
     const retained = flight.world.notables[id];
@@ -1623,15 +1638,21 @@ function nearArrival(
   );
 }
 
-function generateRegion(content: GameContent, x: number, y: number, flight: FlightState): void {
-  const size = content.tuning.chunkSize;
+function generateRegion(
+  content: GameContent,
+  grid: WorldGrid,
+  cell: Vec,
+  flight: FlightState,
+): void {
+  const { x, y } = cell;
+  const size = grid.pitch;
   // One encounter cell per quiet-distance grid; adjacent chunk traversal cannot duplicate it.
   const spacing = encounterSpacing(content, flight.galaxy);
   if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
     return;
   }
   const next = random(hash(flightEncounterSeed(flight) ^ 9173, x, y));
-  const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
+  const center = worldCellCenter(grid, cell);
   if (
     worldDistance(flightWorldContext(flight), center, flight.player) <
       content.tuning.safeRadius * 2 ||
@@ -4754,7 +4775,11 @@ function fireBeam(
       }
     }
   }
-  const struck = first as { object: SpaceObject; part: string | null; at: number } | null;
+  const struck = first as {
+    object: SpaceObject;
+    part: string | null;
+    at: number;
+  } | null;
   // A mine nearer than whatever else the beam meets pops and stops it.
   let popped: { at: number; mine: Mine } | null = null;
   for (const mine of flight.mines) {

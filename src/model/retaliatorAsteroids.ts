@@ -1,7 +1,7 @@
 import { placementRadius, sceneryShape } from "./asteroids.ts";
 import type { RetaliatorAsteroid } from "./retaliatorNavigation.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { worldCellAt, worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellAt, worldCellKey, worldCellsNear } from "./worldCells.ts";
 import { type WorldContext, worldDistance } from "./worldContacts.ts";
 
 /** A slice-local index of real loaded asteroids, shared by every industrial ship's idle input. */
@@ -10,7 +10,7 @@ export function retaliatorAsteroidQuery(
   chunkSize: number,
   objects: readonly SpaceObject[],
 ): (radius: number, home: Vec) => readonly RetaliatorAsteroid[] {
-  const grid = worldGrid(context, chunkSize);
+  const grid = periodicWorldGrid(context, chunkSize);
   const cells = new Map<string, RetaliatorAsteroid[]>();
   let maximumReach = 0;
   for (const object of objects) {

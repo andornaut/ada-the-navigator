@@ -7,14 +7,14 @@ import { worldStationById } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 import {
+  periodicWorldGrid,
   worldCell,
   worldCellAt,
+  worldCellCenter,
   type WorldCellContext,
   worldCellKey,
-  worldCellOrigin,
   worldCellsNear,
   type WorldGrid,
-  worldGrid,
 } from "./worldCells.ts";
 import { wrappedDelta } from "./worldGeometry.ts";
 
@@ -41,14 +41,14 @@ export function beginFlightStep(flight: FlightState): void {
   archived.set(flight, new Set());
 }
 function coordinates(context: GeographyContext, content: GameContent, point: Vec): Vec {
-  return worldCellAt(worldGrid(context, content.tuning.chunkSize), point);
+  return worldCellAt(periodicWorldGrid(context, content.tuning.chunkSize), point);
 }
 function key(context: GeographyContext, content: GameContent, point: Vec): string {
   const at = coordinates(context, content, point);
   return `${at.x},${at.y}`;
 }
 function near(context: GeographyContext, content: GameContent, first: Vec, second: Vec): boolean {
-  const grid = worldGrid(context, content.tuning.chunkSize);
+  const grid = periodicWorldGrid(context, content.tuning.chunkSize);
   const delta =
     grid.periodCells === undefined
       ? { x: second.x - first.x, y: second.y - first.y }
@@ -213,7 +213,7 @@ export function worldActivateFlightRegion(
   point: Vec,
   flight: FlightState,
 ): void {
-  const grid = worldGrid(context, content.tuning.chunkSize);
+  const grid = periodicWorldGrid(context, content.tuning.chunkSize);
   const cell = worldCellAt(grid, point);
   let neighbourhood = activationNeighbourhoods.get(flight);
   if (
@@ -227,9 +227,7 @@ export function worldActivateFlightRegion(
     neighbourhood.grid.phase !== grid.phase ||
     neighbourhood.grid.periodCells !== grid.periodCells
   ) {
-    const center = worldCellOrigin(grid, cell);
-    center.x += grid.pitch / 2;
-    center.y += grid.pitch / 2;
+    const center = worldCellCenter(grid, cell);
     neighbourhood = {
       cell,
       grid,
@@ -385,7 +383,7 @@ export function worldSyncFlightRegion(
     }
   }
   flight.objects = active;
-  const grid = worldGrid(context, content.tuning.chunkSize);
+  const grid = periodicWorldGrid(context, content.tuning.chunkSize);
   const seen = new Set<string>();
   const chunks = flight.chunks.flatMap((value) => {
     const point = chunkCoordinates(value);

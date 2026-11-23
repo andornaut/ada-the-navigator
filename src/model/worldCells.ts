@@ -84,7 +84,16 @@ export function worldCellAt(grid: WorldGrid, point: Vec): Vec {
 
 export function worldCellOrigin(grid: WorldGrid, cell: Vec): Vec {
   const at = worldCell(grid, cell);
-  return { x: at.x * grid.pitch + grid.phase, y: at.y * grid.pitch + grid.phase };
+  return {
+    x: at.x * grid.pitch + grid.phase,
+    y: at.y * grid.pitch + grid.phase,
+  };
+}
+
+/** The center of an ownership cell in the canonical chart. */
+export function worldCellCenter(grid: WorldGrid, cell: Vec): Vec {
+  const origin = worldCellOrigin(grid, cell);
+  return { x: origin.x + grid.pitch / 2, y: origin.y + grid.pitch / 2 };
 }
 
 /** Lazy local candidates, with each canonical cell yielded once even across both seams. */
