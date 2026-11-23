@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
@@ -56,9 +56,18 @@ writeFileSync(
 );
 await prettify(`${art}stardust.json`);
 const key = "icon-stardust-20";
-await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
-  ["rest", [resourceIcon(STARDUST_REST, 20)], 100],
-]);
+const uiManifest = JSON.parse(readFileSync(`${art}ui/manifest.json`, "utf8")) as {
+  sprites: { key: string }[];
+};
+// Keep the UI raster until Tech selects its vector. The world glint emits every time.
+if (
+  uiManifest.sprites.some((entry) => entry.key === key) ||
+  !existsSync(`${art}ui/icons/${key}.svg`)
+) {
+  await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
+    ["rest", [resourceIcon(STARDUST_REST, 20)], 100],
+  ]);
+}
 
 // The pickup sheet loads as a root manifest sprite sheet, placed before the station and enemies.
 const entry = {

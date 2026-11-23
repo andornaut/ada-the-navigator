@@ -82,11 +82,15 @@ async function prettify(path: string): Promise<void> {
 type Sprite = { key: string; png: string; json: string; once: string[] };
 const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 const registered = new Set(manifest.sprites.map(({ key }) => key));
+// Tech selects a vector by removing its raster row after pairing the callers.
+const emitsRaster = (key: string) =>
+  registered.has(key) || !existsSync(`${art}ui/icons/${key}.svg`);
 
-const frames: Record<string, Frame> = { "icon-ore-20": resourceIcon(ORE_PICKUP, 20) };
+const oreKey = "icon-ore-20";
+const frames: Record<string, Frame> = {};
+if (emitsRaster(oreKey)) frames[oreKey] = resourceIcon(ORE_PICKUP, 20);
 for (const [key, { palette, rows }] of Object.entries(ICONS)) {
-  // Tech selects the vector by removing the paired raster's manifest row.
-  if (!registered.has(key) && existsSync(`${art}ui/icons/${key}.svg`)) continue;
+  if (!emitsRaster(key)) continue;
   if (rows.length !== 20 || rows.some((row) => row.length !== 20)) {
     throw new Error(`${key} is not 20 by 20`);
   }
