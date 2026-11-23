@@ -580,6 +580,11 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
   reloaded.step(0.01, idle);
   expect(f.storyScene).toMatchObject({ id: "blocked", lineDue: true });
   expect(reloaded.state.progress[2].replayScene).toBeUndefined();
+  // The arrival step populated the hub's surroundings again. Keep the settled
+  // chunks and destinations while the scene plays without ambient traffic.
+  f.objects = f.objects.filter(
+    (object) => object.kind === "destination" || object.routeId === "hub",
+  );
   for (let i = 0; i < 400 && f.storyScene!.lineDue; i++) {
     if (reloaded.state.dialogue) {
       reloaded.choose("continue");
@@ -587,6 +592,9 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
       reloaded.step(0.05, idle);
     }
   }
+  expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
+    CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
+  );
   expect(reloaded.state.dialogue?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
   // Spoken once: a later flight does not replay it.
   reloaded.state.dialogue = null;
