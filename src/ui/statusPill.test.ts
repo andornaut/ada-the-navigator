@@ -142,7 +142,7 @@ describe("status pill shield bar", () => {
     "shows only the canonical post-hit delay regardless of ore (%s reduced)",
     (reduced) => {
       const ship = shipTuning(ECONOMY, CONTENT, noLevels());
-      expect(ship.shieldRechargeDelay).toBe(30);
+      expect(ship.shieldRechargeDelay).toBe(25);
       const state = {
         cargo: 0,
         shield: ship.shieldMax * 0.6,
