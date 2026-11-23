@@ -16,6 +16,8 @@ export const QUEST_LIST_PAGE_SIZE = 2;
 export const QUEST_ICON = 24;
 
 const QUEST_ROUTE_TYPE = { lineHeight: 18, size: 14 } as const;
+// On smaller views, scale the endpoint with its route up to the shared 48px button minimum.
+const QUEST_ENDPOINT_MIN_HEIGHT = 48;
 
 const { chip, inset, markGap } = MAP_SCREEN_LAYOUT.quests;
 
@@ -65,6 +67,7 @@ export const QUESTS_SCREEN_STYLE = `
   align-items:center;
   gap:${units(4)};
   min-width:0;
+  min-height:min(${QUEST_ENDPOINT_MIN_HEIGHT}px, ${units(QUEST_ENDPOINT_MIN_HEIGHT)});
   color:inherit;
   font:inherit;
   text-align:left;
