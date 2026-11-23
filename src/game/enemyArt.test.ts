@@ -663,6 +663,7 @@ describe("enemy SVGs", () => {
         height: number;
         path: string;
         svgSheet?: boolean;
+        svgSheetMember?: string;
         width: number;
       })[]
     ).filter((asset) => composed.has(enemyFrameKey(asset) ?? ""));
@@ -681,8 +682,9 @@ describe("enemy SVGs", () => {
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const [outer, ...members] = Array.from(svg.matchAll(/<svg\b[^>]*>/gu), ([tag]) => tag);
+      const member = asset.svgSheetMember ?? asset.id;
       const roots = asset.svgSheet
-        ? members.filter((tag) => /\sid="([^"]+)"/u.exec(tag)?.[1] === asset.id)
+        ? members.filter((tag) => /\sid="([^"]+)"/u.exec(tag)?.[1] === member)
         : [outer];
       expect(roots, asset.id).toHaveLength(1);
       const root = roots[0] ?? "";
