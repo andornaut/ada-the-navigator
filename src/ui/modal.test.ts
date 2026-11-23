@@ -355,12 +355,21 @@ describe("modal text", () => {
     expect(mapCloseStyle(".map-close")).toContain("var(--ada-close-ink,ButtonText)");
   });
 
-  it("places the close X's 24 face 6 from the card's corner in its hitAround target", () => {
+  it("keeps the 48 close target fixed while aligning framed close ink 6 from the corner", () => {
     const close = rule(`${UI_SCOPE} .ada-close`);
     expect(close).toContain(`top:${units(CARD_CLOSE.hit.y)}`);
     expect(close).toContain(`right:${units(-6)}`);
     expect(close).toContain(`width:${units(48)}`);
     expect(rule(`${UI_SCOPE} .ada-close::before`)).toContain(`width:${units(24)}`);
+    expect(CARD_CLOSE.framedPaintShift).toEqual({ x: 6, y: -6 });
+    expect(close).not.toContain("translate:");
+    const frames = [
+      ".ada-card-frame",
+      ".ada-modal:not(.ada-interaction-modal) > .ada-dialogue-frame",
+    ];
+    const framed = `${UI_SCOPE} :where(${frames.join(",")}) > .ada-close`;
+    const paint = rule([`${framed}::before`, `${framed}::after`].join(",\n"));
+    expect(paint).toContain(`translate:${units(6)} ${units(-6)}`);
   });
 });
 

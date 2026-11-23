@@ -313,7 +313,7 @@ ${UI_SCOPE} .ada-card p{
   color:${TEXT_TOKENS.supporting}
 }
 
-/* The close X: a 24 face closeInset from the card's top and right, in its hitAround target. */
+/* Keep the close target and its centered art box independent of the visible paint. */
 ${UI_SCOPE} .ada-close{
   position:absolute;
   top:${units(CLOSE_HIT.y)};
@@ -340,6 +340,12 @@ ${UI_SCOPE} .ada-close::before{
     CARD_CLOSE.art.height,
   )};
   image-rendering:pixelated
+}
+/* Align framed Close ink to the frame corner. Move both paint layers, leaving the hit fixed. */
+${UI_SCOPE} :where(.ada-card-frame,.ada-modal:not(.ada-interaction-modal) > .ada-dialogue-frame) > .ada-close::before,
+${UI_SCOPE} :where(.ada-card-frame,.ada-modal:not(.ada-interaction-modal) > .ada-dialogue-frame) > .ada-close::after{
+  translate:${units(CARD_CLOSE.framedPaintShift.x)} ${units(CARD_CLOSE.framedPaintShift.y)};
+  pointer-events:none
 }
 ${UI_SCOPE} .ada-close:active::before{
   background-position:${units(-CARD_CLOSE.art.width)} 0
