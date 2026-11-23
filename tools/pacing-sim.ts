@@ -5,9 +5,9 @@
  * (asteroids and discovery caches), encounter cells and their galaxy tables, station
  * sites, enemy and asteroid drops and pickup splitting. A scripted player explores,
  * fights encounters met in passing, shoots some asteroids and collects pickups inside
- * tractor range. An upgrade weapon spends one shot per volley; the player tops up each owned
- * weapon's ammunition at every station reached. Every behavioural assumption is a named,
- * overridable parameter.
+ * tractor range. Multi-Laser spends one unit per bolt and other upgrades one per volley.
+ * The player tops up each owned weapon's ammunition at every station reached. Every behavioural
+ * assumption is a named, overridable parameter.
  *
  * With --jobs the player also takes and completes station jobs (gameplay/quests.md) back to
  * back, through the game's own job boards, landmarks and rewards.
@@ -714,7 +714,7 @@ export function simulate(input: SimulationInput): RunResult {
     addWeaponGrant(catalog, each, ammo);
   }
   /**
-   * Spends a volley's shot for each interval of `seconds` fired with the equipped weapon. An
+   * Estimates ammunition for `seconds` of firing at the equipped weapon's volley rate. An
    * emptied weapon switches to Laser, and the player re-equips the first owned weapon with
    * ammunition left. A fight's remaining time keeps the weapon it started with.
    */
@@ -722,7 +722,10 @@ export function simulate(input: SimulationInput): RunResult {
     if (weapon === "laser") {
       return;
     }
-    ammo[weapon] = Math.max(0, ammo[weapon] - seconds / weaponAt(weapon, 1).intervalSeconds);
+    const definition = weaponAt(weapon, 1);
+    const ammoPerVolley = weapon === "multiLaser" ? definition.anglesDegrees.length : 1;
+    const volleys = seconds / definition.intervalSeconds;
+    ammo[weapon] = Math.max(0, ammo[weapon] - volleys * ammoPerVolley);
     if (ammo[weapon] === 0) {
       result.emptied++;
       weapon = owned.find((each) => ammo[each] > 0) ?? "laser";
