@@ -25,26 +25,28 @@ describe("ship physics data", () => {
       ),
     ).toEqual({
       ada: [175, 0.95 / Math.log(10), 120 / (0.99 * 175), 0.16, 0.08],
-      capital: [40, 2.5, 3, 2, 0.5],
-      fighter: [140, 0.4, 0.5, 0.3, 0.15],
-      frigate: [80, 1.5, 2, 1.2, 0.4],
-      interceptor: [200, 0.9, 1.2, 0.6, 0.12],
+      capital: [50, 2.5, 3, 2, 0.5],
+      fighter: [160, 0.4, 0.5, 0.3, 0.15],
+      frigate: [100, 1.5, 2, 1.2, 0.4],
+      interceptor: [240, 0.9, 1.2, 0.6, 0.12],
       platform: [0, 1, 1, 1, 0.3],
-      retaliator: [90, 1.2, 1.5, 0.9, 0.35],
-      swarm: [160, 0.2, 0.25, 0.12, 0.1],
+      retaliator: [120, 1.2, 1.5, 0.9, 0.35],
+      swarm: [175, 0.2, 0.25, 0.12, 0.1],
     });
   });
 
-  it("lets a new Ada outrun all but the interceptor, engine 2 match it, engine 3 outrun all", () => {
+  it("matches stock Ada to the swarm and keeps the interceptor faster than engine level 3", () => {
+    const { ada, interceptor, swarm } = SHIP_PHYSICS;
     const [second, third] = ECONOMY.engineLevels.maxSpeed;
     const enemies = Object.values(enemyCatalog).map((definition) => definition.physics.maxSpeed);
-    const { interceptor } = SHIP_PHYSICS;
-    expect(enemies.filter((speed) => speed >= SHIP_PHYSICS.ada.maxSpeed)).toEqual([
+    expect([ada.maxSpeed, second, third]).toEqual([175, 200, 225]);
+    expect(swarm.maxSpeed).toBe(ada.maxSpeed);
+    expect(enemies.filter((speed) => speed >= ada.maxSpeed)).toEqual([
       interceptor.maxSpeed,
+      swarm.maxSpeed,
     ]);
-    expect(interceptor.maxSpeed).toBe(second);
     expect(enemies.filter((speed) => speed >= second)).toEqual([interceptor.maxSpeed]);
-    expect(Math.max(...enemies)).toBeLessThan(third);
+    expect(interceptor.maxSpeed).toBeGreaterThan(third);
   });
 
   it("defines the shared hull turn and rest threshold", () => {

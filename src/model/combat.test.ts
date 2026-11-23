@@ -500,9 +500,10 @@ describe("integrated combat", () => {
   it("explodes Ada's missile at the end of its reach, its blast striking an enemy beside it", () => {
     const flight = empty();
     const target = ship("interceptor", { x: 300, y: 50 });
+    // The disabled, unsalvaged hull stays beside the endpoint without steering into the missile.
+    target.enemy!.disabled = true;
     flight.objects.push(target);
     const hp = target.hp;
-    // From 200 at 200 a second for 0.5 s: it ends at 300 without touching the interceptor.
     flight.shots.push({
       blast: 60,
       damage: 2,
@@ -518,6 +519,7 @@ describe("integrated combat", () => {
     });
     stepFlight(CONTENT, 0.6, idle, flight);
     expect(flight.shots).toEqual([]);
+    expect(target).toMatchObject({ x: 300, y: 50 });
     expect(target.hp).toBe(hp - 2);
     expect(activeBlastFlashes(flight)).toEqual([
       expect.objectContaining({ radius: 60, x: expect.closeTo(300, 6), y: 0 }),
