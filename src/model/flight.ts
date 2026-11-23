@@ -182,7 +182,7 @@ import {
   worldCellsNear,
   type WorldGrid,
 } from "./worldCells.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 export { hostsEncounterCell } from "./ballisticAsteroids.ts";
@@ -993,8 +993,9 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
     placeOreFields(content, grid, cell, existing, flight);
   }
   // Required sites, enemies and authored fields have the first claim on these chunks.
+  const clearance: BallisticClearance = { existing };
   for (const cell of cells) {
-    generateBallisticRegion(content, grid, cell, existing, flight);
+    generateBallisticRegion(content, grid, cell, clearance, flight);
   }
 }
 
@@ -1754,11 +1755,16 @@ function nearArrival(
   );
 }
 
+interface BallisticClearance {
+  readonly existing: Set<string>;
+  occupied?: ReturnType<typeof footprint>[];
+}
+
 function generateBallisticRegion(
   content: GameContent,
   grid: WorldGrid,
   cell: Vec,
-  existing: Set<string>,
+  clearance: BallisticClearance,
   flight: FlightState,
 ): void {
   const encounterSeed = flightEncounterSeed(flight);
@@ -1779,25 +1785,34 @@ function generateBallisticRegion(
   ) {
     return;
   }
+  // Geometry is fixed in this generation pass. Stage each admitted rock in the same order.
+  const occupied = (clearance.occupied ??= flight.objects
+    .filter((other) => other.hp > 0)
+    .map(footprint));
   const admitted: SpaceObject[] = [];
   for (const object of requested) {
     const radius = placementRadius(object);
     if (
-      existing.has(object.id) ||
+      clearance.existing.has(object.id) ||
       Object.hasOwn(flight.world.notables, object.id) ||
-      !clearOf(flight, content.tuning.safeRadius, flight.player, object) ||
+      worldDistance(grid, object, flight.player) <= content.tuning.safeRadius + radius ||
       !clearOfSafeAreas(content, object, flight) ||
       needleChannelContains({ radius }, flight, object) ||
       worldInCurrent(grid, flight.galaxy, radius, object) ||
       !worldClearOfOreFields(grid, flight.galaxy, radius, object) ||
-      flight.objects.some((other) => other.hp > 0 && !clearOf(flight, radius, object, other))
+      occupied.some((other) => {
+        const reach = radius + other.radius;
+        const { x, y } = worldDelta(grid, other, object);
+        return Math.abs(x) <= reach && Math.abs(y) <= reach && Math.hypot(x, y) <= reach;
+      })
     ) {
       continue;
     }
     admitted.push(object);
     canonicalObject(flight, object);
     flight.objects.push(object);
-    existing.add(object.id);
+    occupied.push({ radius, x: object.x, y: object.y });
+    clearance.existing.add(object.id);
   }
   assignBallisticVelocities(encounterSeed, admitted);
 }
@@ -4113,22 +4128,20 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
  * Whether traveling debris moving from `from` to `to` meets Ada's drawn ship: its drawn piece
  * outline against hers, sampled every 2 units along the move; its circle without debris art.
  */
-function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, to: Vec): boolean {
-  const end = worldPoint(flightWorldContext(flight), from, to);
+function debrisTouchesAda(
+  world: WorldContext,
+  flight: FlightState,
+  object: SpaceObject,
+  from: Vec,
+  to: Vec,
+): boolean {
+  const end = worldPoint(world, from, to);
+  const player = worldPoint(world, from, flight.player);
   const drawn = drawnOf(flight, object);
   if (!drawn) {
-    return shipNearSegment(
-      flight.facing,
-      worldPoint(flightWorldContext(flight), from, flight.player),
-      from,
-      worldPoint(flightWorldContext(flight), from, to),
-      object.radius,
-    );
+    return shipNearSegment(flight.facing, player, from, end, object.radius);
   }
-  if (
-    segmentDistance(worldPoint(flightWorldContext(flight), from, flight.player), from, end) >
-    silhouetteWorldReach(drawn) + SHIP_REACH
-  ) {
+  if (segmentDistance(player, from, end) > silhouetteWorldReach(drawn) + SHIP_REACH) {
     return false;
   }
   const frame = frameOf(flight, object);
@@ -4137,9 +4150,7 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
   for (let step = 0; step <= steps; step++) {
     const t = step / steps;
     const at = { ...object, x: from.x + (end.x - from.x) * t, y: from.y + (end.y - from.y) * t };
-    if (
-      worldSceneryBodyContact(flightWorldContext(flight), at, flight.player, body, frame, 0, drawn)
-    ) {
+    if (worldSceneryBodyContact(world, at, flight.player, body, frame, 0, drawn)) {
       return true;
     }
   }
@@ -4153,13 +4164,14 @@ function moveDebris(
   events: FlightEvent[],
   flight: FlightState,
 ): void {
+  const world = flightWorldContext(flight);
   let protectedAreas: { area: SpaceObject; radius: number }[] | undefined;
   for (const object of flight.objects) {
     if (object.river) {
       // River debris follows its current and bumps Ada on contact like other traveling debris.
       const from = { x: object.x, y: object.y };
       placeRiverRock(flight, object);
-      if (debrisTouchesAda(flight, object, from, object)) {
+      if (debrisTouchesAda(world, flight, object, from, object)) {
         bumpAda(content, flight, events, object);
       }
       continue;
@@ -4175,27 +4187,27 @@ function moveDebris(
     }
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
     // Protected regions absorb traveling debris without changing its ballistic heading.
-    protectedAreas ??= flight.objects.flatMap((area) => {
-      const radius = protectedRadius(content, area);
-      return radius === null ? [] : [{ area, radius }];
-    });
+    if (!protectedAreas) {
+      protectedAreas = [];
+      for (const area of flight.objects) {
+        const radius = protectedRadius(content, area);
+        if (radius !== null) {
+          protectedAreas.push({ area, radius });
+        }
+      }
+    }
     const reach = placementRadius(object);
     if (
       protectedAreas.some(
         ({ area, radius }) =>
-          segmentDistance(
-            worldPoint(flightWorldContext(flight), object, area),
-            object,
-            next.position,
-          ) <
-          radius + reach,
+          segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach,
       )
     ) {
       object.hp = 0;
       continue;
     }
     // A bump, though the debris may pass through her between frames (rules.md: 1 a bump).
-    if (debrisTouchesAda(flight, object, object, next.position)) {
+    if (debrisTouchesAda(world, flight, object, object, next.position)) {
       bumpAda(content, flight, events, object);
     }
     object.x = next.position.x;
