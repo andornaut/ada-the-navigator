@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -1091,11 +1091,18 @@ describe("status pill cargo segments", () => {
     expect(statusSegments({ aboard: carrying, ore: 3 })).toEqual(["ore", "aboard"]);
   });
 
-  it("draw Art's 20 px cargo, ore and tow vectors", () => {
-    for (const url of Object.values(CARGO_ICONS)) {
-      expect(url).toMatch(/^\/art\/ui\/icons\/icon-(cargo|ore|tow)-20\.svg$/);
-      expect(existsSync(new URL(`../../public${url}`, import.meta.url))).toBe(true);
-    }
+  it("draws Art's 20 px cargo, ore and tow vectors", () => {
+    const path = "/art/ui/icons/icons-20x20.svg";
+    expect(CARGO_ICONS).toEqual({
+      carrying: `${path}#icon-cargo-20`,
+      ore: `${path}#icon-ore-20`,
+      towing: `${path}#icon-tow-20`,
+    });
+    const sheet = readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8");
+    expect(sheet).toMatch(/<svg\b[^>]*\bwidth="20"[^>]*\bheight="20"/u);
+    expect(sheet).toContain('<view id="icon-cargo-20" viewBox="111 1 20 20"/>');
+    expect(sheet).toContain('<view id="icon-ore-20" viewBox="155 1 20 20"/>');
+    expect(sheet).toContain('<view id="icon-tow-20" viewBox="155 23 20 20"/>');
   });
 });
 

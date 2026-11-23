@@ -100,7 +100,9 @@ describe("native scan receipt view", () => {
     expect(panel.style.display).toBe("flex");
     expect(panel.dataset.kind).toBe("scan");
     expect(panel.children.map((node) => node.textContent)).toEqual(["", "Actual target"]);
-    expect(panel.children[0]!.style.mask).toContain("map-wreck.svg");
+    expect(panel.children[0]!.style.mask).toBe(
+      "url('/art/ui/icons/icons-20x20.svg#map-wreck') center / contain no-repeat",
+    );
     expect(panel.attributes.get("role")).toBe("status");
   });
   it("renders an actual completed task checkbox left and quest icon right", () => {
@@ -119,7 +121,9 @@ describe("native scan receipt view", () => {
     expect(panel.children[0]!.attributes.get("role")).toBe("checkbox");
     expect(panel.children[0]!.attributes.get("aria-checked")).toBe("true");
     expect(panel.children[2]!.dataset.part).toBe("quest-icon");
-    expect(panel.children[2]!.style.mask).toContain("map-job-survey.svg");
+    expect(panel.children[2]!.style.mask).toBe(
+      "url('/art/ui/icons/icons-20x20.svg#map-job-survey') center / contain no-repeat",
+    );
   });
   it.each(["scan", "remembered"] as const)(
     "renders full quest name and icon without a checkbox (%s)",
