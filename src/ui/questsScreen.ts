@@ -11,7 +11,6 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { gainNotice } from "./itemNotice.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -26,6 +25,7 @@ import {
   type QuestsFooterSchema,
   questsTree,
 } from "./questsTree.ts";
+import { spriteIconPath } from "./spriteIconPath.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
@@ -73,8 +73,7 @@ export function questChecklist(entry: QuestEntry): readonly QuestObjective[] {
 /** Existing inventory or known map identity, independent of completion state. */
 export function questObjectiveIcon(entry: QuestEntry, objective: QuestObjective): string | null {
   if (objective.itemKind === "holodisk") {
-    const { icon } = gainNotice({}, { kind: "holodisk" });
-    return "sprite" in icon ? `/art/ui/sprites/${icon.sprite}.png` : icon.mask;
+    return spriteIconPath("icon-holodisk-20");
   }
   if (objective.itemKind) {
     return CARGO_ICONS[objective.itemKind];

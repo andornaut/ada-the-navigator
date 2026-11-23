@@ -92,9 +92,8 @@ describe("quest objective presentation", () => {
   });
 });
 
-it("uses the canonical holodisk notice icon only for the revealed current item", async () => {
+it("uses the shipped holodisk SVG only for the revealed current item", async () => {
   const { questChecklist, questObjectiveIcon } = await import("./questsScreen.ts");
-  const { gainNotice } = await import("./itemNotice.ts");
   const current = {
     ...entry,
     line: {
@@ -105,10 +104,7 @@ it("uses the canonical holodisk notice icon only for the revealed current item",
     },
   };
   const row = questChecklist(current)[0]!;
-  const { icon } = gainNotice({}, { kind: "holodisk" });
-  expect(questObjectiveIcon(current, row)).toBe(
-    "sprite" in icon ? `/art/ui/sprites/${icon.sprite}.png` : icon.mask,
-  );
+  expect(questObjectiveIcon(current, row)).toBe("/art/ui/icons/icon-holodisk-20.svg");
   expect(
     questObjectiveIcon(
       { ...current, line: { kind: "story", target: null, text: "Explore" } },
