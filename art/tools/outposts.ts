@@ -1,7 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { replaceEntries } from "./manifest.ts";
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
+import { readManifest, replaceEntries } from "./manifest.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { writeProjects } from "./projects.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
@@ -11,6 +13,11 @@ type Part = { plan: Plan; cap?: Plan; z0: number; z1: number; top: string; side:
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}outposts/`;
+const sheetFile = "outposts-sheet.svg";
+const sheetPath = `/art/outposts/${sheetFile}`;
+const frameSvgs = new Map<string, string>();
+const svgRoot = (width: number, height: number) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
 // Frame px to logical display px, shared with Ada, the enemies and the station; outposts and their
 // project frames draw at the destination scale (art/destinations.md).
 const DISPLAY_SCALE = 0.4375;
@@ -606,9 +613,9 @@ const outposts: Readonly<Record<string, Outpost>> = {
 type Polygons = ReturnType<typeof polygons>;
 type FixedFrame = { width: number; height: number; above: number };
 
-// Writes both blink frames around the world-plane model point `pivot` and returns the frame
+// Renders both blink frames around the world-plane model point `pivot` and returns the frame
 // geometry. The pivot sits on the vertical centre line at an exact five-decimal height.
-function writeFrames(
+function renderFrames(
   name: string,
   title: string,
   [px, py]: readonly [number, number],
@@ -648,11 +655,11 @@ function writeFrames(
       });
       return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
     });
-    writeFileSync(
-      `${output}${name}-${frame}.svg`,
+    frameSvgs.set(
+      `outpost-${name}-${frame}`,
       svgText(
         [
-          `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+          svgRoot(width, height),
           `  <title>${title} ${frame.toUpperCase()}</title>`,
           ...shapes,
           "</svg>",
@@ -687,7 +694,7 @@ function entries(
   const role = outpost ?? name;
   const frames = { a: polygons(build(true)), b: polygons(build(false)) };
   // The pivot lies on the dock axis on the world plane.
-  const { above, halfWidth, height, local, width } = writeFrames(
+  const { above, halfWidth, height, local, width } = renderFrames(
     name,
     title ?? `${name[0]!.toUpperCase()}${name.slice(1)} outpost`,
     at(pivot, 0),
@@ -763,7 +770,7 @@ const overlays: Readonly<Record<string, Overlay>> = {
 
 function overlayEntries(name: string, { build, outpost, pivot, project, title, frame }: Overlay) {
   const frames = { a: polygons(build(true)), b: polygons(build(false)) };
-  const { above, height, width } = writeFrames(name, title, pivot, frames, frame);
+  const { above, height, width } = renderFrames(name, title, pivot, frames, frame);
   return frameEntries(name, width, height, above).map((entry) => ({
     ...entry,
     outpost,
@@ -778,7 +785,6 @@ function offset(outpost: string, [x, y]: readonly [number, number]) {
   return { x: round(sx), y: round(sy) };
 }
 
-mkdirSync(output, { recursive: true });
 const manifestEntries = [
   ...Object.entries(outposts).flatMap(([name, outpost]) => entries(name, outpost)),
   ...Object.entries(overlays).flatMap(([name, overlay]) => overlayEntries(name, overlay)),
@@ -788,7 +794,56 @@ const manifestEntries = [
 const own = new RegExp(
   `^outpost-(${[...Object.keys(outposts), ...Object.keys(overlays)].join("|")})-[ab]$`,
 );
-replaceEntries("sunflower", (id) => own.test(id), manifestEntries);
+const installed = readManifest("sunflower").assets.filter(
+  (row): row is { id: string; path?: unknown; svgSheet?: unknown } =>
+    own.test(row.id) || ("path" in row && row.path === sheetPath),
+);
+const packed = installed.some(({ path, svgSheet }) => path === sheetPath || svgSheet === true);
+if (
+  packed &&
+  (installed.length !== manifestEntries.length ||
+    installed.some(
+      ({ id, path, svgSheet }, index) =>
+        id !== manifestEntries[index]!.id || path !== sheetPath || svgSheet !== true,
+    ))
+) {
+  throw new Error("Sunflower outpost sheet selection must include every frame in source order");
+}
+
+mkdirSync(output, { recursive: true });
+if (packed) {
+  const layout = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: 720, widths: [360, 540, 720] },
+    [
+      {
+        rectangles: manifestEntries.map(({ width, height }) => ({ width, height })),
+        value: sheetFile,
+      },
+    ],
+  );
+  const page = layout?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (layout?.pages.length !== 1 || !page || slots?.length !== manifestEntries.length) {
+    throw new Error("Cannot pack the Sunflower outpost sheet");
+  }
+  // Each independently extracted root retains its raw intrinsic size. The manifest scales display.
+  const roots = manifestEntries.map(({ id }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${id}" x="${x}" y="${y}" ${frameSvgs.get(id)!.slice("<svg ".length)}`;
+  });
+  writeFileSync(output + sheetFile, `${svgRoot(page.width, page.height)}${roots.join("")}</svg>\n`);
+} else {
+  for (const { id, path } of manifestEntries) {
+    writeFileSync(art + path.slice("/art/".length), frameSvgs.get(id)!);
+  }
+}
+replaceEntries(
+  "sunflower",
+  (id) => own.test(id),
+  packed
+    ? manifestEntries.map((entry) => ({ ...entry, path: sheetPath, svgSheet: true }))
+    : manifestEntries,
+);
 
 // World changes keyed by Gameplay's project id: a replacement frame pair for the outpost, or an
 // overlay at anchors offset from the outpost's pivot in frame px.

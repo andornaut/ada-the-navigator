@@ -4,7 +4,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { replaceEntries } from "./manifest.ts";
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
+import { readManifest, replaceEntries } from "./manifest.ts";
 import * as m from "./phantom-models.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import { along, BLINK_MS, DESTINATION_SCALE, DISPLAY_SCALE, DOCK, type Face } from "./solid.ts";
@@ -69,7 +71,9 @@ const settlements = [
   { variant: "signal", title: "Blurb signal", build: m.signal, width: 80, height: 112, above: 56 },
 ] as const;
 
-mkdirSync(output, { recursive: true });
+const installed: readonly { id: string; path?: string; svgSheet?: true }[] =
+  readManifest("phantom").assets;
+const files = new Map<string, string>();
 const entries = settlements.flatMap(({ above, build, height, title, variant, width }) => {
   const items: Item[] = (["cracked", "mended"] as const).flatMap((state) =>
     (["a", "b"] as const).map((letter) => ({
@@ -91,9 +95,9 @@ const entries = settlements.flatMap(({ above, build, height, title, variant, wid
     }
   }
   const dock = dockAt(frame, m.SETTLEMENT_DOCK.face, m.SETTLEMENT_DOCK.mouth);
-  return items.map((item) => {
-    writeFileSync(`${output}${item.file}.svg`, svgText(svgFile(item.title, frame, item.faces)));
-    return {
+  const frames = items.map((item) => ({
+    root: svgText(svgFile(item.title, frame, item.faces)),
+    entry: {
       id: item.id,
       path: `${PATH}${item.file}.svg`,
       width: frame.width,
@@ -107,9 +111,48 @@ const entries = settlements.flatMap(({ above, build, height, title, variant, wid
       outpost: "settlement",
       variant,
       state: item.state,
-    };
+    },
+  }));
+  return (["cracked", "mended"] as const).flatMap((state) => {
+    const pair = frames.filter(({ entry }) => entry.state === state);
+    const file = `${variant}-${state}-sheet.svg`;
+    const path = PATH + file;
+    const ids = new Set(pair.map(({ entry }) => entry.id));
+    const rows = installed.filter((row) => ids.has(row.id) || row.path === path);
+    if (!rows.some((row) => row.svgSheet === true || row.path === path)) {
+      for (const { entry, root } of pair) files.set(entry.path.slice(PATH.length), root);
+      return pair.map(({ entry }) => entry);
+    }
+
+    if (
+      rows.length !== pair.length ||
+      new Set(rows.map(({ id }) => id)).size !== pair.length ||
+      rows.some((row) => !ids.has(row.id) || row.svgSheet !== true || row.path !== path)
+    ) {
+      throw new Error(`Invalid Phantom settlement sheet selection: ${file}`);
+    }
+    const wide = width * pair.length;
+    const page = packAtlas(
+      { compare: () => 0, extrude: 0, maxSize: Math.max(wide, height), widths: [wide] },
+      [{ rectangles: pair.map(() => ({ width, height })), value: file }],
+    )?.pages[0];
+    const slots = page?.placed[0]?.at;
+    if (!page || slots?.length !== pair.length) {
+      throw new Error(`Cannot pack Phantom settlement sheet: ${file}`);
+    }
+    const children = pair.map(({ entry, root }, index) => {
+      const { x, y } = slots[index]!;
+      return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+    });
+    files.set(
+      file,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
+    );
+    return pair.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
   });
 });
+mkdirSync(output, { recursive: true });
+for (const [file, root] of files) writeFileSync(output + file, root);
 replaceEntries(
   "phantom",
   (id) => /^outpost-(homes|harbour|signal)-(cracked|mended)-[ab]$/.test(id),

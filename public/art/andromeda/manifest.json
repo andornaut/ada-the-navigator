@@ -33,7 +33,7 @@
     },
     {
       "id": "station-settlers-school-a",
-      "path": "/art/andromeda/settlers-school-a.svg",
+      "path": "/art/andromeda/settlers-school-sheet.svg",
       "width": 64,
       "height": 96,
       "displayWidth": 42,
@@ -54,11 +54,12 @@
           "outward": [0, 1],
           "width": 19.596
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "station-settlers-school-b",
-      "path": "/art/andromeda/settlers-school-b.svg",
+      "path": "/art/andromeda/settlers-school-sheet.svg",
       "width": 64,
       "height": 96,
       "displayWidth": 42,
@@ -79,11 +80,12 @@
           "outward": [0, 1],
           "width": 19.596
         }
-      ]
+      ],
+      "svgSheet": true
     },
     {
       "id": "outpost-hamlet-a",
-      "path": "/art/andromeda/hamlet-a.svg",
+      "path": "/art/andromeda/hamlet-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 76.125,
@@ -101,11 +103,12 @@
         "width": 22.045
       },
       "outpost": "settlement",
-      "variant": "hamlet"
+      "variant": "hamlet",
+      "svgSheet": true
     },
     {
       "id": "outpost-hamlet-b",
-      "path": "/art/andromeda/hamlet-b.svg",
+      "path": "/art/andromeda/hamlet-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 76.125,
@@ -123,11 +126,12 @@
         "width": 22.045
       },
       "outpost": "settlement",
-      "variant": "hamlet"
+      "variant": "hamlet",
+      "svgSheet": true
     },
     {
       "id": "outpost-lamphouse-a",
-      "path": "/art/andromeda/lamphouse-a.svg",
+      "path": "/art/andromeda/lamphouse-sheet.svg",
       "width": 64,
       "height": 80,
       "displayWidth": 60.9,
@@ -145,11 +149,12 @@
         "width": 19.596
       },
       "outpost": "settlement",
-      "variant": "lamphouse"
+      "variant": "lamphouse",
+      "svgSheet": true
     },
     {
       "id": "outpost-lamphouse-b",
-      "path": "/art/andromeda/lamphouse-b.svg",
+      "path": "/art/andromeda/lamphouse-sheet.svg",
       "width": 64,
       "height": 80,
       "displayWidth": 60.9,
@@ -167,7 +172,8 @@
         "width": 19.596
       },
       "outpost": "settlement",
-      "variant": "lamphouse"
+      "variant": "lamphouse",
+      "svgSheet": true
     },
     {
       "id": "beacon-guide-lit-a",

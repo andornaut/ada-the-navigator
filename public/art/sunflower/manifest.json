@@ -3,7 +3,7 @@
   "assets": [
     {
       "id": "outpost-growers-a",
-      "path": "/art/outposts/growers-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 144,
       "height": 120,
       "displayWidth": 132.3,
@@ -20,11 +20,12 @@
         "outward": [0, 1],
         "width": 31.843
       },
-      "outpost": "growers"
+      "outpost": "growers",
+      "svgSheet": true
     },
     {
       "id": "outpost-growers-b",
-      "path": "/art/outposts/growers-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 144,
       "height": 120,
       "displayWidth": 132.3,
@@ -41,11 +42,12 @@
         "outward": [0, 1],
         "width": 31.843
       },
-      "outpost": "growers"
+      "outpost": "growers",
+      "svgSheet": true
     },
     {
       "id": "outpost-growers-ring-a",
-      "path": "/art/outposts/growers-ring-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 180,
       "height": 140,
       "displayWidth": 165.375,
@@ -63,11 +65,12 @@
         "width": 31.843
       },
       "outpost": "growers",
-      "project": "greenhouseRing"
+      "project": "greenhouseRing",
+      "svgSheet": true
     },
     {
       "id": "outpost-growers-ring-b",
-      "path": "/art/outposts/growers-ring-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 180,
       "height": 140,
       "displayWidth": 165.375,
@@ -85,11 +88,12 @@
         "width": 31.843
       },
       "outpost": "growers",
-      "project": "greenhouseRing"
+      "project": "greenhouseRing",
+      "svgSheet": true
     },
     {
       "id": "outpost-workshop-a",
-      "path": "/art/outposts/workshop-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 170,
       "height": 120,
       "displayWidth": 156.188,
@@ -106,11 +110,12 @@
         "outward": [0, 1],
         "width": 29.394
       },
-      "outpost": "workshop"
+      "outpost": "workshop",
+      "svgSheet": true
     },
     {
       "id": "outpost-workshop-b",
-      "path": "/art/outposts/workshop-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 170,
       "height": 120,
       "displayWidth": 156.188,
@@ -127,11 +132,12 @@
         "outward": [0, 1],
         "width": 29.394
       },
-      "outpost": "workshop"
+      "outpost": "workshop",
+      "svgSheet": true
     },
     {
       "id": "outpost-salvagers-a",
-      "path": "/art/outposts/salvagers-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 168,
       "height": 110,
       "displayWidth": 154.35,
@@ -148,11 +154,12 @@
         "outward": [0, 1],
         "width": 31.843
       },
-      "outpost": "salvagers"
+      "outpost": "salvagers",
+      "svgSheet": true
     },
     {
       "id": "outpost-salvagers-b",
-      "path": "/art/outposts/salvagers-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 168,
       "height": 110,
       "displayWidth": 154.35,
@@ -169,11 +176,12 @@
         "outward": [0, 1],
         "width": 31.843
       },
-      "outpost": "salvagers"
+      "outpost": "salvagers",
+      "svgSheet": true
     },
     {
       "id": "outpost-workshop-crane-a",
-      "path": "/art/outposts/workshop-crane-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 134,
       "height": 80,
       "displayWidth": 123.113,
@@ -185,11 +193,12 @@
       },
       "frameMs": 700,
       "outpost": "workshop",
-      "project": "workshopCrane"
+      "project": "workshopCrane",
+      "svgSheet": true
     },
     {
       "id": "outpost-workshop-crane-b",
-      "path": "/art/outposts/workshop-crane-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 134,
       "height": 80,
       "displayWidth": 123.113,
@@ -201,11 +210,12 @@
       },
       "frameMs": 700,
       "outpost": "workshop",
-      "project": "workshopCrane"
+      "project": "workshopCrane",
+      "svgSheet": true
     },
     {
       "id": "outpost-salvagers-beacon-a",
-      "path": "/art/outposts/salvagers-beacon-a.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 20,
       "height": 40,
       "displayWidth": 18.375,
@@ -217,11 +227,12 @@
       },
       "frameMs": 700,
       "outpost": "salvagers",
-      "project": "salvageBeacons"
+      "project": "salvageBeacons",
+      "svgSheet": true
     },
     {
       "id": "outpost-salvagers-beacon-b",
-      "path": "/art/outposts/salvagers-beacon-b.svg",
+      "path": "/art/outposts/outposts-sheet.svg",
       "width": 20,
       "height": 40,
       "displayWidth": 18.375,
@@ -233,7 +244,8 @@
       },
       "frameMs": 700,
       "outpost": "salvagers",
-      "project": "salvageBeacons"
+      "project": "salvageBeacons",
+      "svgSheet": true
     },
     {
       "id": "bramble-portrait",

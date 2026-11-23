@@ -5,6 +5,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
+
 import * as m from "./andromeda-models.ts";
 import { svgText } from "./svg-text.ts";
 import { jetsFile } from "./crafts.ts";
@@ -150,6 +152,69 @@ function fixedEntry(
   };
 }
 
+type BlinkFrame = { entry: ReturnType<typeof fixedEntry>; root: string };
+type SheetRow = { id: string; path?: unknown; svgSheet?: unknown };
+
+// Keep existing manifest choices independent for each A/B pair.
+const installed: readonly SheetRow[] = readManifest("andromeda").assets;
+
+function writeBlinkPair(frames: readonly BlinkFrame[]) {
+  const first = frames[0]!.entry;
+  const { width, height } = first;
+  const file = first.path.slice(PATH.length, -"-a.svg".length) + "-sheet.svg";
+  const path = PATH + file;
+  const ids = new Set(frames.map(({ entry }) => entry.id));
+  const rows = installed.filter((row) => ids.has(row.id) || row.path === path);
+  if (!rows.some((row) => row.svgSheet === true || row.path === path)) {
+    for (const { entry, root } of frames) {
+      writeFileSync(output + entry.path.slice(PATH.length), root);
+    }
+    return frames.map(({ entry }) => entry);
+  }
+
+  if (
+    frames.length !== 2 ||
+    ids.size !== 2 ||
+    rows.length !== 2 ||
+    new Set(rows.map(({ id }) => id)).size !== 2 ||
+    rows.some((row) => !ids.has(row.id) || row.svgSheet !== true || row.path !== path)
+  ) {
+    throw new Error(`Invalid Andromeda blink sheet selection: ${file}`);
+  }
+  const wide = width * frames.length;
+  const page = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: Math.max(wide, height), widths: [wide] },
+    [{ rectangles: frames.map(() => ({ width, height })), value: file }],
+  )?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== frames.length) {
+    throw new Error(`Cannot pack Andromeda blink sheet: ${file}`);
+  }
+  const children = frames.map(({ entry, root }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    output + file,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
+  );
+  return frames.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
+}
+
+function writeFixedPair(
+  frame: Layout,
+  items: readonly Fixed[],
+  extra: Record<string, unknown>,
+  scale = DESTINATION_SCALE,
+) {
+  return writeBlinkPair(
+    items.map((item) => ({
+      entry: fixedEntry(frame, item, extra, true, scale),
+      root: svgText(svgFile(item.title, frame, item.faces, scale)),
+    })),
+  );
+}
+
 // A blink pair, frame A lit and frame B the other phase. `levels` are the deck heights buildings
 // rest on.
 function pair(
@@ -204,10 +269,12 @@ const settlementEntries = settlements.flatMap(
   ({ build, dock, frame: dimensions, title, variant }) => {
     const items = pair(`outpost-${variant}`, variant, `Settlement, ${title.toLowerCase()}`, build);
     const frame = fixedLayout(allFaces(items), ...dimensions);
-    for (const item of items) writeFixed(frame, item, SETTLEMENT_SCALE);
     const at = dockAt(frame, dock.face, dock.mouth);
-    return items.map((item) =>
-      fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }, true, SETTLEMENT_SCALE),
+    return writeFixedPair(
+      frame,
+      items,
+      { dock: at, outpost: "settlement", variant },
+      SETTLEMENT_SCALE,
     );
   },
 );
@@ -396,16 +463,13 @@ const school = pair(
   m.SCHOOL_LEVELS,
 );
 const schoolFrame = layout(allFaces(school));
-for (const item of school) writeFixed(schoolFrame, item);
 const schoolBerth = dockAt(schoolFrame, m.SCHOOL.pierFace, m.SCHOOL.mouth, m.SCHOOL.across);
-const schoolEntries = school.map((item) =>
-  fixedEntry(schoolFrame, item, {
-    overlay: true,
-    station: "settlers",
-    project: "courierSchool",
-    berths: [schoolBerth],
-  }),
-);
+const schoolEntries = writeFixedPair(schoolFrame, school, {
+  overlay: true,
+  station: "settlers",
+  project: "courierSchool",
+  berths: [schoolBerth],
+});
 replaceEntries(
   "andromeda",
   (id) => /^station-settlers-school-[ab]$/.test(id),
