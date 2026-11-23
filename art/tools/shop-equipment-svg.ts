@@ -8,7 +8,6 @@ const equipment = {
   "icon-shop-shield": "M10 2l7 3v5c0 4-3 6.5-7 8.5C6 16.5 3 14 3 10V5Z",
   "icon-shop-ship-paint": "M2 3h13v5H2Zm13 2h3v6l-8 2v5",
   "icon-shop-tractor-beam": "M2 4h16m-15 4 5 7m9-7-5 7m-4 2h4",
-  "icon-shop-weapon-upgrade": "M2 9l8-6 8 6M2 16l8-6 8 6",
 };
 const states = [
   ["", "#ead4aa"],
