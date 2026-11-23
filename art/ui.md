@@ -9,7 +9,7 @@ match their commit's tracked bytes. Source files remain unchanged.
 ## Consumer contract
 
 Serve these outputs under `/art/ui/`. The nested `manifest.json` retains only
-`font-body`, `font-title`, `ui-button`, `ui-button-primary`, `ui-button-tile`, `ui-settings-card`,
+`font-body`, `ui-button`, `ui-button-primary`, `ui-button-tile`, `ui-settings-card`,
 `ui-close`, `ui-switch` and `ui-focus`, preserving their exact entries, slices and
 relative paths, sorted by key.
 The [settings navigation icon](settings-icon.md) supplies `icon-settings-nav`
@@ -50,9 +50,9 @@ json-hash frame names and forward tags. Card slice centre is (2,2,12,12);
 focus slice centre is (4,4,8,8), both within (0,0,16,16) bounds. Button slice
 centre is (2,4,12,18) within (0,0,16,28).
 
-BMFont XML names are Liberation Sans Regular (body) and Liberation Sans Bold
-(title), both size 16, lineHeight 20 and base 15. Their single PNG pages are
-256x64 and 256x128 respectively; page filenames stay relative to the FNT.
+The runtime retains the body bitmap for the Penny question-mark mask.
+The imported BMFont descriptors and title bitmap are preserved in
+`art/sources/fonts/chibi-bitmap/`.
 For DOM text, use family AdaUI with weight 400 from
 `/art/ui/fonts/adaui/AdaUI-Regular.woff2` and weight 700 from
 `/art/ui/fonts/adaui/AdaUI-Bold.woff2`, served as `font/woff2`. They are Liberation Sans

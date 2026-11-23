@@ -117,7 +117,7 @@ describe("artUrls", () => {
       SHIPPED_SHIP_SOURCES ? ECONOMY.paintOrder.length * jump.warp.poses.length : 0,
     );
     const ui = read(manifest.ui.manifest) as {
-      fonts: { fnt: string; png: string }[];
+      fonts: { fnt?: string; png: string }[];
       sprites: { json?: string; png: string }[];
     };
     const named = [
@@ -126,7 +126,7 @@ describe("artUrls", () => {
       ...namedArtUrls({ ...jump, warp: { ...jump.warp, poses } }),
       ...(manifest.shipMaterials ? namedArtUrls(read(manifest.shipMaterials)) : []),
       ...[
-        ...ui.fonts.flatMap(({ fnt, png }) => [fnt, png]),
+        ...ui.fonts.flatMap(({ fnt, png }) => (fnt === undefined ? [png] : [png, fnt])),
         ...ui.sprites.flatMap(({ json, png }) => (json === undefined ? [png] : [png, json])),
       ].map((path) => `${manifest.ui.basePath}${path}`),
     ];
