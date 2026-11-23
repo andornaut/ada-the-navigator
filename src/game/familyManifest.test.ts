@@ -324,7 +324,18 @@ describe("source-family manifest readiness", () => {
     expect(f.backdrop).not.toHaveBeenCalled();
     f.loadParts(f.scene, "platform");
     expect(f.scene.partLoads.has("claim:platform")).toBe(true);
+    const selected = readGalaxyManifest(cartwheel)!.assets.filter(
+      (asset) => asset.family === "claim" && asset.archetype === "platform",
+    );
+    const sheets = [...new Set(selected.filter(({ svgSheet }) => svgSheet).map(({ path }) => path))];
+    expect(f.xml.mock.calls).toEqual(sheets.map((path) => [vectorSheetKey(path), path]));
+    for (const path of sheets) {
+      const key = vectorSheetKey(path);
+      f.documents.set(key, {});
+      f.events.emit("filecomplete", key, "xml");
+    }
     const queued = f.svg.mock.calls.map(([, asset]) => asset);
+    expect(queued.map(({ id }) => id).sort()).toEqual(selected.map(({ id }) => id).sort());
     expect(queued.length).toBeGreaterThan(1);
     expect(
       queued.every((asset) => asset.family === "claim" && asset.archetype === "platform"),
