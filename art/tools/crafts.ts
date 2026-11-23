@@ -317,16 +317,6 @@ const sourceCrafts: Craft[] = [
         top: "#f1e5c9",
         side: "#514575",
         loose: true,
-        topDetail: {
-          color: "#474582",
-          plan: [
-            [0.5, 0.13],
-            [0.55, 0.22],
-            [0.55, 0.4],
-            [0.45, 0.4],
-            [0.45, 0.22],
-          ],
-        },
       },
       {
         plan: [
