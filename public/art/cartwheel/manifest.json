@@ -21852,7 +21852,7 @@
     },
     {
       "id": "enemy-claim-hostileStation-0",
-      "path": "/art/cartwheel/enemies/hostileStation-0.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21864,11 +21864,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-1",
-      "path": "/art/cartwheel/enemies/hostileStation-1.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21880,11 +21881,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-2",
-      "path": "/art/cartwheel/enemies/hostileStation-2.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21896,11 +21898,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-3",
-      "path": "/art/cartwheel/enemies/hostileStation-3.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21912,11 +21915,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-4",
-      "path": "/art/cartwheel/enemies/hostileStation-4.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21928,11 +21932,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-5",
-      "path": "/art/cartwheel/enemies/hostileStation-5.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21944,11 +21949,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-6",
-      "path": "/art/cartwheel/enemies/hostileStation-6.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21960,11 +21966,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-7",
-      "path": "/art/cartwheel/enemies/hostileStation-7.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21976,11 +21983,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-8",
-      "path": "/art/cartwheel/enemies/hostileStation-8.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -21992,11 +22000,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-9",
-      "path": "/art/cartwheel/enemies/hostileStation-9.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22008,11 +22017,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-10",
-      "path": "/art/cartwheel/enemies/hostileStation-10.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22024,11 +22034,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-11",
-      "path": "/art/cartwheel/enemies/hostileStation-11.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22040,11 +22051,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-12",
-      "path": "/art/cartwheel/enemies/hostileStation-12.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22056,11 +22068,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-13",
-      "path": "/art/cartwheel/enemies/hostileStation-13.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22072,11 +22085,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-14",
-      "path": "/art/cartwheel/enemies/hostileStation-14.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22088,11 +22102,12 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-15",
-      "path": "/art/cartwheel/enemies/hostileStation-15.svg",
+      "path": "/art/cartwheel/enemies/hostileStation-sheet-2.svg",
       "width": 568,
       "height": 568,
       "displayWidth": 248.5,
@@ -22104,7 +22119,8 @@
         "y": 0.5
       },
       "archetype": "hostileStation",
-      "family": "claim"
+      "family": "claim",
+      "svgSheet": true
     },
     {
       "id": "enemy-claim-hostileStation-weapon-0-intact-0",

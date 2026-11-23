@@ -1,5 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
+
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
 import { format, resolveConfig } from "prettier";
 
@@ -15,6 +18,7 @@ import {
   craftIds,
   GALAXIES,
   type ManifestFile,
+  type Sidecars,
   mergeEntries,
   mergeSidecars,
   readManifest,
@@ -32,28 +36,38 @@ type Family = {
   directory: string;
   prefix: string;
   family?: string;
+  installedVariant?: "phantom" | "andromeda";
   colour: (file: string, text: string) => string;
   jets: (file: string, text: string) => string;
 };
 const unchanged = (_file: string, text: string) => text;
+const claimFamily: Family = {
+  manifest: "cartwheel",
+  directory: "cartwheel/enemies",
+  prefix: "enemy-claim-",
+  family: "claim",
+  colour: recolour,
+  jets: recolourJets,
+};
 const families: Family[] = [
-  { manifest: "core", directory: "enemies", prefix: "enemy-", colour: unchanged, jets: unchanged },
+  {
+    manifest: "core",
+    directory: "enemies",
+    prefix: "enemy-",
+    installedVariant: "phantom",
+    colour: unchanged,
+    jets: unchanged,
+  },
   {
     manifest: "andromeda",
     directory: "andromeda/enemies",
     prefix: "enemy-garnet-",
     family: "garnet",
+    installedVariant: "andromeda",
     colour: recolourGarnet,
     jets: recolourGarnetJets,
   },
-  {
-    manifest: "cartwheel",
-    directory: "cartwheel/enemies",
-    prefix: "enemy-claim-",
-    family: "claim",
-    colour: recolour,
-    jets: recolourJets,
-  },
+  claimFamily,
 ];
 
 const WEAPON_STATES = ["intact", "destroyed", "capped"] as const;
@@ -187,6 +201,124 @@ function weaponBaseSheets(
   return { replacements, sheets, sourceFiles };
 }
 
+// Cartwheel alone retains the original 568-frame station hull. Keep the 9/7 split
+// from the checked station layout and keep each drawable root at intrinsic size.
+const CLAIM_HULL_SHEET_EDGE = 1704;
+const claimHull = ({ id }: Entry) => /^enemy-claim-hostileStation-\d+$/u.test(id);
+function claimHullSheets(
+  entries: readonly Entry[],
+  standalone: (file: string) => string | undefined,
+) {
+  const directory = `/art/${claimFamily.directory}/`;
+  const group = "hostileStation";
+  const selected = entries.filter(claimHull);
+  const rows = new Map(selected.map((entry) => [entry.id, entry]));
+  const packed = selected.filter(({ svgSheet }) => svgSheet === true).length;
+  if (
+    selected.length !== ENEMY_HEADINGS ||
+    rows.size !== ENEMY_HEADINGS ||
+    (packed !== 0 && packed !== ENEMY_HEADINGS)
+  ) {
+    throw new Error("Expected all sixteen CLAIM hull frames as standalone roots or sheets");
+  }
+  const replacements = new Map<string, Entry>();
+  const sheets = new Map<string, string>();
+  const sourceFiles = new Set<string>();
+  const firstRow = rows.get(`${claimFamily.prefix}${group}-0`);
+  const width = firstRow?.width;
+  const height = firstRow?.height;
+  if (typeof width !== "number" || width <= 0 || typeof height !== "number" || height <= 0) {
+    throw new Error(`Missing station hull group: ${claimFamily.prefix}${group}`);
+  }
+  const columns = Math.min(COLUMNS, Math.floor(CLAIM_HULL_SHEET_EDGE / Math.max(width, height)));
+  if (columns < 1) throw new Error(`Station hull frame does not fit: ${group}`);
+  const capacity = columns * columns;
+  const wide = width * columns;
+  for (let first = 0; first < ENEMY_HEADINGS; first += capacity) {
+    const pageCount = Math.min(capacity, ENEMY_HEADINGS - first);
+    const tall = height * Math.ceil(pageCount / columns);
+    const sheet = first === 0 ? `${group}-sheet.svg` : `${group}-sheet-${first / capacity + 1}.svg`;
+    const path = directory + sheet;
+    const layout = packAtlas(
+      { compare: () => 0, extrude: 0, maxSize: Math.max(wide, tall), widths: [wide] },
+      [
+        {
+          rectangles: Array.from({ length: pageCount }, () => ({ width, height })),
+          value: group,
+        },
+      ],
+    )?.pages[0];
+    if (!layout || layout.height !== tall)
+      throw new Error(`Station hull page does not fit: ${sheet}`);
+
+    const roots = Array.from({ length: pageCount }, (_, cell) => {
+      const heading = first + cell;
+      const id = `${claimFamily.prefix}${group}-${heading}`;
+      const file = `${group}-${heading}.svg`;
+      const entry = rows.get(id);
+      if (
+        !entry ||
+        entry.path !== (packed ? path : directory + file) ||
+        entry.family !== claimFamily.family ||
+        entry.top !== undefined ||
+        entry.hardpoint !== undefined ||
+        entry.archetype !== group ||
+        entry.directionIndex !== heading ||
+        entry.width !== width ||
+        entry.height !== height ||
+        typeof entry.displayWidth !== "number" ||
+        entry.displayWidth <= 0 ||
+        entry.displayWidth > width ||
+        typeof entry.displayHeight !== "number" ||
+        entry.displayHeight <= 0 ||
+        entry.displayHeight > height
+      ) {
+        throw new Error(`Invalid station hull: ${id}`);
+      }
+      const svg = standalone(file);
+      const root = `<svg xmlns="http://www.w3.org/2000/svg" width="${entry.displayWidth}" height="${entry.displayHeight}" viewBox="0 0 ${width} ${height}">`;
+      if (!svg?.startsWith(root) || !svg.endsWith("</svg>")) {
+        throw new Error(`Station hull does not match its manifest dimensions: ${directory}${file}`);
+      }
+      const { x, y } = layout.placed[0]!.at[cell]!;
+      replacements.set(id, { ...entry, path, svgSheet: true });
+      sourceFiles.add(file);
+      return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+    });
+    sheets.set(
+      sheet,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${tall}" viewBox="0 0 ${wide} ${tall}">${roots.join("")}</svg>\n`,
+    );
+  }
+  return { replacements, sheets, sourceFiles };
+}
+
+function packRetainedClaimHulls(root: string): void {
+  const directory = `/art/${claimFamily.directory}/`;
+  const plan = claimHullSheets(readManifest("cartwheel").assets, (file) =>
+    readFileSync(`${root}${claimFamily.directory}/${file}`, "utf8"),
+  );
+  const owned = new Set([...plan.sheets.keys()].map((file) => directory + file));
+  const manifests: ManifestFile[] = ["core", ...GALAXIES];
+  for (const manifest of manifests) {
+    const referrer = readManifest(manifest).assets.find(
+      ({ id, path }) =>
+        path !== undefined &&
+        owned.has(path) &&
+        (manifest !== "cartwheel" || !plan.replacements.has(id)),
+    );
+    if (referrer) throw new Error(`CLAIM hull page path is already used by ${referrer.id}`);
+  }
+  const paths = writeOnce(directory, new Map(), plan.sheets);
+  mergeEntries(
+    "cartwheel",
+    (id) => plan.replacements.has(id),
+    [...plan.replacements.values()].map((entry) => storedAt(paths, entry)),
+  );
+}
+
+// A selected variant owns that family's hull and layout. Its normal candidate exporter is
+// separate, so the legacy walk must skip the family once the variant sidecar is selected.
 function packRetainedWeaponBases(root: string): void {
   const manifests: ManifestFile[] = ["core", ...GALAXIES];
   const allAssets: Entry[] = manifests.flatMap((name) => readManifest(name).assets);
@@ -221,14 +353,19 @@ async function main() {
     (option !== undefined &&
       option !== "--icon-only" &&
       option !== "--weapon-base-sheets" &&
-      option !== "--variant-candidate")
+      option !== "--variant-candidate" &&
+      option !== "--claim-hull-sheets")
   ) {
     throw new Error(
-      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--variant-candidate]",
+      "Usage: node art/tools/hostile-station-export.ts [--icon-only|--weapon-base-sheets|--claim-hull-sheets|--variant-candidate]",
     );
   }
   if (option === "--weapon-base-sheets") {
     packRetainedWeaponBases(root);
+    return;
+  }
+  if (option === "--claim-hull-sheets") {
+    packRetainedClaimHulls(root);
     return;
   }
   if (option === "--variant-candidate") {
@@ -259,6 +396,7 @@ async function main() {
   const coreRetained = retained.has(families[0]!);
   for (const family of families) {
     if (retained.has(family)) continue;
+    const manifest = readManifest(family.manifest);
     const directory = `${root}${family.directory}/`;
     mkdirSync(directory, { recursive: true });
     const texts = new Map<string, string>();
@@ -310,22 +448,39 @@ async function main() {
         ...(family.family ? { family: family.family } : {}),
       };
     });
-    const current: Entry[] = readManifest(family.manifest).assets;
+    const current: Entry[] = manifest.assets;
     const installed = current.filter(stationWeaponBase);
     const packed = installed.filter(({ svgSheet }) => svgSheet === true).length;
     if (packed && (installed.length !== WEAPON_BASE_COUNT || packed !== WEAPON_BASE_COUNT)) {
       throw new Error(`Partial station weapon sheet installation in ${family.manifest}`);
     }
     const pack = packed ? weaponBaseSheets(family, entries, (file) => texts.get(file)) : undefined;
-    if (pack) {
-      for (const file of pack.sourceFiles) texts.delete(file);
-      for (const [file, svg] of pack.sheets) texts.set(file, svg);
+    const installedHulls = family === claimFamily ? current.filter(claimHull) : [];
+    const hullPack = installedHulls.some(({ svgSheet }) => svgSheet === true)
+      ? claimHullSheets(entries, (file) => texts.get(file))
+      : undefined;
+    if (
+      hullPack &&
+      (installedHulls.length !== hullPack.replacements.size ||
+        installedHulls.some((row) => !isDeepStrictEqual(row, hullPack.replacements.get(row.id))))
+    ) {
+      throw new Error("CLAIM hull selection differs from the generated rows");
+    }
+    for (const selected of [pack, hullPack]) {
+      if (!selected) continue;
+      for (const file of selected.sourceFiles) texts.delete(file);
+      for (const [file, svg] of selected.sheets) texts.set(file, svg);
     }
     const paths = writeOnce(publicDir, shared, texts);
     mergeEntries(
       family.manifest,
       craftIds(family.prefix, [craft.name]),
-      entries.map((entry) => storedAt(paths, pack?.replacements.get(entry.id) ?? entry)),
+      entries.map((entry) =>
+        storedAt(
+          paths,
+          hullPack?.replacements.get(entry.id) ?? pack?.replacements.get(entry.id) ?? entry,
+        ),
+      ),
     );
     mergeSidecars(family.manifest, (name) => name === craft.name, sidecarsIn(paths));
   }

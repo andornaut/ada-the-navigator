@@ -2,6 +2,7 @@
 // ember, plus the turret platform, a fixed wheel deck in the heavies export. Contract:
 // art/heavies.md (Cartwheel claim jumpers).
 // Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
+import { claimStationPaint } from "./claim-station-paint.ts";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -182,7 +183,8 @@ function swapColours(
 }
 
 // An SVG or shards file in the claim-jumper palette.
-export const recolour = (file: string, text: string) => swapColours(swap, family, file, text);
+export const recolour = (file: string, text: string) =>
+  claimStationPaint(file, swapColours(swap, family, file, text));
 // A jets file in the claim jet colours; shape, lengths and anchors are unchanged.
 export const recolourJets = (file: string, text: string) =>
   swapColours(jetSwap, jetFamily, file, text);
