@@ -1,0 +1,297 @@
+{
+  "version": 1,
+  "frame": 480,
+  "length": {
+    "base": 13.416,
+    "scale": 53.666,
+    "exponent": 2
+  },
+  "layers": [
+    {
+      "name": "outer",
+      "colors": ["#b8644c", "#f0a07c"],
+      "width": 1.6,
+      "length": 1
+    },
+    {
+      "name": "core",
+      "colors": ["#d68b72", "#ffe2c8"],
+      "width": 0.8,
+      "length": 0.55
+    }
+  ],
+  "headings": [
+    {
+      "index": 0,
+      "mouths": [
+        {
+          "anchor": [163.453, 140.186],
+          "axis": [-0.866, -0.5],
+          "half": [6.189, -3.573],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [79.496, 188.659],
+          "axis": [-0.866, -0.5],
+          "half": [6.189, -3.573],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "mouths": [
+        {
+          "anchor": [230.702, 130.328],
+          "axis": [-0.469, -0.653],
+          "half": [8.087, -1.934],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [121.006, 156.561],
+          "axis": [-0.469, -0.653],
+          "half": [8.087, -1.934],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "mouths": [
+        {
+          "anchor": [299.367, 136.078],
+          "axis": [0, -0.707],
+          "half": [8.753, 0],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [180.633, 136.078],
+          "axis": [0, -0.707],
+          "half": [8.753, 0],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "mouths": [
+        {
+          "anchor": [358.994, 156.561],
+          "axis": [0.469, -0.653],
+          "half": [8.087, 1.934],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [249.298, 130.328],
+          "axis": [0.469, -0.653],
+          "half": [8.087, 1.934],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "mouths": [
+        {
+          "anchor": [400.504, 188.659],
+          "axis": [0.866, -0.5],
+          "half": [6.189, 3.573],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [316.547, 140.186],
+          "axis": [0.866, -0.5],
+          "half": [6.189, 3.573],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "mouths": [
+        {
+          "anchor": [417.58, 227.485],
+          "axis": [1.132, -0.271],
+          "half": [3.35, 4.669],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [372.142, 164.152],
+          "axis": [1.132, -0.271],
+          "half": [3.35, 4.669],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "mouths": [
+        {
+          "anchor": [407.62, 267.129],
+          "axis": [1.225, 0],
+          "half": [0, 5.053],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [407.62, 198.578],
+          "axis": [1.225, 0],
+          "half": [0, 5.053],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "mouths": [
+        {
+          "anchor": [372.142, 301.554],
+          "axis": [1.132, 0.271],
+          "half": [-3.35, 4.669],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [417.58, 238.221],
+          "axis": [1.132, 0.271],
+          "half": [-3.35, 4.669],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "mouths": [
+        {
+          "anchor": [316.547, 325.521],
+          "axis": [0.866, 0.5],
+          "half": [-6.189, 3.573],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [400.504, 277.048],
+          "axis": [0.866, 0.5],
+          "half": [-6.189, 3.573],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "mouths": [
+        {
+          "anchor": [249.298, 335.379],
+          "axis": [0.469, 0.653],
+          "half": [-8.087, 1.934],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [358.994, 309.146],
+          "axis": [0.469, 0.653],
+          "half": [-8.087, 1.934],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "mouths": [
+        {
+          "anchor": [180.633, 329.629],
+          "axis": [0, 0.707],
+          "half": [-8.753, 0],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [299.367, 329.629],
+          "axis": [0, 0.707],
+          "half": [-8.753, 0],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "mouths": [
+        {
+          "anchor": [121.006, 309.146],
+          "axis": [-0.469, 0.653],
+          "half": [-8.087, -1.934],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [230.702, 335.379],
+          "axis": [-0.469, 0.653],
+          "half": [-8.087, -1.934],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "mouths": [
+        {
+          "anchor": [79.496, 277.048],
+          "axis": [-0.866, 0.5],
+          "half": [-6.189, -3.573],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [163.453, 325.521],
+          "axis": [-0.866, 0.5],
+          "half": [-6.189, -3.573],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "mouths": [
+        {
+          "anchor": [62.42, 238.221],
+          "axis": [-1.132, 0.271],
+          "half": [-3.35, -4.669],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [107.858, 301.554],
+          "axis": [-1.132, 0.271],
+          "half": [-3.35, -4.669],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "mouths": [
+        {
+          "anchor": [72.38, 198.578],
+          "axis": [-1.225, 0],
+          "half": [0, -5.053],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [72.38, 267.129],
+          "axis": [-1.225, 0],
+          "half": [0, -5.053],
+          "hardpoint": "engine-right"
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "mouths": [
+        {
+          "anchor": [107.858, 164.152],
+          "axis": [-1.132, -0.271],
+          "half": [3.35, -4.669],
+          "hardpoint": "engine-left"
+        },
+        {
+          "anchor": [62.42, 227.485],
+          "axis": [-1.132, -0.271],
+          "half": [3.35, -4.669],
+          "hardpoint": "engine-right"
+        }
+      ]
+    }
+  ]
+}
