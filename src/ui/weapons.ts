@@ -289,6 +289,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{
   content:"";
+  forced-color-adjust:auto;
   position:absolute;
   inset:${units(HUD_BUTTON.edge)};
   box-sizing:border-box;
