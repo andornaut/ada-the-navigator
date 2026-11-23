@@ -318,10 +318,27 @@ function retainedWeaponBaseRoots(root: string, family: Family) {
 // Cartwheel alone retains the original 568-frame station hull. Keep the 9/7 split
 // from the checked station layout and keep each drawable root at intrinsic size.
 const CLAIM_HULL_SHEET_EDGE = 1704;
+const CLAIM_DISPLAY_SHEET = "hostileStation-sheet-display-1.svg";
+const claimDisplayPath = `/art/${claimFamily.directory}/${CLAIM_DISPLAY_SHEET}`;
 const claimHull = ({ id }: Entry) => /^enemy-claim-hostileStation-\d+$/u.test(id);
+
+function selectsClaimDisplaySheet(entries: readonly Entry[]): boolean {
+  const selected = entries.filter(({ path }) => path === claimDisplayPath);
+  if (!selected.length) return false;
+  if (
+    selected.length !== ENEMY_HEADINGS ||
+    new Set(selected.map(({ id }) => id)).size !== ENEMY_HEADINGS ||
+    selected.some((row) => !claimHull(row) || row.svgSheet !== true)
+  ) {
+    throw new Error("CLAIM display sheet requires all sixteen selected hull frames");
+  }
+  return true;
+}
+
 function claimHullSheets(
   entries: readonly Entry[],
   standalone: (file: string) => string | undefined,
+  displayCells: boolean,
 ) {
   const directory = `/art/${claimFamily.directory}/`;
   const group = "hostileStation";
@@ -344,20 +361,55 @@ function claimHullSheets(
   if (typeof width !== "number" || width <= 0 || typeof height !== "number" || height <= 0) {
     throw new Error(`Missing station hull group: ${claimFamily.prefix}${group}`);
   }
-  const columns = Math.min(COLUMNS, Math.floor(CLAIM_HULL_SHEET_EDGE / Math.max(width, height)));
+  const displayWidth = firstRow?.displayWidth;
+  const displayHeight = firstRow?.displayHeight;
+  let cellWidth = width;
+  let cellHeight = height;
+  if (displayCells) {
+    if (
+      typeof displayWidth !== "number" ||
+      !Number.isFinite(displayWidth) ||
+      displayWidth <= 0 ||
+      displayWidth > width ||
+      typeof displayHeight !== "number" ||
+      !Number.isFinite(displayHeight) ||
+      displayHeight <= 0 ||
+      displayHeight > height
+    ) {
+      throw new Error("Missing CLAIM display cell dimensions");
+    }
+    cellWidth = Math.ceil(displayWidth);
+    cellHeight = Math.ceil(displayHeight);
+  }
+  const columns = displayCells
+    ? COLUMNS
+    : Math.min(COLUMNS, Math.floor(CLAIM_HULL_SHEET_EDGE / Math.max(width, height)));
   if (columns < 1) throw new Error(`Station hull frame does not fit: ${group}`);
   const capacity = columns * columns;
-  const wide = width * columns;
+  const wide = cellWidth * columns;
+  if (
+    displayCells &&
+    (capacity !== ENEMY_HEADINGS || Math.max(wide, cellHeight * columns) > CLAIM_HULL_SHEET_EDGE)
+  ) {
+    throw new Error("CLAIM display sheet exceeds its checked layout");
+  }
   for (let first = 0; first < ENEMY_HEADINGS; first += capacity) {
     const pageCount = Math.min(capacity, ENEMY_HEADINGS - first);
-    const tall = height * Math.ceil(pageCount / columns);
-    const sheet = first === 0 ? `${group}-sheet.svg` : `${group}-sheet-${first / capacity + 1}.svg`;
+    const tall = cellHeight * Math.ceil(pageCount / columns);
+    const sheet = displayCells
+      ? CLAIM_DISPLAY_SHEET
+      : first === 0
+        ? `${group}-sheet.svg`
+        : `${group}-sheet-${first / capacity + 1}.svg`;
     const path = directory + sheet;
     const layout = packAtlas(
       { compare: () => 0, extrude: 0, maxSize: Math.max(wide, tall), widths: [wide] },
       [
         {
-          rectangles: Array.from({ length: pageCount }, () => ({ width, height })),
+          rectangles: Array.from({ length: pageCount }, () => ({
+            width: cellWidth,
+            height: cellHeight,
+          })),
           value: group,
         },
       ],
@@ -385,7 +437,9 @@ function claimHullSheets(
         entry.displayWidth > width ||
         typeof entry.displayHeight !== "number" ||
         entry.displayHeight <= 0 ||
-        entry.displayHeight > height
+        entry.displayHeight > height ||
+        (displayCells &&
+          (entry.displayWidth !== displayWidth || entry.displayHeight !== displayHeight))
       ) {
         throw new Error(`Invalid station hull: ${id}`);
       }
@@ -632,8 +686,11 @@ async function main() {
             : text,
       );
     }
+    const claimDisplay = family === claimFamily && selectsClaimDisplaySheet(manifest.assets);
     if (claimHullsOnly) {
-      writeClaimHullSheets(claimHullSheets(manifest.assets, (file) => texts.get(file)));
+      writeClaimHullSheets(
+        claimHullSheets(manifest.assets, (file) => texts.get(file), claimDisplay),
+      );
       return;
     }
     // Unselected recolours share the legacy layout, even when core selects a variant.
@@ -682,7 +739,7 @@ async function main() {
     }
     const installedHulls = family === claimFamily ? current.filter(claimHull) : [];
     const hullPack = installedHulls.some(({ svgSheet }) => svgSheet === true)
-      ? claimHullSheets(entries, (file) => texts.get(file))
+      ? claimHullSheets(entries, (file) => texts.get(file), claimDisplay)
       : undefined;
     if (
       hullPack &&
