@@ -41,12 +41,24 @@ describe("shop rows on the station view", () => {
       ["tractor", "icon-shop-tractor-beam"],
     ] as const) {
       expect(itemGlyph(ECONOMY, { kind: "track", track })).toEqual({ key, kind: "equipment" });
+    }
+  });
+
+  it("ships equipment glyphs in both SVG states without legacy sprite pairs", () => {
+    for (const key of [
+      "icon-shop-engine-tuning",
+      "icon-shop-shield",
+      "icon-shop-ship-paint",
+      "icon-shop-tractor-beam",
+    ]) {
       for (const suffix of ["", "-disabled"]) {
         expect(readFileSync(publicFile(`/art/ui/icons/${key}${suffix}.svg`), "utf8")).toContain(
           'width="20" height="20"',
         );
       }
-      expect(existsSync(publicFile(`/art/ui/sprites/${key}.png`))).toBe(true);
+      for (const extension of ["png", "json"]) {
+        expect(existsSync(publicFile(`/art/ui/sprites/${key}.${extension}`))).toBe(false);
+      }
     }
   });
 
