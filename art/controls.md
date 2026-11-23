@@ -215,7 +215,7 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 
 | Token              | Colour    | Use                                          |
 | ------------------ | --------- | -------------------------------------------- |
-| Conversation panel | `#181425` | Ink panel at alpha 0.65 in every galaxy      |
+| Conversation panel | `#181425` | Ink panel at alpha 0.55 in every galaxy      |
 | Portrait edge      | `#181425` | 2 px frame edge, opaque                      |
 | Portrait face      | `#262b44` | Slot face behind the portrait's clear pixels |
 | Tab edge           | `#181425` | 1 px name tab edge, opaque                   |
@@ -263,14 +263,20 @@ translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
 cream. The name tab overhangs the panel's top edge by 10, so its upper half
 sits on open space.
 
+The contrast below is calculated from the named flat colours. Blend the ink
+panel with the backdrop in sRGB using the encoded alpha byte (`0x8c` for
+0.55), round to 8-bit channels, then compare relative luminance.
+
 | Text           | Colour    | Ground                                     | Contrast |
 | -------------- | --------- | ------------------------------------------ | -------- |
-| Line           | `#ead4aa` | Panel over the base field `#292734`        | 11.64:1  |
-| Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 5.20:1   |
-| Line           | `#ead4aa` | Panel over Cartwheel `#BC9D90`             | 6.37:1   |
-| Line           | `#ead4aa` | Panel over Whirlpool `#B8CEC4`             | 5.18:1   |
-| Line           | `#ead4aa` | Panel over Phantom `#514955`               | 9.99:1   |
-| Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
+| Line           | `#ead4aa` | Panel over the base field `#292734`        | 11.38:1  |
+| Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 3.90:1   |
+| Line           | `#ead4aa` | Panel over Cartwheel `#BC9D90`             | 5.07:1   |
+| Line           | `#ead4aa` | Panel over Whirlpool `#B8CEC4`             | 3.92:1   |
+| Line           | `#ead4aa` | Panel over Needle `#C6BBA6`                | 4.31:1   |
+| Line           | `#ead4aa` | Panel over Andromeda `#9298B5`             | 5.43:1   |
+| Line           | `#ead4aa` | Panel over Phantom `#514955`               | 9.30:1   |
+| Line           | `#ead4aa` | Panel over `#ffffff`, a solid white sample | 2.76:1   |
 | Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
 | Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
 | Penny label    | `#181425` | `#feae34`                                  | 9.71:1   |
@@ -308,21 +314,20 @@ sits on open space.
 | Dollop         | `#181425` | `#f2a6e6`                                  | 9.76:1   |
 | Blurb settler  | `#181425` | `#b0c4ff`                                  | 10.45:1  |
 
-The panel composites to `#1e1b2a` over the base field, `#5b534c` over
-Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1c1526` over
-Phantom and `#696671` over pure white. Notices use the same panel and line.
-The line meets 4.5:1 over every galaxy field, lowest on Sunflower (5.20:1).
-Over a white object passing under the box it is 3.88:1, accepted: white
-objects pass under the box rarely and briefly, and Ada's ship stays 39.2 below
-it.
+The calculated panel composites are `#201d2c` over the base field, `#6f6657`
+over Sunflower, `#625255` over Cartwheel, `#60686d` over Whirlpool, `#665f5f`
+over Needle, `#4f5066` over Andromeda, `#322c3b` over Phantom and `#807e87`
+over white. Top notices use the same panel and line colours. The
+flat-field estimates for Sunflower, Whirlpool and Needle fall below 4.5:1.
+Rendered contrast varies with the painted field and passing objects.
 
-| Tab            | Fill      | On the field `#292734` | On Sunflower `#332712` | On the panel over `#332712` |
+| Tab            | Fill      | On the field `#292734` | On dark-gold `#332712` | On the panel over `#332712` |
 | -------------- | --------- | ---------------------- | ---------------------- | --------------------------- |
-| Ada            | `#70ace8` | 6.11:1                 | 6.08:1                 | 7.12:1                      |
-| Astra          | `#8fe0f2` | 9.84:1                 | 9.80:1                 | 11.48:1                     |
-| Penny          | `#feae34` | 7.89:1                 | 7.86:1                 | 9.21:1                      |
-| Unknown voice  | `#b8b3c9` | 7.20:1                 | 7.17:1                 | 8.41:1                      |
-| General Gadget | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.34:1                      |
+| Ada            | `#70ace8` | 6.11:1                 | 6.08:1                 | 6.91:1                      |
+| Astra          | `#8fe0f2` | 9.84:1                 | 9.80:1                 | 11.13:1                     |
+| Penny          | `#feae34` | 7.89:1                 | 7.86:1                 | 8.93:1                      |
+| Unknown voice  | `#b8b3c9` | 7.20:1                 | 7.17:1                 | 8.15:1                      |
+| General Gadget | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.15:1                      |
 
 Over white the fills alone fall to 1.49:1 (Astra) to 2.69:1 (General Gadget);
 the 1 ink edge holds 18.02:1 there, so the tab's outline reads over every
@@ -348,7 +353,7 @@ panel. The light-field outline applies to the shield pill wherever it sits.
 
 | Token           | Colour    | Use                                                                                                                           |
 | --------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Status panel    | `#181425` | Ink panel at alpha 0.65, as the conversation panel                                                                            |
+| Status panel    | `#181425` | Ink panel at alpha 0.65                                                                                                       |
 | Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab                                                                                    |
 | Shield delay    | `#4f7aa6` | Delay overlay palette, clipped to the remaining filled shield                                                                 |
 | Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red                                                                             |

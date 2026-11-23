@@ -253,7 +253,8 @@ describe("in-flight conversations", () => {
   it("use the provisional timing and ranges", () => {
     expect(CONVERSATION_TUNING).toMatchObject({
       cooldownSeconds: 20,
-      lineSeconds: 5,
+      lineSeconds: 3,
+      noticeSeconds: 5,
       pennyIntervalSeconds: 60,
       pennyRange: 5000,
       quietSeconds: 60,
