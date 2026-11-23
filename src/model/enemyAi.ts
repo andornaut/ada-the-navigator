@@ -768,11 +768,11 @@ function steering(
   const side = circlingSide(state);
   const band = definition.standoff;
   /** Holds `edges` from Ada, or presses in without a band (a heavy). */
-  const hold = (edges = band): Point => {
+  const hold = (edges = band, range = distance): Point => {
     if (!edges) {
       return toward(1);
     }
-    const held = holdBand(edges, aim, distance, side);
+    const held = holdBand(edges, aim, range, side);
     return unit({ x: held.x + push.x, y: held.y + push.y });
   };
   const capital = escorted(context, state);
@@ -791,8 +791,14 @@ function steering(
     return arrive(definition, context, maxSpeed, station, state);
   }
   switch (behaviour.kind) {
-    case "chase":
-      return hold();
+    case "chase": {
+      if (state.archetype !== "retaliator") {
+        return hold();
+      }
+      // Begin turning against radial momentum over the existing velocity response time.
+      const closing = aim.x * state.velocity.x + aim.y * state.velocity.y;
+      return hold(band, distance - closing * definition.physics.accelerationSeconds);
+    }
     case "swarm": {
       // Sinusoidal phase makes the hold erratic without query-dependent RNG.
       const wobble =
