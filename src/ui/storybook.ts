@@ -44,7 +44,7 @@ import {
 } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createButton, FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
+import { FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import {
   breathKeyframes,
@@ -757,21 +757,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   // Bumped as each page shows, so a holodisk start that waited on its decodes plays only if its
   // page still shows.
   let showing = 0;
-  const bindStoryAction = (button: HTMLButtonElement, run: () => void) =>
-    bindAdaAction(
-      {
-        click: {
-          availability: () =>
-            button.disabled || button.closest("[hidden], [inert]")
-              ? { kind: "omitted" }
-              : { kind: "available" },
-          run,
-        },
-        current: () => !disposed && button.isConnected,
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-      },
-      button,
-    );
   try {
     assertAdaActionMetadata(layer);
     // Keep the page first in the controls layer so Settings draws and presses above it.
@@ -785,7 +770,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     layer.remove();
     throw error;
   }
-  let choiceActions: ReturnType<typeof bindAdaAction>[] = [];
+  let choiceActions: ReturnType<typeof createStandardTextAction>[] = [];
   const forgetChoices = () => {
     for (const action of choiceActions) {
       action.dispose();
@@ -881,12 +866,18 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     let buttons: HTMLButtonElement[];
     try {
       buttons = (page.choices ?? []).map(({ label }, index) => {
-        const button = createButton(label);
+        const action = createStandardTextAction(root, label, {
+          availability: (button) =>
+            button?.disabled ? { kind: "disabled" } : { kind: "available" },
+          current: () => !disposed,
+          run: () => options.onChoose(index),
+        });
+        const { element: button } = action;
         button.classList.add("ada-story-button");
         button.dataset.action = "story-choice";
         button.dataset.choice = String(index);
         button.hidden = true;
-        actions.push(bindStoryAction(button, () => options.onChoose(index)));
+        actions.push(action);
         assertAdaActionMetadata(button);
         return button;
       });

@@ -341,7 +341,7 @@ it("rejects an unbound Storybook choice before attaching any new choice and rele
     .mockImplementation((action, element) => {
       staged.push(element);
       const binding =
-        element.dataset.choice === "1"
+        element.textContent === "Second"
           ? { activate: () => false, dispose() {}, update() {} }
           : bind(action, element);
       const dispose = vi.fn(binding.dispose);
