@@ -1,5 +1,5 @@
 import { BUTTON_SLICE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
-import { BUTTON_FACE, TEXT_TOKENS } from "../modal.ts";
+import { TEXT_TOKENS } from "../modal.ts";
 import { slice, units } from "./css.ts";
 import { BUTTON_GAP } from "./tokens.ts";
 
@@ -136,11 +136,6 @@ export const QUESTS_SCREEN_STYLE = `
   min-width:auto;
   text-align:inherit;
   overflow-wrap:inherit
-}
-.ada-controls .ada-quest-list [data-quest-id].ui-standard-button:focus-visible{
-  background-color:${BUTTON_FACE.secondary};
-  color:${TEXT_TOKENS.buttonLabel};
-  forced-color-adjust:auto
 }
 .ada-controls .ada-quests-screen .ada-quest-list .ada-button[data-quest-id]{
   padding-inline:calc(${units(inset)} - ${slice(BUTTON_SLICE.left)})}
