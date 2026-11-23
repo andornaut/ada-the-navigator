@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -29,8 +30,9 @@ import { SPACING, TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
+  BUTTON_FACE,
+  type ButtonRole,
   createActions,
-  createButton,
   createCard,
   createSwitchRow,
   FOCUS_STYLE,
@@ -48,6 +50,7 @@ import {
   type SettingsSwitch,
   settingsTree,
 } from "./settingsTree.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
@@ -286,6 +289,19 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   align-self:flex-end;
   justify-content:flex-end
 }
+/* Install retains the compact button's ring and authored face under native focus. */
+.ada-controls .ada-install-row > .ui-standard-button.ada-compact{
+  --ui-button-focus-fill:${BUTTON_FACE.secondary};
+  --ui-button-focus-text:${TEXT_TOKENS.buttonLabel}
+}
+@media (forced-colors:active){
+  .ada-controls .ada-install-row > .ui-standard-button.ada-compact:focus-visible{
+    forced-color-adjust:auto;
+    background-color:${BUTTON_FACE.secondary};
+    border-color:${BUTTON_FACE.secondary} ${BUTTON_FACE.secondary} #5f5980;
+    color:${TEXT_TOKENS.buttonLabel}
+  }
+}
 .ada-controls [data-dialog=settings] .ada-build{align-self:stretch}
 
 .ada-controls .ada-build{
@@ -331,7 +347,20 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     );
     return target;
   });
-  const actionBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const actionBindings: { dispose(): void }[] = [];
+  const textAction = (id: string, label: string, role: ButtonRole, run: () => void) => {
+    const action = createStandardTextAction(root, label, {
+      availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
+      current: () => !disposed,
+      run,
+    });
+    actionBindings.push(action);
+    const button = action.element;
+    button.dataset.action = id;
+    button.classList.toggle("ada-primary", role === "primary");
+    setButtonRole(role, button);
+    return button;
+  };
   const registerAction = (
     element: HTMLElement,
     run: () => void,
@@ -440,8 +469,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const divider = createAdaPageDivider(document);
   divider.hidden = true;
   // The build line, after the rows as in Chibi: plain text screen readers read with the card.
-  const dismiss = createButton(CONTENT.labels.questBack!, "primary");
-  dismiss.dataset.action = "settings-close";
+  const dismiss = textAction("settings-close", CONTENT.labels.questBack!, "primary", () =>
+    setOpen(false),
+  );
   const actions = createActions([{ button: dismiss, role: "primary" }]);
   actions.classList.add("ada-settings-actions");
   setFooterAction("back", actions);
@@ -461,9 +491,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installNote.className = "ada-setting-note";
   installNote.textContent = options.labels.installNote;
   installText.append(installCaption, installNote);
-  const installButton = createButton(options.labels.installButton);
+  const installButton = textAction("install", options.labels.installButton, "secondary", () =>
+    requestInstall(),
+  );
   installButton.classList.add("ada-compact");
-  installButton.dataset.action = "install";
   installButton.setAttribute("aria-label", options.labels.install);
   installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
   // The whole row presses its button, as every control row does.
@@ -487,8 +518,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stepsText = document.createElement("p");
   const stepsInstallGlyph = settingsIcon(SETTING_ICONS.install);
   stepsLine.append(stepsGlyph, stepsInstallGlyph, stepsText);
-  const stepsClose = createButton(CONTENT.labels.questBack!);
-  stepsClose.dataset.action = "close-install-steps";
+  const stepsClose = textAction("close-install-steps", CONTENT.labels.questBack!, "secondary", () =>
+    closeSteps(),
+  );
   const stepsActions = createActions([{ button: stepsClose, role: "secondary" }]);
   setFooterAction("back", stepsActions);
   stepsBody.append(stepsLine, stepsActions);
@@ -673,15 +705,12 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       void startInstall(options.install.port, openSteps, () => open && !disposed);
     }
   };
-  registerAction(installButton, requestInstall);
   registerAction(
     installRow,
     requestInstall,
     (event) => !(event.target instanceof Node && installButton.contains(event.target)),
   );
-  for (const button of [stepsX, stepsClose]) {
-    registerAction(button, closeSteps);
-  }
+  registerAction(stepsX, closeSteps);
   const setOpen = (value: boolean) => {
     if (disposed || value === open) {
       return;
@@ -721,7 +750,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   };
   registerAction(openButton, () => setOpen(true));
   registerAction(closeButton, () => setOpen(false));
-  registerAction(dismiss, () => setOpen(false));
   const dispose = () => {
     if (disposed) {
       return;

@@ -39,6 +39,7 @@ import { PAUSE_ART } from "./pause.ts";
 export const BUTTON_FACE = {
   disabled: "#2f2d3d",
   primary: "#bfa06f",
+  secondary: "#9690b4",
 } as const;
 
 // Text colours on the card face #3b3850.
@@ -121,7 +122,8 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
 const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
-  :is([data-dialog=menu], .ada-quest-footer) .ada-button.ui-standard-button:focus-visible`;
+  :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings])
+  .ada-button.ui-standard-button:not(:where(.ada-compact)):focus-visible`;
 const ENABLED_TEXT_CONTROL = `:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
 )`;
@@ -352,9 +354,9 @@ ${UI_SCOPE} .ada-button{
   gap:${units(SPACING.markGap)};
   font:${font(TEXT_BUTTON.label)};
   color:${TEXT_TOKENS.buttonLabel};
-  background:#9690b4;
+  background:${BUTTON_FACE.secondary};
   border-style:solid;
-  border-color:#9690b4 #9690b4 #5f5980;
+  border-color:${BUTTON_FACE.secondary} ${BUTTON_FACE.secondary} #5f5980;
   border-width:${SLICE_WIDTHS};
   border-radius:0;
   border-image:var(--ui-button-normal) ${SLICE} fill / ${SLICE_WIDTHS};

@@ -78,8 +78,17 @@ class Element {
         .filter((item) => item !== name)
         .join(" ");
     }),
+    toggle: (name: string, on: boolean) => {
+      if (on) {
+        this.classList.add(name);
+      } else {
+        this.classList.remove(name);
+      }
+      return on;
+    },
   };
   readonly dataset: Record<string, string> = {};
+  disabled = false;
   hidden = false;
   parent: Element | undefined;
   readonly listeners = new Map<string, ((event: Event) => void)[]>();
@@ -93,7 +102,16 @@ class Element {
     },
     setProperty: vi.fn((name: string, value: string) => this.properties.set(name, value)),
   };
-  textContent = "";
+  private text = "";
+  get textContent(): string {
+    return this.text + this.children.map(({ textContent }) => textContent).join("");
+  }
+  set textContent(value: string) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.text = value;
+  }
   addEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
@@ -117,6 +135,9 @@ class Element {
     return !event.defaultPrevented;
   }
   click() {
+    if (this.disabled) {
+      return;
+    }
     const event = new Event("click", { cancelable: true });
     Object.defineProperty(event, "target", { value: this });
     this.dispatchEvent(event);
@@ -183,6 +204,13 @@ class Element {
       this.parent.children.splice(this.parent.children.indexOf(this), 1);
     }
     this.parent = undefined;
+  }
+  toggleAttribute(name: string, on: boolean) {
+    if (on) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
@@ -354,6 +382,7 @@ describe("Settings current-state labels", () => {
     ]);
     expect(actions.children[0]!.dataset.action).toBe("settings-close");
     expect(actions.children[0]!.className).toContain("ada-primary");
+    expect(actions.children[0]!.matches(".ui-standard-button")).toBe(true);
     settings.dispose();
   });
   it("labels install-guide return Back while retaining the independent header Close", () => {
@@ -367,6 +396,7 @@ describe("Settings current-state labels", () => {
     expect(footer.dataset.footerAction).toBe("back");
     expect(footer.children[0]!.textContent).toBe(CONTENT.labels.questBack);
     expect(footer.children[0]!.dataset.action).toBe("close-install-steps");
+    expect(footer.children[0]!.matches(".ui-standard-button")).toBe(true);
     expect(guide.children[1]!.attributes.get("aria-label")).toBe(labels.close);
     settings.dispose();
   });
@@ -518,6 +548,64 @@ it("registers the actual Settings switch callback for held activation and remove
   expect(state(row).textContent).toBe("Shown");
   settings.dispose();
   expect(resolveAdaHoldAction(settings.root, row as unknown as HTMLElement)).toBeNull();
+});
+
+it("keeps Install button and row activation distinct and cancels a deferred guide after closing", async () => {
+  let finish!: (outcome: "steps") => void;
+  const pending = new Promise<"steps">((resolve) => {
+    finish = resolve;
+  });
+  const install = vi.fn(() => pending);
+  const settings = createSettings(fixtureParent(), {
+    build: "test-build",
+    fpsCounter: fpsPreference(),
+    install: {
+      port: {
+        install,
+        offers: () => true,
+        onChange: () => () => {},
+        state: () => "prompt",
+        stepsKind: () => "other",
+      },
+      steps: CONTENT.installSteps,
+    },
+    labels: { ...labels, installButton: "Install now" },
+    onOpenChange: vi.fn(),
+    onVisibilityChange: vi.fn(),
+  });
+  fixtureActionRoot(settings.root);
+  settings.open();
+  const card = settings.card as unknown as Element;
+  const button = card.querySelector('[data-action="install"]')!;
+  const row = button.parent!;
+  const label = button.children[0]!;
+  const event = new Event("click", { cancelable: true });
+  Object.defineProperty(event, "target", { value: label });
+  expect(button.matches(".ui-standard-button")).toBe(true);
+  expect(button.textContent).toBe("Install now");
+  expect(button.getAttribute("aria-label")).toBe(labels.install);
+
+  const held = resolveAdaHoldAction(settings.root, button as unknown as HTMLElement);
+  button.disabled = true;
+  button.click();
+  expect(held?.available()).toBe(false);
+  expect(install).not.toHaveBeenCalled();
+  button.disabled = false;
+  button.dispatchEvent(event);
+  row.dispatchEvent(event);
+  expect(install).toHaveBeenCalledOnce();
+  expect(settings.stepsOpen()).toBe(false);
+  expect(held?.available()).toBe(true);
+  held?.activate();
+  expect(install).toHaveBeenCalledTimes(2);
+  (settings.actions as unknown as Element).children[0]!.click();
+  finish("steps");
+  await pending;
+  expect(settings.stepsOpen()).toBe(false);
+  expect(settings.isOpen()).toBe(false);
+  expect(held?.available()).toBe(false);
+  settings.dispose();
+  expect(button.listeners.get("click")).toHaveLength(0);
 });
 
 it("retains native widgets while the entire Install row leaves and rejoins the tree", () => {
@@ -760,6 +848,7 @@ it("audits Settings and Install Steps entry scopes while retaining external bind
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
   });
+  fixtureActionRoot(settings.root);
   const launcher = document.createElement("button");
   settings.card.append(launcher);
   const external = actionBinding.bindAdaAction(
