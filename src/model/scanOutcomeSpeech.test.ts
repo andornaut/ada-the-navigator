@@ -109,6 +109,17 @@ it("queues the same object once but retains distinct equally worded outcomes wit
   expect(seen.some((id) => id.startsWith("chapter:cue:scan:"))).toBe(false);
 });
 
+it("keeps the existing spoken scan receipt duration when ordinary speech is shorter", () => {
+  const { talk } = director();
+  talk.scanOutcome(outcome());
+  const text = talk.showing!.line.text;
+  const end = 5 + 0.05 * text.length;
+  talk.step(end - 0.01, false, calm);
+  expect(talk.showing?.line.text).toBe(text);
+  talk.step(0.01, false, calm);
+  expect(talk.showing).toBeNull();
+});
+
 it("keeps an active event warning ahead of the new receipt instead of clearing unrelated speech", () => {
   const { talk } = director();
   talk.chapterCue({ speaker: "astra", text: "Existing event warning." });

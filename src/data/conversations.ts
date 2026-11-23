@@ -155,7 +155,7 @@ export function lineDuration(text: string): number {
 /** Seconds a game or network notice shows while it owns the slot. */
 export function noticeDuration(text: string): number {
   return (
-    CONVERSATION_TUNING.noticeSeconds + CONVERSATION_TUNING.lineSecondsPerCharacter * text.length
+    CONVERSATION_TUNING.noticeSeconds + CONVERSATION_TUNING.noticeSecondsPerCharacter * text.length
   );
 }
 
@@ -165,8 +165,9 @@ export const CONVERSATION_TUNING = {
   cooldownSeconds: 20,
   /** Seconds each line shows unless tapped, plus lineSecondsPerCharacter per character. */
   lineSeconds: 3,
-  lineSecondsPerCharacter: 0.05,
+  lineSecondsPerCharacter: 0.03,
   noticeSeconds: 5,
+  noticeSecondsPerCharacter: 0.05,
   /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
   pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */

@@ -99,7 +99,7 @@ describe("reviewed rules", () => {
 
   it("uses a shorter base time for ordinary speech while preserving notice time", () => {
     expect(lineDuration("")).toBe(3);
-    expect(lineDuration("x".repeat(40))).toBeCloseTo(5, 9);
+    expect(lineDuration("x".repeat(40))).toBeCloseTo(4.2, 9);
     expect(noticeDuration("")).toBe(5);
     expect(noticeDuration("x".repeat(40))).toBeCloseTo(7, 9);
   });

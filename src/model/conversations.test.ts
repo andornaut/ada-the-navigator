@@ -71,7 +71,7 @@ function run(talk: ConversationDirector, seconds: number, facts: Partial<Convers
     void talk.showing;
   }
 }
-/** How long the line now showing shows unless tapped: 5 s plus 50 ms a character. */
+/** How long the line now showing shows unless tapped: 3 s plus 30 ms a character. */
 const lineTime = (talk: ConversationDirector) => lineDuration(talk.showing!.line.text);
 /** Whole 0.05 s steps that cover seconds. */
 const lineSteps = (seconds: number) => Math.ceil(seconds / 0.05 - 1e-6);

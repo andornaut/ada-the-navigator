@@ -18,6 +18,7 @@ import {
   type JobMoment,
   type Lesson,
   lineDuration,
+  noticeDuration,
   type Speaker,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -673,9 +674,10 @@ export class ConversationDirector {
     if (this.active) {
       this.active.elapsed += dt;
       const { conversation, line } = this.active;
+      const text = conversation.lines[line]?.text ?? "";
       const duration =
         discoveryLineTiming(conversation, line) ??
-        lineDuration(conversation.lines[line]?.text ?? "");
+        (this.active.notice ? noticeDuration(text) : lineDuration(text));
       if (this.active.elapsed >= duration - EPSILON) {
         this.nextLine();
       }
