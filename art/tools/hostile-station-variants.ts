@@ -39,7 +39,6 @@ const variants = [
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 const round = (x: number) => Math.round(x * 1000) / 1000;
 
-const andromedaDisplaySheet = "hostileStation-andromeda-sheet-display-1.svg";
 const maxPageEdge = 1728;
 
 export async function exportStationVariants(art: string, output: string): Promise<void> {
@@ -70,9 +69,9 @@ export async function exportStationVariants(art: string, output: string): Promis
       ({ hardpoint, top }) => hardpoint === undefined && top === undefined,
     );
     if (hulls.length !== ENEMY_HEADINGS) throw new Error(`Incomplete station hull: ${spec.key}`);
-    const displayPath = dir + andromedaDisplaySheet;
-    const packAtDisplaySize =
-      spec.key === "andromeda" && hulls.some(({ path }) => path === displayPath);
+    const displaySheet = `hostileStation-${spec.key}-sheet-display-1.svg`;
+    const displayPath = dir + displaySheet;
+    const packAtDisplaySize = hulls.some(({ path }) => path === displayPath);
     if (
       packAtDisplaySize &&
       hulls.some(
@@ -85,7 +84,7 @@ export async function exportStationVariants(art: string, output: string): Promis
           svgSheet !== true,
       )
     ) {
-      throw new Error("Andromeda display sheet requires all existing hull frames");
+      throw new Error(`Display sheet requires all existing hull frames: ${spec.key}`);
     }
 
     const rows = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => {
@@ -115,11 +114,11 @@ export async function exportStationVariants(art: string, output: string): Promis
     const perPage = columns ** 2;
     const wide = columns * cell;
     if (packAtDisplaySize && (wide > maxPageEdge || rows.length !== perPage))
-      throw new Error("Andromeda display sheet exceeds its checked page layout");
+      throw new Error(`Display sheet exceeds its checked page layout: ${spec.key}`);
     for (let start = 0; start < rows.length; start += perPage) {
       const page = rows.slice(start, start + perPage);
       const name = packAtDisplaySize
-        ? andromedaDisplaySheet
+        ? displaySheet
         : `hostileStation-${spec.key}-sheet-${start / perPage + 1}.svg`;
       const layoutPage = packAtlas(
         { compare: () => 0, widths: [wide], maxSize: wide, extrude: 0 },
