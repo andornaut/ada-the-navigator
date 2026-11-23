@@ -137,8 +137,6 @@ export interface MapScreenLabels {
   readonly questStoryProgress?: string;
 
   readonly questsEmpty: string;
-  readonly questsJobBoards: string;
-  readonly questsStoryComplete: string;
   readonly towTravel: string;
   readonly carryTravel: string;
   readonly travelEmpty: string;
@@ -193,8 +191,6 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
 
     quests: label("quests"),
     questsEmpty: label("questsEmpty"),
-    questsJobBoards: label("questsJobBoards"),
-    questsStoryComplete: label("questsStoryComplete"),
     towTravel: label("towTravel"),
     travelEmpty: label("travelEmpty"),
     travelHere: label("travelHere"),

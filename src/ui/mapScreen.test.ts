@@ -65,14 +65,14 @@ describe("map screen strings", () => {
     expect(row?.split("|")[2]?.trim()).toBe(LABELS.towTravel);
   });
 
-  it("offer Galaxies and Quests by the player copy's local map and Quests modal lines", () => {
+  it("documents the Local Map actions and the shared Quests list copy", () => {
     expect(LABELS.galaxies).toBe("Galaxies");
     expect(COPY).toContain(
       `Local map: Map; {percent}% mapped; Travel here; ${LABELS.galaxies}; ${LABELS.quests}.`,
     );
     expect(COPY).toContain(
-      `Quests modal: ${LABELS.quests}; ${LABELS.questsStoryComplete}; ${LABELS.jobObjective}; ` +
-        `${LABELS.questsJobBoards}; ${LABELS.questsEmpty}`,
+      `Quests list: ${LABELS.quests}; ${LABELS.questsStoryHeading}; ${LABELS.questsJobsHeading}; ` +
+        `and, when there is nothing to list, ${LABELS.questsEmpty}`,
     );
   });
 

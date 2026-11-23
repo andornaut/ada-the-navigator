@@ -1355,8 +1355,8 @@ or replay rewards.
   - Cartwheel: "A busy mining hub where every rock is worth something."
   - Phantom: "Faint and ghostly, and something in it is watching."
 - Local map: Map; {percent}% mapped; Travel here; Galaxies; Quests.
-- Quests modal: Quests; Story complete.; Job: {objective}; Station job boards
-  have more to do.; Explore to find something to do.
+- Quests list: Quests; Story quests; Station jobs; and, when there is nothing to
+  list, Explore to find something to do.
 - Map with nothing discovered yet: No destinations mapped yet.
 - Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
 - Map place panel: under the place's name, a line naming its kind: Station,

@@ -38,9 +38,8 @@ the Station welcome.
 - An offer whose target becomes invalid, such as a survey landmark charted
   meanwhile or a target another offer already uses, is replaced with a new job
   from the pool.
-- The held job's objective shows in the local map's Quests modal under the story
-  objective, as "Job: {objective}". Its target uses the direction indicator for quest
-  events and is marked on the local map.
+- The held job shows in the Quests list under "Station jobs". Its target uses
+  the direction indicator for quest events and is marked on the local map.
 - A job pays at completion wherever Ada is: a notice shows "Job complete: +{amount}
   Stardust", then Astra says one unseen lore line from the galaxy's job pool.
 
@@ -465,7 +464,7 @@ the final delivery rewards. Stored base rewards use the same one-time
   loses its progress.
 - While a job holds the slot, Talk plays the activity line, and Accept refuses
   with "Finish or drop your current job first."
-- The local map's Quests modal shows an active activity as its "Job:" line.
+- The Quests list shows an active activity under "Station jobs".
 - On a board, the Active activity row shows the shared activity icon, a circular
   repeat arrow, in place of a job type's icon; its title is the activity's name.
   Its detail line is its goal: "Carry
