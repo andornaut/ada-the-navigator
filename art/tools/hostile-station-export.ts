@@ -294,11 +294,8 @@ function claimHullSheets(
   return { replacements, sheets, sourceFiles };
 }
 
-function packRetainedClaimHulls(root: string): void {
+function writeClaimHullSheets(plan: ReturnType<typeof claimHullSheets>): void {
   const directory = `/art/${claimFamily.directory}/`;
-  const plan = claimHullSheets(readManifest("cartwheel").assets, (file) =>
-    readFileSync(`${root}${claimFamily.directory}/${file}`, "utf8"),
-  );
   const owned = new Set([...plan.sheets.keys()].map((file) => directory + file));
   const manifests: ManifestFile[] = ["core", ...GALAXIES];
   for (const manifest of manifests) {
@@ -457,10 +454,6 @@ async function main() {
     packRetainedParts(root, stationTopSheets);
     return;
   }
-  if (option === "--claim-hull-sheets") {
-    packRetainedClaimHulls(root);
-    return;
-  }
   if (option === "--variant-candidate") {
     const { exportStationVariants } = await import("./hostile-station-variants.ts");
     await exportStationVariants(
@@ -473,13 +466,16 @@ async function main() {
   }
   const craft = hostileStation();
   const iconOnly = option === "--icon-only";
+  const claimHullsOnly = option === "--claim-hull-sheets";
   const retained = new Set(
-    iconOnly ? [] : families.filter((family) => retainsVariant(root, family)),
+    iconOnly || claimHullsOnly ? [] : families.filter((family) => retainsVariant(root, family)),
   );
   const result = iconOnly ? undefined : build(craft, place({ version: 1, archetypes: {} }, craft));
-  const iconDirectory = `${root}ui/icons/`;
-  mkdirSync(iconDirectory, { recursive: true });
-  writeFileSync(`${iconDirectory}map-hostile-station.svg`, svgText(hostileStationIcon(craft)));
+  if (!claimHullsOnly) {
+    const iconDirectory = `${root}ui/icons/`;
+    mkdirSync(iconDirectory, { recursive: true });
+    writeFileSync(`${iconDirectory}map-hostile-station.svg`, svgText(hostileStationIcon(craft)));
+  }
   if (!result) return;
   const layoutFile = `${craft.name}-hardpoints.json`;
   const { field, layout } = rebaseStationField(result.files.get(layoutFile)!);
@@ -487,7 +483,7 @@ async function main() {
     hullEntries(craft.name, craft.frame).map(({ path }) => path.split("/").at(-1)!),
   );
   const coreRetained = retained.has(families[0]!);
-  for (const family of families) {
+  for (const family of claimHullsOnly ? [claimFamily] : families) {
     if (retained.has(family)) continue;
     const manifest = readManifest(family.manifest);
     const directory = `${root}${family.directory}/`;
@@ -515,6 +511,10 @@ async function main() {
               )
             : text,
       );
+    }
+    if (claimHullsOnly) {
+      writeClaimHullSheets(claimHullSheets(manifest.assets, (file) => texts.get(file)));
+      return;
     }
     // Unselected recolours share the legacy layout, even when core selects a variant.
     const shared =
