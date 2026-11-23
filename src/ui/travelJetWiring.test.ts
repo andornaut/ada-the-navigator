@@ -111,29 +111,38 @@ function dom(hasActionRoot = true) {
     clientWidth = 960;
     dataset: Record<string, string> = {};
     height = 0;
+    disabled = false;
     hidden = false;
     style = { backgroundImage: "", removeProperty() {}, setProperty() {}, zIndex: "" };
     width = 0;
-    textContent = "";
+    private text = "";
+    get textContent(): string {
+      return this.text + this.children.map((child) => child.textContent).join("");
+    }
+    set textContent(value: string) {
+      this.replaceChildren();
+      this.text = value;
+    }
     readonly attributes = new Map<string, string>();
     readonly tag: string;
     constructor(tag: string) {
       this.tag = tag;
       nodes.push(this);
     }
-    readonly listeners = new Map<string, (() => void)[]>();
-    addEventListener(type: string, callback: () => void) {
+    readonly listeners = new Map<string, ((event?: Event) => void)[]>();
+    addEventListener(type: string, callback: (event?: Event) => void) {
       this.listeners.set(type, [...(this.listeners.get(type) ?? []), callback]);
     }
-    removeEventListener(type: string, callback: () => void) {
+    removeEventListener(type: string, callback: (event?: Event) => void) {
       this.listeners.set(
         type,
         (this.listeners.get(type) ?? []).filter((value) => value !== callback),
       );
     }
     click() {
+      const event = Object.assign(new Event("click", { cancelable: true }), { detail: 0 });
       for (const callback of this.listeners.get("click") ?? []) {
-        callback();
+        callback(event);
       }
     }
     append(...elements: ElementFake[]) {
@@ -147,7 +156,7 @@ function dom(hasActionRoot = true) {
       clone.dataset = { ...this.dataset };
       clone.height = this.height;
       clone.hidden = this.hidden;
-      clone.textContent = this.textContent;
+      clone.text = this.text;
       clone.width = this.width;
       Object.assign(clone.style, this.style);
       for (const [name, value] of this.attributes) {
@@ -190,6 +199,9 @@ function dom(hasActionRoot = true) {
         this.parentNode.children.splice(this.parentNode.children.indexOf(this), 1);
         this.parentNode = null;
       }
+    }
+    getAttribute(name: string) {
+      return this.attributes.get(name) ?? null;
     }
     removeAttribute(name: string) {
       this.attributes.delete(name);
@@ -482,7 +494,8 @@ it.each(["1", "earth", "galaxy-jump", "galaxy-close-x"])(
     const mount = vi.spyOn(fixture.host, "insertBefore");
     const bind = actionBinding.bindAdaAction;
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
-      (element.dataset.action ?? element.dataset.position) === id
+      (element.dataset.action ?? element.dataset.position) === id ||
+      (id === "galaxy-jump" && action.ownAriaDisabled === "refusal-feedback")
         ? { activate: () => false, dispose() {}, update() {} }
         : bind(action, element),
     );
@@ -636,7 +649,7 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
       close: "Close",
       development: "",
       home: "",
-      jump: "",
+      jump: "Jump",
       locked: "",
       lockedAction: "Progress the story to unlock",
       number: "{number}",
@@ -810,14 +823,12 @@ it.each(["mouse", "hold"])(
       expect(currentTitle()).toBe("3");
 
       const screen = fixture.nodes.find((node) => node.dataset.dialog === "galaxies")!;
-      const navigate = screen.listeners.get("keydown")!.at(-1)! as (
-        event: Pick<KeyboardEvent, "key" | "preventDefault" | "shiftKey">,
-      ) => void;
-      navigate({ key: "Tab", preventDefault() {}, shiftKey: false });
+      const navigate = screen.listeners.get("keydown")!.at(-1)!;
+      navigate(Object.assign(new Event("keydown"), { key: "Tab", shiftKey: false }));
       expect(focusTarget).toHaveBeenLastCalledWith(marker(1));
       focus(marker(1));
       expect(onView.mock.calls).toEqual([[3], [3], [1]]);
-      navigate({ key: "ArrowRight", preventDefault() {}, shiftKey: false });
+      navigate(Object.assign(new Event("keydown"), { key: "ArrowRight", shiftKey: false }));
       expect(onStep).toHaveBeenCalledExactlyOnceWith(1);
     } finally {
       map.dispose();

@@ -16,6 +16,7 @@ import {
   invalidatePressScope,
   rootPressGuard,
 } from "./pressScope.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 
 const source = ts.createSourceFile(
   "mapScreen.ts",
@@ -27,14 +28,14 @@ function actual(name: string): string {
   let found: ts.Node | undefined;
   const visit = (node: ts.Node) => {
     if (
-      !["chip", "screen", "travel"].includes(name) &&
+      !["chip", "screen"].includes(name) &&
       ts.isVariableDeclaration(node) &&
       node.name.getText(source) === name
     ) {
       found = node.initializer;
     }
     if (
-      ["chip", "screen", "travel"].includes(name) &&
+      ["chip", "screen"].includes(name) &&
       ts.isCallExpression(node) &&
       node.expression.getText(source) === "registerAction" &&
       node.arguments[1]?.getText(source) === name
@@ -66,6 +67,7 @@ function actual(name: string): string {
 }
 class Element extends EventTarget {
   parentElement: Element | null = null;
+  readonly classList = { add() {} };
   hidden = false;
   inert = false;
   disabled = false;
@@ -91,6 +93,22 @@ class Element extends EventTarget {
       ? this
       : (this.parentElement?.closest(selector) ?? null);
   }
+  append(el: Element) {
+    el.parentElement = this;
+  }
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, value: boolean) {
+    if (value) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
+  }
   matches(selector: string) {
     return selector === ":disabled" && this.disabled;
   }
@@ -106,6 +124,9 @@ class Element extends EventTarget {
 }
 class FixtureDocument extends EventTarget {
   hitTarget: Element | null = null;
+  createElement() {
+    return new Element(this);
+  }
   readonly fonts = new EventTarget();
   elementFromPoint() {
     return this.hitTarget;
@@ -124,12 +145,14 @@ afterEach(() => {
     dispose();
   }
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 function fixture(spatial = false) {
   vi.useFakeTimers();
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "2" }));
   const document = new FixtureDocument(),
-    root = new Element(document),
-    button = new Element(document);
+    root = new Element(document);
+  let button = new Element(document);
   const screen = spatial ? new Element(document) : root;
   if (spatial) {
     screen.parentElement = root;
@@ -163,6 +186,7 @@ function fixture(spatial = false) {
     MAP_SCREEN,
     actionBindings: bindings,
     bindAdaAction,
+    createStandardTextAction,
     disposed: false,
     inCurrentView,
     readViewUnit: () => 2,
@@ -211,7 +235,13 @@ function fixture(spatial = false) {
     }
     return e;
   };
+  const attach = (buttonElement: HTMLButtonElement) => {
+    button = buttonElement as unknown as Element;
+    button.parentElement = screen;
+    document.hitTarget = button;
+  };
   return {
+    attach,
     bindings,
     button,
     click,
@@ -249,16 +279,22 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
     onTravel = vi.fn(),
     refuse = vi.fn();
   let danger = true;
+  let offered = true;
   Object.assign(f.context, {
-    labels: { carryTravel: "Cargo", towTravel: "Tow", travelUnavailable: "Danger" },
+    labels: { travelHere: "Travel here" },
     options: { onTravel, reducedMotion: () => true },
     refuse,
     selectedPlace: () => ({ id: "station" }),
-    travel: f.button,
-    travelNow: () => ({ offered: true, reason: danger ? "danger" : null }),
+    travelNow: () => ({ offered, reason: danger ? "danger" : null }),
+    travelReasons: { danger: "Danger" },
   });
-  f.execute(actual("travel"));
-  f.button.attributes.set("aria-disabled", "true");
+  const action = f.execute(
+    `const travelAction = ${actual("travelAction")}; travelAction;`,
+  ) as ReturnType<typeof createStandardTextAction>;
+  cleanup.push(action.dispose);
+  f.attach(action.element);
+  expect(action.element.getAttribute("aria-disabled")).toBe("true");
+  expect(action.element.disabled).toBe(false);
   f.down();
   f.up();
   f.click();
@@ -267,13 +303,57 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
   f.down();
   vi.advanceTimersByTime(600);
   f.up();
-  expect(f.click().defaultPrevented).toBe(false);
+  expect(f.click().defaultPrevented).toBe(true);
   expect(refuse).toHaveBeenCalledTimes(2);
+  f.click(0);
+  expect(refuse).toHaveBeenCalledTimes(3);
   expect(onTravel).not.toHaveBeenCalled();
   danger = false;
-  f.button.attributes.delete("aria-disabled");
+  action.refresh();
+  expect(action.element.getAttribute("aria-disabled")).toBeNull();
   f.click(0);
   expect(onTravel).toHaveBeenCalledExactlyOnceWith("station");
+  offered = false;
+  action.refresh();
+  expect(action.element.hidden).toBe(true);
+  f.click(0);
+  expect(onTravel).toHaveBeenCalledOnce();
+});
+it("never invokes an unavailable standard action outside its current live view", () => {
+  const f = fixture();
+  const root = f.root as unknown as HTMLElement;
+  let current = true;
+  const run = vi.fn();
+  const refuse = vi.fn();
+  const action = createStandardTextAction(root, "Travel here", {
+    availability: () => ({ kind: "unavailable", reason: "Danger" }),
+    current: () => current && inCurrentView(root, action.element),
+    refuse,
+    run,
+  });
+  f.attach(action.element);
+  const button = action.element as unknown as Element;
+  f.click(0);
+  expect(refuse).toHaveBeenCalledExactlyOnceWith("Danger");
+  refuse.mockClear();
+
+  const cover = new Element(f.document);
+  cover.parentElement = f.root;
+  const leave = enterPressView(root, cover as unknown as HTMLElement);
+  // Dispatch directly so the public onUnavailable handler is exercised even if the root is covered.
+  const click = () => button.dispatchEvent(new Event("click", { cancelable: true }));
+  click();
+  leave();
+  f.root.hidden = true;
+  click();
+  f.root.hidden = false;
+  current = false;
+  click();
+  current = true;
+  action.dispose();
+  click();
+  expect(refuse).not.toHaveBeenCalled();
+  expect(run).not.toHaveBeenCalled();
 });
 it("invalidates removed/rebuilt endpoint bindings and does not activate a disposed Map", () => {
   const f = fixture(),

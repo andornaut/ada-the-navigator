@@ -1,3 +1,4 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
@@ -17,7 +18,7 @@ import {
   galaxyPanelTree,
 } from "./galaxyPanelTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { CARD_SLICE } from "./layout/controls.ts";
+import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
   font,
@@ -49,12 +50,13 @@ import {
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 import { createShipTailView } from "./shipTailView.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
 import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
@@ -438,6 +440,32 @@ ${PRESSED_LABEL}{
   width:max-content;
   max-width:${units(GALAXY_MAP_PANEL.width)}
 }
+.ada-controls .ada-route-action.ui-standard-button:focus-visible{
+  outline:none;
+  box-shadow:none
+}
+.ada-controls .ada-route-action.ui-standard-button:focus-visible:not([aria-disabled]){
+  background-color:${BUTTON_FACE.primary};
+  background-image:linear-gradient(${TEXT_TOKENS.label},${TEXT_TOKENS.label});
+  background-clip:padding-box;
+  border-image-slice:${BUTTON_SLICE.top} ${BUTTON_SLICE.right} ${BUTTON_SLICE.bottom} ${BUTTON_SLICE.left};
+  color:${TEXT_TOKENS.buttonLabel}
+}
+.ada-controls .ada-route-action.ui-standard-button[aria-disabled=true]:focus-visible{
+  background-color:${BUTTON_FACE.disabled};
+  color:${TEXT_TOKENS.disabledLabel};
+  forced-color-adjust:auto;
+  text-decoration:underline;
+  text-underline-offset:.15em
+}
+@media (forced-colors:active){
+  .ada-controls .ada-route-action.ui-standard-button:focus-visible:not([aria-disabled]){
+    forced-color-adjust:none;
+    background-color:ButtonFace;
+    background-image:linear-gradient(Highlight,Highlight);
+    color:HighlightText
+  }
+}
 /* A quantum jump from the map: the panel and the destination action go, then the warp ship covers
    Ada's. */
 .ada-controls .ada-route[data-jumping] .ada-route-panel,
@@ -497,16 +525,18 @@ interface Move {
 export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const { labels } = options;
   let viewingEarth = false;
+  let view: GalaxyMapView | null = null;
   let disposed = false;
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
+  const bindings: { dispose(): void }[] = [];
+  const current = () =>
+    !disposed && view !== null && unlock === null && !("jumping" in screen.dataset);
   const leaveFocus: (() => void)[] = [];
   const register = (element: HTMLElement, run: () => void) => {
     bindings.push(
       bindAdaAction(
         {
           click: { availability: () => ({ kind: "available" }), run },
-          current: () =>
-            !disposed && view !== null && unlock === null && !("jumping" in screen.dataset),
+          current,
           slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
         },
         element,
@@ -633,8 +663,29 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   earthName.textContent = labels.earthTitle;
   earthName.style.left = units((GALAXY_MAP.centres[0]!.x + GALAXY_MAP.centres.at(-1)!.x) / 2);
   chart.append(earth, earthName);
-  const jump = createButton(labels.jump, "primary");
-  jump.classList.add("ada-route-action");
+  const jumpAction = createStandardTextAction(root, labels.jump, {
+    availability: () =>
+      !view
+        ? { kind: "omitted" }
+        : viewingEarth || view.galaxies[view.panel - 1]?.unlocked
+          ? { kind: "available" }
+          : { kind: "unavailable", reason: labels.lockedAction },
+    current,
+    refuse: () => refuse(jumpAction.element, reduced()),
+    run: () => {
+      if (viewingEarth) {
+        options.onEarth();
+      } else if (view?.stay) {
+        options.onClose();
+      } else {
+        options.onJump();
+      }
+    },
+  });
+  const jump = jumpAction.element;
+  jump.classList.add("ada-primary", "ada-route-action");
+  setButtonRole("primary", jump);
+  bindings.push(jumpAction);
   jump.dataset.action = "galaxy-jump";
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
@@ -655,7 +706,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     shot,
   };
 
-  let view: GalaxyMapView | null = null;
   let art: GalaxyMapArt | null = null;
   // Where the ship is along the route, its move under way and its frame.
   let distance = 0;
@@ -771,7 +821,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     if (!view) {
       return;
     }
-    jump.textContent = destinationAction(labels, viewingEarth, view);
+    jumpAction.setLabel(destinationAction(labels, viewingEarth, view));
+    jumpAction.refresh();
     if (viewingEarth) {
       number.textContent = labels.earthKicker;
       name.textContent = labels.earthTitle;
@@ -780,8 +831,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       text.removeAttribute("data-locked");
       screen.setAttribute("aria-label", labels.earthTitle);
       setStoryScenePreview(art?.homeScene, art?.homePreview, shot);
-      jump.classList.remove("ada-unavailable");
-      jump.removeAttribute("aria-disabled");
       return;
     }
     const galaxy = view.galaxies[view.panel - 1]!;
@@ -794,12 +843,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     development.hidden = !(galaxy.unlocked && galaxy.placeholder);
     const preview = galaxy.unlocked ? galaxy.preview.open : galaxy.preview.locked;
     setStoryScenePreview(undefined, preview, shot);
-    jump.classList.toggle("ada-unavailable", !galaxy.unlocked);
-    if (galaxy.unlocked) {
-      jump.removeAttribute("aria-disabled");
-    } else {
-      jump.setAttribute("aria-disabled", "true");
-    }
   }
 
   function stop(): void {
@@ -1018,25 +1061,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   register(earth, selectEarth);
   earth.addEventListener("focus", selectEarth);
   leaveFocus.push(() => earth.removeEventListener("focus", selectEarth));
-  register(jump, () => {
-    if (!view || unlock) {
-      return;
-    }
-    if (viewingEarth) {
-      options.onEarth();
-      return;
-    }
-    const galaxy = view.galaxies[view.panel - 1];
-    if (galaxy?.unlocked) {
-      if (view.stay) {
-        options.onClose();
-      } else {
-        options.onJump();
-      }
-    } else {
-      refuse(jump, reduced());
-    }
-  });
   register(closeX, () => options.onClose());
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
   // then Earth, the destination action and the close X when available.

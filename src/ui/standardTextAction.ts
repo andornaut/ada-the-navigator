@@ -11,6 +11,7 @@ interface StandardTextActionOptions {
   ) => ControlAvailability | { readonly kind: "disabled" };
   readonly current: () => boolean;
   readonly run: () => void;
+  readonly refuse?: (reason: string) => void;
   readonly separateFace?: boolean;
 }
 
@@ -34,6 +35,20 @@ export function createStandardTextAction(
       return action?.available() ? action : null;
     },
     getState: () => ({ availability: options.availability(state.button) }),
+    ...(options.refuse
+      ? {
+          onUnavailable: () => {
+            // Kit can report an unavailable click even when getAction returned null.
+            if (options.availability(kit.element).kind !== "unavailable") {
+              return;
+            }
+            const action = resolveAdaHoldAction(root, kit.element);
+            if (action?.available()) {
+              action.activate();
+            }
+          },
+        }
+      : {}),
     rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
   });
   state.button = kit.element;
@@ -45,9 +60,11 @@ export function createStandardTextAction(
           return state.kind === "disabled" ? { kind: "omitted" } : state;
         },
         run: options.run,
+        ...(options.refuse ? { refuse: options.refuse } : {}),
       },
       current: options.current,
       nativeClickOwner: "factory",
+      ...(options.refuse ? { ownAriaDisabled: "refusal-feedback" as const } : {}),
       slopPx: () => SCROLL.dragThreshold * readViewUnit(kit.element),
     },
     kit.element,

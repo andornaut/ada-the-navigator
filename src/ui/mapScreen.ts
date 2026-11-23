@@ -24,7 +24,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
-import { CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
+import { BUTTON_SLICE, CARD_SLICE, FOCUS_RING } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
   font,
@@ -90,7 +90,7 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { createButton, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
 import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
@@ -477,6 +477,33 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-navigation .ada-button{
   flex:0 1 auto
+}
+/* The selected-place button uses the footer's secondary face and keeps the refusal label cue. */
+.ada-controls .ada-map-screen .ui-standard-button[data-action="map-travel"]:focus-visible{
+  outline:none;
+  box-shadow:none
+}
+.ada-controls .ada-map-screen .ui-standard-button[data-action="map-travel"]:focus-visible:not([aria-disabled]){
+  background-color:${BUTTON_FACE.secondary};
+  background-image:linear-gradient(${TEXT_TOKENS.label},${TEXT_TOKENS.label});
+  background-clip:padding-box;
+  border-image-slice:${BUTTON_SLICE.top} ${BUTTON_SLICE.right} ${BUTTON_SLICE.bottom} ${BUTTON_SLICE.left};
+  color:${TEXT_TOKENS.buttonLabel}
+}
+.ada-controls .ada-map-screen .ui-standard-button[aria-disabled=true]:focus-visible{
+  background-color:${BUTTON_FACE.disabled};
+  color:${TEXT_TOKENS.disabledLabel};
+  forced-color-adjust:auto;
+  text-decoration:underline;
+  text-underline-offset:.15em
+}
+@media (forced-colors:active){
+  .ada-controls .ada-map-screen .ui-standard-button[data-action="map-travel"]:focus-visible:not([aria-disabled]){
+    forced-color-adjust:none;
+    background-color:ButtonFace;
+    background-image:linear-gradient(Highlight,Highlight);
+    color:HighlightText
+  }
 }
 .ada-controls .ada-map-header{
   position:absolute;
@@ -868,6 +895,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   screen.setAttribute("aria-label", labels.map);
   screen.hidden = true;
   let disposed = false;
+  let state: MapScreenState | null = null;
+  let selected: string | null = null;
+  const places = () => state?.map.places ?? [];
+  const selectedPlace = () => places().find(({ id }) => id === selected) ?? null;
+  const travelNow = () =>
+    travelState(
+      state?.inDanger ?? false,
+      state?.towing ?? false,
+      state?.carrying ?? false,
+      selectedPlace(),
+    );
   const actionBindings = new Set<{ dispose(): void }>();
   const registerAction = (
     action: Pick<
@@ -987,8 +1025,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   for (const line of detail) {
     line.className = "ada-map-detail";
   }
-  const travel = createButton(labels.travelHere, "secondary");
-  travel.dataset.action = "map-travel";
   const reason = document.createElement("div");
   reason.className = "ada-map-reason";
   const reasons = {
@@ -996,9 +1032,36 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     danger: document.createElement("span"),
     towing: document.createElement("span"),
   };
-  reasons.danger.textContent = labels.travelUnavailable;
-  reasons.towing.textContent = labels.towTravel;
-  reasons.carrying.textContent = labels.carryTravel;
+  const travelReasons = {
+    carrying: labels.carryTravel,
+    danger: labels.travelUnavailable,
+    towing: labels.towTravel,
+  };
+  for (const key of ["carrying", "danger", "towing"] as const) {
+    reasons[key].textContent = travelReasons[key];
+  }
+  const travelAction = createStandardTextAction(root, labels.travelHere, {
+    availability: () => {
+      const { offered, reason } = travelNow();
+      return !offered
+        ? { kind: "omitted" }
+        : reason === null
+          ? { kind: "available" }
+          : { kind: "unavailable", reason: travelReasons[reason] };
+    },
+    current: () => !disposed && !screen.hidden && inCurrentView(root, travelAction.element),
+    refuse: () => refuse(travelAction.element, options.reducedMotion()),
+    run: () => {
+      const place = selectedPlace();
+      if (place) {
+        options.onTravel(place.id);
+      }
+    },
+  });
+  const travel = travelAction.element;
+  travel.dataset.action = "map-travel";
+  setButtonRole("secondary", travel);
+  actionBindings.add(travelAction);
   const empty = document.createElement("p");
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
@@ -1063,7 +1126,18 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     options.onQuests(),
   );
   questsButton.setAttribute("aria-haspopup", "dialog");
-  const galaxies = createButton(labels.galaxies, "secondary");
+  const galaxiesAction = createStandardTextAction(root, labels.galaxies, {
+    availability: () =>
+      galaxiesAvailable(state?.inDanger ?? false)
+        ? { kind: "available" }
+        : { kind: "unavailable", reason: labels.travelUnavailable },
+    current: () => !disposed && !screen.hidden && inCurrentView(root, galaxiesAction.element),
+    refuse: () => refuse(galaxiesAction.element, options.reducedMotion()),
+    run: () => options.onGalaxies(),
+  });
+  const galaxies = galaxiesAction.element;
+  setButtonRole("secondary", galaxies);
+  actionBindings.add(galaxiesAction);
   galaxies.dataset.action = "map-galaxies";
   galaxies.setAttribute("aria-haspopup", "dialog");
   const closeButton = navigationAction(
@@ -1125,9 +1199,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
 
   let textMeasure: CanvasRenderingContext2D | null | undefined;
   const inkMeasurements = new Map<string, { offset: number; width: number }>();
-  let state: MapScreenState | null = null;
   let view: MapView | null = null;
-  let selected: string | null = null;
   const chips = new Map<string, HTMLButtonElement>();
   let order = "";
 
@@ -1150,15 +1222,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const fit = fitRegion(insets, size);
     return { fit, inner: innerRegion(fit), insets, size, unit };
   };
-  const places = () => state?.map.places ?? [];
-  const selectedPlace = () => places().find(({ id }) => id === selected) ?? null;
-  const travelNow = () =>
-    travelState(
-      state?.inDanger ?? false,
-      state?.towing ?? false,
-      state?.carrying ?? false,
-      selectedPlace(),
-    );
   const detailLines = (place: MapPlace) => {
     if (!state) {
       return [];
@@ -1454,24 +1517,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         line.textContent = lines[index] ?? "";
         line.hidden = lines[index] === undefined;
       });
-      travel.hidden = !travelling.offered;
-      travel.classList.toggle("ada-unavailable", travelling.reason !== null);
-      if (travelling.reason === null) {
-        travel.removeAttribute("aria-disabled");
-      } else {
-        travel.setAttribute("aria-disabled", "true");
-      }
     }
+    travelAction.refresh();
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
     reasons.carrying.toggleAttribute("data-shown", travelling.reason === "carrying");
-    const galaxiesShown = galaxiesAvailable(state?.inDanger ?? false);
-    galaxies.classList.toggle("ada-unavailable", !galaxiesShown);
-    if (galaxiesShown) {
-      galaxies.removeAttribute("aria-disabled");
-    } else {
-      galaxies.setAttribute("aria-disabled", "true");
-    }
+    galaxiesAction.refresh();
   };
 
   // Selecting pans the chip clear of the panel at once; an empty press clears the selection.
@@ -1529,23 +1580,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     toolButtons.get("recentre")!,
   );
-  registerAction(
-    {
-      run: () => {
-        const place = selectedPlace();
-        const now = travelNow();
-        if (!place || !now.offered) {
-          return;
-        }
-        if (now.reason !== null) {
-          refuse(travel, options.reducedMotion());
-          return;
-        }
-        options.onTravel(place.id);
-      },
-    },
-    travel,
-  );
   const goTo = (place: MapPlace) => {
     cancelFieldAction();
     if (view) {
@@ -1557,19 +1591,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       focusTarget(chip);
     }
   };
-  registerAction(
-    {
-      run: () => {
-        if (!galaxiesAvailable(state?.inDanger ?? false)) {
-          refuse(galaxies, options.reducedMotion());
-          return;
-        }
-        options.onGalaxies();
-      },
-    },
-    galaxies,
-  );
-
   // The shared root owns field selection. Page listeners keep pan, pinch and capture bookkeeping.
   const pointers = new Map<number, Point>();
   let press: { readonly at: Point; moved: boolean } | null = null;
