@@ -453,7 +453,7 @@
     },
     {
       "id": "craft-stranded-seed-pod-0-a",
-      "path": "/art/sunflower/stranded-seed-pod-0-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -466,11 +466,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-0-b",
-      "path": "/art/sunflower/stranded-seed-pod-0-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -483,11 +484,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-1-a",
-      "path": "/art/sunflower/stranded-seed-pod-1-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -500,11 +502,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-1-b",
-      "path": "/art/sunflower/stranded-seed-pod-1-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -517,11 +520,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-2-a",
-      "path": "/art/sunflower/stranded-seed-pod-2-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -534,11 +538,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-2-b",
-      "path": "/art/sunflower/stranded-seed-pod-2-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -551,11 +556,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-3-a",
-      "path": "/art/sunflower/stranded-seed-pod-3-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -568,11 +574,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-3-b",
-      "path": "/art/sunflower/stranded-seed-pod-3-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -585,11 +592,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-4-a",
-      "path": "/art/sunflower/stranded-seed-pod-4-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -602,11 +610,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-4-b",
-      "path": "/art/sunflower/stranded-seed-pod-4-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -619,11 +628,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-5-a",
-      "path": "/art/sunflower/stranded-seed-pod-5-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -636,11 +646,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-5-b",
-      "path": "/art/sunflower/stranded-seed-pod-5-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -653,11 +664,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-6-a",
-      "path": "/art/sunflower/stranded-seed-pod-6-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -670,11 +682,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-6-b",
-      "path": "/art/sunflower/stranded-seed-pod-6-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -687,11 +700,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-7-a",
-      "path": "/art/sunflower/stranded-seed-pod-7-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -704,11 +718,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-7-b",
-      "path": "/art/sunflower/stranded-seed-pod-7-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -721,11 +736,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-8-a",
-      "path": "/art/sunflower/stranded-seed-pod-8-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -738,11 +754,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-8-b",
-      "path": "/art/sunflower/stranded-seed-pod-8-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -755,11 +772,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-9-a",
-      "path": "/art/sunflower/stranded-seed-pod-9-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -772,11 +790,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-9-b",
-      "path": "/art/sunflower/stranded-seed-pod-9-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -789,11 +808,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-10-a",
-      "path": "/art/sunflower/stranded-seed-pod-10-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -806,11 +826,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-10-b",
-      "path": "/art/sunflower/stranded-seed-pod-10-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -823,11 +844,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-11-a",
-      "path": "/art/sunflower/stranded-seed-pod-11-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -840,11 +862,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-11-b",
-      "path": "/art/sunflower/stranded-seed-pod-11-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -857,11 +880,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-12-a",
-      "path": "/art/sunflower/stranded-seed-pod-12-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -874,11 +898,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-12-b",
-      "path": "/art/sunflower/stranded-seed-pod-12-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -891,11 +916,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-13-a",
-      "path": "/art/sunflower/stranded-seed-pod-13-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -908,11 +934,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-13-b",
-      "path": "/art/sunflower/stranded-seed-pod-13-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -925,11 +952,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-14-a",
-      "path": "/art/sunflower/stranded-seed-pod-14-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -942,11 +970,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-14-b",
-      "path": "/art/sunflower/stranded-seed-pod-14-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -959,11 +988,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-15-a",
-      "path": "/art/sunflower/stranded-seed-pod-15-a.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -976,11 +1006,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-seed-pod-15-b",
-      "path": "/art/sunflower/stranded-seed-pod-15-b.svg",
+      "path": "/art/sunflower/stranded-seed-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -993,7 +1024,8 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-seed-pod"
+      "craft": "stranded-seed-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-scrap-barge-0",

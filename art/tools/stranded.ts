@@ -140,26 +140,35 @@ export function exportStranded(
 ) {
   const prefix = `craft-${spec.id}-`;
   const sheet = `${spec.id}-sheet.svg`;
-  const current = installed.filter(({ id }) => id.startsWith(prefix));
-  const packed = current.some(({ svgSheet }) => svgSheet === true);
-  if (
-    packed &&
-    (spec.frames.length !== 1 ||
-      spec.frames[0]!.name !== "" ||
-      current.length !== ENEMY_HEADINGS ||
-      current.some(
-        ({ id, path: framePath, svgSheet }, yaw) =>
-          id !== `${prefix}${yaw}` || framePath !== path + sheet || svgSheet !== true,
-      ))
-  ) {
-    throw new Error(`Incomplete stranded sheet selection: ${spec.id}`);
-  }
+  const frameFile = (yaw: number, name: string) =>
+    name ? `${spec.id}-${yaw}-${name}` : `${spec.id}-${yaw}`;
   const poses = Array.from({ length: ENEMY_HEADINGS }, (_, yaw): Pose => ({
     pitch: spec.pitch,
     roll: spec.roll,
     scale: spec.scale,
     yaw,
   }));
+  const current = installed.filter(({ id }) => id.startsWith(prefix));
+  const packed = current.some(({ svgSheet }) => svgSheet === true);
+  if (packed) {
+    const phases = spec.frames.map(({ name }) => name).join(",");
+    const ids = poses.flatMap(({ yaw }) =>
+      spec.frames.map(({ name }) => `craft-${frameFile(yaw, name)}`),
+    );
+    if (
+      !(
+        (spec.frames.length === 1 && phases === "") ||
+        (spec.frames.length === 2 && phases === "a,b")
+      ) ||
+      current.length !== ids.length ||
+      current.some(
+        ({ id, path: framePath, svgSheet }, index) =>
+          id !== ids[index] || framePath !== path + sheet || svgSheet !== true,
+      )
+    ) {
+      throw new Error(`Incomplete stranded sheet selection: ${spec.id}`);
+    }
+  }
   const drawn = poses.map((pose) =>
     spec.frames.map(({ build, name }) => ({
       faces: craftFaces(build(facingAt(pose)), spec.levels, pose),
@@ -178,10 +187,11 @@ export function exportStranded(
   const c = size / 2;
   const entries = [];
   const headings = [];
-  const roots: string[] = [];
+  const roots: { id: string; svg: string }[] = [];
   for (const [yaw, frames] of drawn.entries()) {
     for (const { faces, name } of frames) {
-      const file = name ? `${spec.id}-${yaw}-${name}` : `${spec.id}-${yaw}`;
+      const file = frameFile(yaw, name);
+      const id = `craft-${file}`;
       const polygons = faces.map(
         ({ color, points: list }) =>
           `  <polygon fill="${color}" points="${points(list.map((p) => projectAt(c, c, p)))}"/>`,
@@ -190,12 +200,12 @@ export function exportStranded(
         svg(`${spec.title} ${yaw}${name ? ` ${name}` : ""}`, size, size, polygons),
       );
       if (packed) {
-        roots.push(root.trimEnd());
+        roots.push({ id, svg: root.trimEnd() });
       } else {
         writeFileSync(`${dir}${file}.svg`, root);
       }
       entries.push({
-        id: `craft-${file}`,
+        id,
         path: packed ? path + sheet : `${path}${file}.svg`,
         width: size,
         height: size,
@@ -213,17 +223,18 @@ export function exportStranded(
     headings.push({ index: yaw, tow: [round(tx), round(ty)] });
   }
   if (packed) {
+    // Keep the original four-row grid. A/B uses adjacent cells for each heading.
     // Raw-sized cells keep each nested root at its standalone intrinsic size.
-    const wide = size * 4;
+    const wide = size * 4 * spec.frames.length;
     const layout = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
       { rectangles: roots.map(() => ({ width: size, height: size })), value: spec.id },
     ])?.pages[0];
-    if (!layout || layout.placed[0]?.at.length !== ENEMY_HEADINGS) {
+    if (!layout || layout.placed[0]?.at.length !== roots.length) {
       throw new Error(`Cannot pack stranded sheet: ${spec.id}`);
     }
-    const frames = roots.map((root, yaw) => {
-      const { x, y } = layout.placed[0]!.at[yaw]!;
-      return `<svg id="${prefix}${yaw}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+    const frames = roots.map(({ id, svg }, index) => {
+      const { x, y } = layout.placed[0]!.at[index]!;
+      return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
     });
     writeFileSync(
       dir + sheet,

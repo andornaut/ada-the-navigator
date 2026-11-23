@@ -15735,7 +15735,7 @@
     },
     {
       "id": "craft-stranded-needle-pod-0-a",
-      "path": "/art/needle/stranded-needle-pod-0-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15748,11 +15748,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-0-b",
-      "path": "/art/needle/stranded-needle-pod-0-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15765,11 +15766,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-1-a",
-      "path": "/art/needle/stranded-needle-pod-1-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15782,11 +15784,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-1-b",
-      "path": "/art/needle/stranded-needle-pod-1-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15799,11 +15802,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-2-a",
-      "path": "/art/needle/stranded-needle-pod-2-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15816,11 +15820,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-2-b",
-      "path": "/art/needle/stranded-needle-pod-2-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15833,11 +15838,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-3-a",
-      "path": "/art/needle/stranded-needle-pod-3-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15850,11 +15856,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-3-b",
-      "path": "/art/needle/stranded-needle-pod-3-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15867,11 +15874,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-4-a",
-      "path": "/art/needle/stranded-needle-pod-4-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15884,11 +15892,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-4-b",
-      "path": "/art/needle/stranded-needle-pod-4-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15901,11 +15910,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-5-a",
-      "path": "/art/needle/stranded-needle-pod-5-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15918,11 +15928,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-5-b",
-      "path": "/art/needle/stranded-needle-pod-5-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15935,11 +15946,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-6-a",
-      "path": "/art/needle/stranded-needle-pod-6-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15952,11 +15964,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-6-b",
-      "path": "/art/needle/stranded-needle-pod-6-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15969,11 +15982,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-7-a",
-      "path": "/art/needle/stranded-needle-pod-7-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15986,11 +16000,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-7-b",
-      "path": "/art/needle/stranded-needle-pod-7-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16003,11 +16018,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-8-a",
-      "path": "/art/needle/stranded-needle-pod-8-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16020,11 +16036,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-8-b",
-      "path": "/art/needle/stranded-needle-pod-8-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16037,11 +16054,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-9-a",
-      "path": "/art/needle/stranded-needle-pod-9-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16054,11 +16072,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-9-b",
-      "path": "/art/needle/stranded-needle-pod-9-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16071,11 +16090,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-10-a",
-      "path": "/art/needle/stranded-needle-pod-10-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16088,11 +16108,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-10-b",
-      "path": "/art/needle/stranded-needle-pod-10-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16105,11 +16126,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-11-a",
-      "path": "/art/needle/stranded-needle-pod-11-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16122,11 +16144,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-11-b",
-      "path": "/art/needle/stranded-needle-pod-11-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16139,11 +16162,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-12-a",
-      "path": "/art/needle/stranded-needle-pod-12-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16156,11 +16180,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-12-b",
-      "path": "/art/needle/stranded-needle-pod-12-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16173,11 +16198,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-13-a",
-      "path": "/art/needle/stranded-needle-pod-13-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16190,11 +16216,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-13-b",
-      "path": "/art/needle/stranded-needle-pod-13-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16207,11 +16234,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-14-a",
-      "path": "/art/needle/stranded-needle-pod-14-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16224,11 +16252,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-14-b",
-      "path": "/art/needle/stranded-needle-pod-14-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16241,11 +16270,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-15-a",
-      "path": "/art/needle/stranded-needle-pod-15-a.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16258,11 +16288,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-needle-pod-15-b",
-      "path": "/art/needle/stranded-needle-pod-15-b.svg",
+      "path": "/art/needle/stranded-needle-pod-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -16275,7 +16306,8 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-needle-pod"
+      "craft": "stranded-needle-pod",
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-needle-1",

@@ -15091,7 +15091,7 @@
     },
     {
       "id": "craft-stranded-lamp-buoy-0-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-0-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15104,11 +15104,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-0-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-0-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15121,11 +15122,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-1-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-1-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15138,11 +15140,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-1-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-1-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15155,11 +15158,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-2-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-2-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15172,11 +15176,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-2-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-2-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15189,11 +15194,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-3-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-3-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15206,11 +15212,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-3-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-3-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15223,11 +15230,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-4-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-4-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15240,11 +15248,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-4-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-4-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15257,11 +15266,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-5-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-5-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15274,11 +15284,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-5-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-5-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15291,11 +15302,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-6-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-6-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15308,11 +15320,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-6-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-6-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15325,11 +15338,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-7-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-7-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15342,11 +15356,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-7-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-7-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15359,11 +15374,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-8-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-8-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15376,11 +15392,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-8-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-8-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15393,11 +15410,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-9-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-9-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15410,11 +15428,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-9-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-9-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15427,11 +15446,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-10-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-10-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15444,11 +15464,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-10-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-10-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15461,11 +15482,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-11-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-11-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15478,11 +15500,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-11-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-11-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15495,11 +15518,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-12-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-12-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15512,11 +15536,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-12-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-12-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15529,11 +15554,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-13-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-13-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15546,11 +15572,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-13-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-13-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15563,11 +15590,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-14-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-14-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15580,11 +15608,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-14-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-14-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15597,11 +15626,12 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-15-a",
-      "path": "/art/andromeda/stranded-lamp-buoy-15-a.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15614,11 +15644,12 @@
       },
       "blink": "a",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "craft-stranded-lamp-buoy-15-b",
-      "path": "/art/andromeda/stranded-lamp-buoy-15-b.svg",
+      "path": "/art/andromeda/stranded-lamp-buoy-sheet.svg",
       "width": 64,
       "height": 64,
       "displayWidth": 28,
@@ -15631,7 +15662,8 @@
       },
       "blink": "b",
       "frameMs": 700,
-      "craft": "stranded-lamp-buoy"
+      "craft": "stranded-lamp-buoy",
+      "svgSheet": true
     },
     {
       "id": "backdrop-decoration-andromeda-1",
