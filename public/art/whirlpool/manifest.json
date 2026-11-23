@@ -4779,89 +4779,109 @@
     },
     {
       "id": "brine-portrait",
-      "path": "/art/whirlpool/portraits/brine.png",
+      "path": "/art/whirlpool/portraits/whirlpool-full.png",
       "width": 32,
-      "height": 32,
+      "height": 164,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "coral-portrait",
-      "path": "/art/whirlpool/portraits/coral.png",
+      "path": "/art/whirlpool/portraits/whirlpool-full.png",
       "width": 32,
-      "height": 32,
+      "height": 164,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 33,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "family-portrait",
-      "path": "/art/whirlpool/portraits/family.png",
+      "path": "/art/whirlpool/portraits/whirlpool-full.png",
       "width": 32,
-      "height": 32,
+      "height": 164,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 66,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "marlo-portrait",
-      "path": "/art/whirlpool/portraits/marlo.png",
+      "path": "/art/whirlpool/portraits/whirlpool-full.png",
       "width": 32,
-      "height": 32,
+      "height": 164,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 99,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "ripple-portrait",
-      "path": "/art/whirlpool/portraits/ripple.png",
+      "path": "/art/whirlpool/portraits/whirlpool-full.png",
       "width": 32,
-      "height": 32,
+      "height": 164,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 132,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "brine-portrait-compact",
-      "path": "/art/whirlpool/portraits/brine-compact.png",
+      "path": "/art/whirlpool/portraits/whirlpool-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 114,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -4869,17 +4889,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "coral-portrait-compact",
-      "path": "/art/whirlpool/portraits/coral-compact.png",
+      "path": "/art/whirlpool/portraits/whirlpool-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 114,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -4887,17 +4911,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 23,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "family-portrait-compact",
-      "path": "/art/whirlpool/portraits/family-compact.png",
+      "path": "/art/whirlpool/portraits/whirlpool-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 114,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -4905,17 +4933,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 46,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "marlo-portrait-compact",
-      "path": "/art/whirlpool/portraits/marlo-compact.png",
+      "path": "/art/whirlpool/portraits/whirlpool-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 114,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -4923,17 +4955,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 69,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "ripple-portrait-compact",
-      "path": "/art/whirlpool/portraits/ripple-compact.png",
+      "path": "/art/whirlpool/portraits/whirlpool-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 114,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -4941,10 +4977,14 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 92,
+        "width": 22,
+        "height": 22
       }
     },
     {

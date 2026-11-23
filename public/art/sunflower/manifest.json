@@ -249,105 +249,129 @@
     },
     {
       "id": "bramble-portrait",
-      "path": "/art/sunflower/portraits/bramble.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "clover-portrait",
-      "path": "/art/sunflower/portraits/clover.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 33,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "nectar-portrait",
-      "path": "/art/sunflower/portraits/nectar.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 66,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "patch-portrait",
-      "path": "/art/sunflower/portraits/patch.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 99,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "rivet-portrait",
-      "path": "/art/sunflower/portraits/rivet.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 132,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "saffron-portrait",
-      "path": "/art/sunflower/portraits/saffron.png",
+      "path": "/art/sunflower/portraits/sunflower-full.png",
       "width": 32,
-      "height": 32,
+      "height": 197,
       "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 32,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 165,
+        "width": 32,
+        "height": 32
       }
     },
     {
       "id": "bramble-portrait-compact",
-      "path": "/art/sunflower/portraits/bramble-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -355,17 +379,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "clover-portrait-compact",
-      "path": "/art/sunflower/portraits/clover-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -373,17 +401,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 23,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "nectar-portrait-compact",
-      "path": "/art/sunflower/portraits/nectar-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -391,17 +423,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 46,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "patch-portrait-compact",
-      "path": "/art/sunflower/portraits/patch-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -409,17 +445,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 69,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "rivet-portrait-compact",
-      "path": "/art/sunflower/portraits/rivet-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -427,17 +467,21 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 92,
+        "width": 22,
+        "height": 22
       }
     },
     {
       "id": "saffron-portrait-compact",
-      "path": "/art/sunflower/portraits/saffron-compact.png",
+      "path": "/art/sunflower/portraits/sunflower-compact.png",
       "width": 22,
-      "height": 22,
+      "height": 137,
       "displayWidth": 44,
       "displayHeight": 44,
       "facing": "front",
@@ -445,10 +489,14 @@
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 22,
-      "frameHeight": 22,
       "frames": {
         "neutral": 0
+      },
+      "portraitCrop": {
+        "x": 0,
+        "y": 115,
+        "width": 22,
+        "height": 22
       }
     },
     {
