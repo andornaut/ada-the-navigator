@@ -19,18 +19,19 @@ The three sector one cooperating outposts: growers, a workshop and salvagers.
 - Solid models in the [station](station.md) projection, culling and family:
   cream structure `#efe4cf` (sides `#bfae94`), warm lit windows `#ffe9b8`, and
   fixed orientations. The Growers' navigation strip sits in the habitat rim.
-  The Salvagers' lights sit on the hull and grabber. The Workshop's articulated
-  arms surround an open repair area. Ada visits each outpost with Use.
+  The Salvagers use a steel-blue orbital frame with teal tools and one spine light.
+  The Workshop's articulated arms surround an open repair area. Ada visits each
+  outpost with Use.
 - Each outpost is identified by its silhouette and colours alone. No labels,
   signs or text are drawn on or beside it.
 
 ### Palette
 
-| Outpost   | Shapes                                                                   | Colours                                                                                                                                   |
-| --------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Growers   | Seven hydroponic modules around a round deck and three habitat domes     | Steel `#637985`, leaf `#9ccc5a`, glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`)                  |
-| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, mint `#9fcbc1` and blue-green `#527c83`                                                            |
-| Salvagers | Patched hull, tank, scrap stacks, a turret grabber with an electromagnet | Steel `#b8bfc9`, slate `#8d9bb0`, olive `#aaa883`, rust `#b49a7c`, dark `#6e7482`; periwinkle magnet and beacon `#8f9cf0` (dim `#4a5080`) |
+| Outpost   | Shapes                                                                   | Colours                                                                                                                  |
+| --------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Growers   | Seven hydroponic modules around a round deck and three habitat domes     | Steel `#637985`, leaf `#9ccc5a`, glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`) |
+| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, mint `#9fcbc1` and blue-green `#527c83`                                           |
+| Salvagers | Tapered spine, two open trusses and twin mounted salvage claws           | Steel-blue keel `#526c89` and trusses `#7c96ae`, teal claws `#75a8af`, spine light `#a4ddd4` (dim `#487882`)             |
 
 Growers' leaf green stays clearly yellower and darker than the
 [Stardust](stardust.md) mint.
@@ -48,7 +49,7 @@ Every entry has the station schema plus `outpost`, the outpost role
 
 - Display size is `frame * 0.4375 * 1.5 * 1.4`, the [destination scale](destinations.md#scale) with
   Sunflower outpost growth. `facing` is `fixed`; `dock.outward` is `[0, 1]`.
-- Pivots lie on the world plane: the growers' deck centre, the workshop's central bus and the model origin between the salvagers' hull and tank.
+- Pivots lie on the world plane: the growers' deck centre, the workshop's central bus and the model origin on the salvagers' spine.
 - The legacy approach point lies on the world plane, below the pivot by 43.841
   frame px (growers), 16.971 (workshop) and 38.184 (salvagers). Dock values are
   frame px.
@@ -57,7 +58,8 @@ Every entry has the station schema plus `outpost`, the outpost role
 
 - `frameMs` 700: frames A and B alternate, 700 ms each.
 - A lights the growers' module tips and dome beacon, the workshop's
-  manipulator tips, and the salvagers' magnet and antenna beacon. B dims them.
+  manipulator tips, and the salvagers' teal spine light. B dims them. Funded
+  salvage beacons retain their own periwinkle lights and staggered phases.
 - Reduced motion shows frame A only.
 
 ## Discovery cache

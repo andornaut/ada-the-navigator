@@ -338,15 +338,8 @@ function workshop(lit: boolean): Part[][] {
   return groups;
 }
 
-// Salvagers: a patched hull, scrap stacks and a periwinkle electromagnet grabber.
-const steel = "#b8bfc9";
-const steelSide = "#7f8794";
 const slate = "#8d9bb0";
 const slateSide = "#5f6b7e";
-const olive = "#aaa883";
-const oliveSide = "#76755a";
-const rust = "#b49a7c";
-const rustSide = "#7f6b55";
 const dark = "#6e7482";
 const darkSide = "#4f5462";
 const magnet = "#8f9cf0";
@@ -355,104 +348,52 @@ const magnetDim = "#4a5080";
 const magnetDimSide = "#383d63";
 const SALVAGERS_FACE = 54;
 
-// Tilted plates piled in shrinking tiers with mismatched colours.
-function scrapStack(cx: number, cy: number, seed: number, tiers: number): Part[] {
-  const colors = [
-    [steel, steelSide],
-    [olive, oliveSide],
-    [slate, slateSide],
-    [rust, rustSide],
-    [dark, darkSide],
-    [cream, creamSide],
-  ] as const;
-  const out: Part[] = [];
-  let z = 0;
-  for (let t = 0; t < tiers; t++) {
-    const [top, side] = colors[(seed + t * 2) % colors.length]!;
-    const size = 15 - t * 3;
-    const angle = seed * 0.7 + t * 0.55;
-    const h = 3 + ((seed + t) % 2) * 1.5;
-    out.push({
-      plan: orientedBox(cx + (t % 2) * 1.5, cy - t, angle, size * 1.2, size),
-      z0: z,
-      z1: z + h,
-      top,
-      side,
-    });
-    z += h;
-  }
-  return out;
-}
-
+// Salvagers: a continuous spine with two open trusses and mounted salvage claws.
 function salvagers(lit: boolean): Part[][] {
-  const groups: Part[][] = [];
-  const signal = lit ? magnet : magnetDim;
-  const signalSide = lit ? magnetSide : magnetDimSide;
-  groups.push(scrapStack(-30, -4, 1, 4));
-  groups.push(scrapStack(-28, 24, 4, 3));
-  // Grabber arm on a turret at the back right, reaching screen-right over a stack.
-  const [tx, ty] = [10, -24];
-  const armAngle = -Math.PI / 4 + 0.15;
-  const reach = 32;
-  const [ex, ey] = [tx + Math.cos(armAngle) * reach, ty + Math.sin(armAngle) * reach];
-  groups.push(scrapStack(ex - 1, ey + 2, 2, 3));
-  groups.push([
-    { plan: ngon(8, 6, tx, ty, Math.PI / 8), z0: 0, z1: 24, top: slate, side: slateSide },
-    { plan: ngon(8, 7, tx, ty, Math.PI / 8), z0: 23, z1: 28, top: magnet, side: magnetSide },
-    {
-      plan: orientedBox(
-        tx + Math.cos(armAngle) * (reach / 2),
-        ty + Math.sin(armAngle) * (reach / 2),
-        armAngle,
-        reach + 6,
-        5.5,
-      ),
-      z0: 23.5,
-      z1: 28.5,
-      top: magnet,
-      side: magnetSide,
-    },
-    {
-      plan: box(ex - 0.6, ey - 0.6, ex + 0.6, ey + 0.6),
-      z0: 19,
-      z1: 24,
-      top: darkSide,
-      side: darkSide,
-    },
-  ]);
-  // Electromagnet disc holding a plate; the plate leads so the group draws after the stack.
-  groups.push([
-    { plan: orientedBox(ex, ey, 0.4, 11, 8), z0: 13.5, z1: 15.5, top: rust, side: rustSide },
-    { plan: ngon(8, 7, ex, ey, Math.PI / 8), z0: 15.5, z1: 19.5, top: signal, side: signalSide },
-  ]);
-  // Patched hull: three mismatched modules.
-  const hull = orientedBox(8, 6, 0.25, 34, 26);
-  groups.push([
-    { plan: hull, z0: 0, z1: 14, top: steel, side: steelSide },
-    { plan: orientedBox(2, 0, 0.25, 12, 10), z0: 14, z1: 14.8, top: olive, side: oliveSide },
-    { plan: orientedBox(15, 12, 0.6, 10, 8), z0: 14, z1: 14.8, top: rust, side: rustSide },
-    { plan: orientedBox(16, -1, 0.1, 8, 7), z0: 14, z1: 14.8, top: slate, side: slateSide },
-    ...wallWindows(facing, 6, 9, 2, 2.6, hull),
-    ...[0, 3, 6].map((rib) => ({
-      plan: orientedBox(8 + rib, 6 + rib * 0.25, 0.25, 1.2, 5),
-      z0: 14.8,
-      z1: 15.25,
-      top: darkSide,
-      side: darkSide,
-    })),
-  ]);
-  const tank = ngon(8, 9, -14, 8, Math.PI / 8);
-  groups.push([
-    { plan: tank, z0: 0, z1: 18, top: olive, side: oliveSide },
-    { plan: ngon(8, 6, -14, 8, Math.PI / 8), z0: 18, z1: 20, top: slate, side: slateSide },
-    ...wallWindows(facing, 11, 13.5, 1, 2.6, tank),
-  ]);
-  // Antenna with a periwinkle beacon on the tank.
-  groups.push([
-    { plan: box(-14.6, 7.4, -13.4, 8.6), z0: 20, z1: 32, top: dark, side: darkSide },
-    { plan: box(-16, 6, -12, 10), z0: 32, z1: 35, top: signal, side: signalSide },
-  ]);
-  return groups;
+  const keel = { top: "#526c89", side: "#334961" };
+  const truss = { top: "#7c96ae", side: "#3f5870" };
+  const arm = { top: "#75a8af", side: "#3f6875" };
+  const signal = {
+    top: lit ? "#a4ddd4" : "#487882",
+    side: lit ? "#598f91" : "#355460",
+  };
+  const spine = (
+    [
+      [-33, 0],
+      [-24, -7],
+      [-9, -10],
+      [11, -9],
+      [31, -4],
+      [37, 0],
+      [31, 4],
+      [11, 9],
+      [-9, 10],
+      [-24, 7],
+    ] as const
+  ).map(([along, across]) => at(along, across));
+  const hub = at(4, 0);
+  const structure: Part[] = [{ plan: spine, z0: -4, z1: 8, ...keel }];
+  const equipment: Part[][] = [[armLink(at(5, 0), at(14, 0), 8, 9, 4, signal)]];
+
+  for (const side of [-1, 1] as const) {
+    const shoulder = at(-8, side * 26);
+    const mount = at(4, side * 46);
+    const elbow = at(14, side * 53);
+    const tool = at(22, side * 45);
+    structure.push(
+      armLink(hub, shoulder, -1, 7, 8, truss),
+      armLink(shoulder, mount, -1, 7, 7, truss),
+      armLink(mount, at(20, side * 6), -2, 4, 5, keel),
+    );
+    equipment.push([
+      { plan: ngon(6, 7, ...mount), z0: -1, z1: 16, ...keel },
+      armLink(mount, elbow, 13, 19, 7, arm),
+      armLink(elbow, tool, 12, 18, 6, arm),
+      armLink(tool, at(26, side * 49), 10, 15, 3.5, arm),
+      armLink(tool, at(26, side * 41), 10, 15, 3.5, arm),
+    ]);
+  }
+  return [structure, ...equipment];
 }
 
 // Community project world changes (art/projects.md).
