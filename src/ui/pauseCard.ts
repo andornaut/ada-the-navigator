@@ -17,7 +17,7 @@ import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
-import { createButton, createCard } from "./modal.ts";
+import { createCard } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
@@ -125,17 +125,6 @@ function grid(): HTMLDivElement {
   return group;
 }
 
-// An unavailable action shows the disabled face and refuses: it stays focusable and pressable so
-// the press can be refused with the shared cue.
-function setAvailable(button: HTMLButtonElement, available: boolean): void {
-  button.classList.toggle("ada-unavailable", !available);
-  if (available) {
-    button.removeAttribute("aria-disabled");
-  } else {
-    button.setAttribute("aria-disabled", "true");
-  }
-}
-
 // The Paused card (art/layout.md), its Ship card and its full-screen map (art/map.md), as in
 // Chibi: one shows at a time, the cards over the dimmed game and the map in the dim's place. The
 // X, an outside tap, back and Escape resume from the Paused card; from the Ship card and the map
@@ -213,49 +202,36 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         },
         pauseButton: {
           create(initial) {
-            // Availability is fixed by pauseActions for this button's lifetime. Keep the
-            // existing reasonless refusal path for any unavailable action, including keyboard.
-            const standard = initial.available
-              ? createStandardTextAction(root, initial.label, {
-                  availability: (button) =>
-                    button?.disabled
-                      ? { kind: "disabled" }
-                      : button?.hidden
-                        ? { kind: "omitted" }
-                        : { kind: "available" },
-                  current: () => !disposed,
-                  run: () => act(initial.id),
-                  separateFace: true,
-                })
-              : undefined;
-            const button = standard?.element ?? createButton(initial.label, initial.role);
+            let available = initial.available;
+            const standard = createStandardTextAction(root, initial.label, {
+              availability: (element) =>
+                element?.disabled
+                  ? { kind: "disabled" }
+                  : element?.hidden
+                    ? { kind: "omitted" }
+                    : available
+                      ? { kind: "available" }
+                      : { kind: "unavailable", reason: "Action unavailable." },
+              current: () => !disposed,
+              refuse: () => refuse(button, options.reducedMotion()),
+              run: () => act(initial.id),
+              separateFace: true,
+            });
+            const button = standard.element;
             button.dataset.action = `pause-${initial.id}`;
-            if (standard) {
-              button.classList.toggle("ada-primary", initial.role === "primary");
-              setButtonRole(initial.role, button);
-              if (initial.id === "map" || initial.id === "resume") {
-                button.querySelector(".ui-control-label")!.classList.add("ada-pause-cap-label");
-              }
-            } else {
-              if (initial.id === "map" || initial.id === "resume") {
-                const label = document.createElement("span");
-                label.className = "ada-pause-cap-label";
-                label.textContent = initial.label;
-                button.replaceChildren(label);
-              }
-              register(button, () => act(initial.id));
+            button.classList.toggle("ada-primary", initial.role === "primary");
+            setButtonRole(initial.role, button);
+            if (initial.id === "map" || initial.id === "resume") {
+              button.querySelector(".ui-control-label")!.classList.add("ada-pause-cap-label");
             }
             buttons.set(initial.id, button);
             const update = (data: PauseTreeAction) => {
+              available = data.available;
               button.hidden = data.hidden;
-              if (standard) {
-                standard.refresh();
-              } else {
-                setAvailable(button, data.available);
-              }
+              standard.refresh();
             };
             update(initial);
-            return { dispose: standard?.dispose ?? (() => {}), element: button, slots: {}, update };
+            return { dispose: standard.dispose, element: button, slots: {}, update };
           },
           slots: [],
         },

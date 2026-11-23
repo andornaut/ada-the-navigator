@@ -10,6 +10,7 @@ import { mapScreenLabels, type MapScreenState } from "./mapScreen.ts";
 import * as pauseActions from "./pause.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 import { inCurrentView } from "./pressScope.ts";
+import * as refusal from "./refusal.ts";
 import type { ShipView } from "./shipCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.
@@ -432,20 +433,24 @@ it("keeps a declared unavailable action focusable and refuses native and held di
       action.id === "backToTitle" ? { ...action, available: false } : action,
     ),
   );
+  const cue = vi.spyOn(refusal, "refuse");
   const { modal, options, pause, root } = cards();
   pause.setState(state());
   pause.open();
   const exit = button(modal, "pause-backToTitle");
-  expect(exit.matches(".ui-standard-button")).toBe(false);
+  expect(exit.matches(".ui-standard-button")).toBe(true);
   expect(exit.getAttribute("aria-disabled")).toBe("true");
+  expect(exit.getAttribute("aria-description")).toBe("Action unavailable.");
   expect(exit.matches(":disabled")).toBe(false);
   exit.click();
+  expect(cue).toHaveBeenCalledTimes(1);
   const held = actionBinding.resolveAdaHoldAction(
     root as unknown as HTMLElement,
     exit as unknown as HTMLElement,
   );
   expect(held?.available()).toBe(true);
   held?.activate();
+  expect(cue).toHaveBeenCalledTimes(2);
   expect(options.onBackToTitle).not.toHaveBeenCalled();
   expect(pause.isOpen()).toBe(true);
   pause.dispose();
