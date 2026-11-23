@@ -445,7 +445,7 @@
     },
     {
       "id": "needle-debris-plate-0",
-      "path": "/art/needle/debris-plate-0.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -456,11 +456,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-1",
-      "path": "/art/needle/debris-plate-1.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -471,11 +472,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-2",
-      "path": "/art/needle/debris-plate-2.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -486,11 +488,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-3",
-      "path": "/art/needle/debris-plate-3.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -501,11 +504,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-4",
-      "path": "/art/needle/debris-plate-4.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -516,11 +520,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-5",
-      "path": "/art/needle/debris-plate-5.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -531,11 +536,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-6",
-      "path": "/art/needle/debris-plate-6.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -546,11 +552,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-plate-7",
-      "path": "/art/needle/debris-plate-7.svg",
+      "path": "/art/needle/debris-plate-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -561,11 +568,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-plate"
+      "debris": "needle-debris-plate",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-0",
-      "path": "/art/needle/debris-girder-0.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -576,11 +584,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-1",
-      "path": "/art/needle/debris-girder-1.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -591,11 +600,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-2",
-      "path": "/art/needle/debris-girder-2.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -606,11 +616,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-3",
-      "path": "/art/needle/debris-girder-3.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -621,11 +632,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-4",
-      "path": "/art/needle/debris-girder-4.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -636,11 +648,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-5",
-      "path": "/art/needle/debris-girder-5.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -651,11 +664,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-6",
-      "path": "/art/needle/debris-girder-6.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -666,11 +680,12 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "needle-debris-girder-7",
-      "path": "/art/needle/debris-girder-7.svg",
+      "path": "/art/needle/debris-girder-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -681,7 +696,8 @@
         "x": 0.5,
         "y": 0.5
       },
-      "debris": "needle-debris-girder"
+      "debris": "needle-debris-girder",
+      "svgSheet": true
     },
     {
       "id": "enemy-needle-swarm-0",

@@ -23,6 +23,7 @@ import {
   TUMBLE_FRAMES,
   unit,
 } from "./debris.ts";
+import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import { floorColour } from "./palette.ts";
 import { json } from "./projection.ts";
@@ -106,6 +107,7 @@ const BODY = bodyRamp(
   whirlpool.tint.chroma,
   whirlpool.tint.hue,
 );
+const debrisSvg = new Map<string, string>();
 const pieces = [
   {
     id: "whirlpool-debris-plate",
@@ -121,7 +123,11 @@ const pieces = [
     axis: unit([1, 0.3, 0.5]),
     scale: 1.15,
   },
-].map((spec) => exportDebris(dir, PUBLIC_DIR, BODY, CORAL, spec));
+].map((spec) =>
+  exportDebris(dir, PUBLIC_DIR, BODY, CORAL, spec, (file, svg) => {
+    debrisSvg.set(`${file}.svg`, svg);
+  }),
+);
 
 // ------------------------------------------------------------------ project world changes
 
@@ -198,7 +204,14 @@ await writeJson(`${dir}projects.json`, {
 replaceEntries(
   "whirlpool",
   (id) => id.startsWith("whirlpool-") && !id.startsWith("whirlpool-station-"),
-  [...pieces.flatMap(({ entries }) => entries), ...projectEntries],
+  [
+    ...writeDebrisFrames(
+      "whirlpool",
+      pieces.flatMap(({ entries }) => entries),
+      debrisSvg,
+    ),
+    ...projectEntries,
+  ],
 );
 
 // Whirlpool's manifest names the streak and debris data after the whale data.

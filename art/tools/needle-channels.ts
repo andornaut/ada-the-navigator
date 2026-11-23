@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { bentPlate, brokenGirder, type Solid, unit } from "./debris.ts";
+import { writeDebrisFrames } from "./debris-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import {
@@ -136,6 +137,7 @@ while (edgeOf(lift(STONE, bodyLift)) < EDGE_FLOOR) {
 }
 const BODY = lift(STONE, bodyLift);
 
+const debrisSvg = new Map<string, string>();
 const pieceData = frames.map(({ frame, piece, sets }) => {
   const centre = frame / 2;
   const files = sets.map((facets, k) => {
@@ -145,7 +147,7 @@ const pieceData = frames.map(({ frame, piece, sets }) => {
       /<polygon fill="(#[0-9A-Fa-f]{6})"/g,
       `<polygon fill="$1" stroke="$1" stroke-width="${SEAM}" stroke-linejoin="round"`,
     );
-    writeFileSync(`${OUT}${file}.svg`, svgText(svg));
+    debrisSvg.set(`${file}.svg`, svgText(svg));
     const pts = polygons.flatMap(({ points }) => points);
     const xs = pts.map(([x]) => x);
     const ys = pts.map(([, y]) => y);
@@ -270,7 +272,11 @@ writeFileSync(
   }),
 );
 writeFileSync(`${OUT}eye.json`, json(eye));
-replaceEntries("needle", (id) => id.startsWith("needle-debris-"), entries);
+replaceEntries(
+  "needle",
+  (id) => id.startsWith("needle-debris-"),
+  writeDebrisFrames("needle", entries, debrisSvg),
+);
 linkData("needle", { needleChannels: `${PUBLIC}channels.json`, needleEye: `${PUBLIC}eye.json` });
 console.log(
   `debris lift ${bodyLift}, body ${BODY.join(" ")}, worst piece edge median ${edgeOf(BODY).toFixed(2)}; gates off horizontal ${gates.map(({ offHorizontal: o }) => o.toFixed(1)).join(" ")}`,

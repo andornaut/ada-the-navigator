@@ -222,6 +222,8 @@ export function exportDebris(
   body: readonly string[],
   coral: string,
   { axis, id, scale, solid, title }: DebrisSpec,
+  writeFrame: (file: string, svg: string) => void = (file, svg) =>
+    writeFileSync(`${dir}${file}.svg`, svg),
 ) {
   const frames = Array.from({ length: TUMBLE_FRAMES }, (_, k) =>
     solid.flatMap(({ accent, faces }) =>
@@ -262,8 +264,8 @@ export function exportDebris(
     const file = `${id}-${k}`;
     // The viewBox stays in frame px; the intrinsic size is the display size, so the frame
     // rasterizes at the size it is drawn.
-    writeFileSync(
-      `${dir}${file}.svg`,
+    writeFrame(
+      file,
       svgText(
         [
           `<svg xmlns="http://www.w3.org/2000/svg" width="${w * DISPLAY_SCALE}" height="${h * DISPLAY_SCALE}" viewBox="0 0 ${w} ${h}">`,
