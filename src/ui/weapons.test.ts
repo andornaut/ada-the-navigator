@@ -280,9 +280,9 @@ describe("HUD weapon buttons", () => {
     const focus = shared.split("}").filter((rule) => rule.includes(":focus-visible .disc{"));
     expect(focus).toHaveLength(2);
     expect(focus[0]).toContain("background:#ead4aa");
-    expect(focus[0]).toContain("color:#181425");
+    expect(focus[0]).toContain("--disc-focus-glyph:#181425");
     expect(focus[1]).toContain("background:Highlight");
-    expect(focus[1]).toContain("color:HighlightText");
+    expect(focus[1]).toContain("--disc-focus-glyph:HighlightText");
     expect(focus.join("")).not.toMatch(/outline|box-shadow/u);
   });
 

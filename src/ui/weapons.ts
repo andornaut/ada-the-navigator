@@ -169,20 +169,20 @@ ${button}:focus-visible{
 }
 ${button}:focus-visible ${disc}{
   background:${HUD_DISC_STATES.selected.glyph};
-  color:${INK}
+  --disc-focus-glyph:${INK}
 }
 @media (forced-colors:active){
   ${button}:focus-visible ${disc}{
     forced-color-adjust:none;
     background:Highlight;
-    color:HighlightText
+    --disc-focus-glyph:HighlightText
   }
 }
 ${button} ${disc}::before{
   content:"";
   width:${units(HUD_BUTTON.glyph)};
   height:${units(HUD_BUTTON.glyph)};
-  background:currentColor;
+  background:var(--disc-focus-glyph,currentColor);
   -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
   mask:var(--glyph) center / 100% 100% no-repeat
 }
@@ -284,7 +284,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   background:${HUD_DISC_STATES.selected.face}
 }
 .ada-controls .ada-weapon[data-ui-refusal-red]:focus-visible .ada-disc{
-  color:inherit
+  --disc-focus-glyph:currentColor
 }
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{
