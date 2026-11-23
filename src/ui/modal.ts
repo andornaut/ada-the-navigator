@@ -121,15 +121,16 @@ export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
   [data-station] *,[data-station-confirm] *
 ))`;
 const LEGACY_TEXT_FOCUS = `${UI_SCOPE} ${LEGACY_TEXT_BUTTON}:focus-visible`;
-const STANDARD_TEXT_FOCUS = `${UI_SCOPE}
-  :is([data-dialog=menu], .ada-quest-footer, [data-dialog=install-steps], [data-dialog=settings],
-    .ada-cheats-card, .ada-map-navigation, .ada-ship-back, [data-dialog=conversation])
-  .ada-button.ui-standard-button:not(:where(.ada-compact)):focus-visible`;
+export const STANDARD_CARD_TEXT_BUTTON =
+  ".ada-card .ada-button.ui-standard-button:not(:where(.ada-compact,[data-station] *,[data-station-confirm] *))";
+const STANDARD_TEXT_FOCUS = `${UI_SCOPE} :is(
+  ${STANDARD_CARD_TEXT_BUTTON},
+  :is(.ada-map-navigation,.ada-ship-back,[data-dialog=conversation])
+    .ada-button.ui-standard-button:not(:where(.ada-compact))
+):focus-visible`;
 export const SETTINGS_INSTALL_BUTTON =
   ".ada-install-row > .ui-standard-button.ada-compact[data-action=install]";
 const INSTALL_TEXT_FOCUS = `${UI_SCOPE} [data-dialog=settings] ${SETTINGS_INSTALL_BUTTON}:focus-visible`;
-const PAUSE_TEXT_BUTTON = "[data-dialog=pause] .ada-pause-grid .ui-standard-button";
-const PAUSE_TEXT_FOCUS = `${UI_SCOPE} ${PAUSE_TEXT_BUTTON}:focus-visible`;
 const DIALOGUE_SKIP_FOCUS = `${UI_SCOPE} .ada-interaction-modal [data-action=dialogue-skip]:focus-visible`;
 const STORY_TEXT_FOCUS = ".ada-controls .ada-story .ada-button:focus-visible";
 const ENABLED_TEXT_CONTROL = `:where(
@@ -138,7 +139,6 @@ const ENABLED_TEXT_CONTROL = `:where(
 const LEGACY_ENABLED_FOCUS = `${LEGACY_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const STANDARD_ENABLED_FOCUS = `${STANDARD_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const INSTALL_ENABLED_FOCUS = `${INSTALL_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
-const PAUSE_ENABLED_FOCUS = `${PAUSE_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const DIALOGUE_SKIP_ENABLED_FOCUS = `${DIALOGUE_SKIP_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const STORY_ENABLED_FOCUS = `${STORY_TEXT_FOCUS}${ENABLED_TEXT_CONTROL}`;
 const SPECIAL_BUTTON_SHAPES = `
@@ -428,8 +428,7 @@ ${UI_SCOPE} :is(.ada-cheats-card,.ada-map-navigation) .ada-button.ui-standard-bu
 }
 
 /* Keep the cue on the native painted face when the control has a separate face element. */
-${PAUSE_TEXT_FOCUS} > .ui-button-face,
-${UI_SCOPE} .ada-ship-back [data-action=back-ship].ui-standard-button:focus-visible > .ui-button-face{
+${STANDARD_TEXT_FOCUS} > .ui-button-face{
   background-color:transparent;
   color:inherit;
   forced-color-adjust:inherit
@@ -438,7 +437,6 @@ ${UI_SCOPE} .ada-ship-back [data-action=back-ship].ui-standard-button:focus-visi
 /* Tint the centre and retain the existing sprite slices, including the active lip. */
 ${STANDARD_TEXT_FOCUS},
 ${INSTALL_TEXT_FOCUS},
-${PAUSE_TEXT_FOCUS},
 ${DIALOGUE_SKIP_FOCUS},
 ${STORY_TEXT_FOCUS},
 ${LEGACY_TEXT_FOCUS}{
@@ -447,7 +445,6 @@ ${LEGACY_TEXT_FOCUS}{
 }
 ${STANDARD_ENABLED_FOCUS},
 ${INSTALL_ENABLED_FOCUS},
-${PAUSE_ENABLED_FOCUS},
 ${DIALOGUE_SKIP_ENABLED_FOCUS},
 ${STORY_ENABLED_FOCUS},
 ${LEGACY_ENABLED_FOCUS}{
@@ -459,7 +456,7 @@ ${LEGACY_ENABLED_FOCUS}{
   border-image-slice:${SLICE}
 }
 /* A focusable refusal keeps its flat disabled face and gets a label cue. */
-${PAUSE_TEXT_FOCUS}[aria-disabled=true],
+${STANDARD_TEXT_FOCUS}[aria-disabled=true],
 ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
   text-decoration:underline;
   text-underline-offset:.15em
@@ -467,7 +464,6 @@ ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
 @media (forced-colors:active){
   ${STANDARD_ENABLED_FOCUS},
   ${INSTALL_ENABLED_FOCUS},
-  ${PAUSE_ENABLED_FOCUS},
   ${DIALOGUE_SKIP_ENABLED_FOCUS},
   ${STORY_ENABLED_FOCUS},
   ${LEGACY_ENABLED_FOCUS}{
@@ -698,7 +694,7 @@ ${UI_SCOPE} .ada-cheat-resource-icon{
 
 ${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
   ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button,
-  ${SETTINGS_INSTALL_BUTTON},${PAUSE_TEXT_BUTTON}
+  ${SETTINGS_INSTALL_BUTTON},${STANDARD_CARD_TEXT_BUTTON}
 )),
 ${UI_SCOPE} .ada-row:not([role=switch]):focus-visible{${FOCUS_STYLE}
 }

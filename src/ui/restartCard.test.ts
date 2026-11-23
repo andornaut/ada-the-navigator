@@ -15,6 +15,7 @@ let doc: EventTarget & {
     Node: typeof Element;
     clearTimeout: typeof clearTimeout;
     setTimeout: typeof setTimeout;
+    getComputedStyle: () => object;
     performance: typeof performance;
   };
   fonts: { ready: Promise<void> };
@@ -38,7 +39,12 @@ class Element extends EventTarget {
   disabled = false;
   isConnected = true;
   firstChild = { nodeType: 3, nodeValue: "" };
-  style = { alignSelf: "", minWidth: "", setProperty() {} };
+  style = {
+    alignSelf: "",
+    getPropertyValue: () => "",
+    minWidth: "",
+    setProperty() {},
+  };
   attributes = new Map<string, string>();
   textContent = "";
   get ownerDocument() {
@@ -51,6 +57,8 @@ class Element extends EventTarget {
     return this.parentElement?.children[this.parentElement.children.indexOf(this) + 1] ?? null;
   }
   classList = {
+    add: (...names: string[]) => names.forEach((name) => this.classList.toggle(name, true)),
+    contains: (name: string) => this.className.split(" ").includes(name),
     remove: (name: string) => this.classList.toggle(name, false),
     toggle: (name: string, force?: boolean) => {
       const classes = new Set(this.className.split(" ").filter(Boolean));
@@ -97,6 +105,14 @@ class Element extends EventTarget {
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, force = !this.attributes.has(name)) {
+    if (force) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
+    return force;
   }
   querySelector(selector: string): Element | null {
     return this.querySelectorAll(selector)[0] ?? null;
@@ -150,7 +166,8 @@ const native = vi.hoisted(() => ({
   present: vi.fn(),
   tap: vi.fn(),
 }));
-vi.mock("./modal.ts", () => ({
+vi.mock("./modal.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./modal.ts")>()),
   createActions: () => new Element(),
   createButton: (label: string) => {
     const button = new Element("button");
@@ -178,22 +195,23 @@ vi.mock("./modal.ts", () => ({
     root.dataset.footerAction = intent;
   },
 }));
-vi.mock("./buttonPresentation.ts", () => ({
-  applyAdaControlTheme: () => {},
-  presentAdaButton: (button: Element) => {
-    const root = new Element(),
-      reason = new Element();
-    root.append(button, reason);
-    return {
-      dispose() {
-        root.remove();
-      },
-      element: root,
-      reason,
-      update: native.present,
-    };
-  },
-}));
+vi.mock("./buttonPresentation.ts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./buttonPresentation.ts")>();
+  return {
+    ...actual,
+    applyAdaControlTheme: () => {},
+    presentAdaButtonContent: (...args: Parameters<typeof actual.presentAdaButtonContent>) => {
+      const presented = actual.presentAdaButtonContent(...args);
+      return {
+        ...presented,
+        update(props: (typeof args)[2]) {
+          native.present(props);
+          presented.update(props);
+        },
+      };
+    },
+  };
+});
 // The controls overlay's shared modal layer, recorded: the confirm must take the top over Cheats.
 const published = vi.hoisted(() => ({
   dispose: vi.fn(),
@@ -226,6 +244,7 @@ beforeEach(() => {
       HTMLElement: Element,
       Node: Element,
       clearTimeout,
+      getComputedStyle: () => ({}),
       performance,
       setTimeout,
     }),
@@ -295,6 +314,8 @@ describe("Restart's configured production binding", () => {
     const f = fixture(),
       cancel = f.action("restart-cancel"),
       frame = f.modal.querySelector('[role="dialog"]')!;
+    expect(cancel.classList.contains("ui-standard-button")).toBe(true);
+    expect(f.action("restart-confirm").classList.contains("ui-standard-button")).toBe(true);
     expect(f.modal.hidden).toBe(true);
     expect(f.modal.querySelector(".ada-card")?.dataset.dialog).toBe("restart");
     const body = f.modal.querySelector(".ada-card-body")!;

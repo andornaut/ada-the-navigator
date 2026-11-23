@@ -42,6 +42,7 @@ import {
   setFooterAction,
   setScrollGroup,
   SETTINGS_INSTALL_BUTTON,
+  STANDARD_CARD_TEXT_BUTTON,
   TEXT_TOKENS,
 } from "./modal.ts";
 import { createModalLayer } from "./modalLayer.ts";
@@ -113,7 +114,7 @@ export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
 
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
   .ada-close,.ada-route-marker,.ada-use,.ada-row[role=switch],.ada-quest-endpoint,
-  ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON},${SETTINGS_INSTALL_BUTTON}
+  ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON},${SETTINGS_INSTALL_BUTTON},${STANDARD_CARD_TEXT_BUTTON}
 ))`;
 
 // The start screen while Exit shows: .ada-controls carries this attribute while it does.

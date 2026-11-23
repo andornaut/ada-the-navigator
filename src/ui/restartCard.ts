@@ -114,6 +114,7 @@ export function createRestartCard(
           ? { kind: "omitted" }
           : { kind: "available" },
       presentButton: presentAdaButton,
+      standardButtons: { actionIds: [`${kind}-cancel`, `${kind}-confirm`], root },
     },
     { artReady: Promise.resolve(), host: modal },
     restartTree(labels, kind),

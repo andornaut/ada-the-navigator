@@ -21,6 +21,7 @@ import {
   reserveScrollbar,
   setFooterAction,
   SETTINGS_INSTALL_BUTTON,
+  STANDARD_CARD_TEXT_BUTTON,
   SWITCH_ROW_PARTS,
   switchState,
   TEXT_TOKENS,
@@ -75,7 +76,7 @@ describe("Settings control rows", () => {
     const start = MODAL_STYLE.indexOf(
       `${UI_SCOPE} .ada-card .ada-button:focus-visible:not(:where(
   ${LEGACY_TEXT_BUTTON},.ada-story .ada-button,[data-dialog=conversation] .ui-standard-button,
-  ${SETTINGS_INSTALL_BUTTON},[data-dialog=pause] .ada-pause-grid .ui-standard-button
+  ${SETTINGS_INSTALL_BUTTON},${STANDARD_CARD_TEXT_BUTTON}
 ))`,
     );
     expect(start).toBeGreaterThanOrEqual(0);
@@ -95,7 +96,9 @@ describe("modal buttons", () => {
     const enabled = `${focus}:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
 )`;
-    expect(SETTINGS_STYLE).toContain(`${LEGACY_TEXT_BUTTON},${install}\n))`);
+    expect(SETTINGS_STYLE).toContain(
+      `${LEGACY_TEXT_BUTTON},${install},${STANDARD_CARD_TEXT_BUTTON}\n))`,
+    );
     expect(MODAL_STYLE).toContain(`${focus},`);
     const start = MODAL_STYLE.indexOf(`${enabled},`);
     expect(start).toBeGreaterThanOrEqual(0);
@@ -106,10 +109,14 @@ describe("modal buttons", () => {
     expect(cue).not.toContain("border-image-source");
   });
 
-  it("keeps Pause cursor focus on the face and leaves unavailable controls flat", () => {
-    const focus = `${UI_SCOPE} [data-dialog=pause] .ada-pause-grid .ui-standard-button:focus-visible`;
+  it("uses one in-face cue for standard modal controls and preserves the refusal face", () => {
+    const focus = `${UI_SCOPE} :is(
+  ${STANDARD_CARD_TEXT_BUTTON},
+  :is(.ada-map-navigation,.ada-ship-back,[data-dialog=conversation])
+    .ada-button.ui-standard-button:not(:where(.ada-compact))
+):focus-visible`;
     expect(MODAL_STYLE).toContain(`${focus},`);
-    expect(MODAL_STYLE).toContain(`${focus} > .ui-button-face,`);
+    expect(MODAL_STYLE).toContain(`${focus} > .ui-button-face{`);
     expect(MODAL_STYLE).toContain(`${focus}[aria-disabled=true],`);
     const enabled = `${focus}:where(
   :not(:disabled,.ada-unavailable,[aria-disabled=true])
