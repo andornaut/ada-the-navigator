@@ -2,6 +2,7 @@
 // ember, plus the turret platform, a fixed wheel deck in the heavies export. Contract:
 // art/heavies.md (Cartwheel claim jumpers).
 // Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
+import { packInstalledClaimHullPage } from "./claim-hull-page.ts";
 import { claimStationPaint } from "./claim-station-paint.ts";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -499,11 +500,18 @@ async function main() {
   // The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like
   // another (the cargo hauler is the retaliator) uses that craft's files.
   const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
-  const heavy = packInstalledHeavyParts("cartwheel", texts, entries);
-  const small = packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
+  const claimHulls = packInstalledClaimHullPage(texts, entries);
+  const heavy = packInstalledHeavyParts("cartwheel", texts, claimHulls ?? entries, {
+    packStockHulls: !claimHulls,
+  });
+  const small = claimHulls
+    ? heavy.outputEntries
+    : packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
   const turrets = packInstalledIndustrialTurrets("cartwheel", texts, small);
   const copies = sidecarCopies("core", "hardpoints", shared);
-  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets, copies);
+  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets, copies, {
+    packClaimRetaliator: !claimHulls,
+  });
   const paths = writeOnce(PATH, copies, texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
   // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.

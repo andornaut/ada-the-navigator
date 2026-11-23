@@ -155,7 +155,7 @@
     },
     {
       "id": "outpost-homes-cracked-a",
-      "path": "/art/phantom/homes-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 91.35,
@@ -179,7 +179,7 @@
     },
     {
       "id": "outpost-homes-cracked-b",
-      "path": "/art/phantom/homes-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 91.35,
@@ -203,7 +203,7 @@
     },
     {
       "id": "outpost-homes-mended-a",
-      "path": "/art/phantom/homes-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 91.35,
@@ -227,7 +227,7 @@
     },
     {
       "id": "outpost-homes-mended-b",
-      "path": "/art/phantom/homes-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 91.35,
@@ -251,7 +251,7 @@
     },
     {
       "id": "outpost-harbour-cracked-a",
-      "path": "/art/phantom/harbour-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 106.575,
@@ -275,7 +275,7 @@
     },
     {
       "id": "outpost-harbour-cracked-b",
-      "path": "/art/phantom/harbour-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 106.575,
@@ -299,7 +299,7 @@
     },
     {
       "id": "outpost-harbour-mended-a",
-      "path": "/art/phantom/harbour-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 106.575,
@@ -323,7 +323,7 @@
     },
     {
       "id": "outpost-harbour-mended-b",
-      "path": "/art/phantom/harbour-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 106.575,
@@ -347,7 +347,7 @@
     },
     {
       "id": "outpost-signal-cracked-a",
-      "path": "/art/phantom/signal-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 76.125,
@@ -371,7 +371,7 @@
     },
     {
       "id": "outpost-signal-cracked-b",
-      "path": "/art/phantom/signal-cracked-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 76.125,
@@ -395,7 +395,7 @@
     },
     {
       "id": "outpost-signal-mended-a",
-      "path": "/art/phantom/signal-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 76.125,
@@ -419,7 +419,7 @@
     },
     {
       "id": "outpost-signal-mended-b",
-      "path": "/art/phantom/signal-mended-sheet.svg",
+      "path": "/art/phantom/settlements-sheet.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 76.125,

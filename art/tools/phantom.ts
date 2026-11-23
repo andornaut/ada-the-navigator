@@ -74,7 +74,7 @@ const settlements = [
 const installed: readonly { id: string; path?: string; svgSheet?: true }[] =
   readManifest("phantom").assets;
 const files = new Map<string, string>();
-const entries = settlements.flatMap(({ above, build, height, title, variant, width }) => {
+const pairs = settlements.flatMap(({ above, build, height, title, variant, width }) => {
   const items: Item[] = (["cracked", "mended"] as const).flatMap((state) =>
     (["a", "b"] as const).map((letter) => ({
       id: `outpost-${variant}-${state}-${letter}`,
@@ -113,44 +113,63 @@ const entries = settlements.flatMap(({ above, build, height, title, variant, wid
       state: item.state,
     },
   }));
-  return (["cracked", "mended"] as const).flatMap((state) => {
-    const pair = frames.filter(({ entry }) => entry.state === state);
-    const file = `${variant}-${state}-sheet.svg`;
-    const path = PATH + file;
-    const ids = new Set(pair.map(({ entry }) => entry.id));
-    const rows = installed.filter((row) => ids.has(row.id) || row.path === path);
-    if (!rows.some((row) => row.svgSheet === true || row.path === path)) {
-      for (const { entry, root } of pair) files.set(entry.path.slice(PATH.length), root);
-      return pair.map(({ entry }) => entry);
-    }
-
-    if (
-      rows.length !== pair.length ||
-      new Set(rows.map(({ id }) => id)).size !== pair.length ||
-      rows.some((row) => !ids.has(row.id) || row.svgSheet !== true || row.path !== path)
-    ) {
-      throw new Error(`Invalid Phantom settlement sheet selection: ${file}`);
-    }
-    const wide = width * pair.length;
-    const page = packAtlas(
-      { compare: () => 0, extrude: 0, maxSize: Math.max(wide, height), widths: [wide] },
-      [{ rectangles: pair.map(() => ({ width, height })), value: file }],
-    )?.pages[0];
-    const slots = page?.placed[0]?.at;
-    if (!page || slots?.length !== pair.length) {
-      throw new Error(`Cannot pack Phantom settlement sheet: ${file}`);
-    }
-    const children = pair.map(({ entry, root }, index) => {
-      const { x, y } = slots[index]!;
-      return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
-    });
-    files.set(
-      file,
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
-    );
-    return pair.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
-  });
+  return (["cracked", "mended"] as const).map((state) => ({
+    file: `${variant}-${state}-sheet.svg`,
+    frames: frames.filter(({ entry }) => entry.state === state),
+  }));
 });
+
+type SettlementFrame = (typeof pairs)[number]["frames"][number];
+
+function emitSheet(file: string, frames: readonly SettlementFrame[], width: number) {
+  const path = PATH + file;
+  const ids = new Set(frames.map(({ entry }) => entry.id));
+  const rows = installed.filter((row) => ids.has(row.id) || row.path === path);
+  if (!rows.some((row) => row.svgSheet === true || row.path === path)) {
+    for (const { entry, root } of frames) files.set(entry.path.slice(PATH.length), root);
+    return frames.map(({ entry }) => entry);
+  }
+  if (
+    rows.length !== frames.length ||
+    new Set(rows.map(({ id }) => id)).size !== frames.length ||
+    rows.some((row) => !ids.has(row.id) || row.svgSheet !== true || row.path !== path)
+  ) {
+    throw new Error(`Invalid Phantom settlement sheet selection: ${file}`);
+  }
+  const layout = packAtlas(
+    { compare: () => 0, extrude: 0, maxSize: width, widths: [width] },
+    frames.map((value) => ({ rectangles: [value.entry], value })),
+  );
+  if (layout?.pages.length !== 1) throw new Error(`Cannot pack Phantom settlement sheet: ${file}`);
+  const page = layout.pages[0]!;
+  const children = page.placed.map(
+    ({
+      item: {
+        value: { entry, root },
+      },
+      at,
+    }) => {
+      const { x, y } = at[0]!;
+      return `<svg id="${entry.id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+    },
+  );
+  files.set(
+    file,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${page.height}" viewBox="0 0 ${width} ${page.height}">${children.join("")}</svg>\n`,
+  );
+  return frames.map(({ entry }) => ({ ...entry, path, svgSheet: true as const }));
+}
+
+const sharedFile = "settlements-sheet.svg";
+const entries = installed.some(({ path }) => path === PATH + sharedFile)
+  ? emitSheet(
+      sharedFile,
+      pairs.flatMap(({ frames }) => frames),
+      448,
+    )
+  : pairs.flatMap(({ file, frames }) =>
+      emitSheet(file, frames, frames[0]!.entry.width * frames.length),
+    );
 mkdirSync(output, { recursive: true });
 for (const [file, root] of files) writeFileSync(output + file, root);
 replaceEntries(

@@ -253,7 +253,7 @@
     },
     {
       "id": "enemy-claim-swarm-0",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -270,7 +270,7 @@
     },
     {
       "id": "enemy-claim-swarm-1",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -287,7 +287,7 @@
     },
     {
       "id": "enemy-claim-swarm-2",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -304,7 +304,7 @@
     },
     {
       "id": "enemy-claim-swarm-3",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -321,7 +321,7 @@
     },
     {
       "id": "enemy-claim-swarm-4",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -338,7 +338,7 @@
     },
     {
       "id": "enemy-claim-swarm-5",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -355,7 +355,7 @@
     },
     {
       "id": "enemy-claim-swarm-6",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -372,7 +372,7 @@
     },
     {
       "id": "enemy-claim-swarm-7",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -389,7 +389,7 @@
     },
     {
       "id": "enemy-claim-swarm-8",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -406,7 +406,7 @@
     },
     {
       "id": "enemy-claim-swarm-9",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -423,7 +423,7 @@
     },
     {
       "id": "enemy-claim-swarm-10",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -440,7 +440,7 @@
     },
     {
       "id": "enemy-claim-swarm-11",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -457,7 +457,7 @@
     },
     {
       "id": "enemy-claim-swarm-12",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -474,7 +474,7 @@
     },
     {
       "id": "enemy-claim-swarm-13",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -491,7 +491,7 @@
     },
     {
       "id": "enemy-claim-swarm-14",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -508,7 +508,7 @@
     },
     {
       "id": "enemy-claim-swarm-15",
-      "path": "/art/cartwheel/enemies/swarm-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -525,7 +525,7 @@
     },
     {
       "id": "enemy-claim-fighter-0",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -542,7 +542,7 @@
     },
     {
       "id": "enemy-claim-fighter-1",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -559,7 +559,7 @@
     },
     {
       "id": "enemy-claim-fighter-2",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -576,7 +576,7 @@
     },
     {
       "id": "enemy-claim-fighter-3",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -593,7 +593,7 @@
     },
     {
       "id": "enemy-claim-fighter-4",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -610,7 +610,7 @@
     },
     {
       "id": "enemy-claim-fighter-5",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -627,7 +627,7 @@
     },
     {
       "id": "enemy-claim-fighter-6",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -644,7 +644,7 @@
     },
     {
       "id": "enemy-claim-fighter-7",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -661,7 +661,7 @@
     },
     {
       "id": "enemy-claim-fighter-8",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -678,7 +678,7 @@
     },
     {
       "id": "enemy-claim-fighter-9",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -695,7 +695,7 @@
     },
     {
       "id": "enemy-claim-fighter-10",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -712,7 +712,7 @@
     },
     {
       "id": "enemy-claim-fighter-11",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -729,7 +729,7 @@
     },
     {
       "id": "enemy-claim-fighter-12",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -746,7 +746,7 @@
     },
     {
       "id": "enemy-claim-fighter-13",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -763,7 +763,7 @@
     },
     {
       "id": "enemy-claim-fighter-14",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -780,7 +780,7 @@
     },
     {
       "id": "enemy-claim-fighter-15",
-      "path": "/art/cartwheel/enemies/fighter-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 104,
       "height": 104,
       "displayWidth": 45.5,
@@ -797,7 +797,7 @@
     },
     {
       "id": "enemy-claim-interceptor-0",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -814,7 +814,7 @@
     },
     {
       "id": "enemy-claim-interceptor-1",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -831,7 +831,7 @@
     },
     {
       "id": "enemy-claim-interceptor-2",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -848,7 +848,7 @@
     },
     {
       "id": "enemy-claim-interceptor-3",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -865,7 +865,7 @@
     },
     {
       "id": "enemy-claim-interceptor-4",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -882,7 +882,7 @@
     },
     {
       "id": "enemy-claim-interceptor-5",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -899,7 +899,7 @@
     },
     {
       "id": "enemy-claim-interceptor-6",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -916,7 +916,7 @@
     },
     {
       "id": "enemy-claim-interceptor-7",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -933,7 +933,7 @@
     },
     {
       "id": "enemy-claim-interceptor-8",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -950,7 +950,7 @@
     },
     {
       "id": "enemy-claim-interceptor-9",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -967,7 +967,7 @@
     },
     {
       "id": "enemy-claim-interceptor-10",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -984,7 +984,7 @@
     },
     {
       "id": "enemy-claim-interceptor-11",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1001,7 +1001,7 @@
     },
     {
       "id": "enemy-claim-interceptor-12",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1018,7 +1018,7 @@
     },
     {
       "id": "enemy-claim-interceptor-13",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1035,7 +1035,7 @@
     },
     {
       "id": "enemy-claim-interceptor-14",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1052,7 +1052,7 @@
     },
     {
       "id": "enemy-claim-interceptor-15",
-      "path": "/art/cartwheel/enemies/interceptor-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 88,
       "height": 88,
       "displayWidth": 38.5,
@@ -1069,7 +1069,7 @@
     },
     {
       "id": "enemy-claim-retaliator-0",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1086,7 +1086,7 @@
     },
     {
       "id": "enemy-claim-retaliator-1",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1103,7 +1103,7 @@
     },
     {
       "id": "enemy-claim-retaliator-2",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1120,7 +1120,7 @@
     },
     {
       "id": "enemy-claim-retaliator-3",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1137,7 +1137,7 @@
     },
     {
       "id": "enemy-claim-retaliator-4",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1154,7 +1154,7 @@
     },
     {
       "id": "enemy-claim-retaliator-5",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1171,7 +1171,7 @@
     },
     {
       "id": "enemy-claim-retaliator-6",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1188,7 +1188,7 @@
     },
     {
       "id": "enemy-claim-retaliator-7",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1205,7 +1205,7 @@
     },
     {
       "id": "enemy-claim-retaliator-8",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1222,7 +1222,7 @@
     },
     {
       "id": "enemy-claim-retaliator-9",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1239,7 +1239,7 @@
     },
     {
       "id": "enemy-claim-retaliator-10",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1256,7 +1256,7 @@
     },
     {
       "id": "enemy-claim-retaliator-11",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1273,7 +1273,7 @@
     },
     {
       "id": "enemy-claim-retaliator-12",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1290,7 +1290,7 @@
     },
     {
       "id": "enemy-claim-retaliator-13",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1307,7 +1307,7 @@
     },
     {
       "id": "enemy-claim-retaliator-14",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1324,7 +1324,7 @@
     },
     {
       "id": "enemy-claim-retaliator-15",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -1341,7 +1341,7 @@
     },
     {
       "id": "enemy-claim-frigate-0",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1358,7 +1358,7 @@
     },
     {
       "id": "enemy-claim-frigate-1",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1375,7 +1375,7 @@
     },
     {
       "id": "enemy-claim-frigate-2",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1392,7 +1392,7 @@
     },
     {
       "id": "enemy-claim-frigate-3",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1409,7 +1409,7 @@
     },
     {
       "id": "enemy-claim-frigate-4",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1426,7 +1426,7 @@
     },
     {
       "id": "enemy-claim-frigate-5",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1443,7 +1443,7 @@
     },
     {
       "id": "enemy-claim-frigate-6",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1460,7 +1460,7 @@
     },
     {
       "id": "enemy-claim-frigate-7",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1477,7 +1477,7 @@
     },
     {
       "id": "enemy-claim-frigate-8",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1494,7 +1494,7 @@
     },
     {
       "id": "enemy-claim-frigate-9",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1511,7 +1511,7 @@
     },
     {
       "id": "enemy-claim-frigate-10",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1528,7 +1528,7 @@
     },
     {
       "id": "enemy-claim-frigate-11",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1545,7 +1545,7 @@
     },
     {
       "id": "enemy-claim-frigate-12",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1562,7 +1562,7 @@
     },
     {
       "id": "enemy-claim-frigate-13",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1579,7 +1579,7 @@
     },
     {
       "id": "enemy-claim-frigate-14",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -1596,7 +1596,7 @@
     },
     {
       "id": "enemy-claim-frigate-15",
-      "path": "/art/cartwheel/enemies/frigate-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 432,
       "height": 432,
       "displayWidth": 189,
@@ -5837,7 +5837,7 @@
     },
     {
       "id": "enemy-claim-capital-0",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5854,7 +5854,7 @@
     },
     {
       "id": "enemy-claim-capital-1",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5871,7 +5871,7 @@
     },
     {
       "id": "enemy-claim-capital-2",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5888,7 +5888,7 @@
     },
     {
       "id": "enemy-claim-capital-3",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5905,7 +5905,7 @@
     },
     {
       "id": "enemy-claim-capital-4",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5922,7 +5922,7 @@
     },
     {
       "id": "enemy-claim-capital-5",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5939,7 +5939,7 @@
     },
     {
       "id": "enemy-claim-capital-6",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5956,7 +5956,7 @@
     },
     {
       "id": "enemy-claim-capital-7",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5973,7 +5973,7 @@
     },
     {
       "id": "enemy-claim-capital-8",
-      "path": "/art/cartwheel/enemies/capital-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -5990,7 +5990,7 @@
     },
     {
       "id": "enemy-claim-capital-9",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6007,7 +6007,7 @@
     },
     {
       "id": "enemy-claim-capital-10",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6024,7 +6024,7 @@
     },
     {
       "id": "enemy-claim-capital-11",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6041,7 +6041,7 @@
     },
     {
       "id": "enemy-claim-capital-12",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6058,7 +6058,7 @@
     },
     {
       "id": "enemy-claim-capital-13",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6075,7 +6075,7 @@
     },
     {
       "id": "enemy-claim-capital-14",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -6092,7 +6092,7 @@
     },
     {
       "id": "enemy-claim-capital-15",
-      "path": "/art/cartwheel/enemies/capital-sheet-2.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 480,
       "height": 480,
       "displayWidth": 210,
@@ -18079,7 +18079,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-0",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18097,7 +18097,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-1",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18115,7 +18115,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-2",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18133,7 +18133,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-3",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18151,7 +18151,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-4",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18169,7 +18169,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-5",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18187,7 +18187,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-6",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18205,7 +18205,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-7",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18223,7 +18223,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-8",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18241,7 +18241,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-9",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18259,7 +18259,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-10",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18277,7 +18277,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-11",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18295,7 +18295,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-12",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18313,7 +18313,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-13",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18331,7 +18331,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-14",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,
@@ -18349,7 +18349,7 @@
     },
     {
       "id": "enemy-claim-retaliatorCargoHauler-15",
-      "path": "/art/cartwheel/enemies/retaliator-sheet.svg",
+      "path": "/art/cartwheel/enemies/claim-stock-hulls-sheet.svg",
       "width": 192,
       "height": 192,
       "displayWidth": 84,

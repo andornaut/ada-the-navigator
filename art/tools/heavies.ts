@@ -2256,6 +2256,7 @@ export function packInstalledHeavyParts(
   manifest: "core" | keyof typeof familyPartTargets,
   files: Map<string, string>,
   entries: readonly Entry[],
+  { packStockHulls = true } = {},
 ) {
   const target = manifest === "core" ? corePartTarget : familyPartTargets[manifest];
   const text = (file: string) => files.get(file);
@@ -2277,9 +2278,11 @@ export function packInstalledHeavyParts(
   const extraPack = extra
     ? heavyHeadingSheets(target, { craft: extra, section: "part" }, text, entries, false)
     : undefined;
-  const hulls = hullCrafts(manifest).map((craft) =>
-    heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
-  );
+  const hulls = packStockHulls
+    ? hullCrafts(manifest).map((craft) =>
+        heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
+      )
+    : [];
   let outputEntries = applyHeavySheets(files, entries, capitalPack);
   outputEntries = applyHeavySheets(files, outputEntries, frigatePack);
   outputEntries = applyHeavySheets(files, outputEntries, extraPack);

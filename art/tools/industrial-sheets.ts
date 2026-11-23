@@ -151,6 +151,7 @@ export function packInstalledIndustrialHulls(
   files: Map<string, string>,
   entries: readonly Row[],
   copies?: Map<string, string>,
+  { packClaimRetaliator = true } = {},
 ): readonly Row[] {
   const installed: Row[] = (["core", ...GALAXIES] as const).flatMap(
     (key) => readManifest(key).assets,
@@ -161,6 +162,7 @@ export function packInstalledIndustrialHulls(
   const groups = [];
 
   for (const craft of industrialHulls) {
+    if (family === "cartwheel" && craft === "retaliator" && !packClaimRetaliator) continue;
     const names = craft === "retaliator" ? [craft, "retaliatorCargoHauler"] : [craft];
     const headings = Array.from({ length: ENEMY_HEADINGS }, (_, heading) => heading);
     const sheet = craft + "-sheet.svg";
