@@ -61,10 +61,6 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-frame .ada-story-heading{
   text-align:center
 }
-.ada-controls .ada-station-frame > .ada-close{
-  top:0;
-  right:0
-}
 .ada-controls .ada-station-balances{
   position:absolute;
   top:${units(SPACING.panelPadding)};

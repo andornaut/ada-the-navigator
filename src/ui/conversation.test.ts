@@ -354,10 +354,12 @@ describe("Interaction card HUD row", () => {
     expect(Math.max(skip[2]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
   });
 
-  it("places the X and moves Skip beside it through the Interaction card's styles", () => {
+  it("positions the X and Skip against the HUD only for the full-screen interaction", () => {
     const { close, skipRight } = interactionHudRow();
+    expect(INTERACTION_STYLE).not.toMatch(/\[data-station\][^{]*\.ada-close/u);
+    expect(INTERACTION_STYLE).not.toContain(".ada-controls .ada-dialogue-frame > .ada-close");
     expect(INTERACTION_STYLE).toContain(
-      `.ada-interaction-modal .ada-dialogue-frame > .ada-close{
+      `.ada-interaction-modal > .ada-dialogue-frame > .ada-close{
   top:${fromHudEdge("top", close.y)};
   right:${fromHudEdge("right", -(close.x + close.width))};
   width:${units(close.width)};

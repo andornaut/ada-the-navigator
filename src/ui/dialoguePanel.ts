@@ -8,7 +8,7 @@ import {
   dialoguePanelTree,
 } from "./dialoguePanelTree.ts";
 import { storySpeakerName } from "./dialoguePortraits.ts";
-import { font, safeEdge, units } from "./layout/css.ts";
+import { font, units } from "./layout/css.ts";
 import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
@@ -21,10 +21,6 @@ export const DIALOGUE_PANEL_STYLE = `
   position:absolute;
   inset:0;
   pointer-events:none
-}
-.ada-controls .ada-dialogue-frame > .ada-close{
-  top:${safeEdge("top", SPACING.pageInset)};
-  right:${safeEdge("right", SPACING.pageInset)}
 }
 .ada-controls .ada-dialogue-panel .ada-story-choice-column{
   min-width:0

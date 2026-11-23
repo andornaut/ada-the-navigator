@@ -121,16 +121,15 @@ export function interactionHudRow(): {
 
 const INTERACTION_ROW = interactionHudRow();
 
+// Only the full-screen interaction positions its controls against the HUD.
 export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
-.ada-controls [data-station] .ada-dialogue-frame > .ada-close,
-.ada-controls .ada-interaction-modal .ada-dialogue-frame > .ada-close{
+.ada-controls .ada-interaction-modal > .ada-dialogue-frame > .ada-close{
   top:${fromHudEdge("top", INTERACTION_ROW.close.y)};
   right:${fromHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
   width:${units(INTERACTION_ROW.close.width)};
   height:${units(INTERACTION_ROW.close.height)}
 }
-.ada-controls [data-station] .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip,
-.ada-controls .ada-interaction-modal .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
+.ada-controls .ada-interaction-modal > .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
   right:${fromHudEdge("right", INTERACTION_ROW.skipRight)}
 }
 `;
