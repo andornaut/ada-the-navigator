@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { TOUCH_CHROME_FRAME, USE_DISC_POSES, USE_SYMBOLS } from "../ui/touchChrome.ts";
 import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import { parentFit } from "./playCamera.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
-import { fileFilter, needsRaster, RASTER_CAP, rasterScale, vectorRaster } from "./textures.ts";
+import {
+  chromeAtlasGrid,
+  fileFilter,
+  needsRaster,
+  RASTER_CAP,
+  rasterScale,
+  vectorRaster,
+} from "./textures.ts";
 
 describe("texture filters", () => {
   it("samples SVGs linear and sheets nearest, and leaves other files alone", () => {
@@ -132,5 +140,25 @@ describe("vector raster size", () => {
       ]);
     }
     expect([...seen].sort()).toEqual([...decorations.keys()].sort());
+  });
+});
+
+const frame = { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME };
+const columns = USE_DISC_POSES.length;
+const frames = (Object.keys(USE_SYMBOLS).length + 1) * columns;
+
+describe("Use disc atlas", () => {
+  it("fits every action and pose at full density where the old strip exceeded the texture limit", () => {
+    const grid = chromeAtlasGrid(frame, 2.5, frames, columns, 8192);
+    expect(frames * grid.strideX).toBeGreaterThan(8192);
+    expect(grid).toEqual({ height: 188, rows: 9, strideX: 190, strideY: 190, width: 188 });
+    expect(grid.rows * columns).toBe(frames);
+    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([950, 1710]);
+  });
+
+  it("keeps every frame within a lower renderer limit at the highest raster scale", () => {
+    const grid = chromeAtlasGrid(frame, 4, frames, columns, 2048);
+    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([1135, 2043]);
+    expect(grid.width).toBe(grid.height);
   });
 });

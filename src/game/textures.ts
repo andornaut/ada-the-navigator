@@ -48,3 +48,22 @@ export function vectorRaster(
     width: densityTexels(scale, display.displayWidth),
   };
 }
+
+/** Frame and atlas dimensions, with a clear texel on each side of every frame. */
+export function chromeAtlasGrid(
+  logical: { readonly height: number; readonly width: number },
+  scale: number,
+  frames: number,
+  columns: number,
+  textureLimit: number,
+) {
+  const rows = Math.max(1, Math.ceil(frames / columns));
+  const density = Math.min(
+    scale,
+    (Math.floor(textureLimit / columns) - 2) / logical.width,
+    (Math.floor(textureLimit / rows) - 2) / logical.height,
+  );
+  const width = densityTexels(density, logical.width);
+  const height = densityTexels(density, logical.height);
+  return { height, rows, strideX: width + 2, strideY: height + 2, width };
+}

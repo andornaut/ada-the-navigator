@@ -5,7 +5,6 @@ import {
   tagRepeat,
 } from "@andornaut/game-kit/runtime/art/aseprite";
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
-import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Scene, Textures } from "phaser";
 
 import type { UseAction } from "../model/types.ts";
@@ -34,6 +33,7 @@ import {
   useDiscLayers,
   type UseDiscPose,
 } from "../ui/touchChrome.ts";
+import { chromeAtlasGrid } from "./textures.ts";
 
 export const UI_MANIFEST_KEY = "ui-manifest";
 const UI_MANIFEST_PATH = "/art/ui/manifest.json";
@@ -74,26 +74,34 @@ type Size = { readonly height: number; readonly width: number };
 
 // What a chrome texture is painted from, kept on it so it can paint again at a new scale.
 interface ChromePaint {
+  readonly columns: number;
   readonly frames: ReadonlyMap<string, readonly TouchChromeLayer[]>;
   readonly logical: Size;
+  readonly textureLimit: number;
   scale: number;
 }
 
 const paintOf = (texture: Textures.Texture): ChromePaint =>
   (texture.customData as { chrome: ChromePaint }).chrome;
 
-// Paints texture's frames from paint at scale texels per logical px, one texel of clear edge
-// around each, resizing the canvas and the frames in place.
+// Resizes the atlas and paints each named frame at its new position in the grid.
 function paintChrome(texture: Textures.CanvasTexture, paint: ChromePaint, scale: number): void {
-  const width = densityTexels(scale, paint.logical.width);
-  const height = densityTexels(scale, paint.logical.height);
+  const { columns, frames, logical, textureLimit } = paint;
+  const { height, rows, strideX, strideY, width } = chromeAtlasGrid(
+    logical,
+    scale,
+    frames.size,
+    columns,
+    textureLimit,
+  );
   const texels = width / paint.logical.width;
-  const stride = width + 2;
-  texture.setSize(stride * paint.frames.size, height + 2);
+  texture.setSize(strideX * columns, strideY * rows);
   const context = texture.getContext();
   context.clearRect(0, 0, texture.width, texture.height);
-  let column = 0;
-  for (const [frame, layers] of paint.frames) {
+  let index = 0;
+  for (const [frame, layers] of frames) {
+    const left = (index % columns) * strideX + 1;
+    const top = Math.floor(index / columns) * strideY + 1;
     const image = context.createImageData(width, height);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
@@ -106,13 +114,13 @@ function paintChrome(texture: Textures.CanvasTexture, paint: ChromePaint, scale:
         );
       }
     }
-    context.putImageData(image, column * stride + 1, 1);
+    context.putImageData(image, left, top);
     if (texture.has(frame)) {
-      texture.get(frame).setSize(width, height, column * stride + 1, 1);
+      texture.get(frame).setSize(width, height, left, top);
     } else {
-      texture.add(frame, 0, column * stride + 1, 1, width, height);
+      texture.add(frame, 0, left, top, width, height);
     }
-    column++;
+    index++;
   }
   texture.refresh();
   paint.scale = scale;
@@ -124,12 +132,19 @@ function createChromeTexture(
   key: string,
   logical: Size,
   frames: ReadonlyMap<string, readonly TouchChromeLayer[]>,
+  grid?: { readonly columns: number; readonly textureLimit: number },
 ): void {
   const texture = scene.textures.createCanvas(key, 1, 1);
   if (!texture) {
     throw new Error(`Cannot create ${key}`);
   }
-  const paint: ChromePaint = { frames, logical, scale };
+  const paint: ChromePaint = {
+    columns: grid?.columns ?? Math.max(1, frames.size),
+    frames,
+    logical,
+    scale,
+    textureLimit: grid?.textureLimit ?? Infinity,
+  };
   texture.customData = { chrome: paint };
   paintChrome(texture, paint, scale);
   setTextureFilters(scene.textures, new Map([[key, "linear"]]));
@@ -216,12 +231,17 @@ export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
         frames.set(useDiscFrame(action, pose), useDiscLayers(TOUCH_CHROME_COLOURS, action, pose));
       }
     }
+    const renderer = scene.game.renderer;
     createChromeTexture(
       scene,
       scale,
       USE_DISC_KEY,
       { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME },
       frames,
+      {
+        columns: USE_DISC_POSES.length,
+        textureLimit: "getMaxTextureSize" in renderer ? renderer.getMaxTextureSize() : Infinity,
+      },
     );
   }
   return scene.add
