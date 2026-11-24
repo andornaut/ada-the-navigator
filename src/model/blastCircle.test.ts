@@ -4,12 +4,16 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
+import { scenerySilhouette } from "./asteroids.ts";
 import { fromScreen, type Parts, screenOutlineContact } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { activeBlastFlashes, createFlight, stepFlight } from "./flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { shipTouchesScreenCircle } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress, Shot, SpaceObject, Vec } from "./types.ts";
+import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 // gameplay/rules.md "Missiles": a blast is a circle on screen of radius 30 (Rapid) or 60 (Heavy)
 // that deals full damage to every target whose drawn shape it overlaps.
@@ -125,6 +129,78 @@ function enemyWithGap(
 }
 
 describe("missile blasts as screen circles", () => {
+  it.each([
+    ["rapidMissile", 1, "rock", "x"],
+    ["heavyMissile", 3, "resource", "y"],
+  ] as const)(
+    "uses full %s tier %i damage for a drawn %s at and inside the circle edge",
+    (weapon, level, kind, axis) => {
+      const { blastRadius, damageRatio } = weaponAt(weapon, level);
+      const damage = CONTENT.tuning.flight.playerShotDamage * damageRatio;
+      for (const [gap, covered] of [
+        [-0.25, true],
+        [0, true],
+        [0.25, false],
+      ] as const) {
+        const target: SpaceObject = {
+          asteroid: "asteroid-m1",
+          hp: 100,
+          id: "rock",
+          kind,
+          radius: 1,
+          spinStart: 5,
+          x: 0,
+          y: 0,
+        };
+        const frame = scenerySilhouette(target)!.frames[target.spinStart!]!;
+        const edge = frame.flat().reduce((a, b) => (a[axis] < b[axis] ? a : b));
+        const circle = { ...edge, [axis]: edge[axis] - blastRadius! - gap };
+        const offset = fromScreen(circle);
+        Object.assign(target, { x: BLAST_AT.x - offset.x, y: BLAST_AT.y - offset.y });
+        const flight = flightWith([target]);
+        flight.shots.push({ ...missile(blastRadius!, false), damage, velocity: { x: 0, y: 0 } });
+        stepFlight(CONTENT, 0.001, { ...idle, reducedMotion: true }, flight);
+        expect(target.hp, `gap ${gap}`).toBe(covered ? 100 - damage : 100);
+      }
+    },
+  );
+
+  it("checks a moving asteroid at its stepped position through the nearest wrapped image", () => {
+    const { blastRadius, damageRatio } = weaponAt("rapidMissile", 1);
+    const damage = CONTENT.tuning.flight.playerShotDamage * damageRatio;
+    const side = CURRENT_FLIGHT_TOPOLOGY.side;
+    const at = { x: side / 2 - 10, y: 31_800 };
+    const target: SpaceObject = {
+      asteroid: "asteroid-m1",
+      hp: 100,
+      id: "ballistic:test",
+      kind: "debris",
+      radius: 1,
+      velocity: { x: -60, y: 0 },
+      x: 0,
+      y: 0,
+    };
+    const edge = scenerySilhouette(target)!
+      .frames[0]!.flat()
+      .reduce((a, b) => (a.x < b.x ? a : b));
+    const offset = fromScreen({ x: edge.x - blastRadius! + 0.02, y: edge.y });
+    // The initial screen gap is 0.04 px outside. The first step brings the rock into the circle.
+    Object.assign(target, wrapPoint(side, { x: at.x - offset.x + 0.06, y: at.y - offset.y }));
+    const flight = flightWith([target]);
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+    flight.player = { x: at.x - 400, y: at.y };
+    const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
+    flight.chunks = [...worldCellsNear(grid, grid.pitch * 2, flight.player)].map((cell) =>
+      worldCellKey(grid, cell),
+    );
+    expect(target.x).toBeLessThan(0);
+    flight.shots.push({ ...missile(blastRadius!, false, at), damage, velocity: { x: 0, y: 0 } });
+    stepFlight(CONTENT, 0.001, { ...idle, reducedMotion: true }, flight);
+    expect(activeBlastFlashes(flight)).toMatchObject([at]);
+    expect(flight.objects).toContain(target);
+    expect(target.hp).toBe(100 - damage);
+  });
+
   it("fully damages an enemy whose drawn shape the circle reaches, the same in every direction", () => {
     for (const radius of [RAPID, HEAVY]) {
       for (const [name, direction] of SCREEN_DIRECTIONS) {

@@ -292,7 +292,7 @@ describe("Ada's shot origin", () => {
 });
 
 describe("integrated weapon projectiles", () => {
-  it("uses missile damage and cooldown; a blast spares rocks", () => {
+  it("uses missile damage and cooldown, damaging the struck and nearby rocks once each", () => {
     const { flight } = launched("rapidMissile");
     flight.objects = [
       { hp: 10, id: "direct", kind: "rock", radius: 4, x: 30, y: 0 },
@@ -301,7 +301,7 @@ describe("integrated weapon projectiles", () => {
     flight.facing = { x: 1, y: 0 };
     stepFlight(CONTENT, 0.1, right, flight);
     expect(hp(flight, "direct")).toBe(10 - 1.5);
-    expect(hp(flight, "nearby")).toBe(10);
+    expect(hp(flight, "nearby")).toBe(10 - 1.5);
     expect(flight.fireCooldown).toBeGreaterThan(
       WEAPON_CATALOG.rapidMissile[0].intervalSeconds - 0.11,
     );
