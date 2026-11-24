@@ -2,16 +2,13 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { registerAdaAncestorActionScope } from "./actionRegistry.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { FONT_ROLES } from "./settings.ts";
@@ -41,9 +38,18 @@ export function createUpdateDialog(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
+  let open = false;
+  let disposed = false;
+  const defer = () => offer.defer();
+  const headerBinding = createStandardCloseAction(actionRoot, "close-update", labels.close, {
+    current: (button) =>
+      !disposed && open && inCurrentView(root, button) && availability().kind === "available",
+    run: defer,
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
   const parts = createCard({
-    closeAction: "close-update",
-    closeLabel: labels.close,
+    close: headerBinding.element,
     fontRole: FONT_ROLES.heading,
     size: "small",
     title: labels.title,
@@ -58,21 +64,10 @@ export function createUpdateDialog(
     root === actionRoot ? undefined : registerAdaAncestorActionScope(modal, actionRoot);
   let layer: ReturnType<typeof createModalLayer> | undefined;
   let leaveLayer: (() => void) | undefined;
-  let open = false;
-  let disposed = false;
-  const defer = () => offer.defer();
   const availability = (): ControlAvailability =>
     disposed || !open || (layer !== undefined && !inCurrentView(root, card))
       ? { kind: "omitted" }
       : { kind: "available" };
-  const headerBinding = bindAdaAction(
-    {
-      click: { availability, run: defer },
-      current: () => !disposed && open && inCurrentView(root, close),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(close),
-    },
-    close,
-  );
   const ports = createAdaLayoutPorts<UpdateAction>({
     actionRoot,
     actions: new Map([

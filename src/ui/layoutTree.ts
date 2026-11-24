@@ -138,7 +138,11 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
             slopThreshold: SCROLL.dragThreshold,
           },
         );
-        const parts = createCard({ ...initial, close: close.element });
+        const parts = createCard({
+          close: close.element,
+          size: initial.size,
+          title: initial.title,
+        });
         const body = parts.body.ownerDocument.createElement("div");
         body.style.alignSelf = "stretch";
         body.style.minWidth = "0";

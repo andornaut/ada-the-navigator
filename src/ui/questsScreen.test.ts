@@ -271,11 +271,10 @@ const producer = vi.hoisted(() => ({
 vi.mock("./modal.ts", async (load) => ({
   ...(await load<typeof import("./modal.ts")>()),
   createButton: (label: string) => Object.assign(new QuestNode("button"), { textContent: label }),
-  createCard: () => {
+  createCard: ({ close }: { close: QuestNode }) => {
     const frame = new QuestNode();
     const card = new QuestNode();
     const body = new QuestNode();
-    const close = new QuestNode("button");
     card.append(body);
     frame.append(card, close);
     return { body, card, close, dispose: producer.disposeCard, fit: producer.fit, frame };

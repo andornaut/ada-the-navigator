@@ -128,6 +128,10 @@ class Element {
       this.children.push(node);
     }
   }
+  replaceChildren(...nodes: Element[]) {
+    this.textContent = "";
+    this.append(...nodes);
+  }
   dispatchEvent(event: Event) {
     for (const listener of this.listeners.get(event.type) ?? []) {
       listener(event);

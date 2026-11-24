@@ -46,6 +46,7 @@ import {
   STANDARD_CARD_TEXT_BUTTON,
   TEXT_TOKENS,
 } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
@@ -374,12 +375,21 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       ),
     );
   };
+  const closeControl = (action: string, run: () => void) => {
+    const close = createStandardCloseAction(root, action, options.labels.close, {
+      current: () => !disposed,
+      run,
+      slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+      slopThreshold: SCROLL.dragThreshold,
+    });
+    actionBindings.push(close);
+    return close.element;
+  };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
   const settingsCard = createCard({
-    closeAction: "close-settings",
-    closeLabel: options.labels.close,
+    close: closeControl("close-settings", () => setOpen(false)),
     fontRole: FONT_ROLES.heading,
     size: "large",
     title: options.labels.settings,
@@ -484,13 +494,12 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installRow.append(installButton);
 
   const stepsParts = createCard({
-    closeAction: "close-install-steps",
-    closeLabel: options.labels.close,
+    close: closeControl("close-install-steps", () => closeSteps()),
     fontRole: FONT_ROLES.heading,
     size: "medium",
     title: "",
   });
-  const { body: stepsBody, card: stepsCard, close: stepsX, frame: stepsFrame } = stepsParts;
+  const { body: stepsBody, card: stepsCard, frame: stepsFrame } = stepsParts;
   const stepsTitle = stepsParts.title;
   stepsFrame.hidden = true;
   stepsCard.dataset.dialog = "install-steps";
@@ -689,7 +698,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       void startInstall(options.install.port, openSteps, () => open && !disposed);
     }
   };
-  registerAction(stepsX, closeSteps);
   const setOpen = (value: boolean) => {
     if (disposed || value === open) {
       return;
@@ -728,7 +736,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     options.onOpenChange(open);
   };
   registerAction(openButton, () => setOpen(true));
-  registerAction(closeButton, () => setOpen(false));
   const dispose = () => {
     if (disposed) {
       return;

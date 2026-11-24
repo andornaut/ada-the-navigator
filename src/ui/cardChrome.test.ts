@@ -34,13 +34,18 @@ describe("shared card chrome", () => {
   it("fills a requested dialog without changing its accessible name, close action or content structure", () => {
     vi.stubGlobal("document", { createElement: () => new Element() });
     vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
+    const button = new Element();
+    button.dataset.action = "back";
+    button.setAttribute("aria-label", "Close");
     const full = createCard({
-      closeAction: "back",
-      closeLabel: "Close",
+      close: button as unknown as HTMLButtonElement,
       size: "large",
       title: "Quests",
     });
-    const fitted = createCard({ closeAction: "back", closeLabel: "Close", title: "Ship" });
+    const fitted = createCard({
+      close: new Element() as unknown as HTMLButtonElement,
+      title: "Ship",
+    });
     const frame = full.frame as unknown as Element;
     expect(frame.dataset.cardSize).toBe("large");
     expect(frame.attributes.get("role")).toBe("dialog");

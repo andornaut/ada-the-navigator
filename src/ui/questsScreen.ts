@@ -18,6 +18,7 @@ import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.t
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
 import { createCard, setFooterAction, setScrollGroup } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { type QuestsBodyData, type QuestsBodySchema, questsBodyTree } from "./questsBodyTree.ts";
@@ -129,22 +130,26 @@ export function createQuestsScreen(
   const modal = document.createElement("div");
   modal.className = "ada-modal ada-quests-screen";
   modal.hidden = true;
+  let disposed = false;
+  const headerClose = createStandardCloseAction(root, "close-quests", labels.close, {
+    current: (button) => !disposed && !modal.hidden && inCurrentView(root, button),
+    run: () => back(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
   const card = createCard({
-    closeAction: "close-quests",
-    closeLabel: labels.close,
+    close: headerClose.element,
     size: "large",
     title: labels.quests,
   });
 
   card.card.dataset.dialog = "quests";
   modal.append(card.frame);
-  let disposed = false;
-  const bindings: ReturnType<typeof bindAdaAction>[] = [];
   const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
   let bodyLayout: ReturnType<typeof mountLayout<QuestsBodySchema>> | undefined;
   let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
-  const register = (element: HTMLButtonElement, run: () => void, rendered = true) => {
-    (rendered ? renderedBindings : bindings).push(
+  const register = (element: HTMLButtonElement, run: () => void) => {
+    renderedBindings.push(
       bindAdaAction(
         {
           click: {
@@ -575,10 +580,10 @@ export function createQuestsScreen(
   }
   function dispose(): void {
     disposed = true;
-    for (const binding of [...bindings, ...renderedBindings]) {
+    headerClose.dispose();
+    for (const binding of renderedBindings) {
       binding.dispose();
     }
-    bindings.length = 0;
     renderedBindings.length = 0;
     hide();
     footerLayout?.dispose();
@@ -587,7 +592,6 @@ export function createQuestsScreen(
     modal.remove();
   }
   try {
-    register(card.close, back, false);
     assertAdaActionMetadata(card.frame);
     root.append(modal);
   } catch (error) {

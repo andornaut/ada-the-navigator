@@ -44,6 +44,7 @@ const fixture = vi.hoisted(() => {
     }
     classList = {
       add: (name: string) => this.classList.toggle(name, true),
+      remove: (name: string) => this.classList.toggle(name, false),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -194,7 +195,8 @@ vi.mock("./modal.ts", async (original) => ({
     button.dataset.role = role;
     return button;
   },
-  createCard: () => {
+  createCard: ({ close }: { close: InstanceType<typeof fixture.Node> }) => {
+    fixture.card.close = close;
     fixture.card.card.replaceChildren(fixture.card.title, fixture.card.body);
     fixture.card.frame.replaceChildren(fixture.card.card, fixture.card.close);
     return fixture.card;
@@ -468,11 +470,21 @@ it("owns the whole Update offer in the application action scope", () => {
     expect(resolveAdaHoldAction(controls, target)).toBeNull();
     expect(resolveAdaHoldAction(app, target)?.available()).toBe(true);
   }
-  f.button("cancel").dispatchEvent(new Event("click", { cancelable: true }));
+  const close = fixture.card.close;
+  const held = resolveAdaHoldAction(app, close)!;
+  expect(close.matches(".ui-standard-button")).toBe(true);
+  expect(close.getAttribute("aria-label")).toBe(labels.close);
+  close.dispatchEvent(new Event("click", { cancelable: true }));
   expect(f.offer.defer).toHaveBeenCalledOnce();
+  held.activate();
+  expect(f.offer.defer).toHaveBeenCalledTimes(2);
   expect(f.offer.accept).not.toHaveBeenCalled();
   f.dialog.dispose();
   expect(resolveAdaHoldAction(app, backdrop)).toBeNull();
+  expect(resolveAdaHoldAction(app, close)).toBeNull();
+  held.activate();
+  close.dispatchEvent(new Event("click", { cancelable: true }));
+  expect(f.offer.defer).toHaveBeenCalledTimes(2);
 });
 
 it("checks completed offer reconciliation before exposing unbound controls", () => {

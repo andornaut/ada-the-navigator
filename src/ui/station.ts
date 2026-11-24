@@ -326,15 +326,18 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   confirmModal.dataset.stationConfirm = "";
   confirmModal.hidden = true;
 
-  const stationClose = createStandardCloseAction(parent, "station-back", labels.close, {
-    current: canUse,
-    run: () => back(),
-    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
-    slopThreshold: SCROLL.dragThreshold,
-  });
-  bindings.push(stationClose);
+  const closeControl = (action: string) => {
+    const close = createStandardCloseAction(parent, action, labels.close, {
+      current: canUse,
+      run: () => back(),
+      slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+      slopThreshold: SCROLL.dragThreshold,
+    });
+    bindings.push(close);
+    return close.element;
+  };
   const stationCard = createDialoguePanel({
-    close: stationClose.element,
+    close: closeControl("station-back"),
     title: labels.station,
   });
   stationCard.card.dataset.dialog = "station";
@@ -405,8 +408,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     focusTarget(!openShop.hidden ? openShop : !openJobs.hidden ? openJobs : openExchange);
 
   const shopCard = createCard({
-    closeAction: "shop-back",
-    closeLabel: labels.close,
+    close: closeControl("shop-back"),
     size: "large",
     title: labels.shop,
   });
@@ -417,8 +419,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   shopCard.body.setAttribute("data-shop-stock", "");
   shopCard.body.append(shopStock);
   const exchangeCard = createCard({
-    closeAction: "exchange-back",
-    closeLabel: labels.close,
+    close: closeControl("exchange-back"),
     size: "large",
     title: EXCHANGE_COPY.title,
   });
@@ -427,8 +428,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   const exchange = createExchangeView(parent, exchangeCard.body, options.exchange, () => render());
 
   const confirmCard = createCard({
-    closeAction: "confirm-cancel-x",
-    closeLabel: labels.close,
+    close: closeControl("confirm-cancel-x"),
     size: "small",
     title: "",
   });
@@ -444,8 +444,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   ]);
 
   const jobsCard = createCard({
-    closeAction: "jobs-back",
-    closeLabel: labels.close,
+    close: closeControl("jobs-back"),
     size: "large",
     title: labels.jobsProjects,
   });
@@ -1104,13 +1103,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     render();
     focusTarget(openJobs);
   };
-  register(jobsCard.close, back);
   const showExchange = (): void => {
     view = "exchange";
     render();
     focusTarget(openExchange);
   };
-  register(exchangeCard.close, back);
   const showShop = (): void => {
     if (!configuredStock()) {
       return;
@@ -1119,8 +1116,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     render();
     focusTarget(openShop);
   };
-  register(shopCard.close, back);
-  register(confirmCard.close, back);
   const buyConfirmed = (): void => {
     const pending = confirm;
     if (!pending || "drop" in pending) {

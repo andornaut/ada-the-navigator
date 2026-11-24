@@ -827,13 +827,12 @@ export function reserveScrollbar(group: HTMLElement): void {
 type CardHeading = { readonly fontRole?: string; readonly title: string };
 type PageCardOptions = CardHeading & { readonly page: true };
 type DialogCardOptions = CardHeading & {
+  readonly close: HTMLButtonElement;
+  /** Fixed preset width, clamped to the modal game-area rect. */
   readonly size?: CardSize;
   /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
   readonly list?: boolean;
-} & (
-    | { readonly close: HTMLButtonElement }
-    | { readonly closeAction: string; readonly closeLabel: string }
-  );
+};
 type DialogCardParts = CardParts & { readonly close: HTMLButtonElement };
 
 // A dialog mounts the caller's close control beside the card. A page only mounts its heading and body.
@@ -864,18 +863,9 @@ export function createCard(
   const body = document.createElement("div");
   body.className = "ada-card-body";
   card.append(header, body);
+  const close = page ? undefined : options.close;
   frame.append(card);
-  let close: HTMLButtonElement | undefined;
-  if (!page) {
-    if ("close" in options) {
-      close = options.close;
-    } else {
-      close = document.createElement("button");
-      close.type = "button";
-      close.className = "ada-close";
-      close.dataset.action = options.closeAction;
-      close.setAttribute("aria-label", options.closeLabel);
-    }
+  if (close) {
     frame.append(close);
   }
   const fit = () => fitCard({ body, card, title }, !page, !page && options.list === true);

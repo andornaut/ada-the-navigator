@@ -670,42 +670,37 @@ function constructedStation(
     node.disabled = true;
     return node;
   }
-  function parts(options: {
-    closeAction: string;
-    title: string;
-    close?: InstanceType<typeof Node>;
-  }) {
+  function parts({ close, title: heading }: { close: InstanceType<typeof Node>; title: string }) {
+    const closeAction = close.dataset.action;
+    if (!closeAction) {
+      throw new Error("Station fixture requires a named close action");
+    }
     const frame = new Node("div", false),
       card = new Node("section", false),
       body = new Node("div", false),
       header = new Node("header", false),
       title = new Node("h2", false),
-      close = options.close ?? button("Close"),
       choices = new Node("div", false),
       controls = new Node("div", false),
       skip = button("Skip");
-    frame.className =
-      options.closeAction === "station-back" ? "ada-dialogue-frame" : "ada-card-frame";
+    frame.className = closeAction === "station-back" ? "ada-dialogue-frame" : "ada-card-frame";
     body.className = "ada-card-body";
     const replace = body.replaceChildren.bind(body);
     body.replaceChildren = (...nodes) => {
       replace(...nodes);
-      if (options.closeAction === "confirm-cancel-x" && state.corruptConfirmation) {
+      if (closeAction === "confirm-cancel-x" && state.corruptConfirmation) {
         body.append(unbound());
       }
     };
     frame.setAttribute("role", "dialog");
-    if (!options.close) {
-      close.dataset.action = options.closeAction;
-    }
-    title.textContent = options.title;
+    title.textContent = heading;
     header.append(title);
     card.append(header, body);
     frame.append(card, close);
-    if (options.closeAction === "station-back") {
+    if (closeAction === "station-back") {
       card.append(choices, controls);
     }
-    if (fault === options.closeAction) {
+    if (fault === closeAction) {
       frame.append(unbound());
     }
     const result = {
@@ -722,7 +717,7 @@ function constructedStation(
       skip,
       title,
     };
-    native.set(options.closeAction, result);
+    native.set(closeAction, result);
     return result;
   }
   const doc = f.doc as typeof f.doc & { createElement: (tag: string) => InstanceType<typeof Node> };
@@ -867,8 +862,7 @@ function constructedStation(
     bindAdaAction,
     createActions: actions,
     createCard: parts,
-    createDialoguePanel: (options: { close: InstanceType<typeof Node>; title: string }) =>
-      parts({ ...options, closeAction: "station-back" }),
+    createDialoguePanel: parts,
     createExchangeView: (
       actionRoot: InstanceType<typeof Node>,
       host: InstanceType<typeof Node>,
@@ -1268,7 +1262,9 @@ it("opens unmutated Jobs details then accepts and focuses the same active row", 
     [`${f.labels.questReward}: 10 Stardust`, null],
   ]);
   expect(detail.querySelectorAll(".ada-confirm-left")).toEqual([]);
-  f.activate(f.action("confirm-cancel"));
+  const close = f.action("confirm-cancel-x");
+  expect(close.classList.contains("ui-standard-button")).toBe(true);
+  close.dispatchEvent(new Event("click"));
   expect(f.doc.activeElement).toBe(row);
   f.activate(row);
   f.activate(f.action("confirm-buy"));
@@ -1360,6 +1356,21 @@ it("keeps the standard Station Close scoped to the welcome card", () => {
   held.activate();
   click();
   expect(f.undock).toHaveBeenCalledOnce();
+});
+
+it.each([
+  ["open-shop", "shop-back"],
+  ["open-jobs", "jobs-back"],
+  ["open-exchange", "exchange-back"],
+])("restores %s when its Kit Close runs %s", (opener, id) => {
+  const f = constructedStation();
+  f.station.setOpen(true);
+  f.activate(f.action(opener));
+  const close = f.action(id);
+  expect(close.classList.contains("ui-standard-button")).toBe(true);
+  close.dispatchEvent(new Event("click"));
+  expect(f.doc.activeElement).toBe(f.action(opener));
+  expect(f.undock).not.toHaveBeenCalled();
 });
 
 it("uses one standard native click for footer and confirmation actions", () => {
