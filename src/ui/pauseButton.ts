@@ -1,8 +1,12 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
+
 import { SCROLL } from "../data/layout.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
@@ -74,11 +78,26 @@ export function createPauseButton(
   label: string,
   onPause: () => void,
 ): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "ada-pause";
+  const kit = createButton(root.ownerDocument, {
+    appearance: { className: "ada-pause", face: {}, layout: "caller" },
+    content: { kind: "icon", name: label },
+    getAction: (button) => {
+      const owned = resolveAdaHoldAction(root, button);
+      return owned?.available() ? owned : null;
+    },
+    getState: (button) => ({
+      availability: button.hidden
+        ? { kind: "omitted" }
+        : button.disabled
+          ? { kind: "disabled" }
+          : { kind: "available" },
+    }),
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  });
+  const button = kit.element;
+  // The HUD paints the pose and focus on the button's pseudo-element.
+  kit.face.hidden = true;
   button.dataset.action = "pause";
-  button.setAttribute("aria-label", label);
   button.title = label;
   button.hidden = true;
   let disposed = false;
@@ -96,6 +115,7 @@ export function createPauseButton(
         },
       },
       current: () => !disposed && button.isConnected,
+      nativeClickOwner: "factory",
       slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
     },
     button,
@@ -103,6 +123,7 @@ export function createPauseButton(
   const dispose = () => {
     disposed = true;
     action.dispose();
+    kit.dispose();
     pose.dispose();
     button.removeEventListener("pointerdown", pose.press);
     for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {

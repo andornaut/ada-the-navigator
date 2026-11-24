@@ -8,10 +8,24 @@ import { enterPressView } from "./pressScope.ts";
 class Element extends EventTarget {
   dataset: Record<string, string> = {};
   className = "";
+  readonly classList = {
+    add: (name: string) => {
+      this.className = `${this.className} ${name}`.trim();
+    },
+    remove: (name: string) => {
+      this.className = this.className
+        .split(" ")
+        .filter((part) => part !== name)
+        .join(" ");
+    },
+  };
   readonly children: Element[] = [];
   append(child: Element) {
     child.parentElement = this;
     this.children.push(child);
+  }
+  replaceChildren() {
+    this.children.length = 0;
   }
   querySelectorAll(selector: string): Element[] {
     return this.children.flatMap((child) => [
@@ -68,6 +82,13 @@ class Element extends EventTarget {
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, enabled: boolean) {
+    if (enabled) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
   closest(selector: string): Element | null {
     return (selector.includes("[hidden]") && this.hidden) ||
@@ -126,6 +147,9 @@ it("holds the actual navigation button once and suppresses release click using t
     () => activateNavigation({ mapOpen: false, menu, pausable, pause }, navigation.button),
   );
   const button = navigation.button as unknown as Element;
+  expect(button.className).toBe("ada-pause ui-standard-button");
+  expect(button.children[0]?.hidden).toBe(true);
+  expect(button.children[0]?.children[0]?.getAttribute("aria-hidden")).toBe("true");
   button.hidden = false;
   const event = (type: string) => {
     const e = new Event(type, { cancelable: true });
@@ -166,6 +190,7 @@ it("holds the actual navigation button once and suppresses release click using t
   document.dispatchEvent(event("pointerup"));
   ready = false;
   requiredChanged();
+  button.dispatchEvent(new Event("click", { cancelable: true }));
   down();
   vi.advanceTimersByTime(500);
   expect(menu).toHaveBeenCalledOnce();
@@ -188,7 +213,8 @@ it("holds the actual navigation button once and suppresses release click using t
   expect(menu).toHaveBeenCalledTimes(2);
   const remove = vi.spyOn(button, "removeEventListener");
   navigation.dispose();
-  for (const type of ["click", "pointerdown", "pointerup", "pointercancel", "pointerleave"]) {
+  expect(remove).toHaveBeenCalledWith("click", expect.any(Function), true);
+  for (const type of ["pointerdown", "pointerup", "pointercancel", "pointerleave"]) {
     expect(remove).toHaveBeenCalledWith(type, expect.any(Function));
   }
   expect(vi.getTimerCount()).toBe(0);

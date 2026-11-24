@@ -7,12 +7,22 @@ import { type NavigationActivity, navigationEntry } from "./navigationEntry.ts";
 class Node extends EventTarget {
   children: Node[] = [];
   className = "";
+  readonly classList = {
+    add: () => {},
+    remove: () => {},
+  };
   dataset: Record<string, string> = {};
   hidden = false;
   disabled = false;
   parentElement: Node | null = null;
+  get ownerDocument(): Document {
+    return document;
+  }
   get isConnected(): boolean {
     return (this as unknown) === document.body || (this.parentElement?.isConnected ?? false);
+  }
+  contains(node: unknown): boolean {
+    return node === this || (node instanceof Node && this.contains(node.parentElement));
   }
   closest(): Node | null {
     return this.hidden ? this : (this.parentElement?.closest() ?? null);
@@ -24,6 +34,9 @@ class Node extends EventTarget {
       node.parentElement = this;
       this.children.push(node);
     }
+  }
+  replaceChildren() {
+    this.children.length = 0;
   }
   remove() {
     if (this.parentElement) {
@@ -51,6 +64,19 @@ class Node extends EventTarget {
   }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
+  }
+  getAttribute(key: string) {
+    return this.attributes.get(key) ?? null;
+  }
+  removeAttribute(key: string) {
+    this.attributes.delete(key);
+  }
+  toggleAttribute(key: string, enabled: boolean) {
+    if (enabled) {
+      this.setAttribute(key, "");
+    } else {
+      this.removeAttribute(key);
+    }
   }
 }
 const activity: NavigationActivity = {
@@ -89,8 +115,10 @@ describe("actual Pause/Menu entry", () => {
       body: new Node(),
       createElement: (tag: string) => new Node(tag),
       createElementNS: () => new Node(),
+      defaultView: { HTMLElement: Node, Node },
     });
     vi.stubGlobal("fetch", () => Promise.reject(new Error("No asset fetch in unit fixture")));
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
     const pause = vi.fn();
     const menu = vi.fn();
     const mode = navigationEntry(facts);
@@ -113,7 +141,8 @@ describe("actual Pause/Menu entry", () => {
     expect(menu).toHaveBeenCalledTimes(expected === "menu" ? 1 : 0);
     const button = entry.button as unknown as Node;
     expect(button.attributes.get("aria-label")).toBe(expected === "pause" ? "Pause" : "Menu");
-    expect(button.children).toHaveLength(0);
+    expect(entry.button.title).toBe(expected === "pause" ? "Pause" : "Menu");
+    expect(button.children.map((face) => face.hidden)).toEqual([true]);
     expect(button.dataset.navigation).toBe(expected);
     entry.dispose();
     entry.button.dispatchEvent(new Event("click"));
