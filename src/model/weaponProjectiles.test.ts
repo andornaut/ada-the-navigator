@@ -170,9 +170,13 @@ describe("Phaser hitscan beam", () => {
     expect(outlineContact(enemyHull(target.enemy!)!, target, flash.to, 0.01)).not.toBeNull();
     expect(flash.to.x).toBeLessThan(target.x);
     expect(flash.hit).toBe(true);
+    expect(activeWeaponImpacts(hitFlight)).toMatchObject([
+      { ...flash.to, age: flash.age, family: "phaserRings" },
+    ]);
     const miss = beam([]);
     expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(playerRange), 9);
     expect(activeBeamFlashes(miss)[0]!.hit).toBe(false);
+    expect(activeWeaponImpacts(miss)).toEqual([]);
     // The flash shows 0.15 s and a hit's spark 0.16 s, so both last until the spark ends.
     miss.fireCooldown = 100;
     stepFlight(CONTENT, BEAM.sparkSeconds - 2 / 60, idle, miss);

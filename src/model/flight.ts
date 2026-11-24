@@ -4848,7 +4848,7 @@ export function activeWeaponImpacts(flight: FlightState): readonly WeaponImpact[
               ...flash.to,
               age: flash.age,
               direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
-              family: "compactBright",
+              family: "phaserRings",
               id: impactViewId(flash),
             },
           ]

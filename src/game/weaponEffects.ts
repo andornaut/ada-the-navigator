@@ -694,6 +694,42 @@ function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape):
   };
 }
 
+const PHASER_CONTACT_RINGS = [
+  { colour: EFFECT_COLOURS.cream, peak: 1, start: 0 },
+  { colour: EFFECT_COLOURS.amber, peak: 0.85, start: 26 },
+  { colour: EFFECT_COLOURS.cream, peak: 0.72, start: 52 },
+] as const;
+
+function phaserContactRings(at: Vec, reducedMotion: boolean, age: number): EllipseShape[] {
+  if (reducedMotion) {
+    return age < 136
+      ? [
+          {
+            ...circle(at, 5.5),
+            alpha: 0.95 * Math.min(1, (136 - age) / 88),
+            colour: EFFECT_COLOURS.cream,
+            kind: "ellipse",
+            stroke: 1.75,
+          },
+        ]
+      : [];
+  }
+  const rings: EllipseShape[] = [];
+  for (const { colour, peak, start } of PHASER_CONTACT_RINGS) {
+    const elapsed = age - start;
+    if (elapsed >= 0 && elapsed < 108) {
+      rings.push({
+        ...circle(at, 2.75 + (14.25 * elapsed) / 108),
+        alpha: peak * Math.min(1, (108 - elapsed) / 92),
+        colour,
+        kind: "ellipse",
+        stroke: 1.5,
+      });
+    }
+  }
+  return rings;
+}
+
 /** Existing procedural shapes for a contact; projects direction once and never infers family. */
 export function impactEffect(
   context: { readonly at: Vec; readonly reducedMotion: boolean },
@@ -708,6 +744,9 @@ export function impactEffect(
     return impact.blastRadius !== undefined && impact.blastRadius > 0
       ? blastWithRecipe(BLASTS.heavy, at, impact.blastRadius, reducedMotion, t)
       : [];
+  }
+  if (impact.family === "phaserRings") {
+    return phaserContactRings(at, reducedMotion, t);
   }
   const angle = impact.direction ? screenAngle(impact.direction) : 0;
   if (

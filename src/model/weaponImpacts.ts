@@ -2,7 +2,14 @@ import type { EnemyWeapon } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 
 export type ImpactFamily =
-  "missile" | "compact" | "compactBright" | "pellet" | "lance" | "ripple" | "shockwave";
+  | "missile"
+  | "compact"
+  | "compactBright"
+  | "phaserRings"
+  | "pellet"
+  | "lance"
+  | "ripple"
+  | "shockwave";
 
 /** Visual provenance captured from the weapon that fired, never the current loadout. */
 export function impactFamily(weapon: EnemyWeapon): ImpactFamily {
