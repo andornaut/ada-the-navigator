@@ -4016,7 +4016,7 @@ try {
   assert.deepEqual(damaged.state.economy.ownedWeapons, ["rapidMissile", "multiLaser"]);
   assert.equal(damaged.state.economy.weapon, "rapidMissile", "The equipped weapon must stay");
   assert.equal(damaged.state.economy.stardust, 30, "The jump home must cost no Stardust");
-  const oreLost = Math.ceil(carriedOre / 2) < carriedOre;
+  const oreLost = carriedOre > 0;
   const jumpPage = damaged.storyView?.page.text ?? "";
   assert.ok(
     jumpPage.includes(CONTENT.labels.jumpHome) &&
