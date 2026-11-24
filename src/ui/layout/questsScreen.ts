@@ -79,20 +79,20 @@ export const QUESTS_SCREEN_STYLE = `
   border:0;
   padding:0;
   cursor:pointer}
-.ada-controls .ada-quest-endpoint:disabled{opacity:1;
+.ada-controls .ada-quest-endpoint:is(:disabled,[aria-disabled=true]){opacity:1;
   cursor:default}
-.ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active){
+.ada-controls .ada-quest-endpoint:not(:disabled,[aria-disabled=true]):is(:focus-visible,:active){
   outline:none;
   --ada-endpoint-cue-ink:${TEXT_TOKENS.buttonLabel};
   --ada-endpoint-cue-face:${TEXT_TOKENS.label};
   color:var(--ada-endpoint-cue-ink);
   background:var(--ada-endpoint-cue-face)
 }
-.ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active) small{
+.ada-controls .ada-quest-endpoint:not(:disabled,[aria-disabled=true]):is(:focus-visible,:active) small{
   color:inherit
 }
 @media (forced-colors:active){
-  .ada-controls .ada-quest-endpoint:not(:disabled):is(:focus-visible,:active){
+  .ada-controls .ada-quest-endpoint:not(:disabled,[aria-disabled=true]):is(:focus-visible,:active){
     forced-color-adjust:none;
     --ada-endpoint-cue-ink:HighlightText;
     --ada-endpoint-cue-face:Highlight

@@ -148,7 +148,7 @@ export function createQuestsScreen(
 
   card.card.dataset.dialog = "quests";
   modal.append(card.frame);
-  const renderedBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const renderedBindings: { dispose(): void }[] = [];
   let bodyLayout: ReturnType<typeof mountLayout<QuestsBodySchema>> | undefined;
   let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
   const register = (element: HTMLButtonElement, run: () => void) => {
@@ -427,11 +427,49 @@ export function createQuestsScreen(
                   }
                   route.append(svg);
                 }
-                const button = document.createElement("button");
+                const placeId = endpoint.place?.id;
+                const disabled =
+                  origin === "ship" || endpoint.location === null || placeId === undefined;
+                const direction =
+                  (endpoint.kind === "source" ? labels.questFrom : labels.questTo) ?? "";
+                const location = endpoint.location?.label ?? labels.questExplore ?? "";
+                const name = `${direction} ${location}`.trim();
+                let stopRefusal: (() => void) | undefined;
+                // Ship shows route context without offering Map navigation.
+                const refusal =
+                  disabled && origin !== "ship" && name
+                    ? createStandardTextAction(root, name, {
+                        availability: () => ({ kind: "unavailable", reason: location || name }),
+                        current: (): boolean =>
+                          !disposed && !modal.hidden && inCurrentView(root, button),
+                        pointerRefusal: true,
+                        refuse: () => {
+                          focusTarget(card.frame);
+                          if (
+                            !button.hasAttribute(REFUSAL_ATTRIBUTES.red) &&
+                            !button.hasAttribute(REFUSAL_ATTRIBUTES.shake)
+                          ) {
+                            stopRefusal = refuse(button, options.reducedMotion());
+                          }
+                        },
+                        run: () => {},
+                      })
+                    : undefined;
+                const button: HTMLButtonElement =
+                  refusal?.element ?? document.createElement("button");
                 button.type = "button";
                 button.className = "ada-quest-endpoint";
-                button.disabled =
-                  origin === "ship" || endpoint.location === null || endpoint.place === null;
+                button.disabled = disabled && !refusal;
+                if (refusal) {
+                  // Kit owns activation. Keep the route's authored compound content.
+                  button.replaceChildren();
+                  renderedBindings.push({
+                    dispose() {
+                      refusal.dispose();
+                      stopRefusal?.();
+                    },
+                  });
+                }
                 if (endpoint.location?.symbol) {
                   const image = icon(entry, endpoint.location.symbol, endpoint.place?.taskCategory);
                   if (image) {
@@ -440,12 +478,8 @@ export function createQuestsScreen(
                 }
                 const text = document.createElement("span");
                 const small = document.createElement("small");
-                small.textContent =
-                  (endpoint.kind === "source" ? labels.questFrom : labels.questTo) ?? "";
-                text.append(
-                  small,
-                  document.createTextNode(endpoint.location?.label ?? labels.questExplore ?? ""),
-                );
+                small.textContent = direction;
+                text.append(small, document.createTextNode(location));
                 button.append(text);
                 if (origin !== "ship" && endpoint.location && endpoint.place) {
                   button.setAttribute(
@@ -453,23 +487,24 @@ export function createQuestsScreen(
                     `${labels.questLocate ?? ""}: ${endpoint.location.label}`,
                   );
                 }
-                const placeId = endpoint.place?.id;
                 if (
-                  !button.disabled &&
+                  !disabled &&
                   focusEndpoint?.kind === endpoint.kind &&
                   focusEndpoint.placeId === placeId
                 ) {
                   questFocus = button;
                 }
-                register(button, () => {
-                  if (placeId === undefined) {
-                    return;
-                  }
-                  suspended = { kind: endpoint.kind, placeId };
-                  release();
-                  modal.hidden = true;
-                  options.onLocate(placeId);
-                });
+                if (!refusal) {
+                  register(button, () => {
+                    if (disabled || placeId === undefined) {
+                      return;
+                    }
+                    suspended = { kind: endpoint.kind, placeId };
+                    release();
+                    modal.hidden = true;
+                    options.onLocate(placeId);
+                  });
+                }
                 route.append(button);
               }
 

@@ -575,6 +575,37 @@ it("focuses dismissal when the located endpoint is no longer on the map", () => 
   screen.dispose();
 });
 
+it("refuses an unavailable Locate endpoint without making the Ship route actionable", () => {
+  const { onLocate, root, screen } = screenFixture();
+  screen.setState([entry], [place("growers")], 1);
+  const endpoints = () =>
+    root.querySelectorAll("button").filter((node) => node.className === "ada-quest-endpoint");
+  const click = (node: QuestNode) => node.dispatchEvent(new Event("click", { cancelable: true }));
+  const hold = (node: QuestNode) =>
+    actionBinding.resolveAdaHoldAction(root as unknown as HTMLElement, node);
+  screen.open(entry.id, "list");
+  const [from, to] = endpoints();
+  expect(to!.getAttribute("aria-disabled")).toBe("true");
+  expect(to!.tabIndex).toBe(-1);
+  expect(to!.children.map((child) => child.tag)).toEqual(["img", "span"]);
+  expect(to!.textContent).toContain("Workshop");
+  click(to!);
+  expect(to!.hasAttribute("data-ui-refusal-red")).toBe(false);
+  hold(to!)!.activate();
+  expect(to!.hasAttribute("data-ui-refusal-red")).toBe(true);
+  expect(to!.hasAttribute("data-ui-refusal-shake")).toBe(false);
+  expect(screen.isOpen()).toBe(true);
+  expect(screen.isSuspended()).toBe(false);
+  expect(onLocate).not.toHaveBeenCalled();
+  click(from!);
+  expect(onLocate).toHaveBeenCalledExactlyOnceWith("growers");
+  expect(screen.isSuspended()).toBe(true);
+  screen.open(entry.id, "ship");
+  expect(endpoints().every((button) => button.disabled && !hold(button)?.available())).toBe(true);
+  expect(to!.hasAttribute("data-ui-refusal-red")).toBe(false);
+  screen.dispose();
+});
+
 it("returns to the caller when a suspended filtered context becomes empty", () => {
   const { onClose, root, screen } = screenFixture();
   screen.setState([entry], [place("growers")], 1);
