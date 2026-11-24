@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
+import { restoreSave } from "../model/save.ts";
 import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
@@ -428,9 +429,9 @@ function holdFixture() {
     }
     return click;
   };
-  const dialogue = (id = "choice", refused = false) => {
+  const dialogue = (id = "choice", refused = false, label = "Choice") => {
     ui.model.state.dialogue = {
-      choices: [{ id, label: "Choice", refused }],
+      choices: [{ id, label, refused }],
       context: "fixture",
       text: "Text",
       title: "Title",
@@ -461,13 +462,32 @@ it("holds the current dialogue callback once and keeps keyboard activation and r
   button.click();
   expect(current).toHaveBeenCalledTimes(2);
   const refused = f.dialogue("locked", true);
+  expect(refused.className.split(" ")).toContain("ui-standard-button");
+  expect(refused.textContent).toBe("Choice");
+  expect(refused.disabled).toBe(false);
+  expect(refused.hidden).toBe(false);
+  expect(refused.getAttribute("aria-disabled")).toBeNull();
+  expect(refused.dataset.refused).toBe("true");
   expect(f.resolve(refused)?.available()).toBe(true);
   f.down(refused);
   vi.advanceTimersByTime(500);
   expect(f.release(refused).defaultPrevented).toBe(true);
   expect(current).toHaveBeenCalledTimes(2);
-  expect(refused.attributes.size).toBeGreaterThan(0);
+  expect(refused.hasAttribute("data-ui-refusal-red")).toBe(true);
+  f.dialogue("replace-refusal");
+  expect(refused.hasAttribute("data-ui-refusal-red")).toBe(false);
 });
+it("keeps the existing activation for blank choice labels accepted by the save decoder", () => {
+  const f = holdFixture();
+  const button = f.dialogue("unnamed", false, " ");
+  expect(button.textContent).toBe(" ");
+  expect(restoreSave(f.model.save())?.dialogue?.choices).toEqual([
+    { id: "unnamed", label: " ", refused: false },
+  ]);
+  button.click();
+  expect(f.actions.choose).toHaveBeenCalledExactlyOnceWith("unnamed");
+});
+
 it("unregisters replaced dialogue choices and disposed notice actions without replaying stale captures", () => {
   const f = holdFixture(),
     old = f.dialogue("old");

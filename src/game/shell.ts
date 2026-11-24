@@ -14,6 +14,7 @@ import {
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { refuse } from "../ui/refusal.ts";
+import { createStandardTextAction } from "../ui/standardTextAction.ts";
 import { createStartScreen } from "../ui/startScreen.ts";
 import type { TitleScreenArt } from "../ui/titleScreen.ts";
 
@@ -24,13 +25,6 @@ export interface ShellActions {
   reducedMotion: () => boolean;
   restart: () => void;
   start: () => void;
-}
-
-function button(label: string): HTMLButtonElement {
-  const node = document.createElement("button");
-  node.type = "button";
-  node.textContent = label;
-  return node;
 }
 
 export class StoryShell {
@@ -131,25 +125,27 @@ export class StoryShell {
       for (const choice of state.dialogue.choices) {
         // A refused choice looks disabled but stays enabled, focusable and tappable, so a tap
         // plays the shared refusal; aria-disabled would announce it as unusable.
-        const node = button(choice.label);
         let stopRefusal: (() => void) | undefined;
-        const action = bindAdaAction(
-          {
-            click: {
-              availability: () => (node.disabled ? { kind: "omitted" } : { kind: "available" }),
-              run: () => {
-                if (choice.refused) {
-                  stopRefusal = refuse(node, this.actions.reducedMotion());
-                } else {
-                  this.actions.choose(choice.id);
-                }
-              },
-            },
-            current: () => !this.disposed && !this.panel.hidden && node.isConnected,
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
-          },
-          node,
-        );
+        const current = (node: HTMLButtonElement) =>
+          !this.disposed && !this.panel.hidden && node.isConnected;
+        const run = (node: HTMLButtonElement) => {
+          if (choice.refused) {
+            stopRefusal = refuse(node, this.actions.reducedMotion());
+          } else {
+            this.actions.choose(choice.id);
+          }
+        };
+        // The save decoder accepts blank labels. Keep their existing control without inventing
+        // a name, since the standard text factory requires a nonempty name.
+        const action = choice.label.trim()
+          ? createStandardTextAction(this.host, choice.label, {
+              availability: (button) =>
+                button?.disabled ? { kind: "disabled" } : { kind: "available" },
+              current: (): boolean => current(action.element),
+              run: () => run(action.element),
+            })
+          : this.unnamedChoice(choice.label, current, run);
+        const node = action.element;
         this.choiceDisposals.push(() => {
           action.dispose();
           stopRefusal?.();
@@ -310,6 +306,28 @@ export class StoryShell {
     if (this.savingStatus.textContent !== text) {
       this.savingStatus.textContent = text;
     }
+  }
+
+  private unnamedChoice(
+    label: string,
+    current: (node: HTMLButtonElement) => boolean,
+    run: (node: HTMLButtonElement) => void,
+  ) {
+    const node = document.createElement("button");
+    node.type = "button";
+    node.textContent = label;
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => (node.disabled ? { kind: "omitted" } : { kind: "available" }),
+          run: () => run(node),
+        },
+        current: () => current(node),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+      },
+      node,
+    );
+    return { dispose: binding.dispose, element: node };
   }
 
   private clearChoices(): void {

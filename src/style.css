@@ -113,6 +113,26 @@ button:disabled {
   color: #8a8a8a;
 }
 
+/* Keep the choice label's original inline flow inside the Kit button. */
+.story-panel button[data-action="dialogue-choice"] > .ui-control-label {
+  display: inline;
+  overflow-wrap: inherit;
+  text-align: inherit;
+}
+
+/* A keyboard choice changes face colour inside the existing border. */
+.story-panel button[data-action="dialogue-choice"]:focus-visible {
+  outline: none;
+  background: #373737;
+}
+@media (forced-colors: active) {
+  .story-panel button[data-action="dialogue-choice"]:focus-visible {
+    forced-color-adjust: none;
+    color: HighlightText;
+    background: Highlight;
+  }
+}
+
 @media (orientation: portrait) and (pointer: coarse) {
   html #game-canvas {
     display: flex;
