@@ -1,12 +1,14 @@
 import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
 import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
   EXCHANGE_AMOUNTS,
+  type ExchangeRefusal,
   type ExchangeResource,
   type ImmediateExchangeOrder,
   type ImmediateExchangePreview,
@@ -17,6 +19,7 @@ import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBindin
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
 import { createActions } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface ExchangePort {
@@ -28,6 +31,8 @@ const resourceName = { ore: "ore", stardust: "Stardust" } as const;
 const buyLabel = { ore: EXCHANGE_COPY.buyOre, stardust: EXCHANGE_COPY.buyStardust };
 const paymentFor = (resource: ExchangeResource): ExchangeResource =>
   resource === "ore" ? "stardust" : "ore";
+const isUnaffordable = (reason: ExchangeRefusal["reason"]): boolean =>
+  reason === "cantAfford" || reason === "notEnoughOre";
 
 function exchangeIcon(resource: ExchangeResource): HTMLImageElement {
   const image = document.createElement("img");
@@ -42,6 +47,7 @@ export function createExchangeView(
   actionRoot: HTMLElement,
   parent: HTMLElement,
   port: ExchangePort,
+  reducedMotion: () => boolean,
   onChange: () => void,
 ) {
   const root = document.createElement("section");
@@ -80,7 +86,7 @@ export function createExchangeView(
     if (preview.kind !== "refused") {
       return { kind: "available" };
     }
-    return preview.reason === "cantAfford" || preview.reason === "notEnoughOre"
+    return isUnaffordable(preview.reason)
       ? { kind: "unavailable", reason: refusal(preview) }
       : { kind: "omitted" };
   };
@@ -89,10 +95,19 @@ export function createExchangeView(
       action.refresh();
     }
   };
-  const reportRefusal = (reason: string) => {
-    audit();
+  const reportStatus = (reason: string, visuallyHidden: boolean) => {
+    status.toggleAttribute("data-exchange-affordability", visuallyHidden);
     status.textContent = reason;
-    render();
+  };
+  const reportRefusal = (button: HTMLButtonElement, reason: string) => {
+    reportStatus(reason, true);
+    // The regular cue has a shake throughout its red/off phases. Reduced motion holds red.
+    if (
+      !button.hasAttribute(REFUSAL_ATTRIBUTES.red) &&
+      !button.hasAttribute(REFUSAL_ATTRIBUTES.shake)
+    ) {
+      refuse(button, reducedMotion());
+    }
   };
   const execute = (button: HTMLButtonElement, order: ImmediateExchangeOrder) => {
     audit();
@@ -101,7 +116,11 @@ export function createExchangeView(
       onChange();
       audit();
     }
-    status.textContent = refusal(outcome);
+    if (outcome.kind === "refused" && isUnaffordable(outcome.reason)) {
+      reportRefusal(button, refusal(outcome));
+    } else {
+      reportStatus(refusal(outcome), false);
+    }
     render();
     focusTarget(button);
   };
@@ -120,7 +139,11 @@ export function createExchangeView(
               },
               current: (): boolean =>
                 !disposed && !root.hidden && inCurrentView(parent, action.element),
-              refuse: reportRefusal,
+              refuse: (reason) => {
+                audit();
+                reportRefusal(action.element, reason);
+                render();
+              },
               run: (): void => execute(action.element, order),
             });
             const button = action.element;

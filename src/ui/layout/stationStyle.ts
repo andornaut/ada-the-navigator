@@ -348,7 +348,8 @@ export const STATION_STYLE = `
 }
 
 .ada-controls .ada-confirm-stardust-spoken,
-.ada-controls .ada-exchange-rate-spoken{
+.ada-controls .ada-exchange-rate-spoken,
+.ada-controls .ada-exchange [data-exchange-affordability]{
   position:absolute;
   white-space:nowrap;
   clip-path:inset(50%)

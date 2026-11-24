@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import {
@@ -9,6 +9,7 @@ import {
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
+import { REFUSAL } from "./refusal.ts";
 
 const dom = vi.hoisted(() => {
   const mountedRoots = new Set<Node>();
@@ -63,6 +64,7 @@ const dom = vi.hoisted(() => {
     }
     dataset: Record<string, string> = {};
     attributes: Record<string, string> = {};
+    readonly style = { removeProperty: vi.fn(), setProperty: vi.fn() };
     hidden = false;
     disabled = false;
     className = "";
@@ -141,6 +143,9 @@ const dom = vi.hoisted(() => {
     getAttribute(name: string) {
       return this.attributes[name] ?? null;
     }
+    hasAttribute(name: string) {
+      return this.getAttribute(name) !== null;
+    }
     setAttribute(name: string, value: string) {
       this.attributes[name] = value;
     }
@@ -172,14 +177,20 @@ vi.mock("./modal.ts", async () => ({
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
+beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
   dom.mountedRoots.clear();
   dom.state.corruptFactory = false;
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
-function fixture(placement: "connected" | "detached" | "unowned" = "connected") {
+function fixture(
+  placement: "connected" | "detached" | "unowned" = "connected",
+  reducedMotion = false,
+) {
   vi.stubGlobal("document", {
     createElement: (tag: string) => new dom.Node(tag),
     createElementNS: (_namespace: string, tag: string) => new dom.Node(tag),
@@ -213,6 +224,7 @@ function fixture(placement: "connected" | "detached" | "unowned" = "connected") 
       exchangeImmediately: commit,
       preview: (order) => previewImmediateExchange(balances, order),
     },
+    () => reducedMotion,
     onChange,
   );
   const nodes = (node = root): InstanceType<typeof dom.Node>[] => [
@@ -346,10 +358,43 @@ describe("immediate fixed Exchange actions", () => {
       expect(f.action(id).getAttribute("aria-disabled")).toBe("true");
       f.click(id);
       expect(status.textContent).toBe(reason);
+      expect(status.hasAttribute("data-exchange-affordability")).toBe(true);
+      expect(f.action(id).hasAttribute("data-ui-refusal-red")).toBe(true);
+      expect(f.action(id).hasAttribute("data-ui-refusal-shake")).toBe(true);
+      vi.advanceTimersByTime(200);
+      f.click(id);
+      vi.advanceTimersByTime(REFUSAL.durationMs - 200);
+      expect(f.action(id).hasAttribute("data-ui-refusal-red")).toBe(false);
+      expect(f.action(id).hasAttribute("data-ui-refusal-shake")).toBe(false);
     }
     expect(f.commit).not.toHaveBeenCalled();
     expect(f.onChange).not.toHaveBeenCalled();
     expect(f.balances()).toEqual(balances);
+  });
+  it("holds just the red cue under reduced motion", () => {
+    const f = fixture("connected", true);
+    const id = "exchange-stardust-100";
+    f.click(id);
+    const button = f.action(id);
+    vi.advanceTimersByTime(REFUSAL.durationMs - 1);
+    expect(button.hasAttribute("data-ui-refusal-red")).toBe(true);
+    expect(button.hasAttribute("data-ui-refusal-shake")).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(button.hasAttribute("data-ui-refusal-red")).toBe(false);
+    expect(f.commit).not.toHaveBeenCalled();
+  });
+  it("keeps a transaction error visible after an affordability announcement", () => {
+    const f = fixture();
+    f.click("exchange-ore-100");
+    f.commit.mockReturnValue({ kind: "refused", reason: "stale" });
+    f.click("exchange-ore-1");
+    const status = f.nodes().find((node) => node.getAttribute("role") === "status")!;
+    expect(status.textContent).toBe("Balances changed. Review the exchange again.");
+    expect(status.hasAttribute("data-exchange-affordability")).toBe(false);
+    expect(f.action("exchange-ore-1").hasAttribute("data-ui-refusal-red")).toBe(false);
+    expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 1, resource: "ore" });
+    expect(f.onChange).not.toHaveBeenCalled();
+    expect(f.balances()).toEqual({ ore: 20, stardust: 100 });
   });
   it("revalidates live balances rather than spending an old preview", () => {
     const f = fixture();
