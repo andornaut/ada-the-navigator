@@ -20,7 +20,7 @@ import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
   readonly id: Weapon;
-  /** The weapon's level, 1 to 3, shown by its disc's edge colour and pips. */
+  /** The weapon's level, 1 to 3, shown by pips at levels 2 and 3. */
   readonly level: number;
   readonly selected: boolean;
   /** Shots left; null for Laser, which shows no count. */
@@ -310,12 +310,15 @@ ${PRESSED_WEAPON}{
   position:absolute;
   inset:${units(HUD_BUTTON.edge)};
   box-sizing:border-box;
-  border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid var(--weapon-ring, ${HUD_DISC_STATES.empty.glyph});
+  border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid ${HUD_DISC_STATES.idle.glyph};
   border-radius:50%;
   background:transparent;
   box-shadow:0 0 0 ${units(HUD_BUTTON.edge)} ${INK},
     inset 0 0 0 ${units(HUD_BUTTON.edge)} ${INK};
   pointer-events:none
+}
+.ada-controls .ada-weapon[data-state=empty] .ada-disc::after{
+  border-color:${HUD_DISC_STATES.empty.glyph}
 }
 .ada-controls .ada-weapon[data-state=selected] .ada-disc::after{
   border-color:${HUD_DISC_STATES.selected.glyph}
@@ -323,13 +326,6 @@ ${PRESSED_WEAPON}{
 .ada-controls .ada-weapon:disabled{
   cursor:default
 }
-${([2, 3] as const)
-  .map(
-    (level) => `.ada-controls .ada-weapon[data-level="${level}"] .ada-disc{
-  --weapon-ring:${UPGRADE_TIER_COLOURS[level]}
-}`,
-  )
-  .join("\n")}
 /* Levels 2 and 3 show two or three pips centred on the bottom ring stroke; level 1 has none. */
 .ada-controls .ada-pips{
   position:absolute;

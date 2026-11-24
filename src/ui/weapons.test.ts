@@ -59,13 +59,11 @@ describe("HUD weapon levels", () => {
     );
   });
 
-  it("keeps tier colour inside the shared weapon annulus without exterior halo or outline", () => {
-    for (const level of [2, 3] as const) {
-      const tier = rule(`.ada-weapon[data-level="${level}"] .ada-disc`);
-      expect(tier).toContain(`--weapon-ring:${LEVEL_PIPS[level]}`);
+  it("keeps tier colour on the pips across all weapon levels", () => {
+    for (const level of [1, 2, 3] as const) {
+      expect(rule(`.ada-weapon[data-level="${level}"] .ada-disc`)).toBeUndefined();
     }
-    expect(WEAPON_STYLE).not.toMatch(/--level-(?:edge|halo|outline):/u);
-    expect(rule('.ada-weapon[data-level="1"] .ada-disc')).toBeUndefined();
+    expect(WEAPON_STYLE).not.toMatch(/--weapon-ring|--level-(?:edge|halo|outline):/u);
   });
 });
 
@@ -139,7 +137,7 @@ describe("HUD weapon buttons", () => {
     }
   });
 
-  it("adds a weapon-only cream ring without changing shared HUD disc styling", () => {
+  it("matches the weapon ring to the glyph state without changing shared HUD disc styling", () => {
     const rule = (selector: string) =>
       WEAPON_STYLE.split("}")
         .filter((part) => part.includes(`${selector}{`))
@@ -151,12 +149,15 @@ describe("HUD weapon buttons", () => {
     expect(ring).toContain("position:absolute");
     expect(ring).toContain(`inset:${units(HUD_BUTTON.edge)}`);
     expect(ring).toContain(
-      `border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid var(--weapon-ring, #75748c)`,
+      `border:${units(HUD_BUTTON.annulus - 2 * HUD_BUTTON.edge)} solid #b8b3c9`,
     );
     expect(ring).toContain(
       `box-shadow:0 0 0 ${units(HUD_BUTTON.edge)} #181425,\n    inset 0 0 0 ${units(HUD_BUTTON.edge)} #181425`,
     );
     expect(rule(".ada-controls .ada-weapon .ada-disc")).toContain("box-shadow:none");
+    expect(rule(".ada-controls .ada-weapon[data-state=empty] .ada-disc::after")).toContain(
+      "border-color:#75748c",
+    );
     expect(rule(".ada-controls .ada-weapon[data-state=selected] .ada-disc::after")).toContain(
       "border-color:#ead4aa",
     );
