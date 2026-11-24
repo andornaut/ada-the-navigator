@@ -138,10 +138,12 @@ evidence](docs/checks.md) and [container compatibility](docs/container-adoption.
 
 `delivery-kit.json` schedules Ada departures hourly at :00 America/Toronto using
 the Delivery Kit pin in [package.json](package.json) and [package-lock.json](package-lock.json).
-Only the existing bus deploys, after the isolated gate
-and required CI pass for the exact commit; a push that changes only Markdown,
-`art/` or `gameplay/` files does not deploy. The monitor schedule is unchanged.
-Persisted desired control governs scheduled delivery. Reports route to `game-coordinator`.
+The game coordinator submits user-authorized ad hoc departures with the supported
+`delivery-kit request` command. For deployable changes, the existing runner uses
+the same isolated gate, push, required CI and deployment for the exact local
+`main` commit on both paths. Persisted desired control governs both. A pushed
+range that changes only Markdown, `art/` or `gameplay/` files does not deploy.
+The monitor schedule is unchanged. Reports route to `game-coordinator`.
 
 The bus uses pinned Wrangler with root `wrangler.jsonc`, which defines the
 assets-only Worker `ada-the-navigator`, its custom domain

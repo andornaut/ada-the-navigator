@@ -206,14 +206,22 @@ entrypoint or build command. This route needs the gated `dist/` and locked
 `node_modules/`, without a deployment rebuild. The dry run is part of the
 isolated `all` gate's build category.
 
-Only delivery-kit 4.0.0 deploys the admitted gated artifact after exact-commit CI
-passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
-America/Toronto with `deploy.mode` set to `wrangler`. A pushed range that changes
-only Markdown, `art/` or `gameplay/` files (`deploy.skipPattern`) is gated but not
-deployed. Persisted desired control governs scheduled delivery. Reports route to
-`game-coordinator`. The monitor schedule is
-unchanged. Existing OAuth authentication remains in place; credentials are not
-part of the repository. No manual deployment is part of this procedure.
+The existing Delivery Kit runner uses the same gate and push path for the exact
+local `main` commit on scheduled and user-authorized ad hoc departures. It
+deploys the admitted artifact after required exact-commit CI passes and the
+remote commit matches.
+The game coordinator submits approved ad hoc departures with
+`delivery-kit request --game ada-the-navigator --id SAFE_ID`. Persisted desired
+control governs admission to both kinds of departure.
+
+`delivery-kit.json` schedules hourly departures at :00 America/Toronto with
+`deploy.mode` set to `wrangler`. A pushed range that changes only Markdown, `art/`
+or `gameplay/` files (`deploy.skipPattern`) does not deploy. When all changed paths
+are under `docs/` and no deployment is pending, the runner pushes the exact
+commit and starts CI without a local gate or deployment. Reports route to
+`game-coordinator`. The monitor schedule and existing OAuth authentication remain
+in place. Credentials are not part of the repository. No manual deployment is
+part of this procedure.
 
 ## Browser smoke checks
 
