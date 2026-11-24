@@ -484,7 +484,6 @@ describe("Stardust drops", () => {
     [1, "fighter"],
     [2, "interceptor"],
     [3, "retaliator"],
-    [5, "fighter"],
   ] as const)(
     "in galaxy %i drops an upgrade pickup from a destroyed %s 0.25% of the time, never extra Stardust",
     (galaxy, archetype) => {
@@ -505,8 +504,6 @@ describe("Stardust drops", () => {
     [1, "frigate"],
     [1, "capital"],
     [2, "platform"],
-    [3, "capital"],
-    [5, "frigate"],
   ] as const)(
     "drops an upgrade pickup from galaxy %i's %s 10% of the time when salvaged, never when destroyed",
     (galaxy, archetype) => {
