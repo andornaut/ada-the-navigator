@@ -969,11 +969,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   edge on the facing side of the target. Whole-object destruction bursts remain
   at the object's pivot. A blast is a circle on screen, radius 30 for Rapid
   Missile and 60 for Heavy Missile in the same units as the drawn ships. Every
-  target whose drawn shape, hull or turrets, overlaps the circle, at its edge or
-  inside, takes the missile's full damage; where a turret is in reach, the
-  nearest turret takes it, as with other hits. Mines inside the circle are
-  destroyed. A friendly blast damages enemies, never Ada. An enemy missile's
-  blast damages Ada, never enemies.
+  eligible target whose drawn shape overlaps the circle, including at the edge,
+  takes the missile's full damage once. For friendly blasts this includes
+  destructible asteroids and ore rocks, even when the missile misses the rock
+  itself. When a ship's turret is in reach, the nearest turret takes the
+  damage. Mines inside the circle are destroyed. Friendly blasts spare Ada.
+  Enemy missile blasts damage Ada and spare other enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
   Laser shot deals 1 damage. Enemies fire the same six weapons at their
   equipped weapon level, with that level's damage, blast, spread and reach,
