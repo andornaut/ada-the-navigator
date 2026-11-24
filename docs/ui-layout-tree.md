@@ -55,9 +55,10 @@ Art, widget identity and policy; their presence does not imply an unfinished
 replacement or establish that every UI wrapper is tree-managed.
 
 Runtime and fixture callers supply the same data, production styles, fonts, skins,
-view-unit bridge and action availability. `createAdaLayoutPorts` uses `presentAdaButton` for the actual
-button presentation and the published availability binding to guard execution.
-Other native ports retain their existing widget and action bindings.
+view-unit bridge and action availability. Every `createAdaLayoutPorts` text button
+uses the published Game Kit renderer through `createStandardTextAction`.
+Callers supply the owning action root and the available action. Other native
+ports retain their existing widget and action bindings.
 The `mountAdaLayout` wrapper's `settle()` waits for fonts, explicit art readiness and image decoding before fitting
 updated descendants. The caller's active-view predicate blocks dormant actions.
 Reconciliation retains keyed component and slot identities. `fit()` requests the
