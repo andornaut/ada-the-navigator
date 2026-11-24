@@ -1317,7 +1317,10 @@ or replay rewards.
   Paint: {paint}; Weapons: owned weapons with their actual ammunition. All three
   content columns have equal width, excluding divider/gap tracks. Names append
   [{n}] above level one; accessible level descriptions retain Level {n} of 3.
-  Cargo and paint have no level. Existing icons and detail return paths remain.
+  Cargo and paint have no level. Paint opens a card titled “Paint” with each
+  owned scheme's swatch and name, including Classic. Other schemes show
+  “Apply”, the selected scheme shows “In use”, and “Close” returns to Ship.
+  Existing icons and detail return paths remain.
 - Pause: Pause (button label), Paused, Map, Quests, Settings, Ship, Back to
   title, Resume. Pause is used only during active pausable gameplay.
 - Start Menu: Menu (three-line entry), Achievements, Exit, Settings, Close.
