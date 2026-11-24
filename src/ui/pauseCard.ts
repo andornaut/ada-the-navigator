@@ -8,16 +8,13 @@ import { weaponDetailLines } from "../data/weaponDetails.ts";
 import type { LocalMap } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
 import { createCard } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
@@ -133,17 +130,15 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
   let disposed = false;
   const actionBindings: { dispose(): void }[] = [];
-  const register = (element: HTMLElement, run: () => void) => {
-    actionBindings.push(
-      bindAdaAction(
-        {
-          click: { availability: () => ({ kind: "available" }), run },
-          current: () => !disposed,
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-        },
-        element,
-      ),
-    );
+  const closeControl = (action: string, label: string, run: () => void) => {
+    const close = createStandardCloseAction(root, action, label, {
+      current: () => !disposed,
+      run,
+      slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+      slopThreshold: SCROLL.dragThreshold,
+    });
+    actionBindings.push(close);
+    return close.element;
   };
   const modal = document.createElement("div");
   modal.className = "ada-modal";
@@ -169,7 +164,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     closeLabel: labels.close,
     title: labels.title,
   });
-  const paused = createCard(initialTree.props);
+  const paused = createCard({
+    close: closeControl(initialTree.props.closeAction, initialTree.props.closeLabel, resume),
+    size: initialTree.props.size,
+    title: initialTree.props.title,
+  });
   paused.card.dataset.dialog = "pause";
   const actions = stack();
   const others = grid();
@@ -241,8 +240,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     initialTree,
   );
   const ship = createCard({
-    closeAction: "close-ship",
-    closeLabel: labels.close,
+    close: closeControl("close-ship", labels.close, closeShip),
     size: "large",
     title: labels.ship,
   });
@@ -269,8 +267,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   ship.card.append(shipFooter);
   modal.append(paused.frame, ship.frame);
   try {
-    register(paused.close, resume);
-    register(ship.close, () => closeShip());
     assertAdaActionMetadata(paused.frame);
     assertAdaActionMetadata(ship.frame);
     root.append(modal);

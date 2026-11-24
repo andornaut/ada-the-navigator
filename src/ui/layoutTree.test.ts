@@ -76,6 +76,7 @@ class Element extends EventTarget {
         " ",
       );
     },
+    remove: (name: string) => this.classList.toggle(name, false),
     toggle: (name: string, force: boolean) => {
       if (force) {
         this.classList.add(name);
@@ -109,6 +110,13 @@ class Element extends EventTarget {
       node,
     );
     this.firstChild = this.children[0] ?? null;
+  }
+  replaceChildren(...nodes: Element[]) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.firstChild = null;
+    this.append(...nodes);
   }
   remove() {
     const parent = this.parentElement;
@@ -203,18 +211,16 @@ vi.mock("./buttonPresentation.ts", async (original) => {
 vi.mock("./modal.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./modal.ts")>()),
   createActions: () => new Element(),
-  createCard: () => {
+  createCard: ({ close }: { close: Element }) => {
     const body = new Element(),
       header = new Element(),
       title = new Element(),
-      close = new Element("button"),
       frame = new Element();
     header.append(title);
     if (factories.unboundCard) {
       header.append(new Element("button"));
     }
     frame.append(header, body, close);
-    fixtureActionRoot(frame);
     return { body, close, dispose: factories.dispose, fit: factories.fit, frame, header, title };
   },
   setFooterAction: (intent: string, element: Element) => {
@@ -328,10 +334,23 @@ it("retains native title and sibling body/footer slots without fitting before de
     title: "Menu",
   };
   const card = f.ports.components.card.create(initial);
+  f.root.append(card.element as unknown as Element);
+  const close = (card.element as unknown as Element).children[2]!;
+  const resolve = () =>
+    resolveAdaHoldAction(f.root as unknown as HTMLElement, close as unknown as HTMLElement);
+  const held = resolve()!;
+  expect(close.matches(".ui-standard-button")).toBe(true);
+  expect(close.getAttribute("aria-label")).toBe("Close");
   const slots = card.slots;
   const child = new Element();
   (slots.body as unknown as Element).append(child);
-  card.update({ ...initial, closeAction: "second", footerAction: "back", title: "Detail" });
+  card.update({
+    ...initial,
+    closeAction: "second",
+    closeLabel: "Back",
+    footerAction: "back",
+    title: "Detail",
+  });
   expect(card.slots).toBe(slots);
   expect(slots.body.style.alignSelf).toBe("stretch");
   expect(slots.body.hidden).toBe(false);
@@ -341,14 +360,22 @@ it("retains native title and sibling body/footer slots without fitting before de
   expect(factories.fit).not.toHaveBeenCalled();
   f.ports.fit();
   expect(factories.fit).toHaveBeenCalledOnce();
-  const close = (card.element as unknown as Element).children[2]!;
+  expect((card.element as unknown as Element).children[2]).toBe(close);
+  expect(close.dataset.action).toBe("second");
+  expect(close.getAttribute("aria-label")).toBe("Back");
+  expect(resolve()?.identity).toBe(held.identity);
   close.click();
   expect(f.second).toHaveBeenCalledOnce();
+  held.activate();
+  expect(f.second).toHaveBeenCalledTimes(2);
+  expect(f.first).not.toHaveBeenCalled();
   card.dispose();
   f.ports.fit();
   expect(factories.fit).toHaveBeenCalledOnce();
+  expect(resolve()).toBeNull();
   close.click();
-  expect(f.second).toHaveBeenCalledOnce();
+  held.activate();
+  expect(f.second).toHaveBeenCalledTimes(2);
   expect(factories.dispose).toHaveBeenCalledOnce();
 });
 
@@ -743,8 +770,12 @@ it("does not add a refusal callback to a card close without an original native r
     size: "small",
     title: "Card",
   });
+  f.root.append(part.element as unknown as Element);
   const close = (part.element as unknown as Element).children[2]!;
-  const action = resolveAdaHoldAction(part.element, close as unknown as HTMLElement);
+  const action = resolveAdaHoldAction(
+    f.root as unknown as HTMLElement,
+    close as unknown as HTMLElement,
+  );
   expect(action?.ownAriaDisabled).toBeUndefined();
   expect(action?.available()).toBe(false);
   close.click();

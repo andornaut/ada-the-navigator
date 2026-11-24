@@ -750,7 +750,6 @@ export interface CardParts {
   // The scroll group: append the card's groups here.
   readonly body: HTMLDivElement;
   readonly card: HTMLElement;
-  readonly close: HTMLButtonElement;
   readonly frame: HTMLDivElement;
   readonly header: HTMLElement;
   readonly title: HTMLHeadingElement;
@@ -825,23 +824,24 @@ export function reserveScrollbar(group: HTMLElement): void {
   group.style.paddingRight = units(padding + Math.max(0, SCROLL.gap + SCROLL.track - bar));
 }
 
-// A card in its frame, with its title and scrolling body: a dialog with its close X, or a page
-// card (the start screen) with its title as the page heading and no close X. Show or hide it
-// through frame.hidden.
+type CardHeading = { readonly fontRole?: string; readonly title: string };
+type PageCardOptions = CardHeading & { readonly page: true };
+type DialogCardOptions = CardHeading & {
+  readonly size?: CardSize;
+  /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
+  readonly list?: boolean;
+} & (
+    | { readonly close: HTMLButtonElement }
+    | { readonly closeAction: string; readonly closeLabel: string }
+  );
+type DialogCardParts = CardParts & { readonly close: HTMLButtonElement };
+
+// A dialog mounts the caller's close control beside the card. A page only mounts its heading and body.
+export function createCard(options: DialogCardOptions): DialogCardParts;
+export function createCard(options: PageCardOptions): CardParts;
 export function createCard(
-  options:
-    | {
-        readonly closeAction: string;
-        readonly closeLabel: string;
-        readonly fontRole?: string;
-        /** Fixed preset width, clamped to the modal game-area rect. */
-        readonly size?: CardSize;
-        /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
-        readonly list?: boolean;
-        readonly title: string;
-      }
-    | { readonly fontRole?: string; readonly page: true; readonly title: string },
-): CardParts {
+  options: DialogCardOptions | PageCardOptions,
+): CardParts | DialogCardParts {
   const page = "page" in options;
   const frame = document.createElement("div");
   frame.className = "ada-card-frame";
@@ -864,18 +864,21 @@ export function createCard(
   const body = document.createElement("div");
   body.className = "ada-card-body";
   card.append(header, body);
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "ada-close";
-  if (page) {
-    frame.append(card);
-  } else {
-    close.dataset.action = options.closeAction;
-    close.setAttribute("aria-label", options.closeLabel);
-    frame.append(card, close);
+  frame.append(card);
+  let close: HTMLButtonElement | undefined;
+  if (!page) {
+    if ("close" in options) {
+      close = options.close;
+    } else {
+      close = document.createElement("button");
+      close.type = "button";
+      close.className = "ada-close";
+      close.dataset.action = options.closeAction;
+      close.setAttribute("aria-label", options.closeLabel);
+    }
+    frame.append(close);
   }
-  const list = !("page" in options) && options.list === true;
-  const fit = () => fitCard({ body, card, title }, !page, list);
+  const fit = () => fitCard({ body, card, title }, !page, !page && options.list === true);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {
@@ -888,7 +891,7 @@ export function createCard(
   return {
     body,
     card,
-    close,
+    ...(close ? { close } : {}),
     dispose: () => {
       window.removeEventListener("resize", fit);
       window.removeEventListener(VIEW_SCALE_EVENT, fit);

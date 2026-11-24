@@ -84,6 +84,12 @@ class Element extends EventTarget {
     const index = before === null ? this.children.length : this.children.indexOf(before);
     this.children.splice(index, 0, node);
   }
+  replaceChildren(...nodes: Element[]) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...nodes);
+  }
   remove() {
     if (this.parentElement) {
       this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
@@ -174,13 +180,12 @@ vi.mock("./modal.ts", async (importOriginal) => ({
     button.firstChild.nodeValue = label;
     return button;
   },
-  createCard: () => {
+  createCard: ({ close }: { close: Element }) => {
     const frame = new Element(),
       card = new Element(),
       body = new Element(),
       header = new Element(),
-      title = new Element(),
-      close = new Element("button");
+      title = new Element();
     frame.setAttribute("role", "dialog");
     card.className = "ada-card";
     body.className = "ada-card-body";

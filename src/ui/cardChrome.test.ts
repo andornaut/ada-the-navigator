@@ -54,6 +54,22 @@ describe("shared card chrome", () => {
     fitted.dispose();
   });
 
+  it("mounts an owner-supplied dialog close and allocates no close for a page", () => {
+    const createElement = vi.fn(() => new Element());
+    vi.stubGlobal("document", { createElement });
+    vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
+    const close = new Element() as unknown as HTMLButtonElement;
+    const dialog = createCard({ close, title: "Pause" });
+    const page = createCard({ page: true, title: "Start" });
+    expect(dialog.close).toBe(close);
+    expect((dialog.frame as unknown as Element).children).toEqual([dialog.card, close]);
+    expect((page.frame as unknown as Element).children).toEqual([page.card]);
+    expect(page).not.toHaveProperty("close");
+    expect(createElement).not.toHaveBeenCalledWith("button");
+    dialog.dispose();
+    page.dispose();
+  });
+
   it("fits every preset vertically and scrolls overflowing content through one rule", () => {
     expect(rule(`${UI_SCOPE} .ada-card-frame`)).toContain("min-height:0");
     expect(rule(`${UI_SCOPE} .ada-card-frame`)).not.toMatch(/(?:^|;)\s*height:100%/u);

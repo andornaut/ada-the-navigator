@@ -465,11 +465,18 @@ it("admits the visible Pause X alongside Resume and excludes it under Ship", () 
   pause.open();
   expect(scoped(button(modal, "pause-resume"))).toBe(true);
   expect(scoped(close)).toBe(true);
+  expect(close.className).toContain("ui-standard-button");
+  expect(close.listeners.get("click")).toHaveLength(1);
 
   button(modal, "pause-ship").click();
-  expect(scoped(button(modal, "close-ship"))).toBe(true);
+  const shipClose = button(modal, "close-ship");
+  expect(scoped(shipClose)).toBe(true);
+  expect(shipClose.className).toContain("ui-standard-button");
+  expect(shipClose.listeners.get("click")).toHaveLength(1);
   expect(scoped(close)).toBe(false);
   pause.dispose();
+  expect(close.listeners.get("click")).toHaveLength(0);
+  expect(shipClose.listeners.get("click")).toHaveLength(0);
 });
 
 function standaloneMap(root = mountedRoot()) {

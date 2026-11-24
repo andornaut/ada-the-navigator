@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import {
   type ControlAvailability,
+  controlPresentation,
   invokeControl,
 } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
@@ -10,15 +11,12 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { presentAdaButtonContent } from "./buttonPresentation.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { type ButtonRole, createActions, createCard, setFooterAction } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createProse } from "./prose.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
@@ -127,7 +125,20 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
       create(initial) {
         let current = initial;
         let disposed = false;
-        const parts = createCard(initial);
+        const close = createStandardCloseAction(
+          context.actionRoot,
+          initial.closeAction,
+          initial.closeLabel,
+          {
+            current: () =>
+              !disposed &&
+              controlPresentation(context.availability(current.closeAction)).executable,
+            run: () => dispatch(current.closeAction),
+            slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+            slopThreshold: SCROLL.dragThreshold,
+          },
+        );
+        const parts = createCard({ ...initial, close: close.element });
         const body = parts.body.ownerDocument.createElement("div");
         body.style.alignSelf = "stretch";
         body.style.minWidth = "0";
@@ -136,15 +147,6 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         setFooterAction(initial.footerAction, footer);
         parts.body.append(body, footer);
         fits.add(parts.fit);
-        const activate = () => dispatch(current.closeAction);
-        const registered = bindAdaAction(
-          {
-            click: { availability: () => context.availability(current.closeAction), run: activate },
-            current: () => !disposed,
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(parts.close),
-          },
-          parts.close,
-        );
         const update = (next: AdaCardProps<A>) => {
           current = next;
           body.hidden = next.body === false;
@@ -160,7 +162,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
           assertAdaActionMetadata(parts.frame);
         } catch (error) {
           disposed = true;
-          registered.dispose();
+          close.dispose();
           fits.delete(parts.fit);
           parts.dispose();
           throw error;
@@ -168,7 +170,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         return {
           dispose() {
             disposed = true;
-            registered.dispose();
+            close.dispose();
             fits.delete(parts.fit);
             parts.dispose();
           },
