@@ -27,14 +27,14 @@ formatting and fixes are unchanged. The container's `lint` category is
 the Wrangler packaging dry run. The recipes hold the direct commands the delivery
 runner, the container and the npm scripts use.
 
-Tests launch flights from one pinned seed sequence (`src/testSetup.ts`), so a
-flight's world is the same on every run. The default sequence runs every test.
-The container's test category also runs `tools/test-worlds.mjs`, which repeats
-seed-dependent suites under one further sequence through `ADA_LAUNCH_SEED`.
-The audited seed-independent suites in `src/testing/worlds.ts` run once; their
-default-run guard fails if they consume a launch seed. This preserves every
-distinct test while avoiding identical world repeats. `ADA_LAUNCH_SEED=<n> npm
-test` replays one world.
+The default suite runs each retained test case with a pinned launch-seed sequence
+(`src/testSetup.ts`). The container's test category then runs
+`tools/test-worlds.mjs` to sample seed-dependent suites in one alternate world
+through `ADA_LAUNCH_SEED`. Removing the two other alternate runs cuts gate time
+and gives up coverage of world-dependent paths unique to those seeds. The
+audited seed-independent suites in `src/testing/worlds.ts` run once. Their
+default-run guard fails if they consume a launch seed. Use
+`ADA_LAUNCH_SEED=<n> npm test` to replay a specific world.
 
 The test category also checks the UI font subsets: `src/tools/uiStrings.test.ts` reads
 every string the game page can set in AdaUI (the export `node tools/ui-strings.ts` writes
