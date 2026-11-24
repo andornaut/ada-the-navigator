@@ -2,6 +2,8 @@ import { posix } from "node:path";
 
 import ts from "typescript";
 
+import { guardedRecoveryAssertion } from "./discreteActionArchitectureRecovery.ts";
+
 export interface ActionBindingFinding {
   readonly kind:
     | "raw-discrete"
@@ -237,6 +239,86 @@ function directRecoveryReads(
   return !unsafe(scope);
 }
 
+/**
+ * The adapter must return a live root. Its private registrar cleanup and disposed flag
+ * may be written by the returned disposer only.
+ */
+function privateAdapterLifetime(
+  context: ScanContext,
+  implementation: ts.FunctionDeclaration,
+  properties: ts.NodeArray<ts.ObjectLiteralElementLike>,
+  flag: ts.VariableDeclaration,
+  registration: ts.CallExpression,
+): boolean {
+  const unregister = registration.parent;
+  const methods = properties.filter((property) => property.name?.getText() === "dispose");
+  const dispose = methods[0];
+  if (
+    !ts.isIdentifier(flag.name) ||
+    flag.initializer?.kind !== ts.SyntaxKind.FalseKeyword ||
+    !ts.isVariableDeclaration(unregister) ||
+    !(unregister.parent.flags & ts.NodeFlags.Const) ||
+    !ts.isIdentifier(unregister.name) ||
+    methods.length !== 1 ||
+    !dispose ||
+    !ts.isMethodDeclaration(dispose) ||
+    dispose.asteriskToken ||
+    dispose.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.AsyncKeyword) ||
+    !dispose.body
+  ) {
+    return false;
+  }
+  const flagName = flag.name.text;
+  const unregisterName = unregister.name.text;
+  let writes = 0;
+  let cleanups = 0;
+  const unsafe = (node: ts.Node): true | undefined => {
+    if (ts.isIdentifier(node) && (node.text === flagName || node.text === unregisterName)) {
+      const parent = node.parent;
+      if (ts.isShorthandPropertyAssignment(parent)) {
+        return true;
+      }
+      const declarations = context.lexicalDeclarations(node);
+      if (declarations?.includes(flag) && node !== flag.name) {
+        if (
+          (ts.isIfStatement(parent) && parent.expression === node) ||
+          (ts.isPrefixUnaryExpression(parent) && parent.operator === ts.SyntaxKind.ExclamationToken)
+        ) {
+          return undefined;
+        }
+        if (
+          ts.isBinaryExpression(parent) &&
+          parent.left === node &&
+          parent.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+          parent.right.kind === ts.SyntaxKind.TrueKeyword &&
+          ts.isExpressionStatement(parent.parent) &&
+          parent.parent.parent === dispose.body
+        ) {
+          writes++;
+          return undefined;
+        }
+        return true;
+      }
+      if (declarations?.includes(unregister) && node !== unregister.name) {
+        if (
+          ts.isCallExpression(parent) &&
+          parent.expression === node &&
+          !parent.questionDotToken &&
+          !parent.arguments.length &&
+          ts.isExpressionStatement(parent.parent) &&
+          parent.parent.parent === dispose.body
+        ) {
+          cleanups++;
+          return undefined;
+        }
+        return true;
+      }
+    }
+    return ts.forEachChild(node, unsafe);
+  };
+  return !unsafe(implementation) && writes === 1 && cleanups === 1;
+}
+
 /** Authenticate the actual returned method and its default subtree, through the local wrapper. */
 function recoveryAssertionFactory(
   context: ScanContext,
@@ -376,6 +458,7 @@ function recoveryAssertionFactory(
     !flag ||
     !ts.isVariableDeclaration(flag) ||
     flag.parent.parent.parent !== implementation.body ||
+    !privateAdapterLifetime(context, implementation, properties, flag, registrations[0]!) ||
     !contains ||
     !ts.isCallExpression(contains) ||
     contains.questionDotToken ||
@@ -2418,7 +2501,16 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
       if (ts.isPropertyAccessExpression(callee) && callee.name.text === "assertBindings") {
-        if (recoveryAssertion(node, callee)) {
+        if (
+          recoveryAssertion(node, callee) ||
+          guardedRecoveryAssertion(
+            node,
+            callee,
+            lexicalDeclaration,
+            (factory) =>
+              context.recoveryRoot !== undefined && canonicalCall(factory) === context.recoveryRoot,
+          )
+        ) {
           runtimeAssertions.push({ ...assertionSite(node), kind: "live-root" });
         } else {
           unresolvedRuntimeAssertions.push(assertionSite(node));

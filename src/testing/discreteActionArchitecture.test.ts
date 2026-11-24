@@ -871,34 +871,34 @@ const recoveryCrash = {
   text: readFileSync(new URL("../crash/crashScreen.ts", import.meta.url), "utf8"),
 };
 
-it("associates the eager Startup recovery assertion and leaves the lazy Crash receiver unresolved", () => {
-  const { path } = recoveryStartup;
-  const result = scanDiscreteActionProject([
-    canonicalRegistry,
-    recoveryRegistry,
-    recoveryAdapter,
-    recoveryStartup,
-    recoveryCrash,
-  ]);
-  expect(result.runtimeAssertions).toContainEqual(
-    expect.objectContaining({ kind: "live-root", path, source: "recovery.assertBindings()" }),
-  );
-  expect(result.unresolvedRuntimeAssertions).toEqual([
-    expect.objectContaining({
-      path: recoveryCrash.path,
-      source: "recovery.root.assertBindings()",
-    }),
-  ]);
-});
+const crashAssertion = "completed.root.assertBindings()";
+const recoverySources = [canonicalRegistry, recoveryRegistry, recoveryAdapter, recoveryCrash];
 
-const crashAssertion = "recovery.root.assertBindings()";
+it("associates the eager Startup and guarded lazy Crash recovery assertions", () => {
+  const result = scanDiscreteActionProject([...recoverySources, recoveryStartup]);
+  expect(result.runtimeAssertions).toContainEqual(
+    expect.objectContaining({
+      kind: "live-root",
+      path: recoveryStartup.path,
+      source: "recovery.assertBindings()",
+    }),
+  );
+  expect(result.runtimeAssertions).toContainEqual(
+    expect.objectContaining({
+      kind: "live-root",
+      path: recoveryCrash.path,
+      source: crashAssertion,
+    }),
+  );
+  expect(result.unresolvedRuntimeAssertions).toEqual([]);
+});
 
 it.each([
   [
     "another receiver",
     recoveryCrash,
     crashAssertion,
-    "const foreign = { root: { assertBindings() {} } }; foreign.root.assertBindings()",
+    "foreign.root.assertBindings()",
     "foreign.root.assertBindings()",
   ],
   [
@@ -914,24 +914,55 @@ it.each([
     "bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, body)",
   ],
   [
-    "replacement of the published root",
+    "replacement of the captured root",
     recoveryCrash,
-    crashAssertion,
-    `Object.assign(recovery, { root: { assertBindings() {} } }); ${crashAssertion}`,
+    "metadata.add(stop);",
+    "metadata.add(stop); Object.assign(completed, { root: { assertBindings() {} } });",
   ],
   [
-    "disposal before the assertion",
+    "disposal before the liveness guard",
     recoveryCrash,
-    crashAssertion,
-    `recovery.root.dispose(); ${crashAssertion}`,
+    "metadata.add(stop);",
+    "metadata.add(stop); completed.root.dispose();",
+  ],
+  [
+    "publishing the captured record through a shorthand property",
+    recoveryCrash,
+    "metadata.add(stop);",
+    "metadata.add(stop); publish({ completed });",
+  ],
+  [
+    "binding with the record as its receiver",
+    recoveryCrash,
+    "const bind = completed.bind;",
+    "const bind = action => completed.bind(action);",
   ],
   ["teardown retaining the disposed instance", recoveryCrash, "  recovery = undefined;", ""],
   [
-    "binding reentering the published pagehide teardown",
-    canonicalRegistry,
-    "const binding = bindAdaAction(",
-    'root.ownerDocument.defaultView?.dispatchEvent(new PageTransitionEvent("pagehide")); ' +
-      "const binding = bindAdaAction(",
+    "teardown calling out before retiring the record",
+    recoveryCrash,
+    "  if (retiring) {",
+    "  retiring?.root.invalidate(); if (retiring) {",
+  ],
+  ["the final guard omitting liveness", recoveryCrash, "    completed.live", "    true"],
+  [
+    "the final guard omitting current identity",
+    recoveryCrash,
+    "    recovery === completed &&",
+    "    true &&",
+  ],
+  [
+    "a call after the liveness guard",
+    recoveryCrash,
+    "    completed.live",
+    "    completed.live && probe()",
+  ],
+  ["an already disposed adapter", recoveryAdapter, "let disposed = false;", "let disposed = true;"],
+  [
+    "an adapter that unregisters before returning",
+    recoveryAdapter,
+    "  const resolve = (target:",
+    "  unregister(); const resolve = (target:",
   ],
 ] as const)(
   "keeps Crash recovery reviewable with %s",
@@ -939,9 +970,7 @@ it.each([
     expect(input.text.split(original)).toHaveLength(2);
     const mutated = { ...input, text: input.text.replace(original, replacement) };
     const result = scanDiscreteActionProject([
-      ...[canonicalRegistry, recoveryRegistry, recoveryAdapter, recoveryCrash].map((source) =>
-        source.path === input.path ? mutated : source,
-      ),
+      ...recoverySources.map((source) => (source.path === input.path ? mutated : source)),
       {
         path: "src/crash/foreignRecovery.ts",
         text: "export function bindAdaRecoveryActionRoot() { return { assertBindings() {} }; }",
@@ -953,6 +982,30 @@ it.each([
     ]);
   },
 );
+
+it("associates the guarded lazy Crash recovery assertion even when binding can invoke teardown", () => {
+  const original = "const binding = bindAdaAction(";
+  expect(canonicalRegistry.text.split(original)).toHaveLength(2);
+  const mutated = {
+    ...canonicalRegistry,
+    text: canonicalRegistry.text.replace(
+      original,
+      `root.ownerDocument.defaultView?.dispatchEvent(new PageTransitionEvent("pagehide")); ${original}`,
+    ),
+  };
+  const result = scanDiscreteActionProject([
+    mutated,
+    ...recoverySources.filter(({ path }) => path !== canonicalRegistry.path),
+  ]);
+  expect(result.runtimeAssertions).toContainEqual(
+    expect.objectContaining({
+      kind: "live-root",
+      path: recoveryCrash.path,
+      source: crashAssertion,
+    }),
+  );
+  expect(result.unresolvedRuntimeAssertions).toEqual([]);
+});
 
 it.each([
   [

@@ -40,16 +40,21 @@ let recovery:
   | {
       readonly bind: HoldActionBinding;
       readonly host: HTMLElement;
+      live: boolean;
       readonly root: ReturnType<typeof bindAdaRecoveryActionRoot>;
     }
   | undefined;
 const metadata = new Set<() => void>();
 const disposeRecovery = () => {
-  recovery?.root.invalidate();
+  const retiring = recovery;
+  if (retiring) {
+    retiring.live = false;
+  }
+  retiring?.root.invalidate();
   for (const stop of [...metadata]) {
     stop();
   }
-  recovery?.root.dispose();
+  retiring?.root.dispose();
   recovery = undefined;
   window.removeEventListener("pagehide", onPageHide);
 };
@@ -112,10 +117,11 @@ const bindHoldAction: HoldActionBinding = (action) => {
     style.setProperty("--ada-reload-line", `${TEXT_BUTTON.label.lineHeight}px`);
   }
   const body = element.ownerDocument.body;
-  let host = element;
-  while (host.parentElement && host.parentElement !== body) {
-    host = host.parentElement;
+  let ancestor = element;
+  while (ancestor.parentElement && ancestor.parentElement !== body) {
+    ancestor = ancestor.parentElement;
   }
+  const host = ancestor;
   if (host === body || host.parentElement !== body || host.getAttribute("role") !== "alertdialog") {
     throw new Error("Crash actions require their mounted recovery dialog");
   }
@@ -132,20 +138,31 @@ const bindHoldAction: HoldActionBinding = (action) => {
         host,
       ),
       host,
+      live: true,
       root: bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, host),
     };
     window.addEventListener("pagehide", onPageHide);
   }
-  const unbind = recovery.bind(action);
+  const completed = recovery;
+  const bind = completed.bind;
+  const unbind = bind(action);
   const stopPress = isReload ? bindReloadPress(element) : undefined;
   const stop = () => {
     metadata.delete(stop);
     stopPress?.();
     unbind();
   };
+  if (recovery !== completed || !completed.live) {
+    stop();
+    return () => {};
+  }
   metadata.add(stop);
-  if (metadata.size === host.querySelectorAll("button").length) {
-    recovery.root.assertBindings();
+  if (
+    metadata.size === host.querySelectorAll("button").length &&
+    recovery === completed &&
+    completed.live
+  ) {
+    completed.root.assertBindings();
   }
   return stop;
 };

@@ -1,17 +1,41 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const host = vi.hoisted(() => ({ register: vi.fn(), stop: undefined as (() => void) | undefined }));
+type Attach = (action: { readonly element: HTMLElement }) => () => void;
+const host = vi.hoisted(() => ({
+  attach: undefined as Attach | undefined,
+  duringBind: undefined as (() => void) | undefined,
+  newRoot: vi.fn(() => ({ assertBindings: vi.fn(), dispose: vi.fn(), invalidate: vi.fn() })),
+  register: vi.fn(),
+  stop: undefined as (() => void) | undefined,
+  unbind: vi.fn(),
+}));
 vi.mock("@andornaut/game-kit/runtime/web/crash/dom/crashScreen", () => ({
-  installCrashScreen: () => ({
-    stopGameOnCrash(stop: () => void) {
-      host.register();
-      host.stop = stop;
-    },
-  }),
+  installCrashScreen({ bindHoldAction }: { readonly bindHoldAction: Attach }) {
+    host.attach = bindHoldAction;
+    return {
+      stopGameOnCrash(stop: () => void) {
+        host.register();
+        host.stop = stop;
+      },
+    };
+  },
+}));
+vi.mock("../ui/actionBinding.ts", () => ({
+  createAdaFactoryHoldBinding: () => () => {
+    host.duringBind?.();
+    return host.unbind;
+  },
+}));
+vi.mock("../ui/holdActionsAdapter.ts", () => ({
+  bindAdaRecoveryActionRoot: host.newRoot,
+}));
+vi.mock("../ui/pressScope.ts", () => ({
+  rootPressGuard: () => ({}),
 }));
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  host.duringBind = undefined;
   vi.stubGlobal("window", { location: { search: "" } });
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -35,4 +59,39 @@ it("still releases loading resources when another page-owned crash cleanup throw
   });
   expect(() => host.stop!()).toThrow(AggregateError);
   expect(loading).toHaveBeenCalledOnce();
+});
+
+it("releases a binding retired during construction and audits only the next live instance", async () => {
+  const page = Object.assign(new EventTarget(), { location: { search: "" } });
+  vi.stubGlobal("window", page);
+  await import("./crashScreen.ts");
+
+  const body = {};
+  const dialog = {
+    getAttribute: () => "alertdialog",
+    parentElement: body,
+    querySelectorAll: () => [element],
+  };
+  const element = {
+    matches: () => false,
+    ownerDocument: { body },
+    parentElement: dialog,
+  } as unknown as HTMLElement;
+  host.duringBind = () => {
+    page.dispatchEvent(Object.assign(new Event("pagehide"), { persisted: false }));
+  };
+
+  host.attach!({ element })();
+  const retired = host.newRoot.mock.results[0]!.value;
+  expect(retired.invalidate).toHaveBeenCalledOnce();
+  expect(retired.dispose).toHaveBeenCalledOnce();
+  expect(host.unbind).toHaveBeenCalledOnce();
+  expect(retired.assertBindings).not.toHaveBeenCalled();
+
+  host.duringBind = undefined;
+  host.attach!({ element })();
+  expect(host.newRoot).toHaveBeenCalledTimes(2);
+  expect(retired.assertBindings).not.toHaveBeenCalled();
+  expect(host.newRoot.mock.results[1]!.value.assertBindings).toHaveBeenCalledOnce();
+  expect(host.unbind).toHaveBeenCalledTimes(2);
 });
