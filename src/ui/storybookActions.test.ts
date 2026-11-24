@@ -74,6 +74,7 @@ class Element extends EventTarget {
         .filter(Boolean)
         .join(" ");
     },
+    contains: (name: string) => this.className.split(" ").includes(name),
     remove: (...names: string[]) => {
       this.className = this.className
         .split(" ")
@@ -632,6 +633,7 @@ function useFixture() {
   const actual = runInContext(
     ts.transpileModule(
       `let ${controlsDeclaration("exitPose")};
+let ${controlsDeclaration("pressedStoryButton")};
 ${declarations
   .map((name) => `const ${controlsDeclaration(name)};`)
   .join("\n")}\n({actionRoot,useAction,resolveUsePointer});`,
@@ -703,6 +705,30 @@ ${declarations
     useButton,
   };
 }
+it("clears Storybook press paint on release and dispatches once", () => {
+  const f = useFixture();
+  try {
+    f.story.show(page);
+    f.down(f.hud);
+    expect(f.hud.getAttribute("data-story-pressed")).toBe("");
+    f.up(f.hud);
+    expect(f.hud.getAttribute("data-story-pressed")).toBeNull();
+    f.click(f.hud);
+    expect(f.options.onNext).toHaveBeenCalledOnce();
+    f.down(f.hud);
+    vi.advanceTimersByTime(500);
+    expect(f.options.onNext).toHaveBeenCalledTimes(2);
+    f.up(f.hud);
+    f.click(f.hud);
+    expect(f.hud.getAttribute("data-story-pressed")).toBeNull();
+    expect(f.options.onNext).toHaveBeenCalledTimes(2);
+  } finally {
+    f.useAction.dispose();
+    f.actionRoot.dispose();
+    f.story.dispose();
+  }
+});
+
 it("pairs the actual Controls Use resolver with one short/hold release and no joystick or click duplicate", () => {
   const f = useFixture();
   try {

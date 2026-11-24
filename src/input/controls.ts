@@ -262,6 +262,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   let exitPose: ReturnType<typeof mountNavigationPose> | undefined;
+  let pressedStoryButton: HTMLElement | undefined;
   const actionRoot = bindAdaActionRoot(
     {
       allowNonPrimaryTouch: true,
@@ -269,6 +270,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pointerRelease: {
         onPressChange: (element) => {
           usePress = element === settings.useButton ? { since: performance.now() } : undefined;
+          pressedStoryButton?.removeAttribute("data-story-pressed");
+          pressedStoryButton =
+            element?.classList.contains("ada-story-button") ||
+            element?.classList.contains("ada-story-skip")
+              ? element
+              : undefined;
+          pressedStoryButton?.setAttribute("data-story-pressed", "");
           if (exitPose) {
             const present = element === exitButton ? exitPose.press : exitPose.rest;
             present();

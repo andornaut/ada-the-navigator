@@ -39,6 +39,7 @@ import {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { BUTTON_SLICE } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
@@ -320,6 +321,9 @@ const CHOICE_WIDTH = `clamp(${units(choiceColumn.min)}, calc((100% - ${units(col
 }), ${units(choiceColumn.max)})`;
 const { tab } = CONVERSATION_BOX;
 
+const PRESSED_STORY_BUTTON = `.ada-controls .ada-story
+  .ui-standard-button.ada-button:not(:disabled,[aria-disabled=true]):is(:active,[data-story-pressed])`;
+
 export const STORYBOOK_STYLE = `
 .ada-controls .ada-story-ship{
   position:absolute;
@@ -575,6 +579,22 @@ ${STORY_PORTRAIT_RULES}
   background-color:transparent;
   color:inherit;
   forced-color-adjust:inherit
+}
+
+/* Keep the sprite edges and show a distinct press cue even when keyboard focus is visible. */
+${PRESSED_STORY_BUTTON}{
+  background-color:${TEXT_TOKENS.buttonLabel};
+  background-image:none;
+  background-clip:padding-box;
+  border-image-slice:${BUTTON_SLICE.top} ${BUTTON_SLICE.right} ${BUTTON_SLICE.bottom} ${BUTTON_SLICE.left};
+  color:${TEXT_TOKENS.label}
+}
+@media (forced-colors:active){
+  ${PRESSED_STORY_BUTTON}{
+    forced-color-adjust:none;
+    background-color:ButtonText;
+    color:ButtonFace
+  }
 }
 
 /* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or
