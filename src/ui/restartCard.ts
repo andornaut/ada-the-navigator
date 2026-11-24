@@ -1,6 +1,6 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
-import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
+import { applyAdaControlTheme } from "./buttonPresentation.ts";
 import { mountAdaLayout } from "./layoutTree.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -108,13 +108,12 @@ export function createRestartCard(
   ]);
   const layout = mountAdaLayout(
     {
+      actionRoot: root,
       actions,
       availability: () =>
         disposed || committing || modal.hidden || !inCurrentView(root, frame)
           ? { kind: "omitted" }
           : { kind: "available" },
-      presentButton: presentAdaButton,
-      standardButtons: { actionIds: [`${kind}-cancel`, `${kind}-confirm`], root },
     },
     { artReady: Promise.resolve(), host: modal },
     restartTree(labels, kind),

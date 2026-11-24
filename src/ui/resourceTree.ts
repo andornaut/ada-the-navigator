@@ -1,5 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { CONTENT } from "../data/content.ts";
 import type { AdaLayoutSchema } from "./layoutTree.ts";
 
 export type ResourceAction = "close-resource" | "resource-quests" | "dismiss-resource";
@@ -56,7 +57,10 @@ export function resourceTree(data: ResourceLayoutData): LayoutNode<ResourceLayou
     props: data,
     slots: {
       // Keep the hidden contextual button keyed across openings, as the native card does.
-      footer: resourceFooterTree({ ...data, questsLabel: data.questsLabel ?? "" }),
+      footer: resourceFooterTree({
+        ...data,
+        questsLabel: data.questsLabel ?? CONTENT.labels.quests!,
+      }),
     },
   };
 }

@@ -3,7 +3,7 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
-import { applyAdaControlTheme, presentAdaButton } from "./buttonPresentation.ts";
+import { applyAdaControlTheme } from "./buttonPresentation.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { type AdaLayoutSchema, mountAdaLayout } from "./layoutTree.ts";
 import { createPhysicalLayoutInspector } from "./layoutTreeMeasurements.ts";
@@ -98,6 +98,7 @@ export function mountStationDropDetails(
   ]);
   const layout = mountAdaLayout(
     {
+      actionRoot: context.actionRoot,
       actions,
       availability: (action) =>
         context.active?.() === false
@@ -105,11 +106,6 @@ export function mountStationDropDetails(
           : action === "drop-confirm"
             ? context.availability()
             : { kind: "available" },
-      presentButton: presentAdaButton,
-      standardButtons: {
-        actionIds: ["drop-cancel", "drop-confirm"],
-        root: context.actionRoot,
-      },
     },
     { artReady: context.artReady, host, measure: inspector.measure },
     stationDropTree(data),

@@ -6,7 +6,6 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { presentAdaButton } from "./buttonPresentation.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
@@ -178,6 +177,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     }
   };
   const ports = createAdaLayoutPorts<MenuControlAction>({
+    actionRoot: root,
     actions: new Map<MenuControlAction, () => void>([
       ["close-menu", close],
       ["menu-close", close],
@@ -187,17 +187,6 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       ["menu-cheats", () => choose("cheats")],
     ]),
     availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
-    presentButton: presentAdaButton,
-    standardButtons: {
-      actionIds: [
-        "menu-achievements",
-        "menu-cheats",
-        "menu-settings",
-        "menu-backToTitle",
-        "menu-close",
-      ],
-      root,
-    },
   });
   const fixedBindings = [register(card.close, close)];
   try {

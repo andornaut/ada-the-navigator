@@ -4,7 +4,6 @@ import {
   invokeControl,
 } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
-import { bindButtonAvailability } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutComponentPorts,
   type LayoutOptions,
@@ -19,13 +18,7 @@ import {
 import { presentAdaButtonContent } from "./buttonPresentation.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import {
-  type ButtonRole,
-  createActions,
-  createButton,
-  createCard,
-  setFooterAction,
-} from "./modal.ts";
+import { type ButtonRole, createActions, createCard, setFooterAction } from "./modal.ts";
 import { createProse } from "./prose.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
@@ -56,41 +49,42 @@ export type AdaLayoutSchema<A extends string> = {
 /** Caller-owned DS bindings provide the shared reason placement, skin and sizing. */
 export interface AdaButtonPresentation<A extends string> {
   readonly element: HTMLElement;
-  readonly reason: HTMLElement;
   update(props: AdaButtonProps<A>): void;
   dispose(): void;
 }
 
 export interface AdaLayoutContext<A extends string> {
+  readonly actionRoot: HTMLElement;
   readonly actions: ReadonlyMap<A, () => void>;
   readonly availability: (action: A) => ControlAvailability;
-  readonly presentButton: (
-    button: HTMLButtonElement,
-    label: ChildNode,
-    props: AdaButtonProps<A>,
-  ) => AdaButtonPresentation<A>;
   readonly onUnavailable?: (reason: string) => void;
-  readonly standardButtons?: { readonly actionIds: readonly A[]; readonly root: HTMLElement };
 }
 
 function standardButton<A extends string>(
   context: AdaLayoutContext<A>,
-  root: HTMLElement,
   initial: AdaButtonProps<A>,
   dispatch: (id: A) => void,
 ) {
-  if (context.onUnavailable) {
-    throw new Error("Shared text button does not yet support refusal feedback");
-  }
   let current = initial;
   let disposed = false;
+  const root = context.actionRoot;
+  const reason = root.ownerDocument.createElement("p");
   const kit = createStandardTextAction(root, initial.label, {
     availability: () => context.availability(current.actionId),
     current: () => !disposed,
+    reason,
+    ...(context.onUnavailable
+      ? {
+          refuse: (message: string) => {
+            kit.refresh();
+            context.onUnavailable?.(message);
+          },
+        }
+      : {}),
     run: () => dispatch(current.actionId),
   });
   const button = kit.element;
-  const presentation = presentAdaButtonContent(button, kit.setLabel, initial);
+  const presentation = presentAdaButtonContent<A>(button, kit.setLabel, reason);
   const update = (next: AdaButtonProps<A>) => {
     current = next;
     button.dataset.action = next.actionId;
@@ -126,82 +120,7 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
     });
   const components: LayoutComponentPorts<AdaLayoutSchema<A>> = {
     button: {
-      create(initial) {
-        if (context.standardButtons?.actionIds.includes(initial.actionId)) {
-          return standardButton(context, context.standardButtons.root, initial, dispatch);
-        }
-        let current = initial;
-        let disposed = false;
-        const button = createButton(initial.label, initial.role);
-        const label = button.firstChild ?? button.ownerDocument.createTextNode("");
-        if (!button.firstChild) {
-          button.append(label);
-        }
-        if (label.nodeType !== 3) {
-          throw new Error("Button label text binding is unavailable");
-        }
-        const presentation = context.presentButton(button, label, initial);
-        const availabilityContext = {
-          getAvailability: () => context.availability(current.actionId),
-          ...(context.onUnavailable ? { onUnavailable: context.onUnavailable } : {}),
-          reason: presentation.reason,
-        };
-        const binding = bindButtonAvailability(availabilityContext, button);
-        const activate = () => dispatch(current.actionId);
-        const registered = bindAdaAction(
-          {
-            click: {
-              availability: () => context.availability(current.actionId),
-              ...(availabilityContext.onUnavailable
-                ? {
-                    refuse: () => {
-                      const refreshed = binding.refresh();
-                      if (refreshed.reason !== undefined) {
-                        availabilityContext.onUnavailable?.(refreshed.reason);
-                      }
-                    },
-                  }
-                : {}),
-              run: activate,
-            },
-            current: () => !disposed,
-            ...(availabilityContext.onUnavailable
-              ? { ownAriaDisabled: "refusal-feedback" as const }
-              : {}),
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-          },
-          button,
-        );
-        const update = (next: AdaButtonProps<A>) => {
-          current = next;
-          button.dataset.action = next.actionId;
-          label.nodeValue = next.label;
-          button.classList.toggle("ada-primary", next.role === "primary");
-          presentation.update(next);
-          presentation.element.hidden = !binding.refresh().visible;
-        };
-        update(initial);
-        try {
-          assertAdaActionMetadata(presentation.element);
-        } catch (error) {
-          disposed = true;
-          registered.dispose();
-          binding.dispose();
-          presentation.dispose();
-          throw error;
-        }
-        return {
-          dispose() {
-            disposed = true;
-            registered.dispose();
-            binding.dispose();
-            presentation.dispose();
-          },
-          element: presentation.element,
-          slots: {},
-          update,
-        };
-      },
+      create: (initial) => standardButton(context, initial, dispatch),
       slots: [],
     },
     card: {

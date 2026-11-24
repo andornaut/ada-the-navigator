@@ -11,6 +11,7 @@ interface StandardTextActionOptions {
   ) => ControlAvailability | { readonly kind: "disabled" };
   readonly current: () => boolean;
   readonly run: () => void;
+  readonly reason?: HTMLElement;
   readonly refuse?: (reason: string) => void;
   readonly separateFace?: boolean;
 }
@@ -49,6 +50,7 @@ export function createStandardTextAction(
           },
         }
       : {}),
+    ...(options.reason ? { reason: options.reason } : {}),
     rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
   });
   state.button = kit.element;

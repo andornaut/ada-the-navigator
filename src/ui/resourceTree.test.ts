@@ -1,6 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { resourceFooterTree, resourceTree } from "./resourceTree.ts";
 
 const slots = { button: [], card: ["header", "body", "footer"], text: [] } as const;
@@ -66,6 +67,9 @@ it("retains the native content port and both footer keys without putting callbac
     throw Error("Expected native Resource port");
   }
   expect(tree.slots?.footer?.map((node) => node.key)).toEqual(["quests", "dismiss"]);
+  expect(tree.slots?.footer?.[0]).toMatchObject({
+    props: { actionId: "resource-quests", label: CONTENT.labels.quests },
+  });
   const next = resourceTree({ ...data, quantity: "123 HP", questsLabel: "Quests" });
   expect(next).toMatchObject({ props: { quantity: "123 HP", questsLabel: "Quests" } });
 });

@@ -7,7 +7,6 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { presentAdaButton } from "./buttonPresentation.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -97,14 +96,13 @@ export function createResourceCard(
     close();
   };
   const ports = createAdaLayoutPorts<ResourceAction>({
+    actionRoot: root,
     actions: new Map([
       ["close-resource", close],
       ["dismiss-resource", close],
       ["resource-quests", showQuests],
     ]),
     availability,
-    presentButton: presentAdaButton,
-    standardButtons: { actionIds: ["dismiss-resource"], root },
   });
   const renderContent = (data: ResourceLayoutData) => {
     card.title.textContent = data.title;

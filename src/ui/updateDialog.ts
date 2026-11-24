@@ -8,7 +8,6 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { registerAdaAncestorActionScope } from "./actionRegistry.ts";
-import { presentAdaButton } from "./buttonPresentation.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
@@ -75,14 +74,13 @@ export function createUpdateDialog(
     close,
   );
   const ports = createAdaLayoutPorts<UpdateAction>({
+    actionRoot,
     actions: new Map([
       ["close-update", defer],
       ["cancel-update", defer],
       ["accept-update", () => offer.accept()],
     ]),
     availability,
-    presentButton: presentAdaButton,
-    standardButtons: { actionIds: ["cancel-update", "accept-update"], root: actionRoot },
   });
   const tree = updateTree(labels);
   const mounted = mountLayout<UpdateSchema>(

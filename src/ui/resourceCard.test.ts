@@ -246,15 +246,6 @@ vi.mock("./modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./buttonPresentation.ts", async (original) => ({
-  ...(await original<typeof import("./buttonPresentation.ts")>()),
-  presentAdaButton: (button: InstanceType<typeof fixture.Node>) => ({
-    dispose() {},
-    element: button,
-    reason: new fixture.Node(),
-    update() {},
-  }),
-}));
 vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original) => ({
   ...(await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>()),
@@ -370,6 +361,7 @@ it("shows canonical supplied content and secondary Quests before primary Close w
     ["Quests", "secondary"],
     ["Close", "primary"],
   ]);
+  expect(buttons[0]!.matches(".ui-standard-button")).toBe(true);
   expect(buttons[1]!.matches(".ui-standard-button")).toBe(true);
   buttons[0]!.dispatchEvent(new Event("click"));
   expect(lifecycle).toEqual(["paused", "quests-open", "closed"]);
@@ -696,7 +688,10 @@ it("releases only its own Resource scope after Quests has opened a child", () =>
       },
     });
     const resourcePress = guard.gate.capture();
-    resolveAdaHoldAction(host, fixture.card.body.children[2]!.children[0]!)?.activate();
+    const quests = fixture.card.body.children[2]!.querySelectorAll("button")[0]!;
+    const action = resolveAdaHoldAction(host, quests);
+    expect(action?.available()).toBe(true);
+    action?.activate();
     expect(resourcePress()).toBe(false);
     expect(transitions).toEqual(["resource-open", "child-open", "resource-close"]);
     expect(currentView(host) === (child as unknown as HTMLElement)).toBe(true);

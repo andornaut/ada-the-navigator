@@ -32,33 +32,18 @@ export function createAdaPageDivider(
   return divider;
 }
 
-/** Presentation only. The published adapter retains availability guards and caller action dispatch. */
-export function presentAdaButton<A extends string>(
-  button: HTMLButtonElement,
-  label: ChildNode,
-  initial: AdaButtonProps<A>,
-): AdaButtonPresentation<A> {
-  const faceLabel = button.ownerDocument.createElement("span");
-  faceLabel.className = "ui-control-label";
-  faceLabel.append(label);
-  button.append(faceLabel);
-  return presentAdaButtonContent(button, (text) => (label.nodeValue = text), initial);
-}
-
 /** Styles the native button without taking ownership of its content slot. */
 export function presentAdaButtonContent<A extends string>(
   button: HTMLButtonElement,
   setLabel: (text: string) => void,
-  initial: AdaButtonProps<A>,
+  reason: HTMLElement,
 ): AdaButtonPresentation<A> {
   const document = button.ownerDocument;
   const element = document.createElement("div");
   element.className = "ada-button-presentation ui-control-row";
   element.style.setProperty("--ui-unit", "var(--ada-unit, 1)");
   button.classList.add("ui-control-button");
-  const reason = document.createElement("p");
   reason.className = "ada-button-reason";
-  reason.hidden = true;
   element.append(button, reason);
   let disposed = false;
   const update = (props: AdaButtonProps<A>) => {
@@ -85,7 +70,6 @@ export function presentAdaButtonContent<A extends string>(
       button,
     );
   };
-  update(initial);
   return {
     dispose() {
       if (disposed) {
@@ -95,7 +79,6 @@ export function presentAdaButtonContent<A extends string>(
       element.remove();
     },
     element,
-    reason,
     update,
   };
 }

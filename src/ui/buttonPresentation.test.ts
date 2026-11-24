@@ -5,7 +5,6 @@ import {
   applyAdaControlTheme,
   createAdaPageDivider,
   PAGE_DIVIDER_STYLE,
-  presentAdaButton,
 } from "./buttonPresentation.ts";
 import { BUTTON_METRICS } from "./layout/controls.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
@@ -20,6 +19,7 @@ class TextNode {
 }
 
 class Element extends EventTarget {
+  readonly nodeType = 1;
   attributes = new Map<string, string>();
   children: (Element | TextNode)[] = [];
   className = "";
@@ -63,6 +63,17 @@ class Element extends EventTarget {
     this.className = [...names].join(" ");
     return on;
   }
+  contains(node: unknown): boolean {
+    return (
+      node === this ||
+      this.children.some(
+        (child) => child === node || (child instanceof Element && child.contains(node)),
+      )
+    );
+  }
+  closest(selector: string): Element | null {
+    return this.matches(selector) ? this : (this.parentElement?.closest(selector) ?? null);
+  }
   append(...nodes: (Element | TextNode)[]) {
     for (const node of nodes) {
       if (node.parentElement) {
@@ -85,14 +96,27 @@ class Element extends EventTarget {
       .join("");
   }
   set textContent(value: string) {
+    for (const child of this.children) {
+      child.parentElement = null;
+    }
     this.children = [];
-    this.append(new TextNode(value));
+    if (value !== "") {
+      this.append(new TextNode(value));
+    }
   }
   getAttribute(key: string) {
     return this.attributes.get(key) ?? null;
   }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
+  }
+  toggleAttribute(key: string, force: boolean) {
+    if (force) {
+      this.setAttribute(key, "");
+    } else {
+      this.removeAttribute(key);
+    }
+    return force;
   }
   removeAttribute(key: string) {
     this.attributes.delete(key);
@@ -103,6 +127,12 @@ class Element extends EventTarget {
   matches(selector: string): boolean {
     return selector.split(",").some((part) => {
       const value = part.trim();
+      if (value === ":disabled") {
+        return this.disabled;
+      }
+      if (value === "[hidden]") {
+        return this.hidden;
+      }
       if (value === "[data-action]") {
         return this.dataset.action !== undefined || this.attributes.has("data-action");
       }
@@ -134,6 +164,8 @@ class Element extends EventTarget {
 
 class FixtureDocument {
   defaultView = {
+    HTMLElement: Element,
+    Node: Element,
     getComputedStyle: () => ({
       borderBottomWidth: "6px",
       borderLeftWidth: "2px",
@@ -155,19 +187,20 @@ describe("actual typed-layout button presentation", () => {
   it("retains button, label, reason and root across guarded presentation updates", () => {
     const document = new FixtureDocument();
     vi.stubGlobal("document", document);
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
     let unavailable = false;
     const action = vi.fn();
+    const host = fixtureActionRoot(document.createElement("div"));
+    host.connected = true;
     const ports = createAdaLayoutPorts({
+      actionRoot: host as unknown as HTMLElement,
       actions: new Map([["buy", action]]),
       availability: () =>
         unavailable ? { kind: "unavailable", reason: "Needs 20 Stardust" } : { kind: "available" },
-      presentButton: presentAdaButton,
     });
     const initial = { actionId: "buy", label: "Buy equipment", role: "secondary" as const };
     const part = ports.components.button.create(initial);
     const root = part.element as unknown as Element;
-    const host = fixtureActionRoot(document.createElement("div"));
-    host.connected = true;
     host.append(root);
     const button = root.children[0] as Element;
     const labelFace = button.children[0] as Element;
@@ -189,8 +222,9 @@ describe("actual typed-layout button presentation", () => {
     });
     expect(part.element).toBe(root);
     expect(root.children).toEqual([button, reason]);
-    expect(labelFace.children[0]).toBe(label);
-    expect(label.nodeValue).toBe("Requires a matching weapon");
+    expect(button.children[0]).toBe(labelFace);
+    expect(labelFace.children[0]?.nodeType).toBe(3);
+    expect(labelFace.textContent).toBe("Requires a matching weapon");
     expect(button.getAttribute("data-ui-size")).toBe("compact");
     expect(button.properties.get("--ui-button-min-width")).toBe(
       String(BUTTON_METRICS.compact.minWidth),

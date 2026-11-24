@@ -204,7 +204,7 @@ vi.mock("./buttonPresentation.ts", async (importOriginal) => {
       const presented = actual.presentAdaButtonContent(...args);
       return {
         ...presented,
-        update(props: (typeof args)[2]) {
+        update(props: Parameters<typeof presented.update>[0]) {
           native.present(props);
           presented.update(props);
         },

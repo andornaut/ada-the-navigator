@@ -1,5 +1,5 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
@@ -32,7 +32,13 @@ class Element extends EventTarget {
   inert = false;
   disabled = false;
   type = "";
-  style = { alignSelf: "", minWidth: "" };
+  readonly properties = new Map<string, string>();
+  style = {
+    alignSelf: "",
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    minWidth: "",
+    setProperty: (name: string, value: string) => this.properties.set(name, value),
+  };
   textContent = "";
   firstChild: Element | { nodeType: number; nodeValue: string } | null = null;
   attributes = new Map<string, string>();
@@ -44,7 +50,7 @@ class Element extends EventTarget {
   ownerDocument = {
     createElement: (tag: string) => new Element(tag),
     createTextNode: (nodeValue: string) => ({ nodeType: 3, nodeValue }),
-    defaultView: { HTMLElement: Element, Node: Element },
+    defaultView: { HTMLElement: Element, Node: Element, getComputedStyle: () => ({}) },
     fonts: { ready: Promise.resolve() },
   };
   get parentNode() {
@@ -64,7 +70,24 @@ class Element extends EventTarget {
       (node instanceof Element && Boolean(node.parentElement) && this.contains(node.parentElement))
     );
   }
-  classList = { toggle: vi.fn() };
+  classList = {
+    add: (...names: string[]) => {
+      this.className = [...new Set([...this.className.split(" ").filter(Boolean), ...names])].join(
+        " ",
+      );
+    },
+    toggle: (name: string, force: boolean) => {
+      if (force) {
+        this.classList.add(name);
+      } else {
+        this.className = this.className
+          .split(" ")
+          .filter((entry) => entry !== name)
+          .join(" ");
+      }
+      return force;
+    },
+  };
   append(...nodes: (Element | { nodeType: number; nodeValue: string })[]) {
     for (const node of nodes) {
       if (node instanceof Element) {
@@ -134,6 +157,14 @@ class Element extends EventTarget {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
+  toggleAttribute(name: string, force: boolean) {
+    if (force) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
+    return force;
+  }
   removeAttribute(name: string) {
     this.attributes.delete(name);
   }
@@ -142,18 +173,36 @@ class Element extends EventTarget {
   }
 }
 
-const factories = vi.hoisted(() => ({ dispose: vi.fn(), fit: vi.fn(), unboundCard: false }));
+const factories = vi.hoisted(() => ({
+  buttonDispose: vi.fn(),
+  buttonUpdate: vi.fn(),
+  dispose: vi.fn(),
+  fit: vi.fn(),
+  unboundCard: false,
+}));
+vi.mock("./buttonPresentation.ts", async (original) => {
+  const actual = await original<typeof import("./buttonPresentation.ts")>();
+  return {
+    ...actual,
+    presentAdaButtonContent: (...args: Parameters<typeof actual.presentAdaButtonContent>) => {
+      const presented = actual.presentAdaButtonContent(...args);
+      return {
+        ...presented,
+        dispose() {
+          presented.dispose();
+          factories.buttonDispose();
+        },
+        update(props: AdaButtonProps<string>) {
+          presented.update(props);
+          factories.buttonUpdate(presented.element);
+        },
+      };
+    },
+  };
+});
 vi.mock("./modal.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./modal.ts")>()),
   createActions: () => new Element(),
-  createButton: (label: string) => {
-    const button = new Element("button");
-    button.firstChild = { nodeType: 3, nodeValue: label };
-    if (label === "") {
-      Object.defineProperty(button, "firstChild", { value: null, writable: true });
-    }
-    return button;
-  },
   createCard: () => {
     const body = new Element(),
       header = new Element(),
@@ -174,6 +223,7 @@ vi.mock("./modal.ts", async (importOriginal) => ({
 }));
 
 const inputReleases: (() => void)[] = [];
+beforeEach(() => vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" })));
 afterEach(() => {
   for (const stop of inputReleases.splice(0).reverse()) {
     stop();
@@ -181,59 +231,57 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
+  factories.buttonUpdate.mockReset();
   factories.unboundCard = false;
 });
 
 function fixture(onUnavailable?: (reason: string) => void, actualInput = false) {
   const first = vi.fn(),
-    second = vi.fn(),
-    dispose = vi.fn(),
-    update = vi.fn();
+    second = vi.fn();
   let state: { kind: "available" } | { kind: "unavailable"; reason: string } | { kind: "omitted" } =
     { kind: "available" };
-  let button: Element;
-  let reason: Element;
+  const root = new Element();
+  if (!actualInput) {
+    fixtureActionRoot(root);
+  }
   const ports = createAdaLayoutPorts({
+    actionRoot: root as unknown as HTMLElement,
     actions: new Map([
       ["first", first],
       ["second", second],
     ]),
     availability: () => state,
     ...(onUnavailable ? { onUnavailable } : {}),
-    presentButton(actual) {
-      button = actual as unknown as Element;
-      reason = new Element();
-      const root = new Element();
-      if (!actualInput) {
-        fixtureActionRoot(root);
-      }
-      root.append(button, reason);
-      return {
-        dispose,
-        element: root as unknown as HTMLElement,
-        reason: reason as unknown as HTMLElement,
-        update,
-      };
-    },
   });
+  let button: Element;
+  let reason: Element;
+  const mountButton = (props: AdaButtonProps<string>) => {
+    const part = ports.components.button.create(props);
+    root.append(part.element as unknown as Element);
+    button = root.querySelectorAll("button")[0]!;
+    reason = root.querySelectorAll(".ada-button-reason")[0]!;
+    return part;
+  };
   return {
-    button: () => button!,
-    dispose,
+    button: () => button,
+    dispose: factories.buttonDispose,
     first,
+    mountButton,
     ports,
-    reason: () => reason!,
+    reason: () => reason,
+    root,
     second,
     setState: (next: typeof state) => {
       state = next;
     },
-    update,
+    update: factories.buttonUpdate,
   };
 }
 
 it("retains actual label/root identity while dispatch resolves the current action and availability", () => {
   const f = fixture();
   const initial: AdaButtonProps<string> = { actionId: "first", label: "First", role: "secondary" };
-  const part = f.ports.components.button.create(initial);
+  const part = f.mountButton(initial);
   const root = part.element,
     label = f.button().firstChild!;
   f.button().click();
@@ -241,7 +289,7 @@ it("retains actual label/root identity while dispatch resolves the current actio
   part.update({ actionId: "second", label: "Second", role: "primary" });
   expect(part.element).toBe(root);
   expect(f.button().firstChild).toBe(label);
-  expect(label.nodeValue).toBe("Second");
+  expect((label as Element).textContent).toBe("Second");
   f.button().click();
   expect(f.second).toHaveBeenCalledOnce();
   f.setState({ kind: "unavailable", reason: "Requires weapon" });
@@ -321,13 +369,13 @@ describe("shared production prose", () => {
 it("registers held activation against updated action identity and removes it with the component", () => {
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "2" }));
   const f = fixture();
-  const part = f.ports.components.button.create({
+  const part = f.mountButton({
     actionId: "first",
     label: "First",
     role: "secondary",
   });
-  const root = part.element;
-  const resolve = () => resolveAdaHoldAction(root, f.button() as unknown as HTMLElement);
+  const resolve = () =>
+    resolveAdaHoldAction(f.root as unknown as HTMLElement, f.button() as unknown as HTMLElement);
   expect(resolve()?.rule.slopPx).toBe(16);
   part.update({ actionId: "second", label: "Second", role: "primary" });
   resolve()?.activate();
@@ -341,20 +389,21 @@ it("registers held activation against updated action identity and removes it wit
   expect(resolve()).toBeNull();
 });
 
-it("creates and retains the native text binding for an initially empty button label", () => {
+it("routes a new authored button to Kit and rejects a blank accessible name before mounting", () => {
   const f = fixture();
-  const part = f.ports.components.button.create({
-    actionId: "first",
-    label: "",
-    role: "secondary",
-  });
-  const label = f.button().firstChild!;
-  expect(label.nodeType).toBe(3);
-  expect(label.nodeValue).toBe("");
-  part.update({ actionId: "second", label: "Quests", role: "secondary" });
-  expect(f.button().firstChild).toBe(label);
-  expect(label.nodeValue).toBe("Quests");
-  f.button().click();
+  const initial: AdaButtonProps<string> = { actionId: "second", label: "", role: "secondary" };
+  expect(() => f.mountButton(initial)).toThrow("a nonempty accessible name");
+  expect(f.root.querySelectorAll("button")).toEqual([]);
+  const part = f.mountButton({ ...initial, label: "Quests" });
+  const button = f.button();
+  const label = button.children[0]!;
+  expect(button.matches(".ui-standard-button")).toBe(true);
+  expect(label.textContent).toBe("Quests");
+  part.update({ ...initial, label: "Current quests" });
+  expect(f.button()).toBe(button);
+  expect(button.children[0]).toBe(label);
+  expect(label.textContent).toBe("Current quests");
+  button.click();
   expect(f.second).toHaveBeenCalledOnce();
   part.dispose();
 });
@@ -393,40 +442,29 @@ function mountFixture(attached = false) {
   }
   const mounted = mountAdaLayout(
     {
+      actionRoot: host as unknown as HTMLElement,
       actions: new Map([
         ["first", f.first],
         ["second", f.second],
       ]),
       availability: () => ({ kind: "available" }),
-      presentButton: presentation,
     },
     { artReady: Promise.resolve(), host: host as unknown as HTMLElement },
     cardTree(),
   );
-  function presentation(button: HTMLButtonElement) {
-    const root = new Element(),
-      reason = new Element();
-    root.append(button as unknown as Element, reason);
-    return {
-      dispose: vi.fn(),
-      element: root as unknown as HTMLElement,
-      reason: reason as unknown as HTMLElement,
-      update: f.update,
-    };
-  }
   return { f, host, mounted };
 }
 it("audits complete initial semantic components, including hidden disabled and custom native controls", () => {
   const f = fixture();
-  f.update.mockImplementation(() => {
+  f.update.mockImplementation((element: Element) => {
     const extra = new Element("button");
     extra.hidden = true;
     extra.disabled = true;
-    f.button().parentElement!.append(extra);
+    element.append(extra);
   });
-  expect(() =>
-    f.ports.components.button.create({ actionId: "first", label: "First", role: "primary" }),
-  ).toThrow("no registered action binding");
+  expect(() => f.mountButton({ actionId: "first", label: "First", role: "primary" })).toThrow(
+    "no registered action binding",
+  );
   expect(f.dispose).toHaveBeenCalledOnce();
   factories.unboundCard = true;
   expect(() =>
@@ -454,11 +492,9 @@ it("rejects an attached layout with no owning root even when its metadata is com
   expect(() =>
     mountAdaLayout(
       {
+        actionRoot: host as unknown as HTMLElement,
         actions: new Map(),
         availability: () => ({ kind: "available" }),
-        presentButton: () => {
-          throw Error("No button port requested");
-        },
       },
       { artReady: Promise.resolve(), host: host as unknown as HTMLElement },
       { component: "text", key: "text", kind: "component", props: { text: "Text" } },
@@ -506,11 +542,9 @@ it("structurally audits custom native host controls without evaluating runtime p
   vi.stubGlobal("document", host.ownerDocument);
   const mounted = mountAdaLayout(
     {
+      actionRoot: host as unknown as HTMLElement,
       actions: new Map(),
       availability,
-      presentButton: () => {
-        throw Error("No button port requested");
-      },
     },
     { artReady: Promise.resolve(), host: host as unknown as HTMLElement },
     { component: "text", key: "text", kind: "component", props: { text: "Text" } },
@@ -528,12 +562,13 @@ function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const f = fixture(onUnavailable, true);
   f.setState({ kind: "unavailable", reason: "Need fuel" });
-  const part = f.ports.components.button.create({
+  const part = f.mountButton({
     actionId: "first",
     label: "First",
     role: "secondary",
   });
-  const root = part.element as unknown as Element;
+  const { root } = f;
+  const actionRoot = root as unknown as HTMLElement;
   const document = Object.assign(new EventTarget(), root.ownerDocument, {
     defaultView: Object.assign(new EventTarget(), root.ownerDocument.defaultView, {
       clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
@@ -543,17 +578,17 @@ function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
     elementFromPoint: () => f.button() as unknown as HTMLElement,
     hidden: false,
   });
-  for (const node of [root, f.button(), f.reason()]) {
+  for (const node of [root, part.element as unknown as Element, f.button(), f.reason()]) {
     node.ownerDocument = document;
   }
   const input = bindAdaActionRoot(
     {
-      guard: rootPressGuard(part.element),
+      guard: rootPressGuard(actionRoot),
       pointerRelease: { resolvePointer: () => undefined },
       requiredReady: () => true,
       subscribeRequired: () => () => {},
     },
-    part.element,
+    actionRoot,
   );
   inputReleases.push(input.dispose);
   const event = (type: string, detail = 1) => {
@@ -580,7 +615,7 @@ function semanticRefusalFixture(onUnavailable?: (reason: string) => void) {
     }
     return e;
   };
-  return { ...f, document, event, input, part, root };
+  return { ...f, actionRoot, document, event, input, part, root };
 }
 
 it("gives an explicit semantic unavailable callback the same current refusal on hold once before release", () => {
@@ -618,7 +653,7 @@ it("gives an explicit semantic unavailable callback the same current refusal on 
 
 it("does not opt unavailable semantic controls into hold when no refusal callback exists", () => {
   const f = semanticRefusalFixture();
-  const action = resolveAdaHoldAction(f.part.element, f.button() as unknown as HTMLElement);
+  const action = resolveAdaHoldAction(f.actionRoot, f.button() as unknown as HTMLElement);
   expect(action?.ownAriaDisabled).toBeUndefined();
   expect(action?.available()).toBe(false);
   f.event("pointerdown");
@@ -648,7 +683,7 @@ it.each(["native disabled", "inert", "ancestor ARIA", "root ARIA", "covered", "d
     if (kind === "ancestor ARIA") {
       const ancestor = new Element();
       ancestor.ownerDocument = f.document;
-      f.root.insertBefore(ancestor, f.button());
+      f.button().parentElement!.insertBefore(ancestor, f.button());
       ancestor.append(f.button());
       ancestor.setAttribute("aria-disabled", "true");
     }
@@ -656,7 +691,7 @@ it.each(["native disabled", "inert", "ancestor ARIA", "root ARIA", "covered", "d
       const dialog = new Element();
       dialog.ownerDocument = f.document;
       f.root.append(dialog);
-      leave = enterPressView(f.part.element, dialog as unknown as HTMLElement);
+      leave = enterPressView(f.actionRoot, dialog as unknown as HTMLElement);
     }
     if (kind === "disposed") {
       f.part.dispose();
@@ -682,7 +717,7 @@ it("cancels reentrant semantic refusal ownership without repeating it after a mo
     const dialog = new Element();
     dialog.ownerDocument = f.document;
     f.root.append(dialog);
-    const leave = enterPressView(f.part.element, dialog as unknown as HTMLElement);
+    const leave = enterPressView(f.actionRoot, dialog as unknown as HTMLElement);
     leave();
   });
   const f = semanticRefusalFixture(onUnavailable);

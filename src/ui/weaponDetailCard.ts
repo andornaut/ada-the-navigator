@@ -10,7 +10,6 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { presentAdaButton } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -91,13 +90,12 @@ export function createWeaponDetailCard(
     card.close,
   );
   const ports = createAdaLayoutPorts<WeaponDetailAction>({
+    actionRoot: root,
     actions: new Map([
       ["close-weapon-detail", close],
       ["dismiss-weapon-detail", close],
     ]),
     availability,
-    presentButton: presentAdaButton,
-    standardButtons: { actionIds: ["dismiss-weapon-detail"], root },
   });
   const renderContent = (data: WeaponDetailData) => {
     const { lines, title } = data;
