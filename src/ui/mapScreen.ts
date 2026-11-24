@@ -78,6 +78,7 @@ import {
   type MapChromeSchema,
   mapChromeTrees,
 } from "./mapChromeTree.ts";
+import { createMapCloseAction, mapCloseActionStyle } from "./mapCloseAction.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
 import {
   type MapPanelGroup,
@@ -92,7 +93,6 @@ import {
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
-import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -602,7 +602,7 @@ export const MAP_SCREEN_STYLE = `
   right:${safeEdge("right", SPACING.pageInset)};
   z-index:2
 }
-${mapCloseStyle(".ada-controls .ada-map-screen > .ada-close", HUD_DISC_STATES.idle.face)}
+${mapCloseActionStyle(".ada-controls .ada-map-screen > .ada-close", HUD_DISC_STATES.idle.face)}
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-tool:focus-visible{
   --map-tool-face:${TEXT_TOKENS.label};
@@ -1154,7 +1154,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     "primary",
     () => options.onClose(),
   );
-  const closeX = createModalClose("map-close-x", labels.close);
+  const closeXAction = createMapCloseAction(root, "map-close-x", labels.close, {
+    current: (button) => !disposed && !screen.hidden && inCurrentView(root, button),
+    run: () => options.onClose(),
+    slopPx: () => MAP_SCREEN.dragThreshold * readViewUnit(screen),
+    slopThreshold: MAP_SCREEN.dragThreshold,
+  });
+  actionBindings.add(closeXAction);
+  const closeX = closeXAction.element;
   const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
     column,
     header,
@@ -1571,7 +1578,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  registerAction({ run: () => options.onClose() }, closeX);
   registerAction(
     { run: () => zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")) },
     toolButtons.get("zoomIn")!,

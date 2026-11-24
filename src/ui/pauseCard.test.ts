@@ -490,7 +490,9 @@ it.each(["map-close", "map-close-x"])("binds the standalone Map %s once", (id) =
   const footer = root.querySelectorAll().find((node) => node.dataset.action === "map-close")!;
   const close = root.querySelectorAll().find((node) => node.dataset.action === "map-close-x")!;
   expect(footer.textContent).toBe("Close");
-  expect(close.className).toBe("ada-close");
+  expect(close.className.split(" ")).toEqual(
+    expect.arrayContaining(["ada-close", "ui-standard-button"]),
+  );
   expect(close.getAttribute("aria-label")).toBe("Close");
   const target = id === "map-close" ? footer : close;
   target.click();

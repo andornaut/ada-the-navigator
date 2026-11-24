@@ -50,8 +50,8 @@ import {
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { createMapCloseAction, mapCloseActionStyle } from "./mapCloseAction.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
-import { createModalClose, mapCloseStyle } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
@@ -210,7 +210,7 @@ export const GALAXY_MAP_STYLE = `
   right:${safeEdge("right", SPACING.pageInset)};
   z-index:1
 }
-${mapCloseStyle(".ada-controls .ada-route > .ada-close")}
+${mapCloseActionStyle(".ada-controls .ada-route > .ada-close")}
 .ada-controls .ada-route-sky,
 .ada-controls .ada-route-ground{
   position:absolute;
@@ -689,7 +689,14 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   jump.dataset.action = "galaxy-jump";
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
-  const closeX = createModalClose("galaxy-close-x", labels.close);
+  const closeXAction = createMapCloseAction(root, "galaxy-close-x", labels.close, {
+    current,
+    run: () => options.onClose(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
+  bindings.push(closeXAction);
+  const closeX = closeXAction.element;
   screen.append(sky, rules, ground, chart, closeX);
   const panelGroups: Readonly<Record<GalaxyPanelGroup, HTMLElement>> = {
     footer: flightActions,
@@ -1061,7 +1068,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   register(earth, selectEarth);
   earth.addEventListener("focus", selectEarth);
   leaveFocus.push(() => earth.removeEventListener("focus", selectEarth));
-  register(closeX, () => options.onClose());
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
   // then Earth, the destination action and the close X when available.
   screen.addEventListener("keydown", (event) => {

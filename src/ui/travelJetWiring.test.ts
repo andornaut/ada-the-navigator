@@ -106,7 +106,27 @@ function dom(hasActionRoot = true) {
       );
     }
     className = "";
-    classList = { add() {}, remove() {}, toggle() {} };
+    classList = {
+      add: (...names: string[]) => {
+        this.className = [
+          ...new Set([...this.className.split(" ").filter(Boolean), ...names]),
+        ].join(" ");
+      },
+      remove: (...names: string[]) => {
+        this.className = this.className
+          .split(" ")
+          .filter((name) => !names.includes(name))
+          .join(" ");
+      },
+      toggle: (name: string, force: boolean) => {
+        if (force) {
+          this.classList.add(name);
+        } else {
+          this.classList.remove(name);
+        }
+        return force;
+      },
+    };
     clientHeight = 540;
     clientWidth = 960;
     dataset: Record<string, string> = {};
@@ -568,7 +588,9 @@ it("binds Galaxy X once and withholds it during the unlock and quantum jump", ()
   const map = createGalaxyMap(fixture.host, options);
   const close = fixture.nodes.find((node) => node.dataset.action === "galaxy-close-x")!;
   const binding = resolveAdaHoldAction(fixture.host, close as unknown as HTMLElement)!;
-  expect(close.className).toBe("ada-close");
+  expect(close.className.split(" ")).toEqual(
+    expect.arrayContaining(["ada-close", "ui-standard-button"]),
+  );
   expect(close.attributes.get("aria-label")).toBe("Close");
   close.click();
   expect(options.onClose).not.toHaveBeenCalled();
