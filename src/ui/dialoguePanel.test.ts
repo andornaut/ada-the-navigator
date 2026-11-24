@@ -521,6 +521,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose: vi.fn(),
       close: vi.fn(),
+      reducedMotion: () => false,
       skip: vi.fn(),
     });
     interaction.show(1, {
@@ -567,6 +568,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose: vi.fn(),
       close: vi.fn(),
+      reducedMotion: () => false,
       skip: vi.fn(),
     });
     interaction.show(1, {
@@ -598,6 +600,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose,
       close: vi.fn(),
+      reducedMotion: () => false,
       skip,
     });
     interaction.show(1, {
@@ -634,6 +637,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const interaction = createInteractionCard(parent as unknown as HTMLElement, {
       choose: vi.fn(),
       close: vi.fn(),
+      reducedMotion: () => false,
       skip: vi.fn(),
     });
     interaction.show(1, {
@@ -768,6 +772,7 @@ it("uses the existing Use close callback only for a current backdrop tap", () =>
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
     close,
+    reducedMotion: () => false,
     skip,
   });
   interaction.show(1, {
@@ -866,6 +871,7 @@ it.each(["dialogue-skip", "conversation-close"])(
       createInteractionCard(parent as unknown as HTMLElement, {
         choose: vi.fn(),
         close: vi.fn(),
+        reducedMotion: () => false,
         skip: vi.fn(),
       }),
     ).toThrow("no registered action binding");
@@ -882,7 +888,7 @@ it.each(["open", "replace"])(
     const origin = new Element("button");
     parent.append(origin);
     origin.focus();
-    const options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+    const options = { choose: vi.fn(), close: vi.fn(), reducedMotion: () => false, skip: vi.fn() };
     const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
     const prior = {
       choices: [{ id: "start", label: "Working choice" }],
@@ -954,7 +960,7 @@ it.each(["open", "replace"])(
 it("registers native material choices with default hold dispatch, live callbacks and redraw cleanup", () => {
   setup();
   const parent = connectedParent(),
-    options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+    options = { choose: vi.fn(), close: vi.fn(), reducedMotion: () => false, skip: vi.fn() };
   const resolve = (node: Element) =>
     resolveAdaHoldAction(parent as unknown as HTMLElement, node as unknown as EventTarget);
   let permitted = true;
@@ -1000,15 +1006,18 @@ it("registers native material choices with default hold dispatch, live callbacks
   }
 });
 
-it("keeps the original refusal callback then redraw and denies native disabled actions", () => {
+it("refuses on the original Interaction choice and reads current reduced motion", () => {
   setup();
   const parent = connectedParent(),
     choose = vi.fn();
   fixtureActionRoot(parent);
-  const cue = vi.spyOn(refusal, "refuse").mockReturnValue(() => {});
+  const stopCue = vi.fn();
+  const cue = vi.spyOn(refusal, "refuse").mockReturnValue(stopCue);
+  let reducedMotion = false;
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
     close: vi.fn(),
+    reducedMotion: () => reducedMotion,
     skip: vi.fn(),
   });
   try {
@@ -1031,13 +1040,20 @@ it("keeps the original refusal callback then redraw and denies native disabled a
     binding.activate();
     expect(cue).not.toHaveBeenCalled();
     button.disabled = false;
+    button.focus();
+    reducedMotion = true;
     button.click();
-    expect(cue).toHaveBeenCalledExactlyOnceWith(choices, false);
+    expect(cue).toHaveBeenCalledExactlyOnceWith(button, true);
     expect(choose).not.toHaveBeenCalled();
+    expect(choices.children[0]).toBe(button);
+    expect(document.activeElement).toBe(button);
     expect(
       resolveAdaHoldAction(parent as unknown as HTMLElement, button as unknown as EventTarget),
-    ).toBeNull();
+    ).not.toBeNull();
     expect(choices.children.map((node) => node.textContent)).toEqual(["Accept", "Decline"]);
+    choices.children[1]!.click();
+    expect(choose).toHaveBeenCalledExactlyOnceWith("decline");
+    expect(stopCue).toHaveBeenCalledOnce();
   } finally {
     interaction.dispose();
   }
@@ -1046,7 +1062,7 @@ it("keeps the original refusal callback then redraw and denies native disabled a
 it("binds native Skip and Close once with current callbacks and disposes their retained nodes", () => {
   setup();
   const parent = connectedParent(),
-    options = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+    options = { choose: vi.fn(), close: vi.fn(), reducedMotion: () => false, skip: vi.fn() };
   fixtureActionRoot(parent);
   const interaction = createInteractionCard(parent as unknown as HTMLElement, options);
   const resolve = (node: Element) =>
@@ -1099,6 +1115,7 @@ it("requires a connected owning tree for native dialogue actions", () => {
   const interaction = createInteractionCard(parent as unknown as HTMLElement, {
     choose,
     close: vi.fn(),
+    reducedMotion: () => false,
     skip: vi.fn(),
   });
   try {
@@ -1336,7 +1353,7 @@ it("enters strict Interaction focus after drawing and restores its opener across
   parent.append(origin);
   fixtureActionRoot(parent);
   origin.focus();
-  const callbacks = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+  const callbacks = { choose: vi.fn(), close: vi.fn(), reducedMotion: () => false, skip: vi.fn() };
   const interaction = createInteractionCard(parent as unknown as HTMLElement, callbacks);
   const panel = {
     choices: [{ id: "continue", label: CONTENT.labels.continue! }],
@@ -1379,7 +1396,7 @@ it("enters strict Interaction focus after drawing and restores its opener across
 it("keeps a refused Interaction Close under the caller's policy without choosing an outcome", () => {
   setup();
   const parent = connectedParent(),
-    callbacks = { choose: vi.fn(), close: vi.fn(), skip: vi.fn() };
+    callbacks = { choose: vi.fn(), close: vi.fn(), reducedMotion: () => false, skip: vi.fn() };
   fixtureActionRoot(parent);
   const interaction = createInteractionCard(parent as unknown as HTMLElement, callbacks);
   try {

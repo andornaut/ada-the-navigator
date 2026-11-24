@@ -1,5 +1,6 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
+import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { castPortrait, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
@@ -381,6 +382,7 @@ export function createInteractionCard(
   options: {
     choose(id: string): void;
     close(): void;
+    reducedMotion(): boolean;
     skip(): void;
   },
 ) {
@@ -433,7 +435,7 @@ export function createInteractionCard(
   }
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
-  let actions: ReturnType<typeof createStandardTextAction>[] = [];
+  let actions: { dispose(): void }[] = [];
   let leaveView: (() => void) | undefined;
   let returnFocus: HTMLElement | null = null;
   let signature = "";
@@ -471,11 +473,22 @@ export function createInteractionCard(
     const nextActions: typeof actions = [];
     const choices: HTMLButtonElement[] = [];
     const controls: HTMLButtonElement[] = [];
-    const add = (label: string, callback: () => void, choice = false, primary = false) => {
+    // Refused outcomes keep the current page and the original button while the cue plays.
+    const add = (label: string, callback: (() => void) | null, choice = false, primary = false) => {
+      let stopRefusal: (() => void) | undefined;
       const action = createStandardTextAction(parent, label, {
         availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
         current: () => !disposed && action.element.isConnected,
         run: () => {
+          if (!callback) {
+            if (
+              !button.hasAttribute(REFUSAL_ATTRIBUTES.red) &&
+              !button.hasAttribute(REFUSAL_ATTRIBUTES.shake)
+            ) {
+              stopRefusal = refuse(button, options.reducedMotion());
+            }
+            return;
+          }
           callback();
           draw();
         },
@@ -485,7 +498,12 @@ export function createInteractionCard(
       button.classList.toggle("ada-primary", primary);
       setButtonRole(primary ? "primary" : "secondary", button);
       button.hidden = true;
-      nextActions.push(action);
+      nextActions.push({
+        dispose() {
+          action.dispose();
+          stopRefusal?.();
+        },
+      });
       assertAdaActionMetadata(button);
       // The controls share a row with the primary rightmost: a secondary goes before it.
       const row = choice ? choices : controls;
@@ -512,13 +530,7 @@ export function createInteractionCard(
         for (const choice of state.choices) {
           add(
             choice.label,
-            () => {
-              if (choice.refused) {
-                refuse(card.choices, false);
-              } else {
-                options.choose(choice.id);
-              }
-            },
+            choice.refused ? null : () => options.choose(choice.id),
             choice.id !== "continue",
             state.choices.length === 1,
           );

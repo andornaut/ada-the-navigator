@@ -756,6 +756,7 @@ export function buildScene(scene: UiContext): void {
   const interaction = createInteractionCard(scene.controls.overlay, {
     choose: (id) => apply(() => scene.model.choose(id)),
     close: () => apply(() => scene.model.closeInteraction()),
+    reducedMotion: () => scene.controls.reducedMotion(),
     skip: finishConversation,
   });
   interactionCards.set(scene, interaction);
