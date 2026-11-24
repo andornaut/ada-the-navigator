@@ -54,6 +54,9 @@ class Element extends EventTarget {
   getAttribute(name: string) {
     return this.attributes.get(name) ?? null;
   }
+  hasAttribute(name: string) {
+    return this.attributes.has(name);
+  }
   matches(selector: string): boolean {
     if (this.nodeType !== 1) {
       return false;
@@ -125,6 +128,7 @@ class Element extends EventTarget {
   readonly properties = new Map<string, string>();
   readonly style = {
     backgroundImage: "",
+    removeProperty: (name: string) => this.properties.delete(name),
     setProperty: (name: string, value: string) => this.properties.set(name, value),
   };
   private text = "";
@@ -252,6 +256,7 @@ function setup(
   rows: readonly CheatAction[] = [],
   hold = false,
   placement: "connected" | "detached" | "unowned" = "connected",
+  reducedMotion = false,
 ) {
   const root = new Element();
   if (hold) {
@@ -283,6 +288,7 @@ function setup(
   const cheats = createCheats(root as unknown as HTMLElement, {
     labels: CHEAT_COPY,
     onOpenChange: changed,
+    reducedMotion: () => reducedMotion,
     rows,
   });
   return { actions, changed, cheats, close, root };
@@ -479,16 +485,15 @@ it("rechecks a button that became busy since the last refresh before running its
   const id = "selectiveReset";
   const f = setup([{ available, id, label: CHEAT_COPY.selectiveReset, run }]);
   const button = descendants(f.root).find((node) => node.dataset.cheat === id)!;
-  expect(available).toHaveBeenCalledOnce();
   f.cheats.open();
-  expect(available).toHaveBeenCalledTimes(2);
   const held = resolveAdaHoldAction(f.root as unknown as HTMLElement, button)!;
   expect(held.available()).toBe(true);
   busy = true;
+  expect(held.available()).toBe(false);
   held.activate();
   expect(run).not.toHaveBeenCalled();
+  f.cheats.refresh();
   expect(button.disabled).toBe(true);
-  expect(available).toHaveBeenCalledTimes(4);
   busy = false;
   f.cheats.refresh();
   expect(button.disabled).toBe(false);
@@ -496,6 +501,40 @@ it("rechecks a button that became busy since the last refresh before running its
   expect(run).toHaveBeenCalledOnce();
   f.cheats.dispose();
 });
+
+it.each([false, true])(
+  "refuses an exhausted grant without running it, reduced motion=%s",
+  (reducedMotion) => {
+    vi.useFakeTimers();
+    const grant = action("unlockAllWeapons", 0);
+    let protectedSession = false;
+    const { cheats, root } = setup(
+      [{ ...grant, refusalReason: () => (protectedSession ? null : "Action unavailable.") }],
+      false,
+      "connected",
+      reducedMotion,
+    );
+    const button = descendants(root).find((node) => node.dataset.cheat === grant.id)!;
+    cheats.open();
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute("aria-description")).toBe("Action unavailable.");
+    const refusal = resolveAdaHoldAction(root as unknown as HTMLElement, button)!;
+    expect(refusal.ownAriaDisabled).toBe("refusal-feedback");
+    refusal.activate();
+    expect(button.hasAttribute("data-ui-refusal-red")).toBe(true);
+    expect(button.hasAttribute("data-ui-refusal-shake")).toBe(!reducedMotion);
+    expect(grant.run).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(320);
+    protectedSession = true;
+    cheats.refresh();
+    expect(button.disabled).toBe(true);
+    expect(refusal.available()).toBe(false);
+    refusal.activate();
+    expect(button.hasAttribute("data-ui-refusal-red")).toBe(false);
+    expect(grant.run).not.toHaveBeenCalled();
+    cheats.dispose();
+  },
+);
 
 it("rejects an unregistered hidden disabled control in the completed Cheats modal", () => {
   corruption.factory = true;

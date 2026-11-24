@@ -2,8 +2,10 @@
 export interface CheatAction {
   readonly id: string;
   readonly label: string;
-  /** Whether it has anything to do now; a cheat with nothing left to grant is disabled. */
+  /** Whether the action can execute now, including its protection guards. */
   readonly available: () => boolean;
+  /** An accessible refusal reason when an unavailable action is safe to attempt. */
+  readonly refusalReason?: () => string | null;
   readonly run: () => void;
 }
 

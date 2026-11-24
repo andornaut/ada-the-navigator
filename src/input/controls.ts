@@ -305,6 +305,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
       syncModal();
     },
+    reducedMotion: () => reducedMotion,
   });
   const pause = createPauseCards(settings.root, {
     labels: {

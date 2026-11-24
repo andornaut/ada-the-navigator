@@ -1,6 +1,7 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
@@ -13,6 +14,7 @@ import { createActions, createCard, setFooterAction } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
+import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface CheatLabels {
@@ -25,6 +27,7 @@ interface CheatOptions {
   readonly rows: readonly CheatAction[];
   readonly labels: CheatLabels;
   readonly onOpenChange: (open: boolean) => void;
+  readonly reducedMotion: () => boolean;
 }
 
 /** The Cheats card owns its actions. Navigation owns the entry and return focus. */
@@ -60,7 +63,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   setFooterAction("back", footer);
   const closeBindings = [closeBinding, dismissButton];
   const rows = new Map(options.rows.map((row) => [row.id, row]));
-  const buttons = new Map<HTMLButtonElement, CheatAction>();
+  const actions = new Set<ReturnType<typeof createStandardTextAction>>();
   const items = document.createElement("div");
   items.className = "ada-cheat-items";
   const mounted = mountLayout<CheatsSchema>(
@@ -71,6 +74,7 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
             const action = rows.get(data.id) as CheatAction;
             const resource =
               action.id === "addStardust" ? "stardust" : action.id === "addOre" ? "ore" : null;
+            let stopRefusal: (() => void) | undefined;
             const run = () => {
               if (open && !button.disabled) {
                 runCheatAction(action);
@@ -81,9 +85,26 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
               parent,
               resource ? CHEAT_COPY.amount : data.label,
               {
-                availability: (button) =>
-                  button?.disabled ? { kind: "disabled" } : { kind: "available" },
+                availability: () => {
+                  if (action.available()) {
+                    return { kind: "available" };
+                  }
+                  const reason = action.refusalReason?.();
+                  return reason ? { kind: "unavailable", reason } : { kind: "disabled" };
+                },
                 current: () => current(button),
+                ...(action.refusalReason
+                  ? {
+                      refuse: () => {
+                        if (
+                          !button.hasAttribute(REFUSAL_ATTRIBUTES.red) &&
+                          !button.hasAttribute(REFUSAL_ATTRIBUTES.shake)
+                        ) {
+                          stopRefusal = refuse(button, options.reducedMotion());
+                        }
+                      },
+                    }
+                  : {}),
                 run,
               },
             );
@@ -109,11 +130,12 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
               button.append(decoration);
             }
             update(data);
-            buttons.set(button, action);
+            actions.add(textAction);
             return {
               dispose() {
                 textAction.dispose();
-                buttons.delete(button);
+                stopRefusal?.();
+                actions.delete(textAction);
               },
               element: button,
               slots: {},
@@ -211,8 +233,8 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
     }
   };
   function refresh(): void {
-    for (const [button, action] of buttons) {
-      button.disabled = !action.available();
+    for (const action of actions) {
+      action.refresh();
     }
   }
   try {

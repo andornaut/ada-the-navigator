@@ -426,6 +426,9 @@ export function buildScene(scene: UiContext): void {
     available: () => !scene.cheatSession.ending && scene.model.cheatAvailable(id),
     id,
     label: CHEAT_COPY[id],
+    ...(id === "addOre" || id === "addStardust"
+      ? {}
+      : { refusalReason: () => (scene.cheatSession.ending ? null : "Action unavailable.") }),
     run: () =>
       apply(() => {
         scene.cheatSession = beginCheatSession(
