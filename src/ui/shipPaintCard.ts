@@ -1,0 +1,160 @@
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+import { SCROLL } from "./layout/contentCard.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { createActions, createCard, setFooterAction } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
+import { createModalLayer } from "./modalLayer.ts";
+import { createStandardTextAction } from "./standardTextAction.ts";
+
+export interface ShipPaintOptions {
+  readonly applyLabel: string;
+  readonly current: () => string;
+  readonly inUseLabel: string;
+  readonly schemes: () => readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly swatch?: string;
+  }[];
+  readonly select: (id: string) => void;
+  readonly title: string;
+}
+
+export function createShipPaintCard(
+  root: HTMLElement,
+  options: ShipPaintOptions & { readonly closeLabel: string; readonly onClose: () => void },
+) {
+  const modal = document.createElement("div");
+  modal.className = "ada-modal";
+  modal.hidden = true;
+  let disposed = false;
+  let leave: (() => void) | undefined;
+  let selected = "";
+  const current = () => !disposed && !modal.hidden;
+  const closeX = createStandardCloseAction(root, "close-ship-paint", options.closeLabel, {
+    current,
+    run: close,
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
+  const parts = createCard({ close: closeX.element, size: "large", title: options.title });
+  parts.card.dataset.dialog = "ship-paint";
+  const grid = document.createElement("div");
+  grid.className = "ada-ship-paint-grid";
+  const dismiss = createStandardTextAction(root, options.closeLabel, {
+    availability: () => ({ kind: "available" }),
+    current,
+    run: close,
+  });
+  dismiss.element.dataset.action = "dismiss-ship-paint";
+  dismiss.element.classList.add("ada-primary");
+  setButtonRole("primary", dismiss.element);
+  const footer = createActions([{ button: dismiss.element, role: "primary" }]);
+  setFooterAction("close", footer);
+  parts.body.append(grid, footer);
+  modal.append(parts.frame);
+  assertAdaActionMetadata(modal);
+  root.append(modal);
+  const layer = createModalLayer(modal);
+  const actions = new Map<string, ReturnType<typeof createStandardTextAction>>();
+
+  function hide(): void {
+    modal.hidden = true;
+    leave?.();
+    leave = undefined;
+    for (const action of actions.values()) {
+      action.dispose();
+    }
+    actions.clear();
+    grid.replaceChildren();
+  }
+
+  function close(): void {
+    if (current()) {
+      hide();
+      options.onClose();
+    }
+  }
+
+  function apply(id: string): void {
+    const previous = selected;
+    const focused = document.activeElement === actions.get(id)?.element;
+    options.select(id);
+    selected = options.current();
+    if (!current() || selected === previous) {
+      return;
+    }
+    for (const [scheme, action] of actions) {
+      action.setLabel(scheme === selected ? options.inUseLabel : options.applyLabel);
+      action.refresh();
+    }
+    if (focused && selected === id) {
+      focusTarget(actions.get(previous)?.element ?? dismiss.element);
+    }
+    parts.fit();
+  }
+
+  return {
+    close,
+    dispose() {
+      disposed = true;
+      hide();
+      layer.dispose();
+      closeX.dispose();
+      dismiss.dispose();
+      parts.dispose();
+      modal.remove();
+    },
+    isOpen: current,
+    open() {
+      if (disposed || current()) {
+        return;
+      }
+      selected = options.current();
+      try {
+        for (const { id, name, swatch } of options.schemes()) {
+          const tile = document.createElement("div");
+          tile.className = "ada-ship-paint-tile";
+          tile.dataset.paint = id;
+          const heading = document.createElement("div");
+          heading.className = "ada-ship-paint-name";
+          if (swatch) {
+            const image = document.createElement("img");
+            image.className = "ada-ship-paint-swatch";
+            image.alt = "";
+            image.src = swatch;
+            heading.append(image);
+          }
+          const label = document.createElement("span");
+          label.id = `ada-ship-paint-name-${id}`;
+          label.textContent = name;
+          heading.append(label);
+          const action = createStandardTextAction(
+            root,
+            id === selected ? options.inUseLabel : options.applyLabel,
+            {
+              availability: () => (id === selected ? { kind: "disabled" } : { kind: "available" }),
+              current,
+              run: () => apply(id),
+            },
+          );
+          action.element.dataset.action = "apply-ship-paint";
+          action.element.setAttribute("aria-describedby", label.id);
+          setButtonRole("secondary", action.element);
+          actions.set(id, action);
+          tile.append(heading, action.element);
+          grid.append(tile);
+        }
+        assertAdaActionBindings(modal);
+        modal.hidden = false;
+        parts.fit();
+        leave = layer.open({ close, focus: dismiss.element }, parts.frame);
+      } catch (error) {
+        hide();
+        throw error;
+      }
+    },
+  };
+}

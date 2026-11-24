@@ -60,7 +60,12 @@ import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layo
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import { mountNavigationPose } from "../ui/pauseButton.ts";
-import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
+import {
+  createPauseCards,
+  type PauseLabels,
+  type PauseOptions,
+  type PauseState,
+} from "../ui/pauseCard.ts";
 import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
@@ -110,6 +115,7 @@ export interface ControlsOptions {
     readonly buttonLabel: string;
     readonly menuLabel?: string;
     readonly labels: Omit<PauseLabels, "achievements" | "cheats">;
+    readonly paint?: PauseOptions["paint"];
     readonly shipFrame?: (heading: number) => string | undefined;
     readonly onBackToTitle: () => void;
     /** Return to Earth, which the Map offers. */
@@ -332,6 +338,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.open();
     },
     onTravel: (destination) => options.pause.onTravel(destination),
+    ...(options.pause.paint ? { paint: options.pause.paint } : {}),
     reducedMotion: () => reducedMotion,
     shipFrame: (heading) => options.pause.shipFrame?.(heading),
   });

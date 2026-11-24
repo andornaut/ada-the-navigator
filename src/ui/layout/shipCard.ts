@@ -1,6 +1,7 @@
 import { BUTTON_FACE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { FOCUS_RING } from "./controls.ts";
 import { font, units } from "./css.ts";
+import { SHOP_ROW } from "./shopCard.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 /** Ship geometry uses the shared card and text roles, in logical px. */
@@ -101,5 +102,33 @@ ${UI_SCOPE} .ada-ship-ammo{
   overflow-wrap:anywhere;
   font:${font(TYPE.label)};
   line-height:${units(SHIP_CARD.row)}
+}
+${UI_SCOPE} .ada-ship-paint-grid{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:${units(SPACING.gap)}
+}
+${UI_SCOPE} .ada-ship-paint-tile{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:${units(SPACING.markGap)};
+  min-width:0
+}
+${UI_SCOPE} .ada-ship-paint-name{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:${units(SPACING.markGap)};
+  min-width:0;
+  overflow-wrap:anywhere;
+  font:${font(TYPE.label)}
+}
+${UI_SCOPE} .ada-ship-paint-swatch{
+  flex:none;
+  width:${units(SHOP_ROW.glyph.swatch)};
+  height:${units(SHOP_ROW.glyph.swatch)};
+  object-fit:contain
 }
 `;

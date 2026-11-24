@@ -30,6 +30,7 @@ import {
   shipSections,
   type ShipView,
 } from "./shipCard.ts";
+import { createShipPaintCard, type ShipPaintOptions } from "./shipPaintCard.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
@@ -58,6 +59,7 @@ export interface PauseLabels {
 }
 
 export interface PauseOptions {
+  readonly paint?: ShipPaintOptions;
   readonly shipFrame?: (heading: number) => string | undefined;
   readonly labels: PauseLabels;
   readonly onAchievements: () => void;
@@ -460,7 +462,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         disposeShipSections(shipRows);
       }
       shipRows = sections
-        ? renderShipSections(labels.shipHeadings, sections, openShipItem)
+        ? renderShipSections(labels.shipHeadings, sections, openShipRow)
         : undefined;
       ship.body.replaceChildren(...(shipRows ? [shipRows] : []));
       if (shipRows) {
@@ -468,6 +470,31 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
     }
     ship.fit();
+  };
+  const shipPaint = options.paint
+    ? createShipPaintCard(root, {
+        ...options.paint,
+        closeLabel: labels.close,
+        onClose: () => {
+          if (shipOpen()) {
+            show("ship");
+            const opener = shipRows?.querySelector<HTMLButtonElement>(
+              '[data-item="equipment:paint"]',
+            );
+            if (opener) {
+              focusTarget(opener);
+            }
+          }
+        },
+      })
+    : undefined;
+  const openShipRow = (row: ShipRow, origin: HTMLButtonElement) => {
+    if (shipPaint && row.item.kind === "equipment" && row.item.id === "paint" && shipOpen()) {
+      hidePause(true);
+      shipPaint.open();
+    } else {
+      openShipItem(row, origin);
+    }
   };
   const setOpen = (value: boolean) => {
     if (value === open) {
@@ -494,6 +521,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       quests.close();
       shipResource.close();
       shipWeapon.close();
+      shipPaint?.close();
       mapScreen.close();
     }
     options.onOpenChange(value);
@@ -612,6 +640,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   };
   // The Ship card's X, back and Escape return to the Paused card, on its Ship button.
   function closeShip(): void {
+    if (shipPaint?.isOpen()) {
+      shipPaint.close();
+      return;
+    }
     if (shipResource.isOpen()) {
       shipResource.close();
       return;
@@ -680,6 +712,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       paused.dispose();
       shipResource.dispose();
       shipWeapon.dispose();
+      shipPaint?.dispose();
       ship.dispose();
       quests.dispose();
       mapScreen.dispose();

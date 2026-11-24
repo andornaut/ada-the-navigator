@@ -675,6 +675,28 @@ export function buildScene(scene: UiContext): void {
           jumpThen(() => scene.model.teleport(id));
         }
       },
+      paint: {
+        applyLabel: CONTENT.labels.shipPaintApply ?? "",
+        current: () => scene.model.state.economy.paint,
+        inUseLabel: CONTENT.labels.inUse ?? "",
+        schemes: () =>
+          ECONOMY.paintOrder
+            .filter(
+              (id) => id === ECONOMY.defaultPaint || scene.model.state.economy.paints.includes(id),
+            )
+            .map((id) => {
+              const swatch =
+                materialShipSwatch(scene, id) ??
+                (id === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined);
+              return {
+                id,
+                name: itemName(ECONOMY, CONTENT.labels, { kind: "paint", scheme: id }),
+                ...(swatch ? { swatch } : {}),
+              };
+            }),
+        select: (id) => apply(() => scene.model.selectPaint(id), { preserveInput: true }),
+        title: CONTENT.labels.shipPaintPicker ?? "",
+      },
       shipFrame: (heading) => materialClassicShipFrame(scene, heading),
     },
     rasterScale: scene.rasters.scale,
