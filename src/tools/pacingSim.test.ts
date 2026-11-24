@@ -142,9 +142,17 @@ describe("pacing simulation runs", () => {
     expect(asteroidKillSeconds(halfAim, 1, "laser", "huge")).toBeCloseTo(
       2 * asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", "huge"),
     );
-    expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "heavyMissile", "huge")).toBeLessThan(
-      asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", "huge"),
-    );
+    // A missile spends a whole volley even when the last hit deals more damage than needed.
+    const missile = weaponAt("heavyMissile", 1);
+    const damagePerHit = CONTENT.tuning.flight.playerShotDamage * missile.damageRatio;
+    const secondsPerHit = missile.intervalSeconds / DEFAULT_BEHAVIOUR.hitRate;
+    for (const size of ASTEROID_SIZES) {
+      const seconds = asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "heavyMissile", size);
+      const hits = Math.round(seconds / secondsPerHit);
+      expect(seconds).toBeCloseTo(hits * secondsPerHit, 9);
+      expect((hits - 1) * damagePerHit).toBeLessThan(hp[size]);
+      expect(hits * damagePerHit).toBeGreaterThanOrEqual(hp[size]);
+    }
     const { runs, summary } = run({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "time", prices: {} },
