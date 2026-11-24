@@ -91,8 +91,7 @@ export function loadingFailurePresentation(
   };
 }
 
-export function loadingFailureFrame(document: Document): HTMLDivElement {
-  const frame = document.createElement("div");
+export function styleLoadingFailureFrame(frame: HTMLDivElement): void {
   frame.className = "ada-loading-failure-frame";
   Object.assign(frame.style, {
     alignItems: "center",
@@ -103,7 +102,6 @@ export function loadingFailureFrame(document: Document): HTMLDivElement {
     position: "fixed",
     zIndex: String(LOADING_LAYER - 1),
   });
-  return frame;
 }
 
 /** One page owns the registry, failure presenter and existing bar through every Retry. */
@@ -116,7 +114,8 @@ export async function startLoading(
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
   let installation: InstallationPresentation | undefined;
-  const frame = loadingFailureFrame(root.ownerDocument);
+  const frame = root.ownerDocument.createElement("div");
+  styleLoadingFailureFrame(frame);
   root.ownerDocument.body.append(frame);
   const recovery = bindAdaRecoveryActionRoot({ guard: rootPressGuard(frame) }, frame);
   const stopRecoveryRequired = required.subscribe(() => recovery.invalidate());

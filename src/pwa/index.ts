@@ -56,7 +56,7 @@ import {
   updateActivationActivity,
   updateStateActivity,
 } from "../loading/progress.ts";
-import { loadingFailureFrame, loadingFailurePresentation } from "../loading/startup.ts";
+import { loadingFailurePresentation, styleLoadingFailureFrame } from "../loading/startup.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneBack } from "./events.ts";
 import { presentInstallationFailure } from "./installationPresentation.ts";
@@ -297,7 +297,8 @@ export function preparePhoneLaunch(parent?: HTMLElement): PhoneLaunch {
   if (!app) {
     throw new Error("Missing application mount");
   }
-  const frame = loadingFailureFrame(app.ownerDocument);
+  const frame = app.ownerDocument.createElement("div");
+  styleLoadingFailureFrame(frame);
   const prepared = prepareBrowserLaunch(
     {
       failure: { presentation: loadingFailurePresentation(app) },
