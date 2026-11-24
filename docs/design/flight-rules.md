@@ -56,3 +56,4 @@ and scan feedback.
 | ada-0368 | Wrap galaxy charts at 240000 units                                                                         | [ada-0368.md](../work/ada-0368.md) |
 | ada-0375 | Roll enemy Stardust from fixed ranges                                                                      | [ada-0375.md](../work/ada-0375.md) |
 | ada-0376 | Lose carried Ore on shield depletion                                                                       | [ada-0376.md](../work/ada-0376.md) |
+| ada-0378 | Make asteroids ricochet off one another                                                                    | [ada-0378.md](../work/ada-0378.md) |
