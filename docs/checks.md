@@ -30,7 +30,7 @@ runner, the container and the npm scripts use.
 Tests launch flights from one pinned seed sequence (`src/testSetup.ts`), so a
 flight's world is the same on every run. The default sequence runs every test.
 The container's test category also runs `tools/test-worlds.mjs`, which repeats
-seed-dependent suites under three further sequences through `ADA_LAUNCH_SEED`.
+seed-dependent suites under one further sequence through `ADA_LAUNCH_SEED`.
 The audited seed-independent suites in `src/testing/worlds.ts` run once; their
 default-run guard fails if they consume a launch seed. This preserves every
 distinct test while avoiding identical world repeats. `ADA_LAUNCH_SEED=<n> npm

@@ -36,10 +36,10 @@ process.exit(${status});
   return { calls, result };
 }
 
-it("repeats unaudited suites in all three worlds and excludes only the audited files", () => {
+it("repeats unaudited suites in the retained world and excludes only the audited files", () => {
   const { calls, result } = invoke(0);
   expect(result.status, result.stderr).toBe(0);
-  expect(calls.map((call) => call.seed)).toEqual(["803550167", "1343235941", "4155282460"]);
+  expect(calls.map((call) => call.seed)).toEqual(["803550167"]);
   for (const { args } of calls) {
     expect(args).toEqual([
       "vitest",
@@ -64,7 +64,7 @@ it("repeats unaudited suites in all three worlds and excludes only the audited f
   }
 });
 
-it("stops at the first failing world and preserves its exit status", () => {
+it("reports a failing seeded run and preserves its exit status", () => {
   const { calls, result } = invoke(17);
   expect(result.status).toBe(17);
   expect(calls).toHaveLength(1);

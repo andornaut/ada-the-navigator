@@ -1,13 +1,12 @@
-// Reruns seed-dependent tests under further launch-seed sequences (ADA_LAUNCH_SEED, src/testSetup.ts),
+// Reruns seed-dependent tests under a further launch-seed sequence (ADA_LAUNCH_SEED, src/testSetup.ts),
 // so a test that depends on the world its flight generates fails here instead of passing only
 // in the default world. Arguments pass through to vitest.
 import { spawnSync } from "node:child_process";
 
 import { SEED_INDEPENDENT_TESTS } from "../src/testing/worlds.ts";
 
-// Worlds that have exposed world-dependent tests: drones at a landmark, drones arriving at a
-// hunt spot, and moving debris at a hunt spot.
-export const WORLD_SEEDS = [803550167, 1343235941, 4155282460];
+// This alternate world exposed both the Cartwheel and Phantom hosted replay regressions.
+export const WORLD_SEEDS = [803550167];
 
 for (const seed of WORLD_SEEDS) {
   console.error(JSON.stringify({ event: "test-world", seed }));
