@@ -521,12 +521,12 @@ export const TOUCH_STICK = {
 export const STICK_DRAWN_HALF = (TOUCH_STICK.frame - 1) / 2 - 1;
 
 // The Use disc (art/layout.md "HUD and overlays", Use), Chibi's touch Use button: a 75 frame
-// whose centre pixel is the aim ring's rest centre plus fromAim, as Chibi places Use from Jump.
+// whose centre is equally left of and above the aim ring's rest centre.
 // Its press area is a circle of radius TOUCH_CIRCLE_RADIUS (63) plus the 37 hint radius about the
 // centre, cut on the line midway to the aim ring's centre, so the aim stick keeps its reach.
 export const USE_DISC = {
   frame: TOUCH_CHROME_FRAME,
-  fromAim: { x: -77, y: -100 },
+  fromAim: { x: -100, y: -100 },
   radius: 63 + 37,
 } as const;
 
