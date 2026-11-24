@@ -47,6 +47,11 @@ export interface ShipView {
   /** The ship paint's name. */
   readonly paint: string;
   readonly shield: number;
+  readonly shieldHealth?: {
+    readonly capacity: number;
+    readonly rechargeDelay: number;
+    readonly shield: number;
+  };
   readonly stardust: number;
   readonly tractor: number;
   /** Owned weapons in the HUD weapon icons' order. */

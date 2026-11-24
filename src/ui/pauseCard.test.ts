@@ -970,6 +970,29 @@ describe("Ship card", () => {
     );
   });
 
+  it("shows the installed Shield tier, live HP and warning, then restores the Ship row", () => {
+    const { body, pause, root, ship } = cards();
+    pause.setState(
+      state({
+        ship: { ...SHIP, shieldHealth: { capacity: 15, rechargeDelay: 3, shield: 8.2 } },
+      }),
+    );
+    pause.open();
+    button(body.children[0]!, "pause-ship").click();
+    const shield = buttonsOf(ship).find((node) => node.dataset.item === "equipment:shield")!;
+    shield.click();
+
+    const dismiss = button(root, "dismiss-resource");
+    expect(dismiss.textContent).toBe("Close");
+    const shown = texts(root);
+    expect(shown).toContain("8 / 15 HP");
+    expect(shown.some((text) => text.includes("Absorbs damage and recharges"))).toBe(true);
+    expect(shown.some((text) => text.includes("you lose all carried ore"))).toBe(true);
+    expect(focused()).toBe(dismiss);
+    dismiss.click();
+    expect(focused()).toBe(shield);
+  });
+
   it("returns to the Paused card on its Ship button from the X and from back", () => {
     const { body, pause, ship } = cards();
     pause.setState(state());

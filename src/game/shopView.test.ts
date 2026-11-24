@@ -8,7 +8,7 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { type ShopRow, shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { itemGlyph, stationRow } from "./shopView.ts";
+import { itemGlyph, shopItemDetail, stationRow } from "./shopView.ts";
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
@@ -96,6 +96,30 @@ describe("shop rows on the station view", () => {
       expect(ECONOMY.paints[scheme.id]?.top).toBe(scheme.top);
       expect(CONTENT.labels[ECONOMY.paints[scheme.id]!.label]).toBe(scheme.name);
     }
+  });
+
+  it("uses the offered tier for upgrades and keeps ammo pack counts", () => {
+    const labels = CONTENT.labels;
+    const shield = {
+      inUse: false,
+      item: { kind: "track", track: "shield" },
+      level: { current: 2, max: 3 },
+      owned: false,
+      price: 900,
+    } as const;
+    expect(shopItemDetail(ECONOMY, labels, shield)).toEqual({
+      description: "Absorbs damage and recharges after a quiet stretch.",
+      level: 3,
+      name: "Shield",
+    });
+    expect(stationRow(ECONOMY, labels, 900, shield).level).toBe("Level 2 of 3");
+
+    const ammo = {
+      ...shield,
+      item: { kind: "ammo", weapon: "heavyMissile" },
+      level: null,
+    } as const;
+    expect(shopItemDetail(ECONOMY, labels, ammo)).toMatchObject({ description: "×75" });
   });
 
   it("puts paint rows in their own group with levels and prices for the rest", () => {

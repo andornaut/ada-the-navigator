@@ -19,6 +19,7 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
+import { itemDetailName, itemDetailProse, renderItemDetailHeader } from "./itemDetailContent.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -882,11 +883,14 @@ function constructedStation(
     getComputedStyle,
     inCurrentView,
     isTap,
+    itemDetailName,
+    itemDetailProse,
     mountLayout,
     options,
     parent,
     readViewUnit,
     refuse: vi.fn(),
+    renderItemDetailHeader,
     setButtonRole,
     setFooterAction: (intent: string, row: InstanceType<typeof Node>) => {
       row.dataset.footerAction = intent;
@@ -1054,12 +1058,24 @@ it("registers completed Shop rows and preserves confirmation and retry", () => {
   f.station.setOpen(true);
   f.activate(f.action("open-shop"));
   const row = f.parent.querySelector('[data-item="item-0"]')!;
+  f.request.mockReturnValue({
+    action: f.labels.confirmBuy,
+    item: { description: "Absorbs damage.", level: 3, name: "Shield" },
+    kind: "confirm",
+    price: 10,
+    title: "Buy Shield [3]?",
+  });
   expect(
     resolveAdaHoldAction(f.parent as unknown as HTMLElement, row as unknown as HTMLElement),
   ).not.toBeNull();
   f.activate(row);
   expect(f.request).toHaveBeenCalledExactlyOnceWith("item-0");
-  const detail = f.native.get("confirm-cancel-x")!.body;
+  const confirmation = f.native.get("confirm-cancel-x")!;
+  expect(confirmation.title.textContent).toBe("Shield [3]");
+  expect(confirmation.title.children).toHaveLength(2);
+  expect(f.doc.activeElement).toBe(f.action("confirm-buy"));
+  const detail = confirmation.body;
+  expect(detail.querySelector(".ada-prose")?.textContent).toBe("Absorbs damage.");
   expect(detail.querySelectorAll(".ada-confirm-left")).toEqual([]);
   expect(detail.querySelector(".ada-confirm-price")?.textContent).toBe("10");
   f.activate(f.action("confirm-cancel"));

@@ -16,6 +16,12 @@ import {
 } from "./actionBinding.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
 import { createExchangeView, type ExchangePort } from "./exchange.ts";
+import {
+  type ItemDetail,
+  itemDetailName,
+  itemDetailProse,
+  renderItemDetailHeader,
+} from "./itemDetailContent.ts";
 import { keeperName } from "./keeperBlock.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
@@ -137,10 +143,11 @@ export interface StationRow {
 
 export type StationRequest =
   | {
-      readonly about: string;
+      readonly about?: string;
       /** The primary action's label: Buy, or Accept for a project. */
       readonly action: string;
       readonly kind: "confirm";
+      readonly item?: ItemDetail;
       readonly price: number;
       readonly title: string;
     }
@@ -904,10 +911,20 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     syncPressView();
   };
 
-  const showConfirmation = (title: string, parts: readonly HTMLElement[], action: string): void => {
+  const showConfirmation = (
+    title: string,
+    parts: readonly HTMLElement[],
+    action: string,
+    item?: { readonly name: string; readonly icon: HTMLElement },
+  ): void => {
     confirmCard.frame.hidden = false;
     dropHost.hidden = true;
-    confirmCard.title.textContent = title;
+    if (item) {
+      renderItemDetailHeader(confirmCard.title, item.name, item.icon);
+    } else {
+      confirmCard.title.classList.remove("ada-detail-header");
+      confirmCard.title.textContent = title;
+    }
     confirmCard.frame.setAttribute("aria-label", title);
     buyAction.setLabel(action);
     confirmCard.body.replaceChildren(...parts, confirmActions);
@@ -949,11 +966,19 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       origin,
       ...(catalog === "projects" ? { projectAmount: request.price } : {}),
     };
-    const item = well(row.glyph, true);
-    item.dataset.inkTop = "0";
-    const parts: HTMLElement[] = [item];
-    if (request.about) {
-      parts.push(prose("ada-confirm-about", request.about));
+    const detail = catalog === "shop" ? request.item : undefined;
+    const parts: HTMLElement[] = [];
+    if (detail) {
+      if (detail.description.length > 0) {
+        parts.push(itemDetailProse(detail.description));
+      }
+    } else {
+      const item = well(row.glyph, true);
+      item.dataset.inkTop = "0";
+      parts.push(item);
+      if (request.about) {
+        parts.push(prose("ada-confirm-about", request.about));
+      }
     }
     if (catalog === "projects") {
       parts.push(contributionLine(request.price));
@@ -964,7 +989,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       price.textContent = String(request.price);
       parts.push(price);
     }
-    showConfirmation(request.title, parts, request.action);
+    showConfirmation(
+      request.title,
+      parts,
+      request.action,
+      detail ? { icon: createStationItemIcon(row.glyph), name: itemDetailName(detail) } : undefined,
+    );
   };
 
   const openJob = (job: StationJob, origin: HTMLElement): void => {

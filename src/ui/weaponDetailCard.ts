@@ -8,6 +8,7 @@ import { ammoGlyphPath, weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
+import { renderItemDetailDescription, renderItemDetailHeader } from "./itemDetailContent.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
@@ -98,10 +99,9 @@ export function createWeaponDetailCard(
   const renderContent = (data: WeaponDetailData) => {
     const { lines, title } = data;
     const identity = currentIdentity;
-    card.title.textContent = compactLevelName(identity?.level, title);
+    const name = compactLevelName(identity?.level, title);
+    card.title.textContent = name;
     if (identity) {
-      const label = document.createElement("span");
-      label.textContent = compactLevelName(identity.level, title);
       const icon = document.createElement("span");
       icon.className = "ada-weapon";
       icon.dataset.weapon = identity.id;
@@ -122,10 +122,9 @@ export function createWeaponDetailCard(
         );
       }
       icon.append(disc, pips);
-      card.title.className = "ada-detail-header";
-      card.title.replaceChildren(icon, label);
+      renderItemDetailHeader(card.title, name, icon);
     }
-    card.frame.setAttribute("aria-label", compactLevelName(identity?.level, title));
+    card.frame.setAttribute("aria-label", name);
     let ammoIcon: HTMLElement | undefined;
     let amount: string | undefined;
     if (identity?.ammo !== undefined) {
@@ -141,14 +140,7 @@ export function createWeaponDetailCard(
         identity.ammo === null ? WEAPON_DETAIL_LABELS.detailUnlimited : detailCount(identity.ammo);
     }
     renderDetailQuantity(quantity, ammoIcon, amount, identity?.ammoLabel);
-    description.replaceChildren(
-      ...lines.map((line) => {
-        const paragraph = document.createElement("span");
-        paragraph.style.display = "block";
-        paragraph.textContent = line;
-        return paragraph;
-      }),
-    );
+    renderItemDetailDescription(description, lines);
   };
   const mounted = mountLayout<WeaponDetailSchema>(
     {

@@ -1,13 +1,18 @@
 import type { EconomyCatalog, UpgradeTrack } from "../data/economy.ts";
+import { EQUIPMENT_DESCRIPTIONS } from "../data/equipmentDetails.ts";
+import { weaponDetailLines } from "../data/weaponDetails.ts";
 import { ammoGlyphPath } from "../data/weaponGlyphs.ts";
 import {
   fill,
+  itemAbout,
   itemName,
   packCount,
   type ShopItem,
   type ShopRow,
   shopRowState,
+  weaponName,
 } from "../model/shop.ts";
+import type { ItemDetail } from "../ui/itemDetailContent.ts";
 import { type ItemGlyph, type StationRow, weaponItemGlyph } from "../ui/station.ts";
 
 // Maps the model's shop rows to the station view's rows (art/shop.md, art/shop-icons.md).
@@ -41,6 +46,32 @@ export function itemGlyph(
         path: catalog.paints[item.scheme] ? (paintSwatch?.(item.scheme) ?? "") : "",
       };
   }
+}
+
+/** A purchase describes the offered configuration, independent of the installed one. */
+export function shopItemDetail(
+  catalog: EconomyCatalog,
+  labels: Readonly<Record<string, string>>,
+  row: ShopRow,
+): ItemDetail {
+  const { item, level } = row;
+  const offered = level && row.price !== null ? level.current + 1 : undefined;
+  if (item.kind === "weapon" || item.kind === "weaponUpgrade") {
+    return {
+      name: weaponName(labels, item.weapon),
+      ...(offered === undefined ? {} : { level: offered }),
+      description: weaponDetailLines(item.weapon, offered ?? level?.current ?? 1),
+    };
+  }
+  return {
+    name:
+      item.kind === "track" && item.track === "engine"
+        ? (labels.engine ?? itemName(catalog, labels, item))
+        : itemName(catalog, labels, item),
+    ...(offered === undefined ? {} : { level: offered }),
+    description:
+      item.kind === "track" ? EQUIPMENT_DESCRIPTIONS[item.track] : itemAbout(catalog, labels, item),
+  };
 }
 
 export function stationRow(

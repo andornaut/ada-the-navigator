@@ -22,14 +22,7 @@ import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/e
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
-import {
-  fill,
-  itemAbout,
-  itemName,
-  type ShopItem,
-  type ShopRow,
-  weaponName,
-} from "../model/shop.ts";
+import { fill, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
   exitGame,
@@ -53,6 +46,7 @@ import { screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
 import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap } from "../ui/galaxyMap.ts";
+import { itemDetailName } from "../ui/itemDetailContent.ts";
 import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
@@ -108,7 +102,7 @@ import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
 import { hasShipHeadings } from "./shipArt.ts";
 import { engineJets } from "./shipJets.ts";
-import { stationRow } from "./shopView.ts";
+import { shopItemDetail, stationRow } from "./shopView.ts";
 import {
   FALLBACK_SPACE_PALETTE,
   galaxyPalettes,
@@ -882,16 +876,23 @@ export function buildScene(scene: UiContext): void {
               title: fill(label("donateTitle"), { name: view.name }),
             };
       }
-      const request = scene.model.requestPurchase(item(key));
-      return request.kind === "refused"
-        ? request
-        : {
-            about: itemAbout(ECONOMY, labels, item(key)),
-            action: label("confirmBuy"),
-            kind: "confirm",
-            price: request.price,
-            title: fill(label("confirmTitle"), { name: itemName(ECONOMY, labels, item(key)) }),
-          };
+      const chosen = item(key);
+      const request = scene.model.requestPurchase(chosen);
+      if (request.kind === "refused") {
+        return request;
+      }
+      const detail = shopItemDetail(
+        ECONOMY,
+        labels,
+        shopRow(ECONOMY, scene.model.state.economy, chosen),
+      );
+      return {
+        action: label("confirmBuy"),
+        item: detail,
+        kind: "confirm",
+        price: request.price,
+        title: fill(label("confirmTitle"), { name: itemDetailName(detail) }),
+      };
     },
     rows: () =>
       // Show an effect before funding and the remaining price and progress afterward.
@@ -1402,9 +1403,19 @@ export function observeFeedback(scene: UiContext): void {
 /** The Ship card's facts with the paint named. */
 export function shipView(scene: UiContext): ShipView {
   const ship = scene.model.ship;
+  const flight = scene.model.state.flight;
   const paint = ECONOMY.paints[ship.paint]?.label;
   return {
     ...ship,
+    ...(flight
+      ? {
+          shieldHealth: {
+            capacity: scene.model.shieldMax,
+            rechargeDelay: CONTENT.tuning.shieldRechargeDelay,
+            shield: flight.shield,
+          },
+        }
+      : {}),
     ...(scene.model.aboardQuestId ? { aboardQuestId: scene.model.aboardQuestId } : {}),
     paint: (paint && CONTENT.labels[paint]) ?? "",
   };

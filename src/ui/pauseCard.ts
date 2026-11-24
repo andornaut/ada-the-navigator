@@ -2,6 +2,7 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { EQUIPMENT_DESCRIPTIONS } from "../data/equipmentDetails.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
@@ -22,6 +23,7 @@ import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pause
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
 import { createResourceCard } from "./resourceCard.ts";
+import { shieldDetails } from "./shieldDetails.ts";
 import {
   disposeShipSections,
   renderShipSections,
@@ -401,7 +403,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
   };
   const detailOptions = {
-    closeLabel: labels.mapScreen.questBack ?? labels.close,
+    closeLabel: labels.close,
     onOpenChange: (visible: boolean) => {
       if (!visible) {
         restoreShip();
@@ -438,15 +440,23 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       questRoot = "ship";
       quests.open(row.questId, "ship", questParentDismissal);
     } else {
-      const text =
-        row.item.kind === "resource"
-          ? RESOURCE_DESCRIPTIONS[row.item.id]
-          : row.item.kind === "cargo" && row.item.id === "holodisks"
-            ? (labels.shipRows.holodiskAbout ?? "")
-            : (row.level ?? "");
+      let text = row.level ?? "";
+      let quantity = row.count;
+      if (row.item.kind === "resource") {
+        text = RESOURCE_DESCRIPTIONS[row.item.id];
+      } else if (row.item.kind === "cargo" && row.item.id === "holodisks") {
+        text = labels.shipRows.holodiskAbout ?? "";
+      } else if (row.item.kind === "equipment" && row.item.id !== "paint") {
+        text = EQUIPMENT_DESCRIPTIONS[row.item.id];
+        if (row.item.id === "shield" && view.shieldHealth) {
+          const shield = shieldDetails(row.label, { ...view.shieldHealth, level: view.shield });
+          text = `${text} ${shield.text}`;
+          quantity = shield.quantity;
+        }
+      }
       shipResource.open(compactLevelName(row.tier, row.label), text, origin, {
         icon: shipIconNode(row.icon),
-        ...(row.count ? { quantity: row.count } : {}),
+        ...(quantity ? { quantity } : {}),
       });
     }
   };

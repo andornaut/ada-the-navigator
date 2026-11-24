@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
+import { renderItemDetailDescription, renderItemDetailHeader } from "./itemDetailContent.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
@@ -103,12 +104,8 @@ export function createResourceCard(
     availability,
   });
   const renderContent = (data: ResourceLayoutData) => {
-    card.title.textContent = data.title;
-    description.textContent = data.description;
-    card.title.className = "ada-detail-header";
-    const name = document.createElement("span");
-    name.textContent = data.title;
-    card.title.replaceChildren(...(headerIcon ? [headerIcon] : []), name);
+    renderItemDetailHeader(card.title, data.title, headerIcon);
+    renderItemDetailDescription(description, data.description);
     renderDetailQuantity(quantity, quantityIcon, data.quantity, data.title);
     card.frame.setAttribute("aria-label", data.title);
   };
