@@ -189,22 +189,61 @@ describe("guaranteed destruction loot", () => {
     },
   );
 
-  it.each(["rock", "resource"] as const)(
-    "a missile pays a destroyed %s once without paying nearby scenery",
-    (kind) => {
-      const value = flight();
-      const target: SpaceObject = { hp: 1, id: "missile-rock", kind, radius: 20, x: 600, y: 0 };
-      const neighbor: SpaceObject = { ...target, id: "nearby-rock", y: 60 };
-      value.objects.push(target, neighbor);
-      value.shots.push({ ...killShot(target), blast: 100 }, { ...killShot(target), blast: 100 });
-      stepFlight(CONTENT, 1 / 60, idle, value);
-      const amount = oreTotal(value.objects) + total(pickups(value));
-      const outcome = rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(value.seed, target.id));
-      expect(amount).toBe(outcome.ore + outcome.stardust);
-      expect(neighbor.hp).toBe(1);
-      expect(value.objects.filter(({ id }) => id === target.id)).toEqual([]);
-    },
-  );
+  it.each([
+    ["rock", "rapidMissile"],
+    ["resource", "heavyMissile"],
+  ] as const)("pays each destroyed %s once for a %s impact, including splash", (kind, weapon) => {
+    const value = flight();
+    const { blastRadius, damageRatio } = WEAPON_CATALOG[weapon][0];
+    const damage = CONTENT.tuning.flight.playerShotDamage * damageRatio;
+    const shape = ASTEROID_SHAPES.get("asteroid-s1")!;
+    const target: SpaceObject = {
+      asteroid: shape.id,
+      hp: 2 * damage,
+      id: "missile-rock",
+      kind,
+      radius: shape.radius,
+      x: 600,
+      y: 0,
+    };
+    const splash = { ...target, hp: damage, id: "splash-rock", x: 624, y: 24 };
+    const margin = (blastRadius! + 2 * shape.silhouette.reach + 5) / 2;
+    const outside = { ...target, hp: damage, id: "outside-rock", x: 600 - margin, y: margin };
+    const outcome = (rock: SpaceObject) =>
+      rollAsteroidLoot(ASTEROID_LOOT, shape.size, dropRandom(value.seed, rock.id));
+    const directLoot = outcome(target);
+    const splashLoot = outcome(splash);
+    const missile = {
+      ...killShot(target),
+      blast: blastRadius!,
+      damage,
+      projectile: "missile",
+    } as const;
+
+    value.objects.push(target, splash, outside);
+    value.shots.push({ ...missile, hitIds: [] });
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    expect(target.hp).toBe(damage);
+    expect(value.objects.some(({ id }) => id === splash.id)).toBe(false);
+    expect(oreTotal(value.objects)).toBe(splashLoot.ore);
+    expect(total(pickups(value))).toBe(splashLoot.stardust);
+
+    value.shots.push(
+      { ...missile, hitIds: [], id: "follow-up" },
+      {
+        ...missile,
+        hitIds: [],
+        id: "expiry",
+        life: 0.001,
+      },
+    );
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    expect(value.objects.some(({ id }) => id === target.id)).toBe(false);
+    expect(value.objects).toContain(outside);
+    expect(outside.hp).toBe(damage);
+    expect(oreTotal(value.objects)).toBe(splashLoot.ore + directLoot.ore);
+    expect(total(pickups(value))).toBe(splashLoot.stardust + directLoot.stardust);
+  });
 
   it.each(["rock", "resource"] as const)(
     "groups rolled ore into five-unit chunks and single remainders from a %s and collects once after save/resume",
