@@ -94,7 +94,9 @@ describe("enemy weapon damage", () => {
     const levels = [1, 2, 3] as const;
     for (const weapon of Object.keys(WEAPON_CATALOG) as Weapon[]) {
       for (const level of levels) {
-        expect(fireDamageRatio({ level, weapon }), weapon).toBe(weaponAt(weapon, level).damageRatio);
+        expect(fireDamageRatio({ level, weapon }), weapon).toBe(
+          weaponAt(weapon, level).damageRatio,
+        );
       }
     }
     expect(levels.map((level) => fireDamageRatio({ level, weapon: "heavyMissile" }))).toEqual([

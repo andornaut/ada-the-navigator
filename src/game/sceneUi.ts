@@ -22,7 +22,7 @@ import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/e
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { landmarkById } from "../model/landmarks.ts";
-import { fill, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
+import { fill, itemName, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
   exitGame,
