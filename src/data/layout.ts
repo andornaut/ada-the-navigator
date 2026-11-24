@@ -526,7 +526,7 @@ export const STICK_DRAWN_HALF = (TOUCH_STICK.frame - 1) / 2 - 1;
 // centre, cut on the line midway to the aim ring's centre, so the aim stick keeps its reach.
 export const USE_DISC = {
   frame: TOUCH_CHROME_FRAME,
-  fromAim: { x: -100, y: -100 },
+  fromAim: { x: -70, y: -70 },
   radius: 63 + 37,
 } as const;
 
