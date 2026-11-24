@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { touchControlsActive } from "./coarsePointer.ts";
+import { touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 
 const source = ts.createSourceFile(
   "controls.ts",
@@ -26,7 +26,14 @@ function actual(name: string): ts.ArrowFunction {
   }
   return found;
 }
-function render(enabled: boolean, covered: boolean, coarse = true, map = false, foreground = true) {
+function render(
+  enabled: boolean,
+  covered: boolean,
+  coarse = true,
+  map = false,
+  foreground = true,
+  { desktop = false, maxTouchPoints = 0 } = {},
+) {
   const target = { hidden: false, inert: false };
   const button = Object.assign({ hidden: false, inert: false }, { matches: () => false });
   const navigation = { setMode: vi.fn() };
@@ -39,7 +46,7 @@ function render(enabled: boolean, covered: boolean, coarse = true, map = false, 
     USE_PRESS_MS: 100,
     cheats: { refresh: vi.fn() },
     context: { action: "dock" },
-    desktopBinding: { active: () => false, touchActive: () => false },
+    desktopBinding: { active: () => desktop, touchActive: () => false },
     enabled,
     // The start screen's Exit disc exists only where Exit shows.
     exitButton: undefined,
@@ -57,10 +64,11 @@ function render(enabled: boolean, covered: boolean, coarse = true, map = false, 
     touchControlsActive,
     useDisc,
     useDiscFrame: () => 0,
+    useDiscShown,
     usePress: undefined,
     useShown: false,
     weapons,
-    window: { matchMedia: () => ({ matches: coarse }) },
+    window: { matchMedia: () => ({ matches: coarse }), navigator: { maxTouchPoints } },
   });
   const statements = [...(actual("draw").body as ts.Block).statements];
   const end = statements.findIndex((node) => node.getText(source).startsWith("const size ="));
@@ -104,6 +112,12 @@ describe("actual controls paint under modal covers", () => {
     expect(view.status.setShown).toHaveBeenCalledWith(true);
     expect(view.target.hidden).toBe(true);
     expect(view.button.hidden).toBe(true);
+  });
+  it("keeps Use visible when a touchscreen with a mouse or keyboard is in desktop input mode", () => {
+    const view = render(true, false, false, false, true, { desktop: true, maxTouchPoints: 1 });
+    expect(view.target.hidden).toBe(true);
+    expect(view.button).toMatchObject({ hidden: false, inert: false });
+    expect(view.useDisc.setVisible).toHaveBeenCalledWith(true);
   });
   it("retains the Menu pose behind the full-screen Map and blocks its action", () => {
     const view = render(true, true, true, true);

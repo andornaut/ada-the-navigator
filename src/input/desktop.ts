@@ -128,6 +128,7 @@ export class DesktopControlState {
 
 export interface DesktopBindingOptions {
   readonly accepts: () => boolean;
+  readonly acceptsPointer?: (event: MouseEvent) => boolean;
   readonly onModeChange?: (desktop: boolean) => void;
   readonly onUse?: () => void;
   readonly point: (event: MouseEvent) => Vector;
@@ -184,7 +185,8 @@ export function bindDesktopInput(
       pointerType !== "mouse" ||
       !onSurface(event) ||
       !options.accepts() ||
-      (event.button !== 0 && event.button !== 2)
+      (event.button !== 0 && event.button !== 2) ||
+      options.acceptsPointer?.(event) === false
     ) {
       return;
     }

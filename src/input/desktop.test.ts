@@ -117,7 +117,7 @@ describe("desktop flight controls", () => {
   });
 });
 
-describe("desktop keyboard listener", () => {
+describe("desktop input listeners", () => {
   // EventTarget dispatches the real listeners. The fixture supplies the focused element ancestry
   // that a browser keyboard event would carry to Window.
   class FixtureElement {
@@ -141,7 +141,7 @@ describe("desktop keyboard listener", () => {
     }
   }
 
-  function bind() {
+  function bind(acceptsPointer?: (event: MouseEvent) => boolean) {
     vi.stubGlobal("Element", FixtureElement);
     const host = new EventTarget();
     const document = Object.assign(new EventTarget(), { defaultView: host, hidden: false });
@@ -154,6 +154,7 @@ describe("desktop keyboard listener", () => {
     const binding = bindDesktopInput(
       {
         accepts,
+        ...(acceptsPointer ? { acceptsPointer } : {}),
         onModeChange: () => controls.reset(),
         onUse,
         point: () => frame.ship,
@@ -202,6 +203,26 @@ describe("desktop keyboard listener", () => {
     key("keydown", code);
     expect(onUse).toHaveBeenCalledTimes(2);
     expect(controls.sample().use).toBe(true);
+  });
+
+  it("leaves a canvas press claimed by Use out of desktop flight", () => {
+    const { binding, host, state, surface } = bind((event) => event.clientX !== 50);
+    const down = (clientX: number) => {
+      const event = new Event("mousedown", { cancelable: true });
+      Object.defineProperties(event, {
+        button: { value: 2 },
+        clientX: { value: clientX },
+        target: { value: surface },
+      });
+      host.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(down(50)).toBe(false);
+    expect(binding.active()).toBe(false);
+    expect(state.sample(frame)).toEqual(neutral);
+    expect(down(100)).toBe(true);
+    expect(binding.active()).toBe(true);
+    expect(state.sample(frame).fire).toBe(true);
   });
 
   it("leaves focused native buttons and editable elements alone and rejects modal input", () => {

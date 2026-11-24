@@ -78,7 +78,7 @@ import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frameTurn.ts";
-import { coarsePointer, touchControlsActive } from "./coarsePointer.ts";
+import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desktop.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
@@ -701,16 +701,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       { x: event.clientX, y: event.clientY },
     );
   };
-  const desktopBinding = bindDesktopInput(
-    {
-      accepts: () => state.accepts(),
-      onModeChange: () => state.reset(),
-      onUse: () => state.requestUse(),
-      point,
-      surface: canvas,
-    },
-    desktop,
-  );
   const joystickTarget = (target: EventTarget | null) => {
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
@@ -733,6 +723,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }
     return native || capturedUse ? null : undefined;
   };
+  const desktopBinding = bindDesktopInput(
+    {
+      accepts: () => state.accepts(),
+      acceptsPointer: (event) => resolveUsePointer(event) !== settings.useButton,
+      onModeChange: () => state.reset(),
+      onUse: () => state.requestUse(),
+      point,
+      surface: canvas,
+    },
+    desktop,
+  );
   const useAction = bindAdaAction(
     {
       beforeClick: (event) => event.detail === 0 || resolveUsePointer(event) === settings.useButton,
@@ -913,9 +914,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       target.hidden = !touch;
       target.inert = modalOpen();
     }
-    // Use is a touch control, as in Chibi: shown on a touch screen while an action is in reach;
-    // on desktop the Use key acts.
-    useShown = touch && context !== undefined;
+    useShown = useDiscShown(
+      window,
+      flightShown,
+      context !== undefined,
+      desktopBinding.touchActive(),
+    );
     if (!useShown) {
       usePress = undefined;
     }

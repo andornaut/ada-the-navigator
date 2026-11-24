@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 
-function host(matches: boolean) {
+function host(matches: boolean, maxTouchPoints = 0) {
   const queries: string[] = [];
   const list = { matches };
   return {
@@ -11,6 +11,7 @@ function host(matches: boolean) {
       queries.push(query);
       return list as unknown as MediaQueryList;
     },
+    navigator: { maxTouchPoints },
     queries,
   };
 }
@@ -31,11 +32,12 @@ describe("touch-only joysticks", () => {
     expect(touchControlsActive(host(true), true, true)).toBe(false);
   });
 
-  it("show the Use disc on a touch screen while an action is in reach, never on desktop", () => {
-    expect(useDiscShown(host(true), true, false, true)).toBe(true);
-    expect(useDiscShown(host(true), true, false, false)).toBe(false);
-    expect(useDiscShown(host(false), true, false, true)).toBe(false);
-    expect(useDiscShown(host(true), true, true, true)).toBe(false);
-    expect(useDiscShown(host(true), false, false, true)).toBe(false);
+  it("shows Use in reach on touchscreen and touch input devices", () => {
+    expect(useDiscShown(host(true), true, true, false)).toBe(true);
+    expect(useDiscShown(host(false, 1), true, true, false)).toBe(true);
+    expect(useDiscShown(host(false), true, true, true)).toBe(true);
+    expect(useDiscShown(host(false), true, true, false)).toBe(false);
+    expect(useDiscShown(host(true), false, true, false)).toBe(false);
+    expect(useDiscShown(host(true), true, false, true)).toBe(false);
   });
 });
