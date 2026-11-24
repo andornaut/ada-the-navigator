@@ -152,6 +152,13 @@ class QuestNode extends EventTarget {
   className = "";
   disabled = false;
   hidden = false;
+  focus = vi.fn();
+  get tabIndex(): number {
+    return Number(this.getAttribute("tabindex") ?? 0);
+  }
+  set tabIndex(value: number) {
+    this.setAttribute("tabindex", String(value));
+  }
   private text = "";
   get textContent(): string {
     return this.text + this.children.map((child) => child.textContent).join("");
@@ -208,6 +215,9 @@ class QuestNode extends EventTarget {
   }
   closest(selector: string): QuestNode | null {
     return this.matches(selector) ? this : (this.parentElement?.closest(selector) ?? null);
+  }
+  hasAttribute(name: string): boolean {
+    return this.attributes.has(name);
   }
   querySelectorAll(selector: string): QuestNode[] {
     return this.children.flatMap((child) => [
@@ -294,6 +304,7 @@ afterEach(() => {
 });
 function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
   vi.stubGlobal("document", {
+    addEventListener: vi.fn(),
     createElement: (tag: string) => new QuestNode(tag),
     createElementNS: (_namespace: string, tag: string) => new QuestNode(tag),
     createTextNode: (text: string) => Object.assign(new QuestNode("#text"), { textContent: text }),
@@ -312,6 +323,7 @@ function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
     labels: mapScreenLabels(CONTENT.labels),
     onClose,
     onLocate,
+    reducedMotion: () => true,
   });
   return { onClose, onLocate, root, screen };
 }
@@ -442,7 +454,7 @@ it("keeps Back outside the quest detail's scroll group", () => {
   screen.dispose();
 });
 
-it("uses one standard native action for each footer control and keeps disabled or replaced pages inert", () => {
+it("refuses visible pager boundaries and keeps replaced actions inert", () => {
   const { onClose, root, screen } = screenFixture();
   screen.setState([entry, { ...entry, id: "extra" }, { ...entry, id: "last" }], [], 1);
   screen.open();
@@ -460,17 +472,30 @@ it("uses one standard native action for each footer control and keeps disabled o
   ]);
   const previous = button(labels.previous);
   const next = button(labels.next);
-  expect(previous.disabled).toBe(true);
+  expect(previous.disabled).toBe(false);
+  expect(previous.getAttribute("aria-disabled")).toBe("true");
+  expect(previous.tabIndex).toBe(-1);
   expect(previous.hidden).toBe(false);
-  expect(hold(previous)?.available()).toBe(false);
+  expect(hold(previous)?.ownAriaDisabled).toBe("refusal-feedback");
   click(previous);
+  expect(previous.hasAttribute("data-ui-refusal-red")).toBe(false);
+  hold(previous)!.activate();
+  expect(previous.hasAttribute("data-ui-refusal-red")).toBe(true);
+  expect(previous.hasAttribute("data-ui-refusal-shake")).toBe(false);
+  expect(root.querySelectorAll("output")[0]?.textContent).toBe("1/2");
   expect(button(labels.next)).toBe(next);
 
   const paging = hold(next)!;
   expect(paging.available()).toBe(true);
   paging.activate();
   expect(paging.available()).toBe(false);
-  expect(button(labels.next).disabled).toBe(true);
+  const lastNext = button(labels.next);
+  expect(lastNext.getAttribute("aria-disabled")).toBe("true");
+  expect(lastNext.tabIndex).toBe(-1);
+  expect(button(labels.previous).tabIndex).toBe(0);
+  hold(lastNext)!.activate();
+  expect(lastNext.hasAttribute("data-ui-refusal-red")).toBe(true);
+  expect(root.querySelectorAll("output")[0]?.textContent).toBe("2/2");
   click(next);
   expect(
     root

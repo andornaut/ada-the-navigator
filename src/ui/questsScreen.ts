@@ -1,6 +1,7 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -28,6 +29,7 @@ import {
   type QuestsFooterSchema,
   questsTree,
 } from "./questsTree.ts";
+import { refuse } from "./refusal.ts";
 import { spriteIconPath } from "./spriteIconPath.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
@@ -124,6 +126,7 @@ export function createQuestsScreen(
     readonly labels: MapScreenLabels;
     readonly onClose: () => void;
     readonly onLocate: (id: string) => void;
+    readonly reducedMotion: () => boolean;
   },
 ) {
   const { labels } = options;
@@ -299,7 +302,11 @@ export function createQuestsScreen(
       if (pages > 1) {
         for (const direction of [-1, 1]) {
           footerActions.set(direction < 0 ? "previous" : "next", () => {
-            listPage += direction;
+            const targetPage = listPage + direction;
+            if (targetPage < 0 || targetPage >= pages) {
+              return;
+            }
+            listPage = targetPage;
             render();
           });
         }
@@ -515,9 +522,30 @@ export function createQuestsScreen(
                 throw new Error("Unregistered Quest footer action");
               }
               let props = initial;
+              const paginates = initial.action === "previous" || initial.action === "next";
+              let stopRefusal: (() => void) | undefined;
               const action = createStandardTextAction(root, initial.label, {
-                availability: () => (props.disabled ? { kind: "disabled" } : { kind: "available" }),
+                availability: () =>
+                  props.disabled
+                    ? paginates
+                      ? { kind: "unavailable", reason: "Action unavailable." }
+                      : { kind: "disabled" }
+                    : { kind: "available" },
                 current: () => !disposed && !modal.hidden && inCurrentView(root, action.element),
+                pointerRefusal: paginates,
+                ...(paginates
+                  ? {
+                      refuse: () => {
+                        focusTarget(card.frame);
+                        if (
+                          !button.hasAttribute(REFUSAL_ATTRIBUTES.red) &&
+                          !button.hasAttribute(REFUSAL_ATTRIBUTES.shake)
+                        ) {
+                          stopRefusal = refuse(button, options.reducedMotion());
+                        }
+                      },
+                    }
+                  : {}),
                 run,
               });
               const button = action.element;
@@ -537,7 +565,15 @@ export function createQuestsScreen(
                 action.refresh();
               };
               update(initial);
-              return { dispose: action.dispose, element: button, slots: {}, update };
+              return {
+                dispose() {
+                  action.dispose();
+                  stopRefusal?.();
+                },
+                element: button,
+                slots: {},
+                update,
+              };
             },
             slots: [],
           },

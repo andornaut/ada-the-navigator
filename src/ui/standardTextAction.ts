@@ -13,6 +13,8 @@ interface StandardTextActionOptions {
   readonly run: () => void;
   readonly reason?: HTMLElement;
   readonly refuse?: (reason: string) => void;
+  /** Keep a native-disabled control's tab exclusion while allowing the owned pointer refusal. */
+  readonly pointerRefusal?: boolean;
   readonly separateFace?: boolean;
 }
 
@@ -23,6 +25,16 @@ export function createStandardTextAction(
   options: StandardTextActionOptions,
 ) {
   const state: { button?: HTMLButtonElement } = {};
+  const tryRefusal = () => {
+    // Kit can report an unavailable click even when getAction returned null.
+    if (options.availability(kit.element).kind !== "unavailable") {
+      return;
+    }
+    const action = resolveAdaHoldAction(root, kit.element);
+    if (action?.available()) {
+      action.activate();
+    }
+  };
   const kit = createButton(root.ownerDocument, {
     appearance: {
       className: "ada-button",
@@ -35,19 +47,19 @@ export function createStandardTextAction(
       const action = resolveAdaHoldAction(root, kit.element);
       return action?.available() ? action : null;
     },
-    getState: () => ({ availability: options.availability(state.button) }),
+    getState: () => {
+      const availability = options.availability(state.button);
+      return {
+        availability:
+          options.refuse && options.pointerRefusal && availability.kind === "unavailable"
+            ? { kind: "pointer-refusal" }
+            : availability,
+      };
+    },
     ...(options.refuse
       ? {
-          onUnavailable: () => {
-            // Kit can report an unavailable click even when getAction returned null.
-            if (options.availability(kit.element).kind !== "unavailable") {
-              return;
-            }
-            const action = resolveAdaHoldAction(root, kit.element);
-            if (action?.available()) {
-              action.activate();
-            }
-          },
+          ...(options.pointerRefusal ? { onPointerRefusal: tryRefusal } : {}),
+          onUnavailable: tryRefusal,
         }
       : {}),
     ...(options.reason ? { reason: options.reason } : {}),
@@ -67,6 +79,20 @@ export function createStandardTextAction(
       current: options.current,
       nativeClickOwner: "factory",
       ...(options.refuse ? { ownAriaDisabled: "refusal-feedback" as const } : {}),
+      ...(options.refuse && options.pointerRefusal
+        ? {
+            resolvePointerTarget: (_context, event) => {
+              // A pointer-only refusal keeps the boundary button out of pointer focus.
+              if (
+                event.type === "pointerdown" &&
+                options.availability(kit.element).kind === "unavailable"
+              ) {
+                event.preventDefault();
+              }
+              return undefined;
+            },
+          }
+        : {}),
       slopPx: () => SCROLL.dragThreshold * readViewUnit(kit.element),
     },
     kit.element,

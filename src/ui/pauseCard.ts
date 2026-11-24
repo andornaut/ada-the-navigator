@@ -324,6 +324,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       }
       mapScreen.locate(id);
     },
+    reducedMotion: options.reducedMotion,
   });
   let open = false;
   let mapOpener: "map" | "quests" = "map";
