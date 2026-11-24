@@ -179,6 +179,13 @@ export function weaponUpgradePrices(
 }
 
 const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_STEP);
+const SHOP_AMMO_PACK = {
+  heavyMissile: 75,
+  multiLaser: 300,
+  phaser: 75,
+  rapidMissile: 180,
+  scattershot: 120,
+};
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
@@ -196,10 +203,16 @@ export const ECONOMY: EconomyCatalog = {
       scattershot: 60,
     },
     grant: { heavyMissile: 120, multiLaser: 900, phaser: 120, rapidMissile: 780, scattershot: 180 },
-    pack: { heavyMissile: 75, multiLaser: 300, phaser: 75, rapidMissile: 225, scattershot: 150 },
+    pack: SHOP_AMMO_PACK,
     packPrice: 25,
     rockDropChance: { huge: 0.04, large: 0.02, medium: 0.01, small: 0.005 },
-    worldPack: { heavyMissile: 25, multiLaser: 100, phaser: 25, rapidMissile: 75, scattershot: 50 },
+    worldPack: {
+      heavyMissile: SHOP_AMMO_PACK.heavyMissile / 3,
+      multiLaser: SHOP_AMMO_PACK.multiLaser / 3,
+      phaser: SHOP_AMMO_PACK.phaser / 3,
+      rapidMissile: SHOP_AMMO_PACK.rapidMissile / 3,
+      scattershot: SHOP_AMMO_PACK.scattershot / 3,
+    },
   },
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,

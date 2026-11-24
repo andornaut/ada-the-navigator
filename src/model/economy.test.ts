@@ -1510,8 +1510,8 @@ describe("shop purchases", () => {
       heavyMissile: 75,
       multiLaser: 300,
       phaser: 75,
-      rapidMissile: 225,
-      scattershot: 150,
+      rapidMissile: 180,
+      scattershot: 120,
     });
     const pack = { kind: "ammo", weapon: "phaser" } as const;
     expect(requestPurchase(ECONOMY, economy, pack)).toEqual({

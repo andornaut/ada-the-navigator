@@ -90,12 +90,17 @@ describe("enemy weapon damage", () => {
     expect(fireDamageRatio({ level: 1, weapon: "ringBurst" })).toBe(1.5);
   });
 
-  it("deals Ada's level 1 damage with every shared weapon, no exceptions", () => {
+  it("deals Ada's damage with every shared weapon at its equipped level", () => {
+    const levels = [1, 2, 3] as const;
     for (const weapon of Object.keys(WEAPON_CATALOG) as Weapon[]) {
-      expect(fireDamageRatio({ level: 1, weapon }), weapon).toBe(weaponAt(weapon, 1).damageRatio);
+      for (const level of levels) {
+        expect(fireDamageRatio({ level, weapon }), weapon).toBe(weaponAt(weapon, level).damageRatio);
+      }
     }
-    expect(fireDamageRatio({ level: 1, weapon: "heavyMissile" })).toBe(8);
-    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(13 / 3);
+    expect(levels.map((level) => fireDamageRatio({ level, weapon: "heavyMissile" }))).toEqual([
+      5, 6, 7,
+    ]);
+    expect(levels.map((level) => fireDamageRatio({ level, weapon: "phaser" }))).toEqual([4, 6, 8]);
     expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(1.5);
     expect(fireDamageRatio({ level: 1, weapon: "multiLaser" })).toBe(0.7);
     // A Scattershot volley has seven pellets at 0.8 damage each.
@@ -188,14 +193,14 @@ describe("enemy fire profiles", () => {
     };
     // Sunflower and Whirlpool share 25%, Needle 30%, and Phantom 35% of the player rate.
     expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / (0.25 * (7 / 9)), 300]);
-    expect(fire(1, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.25, 240]);
+    expect(fire(1, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.25, 240]);
     expect(fire(1, "interceptor")).toEqual(["phaser", 1, 1 / 0.25, 0]);
     expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.25 * 1.25), 300]);
     expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / (0.3 * (7 / 9)), 300]);
-    expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.3, 240]);
+    expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.3, 240]);
     expect(fire(4, "interceptor")).toEqual(["phaser", 1, 1 / 0.3, 0]);
     expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.3 * 1.25), 300]);
-    expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.3 / 0.35, 240]);
+    expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.35, 240]);
     expect(fire(6, "interceptor")).toEqual(["phaser", 1, 1 / 0.35, 0]);
     expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(
       weaponAt("heavyMissile", 1).intervalSeconds,

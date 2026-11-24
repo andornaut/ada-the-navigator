@@ -113,9 +113,9 @@ describe("Phaser hitscan beam", () => {
   const STURDY = 30;
   const sturdy = (id: string, x: number, y: number) => retaliator(id, x, y, STURDY);
 
-  it("strikes only the nearest enemy along its line, for 13/3x Laser damage", () => {
+  it("strikes only the nearest enemy along its line, for four damage", () => {
     const flight = beam([sturdy("far", 200, nose.y), sturdy("near", 100, nose.y)]);
-    expect(hp(flight, "near")).toBe(STURDY - 13 / 3);
+    expect(hp(flight, "near")).toBe(STURDY - 4);
     expect(hp(flight, "far")).toBe(STURDY);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(flight.fireCooldown).toBeCloseTo(1, 9);
@@ -127,7 +127,7 @@ describe("Phaser hitscan beam", () => {
       { hp: 10, id: "rock", kind: "rock", radius: 20, x: 80, y: nose.y },
     ]);
     expect(hp(flight, "behind")).toBe(STURDY);
-    expect(hp(flight, "rock")).toBe(10 - 13 / 3);
+    expect(hp(flight, "rock")).toBe(10 - 4);
     expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - 20, 9);
   });
 
@@ -140,15 +140,15 @@ describe("Phaser hitscan beam", () => {
     );
     const edge = nose.y - top + BEAM.halfWidth;
     const grazed = beam([sturdy("enemy", 150, edge - 0.5)]);
-    expect(hp(grazed, "enemy")).toBe(STURDY - 13 / 3);
+    expect(hp(grazed, "enemy")).toBe(STURDY - 4);
     const missed = beam([sturdy("enemy", 150, edge + 0.5)]);
     expect(hp(missed, "enemy")).toBe(STURDY);
   });
 
   it.each([
-    [1, playerRange, 13 / 3],
-    [2, playerRange, 6.5],
-    [3, playerRange, 9.75],
+    [1, playerRange, 4],
+    [2, playerRange, 6],
+    [3, playerRange, 8],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
     // The farthest hull the beam's end still reaches within its half-width.
     const end = { x: ahead(range), y: nose.y };
@@ -209,7 +209,7 @@ describe("Phaser hitscan beam", () => {
     expect((drawn.to.x - drawn.from.x) / reach).toBeCloseTo(flight.facing.x / facing, 9);
     expect((drawn.to.y - drawn.from.y) / reach).toBeCloseTo(flight.facing.y / facing, 9);
     // The hit, its damage and its spark stay at fire time.
-    expect(hp(flight, "enemy")).toBe(STURDY - 13 / 3);
+    expect(hp(flight, "enemy")).toBe(STURDY - 4);
     expect(
       activeWeaponImpacts(flight).map(({ direction, family, x, y }) => ({
         direction,
@@ -226,7 +226,7 @@ describe("Phaser hitscan beam", () => {
     const collisionDamage = CONTENT.tuning.shieldMax - flight.shield;
     expect(collisionDamage).toBe(1);
     // Subtract the admitted bump to verify the beam's damage independently.
-    expect(10 - collisionDamage - hp(flight, "rock")!).toBeCloseTo(13 / 3);
+    expect(10 - collisionDamage - hp(flight, "rock")!).toBeCloseTo(4);
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
@@ -242,7 +242,7 @@ describe("Phaser hitscan beam", () => {
     for (let slice = 0; slice < 60; slice++) {
       stepFlight(CONTENT, 1 / 60, right, flight);
     }
-    expect(hp(flight, "enemy")).toBe(STURDY - 13 / 3);
+    expect(hp(flight, "enemy")).toBe(STURDY - 4);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(model.save()).not.toContain("flash");
   });
@@ -310,8 +310,8 @@ describe("integrated weapon projectiles", () => {
     flight.facing = { x: 1, y: 0 };
     // The missile strikes the first hull, radius 20, about 37 ahead; Ada is inside the blast.
     flight.objects = [
-      retaliator("struck", 60, 0),
-      retaliator("inside", 40, 60),
+      retaliator("struck", 60, 0, 5),
+      retaliator("inside", 40, 60, 5),
       retaliator("outside", 40, -85),
     ];
     const shield = flight.shield;
@@ -329,7 +329,7 @@ describe("integrated weapon projectiles", () => {
     const { flight, model } = launched("heavyMissile");
     flight.ownedWeapons = ["heavyMissile"];
     flight.facing = { x: 1, y: 0 };
-    flight.objects = [retaliator("struck", 60, 0), retaliator("inside", 40, 60)];
+    flight.objects = [retaliator("struck", 60, 0, 5), retaliator("inside", 40, 60, 5)];
     for (let slice = 0; slice < 30 && alive(flight, "struck"); slice++) {
       stepFlight(CONTENT, 1 / 60, slice ? idle : right, flight);
     }

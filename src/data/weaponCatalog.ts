@@ -85,7 +85,7 @@ const laserBase = {
 const multiLaserBase = {
   ...projectile,
   damageRatio: 0.7,
-  intervalSeconds: 0.3,
+  intervalSeconds: 0.4,
   projectileKind: "bolt",
   rangeWorld: BOLT_REACH,
 } as const;
@@ -93,7 +93,6 @@ const phaserBase = {
   ...projectile,
   anglesDegrees: [0],
   beamRange: PHASER_RANGE,
-  damageRatio: 6.5 * (2 / 3),
   intervalSeconds: 1,
   projectileKind: "beam",
 } as const;
@@ -116,21 +115,20 @@ const scattershotBase = {
 
 /** Canonical weapon values; levels change only each weapon's approved growth dimensions. */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
-  // Slow and heavy (gameplay/rules.md): one missile every 2 s at every level, damage alone making
-  // each damage step (8, 12 and 16 times Laser damage), with a 60 blast at every level. The
-  // missile flies 400 world units per second, reaching 220.
+  // One missile every 2 s, with a 60 blast at every level. The missile flies 400 world units
+  // per second, reaching 220.
   heavyMissile: [
     {
       ...heavyMissileBase,
-      damageRatio: 8,
+      damageRatio: 5,
     },
     {
       ...heavyMissileBase,
-      damageRatio: 12,
+      damageRatio: 6,
     },
     {
       ...heavyMissileBase,
-      damageRatio: 16,
+      damageRatio: 7,
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
@@ -154,9 +152,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(700),
     },
   ],
-  // Every 0.30 s, each bolt a fixed 0.7 times Laser damage; levels add only bolts, 3, 4 then 5
-  // across the same -8 to 8 fan. Its bolts fly 400, 500 and 600 world units per second,
-  // reaching 370 at each.
+  // A volley every 0.40 s, with 3, 4 or 5 bolts across the same -8 to 8 fan. Bolts fly
+  // 400, 500 and 600 world units per second, reaching 370 at each level.
   multiLaser: [
     {
       ...multiLaserBase,
@@ -174,19 +171,19 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(600),
     },
   ],
-  // The long-range weapon: once a second at 13/3 times Laser damage, its 370 range covering the
-  // play view at every level; damage alone makes each 1.5 step.
+  // Fires once a second with the same range at every level.
   phaser: [
     {
       ...phaserBase,
+      damageRatio: 4,
     },
     {
       ...phaserBase,
-      damageRatio: phaserBase.damageRatio * 1.5,
+      damageRatio: 6,
     },
     {
       ...phaserBase,
-      damageRatio: phaserBase.damageRatio * 2.25,
+      damageRatio: 8,
     },
   ],
   // Fixed RAPID_DAMAGE and a small blast at every level; fire rate grows 1.2 then 1.5 (every 0.30,

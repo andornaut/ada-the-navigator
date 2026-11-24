@@ -21,9 +21,9 @@ import {
 
 const PACKS = [
   ["multiLaser", 300, 100, 900, 300],
-  ["rapidMissile", 225, 75, 780, 260],
+  ["rapidMissile", 180, 60, 780, 260],
   ["heavyMissile", 75, 25, 120, 40],
-  ["scattershot", 150, 50, 180, 60],
+  ["scattershot", 120, 40, 180, 60],
   ["phaser", 75, 25, 120, 40],
 ] as const;
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

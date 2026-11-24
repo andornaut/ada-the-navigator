@@ -15,7 +15,7 @@ const context: VolleyContext = {
 describe("pure player projectile volleys", () => {
   it.each([
     ["rapidMissile", 0.3, 500 / 600, 1.5, 30],
-    ["heavyMissile", 2, 400 / 600, 8, 60],
+    ["heavyMissile", 2, 400 / 600, 5, 60],
   ] as const)(
     "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
     (weapon, interval, speed, damage, blast) => {

@@ -935,15 +935,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   - Laser: damage, fire rate and bolt speed: every 0.30, 0.25, 0.20 s, dealing 1,
     1.25 and 1.5 times Laser damage.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 16 degrees, 3 at
-    level 1 (-8, 0 and 8 degrees), then 4, then 5, every 0.30 s. Each bolt deals a fixed 0.7 times Laser damage;
-    levels add only bolts. Its bolts are slower than Laser's at the same level.
+    level 1 (-8, 0 and 8 degrees), then 4, then 5, every 0.40 s. Each bolt deals
+    0.7 times base Laser damage. The wider coverage makes small targets easier
+    to hit, so the volleys fire less often than Laser shots. Its bolts are
+    slower than Laser's at the same level.
   - Rapid Missile: quick straight missiles with a small blast (radius 30) and a fixed
     1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 60),
-    every 2.0 s at every level; levels grow only its damage (8, 12, 16 times
-    Laser damage). Rapid Missile remains faster at every level. Heavy Missile
-    deals 4, 6 and 8 Laser damage per second at levels 1, 2 and 3.
+    every 2.0 s at every level. Damage is 5, 6 and 7 at levels 1, 2 and 3.
+    Rapid Missile remains faster at every level.
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
     is a fixed 100 world units on every device, and levels add dots. Up
@@ -956,8 +957,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     visible beam that stays attached to the ship that fired it: from its fire
     origin, along the ship's current aim, at the length it fired with. Only the visible
     beam follows the ship; the hit stays where it resolved. It fires
-    once every 1.0 s and deals 13/3 times Laser damage to the enemy it hits;
-    levels grow only its damage (13/3, 6.5, 9.75).
+    once every 1.0 s and deals 4, 6 or 8 damage at levels 1, 2 and 3.
 - Rapid and Heavy Missiles have a full collision width of 12 world units
   (radius 6). Phaser also has a full hit width of 12 world units (radius 6),
   with its visible beam scaled from that same canonical width.
@@ -981,7 +981,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   and projectile speeds are in [Ships](ships.md#enemy-weapons); enemy
   projectiles fly at 0.6 times Ada's level 1 speed for the weapon. An enemy
   fires only while it is inside the visible game area. An enemy Heavy Missile
-  hit removes 8, 12 or 16 HP at levels 1, 2 and 3, so it fires rarely.
+  hit removes 5, 6 or 7 HP at levels 1, 2 and 3.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Laser and Multi-Laser bolts and Phaser
   beams, Ada's and enemies' alike, use the same fire-time rounded coverage
