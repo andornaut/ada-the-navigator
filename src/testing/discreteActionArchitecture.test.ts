@@ -866,26 +866,93 @@ const recoveryStartup = {
   text: readFileSync(new URL("../loading/startup.ts", import.meta.url), "utf8"),
 };
 
+const recoveryCrash = {
+  path: "src/crash/crashScreen.ts",
+  text: readFileSync(new URL("../crash/crashScreen.ts", import.meta.url), "utf8"),
+};
+
 it("associates the eager Startup recovery assertion and leaves the lazy Crash receiver unresolved", () => {
   const { path } = recoveryStartup;
-  const crash = "src/crash/crashScreen.ts";
   const result = scanDiscreteActionProject([
     canonicalRegistry,
     recoveryRegistry,
     recoveryAdapter,
     recoveryStartup,
-    {
-      path: crash,
-      text: readFileSync(new URL("../crash/crashScreen.ts", import.meta.url), "utf8"),
-    },
+    recoveryCrash,
   ]);
   expect(result.runtimeAssertions).toContainEqual(
     expect.objectContaining({ kind: "live-root", path, source: "recovery.assertBindings()" }),
   );
   expect(result.unresolvedRuntimeAssertions).toEqual([
-    expect.objectContaining({ path: crash, source: "recovery.root.assertBindings()" }),
+    expect.objectContaining({
+      path: recoveryCrash.path,
+      source: "recovery.root.assertBindings()",
+    }),
   ]);
 });
+
+const crashAssertion = "recovery.root.assertBindings()";
+
+it.each([
+  [
+    "another receiver",
+    recoveryCrash,
+    crashAssertion,
+    "const foreign = { root: { assertBindings() {} } }; foreign.root.assertBindings()",
+    "foreign.root.assertBindings()",
+  ],
+  [
+    "a foreign root factory",
+    recoveryCrash,
+    'from "../ui/holdActionsAdapter.ts"',
+    'from "./foreignRecovery.ts"',
+  ],
+  [
+    "a root registered on the wrong host",
+    recoveryCrash,
+    "bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, host)",
+    "bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, body)",
+  ],
+  [
+    "replacement of the published root",
+    recoveryCrash,
+    crashAssertion,
+    `Object.assign(recovery, { root: { assertBindings() {} } }); ${crashAssertion}`,
+  ],
+  [
+    "disposal before the assertion",
+    recoveryCrash,
+    crashAssertion,
+    `recovery.root.dispose(); ${crashAssertion}`,
+  ],
+  ["teardown retaining the disposed instance", recoveryCrash, "  recovery = undefined;", ""],
+  [
+    "binding reentering the published pagehide teardown",
+    canonicalRegistry,
+    "const binding = bindAdaAction(",
+    'root.ownerDocument.defaultView?.dispatchEvent(new PageTransitionEvent("pagehide")); ' +
+      "const binding = bindAdaAction(",
+  ],
+] as const)(
+  "keeps Crash recovery reviewable with %s",
+  (_label, input, original, replacement, site?: string) => {
+    expect(input.text.split(original)).toHaveLength(2);
+    const mutated = { ...input, text: input.text.replace(original, replacement) };
+    const result = scanDiscreteActionProject([
+      ...[canonicalRegistry, recoveryRegistry, recoveryAdapter, recoveryCrash].map((source) =>
+        source.path === input.path ? mutated : source,
+      ),
+      {
+        path: "src/crash/foreignRecovery.ts",
+        text: "export function bindAdaRecoveryActionRoot() { return { assertBindings() {} }; }",
+      },
+    ]);
+    expect(result.runtimeAssertions.filter(({ path }) => path === recoveryCrash.path)).toEqual([]);
+    expect(result.unresolvedRuntimeAssertions).toEqual([
+      expect.objectContaining({ path: recoveryCrash.path, source: site ?? crashAssertion }),
+    ]);
+  },
+);
 
 it.each([
   [
