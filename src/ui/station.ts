@@ -21,6 +21,7 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createCard, isTap } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -325,9 +326,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   confirmModal.dataset.stationConfirm = "";
   confirmModal.hidden = true;
 
+  const stationClose = createStandardCloseAction(parent, "station-back", labels.close, {
+    current: canUse,
+    run: () => back(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
+  bindings.push(stationClose);
   const stationCard = createDialoguePanel({
-    closeAction: "station-back",
-    closeLabel: labels.close,
+    close: stationClose.element,
     title: labels.station,
   });
   stationCard.card.dataset.dialog = "station";
@@ -1112,7 +1119,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     render();
     focusTarget(openShop);
   };
-  register(stationCard.close, back);
   register(shopCard.close, back);
   register(confirmCard.close, back);
   const buyConfirmed = (): void => {

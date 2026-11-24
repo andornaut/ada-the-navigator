@@ -23,6 +23,7 @@ import { SCROLL } from "./layout/contentCard.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
@@ -669,13 +670,17 @@ function constructedStation(
     node.disabled = true;
     return node;
   }
-  function parts(options: { closeAction: string; title: string }) {
+  function parts(options: {
+    closeAction: string;
+    title: string;
+    close?: InstanceType<typeof Node>;
+  }) {
     const frame = new Node("div", false),
       card = new Node("section", false),
       body = new Node("div", false),
       header = new Node("header", false),
       title = new Node("h2", false),
-      close = button("Close"),
+      close = options.close ?? button("Close"),
       choices = new Node("div", false),
       controls = new Node("div", false),
       skip = button("Skip");
@@ -690,7 +695,9 @@ function constructedStation(
       }
     };
     frame.setAttribute("role", "dialog");
-    close.dataset.action = options.closeAction;
+    if (!options.close) {
+      close.dataset.action = options.closeAction;
+    }
     title.textContent = options.title;
     header.append(title);
     card.append(header, body);
@@ -860,7 +867,8 @@ function constructedStation(
     bindAdaAction,
     createActions: actions,
     createCard: parts,
-    createDialoguePanel: parts,
+    createDialoguePanel: (options: { close: InstanceType<typeof Node>; title: string }) =>
+      parts({ ...options, closeAction: "station-back" }),
     createExchangeView: (
       actionRoot: InstanceType<typeof Node>,
       host: InstanceType<typeof Node>,
@@ -871,6 +879,7 @@ function constructedStation(
       return { back: () => false, dispose: () => root.remove(), render: vi.fn(), root };
     },
     createModalLayer,
+    createStandardCloseAction,
     createStandardTextAction,
     createStationItemIcon: () => new Node("span", false),
     document: doc,
@@ -1316,6 +1325,41 @@ it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchan
   f.station.layers.inner.back();
   expect(f.doc.activeElement).toBe(f.action("open-exchange"));
   expect(f.native.get("station-back")!.frame.contains(footer)).toBe(true);
+});
+
+it("keeps the standard Station Close scoped to the welcome card", () => {
+  const f = constructedStation();
+  const close = f.action("station-back");
+  const click = () => close.dispatchEvent(new Event("click"));
+  expect(close.classList.contains("ui-standard-button")).toBe(true);
+  expect(close.getAttribute("aria-label")).toBe(f.labels.close);
+
+  f.station.setOpen(true);
+  const held = resolveAdaHoldAction(
+    f.parent as unknown as HTMLElement,
+    close as unknown as EventTarget,
+  )!;
+  expect(held.available()).toBe(true);
+  close.disabled = true;
+  expect(held.available()).toBe(false);
+  held.activate();
+  click();
+  close.disabled = false;
+  f.activate(f.action("open-shop"));
+  expect(held.available()).toBe(false);
+  held.activate();
+  click();
+  expect(f.undock).not.toHaveBeenCalled();
+
+  f.station.layers.inner.back();
+  expect(f.doc.activeElement).toBe(f.action("open-shop"));
+  click();
+  expect(f.undock).toHaveBeenCalledOnce();
+
+  f.station.dispose();
+  held.activate();
+  click();
+  expect(f.undock).toHaveBeenCalledOnce();
 });
 
 it("uses one standard native click for footer and confirmation actions", () => {

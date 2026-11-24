@@ -71,6 +71,11 @@ class Element {
     add: (...names: string[]) => {
       this.className += ` ${names.join(" ")}`;
     },
+    remove: (...names: string[]) => {
+      for (const name of names) {
+        this.classList.toggle(name, false);
+      }
+    },
     toggle: (name: string, force = !this.className.split(" ").includes(name)) => {
       const names = new Set(this.className.split(" ").filter(Boolean));
       if (force) {
@@ -369,8 +374,7 @@ describe("shared Earth and space dialogue presentation", () => {
   it("uses Trista and Bin profiles for Mom and Dad without changing spoken family addresses", () => {
     setup();
     const panel = createDialoguePanel({
-      closeAction: "close",
-      closeLabel: "Close",
+      close: document.createElement("button"),
       title: "Dialogue",
     });
     for (const [address, name, key, url] of [
@@ -411,8 +415,7 @@ describe("shared Earth and space dialogue presentation", () => {
     async ({ first, second, third, url }) => {
       setup();
       const panel = createDialoguePanel({
-        closeAction: "close",
-        closeLabel: "Close",
+        close: document.createElement("button"),
         title: "Dialogue",
       });
       const face = panel.body.querySelector<HTMLElement>(".ada-story-portrait")!;
@@ -468,8 +471,7 @@ describe("shared Earth and space dialogue presentation", () => {
   it("changes portrait and name with the actual line speaker and leaves narration unnamed", () => {
     setup();
     const panel = createDialoguePanel({
-      closeAction: "close",
-      closeLabel: "Close",
+      close: document.createElement("button"),
       title: "Dialogue",
     });
     panel.showLine("Rivet", "A line");
@@ -489,8 +491,7 @@ describe("shared Earth and space dialogue presentation", () => {
   it("shows a station-specific name while using only the canonical keeper portrait and tab", () => {
     setup();
     const panel = createDialoguePanel({
-      closeAction: "close",
-      closeLabel: "Close",
+      close: document.createElement("button"),
       title: "Station",
     });
     panel.showLine(
@@ -1063,12 +1064,15 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   expect(resolve(skip)!.hold).toBeUndefined();
   resolve(skip)!.activate();
   expect(replacement).toHaveBeenCalledOnce();
+  expect(close.className.split(" ")).toContain("ui-standard-button");
+  expect(close.getAttribute("aria-label")).toBe(CONTENT.labels.close);
   const closeCallback = vi.fn();
   options.close = closeCallback;
   const captured = resolve(close)!;
   interaction.show(1, null);
   expect(captured.available()).toBe(false);
   captured.activate();
+  close.click();
   expect(closeCallback).not.toHaveBeenCalled();
   interaction.show(1, {
     choices: [{ id: "continue", label: CONTENT.labels.continue! }],

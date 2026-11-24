@@ -78,7 +78,7 @@ import {
   type MapChromeSchema,
   mapChromeTrees,
 } from "./mapChromeTree.ts";
-import { createMapCloseAction, mapCloseActionStyle } from "./mapCloseAction.ts";
+import { mapCloseActionStyle } from "./mapCloseAction.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
 import {
   type MapPanelGroup,
@@ -93,6 +93,7 @@ import {
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
 import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
@@ -1154,7 +1155,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     "primary",
     () => options.onClose(),
   );
-  const closeXAction = createMapCloseAction(root, "map-close-x", labels.close, {
+  const closeXAction = createStandardCloseAction(root, "map-close-x", labels.close, {
     current: (button) => !disposed && !screen.hidden && inCurrentView(root, button),
     run: () => options.onClose(),
     slopPx: () => MAP_SCREEN.dragThreshold * readViewUnit(screen),

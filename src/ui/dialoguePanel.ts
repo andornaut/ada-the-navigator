@@ -76,8 +76,7 @@ export type DialogueSpeaker =
 
 /** Earth and space dialogues share the story panel, speaker frame, name tab and text roles. */
 export function createDialoguePanel(options: {
-  readonly closeAction: string;
-  readonly closeLabel: string;
+  readonly close: HTMLButtonElement;
   readonly skip?: HTMLButtonElement;
   readonly title: string;
 }) {
@@ -110,11 +109,7 @@ export function createDialoguePanel(options: {
   choices.className = "ada-story-choices";
   const controls = document.createElement("div");
   controls.className = "ada-story-controls ada-dialogue-controls";
-  const close = document.createElement("button");
-  close.className = "ada-close";
-  close.type = "button";
-  close.dataset.action = options.closeAction;
-  close.setAttribute("aria-label", options.closeLabel);
+  const { close } = options;
   const containers: Readonly<Record<DialoguePanelContainer, HTMLElement>> = {
     body,
     card,

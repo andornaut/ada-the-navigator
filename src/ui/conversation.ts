@@ -21,6 +21,7 @@ import {
   selectPortraitCrop,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 export {
   AWAITING_TAB,
@@ -407,35 +408,31 @@ export function createInteractionCard(
   skip.classList.add("ada-compact", "ada-story-skip");
   skip.dataset.action = "dialogue-skip";
   skip.hidden = true;
+  const closeAction = createStandardCloseAction(
+    parent,
+    "conversation-close",
+    CONTENT.labels.close ?? "",
+    {
+      current: (button) => !disposed && button.isConnected,
+      run: () => close(),
+      slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+      slopThreshold: SCROLL.dragThreshold,
+    },
+  );
   let card: ReturnType<typeof createDialoguePanel>;
   try {
     card = createDialoguePanel({
-      closeAction: "conversation-close",
-      closeLabel: CONTENT.labels.close ?? "",
+      close: closeAction.element,
       skip,
       title: "",
     });
   } catch (error) {
     skipAction.dispose();
+    closeAction.dispose();
     throw error;
   }
   card.card.dataset.dialog = "conversation";
   modal.append(card.frame);
-  const bindAction = (button: HTMLButtonElement, run: () => void) =>
-    bindAdaAction(
-      {
-        click: {
-          availability: () =>
-            button.disabled || button.closest("[hidden], [inert]")
-              ? { kind: "omitted" }
-              : { kind: "available" },
-          run,
-        },
-        current: () => !disposed && button.isConnected,
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-      },
-      button,
-    );
   let actions: ReturnType<typeof createStandardTextAction>[] = [];
   let leaveView: (() => void) | undefined;
   let returnFocus: HTMLElement | null = null;
@@ -565,7 +562,6 @@ export function createInteractionCard(
     options.close();
     draw();
   };
-  const closeAction = bindAction(card.close, close);
   try {
     assertAdaActionMetadata(modal);
     parent.append(modal);

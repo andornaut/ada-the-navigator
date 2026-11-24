@@ -28,7 +28,7 @@ import { font, fromHudEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.t
 import { PAUSE_BUTTON } from "./layout/playView.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { modalCloseStyle } from "./modalClose.ts";
+import { modalCloseStyle, standardCloseActionStyle } from "./modalClose.ts";
 import { PAUSE_ART } from "./pause.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
@@ -336,6 +336,7 @@ ${UI_SCOPE} .ada-close{
   cursor:pointer;
   pointer-events:auto
 }
+${standardCloseActionStyle(`${UI_SCOPE} .ada-close`)}
 ${UI_SCOPE} .ada-close::before{
   content:"";
   width:${units(CARD_CLOSE.art.width)};

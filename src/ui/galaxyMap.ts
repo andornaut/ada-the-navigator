@@ -50,8 +50,9 @@ import {
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createMapCloseAction, mapCloseActionStyle } from "./mapCloseAction.ts";
+import { mapCloseActionStyle } from "./mapCloseAction.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
@@ -689,7 +690,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   jump.dataset.action = "galaxy-jump";
   const flightActions = document.createElement("div");
   flightActions.className = "ada-route-flight-actions";
-  const closeXAction = createMapCloseAction(root, "galaxy-close-x", labels.close, {
+  const closeXAction = createStandardCloseAction(root, "galaxy-close-x", labels.close, {
     current,
     run: () => options.onClose(),
     slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
