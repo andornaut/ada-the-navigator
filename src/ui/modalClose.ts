@@ -2,16 +2,6 @@ import { HUD_BUTTON } from "../data/layout.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { units } from "./layout/css.ts";
 
-/** The shared close artwork on a native button. The modal owns its action binding. */
-export function createModalClose(action: string, label: string): HTMLButtonElement {
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "ada-close";
-  close.dataset.action = action;
-  close.setAttribute("aria-label", label);
-  return close;
-}
-
 // Mask only the idle atlas frame. The active sprite keeps its own face and ink.
 const CLOSE_GLYPH_MASK = `mask:url('/art/ui/sprites/ui-close.png') 0 0 /
   ${units(2 * CARD_CLOSE.art.width)} ${units(CARD_CLOSE.art.height)} no-repeat`;
