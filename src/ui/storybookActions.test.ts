@@ -621,6 +621,7 @@ function useFixture() {
     usePress: undefined,
     usePressed,
     useShown: true,
+    weapons: { setPressed: vi.fn() },
     window,
   });
   const declarations = [

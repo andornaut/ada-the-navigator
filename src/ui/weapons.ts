@@ -112,6 +112,8 @@ export const WEAPON_FILLS: Readonly<Record<Weapon, string>> = {
 export const AMMO_COUNT_TEXT = { inactive: "#b8b8b8", normal: "#ead4aa" } as const;
 
 const INK = "#181425";
+const PRESSED_WEAPON =
+  ".ada-controls .ada-weapon:is(:active,[data-weapon-pressed]):not(:disabled) .ada-disc";
 
 // Permanent disc edges. The level details are transparent on discs without a level.
 const { pip } = HUD_WEAPON_LEVEL;
@@ -287,7 +289,18 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
 .ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
 }
-.ada-controls .ada-weapon[data-ui-refusal-red]:focus-visible .ada-disc{
+${PRESSED_WEAPON}{
+  background:#3a4466;
+  --disc-focus-glyph:#ffffff
+}
+@media (forced-colors:active){
+  ${PRESSED_WEAPON}{
+    forced-color-adjust:none;
+    background:ButtonText;
+    --disc-focus-glyph:ButtonFace
+  }
+}
+.ada-controls .ada-weapon[data-ui-refusal-red]:is(:focus-visible,:active,[data-weapon-pressed]) .ada-disc{
   --disc-focus-glyph:currentColor
 }
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
@@ -354,6 +367,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   let enabled = false;
   let shown: boolean | undefined;
   let disposed = false;
+  let pressed: HTMLElement | null = null;
   const actionBindings = new Map<Weapon, ReturnType<typeof bindAdaAction>>();
   const feedback = new AmmoFeedbackQueue();
   let lastFeedbackTime: number | undefined;
@@ -508,6 +522,13 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       if (root.dataset.field !== field) {
         root.dataset.field = field;
       }
+    },
+    /** Paint the action admitted by the existing pointer-release dispatcher. */
+    setPressed(element: HTMLElement | null): void {
+      pressed?.removeAttribute("data-weapon-pressed");
+      pressed =
+        element?.classList.contains("ada-weapon") && root.contains(element) ? element : null;
+      pressed?.setAttribute("data-weapon-pressed", "");
     },
     /** Controls paint independently of the existing input gate. */
     setShown(value: boolean): void {

@@ -270,6 +270,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pointerRelease: {
         onPressChange: (element) => {
           usePress = element === settings.useButton ? { since: performance.now() } : undefined;
+          weapons.setPressed(element);
           pressedStoryButton?.removeAttribute("data-story-pressed");
           pressedStoryButton =
             element?.classList.contains("ada-story-button") ||
@@ -921,12 +922,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     settings.useButton.inert = modalOpen();
     useDisc.setVisible(useShown);
     if (context) {
+      const useFocused =
+        useShown && !settings.useButton.inert && settings.useButton.matches(":focus-visible");
       const pose = usePress
         ? performance.now() - usePress.since < USE_PRESS_MS
           ? "press"
           : "held"
-        : useShown && !settings.useButton.inert && settings.useButton.matches(":focus-visible")
-          ? "focus"
+        : useFocused
+          ? settings.useButton.matches(":active")
+            ? "focus-held"
+            : "focus"
           : "rest";
       useDisc.setFrame(useDiscFrame(context.questIcon ? "quest" : context.action, pose));
     }

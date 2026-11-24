@@ -117,15 +117,18 @@ describe("Use disc chrome", () => {
   });
 
   it("whitens band and symbol while pressed, the press frame's ring 1 larger for 60 ms", () => {
-    expect(USE_DISC_POSES).toEqual(["rest", "focus", "press", "held"]);
+    expect(USE_DISC_POSES).toEqual(["rest", "focus", "press", "held", "focus-held"]);
     expect(USE_PRESS_MS).toBe(60);
     const press = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "press");
     const held = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "held");
+    const focusHeld = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "focus-held");
     expect(press.slice(0, 2).map((layer) => "outer" in layer && layer.outer)).toEqual([37.5, 36.5]);
     expect(held.slice(0, 2).map((layer) => "outer" in layer && layer.outer)).toEqual([36.5, 35.5]);
     for (const layers of [press, held]) {
       expect(touchChromePixel(4, layers, { x: 37.5, y: 37.5 })).toEqual(WHITE);
     }
+    expect(focusHeld.slice(1)).toEqual(held);
+    expect(touchChromePixel(4, focusHeld, { x: 37.5, y: 17.5 })).toEqual([38, 43, 68, 255]);
     expect(
       touchChromePixel(4, useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "rest"), {
         x: 37.5,

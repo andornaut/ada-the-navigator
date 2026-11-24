@@ -138,9 +138,15 @@ export function touchChromeLayers(
   return layers;
 }
 
-/** The Use disc's poses: at rest or focused, the 60 ms press frame, then held until release. */
-export type UseDiscPose = "focus" | "held" | "press" | "rest";
-export const USE_DISC_POSES: readonly UseDiscPose[] = ["rest", "focus", "press", "held"];
+/** The Use disc's rest, focus, and held poses, with a 60 ms initial touch frame. */
+export type UseDiscPose = "focus" | "focus-held" | "held" | "press" | "rest";
+export const USE_DISC_POSES: readonly UseDiscPose[] = [
+  "rest",
+  "focus",
+  "press",
+  "held",
+  "focus-held",
+];
 /** The press frame's length before the disc shows held. */
 export const USE_PRESS_MS = 60;
 
@@ -293,10 +299,11 @@ export function useDiscLayers(
   action: UseAction | "quest",
   pose: UseDiscPose,
 ): readonly TouchChromeLayer[] {
-  const core = pose === "press" || pose === "held" ? colours.white : colours.cream;
+  const pressed = pose === "press" || pose === "held" || pose === "focus-held";
+  const core = pressed ? colours.white : colours.cream;
   const outer = 36.5 + (pose === "press" ? 1 : 0);
   const layers: TouchChromeLayer[] = [];
-  if (pose === "focus") {
+  if (pose === "focus" || pose === "focus-held") {
     layers.push({ centre: CENTRE, colour: USE_CALLOUT_FACE, kind: "disc", radius: outer - 4 });
   }
   layers.push(
