@@ -1,6 +1,6 @@
 // The game as an installable app that plays offline: the launch that installs and updates the
 // build, persistent storage, the install offer, the update offer and the back gesture.
-// launchPhoneApp runs once from the boot shell before the game downloads; setupPhoneApp runs once
+// The boot shell prepares the launch before the game downloads; setupPhoneApp runs once
 // from main.ts as the page loads; the Settings Install row reads the install functions below.
 //
 // The launch installs the complete build before first play under the one loading bar, then plays
@@ -34,8 +34,9 @@ import {
   watchInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
-  browserLaunchContext,
   createLaunch,
+  type LaunchContext,
+  prepareBrowserLaunch,
   type RequiredUpdateState,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
@@ -55,6 +56,7 @@ import {
   updateActivationActivity,
   updateStateActivity,
 } from "../loading/progress.ts";
+import { loadingFailureFrame, loadingFailurePresentation } from "../loading/startup.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneBack } from "./events.ts";
 import { presentInstallationFailure } from "./installationPresentation.ts";
@@ -74,7 +76,14 @@ export const SERVICE_WORKER_URL = "/sw.js";
 const BACK_GUARD_KEY = "adaBackGuard";
 let flow: InstallFlow | undefined;
 let launch: ReturnType<typeof createLaunch> | undefined;
-let launched: Promise<LaunchResult> | undefined;
+type PhoneLaunch =
+  | { readonly kind: "supported"; readonly result: Promise<LaunchResult> }
+  | {
+      readonly kind: "unsupported";
+      readonly result: Promise<"unsupported">;
+      dispose(): void;
+    };
+let preparedLaunch: PhoneLaunch | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 // The forced update's state once a newer save requires it, and who hears it.
 let required: RequiredUpdateState | undefined;
@@ -109,13 +118,7 @@ function requiredUpdate(state: RequiredUpdateState): void {
   onRequired?.(state);
 }
 
-// The production build only, where the browser has service workers and Cache Storage: the dev
-// server has no sw.js, and a worker would serve stale modules over hot reloads.
-function createPhoneLaunch(): ReturnType<typeof createLaunch> | undefined {
-  const context = import.meta.env.PROD ? browserLaunchContext(CACHE_POLICY) : undefined;
-  if (context === undefined) {
-    return undefined;
-  }
+function createPhoneLaunch(context: LaunchContext): ReturnType<typeof createLaunch> {
   const created = createLaunch(context, {
     onFailure: presentInstallationFailure,
     onNetworkPlay(notice) {
@@ -281,16 +284,48 @@ export function requireNewerVersion(onState: (state: RequiredUpdateState) => voi
   }
 }
 
-// Installs or activates the build before the game downloads: call it first from the boot shell,
-// then again before constructing the game or touching its save; every call shares one run.
-// "reloading" means the page is reloading into another build, so the game must not start. A
-// failed first install stays pending until Loading failed's Retry resumes it.
-export function launchPhoneApp(): Promise<LaunchResult> {
-  if (launched === undefined) {
-    launch = createPhoneLaunch();
-    launched = launch?.run() ?? Promise.resolve("play");
+/** Resolve production capability and share one installation attempt across the boot and game. */
+export function preparePhoneLaunch(parent?: HTMLElement): PhoneLaunch {
+  if (preparedLaunch !== undefined) {
+    return preparedLaunch;
   }
-  return launched;
+  if (!import.meta.env.PROD) {
+    // The development server has no worker and must never use a cached production build.
+    return (preparedLaunch = { kind: "supported", result: Promise.resolve("play") });
+  }
+  const app = parent ?? document.getElementById("app");
+  if (!app) {
+    throw new Error("Missing application mount");
+  }
+  const frame = loadingFailureFrame(app.ownerDocument);
+  const prepared = prepareBrowserLaunch(
+    {
+      failure: { presentation: loadingFailurePresentation(app) },
+      onUnsupported: () => {
+        app.querySelector("#boot-progress")?.remove();
+        app.ownerDocument.body.append(frame);
+      },
+      parent: frame,
+    },
+    CACHE_POLICY,
+  );
+  if (prepared.kind === "unsupported") {
+    return (preparedLaunch = {
+      dispose() {
+        prepared.failure.dispose();
+        frame.remove();
+      },
+      kind: "unsupported",
+      result: Promise.resolve("unsupported"),
+    });
+  }
+  launch = createPhoneLaunch(prepared.context);
+  return (preparedLaunch = { kind: "supported", result: launch.run() });
+}
+
+/** Fallback callers share the boot result and stop before touching the save unless it is play. */
+export function launchPhoneApp(): Promise<LaunchResult | "unsupported"> {
+  return preparePhoneLaunch().result;
 }
 
 /** Check for an update in the current document, using the launch lifecycle's normal guards. */
@@ -298,9 +333,8 @@ export function requestUpdateCheck(): void {
   launch?.requestUpdateCheck();
 }
 
-// A first install that failed for lack of service workers or storage: the game plays from the
-// network this time, and the next launch tries the install again. onNotice hears it now, if
-// known, and when it happens.
+// A supported launcher can fall back to network play after an install attempt. onNotice hears
+// that outcome now, if known, and when it happens.
 export function networkPlayNotice(onNotice: (notice: NetworkPlayNotice) => void): void {
   onNetworkPlay = onNotice;
   if (networkPlay !== undefined) {

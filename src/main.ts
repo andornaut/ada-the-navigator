@@ -90,6 +90,10 @@ export async function prepareGame(
   if (!attempt.isCurrent() || crashed) {
     return;
   }
+  launched ??= launchPhoneApp();
+  if ((await launched) !== "play" || !attempt.isCurrent() || crashed) {
+    return;
+  }
   boot ??= prepareBootReveal(
     { document, required, ui, ...(resources ? { resources } : {}), window },
     parent,
@@ -105,10 +109,6 @@ export async function prepareGame(
       scene.shell.focusUnfocusedDefault();
     },
   );
-  launched ??= launchPhoneApp();
-  if ((await launched) === "reloading" || !attempt.isCurrent() || crashed) {
-    return;
-  }
   saved ??= saves.load();
   const initial = await saved;
   if (!attempt.isCurrent() || crashed) {
@@ -148,7 +148,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
     return;
   }
   launched ??= launchPhoneApp();
-  if ((await launched) === "reloading" || !attempt.isCurrent() || crashed) {
+  if ((await launched) !== "play" || !attempt.isCurrent() || crashed) {
     return;
   }
   // No save read is admitted before the existing launch/update fence.

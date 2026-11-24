@@ -37,6 +37,75 @@ export interface RequiredGame {
   dispose(): void;
 }
 
+function recoveryUnit(root: HTMLElement): number {
+  const viewport = root.ownerDocument.defaultView;
+  const scale = viewScale({
+    height: viewport?.innerHeight ?? root.clientHeight,
+    width: viewport?.innerWidth ?? root.clientWidth,
+  });
+  return Number.isFinite(scale) && scale > 0 ? scale : 1;
+}
+
+export function loadingFailurePresentation(
+  root: HTMLElement,
+): LoadingFailurePresentation<"content"> {
+  const unit = recoveryUnit(root);
+  return {
+    action: {
+      borderWidthPx: FRAME_LINE * unit,
+      heightPx: TEXT_BUTTON.height * unit,
+      highlightHeightPx: FRAME_LINE * unit,
+      paddingBottomPx: TEXT_BUTTON.lipHeight * unit,
+      paddingXPx: TEXT_BUTTON.inset * unit,
+      shadeHeightPx: TEXT_BUTTON.lipHeight * unit,
+      widthPx: "content",
+    },
+    palette: {
+      action: "#bfa06f",
+      actionText: TEXT_TOKENS.buttonLabel,
+      border: "#181425",
+      highlight: "#d2b886",
+      lip: "#2f2d3d",
+      panel: "#3b3850",
+      shade: "#8a7148",
+      shadow: "#181425",
+      text: TEXT_TOKENS.label,
+    },
+    panel: {
+      bodyActionGapPx: 24,
+      borderWidthPx: 1,
+      lipHeightPx: 4,
+      maxWidthPx: 328,
+      paddingBottomPx: 16,
+      paddingTopPx: 24,
+      paddingXPx: 16,
+      safeInsetPx: 16,
+      shadowOffsetPx: 4,
+      titleBodyGapPx: 16,
+    },
+    text: {
+      action: { lineHeight: 1.2, sizePx: 18, synthesis: "weight", weight: 900 },
+      body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
+      title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
+    },
+  };
+}
+
+export function loadingFailureFrame(document: Document): HTMLDivElement {
+  const frame = document.createElement("div");
+  frame.className = "ada-loading-failure-frame";
+  Object.assign(frame.style, {
+    alignItems: "center",
+    display: "flex",
+    inset: "0",
+    justifyContent: "center",
+    pointerEvents: "none",
+    position: "fixed",
+    zIndex: String(LOADING_LAYER - 1),
+  });
+  return frame;
+}
+
 /** One page owns the registry, failure presenter and existing bar through every Retry. */
 export async function startLoading(
   required: RequiredLoading,
@@ -47,63 +116,12 @@ export async function startLoading(
   const stop = mountLoading(root);
   let game: RequiredGame | undefined;
   let installation: InstallationPresentation | undefined;
-  const recoveryUnit = () => {
-    const viewport = root.ownerDocument.defaultView;
-    const scale = viewScale({
-      height: viewport?.innerHeight ?? root.clientHeight,
-      width: viewport?.innerWidth ?? root.clientWidth,
-    });
-    return Number.isFinite(scale) && scale > 0 ? scale : 1;
-  };
-  const presentation = (): LoadingFailurePresentation<"content"> => {
-    const unit = recoveryUnit();
-    return {
-      action: {
-        borderWidthPx: FRAME_LINE * unit,
-        heightPx: TEXT_BUTTON.height * unit,
-        highlightHeightPx: FRAME_LINE * unit,
-        paddingBottomPx: TEXT_BUTTON.lipHeight * unit,
-        paddingXPx: TEXT_BUTTON.inset * unit,
-        shadeHeightPx: TEXT_BUTTON.lipHeight * unit,
-        widthPx: "content",
-      },
-      palette: {
-        action: "#bfa06f",
-        actionText: TEXT_TOKENS.buttonLabel,
-        border: "#181425",
-        highlight: "#d2b886",
-        lip: "#2f2d3d",
-        panel: "#3b3850",
-        shade: "#8a7148",
-        shadow: "#181425",
-        text: TEXT_TOKENS.label,
-      },
-      panel: {
-        bodyActionGapPx: 24,
-        borderWidthPx: 1,
-        lipHeightPx: 4,
-        maxWidthPx: 328,
-        paddingBottomPx: 16,
-        paddingTopPx: 24,
-        paddingXPx: 16,
-        safeInsetPx: 16,
-        shadowOffsetPx: 4,
-        titleBodyGapPx: 16,
-      },
-      text: {
-        action: { lineHeight: 1.2, sizePx: 18, synthesis: "weight", weight: 900 },
-        body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
-        title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
-      },
-    };
-  };
-  const frame = root.ownerDocument.createElement("div");
-  frame.className = "ada-loading-failure-frame";
+  const frame = loadingFailureFrame(root.ownerDocument);
   root.ownerDocument.body.append(frame);
   const recovery = bindAdaRecoveryActionRoot({ guard: rootPressGuard(frame) }, frame);
   const stopRecoveryRequired = required.subscribe(() => recovery.invalidate());
   const bindHoldAction = createAdaFactoryHoldBinding(
-    { current: () => frame.isConnected, slopPx: () => SCROLL.dragThreshold * recoveryUnit() },
+    { current: () => frame.isConnected, slopPx: () => SCROLL.dragThreshold * recoveryUnit(root) },
     frame,
   );
   const failure = (() => {
@@ -138,7 +156,7 @@ export async function startLoading(
               reportError(error);
             }
           },
-          presentation: presentation(),
+          presentation: loadingFailurePresentation(root),
         },
         frame,
       );
@@ -155,7 +173,7 @@ export async function startLoading(
   })();
   const onScale = () => {
     recovery.invalidate();
-    failure.setPresentation(presentation());
+    failure.setPresentation(loadingFailurePresentation(root));
   };
   const events = root.ownerDocument.defaultView;
   events?.addEventListener("resize", onScale);
@@ -166,15 +184,6 @@ export async function startLoading(
     recovery.invalidate();
     failure.update({ ...state, attempt: ++presentationRevision });
   };
-  Object.assign(frame.style, {
-    alignItems: "center",
-    display: "flex",
-    inset: "0",
-    justifyContent: "center",
-    pointerEvents: "none",
-    position: "fixed",
-    zIndex: String(LOADING_LAYER - 1),
-  });
   const moduleAttempt = createLoadingAttempts({
     async load(attempt) {
       const loaded = await loadGame();

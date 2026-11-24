@@ -157,7 +157,7 @@ beforeEach(() => {
   for (const key of ["ship-jets", "ship-retro-jets"]) {
     boot.requiredBodies.set(key, JSON.parse(readFileSync(`public/art/${key}.json`, "utf8")));
   }
-  boot.launch.mockResolvedValue("continue");
+  boot.launch.mockResolvedValue("play");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
   vi.stubGlobal("document", { getElementById: (id: string) => (id === "app" ? boot.app : {}) });
   vi.stubGlobal("screen", {});
@@ -317,14 +317,17 @@ it("does not overlap a constructor that failed before exposing a public retireme
   expect(boot.game).toHaveBeenCalledOnce();
   expect(boot.blockWrites).not.toHaveBeenCalled();
 });
-it("never reads storage or constructs after the launch version switch", async () => {
-  boot.launch.mockResolvedValue("reloading");
-  const { attempt } = await entry();
-  await attempt.start();
-  expect(boot.load).not.toHaveBeenCalled();
-  expect(boot.game).not.toHaveBeenCalled();
-  expect(boot.reveal.commit).not.toHaveBeenCalled();
-});
+it.each(["reloading", "unsupported"])(
+  "never reads storage or constructs when launch is %s",
+  async (result) => {
+    boot.launch.mockResolvedValue(result);
+    const { attempt } = await entry();
+    await attempt.start();
+    expect(boot.load).not.toHaveBeenCalled();
+    expect(boot.game).not.toHaveBeenCalled();
+    expect(boot.reveal.commit).not.toHaveBeenCalled();
+  },
+);
 it("keeps the crash fence while a save read settles and never enters the game", async () => {
   let release!: (value: unknown) => void;
   boot.load.mockReturnValue(

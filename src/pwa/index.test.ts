@@ -9,6 +9,7 @@ const kit = vi.hoisted(() => {
     run: vi.fn<() => Promise<"play" | "reloading">>(),
   };
   const context = { policy: undefined as unknown };
+  const failure = { dispose: vi.fn() };
   return {
     context,
     create: vi.fn(
@@ -34,16 +35,24 @@ const kit = vi.hoisted(() => {
         return launch;
       },
     ),
+    failure,
     launch,
     supported: true,
   };
 });
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/launch", () => ({
-  browserLaunchContext: (policy: unknown) => {
-    kit.context.policy = policy;
-    return kit.supported ? kit.context : undefined;
-  },
   createLaunch: kit.create,
+  prepareBrowserLaunch: (
+    { onUnsupported }: { readonly onUnsupported: () => void },
+    policy: unknown,
+  ) => {
+    kit.context.policy = policy;
+    if (kit.supported) {
+      return { context: kit.context, kind: "supported" };
+    }
+    onUnsupported();
+    return { failure: kit.failure, kind: "unsupported" };
+  },
 }));
 const wakeLock = vi.hoisted(() => {
   const lock = { isHeld: vi.fn(), start: vi.fn(), stop: vi.fn() };
@@ -111,7 +120,22 @@ function stubDevice({
   vi.stubGlobal("CloseWatcher", closeWatcher ? EventTarget : undefined);
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
-  vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+  const frame = { remove: vi.fn(), style: {} };
+  const progress = { remove: vi.fn() };
+  const document = Object.assign(new EventTarget(), {
+    body: { append: vi.fn() },
+    createElement: () => frame,
+    defaultView: page,
+    getElementById: () => mount,
+    visibilityState: "visible",
+  });
+  const mount = {
+    clientHeight: 360,
+    clientWidth: 720,
+    ownerDocument: document,
+    querySelector: (selector: string) => (selector === "#boot-progress" ? progress : null),
+  };
+  vi.stubGlobal("document", document);
   stubHistory();
   return page;
 }
@@ -194,12 +218,8 @@ describe("launch", () => {
     expect(await pwa.launchPhoneApp()).toBe("reloading");
   });
 
-  it.each([
-    ["the development build", false, true],
-    ["a browser without service workers or Cache Storage", true, false],
-  ])("plays from the network in %s", async (_name, prod, supported) => {
-    vi.stubEnv("PROD", prod);
-    kit.supported = supported;
+  it("plays from the network in development without preparing a production launch", async () => {
+    vi.stubEnv("PROD", false);
     stubDevice({});
     const pwa = await import("./index.ts");
     expect(await pwa.launchPhoneApp()).toBe("play");
@@ -209,6 +229,33 @@ describe("launch", () => {
     const states: string[] = [];
     pwa.requireNewerVersion((state) => states.push(state));
     expect(states).toEqual(["unavailable"]);
+  });
+
+  it("exposes unsupported without creating an installer and disposes the prepared notice", async () => {
+    kit.supported = false;
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    const parent = document.getElementById("app")!;
+    const progress = parent.querySelector("#boot-progress")!;
+    const prepared = pwa.preparePhoneLaunch(parent);
+    expect(prepared.kind).toBe("unsupported");
+    expect(pwa.preparePhoneLaunch(parent)).toBe(prepared);
+    expect(await pwa.launchPhoneApp()).toBe("unsupported");
+    expect(progress.remove).toHaveBeenCalledOnce();
+    expect(document.body.append).toHaveBeenCalledOnce();
+    expect(kit.create).not.toHaveBeenCalled();
+    expect(kit.launch.run).not.toHaveBeenCalled();
+    pwa.requestUpdateCheck();
+    expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
+    const states: string[] = [];
+    pwa.requireNewerVersion((state) => states.push(state));
+    expect(states).toEqual(["unavailable"]);
+    if (prepared.kind === "unsupported") {
+      prepared.dispose();
+    }
+    expect(kit.failure.dispose).toHaveBeenCalledOnce();
+    const [frame] = vi.mocked(document.body.append).mock.calls[0]!;
+    expect((frame as HTMLElement).remove).toHaveBeenCalledOnce();
   });
 
   it("counts the boot preload's settled share into the launch's progress", async () => {
