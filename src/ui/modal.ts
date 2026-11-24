@@ -974,21 +974,13 @@ export function createSwitchRow(options: {
   };
 }
 
-export function createButton(label: string, role: ButtonRole = "secondary"): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = role === "primary" ? "ada-button ada-primary" : "ada-button";
-  button.textContent = label;
-  return button;
-}
-
-// An action group of one shared width, secondary actions left of primary ones.
 /** Footer intent is explicit and independent of translated labels or entry context. */
 export function setFooterAction(action: "back" | "close", footer: HTMLElement): void {
   footer.dataset.footerAction = action;
   setControlPlacement("footer", footer);
 }
 
+// An action group of one shared width, secondary actions left of primary ones.
 export function createActions(
   buttons: readonly { readonly button: HTMLButtonElement; readonly role: ButtonRole }[],
 ): HTMLDivElement {
