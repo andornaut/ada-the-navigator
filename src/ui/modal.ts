@@ -980,7 +980,7 @@ export function setFooterAction(action: "back" | "close", footer: HTMLElement): 
   setControlPlacement("footer", footer);
 }
 
-// An action group of one shared width, secondary actions left of primary ones.
+// Place secondary actions before primary actions.
 export function createActions(
   buttons: readonly { readonly button: HTMLButtonElement; readonly role: ButtonRole }[],
 ): HTMLDivElement {
