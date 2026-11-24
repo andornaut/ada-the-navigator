@@ -12,3 +12,16 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+.crash-panel > button.crash-button:is(:active, [data-ada-reload-pressed]):not(:disabled) {
+  background-color: var(--crash-text);
+  color: var(--crash-ink);
+}
+
+@media (forced-colors: active) {
+  .crash-panel > button.crash-button:is(:active, [data-ada-reload-pressed]):not(:disabled) {
+    forced-color-adjust: none;
+    background-color: ButtonText;
+    color: ButtonFace;
+  }
+}

@@ -12,6 +12,10 @@ import {
   installCrashScreen,
 } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import type { HoldActionBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import {
+  listenPagePresses,
+  type PagePress,
+} from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_COPY } from "../data/crashCopy.ts";
@@ -54,12 +58,50 @@ const onPageHide = (event: PageTransitionEvent) => {
     disposeRecovery();
   }
 };
-// The body-level dialog uses the viewport fit, as startup Retry does before the play area exists.
-const recoveryLength = (value: number) =>
-  `min(calc(100vw * ${value} / ${SCREEN.width}), calc(100vh * ${value} / ${SCREEN.height}))`;
+// Fit the landscape game to either viewport orientation before the play area exists.
+const recoveryLength = (value: number) => {
+  const wide = `calc(max(100vw, 100vh) * ${value} / ${SCREEN.width})`;
+  const narrow = `calc(min(100vw, 100vh) * ${value} / ${SCREEN.height})`;
+  return `min(${wide}, ${narrow})`;
+};
+
+// Touch can activate the native button without exposing :active before release.
+function bindReloadPress(element: HTMLElement): () => void {
+  const page = element.ownerDocument;
+  let pointer: number | undefined;
+  const clear = ({ pointerId }: PagePress) => {
+    if (pointerId === pointer) {
+      pointer = undefined;
+      element.removeAttribute("data-ada-reload-pressed");
+    }
+  };
+  const stop = listenPagePresses(
+    (event) => pointer === undefined && event.pointerType === "touch" && event.target === element,
+    {
+      cancel: clear,
+      down: (press) => {
+        pointer = press.pointerId;
+        element.setAttribute("data-ada-reload-pressed", "");
+      },
+      move: (press, event) => {
+        if (!element.contains(page.elementFromPoint(event.clientX, event.clientY))) {
+          clear(press);
+        }
+      },
+      up: clear,
+    },
+    page,
+  );
+  return () => {
+    stop();
+    element.removeAttribute("data-ada-reload-pressed");
+  };
+}
+
 const bindHoldAction: HoldActionBinding = (action) => {
   const { element } = action;
-  if (element.matches(".crash-panel > button.crash-button")) {
+  const isReload = element.matches(".crash-panel > button.crash-button");
+  if (isReload) {
     const { style } = element;
     style.setProperty(
       "--ada-reload-height",
@@ -95,8 +137,10 @@ const bindHoldAction: HoldActionBinding = (action) => {
     window.addEventListener("pagehide", onPageHide);
   }
   const unbind = recovery.bind(action);
+  const stopPress = isReload ? bindReloadPress(element) : undefined;
   const stop = () => {
     metadata.delete(stop);
+    stopPress?.();
     unbind();
   };
   metadata.add(stop);
