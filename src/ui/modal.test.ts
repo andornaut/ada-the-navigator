@@ -135,9 +135,12 @@ describe("modal buttons", () => {
     const { bottom, left, right, top } = BUTTON_SLICE;
     expect(enabled).toContain(`border-image-slice:${top} ${right} ${bottom} ${left}`);
     expect(enabled).not.toMatch(/border-image-source|padding:|fill/u);
-    expect(rule(`${focus}:where(.ada-unavailable,[aria-disabled=true])`)).toContain(
-      "text-decoration:underline",
-    );
+    const unavailable = rule(`${focus}:where(.ada-unavailable,[aria-disabled=true])`);
+    expect(unavailable).toContain("color:var(--ada-unavailable-focus-ink)");
+    expect(unavailable).toContain("forced-color-adjust:auto");
+    expect(unavailable).not.toMatch(/background|border-image|outline|text-decoration/u);
+    expect(MODAL_STYLE).toContain(`--ada-unavailable-focus-ink:${TEXT_TOKENS.label}`);
+    expect(MODAL_STYLE).toContain("--ada-unavailable-focus-ink:LinkText");
     expect(MODAL_STYLE).toContain("--ada-text-focus-face:Highlight;");
     expect(MODAL_STYLE).toContain("--ada-text-focus-ink:HighlightText");
   });

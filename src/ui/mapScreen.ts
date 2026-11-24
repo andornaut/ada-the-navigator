@@ -499,10 +499,8 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-screen .ui-standard-button[aria-disabled=true]:focus-visible{
   background-color:${BUTTON_FACE.disabled};
-  color:${TEXT_TOKENS.disabledLabel};
-  forced-color-adjust:auto;
-  text-decoration:underline;
-  text-underline-offset:.15em
+  color:var(--ada-unavailable-focus-ink);
+  forced-color-adjust:auto
 }
 @media (forced-colors:active){
   .ada-controls .ada-map-screen .ui-standard-button[data-action="map-travel"]:focus-visible:not([aria-disabled]){

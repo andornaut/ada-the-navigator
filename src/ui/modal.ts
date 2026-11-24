@@ -467,12 +467,14 @@ ${LEGACY_ENABLED_FOCUS}{
   border-image-slice:${SLICE}
 }
 /* A focusable refusal keeps its flat disabled face and gets a label cue. */
+${UI_SCOPE}{--ada-unavailable-focus-ink:${TEXT_TOKENS.label}}
 ${STANDARD_TEXT_FOCUS}[aria-disabled=true],
 ${LEGACY_TEXT_FOCUS}:where(.ada-unavailable,[aria-disabled=true]){
-  text-decoration:underline;
-  text-underline-offset:.15em
+  color:var(--ada-unavailable-focus-ink);
+  forced-color-adjust:auto
 }
 @media (forced-colors:active){
+  ${UI_SCOPE}{--ada-unavailable-focus-ink:LinkText}
   ${STANDARD_ENABLED_FOCUS},
   ${INSTALL_ENABLED_FOCUS},
   ${DIALOGUE_SKIP_ENABLED_FOCUS},
