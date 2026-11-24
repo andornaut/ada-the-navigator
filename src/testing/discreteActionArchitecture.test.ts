@@ -340,6 +340,25 @@ it("keeps mixed drag release actions blocking and classifies native value editin
   ).toBe("unresolved-event");
 });
 
+it.each(["gotpointercapture", "lostpointercapture"])(
+  "reviews a pointer capture callback that can activate an action (%s)",
+  (event) => {
+    const findings = scanSingleSource(
+      "src/ui/consumer.ts",
+      `
+      const type = "${event}";
+      screen.addEventListener(type, event => {
+        event.preventDefault();
+        select(event);
+      });
+    `,
+    );
+    expect(findings).toEqual([
+      expect.objectContaining({ classification: "unclassified", kind: "gesture-review" }),
+    ]);
+  },
+);
+
 it("resolves event aliases in their lexical scope and leaves unknown keyboard actions open", () => {
   const findings = scanWithRegistry(
     "src/ui/statusPill.ts",
@@ -691,6 +710,8 @@ it.each([
   ['const button = createButton("Run"); bindAdaAction(options, button);', 1, false],
   ['node.addEventListener("click", run);', 1, false],
   ['node.addEventListener("pointerup", select);', 1, false],
+  ['node.addEventListener("lostpointercapture", select);', 1, false],
+  ["recovery.root.assertBindings();", 1, false],
   ['const button = createButton("Later"); button.disabled = true;', 1, false],
   ['node.addEventListener("click", event => event.preventDefault());', 0, false],
 ] as const)("uses the real CLI exit contract for %s", (text, status, imported) => {
@@ -712,7 +733,8 @@ it.each([
   expect(result.error).toBeUndefined();
   expect(result.status, result.stderr).toBe(status);
   const facts = JSON.parse(readFileSync(report, "utf8"));
-  expect(facts.blocking > 0).toBe(status === 1);
+  expect(facts.blocking).toBe(status);
+  expect(facts.status).toBe(status === 1 ? "OPEN" : "CLOSED_LOCAL_STATIC_CHECKS");
   expect(facts.inputs).toEqual(
     [consumer, ...(imported ? [canonicalRegistry.path] : [])].map((path) => ({
       path,

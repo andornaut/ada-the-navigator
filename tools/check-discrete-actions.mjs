@@ -36,10 +36,11 @@ const counts = Object.fromEntries(
     "registered-action",
   ].map((kind) => [kind, findings.filter((finding) => finding.kind === kind).length]),
 );
-const blocking = findings.filter(
+const blockingFindings = findings.filter(
   (finding) => !["non-action", "registered-action"].includes(finding.kind),
 );
-const status = blocking.length ? "OPEN" : "CLOSED_LOCAL_STATIC_CHECKS";
+const blocking = blockingFindings.length + unresolvedRuntimeAssertions.length;
+const status = blocking ? "OPEN" : "CLOSED_LOCAL_STATIC_CHECKS";
 const report = process.argv.indexOf("--report");
 if (report >= 0) {
   writeFileSync(
@@ -48,7 +49,7 @@ if (report >= 0) {
       {
         status,
         counts,
-        blocking: blocking.length,
+        blocking,
         inputs,
         findings,
         factoryAssociations,
@@ -60,5 +61,5 @@ if (report >= 0) {
     )}\n`,
   );
 }
-console.log(JSON.stringify({ status, counts, blocking: blocking.length }));
-process.exitCode = blocking.length ? 1 : 0;
+console.log(JSON.stringify({ status, counts, blocking }));
+process.exitCode = blocking ? 1 : 0;

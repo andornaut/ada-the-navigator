@@ -2442,7 +2442,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         const facts = callbackFacts(node.arguments[1]);
         const discrete = names.some((name) => ["click", "dblclick"].includes(name));
         const pointer = names.some((name) =>
-          /^(pointer|touch|mouse|wheel|keydown|keyup)/.test(name),
+          /^(?:(?:got|lost)pointercapture$|pointer|touch|mouse|wheel|keydown|keyup)/.test(name),
         );
         const editing = names.some((name) => ["input", "change", "beforeinput"].includes(name));
         const keyboard =
