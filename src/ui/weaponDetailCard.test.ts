@@ -71,6 +71,7 @@ const fixture = vi.hoisted(() => {
     }
     classList = {
       add: (name: string) => this.classList.toggle(name, true),
+      remove: (name: string) => this.classList.toggle(name, false),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -239,7 +240,8 @@ vi.mock("./modal.ts", async (original) => ({
     button.dataset.role = role;
     return button;
   },
-  createCard: () => {
+  createCard: ({ close }: { close: InstanceType<typeof fixture.Node> }) => {
+    fixture.card.close = close;
     fixture.card.card.replaceChildren(fixture.card.title, fixture.card.body);
     fixture.card.frame.replaceChildren(fixture.card.card, fixture.card.close);
     return fixture.card;

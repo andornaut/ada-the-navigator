@@ -1,11 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { units } from "./layout/css.ts";
 import { SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
@@ -19,6 +15,7 @@ import {
   menuTree,
 } from "./menuTree.ts";
 import { createCard } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
 
@@ -42,7 +39,15 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     context,
   });
   const initialTree = menuTree(treeData("nonplay"));
-  const card = createCard(initialTree.props);
+  let disposed = false;
+  const { closeAction, closeLabel, size, title } = initialTree.props;
+  const headerClose = createStandardCloseAction(root, closeAction, closeLabel, {
+    current: () => !disposed,
+    run: () => close(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
+  const card = createCard({ close: headerClose.element, size, title });
   card.card.dataset.dialog = "menu";
   const actions = document.createElement("div");
   actions.className = "ada-actions ada-stack";
@@ -78,18 +83,8 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   let context: MenuContext = "nonplay";
   let origin: HTMLElement | undefined;
   let returnAction: MenuAction | undefined;
-  let disposed = false;
   let releaseUnderlay: (() => void) | undefined;
   let layout: ReturnType<typeof mountLayout<MenuLayoutSchema>> | undefined;
-  const register = (element: HTMLElement, run: () => void) =>
-    bindAdaAction(
-      {
-        click: { availability: () => ({ kind: "available" }), run },
-        current: () => !disposed,
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-      },
-      element,
-    );
   let leave: (() => void) | undefined;
   let layer: ReturnType<typeof createModalLayer> | undefined;
   const hide = (notify = true) => {
@@ -188,7 +183,6 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
     ]),
     availability: () => (disposed || modal.hidden ? { kind: "omitted" } : { kind: "available" }),
   });
-  const fixedBindings = [register(card.close, close)];
   try {
     assertAdaActionMetadata(modal);
     root.append(modal);
@@ -196,9 +190,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       assertAdaActionBindings(modal);
     }
   } catch (error) {
-    for (const binding of fixedBindings) {
-      binding.dispose();
-    }
+    headerClose.dispose();
     card.dispose();
     modal.remove();
     throw error;
@@ -215,9 +207,7 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       view?.removeEventListener("resize", fitActionStack);
       view?.removeEventListener(VIEW_SCALE_EVENT, fitActionStack);
       layout?.dispose();
-      for (const binding of fixedBindings) {
-        binding.dispose();
-      }
+      headerClose.dispose();
       card.dispose();
       modal.remove();
     },

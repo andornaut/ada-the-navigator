@@ -4,11 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { SCREEN } from "../data/screen.ts";
 import { type AchievementsLayoutSchema, achievementsTree } from "./achievementsTree.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
 import { CARD_WIDTH_CAPS, cardWidth, SCROLL } from "./layout/contentCard.ts";
@@ -17,6 +13,7 @@ import { units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { enterPressView } from "./pressScope.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
@@ -249,7 +246,15 @@ export function createAchievementsCard(
     pagerHidden: true,
     previousHidden: true,
   });
-  const card = createCard(initialTree.props.card);
+  const { closeAction, closeLabel, size, title } = initialTree.props.card;
+  const headerClose = createStandardCloseAction(root, closeAction, closeLabel, {
+    current: () => !disposed,
+    run: () => close(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
+  bindings.push(headerClose);
+  const card = createCard({ close: headerClose.element, size, title });
   card.card.dataset.dialog = "achievements";
   const list = document.createElement("ul");
   list.className = "ada-achievement-list";
@@ -430,16 +435,6 @@ export function createAchievementsCard(
     modal.remove();
   };
   try {
-    bindings.push(
-      bindAdaAction(
-        {
-          click: { availability: () => ({ kind: "available" }), run: close },
-          current: () => !disposed,
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
-        },
-        card.close,
-      ),
-    );
     mounted = mount();
     assertAdaActionMetadata(modal);
     root.append(modal);

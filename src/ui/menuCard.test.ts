@@ -82,6 +82,7 @@ const fixture = vi.hoisted(() => {
       add: (name: string) => {
         this.className += ` ${name}`;
       },
+      remove: (name: string) => this.classList.toggle(name, false),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -212,8 +213,10 @@ vi.mock("./modal.ts", async (original) => ({
       textContent: label,
       type: "button",
     }),
-  createCard: (options: unknown) => {
+  createCard: (options: { close: InstanceType<typeof fixture.Node> }) => {
     fixture.requests.push(options);
+    fixture.card.close = options.close;
+    fixture.card.frame.replaceChildren(fixture.card.body, options.close);
     if (fixture.corruptFactory) {
       fixture.card.frame.append(
         Object.assign(new fixture.Node(), { disabled: true, hidden: true, tagName: "BUTTON" }),
@@ -275,7 +278,6 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
   });
   vi.stubGlobal("document", doc);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
-  fixture.card.frame.replaceChildren(fixture.card.body, fixture.card.close);
   const root = new fixture.Node();
   let ready = true;
   let notifyReady = () => {};
@@ -331,8 +333,8 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
 }
 
 it("publishes the initial Menu with its fixed X already registered", () => {
-  const addListener = vi.spyOn(fixture.card.close, "addEventListener");
-  const removeListener = vi.spyOn(fixture.card.close, "removeEventListener");
+  const addListener = vi.spyOn(fixture.Node.prototype, "addEventListener");
+  const removeListener = vi.spyOn(fixture.Node.prototype, "removeEventListener");
   try {
     const published = vi.fn((modal: InstanceType<typeof fixture.Node>) => {
       const subtree = modal as unknown as HTMLElement;
@@ -343,9 +345,15 @@ it("publishes the initial Menu with its fixed X already registered", () => {
     });
     const { menu, onOpenChange, root } = setup(published);
     expect(published).toHaveBeenCalledExactlyOnceWith(root.children[0]);
-    expect(addListener).toHaveBeenCalledExactlyOnceWith("click", expect.any(Function));
+    const added = addListener.mock.calls.filter(
+      (_, i) => addListener.mock.contexts[i] === fixture.card.close,
+    );
+    expect(added).toEqual([["click", expect.any(Function), true]]);
     menu.dispose();
-    expect(removeListener).toHaveBeenCalledWith(...addListener.mock.calls[0]!);
+    const removed = removeListener.mock.calls.filter(
+      (_, i) => removeListener.mock.contexts[i] === fixture.card.close,
+    );
+    expect(removed).toEqual(added);
     expect(root.children).toEqual([]);
     fixture.card.close.dispatchEvent(new Event("click"));
     expect(onOpenChange).not.toHaveBeenCalled();
@@ -458,7 +466,7 @@ it("uses one shared Settings click listener and keeps the live Ada root and disp
         ),
       ).toEqual([["click", expect.any(Function), true]]);
     }
-    expect(fixture.card.close.className.split(" ")).not.toContain("ui-standard-button");
+    expect(fixture.card.close.className.split(" ")).toContain("ui-standard-button");
     const native = added.mock.calls.filter(
       ([type], index) => type === "click" && added.mock.contexts[index] === settings,
     );

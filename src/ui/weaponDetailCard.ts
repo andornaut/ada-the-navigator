@@ -5,17 +5,14 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
 import { ammoGlyphPath, weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import {
@@ -40,9 +37,19 @@ export function createWeaponDetailCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
+  let disposed = false;
+  const headerBinding = createStandardCloseAction(root, "close-weapon-detail", options.closeLabel, {
+    current: (button) =>
+      !disposed &&
+      !modal.hidden &&
+      inCurrentView(root, button) &&
+      availability().kind === "available",
+    run: () => close(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
   const card = createCard({
-    closeAction: "close-weapon-detail",
-    closeLabel: options.closeLabel,
+    close: headerBinding.element,
     size: "small",
     title: "",
   });
@@ -57,7 +64,6 @@ export function createWeaponDetailCard(
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
-  let disposed = false;
   let visible = false;
   const layer = createModalLayer(modal);
   let leaveView: (() => void) | undefined;
@@ -81,14 +87,6 @@ export function createWeaponDetailCard(
     disposed || !visible || !inCurrentView(root, card.frame)
       ? { kind: "omitted" }
       : { kind: "available" };
-  const headerBinding = bindAdaAction(
-    {
-      click: { availability, run: close },
-      current: () => !disposed && !modal.hidden && inCurrentView(root, card.close),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
-    },
-    card.close,
-  );
   const ports = createAdaLayoutPorts<WeaponDetailAction>({
     actionRoot: root,
     actions: new Map([

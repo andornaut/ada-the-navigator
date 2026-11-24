@@ -4,16 +4,13 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { type CheatAction, runCheatAction } from "./cheatActions.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
@@ -35,27 +32,21 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
+  const dismissAction = () => setOpen(false);
+  const current = (element: HTMLElement) => !disposed && open && inCurrentView(parent, element);
+  const closeBinding = createStandardCloseAction(parent, "close-cheats", options.labels.close, {
+    current,
+    run: dismissAction,
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
   const parts = createCard({
-    closeAction: "close-cheats",
-    closeLabel: options.labels.close,
+    close: closeBinding.element,
     size: "large",
     title: options.labels.title,
   });
   const { body, card, close, fit, frame } = parts;
   card.className += " ada-cheats-card";
-  const dismissAction = () => setOpen(false);
-  const current = (element: HTMLElement) => !disposed && open && inCurrentView(parent, element);
-  const closeBinding = bindAdaAction(
-    {
-      click: {
-        availability: () => (open ? { kind: "available" } : { kind: "omitted" }),
-        run: dismissAction,
-      },
-      current: () => current(close),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(close),
-    },
-    close,
-  );
   const dismissButton = createStandardTextAction(parent, options.labels.back, {
     availability: () => ({ kind: "available" }),
     current: () => current(dismissButton.element),

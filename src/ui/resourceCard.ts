@@ -2,16 +2,13 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
+import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { createProse } from "./prose.ts";
@@ -37,9 +34,19 @@ export function createResourceCard(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
+  let disposed = false;
+  const headerBinding = createStandardCloseAction(root, "close-resource", options.closeLabel, {
+    current: (button) =>
+      !disposed &&
+      !modal.hidden &&
+      inCurrentView(root, button) &&
+      availability("close-resource").kind === "available",
+    run: () => close(),
+    slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
+    slopThreshold: SCROLL.dragThreshold,
+  });
   const card = createCard({
-    closeAction: "close-resource",
-    closeLabel: options.closeLabel,
+    close: headerBinding.element,
     size: "small",
     title: "",
   });
@@ -53,7 +60,6 @@ export function createResourceCard(
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
-  let disposed = false;
   let visible = false;
   const layer = createModalLayer(modal);
   let leaveView: (() => void) | undefined;
@@ -79,14 +85,6 @@ export function createResourceCard(
     disposed || !visible || (action === "resource-quests" && !openQuests)
       ? { kind: "omitted" }
       : { kind: "available" };
-  const headerBinding = bindAdaAction(
-    {
-      click: { availability: () => availability("close-resource"), run: close },
-      current: () => !disposed && !modal.hidden && inCurrentView(root, card.close),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(card.close),
-    },
-    card.close,
-  );
   const showQuests = () => {
     if (!openQuests || modal.hidden) {
       return;

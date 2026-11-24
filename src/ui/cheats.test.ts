@@ -112,6 +112,12 @@ class Element extends EventTarget {
     add: (name: string) => {
       this.className = [...new Set([...this.className.split(" "), name])].filter(Boolean).join(" ");
     },
+    remove: (name: string) => {
+      this.className = this.className
+        .split(" ")
+        .filter((value) => value !== name)
+        .join(" ");
+    },
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
@@ -135,6 +141,10 @@ class Element extends EventTarget {
     for (const node of nodes) {
       this.insertBefore(node, null);
     }
+  }
+  replaceChildren(...nodes: Element[]) {
+    this.textContent = "";
+    this.append(...nodes);
   }
   prepend(node: Element) {
     node.parent = this;
@@ -176,13 +186,10 @@ vi.mock("./modal.ts", () => ({
     row.append(...items.map((item) => item.button));
     return row;
   },
-  createCard: ({ closeAction, closeLabel }: { closeAction: string; closeLabel: string }) => {
+  createCard: ({ close }: { close: Element }) => {
     const body = new Element(),
       card = new Element(),
-      close = new Element("button"),
       frame = new Element();
-    close.dataset.action = closeAction;
-    close.setAttribute("aria-label", closeLabel);
     card.append(body);
     frame.append(card, close);
     if (corruption.factory) {

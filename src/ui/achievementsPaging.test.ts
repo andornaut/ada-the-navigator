@@ -31,6 +31,7 @@ class Element {
         .filter(Boolean)
         .join(" ");
     },
+    remove: (name: string) => this.classList.toggle(name, false),
     toggle: (name: string, enabled: boolean) => {
       if (enabled) {
         this.classList.add(name);
@@ -190,12 +191,10 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
 vi.mock("./layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
-  createCard: (options: { closeAction: string }) => {
+  createCard: ({ close }: { close: Element }) => {
     const frame = new Element();
     const card = new Element();
     const body = new Element();
-    const close = new Element("button");
-    close.dataset.action = options.closeAction;
     card.append(body);
     frame.append(card, close);
     if (corruption.factory) {

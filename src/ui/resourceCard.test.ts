@@ -69,6 +69,7 @@ const fixture = vi.hoisted(() => {
     }
     classList = {
       add: (name: string) => this.classList.toggle(name, true),
+      remove: (name: string) => this.classList.toggle(name, false),
       toggle: (name: string, on: boolean) => {
         const names = new Set(this.className.split(" ").filter(Boolean));
         if (on) {
@@ -236,7 +237,8 @@ vi.mock("./modal.ts", async (original) => ({
     button.dataset.role = role;
     return button;
   },
-  createCard: () => {
+  createCard: ({ close }: { close: InstanceType<typeof fixture.Node> }) => {
+    fixture.card.close = close;
     fixture.card.card.replaceChildren(fixture.card.title, fixture.card.body);
     fixture.card.frame.replaceChildren(fixture.card.card, fixture.card.close);
     return fixture.card;
@@ -492,8 +494,8 @@ it("registers one native header click and closes once through the shared default
   attachedActionRoot(root);
   const origin = new fixture.Node();
   const onOpenChange = vi.fn();
-  const listen = vi.spyOn(fixture.card.close, "addEventListener");
-  const remove = vi.spyOn(fixture.card.close, "removeEventListener");
+  const listen = vi.spyOn(fixture.Node.prototype, "addEventListener");
+  const remove = vi.spyOn(fixture.Node.prototype, "removeEventListener");
   const detail = createResourceCard(root as unknown as HTMLElement, {
     closeLabel: "Close",
     onOpenChange,
@@ -503,14 +505,19 @@ it("registers one native header click and closes once through the shared default
   expect(action?.available()).toBe(false);
   detail.open("Ore", "Current", origin as unknown as HTMLElement);
   expect(action?.available()).toBe(true);
-  const clickRegistrations = listen.mock.calls.filter(([type]) => type === "click");
-  expect(clickRegistrations).toHaveLength(1);
+  const clickRegistrations = listen.mock.calls.filter(
+    ([type], index) => type === "click" && listen.mock.contexts[index] === x,
+  );
+  expect(clickRegistrations).toEqual([["click", expect.any(Function), true]]);
+  expect(x.matches(".ui-standard-button")).toBe(true);
   action?.activate();
   x.dispatchEvent(new Event("click"));
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
   expect(origin.focus).toHaveBeenCalledOnce();
   detail.dispose();
-  expect(remove).toHaveBeenCalledWith("click", clickRegistrations[0]![1]);
+  expect(remove.mock.calls.filter((_, index) => remove.mock.contexts[index] === x)).toEqual(
+    clickRegistrations,
+  );
   listen.mockRestore();
   remove.mockRestore();
 });
