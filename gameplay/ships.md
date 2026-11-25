@@ -5,18 +5,18 @@ same fields and the same movement model. All values are provisional tuning.
 
 ## Physics
 
-| Field                 | Meaning                                                                                         |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `maxSpeed`            | Maximum speed in world units per second                                                         |
-| `accelerationSeconds` | Exponential time constant for velocity to approach a non-zero target                            |
-| `brakingSeconds`      | Exponential time constant for velocity to approach zero with no target                          |
-| `turnSeconds`         | Exponential time constant for the movement heading to turn toward a target                      |
-| `aimTurnSeconds`      | Exponential time constant for the aim, or a nose-on small craft's hull, to turn toward a target |
+| Field                 | Meaning                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `maxSpeed`            | Maximum speed in world units per second                                                              |
+| `accelerationSeconds` | Exponential time constant for velocity to approach a non-zero target                                 |
+| `brakingSeconds`      | Exponential time constant for velocity to approach zero with no target                               |
+| `turnSeconds`         | Exponential time constant for the movement heading to turn toward a target                           |
+| `aimTurnSeconds`      | Exponential time constant for the aim, or a nose-on forward-gun ship's hull, to turn toward a target |
 
 Movement is the same for every ship. The requested direction (Ada's stick, or an
 enemy's steering result) sets a target heading. While moving, the heading turns
 toward it along the shorter arc with `turnSeconds`. From rest, Ada's heading
-starts on the target directly, as does a small craft's while its nose is on Ada;
+starts on the target directly, as does a forward-gun ship's while its nose is on Ada;
 any other enemy's heading starts from its hull facing, so it turns into motion
 instead of sliding sideways. Velocity approaches `heading * speed` with `accelerationSeconds`,
 or approaches zero with `brakingSeconds` when there is no target. A ship with no
@@ -26,35 +26,32 @@ aim direction at the weapon's normal cadence. Thrust jets scale with current spe
 as a fraction of the ship's maximum speed.
 
 Ada's ship faces its aim while aiming and its movement otherwise. Enemy facing
-depends on size:
+depends on how a ship mounts its weapons:
 
-- **Large ships:** retaliators, frigates and capitals always face their velocity
-  direction, turning toward it with the shared `hullTurnSeconds` of 0.08 so
-  collision slides do not snap, and keep their last facing when stopped. Because
-  the heading starts from the hull and turns with `turnSeconds`, velocity and
-  hull swing round together, so a large ship turns around to leave. Frigate and
-  capital turrets track Ada independently of the hull with `aimTurnSeconds` and
-  fire in any direction, astern included. The retaliator's Rapid Missile
-  launcher is not a turret but a fixed forward hull weapon: it fires along the
-  facing, so the retaliator must turn toward Ada to shoot, and only while its aim
-  point is inside its [nose arc](#nose-fire). Platforms and hostile stations
-  never move and keep a fixed facing; their turrets track like a frigate's.
-- **Small craft:** the swarm, fighter and interceptor fire only from the nose,
-  like Ada, and have no separate weapon aim. While engaged and seeing Ada within
-  its engagement range, a small craft keeps its nose on her: its hull turns
-  toward its aim point ([Enemy aim](#enemy-aim)) with its class's
-  `aimTurnSeconds`, and it strafes, sliding sideways or backing off. Its movement
-  heading still turns toward the steering request with `turnSeconds`, and its
-  requested speed is capped by direction relative to the facing
-  ([Nose fire](#nose-fire)); momentum above the cap decays with
-  `accelerationSeconds`. It fires along its facing, and only while its aim point
-  lies inside its nose arc; its weapon cooldown keeps running meanwhile, so it
-  fires as soon as Ada enters the arc.
-- **Breaking off and travel:** a small craft that is not keeping its nose on
-  Ada faces its velocity like a large ship and holds fire until it faces Ada
+- **Forward-gun ships:** the swarm, fighter, interceptor and retaliator carry
+  fixed forward hull weapons and no turrets, and fire only from the nose, like
+  Ada. While engaged and seeing Ada within its engagement range, a forward-gun
+  ship keeps its nose on her: its hull turns toward its aim point
+  ([Enemy aim](#enemy-aim)) with its class's `aimTurnSeconds`, and it strafes,
+  sliding sideways or backing off. Its movement heading still turns toward the
+  steering request with `turnSeconds`, and its requested speed is capped by
+  direction relative to the facing ([Nose fire](#nose-fire)); momentum above the
+  cap decays with `accelerationSeconds`. It fires along its facing, and only
+  while its aim point lies inside its nose arc; its weapon cooldown keeps running
+  meanwhile, so it fires as soon as Ada enters the arc.
+- **Breaking off and travel:** a forward-gun ship that is not keeping its nose on
+  Ada faces its velocity like a turret ship and holds fire until it faces Ada
   again. It breaks off in a `hitAndRun` pull-out, a morale retreat, a return
   home and an interceptor's `strafe` pass after closest approach, and travels
   when closing from beyond its engagement range, investigating or patrolling.
+- **Turret ships:** frigates and capitals always face their velocity direction,
+  turning toward it with the shared `hullTurnSeconds` of 0.08 so collision
+  slides do not snap, and keep their last facing when stopped. Because the
+  heading starts from the hull and turns with `turnSeconds`, velocity and hull
+  swing round together, so a turret ship turns around to leave. Its turrets
+  track Ada independently of the hull with `aimTurnSeconds` and fire in any
+  direction, astern included. Platforms and hostile stations never move and keep
+  a fixed facing; their turrets track the same way.
 
 Most mobile enemies patrol when unengaged, investigate a fixed last-seen position
 after losing actual line of sight, and resume patrol there. Returning craft investigate home and
@@ -88,9 +85,8 @@ reach the existing 1% rest threshold. The time constants derive from
 Her aim turns with `aimTurnSeconds` 0.08, 0.07 and 0.06 at engine levels 1, 2
 and 3, and her movement heading turns twice as slowly, with `turnSeconds` 0.16,
 0.14 and 0.12.
-A small craft's `aimTurnSeconds` turns its hull while its nose is on Ada; a
-frigate's, capital's and platform's turn their turrets. The retaliator has no
-turret, so its `aimTurnSeconds` is unused.
+A forward-gun ship's `aimTurnSeconds` turns its hull while its nose is on Ada; a
+turret ship's turns its turrets.
 Enemy base top speeds are the same in every galaxy. A swarm matches Ada's
 level-one top speed. The interceptor's top speed exceeds Ada's at every engine
 level. The finale flagship shares the capital's 50-unit top speed and moves at
@@ -106,18 +102,17 @@ The `platform` is fixed in place and only turns its turrets.
 | `swarm`       |                             20 |             0.8 |         0.6 |
 | `fighter`     |                             20 |             0.8 |         0.6 |
 | `interceptor` |                             20 |             0.8 |         0.6 |
-| `retaliator`  |                             20 |               – |           – |
+| `retaliator`  |                             20 |             0.8 |         0.6 |
 
-These authored values apply while a small craft keeps its nose on Ada
-([Physics](#physics)). The retaliator uses the same nose arc for its forward
-launcher but does not strafe: its hull faces its travel. Its aim point is inside the nose arc when the line to it
+These authored values apply while a forward-gun ship keeps its nose on Ada
+([Physics](#physics)). Its aim point is inside the nose arc when the line to it
 lies within the arc either side of the facing. The strafe limits are fractions of
 the class's `maxSpeed` and cap its requested speed by direction: full `maxSpeed`
 straight ahead, the sideways limit straight sideways and the backing-off limit
 straight back. Between them the cap follows two half-ellipses: for a request at
-angle `a` from the facing, the cap is `maxSpeed / sqrt((cos a / f)^2 + (sin a / s)^2)`,
-where `s` is the sideways limit and `f` is 1 ahead and the backing-off limit
-behind.
+angle `a` from the facing, the cap is
+`maxSpeed / sqrt((cos a / f)^2 + (sin a / s)^2)`, where `s` is the sideways limit
+and `f` is 1 ahead and the backing-off limit behind.
 
 ## Hulls
 
@@ -166,8 +161,8 @@ diameter.
   some headings still fires and takes hits as usual.
 - **Retaliators:** each rolls the Manta gunship, Cargo Hauler or Mining Freighter
   with equal weight in every galaxy, from its ship ID. All three keep the
-  `retaliator` values and Rapid Missile from one fixed forward launcher, which
-  fires along the hull's facing within the [nose arc](#nose-fire).
+  `retaliator` values and Rapid Missile from one fixed forward hull launcher; a
+  retaliator has no turret.
 - **Small craft weapons:** the swarm, fighter and interceptor fire from flush
   hull ports along the hull's facing ([Physics](#physics)). The ports mark where
   shots leave the hull. The fighter's Multi-Laser fan leaves from one origin,
@@ -177,8 +172,8 @@ diameter.
 ## Behaviours
 
 Enemy movement comes from a data-driven behaviour library, so each archetype
-mixes and matches behaviours and their parameters. Small craft fight with their
-weapons, not their hulls: in range, each keeps its nose on Ada and holds a
+mixes and matches behaviours and their parameters. Forward-gun ships fight with
+their weapons, not their hulls: in range, each keeps its nose on Ada and holds a
 standoff band from her, strafing sideways and firing, and backs off when she
 comes inside it. They never press in to ram.
 
@@ -200,18 +195,21 @@ comes inside it. They never press in to ram.
 | `escort`    | Stays near its leader and intercepts Ada when she comes close to it.                         |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
-Every engaged behaviour of a small craft keeps its nose on Ada while she is
+Every engaged behaviour of a forward-gun ship keeps its nose on Ada while she is
 visible within its engagement range, and its movement is strafing under the
 [Nose fire](#nose-fire) limits: the `chase` and `swarm` holds, including the
 swarm's wobble and circling, the `hitAndRun` attack, the `strafe` approach up
 to closest approach, and an `escort`'s station and intercept. A `hitAndRun`
 pull-out, `flee`, a `strafe` pass after closest approach and the return home are
-breaking off: the craft turns to its travel direction and holds fire until it
+breaking off: the ship turns to its travel direction and holds fire until it
 faces Ada again. After closest approach, an interceptor keeps its speed, without
 the strafe limits, through its loop until its next approach begins.
-Retaliators in `chase`, `siege` heavies and platforms follow the large-ship rule
-in every behaviour: a retaliator holding its band faces its travel and fires
-only when that brings Ada's aim point inside its nose arc.
+
+A retaliator keeps its nose on Ada in `chase`, closing to its band and holding it,
+once Ada is within its engagement range. It breaks off in a morale retreat and on
+its return home, and travels while patrolling unprovoked under `retaliate`,
+investigating, or closing from beyond its engagement range. `siege` heavies and
+platforms follow the turret-ship rule in every behaviour.
 
 Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, using
 its independent bounded retreat policy. Morale and `hitAndRun` share initial
@@ -288,8 +286,8 @@ Heavies:
 
 ### Enemy aim
 
-Enemy aim is natural rather than perfect. Every turret, every small craft's nose
-and the retaliator's nose arc check follow it:
+Enemy aim is natural rather than perfect. Every turret and every forward-gun
+ship's nose follow it:
 
 - **Lead skill:** each enemy keeps one lead skill for its life: its position's
   Lead, varied by about 10% either way per ship.
@@ -303,8 +301,8 @@ and the retaliator's nose arc check follow it:
   exceeds about 1 second of her movement.
 - **Direct aim:** hitscan beams and the lance's tracking line aim at Ada directly,
   so an interceptor's nose points at Ada herself.
-- **Small craft:** the resulting aim point is where a small craft turns its hull
-  while its nose is on Ada, so lead and drift steer the nose. Its shots follow the
+- **Forward-gun ships:** the resulting aim point is where a forward-gun ship
+  turns its hull while its nose is on Ada, so lead and drift steer the nose. Its shots follow the
   facing, and it fires only while the aim point is inside its
   [nose arc](#nose-fire).
 
@@ -827,7 +825,7 @@ hardpoint or to the hull with a null ID. Unknown part IDs do nothing. A valid hi
 latches retaliation even when the target is currently unseen. Individual hull damage
 can trigger a bounded morale retreat without killing a craft. Pack losses can
 trigger the same retreat for survivors. Active morale retreat suppresses fire, and
-a small craft in either retreat also turns to its travel direction;
+a forward-gun ship in either retreat also turns to its travel direction;
 recovery can resume aggression under the observation and admission rules below.
 
 `enemyEffects(definition, state)` derives destroyed part IDs, disablement and
@@ -861,7 +859,7 @@ zero loaded survivors. Preserve initial pack counts through unloading and
 Continue. Neither unloading nor disablement is a casualty.
 
 The result contains updated state, desired velocity, aim, fire intents and effects.
-A small craft's aim is its hull facing; it keeps no separate weapon aim.
+A forward-gun ship's aim is its hull facing; it keeps no separate weapon aim.
 State position is deliberately unchanged. Steering and velocity response are rules;
 collision resolution and position integration are runtime responsibilities. Commit
 resolved position and velocity back into the next saved state. Separation reads only
@@ -869,10 +867,10 @@ the supplied snapshot, avoiding array-order feedback. Authored heading anchors
 and turret pivots determine hardpoint and muzzle positions when available.
 Their frame offsets use the canonical display scale once, then the existing
 inverse projection. Fractional catalog offsets are a fallback when authored
-metadata is absent. Large hulls, and small craft that are breaking off, rotate
-to face their movement; a small craft with its nose on Ada turns its hull toward
-its aim point ([Physics](#physics)). Collision and muzzle positions follow the
-drawn hull and turret headings.
+metadata is absent. Turret ships, and forward-gun ships that are breaking off,
+rotate to face their movement; a forward-gun ship with its nose on Ada turns its
+hull toward its aim point ([Physics](#physics)). Collision and muzzle positions
+follow the drawn hull and turret headings.
 
 Sight aggression latches on visible perception. Retaliators patrol without
 attacking until hit.
@@ -976,7 +974,7 @@ fixed last-seen position at a slower pace, then patrols around it. It does not
 follow her hidden position. A chase ends when the pursuit clock reaches `maxSeconds`, the enemy reaches its
 home radius, a visible target leaves that radius, or Ada stays unseen for
 `unseenSeconds`. Ending a chase latches return-to-home, clears engagement and
-suppresses new shots; a returning small craft faces its travel direction.
+suppresses new shots; a returning forward-gun ship faces its travel direction.
 Existing projectiles and incoming damage remain active. No grace or invulnerability is granted. Ship physics can retain outward momentum
 briefly before turning; the adapter's fixed slice bounds distance overshoot.
 
@@ -1008,9 +1006,9 @@ perception range, engagement admission and the existing home leash. Without
 reacquisition, ships investigate the fixed last-seen position within the existing
 unseen and pursuit limits, then return home and patrol. Existing momentum and
 turning still apply; reaching a retreat bound changes steering, not position.
-A small craft in a morale or `hitAndRun` retreat turns to its travel direction and
-holds fire; after recovery it fires again only once its aim point is inside its
-[nose arc](#nose-fire).
+A forward-gun ship in a morale or `hitAndRun` retreat turns to its travel
+direction and holds fire; after recovery it fires again only once its aim point
+is inside its [nose arc](#nose-fire).
 
 ### Runtime integration interface
 
@@ -1071,15 +1069,13 @@ actual intents and adapter commands in the following scenarios:
   disabled heavy produces one outcome event.
 - Each archetype's actual velocity stays within its maximum speed, including
   saved momentum.
-- A small craft on a crossing pass keeps its nose on Ada and fires only while its
-  aim point is inside its nose arc, with shots along its facing; after closest
-  approach it turns to its travel, keeps its speed and holds fire.
-- A small craft breaking off in a retreat turns to its travel direction and fires
-  nothing until it faces Ada again.
-- A small craft strafing in its band keeps its requested speed within its
-  sideways and backing-off limits.
-- A heavy's turret fires at Ada astern while its hull faces its travel.
-- A retaliator fires only along its facing, while its aim point is inside its
-  nose arc.
+- An interceptor on a crossing pass keeps its nose on Ada and fires only while
+  its aim point is inside its nose arc, with shots along its facing; after
+  closest approach it turns to its travel, keeps its speed and holds fire.
+- A forward-gun ship breaking off in a retreat turns to its travel direction and
+  fires nothing until it faces Ada again.
+- A forward-gun ship strafing in its band, a retaliator included, keeps its nose
+  on Ada and its requested speed within its sideways and backing-off limits.
+- A turret ship's turret fires at Ada astern while its hull faces its travel.
 - Quiet encounter placement, safe zones, collision routing, offscreen hardpoints,
   danger tracking and once-only defeat events pass the real integrated flight loop.

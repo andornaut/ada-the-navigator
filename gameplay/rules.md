@@ -1001,10 +1001,11 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   its firing ship's fire origin (Ada's nose, an enemy's muzzle) and current aim
   while it shows. Enemy shots leave from the drawn muzzle of the gun's
   current aim frame wherever the art defines muzzles, and from the model's fire
-  origin otherwise; shot direction always follows the continuous aim. A small
-  craft's aim is its hull facing, so its shots leave along the facing. Frigate,
-  capital, platform and station turrets aim in any direction; a retaliator's
-  launcher fires along its facing ([Physics](ships.md#physics)).
+  origin otherwise; shot direction always follows the continuous aim. A
+  forward-gun ship's aim (swarm, fighter, interceptor and retaliator) is its hull
+  facing, so its shots leave along the facing; turret ships' turrets (frigate,
+  capital, platform and station) aim in any direction
+  ([Physics](ships.md#physics)).
 - At launch, a traveling projectile's world velocity, Ada's or an enemy's
   shared weapon alike, is its weapon heading times weapon speed plus the firing
   ship's current flight velocity. This velocity is captured once per shot,
@@ -1480,10 +1481,11 @@ cluster leaves the cluster's shared velocity. A struck static rock drifts, slows
 rest within about 3 seconds and stays where it settles.
 
 Small enemy ships move and fire on their own, with solo, erratic circling,
-swarming and pack behaviors. They fire only from the nose: in range they keep it
-on Ada and strafe, and they turn to their travel direction and hold fire to break
-off ([Physics](ships.md#physics)). Large ships face their travel while their
-turrets track; a retaliator's launcher fires forward only. Aggression can begin on sight or
+swarming and pack behaviors. Ships with fixed forward guns (swarm, fighter,
+interceptor and retaliator) fire only from the nose: in range they keep it on Ada
+and strafe, and they turn to their travel direction and hold fire to break off
+([Physics](ships.md#physics)). Turret ships face their travel while their turrets
+track. Aggression can begin on sight or
 only after being attacked. The retreat policy replaces permanent
 morale flight with bounded retreats and gated recovery after individual damage
 or pack losses
