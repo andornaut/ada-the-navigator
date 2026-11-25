@@ -796,9 +796,9 @@ export function batchCaptures(ctx) {
     });
   }
 
-  /** A galaxy-one flight with `weapon` equipped and a retaliator held to Ada's screen right. */
-  function armed(weapon, level = 1) {
-    const model = flightModel(1);
+  /** A flight with `weapon` equipped and a retaliator held to Ada's screen right. */
+  function armed(weapon, level = 1, galaxy = 1) {
+    const model = flightModel(galaxy);
     const flight = model.state.flight;
     flight.objects = [];
     const right = toWorld({ x: 1, y: 0 });
@@ -855,6 +855,90 @@ export function batchCaptures(ctx) {
     );
     await open(canonical(model, "weapons-mines"));
     await ctx.frames("weapons-mines", { every: 120, shots: 3 });
+  }
+
+  /**
+   * A flight in `galaxy` with traveling shots placed at screen offsets from Ada and held still:
+   * the enemy's bolts, pellets (one past its fade point), Multi-Laser volleys near and far from
+   * their nose and missiles along the top, and Ada's along the bottom.
+   */
+  function placedShots(galaxy) {
+    const model = flightModel(galaxy);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const along = (screen) => {
+      const world = toWorld(screen);
+      const length = Math.hypot(world.x, world.y);
+      return { x: (world.x / length) * 500, y: (world.y / length) * 500 };
+    };
+    const shots = (enemy, row) => {
+      const base = (id, screen, direction, fields) => ({
+        damage: 1,
+        enemy,
+        hitIds: [],
+        id: `browser-art:shot:${enemy ? "enemy" : "ada"}:${id}`,
+        life: 5,
+        piercing: false,
+        velocity: along(direction),
+        ...at(flight, { x: screen.x, y: row + screen.y }),
+        ...fields,
+      });
+      const fan = (id, nose, radius, spread) => {
+        const origin = at(flight, { x: nose.x, y: row + nose.y });
+        return [-1, 0, 1].map((index) => {
+          const direction = { x: Math.cos(index * spread), y: Math.sin(index * spread) };
+          return base(
+            `${id}-${index}`,
+            { x: nose.x + radius * direction.x, y: nose.y + radius * direction.y },
+            direction,
+            { fan: { count: 3, origin }, projectile: "bolt" },
+          );
+        });
+      };
+      return [
+        base("bolt", { x: -300, y: -30 }, { x: 1, y: 0 }, { projectile: "bolt" }),
+        base("bolt-turned", { x: -240, y: 20 }, { x: 1, y: 0.5 }, { projectile: "bolt" }),
+        base("pellet", { x: -180, y: -30 }, { x: 1, y: 0 }, { projectile: "dot" }),
+        base(
+          "pellet-fading",
+          { x: -150, y: 20 },
+          { x: 1, y: 0 },
+          {
+            fade: { fadeStartFraction: 0.65, initialLife: 1, projectedRange: 100 },
+            life: 0.2,
+            projectile: "dot",
+          },
+        ),
+        ...fan("fan-near", { x: -110, y: 0 }, 30, 0.07),
+        ...fan("fan-far", { x: 10, y: 0 }, 90, 0.12),
+        base("rapid", { x: 200, y: -30 }, { x: 1, y: 0 }, { blast: 30, projectile: "missile" }),
+        base("heavy", { x: 270, y: 25 }, { x: 1, y: -0.5 }, { blast: 60, projectile: "missile" }),
+      ];
+    };
+    flight.shots = [...shots(true, -140), ...shots(false, 130)];
+    return model;
+  }
+  // The weapons' flat look switch: the enemy shots and Ada's bolts, pellets and fan held still
+  // on a light field (Sunflower) and on Phantom, then Ada's Phaser fired on each at full and
+  // reduced motion.
+  async function weaponsFlat() {
+    await inTurn([1, 6], async (galaxy) => {
+      await still(`weapons-flat-shots-${GALAXY_ID[galaxy]}`, placedShots(galaxy));
+    });
+    const cases = [1, 6].flatMap((galaxy) => [
+      [galaxy, false],
+      [galaxy, true],
+    ]);
+    await inTurn(cases, async ([galaxy, reducedMotion]) => {
+      const name = `weapons-flat-phaser-${GALAXY_ID[galaxy]}${reducedMotion ? "-reduced" : ""}`;
+      await open(canonical(armed("phaser", 1, galaxy), name), { reducedMotion });
+      const page = ctx.page();
+      await ctx.release();
+      await page.keyboard.down("Space");
+      await page.clock.runFor(20);
+      await page.keyboard.up("Space");
+      await ctx.frames(name, { after: 20, every: 50, shots: 3 });
+    });
   }
 
   /** A held job in galaxy 2, taken at the hub. */
@@ -992,5 +1076,6 @@ export function batchCaptures(ctx) {
     "stations-sunflower-cartwheel": stationsSunflowerCartwheel,
     "stations-whirlpool-needle": stationsWhirlpoolNeedle,
     weapons,
+    "weapons-flat": weaponsFlat,
   };
 }
