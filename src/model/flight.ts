@@ -27,6 +27,7 @@ import {
   WRECK_ID_PREFIX,
 } from "../data/enemyIdentity.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
@@ -946,9 +947,17 @@ function flightSpawnRules(flight: FlightState): SpawnRules {
   return rules;
 }
 
-/** An actor's whole reach: its physical hull and parts, else its radius. */
-function actorReach(flight: FlightState, actor: SpaceObject): number {
-  const body = actor.enemy && enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
+/**
+ * A required actor's footprint: its design's spacing radius, else, for a design without one, its
+ * whole reach (its physical hull and parts, else its radius).
+ */
+function actorFootprint(flight: FlightState, actor: SpaceObject): number {
+  const position = ROUTE_POSITION[flight.galaxy];
+  const spacing = actor.enemy && spacingRadius(position, actor.enemy);
+  if (spacing !== undefined) {
+    return spacing;
+  }
+  const body = actor.enemy && enemyPhysicalBody(position, actor.enemy);
   return body ? Math.max(actor.radius, partsReach(worldParts(body))) : placementRadius(actor);
 }
 
@@ -975,6 +984,7 @@ function flightSpawnExclusions(
     near(at, reach)
       ? [{ applies, rule, shape: { kind: "disc", radius: reach, x: at.x, y: at.y } }]
       : [];
+  const { gap } = flightSpawnRules(flight);
   const occupants = requiredOccupants(content, flight);
   const routes = requiredRouteGeometry(content, flight);
   const required = {
@@ -1002,14 +1012,15 @@ function flightSpawnExclusions(
       return reach === null ? [] : disc("required", ["rock", "moving", "enemy"], site, reach);
     }),
     ...required.actors.flatMap((actor) => [
-      ...disc("required", ["rock", "moving"], actor, actorReach(flight, actor)),
+      // Rocks keep the spawn gap from a required hull's footprint.
+      ...disc("required", ["rock", "moving"], actor, actorFootprint(flight, actor) + gap),
       // Ambient groups stay out of a required hull's local admission neighbourhood, so its
       // budget remains for the required encounter.
       ...disc(
         "required",
         ["enemy"],
         actor,
-        2 * SPAWNER_POLICIES[flight.galaxy].localRadius + actorReach(flight, actor),
+        2 * SPAWNER_POLICIES[flight.galaxy].localRadius + actorFootprint(flight, actor),
       ),
     ]),
     ...activeNeedleCourses(flight).map((course) => ({

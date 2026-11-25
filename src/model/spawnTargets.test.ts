@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { SLOT_ROCKS_PER_AREA, SPAWN_AREA_CHUNKS, SPAWN_TARGETS } from "../data/spawnTargets.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import {
   ACCEPTANCE,
@@ -10,7 +12,8 @@ import {
   bandAcceptance,
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { spawnRules } from "./spawnTargets.ts";
+import type { ExclusionZone, SpawnCategory } from "./spawnPlanner.ts";
+import { spawnRules, worldSpawnExclusions } from "./spawnTargets.ts";
 
 /**
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
@@ -24,6 +27,41 @@ describe("spawn target catalog", () => {
     for (const galaxy of GALAXY_NUMBERS) {
       expect(spawnRules(galaxy).lattice!.occupancy).toBeCloseTo(occupancy[galaxy], 12);
     }
+  });
+
+  it("sizes footprints, member spacing and escort rings by each design's spacing radius", () => {
+    const target = (galaxy: GalaxyNumber, kind: string) =>
+      spawnRules(galaxy)
+        .bands.flatMap((band) => band.enemies)
+        .find((enemy) => enemy.kind === kind)!;
+    const line = (galaxy: GalaxyNumber, kind: string) => {
+      const enemy = target(galaxy, kind);
+      return Math.max(enemy.spacing, 2 * enemy.radius + spawnRules(galaxy).gap);
+    };
+    // Andromeda flies the Twin hull (58), Phantom the Shoulder frigate (63).
+    expect(line(5, "frigate")).toBe(136);
+    expect(line(6, "frigate")).toBe(146);
+    expect(target(6, "capital").radius).toBe(91);
+    // Each frigate's fighter escorts (13) station 60 beyond the frigate's spacing radius.
+    expect(target(5, "frigate").escorts).toMatchObject({ radius: 13, ring: 58 + 60 });
+    // A retaliator's hull is rolled from its ship id after planning: its largest, the Cargo Hauler.
+    expect(target(1, "retaliator").radius).toBe(45);
+    expect(target(1, "swarm").radius).toBe(8);
+  });
+
+  it("keeps salvage zones around the wreck's footprint", () => {
+    const local = SPAWNER_POLICIES[5].localRadius;
+    let zones: ExclusionZone[] = [];
+    for (let x = 0; !zones.length && x < GALAXY_SIDE; x += 4000) {
+      zones = worldSpawnExclusions({ worldSide: GALAXY_SIDE }, 5, 11, [], 4000, { x, y: 0 }).filter(
+        (zone) => zone.rule === "salvage",
+      );
+    }
+    const shape = (category: SpawnCategory) =>
+      zones.find((zone) => zone.applies.includes(category))!.shape;
+    // Andromeda's wreck is a Twin hull (58).
+    expect(shape("enemy")).toMatchObject({ radius: 2 * local + 58 });
+    expect(shape("rock")).toMatchObject({ radius: 58 + spawnRules(5).gap });
   });
 
   it("requests every positive table density from a roster group, per chunk", () => {

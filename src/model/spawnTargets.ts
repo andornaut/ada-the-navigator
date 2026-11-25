@@ -4,12 +4,11 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   encounterRate,
-  enemyCatalog,
-  enemyDefinition,
   enemyEncounterTuning,
   escortTuning,
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
+import { plannedSpacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
@@ -32,10 +31,7 @@ import {
 } from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
-import { partsReach, worldParts } from "./convex.ts";
 import { worldCurrentsNear } from "./currents.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
@@ -99,6 +95,7 @@ export function encounterLatticeSpacing(galaxy: GalaxyNumber): number {
  * stage's roster. Flexible fighters and swarms draw their largest size in empty space and shrink
  * to their minimum to fit the local budget; other entries draw uniformly over their sizes that fit
  * empty space and stay whole. Cartwheel's fighters gather beside ore fields at the jumper share.
+ * Footprints, member spacing and escort rings follow each design's spacing radius.
  */
 function enemyTargets(
   galaxy: GalaxyNumber,
@@ -138,7 +135,8 @@ function enemyTargets(
     if (!counts.length) {
       return [];
     }
-    const hull = enemyCatalog[entry.archetype].sizeRatio * flight.shipRadius;
+    const position = ROUTE_POSITION[galaxy];
+    const hull = plannedSpacingRadius(position, entry.archetype);
     const escorts =
       entry.archetype === "frigate"
         ? { archetype: "fighter" as const, perLeader: FRIGATE_ESCORT_COUNT }
@@ -154,7 +152,7 @@ function enemyTargets(
               archetype: escorts.archetype,
               kind: `${entry.archetype}-escort`,
               perLeader: escorts.perLeader,
-              radius: enemyCatalog[escorts.archetype].sizeRatio * flight.shipRadius,
+              radius: plannedSpacingRadius(position, escorts.archetype),
               ring: hull + escortTuning.stationGap,
             },
           }
@@ -252,34 +250,15 @@ const disc = (rule: string, applies: ExclusionZone["applies"], at: Vec, radius: 
   shape: { kind: "disc" as const, radius, x: at.x, y: at.y },
 });
 
-const wreckReaches = new Map<GalaxyNumber, number>();
-
-/** A salvage site's disabled frigate's physical reach: its hull and parts. */
-function salvageWreckReach(galaxy: GalaxyNumber): number {
-  let reach = wreckReaches.get(galaxy);
-  if (reach === undefined) {
-    const definition = enemyDefinition(galaxy, "frigate");
-    const state = createEnemy(
-      definition,
-      { archetype: "frigate", id: "salvage", packId: null, phase: 0 },
-      { x: 0, y: 0 },
-    );
-    const body = enemyPhysicalBody(ROUTE_POSITION[galaxy], state);
-    const hull = definition.sizeRatio * flight.shipRadius;
-    reach = body ? Math.max(hull, partsReach(worldParts(body))) : hull;
-    wreckReaches.set(galaxy, reach);
-  }
-  return reach;
-}
-
 /**
  * The seeded world's exclusion zones within `radius` of a point, as `generate` applies them:
  * station protected areas, quantum and launch arrivals (a safe radius for rocks, the calm radius
  * for enemies), landmark charting ranges, currents, ore fields and salvage sites. A salvage
- * site's disabled frigate keeps rocks the spawn gap from its hull and enemy groups out of its
- * local admission neighbourhood, so the site is planned before them. Protected areas and arrival
- * safe radii also bound moving rocks' paths, since they absorb moving rocks. Flight-state zones
- * (the player, story destinations, required routes and the Needle channel) are the caller's.
+ * site's disabled frigate keeps rocks the spawn gap from its footprint and enemy groups out of
+ * its local admission neighbourhood, so the site is planned before them. Protected areas and
+ * arrival safe radii also bound moving rocks' paths, since they absorb moving rocks. Flight-state
+ * zones (the player, story destinations, required routes and the Needle channel) are the
+ * caller's.
  */
 export function worldSpawnExclusions(
   context: WorldCellContext,
@@ -289,7 +268,8 @@ export function worldSpawnExclusions(
   radius: number,
   point: Vec,
 ): ExclusionZone[] {
-  const wreck = salvageWreckReach(galaxy);
+  // A salvage site's disabled frigate: its footprint is its galaxy's frigate design.
+  const wreck = plannedSpacingRadius(ROUTE_POSITION[galaxy], "frigate");
   const neighbourhood = 2 * SPAWNER_POLICIES[galaxy].localRadius + wreck;
   const near = (at: Vec, reach: number) =>
     (context.worldSide === undefined
@@ -329,7 +309,7 @@ export function worldSpawnExclusions(
     )
       .filter((site) => site.opportunity.kind === "salvage")
       .flatMap((site) => [
-        // Rocks keep the spawn gap from the wreck's hull.
+        // Rocks keep the spawn gap from the wreck's footprint.
         disc("salvage", ["rock", "moving"], site, wreck + SPAWN_GAP),
         disc("salvage", ["enemy"], site, neighbourhood),
       ]),
