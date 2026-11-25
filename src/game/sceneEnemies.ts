@@ -40,7 +40,7 @@ import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { type Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
-import { type EffectShape } from "./weaponEffects.ts";
+import { type EffectShape, mineSolid } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
@@ -564,12 +564,13 @@ export function drawEnemyWeapons(
       const effect = mine(art, centre, dropped, motion);
       draw(effect, graphics);
       used.add(dropped.id);
-      const frames = scene.weaponSolids?.mine;
+      const solids = scene.weaponSolids;
       const solid = effect.solid;
-      const texture = solid && frames && (solid.blink ? frames.blink : frames.ids)[solid.step];
-      if (!solid || !frames || !texture || !scene.textures.exists(texture)) {
+      const texture = solid && solids && mineSolid(solids, solid.step, solid.blink);
+      if (!solid || !solids || !texture || !scene.textures.exists(texture)) {
         continue;
       }
+      const frames = solids.mine;
       let sprite = scene.mineSprites.get(dropped.id);
       if (!sprite) {
         sprite = scene.add.image(0, 0, texture);

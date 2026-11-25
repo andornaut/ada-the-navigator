@@ -18,9 +18,7 @@ import {
   headingFactor,
   heldAlpha,
   laserBolt,
-  MINE_SPIN,
-  mineSpinStep,
-  MISSILE_HEADINGS,
+  mineSolid,
   missileFlame,
   missileFrame,
   missileKind,
@@ -209,12 +207,10 @@ describe("missiles", () => {
     expect(solids.heavy).toMatchObject({ height: 42, width: 42 });
     expect(solids.mine).toMatchObject({ height: 21, width: 21 });
     expect(solids.rapid.ids).toEqual(
-      Array.from({ length: MISSILE_HEADINGS }, (_, k) => `weapon-rapidMissile-${k}`),
+      Array.from({ length: 32 }, (_, k) => `weapon-rapidMissile-${k}`),
     );
     expect(solids.heavy.ids[31]).toBe("weapon-heavyMissile-31");
-    expect(solids.mine.ids).toEqual(
-      Array.from({ length: MINE_SPIN.frames }, (_, j) => `weapon-mine-${j}`),
-    );
+    expect(solids.mine.ids).toEqual(Array.from({ length: 8 }, (_, j) => `weapon-mine-${j}`));
     expect(solids.mine.blink[7]).toBe("weapon-mine-blink-7");
   });
 
@@ -224,6 +220,10 @@ describe("missiles", () => {
       undefined,
     );
     expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-mine-blink-3"))).toBe(
+      undefined,
+    );
+    // The last frame alone may go: the count follows the rows, but the blink set must match.
+    expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-mine-blink-7"))).toBe(
       undefined,
     );
     const resized = assets.map((asset) =>
@@ -245,8 +245,12 @@ describe("missiles", () => {
     expect(missileSolid(solids, "rapid", at(4.4))).toBe("weapon-rapidMissile-4");
   });
 
-  it("steps the mine's spin 11.25 degrees a frame through a quarter turn", () => {
-    expect([0, 11.2, 11.25, 89, 90, 101.25, 360].map(mineSpinStep)).toEqual([0, 0, 1, 7, 0, 1, 0]);
+  it("wraps the mine's spin step by its frame count, from the blink set while it blinks", () => {
+    const solids = readWeaponSolids(CORE_MANIFEST.assets)!;
+    expect([0, 1, 7, 8, 9, 32].map((step) => mineSolid(solids, step, false))).toEqual(
+      [0, 1, 7, 0, 1, 0].map((j) => `weapon-mine-${j}`),
+    );
+    expect(mineSolid(solids, 10, true)).toBe("weapon-mine-blink-2");
   });
 });
 

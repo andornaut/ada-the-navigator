@@ -9,17 +9,15 @@ import {
   IMPACT_STYLE,
   impactEffect,
   type LineShape,
-  mineSpinStep,
   type PolygonShape,
   screenAngle,
   SPARK_MS,
 } from "./weaponEffects.ts";
 
 // Art's enemy-only weapon effects and the enemy Phaser (art/weapons.md "Enemy Phaser" and
-// "Enemy-only weapons") in their flat look ("Flat look"), as screen-space shapes in logical px
-// for the scene to fill and stroke. Timings, colours and light-field values come from
-// public/art/enemy-weapons.json; the flat geometry is below. Each builder returns the shapes and
-// the subset a light field edges in ink.
+// "Enemy-only weapons") in their flat look ("Flat look") from public/art/enemy-weapons.json, as
+// screen-space shapes in logical px for the scene to fill and stroke. Each builder returns the
+// shapes and the subset a light field edges in ink.
 
 /** What a weapon effect draws and which of those shapes take ink edges on a light field. */
 export interface EnemyEffect {
@@ -33,9 +31,20 @@ type Colours = Readonly<
   Record<"coralSide" | "ink" | "obstacle" | "plate" | "weapon" | "white", number>
 >;
 
-/** A beam's timing, light-field glow and reduced-motion line. */
+/** (u, v) points in logical px: u along the heading, v across it. */
+type Points = readonly (readonly [number, number])[];
+
+/**
+ * A beam's timing, its opaque bands (width at the nose and at the end, in px times `w`) and
+ * bloom discs, its light-field outer band and the reduced-motion line.
+ */
 interface BeamArt {
+  readonly bloom: readonly { readonly colour: number; readonly radius: number }[];
   readonly keys: readonly (readonly [number, number, number])[];
+  readonly layers: readonly {
+    readonly colour: number;
+    readonly width: readonly [number, number];
+  }[];
   readonly lightField: {
     readonly bloomAlpha: number;
     readonly glow: { readonly alpha: number; readonly width: readonly [number, number] };
@@ -69,17 +78,29 @@ export interface EnemyWeaponsArt {
     readonly fizzleMs: number;
     readonly hint: { ms: number; radius: number; startDeg: number; stroke: number };
     readonly reducedPopMs: number;
-    readonly spin: number;
+    /** Degrees a second, and degrees per frame of the mine's spin. */
+    readonly spin: { readonly degPerSecond: number; readonly stepDeg: number };
   };
   readonly phaser: BeamArt & {
     readonly aimMs: number;
-    readonly aiming: { dash: readonly [number, number] };
+    readonly aiming: { dash: readonly [number, number]; width: number };
     readonly charge: { core: readonly [number, number]; radius: readonly [number, number] };
+    /** The aim's end chevron, u measured from the aim's end. */
+    readonly chevron: Points;
     readonly missFade: number;
     readonly solidFromMs: number;
+    readonly solidWidth: number;
   };
   readonly ringBurst: {
-    readonly emission: { ms: number };
+    readonly dart: {
+      readonly inner: Points;
+      readonly innerColour: number;
+      readonly outer: Points;
+      readonly outerColour: number;
+      readonly tail: { readonly colour: number; readonly points: Points };
+    };
+    /** The emission ring: alpha held to each step's end in ms. */
+    readonly emission: { alpha: Points; ms: number; stroke: number };
     readonly muzzle: {
       readonly core: { radius: readonly [number, number]; untilMs: number };
       readonly ms: number;
@@ -129,6 +150,10 @@ function list<T>(value: unknown, path: string, read: (entry: unknown) => T): T[]
   return found.map(read);
 }
 
+function points(value: unknown, path: string): Points {
+  return list(value, path, (entry) => pair(entry, ""));
+}
+
 const HEX = /^#[0-9a-f]{6}$/iu;
 
 /**
@@ -160,12 +185,20 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
     const beam = (root: string): BeamArt => {
       const art = at(value, root);
       return {
+        bloom: list(art, "bloom", (entry) => ({
+          colour: colour(entry, "colour"),
+          radius: num(entry, "radius"),
+        })),
         keys: list(art, "keys", (entry) => {
           if (!Array.isArray(entry) || entry.length !== 3 || !entry.every(Number.isFinite)) {
             throw new Malformed(`${root}.keys`);
           }
           return [entry[0], entry[1], entry[2]] as const;
         }),
+        layers: list(art, "layers", (entry) => ({
+          colour: colour(entry, "colour"),
+          width: pair(entry, "width"),
+        })),
         lightField: {
           bloomAlpha: num(art, "lightField.bloomAlpha"),
           glow: {
@@ -231,18 +264,34 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
           stroke: num(mine, "hint.stroke"),
         },
         reducedPopMs: num(mine, "reducedMotion.pop.ms"),
-        spin: num(mine, "spin.degPerSecond"),
+        spin: { degPerSecond: num(mine, "spin.degPerSecond"), stepDeg: num(mine, "spin.stepDeg") },
       },
       phaser: {
         ...beam("phaser"),
         aimMs: num(phaser, "aimMs"),
-        aiming: { dash: pair(phaser, "aiming.dash") },
+        aiming: { dash: pair(phaser, "aiming.dash"), width: num(phaser, "aiming.width") },
         charge: { core: pair(phaser, "charge.core"), radius: pair(phaser, "charge.radius") },
+        chevron: points(phaser, "chevron"),
         missFade: num(phaser, "missFade"),
         solidFromMs: num(phaser, "solidFromMs"),
+        solidWidth: num(phaser, "solid.width"),
       },
       ringBurst: {
-        emission: { ms: num(ring, "emission.ms") },
+        dart: {
+          inner: points(ring, "dart.inner"),
+          innerColour: colour(ring, "dart.innerColour"),
+          outer: points(ring, "dart.outer"),
+          outerColour: colour(ring, "dart.outerColour"),
+          tail: {
+            colour: colour(ring, "dart.tail.colour"),
+            points: points(ring, "dart.tail.points"),
+          },
+        },
+        emission: {
+          alpha: points(ring, "emission.alpha"),
+          ms: num(ring, "emission.ms"),
+          stroke: num(ring, "emission.stroke"),
+        },
         muzzle: {
           core: {
             radius: pair(ring, "muzzle.core.radius"),
@@ -377,78 +426,10 @@ export function enemyInkEdges(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Flat geometry
-
-/** A beam's three bands (nose and end widths) and bloom radii, in px times `w`. */
-interface FlatBeam {
-  readonly bands: readonly (readonly [number, number])[];
-  readonly bloom: readonly number[];
-}
-
-/**
- * The flat look's geometry (art/weapons.md "Flat look"), in logical px along the heading (`u`)
- * and across it (`v`).
- */
-const FLAT = {
-  aimLine: {
-    chevron: [
-      [3, 0],
-      [-1, -3],
-      [-1, 3],
-    ],
-    width: 1.5,
-  },
-  dart: {
-    body: [
-      [2.6, 0],
-      [-0.6, -2.3],
-      [-3.8, 0],
-      [-0.6, 2.3],
-    ],
-    core: [
-      [1, 0],
-      [-0.6, -1],
-      [-2.2, 0],
-      [-0.6, 1],
-    ],
-    tail: [
-      [-3.2, -1],
-      [-10, 0],
-      [-3.2, 1],
-    ],
-  },
-  emission: {
-    steps: [
-      [90, 1],
-      [180, 0.5],
-    ],
-    stroke: 2,
-  },
-  lance: {
-    bands: [
-      [9, 6.8],
-      [5.4, 4],
-      [2.4, 1.6],
-    ],
-    bloom: [6.5, 4.2, 2.3],
-  },
-  phaser: {
-    bands: [
-      [8, 5],
-      [4.6, 2.8],
-      [2.2, 1.3],
-    ],
-    bloom: [5, 3.1, 1.6],
-  },
-} as const;
+// Shapes
 
 /** A polygon of (u, v) `points` about `origin` turned to screen `angle`. */
-function turned(
-  origin: Vec,
-  angle: number,
-  colour: number,
-  points: readonly (readonly [number, number])[],
-): PolygonShape {
+function turned(origin: Vec, angle: number, colour: number, points: Points): PolygonShape {
   const at = frame(origin, angle);
   return { alpha: 1, colour, kind: "polygon", points: points.map(([u, v]) => at(u, v)) };
 }
@@ -458,9 +439,8 @@ function turned(
 
 /**
  * A ring burst `t` ms after firing at hull centre `centre` on screen: the bolts' spawn circle of
- * world radius `spawnRadius` as a 2 px ground ellipse, alpha 1 to 90 ms then 0.5 to 180 ms,
- * and, without reduced motion, a shrinking disc with a white core at each bolt's screen origin
- * for 120 ms.
+ * world radius `spawnRadius` as a ground ellipse in held alpha steps and, without reduced motion,
+ * a shrinking disc with a white core at each bolt's screen origin.
  */
 export function ringEmission(
   art: EnemyWeaponsArt,
@@ -475,13 +455,13 @@ export function ringEmission(
   const shapes: EffectShape[] = [];
   if (t >= 0 && t < emission.ms) {
     shapes.push({
-      alpha: heldAlpha(t, FLAT.emission.steps, 0.5),
+      alpha: heldAlpha(t, emission.alpha, emission.alpha.at(-1)![1]),
       at: centre,
       colour: obstacle,
       halfHeight: spawnRadius * Math.SQRT1_2,
       halfWidth: spawnRadius * Math.SQRT2,
       kind: "ellipse",
-      stroke: FLAT.emission.stroke,
+      stroke: emission.stroke,
     });
   }
   if (!reducedMotion && t >= 0 && t < muzzle.ms) {
@@ -514,14 +494,15 @@ export function ringEmission(
  * takes an ink edge; the tail does not.
  */
 export function ringDart(art: EnemyWeaponsArt, head: Vec, velocity: Vec): EnemyEffect {
+  const { inner, innerColour, outer, outerColour, tail } = art.ringBurst.dart;
   const angle = screenAngle(velocity);
-  const body = turned(head, angle, art.colours.obstacle, FLAT.dart.body);
+  const body = turned(head, angle, outerColour, outer);
   return {
     edged: [body],
     shapes: [
-      turned(head, angle, art.colours.coralSide, FLAT.dart.tail),
+      turned(head, angle, tail.colour, tail.points),
       body,
-      turned(head, angle, art.colours.white, FLAT.dart.core),
+      turned(head, angle, innerColour, inner),
     ],
   };
 }
@@ -548,8 +529,9 @@ export function mineBlink(art: EnemyWeaponsArt, ageMs: number, remainingMs: numb
 }
 
 /**
- * The mine's frame (art/weapons.md "Missile and mine frames"): its spin step, from the blink
- * set while its lamp shows white, scaled about its centre and at its alpha.
+ * The mine's frame (art/weapons.md "Missile and mine frames"): its spin step, `floor(th /
+ * stepDeg)`, which the frame count wraps, from the blink set while its lamp shows white, scaled
+ * about its centre and at its alpha.
  */
 export interface MineSolid {
   readonly alpha: number;
@@ -624,7 +606,8 @@ export function mine(
 ): MineEffect {
   const spec = art.mine;
   const { obstacle } = art.colours;
-  const step = mineSpinStep(reducedMotion ? 0 : (spec.spin * view.ageMs) / 1000);
+  const spin = reducedMotion ? 0 : (spec.spin.degPerSecond * view.ageMs) / 1000;
+  const step = Math.floor(spin / spec.spin.stepDeg);
   if (view.end?.kind === "pop") {
     return minePop(art, centre, view.end.ageMs, reducedMotion);
   }
@@ -704,15 +687,14 @@ export function beamAt(beam: Pick<BeamArt, "keys">, t: number): { a: number; w: 
 }
 
 /**
- * A beam `t` ms after it fires from `from` to `to` on screen: opaque coral, plate and white bands
- * at one held alpha, its muzzle bloom, and a miss tapering every band to a point over the last
- * `taper` px. On a light field the outer band and the bloom's outer disc are ink. Reduced motion
- * draws a steady line over an edge.
+ * A beam `t` ms after it fires from `from` to `to` on screen: Art's opaque bands at one held
+ * alpha, its muzzle bloom, and a miss tapering every band to a point over the last `taper` px.
+ * On a light field the outer band and the bloom's outer disc are ink. Reduced motion draws a
+ * steady line over an edge.
  */
 function enemyBeam(
   art: EnemyWeaponsArt,
   beam: BeamArt,
-  flat: FlatBeam,
   from: Vec,
   to: Vec,
   taper: number,
@@ -741,25 +723,24 @@ function enemyBeam(
   }
   const { a, w } = beamAt(beam, t);
   const alpha = beamAlpha(a);
-  const { ink, obstacle, plate, white } = art.colours;
-  const colours = [obstacle, plate, white];
-  const shapes: EffectShape[] = flat.bands.map((widths, index) => {
+  const { ink } = art.colours;
+  const shapes: EffectShape[] = beam.layers.map((layer, index) => {
     const outer = index === 0 && light;
-    const [start, end] = outer ? beam.lightField.glow.width : widths;
+    const [start, end] = outer ? beam.lightField.glow.width : layer.width;
     return band(
       [start * w, end * w],
-      outer ? ink : colours[index]!,
+      outer ? ink : layer.colour,
       (outer ? beam.lightField.glow.alpha : 1) * alpha,
     );
   });
-  flat.bloom.forEach((radius, index) => {
+  beam.bloom.forEach((disc, index) => {
     const outer = index === 0 && light;
     shapes.push({
       alpha: (outer ? beam.lightField.bloomAlpha : 1) * alpha,
       at: from,
-      colour: outer ? ink : colours[index]!,
+      colour: outer ? ink : disc.colour,
       kind: "disc",
-      radius: radius * w,
+      radius: disc.radius * w,
     });
   });
   return shapes;
@@ -866,7 +847,7 @@ export function lance(
   const beamMs = t - tell;
   // A full-length beam tapers over its end as a Phaser miss does; a stopped one ends hard.
   const taper = view.stopped ? 0 : art.phaser.missFade;
-  const shapes = enemyBeam(art, spec, FLAT.lance, muzzle, end, taper, light, reducedMotion, beamMs);
+  const shapes = enemyBeam(art, spec, muzzle, end, taper, light, reducedMotion, beamMs);
   if (!view.stopped) {
     return { edged: [], shapes };
   }
@@ -913,7 +894,7 @@ export function enemyPhaser(
   if (t < spec.aimMs) {
     const solid = t >= spec.solidFromMs;
     const colour = solid ? art.colours.plate : art.colours.obstacle;
-    const width = FLAT.aimLine.width;
+    const width = solid ? spec.solidWidth : spec.aiming.width;
     const line: LineShape[] = solid
       ? [{ alpha: 1, colour, from: muzzle, kind: "line", round: false, to: end, width }]
       : dashes(muzzle, end, spec.aiming.dash[0], spec.aiming.dash[1], 0, {
@@ -921,13 +902,13 @@ export function enemyPhaser(
           colour,
           width,
         });
-    // A chevron at the aim's end, its tip 3 px past it.
+    // The chevron at the aim's end.
     const length = Math.hypot(end.x - muzzle.x, end.y - muzzle.y);
     const chevron = turned(
       muzzle,
       Math.atan2(end.y - muzzle.y, end.x - muzzle.x),
       colour,
-      FLAT.aimLine.chevron.map(([u, v]) => [length + u, v] as const),
+      spec.chevron.map(([u, v]) => [length + u, v] as const),
     );
     const disc = charge(art, spec.charge, muzzle, t / spec.aimMs);
     return { edged: [...line, chevron, disc[0]!], shapes: [...line, chevron, ...disc] };
@@ -938,7 +919,6 @@ export function enemyPhaser(
   const shapes = enemyBeam(
     art,
     spec,
-    FLAT.phaser,
     view.beam?.from ?? muzzle,
     view.beam?.to ?? end,
     taper,

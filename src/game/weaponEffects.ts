@@ -365,10 +365,6 @@ export function missileFlame(
   ];
 }
 
-/** The missiles' heading frames and the mine's spin frames, a quarter turn in eight steps. */
-export const MISSILE_HEADINGS = 32;
-export const MINE_SPIN = { degreesPerFrame: 11.25, frames: 8 } as const;
-
 /** One model's frame ids by heading or spin step, shown `width` by `height` about `pivot`. */
 export interface SolidFrames {
   readonly height: number;
@@ -387,19 +383,20 @@ export interface WeaponSolids {
 type Row = Readonly<Record<string, unknown>>;
 
 /**
- * Reads the missile and mine frames from the core manifest's assets: every Rapid and Heavy
- * heading and every lit and blinking mine spin step, one display size per model. Undefined
- * when any frame is missing or malformed.
+ * Reads the missile and mine frames from the core manifest's assets: each model's frames by
+ * heading or spin step, numbered from 0 without gaps, with one display size per model and as
+ * many blinking mine frames as lit ones. Undefined when any frame is missing or malformed.
  */
 export function readWeaponSolids(assets: readonly object[]): WeaponSolids | undefined {
   const model = (
     member: (row: Row) => boolean,
-    count: number,
     index: (row: Row) => unknown,
   ): SolidFrames | undefined => {
+    const rows = (assets as readonly Row[]).filter(member);
+    const count = rows.length;
     const ids: (string | undefined)[] = Array.from({ length: count }, () => undefined);
     let size: Omit<SolidFrames, "ids"> | undefined;
-    for (const row of (assets as readonly Row[]).filter(member)) {
+    for (const row of rows) {
       const at = index(row);
       const { displayHeight: height, displayWidth: width, id } = row;
       const pivot = row.pivot as Partial<Vec> | undefined;
@@ -432,33 +429,32 @@ export function readWeaponSolids(assets: readonly object[]): WeaponSolids | unde
   const missile = (projectile: string) =>
     model(
       (row) => row.projectile === projectile,
-      MISSILE_HEADINGS,
       (row) => row.directionIndex,
     );
   const mine = (blink: boolean) =>
     model(
       (row) => row.projectile === "mine" && row.blink === blink,
-      MINE_SPIN.frames,
       (row) => row.spinIndex,
     );
   const rapid = missile("rapidMissile");
   const heavy = missile("heavyMissile");
   const lit = mine(false);
   const blink = mine(true);
-  return rapid && heavy && lit && blink
+  return rapid && heavy && lit && blink && blink.ids.length === lit.ids.length
     ? { heavy, mine: { ...lit, blink: blink.ids }, rapid }
     : undefined;
 }
 
-/** A missile's frame id for its world `velocity`: the nearest of the 32 headings. */
+/** A missile's frame id for its world `velocity`: the nearest of its headings. */
 export function missileSolid(solids: WeaponSolids, kind: "heavy" | "rapid", velocity: Vec): string {
-  return solids[kind].ids[shipDirection(MISSILE_HEADINGS, velocity)]!;
+  const { ids } = solids[kind];
+  return ids[shipDirection(ids.length, velocity)]!;
 }
 
-/** The mine's spin step for its spin angle in degrees: `floor(th / 11.25) mod 8`. */
-export function mineSpinStep(spinDegrees: number): number {
-  const step = Math.floor(spinDegrees / MINE_SPIN.degreesPerFrame) % MINE_SPIN.frames;
-  return (step + MINE_SPIN.frames) % MINE_SPIN.frames;
+/** The mine's frame id for spin step `step`, which the frame count wraps. */
+export function mineSolid(solids: WeaponSolids, step: number, blink: boolean): string {
+  const ids = blink ? solids.mine.blink : solids.mine.ids;
+  return ids[((step % ids.length) + ids.length) % ids.length]!;
 }
 
 // ---------------------------------------------------------------------------------------------

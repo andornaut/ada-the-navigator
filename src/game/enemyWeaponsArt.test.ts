@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import file from "../../public/art/enemy-weapons.json";
 import manifest from "../../public/art/manifest.json";
+import { ENEMY_WEAPONS_FLAT as file } from "../testing/enemyWeaponsFlat.ts";
 import {
   beamAt,
   dashes,
@@ -61,6 +61,16 @@ describe("enemy weapons art", () => {
     const reference = copy();
     reference.phaser.reducedMotion.line.colour = "teal";
     expect(readEnemyWeaponsArt(reference)).toBeUndefined();
+    // Each flat-look value is required: the chevron, the dart tail and the mine's spin step.
+    const chevron = copy() as { phaser: { chevron?: unknown } };
+    delete chevron.phaser.chevron;
+    expect(readEnemyWeaponsArt(chevron)).toBeUndefined();
+    const tail = copy();
+    tail.ringBurst.dart.tail.colour = "teal";
+    expect(readEnemyWeaponsArt(tail)).toBeUndefined();
+    const step = copy() as { mine: { spin: { stepDeg?: number } } };
+    delete step.mine.spin.stepDeg;
+    expect(readEnemyWeaponsArt(step)).toBeUndefined();
     expect(readEnemyWeaponsArt(undefined)).toBeUndefined();
   });
 });
@@ -124,10 +134,10 @@ describe("mine", () => {
     const at = { x: 0, y: 0 };
     const live = (ageMs: number, reduced = false) =>
       mine(art, at, { ageMs, lifeMs: 20_000 }, reduced);
-    // 60 degrees a second: 500 ms is 30 degrees, spin step 2; 1500 ms is 90, a quarter turn.
+    // 60 degrees a second in 11.25 degree steps: 500 ms is 30 degrees, step 2; 1500 ms, step 8.
     expect(live(500).solid).toEqual({ alpha: 1, blink: false, scale: 1, step: 2 });
-    expect(live(1500).solid?.step).toBe(0);
-    expect(live(1700).solid?.step).toBe(1);
+    expect(live(1500).solid?.step).toBe(8);
+    expect(live(1700).solid?.step).toBe(9);
     expect(live(500, true).solid).toEqual({ alpha: 1, blink: false, scale: 1, step: 0 });
     // Its lamp blinks from the blink set, never under reduced motion.
     expect(live(1050).solid?.blink).toBe(true);
