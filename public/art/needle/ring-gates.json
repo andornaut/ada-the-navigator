@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "frame": 288,
+  "displayScale": 0.4375,
+  "opening": 66,
+  "rim": {
+    "inner": 33,
+    "outer": 40,
+    "depth": 7
+  },
+  "collar": 43.637,
+  "worldUnit": 1.155,
+  "groundDepth": 1.155,
+  "minScreenAngle": 30,
+  "layers": ["back", "front"],
+  "light": {
+    "fadeMs": 240,
+    "easing": "cubicOut"
+  },
+  "orientations": [
+    {
+      "index": 0,
+      "worldAxis": [1, 0],
+      "axis": [0.866, 0.5],
+      "gameAxis": [0.894, 0.447],
+      "open": 0.577,
+      "offHorizontal": 30,
+      "extent": [96.628, 107.283],
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-0-back",
+          "front": "needle-gate-dark-0-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-0-back",
+          "front": "needle-gate-lit-0-front"
+        }
+      }
+    },
+    {
+      "index": 1,
+      "worldAxis": [0.924, 0.383],
+      "axis": [0.583, 0.813],
+      "gameAxis": [0.638, 0.77],
+      "open": 0.754,
+      "offHorizontal": 54.343,
+      "extent": [119.092, 100.935],
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-1-back",
+          "front": "needle-gate-dark-1-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-1-back",
+          "front": "needle-gate-lit-1-front"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "worldAxis": [0.707, 0.707],
+      "axis": [0, 1],
+      "gameAxis": [0, 1],
+      "open": 0.816,
+      "offHorizontal": 90,
+      "extent": [123.425, 98.092],
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-2-back",
+          "front": "needle-gate-dark-2-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-2-back",
+          "front": "needle-gate-lit-2-front"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "worldAxis": [0.383, 0.924],
+      "axis": [-0.583, 0.813],
+      "gameAxis": [-0.638, 0.77],
+      "open": 0.754,
+      "offHorizontal": 54.343,
+      "extent": [119.092, 100.935],
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-3-back",
+          "front": "needle-gate-dark-3-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-3-back",
+          "front": "needle-gate-lit-3-front"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "worldAxis": [0, 1],
+      "axis": [-0.866, 0.5],
+      "gameAxis": [-0.894, 0.447],
+      "open": 0.577,
+      "offHorizontal": 30,
+      "extent": [96.628, 107.283],
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-4-back",
+          "front": "needle-gate-dark-4-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-4-back",
+          "front": "needle-gate-lit-4-front"
+        }
+      }
+    }
+  ],
+  "colors": {
+    "rim": ["#f3ecdd", "#c6bca5", "#a0957c"],
+    "band": ["#3a3f63", "#282c49", "#1b1d30"],
+    "lampLit": "#d7263d",
+    "lampDark": "#4a4358"
+  }
+}

@@ -633,7 +633,350 @@
         "facing": "fixed",
         "frameMs": 700,
         "project": "practiceBerth"
+      },
+      {
+        "id": "needle-gate-dark-0-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-0",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 0,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-0-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-0",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 0,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-0-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-0",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 0,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-0-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-0",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 0,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-1-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-1",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 1,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-1-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-1",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 1,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-1-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-1",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 1,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-1-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-1",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 1,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-2-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-2",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 2,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-2-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-2",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 2,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-2-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-2",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 2,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-2-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-2",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 2,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-3-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-3",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 3,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-3-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-3",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 3,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-3-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-3",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 3,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-3-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-3",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 3,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-4-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-4",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 4,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-dark-4-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-4",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "dark",
+        "orientation": 4,
+        "layer": "front",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-4-back",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-4",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 4,
+        "layer": "back",
+        "svgSheet": true
+      },
+      {
+        "id": "needle-gate-lit-4-front",
+        "path": "/art/needle/ring-gates-sheet.svg",
+        "width": 288,
+        "height": 288,
+        "displayWidth": 126,
+        "displayHeight": 126,
+        "facing": "axis-4",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "gate": "lit",
+        "orientation": 4,
+        "layer": "front",
+        "svgSheet": true
       }
-    ]
+    ],
+    "data": {
+      "needleGates": "/art/needle/ring-gates.json"
+    }
   }
 }

@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
-import { drawnObjects } from "./friendly.ts";
+import { drawGates, drawnObjects } from "./friendly.ts";
+import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { readManifest } from "./manifest.ts";
 import { strictlyConvex } from "./silhouette.ts";
 
@@ -20,6 +21,8 @@ type Staged = Record<string, { assets: Row[]; data?: Record<string, string> }>;
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 const staged = JSON.parse(read("../friendly-rows.json")) as Staged;
 const objects = drawnObjects();
+const gates = drawGates();
+const isGate = (id: string) => id.startsWith("needle-gate-");
 
 // Shipped rows whose frames the redesign splits into one row per frame.
 const SPLIT: Readonly<Record<string, readonly string[]>> = {
@@ -69,7 +72,10 @@ test("each staged row replaces a shipped row or one frame of a split row", () =>
     Object.values(staged)
       .flatMap(({ assets }) => assets.map(({ id }) => id))
       .toSorted(),
-    objects.flatMap(({ drawn }) => drawn.map(({ id }) => id)).toSorted(),
+    [
+      ...objects.flatMap(({ drawn }) => drawn.map(({ id }) => id)),
+      ...gates.frames.map(({ id }) => id),
+    ].toSorted(),
   );
 });
 
@@ -126,6 +132,50 @@ test("the mooring buoy's three arm tips lie on its frame and point away from its
       // The tip lies outward of the hub, which draws above the pivot by the cleat's height.
       const [dx, dy] = [x - pivot.x * width, y - pivot.y * height];
       assert.ok(dx * outward[0] + dy * outward[1] > 0, id);
+    }
+  }
+});
+
+test("the ring gate is true to Gameplay's rim across the screen at every axis", () => {
+  const shipped = JSON.parse(read("../../public/art/needle/gates.json")) as {
+    opening: number;
+    rim: typeof GATE_RIM;
+  };
+  const data = JSON.parse(read(`../../public${staged.needle!.data!.needleGates}`)) as {
+    frame: number;
+    opening: number;
+    rim: typeof GATE_RIM;
+    orientations: { extent: [number, number]; files: Record<string, Record<string, string>> }[];
+  };
+  assert.equal(data.opening, shipped.opening);
+  assert.deepEqual(data.rim, shipped.rim);
+  assert.equal(data.rim.inner * 2, data.opening);
+  assert.equal(data.orientations.length, GATE_AXES.length);
+  const rows = new Set(staged.needle!.assets.filter(({ id }) => isGate(id)).map(({ id }) => id));
+  assert.equal(rows.size, 20);
+  for (const { extent, files } of data.orientations) {
+    for (const id of Object.values(files).flatMap((layers) => Object.values(layers))) {
+      assert.ok(rows.has(id), id);
+    }
+    assert.ok(extent[0] < data.frame * DISPLAY_SCALE && extent[1] < data.frame * DISPLAY_SCALE);
+  }
+  // Axis 2 runs straight down the screen, so the ring spans its full diameter across it: the
+  // rim's outer diameter and both collars, in display px.
+  const across = data.orientations[2]!.extent[0];
+  assert.ok(across > 2 * GATE_RIM.outer * WORLD_UNIT);
+  assert.ok(Math.abs(across - 2 * (GATE_RIM.outer * WORLD_UNIT + 4.2)) < 0.2);
+});
+
+test("each ring gate layer is one closed half: the layers' outlines differ and both draw", () => {
+  for (const state of ["dark", "lit"]) {
+    for (let orientation = 0; orientation < GATE_AXES.length; orientation++) {
+      const [back, front] = ["back", "front"].map((layer) =>
+        gates.frames.find(
+          (f) => f.state === state && f.orientation === orientation && f.layer === layer,
+        )!,
+      );
+      assert.ok(back!.silhouette.length > 0 && front!.silhouette.length > 0);
+      assert.notEqual(back!.silhouette, front!.silhouette);
     }
   }
 });

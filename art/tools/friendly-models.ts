@@ -7,8 +7,10 @@ import {
   type Mesh,
   meshBar,
   meshBlock,
+  meshCapped,
   meshDome,
   meshExtrude,
+  meshHoop,
   meshLoft,
   meshPlace,
   meshRing,
@@ -385,6 +387,70 @@ function practiceBerth(lit: boolean): Mesh {
   drum(mesh, O, -4, 14, 11, trim, 24);
   drum(mesh, O, 14, 22, 9, lit ? NEEDLE.lamp : NEEDLE.dim, 24);
   meshTube(mesh, [0, 0, 22], [0, 0, 28], 10.5, 5, trim, 24);
+  return mesh;
+}
+
+// ------------------------------------------------------------------ ring gate
+
+// Display px per world unit across the screen: the game draws a world offset (x, y) at
+// (x - y, (x + y) / 2) and the art projection at ((x - y) * sqrt(3) / 2, (x + y) / 2 - z), so
+// this factor makes a model's width across the screen exact.
+export const WORLD_UNIT = 2 / Math.sqrt(3);
+// Gameplay's gate: the opening a pass goes through, and the rim's radii and depth along the
+// axis, in world units.
+export const GATE_OPENING = 66;
+export const GATE_RIM = { inner: 33, outer: 40, depth: 7 } as const;
+// The gate's axis on the world plane, in degrees, per orientation.
+export const GATE_AXES = [0, 22.5, 45, 67.5, 90] as const;
+// The collar's reach from the gate's centre, in model units beyond the rim's outer radius.
+const COLLAR_REACH = 4.2;
+export const GATE_COLLAR = GATE_RIM.outer + COLLAR_REACH / WORLD_UNIT;
+export const GATE_LAMP = { lit: NEEDLE.lamp[0], dark: "#4a4358" } as const;
+// The rim's and its band's flat tones: top, left wall, right wall.
+export const NEEDLE_GATE_TONES = { rim: NEEDLE.body, band: NEEDLE.trim } as const;
+export type GateLayer = "back" | "front";
+
+// The normal of the plane through the gate's centre that parts its front layer from its back
+// layer: the view direction projected onto the ring's plane, so the rule holds at every axis.
+export function gateSplit(axisDegrees: number): Point {
+  const [x, y] = polar(1, axisDegrees);
+  const share = x + y;
+  const n: Point = [1 - x * share, 1 - y * share, 1];
+  const length = Math.hypot(...n);
+  return [n[0] / length, n[1] / length, n[2] / length];
+}
+
+// Ring gate: one slim eye ring on edge with a navy band round its rim, and at each side a blunt
+// needle collar carrying one lamp band. Model units are display px. With `layer`, only that half
+// is built, each solid closed over the cut.
+export function ringGate(axisDegrees: number, lit: boolean, layer?: GateLayer): Mesh {
+  const { body, trim } = NEEDLE;
+  const lamp = glow(lit ? GATE_LAMP.lit : GATE_LAMP.dark);
+  const [x, y] = polar(1, axisDegrees);
+  const axis: Point = [x, y, 0];
+  const side: Point = [-y, x, 0];
+  const [inner, outer, depth] = [
+    GATE_RIM.inner * WORLD_UNIT,
+    GATE_RIM.outer * WORLD_UNIT,
+    GATE_RIM.depth * WORLD_UNIT,
+  ];
+  const split = gateSplit(axisDegrees);
+  const toward = layer === undefined ? undefined : layer === "front" ? split : along(split, -1);
+  const mesh: Mesh = [];
+  meshHoop(mesh, [0, 0, 0], axis, outer, inner, depth, body, 64, toward);
+  meshHoop(mesh, [0, 0, 0], axis, outer + 0.7, outer - 2.6, 2.6, trim, 64, toward);
+  for (const s of [1, -1]) {
+    const parts = [
+      [inner + 1.5, outer + 2.4, 7.2, 7.2, trim],
+      [outer + 2.4, outer + COLLAR_REACH, 7.2, 5.4, trim],
+      [outer - 2.2, outer + 0.6, 7.9, 7.9, lamp],
+    ] as const;
+    for (const [from, to, r0, r1, tones] of parts) {
+      const solid: Mesh = [];
+      meshTube(solid, along(side, s * from), along(side, s * to), r0, r1, tones, 18);
+      mesh.push(...(toward ? meshCapped(solid, [0, 0, 0], toward, tones) : solid));
+    }
+  }
   return mesh;
 }
 
