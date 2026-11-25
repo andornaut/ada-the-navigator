@@ -868,6 +868,11 @@ At each clearance, avoidance checks up to five courses: straight and 30 or 60
 degrees to either side. Quest guard home placement uses a separate 16-direction
 grid. Prediction takes 12 samples, starting at the actual first physics step and
 spacing the rest evenly across the remaining horizon.
+Moving rocks are obstacles at their predicted position at each sample. A moving
+rock is a candidate when its straight path over the look-ahead comes within the
+query reach. Each moving rock is predicted along a straight line from its
+current velocity, including debris-river rocks, whose curved path this
+approximates over the horizon.
 These steering clearances do not inflate physical collision geometry or introduce
 cover behavior. They do not guarantee the preferred berth in every passage.
 Without relevant obstacle candidates, the existing steering path remains active.
