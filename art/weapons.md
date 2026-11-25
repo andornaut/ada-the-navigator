@@ -263,9 +263,10 @@ their damage, intervals, speeds, counts and lifetimes
 - Rebuild with `node art/tools/enemy-weapons.ts`. It writes
   [enemy-weapons.json](../public/art/enemy-weapons.json), formatted with the
   project's Prettier settings, and links it from the core manifest as
-  `enemyWeapons`. Reruns are byte-identical. The build fails if a carrying
-  colour falls below 5:1 on a dark galaxy's background or the ink below 5:1 on
-  a light one, or if the mine's collision parts trace its drawing with an IoU
+  `enemyWeapons`. Reruns are byte-identical. The build fails if a galaxy's boundary
+  edge (the ink on a light galaxy, `foregroundEdge` on Phantom) falls below 5:1
+  on its background, or a carrying colour below 5:1 on a dark galaxy without
+  one, or if the mine's collision parts trace its drawing with an IoU
   below 0.98 or stray more than 1 px from its edge.
 
 ### Enemy-only conventions
@@ -276,8 +277,8 @@ their damage, intervals, speeds, counts and lifetimes
   `#181425`. Coral marks every enemy shot, so the enemy beams are coral where
   Ada's are amber and cream.
 - Every shape that has to be seen draws at alpha 1 in `obstacle`, `plate`,
-  `weapon` or white: at least 5.37:1 on every dark galaxy (`plate` 7.15:1, white
-  14.47:1, amber 8.40:1). Glows, fades and tints carry nothing.
+  `weapon` or white, over the galaxy's boundary edge. Glows, fades and tints
+  carry nothing.
 - Widths and radii are logical px scaled by `s`; the `u`, `v` heading frame and
   `f` are those of [Conventions](#conventions).
 - Tells, lines and beams draw in the effect layer with the Phaser beam. They

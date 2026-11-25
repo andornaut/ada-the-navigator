@@ -21,7 +21,10 @@ const space = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as {
 };
 const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
   lightField: { ink: string };
-  galaxies: { id: string; tint: { light?: boolean }; colors: { background: string } }[];
+  galaxies: Record<
+    string,
+    { tint: { light?: boolean }; colors: { background: string }; foregroundEdge?: string }
+  >;
 };
 
 // Space palette roles, then the coral family's side and salvage plate (art/enemies.md).
@@ -35,14 +38,17 @@ const COLOURS = {
 } as const;
 type Colour = keyof typeof COLOURS;
 
-// Every colour that carries a shape at alpha 1 holds 5:1 on each dark galaxy; on a light galaxy
-// the ink edge carries it.
+// Every colour that carries a shape at alpha 1 holds 5:1 on a dark galaxy without a boundary
+// edge; on a light galaxy the ink edge carries it, and on one with a `foregroundEdge` that edge.
 const CARRIERS: readonly Colour[] = ["obstacle", "weapon", "plate", "white"];
-for (const { id, tint, colors } of fields.galaxies) {
+for (const [id, { tint, colors, foregroundEdge }] of Object.entries(fields.galaxies)) {
   const bg = colors.background.slice(1);
-  const checks: readonly Colour[] = tint.light ? ["ink"] : CARRIERS;
-  for (const name of checks) {
-    const ratio = contrast(bg, COLOURS[name].slice(1));
+  const edge = foregroundEdge ?? (tint.light ? COLOURS.ink : undefined);
+  const checks: readonly (readonly [string, string])[] = edge
+    ? [["edge", edge]]
+    : CARRIERS.map((name) => [name, COLOURS[name]] as const);
+  for (const [name, colour] of checks) {
+    const ratio = contrast(bg, colour.slice(1));
     if (ratio < MIN_CONTRAST) {
       throw new Error(`${name} is ${ratio.toFixed(2)}:1 on ${id}, below ${MIN_CONTRAST}:1`);
     }
