@@ -6,11 +6,12 @@ import { fileURLToPath } from "node:url";
 
 import { type ManifestFile, readManifest } from "./manifest.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
-import { BLINK_MS, DESTINATION_SCALE, DISPLAY_SCALE, HUB_SCALE, type Mesh } from "./solid.ts";
+import { DESTINATION_SCALE, DISPLAY_SCALE, HUB_SCALE, type Mesh } from "./solid.ts";
 import {
   flower,
   type Flower,
   leafFlower,
+  type LeafFlower,
   needle,
   PROJECT,
   saucer,
@@ -23,7 +24,7 @@ import {
 } from "./station-models.ts";
 import { svgText } from "./svg-text.ts";
 import { tonePaths } from "./fleet.ts";
-import { type Fragment, type V2, visibleFragments } from "./visible.ts";
+import { type Fragment, loopArea, type V2, visibleFragments } from "./visible.ts";
 
 // Frame px to display px, as the shipped rows scale each kind of destination.
 const STATION = DISPLAY_SCALE * DESTINATION_SCALE;
@@ -49,14 +50,14 @@ export type State = {
   mesh: (lit: boolean) => Mesh;
   // Draws the model's project solid alone, as far as the whole model leaves it visible.
   overlay?: boolean;
+  // The other bodies an overlay draws on; the overlay must show alike on each.
+  on?: readonly { title: string; mesh: (lit: boolean) => Mesh }[];
   // The reference silhouette, in display px.
   size?: readonly [number, number];
   berths?: readonly Berth[];
   // The outposts' dock: the body's wall on the axis straight down the screen from the pivot, as
   // a radius in display px, and the mouth width the shipped row carries, in frame px.
   dock?: { radius: number; width: number };
-  // The fields of a row that replaces no shipped row.
-  fresh?: Record<string, unknown>;
 };
 
 export type Structure = {
@@ -99,7 +100,13 @@ const ORIGIN: Point = [0, 0, 0];
 
 // The hub's world plane is the large wheel's mid height, where story craft meet its rim.
 const HUB_PLANE = -24;
-const GROWERS: Flower = { petals: 6, reach: 60, disc: 28, stalk: 58, bulb: false, half: 19 };
+// The growers' leaf petals on a long foot, at the width of the shipped growers.
+const GROWERS: LeafFlower = { foot: 62 };
+const GROWERS_SCALE = 0.8;
+// The worn hub's rim opening, in degrees, on the facets of the whole rim (5.625 degrees each).
+const WORN = [42.1875, 109.6875] as const;
+// The docking bay stands off the large wheel's rim where both hub states have it.
+const BAY = 0;
 const WORKSHOP: Flower = {
   angles: [90, 135, 180, 225, 270],
   reach: 72,
@@ -184,41 +191,25 @@ export const STRUCTURES: readonly Structure[] = [
     ],
   },
   {
-    key: "sunflower-second-station",
-    manifest: "sunflower",
-    file: "leaf-station-sheet.svg",
-    scale: STATION,
-    origin: ORIGIN,
-    states: [
-      {
-        title: "Sunflower second station",
-        frames: blink("station-leaf"),
-        mesh: (lit) => leafFlower(lit),
-        size: [165, 101],
-        fresh: { facing: "fixed", pivot: {}, frameMs: BLINK_MS },
-      },
-    ],
-  },
-  {
     key: "sunflower-growers",
     manifest: "sunflower",
-    file: "growers-bud-sheet.svg",
+    file: "growers-leaf-sheet.svg",
     scale: OUTPOST,
     origin: ORIGIN,
     states: [
       {
         title: "Growers' outpost",
         frames: blink("outpost-growers"),
-        mesh: (lit) => flower(lit, GROWERS),
-        size: [146, 110],
-        dock: { radius: 28, width: 31.843 },
+        mesh: (lit) => scaled(leafFlower(lit, GROWERS), GROWERS_SCALE),
+        size: [132, 108],
+        dock: { radius: 30 * GROWERS_SCALE, width: 31.843 },
       },
       {
         title: "Growers with greenhouseRing",
         frames: blink("outpost-growers-ring"),
-        mesh: (lit) => flower(lit, { ...GROWERS, greenhouse: true }),
-        size: [169, 123],
-        dock: { radius: 28, width: 31.843 },
+        mesh: (lit) => scaled(leafFlower(lit, { ...GROWERS, greenhouse: true }), GROWERS_SCALE),
+        size: [165, 121],
+        dock: { radius: 30 * GROWERS_SCALE, width: 31.843 },
       },
     ],
   },
@@ -285,7 +276,7 @@ export const STRUCTURES: readonly Structure[] = [
       {
         title: "Mining hub, worn",
         frames: blink("outpost-hub"),
-        mesh: (lit) => wheels(lit, { gap: [40, 110] }),
+        mesh: (lit) => wheels(lit, { gap: WORN }),
         size: [168, 142],
         berths: hubBerths(),
       },
@@ -299,10 +290,11 @@ export const STRUCTURES: readonly Structure[] = [
       {
         title: "dockingBay",
         frames: blink("outpost-hub-bay"),
-        mesh: (lit) => wheels(lit, { bay: 45 }),
+        mesh: (lit) => wheels(lit, { bay: BAY }),
+        on: [{ title: "worn hub", mesh: (lit) => wheels(lit, { bay: BAY, gap: WORN }) }],
         overlay: true,
-        // The berth drum's wall on the axis straight down the screen.
-        berths: [{ at: pol(105, 45, HUB_PLANE), outward: [1, 1, 0], width: 36.742 }],
+        // The berth drum's wall, outward from the hub.
+        berths: [{ at: pol(105, BAY, HUB_PLANE), outward: pol(1, BAY), width: 36.742 }],
       },
     ],
   },
@@ -479,6 +471,19 @@ type Paths = ReturnType<typeof tonePaths>;
 const markup = (paths: Paths) =>
   paths.map(({ fill, loops }) => `<path fill="${fill}" d="${d(loops)}"/>`).join("");
 
+// Whether two drawings cover the same area in each tone, within one square frame px:
+// the same shapes, whichever points their outlines pass through along an edge.
+const alike = (a: Paths, b: Paths) =>
+  a.length === b.length &&
+  a.every(
+    ({ fill, loops }, i) =>
+      fill === b[i]!.fill &&
+      Math.abs(
+        loops.reduce((sum, loop) => sum + loopArea(loop), 0) -
+          b[i]!.loops.reduce((sum, loop) => sum + loopArea(loop), 0),
+      ) < 1,
+  );
+
 export type DrawnState = {
   state: State;
   // The silhouette's display size.
@@ -486,8 +491,8 @@ export type DrawnState = {
   silhouette: string;
   // The frame's content by lit state, without its root.
   body: (lit: boolean) => string;
-  // An overlay's whole model, body included, and its silhouette.
-  scene?: { silhouette: string; body: (lit: boolean) => string };
+  // An overlay on each whole model it draws on, body included, with that model's silhouette.
+  scenes?: { title: string; silhouette: string; body: (lit: boolean) => string }[];
 };
 export type Drawn = {
   structure: Structure;
@@ -528,7 +533,7 @@ export function draw(structure: Structure): Drawn {
         points: fragment.points.map(([x, y]): V2 => [x + width / 2, y + above]),
       })),
     );
-  const states = visible.map(({ state, all, own }): DrawnState => {
+  const states = visible.map(({ state, own }): DrawnState => {
     const paths = new Map(lights.map((lit) => [lit, framed(own.get(lit)!)]));
     const silhouette = d(paths.get(true)![0]!.loops);
     if (d(paths.get(false)![0]!.loops) !== silhouette) {
@@ -545,18 +550,29 @@ export function draw(structure: Structure): Drawn {
         `${state.title} draws ${size.map((v) => v.toFixed(1)).join(" by ")}, not ${state.size.join(" by ")}`,
       );
     }
-    const scenes = state.overlay && new Map(lights.map((lit) => [lit, framed(all.get(lit)!)]));
+    const scenes =
+      state.overlay &&
+      [{ title: "", mesh: state.mesh }, ...(state.on ?? [])].map(({ title, mesh }) => {
+        const whole = new Map(
+          lights.map((lit) => [lit, fragments(structure, { ...state, mesh }, lit)]),
+        );
+        const part = framed(whole.get(true)!.filter(({ group }) => group === PROJECT));
+        if (!alike(part, paths.get(true)!)) {
+          throw new Error(`${state.title} shows differently on the ${title}`);
+        }
+        const drawnScene = new Map(lights.map((lit) => [lit, framed(whole.get(lit)!)]));
+        return {
+          title,
+          silhouette: d(drawnScene.get(true)![0]!.loops),
+          body: (lit: boolean) => markup(drawnScene.get(lit)!),
+        };
+      });
     return {
       state,
       size,
       silhouette,
       body: (lit) => markup(paths.get(lit)!),
-      ...(scenes && {
-        scene: {
-          silhouette: d(scenes.get(true)![0]!.loops),
-          body: (lit) => markup(scenes.get(lit)!),
-        },
-      }),
+      ...(scenes && { scenes }),
     };
   });
   return { structure, width, height, above, states };
@@ -584,9 +600,7 @@ function sheet(drawn: Drawn): { text: string; rows: Row[] } {
   const children: string[] = [];
   for (const { state, body } of drawn.states) {
     for (const { id, lit, same } of state.frames) {
-      const row: Row | undefined = state.fresh
-        ? { id, path, width, height, displayWidth: 0, displayHeight: 0, ...state.fresh }
-        : shipped.find((entry) => entry.id === id);
+      const row = shipped.find((entry) => entry.id === id);
       if (!row) throw new Error(`${id} has no row in the ${manifest} manifest`);
       // A row that carries its intrinsic size has its root at display size.
       const intrinsic = "intrinsicWidth" in row;

@@ -41,12 +41,12 @@ function main() {
         (py - origin[1]) / scale,
         (pz - origin[2]) / scale,
       ]);
-    for (const { state, size, silhouette, body, scene } of drawn.states) {
+    for (const { state, size, silhouette, body, scenes = [] } of drawn.states) {
       const top = y;
       let x = GAP;
-      const views = [...(scene ? [scene] : []), { silhouette, body }];
+      const views = [...scenes, { silhouette, body }];
       // An overlay's whole model reaches past its frame.
-      const pad = scene && structure.anchor ? 180 : 0;
+      const pad = scenes.length > 0 && structure.anchor ? 180 : 0;
       // The lit states the state's frames draw.
       const lights = [...new Set(state.frames.map(({ lit }) => lit))];
       for (const view of views) {
@@ -73,7 +73,7 @@ function main() {
                 )
               : [];
             const marked = marks ? cross + berths.join("") + dock.join("") : "";
-            const shift = view === scene ? pad * k : 0;
+            const shift = view.body === body ? 0 : pad * k;
             parts.push(
               `<svg x="${x + shift}" y="${top + LABEL + shift}" width="${width * k}" height="${height * k}" viewBox="0 0 ${width} ${height}" overflow="visible">${stroke}${view.body(lit)}${marked}</svg>`,
             );

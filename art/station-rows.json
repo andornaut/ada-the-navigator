@@ -36,38 +36,8 @@
   "sunflower": {
     "assets": [
       {
-        "id": "station-leaf-a",
-        "path": "/art/sunflower/leaf-station-sheet.svg",
-        "width": 264,
-        "height": 168,
-        "displayWidth": 173.25,
-        "displayHeight": 110.25,
-        "facing": "fixed",
-        "pivot": {
-          "x": 0.5,
-          "y": 0.50595
-        },
-        "frameMs": 700,
-        "svgSheet": true
-      },
-      {
-        "id": "station-leaf-b",
-        "path": "/art/sunflower/leaf-station-sheet.svg",
-        "width": 264,
-        "height": 168,
-        "displayWidth": 173.25,
-        "displayHeight": 110.25,
-        "facing": "fixed",
-        "pivot": {
-          "x": 0.5,
-          "y": 0.50595
-        },
-        "frameMs": 700,
-        "svgSheet": true
-      },
-      {
         "id": "outpost-growers-a",
-        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "path": "/art/sunflower/growers-leaf-sheet.svg",
         "width": 192,
         "height": 144,
         "displayWidth": 176.4,
@@ -75,12 +45,12 @@
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.42361
+          "y": 0.45139
         },
         "frameMs": 700,
         "dock": {
           "x": 96,
-          "y": 82.55,
+          "y": 83.471,
           "outward": [0, 1],
           "width": 31.843
         },
@@ -89,7 +59,7 @@
       },
       {
         "id": "outpost-growers-b",
-        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "path": "/art/sunflower/growers-leaf-sheet.svg",
         "width": 192,
         "height": 144,
         "displayWidth": 176.4,
@@ -97,12 +67,12 @@
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.42361
+          "y": 0.45139
         },
         "frameMs": 700,
         "dock": {
           "x": 96,
-          "y": 82.55,
+          "y": 83.471,
           "outward": [0, 1],
           "width": 31.843
         },
@@ -111,7 +81,7 @@
       },
       {
         "id": "outpost-growers-ring-a",
-        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "path": "/art/sunflower/growers-leaf-sheet.svg",
         "width": 192,
         "height": 144,
         "displayWidth": 176.4,
@@ -119,12 +89,12 @@
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.42361
+          "y": 0.45139
         },
         "frameMs": 700,
         "dock": {
           "x": 96,
-          "y": 82.55,
+          "y": 83.471,
           "outward": [0, 1],
           "width": 31.843
         },
@@ -134,7 +104,7 @@
       },
       {
         "id": "outpost-growers-ring-b",
-        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "path": "/art/sunflower/growers-leaf-sheet.svg",
         "width": 192,
         "height": 144,
         "displayWidth": 176.4,
@@ -142,12 +112,12 @@
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.42361
+          "y": 0.45139
         },
         "frameMs": 700,
         "dock": {
           "x": 96,
-          "y": 82.55,
+          "y": 83.471,
           "outward": [0, 1],
           "width": 31.843
         },
@@ -284,25 +254,25 @@
       {
         "id": "outpost-hub-a",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 6.592,
+            "x": 26.592,
             "y": 168,
             "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 313.408,
+            "x": 333.408,
             "y": 168,
             "outward": [1, 0],
             "width": 28.169
@@ -311,31 +281,31 @@
         "destination": "hub",
         "variant": "worn",
         "svgSheet": true,
-        "intrinsicWidth": 175,
-        "intrinsicHeight": 175
+        "intrinsicWidth": 196.875,
+        "intrinsicHeight": 157.5
       },
       {
         "id": "outpost-hub-b",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 6.592,
+            "x": 26.592,
             "y": 168,
             "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 313.408,
+            "x": 333.408,
             "y": 168,
             "outward": [1, 0],
             "width": 28.169
@@ -344,31 +314,31 @@
         "destination": "hub",
         "variant": "worn",
         "svgSheet": true,
-        "intrinsicWidth": 175,
-        "intrinsicHeight": 175
+        "intrinsicWidth": 196.875,
+        "intrinsicHeight": 157.5
       },
       {
         "id": "outpost-hub-repaired-a",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 6.592,
+            "x": 26.592,
             "y": 168,
             "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 313.408,
+            "x": 333.408,
             "y": 168,
             "outward": [1, 0],
             "width": 28.169
@@ -378,31 +348,31 @@
         "variant": "repaired",
         "project": "hub-repairs",
         "svgSheet": true,
-        "intrinsicWidth": 175,
-        "intrinsicHeight": 175
+        "intrinsicWidth": 196.875,
+        "intrinsicHeight": 157.5
       },
       {
         "id": "outpost-hub-repaired-b",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 6.592,
+            "x": 26.592,
             "y": 168,
             "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 313.408,
+            "x": 333.408,
             "y": 168,
             "outward": [1, 0],
             "width": 28.169
@@ -412,20 +382,20 @@
         "variant": "repaired",
         "project": "hub-repairs",
         "svgSheet": true,
-        "intrinsicWidth": 175,
-        "intrinsicHeight": 175
+        "intrinsicWidth": 196.875,
+        "intrinsicHeight": 157.5
       },
       {
         "id": "outpost-hub-bay-a",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "overlay": true,
@@ -433,9 +403,9 @@
         "project": "second-docking-bay",
         "berths": [
           {
-            "x": 160,
-            "y": 303.765,
-            "outward": [0, 1],
+            "x": 346.277,
+            "y": 264,
+            "outward": [0.866, 0.5],
             "width": 36.742
           }
         ],
@@ -444,14 +414,14 @@
       {
         "id": "outpost-hub-bay-b",
         "path": "/art/cartwheel/wheel-hub-sheet.svg",
-        "width": 320,
-        "height": 320,
-        "displayWidth": 175,
-        "displayHeight": 175,
+        "width": 360,
+        "height": 288,
+        "displayWidth": 196.875,
+        "displayHeight": 157.5,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.525
+          "y": 0.58333
         },
         "frameMs": 700,
         "overlay": true,
@@ -459,9 +429,9 @@
         "project": "second-docking-bay",
         "berths": [
           {
-            "x": 160,
-            "y": 303.765,
-            "outward": [0, 1],
+            "x": 346.277,
+            "y": 264,
+            "outward": [0.866, 0.5],
             "width": 36.742
           }
         ],

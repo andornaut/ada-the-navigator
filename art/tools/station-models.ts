@@ -246,6 +246,7 @@ export type LeafFlower = {
   angles?: readonly number[];
   tall?: number;
   foot?: number;
+  greenhouse?: boolean;
 };
 
 // Leaf petals round a peg: each leaf is a lens between two arcs, with a raised inner pad.
@@ -282,7 +283,17 @@ export function leafFlower(lit: boolean, options: LeafFlower = {}): Mesh {
   band(mesh, ORIGIN, tall - 10, tall - 6.5, peg, cream);
   cyl(mesh, ORIGIN, -3, 9, peg + 3, PEG);
   drum(mesh, ORIGIN, -14, -14 - foot, peg * 0.66, 9, PEG, 32);
-  return mesh;
+  const body = mesh.length;
+  if (options.greenhouse) {
+    // greenhouseRing: a ring joining the leaf tips, a dome between each pair.
+    meshRing(mesh, ORIGIN, -1, 5, reach + 8, reach - 3, PEG);
+    for (let i = 0; i < leaves; i++) {
+      const c = pol(reach + 2.5, (i * 360) / leaves);
+      cyl(mesh, c, 5, 7, 8.5, PEG, 20);
+      meshDome(mesh, [c[0], c[1], 7], 7, cream, { sides: 16, bands: 5 });
+    }
+  }
+  return project(mesh, body);
 }
 
 // ------------------------------------------------------------------ Cartwheel
