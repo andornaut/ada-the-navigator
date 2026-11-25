@@ -378,17 +378,17 @@ follow the shield icon's current HUD-relative centre.
   conversation box and its name tab, in the item notice's layer
   ([Status pill](#status-pill)).
 - Use's press circle reaches the conversation box's lower right (to + 113.5,
-  125.5 at a top of 12) by 22.5 at every 360-high view, with or without phone
-  insets (22.4 at 3000x1080, where the box ends 5 left of Use's centre); at
-  1280x720 its top sits 0.5 below the box (147.5). The conversation box always
+  125.5 at a top of 12) by 32.5 at every 360-high view, with or without phone
+  insets (32.4 at 3000x1080, where the box ends 5 left of Use's centre); at
+  1280x720 its top sits 9.5 inside the box (137.5). The conversation box always
   wins a press in the overlap. The 360-high views are the tightest: Use's
-  drawn ring stays 41.5 below the box, and its press circle 42.5 below the
-  weapon count pills' bottom (HUD rect top + 48.5, so 60.5) and 50.5 below the
+  drawn ring stays 31.5 below the box, and its press circle 32.5 below the
+  weapon count pills' bottom (HUD rect top + 48.5, so 60.5) and 40.5 below the
   weapon targets (52.5); every view is in
   [Touch controls by view](#touch-controls-by-view).
-- Use's drawn ring clears the aim ring by about 26 along the diagonal (centres
-  98.99 apart, each ring 73 across). Their 75 frames overlap 5 by 5 at the
-  corner, where the aim target takes the press.
+- Use's drawn ring clears the aim ring by about 40 along the diagonal (centres
+  113.14 apart, each ring 73 across). Their 75 frames stay 5 apart on each
+  axis.
 - The sticks and Use show only on a touch screen, outside modals, as in Chibi.
   Desktop hides them with no hint; Space still activates Use.
 - Press areas may reach past the HUD rect into a side inset (the pause press
