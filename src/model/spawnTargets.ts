@@ -8,7 +8,7 @@ import {
   escortTuning,
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
-import { plannedSpacingRadius } from "../data/enemySpacing.ts";
+import { classSpacingRadius, shipSpacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
@@ -32,6 +32,7 @@ import {
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
+import { ambientPackId, packMemberId } from "./geography.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
@@ -104,6 +105,7 @@ function enemyTargets(
 ): EnemyTarget[] {
   const policy = SPAWNER_POLICIES[galaxy];
   const stage = policy.stages[stageIndex]!;
+  const position = ROUTE_POSITION[galaxy];
   return stage.roster.flatMap((entry) => {
     const density = densities[entry.archetype as keyof EnemyGroupTargets] ?? 0;
     if (entry.weight <= 0 || density <= 0) {
@@ -128,15 +130,14 @@ function enemyTargets(
           ? { archetype: "fighter" as const, count: count * FRIGATE_ESCORT_COUNT }
           : entry.escorts;
       const plan = { archetype: entry.archetype, count, ...(escorts ? { escorts } : {}) };
-      if (worldFitsEncounter({}, policy, stage, flight.shipRadius, [], { x: 0, y: 0 }, plan)) {
+      if (worldFitsEncounter({}, policy, stage, position, [], { x: 0, y: 0 }, plan)) {
         counts.push(count);
       }
     }
     if (!counts.length) {
       return [];
     }
-    const position = ROUTE_POSITION[galaxy];
-    const hull = plannedSpacingRadius(position, entry.archetype);
+    const hull = classSpacingRadius(position, entry.archetype);
     const escorts =
       entry.archetype === "frigate"
         ? { archetype: "fighter" as const, perLeader: FRIGATE_ESCORT_COUNT }
@@ -152,7 +153,7 @@ function enemyTargets(
               archetype: escorts.archetype,
               kind: `${entry.archetype}-escort`,
               perLeader: escorts.perLeader,
-              radius: plannedSpacingRadius(position, escorts.archetype),
+              radius: shipSpacingRadius(position, { archetype: escorts.archetype }),
               ring: hull + escortTuning.stationGap,
             },
           }
@@ -169,6 +170,12 @@ function enemyTargets(
         : {}),
       groupSize: flexible ? [counts.at(-1)!, counts.at(-1)!] : [counts[0]!, counts.at(-1)!],
       kind: entry.archetype,
+      // Each member's ship id, and so its hull, follows from its pack's chunk and its index.
+      memberRadius: (chunk, member) =>
+        shipSpacingRadius(position, {
+          archetype: entry.archetype,
+          id: packMemberId(ambientPackId(chunk), member),
+        }),
       radius: hull,
       ...(flexible ? { smallest: least } : {}),
       spacing: policy.memberSpacing,
@@ -269,7 +276,7 @@ export function worldSpawnExclusions(
   point: Vec,
 ): ExclusionZone[] {
   // A salvage site's disabled frigate: its footprint is its galaxy's frigate design.
-  const wreck = plannedSpacingRadius(ROUTE_POSITION[galaxy], "frigate");
+  const wreck = shipSpacingRadius(ROUTE_POSITION[galaxy], { archetype: "frigate" });
   const neighbourhood = 2 * SPAWNER_POLICIES[galaxy].localRadius + wreck;
   const near = (at: Vec, reach: number) =>
     (context.worldSide === undefined

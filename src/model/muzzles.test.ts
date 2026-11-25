@@ -41,6 +41,7 @@ const context = (state: EnemyState, player = { x: 300, y: 40 }): EnemyContext =>
   peers: [state],
   player,
   playerVelocity: { x: 0, y: 0 },
+  routePosition: 1,
   targetable: true,
   visibility: "visible",
 });

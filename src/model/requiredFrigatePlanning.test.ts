@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { placementRadius } from "./asteroids.ts";
 import {
@@ -49,7 +50,7 @@ it("plans the required frigate with zero support under the inner one-archetype l
   const stage = worldSpawnerStage({}, policy, plan.leader);
   expect(stage.maxNearbyArchetypes).toBe(1);
   expect(
-    worldFitsEncounter({}, policy, stage, CONTENT.tuning.flight.shipRadius, [], plan.leader, {
+    worldFitsEncounter({}, policy, stage, ROUTE_POSITION[1], [], plan.leader, {
       archetype: "frigate",
       count: 1,
     }),

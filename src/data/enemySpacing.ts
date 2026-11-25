@@ -7,6 +7,9 @@ import {
 } from "./enemyIdentity.ts";
 import type { RoutePosition } from "./galaxies.ts";
 
+/** The identity of a ship of an `EnemyArchetype`. */
+export type ShipIdentity = EnemyIdentity & { readonly archetype: EnemyArchetype };
+
 /** The designs with an approved spacing radius: every ship design and the ore-field platform. */
 export type SpacedDesign = Exclude<
   EnemyGeometryKey,
@@ -53,14 +56,18 @@ export function spacingRadius(
 /** The retaliator hulls: the Manta gunship, which flies the class's own design, and the bodies. */
 const RETALIATOR_DESIGNS = ["retaliator", ...INDUSTRIAL_BODY_KEYS] as const;
 
+/** A ship's spacing radius at a route position: every ship of an `EnemyArchetype` has one. */
+export function shipSpacingRadius(position: RoutePosition, identity: ShipIdentity): number {
+  return spacingRadius(position, identity)!;
+}
+
 /**
- * The spacing radius a planned ship of `archetype` takes at a route position, before it has a
- * ship id: its galaxy's design's. A retaliator rolls its hull from its ship id, so it takes its
- * largest hull's.
+ * The largest spacing radius a ship of `archetype` can have at a route position, for bounds that
+ * hold before its ship id is known: its galaxy's design's, or for a retaliator, which rolls its
+ * hull from its ship id, its largest hull's.
  */
-export function plannedSpacingRadius(position: RoutePosition, archetype: EnemyArchetype): number {
-  if (archetype === "retaliator") {
-    return Math.max(...RETALIATOR_DESIGNS.map((design) => SPACING_RADII[design]));
-  }
-  return spacingRadius(position, { archetype })!;
+export function classSpacingRadius(position: RoutePosition, archetype: EnemyArchetype): number {
+  return archetype === "retaliator"
+    ? Math.max(...RETALIATOR_DESIGNS.map((design) => SPACING_RADII[design]))
+    : shipSpacingRadius(position, { archetype });
 }

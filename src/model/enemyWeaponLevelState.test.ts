@@ -19,6 +19,7 @@ it("preserves an explicitly equipped level without altering mechanism state or f
     peers: [legacy],
     player: { x: 0, y: 0 },
     playerVelocity: { x: 0, y: 0 },
+    routePosition: 1 as const,
     targetable: false,
     visibility: "unknown" as const,
   };
@@ -52,6 +53,7 @@ it("retains legacy absence without rolling or adding an equipped level during re
       peers: [enemy],
       player: position,
       playerVelocity: { x: 0, y: 0 },
+      routePosition: 1 as const,
       targetable: false,
       visibility: "unknown",
     },

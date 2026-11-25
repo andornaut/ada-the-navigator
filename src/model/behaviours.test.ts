@@ -14,6 +14,7 @@ import {
   escortTuning,
   type FireProfile,
 } from "../data/enemyCatalog.ts";
+import { SPACING_RADII } from "../data/enemySpacing.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import {
@@ -52,6 +53,7 @@ const context = (peers: readonly EnemyState[], player = ada): EnemyContext => ({
   peers,
   player,
   playerVelocity: { x: 0, y: 0 },
+  routePosition: 1,
   targetable: true,
   visibility: "visible",
 });
@@ -232,7 +234,8 @@ describe("retaliate", () => {
 });
 
 describe("escort", () => {
-  const hull = (enemyCatalog.capital.sizeRatio * CONTENT.tuning.flight.shipRadius * 2) / 2;
+  // The context's route position 1 flies the Hammer capital.
+  const hull = SPACING_RADII.capital;
   const station = hull + escortTuning.stationGap;
   function battle(): EnemyState[] {
     // The capital's engine is out, so only the escort moves.

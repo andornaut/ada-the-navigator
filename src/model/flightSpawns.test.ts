@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import type { EnemyArchetype } from "../data/enemyCatalog.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
@@ -182,6 +185,21 @@ describe("flight spawns from the planner", () => {
     ).toBeGreaterThan(1);
   });
 
+  it("sizes each planned ship's footprint by the spacing radius of the hull it flies", () => {
+    let checked = 0;
+    for (const key of inner(east)) {
+      for (const [id, seen] of planned({ encounter, world: WORLD_SEED }, key)) {
+        if (seen.kind !== "enemy") {
+          continue;
+        }
+        const identity = { archetype: seen.archetype as EnemyArchetype, id };
+        expect(seen.radius, id).toBe(spacingRadius(ROUTE_POSITION[GALAXY], identity));
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
   it("loads the same chunk content whichever direction Ada approaches from", () => {
     const keys = inner(east);
     expect(inner(west)).toEqual(keys);
@@ -219,8 +237,17 @@ describe("flight spawns from the planner", () => {
     );
     // An enemy footprint within this distance of a chunk's square could take a rock's place.
     const reach = rules.gap + largest;
+    // Each enemy with its planned footprint: its hull's spacing radius.
     const enemies = [...east.values(), ...other.values()].flatMap((chunk) =>
-      [...chunk.values()].filter((seen) => seen.kind === "enemy"),
+      [...chunk]
+        .filter(([, seen]) => seen.kind === "enemy")
+        .map(([id, seen]) => ({
+          ...seen,
+          radius: spacingRadius(ROUTE_POSITION[GALAXY], {
+            archetype: seen.archetype as EnemyArchetype,
+            id,
+          })!,
+        })),
     );
     const rocks = (chunk: ReadonlyMap<string, Seen>) =>
       new Map([...chunk].filter(([, seen]) => seen.kind !== "enemy"));

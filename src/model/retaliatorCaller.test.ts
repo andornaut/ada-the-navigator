@@ -58,6 +58,7 @@ function fixture(variant: IndustrialBodyKey) {
       ],
       physicalReach: partsReach(worldParts(enemyPhysicalBody(ROUTE_POSITION[1], state)!)),
     },
+    routePosition: 1,
     targetable: true,
     visibility: "visible",
   };

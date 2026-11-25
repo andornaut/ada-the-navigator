@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -53,14 +54,24 @@ it("admits the complete capital group within its own allowance, retaining the on
     count: 1,
     escorts: { archetype: "fighter", count: 6 },
   } as const;
-  expect(worldFitsEncounter({}, policy, stage, 10, [], point, plan)).toBe(true);
-  expect(worldFitsEncounter({}, policy, stage, 10, [ship("fighter")], point, plan)).toBe(true);
-  expect(worldFitsEncounter({}, policy, stage, 10, [ship("a"), ship("b")], point, plan)).toBe(
-    false,
-  );
-  expect(worldFitsEncounter({}, policy, stage, 10, [ship("capital", "capital")], point, plan)).toBe(
-    false,
-  );
+  expect(worldFitsEncounter({}, policy, stage, ROUTE_POSITION[6], [], point, plan)).toBe(true);
+  expect(
+    worldFitsEncounter({}, policy, stage, ROUTE_POSITION[6], [ship("fighter")], point, plan),
+  ).toBe(true);
+  expect(
+    worldFitsEncounter({}, policy, stage, ROUTE_POSITION[6], [ship("a"), ship("b")], point, plan),
+  ).toBe(false);
+  expect(
+    worldFitsEncounter(
+      {},
+      policy,
+      stage,
+      ROUTE_POSITION[6],
+      [ship("capital", "capital")],
+      point,
+      plan,
+    ),
+  ).toBe(false);
   expect(plan.escorts.count).toBe(6);
 });
 
@@ -99,7 +110,7 @@ it("shares spawn and engagement budgets around capitals and explicit hostile sta
         context,
         policy,
         stage,
-        10,
+        ROUTE_POSITION[6],
         [...old, ...objects.filter((object) => object.kind === "station")],
         point,
         { archetype: "fighter", count: 2 },
@@ -110,7 +121,7 @@ it("shares spawn and engagement budgets around capitals and explicit hostile sta
         context,
         policy,
         stage,
-        10,
+        ROUTE_POSITION[6],
         [...old, ...objects.filter((object) => object.kind === "station")],
         point,
         { archetype: "fighter", count: 3 },

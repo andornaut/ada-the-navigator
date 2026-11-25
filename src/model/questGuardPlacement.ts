@@ -25,7 +25,10 @@ export function questGuardFormationAt(
     leader,
     ...stationPopulationObjects(context.flight)
       .filter((actor) => actor.enemy?.escortOf === guard.id && liveEnemy(actor))
-      .map((actor) => ({ ...actor, ...frigateEscortStation(leader, actor.enemy!.phase) })),
+      .map((actor) => ({
+        ...actor,
+        ...frigateEscortStation(ROUTE_POSITION[context.flight.galaxy], leader, actor.enemy!.phase),
+      })),
   ];
 }
 

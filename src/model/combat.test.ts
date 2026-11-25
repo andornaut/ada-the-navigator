@@ -18,6 +18,7 @@ import {
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
@@ -1027,13 +1028,16 @@ describe("galaxy encounters", () => {
       [packId]: 1,
       [`${packId}:escorts`]: 4,
     });
+    // Andromeda's Broad wing capital.
+    const spacing = spacingRadius(ROUTE_POSITION[5], leader!.enemy!)!;
+    expect(spacing).toBe(75);
     for (const escort of escorts) {
       expect(escort.enemy).toMatchObject({ archetype: "fighter", escortOf: leader!.id });
-      // Each escort starts on its ring, at least the station gap beyond the capital's hull, and
-      // its phase points at its station.
+      // Each escort starts on its ring, at least the station gap beyond the capital's spacing
+      // radius, and its phase points at its station.
       const offset = { x: escort.x - leader!.x, y: escort.y - leader!.y };
       const distance = Math.hypot(offset.x, offset.y);
-      expect(distance).toBeGreaterThanOrEqual(leader!.radius + escortTuning.stationGap - 1);
+      expect(distance).toBeGreaterThanOrEqual(spacing + escortTuning.stationGap - 1);
       expect(Math.cos(escort.enemy!.phase)).toBeCloseTo(offset.x / distance);
       expect(Math.sin(escort.enemy!.phase)).toBeCloseTo(offset.y / distance);
     }

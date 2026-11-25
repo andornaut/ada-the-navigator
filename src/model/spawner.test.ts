@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import {
   FIGHTER_GROUP_TARGET,
   SPAWNER_POLICIES,
@@ -44,12 +44,15 @@ function occupant(
 
 const policy = SPAWNER_POLICIES[1];
 const centre = { x: 4000, y: 0 };
+/** The route position of the galaxy whose spawner policy is `policy`. */
+const positionOf = (policy: (typeof SPAWNER_POLICIES)[1]) =>
+  ROUTE_POSITION[GALAXY_NUMBERS.find((galaxy) => SPAWNER_POLICIES[galaxy] === policy)!];
 const fitsEncounter = (
   policy: Parameters<typeof worldFitsEncounter>[1],
   stage: Parameters<typeof worldFitsEncounter>[2],
   objects: readonly SpaceObject[],
   plan: Parameters<typeof worldFitsEncounter>[6],
-) => worldFitsEncounter({}, policy, stage, 10, objects, centre, plan);
+) => worldFitsEncounter({}, policy, stage, positionOf(policy), objects, centre, plan);
 
 describe("spawner admission", () => {
   it("uses geographic region boundaries without changing enemy physics", () => {
@@ -265,7 +268,7 @@ describe("spawner admission", () => {
     expect(fitsEncounter(laterPolicy, stage, [occupant("capital", centre, "capital")], plan)).toBe(
       false,
     );
-    const reach = groupReach(laterPolicy, 10, plan);
+    const reach = groupReach(laterPolicy, positionOf(laterPolicy), plan);
     expect(reach).toBeGreaterThan(100);
     const edge = occupant("edge", {
       x: centre.x + laterPolicy.localRadius * 2 + reach + 5,
@@ -287,7 +290,7 @@ describe("spawner admission", () => {
 
   it("keeps complete symmetric groups within their reserved footprint", () => {
     const plan = { archetype: "swarm", count: 3 } as const;
-    const reach = groupReach(policy, 10, plan);
+    const reach = groupReach(policy, positionOf(policy), plan);
     const positions = Array.from({ length: plan.count }, (_, index) =>
       memberPosition(policy.memberSpacing, plan.count, centre, index),
     );

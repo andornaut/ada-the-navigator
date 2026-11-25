@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { enemyDefinition, escortTuning } from "../data/enemyCatalog.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
 import { createEnemy, stepEnemy } from "./enemyAi.ts";
 import {
@@ -13,6 +14,7 @@ import {
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
+import { frigateEscortStation } from "./frigateEscorts.ts";
 import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";
 import { newProgress } from "./progress.ts";
@@ -133,6 +135,7 @@ it("uses the existing fallback when the escort leader is disabled", () => {
     peers: [],
     player: { x: 0, y: 0 },
     playerVelocity: { x: 0, y: 0 },
+    routePosition: 1 as const,
     targetable: true,
     visibility: "visible" as const,
   };
@@ -163,4 +166,30 @@ it("does not retrofit or reroll an existing legacy frigate when reopening its ch
   flight.objects = [legacy];
   expect(spawnChapterEnemy(CONTENT, "frigate", "legacy", legacy, flight)).toBe(legacy);
   expect(followers(flight.objects, legacy.id)).toEqual([]);
+});
+
+it("stations each frigate escort the station gap beyond its leader's spacing radius", () => {
+  // Sunflower flies the Shoulder frigate (63), Andromeda the Twin hull (58).
+  for (const [galaxy, radius] of [
+    [1, 63],
+    [5, 58],
+  ] as const) {
+    const definition = enemyDefinition(galaxy, "frigate", "leader");
+    const leader: SpaceObject = {
+      enemy: createEnemy(
+        definition,
+        { archetype: "frigate", id: "leader", packId: null, phase: 0 },
+        { x: 0, y: 0 },
+      ),
+      hp: definition.hp,
+      id: "leader",
+      kind: "enemy",
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+      x: 0,
+      y: 0,
+    };
+    const station = frigateEscortStation(ROUTE_POSITION[galaxy], leader, Math.PI / 2);
+    expect(station.x).toBeCloseTo(0);
+    expect(station.y).toBeCloseTo(radius + escortTuning.stationGap);
+  }
 });

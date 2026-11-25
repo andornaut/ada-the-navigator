@@ -333,6 +333,7 @@ it.each([
         peers: [enemy],
         player: { x: plan.point.x + 300, y: plan.point.y },
         playerVelocity: { x: 0, y: 0 },
+        routePosition: 1,
         targetable: true,
         visibility: "visible",
       },

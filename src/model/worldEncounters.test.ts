@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import {
@@ -82,8 +83,12 @@ describe("explicit periodic currents and encounter budgets", () => {
       y: i * 10,
     }));
     const plan = { archetype: "fighter" as const, count: 1 };
-    expect(worldFitsEncounter(context, policy, stage, 10, objects, centre, plan)).toBe(false);
-    expect(worldFitsEncounter({}, policy, stage, 10, objects, centre, plan)).toBe(true);
+    expect(
+      worldFitsEncounter(context, policy, stage, ROUTE_POSITION[1], objects, centre, plan),
+    ).toBe(false);
+    expect(worldFitsEncounter({}, policy, stage, ROUTE_POSITION[1], objects, centre, plan)).toBe(
+      true,
+    );
   });
   it("reserves nearest seam contacts before farther candidates without exceeding the cap", () => {
     const policy = SPAWNER_POLICIES[1],

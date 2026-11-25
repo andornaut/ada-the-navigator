@@ -1,10 +1,7 @@
 import type { EnemyActorKind } from "../data/enemyActors.ts";
-import {
-  type EncounterEntry,
-  type EnemyArchetype,
-  enemyCatalog,
-  escortTuning,
-} from "../data/enemyCatalog.ts";
+import { type EncounterEntry, type EnemyArchetype, escortTuning } from "../data/enemyCatalog.ts";
+import { classSpacingRadius } from "../data/enemySpacing.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import {
   HOSTILE_LOCAL_ALLOWANCE,
   type SpawnerPolicy,
@@ -52,16 +49,22 @@ export function memberPosition(spacing: number, count: number, centre: Vec, inde
   return { x: centre.x + (index - (count - 1) / 2) * spacing, y: centre.y };
 }
 
-/** Includes every hull and escort station when checking safe areas and overlapping groups. */
-export function groupReach(policy: SpawnerPolicy, shipRadius: number, plan: EncounterPlan): number {
-  const hull = enemyCatalog[plan.archetype].sizeRatio * shipRadius;
+/**
+ * Includes every hull and escort station when checking safe areas and overlapping groups, by
+ * each class's largest spacing radius at the route position.
+ */
+export function groupReach(
+  policy: SpawnerPolicy,
+  position: RoutePosition,
+  plan: EncounterPlan,
+): number {
+  const hull = classSpacingRadius(position, plan.archetype);
   const line = (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 + hull;
   const escort = plan.escorts
     ? Math.hypot(
         plan.archetype === "frigate" ? (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 : 0,
         hull + escortTuning.stationGap,
-      ) +
-      enemyCatalog[plan.escorts.archetype].sizeRatio * shipRadius
+      ) + classSpacingRadius(position, plan.escorts.archetype)
     : 0;
   return Math.max(line, escort);
 }
@@ -112,7 +115,7 @@ export function worldFitsEncounter(
   context: SpawnerContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
-  shipRadius: number,
+  position: RoutePosition,
   objects: readonly SpaceObject[],
   centre: Vec,
   plan: EncounterPlan,
@@ -125,7 +128,7 @@ export function worldFitsEncounter(
       (plan.escorts?.archetype === "capital" ? plan.escorts.count : 0),
     count: plan.count + (plan.escorts?.count ?? 0),
     includesHostileAnchor: plan.archetype === "capital",
-    reach: Math.max(groupReach(policy, shipRadius, plan), actualReach),
+    reach: Math.max(groupReach(policy, position, plan), actualReach),
   });
 }
 

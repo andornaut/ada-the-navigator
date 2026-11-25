@@ -70,6 +70,7 @@ it("uses each industrial primary turret while emitting one canonical Rapid shot"
         peers: [state],
         player: { x: 250, y: 40 },
         playerVelocity: { x: 0, y: 0 },
+        routePosition: 1,
         targetable: true,
         visibility: "visible",
       },

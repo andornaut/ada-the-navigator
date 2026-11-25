@@ -419,6 +419,14 @@ export function escortPackId(packId: string): string {
 export function encounterOf(packId: string): string {
   return packId.endsWith(ESCORT_ROLE) ? packId.slice(0, -ESCORT_ROLE.length) : packId;
 }
+/** The pack of the ambient group planned in the chunk with key `chunk`. */
+export function ambientPackId(chunk: string): string {
+  return `pack:${chunk}`;
+}
+/** A pack member's ship id, by its index in the pack. */
+export function packMemberId(packId: string, index: number): string {
+  return `${packId}:${index}`;
+}
 
 /**
  * Forgets an encounter once none of its members is loaded or retained. Role packs stay

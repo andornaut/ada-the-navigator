@@ -81,6 +81,12 @@ export interface EnemyTarget {
   readonly groupSize: readonly [number, number];
   /** The archetype, which also names the target. */
   readonly kind: string;
+  /**
+   * A member's footprint radius by the chunk key its group is planned in and its index on the
+   * line, at most `radius`. Absent, every member takes `radius`.
+   */
+  readonly memberRadius?: (chunk: string, member: number) => number;
+  /** The largest member footprint radius, which bounds every group's reach. */
   readonly radius: number;
   /** Distance between neighbouring members on the group's line, widened to two hulls plus the gap. */
   readonly spacing: number;
@@ -1009,8 +1015,9 @@ export function enemyGroupReach(rules: SpawnRules): number {
 }
 
 /**
- * A whole group at an anchor: members on a line through it, `lineSpacing` apart, and each
- * leader's escorts evenly on its `escortRing` from `phase`.
+ * A whole group at an anchor: members on a line centred on it, each pair of neighbours their
+ * spacing or two footprints plus the gap apart, and each leader's escorts evenly on its
+ * `escortRing` from `phase`.
  */
 function groupFormation(
   gap: number,
@@ -1022,9 +1029,16 @@ function groupFormation(
   phase: number,
 ): SpawnPlacement[] {
   const formation: SpawnPlacement[] = [];
-  const spacing = lineSpacing(gap, target);
-  const ring = target.escorts ? escortRing(gap, target.radius, target.escorts) : 0;
+  const radii = Array.from(
+    { length: members },
+    (_, member) => target.memberRadius?.(chunk.key, member) ?? target.radius,
+  );
+  const steps = radii
+    .slice(1)
+    .map((radius, index) => Math.max(target.spacing, radii[index]! + radius + gap));
+  let offset = -steps.reduce((sum, step) => sum + step, 0) / 2;
   for (let member = 0; member < members; member++) {
+    const radius = radii[member]!;
     const leader: SpawnPlacement = {
       archetype: target.kind,
       category: "enemy",
@@ -1032,15 +1046,17 @@ function groupFormation(
       group,
       id: `${group}:${member}`,
       kind: target.kind,
-      radius: target.radius,
-      x: anchor.x + (member - (members - 1) / 2) * spacing,
+      radius,
+      x: anchor.x + offset,
       y: anchor.y,
     };
+    offset += steps[member] ?? 0;
     formation.push(leader);
     const escort = target.escorts;
     if (!escort) {
       continue;
     }
+    const ring = escortRing(gap, radius, escort);
     const stations = escort.perLeader;
     for (let station = 0; station < stations; station++) {
       const angle = 2 * Math.PI * (phase + station / stations);

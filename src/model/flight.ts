@@ -97,9 +97,11 @@ import {
 } from "./frigateEscorts.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
+  ambientPackId,
   beginFlightStep,
   escortPackId,
   liveEnemy,
+  packMemberId,
   persistentObject,
   recordUnloadedPackMember,
   retainedRouteBlocked,
@@ -1077,7 +1079,7 @@ function placeAmbient(
     placeRock(placement, existing, flight);
   }
   for (const group of groups.values()) {
-    placeGroup(content, `pack:${key}`, group, existing, flight);
+    placeGroup(content, ambientPackId(key), group, existing, flight);
   }
 }
 
@@ -1117,7 +1119,9 @@ function placeGroup(
 ): void {
   const leaders = group.filter((placement) => placement.leader === undefined);
   const archetype = leaders[0]!.archetype as EnemyArchetype;
-  const ids = new Map(leaders.map((placement, index) => [placement.id, `${packId}:${index}`]));
+  const ids = new Map(
+    leaders.map((placement, index) => [placement.id, packMemberId(packId, index)]),
+  );
   const phase = (id: string) =>
     randomStream(flightEncounterSeed(flight), `ambient-phase:${id}`)() * 2 * Math.PI;
   placePack(
@@ -1174,7 +1178,7 @@ function placePack(
     if (budget <= 0) {
       break;
     }
-    const id = `${packId}:${index}`;
+    const id = packMemberId(packId, index);
     if (existing.has(id) || Object.hasOwn(flight.world.notables, id)) {
       continue;
     }
@@ -1601,7 +1605,7 @@ export function spawnQuestFrigateAt(
       world,
       policy,
       worldSpawnerStage(world, policy, point),
-      content.tuning.flight.shipRadius,
+      ROUTE_POSITION[flight.galaxy],
       represented,
       point,
       {
@@ -1788,7 +1792,7 @@ export function activateRequiredRoute(
       hostileStationContext(flight),
       policy,
       worldSpawnerStage(flightWorldContext(flight), policy, leader.guard),
-      content.tuning.flight.shipRadius,
+      ROUTE_POSITION[flight.galaxy],
       population,
       leader.guard,
       {
@@ -3611,7 +3615,9 @@ function enemies(
             (other) => other.id === state.escortOf && other.hp > 0 && !other.enemy?.disabled,
           )
         : undefined;
-    const approach = escortLeader ? frigateEscortStation(escortLeader, state.phase) : flight.player;
+    const approach = escortLeader
+      ? frigateEscortStation(ROUTE_POSITION[flight.galaxy], escortLeader, state.phase)
+      : flight.player;
     const navigationQuery = worldNavigationQuery(
       {
         ...flightWorldContext(flight),
@@ -3670,6 +3676,7 @@ function enemies(
           blockade,
           object,
         ),
+        routePosition: ROUTE_POSITION[flight.galaxy],
         ...(industrialInput ? { retaliatorNavigation: industrialInput } : {}),
         ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
         summoned: flight.summonedGuards?.includes(object.id) ?? false,

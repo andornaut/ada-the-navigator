@@ -24,6 +24,7 @@ const observation = (state: EnemyState): EnemyContext => ({
   peers: [state],
   player: { x: -half + 60, y: -half + 30 },
   playerVelocity: { x: 17, y: -4 },
+  routePosition: 1,
   targetable: true,
   visibility: "visible",
   worldSide: GALAXY_SIDE,

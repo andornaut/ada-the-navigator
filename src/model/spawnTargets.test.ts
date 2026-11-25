@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { retaliatorVariant } from "../data/enemyIdentity.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { SLOT_ROCKS_PER_AREA, SPAWN_AREA_CHUNKS, SPAWN_TARGETS } from "../data/spawnTargets.ts";
@@ -44,8 +45,19 @@ describe("spawn target catalog", () => {
     expect(target(6, "capital").radius).toBe(91);
     // Each frigate's fighter escorts (13) station 60 beyond the frigate's spacing radius.
     expect(target(5, "frigate").escorts).toMatchObject({ radius: 13, ring: 58 + 60 });
-    // A retaliator's hull is rolled from its ship id after planning: its largest, the Cargo Hauler.
-    expect(target(1, "retaliator").radius).toBe(45);
+    // A retaliator's hull follows from its ship id, its pack's chunk and its index, so each member
+    // takes its own hull's; the largest, the Cargo Hauler's, bounds the group's reach.
+    const retaliator = target(1, "retaliator");
+    expect(retaliator.radius).toBe(45);
+    const radii = new Set<number>();
+    for (let x = 0; x < 30; x++) {
+      const chunk = `${x},0`;
+      const hull = retaliatorVariant({ archetype: "retaliator", id: `pack:${chunk}:0` });
+      const radius = retaliator.memberRadius!(chunk, 0);
+      expect(radius, chunk).toBe(hull === "retaliatorCargoHauler" ? 45 : 30);
+      radii.add(radius);
+    }
+    expect([...radii].sort()).toEqual([30, 45]);
     expect(target(1, "swarm").radius).toBe(8);
   });
 

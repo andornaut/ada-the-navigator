@@ -1,3 +1,4 @@
+import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { outlineContact } from "./convex.ts";
@@ -30,7 +31,7 @@ export interface RequiredWorldOccupants {
   readonly actors: readonly SpaceObject[];
 }
 
-/** Independent authored sites and actors reserve their real geometry without route metadata. */
+/** Independent authored sites and actors reserve their footprints without route metadata. */
 export function requiredWorldOccupantsPlacementClear(
   context: RequiredWorldContext,
   occupants: RequiredWorldOccupants,
@@ -53,10 +54,15 @@ export function requiredWorldOccupantsPlacementClear(
       );
     }) &&
     occupants.actors.every((actor) => {
+      const position = ROUTE_POSITION[context.galaxy];
+      // An enemy's footprint is a circle of its design's spacing radius; a design without one
+      // reserves its assembled hull.
+      const spacing = actor.kind === "enemy" && actor.enemy && spacingRadius(position, actor.enemy);
+      if (typeof spacing === "number") {
+        return worldDistance(context, actor, footprint.center) > spacing + footprint.radius;
+      }
       const body =
-        actor.kind === "enemy" &&
-        actor.enemy &&
-        enemyPhysicalBody(ROUTE_POSITION[context.galaxy], actor.enemy);
+        actor.kind === "enemy" && actor.enemy && enemyPhysicalBody(position, actor.enemy);
       return (
         body !== false &&
         body !== undefined &&
@@ -72,7 +78,7 @@ export function requiredWorldOccupantsPlacementClear(
   );
 }
 
-/** Optional generation respects protected sites and the actual assembled required hulls. */
+/** Optional generation respects protected sites and the footprints of required hulls. */
 export function requiredWorldPlacementClear(
   context: RequiredWorldContext,
   reservations: readonly RequiredWorldReservation[],

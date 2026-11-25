@@ -14,6 +14,8 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { ENEMY_STEERING, ENEMY_STRAFE } from "../data/enemyNavigation.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
+import type { RoutePosition } from "../data/galaxies.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
@@ -141,6 +143,8 @@ export interface EnemyContext extends WorldContext {
   playerVelocity: Point;
   /** Existing authored or escort leash for this actor. */
   pursuitHomeRadius?: number;
+  /** The flight's route position, which sets each hull's design and spacing radius. */
+  routePosition: RoutePosition;
   /**
    * A cued route guard (flight.ts cueGuards): it approaches Ada at full speed, past its
    * pursuit limits and holding its fire, until it is inside the current play view.
@@ -561,6 +565,17 @@ function navigate(
 }
 
 /** The live capital an escort guards, if it is loaded and not disabled. */
+/**
+ * An escort leader's spacing radius, which its escorts' stations sit beyond, or half its drawn
+ * span for a design without one.
+ */
+function escortLeaderRadius(context: EnemyContext, leader: EnemyState): number {
+  return (
+    spacingRadius(context.routePosition, leader) ??
+    (ENEMY_SIZE_RATIOS[leader.archetype] * context.adaWidth) / 2
+  );
+}
+
 function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
   return state.escortOf === null
     ? undefined
@@ -778,7 +793,7 @@ function steering(
   const capital = escorted(context, state);
   if (capital) {
     // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
-    const hull = (ENEMY_SIZE_RATIOS[capital.archetype] * context.adaWidth) / 2;
+    const hull = escortLeaderRadius(context, capital);
     const reach = worldDistance(context, capital.position, context.player);
     if (reach <= escortTuning.interceptRadius + hull) {
       return hold();

@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
-import { partsReach, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createFlight } from "./flight.ts";
 import { newGameState } from "./game.ts";
 import {
@@ -63,7 +63,15 @@ describe("required world reservations", () => {
     expect(requiredWorldPlacementClear(context, reservations, { center: guard, radius: 1 })).toBe(
       false,
     );
-    const reach = partsReach(worldParts(enemyPhysicalBody(1, guard.enemy!)!));
+    // The guard's footprint is its Shoulder frigate's spacing radius.
+    const reach = spacingRadius(1, guard.enemy!)!;
+    expect(reach).toBe(63);
+    expect(
+      requiredWorldPlacementClear(context, reservations, {
+        center: { x: guard.x + reach + 10, y: 0 },
+        radius: 10,
+      }),
+    ).toBe(false);
     expect(
       requiredWorldPlacementClear(context, reservations, {
         center: { x: guard.x + reach + 11, y: 0 },
@@ -125,15 +133,13 @@ describe("required world reservations", () => {
     const policy = SPAWNER_POLICIES[1];
     const stage = spawnerStage(1, 0);
     const ambient = { archetype: "fighter" as const, count: 1 };
-    expect(
-      worldFitsEncounter({}, policy, stage, CONTENT.tuning.flight.shipRadius, [], guard, ambient),
-    ).toBe(true);
+    expect(worldFitsEncounter({}, policy, stage, ROUTE_POSITION[1], [], guard, ambient)).toBe(true);
     expect(
       worldFitsEncounter(
         {},
         policy,
         stage,
-        CONTENT.tuning.flight.shipRadius,
+        ROUTE_POSITION[1],
         requiredWorldPopulation(flight, reservations),
         guard,
         ambient,
@@ -188,7 +194,7 @@ describe("independent required world occupants", () => {
         },
       ),
     ).toBe(false);
-    const reach = partsReach(worldParts(enemyPhysicalBody(3, actor.enemy)!));
+    const reach = spacingRadius(3, actor.enemy)!;
     expect(
       requiredWorldOccupantsPlacementClear(
         needle,

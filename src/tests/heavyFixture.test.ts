@@ -162,6 +162,7 @@ it("retains each retaliator hull's variant/cache identity and one canonical Rapi
         peers: [enemy],
         player: { x: actor.x + 100, y: actor.y },
         playerVelocity: { x: 0, y: 0 },
+        routePosition: 1,
         targetable: true,
         visibility: "visible",
       },
