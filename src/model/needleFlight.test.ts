@@ -239,17 +239,28 @@ describe("mounted Needle flight physics", () => {
     expect(flight.shots.some(({ id }) => id === "grazing-hostile-bolt")).toBe(false);
   });
 
-  it("removes an unarmed mine whose actual spike enters a non-axis-aligned channel boundary", () => {
+  it("removes an unarmed mine whose actual outline enters a non-axis-aligned channel boundary", () => {
     const { course, flight, gate } = courseFlight();
-    const start = course.path[0]!;
-    const along = direction({ x: course.path[1]!.x - start.x, y: course.path[1]!.y - start.y });
+    // The outline's longest world vertex reaches past MINE_REACH, which is measured on screen.
     const vertices = MINE_PARTS.flat().map(fromScreen);
-    const tip = vertices
-      .filter(({ x, y }) => x * along.x + y * along.y < 0)
-      .sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y))[0]!;
-    const outward = direction(tip);
+    const tip = vertices.reduce((best, vertex) =>
+      Math.hypot(vertex.x, vertex.y) > Math.hypot(best.x, best.y) ? vertex : best,
+    );
+    expect(Math.hypot(tip.x, tip.y)).toBeGreaterThan(MINE_REACH);
+    // The mine sits beyond an end of the channel, that vertex pointing back into it: past the
+    // start when it points along the path, else past the end.
+    const outward = direction({ x: -tip.x, y: -tip.y });
+    const [first, second] = [course.path[0]!, course.path[1]!];
+    const [before, last] = [course.path.at(-2)!, course.path.at(-1)!];
+    const along = direction({ x: second.x - first.x, y: second.y - first.y });
+    const end = outward.x * along.x + outward.y * along.y <= 0 ? first : last;
+    if (end === last) {
+      const onward = direction({ x: last.x - before.x, y: last.y - before.y });
+      expect(outward.x * onward.x + outward.y * onward.y).toBeGreaterThanOrEqual(0);
+    }
+    expect(Math.abs(along.x) > 1e-6 && Math.abs(along.y) > 1e-6).toBe(true);
     const gap = (MINE_REACH + Math.hypot(tip.x, tip.y)) / 2;
-    const point = offset(start, outward, course.width / 2 + gap);
+    const point = offset(end, outward, course.width / 2 + gap);
     expect(inNeedleChannel({ radius: MINE_REACH }, course, point)).toBe(false);
     expect(
       vertices.some((vertex) =>
