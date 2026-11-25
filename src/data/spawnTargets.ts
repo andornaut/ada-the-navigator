@@ -23,6 +23,11 @@ export interface RegionSpawnTargets {
 export const SPAWN_AREA_CHUNKS = 9;
 /** Slot rocks per area in every galaxy and region. */
 export const SLOT_ROCKS_PER_AREA = 29.84;
+/**
+ * Moving rocks: the share that travel in a group with one shared velocity, and the speed range
+ * in world units per second (gameplay/rules.md "Space encounters and feedback").
+ */
+export const MOVING_ROCKS = { groupShare: 0.75, speed: [10, 80] } as const;
 /** Composition blends linearly across this width centred on each region boundary. */
 export const SPAWN_BLEND_WIDTH = 2000;
 

@@ -20,6 +20,7 @@ import {
 } from "../data/spawnerCatalog.ts";
 import {
   type EnemyGroupTargets,
+  MOVING_ROCKS,
   SLOT_ROCKS_PER_AREA,
   SPAWN_AREA_CHUNKS,
   SPAWN_BLEND_WIDTH,
@@ -27,17 +28,18 @@ import {
 } from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
-import { BALLISTIC_REQUEST } from "./ballisticAsteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { worldFitsEncounter } from "./spawner.ts";
-import type {
-  EnemyTarget,
-  ExclusionZone,
-  SpawnBand,
-  SpawnRules,
-  SpawnShape,
+import {
+  enemyGroupReach,
+  type EnemyTarget,
+  type ExclusionZone,
+  type SpawnBand,
+  type SpawnRegion,
+  type SpawnRules,
+  type SpawnShape,
 } from "./spawnPlanner.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
@@ -191,10 +193,10 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
         {
           density: targets.moving / SPAWN_AREA_CHUNKS,
           from: ["rock-feature", "rock"],
-          groupShare: BALLISTIC_REQUEST.groupShare,
+          groupShare: MOVING_ROCKS.groupShare,
           kind: MOVING_KIND,
           path: MOVING_PATH_SECONDS,
-          speed: BALLISTIC_REQUEST.speed,
+          speed: MOVING_ROCKS.speed,
         },
       ],
       rocks: [
@@ -300,4 +302,49 @@ export function worldSpawnSites(
       y,
     })),
   };
+}
+
+/**
+ * Chunks around a planned chunk whose enemy groups are planned with it, uncounted: every group
+ * whose footprint plus the gap can reach the chunk anchors within them.
+ */
+export function spawnMargin(rules: SpawnRules): number {
+  return Math.ceil((enemyGroupReach(rules) + rules.gap) / rules.chunkSize);
+}
+
+/**
+ * One chunk's planning region: the chunk itself, with the enemy groups of the margin around it
+ * planned first, so its rocks leave their space. Rocks and moving rocks are planned in the
+ * chunk alone; lanes keep every static rock inside its chunk, so no rock meets a neighbour's.
+ * The region is a function of the chunk, its zones and sites, so a chunk plans the same
+ * content whichever neighbour loads it.
+ */
+export function chunkSpawnRegion(
+  rules: SpawnRules,
+  exclusions: readonly ExclusionZone[],
+  sites: Readonly<Record<string, readonly Vec[]>>,
+  cell: Vec,
+): SpawnRegion {
+  const margin = spawnMargin(rules);
+  return {
+    cell: { x: cell.x - margin, y: cell.y - margin },
+    columns: 2 * margin + 1,
+    exclusions,
+    report: { cell, columns: 1, neighbours: ["enemies"], rows: 1 },
+    rows: 2 * margin + 1,
+    sites,
+  };
+}
+
+/** World units from a chunk's centre that its planning region and every group in it reach. */
+export function chunkSpawnReach(rules: SpawnRules): number {
+  return (spawnMargin(rules) + 0.5) * rules.chunkSize * Math.SQRT2 + enemyGroupReach(rules);
+}
+
+/** The farthest any gathering group looks for a site from its seeded anchor. */
+export function spawnGatherReach(rules: SpawnRules): number {
+  return Math.max(
+    0,
+    ...rules.bands.flatMap((band) => band.enemies.map((target) => target.gather?.reach ?? 0)),
+  );
 }

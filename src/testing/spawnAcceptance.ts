@@ -3,7 +3,12 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { planRegion } from "../model/spawnPlanner.ts";
-import { spawnRules, worldSpawnExclusions, worldSpawnSites } from "../model/spawnTargets.ts";
+import {
+  spawnGatherReach,
+  spawnRules,
+  worldSpawnExclusions,
+  worldSpawnSites,
+} from "../model/spawnTargets.ts";
 import { periodicWorldGrid, worldCellAt } from "../model/worldCells.ts";
 
 /** A target passes when this share of sampled areas delivers this share of its requests. */
@@ -61,10 +66,7 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
   }
   const context = { worldSide: GALAXY_SIDE };
   const rules = spawnRules(galaxy, GALAXY_SIDE);
-  const gatherReach = Math.max(
-    0,
-    ...rules.bands.flatMap((band) => band.enemies.map((target) => target.gather?.reach ?? 0)),
-  );
+  const gatherReach = spawnGatherReach(rules);
   const from = rules.bands[band]!.from;
   const to = rules.bands[band + 1]?.from ?? Infinity;
   const grid = periodicWorldGrid(context, rules.chunkSize);
