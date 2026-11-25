@@ -1,6 +1,7 @@
 import { CAST, castFrames, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
 import type { ConversationLineView } from "./conversation.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { units } from "./layout/css.ts";
 
 export const COMPACT_PORTRAITS = {
@@ -19,7 +20,7 @@ export const COMPACT_PORTRAITS = {
 } as const;
 
 /** The tab fill of a story speaker with no tab of their own, the unnamed General's. */
-export const AWAITING_TAB = "#b8b3c9";
+export const AWAITING_TAB = COLOURS.supporting;
 
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
@@ -121,11 +122,11 @@ export function portraitFrame(
 
 // Each speaker's name tab fill (art/controls.md "Conversation box").
 export const TAB_COLOURS = {
-  ada: "#70ace8",
-  astra: "#8fe0f2",
-  general: "#b8b3c9",
-  generalNamed: "#d68b72",
-  penny: "#feae34",
+  ada: COLOURS.adaBlue,
+  astra: COLOURS.astraTab,
+  general: COLOURS.supporting,
+  generalNamed: COLOURS.generalTab,
+  penny: COLOURS.jobOrange,
   ...Object.fromEntries(
     Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, CAST[key].tab]),
   ),

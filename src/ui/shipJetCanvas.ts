@@ -5,6 +5,7 @@ import {
   type ShipJets,
 } from "../game/shipJets.ts";
 import type { Vec } from "../model/types.ts";
+import { COLOURS } from "./layout/colours.ts";
 
 /** Draws the shared projected polygons in logical canvas coordinates at the caller-selected hull order. */
 export function drawShipJets(
@@ -34,7 +35,7 @@ export function drawShipJets(
     context.fill();
     if (white > 0) {
       context.globalAlpha = alpha * triangle.alpha * white;
-      context.fillStyle = "#ffffff";
+      context.fillStyle = COLOURS.white;
       context.fill();
     }
   }

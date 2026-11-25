@@ -4,6 +4,7 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { bindAdaAction } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { EXPANDED_VIEWPORT, font, fromHudEdge, units } from "./layout/css.ts";
 import {
@@ -92,26 +93,26 @@ export function ammoCount(shots: number): string {
 // (art/controls.md "Top-right HUD icon buttons"). Empty is an unselected weapon with no
 // ammunition: its glyph is the idle lavender mixed toward the navy face.
 export const HUD_DISC_STATES = {
-  empty: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#75748c" },
-  idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
-  selected: { edge: HUD_BUTTON.annulus, face: "#262b44", glyph: "#ead4aa" },
+  empty: { edge: HUD_BUTTON.edge, face: COLOURS.navy, glyph: COLOURS.emptyGlyph },
+  idle: { edge: HUD_BUTTON.edge, face: COLOURS.navy, glyph: COLOURS.supporting },
+  selected: { edge: HUD_BUTTON.annulus, face: COLOURS.navy, glyph: COLOURS.cream },
 } as const satisfies Record<WeaponButtonState, unknown>;
 
 /** Solid weapon faces use existing dark colours from Ada's fields and HUD palette. */
 export const WEAPON_FILLS: Readonly<Record<Weapon, string>> = {
-  heavyMissile: "#332712",
-  laser: "#262b44",
-  multiLaser: "#241827",
-  phaser: "#181425",
-  rapidMissile: "#292734",
-  scattershot: "#132d33",
+  heavyMissile: COLOURS.heavyMissileFace,
+  laser: COLOURS.navy,
+  multiLaser: COLOURS.multiLaserFace,
+  phaser: COLOURS.ink,
+  rapidMissile: COLOURS.baseField,
+  scattershot: COLOURS.scattershotFace,
 };
 
 // The count follows selection: cream like the selected ring, otherwise grey, including zero.
 // Refill labels stay cream and refusal tints only the glyph.
-export const AMMO_COUNT_TEXT = { inactive: "#b8b8b8", normal: "#ead4aa" } as const;
+export const AMMO_COUNT_TEXT = { inactive: COLOURS.inactiveCount, normal: COLOURS.cream } as const;
 
-const INK = "#181425";
+const INK = COLOURS.ink;
 const PRESSED_WEAPON =
   ".ada-controls .ada-weapon:is(:active,[data-weapon-pressed]):not(:disabled) .ada-disc";
 
@@ -125,7 +126,7 @@ const DISC_SHADOW = `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},${LEVE
 
 /** A weapon level's pip colour (art/controls.md "Weapon level"): lavender at 1, then the tier. */
 export const LEVEL_PIPS = {
-  1: "#b8b3c9",
+  1: COLOURS.supporting,
   2: UPGRADE_TIER_COLOURS[2],
   3: UPGRADE_TIER_COLOURS[3],
 } as const;
@@ -291,8 +292,8 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   background:${HUD_DISC_STATES.selected.face}
 }
 ${PRESSED_WEAPON}{
-  background:#3a4466;
-  --disc-focus-glyph:#ffffff
+  background:${COLOURS.pressedFace};
+  --disc-focus-glyph:${COLOURS.white}
 }
 @media (forced-colors:active){
   ${PRESSED_WEAPON}{

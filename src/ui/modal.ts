@@ -9,6 +9,7 @@ import {
   cardTitleReserve,
   listCardHeader,
 } from "./layout/cardFrame.ts";
+import { COLOURS } from "./layout/colours.ts";
 import {
   CARD_WIDTH_CAPS,
   type CardSize,
@@ -37,22 +38,22 @@ import { PAUSE_ART } from "./pause.ts";
 // logical px through src/ui/layout.
 
 export const BUTTON_FACE = {
-  disabled: "#2f2d3d",
-  primary: "#bfa06f",
-  secondary: "#9690b4",
+  disabled: COLOURS.disabledFace,
+  primary: COLOURS.primaryFace,
+  secondary: COLOURS.secondaryFace,
 } as const;
 
 // Text colours on the card face #3b3850.
 export const TEXT_TOKENS = {
-  buttonLabel: "#181425",
-  disabledLabel: "#9a96ad",
-  label: "#ead4aa",
+  buttonLabel: COLOURS.ink,
+  disabledLabel: COLOURS.disabledLabel,
+  label: COLOURS.cream,
   /** Every text of an unaffordable or busy tile row, on its flat #2f2d3d face (5.42:1). */
-  rowDisabled: "#a6a2b8",
+  rowDisabled: COLOURS.rowDisabled,
   /** A tile row's second line and Owned, on its #46425e face (5.11:1). */
-  rowSupporting: "#c0bbd0",
-  supporting: "#b8b3c9",
-  title: "#ffffff",
+  rowSupporting: COLOURS.rowSupporting,
+  supporting: COLOURS.supporting,
+  title: COLOURS.white,
 } as const;
 
 export { BUTTON_SLICE } from "./layout/controls.ts";
@@ -105,9 +106,9 @@ const STORY_HIT = hitMargin(HIT_RULE, {
 // Focus: a cream band between ink fringes, FOCUS_RING.outset outside the control (the HTML form
 // of ui-focus).
 export const FOCUS_STYLE = `
-  outline:${units(FOCUS_RING.band)} solid #ead4aa;
+  outline:${units(FOCUS_RING.band)} solid ${COLOURS.cream};
   outline-offset:${units(FOCUS_RING.fringe)};
-  box-shadow:0 0 0 ${units(FOCUS_RING.fringe)} #181425,0 0 0 ${units(FOCUS_RING.outset)} #181425`;
+  box-shadow:0 0 0 ${units(FOCUS_RING.fringe)} ${COLOURS.ink},0 0 0 ${units(FOCUS_RING.outset)} ${COLOURS.ink}`;
 
 // The close X's press area relative to the card's top-right corner.
 const CLOSE_HIT = CARD_CLOSE.hit;
@@ -165,7 +166,7 @@ ${UI_SCOPE} .ada-modal{
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#101926b3;
+  background:${COLOURS.modalDim};
   pointer-events:auto;
   padding:max(var(${VIEW_PROPERTIES.safe("top")}),
       calc(var(${VIEW_PROPERTIES.areaTop}) + ${units(MODAL_SCREEN_MARGIN)}))
@@ -207,8 +208,8 @@ ${UI_SCOPE} .ada-card{
   padding:0 ${lessSlice(CARD_CONTENT.padding, CARD_SLICE)};
   font:${font(TYPE.body)};
   color:${TEXT_TOKENS.label};
-  background:#3b3850;
-  border:${FRAME} solid #6b6685;
+  background:${COLOURS.cardFace};
+  border:${FRAME} solid ${COLOURS.cardRim};
   border-radius:0;
   border-image:url('/art/ui/sprites/ui-settings-card.png') ${CARD_SLICE} fill / ${FRAME} stretch;
   image-rendering:pixelated
@@ -241,7 +242,7 @@ ${UI_SCOPE} .ada-card-body{
   align-items:center;
   gap:${units(CARD_CONTENT.gap)};
   margin-top:var(--body-gap,0);
-  scrollbar-color:#9690b4 #2f2d3d
+  scrollbar-color:${COLOURS.secondaryFace} ${COLOURS.disabledFace}
 }
 ${UI_SCOPE} .ada-card-body::-webkit-scrollbar,
 ${UI_SCOPE} .ada-scroll::-webkit-scrollbar{
@@ -249,11 +250,11 @@ ${UI_SCOPE} .ada-scroll::-webkit-scrollbar{
 }
 ${UI_SCOPE} .ada-card-body::-webkit-scrollbar-track,
 ${UI_SCOPE} .ada-scroll::-webkit-scrollbar-track{
-  background:linear-gradient(to right,transparent ${units(SCROLL.gap)},#2f2d3d ${units(SCROLL.gap)})
+  background:linear-gradient(to right,transparent ${units(SCROLL.gap)},${COLOURS.disabledFace} ${units(SCROLL.gap)})
 }
 ${UI_SCOPE} .ada-card-body::-webkit-scrollbar-thumb,
 ${UI_SCOPE} .ada-scroll::-webkit-scrollbar-thumb{
-  background:#9690b4;
+  background:${COLOURS.secondaryFace};
   background-clip:padding-box;
   border:solid transparent;
   border-width:${units(SCROLL.thumbInset)} ${units(SCROLL.thumbInset)} ${units(
@@ -284,7 +285,7 @@ ${UI_SCOPE} .ada-card-body > .ada-scroll{
   min-height:0;
   overflow-y:auto;
   overscroll-behavior:contain;
-  scrollbar-color:#9690b4 #2f2d3d
+  scrollbar-color:${COLOURS.secondaryFace} ${COLOURS.disabledFace}
 }
 
 /* Prose never widens a card: it wraps to the inner width of the card's width family. */
@@ -384,7 +385,7 @@ ${UI_SCOPE} .ada-button{
   color:${TEXT_TOKENS.buttonLabel};
   background:${BUTTON_FACE.secondary};
   border-style:solid;
-  border-color:${BUTTON_FACE.secondary} ${BUTTON_FACE.secondary} #5f5980;
+  border-color:${BUTTON_FACE.secondary} ${BUTTON_FACE.secondary} ${COLOURS.secondaryLip};
   border-width:${SLICE_WIDTHS};
   border-radius:0;
   border-image:var(--ui-button-normal) ${SLICE} fill / ${SLICE_WIDTHS};
@@ -404,7 +405,7 @@ ${UI_SCOPE} .ada-button:where(${SPECIAL_BUTTON_SHAPES}){
 }
 ${UI_SCOPE} .ada-button.ada-primary{
   background:${BUTTON_FACE.primary};
-  border-color:${BUTTON_FACE.primary} ${BUTTON_FACE.primary} #8a7148;
+  border-color:${BUTTON_FACE.primary} ${BUTTON_FACE.primary} ${COLOURS.primaryLip};
   border-image-source:var(--ui-button-primary-normal)
 }
 ${UI_SCOPE} .ada-button:active:not(:disabled){

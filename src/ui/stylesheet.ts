@@ -8,6 +8,7 @@ import { DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
 import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";
 import { KEEPER_STYLE } from "./keeperBlock.ts";
+import { UNLISTED_COLOURS } from "./layout/colours.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { DETAIL_CARD_STYLE } from "./layout/detailCard.ts";
 import { FPS_STYLE } from "./layout/fpsCounter.ts";
@@ -27,6 +28,9 @@ import { STATUS_PILL_STYLE } from "./statusPill.ts";
 import { STORYBOOK_STYLE } from "./storybook.ts";
 import { WEAPON_STYLE } from "./weapons.ts";
 
+// The page's inherited text colour and its ground under the game.
+const PAGE_STYLE = `:root{color:${UNLISTED_COLOURS.pageText};background:${UNLISTED_COLOURS.pageBackground}}`;
+
 // The HTML interface's whole stylesheet, which uiStylePlugin (src/tools/uiStylePlugin.ts) serves
 // as a CSS module, so the page links it as a file from its own origin as the CSP's style-src
 // 'self' allows. Equal-specificity rules resolve by order: the loading bar and the conversation
@@ -34,6 +38,7 @@ import { WEAPON_STYLE } from "./weapons.ts";
 // then the cards that refine them, the storybook after the shared card styles it refines.
 export const UI_STYLESHEET = [
   layoutTreeCss,
+  PAGE_STYLE,
   COMPLETION_INDICATOR_STYLE,
   LOADING_STYLE,
   CONVERSATION_STYLE,

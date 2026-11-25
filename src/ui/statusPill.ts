@@ -6,6 +6,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import { frameGridOrigin } from "./layout/frameBox.ts";
@@ -33,22 +34,22 @@ import { createShieldDrawing } from "./shieldDrawing.ts";
 // "Light fields").
 
 export const STATUS_COLOURS = {
-  count: "#ead4aa",
-  divider: "#57536e",
-  flash: "#ffffff",
-  low: "#e4574e",
-  lowPanel: "#532e35",
-  lowPeak: "#ff8a80",
+  count: COLOURS.cream,
+  divider: COLOURS.divider,
+  flash: COLOURS.white,
+  low: COLOURS.refusalRed,
+  lowPanel: COLOURS.shieldLowPanel,
+  lowPeak: COLOURS.shieldLowPeak,
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
-  oreTick: "#eaa676",
+  oreTick: COLOURS.oreTick,
   panel: "rgb(24 20 37 / 0.65)",
   // The separate recharge timer fill and its ink track (art/controls.md "Status pill").
-  recharge: "#ead4aa",
-  rechargeEdge: "#181425",
-  rim: "#9a96ad",
-  shield: "#70ace8",
-  shieldDelay: "#4f7aa6",
-  tick: "#f4d98a",
+  recharge: COLOURS.cream,
+  rechargeEdge: COLOURS.ink,
+  rim: COLOURS.disabledLabel,
+  shield: COLOURS.adaBlue,
+  shieldDelay: COLOURS.shieldDelay,
+  tick: COLOURS.stardustTick,
   // Its own ink layer at 0.65 over the panel, not a hole in it.
   track: "rgb(24 20 37 / 0.65)",
 } as const;

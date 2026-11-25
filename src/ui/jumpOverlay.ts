@@ -19,6 +19,7 @@ import {
 import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
 
@@ -150,7 +151,7 @@ export function createJumpOverlay(
         paint2d.drawImage(image, 0, 0, size, size);
         if (white) {
           paint2d.globalCompositeOperation = "source-in";
-          paint2d.fillStyle = "#ffffff";
+          paint2d.fillStyle = COLOURS.white;
           paint2d.fillRect(0, 0, size, size);
         }
       }

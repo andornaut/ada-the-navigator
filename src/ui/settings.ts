@@ -21,6 +21,7 @@ import {
   writeSetting,
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
@@ -107,7 +108,7 @@ export const SETTINGS_GLYPH = uiIconUrl("settings");
 export const ACHIEVEMENTS_GLYPH = uiIconUrl("achievements");
 
 // Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
-export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
+export const NAV_DISC_PRESSED = { face: COLOURS.pressedFace, glyph: COLOURS.white } as const;
 
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
   .ada-close,.ada-route-marker,.ada-use,.ada-row[role=switch],.ada-quest-endpoint,
@@ -132,7 +133,7 @@ ${viewStyle(WHOLE_PX_EDGES)}
   inset:0;
   pointer-events:none;
   font:${font(TYPE.body)};
-  color:#172335;
+  color:${UNLISTED_COLOURS.controlsText};
   z-index:10
 }
 

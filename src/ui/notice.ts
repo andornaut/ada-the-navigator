@@ -1,3 +1,4 @@
+import { COLOURS } from "./layout/colours.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
@@ -52,7 +53,7 @@ export const CONVERSATION_SLOT = `
   display:flex;
   align-items:center;
   font:${font(CONVERSATION_BOX.text)};
-  color:#ead4aa`;
+  color:${COLOURS.cream}`;
 
 export const NOTICE_STYLE = `
 #game-status,

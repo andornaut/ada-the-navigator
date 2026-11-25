@@ -25,6 +25,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
@@ -347,7 +348,7 @@ export const MAP_SCREEN_STYLE = `
   overflow:hidden;
   pointer-events:auto;
   touch-action:none;
-  background:var(--map-field,#101010)
+  background:var(--map-field,${UNLISTED_COLOURS.pageBackground})
 }
 .ada-controls .ada-map-screen[hidden]{
   display:none
@@ -655,8 +656,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   gap:${units(MAP_PANEL.reasonGap)};
   font:${font(TYPE.body)};
   color:${TEXT_TOKENS.supporting};
-  background:#3b3850;
-  border:${slice(CARD_SLICE)} solid #6b6685;
+  background:${COLOURS.cardFace};
+  border:${slice(CARD_SLICE)} solid ${COLOURS.cardRim};
   border-image:url('/art/ui/sprites/ui-settings-card.png') ${CARD_SLICE} fill / ${slice(
     CARD_SLICE,
   )} stretch;

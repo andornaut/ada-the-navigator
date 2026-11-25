@@ -1,6 +1,7 @@
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { BUTTON_FACE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
 import { font, slice, units } from "./css.ts";
@@ -90,7 +91,7 @@ export const STATION_STYLE = `
   align-items:center;
   gap:${units(SPACING.gap)};
   padding:${units(SPACING.gap)} 0;
-  border-top:${units(FRAME_LINE)} solid #6b6685;
+  border-top:${units(FRAME_LINE)} solid ${COLOURS.cardRim};
   margin-top:auto
 }
 .ada-controls .ada-station-footer [data-action=undock]{
@@ -198,7 +199,7 @@ export const STATION_STYLE = `
   min-width:0
 }
 .ada-controls .ada-station-panes > section + section{
-  border-left:${units(FRAME_LINE)} solid #6b6685;
+  border-left:${units(FRAME_LINE)} solid ${COLOURS.cardRim};
   padding-left:${units(SPACING.gap)}
 }
 .ada-controls .ada-station-panes .ada-shop-row{
@@ -252,8 +253,8 @@ export const STATION_STYLE = `
   align-items:center;
   column-gap:${units(BUTTON_GAP)};
   padding-inline:${units(SPACING.gap)} ${units(BUTTON_GAP)};
-  background:#302e42;
-  border:${slice(FRAME_LINE)} solid #49465f
+  background:${UNLISTED_COLOURS.panelFace};
+  border:${slice(FRAME_LINE)} solid ${UNLISTED_COLOURS.exchangeRowEdge}
 }
 .ada-controls .ada-exchange-row h3{
   margin:0;
@@ -277,8 +278,8 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]{
   color:${TEXT_TOKENS.label};
-  background:#514b68;
-  border-color:#514b68;
+  background:${UNLISTED_COLOURS.unavailableFace};
+  border-color:${UNLISTED_COLOURS.unavailableFace};
   border-image-source:none
 }
 .ada-controls .ada-exchange .ada-button.ada-exchange-amount:focus-visible{
@@ -292,7 +293,7 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-exchange .ada-button.ada-exchange-amount[aria-disabled="true"]:focus-visible{
   color:${TEXT_TOKENS.title};
-  background:#5f5980;
+  background:${COLOURS.secondaryLip};
   border-color:transparent
 }
 @media (forced-colors:active){
@@ -377,9 +378,9 @@ export const STATION_STYLE = `
   font:${font(TYPE.body)};
   text-align:left;
   color:${TEXT_TOKENS.label};
-  background:#46425e;
+  background:${COLOURS.tileFace};
   border-style:solid;
-  border-color:#46425e #46425e #2f2d3d;
+  border-color:${COLOURS.tileFace} ${COLOURS.tileFace} ${COLOURS.disabledFace};
   border-width:${TILE_WIDTHS};
   border-radius:0;
   border-image:var(${buttonProperty("ui-button-tile", "normal")}) ${TILE_SLICE} fill / ${TILE_WIDTHS};
@@ -399,14 +400,14 @@ export const STATION_STYLE = `
 .ada-controls .ada-shop-row[data-state=unaffordable]{
   padding:${FLAT_TOP} ${ROW_SIDE} 0;
   color:${TEXT_TOKENS.rowDisabled};
-  background:#2f2d3d;
-  border-color:#2f2d3d;
+  background:${COLOURS.disabledFace};
+  border-color:${COLOURS.disabledFace};
   border-image-source:var(${buttonProperty("ui-button-tile", "disabled")});
   cursor:default
 }
 /* Colour the face for focus, a held job or installed paint. Keep the tile's edges, lip and pressed art. */
 ${TILE_ROW}[data-state=inUse]{
-  --ada-tile-state-face:#262b44;
+  --ada-tile-state-face:${COLOURS.navy};
   --ada-tile-state-ink:${TEXT_TOKENS.label}
 }
 ${TILE_ROW}:focus-visible{
@@ -419,7 +420,7 @@ ${TILE_ROW}[data-state=inUse]:focus-visible{
   --ada-tile-state-face:${TEXT_TOKENS.supporting}
 }
 ${TILE_ROW}[data-state=unaffordable]:focus-visible{
-  --ada-tile-state-face:#514b68;
+  --ada-tile-state-face:${UNLISTED_COLOURS.unavailableFace};
   --ada-tile-state-ink:${TEXT_TOKENS.title}
 }
 ${TILE_FACE}{
@@ -466,13 +467,13 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   height:${units(SHOP_ROW.well)};
   display:grid;
   place-items:center;
-  background:#262b44;
-  border:${units(SHOP_ROW.wellEdge)} solid #181425;
+  background:${COLOURS.navy};
+  border:${units(SHOP_ROW.wellEdge)} solid ${COLOURS.ink};
   border-radius:${units(SHOP_ROW.wellEdge)};
   color:${TEXT_TOKENS.label}
 }
 .ada-controls [data-state=unaffordable] .ada-well{
-  background:#2f2d3d;
+  background:${COLOURS.disabledFace};
   color:${TEXT_TOKENS.disabledLabel}
 }
 .ada-controls .ada-well.ada-large{
@@ -571,7 +572,7 @@ ${TILE_ROW}:focus-visible:active:not([data-state=unaffordable]) .ada-shop-name{
   justify-content:center;
   gap:${units(SHOP_ROW.markGap)};
   border-radius:${units(PILL.radius)};
-  background:#181425;
+  background:${COLOURS.ink};
   font:${font(PILL.text)};
   color:${TEXT_TOKENS.label};
   white-space:nowrap

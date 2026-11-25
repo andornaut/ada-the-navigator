@@ -4,7 +4,14 @@ import {
   refuse as playRefusal,
 } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-export const REFUSAL = { color: "#e4574e", durationMs: 320, shakePx: 3, stepMs: 80 } as const;
+import { COLOURS } from "./layout/colours.ts";
+
+export const REFUSAL = {
+  color: COLOURS.refusalRed,
+  durationMs: 320,
+  shakePx: 3,
+  stepMs: 80,
+} as const;
 
 const CUE: RefusalCue = {
   shake: REFUSAL.shakePx,

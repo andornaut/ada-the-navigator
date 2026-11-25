@@ -1,3 +1,4 @@
+import { COLOURS } from "./layout/colours.ts";
 import { FRAME_LINE } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { UI_SCOPE } from "./modal.ts";
@@ -19,7 +20,7 @@ ${UI_SCOPE} .ada-completion{
   height:${units(COMPLETION_INDICATOR.size)};
   border:${units(FRAME_LINE)} solid ${COMPLETION_INDICATOR.incomplete};
   background:transparent;
-  color:#181425;
+  color:${COLOURS.ink};
   font:bold ${units(COMPLETION_INDICATOR.size)} / 1 sans-serif
 }
 ${UI_SCOPE} .ada-completion[aria-checked=true]{

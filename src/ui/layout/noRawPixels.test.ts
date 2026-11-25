@@ -3,10 +3,13 @@ import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
+
 // Every DOM UI size reads src/ui/layout (art/layout.md "Verification"): outside it, src/ui writes
 // no raw CSS px and assigns no numeric literal to a geometry property. The style modules inside
 // it (those exporting a *_STYLE stylesheet, and its .css files) and src/style.css follow the same
-// rules, so every size in a stylesheet is a named token.
+// rules, so every size in a stylesheet is a named token. Every UI colour reads the colour module
+// (colours.ts): no other source in src/ui, and not src/style.css, writes a hex colour.
 
 const UI = new URL("../", import.meta.url).pathname;
 const PAGE_STYLE = new URL("../../style.css", import.meta.url).pathname;
@@ -21,7 +24,7 @@ interface Allowed {
 const ALLOWED: readonly Allowed[] = [
   {
     file: "layout/bootSplash.css",
-    reason: "Loads before the interface script, so it cannot read the layout module",
+    reason: "Loads before the interface script, so it cannot read the layout or colour modules",
   },
 ];
 
@@ -110,6 +113,43 @@ function sources(directory: string): string[] {
 
 const UI_SOURCES = [...sources(UI), PAGE_STYLE];
 
+// Every source in src/ui, layout data modules included, and the page stylesheet, but the colour
+// module itself.
+const COLOUR_MODULE = "layout/colours.ts";
+function allSources(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      return allSources(path);
+    }
+    return /\.(?:css|ts)$/u.test(entry.name) && !entry.name.endsWith(".test.ts") ? [path] : [];
+  });
+}
+const COLOUR_SOURCES = [...allSources(UI), PAGE_STYLE].filter(
+  (path) => relative(UI, path) !== COLOUR_MODULE,
+);
+const HEX_COLOUR = /#[\da-f]{3,8}\b/giu;
+
+function isAllowed(file: string, selector: string): boolean {
+  return ALLOWED.some(
+    (entry) =>
+      entry.file === file && (entry.selectors === undefined || entry.selectors.test(selector)),
+  );
+}
+
+export function colourFindings(file: string, text: string): string[] {
+  const code = withoutComments(text);
+  const blanked = withoutSubstitutions(code);
+  return [...code.matchAll(HEX_COLOUR)].flatMap((match) => {
+    const selector = selectorAt(blanked, match.index);
+    if (isAllowed(file, selector)) {
+      return [];
+    }
+    const line = code.slice(0, match.index).split("\n").length;
+    return [`${file}:${line} hex colour: ${match[0]}${selector ? ` in ${selector}` : ""}`];
+  });
+}
+
 export function rawPixelFindings(file: string, text: string): string[] {
   const code = withoutComments(text);
   const blanked = withoutSubstitutions(code);
@@ -121,11 +161,7 @@ export function rawPixelFindings(file: string, text: string): string[] {
         continue;
       }
       const selector = selectorAt(blanked, match.index);
-      const allowed = ALLOWED.some(
-        (entry) =>
-          entry.file === file && (entry.selectors === undefined || entry.selectors.test(selector)),
-      );
-      if (!allowed) {
+      if (!isAllowed(file, selector)) {
         const line = code.slice(0, match.index).split("\n").length;
         findings.push(`${file}:${line} ${name}: ${match[0]}${selector ? ` in ${selector}` : ""}`);
       }
@@ -170,6 +206,33 @@ describe("DOM UI sizes", () => {
     );
     expect(rawPixelFindings("weapons.ts", "`.ada-controls .ada-weapon{gap:4px}`")).toHaveLength(1);
     expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
+  });
+
+  it("draw every colour from the colour module, never a hex literal", () => {
+    const findings = COLOUR_SOURCES.flatMap((path) =>
+      colourFindings(relative(UI, path), readFileSync(path, "utf8")),
+    );
+    expect(findings).toEqual([]);
+    expect(COLOUR_SOURCES.map((path) => relative(UI, path))).toEqual(
+      expect.arrayContaining(["../style.css", "layout/mapScreen.ts", "modal.ts"]),
+    ); // One token per colour value.
+    const values = [...Object.values(COLOURS), ...Object.values(UNLISTED_COLOURS)].map((value) =>
+      value.toLowerCase(),
+    );
+    expect(new Set(values).size).toBe(values.length);
+  });
+
+  it("catch hex colours in CSS strings and string literals, but not ids or comments", () => {
+    const text = [
+      "const A = `.x{color:#ead4aa}`;",
+      ["const ok = `#app .y{color:$", "{COLOURS.ink}}`; // #181425"].join(""),
+    ].join("\n");
+    expect(colourFindings("example.ts", text)).toEqual(["example.ts:1 hex colour: #ead4aa in .x"]);
+    expect(colourFindings("example.ts", 'const face = "#FF6B6B", mask = "#000";')).toEqual([
+      "example.ts:1 hex colour: #FF6B6B",
+      "example.ts:1 hex colour: #000",
+    ]);
+    expect(colourFindings("layout/bootSplash.css", "html{background:#101010}")).toEqual([]);
   });
 
   it("cover the layout style modules and the page stylesheet, and allow only existing files", () => {

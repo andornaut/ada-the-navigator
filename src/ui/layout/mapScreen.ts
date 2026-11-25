@@ -14,6 +14,7 @@ import { TASK_COLORS } from "../../data/taskCategories.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { hudRect, type Insets, safeRect, type Size, STATUS_PILL } from "./playView.ts";
 import { BUTTON_GAP, TYPE } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
@@ -57,33 +58,33 @@ export const MAP_SCREEN = {
 
 /** The map's colours (art/map.md "Symbols" and "Contrast per field"). */
 export const MAP_COLORS = {
-  canopy: "#70ace8",
+  canopy: COLOURS.adaBlue,
   cream: TASK_COLORS.generic,
-  divider: "#57536e",
-  hull: "#ffffff",
-  ink: "#181425",
-  objective: "#c4afcc",
-  supporting: "#b8b3c9",
+  divider: COLOURS.divider,
+  hull: COLOURS.white,
+  ink: COLOURS.ink,
+  objective: UNLISTED_COLOURS.mapPointOfInterest,
+  supporting: COLOURS.supporting,
 } as const;
 
 /**
  * Each symbol's chip face. A held job's own spot keeps the job's orange, as does any place that is
  * the job's target (the faces of gameplay/quests.md's job marks).
  */
-const STATION_FACE = "#c4afcc";
+const STATION_FACE = UNLISTED_COLOURS.mapPointOfInterest;
 
 export const MAP_FACES: Readonly<Record<MapSymbol | "hostileStation", string>> = {
-  beacon: "#ead4aa",
+  beacon: COLOURS.cream,
   destination: TASK_COLORS.story,
-  growers: "#9ccc5a",
-  holodisk: "#e868c8",
+  growers: UNLISTED_COLOURS.mapGrowers,
+  holodisk: COLOURS.holodisk,
   hostileStation: STATION_FACE,
   job: TASK_COLORS.job,
-  nebula: "#ead4aa",
+  nebula: COLOURS.cream,
   salvagers: TASK_COLORS.project,
   station: STATION_FACE,
-  workshop: "#f2d15a",
-  wreck: "#ead4aa",
+  workshop: UNLISTED_COLOURS.mapWorkshop,
+  wreck: COLOURS.cream,
 };
 export const MAP_JOB_FACE = MAP_FACES.job;
 

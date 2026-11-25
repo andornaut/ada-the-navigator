@@ -38,6 +38,7 @@ import {
   storySpeakerName,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { BUTTON_SLICE } from "./layout/controls.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
@@ -193,8 +194,8 @@ export function storyPortrait(name: string | undefined): StoryPortrait | null {
 
 // The tab fills of speakers who appear only on story pages (art/controls.md).
 export const STORY_TAB_COLOURS: Readonly<Record<string, string>> = {
-  Dad: "#c4a6ec",
-  Mom: "#9fd98a",
+  Dad: COLOURS.dadTab,
+  Mom: COLOURS.momTab,
 };
 
 /** Decoded story images, held for the storybook's life, and each one's decode. */
@@ -418,7 +419,7 @@ export const STORYBOOK_STYLE = `
   min-height:0;
   overflow-y:auto;
   overscroll-behavior:contain;
-  scrollbar-color:#9690b4 #2f2d3d
+  scrollbar-color:${COLOURS.secondaryFace} ${COLOURS.disabledFace}
 }
 .ada-controls .ada-story-copy.ada-story-scrolls{
   padding-right:${units(SCROLL.gap + SCROLL.track)}
@@ -522,7 +523,7 @@ ${STORY_PORTRAIT_RULES}
   min-height:0;
   overflow-y:auto;
   overscroll-behavior:contain;
-  scrollbar-color:#9690b4 #2f2d3d;
+  scrollbar-color:${COLOURS.secondaryFace} ${COLOURS.disabledFace};
   padding-right:${units(SCROLL.gap + SCROLL.track)}
 }
 .ada-controls .ada-story-choices > .ada-button{

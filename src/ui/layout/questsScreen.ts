@@ -1,5 +1,6 @@
 import { BUTTON_SLICE, FRAME_LINE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
 import { TEXT_TOKENS } from "../modal.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { NARROW_VIEWPORT, pixels, slice, units } from "./css.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
@@ -54,26 +55,26 @@ export const QUESTS_SCREEN_STYLE = `
   align-content:start;
   gap:${units(SPACING.gap)} ${units(QUEST_DETAIL.columnGap)};
   padding:${units(SPACING.rowGap)} ${units(SPACING.gap)} ${units(SPACING.gap)};
-  background:#302e42;
-  border:${pixels(FRAME_LINE)} solid #777186}
+  background:${UNLISTED_COLOURS.panelFace};
+  border:${pixels(FRAME_LINE)} solid ${UNLISTED_COLOURS.questDetailEdge}}
 .ada-controls .ada-quest-content::before{content:"";
   position:absolute;
   left:50%;
   top:${units(QUEST_DETAIL.ruleInset)};
   bottom:${units(QUEST_DETAIL.ruleInset)};
   width:${pixels(FRAME_LINE)};
-  background:#777186}
+  background:${UNLISTED_COLOURS.questDetailEdge}}
 .ada-controls .ada-quest-content section{min-width:0}
 .ada-controls .ada-quest-objective{grid-row:1 / span 2}
 .ada-controls .ada-quest-reward{grid-column:2}
 .ada-controls .ada-quest-content h3,.ada-controls .ada-quest-content p{font:inherit;
   margin:0;
   overflow-wrap:anywhere}
-.ada-controls .ada-quest-content h3{color:#b8b3c9;
+.ada-controls .ada-quest-content h3{color:${COLOURS.supporting};
   font-weight:bold;
   margin-bottom:${units(SPACING.rowGap)}}
 .ada-controls .ada-quest-description{margin-top:${units(SPACING.gap)}!important;
-  color:#c0bbd0}
+  color:${COLOURS.rowSupporting}}
 .ada-controls .ada-quest-route{display:grid;
   font-size:${units(QUEST_ROUTE_TYPE.size)};
   line-height:${units(QUEST_ROUTE_TYPE.lineHeight)};
@@ -82,8 +83,8 @@ export const QUESTS_SCREEN_STYLE = `
   align-items:center;
   margin-top:${units(SPACING.gap)};
   padding:${units(SPACING.gap)};
-  background:#262b44;
-  border:${pixels(FRAME_LINE)} solid #55516b}
+  background:${COLOURS.navy};
+  border:${pixels(FRAME_LINE)} solid ${UNLISTED_COLOURS.questRouteEdge}}
 @media ${NARROW_VIEWPORT}{
   .ada-controls .ada-quest-route{padding-block:${units(QUEST_DETAIL.compactRoutePadding)}}
 }
@@ -104,7 +105,7 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-endpoint:is(:disabled,[aria-disabled=true]){opacity:1;
   cursor:default}
 .ada-controls .ada-quest-endpoint:is(:disabled,[aria-disabled=true]):focus-visible{
-  outline:${pixels(QUEST_ENDPOINT_UNAVAILABLE_FOCUS.width)} solid #ffffff;
+  outline:${pixels(QUEST_ENDPOINT_UNAVAILABLE_FOCUS.width)} solid ${COLOURS.white};
   outline-offset:${pixels(QUEST_ENDPOINT_UNAVAILABLE_FOCUS.offset)}
 }
 .ada-controls .ada-quest-endpoint:not(:disabled,[aria-disabled=true]):is(:focus-visible,:active){
@@ -128,7 +129,7 @@ export const QUESTS_SCREEN_STYLE = `
   overflow-wrap:anywhere}
 .ada-controls .ada-quest-endpoint small{display:block;
   font:inherit;
-  color:#b8b3c9}
+  color:${COLOURS.supporting}}
 .ada-controls .ada-quest-icon{display:block;
   flex-shrink:0;
   width:${units(QUEST_ICON)};
@@ -178,9 +179,9 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-requirement{display:flex;align-items:center;gap:${REQ.gap};margin-top:${REQ.top}}
 .ada-controls .ada-quest-requirement>span:not(.ada-completion){min-width:0;overflow-wrap:anywhere}
 .ada-controls .ada-quest-requirement>strong{margin-left:auto;white-space:nowrap}
-.ada-controls .ada-quest-list h3{font:inherit;margin:0;color:#b8b3c9}
-.ada-controls .ada-quests-screen .ada-card header h2{color:#ead4aa}
-.ada-controls .ada-quest-content p{color:#ead4aa}
+.ada-controls .ada-quest-list h3{font:inherit;margin:0;color:${COLOURS.supporting}}
+.ada-controls .ada-quests-screen .ada-card header h2{color:${COLOURS.cream}}
+.ada-controls .ada-quest-content p{color:${COLOURS.cream}}
 .ada-controls .ada-quest-objective>p:first-of-type,.ada-controls .ada-quest-reward p{font-weight:bold}
-.ada-controls .ada-quest-objective .ada-quest-description{color:#c0bbd0}
+.ada-controls .ada-quest-objective .ada-quest-description{color:${COLOURS.rowSupporting}}
 `;

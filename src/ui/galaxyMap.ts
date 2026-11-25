@@ -17,6 +17,7 @@ import {
   type GalaxyPanelSchema,
   galaxyPanelTree,
 } from "./galaxyPanelTree.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
 import {
@@ -287,10 +288,10 @@ ${mapCloseActionStyle(".ada-controls .ada-route > .ada-close")}
   background:${inkAt(marker.backing.alpha)}
 }
 .ada-controls .ada-route-marker[data-earth] .ada-route-disc{
-  background:#65aedd;
+  background:${UNLISTED_COLOURS.earthOcean};
   background-image:
-    radial-gradient(ellipse at 30% 30%,#8ab86b 0 23%,transparent 25%),
-    radial-gradient(ellipse at 70% 65%,#8ab86b 0 26%,transparent 28%)
+    radial-gradient(ellipse at 30% 30%,${UNLISTED_COLOURS.earthLand} 0 23%,transparent 25%),
+    radial-gradient(ellipse at 70% 65%,${UNLISTED_COLOURS.earthLand} 0 26%,transparent 28%)
 }
 .ada-controls .ada-route-marker:focus-visible{
   outline:none;
@@ -393,8 +394,8 @@ ${PRESSED_LABEL}{
       GALAXY_MAP_PANEL.capture.width -
       2 * GALAXY_MAP_PANEL.capture.frame,
   )};
-  background:#3b3850;
-  border:${slice(CARD_SLICE)} solid #6b6685;
+  background:${COLOURS.cardFace};
+  border:${slice(CARD_SLICE)} solid ${COLOURS.cardRim};
   border-image:url('/art/ui/sprites/ui-settings-card.png') ${CARD_SLICE} fill / ${slice(CARD_SLICE)} stretch;
   image-rendering:pixelated;
   pointer-events:auto

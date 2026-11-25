@@ -1,4 +1,5 @@
 import { LOADING_LAYER } from "../loadingBar.ts";
+import { UNLISTED_COLOURS } from "./colours.ts";
 import { pixels } from "./css.ts";
 
 /** Above every game layer, the loading bar included, and outside the game area's bands. */
@@ -21,8 +22,8 @@ export const FPS_STYLE = `
   z-index:${FPS_LAYER};
   padding:${pixels(FPS_BOX.padding.y)} ${pixels(FPS_BOX.padding.x)};
   border-radius:${pixels(FPS_BOX.radius)};
-  background:#000000b3;
-  color:#ededed;
+  background:${UNLISTED_COLOURS.fpsPanel};
+  color:${UNLISTED_COLOURS.pageText};
   font:${pixels(FPS_BOX.size)}/${pixels(FPS_BOX.lineHeight)} ui-monospace,monospace;
   pointer-events:none
 }`;

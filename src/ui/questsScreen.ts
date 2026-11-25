@@ -14,6 +14,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -422,7 +423,7 @@ export function createQuestsScreen(
                   for (const d of [QUEST_ROUTE_ARROW.shaft, QUEST_ROUTE_ARROW.head]) {
                     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     path.setAttribute("d", d);
-                    path.setAttribute("fill", "#b8b3c9");
+                    path.setAttribute("fill", COLOURS.supporting);
                     svg.append(path);
                   }
                   route.append(svg);

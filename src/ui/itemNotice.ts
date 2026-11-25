@@ -6,6 +6,7 @@ import { tierColour } from "../data/upgradeTiers.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
+import { COLOURS } from "./layout/colours.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
 import { statusCargoInset } from "./layout/playView.ts";
@@ -26,11 +27,11 @@ export type NoticeKind = "cargo" | "holodisk" | "shield" | "tow" | "upgrade" | "
  * colour and a paint scheme its own top colour (noticeAccent).
  */
 export const NOTICE_ACCENTS = {
-  cargo: "#feae34",
-  holodisk: "#e868c8",
-  tow: "#b8bfc9",
+  cargo: COLOURS.jobOrange,
+  holodisk: COLOURS.holodisk,
+  tow: COLOURS.towSteel,
   // A new weapon or its ammunition: the weapon disc's gold.
-  weapon: "#bfa06f",
+  weapon: COLOURS.primaryFace,
 } as const;
 
 // A level's rim: its tier's colour, which a level 2 or 3 always has.
@@ -347,7 +348,7 @@ export const ITEM_NOTICE_STYLE = `
   box-sizing:border-box;
   border:${units(ITEM_NOTICE.rim)} solid var(--notice-accent);
   border-radius:${units(ITEM_NOTICE.radius)};
-  background:#181425
+  background:${COLOURS.ink}
 }
 .ada-controls .ada-item-notice-icon{
   position:absolute;

@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { LocalMap } from "../model/map.ts";
+import { UNLISTED_COLOURS } from "./layout/colours.ts";
 import { type FogStampBounds, fogStampBounds } from "./layout/mapFog.ts";
 import { fogBlur, fogReveal, type MapView, toScreen } from "./layout/mapScreen.ts";
 
@@ -39,7 +40,7 @@ function fogStamp(context: CanvasRenderingContext2D, bounds: FogStampBounds): Fo
   canvas.width = width;
   canvas.height = height;
   raster.filter = fogBlur(sigma);
-  raster.fillStyle = "#000";
+  raster.fillStyle = UNLISTED_COLOURS.fogMask;
   raster.beginPath();
   raster.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
   raster.fill();
@@ -78,7 +79,7 @@ export function drawMapFog(
   context.fillRect(0, 0, width, height);
   context.globalCompositeOperation = "destination-out";
   context.filter = stamp ? "none" : fogBlur(sigma);
-  context.fillStyle = "#000";
+  context.fillStyle = UNLISTED_COLOURS.fogMask;
   for (const point of [...map.explored, ...map.places, map.player]) {
     const at = toScreen(inner, current, point);
     const x = at.x * px;

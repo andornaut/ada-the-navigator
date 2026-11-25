@@ -2,6 +2,7 @@ import { HUD_BUTTON } from "../../data/layout.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { MENU_ART, type PausePose } from "../pause.ts";
+import { COLOURS } from "./colours.ts";
 import { units } from "./css.ts";
 import { PAUSE_BUTTON } from "./playView.ts";
 
@@ -69,7 +70,7 @@ ${FOCUSED_NAVIGATION}{
 /* Tint only the 35-unit artwork's inner face. Lighten keeps its lighter glyph intact. */
 ${FOCUSED_NAVIGATION}::before{
   --ada-nav-face-radius:${units(NAVIGATION_FACE_RADIUS.rest)};
-  --ada-nav-focus-tone:#6b6685;
+  --ada-nav-focus-tone:${COLOURS.cardRim};
   --ada-nav-focus-blend:lighten;
   background-image:radial-gradient(circle,
     var(--ada-nav-focus-tone) var(--ada-nav-face-radius),

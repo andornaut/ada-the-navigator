@@ -1,5 +1,6 @@
 import { SCREEN } from "../data/screen.ts";
 import type { Vec } from "../model/types.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { COMPACT_VIEWPORT, font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { COMPACT_DISABLED_BANNER } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -11,9 +12,9 @@ import { TYPE } from "./layout/tokens.ts";
 /** Art's banner: a threat-red face with a 1 px ink border, 6 px insets and an ink label. */
 export const DISABLED_BANNER = {
   border: 1,
-  face: "#FF6B6B",
+  face: UNLISTED_COLOURS.disabledBannerFace,
   height: 24,
-  ink: "#181425",
+  ink: COLOURS.ink,
   inset: 6,
   label: TYPE.label,
   radius: 4,
