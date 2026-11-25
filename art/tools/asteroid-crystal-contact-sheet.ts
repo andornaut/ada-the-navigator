@@ -23,6 +23,7 @@ import {
   crystalVariants,
   DISPLAY,
   rockFrames,
+  VEIN_FITS,
   SHAPES,
 } from "./asteroids.ts";
 import type { V2 } from "./silhouette.ts";
@@ -95,6 +96,22 @@ for (const shape of SHAPES.filter(({ size }) => size === "medium")) {
     const { entry, frames } = rockFrames(
       { ...shape, id },
       { cluster, declared: "frame", review: size },
+    );
+    review.set(id, {
+      row: { ...(entry as unknown as Row), svgSheet: "" },
+      frames: frames.map(({ source }) =>
+        source.replace(/^<svg[^>]*>|<\/svg>\s*$/gu, "").replace(/<title>.*?<\/title>/su, ""),
+      ),
+    });
+  }
+}
+// Review-only flush veins on the medium shapes, `<crystal id>-vein`.
+for (const shape of SHAPES.filter(({ size }) => size === "medium")) {
+  for (const cluster of ["small", "full"] as const) {
+    const id = `${crystalId(shape.id, cluster)}-vein`;
+    const { entry, frames } = rockFrames(
+      { ...shape, id },
+      { cluster, declared: "frame", vein: true },
     );
     review.set(id, {
       row: { ...(entry as unknown as Row), svgSheet: "" },
@@ -329,7 +346,48 @@ function fieldSample(galaxy: (typeof FIELDS)[number]): {
 // Cartwheel ore fields at game scale, every rock in its full cluster: each family's 8 rock
 // layout, unturned, about its centre. A field keeps ordinary rocks 600 world units from its
 // centre, wider than the view, so the view at a field shows only its rocks.
-function oreFieldSample(): string {
+// Medium rocks plain, with the fitted crystals and with the flush veins, every spin frame, at 1x
+// and 2x on one field.
+function veinSheet(galaxy: (typeof FIELDS)[number]): string {
+  const parts: string[] = [];
+  let y = GAP;
+  let width = 0;
+  for (const scale of [1, 2]) {
+    for (const shape of SHAPES.filter(({ size }) => size === "medium")) {
+      for (const [id, label] of [
+        [shape.id, "plain"],
+        [crystalId(shape.id, "small"), "fitted crystals, small"],
+        [crystalId(shape.id, "full"), "fitted crystals, full"],
+        [`${crystalId(shape.id, "small")}-vein`, "vein, small"],
+        [`${crystalId(shape.id, "full")}-vein`, "vein, full"],
+      ] as const) {
+        const row = look(id);
+        const w = row.frame.width * DISPLAY * scale;
+        const h = row.frame.height * DISPLAY * scale;
+        parts.push(
+          text(GAP, y + 11, galaxy.edge, `${shape.id} ${label}, ${scale}x, frames 0 to 23`),
+        );
+        y += LABEL;
+        let x = GAP;
+        for (let k = 0; k < row.frames.length; k++) {
+          parts.push(rock(id, k, x + w / 2, y + row.pivot[1] * h, scale));
+          x += w + GAP / 2;
+        }
+        width = Math.max(width, x);
+        y += h + GAP;
+      }
+      y += GAP;
+    }
+  }
+  return svg(
+    width,
+    y,
+    galaxy.edge,
+    `<rect width="100%" height="100%" fill="${galaxy.field}"/>${parts.join("")}`,
+  );
+}
+
+function oreFieldSample(vein = false): string {
   const { field, edge } = FIELDS.find(({ id }) => id === "cartwheel")!;
   const [W, H] = [1400, 760];
   const parts: string[] = [];
@@ -339,7 +397,12 @@ function oreFieldSample(): string {
     const layout = family.layouts.find(({ count }) => count === 8)!;
     const rocks = layout.rocks
       .map(({ id, position: [wx, wy], frame }) => ({
-        id: id.replace(/^resource-(\w+)$/u, "asteroid-$1-crystals-full"),
+        id: id.replace(
+          /^resource-(\w+)$/u,
+          vein && id.startsWith("resource-m")
+            ? "asteroid-$1-crystals-full-vein"
+            : "asteroid-$1-crystals-full",
+        ),
         k: frame,
         x: cx + (wx - wy),
         y: cy + (wx + wy) / 2,
@@ -347,7 +410,12 @@ function oreFieldSample(): string {
       .toSorted((a, b) => a.y - b.y);
     parts.push(
       ...rocks.map((r) => rock(r.id, r.k, r.x, r.y, 1)),
-      text(8, f * H + H - 8, edge, `cartwheel ore field, ${family.id}, 8 rocks, full clusters`),
+      text(
+        8,
+        f * H + H - 8,
+        edge,
+        `cartwheel ore field, ${family.id}, 8 rocks, full${vein ? ": medium veins, large crystals" : " clusters"}`,
+      ),
     );
   });
   return svg(
@@ -412,6 +480,26 @@ writeFileSync(`${dir}/crystal-ore-fields-cartwheel.svg`, oreFieldSample());
 console.log(`share over 100000 ids: ${measuredShare()}`);
 writeFileSync(`${dir}/crystal-frames.svg`, frameSheet());
 writeFileSync(`${dir}/crystal-medium-review.svg`, reviewSheet());
+for (const galaxy of FIELDS.filter(({ id }) =>
+  ["sunflower", "cartwheel", "phantom"].includes(id),
+)) {
+  writeFileSync(`${dir}/crystal-vein-review-${galaxy.id}.svg`, veinSheet(galaxy));
+}
+writeFileSync(`${dir}/crystal-vein-ore-fields-cartwheel.svg`, oreFieldSample(true));
+const veins: Record<string, unknown> = {};
+for (const id of review.keys()) {
+  if (!id.endsWith("-vein")) continue;
+  const row = look(id);
+  const plain = look(id.replace(/-crystals-\w+-vein$/u, ""));
+  const outside: number[] = [];
+  for (let k = 0; k < row.frames.length; k++) {
+    const [mine, base] = [await alpha(row, k), await alpha(plain, k)];
+    outside.push(mine.reduce((n, a, i) => n + (a >= 128 && base[i]! < 128 ? 1 : 0), 0));
+  }
+  veins[id] = { lifts: VEIN_FITS.get(id), outsideMax: Math.max(...outside) };
+  console.log(`${id}: ${JSON.stringify(veins[id])}`);
+}
+writeFileSync(`${dir}/crystal-vein-fits.json`, `${JSON.stringify(veins, null, 2)}\n`);
 const fitted = await fits();
 writeFileSync(`${dir}/crystal-fits.json`, `${JSON.stringify(fitted, null, 2)}\n`);
 for (const [id, { sizes, outside }] of Object.entries(fitted)) {

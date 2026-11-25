@@ -347,7 +347,9 @@ function yawed(faces: readonly Face[], yaw: number, scale: number): Face[] {
 // ------------------------------------------------------------------ resource inset
 
 // A facet with the ramp its tones come from.
-type Painted = { face: Face; ramp: readonly string[] };
+// A facet with the ramp its tones come from. `on` is the index of the facet it lies on, in the
+// same list: it draws just after that facet.
+type Painted = { face: Face; ramp: readonly string[]; on?: number };
 
 const centroid = (f: Face): Point => {
   const n = f.length;
@@ -480,9 +482,11 @@ function crystals(
 // ------------------------------------------------------------------ silhouette
 
 function projected(faces: readonly Painted[], pivot: V2): (Painted & { pts: V2[] })[] {
+  const key = ({ face, on }: Painted) =>
+    on === undefined ? depth(face) : depth(faces[on]!.face) - 1e-9;
   return faces
     .filter(({ face }) => facesViewer(face))
-    .toSorted((a, b) => depth(b.face) - depth(a.face))
+    .toSorted((a, b) => key(b) - key(a))
     .map((p) => ({ ...p, pts: p.face.map((q) => projectAt(pivot[0], pivot[1], q)) }));
 }
 
@@ -613,7 +617,10 @@ function build(
       y,
       scale,
     );
-    return faces.map((face, i): Painted => ({ face, ramp: drawn[i]!.ramp }));
+    return faces.map((face, i): Painted => {
+      const { on, ramp: own } = drawn[i]!;
+      return on === undefined ? { face, ramp: own } : { face, on, ramp: own };
+    });
   });
   const bases = yaws.map((y) => yawed([base], y, scale)[0]!);
   const bounds = posed
@@ -738,7 +745,8 @@ const ORE = ORE_RAMP;
 // declare frame size, as the plain rocks do, so Tech loads both the same way.
 // `review` draws every crystal of the variant's cluster at that size with no fit, for review
 // sheets only: such a drawing may reach past the plain silhouette.
-export type Look = { cluster?: Cluster; declared: Declared; review?: number };
+// `vein` draws the cluster as a flush ore vein set into the crown instead of standing crystals.
+export type Look = { cluster?: Cluster; declared: Declared; review?: number; vein?: boolean };
 const PLAIN: Look = { declared: "frame" };
 const RESOURCE: Look = { cluster: "full", declared: "display" };
 const lookOf = (resource: boolean) => (resource ? RESOURCE : PLAIN);
@@ -845,6 +853,105 @@ function fittedCrystals(
   };
 }
 
+// A vein's share of the rock's upward facet area: a small vein one patch, a full vein about two
+// and a half times as much.
+const VEIN_AREA: Readonly<Record<Cluster, number>> = { small: 0.12, full: 0.3 };
+// Heights a vein facet's crystal point rises to, as a share of the facet's size (the square root
+// of twice its area), highest first.
+const VEIN_LIFTS = [0.35, 0.28, 0.21, 0.14, 0.07];
+// The inset crystal's margin inside its vein facet, as a share of the facet.
+const VEIN_INSET = 0.22;
+
+// A flush ore vein: a connected patch of upward crown facets, grown from the one nearest the
+// yaw axis toward the nearest neighbours that are not thin slivers, until it covers
+// VEIN_AREA[cluster] of the upward area. Vein facets take the ore ramp. `crystal(i, lift)` is the
+// crystal set on vein facet `i`, inset by VEIN_INSET of its size: three facets meeting at a point
+// raised `lift` times the facet's size along its normal, drawn just after the facet.
+function vein(faces: readonly Face[], seed: number, cluster: Cluster) {
+  const rnd = mulberry(seed * 29 + 11);
+  const key = (p: Point) => p.map((v) => v.toFixed(6)).join(",");
+  const area3 = (f: Face) => Math.hypot(...normal(f)) / 2;
+  const info = faces.map((face, i) => {
+    const c = centroid(face);
+    const n = unit(normal(face));
+    const edges = face.map((p, k) => [key(p), key(face[(k + 1) % face.length]!)].sort().join("|"));
+    const longest = Math.max(
+      ...face.map((p, k) => {
+        const q = face[(k + 1) % face.length]!;
+        return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+      }),
+    );
+    // Height over the longest edge: a sliver's is small.
+    const stout = (2 * area3(face)) / longest / longest;
+    return { area: area3(face), c, edges, i, n, ok: n[2] > 0.35 && stout > 0.18 };
+  });
+  const upward = info.filter(({ ok }) => ok);
+  const total = upward.reduce((sum, { area }) => sum + area, 0);
+  const start = upward.toSorted(
+    (a, b) => Math.hypot(a.c[0], a.c[1]) - Math.hypot(b.c[0], b.c[1]),
+  )[0]!;
+  const chosen = [start.i];
+  let covered = start.area;
+  while (covered < VEIN_AREA[cluster] * total) {
+    const edges = new Set(chosen.flatMap((i) => info[i]!.edges));
+    const next = upward
+      .filter(({ i, edges: own }) => !chosen.includes(i) && own.some((e) => edges.has(e)))
+      .toSorted(
+        (a, b) =>
+          Math.hypot(a.c[0] - start.c[0], a.c[1] - start.c[1]) -
+          Math.hypot(b.c[0] - start.c[0], b.c[1] - start.c[1]),
+      )[0];
+    if (!next) break;
+    chosen.push(next.i);
+    covered += next.area;
+  }
+  const height = new Map(chosen.map((i) => [i, 0.7 + rnd() * 0.3]));
+  const crystal = (i: number, lift: number): Face[] => {
+    const face = faces[i]!;
+    const { c, n } = info[i]!;
+    if (!lift) return [];
+    const apex = add(c, n, lift * Math.sqrt(2 * area3(face)) * height.get(i)!);
+    const inset = face.map((p) => add(c, [p[0] - c[0], p[1] - c[1], p[2] - c[2]], 1 - VEIN_INSET));
+    return inset.map((p, k): Face => [p, inset[(k + 1) % inset.length]!, apex]);
+  };
+  return { chosen, crystal };
+}
+
+// Each vein variant's facets and their crystal lifts, in vein order.
+export const VEIN_FITS = new Map<string, number[]>();
+
+// The vein with each facet's crystal at the highest VEIN_LIFTS height that keeps FIT_MARGIN
+// inside the plain silhouette in every frame; a facet whose crystal fits at none is a flat ore
+// facet. Vein facets are the plain facets recoloured, so the outline is the plain rock's.
+function fittedVein(
+  shape: (typeof SHAPES)[number],
+  model: { base: Point[]; faces: Face[] },
+  cluster: Cluster,
+  plain: ReturnType<typeof build>,
+): Painted[] {
+  const frames = plain.built.length;
+  const e0 = extent(model.faces);
+  const scale = shape.width / DISPLAY / (e0.maxX - e0.minX);
+  const yaws = Array.from({ length: frames }, (_, k) => (k * 2 * Math.PI) / frames);
+  const front = (faces: readonly Face[], yaw: number) =>
+    yawed(faces, yaw, scale)
+      .filter(facesViewer)
+      .map((face) => face.map((q) => projectAt(plain.pivot[0], plain.pivot[1], q)));
+  const masks = yaws.map((yaw) => rasterize(front(model.faces, yaw), plain.w, plain.h));
+  const inside = (faces: readonly Face[]) =>
+    yaws.every((yaw, k) => outside(masks[k]!, front(faces, yaw)) === 0);
+  const { chosen, crystal } = vein(model.faces, shape.seed, cluster);
+  const lifts = chosen.map((i) => VEIN_LIFTS.find((lift) => inside(crystal(i, lift))) ?? 0);
+  VEIN_FITS.set(shape.id, lifts);
+  const veined = new Set(chosen);
+  return [
+    ...model.faces.map((face, i) => ({ face, ramp: veined.has(i) ? ORE : STONE })),
+    ...chosen.flatMap((i, k) =>
+      crystal(i, lifts[k]!).map((face): Painted => ({ face, on: i, ramp: ORE })),
+    ),
+  ];
+}
+
 function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
@@ -856,7 +963,9 @@ function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
       ? build(shape.id, model, frames, shape.width, STONE, { write: () => {} })
       : undefined;
   let drawn: Painted[] | undefined;
-  if (count && plain) {
+  if (look.vein && look.cluster && plain) {
+    drawn = fittedVein(shape, model, look.cluster, plain);
+  } else if (count && plain) {
     const fit = fittedCrystals(shape, model, count, plain);
     CRYSTAL_FITS.set(shape.id, fit.sizes);
     drawn = fit.drawn;
