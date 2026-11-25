@@ -182,19 +182,29 @@ bump without damage. Debris keeps its scenery styling: no coral contour (coral k
 [asteroid drift cue](asteroids.md#drift-cue)'s stone chips in place of the
 coral dashes (`cue` `asteroid`).
 
-- The shared [debris models](tools/debris.ts), the bent plate and the girder,
-  at 0.8 scale, tumbling about a tilted axis through 8 frames:
-  `needle-debris-plate-{k}` and `needle-debris-girder-{k}`, `k` 0 to 7,
-  `tumbleIndex` `k`. Frame 80 (display 35), pivot `(0.5, 0.5)`. Frame `k` shows
-  the piece turned `45k` degrees; show frame `floor(angle / 45) mod 8` at a
-  tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion
-  shows frame 0; drift still happens.
+- Two broken pieces of the Weavers' station from the shared
+  [debris models](tools/debris.ts), each one connected solid tumbling about a
+  tilted axis through 8 frames: `needle-debris-plate-{k}`, a segment of the
+  eye ring with one needle socket block, and `needle-debris-girder-{k}`, the
+  broken tip of the needle with its collar, `k` 0 to 7, `tumbleIndex` `k`.
+  The ids keep `plate` and `girder`. Frame 80 (display 35), pivot
+  `(0.5, 0.5)`. The piece leans 20 degrees, then frame `k` shows it turned
+  `45k` degrees about an axis tilted 24 degrees from vertical; show frame
+  `floor(angle / 45) mod 8` at a tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion shows frame 0; drift still happens.
+- Models, in display px: the eye segment is a 110 degree arc 8 wide and 7
+  deep at radius 19 with a socket block 9 wide, at scale 0.7; the tip is an
+  eight-sided cone from radius 7 to 3.6 over 21 with a collar of radius 9, at
+  scale 0.95. Their widest drawn extents are 32.4 and 31.5 px.
 - Body, lit to shadow: `#8A8279`, `#766F66`, `#645C54`, `#534C44`, `#443D35`
   (`body`; 1.99 to 5.63:1, over the 9.49:1 keyline). It is the play stone ramp
   lifted in Oklab L by the least step that puts each piece's floor edge at
   display size at 3:1 or more; on the light field the keyline is that edge, so
-  the lift is 0. The build fails under 3:1. Faces are flat-shaded from the
-  world light, with a 1.2 frame px seam stroke in their own fill.
+  the lift is 0. The build fails under 3:1. Faces resolve by depth into flat
+  tones under the one light from the upper left: the ring and the cone take
+  steps 1, 3 and 5 for tops, walls facing left and walls facing right, and
+  the socket block and the collar steps 2 and 4 and `#342E26`, step 5
+  lowered by 0.06 Oklab L. Each frame is one path per tone, with no seam
+  strokes.
 - `pieces[i]` lists `id`, `frame`, `display`, `pivot`, `radius` (frame px from
   the pivot to the farthest drawn point over all frames) and `frames[k]` with
   `file` and `bounds` (`[minX, minY, maxX, maxY]` in frame px), as Whirlpool's

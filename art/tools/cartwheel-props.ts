@@ -1,4 +1,4 @@
-// Cartwheel props: traveling debris (a bent hull plate tumbling through 8 frames), the ore
+// Cartwheel props: traveling debris (a wheel-rim segment tumbling through 8 frames), the ore
 // nugget pickup, and the two stranded craft a tow job brings home (the ore pod and the stuck
 // hauler) at sixteen headings, with the tow line spec. Writes SVGs, the nugget sheet and
 // debris.json and tow.json to public/art/cartwheel/, and their core and Cartwheel manifest
@@ -17,15 +17,15 @@ import {
 } from "./cartwheel-craft.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
-  bentPlate,
   bodyRamp,
   CONTOUR,
+  debrisPaint,
   exportDebris,
   MARK_DASHES,
   MARK_WIDTH,
+  rimSegment,
   TUMBLE_DEG_PER_SECOND,
   TUMBLE_FRAMES,
-  unit,
 } from "./debris.ts";
 import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, readManifest, replaceEntries } from "./manifest.ts";
@@ -88,8 +88,6 @@ const CRAFT: readonly StrandedSpec[] = [
 // ------------------------------------------------------------------ debris
 
 const CORAL = palette.colors.obstacle!;
-const TUMBLE_AXIS = unit([0.4, 1, 0.6]);
-const DEBRIS_SCALE = 1.25;
 const BODY = bodyRamp(
   cartwheel.colors.environmentDetail!,
   cartwheel.tint.chroma,
@@ -102,14 +100,13 @@ const debrisSvg = new Map<string, string>();
 const debris = exportDebris(
   dir,
   "/art/cartwheel/",
-  BODY,
   CORAL,
   {
     id: "cartwheel-debris",
     title: "Cartwheel debris",
-    solid: bentPlate(),
-    axis: TUMBLE_AXIS,
-    scale: DEBRIS_SCALE,
+    mesh: rimSegment(debrisPaint(BODY)),
+    scale: 0.8,
+    frame: { width: 118, height: 115, top: 58 },
   },
   (file, svg) => debrisSvg.set(`${file}.svg`, svg),
 );

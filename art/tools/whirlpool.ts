@@ -1,6 +1,6 @@
 // Whirlpool's currents, debris rivers and project world changes (art/whirlpool.md): the current
-// streak spec Tech draws at runtime (currents.json), the river debris, a bent plate and a broken
-// girder in the Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json),
+// streak spec Tech draws at runtime (currents.json), the river debris, an arm segment and a drum
+// slice in the Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json),
 // and the nursery beacon and current-map buoys (SVG frames and projects.json), written to
 // public/art/whirlpool/ with their entries and links in Whirlpool's manifest.
 // Usage: node art/tools/whirlpool.ts
@@ -12,16 +12,16 @@ import { format, resolveConfig } from "prettier";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
-  bentPlate,
+  armSegment,
   bodyRamp,
-  brokenGirder,
   CONTOUR,
+  debrisPaint,
+  drumSlice,
   exportDebris,
   MARK_DASHES,
   MARK_WIDTH,
   TUMBLE_DEG_PER_SECOND,
   TUMBLE_FRAMES,
-  unit,
 } from "./debris.ts";
 import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
@@ -107,24 +107,25 @@ const BODY = bodyRamp(
   whirlpool.tint.chroma,
   whirlpool.tint.hue,
 );
+const PAINT = debrisPaint(BODY);
 const debrisSvg = new Map<string, string>();
 const pieces = [
   {
     id: "whirlpool-debris-plate",
     title: "Whirlpool debris plate",
-    solid: bentPlate(),
-    axis: unit([0.4, 1, 0.6]),
-    scale: 1.25,
+    mesh: armSegment(PAINT),
+    scale: 0.84,
+    frame: { width: 118, height: 115, top: 58 },
   },
   {
     id: "whirlpool-debris-girder",
     title: "Whirlpool debris girder",
-    solid: brokenGirder(),
-    axis: unit([1, 0.3, 0.5]),
-    scale: 1.15,
+    mesh: drumSlice(PAINT),
+    scale: 0.92,
+    frame: { width: 108, height: 95, top: 46 },
   },
 ].map((spec) =>
-  exportDebris(dir, PUBLIC_DIR, BODY, CORAL, spec, (file, svg) => {
+  exportDebris(dir, PUBLIC_DIR, CORAL, spec, (file, svg) => {
     debrisSvg.set(`${file}.svg`, svg);
   }),
 );

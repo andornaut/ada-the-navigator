@@ -22,39 +22,39 @@
         "frame": 80,
         "display": 35,
         "pivot": [0.5, 0.5],
-        "radius": 34.516,
+        "radius": 38.619,
         "frames": [
           {
             "file": "/art/needle/debris-plate-0.svg",
-            "bounds": [11.687, 19.8, 61.704, 47.4]
+            "bounds": [7.12, 18.745, 61.487, 59.542]
           },
           {
             "file": "/art/needle/debris-plate-1.svg",
-            "bounds": [20.973, 15.791, 58.351, 46.413]
+            "bounds": [2.28, 21.064, 76.227, 59.223]
           },
           {
             "file": "/art/needle/debris-plate-2.svg",
-            "bounds": [21.898, 17.145, 69.522, 52.619]
+            "bounds": [14.844, 21.804, 75.049, 58.732]
           },
           {
             "file": "/art/needle/debris-plate-3.svg",
-            "bounds": [20.825, 17.746, 72.996, 59.444]
+            "bounds": [19.538, 21.796, 60.321, 57.893]
           },
           {
             "file": "/art/needle/debris-plate-4.svg",
-            "bounds": [19.913, 10.348, 68.252, 71.386]
+            "bounds": [18.513, 24.725, 72.88, 55.85]
           },
           {
             "file": "/art/needle/debris-plate-5.svg",
-            "bounds": [22.052, 9.995, 58.353, 72.682]
+            "bounds": [3.773, 26.259, 77.72, 54.758]
           },
           {
             "file": "/art/needle/debris-plate-6.svg",
-            "bounds": [9.338, 11.578, 60.88, 68.136]
+            "bounds": [4.951, 22.418, 65.156, 56.385]
           },
           {
             "file": "/art/needle/debris-plate-7.svg",
-            "bounds": [6.207, 18.304, 61.8, 57.53]
+            "bounds": [19.679, 19.305, 60.462, 58.367]
           }
         ]
       },
@@ -63,39 +63,39 @@
         "frame": 80,
         "display": 35,
         "pivot": [0.5, 0.5],
-        "radius": 37.987,
+        "radius": 40.09,
         "frames": [
           {
             "file": "/art/needle/debris-girder-0.svg",
-            "bounds": [10.302, 17.8, 69.698, 63]
+            "bounds": [0.925, 1.789, 68.604, 67.112]
           },
           {
             "file": "/art/needle/debris-girder-1.svg",
-            "bounds": [10.174, 23.997, 54.333, 56.676]
+            "bounds": [15.491, 1.576, 60.421, 68.377]
           },
           {
             "file": "/art/needle/debris-girder-2.svg",
-            "bounds": [9.015, 24.97, 69.86, 49.391]
+            "bounds": [14.363, 2.189, 77.361, 67.397]
           },
           {
             "file": "/art/needle/debris-girder-3.svg",
-            "bounds": [6.62, 15.141, 71.77, 63.897]
+            "bounds": [7.471, 3.74, 79.484, 64.558]
           },
           {
             "file": "/art/needle/debris-girder-4.svg",
-            "bounds": [14.798, 9.54, 65.004, 68.949]
+            "bounds": [11.396, 6.691, 79.075, 60.973]
           },
           {
             "file": "/art/needle/debris-girder-5.svg",
-            "bounds": [24.072, 9.616, 66.335, 69.093]
+            "bounds": [19.579, 8.339, 64.509, 59.134]
           },
           {
             "file": "/art/needle/debris-girder-6.svg",
-            "bounds": [6.642, 18.298, 74.814, 63.411]
+            "bounds": [2.639, 6.571, 65.637, 60.576]
           },
           {
             "file": "/art/needle/debris-girder-7.svg",
-            "bounds": [5.551, 23.734, 76.39, 61.308]
+            "bounds": [0.516, 3.858, 72.529, 63.88]
           }
         ]
       }

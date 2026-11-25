@@ -14,7 +14,7 @@
   [art/tools/palette.ts](tools/palette.ts) checks ink `#181425` (10.86:1 on
   `#B8CEC4`) in place of each fill, and the fills stay as drawn. A dark field
   checks the fills.
-- The debris model is shared in [art/tools/debris.ts](tools/debris.ts); the
+- The debris models are shared in [art/tools/debris.ts](tools/debris.ts); the
   project models are in [art/tools/whirlpool-projects.ts](tools/whirlpool-projects.ts).
 
 ## Station
@@ -132,24 +132,31 @@ mint `active` (`#65C9BF`) of ore and Stardust.
 ## River debris
 
 A debris river's pieces are traveling debris and damage on contact, so they
-take the coral hazard contour. Two pieces tumble about tilted axes, 8 frames
-each:
+take the coral hazard contour. Two broken pieces of the Whirlpool station,
+each one connected solid, tumble about a tilted axis, 8 frames each:
 
-| Piece                     | Shape                                                | Frame (px) | Display (px)      | Pivot          | `radius` |
-| ------------------------- | ---------------------------------------------------- | ---------- | ----------------- | -------------- | -------: |
-| `whirlpool-debris-plate`  | A bent hull plate, torn on one edge, folded on a rib | 118 by 115 | 51.625 by 50.3125 | (0.5, 0.50435) |    56.35 |
-| `whirlpool-debris-girder` | An I-beam stub with a torn panel riveted to a flange | 108 by 95  | 47.25 by 41.5625  | (0.5, 0.48421) |    50.62 |
+| Piece                     | Shape                                                   | Frame (px) | Display (px)      | Pivot          | `radius` |
+| ------------------------- | ------------------------------------------------------- | ---------- | ----------------- | -------------- | -------: |
+| `whirlpool-debris-plate`  | A spiral-arm segment that still carries its end pod     | 118 by 115 | 51.625 by 50.3125 | (0.5, 0.50435) |    59.91 |
+| `whirlpool-debris-girder` | A slice of the drum with its cap and the root of an arm | 108 by 95  | 47.25 by 41.5625  | (0.5, 0.48421) |    51.87 |
 
-- Manifest `{piece}-{k}`, `k` 0 to 7, `tumbleIndex` `k`. Frame `k` shows the
-  piece turned `45k` degrees; show frame `floor(angle / 45) mod 8` and pick a
+The ids keep `plate` and `girder`. The arm segment is a 78 degree arc 10 wide
+and 9 deep at radius 26 with a round pod of radius 8 on its end, at scale
+0.86; the drum slice is a drum of radius 11 and depth 12 with a cap of radius
+6.5 and an arm root 10 wide, at scale 0.92, in display px. Their widest drawn
+extents are 47.7 and 39.1 px.
+
+- Manifest `{piece}-{k}`, `k` 0 to 7, `tumbleIndex` `k`. The piece leans 20
+  degrees, then frame `k` shows it turned `45k` degrees about an axis tilted
+  24 degrees from vertical; show frame `floor(angle / 45) mod 8` and pick a
   tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion
   shows frame 0; travel still happens. Choose the piece per river rock from
   its seed.
 - Body, lit to shadow: `#CFECDF`, `#BFDCCF`, `#AFCCBF`, `#A2BFB2` and
   `#99B5A9` (`body`): Whirlpool's `environmentDetail` lightness plus 0.2,
-  0.15, 0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. The rib
-  and the girder web sit one tone deeper. Muted field matter, never the
-  neutral stone of harmless rocks; 1.04 to 1.33:1 on the field.
+  0.15, 0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. Muted
+  field matter, never the neutral stone of harmless rocks; 1.04 to 1.33:1 on
+  the field.
 - A 1.5 px coral (`obstacle`, `#D68B72`) contour outside the silhouette
   (`contour`): 1.62:1 on the field and 1.22 to 2.14:1 on the body tones.
 - On the light field each piece draws over the 1 px ink keyline of the
@@ -161,9 +168,11 @@ each:
   frames, contour included. Each frame's `bounds` is its drawn box in frame
   px, `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
   ([Collision](#collision)). Damage is a Gameplay value.
-- Faces are flat polygons shaded from the world light `(-0.25, 0.45, 1)` into
-  the body ramp (thresholds 0.9, 0.7, 0.45 and 0.15), with a 1.2 frame px seam
-  stroke in their own fill.
+- Faces resolve by depth into flat tones under the one light from the upper
+  left. The arm and the drum's cap and arm root take steps 1, 3 and 5 of the
+  ramp for tops, walls facing left and walls facing right; the pod and the
+  drum take steps 2 and 4 and `#87A297`, step 5 lowered by 0.06 Oklab L.
+  Each frame is one path per tone, with no seam strokes.
 
 ### Direction mark
 
@@ -189,19 +198,18 @@ silhouette, contour included: `debris[i].frames[k].collision` beside `file` and
 that piece's frame (the schema of the ship's `collision[k]`). Multiply offsets
 from the pivot by `displayScale` for display px.
 
-- `art/tools/debris.ts` traces each frame's faces with the
+- `art/tools/debris.ts` traces each frame's visible faces with the
   [shared tracer](ship.md#shared-tracer), grown by half the 6.86 frame px
   contour stroke (3.43), the outermost stroke. Each frame takes the first
   Douglas-Peucker tolerance of 0.75, 0.5, 0.4 and 0.3 frame px that passes the
   0.98 floor. No frame has a notch tip.
 
-| Piece                     | Tolerance             | Parts   | Intersection over union |
-| ------------------------- | --------------------- | ------- | ----------------------- |
-| `whirlpool-debris-plate`  | 0.75                  | 4 to 7  | 0.984 to 0.993          |
-| `whirlpool-debris-girder` | 0.75; 0.5 for frame 3 | 5 to 10 | 0.984 to 0.991          |
+| Piece                     | Parts  |
+| ------------------------- | ------ |
+| `whirlpool-debris-plate`  | 2 to 7 |
+| `whirlpool-debris-girder` | 3 to 7 |
 
-Against librsvg renders at 4 px per frame px: 0.981 or more, every boundary
-within 1 frame px.
+Every frame passes the floor.
 
 ## Project world changes
 

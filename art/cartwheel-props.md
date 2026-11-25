@@ -16,8 +16,9 @@ no damaging hazards.
   [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
   are byte-identical.
 - The craft models are in `art/tools/cartwheel-craft.ts`: the tri-hull miner,
-  powered or not, and the ore pod. The debris model is shared with Whirlpool's
-  river debris in [art/tools/debris.ts](tools/debris.ts).
+  powered or not, and the ore pod. The debris models, tumble and frame export
+  are shared with Whirlpool's river debris and Needle's channel debris in
+  [art/tools/debris.ts](tools/debris.ts).
 - Every SVG keeps its `viewBox` in frame px and declares its display size
   (frame times 0.4375) as `width` and `height`, so it rasterizes at the size it
   is drawn. Manifest `width` and `height` are frame px; `displayWidth` and
@@ -26,19 +27,28 @@ no damaging hazards.
 
 ## Traveling debris
 
-A bent hull plate, torn on one edge and folded along a rib, tumbling about a
+A broken piece of the Cartwheel hub: a wheel-rim segment with the stub of its
+spoke and the collar that held it, one connected solid tumbling about a
 tilted axis.
 
 - Manifest `cartwheel-debris-{k}`, `k` 0 to 7, `tumbleIndex` `k`: frame 118 by
-  115, display 51.625 by 50.3125, pivot (0.5, 0.50435), the plate's centre of
-  rotation. Frame `k` shows the plate turned `45k` degrees; show frame
+  115, display 51.625 by 50.3125, pivot (0.5, 0.50435), the piece's centre of
+  rotation. The piece leans 20 degrees, then frame `k` shows it turned `45k`
+  degrees about an axis tilted 24 degrees from vertical; show frame
   `floor(angle / 45) mod 8` and pick a tumble rate in `tumble.degPerSecond`
   (60 to 120) per piece. Reduced motion shows frame 0.
+- Model: an 84 degree arc of a rim 11 wide and 10 deep at radius 30, a spoke
+  stub 8 wide and 6 deep, and a collar 11 wide and 9 deep, in display px at
+  scale 0.8. The widest drawn extent is 46.6 px.
 - Body, lit to shadow: `#D9B09F`, `#C9A190`, `#B99181`, `#AC8575` and
   `#A37C6C` (`body`), 1.07 to 1.48:1 on Cartwheel's light background: Cartwheel's `environmentDetail` lightness plus 0.2, 0.15,
-  0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. The rib sits
-  one tone deeper. Muted field matter, never the neutral stone of harmless
-  rocks.
+  0.1, 0.06 and 0.03, at its tint hue with 1.3 times its chroma. Muted field
+  matter, never the neutral stone of harmless rocks.
+- Faces resolve by depth into flat tones under the one light from the upper
+  left. The rim and collar take steps 1, 3 and 5 of the ramp for tops, walls
+  facing left and walls facing right; the spoke stub takes steps 2 and 4 and
+  `#906A5B`, step 5 lowered by 0.06 Oklab L. Each frame is one path per
+  tone, with no seam strokes.
 - A 1.5 px coral (`obstacle`, `#D68B72`) contour outside the silhouette (`contour`):
   1.07:1 on Cartwheel's background, and 1.05 to 1.38:1 on the body tones (1.05:1
   on the middle one). Coral means damage.
@@ -46,7 +56,7 @@ tilted axis.
   [light-field rule](galaxies.md#light-fields) (`debris`): the silhouette,
   contour included, at alpha 0.5, grown by 1 px in all eight directions. Ink
   `#181425` is 7.18:1 on the field and 4.85 to 9.15:1 against the body tones.
-- `radius`: 56.35 frame px from the pivot to the farthest drawn point over all
+- `radius`: 58.56 frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame px,
   `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
   ([Collision](#collision)). Damage is a Gameplay value.
@@ -59,15 +69,12 @@ silhouette, contour included: `debris[i].frames[k].collision` beside `file` and
 that piece's frame (the schema of the ship's `collision[k]`). Multiply offsets
 from the pivot by `displayScale` for display px.
 
-- `art/tools/debris.ts` traces each frame's faces with the
+- `art/tools/debris.ts` traces each frame's visible faces with the
   [shared tracer](ship.md#shared-tracer), grown by half the 6.86 frame px
   contour stroke (3.43), the outermost stroke. Each frame takes the first
   Douglas-Peucker tolerance of 0.75, 0.5, 0.4 and 0.3 frame px that passes the
   0.98 floor. No frame has a notch tip.
-- Every frame passes at 0.75: 4 to 7 parts, intersection over union 0.984
-  to 0.993 (0.981 or more against librsvg renders at 4 px per frame px), every
-  boundary within 1 frame px of the render. The plate's parts match
-  Whirlpool's `whirlpool-debris-plate`, the same model.
+- Every frame passes the floor with 4 to 7 parts.
 
 ### Direction mark
 
