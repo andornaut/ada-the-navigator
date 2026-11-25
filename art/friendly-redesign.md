@@ -3,9 +3,8 @@
 Production plan for the friendly objects and points of interest: the pickups
 and caches, the galaxy beacons, buoys and lamps, the job landmarks, the Needle
 ring gate, the 32 friendly craft and the whales. Each is one model of connected
-solids drawn with depth-resolved occlusion. Stages 1 to 3 are built; the whales
-are designed and their frames planned. Stations, outposts, enemy ships and Ada's ship are outside this
-plan.
+solids drawn with depth-resolved occlusion. All four stages are built.
+Stations, outposts, enemy ships and Ada's ship are outside this plan.
 
 ## Rules
 
@@ -118,9 +117,11 @@ The pivot column is the row's `pivot.y`; `pivot.x` is 0.5 for every row.
 
 - `/art/pickups/pickups-sheet.svg`: the pickups, the holodisk waypoint beacon
   and the discovery cache.
-- `/art/pickups/pickups.json`: per frame id, the frame size, pivot, drawn
+- `/art/pickups/pickups.json`: per row id, the frame size, pivot, drawn
   extents and convex collision parts in frame px, for the pickups and the
-  cache. The staged core rows name it as the `pickups` data link.
+  cache. The staged core rows name it as the `pickups` data link. An animated
+  pickup's parts are its rest frame's, so its body holds still through its
+  loop.
 - `/art/landmarks/landmarks-sheet.svg`: the survey beacon and the wreck.
 - `/art/{galaxy}/beacons-sheet.svg` for Sunflower, Cartwheel, Whirlpool,
   Andromeda and Needle: that galaxy's beacons, buoys and lamps.
@@ -290,19 +291,49 @@ Data files:
   points on the centre line. The lamp buoy's tow point is its float's rim on
   the side it faces.
 
-## Stage 4 design: whale swim loop
+## Pickup animations
+
+The pickups keep the shipped animations. Each pickup is one row whose nested
+root is a strip of its frames, left to right: `width` spans the strip,
+`frameWidth` and `frameHeight` are one frame in frame px, `displayWidth` and
+`displayHeight` are one frame's display size, and `frames`, `loop` and `climb`
+are the shipped rows' fields. The frame and the drawn sizes in the stage 1
+table are the rest frame's.
+
+| Pickup            | Strip frames | Animation                                                              | Loop, as shipped                                    |
+| ----------------- | -----------: | ---------------------------------------------------------------------- | --------------------------------------------------- |
+| `stardust`        |            4 | Twinkle: the crystal turns a quarter facet and back as its tones light | rest 420 ms, glint1 60, glint2 80, glint1 60        |
+| `hunt-glint`      |            4 | The same twinkle                                                       | rest 420 ms, glint1 60, glint2 80, glint1 60        |
+| `ammo-pack`       |            4 | A glint crosses the crate: top, top and lit side, lit side             | rest 1100 ms, glint1 70, glint2 70, glint3 70       |
+| `holodisk`        |            4 | Turn about its upright diameter: face on, 50, 90 and 130 degrees       | rest 600 ms, turn1 70, edge 70, turn2 70            |
+| `upgrade-chevron` |            3 | Climbing light: rest, lower block lit, upper block lit                 | `climb`: 900 ms unlit, 120 lit lower, 120 lit upper |
+| `ore-nugget`      |            1 | None                                                                   | `frames` `rest` only                                |
+
+- The twinkle strips' fourth frame repeats glint 1, as the shipped strips do,
+  so `loop` indexes frames 0 to 3 unchanged.
+- `upgrade-chevron` gains `frames` `rest`, `lower` and `upper`; a `climb`
+  step's `lit` names the frame to show, and a step without one shows `rest`.
+  The shipped `chevrons` offsets are gone: each frame holds both blocks.
+- `node art/tools/friendly-contact-sheet.ts <dir>` also writes
+  `friendly-pickup-loops.svg`: each strip frame by frame at 1x and 4x on the
+  lightest field and on Phantom's.
+
+## Stage 4 output: whales
 
 [friendly-whale-models.ts](tools/friendly-whale-models.ts) builds one humpback
-at four lengths: a rounded twelve-sided body with a broad round head, a pale
-jaw along the lower head, a low back hump, a tail stock tapering into a
-horizontal notched fluke, and curved flippers swept back along the flanks.
+at four lengths and [friendly-whales.ts](tools/friendly-whales.ts) draws it: a
+rounded twelve-sided body with a broad round head, a pale jaw along the lower
+head, one dark blowhole on the crown, a low back hump, a tail stock tapering
+into a horizontal notched fluke, and curved flippers swept back along the
+flanks. The blowhole marks the head at the two headings that see the whale end
+on.
 
-| Kind        | Length, display px | Spots               |
-| ----------- | -----------------: | ------------------- |
-| `whale`     |                100 | Six, in three pairs |
-| `adult`     |                 79 | Five, in one row    |
-| `calf`      |                 43 | Four, in two pairs  |
-| `youngCalf` |                 36 | Three, in one row   |
+| Kind        | Manifest  | Length, display px | Spots               | Frame | Drawn at heading 0, display px | Footprint radius, world units |
+| ----------- | --------- | -----------------: | ------------------- | ----: | -----------------------------: | ----------------------------- |
+| `whale`     | core      |                100 | Six, in three pairs |   336 |                       112 x 66 | 51.5 to 58.5                  |
+| `adult`     | core      |                 79 | Five, in one row    |   264 |                        89 x 52 | 40.7 to 46.2                  |
+| `calf`      | whirlpool |                 43 | Four, in two pairs  |   144 |                        49 x 29 | 22.2 to 25.1                  |
+| `youngCalf` | whirlpool |                 36 | Three, in one row   |   120 |                        41 x 25 | 18.5 to 21.1                  |
 
 The loop has 8 frames, in shares of the length:
 
@@ -315,10 +346,27 @@ The loop has 8 frames, in shares of the length:
   stock. The fluke's tips swing about 0.19 from top to bottom.
 - The hump and the spots ride the spine; the flippers and eyes do not move.
 
+Frames, ids and data:
+
+- Ids are `whale-{kind}-{k}-{f}` for heading `k` of 16 and loop frame `f` of
+  8, as shipped, with `kind`, `directionIndex` and `loopFrame` on each row.
+- A kind's frame is square, a multiple of 8 frame px, and fits every heading
+  and loop frame with 1 px of margin. The pivot is `(0.5, 0.5)`, the middle of
+  the body on the world plane. Display size is the frame times 0.4375.
+- `/art/whales/friendly-{kind}-{k}-sheet.svg`: one heading's 8 loop frames as
+  nested roots in a row.
+- `/art/friendly-whales.json`, staged as the `whales` link of Whirlpool and
+  Phantom, in the shape of the shipped `whales.json`. The loop timings, each
+  kind's `stationaryHeading`, `reducedMotion` and the `family` offsets are
+  read from the shipped file and unchanged. Per heading it holds the frame,
+  the display size, the pivot and `footprintRadius`: the world distance from
+  the pivot to the farthest point of the whale's plan over the loop.
+- `palette` holds each material's three flat tones and the spot colours;
+  `sheets` replaces `files`.
+
 `node art/tools/friendly-whale-sheet.ts <dir> [kind]` writes
-`friendly-whale-loop.svg`: one kind's rest pose and 8 loop frames at four
-headings, at 1x and 2x on Whirlpool's field and at 1x on Phantom's. The full
-set, 4 kinds by 16 headings by 8 frames, is not produced yet.
+`friendly-whale-loop.svg`, one kind's rest pose and 8 loop frames at four
+headings, and `friendly-whales.svg`, every kind's 16 headings.
 
 ## Switch
 
@@ -330,15 +378,16 @@ is the frame times 0.4375.
 Rows that change shape:
 
 - The pickups were Aseprite PNG strips drawn at native size with frame loops.
-  Each is now one vector frame: the glint loops of Stardust, the lost item and
-  the ammo pack, the holodisk's four-frame turn and their `frames` and `loop`
-  fields have no art.
+  Each is now a vector strip in one nested root with the same `frames` and
+  `loop` fields. The loader slices an `svgSheet` row that carries `frameWidth`
+  and `frameHeight` into frames, as it slices a PNG strip.
 - `holodisk-beacon` becomes `holodisk-beacon-a` and `-b`, and
   `discovery-cache` becomes `discovery-cache-lit-a`, `-lit-b` and `-hidden`:
   one row per frame, in place of `frames` indices into a strip.
-- `upgrade-chevron` is one frame of both chevron blocks. The shipped row drew
-  one chevron twice from `chevrons` offsets and lit each in a `climb`; those
-  fields have no art.
+- `upgrade-chevron` is a strip of three frames, each holding both chevron
+  blocks. The shipped row drew one chevron twice from `chevrons` offsets and
+  lit each in a `climb`; the row keeps `climb` and names the lit frames in
+  `frames`.
 - `ore-nugget` draws 14 px for one unit; the five-unit chunk stays a scale of
   the same frame.
 - The salvage beacon, the nursery beacon and the lamp and berth move to their
@@ -351,6 +400,18 @@ Rows that change shape:
   tuned to the shipped art need a look: the salvage beacon's bud is now at the
   pivot with its stalk below, and the current buoy and nursery beacon hang
   their keels below the pivot.
+
+Whale rows that change at the switch:
+
+- Every heading of a kind shares one square frame with a centre pivot, at
+  display scale 0.4375. The shipped rows had a frame and a pivot per heading
+  at display scale 1.
+- The whales draw larger than the shipped ones and each footprint radius
+  grows with them, so spacing tuned to the shipped radii needs a look.
+- The sheets are `friendly-{kind}-{k}-sheet.svg`, and the data file's
+  `palette` and `sheets` fields differ from the shipped `palette` and `files`.
+  `src/game/whaleArt.ts` reads `kinds`, `family` and `reducedMotion`, which
+  keep their shape; `src/game/whaleArt.test.ts` asserts the shipped sizes.
 
 Craft rows that change at the switch:
 
@@ -408,5 +469,4 @@ sections, and deletes `friendly-rows.json`.
    their galaxy features and blink frames, with jets and nose sidecars. Ids
    stay `craft-{name}-{k}`. Built.
 4. The whales (Marlo, adult, calf, young calf) at 16 headings with an 8-frame
-   swim loop that bends the tail stock and fluke. The model and the loop are
-   designed; the frames are not produced.
+   swim loop that bends the tail stock and fluke. Built.
