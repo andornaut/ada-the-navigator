@@ -2,8 +2,9 @@
 
 Production plan for the enemy fleet: fourteen ship designs and nine weapon tops,
 each built as one model of connected solids and drawn at 16 headings with
-depth-resolved occlusion. Stages 1 and 2 (the model layer, the three small
-craft and the three retaliator hulls) are built; the other stages are planned.
+depth-resolved occlusion. Stages 1 to 3 (the model layer, the three small
+craft, the three retaliator hulls and the two frigates with their `gun` and
+`rail` tops) are built; the other stages are planned.
 
 ## Rules
 
@@ -141,12 +142,69 @@ state and the `pod` top, named `turret` in its rows and file:
   convex `collision`; `tops.turret[i]` gives the two shot origins (one per
   bright cell) and the top's convex collision at aim `i`, relative to the
   pivot. It adds `hull` and the hardpoint's `offset` from the hull pivot, x to
-  port and y aft.
+  starboard and y aft.
 - The shards add the launcher, collar and top aimed ahead, as one loose part.
 - The Manta gunship wears the family's hull paint. The stems keep their role
   paint; their collar, top, jets, nozzle glow and dark works take the family's,
   so the garnet and needle rows name the coral stem sheets and claim has its
   own.
+
+### Frigates
+
+| Craft      | Key                | Frame | Display | Hull length | Hull width | Radius | Engine frame | Mount frame | `gun` frame | `rail` frame |
+| ---------- | ------------------ | ----: | ------: | ----------: | ---------: | -----: | -----------: | ----------: | ----------: | -----------: |
+| Slim delta | `fleetFrigate`     |   376 |   164.5 |      242.29 |      214.4 | 121.14 |          128 |          32 |          40 |           48 |
+| Twin hull  | `fleetFrigateTwin` |   400 |     175 |      221.71 |      214.4 | 110.86 |          256 |          32 |          40 |           48 |
+
+| Hardpoint   | Slim delta offset | Twin hull offset   | States                    |
+| ----------- | ----------------- | ------------------ | ------------------------- |
+| `engine`    | `[0, 93.71]`      | `[0, 109.71]`      | intact, destroyed         |
+| `port`      | `[-66.29, 50.29]` | `[-87.77, -22.86]` | intact, destroyed         |
+| `starboard` | `[66.29, 50.29]`  | `[87.77, -22.86]`  | intact, destroyed         |
+| `spine`     | `[0, 66.29]`      | `[0, 20.57]`       | intact, destroyed, capped |
+| `bow`       | `[0, -91.43]`     | `[0, -18.29]`      | intact, destroyed, capped |
+
+Offsets are frame px from the hull pivot, x to starboard and y aft, as in the
+shipped layout: `port` is the mount to port on screen. The reference sheets
+draw the Heavy Missile on the other wing, because their model axes mirror on
+screen.
+
+- The hull sheet has no hardpoints. Each hardpoint base is its own layer per
+  state, centred on its anchor and cut by the hull at each heading: the engine
+  (the stern block and twin cones on the Slim delta, one cone per hull on the
+  Twin hull, as one `engine` hardpoint), and each mount's collar.
+- Destroyed: a mount is a low scorched stump with a breach; an engine keeps its
+  block, its cones lose their flared lips and glow, and one mouth holds an
+  ember. Capped: the collar closed by a low plate.
+- `gun` and `rail` tops at 16 aims, one shot origin each.
+- `{key}-parts-{size}-sheet.svg` holds every base set and top of one frame
+  size, a set of 16 to a row.
+- `{key}-jets.json`: two mouths tagged `hardpoint` `engine`, and `hull`.
+- `{key}-mounts.json`, version 1, in the shipped frigate's
+  `{craft}-hardpoints.json` schema, which name it takes at the switch:
+  `hardpoints` with `capped` and `offset`, `fill`, `weaponTops`, `tiers`,
+  per heading the layer `order`, each hardpoint's `anchor`, `pivot` and
+  collision by state, the hull's convex `collision` and the `banner` centre,
+  and `tops` with shot origins and collision per aim. It adds `hull`.
+- Layer order per heading is the hull, then the hardpoints far to near.
+- Frigates have no shards.
+
+Each galaxy flies one frigate, and the rows are staged so that the frame key
+selects it:
+
+| Galaxy             | Frigate    | Manifest  | Rows                       | Sidecar key   |
+| ------------------ | ---------- | --------- | -------------------------- | ------------- |
+| Sunflower, Phantom | Slim delta | core      | `enemy-frigate-...`        | `frigate`     |
+| Cartwheel          | Slim delta | Cartwheel | `enemy-claim-frigate-...`  | `frigate`     |
+| Whirlpool          | Twin hull  | Whirlpool | `enemy-frigateTwin-...`    | `frigateTwin` |
+| Andromeda          | Twin hull  | Andromeda | `enemy-garnet-frigate-...` | `frigate`     |
+| Needle             | Twin hull  | Needle    | `enemy-needle-frigate-...` | `frigate`     |
+
+A family's own `frigate` rows are that family's design, so Cartwheel,
+Andromeda and Needle select as they do now. Whirlpool flies the coral family,
+whose `frigate` is the Slim delta, so the coral Twin hull is the new frame key
+`frigateTwin` in Whirlpool's manifest, its only user. The `frigateNarrow` and
+`frigateCompact` rows and sidecars have no replacement.
 
 A sheet whose frames equal one already written ships once: its rows name that
 file and its nested roots with `svgSheetMember`. The Mining Freighter's top is
@@ -204,6 +262,17 @@ For the retaliators, from the same file:
   each hull's `hull.radius` for spacing and footprint: 64.32, 68.55 and 64.32
   frame px.
 
+For the frigates, from the same file:
+
+- The `frigate` hull, base and top rows of the core, Cartwheel, Andromeda and
+  Needle manifests (240 rows each), and `sidecars.frigate`.
+- Whirlpool's manifest gains the 240 `enemy-frigateTwin-...` rows and
+  `sidecars.frigateTwin`, and Whirlpool selects that frame key for its
+  frigates.
+- The `frigateNarrow` and `frigateCompact` rows, sidecars and files are
+  removed, with the profile selection that picks them.
+- `tools/enemy-hardpoints.json` takes each design's offsets.
+
 Art then moves the craft into `enemies.ts`, `destruction.ts` and the family
 generators' ownership, renames the files to the `{archetype}-` stems and
 removes `fleet-rows.json` and the replaced sheets and models.
@@ -245,15 +314,16 @@ and `fleet-contact-sheet.ts`.
    family, with the launcher's collar, the `pod` top at 16 aims and
    `{craft}-hardpoints.json`. Built.
 3. Frigates: Slim delta and Twin hull in cold armour, with engine, and `port`,
-   `starboard`, `spine` and `bow` mounts in intact, destroyed and capped states.
+   `starboard`, `spine` and `bow` mounts in intact, destroyed and capped
+   states, and the `gun` and `rail` tops. Built.
 4. Capitals: six hulls with `command`, two engines and eight mounts. The
    Crossbow follows its rework. The narrow and compact profile rows, sheets
    and sidecars are removed.
-5. Weapon tops: `gun`, `triple`, `dish`, `rail`, `spread`, `lance`, `hopper`
+5. Weapon tops: `triple`, `dish`, `spread`, `lance`, `hopper`
    and `dome` at 16 aims with muzzles and collision, adding the ball and dome
    solids; the platform and hostile station take the tops they carry.
 
-Stages 3 and 4 change `{craft}-hardpoints.json`, the part sheets and their
+Stages 3 and 4 replace `{craft}-hardpoints.json`, the part sheets and their
 manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
 `src/game/heavyStates.test.ts`, `src/model/muzzles.test.ts` and
 `art/tools/enemy-assets.test.ts`.
