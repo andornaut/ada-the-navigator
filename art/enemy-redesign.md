@@ -435,8 +435,8 @@ Tests that assert the replaced art and need Tech's changes at the switch:
 
 - `src/game/enemyArt.test.ts`: display sizes 35, 45.5 and 38.5 and frames 80,
   104 and 88 for the swarm, fighter and interceptor.
-- `src/model/collisionData.test.ts` and `src/pwa/precacheArt.test.ts`: the
-  heading sets and jets files by path.
+- `src/model/collisionData.test.ts` and the precache art test
+  (`precacheArt.test.ts`): the heading sets and jets files by path.
 - `src/game/destructionArt.test.ts` and `src/game/shardPalettePack.test.ts`:
   shard archetypes and palettes.
 - `src/game/familyManifest.test.ts`, `src/game/claimArtLoad.test.ts` and
