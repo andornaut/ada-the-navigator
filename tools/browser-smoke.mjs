@@ -2708,8 +2708,9 @@ try {
       Math.abs(logical(hudRow.galaxies.left - hudRow.quests.right) - 16) <= 0.1 &&
       Math.abs(logical(hudRow.close.left - hudRow.galaxies.right) - 16) <= 0.1 &&
       Math.abs(hudRow.close.right - hudRow.closeX.right) <= 0.5,
-    `Quests, Galaxies and Close are their labels plus 32 by 48, 16 apart, Back under the X: ${ 
-      JSON.stringify(hudRow)}`,
+    `Quests, Galaxies and Close are their labels plus 32 by 48, 16 apart, Back under the X: ${JSON.stringify(
+      hudRow,
+    )}`,
   );
   // The three zoom tools keep their spacing with the X at the right edge.
   assert.ok(
@@ -3095,7 +3096,9 @@ try {
   const questsShown = () =>
     page.evaluate(() => {
       const card = document.querySelector(".ada-quests-screen");
-      const button = (node) => ({ disabled: node.disabled, text: node.textContent.trim() });
+      // A refused control stays pressable and reads as unavailable through aria-disabled.
+      const unavailable = (node) => node.disabled || node.getAttribute("aria-disabled") === "true";
+      const button = (node) => ({ text: node.textContent.trim(), unavailable: unavailable(node) });
       return {
         endpoints: [...card.querySelectorAll(".ada-quest-endpoint")].map((node) => ({
           disabled: node.disabled,
@@ -3109,7 +3112,7 @@ try {
     });
   const pager = (footer) =>
     [CONTENT.labels.previous, CONTENT.labels.next].map(
-      (label) => footer.find(({ text }) => text === label)?.disabled ?? null,
+      (label) => footer.find(({ text }) => text === label)?.unavailable ?? null,
     );
   const questProofs = {};
   async function checkQuestList(insets, view, name, expected) {
@@ -3119,7 +3122,9 @@ try {
       expected.lines.every((id) => shown.lines.includes(id)) &&
         shown.lines.length === expected.lines.length &&
         near(
-          pager(shown.footer).map((disabled) => (disabled === null ? -1 : Number(disabled))),
+          pager(shown.footer).map((unavailable) =>
+            unavailable === null ? -1 : Number(unavailable),
+          ),
           expected.pager,
           0,
         ),
@@ -3132,7 +3137,7 @@ try {
   // times, inside the browser container's memory ceiling.
   await proofsAt("quests-list-unmapped", async (insets, view, name) => {
     const size = name.slice("quests-list-unmapped-".length);
-    // Page one: the story and the job whose target is unmapped, Previous disabled, Next enabled.
+    // Page one: the story and the job whose target is unmapped, Previous refused, Next available.
     await checkQuestList(insets, view, name, {
       lines: ["story:1:1", unmappedJob],
       pager: [1, 0],
@@ -3154,7 +3159,7 @@ try {
     );
     await questsList.locator('[data-action="quest-back"]').click();
     await questsList.locator(".ada-quest-list").waitFor({ state: "visible" });
-    // Page two: the other galaxy's job, Previous enabled and Next disabled.
+    // Page two: the other galaxy's job, Previous available and Next refused.
     await footerButton(CONTENT.labels.next).click();
     await questsList.locator('.ada-quest-list [data-quest-id="job:2:job:smoke-far"]').waitFor();
     await page.screenshot({ path: `${output}/quests-list-paged-${size}.png` });
