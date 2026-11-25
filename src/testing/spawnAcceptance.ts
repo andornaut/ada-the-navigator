@@ -3,7 +3,7 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { planRegion } from "../model/spawnPlanner.ts";
-import { interimSpawnRules, worldSpawnExclusions } from "../model/spawnTargets.ts";
+import { spawnRules, worldSpawnExclusions, worldSpawnSites } from "../model/spawnTargets.ts";
 import { periodicWorldGrid, worldCellAt } from "../model/worldCells.ts";
 
 /** A target passes when this share of sampled areas delivers this share of its requests. */
@@ -42,8 +42,9 @@ const cache = new Map<string, BandAcceptance>();
 
 /**
  * Samples a band's 3x3-chunk areas uniformly by area across the band's ring of the torus world,
- * plans each with the interim targets and the seeded world's exclusion zones around the launch
- * point, and totals each kind's requests and deliveries.
+ * plans each with the spawn target catalog, the seeded world's exclusion zones around the launch
+ * point and its ore field sites, and totals each kind's requests and deliveries. Areas near a
+ * region boundary request the blended densities, and are judged against them.
  */
 export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptance {
   const key = `${galaxy}:${band}`;
@@ -52,7 +53,11 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
     return known;
   }
   const context = { worldSide: GALAXY_SIDE };
-  const rules = interimSpawnRules(galaxy, GALAXY_SIDE);
+  const rules = spawnRules(galaxy, GALAXY_SIDE);
+  const gatherReach = Math.max(
+    0,
+    ...rules.bands.flatMap((band) => band.enemies.map((target) => target.gather?.reach ?? 0)),
+  );
   const from = rules.bands[band]!.from;
   const to = rules.bands[band + 1]?.from ?? Infinity;
   const grid = periodicWorldGrid(context, rules.chunkSize);
@@ -87,6 +92,7 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
       columns: AREA_CHUNKS,
       exclusions: worldSpawnExclusions(context, galaxy, [{ x: 0, y: 0 }], reach, point),
       rows: AREA_CHUNKS,
+      sites: worldSpawnSites(context, galaxy, reach + gatherReach, point),
     });
     for (const [kind, report] of Object.entries(plan.report.kinds)) {
       if (!report.requested) {

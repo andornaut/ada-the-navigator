@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { SLOT_ROCKS_PER_AREA, SPAWN_AREA_CHUNKS, SPAWN_TARGETS } from "../data/spawnTargets.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import {
   ACCEPTANCE,
@@ -9,32 +10,63 @@ import {
   accepted,
   bandAcceptance,
 } from "../testing/spawnAcceptance.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { encounterSpacing } from "./flight.ts";
-import { interimEncounterSpacing, interimSpawnRules } from "./spawnTargets.ts";
+import { encounterLatticeSpacing, spawnRules } from "./spawnTargets.ts";
 
 const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `${galaxy}:${band}`));
 
 /**
- * Interim targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
+ * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
+const except = (...bands: string[]) => EVERY_BAND.filter((band) => !bands.includes(band));
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // The arrival calm radius.
-  interceptor: ["2:0", "4:0"],
-  // Overlap: the static rock target exceeds the room between the lanes and the enemy groups.
+  // Admission: the local budget and archetype limit refuse groups near others.
+  capital: ["2:0", "2:1", "2:2", "4:0", "4:1", "4:2", "5:0", "5:1", "5:2", "6:0", "6:1", "6:2"],
+  // Admission, and the arrival calm radius in the inner region.
+  fighter: except("6:2"),
+  // Admission.
+  frigate: except("1:0", "1:1", "1:2"),
+  // Admission, and the arrival calm radius in the inner region.
+  interceptor: except("1:0", "1:1", "2:2", "5:0", "5:1"),
+  // Overlap: at these requests, slot rocks and enemy groups leave room for about two thirds.
   resource: EVERY_BAND,
-  // Ore fields in galaxy two and currents in galaxy three.
+  // Admission, and the arrival calm radius in the inner region.
+  retaliator: except("1:0", "1:2"),
+  // Ore fields in Cartwheel and currents in Whirlpool.
   rock: ["2:1", "2:2", "3:0", "3:1", "3:2"],
-  // Corridor: huge rocks cannot fit a quadrant between the lanes.
-  "rock-feature": EVERY_BAND,
-  // The arrival calm radius.
-  swarm: ["4:0"],
+  // Currents in Whirlpool.
+  "rock-feature": ["3:0"],
+  // Admission, and the arrival calm radius in the inner region.
+  swarm: ["1:0", "2:0", "4:0", "5:0"],
 };
 
-describe("interim spawn targets", () => {
-  it("space enemy groups on flight's encounter lattice", () => {
+describe("spawn target catalog", () => {
+  it("measures gathering reach on flight's encounter lattice", () => {
     for (const galaxy of GALAXY_NUMBERS) {
-      expect(interimEncounterSpacing(galaxy)).toBe(encounterSpacing(CONTENT, galaxy));
+      expect(encounterLatticeSpacing(galaxy)).toBe(encounterSpacing(CONTENT, galaxy));
+    }
+  });
+
+  it("requests every positive table density from a roster group, per chunk", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      spawnRules(galaxy).bands.forEach((band, index) => {
+        const table = SPAWN_TARGETS[galaxy][index]!;
+        for (const [kind, density] of Object.entries(table.enemies)) {
+          const target = band.enemies.find((enemy) => enemy.kind === kind);
+          expect(target?.density ?? 0, `${galaxy}:${index}:${kind}`).toBeCloseTo(
+            density / SPAWN_AREA_CHUNKS,
+          );
+        }
+        const rock = (kind: string) => band.rocks.find((target) => target.kind === kind)!;
+        expect(rock("rock").density).toBeCloseTo(SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS);
+        expect(rock("resource").density).toBeCloseTo(table.resources / SPAWN_AREA_CHUNKS);
+        expect(rock("rock-feature").density).toBeCloseTo(table.features / SPAWN_AREA_CHUNKS);
+        for (const shape of rock("rock-feature").shapes) {
+          expect(ASTEROID_SHAPES.get(shape.id)!.size).toBe("large");
+        }
+      });
     }
   });
 });
@@ -45,7 +77,7 @@ const ACCEPTANCE_NAME =
 
 describe(ACCEPTANCE_NAME, () => {
   for (const galaxy of GALAXY_NUMBERS) {
-    const rules = interimSpawnRules(galaxy, GALAXY_SIDE);
+    const rules = spawnRules(galaxy, GALAXY_SIDE);
     rules.bands.forEach((band, index) => {
       const kinds = new Set([
         ...band.rocks.map((target) => target.kind),

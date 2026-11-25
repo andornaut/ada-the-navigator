@@ -1,5 +1,5 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
@@ -10,16 +10,26 @@ import {
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import {
   FIGHTER_GROUP_TARGET,
+  HOSTILE_LOCAL_ALLOWANCE,
   SPAWNER_POLICIES,
   SWARM_GROUP_MINIMUM,
 } from "../data/spawnerCatalog.ts";
+import {
+  type EnemyGroupTargets,
+  MOVING_ROCKS_PER_ENCOUNTER_RATE,
+  SLOT_ROCKS_PER_AREA,
+  SPAWN_AREA_CHUNKS,
+  SPAWN_BLEND_WIDTH,
+  SPAWN_TARGETS,
+} from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
-import { BALLISTIC_REQUEST, ballisticEncounterSpacing } from "./ballisticAsteroids.ts";
+import { BALLISTIC_REQUEST, originalEncounterRate } from "./ballisticAsteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
@@ -37,6 +47,13 @@ import type { WorldCellContext } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
 const MOVING_KIND = "moving-rock";
+/** Region site kind that Cartwheel's claim jumpers gather beside. */
+export const ORE_FIELD_SITE = "ore-field";
+/**
+ * Seconds of a moving rock's straight path checked against launch, arrival and protected areas,
+ * which absorb moving rocks that reach them.
+ */
+export const MOVING_PATH_SECONDS = 30;
 
 const tuning = CONTENT.tuning;
 const flight = tuning.flight;
@@ -60,28 +77,29 @@ function sized(sizes: Readonly<Partial<Record<AsteroidSize, number>>>): SpawnSha
 }
 
 /** Chunks between encounter lattice cells, as flight's encounter director spaces them. */
-export function interimEncounterSpacing(galaxy: GalaxyNumber): number {
+export function encounterLatticeSpacing(galaxy: GalaxyNumber): number {
   return (
     Math.max(3, Math.ceil(enemyEncounterTuning.quietDistance / tuning.chunkSize)) /
     Math.sqrt(encounterRate(galaxy))
   );
 }
 
-/** Encounter groups per chunk: three in four lattice cells, one lattice cell per spacing squared. */
-function encounterGroupsPerChunk(galaxy: GalaxyNumber): number {
-  return 0.75 / interimEncounterSpacing(galaxy) ** 2;
-}
-
 /**
- * One band's enemy targets: each roster entry's share of the encounter groups, with the member
- * counts the current selector admits in empty space (flexible fighters and swarms at their
- * largest fitting size, other entries uniform over their fitting sizes).
+ * One band's enemy targets: the table's group densities, with group shapes from the spawner
+ * stage's roster. Flexible fighters and swarms draw their largest size in empty space and shrink
+ * to their minimum to fit the local budget; other entries draw uniformly over their sizes that fit
+ * empty space and stay whole. Cartwheel's fighters gather beside ore fields at the jumper share.
  */
-function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
+function enemyTargets(
+  galaxy: GalaxyNumber,
+  stageIndex: number,
+  densities: EnemyGroupTargets,
+): EnemyTarget[] {
   const policy = SPAWNER_POLICIES[galaxy];
   const stage = policy.stages[stageIndex]!;
-  const choices = stage.roster.flatMap((entry) => {
-    if (entry.weight <= 0) {
+  return stage.roster.flatMap((entry) => {
+    const density = densities[entry.archetype as keyof EnemyGroupTargets] ?? 0;
+    if (entry.weight <= 0 || density <= 0) {
       return [];
     }
     const flexible =
@@ -107,12 +125,9 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
         counts.push(count);
       }
     }
-    const fitting = flexible ? counts.slice(-1) : counts;
-    return fitting.length ? [{ counts: fitting, entry }] : [];
-  });
-  const total = choices.reduce((sum, choice) => sum + choice.entry.weight, 0);
-  const groups = encounterGroupsPerChunk(galaxy);
-  return choices.map(({ counts, entry }) => {
+    if (!counts.length) {
+      return [];
+    }
     const hull = enemyCatalog[entry.archetype].sizeRatio * flight.shipRadius;
     const escorts =
       entry.archetype === "frigate"
@@ -120,10 +135,9 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
         : entry.escorts
           ? { archetype: entry.escorts.archetype, perLeader: entry.escorts.count }
           : undefined;
-    const least = counts[0]!;
-    const most = counts.at(-1)!;
-    return {
-      density: (groups * entry.weight) / total,
+    const gathers = ORE_FIELDS.galaxies.includes(galaxy) && entry.archetype === "fighter";
+    const target: EnemyTarget = {
+      density: density / SPAWN_AREA_CHUNKS,
       ...(escorts
         ? {
             escorts: {
@@ -135,72 +149,84 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
             },
           }
         : {}),
-      groupSize: [least, most] as const,
+      ...(gathers
+        ? {
+            gather: {
+              distance: ORE_FIELDS.diameter / 2,
+              reach: (encounterLatticeSpacing(galaxy) * tuning.chunkSize) / 2,
+              share: ORE_FIELDS.jumperShare,
+              site: ORE_FIELD_SITE,
+            },
+          }
+        : {}),
+      groupSize: flexible ? [counts.at(-1)!, counts.at(-1)!] : [counts[0]!, counts.at(-1)!],
       kind: entry.archetype,
       radius: hull,
+      ...(flexible ? { smallest: least } : {}),
       spacing: policy.memberSpacing,
     };
+    return [target];
   });
 }
 
 /**
- * Interim mapping from the current approved placement values to planner targets, until Gameplay
- * states densities per kind and area. Nothing here changes those values:
- * - Slot rocks and resources: `objectsPerChunk` slots split by `spawnWeights` (enemy and pickup
- *   slots stay empty), plus the `asteroidDensity` share of every ordinary placement, features
- *   included, added as slot rocks and resources in their weight ratio.
- * - Feature rocks: the field's feature chance averaged over the chunk catalog's template weights.
- * - Moving rocks: the ballistic encounter lattice's mean movers per chunk, chosen from placed
- *   slot and feature rocks, with its group share and speeds.
- * - Enemies: the encounter lattice's groups per chunk, split by spawner stage roster weights.
- * - Lanes: the chunk templates' corridor half width (ship radius plus clearance).
- * Enemy groups are planned first and static rocks take the shortfall.
- * Interim planner values: a gap of Ada's diameter between footprints, 24 positions per rock or
- * anchors per enemy group, and a group anchor search of half a chunk.
+ * The spawn target catalog as planner rules (gameplay/rules.md "Spawn targets"): enemy groups
+ * first, then feature, slot and resource rocks, then moving rocks chosen from placed feature and
+ * slot rocks. Slot rocks and moving rocks follow their rules in every region (moving rocks scale
+ * with the original encounter rate); resources, Large-only features and enemy groups follow the
+ * table by region. Densities blend across the region boundaries; budgets and archetype limits
+ * switch there.
  */
-export function interimSpawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
+export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
-  const templates = byPosition(CHUNK_CATALOG, galaxy);
-  const templateWeight = templates.reduce((sum, template) => sum + template.weight, 0);
-  const featureDensity = templates.reduce(
-    (sum, template) => sum + (template.weight / templateWeight) * field.featureChance[template.id],
-    0,
-  );
-  const weights = flight.spawnWeights;
-  const slotTotal = weights.enemy + weights.pickup + weights.resource + weights.rock;
-  const slotRock = (flight.objectsPerChunk * weights.rock) / slotTotal;
-  const slotResource = (flight.objectsPerChunk * weights.resource) / slotTotal;
-  const extra = (flight.asteroidDensity - 1) * (slotRock + slotResource + featureDensity);
-  const rockShare = weights.rock / (weights.rock + weights.resource);
   const large = 1 / RESOURCE_ROCKS.largeEvery;
-  const rocks = [
-    { density: featureDensity, kind: "rock-feature", shapes: sized(field.featureSizes) },
-    { density: slotRock + extra * rockShare, kind: "rock", shapes: sized(field.slotSizes) },
-    {
-      density: slotResource + extra * (1 - rockShare),
-      kind: "resource",
-      shapes: sized({ large, medium: 1 - large }),
-    },
-  ];
-  const [fewest, most] = BALLISTIC_REQUEST.count;
-  const spacing = ballisticEncounterSpacing(tuning.chunkSize, galaxy);
+  const policy = SPAWNER_POLICIES[galaxy];
   const moving = [
     {
-      density: (BALLISTIC_REQUEST.occupancy * ((fewest + most) / 2)) / spacing ** 2,
+      density:
+        (MOVING_ROCKS_PER_ENCOUNTER_RATE * originalEncounterRate(galaxy)) / SPAWN_AREA_CHUNKS,
       from: ["rock-feature", "rock"],
       groupShare: BALLISTIC_REQUEST.groupShare,
       kind: MOVING_KIND,
+      path: MOVING_PATH_SECONDS,
       speed: BALLISTIC_REQUEST.speed,
     },
   ];
-  const bands: SpawnBand[] = SPAWNER_POLICIES[galaxy].stages.map((stage, index) => ({
-    enemies: enemyTargets(galaxy, index),
-    from: stage.centerDistance,
-    moving,
-    rocks,
-  }));
+  const bands: SpawnBand[] = policy.stages.map((stage, index) => {
+    const targets = SPAWN_TARGETS[galaxy][index]!;
+    return {
+      admission: { archetypes: stage.maxNearbyArchetypes, cap: stage.localCap },
+      enemies: enemyTargets(galaxy, index, targets.enemies),
+      from: stage.centerDistance,
+      moving,
+      rocks: [
+        {
+          density: targets.features / SPAWN_AREA_CHUNKS,
+          kind: "rock-feature",
+          shapes: sized({ large: 1 }),
+        },
+        {
+          density: SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS,
+          kind: "rock",
+          shapes: sized(field.slotSizes),
+        },
+        {
+          density: targets.resources / SPAWN_AREA_CHUNKS,
+          kind: "resource",
+          shapes: sized({ large, medium: 1 - large }),
+        },
+      ],
+    };
+  });
   return {
+    admission: {
+      allowance: HOSTILE_LOCAL_ALLOWANCE,
+      capital: "capital",
+      localRadius: policy.localRadius,
+      maxNearbyCapitals: policy.maxNearbyCapitals,
+    },
     bands,
+    blend: SPAWN_BLEND_WIDTH,
     chunkSize: tuning.chunkSize,
     corridor: flight.shipRadius + flight.shipRadius,
     gap: 2 * flight.shipRadius,
@@ -220,8 +246,9 @@ const disc = (rule: string, applies: ExclusionZone["applies"], at: Vec, radius: 
 /**
  * The seeded world's exclusion zones within `radius` of a point, as `generate` applies them:
  * station protected areas, quantum and launch arrivals (a safe radius for rocks, the calm radius
- * for enemies), landmark charting ranges, currents and ore fields. Flight-state zones (the
- * player, story destinations, required routes and the Needle channel) are the caller's.
+ * for enemies), landmark charting ranges, currents and ore fields. Protected areas and arrival
+ * safe radii also bound moving rocks' paths, since they absorb moving rocks. Flight-state zones
+ * (the player, story destinations, required routes and the Needle channel) are the caller's.
  */
 export function worldSpawnExclusions(
   context: WorldCellContext,
@@ -238,11 +265,11 @@ export function worldSpawnExclusions(
   const stationSafe = ECONOMY.station.safeRadius;
   return [
     ...worldStationsNear(context, ECONOMY, galaxy, radius + stationSafe, point).map((station) =>
-      disc("protected", ["rock", "moving", "enemy"], station, stationSafe),
+      disc("protected", ["rock", "moving", "path", "enemy"], station, stationSafe),
     ),
     ...arrivals.flatMap((arrival) => [
       ...(near(arrival, tuning.safeRadius)
-        ? [disc("arrival-safe", ["rock", "moving"], arrival, tuning.safeRadius)]
+        ? [disc("arrival-safe", ["rock", "moving", "path"], arrival, tuning.safeRadius)]
         : []),
       ...(near(arrival, flight.arrivalCalm)
         ? [disc("arrival-calm", ["enemy"], arrival, flight.arrivalCalm)]
@@ -260,4 +287,19 @@ export function worldSpawnExclusions(
       disc("ore-field", ["rock", "moving"], field, ORE_FIELD_CLEAR_RADIUS),
     ),
   ];
+}
+
+/** The seeded world's ore field centres within `radius` of a point, as gathering sites. */
+export function worldSpawnSites(
+  context: WorldCellContext,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): Readonly<Record<string, readonly Vec[]>> {
+  return {
+    [ORE_FIELD_SITE]: worldOreFieldsNear(context, galaxy, radius, point).map(({ x, y }) => ({
+      x,
+      y,
+    })),
+  };
 }

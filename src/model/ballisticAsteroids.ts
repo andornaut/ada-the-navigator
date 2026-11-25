@@ -46,9 +46,14 @@ export function hostsEncounterCell(spacing: number, index: number): boolean {
   return Math.ceil(index / spacing) * spacing < index + 1;
 }
 
+/** The galaxy's encounter rate in the original opportunity lattice. */
+export function originalEncounterRate(galaxy: GalaxyNumber): number {
+  return byPosition(ORIGINAL_ENCOUNTERS.rates, galaxy);
+}
+
 export function ballisticEncounterSpacing(chunkSize: number, galaxy: GalaxyNumber): number {
   const base = Math.max(3, Math.ceil(ORIGINAL_ENCOUNTERS.quietDistance / chunkSize));
-  return base / Math.sqrt(byPosition(ORIGINAL_ENCOUNTERS.rates, galaxy));
+  return base / Math.sqrt(originalEncounterRate(galaxy));
 }
 
 /** Requested movers from a dedicated local stream, before any caller-owned clearances. */
