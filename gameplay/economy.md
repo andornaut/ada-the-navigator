@@ -314,7 +314,8 @@ not advance that order. Buy new paints at shops. From Paused → Ship, open
 Paint to see swatches for every owned scheme, including Classic. Apply equips
 a paint immediately for free and keeps the card open. The selected scheme
 shows In use. Close returns to Ship. The selected paint is saved with the
-loadout.
+loadout. Each scheme has a main colour and a wing-tip accent colour. Shop
+swatches, Paint swatches and the paint notice show both.
 
 ## Ammunition
 
