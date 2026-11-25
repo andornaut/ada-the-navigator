@@ -166,6 +166,35 @@ describe("planRegion", () => {
     }
   });
 
+  it("keeps out only a path zone's band, not the rest of its bounding box", () => {
+    // An L along the region's left and bottom edges: its box spans the whole region.
+    const corner: ExclusionZone = {
+      applies: ["rock"],
+      rule: "current",
+      shape: {
+        halfWidth: 40,
+        kind: "path",
+        points: [
+          { x: -512, y: 1024 },
+          { x: -512, y: -512 },
+          { x: 1024, y: -512 },
+        ],
+      },
+    };
+    const rocks = { ...rules, bands: [{ ...band, enemies: [], moving: [] }] };
+    for (const seed of SEEDS) {
+      const placements = planRegion(rocks, seeds(seed), {
+        ...region,
+        exclusions: [corner],
+      }).placements;
+      expect(placements.length).toBeGreaterThan(0);
+      for (const rock of placements) {
+        const gap = Math.min(rock.x + 512, rock.y + 512) - 40;
+        expect(gap).toBeGreaterThanOrEqual(rock.radius);
+      }
+    }
+  });
+
   it("keeps each category out of the zones that apply to it", () => {
     const exclusions: ExclusionZone[] = [
       {

@@ -476,8 +476,44 @@ function segmentDistance(a: Vec, b: Vec, c: Vec, d: Vec): number {
   );
 }
 
-/** Distance from the segment `from` to `to` (a point when absent) to a zone's edge, negative inside. */
-function zoneGap(rules: SpawnRules, shape: ExclusionShape, from: Vec, to: Vec = from): number {
+interface Bounds {
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly minX: number;
+  readonly minY: number;
+}
+
+const pathBounds = new WeakMap<readonly Vec[], Bounds>();
+
+/** The bounding box of a path zone's points, computed once per point list. */
+function boundsOf(points: readonly Vec[]): Bounds {
+  let bounds = pathBounds.get(points);
+  if (!bounds) {
+    const xs = points.map((point) => point.x);
+    const ys = points.map((point) => point.y);
+    bounds = {
+      maxX: Math.max(...xs),
+      maxY: Math.max(...ys),
+      minX: Math.min(...xs),
+      minY: Math.min(...ys),
+    };
+    pathBounds.set(points, bounds);
+  }
+  return bounds;
+}
+
+/**
+ * Distance from the segment `from` to `to` (a point when absent) to a zone's edge, negative
+ * inside. Callers only compare it with `within`, so for a path zone whose bounding box already
+ * lies at least `within` beyond its half width, the box's distance stands in for the exact one.
+ */
+function zoneGap(
+  rules: SpawnRules,
+  within: number,
+  shape: ExclusionShape,
+  from: Vec,
+  to: Vec = from,
+): number {
   const along = { x: to.x - from.x, y: to.y - from.y };
   if (shape.kind === "disc") {
     const delta = distanceTo(rules, shape, from);
@@ -493,6 +529,18 @@ function zoneGap(rules: SpawnRules, shape: ExclusionShape, from: Vec, to: Vec = 
   const start =
     rules.worldSide === undefined ? from : nearestImage(rules.worldSide, first, from).point;
   const finish = { x: start.x + along.x, y: start.y + along.y };
+  const box = boundsOf(shape.points);
+  const outside = (low: number, high: number, a: number, b: number) =>
+    Math.max(0, low - Math.max(a, b), Math.min(a, b) - high);
+  // The segment's box gap to the points' box never exceeds its distance to any of their segments.
+  const floor =
+    Math.hypot(
+      outside(box.minX, box.maxX, start.x, finish.x),
+      outside(box.minY, box.maxY, start.y, finish.y),
+    ) - shape.halfWidth;
+  if (floor - EPSILON >= within) {
+    return floor;
+  }
   let nearest = Infinity;
   for (let index = 1; index < shape.points.length; index++) {
     nearest = Math.min(
@@ -521,7 +569,7 @@ function openShare(
   const zones = region.exclusions.filter(
     (zone) =>
       zone.applies.includes(category) &&
-      zoneGap(rules, zone.shape, centre) < (size / 2) * Math.SQRT2,
+      zoneGap(rules, (size / 2) * Math.SQRT2, zone.shape, centre) < (size / 2) * Math.SQRT2,
   );
   if (!zones.length) {
     return 1;
@@ -533,7 +581,7 @@ function openShare(
         x: origin.x + ((column + 0.5) * size) / OPEN_SAMPLES,
         y: origin.y + ((row + 0.5) * size) / OPEN_SAMPLES,
       };
-      if (zones.every((zone) => zoneGap(rules, zone.shape, point) >= 0)) {
+      if (zones.every((zone) => zoneGap(rules, 0, zone.shape, point) >= 0)) {
         open++;
       }
     }
@@ -549,7 +597,8 @@ function excludedBy(
   at: Footprint,
 ): string | undefined {
   return region.exclusions.find(
-    (zone) => zone.applies.includes(category) && zoneGap(rules, zone.shape, at) < at.radius,
+    (zone) =>
+      zone.applies.includes(category) && zoneGap(rules, at.radius, zone.shape, at) < at.radius,
   )?.rule;
 }
 
@@ -1210,7 +1259,9 @@ function pathBlocked(
 ): string | undefined {
   const end = { x: rock.x + motion.x * seconds, y: rock.y + motion.y * seconds };
   return region.exclusions.find(
-    (zone) => zone.applies.includes("path") && zoneGap(rules, zone.shape, rock, end) < rock.radius,
+    (zone) =>
+      zone.applies.includes("path") &&
+      zoneGap(rules, rock.radius, zone.shape, rock, end) < rock.radius,
   )?.rule;
 }
 
