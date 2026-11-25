@@ -1160,14 +1160,23 @@ function queueEnemyPartSheets(scene: AssetsContext, parts: readonly Asset[]): vo
     }
     sheets.delete(key);
     try {
-      // Validate the entire sheet before queuing any of its textures.
+      // Validate the entire sheet before queuing any of its textures. Part roots keep their
+      // authored display size, except the bases of Art's model-layer hostile stations and Claim
+      // platform, which have the raw-intrinsic contract.
       const textures = sheet.frames.map((part) => ({
         ...part,
-        path: vectorSheetSource(xml, sheet.path, {
-          ...part,
-          intrinsicHeight: part.displayHeight ?? part.height,
-          intrinsicWidth: part.displayWidth ?? part.width,
-        }),
+        path: vectorSheetSource(
+          xml,
+          sheet.path,
+          part.hardpoint !== undefined &&
+            (part.archetype === "hostileStation" || part.archetype === "platform")
+            ? part
+            : {
+                ...part,
+                intrinsicHeight: part.displayHeight ?? part.height,
+                intrinsicWidth: part.displayWidth ?? part.width,
+              },
+        ),
       }));
       textures.forEach((part) => loadSvg(scene, part));
     } catch (error) {

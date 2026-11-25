@@ -37,6 +37,7 @@ import {
   HitFlashes,
   hullHeading,
   layoutTier,
+  mountedTop,
   type PartPose,
   readHardpointLayout,
   readSidecars,
@@ -136,7 +137,7 @@ describe("enemy frame sets", () => {
       fighter: 35,
       frigate: 150.5,
       gadget: 245,
-      hostileStation: 360.5,
+      hostileStation: 164.5,
       interceptor: 56,
       retaliator: 70,
       retaliatorCargoHauler: 122.5,
@@ -754,8 +755,7 @@ describe("enemy SVGs", () => {
       groups.set(`${owner}|${archetype}`, { archetype, owner });
     }
     const expected = [...groups.values()].reduce(
-      (sum, { archetype, owner }) =>
-        sum + nativePartFrames(owner, archetype) + (archetype === "platform" ? 1 : 16),
+      (sum, { archetype, owner }) => sum + nativePartFrames(owner, archetype) + 16,
       0,
     );
     expect(heavies).toHaveLength(expected);
@@ -770,8 +770,12 @@ describe("enemy SVGs", () => {
       const root = roots[0] ?? "";
       const size = (name: string) =>
         Number(new RegExp(`\\b${name}="([\\d.]+)"`, "u").exec(root)?.[1]);
-      // The fleet producer's sheets, hulls and parts alike, size each root in frame px.
-      const framePx = /\/fleet[A-Z][^/]*$/u.test(asset.path);
+      // The fleet producer's sheets, hulls and parts alike, and Art's model-layer hostile station
+      // and platform hulls and bases size each root in frame px.
+      const framePx =
+        /\/fleet[A-Z][^/]*$/u.test(asset.path) ||
+        ((asset.archetype === "hostileStation" || asset.archetype === "platform") &&
+          asset.top === undefined);
       expect([size("width"), size("height")], asset.path).toEqual(
         framePx ? [asset.width, asset.height] : [asset.displayWidth, asset.displayHeight],
       );
@@ -817,9 +821,11 @@ describe("claim jumper art", () => {
     expect(enemyFrameSets(assets).has("platform")).toBe(false);
   });
 
-  it("draws the platform's one fixed hull for every facing, its turrets on heading 0", () => {
+  it("turns the platform's hull with its heading, its mounts at that heading's anchors", () => {
     const platform = claim.get("platform")!;
-    expect(platform.frames.map((frame) => frame.id)).toEqual(["enemy-claim-platform"]);
+    expect(platform.frames.map((frame) => frame.id)).toEqual(
+      Array.from({ length: 16 }, (_, index) => `enemy-claim-platform-${index}`),
+    );
     expect(platform.jets).toBeUndefined();
     const pose: PartPose = {
       aim: () => ({ x: 0, y: 1 }),
@@ -827,17 +833,18 @@ describe("claim jumper art", () => {
       position: 5,
       weapon: () => "laser",
     };
-    for (const degrees of [0, 90, 200, 315]) {
+    for (const degrees of [0, 90, 202.5, 315]) {
       const hull = selectEnemyFrame(platform, at(degrees));
-      expect(hull.id).toBe("enemy-claim-platform");
-      expect(hullHeading(platform, hull)).toBe(0);
+      const heading = Math.round(degrees / 22.5) % 16;
+      expect(hull.id).toBe(`enemy-claim-platform-${heading}`);
+      expect(hullHeading(platform, hull)).toBe(heading);
       const sprites = composeEnemy(platform, pose, hull);
       expect(sprites.map((sprite) => sprite.frame.id).sort()).toEqual(
         [
-          "enemy-claim-platform",
-          "enemy-claim-platform-aft-capped-0",
-          "enemy-claim-platform-port-intact-0",
-          "enemy-claim-platform-starboard-intact-0",
+          `enemy-claim-platform-${heading}`,
+          `enemy-claim-platform-aft-capped-${heading}`,
+          `enemy-claim-platform-port-intact-${heading}`,
+          `enemy-claim-platform-starboard-intact-${heading}`,
           `enemy-claim-platform-turret-top-${aimIndex({ x: 0, y: 1 })}`,
           `enemy-claim-platform-turret-top-${aimIndex({ x: 0, y: 1 })}`,
         ].sort(),
@@ -855,6 +862,32 @@ describe("claim jumper art", () => {
       .filter((sprite) => sprite.layer === "top")
       .map((sprite) => sprite.frame.id);
     expect(new Set(tops).size).toBe(2);
+  });
+
+  it("draws no top on a mount the hull hides at a heading, which still fires", () => {
+    const station = galaxy("hostileStation");
+    const file = json(enemyHardpointsPath(coreSidecars, "hostileStation")) as {
+      headings: { hardpoints: { hidden?: boolean; id: string }[]; index: number }[];
+    };
+    const hidden = file.headings.flatMap(({ hardpoints, index }) =>
+      hardpoints.filter((part) => part.hidden).map(({ id }) => ({ id, index })),
+    );
+    expect(hidden.length).toBeGreaterThan(0);
+    const pose: PartPose = {
+      aim: () => ({ x: 1, y: 0 }),
+      intact: () => true,
+      position: 5,
+      weapon: () => "laser",
+    };
+    for (const { id, index } of hidden) {
+      const hull = station.frames[index]!;
+      const sprites = composeEnemy(station, pose, hull).filter((part) => part.hardpoint === id);
+      expect(sprites.map(({ layer }) => layer)).not.toContain("top");
+      const shown = mountedTop(station.parts!.layout, pose.position, id, "laser");
+      if (shown !== "capped" && shown.top) {
+        expect(turretMuzzles(station, pose, hull, id).length).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("composes the claim frigate and capital, drawing a destroyed hardpoint's destroyed base", () => {

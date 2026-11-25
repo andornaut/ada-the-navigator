@@ -9,9 +9,6 @@ export function vectorSheetSource(
   xml: Document | undefined,
   path: string,
   {
-    archetype,
-    displayHeight,
-    displayWidth,
     height,
     id,
     intrinsicHeight,
@@ -19,9 +16,6 @@ export function vectorSheetSource(
     svgSheetMember,
     width,
   }: {
-    readonly archetype?: string;
-    readonly displayHeight?: number;
-    readonly displayWidth?: number;
     readonly height: number;
     readonly id: string;
     readonly intrinsicHeight?: number;
@@ -45,10 +39,8 @@ export function vectorSheetSource(
     ?.trim()
     .split(/[\s,]+/u)
     .map(Number);
-  // Station hull roots retain their authored display size within the raw frame viewBox.
-  const station = archetype === "hostileStation";
-  const expectedWidth = intrinsicWidth ?? (station ? displayWidth : undefined) ?? width;
-  const expectedHeight = intrinsicHeight ?? (station ? displayHeight : undefined) ?? height;
+  const expectedWidth = intrinsicWidth ?? width;
+  const expectedHeight = intrinsicHeight ?? height;
   // A display-sized root may instead be authored at its raw frame size, as the enemy fleet
   // producer writes every hull and part root.
   const rootWidth = Number(frame?.getAttribute("width"));

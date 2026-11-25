@@ -520,10 +520,13 @@ describe("source-family manifest readiness", () => {
       ...new Set(selected.filter(({ svgSheet }) => svgSheet).map(({ path }) => path)),
     ];
     expect(f.xml.mock.calls).toEqual(sheets.map((path) => [vectorSheetKey(path), path]));
+    // The loader emits both completion events: the hull headings' sheet waits on the keyed one,
+    // the part sheets on the generic one.
     for (const path of sheets) {
       const key = vectorSheetKey(path);
       f.documents.set(key, {});
       f.events.emit("filecomplete", key, "xml");
+      f.events.emit(`filecomplete-xml-${key}`, key, "xml", {});
     }
     const queued = f.svg.mock.calls.map(([, asset]) => asset);
     expect(queued.map(({ id }) => id).sort()).toEqual(selected.map(({ id }) => id).sort());
@@ -538,7 +541,7 @@ describe("source-family manifest readiness", () => {
       cartwheel.sidecars.platform.hardpoints,
     );
     expect(cartwheel.sidecars.platform.hardpoints).toBe(
-      "/art/cartwheel/enemies/platform-hardpoints.json",
+      "/art/cartwheel/enemies/platformWheel-hardpoints.json",
     );
     // A later own flight still queues Cartwheel's world through its unchanged foreground path.
     f.loadWorld(f.scene, 2);

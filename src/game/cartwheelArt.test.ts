@@ -85,8 +85,8 @@ describe("Cartwheel art", () => {
         "frigate",
         "capital",
         "hostileStation",
+        "platform",
       ].flatMap((body) => Array.from({ length: 16 }, (_, index) => `enemy-claim-${body}-${index}`)),
-      "enemy-claim-platform",
     ];
     expect(cartwheel.filter((id) => id.startsWith("enemy-claim-") && !part(id)).sort()).toEqual(
       claimHullIds.sort(),

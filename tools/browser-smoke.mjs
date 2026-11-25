@@ -4991,11 +4991,13 @@ try {
   );
   assert.equal(claimManifestResponse.status(), 200);
   const claimManifest = await claimManifestResponse.json();
-  const platformPaths = ["enemy-claim-platform", "enemy-claim-platform-port-intact-0"].map((id) => {
-    const asset = claimManifest.assets.find((entry) => entry.id === id);
-    assert.ok(asset?.path.startsWith("/art/"), `Cartwheel art must name ${id}`);
-    return asset.path;
-  });
+  const platformPaths = ["enemy-claim-platform-0", "enemy-claim-platform-port-intact-0"].map(
+    (id) => {
+      const asset = claimManifest.assets.find((entry) => entry.id === id);
+      assert.ok(asset?.path.startsWith("/art/"), `Cartwheel art must name ${id}`);
+      return asset.path;
+    },
+  );
   await page.waitForFunction(
     (paths) => {
       const downloaded = new Set(performance.getEntriesByType("resource").map(({ name }) => name));

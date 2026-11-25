@@ -730,7 +730,8 @@ function hullOffset(hull: EnemyFrame, frame: number, at: Vec): Vec {
 /**
  * The composed frame far to near: in the heading's layer order, the hull or each hardpoint's
  * base for its state at its anchor, then an intact turret's top for its aim at its pivot. A mount
- * the position's tier leaves unused draws its capped plate and no top.
+ * the position's tier leaves unused draws its capped plate and no top, and a mount the hull
+ * hides at the heading draws no top.
  */
 export function composeEnemy<T extends EnemyFrame>(
   art: EnemyArt<T>,

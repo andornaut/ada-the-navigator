@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import FLEET_TOPS from "../fleet-tops.json" with { type: "json" };
 import { readMuzzleArt } from "../../src/data/enemyMuzzles.ts";
 import { INDUSTRIAL_STEMS } from "./crafts.ts";
 import { fleetCrafts } from "./fleet.ts";
@@ -177,9 +178,11 @@ test("installed station families retain the approved tier prefixes and exact Rap
     assert.deepEqual(Object.keys(file.weaponTops!).sort(), ["rapidMissile", "ringBurst"], path);
     for (const part of file.hardpoints)
       assert.equal(part.top, part.id === "weapon-5" ? "dome" : "pod", path);
+    // The pod is the enemy fleet's top (art/fleet-tops.json), with its muzzles.
     const art = readMuzzleArt(file);
+    const pod = FLEET_TOPS.tops.pod.aims[0]!.muzzles.length;
     assert.ok(
-      art.tops.get("pod")!.every((tips) => tips.length === 4),
+      art.tops.get("pod")!.every((tips) => tips.length === pod),
       path,
     );
     assert.ok(
