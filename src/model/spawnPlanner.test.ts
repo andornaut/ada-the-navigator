@@ -12,6 +12,7 @@ import {
   type SpawnPlan,
   type SpawnRegion,
   type SpawnRules,
+  type SpawnSeeds,
 } from "./spawnPlanner.ts";
 
 const band: SpawnBand = {
@@ -54,6 +55,11 @@ const rules: SpawnRules = {
 const region: SpawnRegion = { cell: { x: -1, y: -1 }, columns: 3, exclusions: [], rows: 3 };
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
 
+/** One number as both the world and the encounter seed. */
+function seeds(seed: number): SpawnSeeds {
+  return { encounter: seed, world: seed };
+}
+
 function pairs(placements: readonly SpawnPlacement[]): [SpawnPlacement, SpawnPlacement][] {
   return placements.flatMap((a, index) =>
     placements.slice(index + 1).map((b) => [a, b] as [SpawnPlacement, SpawnPlacement]),
@@ -76,16 +82,33 @@ function deliveredOf(plan: SpawnPlan, kind: string): number {
 describe("planRegion", () => {
   it("returns the same plan for the same seed, rules and region", () => {
     for (const seed of SEEDS) {
-      expect(planRegion(rules, seed, region)).toEqual(planRegion(rules, seed, region));
+      expect(planRegion(rules, seeds(seed), region)).toEqual(
+        planRegion(rules, seeds(seed), region),
+      );
     }
-    expect(planRegion(rules, 1, region).placements).not.toEqual(
-      planRegion(rules, 2, region).placements,
+    expect(planRegion(rules, seeds(1), region).placements).not.toEqual(
+      planRegion(rules, seeds(2), region).placements,
     );
+  });
+
+  it("draws rocks from the world seed and enemy groups from the encounter seed", () => {
+    const rocksOnly = { ...rules, bands: [{ ...band, enemies: [] }] };
+    const of = (plan: SpawnPlan, category: SpawnPlacement["category"]) =>
+      plan.placements.filter((placement) => placement.category === category);
+    for (const seed of SEEDS) {
+      const world = { encounter: seed, world: seed + 100 };
+      expect(of(planRegion(rules, world, region), "enemy")).toEqual(
+        of(planRegion(rules, seeds(seed), region), "enemy"),
+      );
+      expect(planRegion(rocksOnly, { encounter: seed + 100, world: seed }, region)).toEqual(
+        planRegion(rocksOnly, seeds(seed), region),
+      );
+    }
   });
 
   it("keeps every footprint plus the gap clear of every other", () => {
     for (const seed of SEEDS) {
-      const { placements } = planRegion(rules, seed, region);
+      const { placements } = planRegion(rules, seeds(seed), region);
       expect(placements.length).toBeGreaterThan(40);
       for (const [a, b] of pairs(placements)) {
         expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(
@@ -100,7 +123,7 @@ describe("planRegion", () => {
     const size = rules.chunkSize;
     const lane = rules.corridor!;
     for (const seed of SEEDS) {
-      for (const rock of planRegion(rules, seed, region).placements) {
+      for (const rock of planRegion(rules, seeds(seed), region).placements) {
         if (rock.category !== "rock") {
           continue;
         }
@@ -143,7 +166,7 @@ describe("planRegion", () => {
     const zoned = { ...region, exclusions };
     let rocksInEnemyZone = 0;
     for (const seed of SEEDS) {
-      const plan = planRegion(rules, seed, zoned);
+      const plan = planRegion(rules, seeds(seed), zoned);
       for (const placement of plan.placements) {
         const categories: SpawnCategory[] = [
           placement.category,
@@ -193,8 +216,8 @@ describe("planRegion", () => {
     const still = { ...rules, bands: [{ ...band, enemies: [], moving: [] }] };
     let moved = 0;
     for (const seed of SEEDS) {
-      const plan = planRegion({ ...rules, bands: [{ ...band, enemies: [] }] }, seed, region);
-      const base = planRegion(still, seed, region);
+      const plan = planRegion({ ...rules, bands: [{ ...band, enemies: [] }] }, seeds(seed), region);
+      const base = planRegion(still, seeds(seed), region);
       const at = (placement: SpawnPlacement) => [placement.id, placement.x, placement.y];
       expect(plan.placements.map(at)).toEqual(base.placements.map(at));
       expect(base.placements.some((placement) => placement.moving)).toBe(false);
@@ -227,7 +250,7 @@ describe("planRegion", () => {
     };
     let dropped = 0;
     for (const seed of SEEDS) {
-      const plan = planRegion(crowded, seed, region);
+      const plan = planRegion(crowded, seeds(seed), region);
       for (const [kind, report] of Object.entries(plan.report.kinds)) {
         expect(report.requested).toBe(report.delivered + report.dropped);
         expect(report.dropped).toBe(Object.values(report.drops).reduce((sum, n) => sum + n, 0));
@@ -244,7 +267,7 @@ describe("planRegion", () => {
       rule: "closed",
       shape: { kind: "disc", radius: 5000, x: 0, y: 0 },
     };
-    const plan = planRegion(rules, 3, { ...region, exclusions: [everywhere] });
+    const plan = planRegion(rules, seeds(3), { ...region, exclusions: [everywhere] });
     expect(plan.placements).toEqual([]);
     for (const kind of ["big", "small", "heavy", "fighter"]) {
       const report = plan.report.kinds[kind]!;
@@ -264,7 +287,7 @@ describe("planRegion", () => {
   it("places every member and escort of a group or none of it", () => {
     let groups = 0;
     for (const seed of SEEDS) {
-      const plan = planRegion(rules, seed, region);
+      const plan = planRegion(rules, seeds(seed), region);
       for (const target of band.enemies) {
         const members = plan.placements.filter(
           (placement) => placement.kind === target.kind && !placement.leader,
@@ -304,7 +327,7 @@ describe("planRegion", () => {
     const pair = (target: EnemyTarget) =>
       planRegion(
         { ...rules, bands: [{ ...band, enemies: [target], moving: [], rocks: [] }], gap: 20 },
-        1,
+        seeds(1),
         { ...region, columns: 1, rows: 1 },
       );
     const leaders = (plan: SpawnPlan) =>
@@ -375,8 +398,8 @@ describe("planRegion", () => {
     const enemies = { ...rules, bands: [{ ...band, moving: [], rocks: [] }] };
     let retried = 0;
     for (const seed of SEEDS) {
-      const report = planRegion(enemies, seed, { ...region, exclusions: blocks }).report.kinds
-        .heavy!;
+      const report = planRegion(enemies, seeds(seed), { ...region, exclusions: blocks }).report
+        .kinds.heavy!;
       const drops = report.drops.block ?? 0;
       // Rejected anchors beyond those of dropped groups belong to groups placed on a later try.
       retried += (report.rejections.block ?? 0) - drops * rules.tries;
@@ -395,14 +418,14 @@ describe("planRegion", () => {
     const rocksFirst = { ...rules, order: ["rocks", "moving", "enemies"] as const };
     let shortfall = 0;
     for (const seed of SEEDS) {
-      const enemiesFirst = planRegion(rules, seed, region);
+      const enemiesFirst = planRegion(rules, seeds(seed), region);
       expect(ofCategory(enemiesFirst, "enemy")).toEqual(
-        ofCategory(planRegion(without("rocks"), seed, region), "enemy"),
+        ofCategory(planRegion(without("rocks"), seeds(seed), region), "enemy"),
       );
-      const rocks = planRegion(rocksFirst, seed, region);
+      const rocks = planRegion(rocksFirst, seeds(seed), region);
       expect(ofCategory(rocks, "rock").map(({ id, x, y }) => [id, x, y])).toEqual(
         ofCategory(
-          planRegion({ ...without("enemies"), order: rocksFirst.order }, seed, region),
+          planRegion({ ...without("enemies"), order: rocksFirst.order }, seeds(seed), region),
           "rock",
         ).map(({ id, x, y }) => [id, x, y]),
       );
@@ -418,7 +441,7 @@ describe("planRegion", () => {
       ["enemies", "rocks", "rocks"],
       ["moving", "rocks", "enemies"],
     ] as const) {
-      expect(() => planRegion({ ...rules, order }, 1, region)).toThrow(RangeError);
+      expect(() => planRegion({ ...rules, order }, seeds(1), region)).toThrow(RangeError);
     }
   });
 
@@ -475,7 +498,7 @@ describe("planRegion", () => {
           bands: [{ admission, enemies, from: 0, moving: [], rocks: [] }],
           gap: 20,
         },
-        1,
+        seeds(1),
         single,
       );
     const fighters = (smallest?: number): EnemyTarget => ({
@@ -557,7 +580,7 @@ describe("planRegion", () => {
           bands: [{ ...band, enemies: [target(share)], moving: [], rocks: [] }],
           gap: 20,
         },
-        1,
+        seeds(1),
         { ...region, sites: { "ore-field": [site, { x: 5000, y: 5000 }] } },
       ).placements;
     const distances = (share: number) =>
@@ -584,7 +607,7 @@ describe("planRegion", () => {
     let rejected = 0;
     let movers = 0;
     for (const seed of SEEDS) {
-      const plan = planRegion(pathed, seed, { ...region, exclusions: [zone] });
+      const plan = planRegion(pathed, seeds(seed), { ...region, exclusions: [zone] });
       rejected += plan.report.kinds.mover!.rejections.protected ?? 0;
       for (const rock of plan.placements.filter((placement) => placement.moving)) {
         movers++;
@@ -626,7 +649,7 @@ describe("planRegion", () => {
     it("keeps one group per cell, inside the cell's inset bounds", () => {
       let groups = 0;
       for (const seed of SEEDS) {
-        const plan = planRegion(latticed(), seed, region);
+        const plan = planRegion(latticed(), seeds(seed), region);
         const cells = plan.placements.map(cellOf);
         expect(new Set(cells).size).toBe(cells.length);
         for (const placement of plan.placements) {
@@ -653,8 +676,11 @@ describe("planRegion", () => {
 
     it("plans a cell's group the same in every region that holds its anchor", () => {
       for (const seed of SEEDS) {
-        const a = planRegion(latticed(), seed, region).placements;
-        const b = planRegion(latticed(), seed, { ...region, cell: { x: 0, y: 0 } }).placements;
+        const a = planRegion(latticed(), seeds(seed), region).placements;
+        const b = planRegion(latticed(), seeds(seed), {
+          ...region,
+          cell: { x: 0, y: 0 },
+        }).placements;
         const shared = a.filter((placement) => b.some((other) => other.id === placement.id));
         expect(shared.length).toBeGreaterThan(0);
         for (const placement of shared) {
@@ -686,7 +712,7 @@ describe("planRegion", () => {
       };
       let retried = 0;
       for (const seed of SEEDS) {
-        const plan = planRegion(latticed(), seed, { ...region, exclusions: [zone] });
+        const plan = planRegion(latticed(), seeds(seed), { ...region, exclusions: [zone] });
         for (const [a, b] of pairs(plan.placements)) {
           expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(200);
         }
@@ -702,8 +728,8 @@ describe("planRegion", () => {
   it("counts only the report's chunks while planning their neighbours", () => {
     const centre = { cell: { x: 0, y: 0 }, columns: 1, rows: 1 };
     for (const seed of SEEDS) {
-      const plan = planRegion(rules, seed, { ...region, report: centre });
-      const alone = planRegion(rules, seed, { ...region, ...centre });
+      const plan = planRegion(rules, seeds(seed), { ...region, report: centre });
+      const alone = planRegion(rules, seeds(seed), { ...region, ...centre });
       expect(plan.placements.some((placement) => placement.chunk !== "0,0")).toBe(true);
       for (const kind of ["big", "small", "heavy", "fighter", "mover"]) {
         expect(plan.report.kinds[kind]?.requested ?? 0).toBe(
@@ -721,7 +747,7 @@ describe("planRegion", () => {
   it("plans only the named passes in the chunks the report leaves out", () => {
     const report = { cell: { x: 0, y: 0 }, columns: 1, neighbours: ["enemies"] as const, rows: 1 };
     for (const seed of SEEDS) {
-      const plan = planRegion(rules, seed, { ...region, report });
+      const plan = planRegion(rules, seeds(seed), { ...region, report });
       const outside = plan.placements.filter((placement) => placement.chunk !== "0,0");
       expect(outside.length).toBeGreaterThan(0);
       expect(outside.every((placement) => placement.category === "enemy")).toBe(true);
@@ -756,7 +782,7 @@ describe("planRegion", () => {
           ],
           openArea,
         },
-        1,
+        seeds(1),
         { cell: { x: 0, y: 0 }, columns: 1, exclusions: [half], rows: 1 },
       ).report.kinds;
     expect(target(true).small!.requested).toBe(4);
@@ -777,7 +803,7 @@ describe("planRegion", () => {
         },
       ],
     };
-    const report = planRegion(huge, 1, region).report.kinds.huge!;
+    const report = planRegion(huge, seeds(1), region).report.kinds.huge!;
     expect(report.delivered).toBe(0);
     expect(report.drops).toEqual({ [SPAWN_RULE.corridor]: report.requested });
   });
@@ -785,8 +811,8 @@ describe("planRegion", () => {
   it("plans each kind from its own streams, so other kinds do not shift its requests", () => {
     const alone = { ...rules, bands: [{ ...band, enemies: [], rocks: [band.rocks[1]!] }] };
     for (const seed of SEEDS) {
-      expect(planRegion(alone, seed, region).report.kinds.small!.requested).toBe(
-        planRegion(rules, seed, region).report.kinds.small!.requested,
+      expect(planRegion(alone, seeds(seed), region).report.kinds.small!.requested).toBe(
+        planRegion(rules, seeds(seed), region).report.kinds.small!.requested,
       );
     }
   });
@@ -795,7 +821,7 @@ describe("planRegion", () => {
     const far = { ...band, enemies: [], moving: [], rocks: [{ ...band.rocks[0]!, kind: "far" }] };
     const near = { ...band, enemies: [], moving: [], rocks: [band.rocks[1]!] };
     const banded = { ...rules, bands: [near, { ...far, from: 600 }] };
-    const plan = planRegion(banded, 1, region);
+    const plan = planRegion(banded, seeds(1), region);
     for (const placement of plan.placements) {
       // Chunk centres at (+-256, +-256) lie 362 from the centre; every other is beyond 800.
       expect(placement.kind).toBe(
@@ -812,7 +838,11 @@ describe("planRegion", () => {
       shape: { kind: "disc", radius: 400, x: side / 2 - 10, y: 0 },
     };
     const wrapped = { ...rules, worldSide: side };
-    const plan = planRegion(wrapped, 1, { ...region, cell: { x: -6, y: -1 }, exclusions: [seam] });
+    const plan = planRegion(wrapped, seeds(1), {
+      ...region,
+      cell: { x: -6, y: -1 },
+      exclusions: [seam],
+    });
     for (const placement of plan.placements) {
       const offset = (((placement.x - (side / 2 - 10)) % side) + side) % side;
       const dx = Math.min(offset, side - offset);

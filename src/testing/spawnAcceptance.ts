@@ -108,19 +108,24 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
         zone.applies.includes("enemy"),
       ),
     ];
-    const plan = planRegion(rules, ACCEPTANCE_SEEDS[sample % ACCEPTANCE_SEEDS.length]!, {
-      cell: { x: centre.x - half - AREA_MARGIN, y: centre.y - half - AREA_MARGIN },
-      columns: planned,
-      exclusions,
-      report: {
-        cell: { x: centre.x - half, y: centre.y - half },
-        columns: AREA_CHUNKS,
-        neighbours: ["enemies"],
-        rows: AREA_CHUNKS,
+    const seed = ACCEPTANCE_SEEDS[sample % ACCEPTANCE_SEEDS.length]!;
+    const plan = planRegion(
+      rules,
+      { encounter: seed, world: seed },
+      {
+        cell: { x: centre.x - half - AREA_MARGIN, y: centre.y - half - AREA_MARGIN },
+        columns: planned,
+        exclusions,
+        report: {
+          cell: { x: centre.x - half, y: centre.y - half },
+          columns: AREA_CHUNKS,
+          neighbours: ["enemies"],
+          rows: AREA_CHUNKS,
+        },
+        rows: planned,
+        sites: worldSpawnSites(context, galaxy, reach + gatherReach, point),
       },
-      rows: planned,
-      sites: worldSpawnSites(context, galaxy, reach + gatherReach, point),
-    });
+    );
     for (const [kind, report] of Object.entries(plan.report.kinds)) {
       if (!report.requested) {
         continue;

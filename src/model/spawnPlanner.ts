@@ -248,6 +248,15 @@ export interface SpawnPlan {
   readonly report: SpawnReport;
 }
 
+/**
+ * Seeds for the two kinds of draw: rocks and moving rocks follow the world's geography seed,
+ * enemy groups the encounter identity.
+ */
+export interface SpawnSeeds {
+  readonly encounter: number;
+  readonly world: number;
+}
+
 /** Report rule names the planner itself applies; exclusion zones add their own. */
 export const SPAWN_RULE = {
   admission: "admission",
@@ -613,9 +622,10 @@ function velocity(next: Random, speed: readonly [number, number]): Vec {
  * footprint and of the others in its group and touches no applicable exclusion zone, within
  * `tries` positions or group anchors; otherwise it is dropped whole and reported. Every count
  * and position comes from named streams per kind and chunk, so a kind's requests never shift
- * with another kind's draws. Stations and points of interest are not inputs and never block.
+ * with another kind's draws. Rock and moving-rock streams use the world seed and enemy streams
+ * the encounter seed. Stations and points of interest are not inputs and never block.
  */
-export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion): SpawnPlan {
+export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRegion): SpawnPlan {
   validate(rules, region);
   const grid = periodicWorldGrid(rules, rules.chunkSize);
   const size = grid.pitch;
@@ -639,7 +649,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     return share;
   };
   const placements: SpawnPlacement[] = [];
-  const stream = (kind: string, chunk: Chunk, part: string) =>
+  const stream = (seed: number, kind: string, chunk: Chunk, part: string) =>
     randomStream(seed, `spawn:${kind}:${chunk.key}:${part}`);
   // The first applicable rule a candidate breaks, or undefined when it is accepted.
   const blocked = (category: SpawnCategory, at: Footprint): string | undefined =>
@@ -655,10 +665,10 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
           continue;
         }
         const count = chanceRound(
-          stream(kind, chunk, "count"),
+          stream(seeds.world, kind, chunk, "count"),
           target.density * open(chunk, "rock"),
         );
-        const next = stream(kind, chunk, "place");
+        const next = stream(seeds.world, kind, chunk, "place");
         tally.request(kind, count);
         for (let spawn = 0; spawn < count; spawn++) {
           const shape = weightedPick(
@@ -703,7 +713,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
           continue;
         }
         const count = chanceRound(
-          stream(kind, chunk, "count"),
+          stream(seeds.world, kind, chunk, "count"),
           target.density * open(chunk, "moving"),
         );
         tally.request(kind, count);
@@ -724,7 +734,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
           }
           return !rule;
         });
-        const order = shuffled(stream(kind, chunk, "choose"), eligible);
+        const order = shuffled(stream(seeds.world, kind, chunk, "choose"), eligible);
         const anchor = order[0];
         const grouped = count > 1 ? Math.ceil(count * target.groupShare) : 0;
         const group = anchor
@@ -765,9 +775,9 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
           }
           tally.drop(kind, rule!, rocks.length);
         };
-        move(group, stream(kind, chunk, "group-motion"), true);
+        move(group, stream(seeds.world, kind, chunk, "group-motion"), true);
         for (const rock of solos) {
-          move([rock], randomStream(seed, `spawn:${kind}:${rock.id}:solo-motion`), false);
+          move([rock], randomStream(seeds.world, `spawn:${kind}:${rock.id}:solo-motion`), false);
         }
         const missing = count - group.length - solos.length;
         if (missing > 0) {
@@ -829,10 +839,10 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
           continue;
         }
         const groups = chanceRound(
-          stream(kind, chunk, "count"),
+          stream(seeds.encounter, kind, chunk, "count"),
           target.density * open(chunk, "enemy"),
         );
-        const next = stream(kind, chunk, "place");
+        const next = stream(seeds.encounter, kind, chunk, "place");
         tally.request(kind, groups, "groups");
         for (let number = 0; number < groups; number++) {
           const group = `${kind}:${chunk.key}:${number}`;
@@ -869,7 +879,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     };
     for (let i = cells.x[0]!; i <= cells.x[1]!; i++) {
       for (let j = cells.y[0]!; j <= cells.y[1]!; j++) {
-        const next = randomStream(seed, `spawn:lattice:${i},${j}`);
+        const next = randomStream(seeds.encounter, `spawn:lattice:${i},${j}`);
         const within = () => ({
           x: i * lattice.cell + inset + next() * span,
           y: j * lattice.cell + inset + next() * span,
@@ -978,6 +988,24 @@ function escortRing(gap: number, leader: number, escort: EscortTarget): number {
       ? (2 * escort.radius + gap) / (2 * Math.sin(Math.PI / escort.perLeader))
       : 0;
   return Math.max(escort.ring, leader + escort.radius + gap, neighbours);
+}
+
+/**
+ * The farthest any group's member or escort footprint can reach from its anchor, over every
+ * band's enemy targets at their largest size.
+ */
+export function enemyGroupReach(rules: SpawnRules): number {
+  let reach = 0;
+  for (const target of rules.bands.flatMap((band) => band.enemies)) {
+    const line = ((target.groupSize[1] - 1) / 2) * lineSpacing(rules.gap, target);
+    const escort = target.escorts;
+    reach = Math.max(
+      reach,
+      line + target.radius,
+      escort ? line + escortRing(rules.gap, target.radius, escort) + escort.radius : 0,
+    );
+  }
+  return reach;
 }
 
 /**
