@@ -171,8 +171,7 @@ opens the browser's prompt or that browser's menu steps.
   and implemented in [`src/ui/cheats.ts`](ui/cheats.ts) and
   [`src/model/cheats.ts`](model/cheats.ts).
 - **Launch worlds:** `ADA_LAUNCH_SEED=<n> npm test` replays the suite in another
-  launch-seed world; [`tools/test-worlds.mjs`](../tools/test-worlds.mjs) runs three
-  further worlds in the container's test category.
+  launch-seed world on demand; the test category runs only the default world.
 - **Pacing:** [`tools/pacing-sim.ts`](../tools/pacing-sim.ts) simulates Stardust
   pacing headlessly for Gameplay review.
 - **Layout:** [`tools/layout-dump.ts`](../tools/layout-dump.ts) dumps every computed

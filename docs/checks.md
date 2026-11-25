@@ -12,7 +12,7 @@ load below 20, four CPUs, four test workers and the configured memory ceilings.
 | `npm run check`                        | `check`: `lint`, `test` and `build`, in `CHECK_TASKS` order               |
 | `npm run typecheck`                    | `typecheck`: TypeScript alone, runnable in a plain Node container         |
 | `npm run lint`                         | `lint-only`: ShellCheck 0.11.0, Prettier, ESLint and Markdown lint        |
-| `npm test`                             | `test`: Vitest with at most four workers, then the seeded worlds          |
+| `npm test`                             | `test`: Vitest once with at most four workers, then the art tool tests    |
 | `npm run test:game-kit`                | The game-owned game-kit consumer tests, run directly by Vitest            |
 | `npm run build`                        | `bundle`: Vite, writing `dist/`                                           |
 | `make check`                           | Complete container profile, the default Make target                       |
@@ -27,14 +27,11 @@ formatting and fixes are unchanged. The container's `lint` category is
 the Wrangler packaging dry run. The recipes hold the direct commands the delivery
 runner, the container and the npm scripts use.
 
-The default suite runs each retained test case with a pinned launch-seed sequence
-(`src/testSetup.ts`). The container's test category then runs
-`tools/test-worlds.mjs` to sample seed-dependent suites in one alternate world
-through `ADA_LAUNCH_SEED`. Removing the two other alternate runs cuts gate time
-and gives up coverage of world-dependent paths unique to those seeds. The
-audited seed-independent suites in `src/testing/worlds.ts` run once. Their
-default-run guard fails if they consume a launch seed. Use
-`ADA_LAUNCH_SEED=<n> npm test` to replay a specific world.
+The test category runs the suite once, with every test case on a pinned
+launch-seed sequence (`src/testSetup.ts`), and runs no routine alternate-world
+pass. Contract and property tests and the fixed acceptance batch pin
+seed-dependent behaviour. Use `ADA_LAUNCH_SEED=<n> npm test` to replay a
+specific world on demand.
 
 The test category also checks the UI font subsets: `src/tools/uiStrings.test.ts` reads
 every string the game page can set in AdaUI (the export `node tools/ui-strings.ts` writes

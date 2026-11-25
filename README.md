@@ -124,7 +124,7 @@ starts from the custom dependency image used by CI.
 | `npm run check`                        | The whole chain in the container: lint, the tests and the build            |
 | `npm run typecheck`                    | TypeScript alone, anywhere, a plain Node container included                |
 | `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and markdownlint, in the container     |
-| `npm test`                             | Vitest (four workers), seeded worlds and art tool tests, in the container  |
+| `npm test`                             | Vitest (four workers) once, then art tool tests, in the container          |
 | `npm run test:game-kit`                | The game-owned game-kit consumer tests, with Vitest's runner config loader |
 | `npm run build`                        | Vite build, writing `dist/`                                                |
 | `npm run preview`                      | Build, then serve `dist/` with `wrangler dev`                              |
