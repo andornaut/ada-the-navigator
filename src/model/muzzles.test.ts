@@ -13,13 +13,7 @@ import {
 import { ENEMY_DISPLAY_SCALE, MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { aimIndex } from "../game/enemyArt.ts";
 import { ART_MANIFEST } from "../testing/publicArt.ts";
-import {
-  createEnemy,
-  damageEnemy,
-  type EnemyContext,
-  type EnemyState,
-  stepEnemy,
-} from "./enemyAi.ts";
+import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { drawnIndex, muzzleOffset } from "./muzzles.ts";
 
 const at = (degrees: number) => ({
@@ -167,13 +161,14 @@ describe("drawn muzzles", () => {
 
   it("keeps the model origin for ships whose art defines no muzzles", () => {
     for (const archetype of ["fighter"] as const) {
-      // A hit engages the ship at once, so it fires on this step.
-      const hit = damageEnemy(
-        enemyCatalog[archetype],
-        { amount: 1, hardpointId: null },
-        spawn(archetype),
-      );
-      const state = { ...hit, position: { x: 25, y: 10 } };
+      // An engaged ship with its nose on Ada, 100 units ahead, fires on this step. A hit would
+      // start a hit-and-run retreat, which holds fire.
+      const state = {
+        ...spawn(archetype),
+        engaged: true,
+        facing: { x: 1, y: 0 },
+        position: { x: 25, y: 10 },
+      };
       const shots = stepEnemy(
         enemyCatalog[archetype],
         context(state, { x: 125, y: 10 }),
