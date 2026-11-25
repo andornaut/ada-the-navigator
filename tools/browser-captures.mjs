@@ -179,19 +179,27 @@ async function shot(file) {
 /**
  * Saves a square of the page `side` CSS px wide, without the HTML drawn over the canvas, centred
  * on the element `selector` (by default the canvas, where Ada draws), as `file`. Without `side`
- * the square is twice the element's larger dimension.
+ * the square is twice the element's larger dimension. `screen` moves the centre by that offset
+ * in game screen px from the canvas centre, as the fixtures place objects about Ada.
  */
-async function closeUp(file, { selector = "#game-canvas > canvas", side } = {}) {
+async function closeUp(
+  file,
+  { screen = { x: 0, y: 0 }, selector = "#game-canvas > canvas", side } = {},
+) {
   const box = await page.locator(selector).boundingBox();
   assert.ok(box, `${selector} must be laid out for its close-up`);
   const width = side ?? 2 * Math.max(box.width, box.height);
+  const scale = box.width / SCREEN.width;
+  // A square that would leave the page slides back inside it.
+  const view = page.viewportSize();
+  const inside = (at, extent) => Math.min(Math.max(at, 0), Math.max(extent - width, 0));
   const showOverCanvas = await hideOverCanvas(page);
   await page.screenshot({
     clip: {
       height: width,
       width,
-      x: box.x + box.width / 2 - width / 2,
-      y: box.y + box.height / 2 - width / 2,
+      x: inside(box.x + box.width / 2 + screen.x * scale - width / 2, view.width),
+      y: inside(box.y + box.height / 2 + screen.y * scale - width / 2, view.height),
     },
     path: `${output}/${file}`,
   });

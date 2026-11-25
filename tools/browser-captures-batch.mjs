@@ -32,6 +32,7 @@ const [
   { GALAXY_ID },
   { readAsteroidCatalog },
   { backdropFixture },
+  { uiIconUrl },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
   import(new URL("../src/data/content.ts", import.meta.url)),
@@ -56,6 +57,7 @@ const [
   import(new URL("../src/data/galaxies.ts", import.meta.url)),
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import("./browser-support.mjs"),
+  import(new URL("../src/data/uiIconUrl.ts", import.meta.url)),
 ]);
 
 const ALL = [1, 2, 3, 4, 5, 6];
@@ -1074,6 +1076,94 @@ export function batchCaptures(ctx) {
     await ctx.pageShot("controls-paint-notice.png");
   }
 
+  // Art's retuned project placements: the salvage beacons on the salvagers' yard, Whirlpool's
+  // nursery beacon by the whale family and Andromeda's spare beacon beside the relit dark
+  // beacon, each whole and in a close-up at 2 device px per CSS px, after the reveal.
+  async function placements() {
+    const spare = () => {
+      const model = destinationModel(5, "darkBeacon", {
+        projects: ["spareBeacon"],
+        screen: { x: -90, y: -30 },
+      });
+      model.state.progress[5].questComplete = true;
+      return model;
+    };
+    const cases = [
+      [
+        "salvagers",
+        () => destinationModel(1, "salvagers", { projects: ["salvageBeacons"] }),
+        { x: -110, y: -20 },
+      ],
+      [
+        "nursery",
+        () =>
+          destinationModel(3, "family", {
+            projects: ["nurseryBeacon"],
+            screen: { x: -60, y: -40 },
+          }),
+        { x: -60, y: -40 },
+      ],
+      ["spare", spare, { x: -90, y: -30 }],
+    ];
+    await inTurn(cases, async ([name, model, screen]) => {
+      const file = `placements-${name}`;
+      await open(canonical(model(), file), { deviceScaleFactor: 2 });
+      // The reveal fades a change in over 600 ms.
+      await ctx.frames(file, { after: 700 });
+      await ctx.closeUp(`art-${file}-close.png`, { screen, side: 420 });
+    });
+  }
+
+  // The hostile stations' pod and dome tops in each family, aimed at Ada, at 2 device px per
+  // CSS px: the Claim station in Cartwheel, the garnet station in Andromeda and the coral station
+  // in Phantom, each still, in a close-up, and with a pod and the dome firing.
+  async function hostileTops() {
+    const cases = [
+      ["claim", 2],
+      ["garnet", 5],
+      ["coral", 6],
+    ];
+    const screen = { x: -150, y: -20 };
+    await inTurn(cases, async ([family, galaxy]) => {
+      const model = flightModel(galaxy);
+      model.state.flight.objects = [];
+      addEnemy(model, { archetype: "hostileStation", fire: ["weapon-0", "weapon-5"], screen });
+      const name = `hostile-tops-${family}`;
+      await open(canonical(model, name), { deviceScaleFactor: 2 });
+      await ctx.frames(name);
+      await ctx.closeUp(`art-${name}-close.png`, { screen, side: 360 });
+      await ctx.release();
+      await ctx.page().clock.runFor(700);
+      await ctx.closeUp(`art-${name}-firing-close.png`, { screen, side: 360 });
+    });
+  }
+
+  // The holodisk item icons as served: icon-holodisk-24 and the 16 and 20 px vectors at their
+  // own size and at 8 times, nearest-neighbour, on the item notice's ink chip and on cream.
+  async function holodiskIcon() {
+    const page = await ctx.openHome(null);
+    const icons = [
+      ["icon-holodisk-24", "/art/ui/sprites/icon-holodisk-24.png", 24],
+      ["icon-holodisk-20", uiIconUrl("icon-holodisk-20"), 20],
+      ["icon-holodisk", uiIconUrl("icon-holodisk"), 16],
+    ];
+    const cell = ([key, src, size], ground) =>
+      `<figure style="margin:0;padding:16px;background:${ground};display:grid;gap:12px;` +
+      `justify-items:center"><img src="${src}" width="${size}" height="${size}" alt="">` +
+      `<img src="${src}" width="${size * 8}" height="${size * 8}" alt="" ` +
+      `style="image-rendering:pixelated"><figcaption style="font:12px monospace;color:#888">` +
+      `${key}</figcaption></figure>`;
+    const cells = ["#181425", "#f2edd5"].flatMap((ground) =>
+      icons.map((icon) => cell(icon, ground)),
+    );
+    const body = "margin:0;padding:16px;background:#7a7a7a;display:flex;flex-wrap:wrap;gap:16px";
+    await page.setContent(`<body style="${body}">${cells.join("")}</body>`);
+    await page.waitForFunction(() =>
+      [...document.images].every((image) => image.complete && image.naturalWidth > 0),
+    );
+    await ctx.pageShot("holodisk-icon.png");
+  }
+
   return {
     backdrops,
     controls,
@@ -1082,7 +1172,9 @@ export function batchCaptures(ctx) {
     fleet,
     "fleet-craft": fleetCraft,
     "fleet-tops": fleetTops,
+    "holodisk-icon": holodiskIcon,
     hostile,
+    "hostile-tops": hostileTops,
     landmarks,
     needle,
     "nose-heavy-missile": noseSet("heavyMissile", 1),
@@ -1092,6 +1184,7 @@ export function batchCaptures(ctx) {
     "nose-rapid-missile": noseSet("rapidMissile", 1),
     "nose-scattershot": noseSet("scattershot", 1),
     pickups,
+    placements,
     resources,
     ship,
     "ship-fixes": shipFixes,

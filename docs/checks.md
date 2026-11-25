@@ -293,6 +293,12 @@ warp's settle-24, settle-16 and settle-10 poses. `ship-fixes-l`, `ship-fixes-m`
 and `ship-fixes-s` take her plumes at 1, 0.6 and 0.25 of her top speed, forward
 and in reverse, at headings 0, 16, 32 and 48 of 64: eight fixtures per set.
 
+`placements` takes the salvage beacons, Whirlpool's nursery beacon and
+Andromeda's spare beacon after their reveal, and `hostile-tops` each family's
+hostile station still and with a pod and the dome firing, both at 2 device px
+per CSS px with a close-up of each. `holodisk-icon` lays the served holodisk
+item icons at their own size and at 8 times on the ink chip and on cream.
+
 Browser smoke coverage supports prototype integration review; it does not
 establish story completeness or gameplay balance. Review the collected results
 for the exact source revision before claiming a behavior is verified.
