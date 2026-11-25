@@ -12,6 +12,92 @@
     "edge": 1,
     "dash": [8, 2]
   },
+  "fade": {
+    "steps": [
+      [0.6, 1],
+      [0.3, 0.6]
+    ],
+    "last": 0.3
+  },
+  "bolt": {
+    "outer": [
+      [0, 0],
+      [-3.6, -2.1],
+      [-12, 0],
+      [-3.6, 2.1]
+    ],
+    "outerColour": "obstacle",
+    "inner": [
+      [-1.2, 0],
+      [-3.6, -0.95],
+      [-7, 0],
+      [-3.6, 0.95]
+    ],
+    "innerColour": "white",
+    "tail": {
+      "colour": "coralSide",
+      "points": [
+        [-8, -1.1],
+        [-20, 0],
+        [-8, 1.1]
+      ]
+    }
+  },
+  "fan": {
+    "far": {
+      "colour": "obstacle",
+      "points": [
+        [0, 0],
+        [-3, -1.3],
+        [-10, 0],
+        [-3, 1.3]
+      ]
+    },
+    "near": {
+      "spacing": 5.6,
+      "colour": "obstacle",
+      "depth": 11,
+      "minRadius": 4,
+      "widen": 1.3,
+      "innerColour": "white",
+      "inner": {
+        "inset": 2.5,
+        "offset": 4
+      },
+      "notch": 3
+    }
+  },
+  "pellet": {
+    "outer": [
+      [2.4, 0],
+      [0, -1.9],
+      [-2.4, 0],
+      [0, 1.9]
+    ],
+    "outerColour": "obstacle",
+    "inner": [
+      [1.2, 0],
+      [0.2, -0.8],
+      [-0.8, 0],
+      [0.2, 0.8]
+    ],
+    "innerColour": "white"
+  },
+  "missiles": {
+    "rapid": "enemyRapidMissile",
+    "heavy": "enemyHeavyMissile",
+    "flame": {
+      "colour": "obstacle",
+      "innerColour": "plate"
+    }
+  },
+  "ripple": {
+    "colour": "weapon",
+    "stroke": [2.2, 1.2],
+    "reducedMotion": {
+      "stroke": 2
+    }
+  },
   "ringBurst": {
     "emission": {
       "ms": 180,
@@ -701,24 +787,9 @@
     "spark": {
       "ms": 160
     },
-    "lightField": {
-      "glow": {
-        "width": [10, 7.5],
-        "alpha": 0.9
-      },
-      "bloomAlpha": 0.6
-    },
     "reducedMotion": {
-      "line": {
-        "width": 3,
-        "colour": "obstacle"
-      },
-      "edge": {
-        "width": 6,
-        "alpha": 0.35,
-        "colour": "obstacle",
-        "lightAlpha": 0.9
-      },
+      "widthFactor": 1,
+      "bloom": false,
       "holdMs": 180
     }
   },
@@ -780,24 +851,9 @@
     "spark": {
       "ms": 160
     },
-    "lightField": {
-      "glow": {
-        "width": [6.5, 4],
-        "alpha": 0.9
-      },
-      "bloomAlpha": 0.6
-    },
     "reducedMotion": {
-      "line": {
-        "width": 2,
-        "colour": "obstacle"
-      },
-      "edge": {
-        "width": 4,
-        "alpha": 0.35,
-        "colour": "obstacle",
-        "lightAlpha": 0.9
-      },
+      "widthFactor": 1,
+      "bloom": false,
       "holdMs": 90
     }
   }

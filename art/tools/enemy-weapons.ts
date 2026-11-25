@@ -1,5 +1,6 @@
-// Enemy-only weapon effects (ring burst, mine, charged lance) and the enemy Phaser's aim line and
-// beam: the shapes, widths, alpha keys and timings Tech draws in code, written to
+// The enemies' shots (bolt, Multi-Laser fan, Scattershot pellet, missiles), their ripple and
+// fades, the enemy-only weapon effects (ring burst, mine, charged lance) and the enemy Phaser's
+// aim line and beam: the shapes, widths, alpha keys and timings Tech draws in code, written to
 // public/art/enemy-weapons.json and linked from the core manifest as `enemyWeapons`. The mine's
 // collision is the union of its weapon-solids frames as convex parts, checked against them.
 import { readFileSync, writeFileSync } from "node:fs";
@@ -64,13 +65,73 @@ const point = (x: number, y: number): V2 => [round(x), round(y)];
 // The aim grammar shared by the lance and the Phaser: dashed while aiming, solid when it will fire.
 const TELL = { width: 1, dash: [6, 4] } as const;
 
-// A beam's flat look (art/weapons.md, Flat look): opaque bands in coral, plate and white, each
-// `width` px at the nose then the end times `w`, and opaque muzzle bloom discs in the same order.
+// A beam's opaque bands in coral, plate and white, each `width` px at the nose then the end times
+// `w`, and its opaque muzzle bloom discs in the same order (art/weapons.md, Beams).
 const BAND_COLOURS = ["obstacle", "plate", "white"] as const;
 const flatBeam = (widths: readonly V2[], radii: readonly number[]) => ({
   layers: widths.map((width, i) => ({ colour: BAND_COLOURS[i]!, width })),
   bloom: radii.map((radius, i) => ({ colour: BAND_COLOURS[i]!, radius })),
 });
+
+// Every linear fade (ripple, mine fizzle, Scattershot range fade) holds steps: a linear value
+// over a step's threshold takes its alpha, and below the last threshold the fade holds `last`.
+const FADE = {
+  steps: [
+    [0.6, 1],
+    [0.3, 0.6],
+  ],
+  last: 0.3,
+} as const;
+
+// The enemy bolt, the ring dart's construction stretched to a bolt: a coral body with a white
+// core over a coralSide tail wedge, its head at the shot's point.
+const BOLT = {
+  outer: [point(0, 0), point(-3.6, -2.1), point(-12, 0), point(-3.6, 2.1)],
+  outerColour: "obstacle",
+  inner: [point(-1.2, 0), point(-3.6, -0.95), point(-7, 0), point(-3.6, 0.95)],
+  innerColour: "white",
+  tail: { colour: "coralSide", points: [point(-8, -1.1), point(-20, 0), point(-8, 1.1)] },
+} as const;
+
+// The enemy Multi-Laser: far bolts are small coral darts; near the nose the volley draws Ada's
+// band through the heads (art/weapons.md, Bolt, pellet and fan) in coral with a white inner band,
+// its trailing edges notched `notch` px forward at the middle head, so it reads as a chevron.
+const FAN = {
+  far: {
+    colour: "obstacle",
+    points: [point(0, 0), point(-3, -1.3), point(-10, 0), point(-3, 1.3)],
+  },
+  near: {
+    spacing: 5.6,
+    colour: "obstacle",
+    depth: 11,
+    minRadius: 4,
+    widen: 1.3,
+    innerColour: "white",
+    inner: { inset: 2.5, offset: 4 },
+    notch: 3,
+  },
+} as const;
+
+// The enemy Scattershot pellet: a coral diamond with a white core, turned to its heading.
+const PELLET = {
+  outer: [point(2.4, 0), point(0, -1.9), point(-2.4, 0), point(0, 1.9)],
+  outerColour: "obstacle",
+  inner: [point(1.2, 0), point(0.2, -0.8), point(-0.8, 0), point(0.2, 0.8)],
+  innerColour: "white",
+} as const;
+
+// The enemy missiles: the weapon-solids frames of these projectiles over a coral flame with a
+// plate inner wedge, in the geometry Ada's missiles use.
+const MISSILES = {
+  rapid: "enemyRapidMissile",
+  heavy: "enemyHeavyMissile",
+  flame: { colour: "obstacle", innerColour: "plate" },
+} as const;
+
+// The ring-burst contact: an amber ground ripple whose stroke thins from `stroke[0]` to
+// `stroke[1]` over its life; reduced motion holds it at the full radius at `reducedMotion.stroke`.
+const RIPPLE = { colour: "weapon", stroke: [2.2, 1.2], reducedMotion: { stroke: 2 } } as const;
 
 const RING_BURST = {
   // The emission ring's alpha holds to each step's end in ms.
@@ -261,10 +322,9 @@ const LANCE = {
     [6.5, 4.2, 2.3],
   ),
   spark: SPARK,
-  lightField: { glow: { width: [10, 7.5], alpha: 0.9 }, bloomAlpha: 0.6 },
   reducedMotion: {
-    line: { width: 3, colour: "obstacle" },
-    edge: { width: 6, alpha: 0.35, colour: "obstacle", lightAlpha: 0.9 },
+    widthFactor: 1,
+    bloom: false,
     holdMs: 180,
   },
 } as const;
@@ -294,10 +354,9 @@ const PHASER = {
   ),
   missFade: 28,
   spark: SPARK,
-  lightField: { glow: { width: [6.5, 4], alpha: 0.9 }, bloomAlpha: 0.6 },
   reducedMotion: {
-    line: { width: 2, colour: "obstacle" },
-    edge: { width: 4, alpha: 0.35, colour: "obstacle", lightAlpha: 0.9 },
+    widthFactor: 1,
+    bloom: false,
     holdMs: 90,
   },
 } as const;
@@ -310,6 +369,12 @@ writeFileSync(
       version: 1,
       colours: COLOURS,
       lightField: { edge: 1, dash: [8, 2] },
+      fade: FADE,
+      bolt: BOLT,
+      fan: FAN,
+      pellet: PELLET,
+      missiles: MISSILES,
+      ripple: RIPPLE,
       ringBurst: RING_BURST,
       mine: MINE_DATA,
       lance: LANCE,
