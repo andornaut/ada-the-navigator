@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import platformFile from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json";
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
+import crossbowFile from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
@@ -105,4 +106,53 @@ it("keeps capital and flagship part caches separate even for identical mount and
   expect(second).not.toEqual(first);
   expect(enemyPartOutline(6, capital, "claw-left")).toBe(first);
   expect(enemyPartOutline(6, flagship, "claw-left")).toBe(second);
+});
+
+it("gives a fleet capital's hidden mount the collar outline of the nearest heading that draws it", () => {
+  // Needle (route position 3) flies the Crossbow capital.
+  const crossbow = createEnemy(
+    enemyDefinition(4, "capital", "raw-crossbow"),
+    { archetype: "capital", id: "raw-crossbow", packId: null, phase: 0 },
+    { x: 0, y: 0 },
+  );
+  type Mount = (typeof crossbowFile.headings)[number]["hardpoints"][number] & { hidden?: boolean };
+  const mount = (index: number, id: string): Mount =>
+    crossbowFile.headings
+      .find((heading) => heading.index === (index + 16) % 16)!
+      .hardpoints.find((part) => part.id === id)!;
+  const bare = crossbowFile.headings.flatMap(({ hardpoints, index }) =>
+    (hardpoints as Mount[])
+      .filter((part) => part.hidden === true && part.collision.intact.length === 0)
+      .map(({ id }) => ({ id, index })),
+  );
+  expect(bare.length).toBeGreaterThan(0);
+  const centre = crossbowFile.frame / 2;
+  for (const { id, index } of bare) {
+    const near = [1, 2, 3, 4, 5, 6, 7, 8]
+      .flatMap((step) => [index - step, index + step])
+      .find((candidate) => mount(candidate, id).collision.intact.length > 0)!;
+    const own = mount(index, id);
+    const drawn = mount(near, id);
+    const dx = own.anchor[0]! - drawn.anchor[0]!;
+    const dy = own.anchor[1]! - drawn.anchor[1]!;
+    const destroyed = {
+      ...crossbow,
+      facing: at(index),
+      hardpoints: crossbow.hardpoints.map((part) => (part.id === id ? { ...part, hp: 0 } : part)),
+    };
+    const outline = enemyPartOutline(3, destroyed, id)!;
+    const expected = drawn.collision.destroyed.map((polygon) =>
+      polygon.map(([x, y]) => ({
+        x: (x! + dx - centre) * ENEMY_DISPLAY_SCALE,
+        y: (y! + dy - centre) * ENEMY_DISPLAY_SCALE,
+      })),
+    );
+    expect(outline, `${id} at heading ${index}`).toHaveLength(expected.length);
+    outline.forEach((polygon, p) =>
+      polygon.forEach((point, k) => {
+        expect(point.x).toBeCloseTo(expected[p]![k]!.x, 9);
+        expect(point.y).toBeCloseTo(expected[p]![k]!.y, 9);
+      }),
+    );
+  }
 });

@@ -90,7 +90,6 @@ interface JetsFile {
 }
 
 interface HardpointsFile {
-  archetype?: string;
   frame: number;
   hardpoints: { id: string; states?: string[]; top: string | null }[];
   headings: {
@@ -143,10 +142,9 @@ function smallOutline(file: JetsFile): EnemyOutline | undefined {
 type HeadingMount = HardpointsFile["headings"][number]["hardpoints"][number];
 
 /**
- * A mount's collision at a heading. A hostile station mount the hull hides there carries none,
- * yet it still takes hits: its collar's parts come from the nearest heading that draws them,
- * moved by the difference of the two anchors (art/station-redesign.md). A fleet hull's hidden
- * base keeps its empty collision (art/enemy-redesign.md).
+ * A mount's collision at a heading. A mount the hull hides there carries none, yet it still
+ * takes hits: its collar's parts come from the nearest heading that draws them, moved by the
+ * difference of the two anchors. This holds for hostile stations and fleet hulls alike.
  */
 function mountCollision(
   file: HardpointsFile,
@@ -154,7 +152,7 @@ function mountCollision(
   part: HeadingMount,
 ): NonNullable<HeadingMount["collision"]> {
   const own = part.collision ?? {};
-  if (file.archetype !== "hostileStation" || !part.hidden || own.intact?.length || !part.anchor) {
+  if (!part.hidden || own.intact?.length || !part.anchor) {
     return own;
   }
   for (let step = 1; step <= HEADINGS / 2; step++) {
@@ -203,7 +201,7 @@ function heavyOutline(file: HardpointsFile, jets?: JetsFile): EnemyOutline | und
     for (const heading of file.headings) {
       const part = heading.hardpoints.find((entry) => entry.id === id);
       const { capped, destroyed, intact } = part ? mountCollision(file, heading.index, part) : {};
-      // A fleet base the hull hides whole at this heading has no collision; its top still has.
+      // A hidden mount with no heading to borrow from keeps an empty base; its top still collides.
       const hidden = part?.hidden === true;
       if (
         !part ||
