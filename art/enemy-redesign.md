@@ -313,15 +313,12 @@ is 10.51 frame px (4.6 display px) and the collar is 2.74 frame px high.
 - Round solids (the mines and the dome) are lit per aim, so their two tones
   meet on the light's terminator at every aim.
 - A ship's tops are in its part sheets and hardpoints file. The tops the
-  hostile station and the platform carry are produced at game scale for the
-  station switch: `/art/enemies/fleetTop-pod-sheet.svg` and
-  `fleetTop-dome-sheet.svg` in the coral, claim and garnet folders, and
-  `fleetTop-gun-sheet.svg` in the claim folder.
-- [fleet-top-rows.json](fleet-top-rows.json) stages their rows under the
-  shipped ids `enemy-{family}-hostileStation-pod-top-{i}`,
-  `enemy-{family}-hostileStation-dome-top-{i}` and
-  `enemy-claim-platform-turret-top-{i}`, apart from the fleet's rows, because
-  they switch with the stations.
+  hostile station and the platform carry ship at game scale as
+  `fleetTop-pod-sheet.svg` and `fleetTop-dome-sheet.svg` in the coral, claim
+  and garnet folders and `fleetTop-gun-sheet.svg` in the claim folder, under
+  the ids `enemy-{family}-hostileStation-pod-top-{i}`,
+  `enemy-{family}-hostileStation-dome-top-{i}` (`enemy-` for coral) and
+  `enemy-claim-platform-turret-top-{i}`.
 - [fleet-tops.json](fleet-tops.json) holds the shot origins and collision of
   `gun`, `pod`, `dome`, `triple` and `dish` per aim, relative to the pivot, and
   the mount's radius and collar height. `triple` and `dish` have no carrier, so
@@ -420,12 +417,12 @@ For the capitals, from the same file:
   and `hopper` one.
 - A `flashWidth` for any capital is 254.707.
 
-For the stations, from [fleet-top-rows.json](fleet-top-rows.json): the `pod`
-and `dome` top rows of the hostile station in the core, Cartwheel and Andromeda
-manifests and the platform's `turret` top rows in Cartwheel's, with the shot
-origins and collision of [fleet-tops.json](fleet-tops.json): two for `pod`,
-eight for `dome`, one for `gun`. The frames are 40, 32 and 40 px, against the
-shipped 48, 48 and 120.
+Every station top is switched: the `pod` and `dome` top rows of the hostile
+station in the core, Cartwheel and Andromeda manifests and the platform's
+`turret` top rows in Cartwheel's name the fleet's top sheets, frames 40, 32 and
+40 px, with the shot origins and collision of
+[fleet-tops.json](fleet-tops.json): two for `pod`, eight for `dome`, one for
+`gun`.
 
 Art then moves the craft into `enemies.ts`, `destruction.ts` and the family
 generators' ownership, renames the files to the `{archetype}-` stems and

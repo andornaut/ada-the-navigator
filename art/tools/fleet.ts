@@ -987,9 +987,7 @@ export const recolour = (family: FleetFamily, text: string): string => {
 
 // The switch rows, by manifest: the producer leaves the manifests to the switch.
 const ROWS = fileURLToPath(new URL("../fleet-rows.json", import.meta.url));
-// The rows of the tops the hostile station and the platform carry, and every standalone top's
-// shot origins and collision per aim, relative to its pivot.
-const TOP_ROWS = fileURLToPath(new URL("../fleet-top-rows.json", import.meta.url));
+// Every standalone top's shot origins and collision per aim, relative to its pivot.
 const TOPS = fileURLToPath(new URL("../fleet-tops.json", import.meta.url));
 const MANIFESTS: Readonly<Record<FleetFamily, ManifestFile>> = {
   coral: "core",
@@ -1264,36 +1262,22 @@ async function main() {
   const text = json(rows);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   // The tops no fleet hull carries. A carried design's sheet is written in each family that
-  // draws it, and its rows are staged apart from the fleet's, for the station and platform
-  // switch. Every design's shot origins and collision are staged as data.
+  // draws it, for the hostile station and the platform. Every design's shot origins and
+  // collision are staged as data.
   const tops = weaponTops();
-  const topRows: Record<string, { assets: unknown[] }> = {};
   for (const { carrier, frames, name, top } of tops.tops) {
     for (const family of carrier?.families ?? []) {
       const manifest = MANIFESTS[family];
       const directory = manifest === "core" ? "/art/enemies/" : `/art/${manifest}/enemies/`;
       const file = `fleetTop-${name}-sheet.svg`;
-      const set: Sheet = {
-        file,
-        size: top.frame,
-        ids: frames.map(
-          (_, index) => `${prefix(family)}${carrier!.stem}-${carrier!.top}-top-${index}`,
-        ),
-        frames: frames.map((each) => ({ ...each, svg: recolour(family, each.svg) })),
-        fields: (aimIndex) => ({ aimIndex, top: carrier!.top }),
-      };
-      const path = writeOnce(
-        directory,
-        new Map(),
-        new Map([[file, sheet(set.size, set.frames, set.ids)]]),
-      ).get(file)!;
-      (topRows[manifest] ??= { assets: [] }).assets.push(
-        ...entries({ archetype: carrier!.stem }, family, set, path),
+      const ids = frames.map(
+        (_, index) => `${prefix(family)}${carrier!.stem}-${carrier!.top}-top-${index}`,
       );
+      const drawn = frames.map((each) => ({ ...each, svg: recolour(family, each.svg) }));
+      writeOnce(directory, new Map(), new Map([[file, sheet(top.frame, drawn, ids)]]));
     }
   }
   const staged: readonly (readonly [string, string])[] = [
-    [TOP_ROWS, json(topRows)],
     [
       TOPS,
       json({
