@@ -159,11 +159,13 @@ test("the ring gate is true to Gameplay's rim across the screen at every axis", 
     }
     assert.ok(extent[0] < data.frame * DISPLAY_SCALE && extent[1] < data.frame * DISPLAY_SCALE);
   }
-  // Axis 2 runs straight down the screen, so the ring spans its full diameter across it: the
-  // rim's outer diameter and both collars, in display px.
+  // Axis 2 runs straight down the screen, so the ring's plane lies across it: the rim's outer
+  // diameter draws as wide as the game draws 80 world units across the screen, 80 * sqrt(2),
+  // and the collars add their reach on each side.
   const across = data.orientations[2]!.extent[0];
-  assert.ok(across > 2 * GATE_RIM.outer * WORLD_UNIT);
-  assert.ok(Math.abs(across - 2 * (GATE_RIM.outer * WORLD_UNIT + 4.2)) < 0.2);
+  const screen = Math.sqrt(1.5);
+  assert.ok(Math.abs(2 * GATE_RIM.outer * WORLD_UNIT * screen - 80 * Math.SQRT2) < 1e-9);
+  assert.ok(Math.abs(across - 2 * (GATE_RIM.outer * WORLD_UNIT + 4.2) * screen) < 0.2);
 });
 
 test("each ring gate layer is one closed half: the layers' outlines differ and both draw", () => {

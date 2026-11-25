@@ -139,12 +139,12 @@ each side, a blunt needle collar carrying one lamp band. It is true to
 Gameplay's gate: `opening` 66 and `rim` inner 33, outer 40 and depth 7 world
 units, unchanged.
 
-| Rim                                             | World units | Display px |
-| ----------------------------------------------- | ----------: | ---------: |
-| Inner radius                                    |          33 |       38.1 |
-| Outer radius                                    |          40 |       46.2 |
-| Depth along the axis                            |           7 |        8.1 |
-| Collar reach from the centre, without collision |        43.6 |       50.4 |
+| Rim                                             | World units | Model units |
+| ----------------------------------------------- | ----------: | ----------: |
+| Inner radius                                    |          33 |        38.1 |
+| Outer radius                                    |          40 |        46.2 |
+| Depth along the axis                            |           7 |         8.1 |
+| Collar reach from the centre, without collision |        43.6 |        50.4 |
 
 - `/art/needle/ring-gates-sheet.svg`: 20 frames, ids
   `needle-gate-{state}-{o}-{layer}` as shipped: `state` `dark` or `lit`,
@@ -170,8 +170,9 @@ units, unchanged.
 The game draws a world offset `(x, y)` at `(x - y, (x + y) / 2)`. The art
 projection draws a model point at `((x - y) * sqrt(3) / 2, (x + y) / 2 - z)`.
 The gate's model is the world rim scaled by `2 / sqrt(3)` (1.1547 display px
-per world unit), which makes its width across the screen exact: the rim's
-outer diameter spans 92.4 px where the game spans 80 world units.
+per world unit), which makes its width across the screen exact: at axis 2 the
+rim's outer diameter draws 113.1 px wide and the opening 93.3 px, as the game
+draws 80 and 66 world units across the screen.
 
 The same scale draws every ground offset 15.47% farther down the screen than
 the game does, and the two cannot both be exact in this projection:
