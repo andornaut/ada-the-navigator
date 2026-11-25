@@ -20,26 +20,17 @@ const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `$
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
-const except = (...bands: string[]) => EVERY_BAND.filter((band) => !bands.includes(band));
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // Admission: the local budget and archetype limit refuse groups near others.
-  capital: ["2:0", "2:1", "2:2", "4:0", "4:1", "4:2", "5:0", "5:1", "5:2", "6:0", "6:1", "6:2"],
-  // Admission, and the arrival calm radius in the inner region.
-  fighter: except("6:2"),
-  // Admission.
-  frigate: except("1:0", "1:1", "1:2"),
-  // Admission, and the arrival calm radius in the inner region.
-  interceptor: except("1:0", "1:1", "2:2", "5:0", "5:1"),
+  // Group spacing, then admission: anchors kept a lattice spacing apart at random positions
+  // jam below the table's group densities.
+  capital: EVERY_BAND,
+  fighter: EVERY_BAND,
+  frigate: EVERY_BAND,
+  interceptor: EVERY_BAND,
   // Overlap: at these requests, slot rocks and enemy groups leave room for about two thirds.
   resource: EVERY_BAND,
-  // Admission, and the arrival calm radius in the inner region.
-  retaliator: except("1:0", "1:2"),
-  // Ore fields in Cartwheel and currents in Whirlpool.
-  rock: ["2:1", "2:2", "3:0", "3:1", "3:2"],
-  // Currents in Whirlpool.
-  "rock-feature": ["3:0"],
-  // Admission, and the arrival calm radius in the inner region.
-  swarm: ["1:0", "2:0", "4:0", "5:0"],
+  retaliator: EVERY_BAND,
+  swarm: EVERY_BAND.filter((band) => band !== "6:1"),
 };
 
 describe("spawn target catalog", () => {

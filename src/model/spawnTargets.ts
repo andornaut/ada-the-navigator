@@ -174,8 +174,9 @@ function enemyTargets(
  * first, then feature, slot and resource rocks, then moving rocks chosen from placed feature and
  * slot rocks. Slot rocks and moving rocks follow their rules in every region (moving rocks scale
  * with the original encounter rate); resources, Large-only features and enemy groups follow the
- * table by region. Densities blend across the region boundaries; budgets and archetype limits
- * switch there.
+ * table by region. Densities count per open area, blend across the region boundaries and keep
+ * enemy groups an encounter lattice spacing apart; budgets and archetype limits switch at the
+ * boundaries.
  */
 export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
@@ -230,6 +231,8 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     chunkSize: tuning.chunkSize,
     corridor: flight.shipRadius + flight.shipRadius,
     gap: 2 * flight.shipRadius,
+    groupSpacing: encounterLatticeSpacing(galaxy) * tuning.chunkSize,
+    openArea: true,
     order: ["enemies", "rocks", "moving"],
     search: tuning.chunkSize / 2,
     tries: 24,

@@ -13,6 +13,11 @@ export const ACCEPTANCE_SEEDS = [11, 23, 37, 41, 59, 67, 73, 89] as const;
 export const AREAS_PER_BAND = 160;
 /** Sampled areas are this many chunks on a side. */
 const AREA_CHUNKS = 3;
+/**
+ * Chunks of enemy groups planned around each area, uncounted, so group spacing and admission
+ * meet the area's neighbours; rocks are planned in the area alone.
+ */
+const AREA_MARGIN = 4;
 
 export interface KindAcceptance {
   /** Sampled areas that requested at least one of the kind. */
@@ -43,8 +48,10 @@ const cache = new Map<string, BandAcceptance>();
 /**
  * Samples a band's 3x3-chunk areas uniformly by area across the band's ring of the torus world,
  * plans each with the spawn target catalog, the seeded world's exclusion zones around the launch
- * point and its ore field sites, and totals each kind's requests and deliveries. Areas near a
- * region boundary request the blended densities, and are judged against them.
+ * point and its ore field sites, and totals each kind's requests and deliveries. Enemy groups in
+ * a margin of uncounted chunks around each area are planned with it, so group spacing and
+ * admission see the area's neighbours. Requests are per open area and, near a region boundary, blended; each area
+ * is judged against its own reduced, blended request.
  */
 export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptance {
   const key = `${galaxy}:${band}`;
@@ -85,13 +92,33 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
     } while (Math.hypot(point.x, point.y) < from);
     const centre = worldCellAt(grid, point);
     const half = Math.floor(AREA_CHUNKS / 2);
-    // Every chunk of the area lies within this distance of the sampled point.
-    const reach = AREA_CHUNKS * grid.pitch;
+    const planned = AREA_CHUNKS + 2 * AREA_MARGIN;
+    // Every planned chunk lies within this distance of the sampled point.
+    const reach = planned * grid.pitch;
+    // Rocks are planned in the area alone, so only enemy zones need the margin's reach.
+    const exclusions = [
+      ...worldSpawnExclusions(
+        context,
+        galaxy,
+        [{ x: 0, y: 0 }],
+        AREA_CHUNKS * grid.pitch,
+        point,
+      ).filter((zone) => !zone.applies.includes("enemy")),
+      ...worldSpawnExclusions(context, galaxy, [{ x: 0, y: 0 }], reach, point).filter((zone) =>
+        zone.applies.includes("enemy"),
+      ),
+    ];
     const plan = planRegion(rules, ACCEPTANCE_SEEDS[sample % ACCEPTANCE_SEEDS.length]!, {
-      cell: { x: centre.x - half, y: centre.y - half },
-      columns: AREA_CHUNKS,
-      exclusions: worldSpawnExclusions(context, galaxy, [{ x: 0, y: 0 }], reach, point),
-      rows: AREA_CHUNKS,
+      cell: { x: centre.x - half - AREA_MARGIN, y: centre.y - half - AREA_MARGIN },
+      columns: planned,
+      exclusions,
+      report: {
+        cell: { x: centre.x - half, y: centre.y - half },
+        columns: AREA_CHUNKS,
+        neighbours: ["enemies"],
+        rows: AREA_CHUNKS,
+      },
+      rows: planned,
       sites: worldSpawnSites(context, galaxy, reach + gatherReach, point),
     });
     for (const [kind, report] of Object.entries(plan.report.kinds)) {
