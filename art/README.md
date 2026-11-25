@@ -52,6 +52,8 @@ Gameplay supplies semantic requirements.
 - The [friendly object redesign](friendly-redesign.md) plans the replacement
   pickups, beacons, gate, friendly craft and whales and documents their
   producer.
+- The [station redesign](station-redesign.md) plans the replacement stations,
+  outposts and hostile stations and documents their producer.
 - [Whirlpool whales](whales.md), [portrait provenance](portraits.md) and
   [conversation portraits](conversation.md) cover the cast.
 - [Finale allies](allies.md) covers the Phantom battle's allies, Marlo's song

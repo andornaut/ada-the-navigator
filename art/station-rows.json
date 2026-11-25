@@ -33,32 +33,344 @@
       }
     ]
   },
+  "sunflower": {
+    "assets": [
+      {
+        "id": "station-leaf-a",
+        "path": "/art/sunflower/leaf-station-sheet.svg",
+        "width": 264,
+        "height": 168,
+        "displayWidth": 173.25,
+        "displayHeight": 110.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.50595
+        },
+        "frameMs": 700,
+        "svgSheet": true
+      },
+      {
+        "id": "station-leaf-b",
+        "path": "/art/sunflower/leaf-station-sheet.svg",
+        "width": 264,
+        "height": 168,
+        "displayWidth": 173.25,
+        "displayHeight": 110.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.50595
+        },
+        "frameMs": 700,
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-growers-a",
+        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "width": 192,
+        "height": 144,
+        "displayWidth": 176.4,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42361
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 96,
+          "y": 82.55,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "growers",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-growers-b",
+        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "width": 192,
+        "height": 144,
+        "displayWidth": 176.4,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42361
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 96,
+          "y": 82.55,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "growers",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-growers-ring-a",
+        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "width": 192,
+        "height": 144,
+        "displayWidth": 176.4,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42361
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 96,
+          "y": 82.55,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "growers",
+        "project": "greenhouseRing",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-growers-ring-b",
+        "path": "/art/sunflower/growers-bud-sheet.svg",
+        "width": 192,
+        "height": 144,
+        "displayWidth": 176.4,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42361
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 96,
+          "y": 82.55,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "growers",
+        "project": "greenhouseRing",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-workshop-a",
+        "path": "/art/sunflower/workshop-bloom-sheet.svg",
+        "width": 200,
+        "height": 144,
+        "displayWidth": 183.75,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.41667
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 100,
+          "y": 83.089,
+          "outward": [0, 1],
+          "width": 29.394
+        },
+        "outpost": "workshop",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-workshop-b",
+        "path": "/art/sunflower/workshop-bloom-sheet.svg",
+        "width": 200,
+        "height": 144,
+        "displayWidth": 183.75,
+        "displayHeight": 132.3,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.41667
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 100,
+          "y": 83.089,
+          "outward": [0, 1],
+          "width": 29.394
+        },
+        "outpost": "workshop",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-workshop-crane-a",
+        "path": "/art/sunflower/workshop-boom-sheet.svg",
+        "width": 128,
+        "height": 64,
+        "displayWidth": 117.6,
+        "displayHeight": 58.8,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.64063
+        },
+        "frameMs": 700,
+        "outpost": "workshop",
+        "project": "workshopCrane",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-workshop-crane-b",
+        "path": "/art/sunflower/workshop-boom-sheet.svg",
+        "width": 128,
+        "height": 64,
+        "displayWidth": 117.6,
+        "displayHeight": 58.8,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.64063
+        },
+        "frameMs": 700,
+        "outpost": "workshop",
+        "project": "workshopCrane",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-salvagers-a",
+        "path": "/art/sunflower/salvagers-leaf-sheet.svg",
+        "width": 176,
+        "height": 120,
+        "displayWidth": 161.7,
+        "displayHeight": 110.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.48333
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 88,
+          "y": 78.203,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "salvagers",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-salvagers-b",
+        "path": "/art/sunflower/salvagers-leaf-sheet.svg",
+        "width": 176,
+        "height": 120,
+        "displayWidth": 161.7,
+        "displayHeight": 110.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.48333
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 88,
+          "y": 78.203,
+          "outward": [0, 1],
+          "width": 31.843
+        },
+        "outpost": "salvagers",
+        "svgSheet": true
+      }
+    ]
+  },
   "cartwheel": {
     "assets": [
       {
-        "id": "outpost-hub-repaired-a",
-        "path": "/art/cartwheel/wheel-hub-repaired-sheet.svg",
+        "id": "outpost-hub-a",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
         "width": 320,
-        "height": 272,
+        "height": 320,
         "displayWidth": 175,
-        "displayHeight": 148.75,
+        "displayHeight": 175,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.61765
+          "y": 0.525
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 51.524,
-            "y": 230.629,
-            "outward": [-0.866, 0.5],
+            "x": 6.592,
+            "y": 168,
+            "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 268.476,
-            "y": 230.629,
-            "outward": [0.866, 0.5],
+            "x": 313.408,
+            "y": 168,
+            "outward": [1, 0],
+            "width": 28.169
+          }
+        ],
+        "destination": "hub",
+        "variant": "worn",
+        "svgSheet": true,
+        "intrinsicWidth": 175,
+        "intrinsicHeight": 175
+      },
+      {
+        "id": "outpost-hub-b",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
+        "width": 320,
+        "height": 320,
+        "displayWidth": 175,
+        "displayHeight": 175,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.525
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 6.592,
+            "y": 168,
+            "outward": [-1, 0],
+            "width": 28.169
+          },
+          {
+            "x": 313.408,
+            "y": 168,
+            "outward": [1, 0],
+            "width": 28.169
+          }
+        ],
+        "destination": "hub",
+        "variant": "worn",
+        "svgSheet": true,
+        "intrinsicWidth": 175,
+        "intrinsicHeight": 175
+      },
+      {
+        "id": "outpost-hub-repaired-a",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
+        "width": 320,
+        "height": 320,
+        "displayWidth": 175,
+        "displayHeight": 175,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.525
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 6.592,
+            "y": 168,
+            "outward": [-1, 0],
+            "width": 28.169
+          },
+          {
+            "x": 313.408,
+            "y": 168,
+            "outward": [1, 0],
             "width": 28.169
           }
         ],
@@ -67,32 +379,32 @@
         "project": "hub-repairs",
         "svgSheet": true,
         "intrinsicWidth": 175,
-        "intrinsicHeight": 148.75
+        "intrinsicHeight": 175
       },
       {
         "id": "outpost-hub-repaired-b",
-        "path": "/art/cartwheel/wheel-hub-repaired-sheet.svg",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
         "width": 320,
-        "height": 272,
+        "height": 320,
         "displayWidth": 175,
-        "displayHeight": 148.75,
+        "displayHeight": 175,
         "facing": "fixed",
         "pivot": {
           "x": 0.5,
-          "y": 0.61765
+          "y": 0.525
         },
         "frameMs": 700,
         "berths": [
           {
-            "x": 51.524,
-            "y": 230.629,
-            "outward": [-0.866, 0.5],
+            "x": 6.592,
+            "y": 168,
+            "outward": [-1, 0],
             "width": 28.169
           },
           {
-            "x": 268.476,
-            "y": 230.629,
-            "outward": [0.866, 0.5],
+            "x": 313.408,
+            "y": 168,
+            "outward": [1, 0],
             "width": 28.169
           }
         ],
@@ -101,7 +413,59 @@
         "project": "hub-repairs",
         "svgSheet": true,
         "intrinsicWidth": 175,
-        "intrinsicHeight": 148.75
+        "intrinsicHeight": 175
+      },
+      {
+        "id": "outpost-hub-bay-a",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
+        "width": 320,
+        "height": 320,
+        "displayWidth": 175,
+        "displayHeight": 175,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.525
+        },
+        "frameMs": 700,
+        "overlay": true,
+        "destination": "hub",
+        "project": "second-docking-bay",
+        "berths": [
+          {
+            "x": 160,
+            "y": 303.765,
+            "outward": [0, 1],
+            "width": 36.742
+          }
+        ],
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-hub-bay-b",
+        "path": "/art/cartwheel/wheel-hub-sheet.svg",
+        "width": 320,
+        "height": 320,
+        "displayWidth": 175,
+        "displayHeight": 175,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.525
+        },
+        "frameMs": 700,
+        "overlay": true,
+        "destination": "hub",
+        "project": "second-docking-bay",
+        "berths": [
+          {
+            "x": 160,
+            "y": 303.765,
+            "outward": [0, 1],
+            "width": 36.742
+          }
+        ],
+        "svgSheet": true
       }
     ]
   },
@@ -192,9 +556,9 @@
       {
         "id": "needle-station-a",
         "path": "/art/needle/eye-station-sheet.svg",
-        "width": 496,
+        "width": 528,
         "height": 120,
-        "displayWidth": 325.5,
+        "displayWidth": 346.5,
         "displayHeight": 78.75,
         "facing": "fixed",
         "pivot": {
@@ -204,13 +568,13 @@
         "frameMs": 700,
         "berths": [
           {
-            "x": 7.25,
+            "x": 23.25,
             "y": 60,
             "outward": [-1, 0],
             "width": 24.495
           },
           {
-            "x": 488.75,
+            "x": 504.75,
             "y": 60,
             "outward": [1, 0],
             "width": 24.495
@@ -219,15 +583,15 @@
         "destination": "station",
         "variant": "base",
         "svgSheet": true,
-        "intrinsicWidth": 325.5,
+        "intrinsicWidth": 346.5,
         "intrinsicHeight": 78.75
       },
       {
         "id": "needle-station-b",
         "path": "/art/needle/eye-station-sheet.svg",
-        "width": 496,
+        "width": 528,
         "height": 120,
-        "displayWidth": 325.5,
+        "displayWidth": 346.5,
         "displayHeight": 78.75,
         "facing": "fixed",
         "pivot": {
@@ -237,13 +601,13 @@
         "frameMs": 700,
         "berths": [
           {
-            "x": 7.25,
+            "x": 23.25,
             "y": 60,
             "outward": [-1, 0],
             "width": 24.495
           },
           {
-            "x": 488.75,
+            "x": 504.75,
             "y": 60,
             "outward": [1, 0],
             "width": 24.495
@@ -252,7 +616,75 @@
         "destination": "station",
         "variant": "base",
         "svgSheet": true,
-        "intrinsicWidth": 325.5,
+        "intrinsicWidth": 346.5,
+        "intrinsicHeight": 78.75
+      },
+      {
+        "id": "needle-station-hall-a",
+        "path": "/art/needle/eye-station-sheet.svg",
+        "width": 528,
+        "height": 120,
+        "displayWidth": 346.5,
+        "displayHeight": 78.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 4.587,
+            "y": 60,
+            "outward": [-1, 0],
+            "width": 24.495
+          },
+          {
+            "x": 523.413,
+            "y": 60,
+            "outward": [1, 0],
+            "width": 24.495
+          }
+        ],
+        "destination": "station",
+        "variant": "loom-hall",
+        "project": "loomHall",
+        "svgSheet": true,
+        "intrinsicWidth": 346.5,
+        "intrinsicHeight": 78.75
+      },
+      {
+        "id": "needle-station-hall-b",
+        "path": "/art/needle/eye-station-sheet.svg",
+        "width": 528,
+        "height": 120,
+        "displayWidth": 346.5,
+        "displayHeight": 78.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 4.587,
+            "y": 60,
+            "outward": [-1, 0],
+            "width": 24.495
+          },
+          {
+            "x": 523.413,
+            "y": 60,
+            "outward": [1, 0],
+            "width": 24.495
+          }
+        ],
+        "destination": "station",
+        "variant": "loom-hall",
+        "project": "loomHall",
+        "svgSheet": true,
+        "intrinsicWidth": 346.5,
         "intrinsicHeight": 78.75
       }
     ]
@@ -294,6 +726,150 @@
         "svgSheet": true,
         "intrinsicWidth": 204.75,
         "intrinsicHeight": 152.25
+      },
+      {
+        "id": "station-settlers-school-a",
+        "path": "/art/andromeda/saucer-school-sheet.svg",
+        "width": 104,
+        "height": 64,
+        "displayWidth": 68.25,
+        "displayHeight": 42,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.46875
+        },
+        "frameMs": 700,
+        "overlay": true,
+        "station": "settlers",
+        "project": "courierSchool",
+        "berths": [
+          {
+            "x": 52,
+            "y": 47.24,
+            "outward": [0, 1],
+            "width": 19.596
+          }
+        ],
+        "svgSheet": true
+      },
+      {
+        "id": "station-settlers-school-b",
+        "path": "/art/andromeda/saucer-school-sheet.svg",
+        "width": 104,
+        "height": 64,
+        "displayWidth": 68.25,
+        "displayHeight": 42,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.46875
+        },
+        "frameMs": 700,
+        "overlay": true,
+        "station": "settlers",
+        "project": "courierSchool",
+        "berths": [
+          {
+            "x": 52,
+            "y": 47.24,
+            "outward": [0, 1],
+            "width": 19.596
+          }
+        ],
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-hamlet-a",
+        "path": "/art/andromeda/hamlet-saucer-sheet.svg",
+        "width": 96,
+        "height": 88,
+        "displayWidth": 91.35,
+        "displayHeight": 83.738,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.36364
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 56.136,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "hamlet",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-hamlet-b",
+        "path": "/art/andromeda/hamlet-saucer-sheet.svg",
+        "width": 96,
+        "height": 88,
+        "displayWidth": 91.35,
+        "displayHeight": 83.738,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.36364
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 56.136,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "hamlet",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-lamphouse-a",
+        "path": "/art/andromeda/lamphouse-saucer-sheet.svg",
+        "width": 72,
+        "height": 96,
+        "displayWidth": 68.513,
+        "displayHeight": 91.35,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.45833
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 36,
+          "y": 61.983,
+          "outward": [0, 1],
+          "width": 19.596
+        },
+        "outpost": "settlement",
+        "variant": "lamphouse",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-lamphouse-b",
+        "path": "/art/andromeda/lamphouse-saucer-sheet.svg",
+        "width": 72,
+        "height": 96,
+        "displayWidth": 68.513,
+        "displayHeight": 91.35,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.45833
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 36,
+          "y": 61.983,
+          "outward": [0, 1],
+          "width": 19.596
+        },
+        "outpost": "settlement",
+        "variant": "lamphouse",
+        "svgSheet": true
       }
     ]
   },
@@ -456,7 +1032,326 @@
         "intrinsicWidth": 204.75,
         "intrinsicHeight": 178.5,
         "svgSheetMember": "phantom-station-4"
+      },
+      {
+        "id": "outpost-homes-cracked-a",
+        "path": "/art/phantom/homes-triarm-sheet.svg",
+        "width": 128,
+        "height": 80,
+        "displayWidth": 121.8,
+        "displayHeight": 76.125,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4625
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 64,
+          "y": 56.475,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "homes",
+        "state": "cracked",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-homes-cracked-b",
+        "path": "/art/phantom/homes-triarm-sheet.svg",
+        "width": 128,
+        "height": 80,
+        "displayWidth": 121.8,
+        "displayHeight": 76.125,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4625
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 64,
+          "y": 56.475,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "homes",
+        "state": "cracked",
+        "svgSheet": true,
+        "svgSheetMember": "outpost-homes-cracked-a"
+      },
+      {
+        "id": "outpost-homes-mended-a",
+        "path": "/art/phantom/homes-triarm-sheet.svg",
+        "width": 128,
+        "height": 80,
+        "displayWidth": 121.8,
+        "displayHeight": 76.125,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4625
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 64,
+          "y": 56.475,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "homes",
+        "state": "mended",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-homes-mended-b",
+        "path": "/art/phantom/homes-triarm-sheet.svg",
+        "width": 128,
+        "height": 80,
+        "displayWidth": 121.8,
+        "displayHeight": 76.125,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4625
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 64,
+          "y": 56.475,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "homes",
+        "state": "mended",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-harbour-cracked-a",
+        "path": "/art/phantom/harbour-triarm-sheet.svg",
+        "width": 152,
+        "height": 72,
+        "displayWidth": 144.638,
+        "displayHeight": 68.513,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38889
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 76,
+          "y": 37.809,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "harbour",
+        "state": "cracked",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-harbour-cracked-b",
+        "path": "/art/phantom/harbour-triarm-sheet.svg",
+        "width": 152,
+        "height": 72,
+        "displayWidth": 144.638,
+        "displayHeight": 68.513,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38889
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 76,
+          "y": 37.809,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "harbour",
+        "state": "cracked",
+        "svgSheet": true,
+        "svgSheetMember": "outpost-harbour-cracked-a"
+      },
+      {
+        "id": "outpost-harbour-mended-a",
+        "path": "/art/phantom/harbour-triarm-sheet.svg",
+        "width": 152,
+        "height": 72,
+        "displayWidth": 144.638,
+        "displayHeight": 68.513,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38889
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 76,
+          "y": 37.809,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "harbour",
+        "state": "mended",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-harbour-mended-b",
+        "path": "/art/phantom/harbour-triarm-sheet.svg",
+        "width": 152,
+        "height": 72,
+        "displayWidth": 144.638,
+        "displayHeight": 68.513,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38889
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 76,
+          "y": 37.809,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "harbour",
+        "state": "mended",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-signal-cracked-a",
+        "path": "/art/phantom/signal-triarm-sheet.svg",
+        "width": 96,
+        "height": 136,
+        "displayWidth": 91.35,
+        "displayHeight": 129.413,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.39706
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 68.065,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "signal",
+        "state": "cracked",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-signal-cracked-b",
+        "path": "/art/phantom/signal-triarm-sheet.svg",
+        "width": 96,
+        "height": 136,
+        "displayWidth": 91.35,
+        "displayHeight": 129.413,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.39706
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 68.065,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "signal",
+        "state": "cracked",
+        "svgSheet": true,
+        "svgSheetMember": "outpost-signal-cracked-a"
+      },
+      {
+        "id": "outpost-signal-mended-a",
+        "path": "/art/phantom/signal-triarm-sheet.svg",
+        "width": 96,
+        "height": 136,
+        "displayWidth": 91.35,
+        "displayHeight": 129.413,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.39706
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 68.065,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "signal",
+        "state": "mended",
+        "svgSheet": true
+      },
+      {
+        "id": "outpost-signal-mended-b",
+        "path": "/art/phantom/signal-triarm-sheet.svg",
+        "width": 96,
+        "height": 136,
+        "displayWidth": 91.35,
+        "displayHeight": 129.413,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.39706
+        },
+        "frameMs": 700,
+        "dock": {
+          "x": 48,
+          "y": 68.065,
+          "outward": [0, 1],
+          "width": 22.045
+        },
+        "outpost": "settlement",
+        "variant": "signal",
+        "state": "mended",
+        "svgSheet": true
       }
     ]
+  },
+  "projects": {
+    "workshopCrane": {
+      "outpost": "workshop",
+      "kind": "overlay",
+      "frames": ["outpost-workshop-crane-a", "outpost-workshop-crane-b"],
+      "anchors": [
+        {
+          "x": 79.179,
+          "y": 45.714,
+          "layer": "front",
+          "phase": 0
+        }
+      ]
+    },
+    "courierSchool": {
+      "station": "settlers",
+      "kind": "overlay",
+      "frames": ["station-settlers-school-a", "station-settlers-school-b"],
+      "anchors": [
+        {
+          "x": -194.093,
+          "y": 0,
+          "layer": "front",
+          "phase": 0
+        }
+      ]
+    }
   }
 }

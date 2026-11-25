@@ -135,7 +135,12 @@ function finial(mesh: Mesh, c: XY, z: number, tones: Tones, tip: Tones, r = 4.2,
   cyl(mesh, c, z + h, z + h + 2, r * 0.55, tip, 16);
 }
 
-const scaled = (mesh: Mesh, k: number): Mesh => meshScale(mesh, [k, k, k]);
+export const scaled = (mesh: Mesh, k: number): Mesh => meshScale(mesh, [k, k, k]);
+
+// The face group of a project's solid, which its overlay frame draws without the body.
+export const PROJECT = 1;
+const project = (mesh: Mesh, from: number): Mesh =>
+  mesh.map((face, i) => (i < from ? face : { ...face, group: PROJECT }));
 
 // ------------------------------------------------------------------ Sunflower
 
@@ -190,11 +195,9 @@ export type Flower = {
   bulb?: boolean;
   angles?: readonly number[];
   half?: number;
-  // The workshop crane's angle, the greenhouse ring, and which solids to build: the body with
-  // its project solid, or the project solid alone.
+  // The workshop crane's angle and the greenhouse ring.
   boom?: number;
   greenhouse?: boolean;
-  parts?: "all" | "overlay";
 };
 
 // Petal slabs round a seed disc on a stalk.
@@ -202,18 +205,17 @@ export function flower(lit: boolean, options: Flower = {}): Mesh {
   const { petals = 8, reach = 76, disc = 31, stalk = 86, bulb = true, half = 15 } = options;
   const cream = lamp(CREAM, lit);
   const mesh: Mesh = [];
-  if ((options.parts ?? "all") === "all") {
-    drum(mesh, ORIGIN, -8, -8 - stalk, disc * 0.5, 7, SEED, 32);
-    cyl(mesh, ORIGIN, -15, -8, disc * 0.68, SEED);
-    if (bulb) meshDome(mesh, [0, 0, -12 - stalk], 11, SEED, { full: true, sides: 20, bands: 5 });
-    cyl(mesh, ORIGIN, -8, 9, disc, SEED);
-    band(mesh, ORIGIN, 1.5, 5, disc, cream);
-    const angles =
-      options.angles ?? Array.from({ length: petals }, (_, i) => 22.5 + (i * 360) / petals);
-    for (const a of angles) petal(mesh, a, disc - 7, reach, half, -7, 0);
-    cyl(mesh, ORIGIN, 9, 12, disc * 0.6, SEED);
-    meshDome(mesh, [0, 0, 12], disc * 0.46, cream);
-  }
+  drum(mesh, ORIGIN, -8, -8 - stalk, disc * 0.5, 7, SEED, 32);
+  cyl(mesh, ORIGIN, -15, -8, disc * 0.68, SEED);
+  if (bulb) meshDome(mesh, [0, 0, -12 - stalk], 11, SEED, { full: true, sides: 20, bands: 5 });
+  cyl(mesh, ORIGIN, -8, 9, disc, SEED);
+  band(mesh, ORIGIN, 1.5, 5, disc, cream);
+  const angles =
+    options.angles ?? Array.from({ length: petals }, (_, i) => 22.5 + (i * 360) / petals);
+  for (const a of angles) petal(mesh, a, disc - 7, reach, half, -7, 0);
+  cyl(mesh, ORIGIN, 9, 12, disc * 0.6, SEED);
+  meshDome(mesh, [0, 0, 12], disc * 0.46, cream);
+  const body = mesh.length;
   if (options.boom !== undefined) {
     // workshopCrane: a thick tapered boom with a lifting drum.
     const end = pol(reach + 12, options.boom);
@@ -230,6 +232,55 @@ export function flower(lit: boolean, options: Flower = {}): Mesh {
       meshDome(mesh, [c[0], c[1], 1], 7, cream, { sides: 16, bands: 5 });
     }
   }
+  return project(mesh, body);
+}
+
+const LEAF = mat("#f2b31c", "#c48a10", "#a8700c");
+const PEG = mat("#5a3f2e", "#3f2b20", "#2d1e16");
+
+export type LeafFlower = {
+  leaves?: number;
+  reach?: number;
+  peg?: number;
+  angles?: readonly number[];
+  tall?: number;
+  foot?: number;
+};
+
+// Leaf petals round a peg: each leaf is a lens between two arcs, with a raised inner pad.
+export function leafFlower(lit: boolean, options: LeafFlower = {}): Mesh {
+  const { leaves = 8, reach = 73, peg = 27, tall = 20, foot = 18 } = options;
+  const cream = lamp("#fff2d0", lit);
+  const mesh: Mesh = [];
+  cyl(mesh, ORIGIN, -14, tall, peg, PEG);
+  const root = peg - 6;
+  const leaf = (a: number, from: number, to: number, z0: number, z1: number) => {
+    const half = (to - from) / 2;
+    const radius = half * 1.31;
+    const off = Math.sqrt(radius * radius - half * half);
+    const span = Math.asin(half / radius);
+    const [ex, ey] = pol(1, a);
+    const plan: XY[] = [];
+    for (const side of [1, -1]) {
+      for (let j = 0; j < 12; j++) {
+        const t = -span + (2 * span * j) / 12;
+        const u = from + half - side * radius * Math.sin(t);
+        const v = -side * (radius * Math.cos(t) - off);
+        plan.push([ex * u - ey * v, ey * u + ex * v]);
+      }
+    }
+    prism(mesh, plan, z0, z1, LEAF);
+  };
+  const angles =
+    options.angles ?? Array.from({ length: leaves }, (_, i) => 22.5 + (i * 360) / leaves);
+  for (const a of angles) {
+    leaf(a, root, reach, -1, 5);
+    leaf(a, root + 4, reach - (reach - root) * 0.3, 5, 7.6);
+  }
+  cyl(mesh, ORIGIN, tall, tall + 3, peg * 0.5, cream);
+  band(mesh, ORIGIN, tall - 10, tall - 6.5, peg, cream);
+  cyl(mesh, ORIGIN, -3, 9, peg + 3, PEG);
+  drum(mesh, ORIGIN, -14, -14 - foot, peg * 0.66, 9, PEG, 32);
   return mesh;
 }
 
@@ -249,7 +300,6 @@ export type Wheels = {
   // The arc of the large wheel's rim left open, in degrees, and the docking bay's angle.
   gap?: readonly [number, number];
   bay?: number;
-  parts?: "all" | "overlay";
 };
 
 // A large wheel under a smaller one, heavy hubs, a tapered axle and a dock collar.
@@ -259,36 +309,35 @@ export function wheels(lit: boolean, options: Wheels = {}): Mesh {
   const specs = HUB_WHEELS;
   const big = specs[0]!;
   const [low, high] = [specs[0]![0], specs.at(-1)![0] + 8];
-  if ((options.parts ?? "all") === "all") {
-    for (const wheel of specs) {
-      const [z0, outer, inner, spokes, hub] = wheel;
-      const z1 = z0 + 8;
-      const open = wheel === big ? options.gap : undefined;
-      const gap = open && ([open[0] * RADIAN, open[1] * RADIAN] as const);
-      meshRing(mesh, ORIGIN, z0, z1, outer, inner, RIM, { ...(gap && { gap }) });
-      meshRing(mesh, ORIGIN, z0 + 2.4, z0 + 5.6, outer + 0.5, outer - 1.5, HUB, {
-        ...(gap && { gap }),
-      });
-      cyl(mesh, ORIGIN, z0 - 3, z1 + 3, hub, HUB, 32);
-      for (let k = 0; k < spokes; k++) {
-        const a = (k * 360) / spokes + 30;
-        if (open && open[0] < a % 360 && a % 360 < open[1]) continue;
-        bar(mesh, ORIGIN, a, hub - 1, inner + 1, 6.5, z0 + 1.5, z1 - 1.5, HUB);
-        bar(mesh, ORIGIN, a, inner - 4, inner + 0.5, 10.5, z0 + 0.8, z1 - 0.8, HUB);
-      }
+  for (const wheel of specs) {
+    const [z0, outer, inner, spokes, hub] = wheel;
+    const z1 = z0 + 8;
+    const open = wheel === big ? options.gap : undefined;
+    const gap = open && ([open[0] * RADIAN, open[1] * RADIAN] as const);
+    meshRing(mesh, ORIGIN, z0, z1, outer, inner, RIM, { ...(gap && { gap }) });
+    meshRing(mesh, ORIGIN, z0 + 2.4, z0 + 5.6, outer + 0.5, outer - 1.5, HUB, {
+      ...(gap && { gap }),
+    });
+    cyl(mesh, ORIGIN, z0 - 3, z1 + 3, hub, HUB, 32);
+    for (let k = 0; k < spokes; k++) {
+      const a = (k * 360) / spokes + 30;
+      if (open && open[0] < a % 360 && a % 360 < open[1]) continue;
+      bar(mesh, ORIGIN, a, hub - 1, inner + 1, 6.5, z0 + 1.5, z1 - 1.5, HUB);
+      bar(mesh, ORIGIN, a, inner - 4, inner + 0.5, 10.5, z0 + 0.8, z1 - 0.8, HUB);
     }
-    for (const [i, lower] of specs.slice(0, -1).entries()) {
-      const upper = specs[i + 1]!;
-      drum(mesh, ORIGIN, lower[0] + 11, upper[0] - 3, lower[4] * 0.72, upper[4] * 0.8, HUB, 32);
-    }
-    const top = specs.at(-1)![4];
-    cyl(mesh, ORIGIN, high + 3, high + 6, top * 0.8, cap, 32);
-    finial(mesh, ORIGIN, high + 6, HUB, cap, top * 0.5, 6);
-    const bottom = big[4];
-    cyl(mesh, ORIGIN, low - 13, low - 3, bottom * 1.25, RIM, 40);
-    band(mesh, ORIGIN, low - 9.6, low - 6.4, bottom * 1.25, cap, 40);
-    drum(mesh, ORIGIN, low - 13, low - 27, bottom * 0.9, bottom * 0.4, HUB, 28);
   }
+  for (const [i, lower] of specs.slice(0, -1).entries()) {
+    const upper = specs[i + 1]!;
+    drum(mesh, ORIGIN, lower[0] + 11, upper[0] - 3, lower[4] * 0.72, upper[4] * 0.8, HUB, 32);
+  }
+  const top = specs.at(-1)![4];
+  cyl(mesh, ORIGIN, high + 3, high + 6, top * 0.8, cap, 32);
+  finial(mesh, ORIGIN, high + 6, HUB, cap, top * 0.5, 6);
+  const bottom = big[4];
+  cyl(mesh, ORIGIN, low - 13, low - 3, bottom * 1.25, RIM, 40);
+  band(mesh, ORIGIN, low - 9.6, low - 6.4, bottom * 1.25, cap, 40);
+  drum(mesh, ORIGIN, low - 13, low - 27, bottom * 0.9, bottom * 0.4, HUB, 28);
+  const body = mesh.length;
   if (options.bay !== undefined) {
     // dockingBay: a berth drum on a thick arm off the rim wall.
     const [z0, outer] = big;
@@ -297,7 +346,7 @@ export function wheels(lit: boolean, options: Wheels = {}): Mesh {
     cyl(mesh, c, z0 - 1, z0 + 9, 13, RIM, 28);
     cyl(mesh, c, z0 + 9, z0 + 10.5, 8, cap, 24);
   }
-  return mesh;
+  return project(mesh, body);
 }
 
 // ------------------------------------------------------------------ Whirlpool
@@ -421,7 +470,6 @@ export type Saucer = {
   turret?: readonly [number, number];
   keel?: number;
   school?: boolean;
-  parts?: "all" | "overlay";
 };
 
 // Thick lens: rim deck, stepped upper and lower tiers, bulge, turret and keel.
@@ -429,24 +477,23 @@ export function saucer(lit: boolean, options: Saucer = {}): Mesh {
   const { reach = 80, bulge = [44, 28, 14], turret = [15, 9], keel = 54 } = options;
   const gold = lamp("#ffc43d", lit);
   const mesh: Mesh = [];
-  if ((options.parts ?? "all") === "all") {
-    cyl(mesh, ORIGIN, -5, 5, reach, BODY, 72);
-    band(mesh, ORIGIN, -1.7, 1.7, reach, INDIGO, 72);
-    cyl(mesh, ORIGIN, 5, 9, reach * 0.76, BODY, 64);
-    cyl(mesh, ORIGIN, -9, -5, reach * 0.7, BODY, 64);
-    const [b0, b1, bh] = bulge;
-    drum(mesh, ORIGIN, 9, 9 + bh, b0, b1, BODY);
-    const [tr, th] = turret;
-    const zt = 9 + bh;
-    cyl(mesh, ORIGIN, zt, zt + th, tr, INDIGO);
-    band(mesh, ORIGIN, zt + th * 0.3, zt + th * 0.7, tr, gold, 32);
-    cyl(mesh, ORIGIN, zt + th, zt + th + 2.5, tr * 0.62, gold, 24);
-    drum(mesh, ORIGIN, -9, -25, b0 * 0.9, 17, BODY);
-    if (keel) {
-      drum(mesh, ORIGIN, -25, -25 - keel, 14, 6, INDIGO, 32);
-      cyl(mesh, ORIGIN, -31, -25, 18, INDIGO);
-    }
+  cyl(mesh, ORIGIN, -5, 5, reach, BODY, 72);
+  band(mesh, ORIGIN, -1.7, 1.7, reach, INDIGO, 72);
+  cyl(mesh, ORIGIN, 5, 9, reach * 0.76, BODY, 64);
+  cyl(mesh, ORIGIN, -9, -5, reach * 0.7, BODY, 64);
+  const [b0, b1, bh] = bulge;
+  drum(mesh, ORIGIN, 9, 9 + bh, b0, b1, BODY);
+  const [tr, th] = turret;
+  const zt = 9 + bh;
+  cyl(mesh, ORIGIN, zt, zt + th, tr, INDIGO);
+  band(mesh, ORIGIN, zt + th * 0.3, zt + th * 0.7, tr, gold, 32);
+  cyl(mesh, ORIGIN, zt + th, zt + th + 2.5, tr * 0.62, gold, 24);
+  drum(mesh, ORIGIN, -9, -25, b0 * 0.9, 17, BODY);
+  if (keel) {
+    drum(mesh, ORIGIN, -25, -25 - keel, 14, 6, INDIGO, 32);
+    cyl(mesh, ORIGIN, -31, -25, 18, INDIGO);
   }
+  const body = mesh.length;
   if (options.school) {
     // courierSchool: a small saucer docked on a thick spur off the rim deck.
     taper(mesh, ORIGIN, 135, reach - 4, reach + 14, 7, 5, -4, 3, INDIGO);
@@ -456,7 +503,7 @@ export function saucer(lit: boolean, options: Saucer = {}): Mesh {
     cyl(mesh, c, 8, 12, 5.5, INDIGO, 20);
     cyl(mesh, c, 12, 14, 3.6, gold, 16);
   }
-  return mesh;
+  return project(mesh, body);
 }
 
 // ------------------------------------------------------------------ Phantom
@@ -594,5 +641,3 @@ export function twin(lit: boolean, options: Twin = {}): Mesh {
   if (keel) drum(mesh, ORIGIN, low, low - keel, 11, 4.5, VIOLET, 20);
   return mesh;
 }
-
-export { scaled };

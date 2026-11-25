@@ -1,69 +1,94 @@
 // Review sheet of the station producer's structures: `node art/tools/station-contact-sheet.ts
-// <dir>` writes `<dir>/stations.svg`, the lit and dim frame of each structure at 1x and 2x
-// display size on its galaxy's field, with the 2 px ink destination keyline on light fields and
-// Phantom's 1 px white edge. A cross marks each pivot and a dot each berth.
+// <dir>` writes `<dir>/stations.svg`, the frames of each state at 1x and 2x display
+// size on its galaxy's field, with the 2 px ink destination keyline on light fields and
+// Phantom's 1 px white edge. An overlay shows on its whole model, then alone. A third argument
+// `marks` writes `<dir>/stations-marks.svg` with a cross on each pivot, a dot on each berth and a
+// square on each dock.
 import { mkdirSync, writeFileSync } from "node:fs";
 
-import { draw, STRUCTURES } from "./stations.ts";
 import { projectAt } from "./projection.ts";
+import { draw, STRUCTURES } from "./stations.ts";
 
-const FIELDS: Readonly<Record<string, { field: string; edge: string; width: number }>> = {
-  core: { field: "#D8C994", edge: "#181425", width: 2 },
-  sunflower: { field: "#D8C994", edge: "#181425", width: 2 },
-  cartwheel: { field: "#BC9D90", edge: "#181425", width: 2 },
-  whirlpool: { field: "#B8CEC4", edge: "#181425", width: 2 },
-  needle: { field: "#C6BBA6", edge: "#181425", width: 2 },
-  andromeda: { field: "#9298B5", edge: "#181425", width: 2 },
-  phantom: { field: "#514955", edge: "#FFFFFF", width: 1 },
+const LIGHT = { edge: "#181425", keyline: 2 };
+const FIELDS: Readonly<Record<string, { field: string; edge: string; keyline: number }>> = {
+  core: { field: "#D8C994", ...LIGHT },
+  sunflower: { field: "#D8C994", ...LIGHT },
+  cartwheel: { field: "#BC9D90", ...LIGHT },
+  whirlpool: { field: "#B8CEC4", ...LIGHT },
+  needle: { field: "#C6BBA6", ...LIGHT },
+  andromeda: { field: "#9298B5", ...LIGHT },
+  phantom: { field: "#514955", edge: "#FFFFFF", keyline: 1 },
 };
 const SCALES = [1, 2];
-const GAP = 12;
+const GAP = 14;
 const LABEL = 30;
 
 function main() {
   const out = process.argv[2];
-  if (!out) throw new Error("Usage: node art/tools/station-contact-sheet.ts <dir>");
+  if (!out) throw new Error("Usage: node art/tools/station-contact-sheet.ts <dir> [marks]");
   const marks = process.argv[3] === "marks";
   const parts: string[] = [];
   let y = 0;
   let wide = 0;
   for (const structure of STRUCTURES) {
     const drawn = draw(structure);
-    const { field, edge, width: keyline } = FIELDS[structure.manifest]!;
+    const { field, edge, keyline } = FIELDS[structure.manifest]!;
     const { width, height, above } = drawn;
-    const top = y;
-    let x = GAP;
-    for (const scale of SCALES) {
-      const k = structure.scale * scale;
-      for (const lit of [true, false]) {
-        // The keyline is `keyline` display px at 1x outside the silhouette, with square corners.
-        const stroke = `<path d="${drawn.silhouette}" fill="${edge}" stroke="${edge}" stroke-width="${(2 * keyline) / structure.scale}" stroke-linejoin="miter" stroke-miterlimit="2.5"/>`;
-        const pivot = marks
-          ? `<path d="M${width / 2 - 6},${above}h12M${width / 2},${above - 6}v12" stroke="#ff00ff" stroke-width="1.5" fill="none"/>` +
-            (structure.berths ?? [])
-              .map(({ at }) => {
-                const [bx, by] = projectAt(width / 2, above, [
-                  at[0] / structure.scale,
-                  at[1] / structure.scale,
-                  (at[2] - structure.plane) / structure.scale,
-                ]);
-                return `<circle cx="${bx}" cy="${by}" r="3" fill="#00e5ff" stroke="#181425"/>`;
-              })
-              .join("")
-          : "";
-        parts.push(
-          `<svg x="${x}" y="${top + LABEL}" width="${width * k}" height="${height * k}" viewBox="0 0 ${width} ${height}" overflow="visible">${stroke}${drawn.body(lit)}${pivot}</svg>`,
-        );
-        x += width * k + GAP;
+    const { origin, scale } = structure;
+    const point = ([px, py, pz]: readonly [number, number, number]) =>
+      projectAt(width / 2, above, [
+        (px - origin[0]) / scale,
+        (py - origin[1]) / scale,
+        (pz - origin[2]) / scale,
+      ]);
+    for (const { state, size, silhouette, body, scene } of drawn.states) {
+      const top = y;
+      let x = GAP;
+      const views = [...(scene ? [scene] : []), { silhouette, body }];
+      // An overlay's whole model reaches past its frame.
+      const pad = scene && structure.anchor ? 180 : 0;
+      // The lit states the state's frames draw.
+      const lights = [...new Set(state.frames.map(({ lit }) => lit))];
+      for (const view of views) {
+        for (const k of SCALES.map((s) => s * scale)) {
+          for (const lit of lights) {
+            // The keyline is `keyline` display px at 1x outside the silhouette, square cornered.
+            const stroke = `<path d="${view.silhouette}" fill="${edge}" stroke="${edge}" stroke-width="${(2 * keyline) / scale}" stroke-linejoin="miter" stroke-miterlimit="2.5"/>`;
+            const [bx, by] = [width / 2, above];
+            const cross = `<path d="M${bx - 6},${by}h12M${bx},${by - 6}v12" stroke="#ff00ff" stroke-width="1.5" fill="none"/>`;
+            const berths = (state.berths ?? []).map(({ at }) => {
+              const [cx, cy] = point(at);
+              return `<circle cx="${cx}" cy="${cy}" r="3" fill="#00e5ff" stroke="#181425"/>`;
+            });
+            const dock = state.dock
+              ? [
+                  point([
+                    origin[0] + state.dock.radius * Math.SQRT1_2,
+                    origin[1] + state.dock.radius * Math.SQRT1_2,
+                    origin[2],
+                  ]),
+                ].map(
+                  ([cx, cy]) =>
+                    `<rect x="${cx - 3}" y="${cy - 3}" width="6" height="6" fill="#00e5ff" stroke="#181425"/>`,
+                )
+              : [];
+            const marked = marks ? cross + berths.join("") + dock.join("") : "";
+            const shift = view === scene ? pad * k : 0;
+            parts.push(
+              `<svg x="${x + shift}" y="${top + LABEL + shift}" width="${width * k}" height="${height * k}" viewBox="0 0 ${width} ${height}" overflow="visible">${stroke}${view.body(lit)}${marked}</svg>`,
+            );
+            x += width * k + GAP + 2 * shift;
+          }
+        }
       }
+      y += LABEL + (height + 2 * pad) * scale * 2 + GAP;
+      parts.unshift(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${field}"/>`);
+      const ids = state.frames.map(({ id }) => id);
+      parts.push(
+        `<text x="${GAP}" y="${top + 19}" font-family="DejaVu Sans" font-size="12" fill="${edge}">${state.title} (${ids[0]} to ${ids.at(-1)}): 1x and 2x; drawn ${size[0].toFixed(0)} by ${size[1].toFixed(0)} px</text>`,
+      );
+      wide = Math.max(wide, x);
     }
-    y += LABEL + height * structure.scale * 2 + GAP;
-    const [w, h] = drawn.size;
-    parts.unshift(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${field}"/>`);
-    parts.push(
-      `<text x="${GAP}" y="${top + 19}" font-family="DejaVu Sans" font-size="12" fill="${edge}">${structure.title} (${structure.frames.map(({ id }) => id).join(", ")}): lit and dim at 1x and 2x; silhouette ${w.toFixed(0)} by ${h.toFixed(0)} px</text>`,
-    );
-    wide = Math.max(wide, x);
   }
   mkdirSync(out, { recursive: true });
   writeFileSync(
