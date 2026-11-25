@@ -4436,11 +4436,24 @@ try {
     assert.equal(shot.note, 0, `${name}: the start screen has no note`);
     assert.equal(shot.title, CONTENT.labels.home, `${name}: the wordmark is named by home`);
     assert.equal(shot.shipSrc, SHIPPED_TITLE_SHIP, `${name}: the canonical Classic title frame`);
+    // The row's buttons have intrinsic widths, each capped at actions.width, BUTTON_GAP (16) apart
+    // and centred as a row on the game area (art/layout.md "Start screen").
+    const centre = actions.left.start + actions.width / 2;
+    const row = shot.actions.map(([, box]) => box);
+    assert.ok(
+      Math.abs((row[0][0] + row.at(-1)[0] + row.at(-1)[2]) / 2 - centre) <= 0.2 &&
+        row.every(([, , width]) => width > 0 && width <= actions.width) &&
+        row.slice(1).every(([left], index) => {
+          const [previousLeft, , previousWidth] = row[index];
+          return Math.abs(left - (previousLeft + previousWidth + 16)) <= 0.2;
+        }),
+      `${name}: the row is centred, 16 apart, each at most ${actions.width}: ${JSON.stringify(row)}`,
+    );
     for (const [action, box, role] of shot.actions) {
       assert.deepEqual(
-        box,
-        [actions.left[action], actions.top, actions.width, actions.height],
-        `${name}: ${action} sits at its play-view place`,
+        [box[1], box[3]],
+        [actions.top, actions.height],
+        `${name}: ${action} sits on the action row`,
       );
       assert.equal(
         role,
