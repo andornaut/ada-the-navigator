@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import { decodePng } from "@andornaut/art-kit/build/png";
+
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { drawnCrafts, TOW_LINE } from "./friendly-craft.ts";
 import { WHALE_KINDS, WHALE_LOOP_FRAMES } from "./friendly-whale-models.ts";
@@ -12,7 +14,7 @@ import {
   whaleFrame,
   whaleLayout,
 } from "./friendly-whales.ts";
-import { drawGates, drawnObjects } from "./friendly.ts";
+import { drawGates, drawnObjects, HOLODISK_ICON, holodiskIcon } from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { GALAXIES, type ManifestFile, readManifest } from "./manifest.ts";
 import { strictlyConvex } from "./silhouette.ts";
@@ -466,4 +468,31 @@ test("the holodisk and its beacon are black with the pink ring, and each chevron
     colours("upgradeChevrons").map((frame) => [...frame].toSorted()),
     [["#f0bd68"], ["#f0bd68", "#fff2cc"], ["#f0bd68", "#fff2cc"]],
   );
+});
+
+test("icon-holodisk-24 is the black 24 px disc with the pink rim, as shipped", () => {
+  const frame = holodiskIcon(HOLODISK_ICON);
+  const colours = new Set(frame.flat().filter((colour) => colour !== null));
+  assert.deepEqual([...colours].toSorted(), ["181425", "2a2536", "4a4358", "e868c8"]);
+  const image = decodePng(
+    readFileSync(new URL("../../public/art/ui/sprites/icon-holodisk-24.png", import.meta.url)),
+  );
+  assert.equal(image.width, HOLODISK_ICON);
+  assert.equal(image.height, HOLODISK_ICON);
+  for (let y = 0; y < HOLODISK_ICON; y++) {
+    for (let x = 0; x < HOLODISK_ICON; x++) {
+      const at = (y * HOLODISK_ICON + x) * 4;
+      const colour = frame[y]![x];
+      const pixel = [...image.data.subarray(at, at + 4)];
+      assert.deepEqual(
+        pixel,
+        colour === null ? [0, 0, 0, 0] : [...Buffer.from(colour, "hex"), 255],
+        `${x}, ${y}`,
+      );
+    }
+  }
+  const manifest = JSON.parse(read("../../public/art/ui/manifest.json")) as {
+    sprites: { key: string }[];
+  };
+  assert.ok(manifest.sprites.some(({ key }) => key === "icon-holodisk-24"));
 });

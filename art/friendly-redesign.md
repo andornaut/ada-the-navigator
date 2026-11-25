@@ -323,7 +323,10 @@ table are the rest frame's.
 - The item icons `icon-holodisk` and `icon-holodisk-20`
   ([shared-resource-svg.ts](tools/shared-resource-svg.ts)) match: a `#2a2536`
   disc with a pink rim in place of the ink outline, so the disc reads on the
-  item notice's ink chip, the pink ring and the ink hub.
+  item notice's ink chip, the pink ring and the ink hub. This producer writes
+  `icon-holodisk-24`, the 20 px design rasterised at 24 px, as
+  `public/art/ui/sprites/icon-holodisk-24.png` with its Aseprite data and
+  keeps its UI manifest entry ([Holodisk](holodisk.md#item-icon)).
 - `node art/tools/friendly-contact-sheet.ts <dir>` also writes
   `friendly-pickup-loops.svg`: each strip frame by frame at 1x and 4x on the
   lightest field and on Phantom's.

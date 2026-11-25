@@ -6,6 +6,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import type { Frame } from "@andornaut/art-kit/build/grid";
+
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { tonePaths } from "./fleet.ts";
@@ -58,9 +60,11 @@ import {
   writeOnce,
 } from "./manifest.ts";
 import { writeProjects } from "./projects.ts";
+import { INK } from "./palette.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
 import type { Mesh } from "./solid.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 import { svgText } from "./svg-text.ts";
 import { type Fragment, type V2, visibleFragments } from "./visible.ts";
 
@@ -542,6 +546,94 @@ function stageWhales(staged: Record<string, Rows>) {
   return whales;
 }
 
+// A stroked circular arc, as SVG's `a r r 0 0 1 dx dy` from `from`: its centre, radius, start
+// angle and clockwise span, the arc being under half a turn.
+type Arc = { centre: V2; radius: number; start: number; span: number; half: number };
+function arc(from: V2, radius: number, delta: V2, width: number): Arc {
+  const [hx, hy] = [-delta[0] / 2, -delta[1] / 2];
+  const k = Math.sqrt(Math.max(0, radius ** 2 / (hx ** 2 + hy ** 2) - 1));
+  const centre: V2 = [from[0] - hx + k * hy, from[1] - hy - k * hx];
+  const angle = ([x, y]: V2) => Math.atan2(y - centre[1], x - centre[0]);
+  const start = angle(from);
+  const turn = (a: number) => (((a - start) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const span = turn(angle([from[0] + delta[0], from[1] + delta[1]]));
+  return { centre, radius, start, span, half: width / 2 };
+}
+function onArc({ centre, radius, start, span, half }: Arc, [x, y]: V2): boolean {
+  const [dx, dy] = [x - centre[0], y - centre[1]];
+  const turn = (((Math.atan2(dy, dx) - start) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  if (turn <= span) return Math.abs(Math.hypot(dx, dy) - radius) <= half;
+  // Round caps.
+  const ends = [start, start + span].map((a): V2 => [
+    centre[0] + radius * Math.cos(a),
+    centre[1] + radius * Math.sin(a),
+  ]);
+  return ends.some(([ex, ey]) => Math.hypot(x - ex, y - ey) <= half);
+}
+
+// The 24 px holodisk item icon: icon-holodisk-20's design (shared-resource-svg.ts) on its
+// 20 unit grid, scaled to the frame. A `#2a2536` disc with a pink rim, the pink hologram ring,
+// the ink hub, a lit arc at the upper left and an ink shade at the lower right rim.
+export const HOLODISK_ICON = 24;
+const ICON_RIM = "e868c8";
+const ICON_HIGHLIGHT = arc([4.1, 9], 6, [5.4, -5.2], 1.45);
+const ICON_SHADE = arc([16.8, 10.8], 6.9, [-5.5, 5.9], 1.65);
+// 5 by 5 samples a pixel; the most covered colour fills it, the later painted on a tie.
+const ICON_SAMPLES = 5;
+export function holodiskIcon(size: number): Frame {
+  const paint = (point: V2): string | null => {
+    const d = Math.hypot(point[0] - 10, point[1] - 10);
+    if (onArc(ICON_SHADE, point)) return INK;
+    if (onArc(ICON_HIGHLIGHT, point)) return "4a4358";
+    // The hub's radius drops from 2 to 1.7 so its corner pixels fall clear and it draws round.
+    if (d <= 1.7) return INK;
+    if (d <= 4.9 || Math.abs(d - 8.3) <= 0.75) return ICON_RIM;
+    return d <= 8.3 ? "2a2536" : null;
+  };
+  const order = [null, "2a2536", ICON_RIM, INK, "4a4358"];
+  return Array.from({ length: size }, (_, y) =>
+    Array.from({ length: size }, (_, x) => {
+      const counts = new Map<string | null, number>();
+      for (let j = 0; j < ICON_SAMPLES; j++) {
+        for (let i = 0; i < ICON_SAMPLES; i++) {
+          const point: V2 = [
+            ((x + (i + 0.5) / ICON_SAMPLES) * 20) / size,
+            ((y + (j + 0.5) / ICON_SAMPLES) * 20) / size,
+          ];
+          const colour = paint(point);
+          counts.set(colour, (counts.get(colour) ?? 0) + 1);
+        }
+      }
+      return [...counts].toSorted(
+        ([a, m], [b, n]) => n - m || order.indexOf(b) - order.indexOf(a),
+      )[0]![0];
+    }),
+  );
+}
+
+// Writes icon-holodisk-24 and keeps its UI subset entry, sorted by key.
+async function writeHolodiskIcon() {
+  const key = `icon-holodisk-${HOLODISK_ICON}`;
+  const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
+  await writeSprites(
+    { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },
+    { key },
+    [["rest", [holodiskIcon(HOLODISK_ICON)], 100]],
+  );
+  const path = `${ui}manifest.json`;
+  const before = readFileSync(path, "utf8");
+  const manifest = JSON.parse(before) as { sprites: { key: string }[] };
+  manifest.sprites = [
+    ...manifest.sprites.filter((entry) => entry.key !== key),
+    { key, png: `sprites/${key}.png`, json: `sprites/${key}.json`, once: [] },
+  ].toSorted((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const text = `${JSON.stringify(manifest, null, 2)}\n`;
+  if (text !== before) {
+    writeFileSync(path, text);
+    await prettify(path);
+  }
+}
+
 const ROWS = fileURLToPath(new URL("../friendly-rows.json", import.meta.url));
 const PICKUPS = "pickups.json";
 const GATE_SHEET = "ring-gates-sheet.svg";
@@ -560,7 +652,7 @@ function writeManifests(live: Readonly<Record<string, Rows>>) {
   }
 }
 
-function main() {
+async function main() {
   const objects = drawnObjects();
   const live: Record<string, Rows> = {};
   const staged: Record<string, Rows> = {};
@@ -601,6 +693,7 @@ function main() {
   writeManifests(live);
   writeProjects(PROJECTS);
   const whales = stageWhales(staged);
+  await writeHolodiskIcon();
   const text = json(staged);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   for (const { name, width, height, pivot, drawn } of objects) {
@@ -627,5 +720,5 @@ function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
+  await main();
 }
