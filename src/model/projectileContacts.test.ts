@@ -48,28 +48,25 @@ function rock(overrides: Partial<SpaceObject> = {}): SpaceObject {
   return { hp: 100, id: "target", kind: "rock", radius: 40, x: 200, y: 0, ...overrides };
 }
 describe("projectile contact positions and detonation", () => {
-  it.each(["rock", "resource", "debris"] as const)(
-    "detonates once at the near edge of a large %s",
-    (kind) => {
-      const { flight, model } = fixture();
-      const target = rock({ kind });
-      flight.objects = [target];
-      flight.shots = [missile()];
-      const feedback = new ModelFeedback();
-      feedback.observe(100, model.state);
-      stepFlight(CONTENT, 0.02, idle, flight);
-      expect(target.hp).toBe(100 - WEAPON_CATALOG.rapidMissile[0].damageRatio);
-      expect(activeBlastFlashes(flight)).toHaveLength(1);
-      const blast = activeBlastFlashes(flight)[0]!;
-      expect(blast.x).toBeCloseTo(160, 4);
-      expect(blast.y).toBeCloseTo(0, 4);
-      expect(blast.radius).toBe(WEAPON_CATALOG.rapidMissile[0].blastRadius);
-      feedback.observe(100, model.state);
-      expect(feedback.pulses.find((pulse) => pulse.kind === "hit")?.x).toBeCloseTo(blast.x, 4);
-      stepFlight(CONTENT, 0.02, idle, flight);
-      expect(activeBlastFlashes(flight)).toHaveLength(1);
-    },
-  );
+  it.each(["rock", "debris"] as const)("detonates once at the near edge of a large %s", (kind) => {
+    const { flight, model } = fixture();
+    const target = rock({ kind });
+    flight.objects = [target];
+    flight.shots = [missile()];
+    const feedback = new ModelFeedback();
+    feedback.observe(100, model.state);
+    stepFlight(CONTENT, 0.02, idle, flight);
+    expect(target.hp).toBe(100 - WEAPON_CATALOG.rapidMissile[0].damageRatio);
+    expect(activeBlastFlashes(flight)).toHaveLength(1);
+    const blast = activeBlastFlashes(flight)[0]!;
+    expect(blast.x).toBeCloseTo(160, 4);
+    expect(blast.y).toBeCloseTo(0, 4);
+    expect(blast.radius).toBe(WEAPON_CATALOG.rapidMissile[0].blastRadius);
+    feedback.observe(100, model.state);
+    expect(feedback.pulses.find((pulse) => pulse.kind === "hit")?.x).toBeCloseTo(blast.x, 4);
+    stepFlight(CONTENT, 0.02, idle, flight);
+    expect(activeBlastFlashes(flight)).toHaveLength(1);
+  });
 
   it.each(["bolt", "dot"] as const)(
     "keeps a consumed %s impact on the edge in feedback",

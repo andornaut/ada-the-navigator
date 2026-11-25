@@ -246,15 +246,14 @@ describe("space currents", () => {
     expect(Math.hypot(frigate.x - frigateStart.x, frigate.y - frigateStart.y)).toBeLessThan(1);
   });
 
-  it("keep asteroids and resource rocks out of their bands", () => {
+  it("keep asteroids out of their bands", () => {
     const current = currents.find((entry) => entry.length > 3500)!;
     const { point } = middle(current);
     const flight = createFlight(CONTENT, 3, 5, { known: [] });
     flight.player = { x: point.x + 600, y: point.y + 600 };
     stepFlight(CONTENT, 0.001, idle, flight);
     const rocks = flight.objects.filter(
-      (object) =>
-        (object.kind === "rock" || object.kind === "resource") && !object.id.startsWith("river:"),
+      (object) => object.kind === "rock" && !object.id.startsWith("river:"),
     );
     expect(rocks.length).toBeGreaterThan(0);
     for (const rock of rocks) {

@@ -12,7 +12,6 @@ import { JOB_TYPES } from "../data/jobs.ts";
 import { NEEDLE_PLACES } from "../data/needle.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Weapon, WeaponLevel } from "../data/types.ts";
@@ -304,7 +303,6 @@ function wreckState(id: string, value: unknown): boolean {
 }
 const OBJECT_KINDS = [
   "rock",
-  "resource",
   "enemy",
   "hazard",
   "pickup",
@@ -340,7 +338,7 @@ function spaceObject(
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
     (value.asteroid === undefined ||
-      ((value.kind === "rock" || value.kind === "debris" || value.kind === "resource") &&
+      ((value.kind === "rock" || value.kind === "debris") &&
         typeof value.asteroid === "string" &&
         ASTEROID_SHAPES.has(value.asteroid))) &&
     (value.orbit === undefined ||
@@ -355,10 +353,6 @@ function spaceObject(
         Number.isInteger(value.spinStart) &&
         nonnegative(value.spinStart) &&
         (value.spinStart as number) < (ASTEROID_SHAPES.get(value.asteroid)?.frames.length ?? 0))) &&
-    (value.resource === undefined ||
-      (value.kind === "resource" &&
-        typeof value.resource === "string" &&
-        Object.hasOwn(RESOURCE_ROCKS.classes, value.resource))) &&
     (value.river === undefined ||
       (value.kind === "debris" &&
         record(value.river) &&

@@ -115,7 +115,6 @@ it("does not extend tracked-object retention to unrelated pickups or protected o
     { amount: undefined },
     { upgrade: true },
     { ammoPack: true },
-    { kind: "resource" },
     { kind: "rock" },
     { kind: "station" },
     { kind: "destination" },

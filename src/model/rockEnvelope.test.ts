@@ -4,9 +4,9 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import * as convex from "./convex.ts";
 import { drawnRock, rocksOverlap, type Spaced } from "./rockSpacing.ts";
 
-const rock = (asteroid: string, x = 0, y = 0, kind: "resource" | "rock" = "rock"): Spaced => ({
+const rock = (asteroid: string, x = 0, y = 0): Spaced => ({
   asteroid,
-  kind,
+  kind: "rock",
   x,
   y,
 });
@@ -30,37 +30,31 @@ describe("prepared rock envelopes", () => {
       expect(grown).toHaveBeenCalledTimes(1);
       rocksOverlap(rock("asteroid-m3"), rock("asteroid-s2"));
       expect(grown).toHaveBeenCalledTimes(2);
-      rocksOverlap(rock("asteroid-s2"), rock("asteroid-m3", 0, 0, "resource"));
-      expect(grown).toHaveBeenCalledTimes(3);
     } finally {
       grown.mockRestore();
     }
   });
 
-  it("matches canonical polygon containment for every shape, order, resource silhouette and edge", () => {
+  it("matches canonical polygon containment for every shape, order and edge", () => {
     for (const a of ASTEROID_SHAPES.keys()) {
       for (const b of ASTEROID_SHAPES.keys()) {
-        for (const kind of ["resource", "rock"] as const) {
-          const first = rock(a);
-          const second = rock(b, 0, 0, kind);
-          const parts = convex.grown(drawnRock(first)!.parts, drawnRock(second)!.parts);
-          const limit = drawnRock(first)!.reach + drawnRock(second)!.reach;
-          const points = [
-            { x: limit, y: 0 },
-            { x: -limit, y: 0 },
-            { x: 0, y: limit },
-            { x: 0, y: -limit },
-            ...parts.flat(),
-            ...[-100, -20, 0, 20, 100].flatMap((x) =>
-              [-100, -20, 0, 20, 100].map((y) => ({ x, y })),
-            ),
-          ];
-          for (const point of points) {
-            for (const delta of [0, -1e-9, 1e-9]) {
-              const offset = convex.fromScreen({ x: point.x + delta, y: point.y });
-              const moved = { ...second, ...offset };
-              expect(rocksOverlap(first, moved)).toBe(reference(first, moved));
-            }
+        const first = rock(a);
+        const second = rock(b);
+        const parts = convex.grown(drawnRock(first)!.parts, drawnRock(second)!.parts);
+        const limit = drawnRock(first)!.reach + drawnRock(second)!.reach;
+        const points = [
+          { x: limit, y: 0 },
+          { x: -limit, y: 0 },
+          { x: 0, y: limit },
+          { x: 0, y: -limit },
+          ...parts.flat(),
+          ...[-100, -20, 0, 20, 100].flatMap((x) => [-100, -20, 0, 20, 100].map((y) => ({ x, y }))),
+        ];
+        for (const point of points) {
+          for (const delta of [0, -1e-9, 1e-9]) {
+            const offset = convex.fromScreen({ x: point.x + delta, y: point.y });
+            const moved = { ...second, ...offset };
+            expect(rocksOverlap(first, moved)).toBe(reference(first, moved));
           }
         }
       }

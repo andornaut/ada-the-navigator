@@ -4,7 +4,6 @@ import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
 import type { HeavyHullProfile, OrdinaryHeavy } from "../data/enemyIdentity.ts";
 import type { JobType } from "../data/jobs.ts";
-import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
@@ -41,15 +40,7 @@ export interface FlightInput {
   reducedMotion?: boolean;
 }
 export type ObjectKind =
-  | "rock"
-  | "resource"
-  | "enemy"
-  | "hazard"
-  | "pickup"
-  | "destination"
-  | "debris"
-  | "station"
-  | "wreck";
+  "rock" | "enemy" | "hazard" | "pickup" | "destination" | "debris" | "station" | "wreck";
 /** A destroyed enemy breaking apart before it releases its drops. */
 export interface WreckState {
   archetype: EnemyArchetype;
@@ -80,8 +71,6 @@ export interface SpaceObject extends Vec {
   river?: { arc: number; current: string };
   /** The spin frame an ore field rock starts on (art/cartwheel-props.md "Ore field"). */
   spinStart?: number;
-  /** A resource rock's class; a rock saved without one is medium. */
-  resource?: ResourceClass;
   radius: number;
   hp: number;
   role?: string;
@@ -477,8 +466,6 @@ export type FlightEvent =
       type: "asteroidDestroyed";
       asteroid: string;
       id: string;
-      /** A resource rock, drawn as Art's `resource-{shape}`. */
-      resource?: true;
       x: number;
       y: number;
     }

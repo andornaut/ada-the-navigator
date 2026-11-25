@@ -35,7 +35,6 @@ import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
@@ -222,7 +221,12 @@ import {
   needleRims,
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
-import { worldClearOfOreFields, worldOreFieldsNear } from "./oreFields.ts";
+import {
+  isOreFieldRock,
+  ORE_FIELD_ROLE,
+  worldClearOfOreFields,
+  worldOreFieldsNear,
+} from "./oreFields.ts";
 import {
   orePickupSize,
   pickupOutline,
@@ -442,7 +446,7 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
     clearOf(flight, LANDMARK_TUNING.chart, site, object),
   );
 }
-const SCENERY = ["rock", "resource", "debris"];
+const SCENERY = ["rock", "debris"];
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 /**
  * Push a circle out of overlapping scenery along each contact normal and report every contact
@@ -932,21 +936,13 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
     for (const placement of plan.placements) {
       const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
       const object: SpaceObject = {
-        hp:
-          placement.kind === "pickup"
-            ? 1
-            : placement.resource
-              ? RESOURCE_ROCKS.classes[placement.resource].hp
-              : shape
-                ? field.hp[shape.size]
-                : tuning.rockHp,
+        hp: placement.kind === "pickup" ? 1 : shape ? field.hp[shape.size] : tuning.rockHp,
         id: placement.id,
         kind: placement.kind,
         radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
         x: placement.x,
         y: placement.y,
         ...(shape ? { asteroid: shape.id } : {}),
-        ...(placement.resource ? { resource: placement.resource } : {}),
       };
       // A drifting asteroid's place on its seeded path follows flight time, so paging and
       // saves resume it where it would be.
@@ -969,8 +965,8 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
         object.radius = stardustPickupReach(ECONOMY.stardustPickupRadius, object.amount);
         object.role = "stardust";
       }
-      // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
-      // included; an ore field holds only its own rocks.
+      // Asteroids are not placed in currents or ore fields, drift loops included; an ore field
+      // holds only its own rocks.
       const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
       const at = object.orbit ?? object;
       if (
@@ -1007,7 +1003,8 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
 export const PLATFORM_FACING: Readonly<Vec> = { x: 1, y: 0 };
 
 /**
- * Cartwheel's seeded ore fields whose centres fall in chunk (x, y): their resource rocks and,
+ * Cartwheel's seeded ore fields whose centres fall in chunk (x, y): their rocks, ordinary
+ * asteroids with their size's HP marked with `ORE_FIELD_ROLE`, and,
  * at a guarded field, a retained platform facing `PLATFORM_FACING`. A field within the
  * ore-field clearance of a station, the hub or a quantum jump arrival is left out.
  */
@@ -1038,14 +1035,16 @@ function placeOreFields(
     ) {
       continue;
     }
+    const hp = byPosition(ASTEROID_FIELDS, flight.galaxy).hp;
     field.rocks.forEach((rock, index) => {
+      const shape = ASTEROID_SHAPES.get(rock.asteroid)!;
       const object: SpaceObject = {
         ...rock,
-        hp: RESOURCE_ROCKS.classes[rock.resource].hp,
+        hp: hp[shape.size],
         id: `${field.id}:${index}`,
-        kind: "resource",
-        radius: ASTEROID_SHAPES.get(rock.asteroid)!.radius,
-        role: "discovery",
+        kind: "rock",
+        radius: shape.radius,
+        role: ORE_FIELD_ROLE,
       };
       if (
         !existing.has(object.id) &&
@@ -2241,7 +2240,7 @@ function placeGuards(content: GameContent, guards: SpaceObject[], flight: Flight
       (object) =>
         object !== guard &&
         !(capital(guard) && capital(object) && guardSet.has(object) && !positions.has(object)) &&
-        ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
+        ["enemy", "rock", "debris"].includes(object.kind) &&
         object.hp > 0 &&
         // A salvaged hulk keeps no spacing, but nothing settles onto its drawn hull.
         (object.enemy?.salvaged
@@ -4177,7 +4176,7 @@ function moveDebris(
       }
       continue;
     }
-    if (object.orbit && (object.kind === "rock" || object.kind === "resource")) {
+    if (object.orbit && object.kind === "rock") {
       // Legacy circular paths settle at their current centre without changing HP or drops.
       delete object.orbit;
       delete object.velocity;
@@ -4595,7 +4594,6 @@ function hit(
     events.push({
       asteroid: object.asteroid,
       id: object.id,
-      ...(object.kind === "resource" ? { resource: true as const } : {}),
       type: "asteroidDestroyed",
       x: object.x,
       y: object.y,
@@ -4604,22 +4602,29 @@ function hit(
   if (object.kind === "debris") {
     events.push({ id: object.id, type: "debrisCleared" });
   }
-  if (object.kind === "rock" || object.kind === "resource") {
+  if (object.kind === "rock") {
     dropFromRock(content, object, flight);
   }
 }
 
-/** An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. */
+/**
+ * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. An ore field
+ * rock skips the ammo roll and gives at least `ORE_FIELDS.minimumOre`; further ore and Stardust
+ * roll as usual.
+ */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
   const size = asteroidSize(object);
+  const oreField = isOreFieldRock(object);
   if (
+    !oreField &&
     rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${object.id}`))
   ) {
     pushAmmoPack(content, object, flight);
     return;
   }
   const next = dropRandom(flight.seed, object.id);
-  const loot = rollAsteroidLoot(ASTEROID_LOOT, size, next);
+  const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
+  const loot = oreField ? { ...rolled, ore: Math.max(ORE_FIELDS.minimumOre, rolled.ore) } : rolled;
   const amounts = splitResourcePickup(loot.ore);
   const orePieces = amounts.length;
   const widths = amounts.map(orePickupSize);
@@ -4696,9 +4701,7 @@ function blast(
     }
     if (object.kind !== "enemy") {
       if (
-        (object.kind === "rock" ||
-          object.kind === "resource" ||
-          (object.kind === "debris" && object.asteroid)) &&
+        (object.kind === "rock" || (object.kind === "debris" && object.asteroid)) &&
         blastCoversRock(flight, radius, at, object)
       ) {
         hit(content, amount, null, object, flight, events);
@@ -4732,7 +4735,7 @@ function blastCoversRock(
     return false;
   }
   if (!drawn) {
-    return object.kind === "resource" || coversFallbackRock(offset, object.radius, reach);
+    return coversFallbackRock(offset, object.radius, reach);
   }
   const frame = drawn.frames[frameOf(flight, object)] ?? drawn.frames[0]!;
   return frame.some(

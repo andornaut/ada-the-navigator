@@ -541,7 +541,7 @@ describe("asteroid save boundary", () => {
     }
   });
 
-  it("keeps whale debris stone shapes and resource rock classes, rejecting misplaced ones", () => {
+  it("keeps whale debris stone shapes and ore field rocks, rejecting misplaced ones", () => {
     const model = new GameModel(CONTENT);
     model.startGalaxy(1);
     playOpening(model);
@@ -557,11 +557,13 @@ describe("asteroid save boundary", () => {
       y: 4800,
     };
     const ore: SpaceObject = {
-      hp: 5,
-      id: "chunk:9,9:1",
-      kind: "resource",
+      asteroid: "asteroid-l1",
+      hp: 10,
+      id: "ore:9,9:1",
+      kind: "rock",
       radius: 54,
-      resource: "large",
+      role: "ore-field",
+      spinStart: 0,
       x: 5200,
       y: 4800,
     };
@@ -569,8 +571,7 @@ describe("asteroid save boundary", () => {
     const restored = restoreSave(JSON.stringify(saved))!.flight!.objects;
     expect(restored.slice(-2)).toEqual([stone, ore]);
     for (const bad of [
-      { ...ore, resource: "huge" },
-      { ...stone, resource: "medium" },
+      { ...ore, kind: "resource" as string },
       { ...ore, asteroid: "asteroid-s2", kind: "pickup" },
     ]) {
       saved.flight!.objects = [...base, bad as SpaceObject];

@@ -71,7 +71,7 @@ describe("asteroid-only density", () => {
         ({ id }) => !baseline.placements.some((old) => old.id === id),
       );
       for (const extra of extras) {
-        expect(["rock", "resource"]).toContain(extra.kind);
+        expect(extra.kind).toBe("rock");
         const margin =
           extra.radius + (extra.orbit?.radius ?? 0) + settings.shipRadius + settings.clearance;
         expect(Math.abs(extra.x - (settings.x + 0.5) * settings.size)).toBeGreaterThanOrEqual(
@@ -158,7 +158,7 @@ describe("asteroid-only density", () => {
         const cachesBefore = before.filter(({ role }) => role === "stardust");
         expect(after.filter(({ role }) => role === "stardust")).toEqual(cachesBefore);
         total.caches += cachesBefore.length;
-        total.authored += oreBefore.filter(({ kind }) => kind === "resource").length;
+        total.authored += oreBefore.filter(({ kind }) => kind === "rock").length;
         for (let x = origin.x - 2; x <= origin.x + 2; x++) {
           for (let y = origin.y - 2; y <= origin.y + 2; y++) {
             const settings = options(galaxy, x, y);
@@ -173,7 +173,7 @@ describe("asteroid-only density", () => {
             ).length;
             const prefix = `chunk:${x},${y}:`;
             const asteroid = (object: { id: string; kind: string }) =>
-              object.id.startsWith(prefix) && ["rock", "resource"].includes(object.kind);
+              object.id.startsWith(prefix) && object.kind === "rock";
             const baseline = before.filter(asteroid).length;
             const boosted = after.filter(asteroid).length;
             const counts = templates.get(id) ?? { baseline: 0, boosted: 0, chunks: 0 };

@@ -114,8 +114,6 @@ export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "rasters"
     | "settingsOpen"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "reveals"
     | "rockQueued"
     | "rockRequests"

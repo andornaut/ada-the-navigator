@@ -165,7 +165,7 @@ export interface GameContent {
     flight: {
       asteroidDensity: number;
       objectsPerChunk: number;
-      spawnWeights: { resource: number; rock: number; enemy: number; pickup: number };
+      spawnWeights: { rock: number; enemy: number; pickup: number };
       rockHp: number;
       enemyHp: number;
       playerShotDamage: number;

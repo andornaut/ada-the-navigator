@@ -45,7 +45,7 @@ function context(overrides: Partial<IndicatorContext> = {}): IndicatorContext {
         object("station:1:0", "station", 400),
         object("drone", "enemy", 300),
         object("cache", "pickup", 200, { role: "discovery" }),
-        object("ore", "resource", 250, { role: "discovery" }),
+        object("ore", "rock", 250, { role: "ore-field" }),
       ],
       player: ORIGIN,
     },
@@ -127,7 +127,7 @@ describe("direction indicators", () => {
     expect(marked(context({ objective: null }))).toEqual([]);
   });
 
-  it("never mark ordinary enemies, optional discovery caches or resource rocks", () => {
+  it("never mark ordinary enemies, optional discovery caches or ore field rocks", () => {
     const all = marked(context({ holodiskWaypoint: true, questItem: "growers" }));
     expect(all).toEqual(["holodisk:holodisk", "objective:workshop", "questItem:growers"]);
     expect(all.some((target) => /drone|cache|ore/u.test(target))).toBe(false);

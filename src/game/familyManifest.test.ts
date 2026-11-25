@@ -154,7 +154,6 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     partAssets: [] as Asset[],
     partLoads: new Set<string>(),
     rasters: new SvgRasters(1),
-    resourceFiles: new Set<string>(),
     rockQueued: false,
     rockRequests: new Set<string>(),
     shards: new Map(),

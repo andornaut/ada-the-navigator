@@ -1,8 +1,7 @@
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
-import type { ResourceClass } from "../data/resourceRocks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type { Vec } from "./types.ts";
+import type { SpaceObject, Vec } from "./types.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -22,14 +21,21 @@ export interface OreField extends Vec {
   /** The guard's position, or null for an unguarded field. */
   guard: Vec | null;
   id: string;
-  /** Each rock's class, the plain asteroid shape it collides on and its start spin frame. */
+  /** Each rock's asteroid shape and its start spin frame. */
   rocks: readonly (Vec & {
     asteroid: string;
-    resource: ResourceClass;
     spinStart: number;
   })[];
   /** Recomputed from the placement cell; not stored in flight or save state. */
   variantId: string;
+}
+
+/** The role that marks an ordinary rock placed in an ore field. */
+export const ORE_FIELD_ROLE = "ore-field";
+
+/** Whether a flight object is a rock placed in an ore field. */
+export function isOreFieldRock(object: Pick<SpaceObject, "kind" | "role">): boolean {
+  return object.kind === "rock" && object.role === ORE_FIELD_ROLE;
 }
 
 /** Fixed seeds for the galaxies with ore fields, so ore fields are the same on every flight. */
@@ -86,7 +92,6 @@ export function worldOreFieldInCell(
     ORE_FIELD_LAYOUTS.variants[Math.floor(roll(0x8e13) * ORE_FIELD_LAYOUTS.variants.length)]!;
   const rocks = oreFieldLayout(variant.id, total).map((rock) => ({
     asteroid: rock.asteroid,
-    resource: rock.resource,
     spinStart: rock.frame,
     x: x + rock.position.x * cos - rock.position.y * sin,
     y: y + rock.position.x * sin + rock.position.y * cos,

@@ -1,14 +1,12 @@
 import ORE_FIELD from "../../public/art/cartwheel/ore-field.json" with { type: "json" };
 import { ASTEROID_ART } from "./asteroidCatalog.ts";
-import type { ResourceClass } from "./resourceRocks.ts";
 
 /** One rock of an ore field layout: Art's rock, its rest position and its start spin frame. */
 export interface OreFieldRock {
-  /** The plain asteroid shape it collides on, `asteroid-{shape}` for Art's `resource-{shape}`. */
+  /** The asteroid shape, `asteroid-{shape}` for the layout's `resource-{shape}` id. */
   readonly asteroid: string;
   readonly frame: number;
   readonly position: { readonly x: number; readonly y: number };
-  readonly resource: ResourceClass;
 }
 
 export interface OreFieldVariant {
@@ -102,7 +100,6 @@ export function readOreFieldLayouts(value: unknown): OreFieldLayouts {
           asteroid,
           frame: rock!.frame as number,
           position: { x: position[0] as number, y: position[1] as number },
-          resource: match[1] === "m" ? "medium" : "large",
         };
       });
       for (const [index, rock] of decoded.entries()) {

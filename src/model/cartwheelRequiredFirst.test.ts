@@ -33,9 +33,7 @@ it("reserves the hub capital and held buoy geometry before optional chunks witho
     plan.site,
     ...cartwheelRequiredSites(flightWorldContext(flight), plan.site, ["miner", "visitors"]),
   ];
-  const rocks = stationPopulationObjects(flight).filter(
-    ({ kind }) => kind === "rock" || kind === "resource",
-  );
+  const rocks = stationPopulationObjects(flight).filter(({ kind }) => kind === "rock");
   for (const site of sites) {
     for (const rock of rocks) {
       expect(worldDistance(flightWorldContext(flight), site, rock)).toBeGreaterThan(

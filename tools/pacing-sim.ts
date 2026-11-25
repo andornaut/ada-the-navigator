@@ -423,8 +423,7 @@ const FLIGHT_START = { x: 0, y: 0 };
 
 /**
  * One chunk's layout objects and encounter pack, as flight.ts generates them with Ada at
- * `player`. Resource rocks carry cargo, not Stardust, and debris drops nothing, so both
- * are omitted.
+ * `player`. Debris drops nothing, so it is omitted.
  */
 export function generateChunk(
   options: WorldOptions,
@@ -1539,8 +1538,8 @@ export function runScenario(
   };
   const spawnWeights = {
     ...tuning.flight.spawnWeights,
-    // Weight taken from caches moves to the skipped enemy slot, so rock and resource
-    // densities stay unchanged.
+    // Weight taken from caches moves to the skipped enemy slot, so rock density stays
+    // unchanged.
     ...(scenario.cacheSpawnWeight === undefined
       ? {}
       : {
@@ -1581,8 +1580,8 @@ export function runScenario(
 export function createScenarioRunner(): (options: RunOptions) => ReturnType<typeof runScenario> {
   const worlds = new Map<string, CellPlans>();
   const plansForWorld: PlansForWorld = ({ galaxy, seed, spawnWeights }) => {
-    const { enemy, pickup, resource, rock } = spawnWeights;
-    const key = `${galaxy}:${seed}:${enemy}:${pickup}:${resource}:${rock}`;
+    const { enemy, pickup, rock } = spawnWeights;
+    const key = `${galaxy}:${seed}:${enemy}:${pickup}:${rock}`;
     const existing = worlds.get(key);
     if (existing) {
       return existing;
@@ -1664,7 +1663,7 @@ export function realLoop(
     const probe = { x: player.x + Math.cos(heading) * 70, y: player.y + Math.sin(heading) * 70 };
     const blocked = flight.objects.some(
       (object) =>
-        ["rock", "resource", "debris"].includes(object.kind) &&
+        ["rock", "debris"].includes(object.kind) &&
         object.hp > 0 &&
         segmentDistance(object, player, probe) < object.radius + tuning.flight.shipRadius + 4,
     );

@@ -2,12 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_ART, readResourceRocks } from "../data/asteroidCatalog.ts";
 import { PROJECTS } from "../data/projects.ts";
-import { resourceArtId } from "../data/resourceRocks.ts";
 import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
@@ -33,7 +30,6 @@ const cartwheelJets = (craft: string) =>
     enemyJetsPath(readSidecars(CORE_MANIFEST.sidecars)!, craft))!;
 const manifest = ART_MANIFEST as unknown as {
   assets: CartwheelAsset[];
-  resourceRocks: string;
 };
 const assets = manifest.assets;
 // A cast portrait sheet ({key}-portrait or {key}-portrait-compact), in any galaxy's manifest.
@@ -230,30 +226,6 @@ describe("Cartwheel art", () => {
     const own = core.map((frame) => ({ ...frame, path: frame.path.replace("/art/", "/art/own/") }));
     expect(storyCraftSets([], core).get("miner")).toEqual(core);
     expect(storyCraftSets(own, core).get("miner")).toEqual(own);
-  });
-
-  it("draws each resource rock on its plain shape's exact footprints", () => {
-    const rocks = readResourceRocks(json(manifest.resourceRocks))!;
-    expect(rocks.rocks.map((rock) => rock.id).sort()).toEqual(
-      [...ASTEROID_SHAPES.values()]
-        .filter((shape) => shape.size === "medium" || shape.size === "large")
-        .map((shape) => resourceArtId(shape.id))
-        .sort(),
-    );
-    const plain = new Map(ASTEROID_ART.asteroids.map((rock) => [resourceArtId(rock.id), rock]));
-    // Footprints are world-plane offsets from the base centre, so they match as given.
-    for (const rock of rocks.rocks) {
-      const base = plain.get(rock.id)!;
-      expect(rock.footprintRadius).toBe(base.footprintRadius);
-      expect(rock.frames).toHaveLength(rock.size === "medium" ? 24 : 1);
-      const ours = rock.frames.flatMap((frame) => frame.footprint.flat());
-      const theirs = base.frames.flatMap((frame) => frame.footprint.flat());
-      expect(ours).toHaveLength(theirs.length);
-      ours.forEach((at, i) => {
-        expect(at.x).toBeCloseTo(theirs[i]!.x, 6);
-        expect(at.y).toBeCloseTo(theirs[i]!.y, 6);
-      });
-    }
   });
 
   it("read each story craft's nose by heading, its distance following Art's projection rule", () => {

@@ -187,7 +187,7 @@ it("generates optional content around hidden required footprints and retains cap
   flight.player = { x: site.x, y: site.y };
   stepFlight(CONTENT, 1 / 120, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false }, flight);
   const optional = flight.objects.filter((actor) =>
-    ["rock", "resource", "debris", "enemy"].includes(actor.kind),
+    ["rock", "debris", "enemy"].includes(actor.kind),
   );
   expect(optional.length).toBeGreaterThan(0);
   expect(

@@ -62,7 +62,7 @@ export function worldNavigationQuery(
   const candidates = objects.filter(
     (object) =>
       object.hp > 0 &&
-      ["rock", "resource", "debris"].includes(object.kind) &&
+      ["rock", "debris"].includes(object.kind) &&
       worldDistance(context, enemy.position, object) <=
         reach +
           sceneryBound(object, hullRadius + ENEMY_AVOIDANCE.clearance, context.drawnOf(object)),

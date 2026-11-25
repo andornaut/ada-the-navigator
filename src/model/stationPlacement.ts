@@ -71,7 +71,7 @@ export function stationFormationClear(
         if (!obstacle || overlaps(obstacle, point, body, actor)) {
           return false;
         }
-      } else if (["rock", "resource", "debris"].includes(other.kind)) {
+      } else if (["rock", "debris"].includes(other.kind)) {
         if (
           worldSceneryBodyContact(
             world,

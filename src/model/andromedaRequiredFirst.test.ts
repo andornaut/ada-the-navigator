@@ -31,7 +31,7 @@ it("runs actual G5 launch initialization before optional chunks without selectin
       before,
       ids: context.flight.objects.map(({ id }) => id),
       optional: context.flight.objects
-        .filter((object) => ["rock", "resource", "debris", "enemy"].includes(object.kind))
+        .filter((object) => ["rock", "debris", "enemy"].includes(object.kind))
         .map(({ id }) => id),
     });
   });

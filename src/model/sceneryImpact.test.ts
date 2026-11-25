@@ -8,15 +8,12 @@ const tuning = CONTENT.tuning.flight;
 const ship = Object.freeze({ shield: 10, time: 1 });
 
 describe("scenery impact admission", () => {
-  it.each(["rock", "resource", "debris"] as const)(
-    "admits one basic Laser hit against live %s",
-    (kind) => {
-      const obstacle = Object.freeze({ hp: 3, kind });
-      expect(sceneryImpact(tuning, ship, obstacle)).toEqual({ amount: 1, damageObstacle: true });
-      expect(ship).toEqual({ shield: 10, time: 1 });
-      expect(obstacle).toEqual({ hp: 3, kind });
-    },
-  );
+  it.each(["rock", "debris"] as const)("admits one basic Laser hit against live %s", (kind) => {
+    const obstacle = Object.freeze({ hp: 3, kind });
+    expect(sceneryImpact(tuning, ship, obstacle)).toEqual({ amount: 1, damageObstacle: true });
+    expect(ship).toEqual({ shield: 10, time: 1 });
+    expect(obstacle).toEqual({ hp: 3, kind });
+  });
 
   it("retains the exact shared half-second repeat policy", () => {
     const obstacle = { hp: 3, kind: "rock" as const };

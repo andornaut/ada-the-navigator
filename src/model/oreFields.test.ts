@@ -9,13 +9,13 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { shipDirection } from "../game/shipArt.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { createFlight, PLATFORM_FACING, stepFlight } from "./flight.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
+  ORE_FIELD_ROLE,
   type OreField,
   oreFieldInCell,
   oreFieldsNear,
@@ -40,20 +40,12 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 describe("ore fields", () => {
   const fields = grid(2, 12);
 
-  it.each(GALAXY_NUMBERS)(
-    "galaxy %i supplies ordinary ore rocks without changing Cartwheel's fields",
-    (galaxy) => {
-      const flight = createFlight(CONTENT, galaxy, 7, { known: [] });
-      const rocks = flight.objects.filter(
-        (object) => object.kind === "resource" && !object.id.startsWith("ore:"),
-      );
-      expect(rocks.length).toBeGreaterThan(0);
-      for (const rock of rocks) {
-        expect(rock.resource === "medium" || rock.resource === "large").toBe(true);
-        expect(rock.hp).toBe(RESOURCE_ROCKS.classes[rock.resource!].hp);
-      }
-    },
-  );
+  it.each(GALAXY_NUMBERS)("galaxy %i places only ordinary static rocks", (galaxy) => {
+    const flight = createFlight(CONTENT, galaxy, 7, { known: [] });
+    const kinds = new Set<string>(flight.objects.map(({ kind }) => kind));
+    expect(kinds).toContain("rock");
+    expect(kinds).not.toContain("resource");
+  });
 
   it("are seeded in Cartwheel only, the same on every call", () => {
     expect(fields.length).toBeGreaterThan(200);
@@ -84,9 +76,9 @@ describe("ore fields", () => {
       expect(field.rocks.map((rock) => [rock.asteroid, rock.spinStart])).toEqual(
         layout.map((rock) => [rock.asteroid, rock.frame]),
       );
-      expect(field.rocks.filter((rock) => rock.resource === "large")).toHaveLength(
-        Math.round(field.rocks.length / 3),
-      );
+      expect(
+        field.rocks.filter((rock) => ASTEROID_SHAPES.get(rock.asteroid)!.size === "large"),
+      ).toHaveLength(Math.round(field.rocks.length / 3));
       const radius = (rock: { asteroid: string }) => ASTEROID_SHAPES.get(rock.asteroid)!.radius;
       field.rocks.forEach((rock, index) => {
         const reach = Math.hypot(rock.x - field.x, rock.y - field.y) + radius(rock);
@@ -179,10 +171,9 @@ describe("ore fields", () => {
         flight.player = { x: field.x + 2000, y: field.y };
         stepFlight(CONTENT, 0.001, idle, flight);
       }
-      // Chunk asteroids: rocks and resource rocks that belong to no field.
+      // Chunk asteroids: rocks that belong to no field.
       const asteroids = flight.objects.filter(
-        (object) =>
-          (object.kind === "rock" || object.kind === "resource") && !object.id.startsWith("ore:"),
+        (object) => object.kind === "rock" && !object.id.startsWith("ore:"),
       );
       for (const rock of asteroids) {
         for (const field of oreFieldsNear(2, ORE_FIELD_CLEAR_RADIUS, rock)) {
@@ -212,16 +203,19 @@ describe("ore fields", () => {
     stepFlight(CONTENT, 0.001, idle, flight);
     const rocks = flight.objects.filter((object) => object.id.startsWith(`${field.id}:`));
     expect(rocks.length).toBeGreaterThan(0);
-    expect(rocks.every((rock) => rock.kind === "resource")).toBe(true);
+    expect(rocks).toHaveLength(field.rocks.length);
+    // Ore field rocks are ordinary asteroids with ordinary HP: 5 for medium and 10 for large.
+    const hp = { large: 10, medium: 5 } as const;
     for (const rock of rocks) {
-      const { asteroid, resource, spinStart } = field.rocks[Number(rock.id.split(":").at(-1))]!;
+      const { asteroid, spinStart } = field.rocks[Number(rock.id.split(":").at(-1))]!;
       const shape = ASTEROID_SHAPES.get(asteroid)!;
-      expect(shape.size).toBe(resource);
+      expect(shape.size === "medium" || shape.size === "large").toBe(true);
       expect(rock).toMatchObject({
         asteroid,
-        hp: RESOURCE_ROCKS.classes[resource].hp,
+        hp: hp[shape.size as keyof typeof hp],
+        kind: "rock",
         radius: shape.radius,
-        resource,
+        role: ORE_FIELD_ROLE,
         spinStart,
       });
     }

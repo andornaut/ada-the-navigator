@@ -19,7 +19,7 @@ const cacheContent = {
     ...CONTENT.tuning,
     flight: {
       ...CONTENT.tuning.flight,
-      spawnWeights: { enemy: 0, pickup: 1, resource: 0, rock: 0 },
+      spawnWeights: { enemy: 0, pickup: 1, rock: 0 },
     },
   },
 };

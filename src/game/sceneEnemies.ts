@@ -107,8 +107,6 @@ export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "rockQueued"
     | "rockRequests"
     | "salvagedGroups"

@@ -86,8 +86,8 @@ export function rollAmmoDrop(
 }
 
 /**
- * Whether a destroyed asteroid or ore rock drops an ammo pack pickup: at the rock ammo drop
- * chance for its size while Ada owns a weapon other than Laser.
+ * Whether a destroyed asteroid drops an ammo pack pickup: at the rock ammo drop chance for its
+ * size while Ada owns a weapon other than Laser. Ore field rocks skip this roll.
  */
 export function rollRockAmmoDrop(
   catalog: EconomyCatalog,

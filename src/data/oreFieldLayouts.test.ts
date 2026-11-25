@@ -29,18 +29,12 @@ describe("ore field family catalog", () => {
     expect(ORE_FIELD_LAYOUTS.gap).toBe(55);
     for (const count of [6, 7, 8, 9, 10]) {
       const loose = oreFieldLayout("loose-cluster", count);
-      const compositions = loose.map(({ asteroid, frame, resource }) => ({
-        asteroid,
-        frame,
-        resource,
-      }));
+      const compositions = loose.map(({ asteroid, frame }) => ({ asteroid, frame }));
       const positions = new Set<string>();
       for (const id of families) {
         const rocks = oreFieldLayout(id, count);
         expect(rocks).toHaveLength(count);
-        expect(
-          rocks.map(({ asteroid, frame, resource }) => ({ asteroid, frame, resource })),
-        ).toEqual(compositions);
+        expect(rocks.map(({ asteroid, frame }) => ({ asteroid, frame }))).toEqual(compositions);
         positions.add(JSON.stringify(rocks.map(({ position }) => position)));
       }
       expect(positions.size).toBe(families.length);

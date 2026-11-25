@@ -3,10 +3,7 @@ import {
   type AsteroidArt,
   type AsteroidArtCatalog,
   type AsteroidSize,
-  RESOURCE_ART,
-  type ResourceRockCatalog,
 } from "../data/asteroidCatalog.ts";
-import { resourceArtId, type ResourceClass } from "../data/resourceRocks.ts";
 import {
   closestOnSegment,
   type Contact,
@@ -81,27 +78,6 @@ export function asteroidShapes(catalog: AsteroidArtCatalog): ReadonlyMap<string,
 
 export const ASTEROID_SHAPES = asteroidShapes(ASTEROID_ART);
 
-/**
- * Resource rock silhouettes by the plain shape a resource rock collides on: `asteroid-m1` maps
- * to `resource-m1`'s drawing, which is taller than the plain rock's.
- */
-export function resourceSilhouettes(
-  catalog: ResourceRockCatalog | undefined,
-  shapes: ReadonlyMap<string, AsteroidShape>,
-): ReadonlyMap<string, Silhouette> {
-  const rocks = new Map((catalog?.rocks ?? []).map((art) => [art.id, art]));
-  const silhouettes = new Map<string, Silhouette>();
-  for (const shape of shapes.values()) {
-    const art = rocks.get(resourceArtId(shape.id));
-    if (art && art.frames.length === shape.frames.length) {
-      silhouettes.set(shape.id, silhouette(art));
-    }
-  }
-  return silhouettes;
-}
-
-const RESOURCE_SILHOUETTES = resourceSilhouettes(RESOURCE_ART, ASTEROID_SHAPES);
-
 function hash(seed: number, text: string): number {
   let value = seed >>> 0 || 0x811c9dc5;
   for (const character of text) {
@@ -148,14 +124,6 @@ export function rockFrame(
   return Math.floor(turned / (360 / shape.frames.length)) % shape.frames.length;
 }
 
-/** The plain shapes of a resource class's size, the footprints its rocks collide on. */
-export function resourceShapes(
-  shapes: readonly AsteroidShape[],
-  resource: ResourceClass,
-): AsteroidShape[] {
-  return shapes.filter((shape) => shape.size === resource);
-}
-
 export function sceneryShape(object: Pick<SpaceObject, "asteroid">): AsteroidShape | null {
   return object.asteroid ? (ASTEROID_SHAPES.get(object.asteroid) ?? null) : null;
 }
@@ -165,21 +133,9 @@ export function asteroidSize(object: SpaceObject): AsteroidSize {
   return sceneryShape(object)?.size ?? "small";
 }
 
-/**
- * The silhouette a scenery object is drawn with: a resource rock's own drawing, else its asteroid
- * shape's; null for a circle obstacle.
- */
-export function scenerySilhouette(
-  object: Pick<SpaceObject, "asteroid" | "kind">,
-): Silhouette | null {
-  if (!object.asteroid) {
-    return null;
-  }
-  return (
-    (object.kind === "resource" ? RESOURCE_SILHOUETTES.get(object.asteroid) : undefined) ??
-    sceneryShape(object)?.silhouette ??
-    null
-  );
+/** A scenery object's drawn silhouette, its asteroid shape's; null for a circle obstacle. */
+export function scenerySilhouette(object: Pick<SpaceObject, "asteroid">): Silhouette | null {
+  return sceneryShape(object)?.silhouette ?? null;
 }
 
 const WORLD_REACH = new WeakMap<Silhouette, number>();

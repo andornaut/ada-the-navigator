@@ -80,8 +80,7 @@ function clearOptional(flight: FlightState): void {
     stationPopulationObjects(flight)
       .filter(
         (actor) =>
-          ["rock", "resource", "debris"].includes(actor.kind) ||
-          actor.enemy?.packId?.startsWith("pack:"),
+          ["rock", "debris"].includes(actor.kind) || actor.enemy?.packId?.startsWith("pack:"),
       )
       .map(({ id }) => id),
   );

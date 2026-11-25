@@ -50,12 +50,12 @@ describe("reviewed rules", () => {
   });
 
   it("deals bump damage from generated play rocks of every kind, 1 a bump, at most every 0.5 s", () => {
-    // Stable IDs select actual generated small, large, resource and moving debris fixtures.
+    // Stable IDs select actual generated small, medium, large and moving debris fixtures.
     const kinds = new Set<string>();
     for (const [seed, id, expectedKind] of [
       [173, "chunk:0,0:0", "rock:small"],
       [174, "chunk:0,0:feature", "rock:large"],
-      [176, "chunk:0,-1:0", "resource:medium"],
+      [176, "chunk:0,-1:0", "rock:medium"],
       [173, "ballistic:0,0:4", "drifting"],
     ] as const) {
       seedLaunches(seed);
@@ -94,7 +94,7 @@ describe("reviewed rules", () => {
         );
       }
     }
-    expect(kinds).toEqual(new Set(["drifting", "resource:medium", "rock:large", "rock:small"]));
+    expect(kinds).toEqual(new Set(["drifting", "rock:large", "rock:medium", "rock:small"]));
   });
 
   it("uses a shorter base time for ordinary speech while preserving notice time", () => {

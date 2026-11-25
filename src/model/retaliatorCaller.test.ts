@@ -170,7 +170,7 @@ it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
       expect(context.pursuit.homeRadius).toBe(2000);
       for (const asteroid of context.asteroids) {
         const actual = flight.objects.find((o) => o.id === asteroid.id)!;
-        expect(["rock", "resource"]).toContain(actual.kind);
+        expect(actual.kind).toBe("rock");
         expect(asteroid.position).toEqual({ x: actual.x, y: actual.y });
         expect(asteroid.physicalReach).toBe(placementRadius(actual));
       }

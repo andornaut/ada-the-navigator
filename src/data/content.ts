@@ -761,8 +761,8 @@ export const CONTENT: GameContent = {
       sceneryRestitution: 0.4,
       shipRadius: 10,
       // Enemy slots stay empty (encounters come from the director), so rare caches leave gaps
-      // instead of adding rocks or resources.
-      spawnWeights: { enemy: 0.2064, pickup: 0.0136, resource: 0.4, rock: 0.38 },
+      // instead of adding rocks and the rock share alone sets the static rock count.
+      spawnWeights: { enemy: 0.6064, pickup: 0.0136, rock: 0.38 },
     },
     hazardDamage: 1,
     introFreshDistance: 10800,

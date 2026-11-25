@@ -9,7 +9,7 @@ import type { FlightEvent, FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const shape = [...ASTEROID_SHAPES.values()].find(({ size }) => size === "medium")!;
-function fixture(kind: "rock" | "resource" | "debris" = "rock", hp = 3, content = CONTENT) {
+function fixture(kind: "rock" | "debris" = "rock", hp = 3, content = CONTENT) {
   const flight = createFlight(content, 1, 7, { known: [] });
   const obstacle: SpaceObject = {
     ...(kind === "debris" ? {} : { asteroid: shape.id }),
@@ -18,7 +18,6 @@ function fixture(kind: "rock" | "resource" | "debris" = "rock", hp = 3, content 
     kind,
     persistent: true,
     radius: shape.radius,
-    ...(kind === "resource" ? { resource: "medium" as const } : {}),
     x: 100,
     y: 100,
   };
@@ -119,8 +118,6 @@ describe("scenery collision damage", () => {
   it.each([
     ["rock", false],
     ["rock", true],
-    ["resource", false],
-    ["resource", true],
   ] as const)(
     "releases the existing seeded medium %s ammo once (same-frame Laser: %s)",
     (kind, sameFrameShot) => {
@@ -156,8 +153,8 @@ describe("scenery collision damage", () => {
     },
   );
 
-  it("releases resource cargo once and resolves the obstacle even when the same impact depletes Ada", () => {
-    const { flight, obstacle } = fixture("resource", 1);
+  it("releases rock cargo once and resolves the obstacle even when the same impact depletes Ada", () => {
+    const { flight, obstacle } = fixture("rock", 1);
     flight.shield = 1;
     const events = impact(CONTENT, flight, obstacle);
     expect(flight.shield).toBe(0);
@@ -167,7 +164,7 @@ describe("scenery collision damage", () => {
     expect(loot.ore + loot.stardust).toBeLessThanOrEqual(5);
     expect(events.filter(({ type }) => type === "depleted")).toHaveLength(1);
     expect(events.filter(({ type }) => type === "asteroidDestroyed")).toEqual([
-      expect.objectContaining({ id: obstacle.id, resource: true }),
+      expect.objectContaining({ id: obstacle.id }),
     ]);
     const once = payload(flight, events);
     expect(stepFlight(CONTENT, 1, idle, flight)).toEqual([]);

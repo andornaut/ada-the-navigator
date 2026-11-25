@@ -88,7 +88,7 @@ describe("rock spacing", () => {
         }
       }
     }
-    expect(rocks).toBeGreaterThan(1000);
+    expect(rocks).toBeGreaterThan(700);
   });
 
   it("regenerates the same spaced plan for the same chunk and seed", () => {

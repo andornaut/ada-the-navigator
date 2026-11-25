@@ -4,12 +4,7 @@ import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textu
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Loader, Scenes } from "phaser";
 
-import {
-  ASTEROID_ART,
-  type AsteroidArt,
-  readResourceRocks,
-  RESOURCE_ART,
-} from "../data/asteroidCatalog.ts";
+import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   enemyAssetKey,
@@ -318,8 +313,6 @@ export type AssetsContext = Pick<
   | "partAssets"
   | "partLoads"
   | "rasters"
-  | "resourceFiles"
-  | "resourceRocks"
   | "rockQueued"
   | "rockRequests"
   | "scale"
@@ -457,10 +450,8 @@ export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void 
     return;
   }
   scene.galaxyLoads.add(galaxy);
-  // Resource rocks are in every galaxy's chunks, and any galaxy's rescue draws the tow line:
-  // both load with the first flight.
+  // Any galaxy's rescue draws the tow line, so it loads with the first flight.
   for (const [key, path] of [
-    ["resource-rocks", scene.manifest.resourceRocks],
     ["tow", scene.manifest.tow],
     ["jobs", scene.manifest.jobs],
     ["backdrop-layers", scene.manifest.backdropLayers],
@@ -850,11 +841,6 @@ export function readGalaxyArt(scene: AssetsContext): void {
     loaded,
     scene.cache.json.get("whirlpool-projects"),
   );
-  const rocks = readResourceRocks(scene.cache.json.get("resource-rocks"));
-  scene.resourceRocks = new Map((rocks?.rocks ?? []).map((rock) => [rock.id, rock]));
-  scene.resourceFiles = new Set(
-    (rocks?.rocks ?? []).flatMap((rock) => rock.frames.map((frame) => frame.file)),
-  );
   const whaleData: unknown = scene.cache.json.get("whales");
   const whaleFrames = scene.manifest.assets.filter(whaleFrameAsset);
   const linkedPhantom =
@@ -894,14 +880,9 @@ function registerRockSheets(rocks: readonly AsteroidArt[], intrinsicScale: numbe
   }
 }
 registerRockSheets(ASTEROID_ART.asteroids, 1);
-if (RESOURCE_ART) {
-  // Resource SVGs already have a scaled intrinsic size, before rounding in the display metadata.
-  registerRockSheets(RESOURCE_ART.rocks, RESOURCE_ART.displayScale);
-}
 
 function queueRockSvg(scene: AssetsContext, file: string, path: string): void {
-  // Resource rocks are drawn at their own size; backdrop rocks at the art's display scale.
-  const factor = scene.resourceFiles.has(file) ? 1 : scene.asteroidArt.displayScale;
+  const factor = scene.asteroidArt.displayScale;
   queueSvg(scene, { key: file, path, size: (scale) => ({ scale: scale * factor }) });
 }
 

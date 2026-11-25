@@ -172,7 +172,7 @@ const geometry = (sites: ReturnType<typeof proceduralPoisNear>) =>
   sites.map(({ id, kind, name, x, y }) => ({ id, kind, name, x, y }));
 
 describe("useful procedural POI opportunities", () => {
-  it("uses ordinary ore rocks everywhere without unlocking richer field composition", () => {
+  it("uses ordinary rocks everywhere without unlocking richer field composition", () => {
     const resources = { ...context, opportunityEligibility: { resources: true, salvage: false } };
     for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       const sites = proceduralPoisNear(resources, galaxy, 42, 25000, far);

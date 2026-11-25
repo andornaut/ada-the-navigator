@@ -53,9 +53,10 @@ export interface EconomyCatalog {
   /**
    * Ammunition for every upgrade weapon (Laser is unlimited). Shop packs, new weapons, found
    * duplicates, and world pickups each award their own quantities. Eligible destroyed small craft
-   * roll at `dropChance`, and asteroids or ore rocks at their size's `rockDropChance`. Ada must own
-   * a weapon other than Laser. The pack's weapon is selected among eligible owned weapons by
-   * `dropWeights` on collection, including an upgrade pickup that falls back to ammo.
+   * roll at `dropChance`, and asteroids other than ore field rocks at their size's
+   * `rockDropChance`. Ada must own a weapon other than Laser. The pack's weapon is selected among
+   * eligible owned weapons by `dropWeights` on collection, including an upgrade pickup that falls
+   * back to ammo.
    */
   ammo: {
     /** Maximum stored shots per finite-ammunition weapon. */

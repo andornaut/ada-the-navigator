@@ -78,8 +78,6 @@ export type BackdropContext = Pick<
   | "plateInk"
   | "rasters"
   | "reducedMotion"
-  | "resourceFiles"
-  | "resourceRocks"
   | "rockQueued"
   | "rockRequests"
   | "scale"

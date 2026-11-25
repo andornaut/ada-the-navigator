@@ -10,7 +10,6 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { enemyAssetKey, heavyProfilePartClass, wreckEnemyId } from "../data/enemyIdentity.ts";
-import { resourceArtId } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
@@ -160,8 +159,6 @@ export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> 
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "revealGroups"
     | "reveals"
     | "rockQueued"
@@ -1035,16 +1032,6 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         drawUpgradeChevrons(scene, object, point, color);
       }
       break;
-    case "resource": {
-      const art = object.asteroid && scene.resourceRocks.get(resourceArtId(object.asteroid));
-      if (art) {
-        drawAsteroidSprite(scene, object, point, art);
-        break;
-      }
-      scene.ink.fillStyle(color);
-      scene.ink.fillCircle(point.x, point.y, radius);
-      break;
-    }
     case "rock":
     case "debris": {
       if (object.kind === "debris" && drawTravelingDebris(scene, object, point)) {

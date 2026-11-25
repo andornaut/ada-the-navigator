@@ -77,7 +77,7 @@ describe("edge marker kinds", () => {
     for (const id of ["whale", "family", "holodisk", "miner", "visitors"]) {
       expect(edgeMarkerKind({ ...base, id, kind: "destination" })).toBeNull();
     }
-    for (const kind of ["rock", "resource", "debris", "pickup", "wreck", "hazard"] as const) {
+    for (const kind of ["rock", "debris", "pickup", "wreck", "hazard"] as const) {
       expect(edgeMarkerKind({ ...base, id: kind, kind })).toBeNull();
     }
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), hp: 0 })).toBeNull();

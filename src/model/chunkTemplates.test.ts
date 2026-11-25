@@ -61,7 +61,7 @@ describe("stateless chunk plans", () => {
   });
 
   it("bounds placements to authored slots and configured count without introducing story or combat entities", () => {
-    const allRock = { enemy: 0, pickup: 0, resource: 0, rock: 1 };
+    const allRock = { enemy: 0, pickup: 0, rock: 1 };
     for (const family of families) {
       const many = planChunk(catalogFor(family), {
         ...options,
@@ -96,24 +96,36 @@ describe("stateless chunk plans", () => {
     const second = planChunk(catalog, {
       ...options,
       galaxy: 2,
-      spawnWeights: { enemy: 0, pickup: 0, resource: 1, rock: 0 },
+      spawnWeights: { enemy: 0, pickup: 0, rock: 1 },
     });
     const third = planChunk(catalog, { ...options, galaxy: 3 });
     expect([first.id, second.id, third.id]).toEqual(["quiet", "cluster", "poi"]);
     expect(second.placements.length).toBeGreaterThan(0);
-    expect(second.placements.every((placement) => placement.kind === "resource")).toBe(true);
+    expect(second.placements.every((placement) => placement.kind === "rock")).toBe(true);
     expect(first.ports).toEqual(second.ports);
     expect(second.ports).toEqual(third.ports);
     clearCross(second, { ...options, galaxy: 2 });
   });
 
+  it("places only ordinary rocks and caches with the content weights, never a resource kind", () => {
+    const kinds = new Set<string>();
+    for (let x = -10; x < 10; x++) {
+      for (let y = -10; y < 10; y++) {
+        for (const placement of planChunk(CHUNK_CATALOG, { ...options, x, y }).placements) {
+          kinds.add(placement.kind);
+        }
+      }
+    }
+    expect([...kinds].sort()).toEqual(["pickup", "rock"]);
+    expect(Object.keys(CONTENT.tuning.flight.spawnWeights).sort()).toEqual([
+      "enemy",
+      "pickup",
+      "rock",
+    ]);
+  });
+
   it("drops scenery that cannot fit clearances instead of sealing a passage", () => {
-    // Resource rocks take their class radius, so only plain rocks read the wide rockRadius.
-    const constrained = {
-      ...options,
-      rockRadius: options.size / 2,
-      spawnWeights: { ...options.spawnWeights, resource: 0 },
-    };
+    const constrained = { ...options, rockRadius: options.size / 2 };
     const plan = planChunk(catalogFor("passage"), constrained);
     expect(plan.placements).toEqual([]);
     expect(plan.ports.east.halfWidth).toBe(options.shipRadius + options.clearance);

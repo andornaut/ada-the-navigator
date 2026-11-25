@@ -63,7 +63,6 @@ export function spaceObjectColor(palette: SpacePalette, object: SpaceObject): nu
     case "debris":
       return object.velocity === undefined ? palette.environmentDetail : palette.obstacle;
     case "destination":
-    case "resource":
       return palette.pointOfInterest;
     case "pickup":
       return object.ammoPack ? palette.ammo : object.upgrade ? palette.weapon : palette.active;

@@ -221,8 +221,6 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "restartCard"
     | "rockQueued"
     | "rockRequests"
@@ -374,7 +372,6 @@ export function buildScene(scene: UiContext): void {
   scene.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);
   scene.manifest = {
     assets: bootAssets,
-    ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
     ...(manifest?.tow ? { tow: manifest.tow } : {}),
     ...(manifest?.jobs ? { jobs: manifest.jobs } : {}),
     ...(manifest?.backdropLayers ? { backdropLayers: manifest.backdropLayers } : {}),

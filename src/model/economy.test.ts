@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import {
   ECONOMY,
@@ -15,8 +15,7 @@ import {
 } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog, HEAVIES } from "../data/enemyCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
-import { byPosition } from "../data/galaxies.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
@@ -37,6 +36,7 @@ import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
+import { ORE_FIELD_ROLE } from "./oreFields.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { restoreSave } from "./save.ts";
@@ -124,7 +124,7 @@ const total = (objects: SpaceObject[]) =>
   objects.reduce((sum, object) => sum + (object.amount ?? 0), 0);
 
 describe("guaranteed destruction loot", () => {
-  it.each(["rock", "resource"] as const)(
+  it.each(["rock"] as const)(
     "pays one bounded combined outcome only on a lethal %s hit",
     (kind) => {
       for (const size of ["small", "medium", "large", "huge"] as const) {
@@ -160,7 +160,7 @@ describe("guaranteed destruction loot", () => {
     },
   );
 
-  it.each(["rock", "resource"] as const)(
+  it.each(["rock"] as const)(
     "supports ore-only, Stardust-only and mixed %s outcomes without a bonus",
     (kind) => {
       for (const composition of ["ore", "stardust", "mixed"] as const) {
@@ -191,7 +191,7 @@ describe("guaranteed destruction loot", () => {
 
   it.each([
     ["rock", "rapidMissile"],
-    ["resource", "heavyMissile"],
+    ["rock", "heavyMissile"],
   ] as const)("pays each destroyed %s once for a %s impact, including splash", (kind, weapon) => {
     const value = flight();
     const { blastRadius, damageRatio } = WEAPON_CATALOG[weapon][0];
@@ -245,7 +245,7 @@ describe("guaranteed destruction loot", () => {
     expect(total(pickups(value))).toBe(splashLoot.stardust + directLoot.stardust);
   });
 
-  it.each(["rock", "resource"] as const)(
+  it.each(["rock"] as const)(
     "groups rolled ore into five-unit chunks and single remainders from a %s and collects once after save/resume",
     (kind) => {
       const { minimum, weights } = ASTEROID_LOOT.totals.huge;
@@ -415,30 +415,27 @@ describe("guaranteed destruction loot", () => {
     }
   });
 
-  it.each(["rock", "resource"] as const)(
-    "preserves released %s loot across save and resume",
-    (kind) => {
-      const model = new GameModel(CONTENT);
-      model.state.mode = "space";
-      const value = flight();
-      value.topology = CURRENT_FLIGHT_TOPOLOGY;
-      const target: SpaceObject = { hp: 1, id: "saved-rock", kind, radius: 20, x: 600, y: 0 };
-      value.objects.push(target);
-      value.shots.push(killShot(target), killShot(target));
-      stepFlight(CONTENT, 1 / 60, idle, value);
-      const before = value.objects.filter(({ kind }) => kind === "pickup").map(({ id }) => id);
-      expect(before.length).toBeGreaterThan(0);
-      model.state.flight = value;
-      const restored = restoreSave(model.save());
-      expect(restored).not.toBeNull();
-      const resumed = restored!.flight!;
-      resumed.shots.push(killShot(target));
-      stepFlight(CONTENT, 1 / 60, idle, resumed);
-      expect(resumed.objects.filter(({ kind }) => kind === "pickup").map(({ id }) => id)).toEqual(
-        before,
-      );
-    },
-  );
+  it.each(["rock"] as const)("preserves released %s loot across save and resume", (kind) => {
+    const model = new GameModel(CONTENT);
+    model.state.mode = "space";
+    const value = flight();
+    value.topology = CURRENT_FLIGHT_TOPOLOGY;
+    const target: SpaceObject = { hp: 1, id: "saved-rock", kind, radius: 20, x: 600, y: 0 };
+    value.objects.push(target);
+    value.shots.push(killShot(target), killShot(target));
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    const before = value.objects.filter(({ kind }) => kind === "pickup").map(({ id }) => id);
+    expect(before.length).toBeGreaterThan(0);
+    model.state.flight = value;
+    const restored = restoreSave(model.save());
+    expect(restored).not.toBeNull();
+    const resumed = restored!.flight!;
+    resumed.shots.push(killShot(target));
+    stepFlight(CONTENT, 1 / 60, idle, resumed);
+    expect(resumed.objects.filter(({ kind }) => kind === "pickup").map(({ id }) => id)).toEqual(
+      before,
+    );
+  });
 
   it("does not pay an already released wreck again after restoring a save", () => {
     const model = new GameModel(CONTENT);
@@ -797,8 +794,6 @@ describe("Stardust drops", () => {
     ["rock", "medium", 0.005, 0.01, 0.02],
     ["rock", "large", 0.01, 0.02, 0.04],
     ["rock", "huge", 0.02, 0.04, 0.05],
-    ["resource", "medium", 0.005, 0.01, 0.02],
-    ["resource", "large", 0.01, 0.02, 0.04],
   ] as const)(
     "uses the canonical %s %s shot-destruction cutoff and releases a single outcome",
     (kind, size, previousChance, chance, nextChance) => {
@@ -822,9 +817,6 @@ describe("Stardust drops", () => {
             id,
             kind,
             radius: shape.radius,
-            ...(kind === "resource" && (size === "medium" || size === "large")
-              ? { resource: size }
-              : {}),
             x: 600,
             y: 0,
           };
@@ -883,79 +875,52 @@ describe("Stardust drops", () => {
     expect(dropped.every((object) => object.ammoPack && !object.upgrade)).toBe(true);
   });
 
-  it("keeps resource durability and centres its bounded ore outcome on the rock", () => {
-    for (const resource of ["medium", "large"] as const) {
-      const value = flight();
-      const { hp } = RESOURCE_ROCKS.classes[resource];
-      const shape = ASTEROID_SHAPES.get(resource === "medium" ? "asteroid-m2" : "asteroid-l1")!;
-      const deposit: SpaceObject = {
+  it("gives at least one ore and never an ammo pack from a destroyed ore field rock", () => {
+    const seed = 77;
+    const ids = Array.from({ length: 4000 }, (_, index) => `ore:0,0:${index}`);
+    // A rock whose ammo roll hits, and one whose ordinary roll gives no ore.
+    const ammoId = ids.find((id) =>
+      rollRockAmmoDrop(ECONOMY, ["phaser"], "medium", dropRandom(seed, `ammo:${id}`)),
+    )!;
+    const orelessId = ids.find(
+      (id) => rollAsteroidLoot(ASTEROID_LOOT, "medium", dropRandom(seed, id)).ore === 0,
+    )!;
+    expect(ammoId).toBeDefined();
+    expect(orelessId).toBeDefined();
+    const shape = ASTEROID_SHAPES.get("asteroid-m2")!;
+    const destroy = (id: string, role?: string) => {
+      const value = flight(seed);
+      value.ownedWeapons = ["phaser"];
+      const rock: SpaceObject = {
         asteroid: shape.id,
-        hp,
-        id: "deposit",
-        kind: "resource",
+        hp: 1,
+        id,
+        kind: "rock",
         radius: shape.radius,
-        resource,
-        x: -400,
+        ...(role ? { role } : {}),
+        x: 600,
         y: 0,
       };
-      value.objects.push(deposit);
-      value.shots.push({ ...killShot(deposit), damage: hp - 1, id: "chip" });
+      value.objects.push(rock);
+      value.shots.push(killShot(rock));
       stepFlight(CONTENT, 1 / 60, idle, value);
-      expect(value.objects.some((object) => object.id === "deposit")).toBe(true);
-      value.shots.push(killShot(deposit));
-      stepFlight(CONTENT, 1 / 60, idle, value);
-      const cargo = value.objects.filter((object) => object.role === "cargo");
-      const amount = oreTotal(cargo) + total(pickups(value));
-      const outcome = rollAsteroidLoot(ASTEROID_LOOT, resource, dropRandom(value.seed, deposit.id));
-      expect(amount).toBe(outcome.ore + outcome.stardust);
-      if (cargo.length) {
-        const left = Math.min(
-          ...cargo.map((piece) => toScreen(piece).x - orePickupSize(piece.amount) / 2),
-        );
-        const right = Math.max(
-          ...cargo.map((piece) => toScreen(piece).x + orePickupSize(piece.amount) / 2),
-        );
-        expect((left + right) / 2).toBeCloseTo(-400, 9);
-      }
+      return value;
+    };
+    for (const id of [ammoId, orelessId]) {
+      const rolled = rollAsteroidLoot(ASTEROID_LOOT, "medium", dropRandom(seed, id));
+      const value = destroy(id, ORE_FIELD_ROLE);
+      expect(value.objects.some((object) => object.ammoPack)).toBe(false);
+      expect(oreTotal(value.objects)).toBe(Math.max(ORE_FIELDS.minimumOre, rolled.ore));
+      expect(total(pickups(value))).toBe(rolled.stardust);
     }
-    expect([RESOURCE_ROCKS.classes.medium, RESOURCE_ROCKS.classes.large]).toMatchObject([
-      { hp: 3 },
-      { hp: 5 },
+    // The same rocks outside an ore field keep the ordinary roll, the exclusive ammo pack included.
+    const ammo = destroy(ammoId);
+    expect(ammo.objects.filter((object) => object.kind === "pickup")).toMatchObject([
+      { ammoPack: true },
     ]);
-  });
-
-  it("makes two of every three chunk resource rocks medium, each on a shape of its size", () => {
-    const counts = { large: 0, medium: 0 };
-    const shapes = [...ASTEROID_SHAPES.values()];
-    for (let x = -20; x < 20; x++) {
-      for (let y = -20; y < 20; y++) {
-        const plan = planChunk(CHUNK_CATALOG, {
-          asteroids: { field: byPosition(ASTEROID_FIELDS, 2), shapes },
-          clearance: CONTENT.tuning.flight.shipRadius,
-          galaxy: 2,
-          objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
-          rockRadius: CONTENT.tuning.flight.rockRadius,
-          seed: 11,
-          shipRadius: CONTENT.tuning.flight.shipRadius,
-          size: CONTENT.tuning.chunkSize,
-          spawnWeights: CONTENT.tuning.flight.spawnWeights,
-          x,
-          y,
-        });
-        for (const placement of plan.placements.filter((entry) => entry.kind === "resource")) {
-          counts[placement.resource!]++;
-          const shape = ASTEROID_SHAPES.get(placement.asteroid!)!;
-          expect(shape.size).toBe(placement.resource);
-          expect(placement.radius).toBe(shape.radius);
-        }
-      }
-    }
-    const share = counts.medium / (counts.medium + counts.large);
-    // A large rock that does not fit its slot's clearance is left out, so large rocks run a
-    // little under a third.
-    expect(counts.large).toBeGreaterThan(50);
-    expect(share).toBeGreaterThan(0.6);
-    expect(share).toBeLessThan(0.85);
+    const plain = destroy(orelessId);
+    expect(oreTotal(plain.objects)).toBe(0);
+    expect(ORE_FIELDS.minimumOre).toBe(1);
   });
 });
 
@@ -1848,7 +1813,7 @@ describe("discovery cache rarity", () => {
       y,
     });
 
-  it("leaves rare caches' freed weight empty, so rocks and resources are unchanged", () => {
+  it("leaves rare caches' freed weight empty, so rocks are unchanged", () => {
     const weights = tuning.flight.spawnWeights;
     const common = { ...weights, enemy: weights.enemy + weights.pickup - 0.12, pickup: 0.12 };
     let caches = 0;

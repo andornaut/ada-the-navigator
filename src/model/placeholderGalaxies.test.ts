@@ -91,8 +91,7 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
       const kinds = new Set(objects.map(({ kind }) => kind));
       expect(kinds.has("enemy")).toBe(true);
       expect(kinds.has("rock")).toBe(true);
-      // No story destinations or current debris; resource rocks are generic chunk rocks in every
-      // galaxy, and ore fields are checked below.
+      // No story destinations or current debris; ore fields are checked below.
       expect(kinds.has("destination")).toBe(false);
       expect(objects.some((object) => object.river)).toBe(false);
       // Enemies come from the tuning table it reads, the built galaxy before it on the route.

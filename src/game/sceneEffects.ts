@@ -3,7 +3,6 @@
 import type { Scene } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
-import { resourceArtId } from "../data/resourceRocks.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { playDepth, rockArt } from "./asteroidArt.ts";
 import { reducedAt } from "./destructionArt.ts";
@@ -64,8 +63,6 @@ export type EffectsContext = Scene &
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "rockBreaks"
     | "rockQueued"
     | "rockRequests"
@@ -153,11 +150,7 @@ export function startRockBreaks(scene: EffectsContext, nowMs: number): void {
     return;
   }
   for (const event of scene.model.flightEvents) {
-    const art =
-      event.type === "asteroidDestroyed" &&
-      (event.resource
-        ? scene.resourceRocks.get(resourceArtId(event.asteroid))
-        : rockArt(event.asteroid));
+    const art = event.type === "asteroidDestroyed" && rockArt(event.asteroid);
     if (art && event.type === "asteroidDestroyed") {
       scene.rockBreaks.push({
         art,

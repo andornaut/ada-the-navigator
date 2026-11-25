@@ -77,8 +77,6 @@ export type HudContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "quantum"
     | "rasters"
     | "reducedMotion"
-    | "resourceFiles"
-    | "resourceRocks"
     | "rockQueued"
     | "rockRequests"
     | "scale"

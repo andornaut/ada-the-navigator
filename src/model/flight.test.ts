@@ -232,7 +232,7 @@ describe("flight boundaries", () => {
     expect(flight.weapon).toBe("rapidMissile");
   });
 
-  it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {
+  it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed rocks", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     // A disabled platform isolates player bolts from retreat steering and hostile fire.
@@ -257,16 +257,16 @@ describe("flight boundaries", () => {
         x: 220,
         y: 100,
       },
-      { hp: 1, id: "resource", kind: "resource", radius: 10, x: 310, y: 100 },
+      { hp: 1, id: "rock", kind: "rock", radius: 10, x: 310, y: 100 },
     ];
     flight.weapon = "laser";
     const events = stepFlight(CONTENT, 1.5, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ id: "enemy", type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
-      rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, "resource")).ore,
+      rollAsteroidLoot(ASTEROID_LOOT, "small", dropRandom(flight.seed, "rock")).ore,
     );
-    expect(flight.objects.some((o) => ["debris", "enemy", "resource"].includes(o.id))).toBe(false);
+    expect(flight.objects.some((o) => ["debris", "enemy", "rock"].includes(o.id))).toBe(false);
   });
 
   it("separates regenerated known destinations and discovers nearby arrivals", () => {

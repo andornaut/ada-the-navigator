@@ -1,5 +1,4 @@
 import ART_FILE from "../../public/art/asteroids.json" with { type: "json" };
-import RESOURCE_FILE from "../../public/art/resource-rocks.json" with { type: "json" };
 import type { Vec } from "../model/types.ts";
 
 export const ASTEROID_SIZES = ["small", "medium", "large", "huge"] as const;
@@ -281,35 +280,6 @@ export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefi
   };
 }
 
-/** Art's resource rocks (`resource-rocks.json`, art/asteroids.md "Resource rocks"). */
-export interface ResourceRockCatalog {
-  readonly displayScale: number;
-  readonly rocks: readonly AsteroidArt[];
-}
-
-/** The resource rocks in the asteroid schema, or undefined to keep their placeholders. */
-export function readResourceRocks(value: unknown): ResourceRockCatalog | undefined {
-  const root = fields(value);
-  if (
-    !root ||
-    root.version !== 1 ||
-    !positive(root.displayScale) ||
-    !Array.isArray(root.rocks) ||
-    !root.rocks.length
-  ) {
-    return undefined;
-  }
-  const rocks: AsteroidArt[] = [];
-  for (const value of root.rocks as unknown[]) {
-    const entry = readAsteroid(value);
-    if (!entry || rocks.some((rock) => rock.id === entry.id)) {
-      return undefined;
-    }
-    rocks.push(entry);
-  }
-  return { displayScale: root.displayScale, rocks };
-}
-
 function required(catalog: AsteroidArtCatalog | undefined): AsteroidArtCatalog {
   if (!catalog) {
     throw new Error("public/art/asteroids.json does not read as Art's version 1 catalog");
@@ -319,6 +289,3 @@ function required(catalog: AsteroidArtCatalog | undefined): AsteroidArtCatalog {
 
 /** Art's rocks and backdrop: collision, placement and drawing all read it. */
 export const ASTEROID_ART: AsteroidArtCatalog = required(readAsteroidCatalog(ART_FILE));
-
-/** Art's resource rocks, or undefined when the file does not read; shots read their silhouettes. */
-export const RESOURCE_ART: ResourceRockCatalog | undefined = readResourceRocks(RESOURCE_FILE);

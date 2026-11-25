@@ -14,7 +14,7 @@ export function retaliatorAsteroidQuery(
   const cells = new Map<string, RetaliatorAsteroid[]>();
   let maximumReach = 0;
   for (const object of objects) {
-    if (object.hp <= 0 || !["rock", "resource"].includes(object.kind) || !sceneryShape(object)) {
+    if (object.hp <= 0 || object.kind !== "rock" || !sceneryShape(object)) {
       continue;
     }
     const physicalReach = placementRadius(object);

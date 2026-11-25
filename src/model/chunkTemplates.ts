@@ -1,9 +1,8 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { AsteroidField, ChunkCatalog, ChunkTemplateId } from "../data/chunkCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
-import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resourceRocks.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
+import type { AsteroidShape } from "./asteroids.ts";
 import { fromScreen, toScreen } from "./convex.ts";
 import { drawnRock, loopReach, rocksOverlap } from "./rockSpacing.ts";
 import type { Vec } from "./types.ts";
@@ -34,7 +33,7 @@ export interface ChunkPlanOptions {
   readonly seed: number;
   readonly shipRadius: number;
   readonly size: number;
-  readonly spawnWeights: Readonly<Record<"enemy" | "pickup" | "resource" | "rock", number>>;
+  readonly spawnWeights: Readonly<Record<"enemy" | "pickup" | "rock", number>>;
   readonly x: number;
   readonly y: number;
 }
@@ -48,10 +47,9 @@ export interface AsteroidOrbit {
 export interface ChunkPlacement extends Vec {
   readonly asteroid?: string;
   readonly id: string;
-  readonly kind: "rock" | "resource" | "pickup";
+  readonly kind: "rock" | "pickup";
   readonly orbit?: AsteroidOrbit;
   readonly radius: number;
-  readonly resource?: ResourceClass;
 }
 export interface ChunkPort {
   readonly center: Vec;
@@ -554,7 +552,7 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
   const templateSlots = TEMPLATES[id];
   const count = Math.min(options.objectsPerChunk, templateSlots.length);
   const weights = options.spawnWeights;
-  const totalSpawn = weights.resource + weights.rock + weights.enemy + weights.pickup;
+  const totalSpawn = weights.rock + weights.enemy + weights.pickup;
   const asteroids = options.asteroids;
   const around = asteroids ? neighbourFeatures(catalog, options, grid) : [];
   // At most one large feature per chunk sits at a quadrant center, clear of edges and corridors.
@@ -562,21 +560,13 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
   const feature = spacedFeature(options, rolled, around);
   const slots: Slot[] = [];
   const pickups: ChunkPlacement[] = [];
-  // Placed resource rocks follow the large-every pattern from a seeded start.
-  let resources = mix(seed, 3001) % RESOURCE_ROCKS.largeEvery;
   for (let slot = 0; slot < count; slot++) {
     const local = templateSlots[(slot + (seed % templateSlots.length)) % templateSlots.length]!;
     const x = local[0] * options.size;
     const y = local[1] * options.size;
     const choice = (mix(seed, slot + 1) / 0x100000000) * totalSpawn;
     const kind =
-      choice < weights.resource
-        ? "resource"
-        : choice < weights.resource + weights.rock
-          ? "rock"
-          : choice < weights.resource + weights.rock + weights.enemy
-            ? "enemy"
-            : "pickup";
+      choice < weights.rock ? "rock" : choice < weights.rock + weights.enemy ? "enemy" : "pickup";
     // Keep combat under the existing encounter director, never an ambient slot roll.
     if (kind === "enemy") {
       continue;
@@ -585,10 +575,7 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
       kind === "rock" && asteroids
         ? asteroid(asteroids, asteroids.field.slotSizes, seed, 2000 + slot * 16)
         : undefined;
-    const resource = kind === "resource" ? resourceClass(resources) : undefined;
-    const variants = resource && asteroids ? resourceShapes(asteroids.shapes, resource) : [];
-    const ore = variants.length ? variants[mix(seed, 3100 + slot) % variants.length] : undefined;
-    const radius = chosen?.shape.radius ?? ore?.radius ?? options.rockRadius;
+    const radius = chosen?.shape.radius ?? options.rockRadius;
     const boundary = radius + halfWidth;
     if (
       x < boundary ||
@@ -609,15 +596,11 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
     ) {
       continue;
     }
-    if (resource) {
-      resources++;
-    }
     const placement: ChunkPlacement = {
-      ...(chosen ? { asteroid: chosen.shape.id } : ore ? { asteroid: ore.id } : {}),
+      ...(chosen ? { asteroid: chosen.shape.id } : {}),
       id: `chunk:${options.x},${options.y}:${slot}`,
       kind,
       radius,
-      ...(resource ? { resource } : {}),
       ...at,
     };
     if (kind === "pickup" || !placement.asteroid) {
@@ -627,14 +610,13 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
     slots.push({
       ...(chosen?.drift ? { drift: chosen.drift } : {}),
       placement,
-      salt: resource ? 3100 + slot : 2000 + slot * 16,
-      size: chosen?.shape.size ?? ore?.size ?? null,
+      salt: 2000 + slot * 16,
+      size: chosen?.shape.size ?? null,
       steps: 0,
     });
   }
   // Rocks part on the screen; a slot that still overlaps steps down a size and parts again, and
-  // one that cannot fit at small is dropped. A resource rock steps down from large to medium
-  // only, its class with it.
+  // one that cannot fit at small is dropped.
   const fixed = feature ? [feature, ...around] : around;
   for (let round = 0; round < STEP_ROUNDS; round++) {
     respace(options, origin, fixed, feature, slots);
@@ -643,9 +625,7 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
       break;
     }
     for (const slot of stuck) {
-      const resource = slot.placement.resource;
-      const next =
-        resource === "large" ? "medium" : resource ? null : slot.size ? STEP_DOWN[slot.size] : null;
+      const next = slot.size ? STEP_DOWN[slot.size] : null;
       const shape =
         next && asteroids
           ? variantOf(asteroids, next, seed, slot.salt + 7 + slot.steps)
@@ -660,7 +640,6 @@ function planCell(catalog: ChunkCatalog, options: ChunkPlanOptions, grid: WorldG
         ...slot.placement,
         asteroid: shape.id,
         radius: shape.radius,
-        ...(resource ? { resource: next as ResourceClass } : {}),
       };
     }
   }

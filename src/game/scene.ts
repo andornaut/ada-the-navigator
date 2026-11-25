@@ -287,7 +287,6 @@ export class GameScene extends Scene {
     backdropLayers?: string;
     cartwheelDebris?: string;
     jobs?: string;
-    resourceRocks?: string;
     tow?: string;
     whales?: string;
     whirlpoolCurrents?: string;
@@ -318,9 +317,6 @@ export class GameScene extends Scene {
   familyParts = new Map<string, readonly Asset[]>();
   debrisArt: ReadonlyMap<GalaxyNumber, DebrisArt> = new Map();
   streakSpec: StreakSpec | undefined;
-  resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
-  // Resource rock SVGs declare their display size, so they load without the displayScale.
-  resourceFiles = new Set<string>();
   stardustArt: StardustArt<Asset> | undefined;
   cacheArt: LoopArt<Asset> | undefined;
   holodiskArt: LoopArt<Asset> | undefined;

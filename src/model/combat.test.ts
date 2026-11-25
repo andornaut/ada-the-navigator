@@ -942,14 +942,11 @@ describe("integrated combat", () => {
     // Galaxy one's largest group is a swarm pack of 4 to 6 with the position's +1 bonus.
     expect(Object.values(packs).every((size) => size >= 1 && size <= 7)).toBe(true);
     expect(
-      flight.objects.some(
-        (object) => object.id.startsWith("chunk:") && ["rock", "resource"].includes(object.kind),
-      ),
+      flight.objects.some((object) => object.id.startsWith("chunk:") && object.kind === "rock"),
     ).toBe(true);
     expect(
       flight.objects.some((object) => object.id.startsWith("ballistic:") && object.velocity),
     ).toBe(true);
-    expect(flight.objects.some((object) => object.role === "discovery")).toBe(true);
     // A capital battle's escorts share their capital's encounter cell.
     const cells = new Set(Object.keys(packs).map((id) => id.split(":")[1]!));
     const origins = [...cells].map((cell) => cell.split(",").map(Number));
@@ -996,7 +993,7 @@ describe("rotating hulls", () => {
 describe("galaxy encounters", () => {
   it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
     // This seeded middle-region cell admits a capital and its four escorts in one step.
-    const flight = createFlight(CONTENT, 5, 0, progress);
+    const flight = createFlight(CONTENT, 5, 17, progress);
     flight.player = {
       x: 24 * CONTENT.tuning.chunkSize,
       y: 24 * CONTENT.tuning.chunkSize,

@@ -300,7 +300,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const npc: SpaceObject = {
       hp: 1,
       id: "interacted",
-      kind: "resource",
+      kind: "rock",
       persistent: true,
       radius: 10,
       x: 100,

@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  ASTEROID_ART,
-  ASTEROID_SIZES,
-  type AsteroidArt,
-  RESOURCE_ART,
-} from "../data/asteroidCatalog.ts";
+import { ASTEROID_ART, ASTEROID_SIZES, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -87,25 +82,13 @@ const huge = shapes.find((shape) => shape.size === "huge")!;
 // A screen offset from a rock's pivot as the world offset that projects to it.
 const world = (screen: Vec): Vec => ({ x: screen.y + screen.x / 2, y: screen.y - screen.x / 2 });
 const idleInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-// Every Art rock as the flight object that draws it: plain rocks as rocks, resource rocks on the
-// plain shape they collide on.
-const drawnRocks: { art: AsteroidArt; object: SpaceObject }[] = [
-  ...ASTEROID_ART.asteroids.map((art) => ({
+// Every Art rock as the flight object that draws it.
+const drawnRocks: { art: AsteroidArt; object: SpaceObject }[] = ASTEROID_ART.asteroids.map(
+  (art) => ({
     art,
     object: rock(art.id, { asteroid: art.id, radius: art.footprintRadius }),
-  })),
-  ...RESOURCE_ART!.rocks.map((art) => {
-    const plain = art.id.replace(/^resource-/, "asteroid-");
-    return {
-      art,
-      object: rock(art.id, {
-        asteroid: plain,
-        kind: "resource",
-        radius: ASTEROID_SHAPES.get(plain)!.radius,
-      }),
-    };
   }),
-];
+);
 
 describe("asteroid footprints", () => {
   // Gameplay's size classes (art/asteroids.md "Classes"): footprint radius ranges in world units.
@@ -189,7 +172,7 @@ describe("asteroid footprints", () => {
 });
 
 describe("rock silhouettes", () => {
-  it("sit inside each rock's drawn sprite box, a resource rock on its own drawing", () => {
+  it("sit inside each rock's drawn sprite box", () => {
     for (const { art, object } of drawnRocks) {
       const left = -art.pivot.x * art.display.width;
       const top = -art.pivot.y * art.display.height;
@@ -245,39 +228,7 @@ describe("rock silhouettes", () => {
         }
       });
     }
-    expect(checked).toBe(
-      4 *
-        [...ASTEROID_ART.asteroids, ...RESOURCE_ART!.rocks].reduce(
-          (n, a) => n + a.frames.length,
-          0,
-        ),
-    );
-  });
-
-  it("draw a resource rock's crystals above its plain shape, and hit them", () => {
-    const highest = (object: SpaceObject, frame: number) =>
-      scenerySilhouette(object)!
-        .frames[frame]!.flat()
-        .reduce((best, at) => (at.y < best.y ? at : best));
-    // The resource rock and frame whose crest stands highest above its plain rock's top.
-    let tallest: { frame: number; gap: number; plain: SpaceObject; resource: SpaceObject } | null =
-      null;
-    for (const { object } of drawnRocks.filter((entry) => entry.object.kind === "resource")) {
-      const plain = rock("plain", { asteroid: object.asteroid!, radius: object.radius });
-      for (let frame = 0; frame < scenerySilhouette(object)!.frames.length; frame++) {
-        const gap = highest(plain, frame).y - highest(object, frame).y;
-        if (!tallest || gap > tallest.gap) {
-          tallest = { frame, gap, plain, resource: object };
-        }
-      }
-    }
-    const { frame, gap, plain, resource } = tallest!;
-    expect(gap).toBeGreaterThan(6);
-    // Just under the crystals' crest and above the plain rock's top.
-    const crest = highest(resource, frame);
-    const at = world({ x: crest.x, y: crest.y + 2 });
-    expect(sceneryContact(resource, at, 1, frame)).not.toBeNull();
-    expect(sceneryContact(plain, at, 1, frame)).toBeNull();
+    expect(checked).toBe(4 * ASTEROID_ART.asteroids.reduce((n, a) => n + a.frames.length, 0));
   });
 
   it("strike a real shot through the drawn top of a rock, not one just above it", () => {
@@ -864,7 +815,7 @@ describe("asteroids in flight", () => {
     model.step(1 / 60, idle);
     expect(flight.chunks).toContain("0,0");
     for (const object of flight.objects) {
-      if (["rock", "resource"].includes(object.kind) || object.role === "discovery") {
+      if (object.kind === "rock" || object.role === "discovery") {
         expect(gap({ x: 0, y: 0 }, object), object.id).toBeGreaterThan(safe);
       }
     }

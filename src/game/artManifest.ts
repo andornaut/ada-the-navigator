@@ -25,7 +25,6 @@ export interface CoreManifest<T> {
   /** The enemy-only weapon effects (public/art/enemy-weapons.json). */
   readonly enemyWeapons?: string;
   readonly quantumJump?: string;
-  readonly resourceRocks?: string;
   /** Core's enemy and story craft data file paths, read with readSidecars. */
   readonly sidecars?: unknown;
   readonly spacePalette?: string;

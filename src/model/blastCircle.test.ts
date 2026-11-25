@@ -131,7 +131,7 @@ function enemyWithGap(
 describe("missile blasts as screen circles", () => {
   it.each([
     ["rapidMissile", 1, "rock", "x"],
-    ["heavyMissile", 3, "resource", "y"],
+    ["heavyMissile", 3, "rock", "y"],
   ] as const)(
     "uses full %s tier %i damage for a drawn %s at and inside the circle edge",
     (weapon, level, kind, axis) => {

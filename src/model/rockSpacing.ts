@@ -10,7 +10,7 @@ import type { Vec } from "./types.ts";
 /** What spacing reads of a placement: where it sits, its drawn rock and its drift loop. */
 export interface Spaced extends Vec {
   readonly asteroid?: string;
-  readonly kind: "pickup" | "resource" | "rock";
+  readonly kind: "pickup" | "rock";
   readonly orbit?: { readonly radius: number };
 }
 

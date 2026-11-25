@@ -2,7 +2,7 @@ import { ORE_FIELD_LAYOUTS } from "./oreFieldLayouts.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 /**
- * Cartwheel's ore fields (gameplay/ships.md): seeded clusters of resource rocks, placed like
+ * Cartwheel's ore fields (gameplay/ships.md): seeded clusters of ordinary rocks, placed like
  * stations. All values are provisional tuning in world units.
  */
 export const ORE_FIELDS = {
@@ -17,7 +17,7 @@ export const ORE_FIELDS = {
   chance: 0.7,
   /** Clearance from the hub, stations and quantum jump arrivals. */
   clearance: 1500,
-  /** Inclusive resource rock count per field. */
+  /** Inclusive rock count per field. */
   count: [6, 10] as const,
   /** Field diameter across its rock centres. */
   diameter: 2 * ORE_FIELD_LAYOUTS.radius,
@@ -32,6 +32,8 @@ export const ORE_FIELDS = {
   jitter: 1500,
   /** Share of claim-jumper groups moved to an ore field. */
   jumperShare: 0.5,
+  /** Least ore a destroyed ore field rock gives; it skips the ammo roll (gameplay/economy.md). */
+  minimumOre: 1,
 } as const;
 
 /**

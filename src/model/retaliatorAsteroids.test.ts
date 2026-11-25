@@ -19,7 +19,7 @@ afterEach(() => vi.restoreAllMocks());
 
 it("supplies only live authored asteroid bodies in stable id order, with actual positions and reaches", () => {
   const first = rock("z-rock", 0);
-  const ore = { ...rock("a-resource", 1), kind: "resource" as const };
+  const ore = { ...rock("a-ore-field", 1), role: "ore-field" };
   const objects = [
     first,
     ore,

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_ART, RESOURCE_ART } from "../data/asteroidCatalog.ts";
+import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import {
   type EnemyArchetype,
   enemyCatalog,
@@ -251,8 +251,8 @@ describe("Art's collision data", () => {
     expect(Math.max(...square.flat().map((at) => at.x))).toBe(10.75);
   });
 
-  it("gives every rock and resource rock frame a silhouette", () => {
-    for (const art of [...ASTEROID_ART.asteroids, ...RESOURCE_ART!.rocks]) {
+  it("gives every rock frame a silhouette", () => {
+    for (const art of ASTEROID_ART.asteroids) {
       expect(art.frames.every((frame) => frame.collision.length > 0)).toBe(true);
     }
     for (const shape of ASTEROID_SHAPES.values()) {

@@ -16,7 +16,7 @@ export function sceneryImpact(
   if (
     flight.shield <= 0 ||
     obstacle.hp <= 0 ||
-    !["rock", "resource", "debris"].includes(obstacle.kind) ||
+    !["rock", "debris"].includes(obstacle.kind) ||
     flight.time - (flight.lastBump ?? -Infinity) < SCENERY_IMPACT_SECONDS - 1e-9
   ) {
     return null;

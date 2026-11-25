@@ -56,7 +56,6 @@ export const ART_MANIFEST = {
   readonly assets: ArtEntry[];
   readonly cartwheelDebris: string;
   readonly galaxyFields: string;
-  readonly resourceRocks: string;
   readonly tow: string;
   readonly whales: string;
   readonly whirlpoolCurrents: string;

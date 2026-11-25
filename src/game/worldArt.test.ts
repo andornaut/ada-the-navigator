@@ -98,7 +98,7 @@ describe("discovery cache art", () => {
     expect(isDiscoveryCache(object({ amount: 5, role: "discovery" }))).toBe(true);
     expect(isDiscoveryCache(object({ amount: 5 }))).toBe(false);
     expect(isDiscoveryCache(object({ role: "cargo" }))).toBe(false);
-    expect(isDiscoveryCache(object({ kind: "resource", role: "discovery" }))).toBe(false);
+    expect(isDiscoveryCache(object({ kind: "rock", role: "discovery" }))).toBe(false);
   });
 });
 
