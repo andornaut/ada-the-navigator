@@ -1,20 +1,10 @@
-// Cartwheel props: traveling debris (a wheel-rim segment tumbling through 8 frames), the ore
-// nugget pickup, and the two stranded craft a tow job brings home (the ore pod and the stuck
-// hauler) at sixteen headings, with the tow line spec. Writes SVGs, the nugget sheet and
-// debris.json and tow.json to public/art/cartwheel/, and their core and Cartwheel manifest
-// entries and links.
+// Cartwheel's traveling debris: a wheel-rim segment tumbling through 8 frames. Writes its sheet
+// and debris.json to public/art/cartwheel/, and its Cartwheel manifest entries and link. The ore
+// nugget, the stranded craft and the tow line are friendly objects (art/tools/friendly.ts).
 // Usage: node art/tools/cartwheel-props.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import {
-  hauler,
-  HAULER_LEVELS,
-  HAULER_TOW,
-  orePod,
-  POD_TOW,
-  steelDarkSide,
-} from "./cartwheel-craft.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
   bodyRamp,
@@ -28,13 +18,9 @@ import {
   TUMBLE_FRAMES,
 } from "./debris.ts";
 import { writeDebrisFrames } from "./debris-sheets.ts";
-import { linkData, readManifest, replaceEntries } from "./manifest.ts";
-import { stageRows } from "./polish-rows.ts";
+import { linkData, mergeEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
-import { ORE_PICKUP, PICKUP_SIZE } from "./resource-glyphs.ts";
-import { traceGrid, withCollision } from "./silhouette.ts";
-import { prettify, writeSprites } from "./sprite-sheet.ts";
-import { type CraftSpec as StrandedSpec, exportStranded } from "./stranded.ts";
+import { prettify } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dir = `${art}cartwheel/`;
@@ -58,34 +44,6 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await prettify(path);
 }
 
-const DEG = Math.PI / 180;
-
-const CRAFT: readonly StrandedSpec[] = [
-  {
-    id: "stranded-ore-pod",
-    title: "Stranded ore pod",
-    scale: 1.6,
-    roll: 0,
-    pitch: 0,
-    levels: [11],
-    tow: POD_TOW,
-    frames: [
-      { name: "a", build: () => orePod(true) },
-      { name: "b", build: () => orePod(false) },
-    ],
-  },
-  {
-    // The tri-hull miner with its power off: dark glass, dim lights, no jets, listing to port, nose down.
-    id: "stranded-hauler",
-    title: "Stuck hauler",
-    scale: 1,
-    roll: -12 * DEG,
-    pitch: -5 * DEG,
-    levels: HAULER_LEVELS,
-    tow: HAULER_TOW,
-    frames: [{ name: "", build: (facing) => hauler({ powered: false }, facing) }],
-  },
-];
 // ------------------------------------------------------------------ debris
 
 const CORAL = palette.colors.obstacle!;
@@ -111,35 +69,6 @@ const debris = exportDebris(
   },
   (file, svg) => debrisSvg.set(`${file}.svg`, svg),
 );
-const installed = readManifest("cartwheel").assets;
-const craft = CRAFT.map((spec) => exportStranded(installed, spec, dir, "/art/cartwheel/"));
-
-await writeSprites(
-  { data: `${dir}ore-nugget.json`, sheet: `${dir}ore-nugget.png` },
-  { key: "ore-nugget" },
-  [["rest", [ORE_PICKUP], 100]],
-);
-const nuggetData = `${dir}ore-nugget.json`;
-// The frame's drawn silhouette, in frame px.
-const nuggetText = withCollision(readFileSync(nuggetData, "utf8"), [
-  traceGrid("ore-nugget", ORE_PICKUP).collision,
-]);
-writeFileSync(nuggetData, nuggetText);
-await prettify(nuggetData);
-const nugget = {
-  id: "ore-nugget",
-  path: "/art/cartwheel/ore-nugget.png",
-  width: PICKUP_SIZE,
-  height: PICKUP_SIZE,
-  displayWidth: PICKUP_SIZE,
-  displayHeight: PICKUP_SIZE,
-  facing: "front",
-  pivot: { x: 0.5, y: 0.5 },
-  frameWidth: PICKUP_SIZE,
-  frameHeight: PICKUP_SIZE,
-  frames: { rest: 0 },
-};
-
 await writeJson(`${dir}debris.json`, {
   version: 1,
   displayScale: DISPLAY_SCALE,
@@ -150,58 +79,10 @@ await writeJson(`${dir}debris.json`, {
   debris: [debris.data],
 });
 
-// Tow line, logical px: a steel cable from Ada's pivot to the craft's tow point.
-await writeJson(`${dir}tow.json`, {
-  version: 1,
-  displayScale: DISPLAY_SCALE,
-  line: {
-    layers: [
-      { name: "outer", color: steelDarkSide.toUpperCase(), width: 2.5 },
-      { name: "core", color: "#B8BFC9", width: 1.2 },
-    ],
-    beads: { color: steelDarkSide.toUpperCase(), radius: 0.9, spacing: 12, start: 6 },
-    cap: [
-      { color: steelDarkSide.toUpperCase(), radius: 1.8 },
-      { color: "#B8BFC9", radius: 0.8 },
-    ],
-  },
-  craft: craft.map(({ data }) => data),
-});
-
-// The staged tow line (art/cartwheel-props.md, Tow line): a wider cable and one clamp block at
-// the craft end, with no beads and no cap. It replaces `line` whole.
-stageRows("effects-tow", {
-  file: "/art/cartwheel/tow.json",
-  line: {
-    layers: [
-      { name: "outer", color: steelDarkSide.toUpperCase(), width: 3 },
-      { name: "core", color: "#B8BFC9", width: 1.4 },
-    ],
-    // The light-field ink stroke under the cable.
-    lightInk: 4.2,
-    // A block at the tow point: `before` px along the line toward Ada to `after` px past the
-    // point and `across` px wide, with a lit band `face.depth` px deep on its screen-upper edge.
-    clamp: {
-      color: steelDarkSide.toUpperCase(),
-      before: 3.2,
-      after: 2.6,
-      across: 5.2,
-      face: { color: "#B8BFC9", depth: 2.2 },
-    },
-  },
-});
-
-// The nugget and the tow line serve every galaxy's cargo and rescues, so they are core; the
-// debris and stranded craft are Cartwheel's.
-replaceEntries("core", (id) => id === "ore-nugget", [nugget]);
-const owned =
-  /^cartwheel-debris-\d+$|^craft-stranded-hauler-\d+$|^craft-stranded-ore-pod-\d+-[ab]$/;
-replaceEntries("cartwheel", (id) => owned.test(id), [
-  ...writeDebrisFrames("cartwheel", debris.entries, debrisSvg),
-  ...craft.flatMap(({ entries }) => entries),
-]);
-linkData("core", { tow: "/art/cartwheel/tow.json" });
-linkData("cartwheel", {
-  cartwheelDebris: "/art/cartwheel/debris.json",
-  tow: "/art/cartwheel/tow.json",
-});
+// The debris rows keep their places in Cartwheel's manifest.
+mergeEntries(
+  "cartwheel",
+  (id) => /^cartwheel-debris-\d+$/.test(id),
+  writeDebrisFrames("cartwheel", debris.entries, debrisSvg),
+);
+linkData("cartwheel", { cartwheelDebris: "/art/cartwheel/debris.json" });

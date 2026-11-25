@@ -241,9 +241,11 @@ outward.
 | `outposts.ts`, outposts and their frames | `leafFlower` (growers, salvagers) and `flower` (workshop)      |     2 |
 | `hostile-station-export.ts` and its kin  | Three family models at 16 headings, and the Claim platform     |     3 |
 
-`andromeda.ts` and `outposts.ts` are removed. `primary-station-sheets.ts`,
-`station-model.ts` and `station-sidecars.ts` retire with the producers that use
-them. The Needle ring
+`andromeda.ts`, `outposts.ts` and `hostile-station-export.ts` with its field,
+surface and variant modules are removed. `node art/tools/hostile-station-icon.ts`
+writes the Map mask `map-hostile-station` from the assembly in
+`hostile-station.ts`. `primary-station-sheets.ts`, `station-model.ts` and
+`station-sidecars.ts` retire with the producers that use them. The Needle ring
 gate (`needle-gates.ts`), beacons, buoys and lamps belong to the friendly
 objects set. The other entries of `cartwheel.ts` and `phantom.ts` stay with
 their producers.

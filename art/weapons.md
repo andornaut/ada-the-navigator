@@ -531,11 +531,9 @@ leave its amber signal unchanged.
 - Square: a 1.5 px amber `#f0bd68` (`weapon`) outline, no fill, centred on the
   pickup's projected point and aligned with the screen, half-size
   `pickupRadius` (10, so 20 px across).
-- Chevrons: two copies of the generic upgrade chevron, the core manifest mask
-  `upgrade-chevron` (`public/art/pickups/upgrade-chevron.svg`, 12 by 8 px, pivot
-  at the centre, rebuilt by `node art/tools/upgrade-pickup.ts`, with two-decimal
-  coordinates per [SVG output](README.md#svg-output)), tinted amber
-  and centred at `(0, 2.4)` (lower) and `(0, -2.4)` (upper) from the pickup's
+- Chevrons: two copies of the generic upgrade chevron in each frame of the
+  core manifest strip `upgrade-chevron`, drawn by `node art/tools/friendly.ts`
+  ([Friendly object redesign](friendly-redesign.md)), amber and centred at `(0, 2.4)` (lower) and `(0, -2.4)` (upper) from the pickup's
   point, 4.8 px apart. Each is a 2.2 px
   stroke with butt caps and a mitred apex along a centreline from
   `(-5.2, 2.1)` up to `(0, -2.1)` and down to `(5.2, 2.1)` about its own centre.
@@ -563,12 +561,9 @@ chosen when Ada collects it (Gameplay), so it shows no weapon. It is a cartridge
 clip in ammo green (`ammo`), apart from the amber upgrade pickup, gold Stardust,
 the rust ore nugget, the lavender hunt glint and the red edge markers.
 
-- Rebuild with `node art/tools/ammo-pack.ts`. It writes
-  `public/art/pickups/ammo-pack.png`, a 64 by 16 sheet of four 16 by 16
-  frames, its Aseprite data `ammo-pack.json` with each frame's `collision`, and
-  the core manifest entry `ammo-pack`, displayed at 16 by 16 logical px with
-  the pivot at the centre, nearest-neighbour filtered. Reruns are
-  byte-identical.
+- `node art/tools/friendly.ts` draws the pack: the core manifest strip row
+  `ammo-pack`, with its collision in `pickups.json`
+  ([Friendly object redesign](friendly-redesign.md)).
 - Drawing: three rounds 4 px wide at columns 1, 6 and 11, rows 1 to 14: a
   cream tip (rows 1 to 3, shaded on the right), a casing lit on its left and
   shaded on its right, and a shade base row; a 2-row ink clip across the full

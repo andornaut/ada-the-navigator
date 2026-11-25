@@ -198,8 +198,6 @@ names each exception:
 | ------------------------------------------------------------ | -------: | -------------------------------------------------------------------- |
 | Classic landing, boot, Local Map and Shop                    |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
 | Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
-| Outposts                                                     |        2 | 99th percentile 7 levels at display size, 12 at 2x                   |
-| Upgrade pickup chevron                                       |        2 | 99th percentile 9 levels at display size, 22 at 2x                   |
 | Job landmarks                                                |        3 | The beacon arcs, authored to 3 decimals, shift along their length    |
 | Start screen nav glyphs (`achievements`, `exit`, `settings`) |        3 | The trophy handles, authored to 3 decimals, shift along their length |
 
@@ -224,22 +222,24 @@ Resolve Classic and paid hulls from `ship-materials.json` and `ship-paint.json`;
 the core manifest's ship frame paths are logical references.
 
 Ship material and geometry data are deterministic exports from `art/tools/ship.ts`.
-Enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool
-debris, project and Andromeda SVGs are deterministic exports from `art/tools/enemies.ts`, `art/tools/station.ts`, `art/tools/outposts.ts`,
-`art/tools/cartwheel.ts`, `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`,
-`art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
-heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers from
-`art/tools/claim-jumpers.ts`, Andromeda's garnet drones from
-`art/tools/garnet-drones.ts` and the [hostile station](heavies.md#hostile-station)
-in every family from `art/tools/hostile-station-export.ts`. Needle's art comes from `art/tools/needle-station.ts`,
-`needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
-`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`, and the finale
-allies from `art/tools/allies.ts`. Every
-galaxy's stranded craft but Cartwheel's come from `art/tools/stranded-craft.ts`. The
+The stations, outposts, settlements, hostile stations and their project frames
+come from `art/tools/stations.ts` and `art/tools/hostile-stations.ts`
+([Station redesign](station-redesign.md)); the pickups, caches, landmarks,
+galaxy beacons, ring gates, friendly craft and the project sprites' placements
+from `art/tools/friendly.ts` ([Friendly object redesign](friendly-redesign.md));
+and the small enemy craft from `art/tools/fleet.ts`
+([Enemy fleet redesign](enemy-redesign.md)). Enemy, asteroid, whale and debris
+SVGs are deterministic exports from `art/tools/enemies.ts`,
+`art/tools/asteroids.ts`, `art/tools/whales.ts`, `art/tools/cartwheel-props.ts`
+and `art/tools/whirlpool.ts`, with the heavies' layered sprites from
+`art/tools/heavies.ts`, Cartwheel's claim jumpers from
+`art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
+`art/tools/garnet-drones.ts`. Needle's channels, sky, portraits and drones come
+from `art/tools/needle-channels.ts`, `needle-sky.ts`, `needle-portraits.ts` and
+`needle-drones.ts`, and the finale allies' data from `art/tools/allies.ts`. The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
-Phantom come from `art/tools/backdrop.ts`, and the upgrade pickup's chevron mask from
-`art/tools/upgrade-pickup.ts`; edit the generators and
-regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
+Phantom come from `art/tools/backdrop.ts`; edit the generators and regenerate
+the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the
 [sector one enemies](enemies.md#collision), the

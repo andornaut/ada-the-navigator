@@ -255,7 +255,7 @@ async function main() {
   const outputEntries = packInstalledIndustrialHulls("andromeda", texts, turrets, copies);
   const paths = writeEnemyAssets("andromeda", PATH, copies, texts);
   // In Andromeda's manifest after the destinations, before the story craft.
-  // Only these crafts' ids; hostile-station-export.ts writes `enemy-garnet-hostileStation-`.
+  // Only these crafts' ids; hostile-stations.ts writes `enemy-garnet-hostileStation-`.
   mergeEntries(
     "andromeda",
     craftIds(

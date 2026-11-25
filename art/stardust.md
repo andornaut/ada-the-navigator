@@ -1,9 +1,8 @@
 # Stardust
 
-- Rebuild with `node art/tools/stardust.ts`. It writes the pickup sheet
-  `public/art/stardust.png` with its Aseprite data `stardust.json`, the HUD icon
-  sheets in `public/art/ui/sprites/`, and the `stardust` root manifest entry.
-  JSON goes through the project's Prettier settings.
+- `node art/tools/friendly.ts` draws the pickup: the core manifest's
+  `stardust` strip row, with its collision in `pickups.json`
+  ([Friendly object redesign](friendly-redesign.md)).
 - Pixel art from character grids, like the [settings icons](settings-icons.md).
   Every pixel is opaque or clear; draw with nearest-neighbour filtering.
 

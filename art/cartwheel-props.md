@@ -5,20 +5,17 @@ tow job brings home, the tow line and the [ore field](#ore-field) layouts. The
 resource rocks are in [Asteroids](asteroids.md#resource-rocks). Cartwheel has
 no damaging hazards.
 
-- Rebuild with `node art/tools/cartwheel-props.ts`. It writes the SVGs, the
-  nugget sheet, [debris.json](../public/art/cartwheel/debris.json) and
-  [tow.json](../public/art/cartwheel/tow.json) to `public/art/cartwheel/`
-  (JSON through the project's Prettier settings) and replaces its manifest
-  entries in place. The nugget entry and the `tow` link are in the core
-  manifest, since every galaxy's resource rocks drop cargo and any rescue draws
-  the tow line; the debris, the stranded craft, the `cartwheelDebris` link and
-  a `tow` link to the same `tow.json` are in
-  [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
-  are byte-identical.
-- The craft models are in `art/tools/cartwheel-craft.ts`: the tri-hull miner,
-  powered or not, and the ore pod. The debris models, tumble and frame export
-  are shared with Whirlpool's river debris and Needle's channel debris in
-  [art/tools/debris.ts](tools/debris.ts).
+- Rebuild the debris with `node art/tools/cartwheel-props.ts`. It writes the
+  debris sheet and [debris.json](../public/art/cartwheel/debris.json) to
+  `public/art/cartwheel/` and the debris entries and `cartwheelDebris` link in
+  [Cartwheel's manifest](../public/art/cartwheel/manifest.json), each row in
+  its place. Reruns are byte-identical. The debris models, tumble and frame
+  export are shared with Whirlpool's river debris and Needle's channel debris in [art/tools/debris.ts](tools/debris.ts).
+- `node art/tools/friendly.ts` draws the ore nugget, the stranded craft and the
+  tow line ([Friendly object redesign](friendly-redesign.md)): the nugget row
+  and the `tow` link are in the core manifest, since every galaxy's resource
+  rocks drop cargo and any rescue draws the tow line; the stranded craft and a
+  `tow` link to the same `friendly-tow.json` are in Cartwheel's.
 - Every SVG keeps its `viewBox` in frame px and declares its display size
   (frame times 0.4375) as `width` and `height`, so it rasterizes at the size it
   is drawn. Manifest `width` and `height` are frame px; `displayWidth` and

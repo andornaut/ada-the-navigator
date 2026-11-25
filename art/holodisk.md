@@ -1,12 +1,12 @@
 # Holodisk
 
-- Rebuild with `node art/tools/holodisk.ts`. It writes the item icons as UI
-  subset sheets with their Aseprite data in `public/art/ui/sprites/`, the
-  pickup and beacon sheets (PNG only) in `public/art/`, and their entries in the
-  [UI manifest](../public/art/ui/manifest.json) and the root
-  [manifest](../public/art/manifest.json).
-- Icons, pickup and beacon are pixel art: every pixel opaque or clear, drawn
-  with nearest-neighbour filtering.
+- `node art/tools/friendly.ts` draws the pickup and the waypoint beacon: the
+  core manifest's `holodisk` strip row and `holodisk-beacon-a` and `-b`
+  ([Friendly object redesign](friendly-redesign.md)).
+- The item icon `icon-holodisk-24` ships as a UI subset sheet with its Aseprite
+  data in `public/art/ui/sprites/`, named in the
+  [UI manifest](../public/art/ui/manifest.json): pixel art, every pixel opaque
+  or clear, drawn with nearest-neighbour filtering.
 
 A pearl disc with a magenta hologram band: round where Stardust is a diamond,
 magenta where weapon signals are amber, so shape, size and hue all differ.

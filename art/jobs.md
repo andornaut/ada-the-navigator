@@ -6,14 +6,13 @@ hunt's search area and its lost item's glint (Gameplay's rules:
 the row icons in [Shop icons](shop-icons.md#job-icons) and the Map marks in
 [Map](map.md#symbols).
 
-- Rebuild with `node art/tools/job-art.ts`. It writes
-  `public/art/landmarks/*.svg` (three-decimal coordinates for the authored
-  beacon arcs, per [SVG output](README.md#svg-output)), the glint sheet `public/art/hunt-glint.png` with
-  its Aseprite data `hunt-glint.json`, and [jobs.json](../public/art/jobs.json),
-  and replaces its `landmark-*` and `hunt-glint` entries in the core manifest,
-  after the discovery cache and ore nugget and before the `enemy-*` entries,
-  and the core manifest's `jobs` link. JSON goes through the project's Prettier
-  settings; reruns are byte-identical.
+- Rebuild with `node art/tools/job-art.ts`. It writes the nebula layers
+  `public/art/landmarks/nebula-*.svg` (three decimals, per
+  [SVG output](README.md#svg-output)) and [jobs.json](../public/art/jobs.json),
+  and replaces its `landmark-nebula-*` entries in the core manifest and the
+  core manifest's `jobs` link. Reruns are byte-identical.
+- `node art/tools/friendly.ts` draws the survey beacon, the wreck and the lost
+  item's glint ([Friendly object redesign](friendly-redesign.md)).
 - Every galaxy has landmarks, so the art is shared and in core. The nebula's
   masses are white and take the galaxy's tint at runtime, keyed by galaxy id
   in `jobs.json` `tints`, as the backdrop rocks take theirs.

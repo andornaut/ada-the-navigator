@@ -33,14 +33,10 @@ export const SVG_DECIMALS = {
   landmarks: 3,
   /** The start screen nav glyphs, authored to 3 decimals on a 20 px grid. */
   navGlyphs: 3,
-  /** The outposts' growers and rings. */
-  outposts: 2,
   /** Ada's ship frames, 96 units drawn at 42 px. */
   ship: 2,
   /** The core station frames. */
   station: 2,
-  /** The upgrade pickup's 12 by 8 chevron. */
-  upgradePickup: 2,
 } as const;
 
 const NUMBER = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/gu;

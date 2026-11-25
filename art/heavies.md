@@ -29,7 +29,9 @@ each sprite's drawn silhouette ([Collision](#collision)).
   `art/tools/enemies.ts` writes the sector one enemies' `jets`,
   `art/tools/heavies.ts` every craft's `hardpoints` and the jets of the hulls
   it draws (frigate, capital, Gadget's capital), `art/tools/destruction.ts`
-  the `shards` and `art/tools/hostile-station-export.ts` the hostile station's.
+  the retaliator and industrial `shards`, `art/tools/fleet.ts` the small
+  craft's, and `art/tools/hostile-stations.ts` the hostile station's and the
+  platform's `hardpoints`.
   The family producers write every kind of their own crafts.
 
 ## Crafts
@@ -533,14 +535,11 @@ Its assembled body spans 4 Ada source widths.
 
 ## Hostile station
 
-`node art/tools/hostile-station-export.ts` exports the normalized station into
-three existing families: coral for Phantom, Garnet for Andromeda and Claim
-for Cartwheel. It owns only the `hostileStation` entries under each family
-prefix and the `hostileStation` sidecars in each family's manifest; the drone
-producers own the rest. The stem is `hostileStation`; metadata remains
-`hostileStation-hardpoints.json`, version 1, written once in
-`public/art/enemies/`, which the Garnet and Claim sidecars also name. The friendly station producer and
-assets remain separate.
+`node art/tools/hostile-stations.ts` draws the hostile station in each family
+and the Claim platform ([Station redesign](station-redesign.md#hostile-stations)).
+`node art/tools/hostile-station-icon.ts` writes the Map mask
+`map-hostile-station` from the assembly this section describes, in
+`art/tools/hostile-station.ts`.
 
 The complete intact physical assembly spans 7 Ada source widths, from the
 canonical dimensions module. One source transform scales the hull, physical
@@ -570,6 +569,5 @@ The Map glyph `map-hostile-station` is an authored 24 px ink mask in
 of its four corners. It is the one view of
 `public/art/ui/icons/icons-24x24.svg`, with a 24 by 24 view box; no shared
 manifest entry is added. `node art/tools/hostile-station-icon.ts` writes its
-source, as `hostile-station-export.ts` does with or without `--icon-only`,
-and `node art/tools/ui-icon-sheets.ts --out <scratch directory>` packs it.
+source, and `node art/tools/ui-icon-sheets.ts --out <scratch directory>` packs it.
 Friendly station assets and UI caller wiring remain separate.

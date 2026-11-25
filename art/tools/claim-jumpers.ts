@@ -514,7 +514,7 @@ async function main() {
   });
   const paths = writeEnemyAssets("cartwheel", PATH, copies, texts);
   // In Cartwheel's manifest after the hub and buoy, before the story craft.
-  // Only these crafts' ids; hostile-station-export.ts writes `enemy-claim-hostileStation-`.
+  // Only these crafts' ids; hostile-stations.ts writes `enemy-claim-hostileStation-`.
   mergeEntries(
     "cartwheel",
     craftIds(
