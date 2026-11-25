@@ -82,6 +82,10 @@ Sizes are logical px, scaled by `s`.
 | Guard (a heavy that still blocks a route)          | The heavy's disc, 10 across, with an ink `#181425` bar 7 wide and 2 tall across its centre | `threat`, ink bar |
 | Station (seen stations and outposts)               | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins     | `pointOfInterest` |
 
+Every enemy marker (enemy, heavy, guard and hostile station) is `threat` red
+in every galaxy, including an enemy that is a task's target: a task colour
+never replaces the red on an enemy marker.
+
 `threat` is the one red in space, used only for these markers and the
 [hit flash](layout.md#hit-flash). It is at least
 5.2:1 on every dark galaxy's background (Whirlpool 5.22:1, the default 5.28:1,
