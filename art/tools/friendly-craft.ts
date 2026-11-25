@@ -202,18 +202,24 @@ export const craftSheetFile = ({ name }: FriendlyCraft) => `friendly-${name}-she
 export const craftJetsFile = ({ name }: FriendlyCraft) => `friendly-${name}-jets.json`;
 export const PHANTOM_JETS_FILE = "friendly-craft-jets.json";
 export const TOW_FILE = "friendly-tow.json";
-// The tow line, in logical px: a steel cable from Ada's pivot to the craft's tow point, with
-// beads along it and a cap at each end. Cartwheel's tow file holds it for every galaxy.
+// The tow line, in logical px: a steel cable from Ada's pivot to the craft's tow point, with one
+// clamp block at the craft end and a light-field ink stroke under the cable. Cartwheel's tow file
+// holds it for every galaxy. The clamp runs `before` px along the line toward Ada to `after` px
+// past the tow point and `across` px wide, with a lit band `face.depth` px deep on its
+// screen-upper edge.
 export const TOW_LINE = {
   layers: [
-    { name: "outer", color: "#4F5462", width: 2.5 },
-    { name: "core", color: "#B8BFC9", width: 1.2 },
+    { name: "outer", color: "#4F5462", width: 3 },
+    { name: "core", color: "#B8BFC9", width: 1.4 },
   ],
-  beads: { color: "#4F5462", radius: 0.9, spacing: 12, start: 6 },
-  cap: [
-    { color: "#4F5462", radius: 1.8 },
-    { color: "#B8BFC9", radius: 0.8 },
-  ],
+  lightInk: 4.2,
+  clamp: {
+    color: "#4F5462",
+    before: 3.2,
+    after: 2.6,
+    across: 5.2,
+    face: { color: "#B8BFC9", depth: 2.2 },
+  },
 } as const;
 
 // The frames as one sheet of nested roots, four to a row, each carrying its manifest id.
