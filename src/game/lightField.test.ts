@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { ART_MANIFEST } from "../testing/publicArt.ts";
 import {
   alphaTopRow,
   blastEdges,
@@ -30,6 +31,7 @@ import {
   type EffectShape,
   glowingBeam,
 } from "./weaponEffects.ts";
+import { blinkRow, readBeaconArt } from "./worldArt.ts";
 
 const galaxies: unknown = JSON.parse(
   readFileSync(new URL("../../public/art/galaxies.json", import.meta.url), "utf8"),
@@ -40,7 +42,8 @@ describe("light-field rule", () => {
   it("reads Art's lightField: ink keylines, edges, strokes and dark jets", () => {
     expect(LIGHT_FIELD).toMatchObject({
       effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards", "towClamp"],
-      holodiskBeacon: "base",
+      // The row a light field holds the beacon on: its A row, as reduced motion does.
+      holodiskBeacon: blinkRow(readBeaconArt(ART_MANIFEST.assets)!, true, 0).id,
       hudOutline: 1,
       indicatorStroke: 4,
       ink: INK,

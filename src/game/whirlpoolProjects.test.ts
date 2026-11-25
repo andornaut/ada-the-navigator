@@ -42,7 +42,8 @@ describe("Whirlpool's project world changes", () => {
       "whirlpool-nursery-beacon-a",
       "whirlpool-nursery-beacon-b",
     ]);
-    expect(beacon).toMatchObject({ frameMs: 1400, offset: { x: -54, y: 58 } });
+    const [x, y] = FILE.projects.nurseryBeacon!.offset as [number, number];
+    expect(beacon).toMatchObject({ frameMs: 1400, offset: { x, y } });
     expect(beacon.pool).toEqual({
       alpha: [0.07, 0.05],
       centre: { x: -6, y: 54 },

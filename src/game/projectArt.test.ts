@@ -100,12 +100,18 @@ describe("project world-change art", () => {
       ["outpost-salvagers-beacon-b", 1],
       ["outpost-salvagers-beacon-a", 2],
     ]);
-    // The Salvagers enlargement applies equally to the hull and beacon anchors.
+    // The Salvagers enlargement applies equally to the hull and beacon anchors: the behind
+    // anchor draws first, then the front anchors after the hull, in the file's order.
     const scale = 0.4375 * 1.5 * 1.4;
-    expect(parts[0]!.offset.x).toBeCloseTo(-36.232 * scale, 9);
-    expect(parts[0]!.offset.y).toBeCloseTo(-44.86 * scale, 9);
-    expect(parts[3]!.offset.x).toBeCloseTo(55.426 * scale, 9);
-    expect(parts[3]!.offset.y).toBeCloseTo(32 * scale, 9);
+    const anchors = PROJECTS_FILE.projects.salvageBeacons!.anchors as { x: number; y: number }[];
+    for (const [part, anchor] of [
+      [parts[0]!, anchors[0]!],
+      [parts[2]!, anchors[1]!],
+      [parts[3]!, anchors[2]!],
+    ] as const) {
+      expect(part.offset.x).toBeCloseTo(anchor.x * scale, 9);
+      expect(part.offset.y).toBeCloseTo(anchor.y * scale, 9);
+    }
     expect(ids(outpostParts(salvagers, [change("salvageBeacons")], 1)).map(([id]) => id)).toEqual([
       "outpost-salvagers-beacon-b",
       "outpost-salvagers-b",
