@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { GALAXIES } from "../data/storybook.ts";
@@ -24,19 +26,18 @@ describe("route map art", () => {
     ).toBeNull();
   });
 
-  it("shows Art's placeholder previews where it lists them, else the selector captures", () => {
-    const previews = Object.fromEntries(
-      GALAXIES.map((card) => [card.id, routePreviews(CORE_MANIFEST.assets, card)]),
-    );
-    expect(previews.needle).toEqual({
-      locked: "/art/previews/galaxy-needle-locked.png",
-      open: "/art/previews/galaxy-needle.png",
-    });
-    expect(previews.sunflower).toEqual({
-      locked: "/previews/galaxy-sunflower-locked.png",
-      open: "/previews/galaxy-sunflower.png",
-    });
-    expect(previews.phantom?.open).toBe("/previews/galaxy-phantom.png");
+  it("shows each galaxy's authored preview cards, open and locked", () => {
+    for (const card of GALAXIES) {
+      const previews = routePreviews(card);
+      expect(previews, card.id).toEqual({
+        locked: `/art/previews/card-${card.id}-locked.png`,
+        open: `/art/previews/card-${card.id}.png`,
+      });
+      for (const path of [previews.open, previews.locked]) {
+        expect(existsSync(new URL(`../../public${path}`, import.meta.url)), path).toBe(true);
+      }
+    }
+    expect(CORE_MANIFEST.assets.filter(({ id }) => id.startsWith("galaxy-preview-"))).toEqual([]);
   });
 
   it("reads the sky, the ground and its two figures at their canvas points", () => {

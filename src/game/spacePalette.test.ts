@@ -1,9 +1,7 @@
-import { existsSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
 
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
+import { GALAXIES } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
@@ -87,7 +85,6 @@ describe("space palette boundary", () => {
   });
 });
 
-const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
 const galaxiesData = publicJson(ART_MANIFEST.galaxyFields);
 
 describe("galaxy fields", () => {
@@ -136,19 +133,9 @@ describe("galaxy fields", () => {
     expect(readGalaxyFields(null).size).toBe(0);
   });
 
-  it("names each selector galaxy by its galaxies.json id, with both previews committed", () => {
+  it("names each selector galaxy by its galaxies.json id", () => {
     // galaxies.json holds every selector galaxy by its stable id, and nothing else.
     const ids = Object.keys((galaxiesData as { galaxies: Record<string, unknown> }).galaxies);
     expect(ids.toSorted()).toEqual(GALAXIES.map(({ id }) => id).toSorted());
-    for (const galaxy of GALAXIES) {
-      for (const locked of [false, true]) {
-        const preview = galaxyPreview(galaxy, locked);
-        // A galaxy without Art's previews shows none.
-        expect(preview === "", galaxy.id).toBe(!galaxy.preview);
-        if (galaxy.preview) {
-          expect(existsSync(publicFile(preview)), galaxy.id).toBe(true);
-        }
-      }
-    }
   });
 });

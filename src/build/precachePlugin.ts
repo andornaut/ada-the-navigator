@@ -10,7 +10,7 @@ import type { Plugin } from "vite";
 
 import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
-import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
+import { ART_DIRECTORY, artUrls } from "./precacheArt.ts";
 
 const UPDATE_ART_BUCKETS: Readonly<Record<string, number>> = {
   andromeda: 4,
@@ -25,9 +25,6 @@ const UPDATE_ART_BUCKETS: Readonly<Record<string, number>> = {
 
 // Keep build outputs in stable groups when only their content hashes change.
 function updateGroup(url: string): string {
-  if (url.startsWith("/previews/")) {
-    return "preview";
-  }
   if (url.startsWith("/assets/art/app-icon/")) {
     return "app-icons";
   }
@@ -61,11 +58,10 @@ interface PrecachePluginOptions {
 
 // The kit's precache plugin with the game's cache policy, building /sw.js (the router) from
 // serviceWorkerSource (serviceWorker.ts) and writing the build's manifest and pointer under
-// /.game-kit/. The manifest lists the game page at pageHtmlFile, what it loads, and the art and
-// previews: the game loads its art at runtime rather than linking it, so a first plugin emits
-// every file artUrls lists from public/art/, and every preview in public/previews/, into the
-// build output at its own path, for the kit's to name. The complete build installs before first
-// play.
+// /.game-kit/. The manifest lists the game page at pageHtmlFile, what it loads, and the art: the
+// game loads its art at runtime rather than linking it, so a first plugin emits every file
+// artUrls lists from public/art/ into the build output at its own path, for the kit's to name.
+// The complete build installs before first play.
 export function precachePlugin({
   buildId,
   pageHtmlFile,
@@ -118,20 +114,13 @@ export function precachePlugin({
         source: await readFile(join(publicDir, "site.css")),
         type: "asset",
       });
-      // A directory not there yet (the previews before their first capture) lists nothing.
-      const listed = async (directory: string) => {
-        const root = join(publicDir, directory);
-        const entries = await readdir(root, { recursive: true, withFileTypes: true }).catch(
-          (error: NodeJS.ErrnoException) => (error.code === "ENOENT" ? [] : Promise.reject(error)),
-        );
-        return entries
+      const root = join(publicDir, ART_DIRECTORY);
+      const entries = await readdir(root, { recursive: true, withFileTypes: true });
+      urls = artUrls(
+        entries
           .filter((entry) => entry.isFile())
-          .map((entry) => relative(root, join(entry.parentPath, entry.name)).split(sep).join("/"));
-      };
-      urls = [
-        ...artUrls(await listed(ART_DIRECTORY)),
-        ...previewUrls(await listed(PREVIEW_DIRECTORY)),
-      ];
+          .map((entry) => relative(root, join(entry.parentPath, entry.name)).split(sep).join("/")),
+      );
       const files = await mapBounded(
         FILE_READ_CONCURRENCY,
         async (url) => [url, await readFile(join(publicDir, url))] as const,
@@ -150,8 +139,7 @@ export function precachePlugin({
       buildId,
       groupedFirstInstall: {
         archiveOnly: (url) =>
-          deferredOutputs.has(url.slice(1)) ||
-          ((url.startsWith("/art/") || url.startsWith("/previews/")) && !DIRECT_ART.has(url)),
+          deferredOutputs.has(url.slice(1)) || (url.startsWith("/art/") && !DIRECT_ART.has(url)),
       },
       hashedFiles: (bundleFile) => {
         emitted = bundleFile;

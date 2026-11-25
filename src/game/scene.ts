@@ -408,7 +408,7 @@ export class GameScene extends Scene {
   station!: ReturnType<typeof createStationView>;
   storybook!: ReturnType<typeof createStorybook>;
   galaxies!: ReturnType<typeof createGalaxyMap>;
-  // Each galaxy's route map marker hue and previews, from Art's galaxies.json and manifest.
+  // Each galaxy's route map marker hue, from Art's galaxies.json, and its preview cards.
   routeGalaxies: () => GalaxyMapView["galaxies"] = () => [];
   restartCard!: ReturnType<typeof createRestartCard>;
   fpsCounter!: ReturnType<typeof createFpsCounter>;

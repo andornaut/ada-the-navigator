@@ -1078,7 +1078,7 @@ export function buildScene(scene: UiContext): void {
         hue: markerHue(markers, galaxy),
         name: card.name,
         placeholder: !BUILT.has(galaxy),
-        preview: routePreviews(routeAssets, card),
+        preview: routePreviews(card),
         unlocked: scene.model.isUnlocked(galaxy),
       };
     });

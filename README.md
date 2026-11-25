@@ -120,7 +120,6 @@ starts from the custom dependency image used by CI.
 | -------------------------------------- | -------------------------------------------------------------------------- |
 | `make check`                           | Lint, test and build in the container profile, the default Make target     |
 | `make lint`, `make test`, `make build` | One category each; CI runs `make lint` for `Lint` and `make test build`    |
-| `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews/` |
 | `npm run check`                        | The whole chain in the container: lint, the tests and the build            |
 | `npm run typecheck`                    | TypeScript alone, anywhere, a plain Node container included                |
 | `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and markdownlint, in the container     |

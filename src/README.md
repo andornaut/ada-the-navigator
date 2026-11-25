@@ -116,7 +116,7 @@ The production build writes `/sw.js`, the kit's router service worker scoped to
 `/`, and the build's manifest and pointer under `/.game-kit/`. The manifest lists
 every file with its SHA-256 and size: the game page at `/play/`, the build output
 it loads, the web app manifest and its icons, every file under `public/art/`
-except `app-icon/`, and the galaxy selector previews under `public/previews/`.
+except `app-icon/`.
 Each update group ([`src/build/precachePlugin.ts`](build/precachePlugin.ts)) ships
 as a gzip archive at `/.game-kit/group-<sha256>.bin`, served as emitted without
 HTTP coding, and as a decoded copy at `/.game-kit/archive-<sha256>-0.bin` for
@@ -187,8 +187,6 @@ opens the browser's prompt or that browser's menu steps.
   pacing headlessly for Gameplay review.
 - **Layout:** [`tools/layout-dump.ts`](../tools/layout-dump.ts) dumps every computed
   UI layout result as canonical JSON.
-- **Previews:** `make previews` recaptures the galaxy selector previews with
-  [`tools/galaxy-previews.mjs`](../tools/galaxy-previews.mjs).
 - **Browser smoke:** [`tools/browser-check.mjs`](../tools/browser-check.mjs) runs
   [`tools/browser-smoke.mjs`](../tools/browser-smoke.mjs) against a gated build; see
   [check commands and evidence](../docs/checks.md).

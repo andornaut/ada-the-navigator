@@ -1407,15 +1407,15 @@ try {
   // Six galaxy markers and the Earth marker, a route marker carrying data-earth.
   assert.equal(await selector().locator(".ada-route-marker:not([data-earth])").count(), 6);
   assert.equal(await selector().locator(".ada-route-marker[data-earth]").count(), 1);
-  // Galaxy one is unlocked, so its preview is the tinted capture; it must be served.
+  // Galaxy one is unlocked, so its preview is the open card; it must be served.
   const preview = await selector()
     .locator(".ada-galaxy-shot")
     .evaluate((shot) => shot.style.backgroundImage);
-  assert.equal(preview, 'url("/previews/galaxy-sunflower.png")');
+  assert.equal(preview, 'url("/art/previews/card-sunflower.png")');
   const previewResponse = await page.request.get(
-    "http://ada-preview:4173/previews/galaxy-sunflower.png",
+    "http://ada-preview:4173/art/previews/card-sunflower.png",
   );
-  assert.equal(previewResponse.status(), 200, "Galaxy previews must be served");
+  assert.equal(previewResponse.status(), 200, "Galaxy preview cards must be served");
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
     CONTENT.labels.galaxyNumber.replace("{number}", "1"),

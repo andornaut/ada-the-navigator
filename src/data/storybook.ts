@@ -81,20 +81,9 @@ export interface GalaxyCard {
   readonly flavor: string;
   /** The galaxy's numeric id. */
   readonly galaxy: GalaxyNumber;
-  /** The galaxy's stable id (galaxies.ts GALAXY_ID), which also names its selector previews. */
+  /** The galaxy's stable id (galaxies.ts GALAXY_ID), which also names its preview cards. */
   readonly id: string;
   readonly name: string;
-  /** Whether Art has drawn its selector previews. */
-  readonly preview: boolean;
-}
-
-/**
- * A galaxy's selector preview (tools/galaxy-previews.mjs): in its own field colours, or the locked greyscale.
- * CLEANUP (added 2026-11-11): recapture with `make previews` once Sunflower's light field lands
- * and once the hub and the whale (Cartwheel's and Whirlpool's first destinations) draw as art.
- */
-export function galaxyPreview(galaxy: Pick<GalaxyCard, "id" | "preview">, locked: boolean): string {
-  return galaxy.preview ? `/previews/galaxy-${galaxy.id}${locked ? "-locked" : ""}.png` : "";
 }
 
 /**
@@ -107,42 +96,36 @@ export const GALAXIES: readonly GalaxyCard[] = [
     galaxy: 1,
     id: GALAXY_ID[1],
     name: "Sunflower",
-    preview: true,
   },
   {
     flavor: "Swirling debris, and a song somewhere in the dark.",
     galaxy: 3,
     id: GALAXY_ID[3],
     name: "Whirlpool",
-    preview: true,
   },
   {
     flavor: "A thin silver line of stars, where nothing can be rushed.",
     galaxy: 4,
     id: GALAXY_ID[4],
     name: "Needle",
-    preview: false,
   },
   {
     flavor: "A great bright spiral, close enough to feel like a neighbor.",
     galaxy: 5,
     id: GALAXY_ID[5],
     name: "Andromeda",
-    preview: false,
   },
   {
     flavor: "A busy mining hub where every rock is worth something.",
     galaxy: 2,
     id: GALAXY_ID[2],
     name: "Cartwheel",
-    preview: true,
   },
   {
     flavor: "A shadowed rim where someone is watching.",
     galaxy: 6,
     id: GALAXY_ID[6],
     name: "Phantom",
-    preview: true,
   },
 ];
 

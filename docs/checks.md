@@ -7,17 +7,16 @@ never enter Make; every recipe but `typecheck` and `bundle` refuses outside the
 check container. Choose the execution environment for the task. Preserve resource admission,
 load below 20, four CPUs, four test workers and the configured memory ceilings.
 
-| Command                                | Work                                                                      |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run check`                        | `check`: `lint`, `test` and `build`, in `CHECK_TASKS` order               |
-| `npm run typecheck`                    | `typecheck`: TypeScript alone, runnable in a plain Node container         |
-| `npm run lint`                         | `lint-only`: ShellCheck 0.11.0, Prettier, ESLint and Markdown lint        |
-| `npm test`                             | `test`: Vitest once with at most four workers, then the art tool tests    |
-| `npm run test:game-kit`                | The game-owned game-kit consumer tests, run directly by Vitest            |
-| `npm run build`                        | `bundle`: Vite, writing `dist/`                                           |
-| `make check`                           | Complete container profile, the default Make target                       |
-| `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                         |
-| `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews` |
+| Command                                | Work                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| `npm run check`                        | `check`: `lint`, `test` and `build`, in `CHECK_TASKS` order            |
+| `npm run typecheck`                    | `typecheck`: TypeScript alone, runnable in a plain Node container      |
+| `npm run lint`                         | `lint-only`: ShellCheck 0.11.0, Prettier, ESLint and Markdown lint     |
+| `npm test`                             | `test`: Vitest once with at most four workers, then the art tool tests |
+| `npm run test:game-kit`                | The game-owned game-kit consumer tests, run directly by Vitest         |
+| `npm run build`                        | `bundle`: Vite, writing `dist/`                                        |
+| `make check`                           | Complete container profile, the default Make target                    |
+| `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                      |
 
 Hook verification creates its own scratch Git repository and preserves the
 caller's working files and index. `--output <proof.json>` selects explicit hook

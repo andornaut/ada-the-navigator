@@ -10,12 +10,13 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
-import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
+import { GALAXIES } from "../data/storybook.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
+import { routePreviews } from "../game/routeArt.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
+import { ART_DIRECTORY, artUrls } from "./precacheArt.ts";
 
 const publicDir = fileURLToPath(new URL("../../public/", import.meta.url));
 const artDirectory = join(publicDir, ART_DIRECTORY);
@@ -246,15 +247,14 @@ describe("artUrls", () => {
   });
 });
 
-describe("previewUrls", () => {
-  it("lists every galaxy preview the selector loads, both states", () => {
-    const files = readdirSync(join(publicDir, PREVIEW_DIRECTORY));
-    const urls = previewUrls(files);
-    expect(urls).toEqual(
-      GALAXIES.filter(({ preview }) => preview)
-        .flatMap((galaxy) => [false, true].map((locked) => galaxyPreview(galaxy, locked)))
-        .sort(),
-    );
-    expect(urls.filter((url) => isHashedAssetUrl(CACHE_POLICY, url))).toEqual([]);
+describe("galaxy preview cards", () => {
+  it("lists every card the selector loads, both states, with the art", () => {
+    const urls = artUrls(artFiles);
+    const cards = GALAXIES.flatMap((galaxy) => {
+      const { locked, open } = routePreviews(galaxy);
+      return [open, locked];
+    });
+    expect(cards.filter((url) => !urls.includes(url))).toEqual([]);
+    expect(urls.filter((url) => url.startsWith("/art/previews/"))).toEqual(cards.toSorted());
   });
 });

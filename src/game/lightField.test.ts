@@ -143,7 +143,7 @@ describe("light-field rule", () => {
     ]).toEqual([]);
     expect(lightGalaxy(light, null)).toBe(false);
     expect(lightGalaxy(light, undefined)).toBe(false);
-    // The base field the previews capture locked galaxies on lists no galaxy, so none is light.
+    // A field that lists no galaxy has no light galaxy.
     expect(lightGalaxy(readLightGalaxies({ galaxies: {} }), 1)).toBe(false);
   });
 

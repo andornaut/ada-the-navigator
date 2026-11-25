@@ -28,7 +28,7 @@ it("forwards the build identity, boot files and grouped first install to the kit
   expect(options.emitUpdateGroupRecipes).toBeUndefined();
   const archiveOnly = options.groupedFirstInstall!.archiveOnly;
   expect(archiveOnly("/art/manifest.json")).toBe(true);
-  expect(archiveOnly("/previews/sunflower.png")).toBe(true);
+  expect(archiveOnly("/art/previews/card-sunflower.png")).toBe(true);
   for (const direct of [
     "/play/",
     "/sw.js",
@@ -46,7 +46,7 @@ it("forwards the build identity, boot files and grouped first install to the kit
     updateGroup("/assets/main-Abc012_-.js"),
   );
   expect(updateGroup("/assets/art/app-icon/mask-Abc012_-.svg")).toBe("app-icons");
-  expect(updateGroup("/previews/sunflower.png")).toBe("preview");
+  expect(updateGroup("/art/previews/card-sunflower.png")).toBe("art:previews:0");
   expect(updateGroup("/art/manifest.json")).toMatch(/^art:core:[0-2]$/u);
   expect(updateGroup("/art/whales/whale-0.svg")).toMatch(/^art:whales:[0-3]$/u);
   expect(options.verifiedJsonBodies).toBeUndefined();

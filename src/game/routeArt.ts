@@ -1,12 +1,12 @@
 import { byGalaxy } from "../data/galaxies.ts";
-import { type GalaxyCard, galaxyPreview } from "../data/storybook.ts";
+import type { GalaxyCard } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { GalaxyMapArt } from "../ui/galaxyMap.ts";
 import type { StoryArt } from "../ui/storyArt.ts";
 
 // The route map's art from Art's manifests (art/route-sky.md, art/galaxies.md "Markers"): the
 // sky and ground with their figures, each galaxy's marker hue and the shared locked grey, each
-// galaxy's previews, and Ada's ship frames by heading.
+// galaxy's preview cards, and Ada's ship frames by heading.
 
 export interface RouteAsset {
   readonly at?: { readonly x: number; readonly y: number };
@@ -33,19 +33,15 @@ export function readRouteMarkers(
 }
 
 /**
- * A galaxy's previews, open and locked: Art's placeholder previews where the manifest lists
- * them (`galaxy-preview-{id}`), else the selector captures; empty where neither exists.
+ * A galaxy's preview cards, open and locked (art/galaxies.md "Preview cards"), which Art draws
+ * for every galaxy under its stable id.
  */
-export function routePreviews(
-  assets: readonly RouteAsset[],
-  card: Pick<GalaxyCard, "id" | "preview">,
-): { readonly locked: string; readonly open: string } {
-  const art = (suffix: string) =>
-    assets.find(({ id }) => id === `galaxy-preview-${card.id}${suffix}`)?.path;
-  return {
-    locked: art("-locked") ?? galaxyPreview(card, true),
-    open: art("") ?? galaxyPreview(card, false),
-  };
+export function routePreviews(card: Pick<GalaxyCard, "id">): {
+  readonly locked: string;
+  readonly open: string;
+} {
+  const path = (suffix: string) => `/art/previews/card-${card.id}${suffix}.png`;
+  return { locked: path("-locked"), open: path("") };
 }
 
 /** The sky, the ground with its figures and the locked grey; null while any is missing. */
