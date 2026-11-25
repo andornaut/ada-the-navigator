@@ -3,8 +3,8 @@
 Production plan for the friendly objects and points of interest: the pickups
 and caches, the galaxy beacons, buoys and lamps, the job landmarks, the Needle
 ring gate, the 32 friendly craft and the whales. Each is one model of connected
-solids drawn with depth-resolved occlusion. Stage 1 is built; the other stages
-are planned. Stations, outposts, enemy ships and Ada's ship are outside this
+solids drawn with depth-resolved occlusion. Stages 1 and 2 are built; the other
+stages are planned. Stations, outposts, enemy ships and Ada's ship are outside this
 plan.
 
 ## Rules
@@ -132,6 +132,74 @@ States:
 - The mooring buoy rows carry `moorings`: the top centre of each arm's cleat in
   frame px and the unit screen direction the arm points.
 
+## Stage 2 output: ring gate
+
+The gate is one slim eye ring on edge with a navy band round its rim and, at
+each side, a blunt needle collar carrying one lamp band. It is true to
+Gameplay's gate: `opening` 66 and `rim` inner 33, outer 40 and depth 7 world
+units, unchanged.
+
+| Rim                                             | World units | Display px |
+| ----------------------------------------------- | ----------: | ---------: |
+| Inner radius                                    |          33 |       38.1 |
+| Outer radius                                    |          40 |       46.2 |
+| Depth along the axis                            |           7 |        8.1 |
+| Collar reach from the centre, without collision |        43.6 |       50.4 |
+
+- `/art/needle/ring-gates-sheet.svg`: 20 frames, ids
+  `needle-gate-{state}-{o}-{layer}` as shipped: `state` `dark` or `lit`,
+  orientation `o` 0 to 4, `layer` `back` or `front`. Frame 288 (display 126),
+  pivot `(0.5, 0.5)` at the ring's centre.
+- `/art/needle/ring-gates.json`: the gate data in the shape of the shipped
+  `gates.json`, staged as Needle's `needleGates` link.
+- Orientation `o` puts the gate's axis at `o * 22.5` degrees on the world
+  plane. Drawn extents in display px: 97 x 107 at 0 and 4, 119 x 101 at 1 and
+  3, 123 x 98 at 2. The opening is 93 px wide and 76 px high at 2.
+- The lamp bands are `#d7263d` lit and `#4a4358` dark. Nothing else differs
+  between the states; there is no veil and no guide field.
+- Layers: the front layer is the half of the gate on the viewer's side of the
+  plane through its centre whose normal is the view direction projected onto
+  the ring's plane; the back layer is the other half. Each layer is a closed
+  solid: the ring and the collars the plane crosses are capped over the cut.
+  Draw the back layer, the ship, then the front layer. Where the game keylines
+  each layer on its own, the front layer's keyline crosses the ring at the two
+  cuts.
+
+### World scale and the projection mismatch
+
+The game draws a world offset `(x, y)` at `(x - y, (x + y) / 2)`. The art
+projection draws a model point at `((x - y) * sqrt(3) / 2, (x + y) / 2 - z)`.
+The gate's model is the world rim scaled by `2 / sqrt(3)` (1.1547 display px
+per world unit), which makes its width across the screen exact: the rim's
+outer diameter spans 92.4 px where the game spans 80 world units.
+
+The same scale draws every ground offset 15.47% farther down the screen than
+the game does, and the two cannot both be exact in this projection:
+
+- At axis 2 the ring's plane lies across the screen, so the rim and the
+  opening match the game's exactly across it; only the 7 unit depth draws 15%
+  deep.
+- At the oblique axes the ring's ground line, from collar to collar, is drawn
+  steeper than the game's rim: its ends sit 3.1 px lower and higher than the
+  game's at axes 0 and 4, and 1.7 px at axes 1 and 3.
+- `orientations[o].worldAxis` is the axis on the world plane, `gameAxis` its
+  screen direction as the game draws it and `axis` its screen direction as the
+  art draws it. Choose the orientation by `worldAxis` or `gameAxis`; `axis`
+  differs from `gameAxis` by 3.4 degrees at axes 0 and 4 and 4 degrees at
+  axes 1 and 3.
+- A gate rendered through the game's own projection would remove the mismatch
+  and would no longer share the projection of every other object.
+
+`ring-gates.json` adds to the shipped fields: `collar`, `worldUnit` (display px
+per world unit), `groundDepth` (how many times farther down the screen the art
+draws a ground offset than the game), and per orientation `worldAxis`,
+`gameAxis` and `extent` (the drawn width and height in display px). `colors` holds the rim's and band's three flat tones and the two
+lamp colours in place of the shipped ramps and veil.
+
+Tests that assert the shipped gate: `src/game/familyManifest.test.ts` (sheet
+path and frame) and the readers of `src/data/needle.ts`, which imports
+`gates.json` and reads `opening`, `rim` and the orientations.
+
 ## Switch
 
 Tech replaces the shipped rows with the rows of the same ids from
@@ -192,7 +260,7 @@ sections, and deletes `friendly-rows.json`.
 1. Pickups, caches, landmarks and galaxy beacons, buoys and lamps. Built.
 2. Ring gate, true to Gameplay's opening of 66 and rim of 33, 40 and 7 world
    units: five axes, lit and dark, back and front layers as closed solids, a
-   288 px frame and the gate data file with the new extents.
+   288 px frame and the gate data file with the new extents. Built.
 3. The 32 craft at 16 headings: the yard hull with one role feature each, Elder
    Loom's saucer, Reed's ring ship, the Blocker and the lifeboat pods with
    their galaxy features and blink frames, with jets and nose sidecars. Ids
