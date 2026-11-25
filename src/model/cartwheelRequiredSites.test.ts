@@ -14,8 +14,9 @@ describe("Cartwheel required buoy sites", () => {
     const center = gameAreaPoint(hub, hub);
     const sites = cartwheelRequiredSites({}, hub, selected);
     const expected = [
-      { id: "miner", x: -248.2, y: 0 },
-      { id: "visitors", x: 277.4, y: -11.2 },
+      // The buoys stand at fractions of the docked view, less the miner's 63 px frame.
+      { id: "miner", x: -245.225, y: 0 },
+      { id: "visitors", x: 274.075, y: -10.85 },
     ];
     for (const [index, site] of sites.entries()) {
       const point = gameAreaPoint(hub, site);
