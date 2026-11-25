@@ -151,6 +151,8 @@ it("retains each retaliator hull's variant/cache identity and one canonical Rapi
     expect(enemyAssetKey(enemy)).toBe(variant);
     expect(enemy.weaponLevel).toBe(3);
     expect(definitions[0]).toBe(canonical);
+    // The launcher fires forward only, so the nose starts on Ada, 100 units ahead.
+    enemy.facing = { x: 1, y: 0 };
     const intent = stepEnemy(
       canonical,
       {
