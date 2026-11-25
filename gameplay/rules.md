@@ -1527,8 +1527,8 @@ apply to the planner's output.
 - An enemy's footprint is a circle of its spacing radius r
   ([Ships](ships.md#hulls)). Adjacent group members are spaced, centre to
   centre, by the larger of the galaxy's member spacing and 2r + 20: a Twin hull
-  pair in Andromeda sits about 135 world units apart and a Slim delta pair in
-  Phantom about 145. Escorts sit on a ring the largest of the leader's r + 60
+  pair in Andromeda sits about 135 world units apart and a Shoulder frigate pair in
+  Phantom about 147. Escorts sit on a ring the largest of the leader's r + 60
   (the escort station), the leader's r + the escort's r + 20, and the radius
   that keeps neighbouring escorts 20 apart.
 - Stations and points of interest never block a spawn. The existing exclusion

@@ -88,7 +88,7 @@ diameter.
 | `retaliator`  | Manta gunship                 |        34 x 56 |                           30 |
 | `retaliator`  | Cargo Hauler                  |      84 x 46.9 |                           45 |
 | `retaliator`  | Mining Freighter              |        50 x 56 |                           30 |
-| `frigate`     | Slim delta                    |     117 x 93.8 |                           62 |
+| `frigate`     | Shoulder frigate              |     119 x 93.8 |                           63 |
 | `frigate`     | Twin hull                     |     108 x 93.8 |                           58 |
 | `capital`     | Hammer (Sunflower)            |  158.9 x 112.6 |                           85 |
 | `capital`     | Manta dreadnought (Whirlpool) |  152.9 x 112.6 |                           82 |
@@ -105,7 +105,7 @@ diameter.
 - **Spacing radius:** the larger of half the drawn length and half the drawn
   width, in world units. It sets spawn footprints, group member spacing, escort
   rings and capital spacing, never hits.
-- **Frigates:** the Slim delta in Sunflower, Cartwheel and Phantom; the Twin hull
+- **Frigates:** the Shoulder frigate in Sunflower, Cartwheel and Phantom; the Twin hull
   in Whirlpool, Andromeda and Needle. Each galaxy has one capital, listed above.
   Every frigate and capital in a galaxy uses that galaxy's hull. The Twin hull's
   length includes its engines.
