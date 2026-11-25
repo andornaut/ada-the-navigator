@@ -7,12 +7,13 @@ import { coral, coralRear, exportCrafts as crafts } from "./crafts.ts";
 import { recolour } from "./claim-jumpers.ts";
 import { recolourGarnet } from "./garnet-drones.ts";
 import { recolourNeedle } from "./needle-drones.ts";
-import { installedShardPacks, shardPalettePack } from "./shard-palette-pack.ts";
+import { shardPalettePack } from "./shard-palette-pack.ts";
 import { sizeReceipts } from "./enemy-size.ts";
+import { fleetCrafts } from "./fleet.ts";
 import { FLEET_FAMILIES, FLEET_PAINT } from "./fleet-models.ts";
 import { stageRows } from "./polish-rows.ts";
 import { svgText } from "./svg-text.ts";
-import { mergeSidecars } from "./manifest.ts";
+import { mergeSidecars, readManifest, type Sidecars } from "./manifest.ts";
 import { json, round } from "./projection.ts";
 import { halfSpan, shards } from "./shard-geometry.ts";
 
@@ -62,17 +63,22 @@ function flash(): string {
   ].join("\n");
 }
 
+// The enemy fleet's craft, by the archetype each replaces: its frame and half span size that
+// archetype's flash, timings and spread.
+const fleet = new Map(fleetCrafts().map((craft) => [craft.archetype, craft]));
+
 function spec(): string {
   const archetypes = Object.fromEntries(
     crafts.map((craft) => {
-      const sourceFrame = sizeReceipts.get(craft.name)!.frameBefore;
+      const redesigned = fleet.get(craft.name);
+      const sourceFrame = redesigned?.frame ?? sizeReceipts.get(craft.name)!.frameBefore;
       const reduced = byFrame(sourceFrame, 360, 450);
       return [
         craft.name,
         {
           durationMs: byFrame(sourceFrame, 450, 600),
           releaseMs: byFrame(sourceFrame, 150, 190),
-          flashWidth: round(halfSpan(craft) * 1.98),
+          flashWidth: round((redesigned?.halfSpan ?? halfSpan(craft)) * 1.98),
           spread: spread(sourceFrame, 19.2, 33.6),
           reduced: {
             durationMs: reduced,
@@ -113,12 +119,32 @@ export async function writeJson(path: string, text: string): Promise<void> {
   writeFileSync(path, await format(text, { ...options, filepath: path }));
 }
 
+// The crafts whose shards this producer writes, each with its shards path: every craft but those
+// whose core sidecar names the enemy fleet's pack (art/tools/fleet.ts writes those). A craft
+// keeps the packed file its manifests select.
+function ownShards(): Map<string, string> {
+  const installed = (readManifest("core").sidecars ?? {}) as Sidecars;
+  const own = new Map<string, string>();
+  for (const { name } of crafts) {
+    const path = installed[name]?.shards;
+    const packed = `/art/enemies/${name}-shards-packed.json`;
+    if (path === undefined || path === `/art/enemies/${name}-shards.json`) {
+      own.set(name, `/art/enemies/${name}-shards.json`);
+    } else if (path === packed) {
+      own.set(name, packed);
+    }
+  }
+  return own;
+}
+
 async function main() {
-  const packs = installedShardPacks();
+  const own = ownShards();
   for (const craft of crafts) {
+    const path = own.get(craft.name);
+    if (path === undefined) continue;
     const file = `${craft.name}-shards.json`;
     const core = shards(craft);
-    if (packs.has(craft.name)) {
+    if (path.endsWith("-shards-packed.json")) {
       const pack = shardPalettePack(core, {
         garnet: recolourGarnet(file, core),
         claim: recolour(file, core),
@@ -151,17 +177,11 @@ async function main() {
     },
   });
   writeFileSync(`${output}destruction-flash.svg`, svgText(flash()));
-  // The coral shards; enemies.ts and heavies.ts write these crafts' other sidecars.
-  const names = new Set(crafts.map(({ name }) => name));
+  // The coral shards it owns; enemies.ts and heavies.ts write these crafts' other sidecars.
   mergeSidecars(
     "core",
-    (craft, kind) => kind === "shards" && names.has(craft),
-    Object.fromEntries(
-      crafts.map(({ name }) => [
-        name,
-        { shards: packs.get(name) ?? `/art/enemies/${name}-shards.json` },
-      ]),
-    ),
+    (craft, kind) => kind === "shards" && own.has(craft),
+    Object.fromEntries([...own].map(([name, shards]) => [name, { shards }])),
   );
 }
 
