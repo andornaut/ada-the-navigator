@@ -4,6 +4,7 @@ import { NEEDLE_CHAPTER } from "./needleCopy.ts";
 import { PHANTOM_CHAPTER, PHANTOM_CLOSING, PHANTOM_RESOLUTION_REJOIN } from "./phantom.ts";
 import { PREMISE } from "./premiseCopy.ts";
 import { SHIP_PHYSICS } from "./shipPhysics.ts";
+import { MOVING_ROCKS } from "./spawnTargets.ts";
 import type { GameContent } from "./types.ts";
 import { BASE_PROJECTILE_SPEED } from "./weaponCatalog.ts";
 export const CONTENT: GameContent = {
@@ -756,9 +757,9 @@ export const CONTENT: GameContent = {
       pursuitSpeedFactor: 0.55,
       rockHp: 3,
       rockRadius: 20,
-      // A soft knock: 0.3 of the closing speed, at most 80, and a struck static rock rests
-      // within 3 s (gameplay/rules.md "Space encounters and feedback").
-      rockRicochet: { maxSpeed: 80, restitution: 0.3, settleSeconds: 3 },
+      // A soft knock: 0.3 of the closing speed, at most the top moving-rock speed, and a struck
+      // static rock rests within 3 s (gameplay/rules.md "Space encounters and feedback").
+      rockRicochet: { maxSpeed: MOVING_ROCKS.speed[1], restitution: 0.3, settleSeconds: 3 },
       sceneryRecoil: 24,
       sceneryRestitution: 0.4,
       shipRadius: 10,

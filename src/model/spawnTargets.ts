@@ -55,11 +55,6 @@ import { wrappedDistance } from "./worldGeometry.ts";
 const MOVING_KIND = "moving-rock";
 /** Region site kind that Cartwheel's claim jumpers gather beside. */
 export const ORE_FIELD_SITE = "ore-field";
-/**
- * Seconds of a moving rock's straight path checked against launch, arrival and protected areas,
- * which absorb moving rocks that reach them.
- */
-export const MOVING_PATH_SECONDS = 30;
 
 const tuning = CONTENT.tuning;
 const flight = tuning.flight;
@@ -204,11 +199,11 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
       from: stage.centerDistance,
       moving: [
         {
+          cluster: MOVING_ROCKS.cluster,
           density: targets.moving / SPAWN_AREA_CHUNKS,
           from: ["rock-feature", "rock"],
-          groupShare: MOVING_ROCKS.groupShare,
           kind: MOVING_KIND,
-          path: MOVING_PATH_SECONDS,
+          path: MOVING_ROCKS.pathSeconds,
           speed: MOVING_ROCKS.speed,
         },
       ],

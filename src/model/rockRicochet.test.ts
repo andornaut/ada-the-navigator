@@ -137,8 +137,8 @@ describe("rock ricochet", () => {
   });
 
   it("caps every rock leaving a ricochet at the fastest speed", () => {
-    const big = mover("big", largest, { x: 0, y: 0 }, { x: 80, y: 0 });
-    const small = mover("small", smallest, { x: 0, y: 0 }, { x: -80, y: 0 });
+    const big = mover("big", largest, { x: 0, y: 0 }, { x: RULES.maxSpeed, y: 0 });
+    const small = mover("small", smallest, { x: 0, y: 0 }, { x: -RULES.maxSpeed, y: 0 });
     touching(small, big);
     const uncapped = [structuredClone(big), structuredClone(small)];
     ricochetRocks(context, { ...RULES, maxSpeed: 1000 }, uncapped);
@@ -148,7 +148,7 @@ describe("rock ricochet", () => {
     expect(speed(small)).toBeCloseTo(RULES.maxSpeed);
   });
 
-  it("lets a grouped mover leave the group's shared velocity", () => {
+  it("lets a clustered mover leave the cluster's shared velocity", () => {
     const shared = { x: -40, y: 0 };
     const still = rock("still", smallest, { x: 0, y: 0 });
     const front = mover("front", smallest, { x: 0, y: 0 }, { ...shared });

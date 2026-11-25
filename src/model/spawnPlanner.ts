@@ -31,12 +31,26 @@ export interface RockTarget {
   readonly shapes: readonly SpawnShape[];
 }
 
-/** Moving rocks per chunk, chosen from that chunk's placed rocks of the `from` kinds. */
+/**
+ * Rocks a cluster leader pulls along at its velocity: a seeded `share` of chosen rocks lead, each
+ * pulling from `size[0]` to `size[1]` (equal weight) of its chunk's nearest free source rocks
+ * whose centres lie within `radius`, fewer when fewer qualify.
+ */
+export interface ClusterTarget {
+  readonly radius: number;
+  readonly share: number;
+  readonly size: readonly [number, number];
+}
+
+/**
+ * Moving rocks per chunk, chosen from that chunk's placed rocks of the `from` kinds. Every rock
+ * that moves, leader or pulled, counts toward the density.
+ */
 export interface MovingTarget {
+  /** Absent, every chosen rock moves alone. */
+  readonly cluster?: ClusterTarget;
   readonly density: number;
   readonly from: readonly string[];
-  /** Share of a chunk's moving rocks, rounded up, that share one velocity when there are two or more. */
-  readonly groupShare: number;
   readonly kind: string;
   /**
    * Seconds of straight travel checked against zones that apply to paths; a velocity whose path
@@ -210,7 +224,8 @@ export interface SpawnRegion {
 }
 
 export interface SpawnMotion {
-  readonly grouped: boolean;
+  /** Whether the rock moves in a cluster of two or more sharing one velocity. */
+  readonly clustered: boolean;
   readonly kind: string;
   readonly velocity: Vec;
 }
@@ -718,12 +733,12 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         if (!target) {
           continue;
         }
-        const count = chanceRound(
+        // Chosen rocks: the density over the rocks one choice moves on average.
+        const choices = chanceRound(
           stream(seeds.world, kind, chunk, "count"),
-          target.density * open(chunk, "moving"),
+          (target.density * open(chunk, "moving")) / rocksPerChoice(target),
         );
-        tally.request(kind, count);
-        if (!count) {
+        if (!choices) {
           continue;
         }
         const eligible = placements.filter((placement) => {
@@ -740,25 +755,10 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           }
           return !rule;
         });
-        const order = shuffled(stream(seeds.world, kind, chunk, "choose"), eligible);
-        const anchor = order[0];
-        const grouped = count > 1 ? Math.ceil(count * target.groupShare) : 0;
-        const group = anchor
-          ? [...order]
-              .sort(
-                (a, b) =>
-                  Math.hypot(a.x - anchor.x, a.y - anchor.y) -
-                  Math.hypot(b.x - anchor.x, b.y - anchor.y),
-              )
-              .slice(0, grouped)
-          : [];
-        const solos = order.filter((rock) => !group.includes(rock)).slice(0, count - group.length);
+        const free = new Set(shuffled(stream(seeds.world, kind, chunk, "choose"), eligible));
         // A velocity is kept when every rock it moves keeps its path clear; otherwise it is
         // redrawn, and after the tries those rocks stay still and are dropped as movers.
-        const move = (rocks: readonly SpawnPlacement[], next: Random, isGroup: boolean) => {
-          if (!rocks.length) {
-            return;
-          }
+        const move = (rocks: readonly SpawnPlacement[], next: Random) => {
           let rule: string | undefined;
           for (let attempt = 0; attempt < rules.tries; attempt++) {
             const motion = velocity(next, target.speed);
@@ -771,7 +771,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
               for (const rock of rocks) {
                 placements[placements.indexOf(rock)] = {
                   ...rock,
-                  moving: { grouped: isGroup, kind, velocity: { ...motion } },
+                  moving: { clustered: rocks.length > 1, kind, velocity: { ...motion } },
                 };
                 tally.deliver(kind);
               }
@@ -781,13 +781,38 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           }
           tally.drop(kind, rule!, rocks.length);
         };
-        move(group, stream(seeds.world, kind, chunk, "group-motion"), true);
-        for (const rock of solos) {
-          move([rock], randomStream(seeds.world, `spawn:${kind}:${rock.id}:solo-motion`), false);
+        // Each chosen rock may lead a cluster of the nearest free source rocks; pulled rocks
+        // count toward the request, and a choice with no free rock left is dropped.
+        let chosen = 0;
+        for (const leader of free) {
+          if (chosen === choices) {
+            break;
+          }
+          chosen++;
+          free.delete(leader);
+          const next = randomStream(seeds.world, `spawn:${kind}:${leader.id}:motion`);
+          const cluster = target.cluster;
+          const pulled: SpawnPlacement[] = [];
+          if (cluster && next() < cluster.share) {
+            const size = randomInt(next, cluster.size[0], cluster.size[1] + 1);
+            const apart = (rock: SpawnPlacement) =>
+              Math.hypot(rock.x - leader.x, rock.y - leader.y);
+            pulled.push(
+              ...[...free]
+                .filter((rock) => apart(rock) <= cluster.radius)
+                .sort((a, b) => apart(a) - apart(b))
+                .slice(0, size),
+            );
+            for (const rock of pulled) {
+              free.delete(rock);
+            }
+          }
+          tally.request(kind, 1 + pulled.length);
+          move([leader, ...pulled], next);
         }
-        const missing = count - group.length - solos.length;
-        if (missing > 0) {
-          tally.drop(kind, SPAWN_RULE.noSourceRock, missing);
+        if (chosen < choices) {
+          tally.request(kind, choices - chosen);
+          tally.drop(kind, SPAWN_RULE.noSourceRock, choices - chosen);
         }
       }
     }
@@ -1131,6 +1156,12 @@ function admitted(
     new Set(formation.map((member) => member.archetype)).size <= local.archetypes &&
     capitals <= admission.maxCapitals
   );
+}
+
+/** Rocks one chosen rock moves on average: itself, plus its mean pull when it leads a cluster. */
+export function rocksPerChoice(target: MovingTarget): number {
+  const cluster = target.cluster;
+  return 1 + (cluster ? (cluster.share * (cluster.size[0] + cluster.size[1])) / 2 : 0);
 }
 
 /** The rule of the first path zone a moving rock's footprint touches over `seconds` at `motion`. */

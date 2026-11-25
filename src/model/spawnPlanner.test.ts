@@ -4,6 +4,7 @@ import {
   type EnemyTarget,
   type ExclusionZone,
   planRegion,
+  rocksPerChoice,
   SPAWN_RULE,
   type SpawnBand,
   spawnBandAt,
@@ -15,6 +16,7 @@ import {
   type SpawnSeeds,
 } from "./spawnPlanner.ts";
 
+const CLUSTER = { radius: 300, share: 0.5, size: [1, 3] } as const;
 const band: SpawnBand = {
   enemies: [
     {
@@ -29,7 +31,7 @@ const band: SpawnBand = {
   ],
   from: 0,
   moving: [
-    { density: 1.5, from: ["big", "small"], groupShare: 0.75, kind: "mover", speed: [10, 80] },
+    { cluster: CLUSTER, density: 1.5, from: ["big", "small"], kind: "mover", speed: [10, 80] },
   ],
   rocks: [
     { density: 0.6, kind: "big", shapes: [{ id: "big-a", radius: 70, weight: 1 }] },
@@ -54,10 +56,21 @@ const rules: SpawnRules = {
 };
 const region: SpawnRegion = { cell: { x: -1, y: -1 }, columns: 3, exclusions: [], rows: 3 };
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
+const MOVING_SEEDS = Array.from({ length: 24 }, (_, index) => index + 1);
 
 /** One number as both the world and the encounter seed. */
 function seeds(seed: number): SpawnSeeds {
   return { encounter: seed, world: seed };
+}
+
+/** Movers by shared velocity: each cluster, and each solo rock alone. */
+function clustersOf(movers: readonly SpawnPlacement[]): SpawnPlacement[][] {
+  const clusters = new Map<string, SpawnPlacement[]>();
+  for (const mover of movers) {
+    const key = `${mover.chunk}:${JSON.stringify(mover.moving!.velocity)}`;
+    clusters.set(key, [...(clusters.get(key) ?? []), mover]);
+  }
+  return [...clusters.values()];
 }
 
 function pairs(placements: readonly SpawnPlacement[]): [SpawnPlacement, SpawnPlacement][] {
@@ -229,43 +242,73 @@ describe("planRegion", () => {
         expect(speed).toBeGreaterThanOrEqual(10);
         expect(speed).toBeLessThanOrEqual(80);
       }
-      for (const chunk of new Set(movers.map((mover) => mover.chunk))) {
-        const group = movers.filter((mover) => mover.chunk === chunk);
-        const grouped = group.filter((mover) => mover.moving!.grouped);
-        expect(new Set(grouped.map((mover) => JSON.stringify(mover.moving!.velocity))).size).toBe(
-          grouped.length ? 1 : 0,
-        );
-        expect(grouped.length).toBe(group.length > 1 ? Math.ceil(group.length * 0.75) : 0);
+      for (const cluster of clustersOf(movers)) {
+        // A cluster shares one velocity and holds a leader and 1 to 3 pulled rocks.
+        expect(cluster.length).toBeLessThanOrEqual(4);
+        expect(cluster.every((mover) => mover.moving!.clustered)).toBe(cluster.length > 1);
       }
     }
     expect(moved).toBeGreaterThan(40);
   });
 
-  it("moves a group of a chunk's rocks nearest one of them", () => {
-    let groups = 0;
-    for (const seed of SEEDS) {
+  it("pulls each cluster from its leader's nearest free rocks within the cluster radius", () => {
+    let clusters = 0;
+    for (const seed of MOVING_SEEDS) {
       const plan = planRegion({ ...rules, bands: [{ ...band, enemies: [] }] }, seeds(seed), region);
-      const chunks = new Set(
-        plan.placements.filter((placement) => placement.moving?.grouped).map(({ chunk }) => chunk),
-      );
-      for (const chunk of chunks) {
-        const rocks = plan.placements.filter((placement) => placement.chunk === chunk);
-        const group = rocks.filter((rock) => rock.moving?.grouped);
-        const others = rocks.filter((rock) => !rock.moving?.grouped);
+      const still = plan.placements.filter((placement) => !placement.moving);
+      for (const cluster of clustersOf(plan.placements.filter((placement) => placement.moving))) {
+        if (cluster.length < 2) {
+          continue;
+        }
+        clusters++;
         const apart = (a: SpawnPlacement, b: SpawnPlacement) => Math.hypot(a.x - b.x, a.y - b.y);
-        // The anchor's farthest group member is nearer than every rock left out of the group.
+        // Some member, the leader, has every other within the radius, and every still rock of
+        // its chunk is no nearer to it than the farthest rock it pulled.
         expect(
-          group.some(
-            (anchor) =>
-              Math.max(...group.map((rock) => apart(anchor, rock))) <
-              Math.min(...others.map((rock) => apart(anchor, rock))),
-          ),
-          chunk,
+          cluster.some((leader) => {
+            const reach = Math.max(...cluster.map((rock) => apart(leader, rock)));
+            return (
+              reach <= CLUSTER.radius &&
+              still
+                .filter((rock) => rock.chunk === leader.chunk)
+                .every((rock) => apart(leader, rock) >= reach)
+            );
+          }),
+          cluster[0]!.id,
         ).toBe(true);
-        groups++;
       }
     }
-    expect(groups).toBeGreaterThan(20);
+    expect(clusters).toBeGreaterThan(30);
+  });
+
+  it("leads clusters with a seeded share of chosen rocks and counts every mover", () => {
+    expect(rocksPerChoice(band.moving[0]!)).toBe(2);
+    expect(rocksPerChoice({ density: 1, from: ["big"], kind: "solo", speed: [10, 80] })).toBe(1);
+    let chunks = 0;
+    let moved = 0;
+    let leaders = 0;
+    let solos = 0;
+    for (const seed of MOVING_SEEDS) {
+      const plan = planRegion({ ...rules, bands: [{ ...band, enemies: [] }] }, seeds(seed), region);
+      const movers = plan.placements.filter((placement) => placement.moving);
+      const report = plan.report.kinds.mover!;
+      expect(report.delivered).toBe(movers.length);
+      expect(report.requested).toBe(report.delivered + report.dropped);
+      chunks += region.columns * region.rows;
+      moved += movers.length;
+      for (const cluster of clustersOf(movers)) {
+        if (cluster.length > 1) {
+          leaders++;
+        } else {
+          solos++;
+        }
+      }
+    }
+    // Half the chosen rocks lead, pulling 2 on average, so movers match the density.
+    expect(leaders / (leaders + solos)).toBeGreaterThan(0.4);
+    expect(leaders / (leaders + solos)).toBeLessThan(0.6);
+    expect(moved / chunks).toBeGreaterThan(0.8 * band.moving[0]!.density);
+    expect(moved / chunks).toBeLessThan(1.2 * band.moving[0]!.density);
   });
 
   it("accounts for every request as delivered or dropped, by rule", () => {

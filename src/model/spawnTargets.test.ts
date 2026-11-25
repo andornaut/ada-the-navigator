@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { retaliatorVariant } from "../data/enemyIdentity.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import { SLOT_ROCKS_PER_AREA, SPAWN_AREA_CHUNKS, SPAWN_TARGETS } from "../data/spawnTargets.ts";
+import {
+  MOVING_ROCKS,
+  SLOT_ROCKS_PER_AREA,
+  SPAWN_AREA_CHUNKS,
+  SPAWN_TARGETS,
+} from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import {
@@ -19,7 +25,6 @@ import { type ExclusionZone, planRegion, type SpawnCategory } from "./spawnPlann
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
-  MOVING_PATH_SECONDS,
   spawnGatherReach,
   spawnRules,
   worldSpawnExclusions,
@@ -142,6 +147,19 @@ describe("spawn target catalog", () => {
   });
 });
 
+describe("moving rock values", () => {
+  it("come from one table: clusters, path seconds, speeds and the ricochet cap", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      for (const target of spawnRules(galaxy).bands.flatMap((band) => band.moving)) {
+        expect(target.cluster).toBe(MOVING_ROCKS.cluster);
+        expect(target.path).toBe(MOVING_ROCKS.pathSeconds);
+        expect(target.speed).toBe(MOVING_ROCKS.speed);
+      }
+    }
+    expect(CONTENT.tuning.flight.rockRicochet.maxSpeed).toBe(MOVING_ROCKS.speed[1]);
+  });
+});
+
 describe("moving rock paths", () => {
   const context = { worldSide: GALAXY_SIDE };
 
@@ -154,10 +172,10 @@ describe("moving rock paths", () => {
         ),
       );
       for (const target of rules.bands.flatMap((band) => band.moving)) {
-        expect(target.path).toBe(MOVING_PATH_SECONDS);
+        expect(target.path).toBe(MOVING_ROCKS.pathSeconds);
         // A placed rock's centre lies within half a chunk diagonal of its chunk's centre.
         expect(chunkSpawnReach(rules)).toBeGreaterThanOrEqual(
-          (rules.chunkSize * Math.SQRT2) / 2 + target.speed[1] * MOVING_PATH_SECONDS + largest,
+          (rules.chunkSize * Math.SQRT2) / 2 + target.speed[1] * MOVING_ROCKS.pathSeconds + largest,
         );
       }
     }
@@ -206,8 +224,8 @@ describe("moving rock paths", () => {
             for (const rock of movers) {
               const at = wrappedDelta(GALAXY_SIDE, rock, zone.shape);
               const travel = {
-                x: rock.moving!.velocity.x * MOVING_PATH_SECONDS,
-                y: rock.moving!.velocity.y * MOVING_PATH_SECONDS,
+                x: rock.moving!.velocity.x * MOVING_ROCKS.pathSeconds,
+                y: rock.moving!.velocity.y * MOVING_ROCKS.pathSeconds,
               };
               const along = Math.max(
                 0,

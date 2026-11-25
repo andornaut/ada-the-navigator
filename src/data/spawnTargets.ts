@@ -24,10 +24,17 @@ export const SPAWN_AREA_CHUNKS = 9;
 /** Slot rocks per area in every galaxy and region. */
 export const SLOT_ROCKS_PER_AREA = 29.84;
 /**
- * Moving rocks: the share that travel in a group with one shared velocity, and the speed range
- * in world units per second (gameplay/rules.md "Space encounters and feedback").
+ * Moving rocks (gameplay/rules.md "Space encounters and feedback"): the share of chosen rocks
+ * that lead a cluster, how many placed rocks each leader pulls (equal weight, inclusive) and the
+ * farthest a pulled rock's centre lies from the leader's; the seconds of straight path checked
+ * against protected areas and arrival safe radii; and the speed range in world units per second,
+ * whose top is also the fastest a rock leaves a ricochet.
  */
-export const MOVING_ROCKS = { groupShare: 0.75, speed: [10, 80] } as const;
+export const MOVING_ROCKS = {
+  cluster: { radius: 300, share: 0.5, size: [1, 3] },
+  pathSeconds: 30,
+  speed: [10, 100],
+} as const;
 /**
  * Each galaxy's enemy density factor: the share of encounter lattice cells that hold a group is
  * 0.75 times it (gameplay/ships.md "Ambient admission"). It scales enemy densities only; the
@@ -72,38 +79,38 @@ export const SPAWN_TARGETS: Readonly<
 > = {
   // Sunflower
   1: [
-    region(1.5, 2.15, [0.244, 0.2, 0, 0, 0, 0]),
-    region(1.6, 2.15, [0.2, 0.178, 0, 0.067, 0, 0]),
-    region(1.5, 2.15, [0.178, 0.155, 0.044, 0.067, 0, 0]),
+    region(1.5, 4.3, [0.244, 0.2, 0, 0, 0, 0]),
+    region(1.6, 4.3, [0.2, 0.178, 0, 0.067, 0, 0]),
+    region(1.5, 4.3, [0.178, 0.155, 0.044, 0.067, 0, 0]),
   ],
   // Cartwheel
   2: [
-    region(1.4, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
-    region(1.4, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
-    region(1.3, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(1.4, 4.68, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(1.4, 4.68, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(1.3, 4.68, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
   ],
   // Whirlpool
   3: [
-    region(1.3, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
-    region(1.2, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
-    region(1.1, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.3, 5.04, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.2, 5.04, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.1, 5.04, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
   ],
   // Needle
   4: [
-    region(1.3, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
-    region(1.4, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
-    region(1.4, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.3, 4.98, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.4, 4.98, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.4, 4.98, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
   ],
   // Andromeda
   5: [
-    region(1.4, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
-    region(1.5, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
-    region(1.4, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(1.4, 4.82, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(1.5, 4.82, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(1.4, 4.82, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
   ],
   // Phantom
   6: [
-    region(1.4, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
-    region(1.4, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
-    region(1.3, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(1.4, 7.32, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(1.4, 7.32, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(1.3, 7.32, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
   ],
 };
