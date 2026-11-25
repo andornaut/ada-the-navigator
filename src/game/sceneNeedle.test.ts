@@ -219,7 +219,7 @@ describe("Needle renderer lifecycle and published gate art", () => {
           : image.depth > f.frame.playerDepth,
       ).toBe(true);
     }
-    expect(f.styles[0]).toEqual([1, 0xcfc5bd, 0.38]);
+    expect(f.styles[0]).toEqual([2, 0xcfc5bd, 0.6]);
     expect(f.lines.length).toBeGreaterThan(0);
   });
 
@@ -303,14 +303,19 @@ describe("Needle ordinary debris frames", () => {
     const frame = { ...f.frame, debris: [{ descriptor, object }], reducedMotion: true };
     const original = structuredClone(object);
     f.renderer.draw(frame);
-    // Plate frame zero: published [11.687,19.8,61.704,47.4], pivot .5, scale 35/80.
+    // Plate frame zero's published bounds about its pivot, at display 35 over frame 80.
+    const plate = NEEDLE.channels.debris.pieces.find(({ id }) => id === "needle-debris-plate")!;
+    const [minX, minY, maxX, maxY] = plate.frames[0]!.bounds;
+    expect(plate.frames[0]!.bounds).toEqual([7.12, 18.745, 61.487, 59.542]);
+    const scale = plate.display / plate.frame;
+    const pivot = { x: plate.pivot[0]! * plate.frame, y: plate.pivot[1]! * plate.frame };
     const chips = driftChipsFromBounds(
       { behind: { x: -24, y: -12 }, id: object.id, seed: 123 },
       {
-        bottom: 3.2375,
-        left: -12.3869375,
-        right: 9.4955,
-        top: -8.8375,
+        bottom: (maxY! - pivot.y) * scale,
+        left: (minX! - pivot.x) * scale,
+        right: (maxX! - pivot.x) * scale,
+        top: (minY! - pivot.y) * scale,
       },
     );
     expect(f.fills).toEqual([
@@ -415,13 +420,20 @@ describe("Needle ordinary debris frames", () => {
 const identity = { project: (p: { x: number; y: number }) => p };
 
 describe("Needle channel stitch", () => {
-  it("draws six logical pixels on and four off at the actual two channel edges", () => {
-    const marks = needleStitches(identity, straight());
+  it("draws ten logical pixels on and eight off at the actual two channel edges", () => {
+    expect(NEEDLE.channels.stitch.dash).toEqual([10, 8]);
+    const marks = needleStitches(
+      identity,
+      straight([
+        { x: 0, y: 0 },
+        { x: 40, y: 0 },
+      ]),
+    );
     expect(marks).toEqual(
       [-105, 105].flatMap((y) => [
-        { from: { x: 0, y }, to: { x: 6, y } },
-        { from: { x: 10, y }, to: { x: 16, y } },
-        { from: { x: 20, y }, to: { x: 25, y } },
+        { from: { x: 0, y }, to: { x: 10, y } },
+        { from: { x: 18, y }, to: { x: 28, y } },
+        { from: { x: 36, y }, to: { x: 40, y } },
       ]),
     );
   });
@@ -431,23 +443,22 @@ describe("Needle channel stitch", () => {
       identity,
       straight([
         { x: 0, y: 0 },
-        { x: 13, y: 0 },
+        { x: 5, y: 0 },
         { x: 25, y: 0 },
       ]),
     );
-    expect(marks.slice(0, 4)).toEqual([
-      { from: { x: 0, y: -105 }, to: { x: 6, y: -105 } },
-      { from: { x: 10, y: -105 }, to: { x: 13, y: -105 } },
-      { from: { x: 13, y: -105 }, to: { x: 16, y: -105 } },
-      { from: { x: 20, y: -105 }, to: { x: 25, y: -105 } },
+    expect(marks.slice(0, 3)).toEqual([
+      { from: { x: 0, y: -105 }, to: { x: 5, y: -105 } },
+      { from: { x: 5, y: -105 }, to: { x: 10, y: -105 } },
+      { from: { x: 18, y: -105 }, to: { x: 25, y: -105 } },
     ]);
   });
 
   it("measures dashes after projection rather than changing their lengths with world angle", () => {
     const projected = { project: (p: { x: number; y: number }) => ({ x: p.x * 2, y: p.y / 2 }) };
     const marks = needleStitches(projected, straight());
-    expect(marks[0]).toEqual({ from: { x: 0, y: -52.5 }, to: { x: 6, y: -52.5 } });
-    expect(marks).toHaveLength(10);
+    expect(marks[0]).toEqual({ from: { x: 0, y: -52.5 }, to: { x: 10, y: -52.5 } });
+    expect(marks).toHaveLength(6);
   });
 
   it("does not emit non-finite segments for an empty or repeated path", () => {
@@ -470,7 +481,7 @@ describe("Needle channel stitch", () => {
       const marks = needleStitches(identity, course);
       expect(marks.length).toBeGreaterThan(100);
       expect(
-        marks.every(({ from, to }) => Math.hypot(to.x - from.x, to.y - from.y) <= 6.000001),
+        marks.every(({ from, to }) => Math.hypot(to.x - from.x, to.y - from.y) <= 10.000001),
       ).toBe(true);
       expect(course).toEqual(before);
     }

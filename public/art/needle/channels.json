@@ -3,9 +3,9 @@
   "displayScale": 0.4375,
   "stitch": {
     "color": "#CFC5BD",
-    "alpha": 0.38,
-    "width": 1,
-    "dash": [6, 4],
+    "alpha": 0.6,
+    "width": 2,
+    "dash": [10, 8],
     "inset": 0
   },
   "debris": {
