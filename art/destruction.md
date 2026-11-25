@@ -5,10 +5,9 @@ behind a brief pale flash, and releases its Stardust from the wreck. Tech render
 the effect from data; there are no animation frames.
 
 - Rebuild with `node art/tools/destruction.ts`. It writes
-  `public/art/enemies/{archetype}-shards.json`, `destruction.json` and
-  `destruction-flash.svg`, formatting the JSON with the project's Prettier
-  settings. The craft models in `art/tools/crafts.ts` are shared with
-  [the idle frames](enemies.md).
+  `public/art/enemies/destruction.json` and `destruction-flash.svg`,
+  formatting the JSON with the project's Prettier settings. The shard files
+  are the [enemy fleet](enemy-redesign.md)'s `{key}-shards-packed.json`.
 
 ## Shard files
 
@@ -41,10 +40,11 @@ For elapsed `t` and duration `T`, `u = min(1, t / T)` and the ease
   `s = 1 - 0.35 u` (to 65%). `M(a) = [[cos a, -sqrt(3) sin a], [sin a / sqrt(3), cos a]]`
   is a plan rotation seen through the projection.
 - Draw shards in ascending `nearness + nearnessDrift * e`.
-- Colour: every polygon colour moves linearly in sRGB toward `#7f4b3d` by
-  `0.55 u` (`shards.cool`).
-- Alpha: hull and part shards stay opaque until `u = 0.3`, then
-  `(1 - (u - 0.3) / 0.7) ^ 1.3`. Flecks fade linearly to zero at `u = 0.6`.
+- Colour: every polygon colour moves linearly in sRGB toward its family's
+  darkest hull tone by `0.55 u` (`shards.cool`, [flat look](#flat-look)).
+- Alpha: hull and part shards hold 1 until `u = 0.55`, 0.6 until `u = 0.8`,
+  then 0.3 until the shard ends at `u = 1` (`shards.fade.steps`). Flecks fade
+  linearly to zero at `u = 0.6`.
 - Drift covers 0.45 to 0.75 half-spans for shards and 1.5 times that for flecks;
   spin magnitudes are 0.7 to 1.6 rad. Four flecks per archetype.
 - Flash: `destruction-flash.svg` (80 by 64, pale `#ffe2c8` four-point star with
@@ -54,15 +54,8 @@ For elapsed `t` and duration `T`, `u = min(1, t / T)` and the ease
 
 ## Flat look
 
-The accepted shard look, staged as `effects-destruction` in
-[polish-rows.json](polish-rows.json) for `destruction.json`
-([handoff](polish-handoff.md)). Drift, spin, shrink, order, durations and the
-flash are unchanged.
-
-| Rule  | Shipped                                               | Flat look                                                                                           |
-| ----- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Cool  | Every family toward coral `#7f4b3d` by `0.55 u`       | Each family toward its own darkest hull tone by `0.55 u` (`shards.cool.families`)                   |
-| Alpha | Opaque to `u` 0.3, then `(1 - (u - 0.3) / 0.7) ^ 1.3` | Held steps (`shards.fade.steps`): 1 to `u` 0.55, 0.6 to 0.8, then 0.3 until the shard ends at `u` 1 |
+Each family's shards cool toward its own darkest hull tone
+(`shards.cool.families`), and alpha holds in steps (`shards.fade.steps`).
 
 | Family | Cool target |
 | ------ | ----------- |
@@ -81,15 +74,19 @@ its glint loop at a random phase.
 
 ## Per archetype
 
-Approved: fighter and retaliator. Swarm and interceptor interpolate linearly by
-frame size and round to 10 ms.
+Duration, release and `spread` interpolate linearly by frame size from 450 ms,
+150 ms and 19.2 at frame 96 to 600 ms, 190 ms and 33.6 at frame 192, times
+rounded to 10 ms: the small craft at their fleet frames (56, 80 and 128), the
+retaliators at 192. `flashWidth` is the fleet hull's half span times 1.98.
 
-| Archetype     | Duration | Release | `flashWidth` | `spread` | Reduced duration | Reduced release | Reduced `spread` |
-| ------------- | -------: | ------: | -----------: | -------: | ---------------: | --------------: | ---------------: |
-| `swarm`       |   430 ms |  140 ms |        27.72 |     16.8 |           350 ms |          230 ms |             6.72 |
-| `fighter`     |   450 ms |  150 ms |        41.58 |     19.2 |           360 ms |          240 ms |             7.68 |
-| `interceptor` |   440 ms |  150 ms |         19.8 |       18 |           350 ms |          230 ms |              7.2 |
-| `retaliator`  |   600 ms |  190 ms |        85.14 |     33.6 |           450 ms |          300 ms |            13.44 |
+| Archetype                   | Duration | Release | `flashWidth` | `spread` | Reduced duration | Reduced release | Reduced `spread` |
+| --------------------------- | -------: | ------: | -----------: | -------: | ---------------: | --------------: | ---------------: |
+| `swarm`                     |   390 ms |  130 ms |       33.961 |     13.2 |           320 ms |          210 ms |             5.28 |
+| `fighter`                   |   430 ms |  140 ms |       42.451 |     16.8 |           350 ms |          230 ms |             6.72 |
+| `interceptor`               |   500 ms |  160 ms |       42.451 |       24 |           390 ms |          260 ms |              9.6 |
+| `retaliator`                |   600 ms |  190 ms |      127.354 |     33.6 |           450 ms |          300 ms |            13.44 |
+| `retaliatorCargoHauler`     |   600 ms |  190 ms |      106.128 |     33.6 |           450 ms |          300 ms |            13.44 |
+| `retaliatorMiningFreighter` |   600 ms |  190 ms |      127.354 |     33.6 |           450 ms |          300 ms |            13.44 |
 
 ## Reduced motion
 

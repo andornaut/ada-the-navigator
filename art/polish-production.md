@@ -52,6 +52,3 @@ motif field cameras as `{galaxy}-lattice-{k}.png`.
   `public/art/cartwheel/manifest.json` with the `svgSheet` key of the
   stranded craft rows in a different position. The content is equal; the
   reordered file is not committed.
-- `art/tools/destruction.ts` rewrites `public/art/manifest.json` with the
-  `sidecars` entries in a different order. The content is equal; the
-  reordered file is not committed.

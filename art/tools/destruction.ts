@@ -4,20 +4,11 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 import { coral, coralRear, exportCrafts as crafts } from "./crafts.ts";
-import { recolour } from "./claim-jumpers.ts";
-import { recolourGarnet } from "./garnet-drones.ts";
-import { recolourNeedle } from "./needle-drones.ts";
-import { shardPalettePack } from "./shard-palette-pack.ts";
 import { sizeReceipts } from "./enemy-size.ts";
 import { fleetCrafts } from "./fleet.ts";
 import { FLEET_FAMILIES, FLEET_PAINT } from "./fleet-models.ts";
-import { stageRows } from "./polish-rows.ts";
 import { svgText } from "./svg-text.ts";
-import { mergeSidecars, readManifest, type Sidecars } from "./manifest.ts";
 import { json, round } from "./projection.ts";
-import { halfSpan, shards } from "./shard-geometry.ts";
-
-export { shards };
 
 const output = fileURLToPath(new URL("../../public/art/enemies/", import.meta.url));
 
@@ -63,22 +54,25 @@ function flash(): string {
   ].join("\n");
 }
 
-// The enemy fleet's craft, by the archetype each replaces: its frame and half span size that
-// archetype's flash, timings and spread.
-const fleet = new Map(fleetCrafts().map((craft) => [craft.archetype, craft]));
+// The enemy fleet's hulls by stem: each hull's half span sizes its flash. The small craft's
+// timings and spread follow their fleet frames; the retaliators keep those of their 192 px frames.
+const fleet = new Map(fleetCrafts().map((craft) => [craft.stem, craft]));
+const SMALL_CRAFT = new Set(["swarm", "fighter", "interceptor"]);
 
 function spec(): string {
   const archetypes = Object.fromEntries(
     crafts.map((craft) => {
-      const redesigned = fleet.get(craft.name);
-      const sourceFrame = redesigned?.frame ?? sizeReceipts.get(craft.name)!.frameBefore;
+      const hull = fleet.get(craft.name)!;
+      const sourceFrame = SMALL_CRAFT.has(craft.name)
+        ? hull.frame
+        : sizeReceipts.get(craft.name)!.frameBefore;
       const reduced = byFrame(sourceFrame, 360, 450);
       return [
         craft.name,
         {
           durationMs: byFrame(sourceFrame, 450, 600),
           releaseMs: byFrame(sourceFrame, 150, 190),
-          flashWidth: round((redesigned?.halfSpan ?? halfSpan(craft)) * 1.98),
+          flashWidth: round(hull.halfSpan * 1.98),
           spread: spread(sourceFrame, 19.2, 33.6),
           reduced: {
             durationMs: reduced,
@@ -94,8 +88,20 @@ function spec(): string {
     shards: {
       ease: 2.4,
       shrink: 0.65,
-      cool: { color: "#7f4b3d", amount: 0.55 },
-      fade: { from: 0.3, exponent: 1.3 },
+      // Each family's shards cool toward its own darkest hull tone, and the fade holds in steps.
+      cool: {
+        amount: 0.55,
+        families: Object.fromEntries(
+          FLEET_FAMILIES.map((family) => [family, FLEET_PAINT[family].hull[2]]),
+        ),
+      },
+      fade: {
+        steps: [
+          { from: 0, alpha: 1 },
+          { from: 0.55, alpha: 0.6 },
+          { from: 0.8, alpha: 0.3 },
+        ],
+      },
       fleckFadeEnd: 0.6,
     },
     flash: {
@@ -114,75 +120,14 @@ function spec(): string {
 }
 
 // Long point lists wrap the way Prettier fills them, so the files stay Prettier-clean.
-export async function writeJson(path: string, text: string): Promise<void> {
+async function writeJson(path: string, text: string): Promise<void> {
   const options = await resolveConfig(path);
   writeFileSync(path, await format(text, { ...options, filepath: path }));
 }
 
-// The crafts whose shards this producer writes, each with its shards path: every craft but those
-// whose core sidecar names the enemy fleet's pack (art/tools/fleet.ts writes those). A craft
-// keeps the packed file its manifests select.
-function ownShards(): Map<string, string> {
-  const installed = (readManifest("core").sidecars ?? {}) as Sidecars;
-  const own = new Map<string, string>();
-  for (const { name } of crafts) {
-    const path = installed[name]?.shards;
-    const packed = `/art/enemies/${name}-shards-packed.json`;
-    if (path === undefined || path === `/art/enemies/${name}-shards.json`) {
-      own.set(name, `/art/enemies/${name}-shards.json`);
-    } else if (path === packed) {
-      own.set(name, packed);
-    }
-  }
-  return own;
-}
-
 async function main() {
-  const own = ownShards();
-  for (const craft of crafts) {
-    const path = own.get(craft.name);
-    if (path === undefined) continue;
-    const file = `${craft.name}-shards.json`;
-    const core = shards(craft);
-    if (path.endsWith("-shards-packed.json")) {
-      const pack = shardPalettePack(core, {
-        garnet: recolourGarnet(file, core),
-        claim: recolour(file, core),
-        needle: recolourNeedle(file, core),
-      });
-      await writeJson(`${output}${craft.name}-shards-packed.json`, pack);
-    } else {
-      await writeJson(output + file, core);
-    }
-  }
   await writeJson(`${output}destruction.json`, spec());
-  // The staged shard look (art/destruction.md, Flat look): each family's shards cool toward its
-  // own darkest hull tone, and the fade holds in steps.
-  stageRows("effects-destruction", {
-    file: "/art/enemies/destruction.json",
-    shards: {
-      cool: {
-        amount: 0.55,
-        families: Object.fromEntries(
-          FLEET_FAMILIES.map((family) => [family, FLEET_PAINT[family].hull[2]]),
-        ),
-      },
-      fade: {
-        steps: [
-          { from: 0, alpha: 1 },
-          { from: 0.55, alpha: 0.6 },
-          { from: 0.8, alpha: 0.3 },
-        ],
-      },
-    },
-  });
   writeFileSync(`${output}destruction-flash.svg`, svgText(flash()));
-  // The coral shards it owns; enemies.ts and heavies.ts write these crafts' other sidecars.
-  mergeSidecars(
-    "core",
-    (craft, kind) => kind === "shards" && own.has(craft),
-    Object.fromEntries([...own].map(([name, shards]) => [name, { shards }])),
-  );
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

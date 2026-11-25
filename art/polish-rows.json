@@ -5312,36 +5312,6 @@
       "height": 35
     }
   ],
-  "effects-destruction": {
-    "file": "/art/enemies/destruction.json",
-    "shards": {
-      "cool": {
-        "amount": 0.55,
-        "families": {
-          "coral": "#7f4b3d",
-          "claim": "#703921",
-          "garnet": "#823643",
-          "needle": "#75313a"
-        }
-      },
-      "fade": {
-        "steps": [
-          {
-            "from": 0,
-            "alpha": 1
-          },
-          {
-            "from": 0.55,
-            "alpha": 0.6
-          },
-          {
-            "from": 0.8,
-            "alpha": 0.3
-          }
-        ]
-      }
-    }
-  },
   "effects-ping": {
     "file": "/art/jobs.json",
     "glint": {
