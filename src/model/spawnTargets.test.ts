@@ -145,6 +145,16 @@ describe("spawn target catalog", () => {
       });
     }
   });
+
+  it("searches 48 positions per rock and 24 velocities or anchors per mover and group", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      for (const band of spawnRules(galaxy).bands) {
+        expect(band.rocks.map((target) => target.tries)).toEqual([48, 48]);
+        expect(band.moving.map((target) => target.tries)).toEqual([24]);
+        expect(new Set(band.enemies.map((target) => target.tries))).toEqual(new Set([24]));
+      }
+    }
+  });
 });
 
 describe("moving rock values", () => {

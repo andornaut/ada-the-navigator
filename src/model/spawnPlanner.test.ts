@@ -17,6 +17,8 @@ import {
 } from "./spawnPlanner.ts";
 
 const CLUSTER = { radius: 300, share: 0.5, size: [1, 3] } as const;
+/** Tries per spawn for every fixture target. */
+const TRIES = 12;
 const band: SpawnBand = {
   enemies: [
     {
@@ -26,15 +28,30 @@ const band: SpawnBand = {
       kind: "heavy",
       radius: 40,
       spacing: 120,
+      tries: TRIES,
     },
-    { density: 0.7, groupSize: [2, 4], kind: "fighter", radius: 10, spacing: 100 },
+    {
+      density: 0.7,
+      groupSize: [2, 4],
+      kind: "fighter",
+      radius: 10,
+      spacing: 100,
+      tries: TRIES,
+    },
   ],
   from: 0,
   moving: [
-    { cluster: CLUSTER, density: 1.5, from: ["big", "small"], kind: "mover", speed: [10, 80] },
+    {
+      cluster: CLUSTER,
+      density: 1.5,
+      from: ["big", "small"],
+      kind: "mover",
+      speed: [10, 80],
+      tries: TRIES,
+    },
   ],
   rocks: [
-    { density: 0.6, kind: "big", shapes: [{ id: "big-a", radius: 70, weight: 1 }] },
+    { density: 0.6, kind: "big", shapes: [{ id: "big-a", radius: 70, weight: 1 }], tries: TRIES },
     {
       density: 6,
       kind: "small",
@@ -42,6 +59,7 @@ const band: SpawnBand = {
         { id: "small-a", radius: 15, weight: 2 },
         { id: "small-b", radius: 30, weight: 1 },
       ],
+      tries: TRIES,
     },
   ],
 };
@@ -52,7 +70,6 @@ const rules: SpawnRules = {
   gap: 40,
   order: ["enemies", "rocks", "moving"],
   search: 256,
-  tries: 12,
 };
 const region: SpawnRegion = { cell: { x: -1, y: -1 }, columns: 3, exclusions: [], rows: 3 };
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -293,7 +310,10 @@ describe("planRegion", () => {
     expect(rocksPerChoice(target, rocks)).toBeCloseTo(1 + 0.5 * (2 / 3));
     expect(rocksPerChoice({ ...target, cluster: { ...CLUSTER, radius: 50 } }, rocks)).toBe(1);
     expect(
-      rocksPerChoice({ density: 1, from: ["big"], kind: "solo", speed: [10, 80] }, rocks),
+      rocksPerChoice(
+        { density: 1, from: ["big"], kind: "solo", speed: [10, 80], tries: TRIES },
+        rocks,
+      ),
     ).toBe(1);
     let chunks = 0;
     let moved = 0;
@@ -354,7 +374,7 @@ describe("planRegion", () => {
       const report = plan.report.kinds[kind]!;
       expect(report.requested).toBeGreaterThan(0);
       expect(report.drops).toEqual({ closed: report.requested });
-      expect(report.rejections.closed).toBe(report.requested * rules.tries);
+      expect(report.rejections.closed).toBe(report.requested * TRIES);
     }
     expect(plan.report.kinds.heavy!.unit).toBe("groups");
     expect(plan.report.kinds.small!.unit).toBe("rocks");
@@ -422,6 +442,7 @@ describe("planRegion", () => {
         kind: "frigate",
         radius: 50,
         spacing: 100,
+        tries: TRIES,
       });
       expect(plan.report.kinds.frigate).toMatchObject({ delivered: 1, requested: 1 });
       const [a, b] = leaders(plan);
@@ -440,6 +461,7 @@ describe("planRegion", () => {
         kind: "fighter",
         radius: 10,
         spacing: 100,
+        tries: TRIES,
       });
       const xs = leaders(plan)
         .map((member) => member.x)
@@ -457,6 +479,7 @@ describe("planRegion", () => {
         kind: "capital",
         radius: 10,
         spacing: 100,
+        tries: TRIES,
       });
       const escorts = plan.placements.filter((placement) => placement.leader);
       expect(escorts).toHaveLength(6);
@@ -483,7 +506,7 @@ describe("planRegion", () => {
         .kinds.heavy!;
       const drops = report.drops.block ?? 0;
       // Rejected anchors beyond those of dropped groups belong to groups placed on a later try.
-      retried += (report.rejections.block ?? 0) - drops * rules.tries;
+      retried += (report.rejections.block ?? 0) - drops * TRIES;
       expect(report.delivered + report.dropped).toBe(report.requested);
     }
     expect(retried).toBeGreaterThan(0);
@@ -588,6 +611,7 @@ describe("planRegion", () => {
       kind: "fighter",
       radius: 10,
       spacing: 100,
+      tries: TRIES,
       ...(smallest === undefined ? {} : { smallest }),
     });
 
@@ -623,6 +647,7 @@ describe("planRegion", () => {
       kind: "capital",
       radius: 60,
       spacing: 100,
+      tries: TRIES,
     };
 
     it("adds the allowance for a capital in the group", () => {
@@ -653,6 +678,7 @@ describe("planRegion", () => {
       kind: "fighter",
       radius: 10,
       spacing: 100,
+      tries: TRIES,
     });
     const plan = (share: number) =>
       planRegion(
@@ -715,6 +741,7 @@ describe("planRegion", () => {
       kind: "fighter",
       radius: 10,
       spacing: 100,
+      tries: TRIES,
     };
     const latticed = (): SpawnRules => ({
       ...rules,
@@ -880,7 +907,14 @@ describe("planRegion", () => {
           ...band,
           enemies: [],
           moving: [],
-          rocks: [{ density: 2, kind: "huge", shapes: [{ id: "huge", radius: 120, weight: 1 }] }],
+          rocks: [
+            {
+              density: 2,
+              kind: "huge",
+              shapes: [{ id: "huge", radius: 120, weight: 1 }],
+              tries: TRIES,
+            },
+          ],
         },
       ],
     };

@@ -53,6 +53,11 @@ import type { WorldCellContext } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
 const MOVING_KIND = "moving-rock";
+/**
+ * Planner search effort by pass: candidate positions per slot or feature rock, velocities per
+ * chosen moving rock and anchors per enemy group, each before the spawn is dropped.
+ */
+const PLACEMENT_TRIES = { enemies: 24, moving: 24, rocks: 48 } as const;
 /** Region site kind that Cartwheel's claim jumpers gather beside. */
 export const ORE_FIELD_SITE = "ore-field";
 
@@ -173,6 +178,7 @@ function enemyTargets(
       radius: hull,
       ...(flexible ? { smallest: least } : {}),
       spacing: policy.memberSpacing,
+      tries: PLACEMENT_TRIES.enemies,
     };
     return [target];
   });
@@ -205,6 +211,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
           kind: MOVING_KIND,
           path: MOVING_ROCKS.pathSeconds,
           speed: MOVING_ROCKS.speed,
+          tries: PLACEMENT_TRIES.moving,
         },
       ],
       rocks: [
@@ -212,11 +219,13 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
           density: targets.features / SPAWN_AREA_CHUNKS,
           kind: "rock-feature",
           shapes: sized({ large: 1 }),
+          tries: PLACEMENT_TRIES.rocks,
         },
         {
           density: SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS,
           kind: "rock",
           shapes: sized(field.slotSizes),
+          tries: PLACEMENT_TRIES.rocks,
         },
       ],
     };
@@ -240,7 +249,6 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     openArea: true,
     order: ["enemies", "rocks", "moving"],
     search: tuning.chunkSize / 2,
-    tries: 24,
     ...(worldSide === undefined ? {} : { worldSide }),
   };
 }

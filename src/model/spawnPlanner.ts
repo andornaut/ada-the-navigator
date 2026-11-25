@@ -29,6 +29,8 @@ export interface RockTarget {
   readonly density: number;
   readonly kind: string;
   readonly shapes: readonly SpawnShape[];
+  /** Candidate positions per rock before it is dropped. */
+  readonly tries: number;
 }
 
 /**
@@ -54,11 +56,13 @@ export interface MovingTarget {
   readonly kind: string;
   /**
    * Seconds of straight travel checked against zones that apply to paths; a velocity whose path
-   * touches one is redrawn, up to the rules' tries. Absent, paths are not checked.
+   * touches one is redrawn, up to `tries` velocities. Absent, paths are not checked.
    */
   readonly path?: number;
   /** Speed range in world units per second; headings are uniform. */
   readonly speed: readonly [number, number];
+  /** Velocities drawn per chosen rock before it and its cluster stay still. */
+  readonly tries: number;
 }
 
 /** Escorts stationed on a ring around each leader of an enemy group. */
@@ -109,6 +113,11 @@ export interface EnemyTarget {
    * group keeps its drawn size.
    */
   readonly smallest?: number;
+  /**
+   * Anchors per group before it is dropped. Without a lattice, later anchors spread out to
+   * `search` over the tries.
+   */
+  readonly tries: number;
 }
 
 /** A band's local admission budget and distinct archetype limit, switched at its `from`. */
@@ -185,8 +194,6 @@ export interface SpawnRules {
    * kind rolls its group count per chunk at its density, with anchors anywhere in the chunk.
    */
   readonly lattice?: EnemyLattice;
-  /** Candidate positions per rock, or anchors per enemy group, before it is dropped. */
-  readonly tries: number;
   readonly worldSide?: number;
 }
 
@@ -407,10 +414,13 @@ interface Chunk {
 }
 
 function validate(rules: SpawnRules, region: SpawnRegion): void {
-  const counts = [rules.tries, region.columns, region.rows, region.cell.x, region.cell.y];
+  const counts = [region.columns, region.rows, region.cell.x, region.cell.y];
+  const tries = rules.bands.flatMap((band) =>
+    [...band.enemies, ...band.moving, ...band.rocks].map((target) => target.tries),
+  );
   if (
     !counts.every(Number.isSafeInteger) ||
-    rules.tries < 1 ||
+    !tries.every((count) => Number.isSafeInteger(count) && count >= 1) ||
     region.columns < 0 ||
     region.rows < 0 ||
     ![rules.gap, rules.search, rules.corridor ?? 0, rules.blend ?? 0].every(
@@ -641,7 +651,7 @@ function velocity(next: Random, speed: readonly [number, number]): Vec {
  * one spatial index. A rock, or every member and
  * escort of a group, is accepted only where each footprint plus `gap` is clear of every placed
  * footprint and of the others in its group and touches no applicable exclusion zone, within
- * `tries` positions or group anchors; otherwise it is dropped whole and reported. Every count
+ * its target's `tries` positions or group anchors; otherwise it is dropped whole and reported. Every count
  * and position comes from named streams per kind and chunk, so a kind's requests never shift
  * with another kind's draws. Rock and moving-rock streams use the world seed and enemy streams
  * the encounter seed. Stations and points of interest are not inputs and never block.
@@ -697,7 +707,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             target.shapes,
             target.shapes.map((option) => option.weight),
           );
-          const placed = placeRock(rules, size, chunk, next, shape.radius, (at) =>
+          const placed = placeRock(rules, size, chunk, next, target.tries, shape.radius, (at) =>
             blocked("rock", at),
           );
           if (typeof placed === "string") {
@@ -759,7 +769,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         // redrawn, and after the tries those rocks stay still and are dropped as movers.
         const move = (rocks: readonly SpawnPlacement[], next: Random) => {
           let rule: string | undefined;
-          for (let attempt = 0; attempt < rules.tries; attempt++) {
+          for (let attempt = 0; attempt < target.tries; attempt++) {
             const motion = velocity(next, target.speed);
             rule = target.path
               ? rocks
@@ -829,7 +839,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
     const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
     const rejected: string[] = [];
     let formation: SpawnPlacement[] | undefined;
-    for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
+    for (let attempt = 0; attempt < target.tries && !formation; attempt++) {
       const anchor = anchorAt(attempt);
       const phase = next();
       // The drawn size, or the largest smaller size down to `smallest` the budget admits.
@@ -883,7 +893,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           placeGroup(tally, chunk, target, group, next, (attempt) =>
             attempt === 0
               ? seeded
-              : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1)),
+              : disc(next, seeded, (rules.search * attempt) / Math.max(1, target.tries - 1)),
           );
         }
       }
@@ -970,14 +980,16 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
 }
 
 /**
- * A static rock's position: a uniform point in a seeded quadrant's lane-free box, or anywhere in
- * the chunk without lanes. Returns the corridor rule when the rock cannot fit a quadrant.
+ * A static rock's position: the first of up to `tries` uniform points in a seeded quadrant's
+ * lane-free box, or anywhere in the chunk without lanes, that no rule blocks. Returns the
+ * corridor rule when the rock cannot fit a quadrant.
  */
 function placeRock(
   rules: SpawnRules,
   size: number,
   chunk: Chunk,
   next: Random,
+  tries: number,
   radius: number,
   blocked: (at: Footprint) => string | undefined,
 ): { at?: Vec; rejected: string[] } | string {
@@ -988,7 +1000,7 @@ function placeRock(
     return SPAWN_RULE.corridor;
   }
   const rejected: string[] = [];
-  for (let attempt = 0; attempt < rules.tries; attempt++) {
+  for (let attempt = 0; attempt < tries; attempt++) {
     const quadrant = lane === undefined ? 0 : Math.floor(next() * 4);
     const at = {
       x: chunk.origin.x + (quadrant % 2) * (size / 2) + inset + next() * span,
