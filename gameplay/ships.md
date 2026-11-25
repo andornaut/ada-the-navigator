@@ -337,20 +337,22 @@ by this contract.
 
 ## Ambient admission
 
-Ambient encounters use a 900-world-unit local admission radius. Whole groups,
-including every escort and hull, must fit the budget and archetype limit, with
-at most one nearby capital. Admission conservatively counts live neighbouring
-hulls whose footprints could share that neighbourhood, including required
-guards, old packs and pursuing ships. Disabled hulls still count; salvaged ships
-do not. Fighter groups target four and use the largest size that fits the remaining budget.
-Swarms target their configured maximum and fit the remaining budget down to two;
-with fewer than two slots they wait rather than spawning a singleton.
-One nonstacking local allowance adds two slots near a capital ship or a hostile
-station. A proposed capital supplies the allowance to its own formation. Multiple
-qualifying ships and stations never add more than two slots. Spawn and first-sight
-admission use the same existing footprint neighborhood. Frigates do not supply
-this allowance, and all escorts still consume cap slots. Friendly stations do not
-qualify. Encounter weights, frequency, HP and rewards are unchanged.
+Spawn admission counts only the group being placed, in its own lattice cell; the
+lattice spacing keeps groups apart ([Spawn targets](rules.md#spawn-targets)). The
+whole group, including every escort and hull, must fit the local budget and
+archetype limit, with at most one capital. Fighter groups target four and use the
+largest size that fits the budget. Swarms target their configured maximum and fit
+the budget down to two, never a singleton. A capital supplies one nonstacking
+allowance of two slots to its own formation; frigates do not supply it, and all
+escorts still consume budget slots. Encounter weights, HP and rewards are
+unchanged.
+
+First-sight admission uses a 900-world-unit local radius. It conservatively counts
+live neighbouring hulls whose footprints could share that neighbourhood, including
+required guards, old packs and pursuing ships. Disabled hulls still count;
+salvaged ships do not. One nonstacking local allowance adds two slots near a
+capital ship or a hostile station. Multiple qualifying ships and stations never
+add more than two slots, and friendly stations do not qualify.
 
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
@@ -374,8 +376,11 @@ unchanged. Existing required-guard assertions remain required.
 
 Ambient enemy group densities by galaxy and region are in
 [Spawn targets](rules.md#spawn-targets). Each galaxy's encounter rate below sets
-its encounter spacing: the quiet distance of 1800 world units, rounded up to whole
-512-unit chunks (at least three), divided by the square root of the rate.
+its encounter spacing (the lattice pitch): the quiet distance of 1800 world units,
+rounded up to whole 512-unit chunks (at least three), divided by the square root
+of the rate. The minimum group distance is the quiet distance divided by the
+square root of the rate, and the anchor box width is the encounter spacing minus
+the minimum group distance.
 
 Every galaxy uses three geographic regions measured from the galactic center at
 the encounter location: inner below 10000 world units, middle from 10000 to below
@@ -388,14 +393,14 @@ boundary (9000–11000 and 24000–26000). Numeric budgets and archetype limits 
 discretely at 10000 and 25000; they do not interpolate. The fresh-chunk ledger
 continues to exclude standing, teleports and revisits for quest pacing.
 
-| Position | Galaxy    | Encounter rate | Encounter spacing (world units) | Inner / middle / outer budget | Archetype limit |
-| -------: | --------- | -------------: | ------------------------------: | ----------------------------- | --------------- |
-|        1 | Sunflower |          1.725 |                            1559 | 3 / 4 / 5                     | 1 / 2 / 2       |
-|        2 | Whirlpool |         1.8975 |                            1487 | 4 / 5 / 6                     | 2               |
-|        3 | Needle    |           2.07 |                            1423 | 4 / 5 / 6                     | 3               |
-|        4 | Andromeda |         2.2425 |                            1368 | 5 / 6 / 7                     | 4               |
-|        5 | Cartwheel |          2.415 |                            1318 | 5 / 6 / 7                     | 4               |
-|        6 | Phantom   |         2.5875 |                            1273 | 6 / 7 / 8                     | 4               |
+| Position | Galaxy    | Encounter rate | Encounter spacing (world units) | Minimum group distance | Anchor box width | Inner / middle / outer budget | Archetype limit |
+| -------: | --------- | -------------: | ------------------------------: | ---------------------: | ---------------: | ----------------------------- | --------------- |
+|        1 | Sunflower |          1.725 |                            1559 |                   1370 |              189 | 3 / 4 / 5                     | 1 / 2 / 2       |
+|        2 | Whirlpool |         1.8975 |                            1487 |                   1307 |              180 | 4 / 5 / 6                     | 2               |
+|        3 | Needle    |           2.07 |                            1423 |                   1251 |              172 | 4 / 5 / 6                     | 3               |
+|        4 | Andromeda |         2.2425 |                            1368 |                   1202 |              166 | 5 / 6 / 7                     | 4               |
+|        5 | Cartwheel |          2.415 |                            1318 |                   1158 |              160 | 5 / 6 / 7                     | 4               |
+|        6 | Phantom   |         2.5875 |                            1273 |                   1119 |              154 | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
 galaxies retain their other encounter groups, heavy weights and archetype limits.
