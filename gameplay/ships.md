@@ -283,14 +283,14 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 
 - **Damage:** a hardpoint hit damages only that part, with no hull damage or
   overflow. A hull hit damages only the hull. The flagship retains its hull floor of 1.
-- **Destroyed:** at 0 hull HP the ship breaks apart and drops twice its Stardust
+- **Destroyed:** at 0 hull HP the ship breaks apart and drops its full Stardust roll
   and no upgrade (see [Economy](economy.md#earning-stardust)).
 - **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,
   whatever its hull HP. It stops attacking and steering, coasts to rest, no longer
   counts for battle, and shows a red "Disabled" banner above its hull.
 - **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. Salvaging drops the
-  ship's Stardust, half what destroying it gives, and has the heavy upgrade chance, and
-  spares the ship: it powers down, its banner goes, it is drawn dimmed,
+  half the rolled Stardust, rounded down, and can yield a heavy upgrade. The ship
+  survives: it powers down, its banner goes, it is drawn dimmed,
   and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
   until its hull breaks, for more Stardust and no upgrade.
 - **Engines and command:** each engine still provides an equal share of thrust.
