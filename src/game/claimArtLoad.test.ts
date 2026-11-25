@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import FLEET_TOPS from "../../art/fleet-tops.json" with { type: "json" };
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { galaxyLoadsAtOnce } from "./artManifest.ts";
 import {
@@ -22,6 +23,13 @@ const cartwheel = GALAXY_MANIFESTS.get(2)!.assets as unknown as (EnemyFrame & {
 })[];
 const claim = cartwheel.filter((asset) => asset.family === "claim");
 const parts = claim.filter(enemyPartFrame);
+// Art's fleet tops by the craft and top that carry them, `{archetype} {top}`: "platform turret"
+// is `gun`, "hostileStation pod" is `pod`.
+const FLEET_TOP_BY_CARRIER = new Map(
+  Object.entries(FLEET_TOPS.tops).flatMap(([name, top]) =>
+    "carrier" in top ? [[top.carrier, name] as const] : [],
+  ),
+);
 const present = (path: string) => existsSync(new URL(`../../public${path}`, import.meta.url));
 
 describe("claim jumper art loading", () => {
@@ -62,14 +70,15 @@ describe("claim jumper art loading", () => {
         expect(part.id.startsWith(`enemy-claim-${body}-`), part.id).toBe(true);
         // Each fleet body's parts are its design's files: the claim capital is the Outrigger
         // carrier, and the Mining Freighter draws the Manta gunship's top. The Claim station's
-        // and the wheel platform's bases are their designs' files. The station's pod and dome
-        // tops are the fleet's top sheets, `fleetTop-{top}`; the platform's are the class's.
+        // and the wheel platform's bases are their designs' files. Their tops are the fleet's top
+        // sheets, `fleetTop-{name}`, named by the fleet top whose carrier is `{body} {top}`.
         const top = part.id.includes("-top-");
+        const fleetTop = `fleetTop-${FLEET_TOP_BY_CARRIER.get(`${body} ${part.top}`)}`;
         const fleet: Readonly<Record<string, string>> = {
           capital: "fleetCapitalOutrigger",
           frigate: "fleetFrigate",
-          hostileStation: top ? `fleetTop-${part.top}` : "hostileStationClaim",
-          platform: top ? "platform" : "platformWheel",
+          hostileStation: top ? fleetTop : "hostileStationClaim",
+          platform: top ? fleetTop : "platformWheel",
           retaliator: "fleetRetaliator",
           retaliatorCargoHauler: "fleetRetaliatorCargoHauler",
           retaliatorMiningFreighter: part.id.includes("-turret-top-")

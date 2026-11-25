@@ -1123,20 +1123,23 @@ export function batchCaptures(ctx) {
     });
   }
 
-  // The hostile stations' pod and dome tops in each family, aimed at Ada, at 2 device px per
-  // CSS px: the Claim station in Cartwheel, the garnet station in Andromeda and the coral station
-  // in Phantom, each still, in a close-up, and with a pod and the dome firing.
+  // The hostile stations' pod and dome tops in each family and the Claim platform's gun tops,
+  // aimed at Ada, at 2 device px per CSS px: the Claim station and platform in Cartwheel, the
+  // garnet station in Andromeda and the coral station in Phantom, each still, in a close-up, and
+  // with a pod and the dome, or both armed guns, firing.
   async function hostileTops() {
+    const station = ["hostileStation", ["weapon-0", "weapon-5"]];
     const cases = [
-      ["claim", 2],
-      ["garnet", 5],
-      ["coral", 6],
+      ["claim", 2, ...station],
+      ["claim-platform", 2, "platform", ["port", "starboard"]],
+      ["garnet", 5, ...station],
+      ["coral", 6, ...station],
     ];
     const screen = { x: -150, y: -20 };
-    await inTurn(cases, async ([family, galaxy]) => {
+    await inTurn(cases, async ([family, galaxy, archetype, fire]) => {
       const model = flightModel(galaxy);
       model.state.flight.objects = [];
-      addEnemy(model, { archetype: "hostileStation", fire: ["weapon-0", "weapon-5"], screen });
+      addEnemy(model, { archetype, fire, screen });
       const name = `hostile-tops-${family}`;
       await open(canonical(model, name), { deviceScaleFactor: 2 });
       await ctx.frames(name);
