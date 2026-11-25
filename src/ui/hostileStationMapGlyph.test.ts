@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { HOSTILE_STATION_COPY } from "../data/hostileStationCopy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { HostileStationMapStatus, KnownHostileStationMapPlace } from "../model/map.ts";
@@ -19,9 +18,9 @@ it("uses the native hostile-station asset while retaining friendly station ident
     new URL(`../../public${uiIconUrl("map-hostile-station")}`, import.meta.url),
     "utf8",
   );
-  expect(source).toContain(`width="${EDGE_MARKER_GLYPHS.hostileStation.icon}"`);
-  expect(source).toContain(`height="${EDGE_MARKER_GLYPHS.hostileStation.icon}"`);
-  expect(mapGlyphSize("hostileStation")).toBe(EDGE_MARKER_GLYPHS.hostileStation.icon);
+  expect(source).toContain(`width="${MAP_SYMBOL.hostileStationGlyph}"`);
+  expect(source).toContain(`height="${MAP_SYMBOL.hostileStationGlyph}"`);
+  expect(mapGlyphSize("hostileStation")).toBe(MAP_SYMBOL.hostileStationGlyph);
   expect(mapGlyphSize("station")).toBe(MAP_SYMBOL.glyph);
   expect(mapGlyphSize("job")).toBe(MAP_SYMBOL.glyph);
 });

@@ -584,6 +584,8 @@ export const MAP_SYMBOL = {
   glyph: 20,
   /** Press area: hitAround of the chip, HIT_RULE.minTarget. */
   hit: 48,
+  /** The native hostile-station icon, at its authored extent. */
+  hostileStationGlyph: 24,
   objective: {
     /** The indicator's drawing box around the chip centre: across, down, and its top above it. */
     box: { height: 28, top: 48, width: 16 },

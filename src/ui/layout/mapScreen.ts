@@ -1,7 +1,6 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { EDGE_MARKER_GLYPHS } from "../../data/edgeMarkers.ts";
 import {
   HUD_BUTTON,
   MAP_HUD_LABEL_WIDTHS,
@@ -105,7 +104,7 @@ export const MAP_GLYPHS: Readonly<Record<MapSymbol | "hostileStation", string | 
 
 /** Native hostile-station art keeps its authored extent; other Map glyphs retain their size. */
 export function mapGlyphSize(symbol: keyof typeof MAP_GLYPHS): number {
-  return symbol === "hostileStation" ? EDGE_MARKER_GLYPHS.hostileStation.icon : MAP_SYMBOL.glyph;
+  return symbol === "hostileStation" ? MAP_SYMBOL.hostileStationGlyph : MAP_SYMBOL.glyph;
 }
 
 /** The compact tools, left to right, with their glyphs. */

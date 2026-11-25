@@ -16,6 +16,9 @@ import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipGlyph } from "./mapScreen.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
+/** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */
+const THREAT_SYMBOLS = ["enemy", "guard", "heavy", "hostileStation"] as const;
+type ThreatSymbol = (typeof THREAT_SYMBOLS)[number];
 export const PENNY_MARKERS_STYLE = `
 .ada-penny-markers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
 .ada-penny-marker{position:absolute;box-sizing:border-box;width:${units(SIZE)};
@@ -24,23 +27,19 @@ border-radius:50%;display:grid;place-items:center}
 .ada-penny-glyph{width:${units(MAP_SYMBOL.glyph)};height:${units(MAP_SYMBOL.glyph)};
 background:${MAP_COLORS.ink};mask:var(--glyph) center / contain no-repeat;
 -webkit-mask:var(--glyph) center / contain no-repeat}
-${(["enemy", "guard", "heavy"] as const)
-  .map(
-    (kind) => `
+${THREAT_SYMBOLS.map(
+  (kind) => `
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"]{
 width:${units(EDGE_MARKER_GLYPHS[kind].disc)};height:${units(EDGE_MARKER_GLYPHS[kind].disc)};
 border:0;background:var(--marker-threat)}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"][data-light="true"]{
-box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} ${MAP_COLORS.ink}}
+box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} var(--marker-outline)}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"] .ada-penny-glyph{display:none}
 `,
-  )
-  .join("")}
+).join("")}
 .ada-penny-marker[data-identified="true"][data-symbol="guard"] .ada-penny-glyph{
 display:block;width:${units(EDGE_MARKER_GLYPHS.guard.bar.width)};height:${units(EDGE_MARKER_GLYPHS.guard.bar.height)};
 mask:none;-webkit-mask:none;background:${MAP_COLORS.ink}}
-.ada-penny-marker[data-identified="true"][data-symbol="hostileStation"] .ada-penny-glyph{
-width:${units(EDGE_MARKER_GLYPHS.hostileStation.icon)};height:${units(EDGE_MARKER_GLYPHS.hostileStation.icon)}}
 .ada-penny-marker[data-identified="false"] .ada-penny-glyph{
 width:${units(BODY_QUESTION.width)};height:${units(BODY_QUESTION.height)};
 background:${MAP_COLORS.ink};mask-image:url('/art/ui/fonts/font-body.png');
@@ -50,14 +49,11 @@ mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)}
 mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
 `;
-const threatSymbol = (symbol: PennyMarker["symbol"]): symbol is "enemy" | "guard" | "heavy" =>
-  symbol === "enemy" || symbol === "guard" || symbol === "heavy";
+const threatSymbol = (symbol: PennyMarker["symbol"]): symbol is ThreatSymbol =>
+  (THREAT_SYMBOLS as readonly string[]).includes(symbol);
 export function pennyGlyph(marker: PennyMarker): string | null {
   if (!marker.identified || threatSymbol(marker.symbol)) {
     return null;
-  }
-  if (marker.symbol === "hostileStation") {
-    return uiIconUrl("map-hostile-station");
   }
   if (marker.item === "stardust") {
     return uiIconUrl("icon-stardust-20");
@@ -132,7 +128,9 @@ function maskInk(doc: Pick<Document, "createElement">, redraw: () => void) {
 interface DirectionStyle {
   readonly blocked?: readonly Rect[];
   readonly color: string;
+  /** The field's foreground edge, the enemy markers' outline: ink on a light field, white on Phantom. */
   readonly edge?: string | undefined;
+  /** Whether the field draws foreground edges, so each enemy marker draws over its outline. */
   readonly light: boolean;
   readonly threat?: string;
 }
@@ -202,10 +200,10 @@ export function createPennyMarkerLayer(
         // An identified enemy or hostile station is threat red even as a task target.
         const threat = style.threat ?? style.color;
         node.style.setProperty("--marker-threat", threat);
+        // The field's foreground edge: ink on a light field, white on Phantom.
+        node.style.setProperty("--marker-outline", style.edge ?? MAP_COLORS.ink);
         node.style.background =
-          marker.identified && (marker.symbol === "hostileStation" || threatSymbol(marker.symbol))
-            ? threat
-            : (tint ?? TASK_COLORS.generic);
+          marker.identified && threatSymbol(marker.symbol) ? threat : (tint ?? TASK_COLORS.generic);
         const glyph = pennyGlyph(marker);
         if (glyph) {
           node.style.setProperty("--glyph", `url('${glyph}')`);

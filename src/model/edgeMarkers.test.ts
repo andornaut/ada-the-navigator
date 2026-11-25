@@ -51,7 +51,9 @@ describe("edge marker kinds", () => {
     const kind = ENEMY_MARKER_KINDS.hostileStation;
     expect(kind).toBe("hostileStation");
     expect(BLOCKING_MARKER_KINDS[kind]).toBeUndefined();
-    expect(edgeMarkerInset(0, kind)).toBe(13);
+    // A hostile station draws the heavy's disc.
+    expect(EDGE_MARKER_GLYPHS[kind]).toEqual(EDGE_MARKER_GLYPHS.heavy);
+    expect(edgeMarkerInset(0, kind)).toBe(7);
   });
 
   it("marks small enemies as enemy, the large ships as heavy, stations and outposts as station", () => {
@@ -95,12 +97,12 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), routeId: "holodisk" })).toBe("enemy");
   });
 
-  it("keeps generic enemies at six pixels and heavy, guard and station icons at twelve", () => {
+  it("keeps generic enemies at six pixels and heavy, guard, hostile and station icons at twelve", () => {
     expect(EDGE_MARKER_GLYPHS).toEqual({
       enemy: { disc: 6 },
       guard: { bar: { height: 2, width: 7 }, disc: 12 },
       heavy: { disc: 12 },
-      hostileStation: { icon: 24 },
+      hostileStation: { disc: 12 },
       station: { diamond: 12, stroke: 2 },
     });
     expect(range).toBe(5000);
@@ -111,6 +113,10 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerInset(0, "heavy")).toBe(7);
     expect(edgeMarkerInset(0, "guard")).toBe(7);
     expect(edgeMarkerInset(1, "guard")).toBe(8);
+    // The guard is the heavy's disc with the ink bar, whose corners sit 2.36 inside the disc.
+    const { bar, disc } = EDGE_MARKER_GLYPHS.guard;
+    expect(disc).toBe(EDGE_MARKER_GLYPHS.heavy.disc);
+    expect(disc / 2 - Math.hypot(bar.width / 2, bar.height / 2)).toBeCloseTo(2.36, 2);
     expect(edgeMarkerInset(1, "station")).toBe(8);
   });
 });

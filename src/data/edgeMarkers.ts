@@ -19,27 +19,28 @@ export const EDGE_MARKERS = {
 
 /**
  * Each kind's glyph in logical px (art/space-palette.md "Edge markers"): a filled disc for
- * enemies, heavies and guards, in the space palette's threat, the guard's with an ink bar across
- * its centre; an unfilled diamond with a 2 stroke inside its extent for stations, in
- * pointOfInterest. A light field outlines each in ink (lightField.markerOutline); the guard's
- * bar adds none.
+ * enemies, heavies, guards and hostile stations, in the space palette's threat, the guard's with
+ * an ink bar across its centre and a hostile station's the heavy's disc; an unfilled diamond with
+ * a 2 stroke inside its extent for stations, in pointOfInterest. A field with foreground edges
+ * outlines each in its edge colour (lightField.markerOutline), ink on a light field and white on
+ * Phantom; the guard's bar adds none.
  */
 export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },
   guard: { bar: { height: 2, width: 7 }, disc: 12 },
   heavy: { disc: 12 },
-  hostileStation: { icon: 24 },
+  hostileStation: { disc: 12 },
   station: { diamond: 12, stroke: 2 },
 } as const;
 
 /**
  * How far in from the game area's edge a marker's centre sits: half its glyph's drawn extent,
- * plus the ink `outline` drawn around it (0 on a dark field), plus EDGE_MARKERS.gap.
+ * plus the `outline` drawn around it (0 on a field without foreground edges), plus
+ * EDGE_MARKERS.gap.
  */
 export function edgeMarkerInset(outline: number, kind: EdgeMarkerKind): number {
-  const glyph: { readonly diamond?: number; readonly disc?: number; readonly icon?: number } =
-    EDGE_MARKER_GLYPHS[kind];
-  return (glyph.disc ?? glyph.diamond ?? glyph.icon ?? 0) / 2 + outline + EDGE_MARKERS.gap;
+  const glyph: { readonly diamond?: number; readonly disc?: number } = EDGE_MARKER_GLYPHS[kind];
+  return (glyph.disc ?? glyph.diamond ?? 0) / 2 + outline + EDGE_MARKERS.gap;
 }
 
 /**

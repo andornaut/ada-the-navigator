@@ -6,7 +6,13 @@ import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
+import {
+  foregroundEdge,
+  LIGHT_FIELD,
+  lightGalaxy,
+  readForegroundEdges,
+  readLightGalaxies,
+} from "../game/lightField.ts";
 import {
   galaxyPalettes,
   readGalaxyFields,
@@ -15,6 +21,7 @@ import {
 } from "../game/spacePalette.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
+import { units } from "./layout/css.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";
 import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
@@ -26,8 +33,11 @@ import {
   pennyMarkerInkExtent,
 } from "./pennyMarkers.ts";
 let viewUnit = 1;
+/** The symbol whose fixture glyph is 24 and so protrudes from its 24 badge's 1 border. */
+let protruding: string | undefined;
 beforeEach(() => {
   viewUnit = 1;
+  protruding = undefined;
   vi.stubGlobal("devicePixelRatio", 1);
   vi.stubGlobal("getComputedStyle", () => ({
     getPropertyValue: (key: string) => (key === "--ada-unit" ? String(viewUnit) : "0px"),
@@ -44,12 +54,16 @@ const marker: PennyMarker = {
   y: 0,
 };
 describe("Penny's existing marker art", () => {
-  it("uses the native hostile-station icon without revealing an unknown actor", () => {
-    expect(pennyGlyph({ ...marker, identified: true, symbol: "hostileStation" })).toBe(
-      uiIconUrl("map-hostile-station"),
-    );
+  it("draws a hostile station as the heavy's threat disc, with no badge icon", () => {
+    expect(pennyGlyph({ ...marker, identified: true, symbol: "hostileStation" })).toBeNull();
     expect(pennyGlyph({ ...marker, identified: false, symbol: "hostileStation" })).toBeNull();
     expect(PENNY_MARKERS_STYLE).toContain('data-symbol="hostileStation"');
+    expect(PENNY_MARKERS_STYLE).not.toContain("map-hostile-station");
+    for (const light of [false, true]) {
+      expect(
+        pennyMarkerInkExtent({ ...marker, identified: true, symbol: "hostileStation" }, light),
+      ).toEqual(pennyMarkerInkExtent({ ...marker, identified: true, symbol: "heavy" }, light));
+    }
   });
   it("uses canonical real target glyphs while keeping unknown targets anonymous", () => {
     expect(pennyGlyph(marker)).toBeNull();
@@ -77,7 +91,7 @@ describe("Penny's existing marker art", () => {
     expect(PENNY_MARKERS_STYLE).toContain("/art/ui/fonts/font-body.png");
   });
   it("retains the opaque paint baseline; protruding native glyph alpha is handled by the caller", () => {
-    for (const symbol of ["wreck", "station", "hostileStation", "destination"] as const) {
+    for (const symbol of ["wreck", "station", "destination"] as const) {
       for (const identified of [false, true]) {
         expect(pennyMarkerInkExtent({ ...marker, identified, symbol }, true)).toEqual({
           height: 24,
@@ -94,7 +108,7 @@ describe("Penny's existing marker art", () => {
       expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol: "enemy" }, light)).toEqual(
         { height: 6 + outline, width: 6 + outline },
       );
-      for (const symbol of ["guard", "heavy"] as const) {
+      for (const symbol of ["guard", "heavy", "hostileStation"] as const) {
         expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol }, light)).toEqual({
           height: 12 + outline,
           width: 12 + outline,
@@ -144,7 +158,7 @@ class ElementFixture {
       if (this.dataset.symbol === "enemy") {
         width = height = 6 * viewUnit;
       }
-      if (["heavy", "guard"].includes(this.dataset.symbol!)) {
+      if (["heavy", "guard", "hostileStation"].includes(this.dataset.symbol!)) {
         width = height = 12 * viewUnit;
       }
     }
@@ -154,11 +168,11 @@ class ElementFixture {
     }
     if (this.className === "ada-penny-glyph" && this.parent) {
       const body = this.parent.getBoundingClientRect();
-      width = (this.parent.dataset.symbol === "hostileStation" ? 24 : 20) * viewUnit;
+      width = (this.parent.dataset.symbol === protruding ? 24 : 20) * viewUnit;
       height = width;
       const border =
         this.parent.dataset.identified === "true" &&
-        ["enemy", "guard", "heavy"].includes(this.parent.dataset.symbol!)
+        ["enemy", "guard", "heavy", "hostileStation"].includes(this.parent.dataset.symbol!)
           ? 0
           : Math.max(1, Math.floor(viewUnit));
       x = body.x + border + Math.max(0, (body.width - 2 * border - width) / 2);
@@ -288,18 +302,23 @@ it("keeps the same marker node while identifying it and clearing its identity ag
   ui.destroy();
   expect(root.children).toEqual([]);
 });
-describe("enemy marker colour in every galaxy", () => {
+describe("enemy marker colour and outline in every galaxy", () => {
   const art = readSpacePalette(publicJson("/art/space-palette.json"))!;
   const galaxies = publicJson(ART_MANIFEST.galaxyFields);
   const palettes = galaxyPalettes(art, readGalaxyFields(galaxies));
   const light = readLightGalaxies(galaxies);
+  const edges = readForegroundEdges(galaxies);
+  // The style the scene passes: its foreground edge, Art's or a light field's ink, and whether
+  // the field draws one.
   const styles = GALAXY_NUMBERS.map((galaxy) => {
     const palette = palettes.get(galaxy)!;
+    const edge = foregroundEdge(light, edges, galaxy);
     return {
       galaxy,
       style: {
         color: spaceColorCss(palette.pointOfInterest),
-        light: lightGalaxy(light, galaxy),
+        edge: spaceColorCss(edge ?? LIGHT_FIELD.ink),
+        light: edge !== undefined,
         threat: spaceColorCss(palette.threat),
       },
     };
@@ -315,17 +334,25 @@ describe("enemy marker colour in every galaxy", () => {
   }
   const area = { height: 360, width: 720, x: 0, y: 0 };
   const categories = [undefined, ...(Object.keys(TASK_COLORS) as TaskCategory[])];
+  const threats = ["enemy", "heavy", "guard", "hostileStation"] as const;
 
-  it("covers every galaxy's palette, light and dark fields alike", () => {
+  it("covers every galaxy: ink edges on light fields, white on Phantom, none elsewhere", () => {
     expect(styles.map(({ galaxy }) => galaxy)).toEqual([...GALAXY_NUMBERS]);
-    expect(new Set(styles.map(({ style }) => style.light))).toEqual(new Set([false, true]));
+    for (const { galaxy, style } of styles) {
+      expect([galaxy, style.light, style.edge]).toEqual([
+        galaxy,
+        lightGalaxy(light, galaxy) || galaxy === 6,
+        galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink),
+      ]);
+    }
+    expect(lightGalaxy(light, 6)).toBe(false);
   });
   it.each(styles)(
     "draws a task-target enemy, heavy, guard and hostile station threat red in galaxy $galaxy",
     ({ style }) => {
       expect(style.threat).toBe("#ff6b6b");
       const { root, ui } = layer();
-      for (const symbol of ["enemy", "heavy", "guard", "hostileStation"] as const) {
+      for (const symbol of threats) {
         for (const taskCategory of categories) {
           const target: PennyMarker = {
             ...marker,
@@ -344,18 +371,53 @@ describe("enemy marker colour in every galaxy", () => {
     },
   );
   it.each(styles)(
-    "keeps an unidentified marker the generic colour in galaxy $galaxy",
+    "outlines each enemy marker in the field's edge colour in galaxy $galaxy",
+    ({ galaxy, style }) => {
+      const { root, ui } = layer();
+      for (const symbol of threats) {
+        ui.place({ x: 0, y: 0 }, area, style, [{ ...marker, identified: true, symbol }]);
+        const node = root.children[0]!.children[0]!;
+        expect(node.dataset.light).toBe(String(style.light));
+        expect(node.properties.get("--marker-outline")).toBe(
+          galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink),
+        );
+        // The outline adds its width on every side, as the light field's ink outline does.
+        const disc = symbol === "enemy" ? 6 : 12;
+        const ring = style.light ? 2 * LIGHT_FIELD.markerOutline : 0;
+        expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol }, style.light)).toEqual({
+          height: disc + ring,
+          width: disc + ring,
+        });
+      }
+      ui.destroy();
+    },
+  );
+  it("draws the outline as a 1 px ring in the edge colour around each enemy disc", () => {
+    expect(LIGHT_FIELD.markerOutline).toBe(1);
+    for (const symbol of threats) {
+      expect(PENNY_MARKERS_STYLE).toContain(
+        `[data-symbol="${symbol}"][data-light="true"]{\nbox-shadow:0 0 0 ${units(1)} var(--marker-outline)}`,
+      );
+    }
+  });
+  it.each(styles)(
+    "keeps an unidentified marker the generic colour unless a story or job targets it, galaxy $galaxy",
     ({ style }) => {
       const { root, ui } = layer();
-      for (const symbol of ["enemy", "heavy", "guard", "hostileStation", "station"] as const) {
-        for (const taskCategory of [undefined, "generic"] as const) {
+      for (const symbol of [...threats, "station"] as const) {
+        for (const [taskCategory, colour] of [
+          [undefined, TASK_COLORS.generic],
+          ["generic", TASK_COLORS.generic],
+          ["story", TASK_COLORS.story],
+          ["job", TASK_COLORS.job],
+        ] as const) {
           ui.place({ x: 0, y: 0 }, area, style, [
             { ...marker, symbol, ...(taskCategory ? { taskCategory } : {}) },
           ]);
           const node = root.children[0]!.children[0]!;
           expect(node.dataset.identified).toBe("false");
           expect(node.dataset).not.toHaveProperty("symbol");
-          expect(node.style.background).toBe(TASK_COLORS.generic);
+          expect(node.style.background).toBe(colour);
         }
       }
       ui.destroy();
@@ -454,13 +516,8 @@ it.each([false, true])(
       const known = { ...target, identified: true, symbol };
       ui.place({ x: 0, y: 0 }, area, style, [known]);
       expect(root.children[0]!.children[0]).toBe(node);
-      const body = symbol === "enemy" ? 6 : symbol === "guard" || symbol === "heavy" ? 12 : 24;
-      const outside =
-        symbol === "hostileStation"
-          ? 1
-          : ["enemy", "guard", "heavy"].includes(symbol) && light
-            ? LIGHT_FIELD.markerOutline
-            : 0;
+      const body = symbol === "enemy" ? 6 : symbol === "station" ? 24 : 12;
+      const outside = symbol !== "station" && light ? LIGHT_FIELD.markerOutline : 0;
       expect(area.width - left() - body - outside).toBe(EDGE_MARKERS.gap);
       expect(node.dataset.target).toBe(target.id);
       expect(node.dataset.identified).toBe("true");
@@ -469,6 +526,7 @@ it.each([false, true])(
   },
 );
 it("unions actual native SVG alpha outside the badge and removes pending image callbacks on disposal", () => {
+  protruding = "station";
   const root = new ElementFixture(),
     images: ElementFixture[] = [];
   const doc = {
@@ -485,7 +543,7 @@ it("unions actual native SVG alpha outside the badge and removes pending image c
   const target = {
     ...marker,
     identified: true,
-    symbol: "hostileStation" as const,
+    symbol: "station" as const,
     x: 4000,
     y: -4000,
   };
