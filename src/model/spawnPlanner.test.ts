@@ -657,6 +657,16 @@ describe("planRegion", () => {
     }
   });
 
+  it("plans only the named passes in the chunks the report leaves out", () => {
+    const report = { cell: { x: 0, y: 0 }, columns: 1, neighbours: ["enemies"] as const, rows: 1 };
+    for (const seed of SEEDS) {
+      const plan = planRegion(rules, seed, { ...region, report });
+      const outside = plan.placements.filter((placement) => placement.chunk !== "0,0");
+      expect(outside.length).toBeGreaterThan(0);
+      expect(outside.every((placement) => placement.category === "enemy")).toBe(true);
+    }
+  });
+
   it("shrinks requests by the share of the chunk that applicable zones cover", () => {
     // A band along x = 128 of half width 128 covers the chunk's left half.
     const half: ExclusionZone = {

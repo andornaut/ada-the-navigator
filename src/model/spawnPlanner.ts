@@ -181,7 +181,13 @@ export interface SpawnRegion {
    * The chunks the report counts; the others are planned so that counted spawns meet their
    * neighbours as they would in flight. Absent, every chunk counts.
    */
-  readonly report?: { readonly cell: Vec; readonly columns: number; readonly rows: number };
+  readonly report?: {
+    readonly cell: Vec;
+    readonly columns: number;
+    /** The passes planned in the other chunks. Absent, every pass. */
+    readonly neighbours?: readonly SpawnPass[];
+    readonly rows: number;
+  };
   /** Points enemy groups may gather beside, by site kind. */
   readonly sites?: Readonly<Record<string, readonly Vec[]>>;
 }
@@ -625,7 +631,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     excludedBy(rules, region, category, at) ??
     (index.clear(rules.gap, at) ? undefined : SPAWN_RULE.overlap);
 
-  const rocks = () => {
+  const rocks = (area: readonly Chunk[]) => {
     for (const kind of kindsOf(rules, (band) => band.rocks)) {
       for (const chunk of area) {
         const tally = chunk.counted ? reported : ignored;
@@ -673,7 +679,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       }
     }
   };
-  const moving = () => {
+  const moving = (area: readonly Chunk[]) => {
     for (const kind of kindsOf(rules, (band) => band.moving)) {
       for (const chunk of area) {
         const tally = chunk.counted ? reported : ignored;
@@ -755,7 +761,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       }
     }
   };
-  const enemies = () => {
+  const enemies = (area: readonly Chunk[]) => {
     for (const kind of kindsOf(rules, (band) => band.enemies)) {
       for (const chunk of area) {
         const tally = chunk.counted ? reported : ignored;
@@ -833,9 +839,16 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       }
     }
   };
-  const passes: Readonly<Record<SpawnPass, () => void>> = { enemies, moving, rocks };
+  const passes: Readonly<Record<SpawnPass, (chunks: readonly Chunk[]) => void>> = {
+    enemies,
+    moving,
+    rocks,
+  };
+  const neighbours = region.report?.neighbours;
   for (const pass of rules.order) {
-    passes[pass]();
+    passes[pass](
+      !neighbours || neighbours.includes(pass) ? area : area.filter((chunk) => chunk.counted),
+    );
   }
   return { placements, report: reported.report() };
 }
