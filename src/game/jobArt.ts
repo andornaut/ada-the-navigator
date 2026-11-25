@@ -37,13 +37,17 @@ export interface JobArt<T extends JobFrame = JobFrame> {
     readonly loop: readonly { readonly frame: number; readonly ms: number }[];
     readonly loopMs: number;
     readonly ping: {
-      readonly alpha: readonly [number, number];
       readonly aspect: number;
+      /** Held alpha steps in ascending `from` of the ping's progress. */
+      readonly fade: {
+        readonly steps: readonly { readonly alpha: number; readonly from: number }[];
+      };
       readonly from: number;
       readonly lightInk: number;
       readonly ms: number;
       readonly to: number;
-      readonly width: number;
+      /** Stroke width at the start and the end of the ping, linear in its progress. */
+      readonly width: readonly [number, number];
     };
     /** The frame reduced motion holds. */
     readonly rest: number;
@@ -140,7 +144,8 @@ function readGlint<T extends JobFrame>(assets: readonly T[], value: unknown): Jo
   const loop = asset?.loop ?? [];
   const loopMs = loop.reduce((sum, step) => sum + step.ms, 0);
   const rest = asset?.frames?.[String(glint?.reducedMotion)];
-  const alpha = ping?.alpha;
+  const width = ping?.width;
+  const steps = fields(ping?.fade)?.steps;
   if (
     !asset ||
     !(loopMs > 0) ||
@@ -149,12 +154,21 @@ function readGlint<T extends JobFrame>(assets: readonly T[], value: unknown): Jo
     !positive(ping.from) ||
     !positive(ping.to) ||
     !positive(ping.ms) ||
-    !positive(ping.width) ||
+    !Array.isArray(width) ||
+    width.length !== 2 ||
+    !width.every(positive) ||
     !positive(ping.lightInk) ||
     !positive(ping.aspect) ||
-    !Array.isArray(alpha) ||
-    alpha.length !== 2 ||
-    !alpha.every(finite)
+    !Array.isArray(steps) ||
+    steps.length === 0 ||
+    !steps.every(
+      (step, index) =>
+        finite(fields(step)?.alpha) &&
+        finite(fields(step)?.from) &&
+        (index === 0
+          ? fields(step)!.from === 0
+          : (fields(step)!.from as number) > (fields(steps[index - 1])!.from as number)),
+    )
   ) {
     return undefined;
   }
@@ -163,13 +177,18 @@ function readGlint<T extends JobFrame>(assets: readonly T[], value: unknown): Jo
     loop,
     loopMs,
     ping: {
-      alpha: [alpha[0] as number, alpha[1] as number],
       aspect: ping.aspect,
+      fade: {
+        steps: (steps as Fields[]).map((step) => ({
+          alpha: step.alpha as number,
+          from: step.from as number,
+        })),
+      },
       from: ping.from,
       lightInk: ping.lightInk,
       ms: ping.ms,
       to: ping.to,
-      width: ping.width,
+      width: [width[0] as number, width[1] as number],
     },
     rest,
     ...(typeof glint!.keyline === "string" ? { keyline: glint!.keyline } : {}),
@@ -287,20 +306,32 @@ export function glintFrame(
 
 /**
  * The glint's ping at timeMs: a ring growing across from `from` to `to` px over `ms`, `aspect`
- * as tall as wide, its alpha easing linearly between the pair; none under reduced motion.
+ * as tall as wide, its stroke narrowing linearly across `width` and its alpha held in the fade
+ * steps; none under reduced motion.
  */
 export function glintPing(
   glint: NonNullable<JobArt["glint"]>,
   reducedMotion: boolean,
   timeMs: number,
-): { alpha: number; height: number; width: number } | null {
+): { alpha: number; height: number; stroke: number; width: number } | null {
   if (reducedMotion) {
     return null;
   }
-  const { alpha, aspect, from, ms, to } = glint.ping;
+  const { aspect, fade, from, ms, to, width: stroke } = glint.ping;
   const t = (((timeMs % ms) + ms) % ms) / ms;
   const width = from + (to - from) * t;
-  return { alpha: alpha[0] + (alpha[1] - alpha[0]) * t, height: width * aspect, width };
+  let alpha = 1;
+  for (const step of fade.steps) {
+    if (t >= step.from) {
+      alpha = step.alpha;
+    }
+  }
+  return {
+    alpha,
+    height: width * aspect,
+    stroke: stroke[0] + (stroke[1] - stroke[0]) * t,
+    width,
+  };
 }
 
 /**

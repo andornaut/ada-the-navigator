@@ -97,13 +97,28 @@
     "reducedMotion": "rest",
     "ping": {
       "colour": "pointOfInterest",
-      "width": 1,
-      "lightInk": 3,
+      "width": [2, 1],
+      "lightInk": 4,
       "from": 8,
       "to": 28,
       "aspect": 0.5,
       "ms": 1200,
-      "alpha": [0.9, 0],
+      "fade": {
+        "steps": [
+          {
+            "from": 0,
+            "alpha": 1
+          },
+          {
+            "from": 0.5,
+            "alpha": 0.6
+          },
+          {
+            "from": 0.8,
+            "alpha": 0.3
+          }
+        ]
+      },
       "reducedMotion": false
     }
   }

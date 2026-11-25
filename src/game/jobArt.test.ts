@@ -67,13 +67,17 @@ describe("the station jobs' art in flight", () => {
     expect(glintFrame(glint, true, 480)).toBe(glint.rest);
   });
 
-  it("grows the ping from 8 to 28 across over 1200 ms at half its width, fading out; none reduced", () => {
+  it("grows the ping from 8 to 28 across, narrowing 2 to 1 px in held alpha steps; none reduced", () => {
     const glint = art.glint!;
-    expect(glintPing(glint, false, 0)).toEqual({ alpha: 0.9, height: 4, width: 8 });
+    expect(glint.ping.lightInk).toBe(4);
+    expect(glintPing(glint, false, 0)).toEqual({ alpha: 1, height: 4, stroke: 2, width: 8 });
     const half = glintPing(glint, false, 600)!;
     expect(half.width).toBeCloseTo(18);
     expect(half.height).toBeCloseTo(9);
-    expect(half.alpha).toBeCloseTo(0.45);
+    expect(half.stroke).toBeCloseTo(1.5);
+    expect(
+      [0, 599, 600, 959, 960, 1199].map((time) => glintPing(glint, false, time)!.alpha),
+    ).toEqual([1, 1, 0.6, 0.6, 0.3, 0.3]);
     expect(glintPing(glint, true, 600)).toBeNull();
   });
 

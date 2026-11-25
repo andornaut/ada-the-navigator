@@ -577,7 +577,7 @@ export function drawJobs(scene: WorldContext): void {
           scene.ink.lineStyle(sprite.ping.lightInk, scene.edgeInk ?? LIGHT_FIELD.ink, ping.alpha);
           scene.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
         }
-        scene.ink.lineStyle(sprite.ping.width, scene.palette.pointOfInterest, ping.alpha);
+        scene.ink.lineStyle(ping.stroke, scene.palette.pointOfInterest, ping.alpha);
         scene.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
       }
       scene.glintSprite ??= scene.add.image(0, 0, sprite.asset.id);
