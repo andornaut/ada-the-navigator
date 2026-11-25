@@ -2221,13 +2221,25 @@ try {
       document.querySelector('[data-cheat="unlockAllWeapons"]')?.getAttribute("aria-disabled") ===
       "true",
   );
-  assert.deepEqual((await readSave()).economy, guardedSave.economy);
+  // The installed window saves the grant to the real save, as the browser tab does.
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).economy.ownedWeapons.length === 5,
+    storageKey,
+  );
+  const installedSave = await readSave();
+  assert.deepEqual(
+    [...installedSave.economy.ownedWeapons].sort(),
+    ["heavyMissile", "multiLaser", "phaser", "rapidMissile", "scattershot"],
+    "An installed-window cheat saves its grant to the real save",
+  );
+  assert.equal(installedSave.economy.stardust, guardedSave.economy.stardust);
   await cheatsProof().locator('[data-action="close-cheats"]').click();
   await page.locator('[data-action="pause-cheats"]:focus').waitFor();
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
     "Direct Cheats actions pause input, retain focus in browser and installed-window fixtures, " +
-      "and apply to play without saving. The FPS counter sits in the safe corner above every layer.",
+      "and save their grants to the real save. The FPS counter sits in the safe corner above " +
+      "every layer.",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
