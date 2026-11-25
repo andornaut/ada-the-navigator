@@ -3,10 +3,18 @@ import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
-import { TASK_COLORS } from "../data/taskCategories.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { LIGHT_FIELD } from "../game/lightField.ts";
+import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
+import {
+  galaxyPalettes,
+  readGalaxyFields,
+  readSpacePalette,
+  spaceColorCss,
+} from "../game/spacePalette.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
+import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";
 import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
@@ -279,6 +287,80 @@ it("keeps the same marker node while identifying it and clearing its identity ag
   expect(layer.children).toEqual([]);
   ui.destroy();
   expect(root.children).toEqual([]);
+});
+describe("enemy marker colour in every galaxy", () => {
+  const art = readSpacePalette(publicJson("/art/space-palette.json"))!;
+  const galaxies = publicJson(ART_MANIFEST.galaxyFields);
+  const palettes = galaxyPalettes(art, readGalaxyFields(galaxies));
+  const light = readLightGalaxies(galaxies);
+  const styles = GALAXY_NUMBERS.map((galaxy) => {
+    const palette = palettes.get(galaxy)!;
+    return {
+      galaxy,
+      style: {
+        color: spaceColorCss(palette.pointOfInterest),
+        light: lightGalaxy(light, galaxy),
+        threat: spaceColorCss(palette.threat),
+      },
+    };
+  });
+  function layer() {
+    const root = new ElementFixture();
+    const doc = {
+      createElement: () => new ElementFixture(),
+      createElementNS: () => new ElementFixture(),
+    } as unknown as Document;
+    const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement);
+    return { root, ui };
+  }
+  const area = { height: 360, width: 720, x: 0, y: 0 };
+  const categories = [undefined, ...(Object.keys(TASK_COLORS) as TaskCategory[])];
+
+  it("covers every galaxy's palette, light and dark fields alike", () => {
+    expect(styles.map(({ galaxy }) => galaxy)).toEqual([...GALAXY_NUMBERS]);
+    expect(new Set(styles.map(({ style }) => style.light))).toEqual(new Set([false, true]));
+  });
+  it.each(styles)(
+    "draws a task-target enemy, heavy, guard and hostile station threat red in galaxy $galaxy",
+    ({ style }) => {
+      expect(style.threat).toBe("#ff6b6b");
+      const { root, ui } = layer();
+      for (const symbol of ["enemy", "heavy", "guard", "hostileStation"] as const) {
+        for (const taskCategory of categories) {
+          const target: PennyMarker = {
+            ...marker,
+            identified: true,
+            symbol,
+            ...(taskCategory ? { taskCategory } : {}),
+          };
+          ui.place({ x: 0, y: 0 }, area, style, [target]);
+          const node = root.children[0]!.children[0]!;
+          expect(node.dataset.symbol).toBe(symbol);
+          expect(node.style.background).toBe(style.threat);
+          expect(node.properties.get("--marker-threat")).toBe(style.threat);
+        }
+      }
+      ui.destroy();
+    },
+  );
+  it.each(styles)(
+    "keeps an unidentified marker the generic colour in galaxy $galaxy",
+    ({ style }) => {
+      const { root, ui } = layer();
+      for (const symbol of ["enemy", "heavy", "guard", "hostileStation", "station"] as const) {
+        for (const taskCategory of [undefined, "generic"] as const) {
+          ui.place({ x: 0, y: 0 }, area, style, [
+            { ...marker, symbol, ...(taskCategory ? { taskCategory } : {}) },
+          ]);
+          const node = root.children[0]!.children[0]!;
+          expect(node.dataset.identified).toBe("false");
+          expect(node.dataset).not.toHaveProperty("symbol");
+          expect(node.style.background).toBe(TASK_COLORS.generic);
+        }
+      }
+      ui.destroy();
+    },
+  );
 });
 it("renders two coincident IDs at their ray despite the blocking HUD and retains their native nodes", () => {
   const root = new ElementFixture();

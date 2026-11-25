@@ -199,7 +199,8 @@ export function createPennyMarkerLayer(
           delete node.dataset.symbol;
         }
         const tint = marker.taskCategory && TASK_COLORS[marker.taskCategory];
-        const threat = tint ?? style.threat ?? style.color;
+        // An identified enemy or hostile station is threat red even as a task target.
+        const threat = style.threat ?? style.color;
         node.style.setProperty("--marker-threat", threat);
         node.style.background =
           marker.identified && (marker.symbol === "hostileStation" || threatSymbol(marker.symbol))
