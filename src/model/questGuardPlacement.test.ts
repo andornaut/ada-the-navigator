@@ -151,7 +151,7 @@ it("creates a new quest route frigate at the canonical local home without projec
         partsReach(worldParts(enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy!)!)),
     ),
   );
-  const minimum = CONTENT.tuning.safeRadius + reach;
+  const minimum = CONTENT.tuning.exclusionRadius + reach;
   expect(worldDistance(world, site, guard)).toBeGreaterThanOrEqual(minimum);
   expect(worldDistance(world, site, guard)).toBeLessThanOrEqual(
     minimum + ENEMY_AVOIDANCE.clearance,

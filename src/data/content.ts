@@ -733,13 +733,14 @@ export const CONTENT: GameContent = {
   premise: PREMISE,
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
+    approachRadius: 160,
     // The battle square reaches 424 from Ada on the 720-wide view.
     battleMargin: 64,
     chunkSize: 512,
     encounterFreshDistance: 600,
+    exclusionRadius: 160,
     flight: {
       arrivalCalm: 2000,
-      // Provisional until Gameplay sets the arrival grace.
       arrivalGrace: 3,
       damageInterval: 1,
       enemyFireInterval: 2.5,
@@ -774,14 +775,13 @@ export const CONTENT: GameContent = {
     minSpeedFraction: 0.04,
     miningMilestones: [10, 20, 30],
     physics: SHIP_PHYSICS.ada,
-    safeRadius: 160,
     shieldFillSeconds: 25,
     shieldMax: 10,
     shieldRechargeDelay: 25,
     speedCurveExponent: 2.5,
     // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
     storySpacing: 1200,
-    // Talk range, centre to centre (gameplay/rules.md); safeRadius keeps the clearances.
+    // Talk range, centre to centre (gameplay/rules.md); exclusionRadius keeps the clearances.
     talkRange: 160,
     // Medium stone rocks from the asteroid set; a ring 92 from the whale's centre clears
     // Marlo's 58.5 footprint plus the largest of their footprints (33).

@@ -65,7 +65,8 @@ debris keep simple placeholders. See [economy](gameplay/economy.md).
 
 Combat includes data-defined solo ships and packs, independent large-ship
 hardpoints and straight-flying missiles. Required approach encounters stay outside
-friendly safe zones. See the [enemy rule interface](gameplay/enemies.md).
+friendly exclusion zones, and Ada is protected by state, never by place. See the
+[enemy rule interface](gameplay/enemies.md).
 
 ### Controls
 

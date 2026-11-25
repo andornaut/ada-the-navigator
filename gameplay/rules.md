@@ -845,7 +845,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   exactly, danger and tow included, as after closing the app. It stays
   available in danger. While Ada is in danger, Travel
   here and Galaxies stay visible but disabled, refuse with the shared refusal feedback, and the local map
-  shows "Unavailable while you are in danger." The close X, an outside tap, back
+  shows "Unavailable while you are in danger." Dock is blocked in the same
+  terms: Use still shows Dock within Talk range, and in danger it refuses with
+  the shared refusal feedback and "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   Settings is nested in Pause or Menu, with no standalone Settings icon. Pause is
   available only during active pausable gameplay, determined from model state and
@@ -1061,8 +1063,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   retaliators not yet hit, fleeing or returning enemies and disabled heavies do
   not count. Ada is in danger while she is in battle or while an enemy shot is in
   flight inside the battle square.
-  Danger disables Travel here and Galaxies; Back to title stays available.
-- No post-hit invulnerability or protection window.
+  Danger disables Travel here, Galaxies and Dock; Back to title stays available.
+  Ada must break contact before she docks.
+- No post-hit invulnerability. The arrival grace under [Protection](#protection)
+  is the only protection window in play.
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
   flight and all its undeposited ore are lost, and the jump-home page says so;
   weapons, levels, Stardust, purchases and story progress persist, and the next
@@ -1148,19 +1152,61 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   and restarts the shield's recharge delay. A gate rim in
   Needle is the one bump without damage. Attacks and marked hazards also damage
   the shield.
-- Friendly destinations, dialogue locations and teleport arrivals are always safe. No
-  encounter is placed within 2000 world units of a flight's start or any quantum
-  jump arrival, so every launch begins calm.
+- No encounter is placed within 2000 world units of a flight's start or any
+  quantum jump arrival, Travel included, so every launch begins calm.
 - Ambient enemy group densities follow [Spawn targets](#spawn-targets), and the
   three capped fresh-exploration budget stages in every galaxy follow
   [Ships](ships.md#ambient-admission). Fresh flights reset the stage; roster and
   type gates remain galaxy-specific.
 
+### Protection
+
+Protection follows Ada's state, never a place. While Ada is protected, no enemy
+can target her: enemies do not aim, fire or chase at her, and sight aggression
+does not latch. Enemy shots and collisions with enemies deal her no damage.
+
+- Docked, in a station menu (the Station welcome and the Shop, Jobs and Exchange
+  opened from it) and in a conversation card (Talk, Deliver, Tow, Salvage and
+  Deposit), play is paused, so nothing moves, fires or deals damage. The
+  in-flight speech box and notices never pause play and give no protection.
+- Arrival grace: for 3 seconds after a flight's start (launch), a quantum jump
+  arrival in a galaxy, a Travel here teleport and undocking, Ada is protected
+  while play runs. The grace counts flight time only, so paused time does not
+  use it up. Enemy shots frozen near the station while she was docked cannot
+  damage her during the undocking grace. Closing a conversation card gives no
+  grace.
+- Resuming a flight with Continue is not a launch and gives no
+  grace, and a running grace is not saved.
+- The grace always runs its full 3 seconds. Ada's own fire, a hit
+  she lands and any other action leave it unchanged. An enemy she hits during
+  the grace still engages and attacks once the grace ends.
+- An enemy shot that reaches Ada during the grace is spent on
+  contact with no damage and no hit effect, so it cannot linger and strike her
+  after the grace ends.
+- Scenery bumps and marked hazards also deal no damage during the
+  grace, so one rule covers every damage source.
+- Everywhere else normal combat applies, near stations and destinations and in
+  Needle's channels included. Enemies chase and fire up to the edge of a
+  station's or destination's exclusion zone, and their shots cross it. Enemies
+  never enter Needle's channels, but they fire into them, and channel debris
+  bumps deal damage like all scenery.
+- Friendly stations and destinations do not shoot and have no defenders; they
+  change nothing in combat. A hostile station and its two `swarm` defenders
+  fight under normal combat
+  ([Ships](ships.md#hostile-station-defenders-and-encounter-lifetime)).
+- Exclusion zones remain placement and movement rules and grant no protection.
+  A station's exclusion zone reaches 320 world units from its centre and a
+  friendly destination's 160. No rock, moving-rock path or enemy group is placed
+  in either, and enemy ships steer and move outside them. The 160-world-unit
+  arrival clearance keeps rocks off each launch and arrival point, and the
+  2000-world-unit calm radius above keeps encounters off it. Salvage sites keep
+  their own exclusion zone ([Spawn targets](#spawn-targets)).
+
 ## Interactions and navigation
 
 Use is one contextual control, Chibi's touch disc beside the aim stick, visible
 only when an interaction is available. Available real actions, including
-repeatable Dock on every visit, precede Quest details. Details is a fallback
+repeatable Dock on every visit outside danger, precede Quest details. Details is a fallback
 only when no real action remains on a nearby quest-linked object. Use retains
 its existing proximity/input guards and centered actual quest icon. World
 objects are not click/tap inspection targets; station quests and All quests stay
@@ -1507,13 +1553,13 @@ disabled. Only its support fighters may number zero to two, within existing
 caps. General ambient frigates retain two mandatory escorts; see
 [Ships](ships.md#required-guard-frigates-and-support-fighters).
 
-Plan actual required sites, guard hulls and protected footprints before optional
+Plan actual required sites, guard hulls and exclusion zones before optional
 rocks or ambient encounters. Reserve required guard frigates before allocating
 their support. Failed placement remains an explicit blocked planning condition,
 not a whole empty route plan or story bypass. Preserve existing caps and
 required-guard assertions. Planning must not reveal hidden targets or grant a
-marker exception. Spawn guards near their station/objective outside protected
-clearance and patrol there, never remotely summon them toward Ada. Existing
+marker exception. Spawn guards near their station/objective outside its exclusion
+zone and patrol there, never remotely summon them toward Ada. Existing
 approved marker eligibility remains separate. Factory/world reservation interfaces are present at the inspected source;
 production lifecycle checks and acceptance are not established by this rule.
 
@@ -1556,7 +1602,8 @@ apply to the planner's output.
   that keeps neighbouring escorts 20 apart.
 - Stations and points of interest other than salvage sites never block a
   spawn. The existing exclusion zones still apply, including the arrival calm
-  radius, protected areas, the Needle channel, currents and ore fields.
+  radius, station and destination exclusion zones, the Needle channel, currents
+  and ore fields.
 - A salvage site is a point of interest whose disabled frigate wreck Ada can
   salvage. Each salvage site has its own exclusion zone, and enemy groups avoid
   it as they avoid a required hull: a circle around the wreck reaching twice the
@@ -1571,7 +1618,7 @@ apply to the planner's output.
 - Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
   fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
   path over the next 30 seconds, up to 3000 world units, is checked against
-  station protected areas and launch and arrival safe radii; the Needle channel
+  station exclusion zones and launch and arrival clearances; the Needle channel
   is not checked. A failed path redraws the rock's velocity, up to 24 times.
   After the 24th failure the rock stays where it was placed as a static rock and
   counts as one dropped mover under the rule that blocked its last path; no
@@ -1635,7 +1682,7 @@ and acceptance remain unverified here. Andromeda, Cartwheel and Phantom have see
 hostile station geographic sites, 10,000 to 100,000 world units from the galaxy
 center by shortest wrapped distance. Density is an expected one site per
 625,000,000 world units of area (25,000 by 25,000), not a fixed site count.
-Required sites/routes and protected footprints take precedence over placement.
+Required sites/routes and their exclusion zones take precedence over placement.
 Do not convert friendly stations, remove required guards or create cap exceptions.
 Engineering owns the candidate algorithm while preserving existing random
 streams, geography and required routes.
@@ -1657,7 +1704,8 @@ defender, reward and map clauses only; independent guards remain in force.
 ## Verification priorities
 
 Check independent move/aim controls, shield recharge, the shield-depletion jump home,
-safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
+protection while docked, in dialogue and during the arrival grace, guards
+returning fire near stations, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
 interrupted-flight resume. Verify the five home resolutions unlock galaxies
 in order and completed stories remain resolved on replay.

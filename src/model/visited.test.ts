@@ -58,7 +58,7 @@ describe("exact compact visited chunks", () => {
   it("keeps visited metadata compact during travel and never credits standing, teleports or old chunks", () => {
     const content = structuredClone(CONTENT);
     content.tuning.physics = { ...content.tuning.physics, maxSpeed: 1024 };
-    content.tuning.safeRadius = 1e9;
+    content.tuning.exclusionRadius = 1e9;
     const flight = createFlight(content, 1, 1234, progress);
     stepFlight(content, 1, idle, flight);
     expect(flight.freshDistance).toBe(0);

@@ -21,7 +21,7 @@ export function stationGuardPatrolRadius(
   );
 }
 
-/** A site-centered course through a valid local home, outside its protected footprint. */
+/** A site-centered course through a valid local home, outside its exclusion zone. */
 export function stationGuardPatrol(
   context: WorldContext,
   anchor: StationGuardAnchor,

@@ -20,7 +20,7 @@ import type { FlightInput, FlightState, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
-const { safeRadius } = ECONOMY.station;
+const { exclusionRadius } = ECONOMY.station;
 
 function sites(galaxy: GalaxyNumber, span = 15): StationSite[] {
   const found: StationSite[] = [];
@@ -35,10 +35,10 @@ function sites(galaxy: GalaxyNumber, span = 15): StationSite[] {
   return found;
 }
 const site = sites(1, 3)[0]!;
-// Ada waits 200 from the station's centre: inside its protected area, outside Talk range.
+// Ada waits 200 from the station's centre: inside its exclusion zone, outside Talk range.
 const approach = { x: site.x + 200 * Math.SQRT1_2, y: site.y + 200 * Math.SQRT1_2 };
 
-/** A flight parked inside a station's protected area with nothing else nearby. */
+/** A flight parked inside a station's exclusion zone with nothing else nearby. */
 function atStation(seed = 5): FlightState {
   const flight = createFlight(CONTENT, 1, seed, { known: [] });
   flight.player = { ...approach };
@@ -203,9 +203,9 @@ describe("station proximity", () => {
     expect(flight.shots).toEqual([]);
   });
 
-  it("keeps enemies out of the station's protected area while they fire at Ada inside it", () => {
+  it("keeps enemies out of the station's exclusion zone while they fire at Ada inside it", () => {
     const flight = atStation();
-    const at = { x: site.x + safeRadius + 40, y: site.y };
+    const at = { x: site.x + exclusionRadius + 40, y: site.y };
     const definition = enemyCatalog.fighter;
     flight.objects.push({
       ...at,
@@ -221,7 +221,7 @@ describe("station proximity", () => {
       stepFlight(CONTENT, 1 / 30, idle, flight);
       const enemy = flight.objects.find((object) => object.id === "f")!;
       expect(distance(enemy, site)).toBeGreaterThanOrEqual(
-        safeRadius + CONTENT.tuning.flight.shipRadius - 1e-6,
+        exclusionRadius + CONTENT.tuning.flight.shipRadius - 1e-6,
       );
       fired = Math.max(fired, flight.shots.filter((shot) => shot.enemy).length);
     }

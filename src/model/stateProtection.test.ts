@@ -6,8 +6,10 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
+  activeProjectileImpacts,
   arrivalGraceActive,
   beginArrivalGrace,
   createFlight,
@@ -54,14 +56,16 @@ function sunflower(seen = true): GameModel {
   return model;
 }
 
-/** Steps the model idle until the arrival grace has run out. */
-function outlastGrace(model: GameModel): void {
+/** Steps the model until the arrival grace has run out; returns the flight time it took. */
+function outlastGrace(model: GameModel, input: FlightInput = idle): number {
   const flight = model.state.flight!;
+  const start = flight.time;
   for (let step = 0; step < 1000 && arrivalGraceActive(flight); step++) {
     model.state.dialogue = null;
-    model.step(SIMULATION_STEP_SECONDS, idle);
+    model.step(SIMULATION_STEP_SECONDS, input);
   }
   expect(arrivalGraceActive(flight)).toBe(false);
+  return flight.time - start;
 }
 
 function nearestStation(galaxy: GalaxyNumber): StationSite {
@@ -121,20 +125,35 @@ function answerTime(
 }
 
 describe("arrival grace", () => {
-  it("protects Ada after a launch, then lets enemy fire land once it ends", () => {
+  it("protects Ada for the full grace after a launch, through her own fire, then lets fire land", () => {
     const model = sunflower();
     const flight = model.state.flight!;
     model.state.dialogue = null;
-    expect(flight.arrivalGraceUntil).toBe(flight.time + GRACE);
+    const start = flight.time;
     expect(arrivalGraceActive(flight)).toBe(true);
     incoming(flight);
     model.step(SIMULATION_STEP_SECONDS, idle);
+    // The bolt is spent on contact with no damage and no hit effect.
     expect(flight.shield).toBe(shieldMax);
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
-    outlastGrace(model);
+    expect(activeProjectileImpacts(flight)).toEqual([]);
+    outlastGrace(model, { ...idle, aim: { x: 1, y: 0 } });
+    expect(flight.time - start).toBeGreaterThanOrEqual(GRACE - 1e-9);
+    expect(flight.time - start).toBeLessThan(GRACE + SIMULATION_STEP_SECONDS + 1e-9);
     incoming(flight);
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(flight.shield).toBe(shieldMax - 1);
+  });
+
+  it("is neither saved nor given by Continue", () => {
+    const model = sunflower();
+    model.state.dialogue = null;
+    expect(arrivalGraceActive(model.state.flight!)).toBe(true);
+    const saved = model.save();
+    expect(saved).not.toContain("arrivalGrace");
+    const resumed = relaunch(content, saved);
+    expect(resumed.state.mode).toBe("space");
+    expect(arrivalGraceActive(resumed.state.flight!)).toBe(false);
   });
 
   it("holds an engaged enemy's fire during the grace and releases it at its end", () => {
@@ -158,6 +177,47 @@ describe("arrival grace", () => {
     expect(flight.shield).toBeLessThan(shieldMax);
   });
 
+  it("keeps scenery bumps and hazards from damaging Ada during the grace", () => {
+    const flight = createFlight(content, 1, 7, { known: [] });
+    flight.player = { x: 100, y: 100 };
+    const debris = (id: string): SpaceObject => ({
+      hp: content.tuning.flight.rockHp,
+      id,
+      kind: "debris",
+      radius: content.tuning.flight.rockRadius,
+      velocity: { x: 1, y: 0 },
+      x: 100,
+      y: 100,
+    });
+    const hazard: SpaceObject = {
+      hp: 1,
+      id: "hazard",
+      kind: "hazard",
+      radius: 1000,
+      x: 100,
+      y: 100,
+    };
+    flight.objects = [debris("grace-debris")];
+    beginArrivalGrace(content, flight);
+    stepFlight(content, 0.05, idle, flight);
+    expect(flight.shield).toBe(shieldMax);
+    flight.objects = [hazard];
+    stepFlight(content, 0.05, idle, flight);
+    expect(flight.shield).toBe(shieldMax);
+    flight.objects = [];
+    while (arrivalGraceActive(flight)) {
+      stepFlight(content, SIMULATION_STEP_SECONDS, idle, flight);
+    }
+    delete flight.lastBump;
+    flight.objects = [debris("late-debris")];
+    stepFlight(content, 0.05, idle, flight);
+    const bumped = flight.shield;
+    expect(bumped).toBeLessThan(shieldMax);
+    flight.objects = [{ ...hazard, cooldown: 0 }];
+    stepFlight(content, 0.05, idle, flight);
+    expect(flight.shield).toBeLessThan(bumped);
+  });
+
   it("protects Ada after a Travel arrival at a station until the grace ends", () => {
     const model = sunflower();
     const flight = model.state.flight!;
@@ -168,15 +228,14 @@ describe("arrival grace", () => {
     expect(model.state.progress[1].stations).toContain(site.id);
     flight.player = { x: site.x + 6000, y: site.y };
     model.step(SIMULATION_STEP_SECONDS, idle);
-    outlastGrace(model);
     flight.dangerFor = 0;
     model.teleport(site.id);
     expect(flight.player).toEqual({ x: site.x, y: site.y });
-    expect(flight.arrivalGraceUntil).toBe(flight.time + GRACE);
+    expect(arrivalGraceActive(flight)).toBe(true);
     incoming(flight);
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(flight.shield).toBe(shieldMax);
-    outlastGrace(model);
+    expect(outlastGrace(model)).toBeLessThan(GRACE);
     incoming(flight);
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(flight.shield).toBe(shieldMax - 1);
@@ -184,7 +243,7 @@ describe("arrival grace", () => {
 });
 
 describe("paused protection", () => {
-  it("lands no shot or damage while docked, and normal combat resumes on undocking", () => {
+  it("refuses Dock in danger, then docks once Ada has broken contact", () => {
     const model = sunflower();
     const flight = model.state.flight!;
     model.state.dialogue = null;
@@ -194,11 +253,38 @@ describe("paused protection", () => {
     flight.velocity = { x: 0, y: 0 };
     model.step(SIMULATION_STEP_SECONDS, idle);
     flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    const enemy = frigate(1, "danger-frigate", { x: site.x + 400, y: site.y });
+    enemy.enemy!.engaged = true;
+    flight.objects.push(enemy);
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(model.inDanger).toBe(true);
+    expect(model.contextAction).toBe("dock");
+    model.interact();
+    expect(model.state.docked).toBeNull();
+    expect(model.state.notice).toBe("Unavailable while you are in danger.");
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    flight.shots = [];
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(model.inDanger).toBe(false);
+    model.interact();
+    expect(model.state.docked).toBe(site.id);
+  });
+
+  it("lands no shot while docked, and undocking starts the grace before combat resumes", () => {
+    const model = sunflower();
+    const flight = model.state.flight!;
+    model.state.dialogue = null;
+    outlastGrace(model);
+    const site = nearestStation(1);
+    flight.player = { x: site.x + 150, y: site.y };
+    flight.velocity = { x: 0, y: 0 };
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    model.step(SIMULATION_STEP_SECONDS, { ...idle, use: true });
+    expect(model.state.docked).toBe(site.id);
     const enemy = frigate(1, "dock-frigate", { x: site.x + 400, y: site.y });
     enemy.enemy!.engaged = true;
     flight.objects.push(enemy);
-    model.step(SIMULATION_STEP_SECONDS, { ...idle, use: true });
-    expect(model.state.docked).toBe(site.id);
     incoming(flight);
     const time = flight.time;
     const shots = structuredClone(flight.shots);
@@ -209,11 +295,19 @@ describe("paused protection", () => {
     expect(flight.shots).toEqual(shots);
     expect(flight.shield).toBe(shieldMax);
     model.undock();
+    expect(arrivalGraceActive(flight)).toBe(true);
+    // The bolt frozen beside her while docked is spent without damage.
     model.step(SIMULATION_STEP_SECONDS, idle);
-    expect(flight.shield).toBe(shieldMax - 1);
+    expect(flight.shield).toBe(shieldMax);
+    expect(flight.shots.some(({ id }) => id === shots[0]!.id)).toBe(false);
+    outlastGrace(model);
+    expect(flight.shield).toBe(shieldMax);
+    incoming(flight);
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(flight.shield).toBeLessThan(shieldMax);
   });
 
-  it("lands no shot or damage during dialogue, and normal combat resumes when it closes", () => {
+  it("lands no shot during a conversation card, and closing it gives no grace", () => {
     const model = sunflower();
     const flight = model.state.flight!;
     model.state.dialogue = null;
@@ -228,6 +322,7 @@ describe("paused protection", () => {
     expect(flight.shield).toBe(shieldMax);
     model.closeInteraction();
     expect(model.state.dialogue).toBeNull();
+    expect(arrivalGraceActive(flight)).toBe(false);
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(flight.shield).toBe(shieldMax - 1);
   });
@@ -258,7 +353,7 @@ describe("guards fire back wherever Ada attacks from", () => {
     };
     flight.velocity = { x: 0, y: 0 };
     expect(Math.hypot(flight.player.x - station.x, flight.player.y - station.y)).toBeLessThan(
-      content.tuning.safeRadius,
+      content.tuning.exclusionRadius,
     );
     const { answered, hit } = answerTime(model, leader, 8);
     expect(hit).toBe(true);

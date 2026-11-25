@@ -50,13 +50,13 @@ describe("required world reservations", () => {
     const { guard, reservations } = fixture();
     expect(
       requiredWorldPlacementClear(context, reservations, {
-        center: { x: CONTENT.tuning.safeRadius + 9, y: 0 },
+        center: { x: CONTENT.tuning.exclusionRadius + 9, y: 0 },
         radius: 10,
       }),
     ).toBe(false);
     expect(
       requiredWorldPlacementClear(context, reservations, {
-        center: { x: CONTENT.tuning.safeRadius + 11, y: 0 },
+        center: { x: CONTENT.tuning.exclusionRadius + 11, y: 0 },
         radius: 10,
       }),
     ).toBe(true);

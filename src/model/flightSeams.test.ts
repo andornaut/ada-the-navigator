@@ -52,7 +52,7 @@ function fixture(player: Vec, galaxy: GalaxyNumber = 1) {
 
 const seamY = ECONOMY.station.cellSize / 2;
 
-/** Seam interactions require open space beyond canonical station safe areas. */
+/** Seam interactions require open space beyond canonical station exclusion zones. */
 function stationClearFixture(player: Vec, galaxy: GalaxyNumber = 1) {
   const flight = fixture(player, galaxy);
   expect(worldStationsNear(flightStationContext(flight), ECONOMY, galaxy, 4000, player)).toEqual(

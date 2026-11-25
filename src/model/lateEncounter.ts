@@ -13,7 +13,7 @@ export function lateEncounterCue(
   },
   flight: FlightState,
 ): EncounterCue | null {
-  const range = context.catalog.station.safeRadius;
+  const range = context.catalog.station.discoveryRadius;
   if (flight.galaxy === 4) {
     const loom = flight.objects.find(
       (object) => object.kind === "destination" && object.id === "elderLoom",

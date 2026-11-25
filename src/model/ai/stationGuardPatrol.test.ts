@@ -32,7 +32,7 @@ it.each([undefined, GALAXY_SIDE])(
       ),
     );
     const center = { x: worldSide === undefined ? 0 : worldSide / 2 - 20, y: 0 };
-    const anchor = { center, clearanceRadius: ECONOMY.station.safeRadius + hullReach };
+    const anchor = { center, clearanceRadius: ECONOMY.station.exclusionRadius + hullReach };
     const radius = anchor.clearanceRadius + ENEMY_AVOIDANCE.clearance;
     for (const side of [-1, 1] as const) {
       const home = { x: center.x + radius, y: center.y };
@@ -75,7 +75,7 @@ it.each([undefined, GALAXY_SIDE])(
         );
         closest = Math.min(closest, worldDistance(context, center, state.position) - hullReach);
       }
-      expect(closest).toBeGreaterThanOrEqual(ECONOMY.station.safeRadius);
+      expect(closest).toBeGreaterThanOrEqual(ECONOMY.station.exclusionRadius);
       expect(worldDelta(context, center, state.position).y * side).toBeGreaterThan(0);
       expect(worldDistance(context, center, state.position)).toBeLessThan(
         radius + ENEMY_AVOIDANCE.clearance,

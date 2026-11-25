@@ -5,7 +5,6 @@ import { enemyCatalog, enemyDefinition, PHASER_AIM_SECONDS } from "../data/enemy
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { BEAM } from "../data/weaponCatalog.ts";
 import { placementRadius } from "./asteroids.ts";
 import { fromScreen } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -71,7 +70,7 @@ describe("mounted Needle flight physics", () => {
     expect(flight.shield).toBe(shield);
   });
 
-  it("excludes hostile bolts from the protected channel while retaining Ada's own bolt", () => {
+  it("lets a hostile bolt strike Ada inside the channel while her own bolt flies on", () => {
     const { flight, gate } = courseFlight();
     flight.player = { ...gate.point };
     flight.shots = [true, false].map((enemy) => ({
@@ -86,7 +85,7 @@ describe("mounted Needle flight physics", () => {
     }));
     const shield = flight.shield;
     stepFlight(CONTENT, 0.001, idle, flight);
-    expect(flight.shield).toBe(shield);
+    expect(flight.shield).toBe(shield - 1);
     expect(flight.shots.some(({ id }) => id === "hostile-channel-bolt")).toBe(false);
     expect(flight.shots.some(({ id }) => id === "friendly-channel-bolt")).toBe(true);
   });
@@ -209,7 +208,24 @@ describe("mounted Needle flight physics", () => {
     expect(next).not.toContainEqual({ id: descriptor.id, type: "debrisCleared" });
   });
 
-  it("rejects a hostile bolt whose center stays outside but whose radius grazes the channel", () => {
+  it("deals bump damage when channel debris strikes Ada", () => {
+    const { course, flight } = courseFlight();
+    const descriptor = needleDebris(course, flight.seed)[0]!;
+    flight.player = { x: descriptor.x + 500, y: descriptor.y };
+    stepFlight(CONTENT, 0.01, idle, flight);
+    const object = flight.objects.find(({ id }) => id === descriptor.id)!;
+    flight.player = { x: object.x, y: object.y };
+    expect(activeNeedleCourses(flight).some((entry) => inNeedleChannel({}, entry, object))).toBe(
+      true,
+    );
+    // A fresh bump, past the once-per-interval limit of any earlier one.
+    delete flight.lastBump;
+    const shield = flight.shield;
+    stepFlight(CONTENT, 0.01, idle, flight);
+    expect(flight.shield).toBeLessThan(shield);
+  });
+
+  it("keeps a hostile bolt flying across the channel boundary", () => {
     const { course, flight, gate } = courseFlight();
     const tangent = direction({
       x: course.path[1]!.x - course.path[0]!.x,
@@ -236,7 +252,7 @@ describe("mounted Needle flight physics", () => {
       },
     ];
     stepFlight(CONTENT, 0.01, idle, flight);
-    expect(flight.shots.some(({ id }) => id === "grazing-hostile-bolt")).toBe(false);
+    expect(flight.shots.some(({ id }) => id === "grazing-hostile-bolt")).toBe(true);
   });
 
   it("removes an unarmed mine whose actual outline enters a non-axis-aligned channel boundary", () => {
@@ -374,7 +390,7 @@ describe("mounted Needle flight physics", () => {
     }
   });
 
-  it("clips an actual Phaser tell and fired beam at the course boundary", () => {
+  it("fires an actual Phaser tell and beam into the channel at Ada", () => {
     // Phantom supplies a legal beam producer; course metadata isolates the generic boundary,
     // rather than claiming a legal Needle loadout or a production chapter/save state.
     const flight = createFlight(CONTENT, 6, 173, newProgress());
@@ -407,21 +423,16 @@ describe("mounted Needle flight physics", () => {
     expect(beam.fired).toBe(false);
     const origin = needleCourses(courseFlight().flight)!.practice.gates[0]!.point;
     flight.needle = { anchor: { x: -origin.x, y: -origin.y }, chatter: [], exitPackPlaced: true };
+    expect(
+      activeNeedleCourses(flight).some((course) => inNeedleChannel({}, course, flight.player)),
+    ).toBe(true);
     const shield = flight.shield;
     stepFlight(CONTENT, 0.001, idle, flight);
     expect(beam.fired).toBe(false);
-    expect(beam.stopped).toBe(true);
-    expect(Math.hypot(beam.end.x - beam.muzzle.x, beam.end.y - beam.muzzle.y)).toBeLessThan(
-      beam.range,
-    );
-    expect(
-      activeNeedleCourses(flight).some((course) =>
-        inNeedleChannel({ radius: BEAM.halfWidth + 0.001 }, course, beam.end),
-      ),
-    ).toBe(true);
+    expect(beam.stopped).toBe(false);
     stepFlight(CONTENT, PHASER_AIM_SECONDS, idle, flight);
     expect(beam.fired).toBe(true);
     expect(beam.stopped).toBe(true);
-    expect(flight.shield).toBe(shield);
+    expect(flight.shield).toBeLessThan(shield);
   });
 });

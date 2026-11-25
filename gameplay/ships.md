@@ -499,10 +499,10 @@ formation counts as three hulls; a pair counts as six. Admit the complete
 formation within existing population, archetype and footprint caps or wait.
 Required story/quest guard frigates are always present; only their support
 fighters may number zero to two. Reserve actual required sites, hulls and
-protected footprints before optional rocks/ambient encounters, then fit support
+exclusion zones before optional rocks/ambient encounters, then fit support
 under existing caps. Never turn failed placement into an empty route plan,
 raise caps, remotely summon a guard toward Ada or reveal hidden targets.
-Guards patrol near their station/objective outside protected clearance and block
+Guards patrol near their station/objective outside its exclusion zone and block
 the route until defeated or disabled. Support is not an independent blocker.
 Persistent identities, surviving followers and casualties do not replenish or
 duplicate on revisit/Continue. A disabled or destroyed leader retains the
@@ -846,9 +846,11 @@ Context supplies Ada's maximum speed and width, player position, targeting permi
 explicit visibility and initial pack sizes. Inputs must be finite;
 use positive dimensions, nonnegative speeds and stable unique entity/part IDs.
 Only positive finite dt advances rules. Unknown or occluded visibility grants no
-chase or fire permission. It does not classify space as safe or unreachable.
-The adapter must supply actual observation and safe-zone permission, not infer them
-from hidden runtime state. Active peers contain live, nonsalvaged, enabled
+chase or fire permission. It does not classify space as unreachable.
+The adapter must supply actual observation and targeting permission, not infer them
+from hidden runtime state. Targeting permission is false exactly while Ada is
+protected ([Protection](rules.md#protection)) and never depends on where Ada or
+the enemy is. Active peers contain live, nonsalvaged, enabled
 actors, including self exactly once for an active actor. Disabled hulls remain
 physical and saved but do not influence steering or escort observation.
 The adapter supplies transient `loadedPackMembers` counts from the full live,
@@ -877,8 +879,9 @@ attacking until hit.
 Engaged craft move by their behaviours ([Ships](#behaviours)) and separate from
 peers. Smooth seeded variation gives each mobile ship a stable patrol shape
 without erratic jitter or query-dependent RNG.
-Flee direction is away from the observed or last-seen player position. Safe-zone collision policy
-must still reject unsafe movement. There is no pathfinder or reachability oracle.
+Flee direction is away from the observed or last-seen player position. Movement
+into a station's or destination's exclusion zone or the Needle channel is still
+rejected. There is no pathfinder or reachability oracle.
 
 Fire intents contain world-space origin, normalized aim, projectile speed, weapon
 ID, equipped level, damage ratio, projectile kind and delay within the slice.
@@ -928,7 +931,7 @@ its patrol extent, and patrols home when no asteroid qualifies.
 Platforms have no navigation and remain stationary. Disabled or salvaged ships
 do not patrol or investigate. A ship with every engine destroyed has no thrust
 and coasts to rest. Patrol changes neither aggression, engagement admission,
-pursuit leashes nor safe-zone permissions.
+pursuit leashes nor targeting permission.
 
 ### Obstacle clearance
 
@@ -1027,7 +1030,7 @@ identity, finite vectors, nonnegative timers and HP, and exactly one state entry
 catalog hardpoint. Route IDs and route encounters must belong to the selected galaxy.
 
 The flight adapter must take one peer snapshot and call the rules per live enemy
-per simulation slice. Apply resolved movement once, respecting safe zones and
+per simulation slice. Apply resolved movement once, respecting exclusion zones and
 collisions. Adapt fire intents into `Shot` with unique `nextId` values, `enemy: true`,
 empty hit IDs, configured lifetime, intended velocity and projectile kind. Runtime
 shield damage, projectile collisions and danger tracking remain in the flight model.
@@ -1077,5 +1080,5 @@ actual intents and adapter commands in the following scenarios:
 - A forward-gun ship strafing in its band, a retaliator included, keeps its nose
   on Ada and its requested speed within its sideways and backing-off limits.
 - A turret ship's turret fires at Ada astern while its hull faces its travel.
-- Quiet encounter placement, safe zones, collision routing, offscreen hardpoints,
-  danger tracking and once-only defeat events pass the real integrated flight loop.
+- Quiet encounter placement, exclusion zones, state protection, collision
+  routing, offscreen hardpoints, danger tracking and once-only defeat events pass the real integrated flight loop.

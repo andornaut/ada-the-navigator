@@ -219,11 +219,13 @@ placement algorithm and must measure accepted station density after candidate
 rejections against the approximately doubled target, rather than counting layers. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
 within 5000 world units of Ada is marked by the direction indicator, so stations
-remain findable. A station is a safe
-area. Ada docks with Use (Dock) within Talk range, 160 world units from the
-station's centre, like any other destination; the station has no dock mouth and
-flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. A normal docking opens the Station welcome with
+remain findable. A station protects Ada only while she is docked; near it,
+normal combat applies ([Protection](rules.md#protection)). Ada docks with Use
+(Dock) outside danger ([Flight and combat](rules.md#flight-and-combat)) within
+Talk range, 160 world units from the station's centre, like any
+other destination; the station has no dock mouth and flying over it does
+nothing. Undocking leaves Ada at rest where she docked, so
+Use offers Dock again at once, and starts the 3-second arrival grace. A normal docking opens the Station welcome with
 the keeper's paragraph and the available service actions (see
 [Species and greeters](rules.md#species-and-greeters)). Jobs is offered only at a
 station with jobs. Every station offers Exchange. Jobs-only stations retain

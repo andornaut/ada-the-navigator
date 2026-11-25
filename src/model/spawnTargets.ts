@@ -253,11 +253,11 @@ const disc = (rule: string, applies: ExclusionZone["applies"], at: Vec, radius: 
 
 /**
  * The seeded world's exclusion zones within `radius` of a point, as `generate` applies them:
- * station protected areas, quantum and launch arrivals (a safe radius for rocks, the calm radius
+ * station exclusion zones, quantum and launch arrivals (an arrival clearance for rocks, the calm radius
  * for enemies), landmark charting ranges, currents, ore fields, salvage sites and hostile station
  * sites. A salvage site's disabled frigate and a hostile station keep rocks the spawn gap from
  * their footprint and enemy groups out of their local admission neighbourhood, so their sites
- * are planned before them. Protected areas and arrival safe radii also bound moving rocks'
+ * are planned before them. Exclusion zones and arrival clearances also bound moving rocks'
  * paths, since they absorb moving rocks. Flight-state zones (the player, story destinations,
  * required routes and the Needle channel) are the caller's.
  */
@@ -281,14 +281,14 @@ export function worldSpawnExclusions(
       ? Math.hypot(at.x - point.x, at.y - point.y)
       : wrappedDistance(context.worldSide, at, point)) <=
     radius + reach;
-  const stationSafe = ECONOMY.station.safeRadius;
+  const stationZone = ECONOMY.station.exclusionRadius;
   return [
-    ...worldStationsNear(context, ECONOMY, galaxy, radius + stationSafe, point).map((station) =>
-      disc("protected", ["rock", "moving", "path", "enemy"], station, stationSafe),
+    ...worldStationsNear(context, ECONOMY, galaxy, radius + stationZone, point).map((station) =>
+      disc("exclusion", ["rock", "moving", "path", "enemy"], station, stationZone),
     ),
     ...arrivals.flatMap((arrival) => [
-      ...(near(arrival, tuning.safeRadius)
-        ? [disc("arrival-safe", ["rock", "moving", "path"], arrival, tuning.safeRadius)]
+      ...(near(arrival, tuning.exclusionRadius)
+        ? [disc("arrival-clearance", ["rock", "moving", "path"], arrival, tuning.exclusionRadius)]
         : []),
       ...(near(arrival, flight.arrivalCalm)
         ? [disc("arrival-calm", ["enemy"], arrival, flight.arrivalCalm)]

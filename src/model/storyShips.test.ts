@@ -236,7 +236,7 @@ describe("Cartwheel story ships", () => {
       expect(Math.abs(point.x + point.y) / 2 + height / 2).toBeLessThanOrEqual(
         SCREEN.height / 2 - STORY_VIEW.margin,
       );
-      expect(Math.hypot(point.x, point.y)).toBeGreaterThan(CONTENT.tuning.safeRadius);
+      expect(Math.hypot(point.x, point.y)).toBeGreaterThan(CONTENT.tuning.exclusionRadius);
     };
     for (const [id, point] of Object.entries(hold)) {
       const frame = assets.get(`craft-${STORY_SHIP_CRAFT[id as keyof typeof hold]}-0`)!;
@@ -248,7 +248,7 @@ describe("Cartwheel story ships", () => {
     }
     expect(destinations).toEqual(buoys);
     expect(gap(destinations.miner, destinations.visitors)).toBeGreaterThanOrEqual(
-      CONTENT.tuning.safeRadius * 2,
+      CONTENT.tuning.exclusionRadius * 2,
     );
     // The visitors' frames do not overlap on screen.
     const [a, b] = [hold["visitor-1"], hold["visitor-2"]];

@@ -72,7 +72,7 @@ describe("additional procedural POIs", () => {
       }
     }
   });
-  it("excludes protected footprints through a wrapped corner and uses the existing clearance", () => {
+  it("excludes exclusion zones through a wrapped corner and uses the existing clearance", () => {
     const sites = proceduralPoisNear(context, 2, 51, 25000, corner);
     expect(sites.length).toBeGreaterThan(0);
     const site = sites[0]!;

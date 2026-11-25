@@ -504,9 +504,9 @@ export function generateChunk(
   const radius = stardustPickupReach(catalog.stardustPickupRadius, amount);
   for (const cache of plan.caches) {
     if (
-      distance(cache, player) > tuning.safeRadius + radius &&
-      distance(cache, FLIGHT_START) > tuning.safeRadius + radius &&
-      stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, cache).length === 0
+      distance(cache, player) > tuning.exclusionRadius + radius &&
+      distance(cache, FLIGHT_START) > tuning.exclusionRadius + radius &&
+      stationsNear(catalog, galaxy, catalog.station.exclusionRadius + radius, cache).length === 0
     ) {
       chunk.caches.push({
         amount,
@@ -796,7 +796,7 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
     // Known outposts are placed ahead of the launch point in turn, as ensureDestination does.
     outposts = outposts.map(({ id }, index) => ({
       id,
-      x: Math.ceil(index / 2) * (index % 2 ? 1 : -1) * tuning.safeRadius * 2.5,
+      x: Math.ceil(index / 2) * (index % 2 ? 1 : -1) * tuning.exclusionRadius * 2.5,
       y: -tuning.chunkSize * 2,
     }));
     // A flight's end loses a delivery's item and returns a towed craft to its spot.
@@ -1008,7 +1008,9 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
       }
       const sites = [...known.values()].filter((site) => !emptyBoards.has(site.id));
       const nearest = sites.sort((a, b) => distance(a, position) - distance(b, position))[0];
-      return nearest ? { ...nearest, reach: catalog.station.safeRadius, station: nearest } : null;
+      return nearest
+        ? { ...nearest, reach: catalog.station.discoveryRadius, station: nearest }
+        : null;
     }
     if (held.type === "survey") {
       const site = landmarkById(galaxy, held.target.id)!;
@@ -1018,10 +1020,10 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
       const id = held.carrying ? held.target.id : held.station;
       const site = stationById(catalog, galaxy, id);
       if (site) {
-        return { ...site, reach: catalog.station.safeRadius, station: site };
+        return { ...site, reach: catalog.station.discoveryRadius, station: site };
       }
       const place = outpost(id) ?? held.target;
-      return { reach: tuning.safeRadius, x: place.x, y: place.y };
+      return { reach: tuning.talkRange, x: place.x, y: place.y };
     }
     if (held.type === "rescue") {
       if (!tow) {
@@ -1074,7 +1076,7 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
       }
       if (goal?.station && distance(goal, position) <= goal.reach) {
         dock(goal.station);
-      } else if (held.carrying && place && distance(place, position) <= tuning.safeRadius) {
+      } else if (held.carrying && place && distance(place, position) <= tuning.talkRange) {
         finishJob();
       }
     } else if (held.type === "rescue") {
@@ -1127,7 +1129,7 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
         continue;
       }
       const gap = distance(site, position);
-      if (gap <= catalog.station.safeRadius) {
+      if (gap <= catalog.station.discoveryRadius) {
         stations.add(site.id);
         known.set(site.id, site);
         progress.stations.push(site.id);

@@ -5,7 +5,7 @@ export interface GuardObstacle extends Vec {
   readonly radius: number;
 }
 
-/** A local tangent detour keeps a summoned guard outside protected areas on its way to Ada. */
+/** A local tangent detour keeps a summoned guard outside exclusion zones on its way to Ada. */
 export function guardApproach(
   context: WorldContext,
   obstacles: readonly GuardObstacle[],

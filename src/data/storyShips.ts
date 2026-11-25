@@ -152,7 +152,7 @@ const VISITOR_2_MOORED: StoryDock = {
  * Cartwheel's story ships (gameplay/rules.md): the miner, two regular visitors and the
  * blocking pilot. Between scenes the miner and the visitors wait moored at two buoys inside
  * the docked view, facing the hub; each buoy is its group's story destination, outside the
- * hub's safe area and two safe areas from the other. Each scene moves its ships along scripted
+ * hub's exclusion zone and two exclusion zones from the other. Each scene moves its ships along scripted
  * paths, then its line plays. Ships that dock stay docked: the miner at the left berth and the
  * first visitor at the right; the second visitor waits at its buoy until the second docking bay
  * is funded, then docks at the bay's berth.

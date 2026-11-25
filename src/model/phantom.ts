@@ -8,6 +8,7 @@ import {
 } from "../data/phantom.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { dropRandom } from "./drops.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import {
   activateRouteEncounter,
   ensureDestination,
@@ -30,7 +31,6 @@ import {
   validPendingPhantomEncounter,
 } from "./phantomRequiredPlans.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import type { DialogueState, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 export interface PhantomProgress {
@@ -346,7 +346,7 @@ export function prepareNextPhantomEncounter(context: PhantomContext): void {
     placePhantomEncounter(placement(represented, false), groups) ??
     placePhantomEncounter(
       placement(
-        represented.filter((actor) => protectedRadius(context.content, actor) !== null),
+        represented.filter((actor) => exclusionZoneRadius(context.content, actor) !== null),
         false,
       ),
       groups,

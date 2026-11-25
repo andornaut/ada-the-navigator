@@ -258,7 +258,7 @@ describe("rock ricochet in flight", () => {
     const flight = empty();
     flight.player = { x: 0, y: 900 };
     const drifting: SpaceObject = {
-      ...rock("drifting", smallest, { x: CONTENT.tuning.safeRadius + 60, y: 0 }),
+      ...rock("drifting", smallest, { x: CONTENT.tuning.exclusionRadius + 60, y: 0 }),
       settle: RULES.settleSeconds,
       velocity: { x: -80, y: 0 },
     };

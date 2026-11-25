@@ -54,7 +54,7 @@ export function memberPosition(spacing: number, count: number, centre: Vec, inde
 export const SPAWN_GAP = 2 * CONTENT.tuning.flight.shipRadius;
 
 /**
- * Includes every hull and escort station when checking safe areas and overlapping groups, by
+ * Includes every hull and escort station when checking exclusion zones and overlapping groups, by
  * each class's largest spacing radius at the route position. Neighbouring members sit their
  * member spacing apart, or two footprints plus the spawn gap where that is wider.
  */

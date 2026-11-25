@@ -458,7 +458,7 @@ describe("galaxy three's holodisk", () => {
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
   });
 
-  it("is recovered within 20 world units of Ada's drawn ship, not on entering its safe area", () => {
+  it("is recovered within 20 world units of Ada's drawn ship, not on entering its exclusion zone", () => {
     const model = questDone(3, ["whale", "family"]);
     model.step(0.01, idle);
     const f = model.state.flight!;

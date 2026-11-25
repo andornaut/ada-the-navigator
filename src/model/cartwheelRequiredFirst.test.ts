@@ -37,7 +37,7 @@ it("reserves the hub capital and held buoy geometry before optional chunks witho
   for (const site of sites) {
     for (const rock of rocks) {
       expect(worldDistance(flightWorldContext(flight), site, rock)).toBeGreaterThan(
-        CONTENT.tuning.safeRadius + rock.radius,
+        CONTENT.tuning.exclusionRadius + rock.radius,
       );
     }
   }

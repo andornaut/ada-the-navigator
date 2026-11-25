@@ -166,7 +166,13 @@ export interface GameContent {
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
     encounterFreshDistance: number;
-    safeRadius: number;
+    /**
+     * A friendly destination's exclusion zone and the arrival clearance around each launch and
+     * arrival point: placement and movement only, with no protection.
+     */
+    exclusionRadius: number;
+    /** Ada within this of a place has approached it: the hub replays a cut scene, a cache lights. */
+    approachRadius: number;
     /**
      * Talk range, centre to centre: Use at a destination, its discovery, and Salvage on a
      * disabled heavy (gameplay/rules.md).
@@ -199,7 +205,10 @@ export interface GameContent {
       rockRicochet: RockRicochet;
       /** No encounter ship is placed this close to a flight's start or a jump arrival. */
       arrivalCalm: number;
-      /** Seconds after a launch, jump or Travel arrival during which enemies hold fire at Ada. */
+      /**
+       * Seconds of flight time after a launch, quantum jump arrival, Travel arrival or undocking
+       * during which Ada is protected (gameplay/rules.md "Protection").
+       */
       arrivalGrace: number;
       pickupRadius: number;
       pieceRadius: number;

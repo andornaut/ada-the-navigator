@@ -181,7 +181,7 @@ describe("moving rock paths", () => {
     }
   });
 
-  it("keep planned movers' paths clear of launch, arrival and station protected areas", () => {
+  it("keep planned movers' paths clear of launch, arrival and station exclusion zones", () => {
     const galaxy = 2;
     const seed = 4471;
     const rules = spawnRules(galaxy, GALAXY_SIDE);
@@ -247,7 +247,7 @@ describe("moving rock paths", () => {
     }
     // Movers within a path's length of launch, arrival and station areas were checked.
     expect(reachable).toBeGreaterThan(20);
-    expect([...met].sort()).toEqual(["arrival-safe", "protected"]);
+    expect([...met].sort()).toEqual(["arrival-clearance", "exclusion"]);
   });
 });
 

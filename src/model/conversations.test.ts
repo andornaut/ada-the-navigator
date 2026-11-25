@@ -929,7 +929,7 @@ describe("conversations in the game", () => {
     expect(model.conversation?.key).toBe("lesson:move:0");
     const flight = model.state.flight!;
     // Far from any friendly place with danger running and the shield low, as in a fight.
-    flight.player.x += CONTENT.tuning.safeRadius * 3;
+    flight.player.x += CONTENT.tuning.exclusionRadius * 3;
     flight.dangerFor = 5;
     // An enemy shot held in the battle square for 5 s keeps the danger running.
     flight.shots.push({

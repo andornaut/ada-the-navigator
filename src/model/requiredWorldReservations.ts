@@ -1,8 +1,8 @@
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldDistance } from "./worldContacts.ts";
 
@@ -45,7 +45,7 @@ export function requiredWorldOccupantsPlacementClear(
   }
   return (
     occupants.sites.every((site) => {
-      const protection = protectedRadius(context.content, site);
+      const protection = exclusionZoneRadius(context.content, site);
       return (
         protection === null ||
         worldDistance(context, site, footprint.center) > protection + footprint.radius
@@ -70,7 +70,7 @@ export function requiredWorldPlacementClear(
   footprint: OptionalWorldFootprint,
 ): boolean {
   return (
-    reservations.every(({ site }) => protectedRadius(context.content, site) !== null) &&
+    reservations.every(({ site }) => exclusionZoneRadius(context.content, site) !== null) &&
     requiredWorldOccupantsPlacementClear(
       context,
       {

@@ -733,7 +733,7 @@ export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec
     scene.litFlight = flight.seed;
     scene.litCaches.clear();
   }
-  if (cacheApproached(CONTENT.tuning.safeRadius, flight.player, object)) {
+  if (cacheApproached(CONTENT.tuning.approachRadius, flight.player, object)) {
     scene.litCaches.add(object.id);
   }
   const row = cacheRow(art, scene.litCaches.has(object.id), scene.reducedMotion, scene.time.now);
@@ -744,11 +744,11 @@ export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec
   keylineSprite(scene, "discoveryCache", object.id, sprite);
 }
 
-/** Fallback without the station art: a ring hull and its safe-area outline. */
+/** Fallback without the station art: a ring hull and its exclusion zone's outline. */
 export function drawStationPlaceholder(scene: ObjectsContext, point: Vec, radius: number): void {
-  const safe = ECONOMY.station.safeRadius;
+  const zone = ECONOMY.station.exclusionRadius;
   scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.35);
-  scene.ink.strokeEllipse(point.x, point.y, safe * 2, safe);
+  scene.ink.strokeEllipse(point.x, point.y, zone * 2, zone);
   scene.ink.fillStyle(scene.palette.environment);
   scene.ink.lineStyle(2, scene.palette.pointOfInterest);
   scene.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);

@@ -1,5 +1,5 @@
 import type { GameContent } from "../data/types.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 export type StationGuardSite =
@@ -41,7 +41,7 @@ export function stationGuardSite(
     }
     site = retained;
   }
-  const clearanceRadius = protectedRadius(content, site);
+  const clearanceRadius = exclusionZoneRadius(content, site);
   if (clearanceRadius === null) {
     return { status: "unresolved" };
   }

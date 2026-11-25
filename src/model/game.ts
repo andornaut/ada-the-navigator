@@ -1963,7 +1963,7 @@ export class GameModel {
   /** Undocking leaves Ada at rest where she docked (gameplay/economy.md). */
   undock(): void {
     if (this.state.docked && this.state.flight) {
-      undockFlight(this.state.flight);
+      undockFlight(this.content, this.state.flight);
     }
     this.state.docked = null;
     this.greeting = null;
@@ -2068,6 +2068,11 @@ export class GameModel {
    * replaced at its issuing station.
    */
   private dock(id: string, f: FlightState): void {
+    // Danger blocks Dock as it blocks Travel: Ada must break contact first.
+    if (this.inDanger) {
+      this.notify(this.label("travelUnavailable"));
+      return;
+    }
     if (!dockFlight(this.content, id, f)) {
       return;
     }
@@ -3000,7 +3005,7 @@ export class GameModel {
       replay &&
       hub &&
       !f.storyScene?.lineDue &&
-      Math.hypot(hub.x - f.player.x, hub.y - f.player.y) <= this.content.tuning.safeRadius
+      Math.hypot(hub.x - f.player.x, hub.y - f.player.y) <= this.content.tuning.approachRadius
     ) {
       f.storyScene = { at: f.time, id: replay, lineDue: true };
       delete this.current.replayScene;
@@ -3186,7 +3191,7 @@ export class GameModel {
       (object) =>
         (object.kind === "station" ||
           (object.kind === "destination" && f.galaxy === 2 && object.id === HUB_STATION)) &&
-        Math.hypot(object.x - f.player.x, object.y - f.player.y) <= ECONOMY.station.safeRadius,
+        Math.hypot(object.x - f.player.x, object.y - f.player.y) <= ECONOMY.station.discoveryRadius,
     );
   }
   /**

@@ -28,7 +28,7 @@ it.each([false, true])(
         ),
       ),
     );
-    const clearanceRadius = ECONOMY.station.safeRadius + hullReach;
+    const clearanceRadius = ECONOMY.station.exclusionRadius + hullReach;
     const home = { x: center.x + clearanceRadius + ENEMY_AVOIDANCE.clearance, y: 0 };
     let state = createEnemy(
       definition,
@@ -68,7 +68,7 @@ it.each([false, true])(
       expect(state.home).toEqual(home);
       closest = Math.min(closest, worldDistance(context, center, position) - hullReach);
     }
-    expect(closest).toBeGreaterThanOrEqual(ECONOMY.station.safeRadius);
+    expect(closest).toBeGreaterThanOrEqual(ECONOMY.station.exclusionRadius);
     expect(worldDistance(context, home, state.position)).toBeGreaterThan(1);
     expect(state.returning).toBe(returning);
   },
@@ -108,7 +108,7 @@ it.each(["combat", "summoned", "lastSeen"])(
           ...context,
           stationGuardAnchor: {
             center: { x: 0, y: 0 },
-            clearanceRadius: ECONOMY.station.safeRadius,
+            clearanceRadius: ECONOMY.station.exclusionRadius,
           },
         },
         state,

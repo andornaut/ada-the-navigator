@@ -6,6 +6,7 @@ import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { type IndustrialBodyKey, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
 import { partsReach, worldParts } from "./convex.ts";
@@ -147,6 +148,8 @@ it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
     model.startGalaxy(1);
     model.state.dialogue = null;
     const flight = model.state.flight!;
+    // Continue gives no grace, so the compared flights both run without one.
+    endArrivalGrace(flight);
     const point = { x: 30000, y: 5000 };
     flight.player = { ...point };
     const actor = spawnChapterEnemy(

@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import type { Weapon } from "../data/types.ts";
 import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -28,6 +29,7 @@ function launched(weapon: Weapon) {
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
+  endArrivalGrace(flight);
   flight.objects = [];
   flight.shots = [];
   flight.player = { x: 0, y: 0 };

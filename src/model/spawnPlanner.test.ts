@@ -678,7 +678,7 @@ describe("planRegion", () => {
   it("redraws a moving rock's velocity until its path keeps clear of path zones", () => {
     const zone: ExclusionZone = {
       applies: ["path"],
-      rule: "protected",
+      rule: "exclusion",
       shape: { kind: "disc", radius: 300, x: 0, y: 0 },
     };
     const pathed = {
@@ -689,7 +689,7 @@ describe("planRegion", () => {
     let movers = 0;
     for (const seed of SEEDS) {
       const plan = planRegion(pathed, seeds(seed), { ...region, exclusions: [zone] });
-      rejected += plan.report.kinds.mover!.rejections.protected ?? 0;
+      rejected += plan.report.kinds.mover!.rejections.exclusion ?? 0;
       for (const rock of plan.placements.filter((placement) => placement.moving)) {
         movers++;
         const { velocity } = rock.moving!;

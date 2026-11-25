@@ -30,7 +30,7 @@ function approach(galaxy: GalaxyNumber) {
 
 describe("required route approach encounters", () => {
   it.each([1, 2, 3] as const)(
-    "gates galaxy %i before friendly interaction while preserving its safe zone",
+    "gates galaxy %i before friendly interaction while preserving its exclusion zone",
     (galaxy) => {
       const { flight, model, target } = approach(galaxy);
       const guard = flight.objects.find((object) => object.routeId === target.id)!;
@@ -38,7 +38,7 @@ describe("required route approach encounters", () => {
         ({ 1: "frigate", 2: "capital", 3: "capital" } as const)[galaxy],
       );
       expect(Math.hypot(guard.x - target.x, guard.y - target.y)).toBeGreaterThan(
-        CONTENT.tuning.safeRadius + guard.radius,
+        CONTENT.tuning.exclusionRadius + guard.radius,
       );
       const shield = flight.shield;
       model.step(1, idle);

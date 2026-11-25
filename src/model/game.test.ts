@@ -7,6 +7,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -54,10 +55,10 @@ function launch(model: GameModel, galaxy: GalaxyNumber = 1) {
   model.startGalaxy(galaxy);
 }
 
-it("talks and salvages within the 160 Talk range, whatever the safe radius", () => {
+it("talks and salvages within the 160 Talk range, whatever the exclusion radius", () => {
   expect(CONTENT.tuning.talkRange).toBe(160);
-  // A smaller safe radius leaves the interaction range alone.
-  const content = { ...CONTENT, tuning: { ...CONTENT.tuning, safeRadius: 40 } };
+  // A smaller exclusion radius leaves the interaction range alone.
+  const content = { ...CONTENT, tuning: { ...CONTENT.tuning, exclusionRadius: 40 } };
   const model = new GameModel(content);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.startGalaxy(1);
@@ -312,6 +313,8 @@ describe("story and persistence", () => {
     model.state.flight!.ammo.rapidMissile = 200;
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
+    // Continue gives no grace, so the compared flights both run without one.
+    endArrivalGrace(model.state.flight!);
     const saved = model.save();
     const resumed = relaunch(CONTENT, saved);
     expect(resumed.state).toEqual(model.state);
@@ -550,11 +553,11 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
     const offset = CARTWHEEL_STORY_SHIPS.destinations[id];
     expect(destination).toMatchObject({ x: hub.x + offset.x, y: hub.y + offset.y });
     expect(ensureRouteEncounter(CONTENT, id, f)).toBeNull();
-    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThan(CONTENT.tuning.safeRadius);
+    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThan(CONTENT.tuning.exclusionRadius);
   }
   const { miner, visitors } = CARTWHEEL_STORY_SHIPS.destinations;
   expect(Math.hypot(miner.x - visitors.x, miner.y - visitors.y)).toBeGreaterThanOrEqual(
-    CONTENT.tuning.safeRadius * 2,
+    CONTENT.tuning.exclusionRadius * 2,
   );
 });
 

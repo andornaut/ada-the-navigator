@@ -140,7 +140,7 @@ it("rejects whole footprints at friendly protection, outer hulls and overlapping
     id: "friendly",
     kind: "station",
     radius: ECONOMY.station.radius,
-    x: plan.point.x + ECONOMY.station.safeRadius + 1,
+    x: plan.point.x + ECONOMY.station.exclusionRadius + 1,
     y: 0,
   });
   expect(hostileStationContext(friendly).hostileStationIds?.size).toBe(0);

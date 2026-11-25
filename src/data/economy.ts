@@ -127,7 +127,13 @@ export interface EconomyCatalog {
     indicatorRange: number;
     /** The station's silhouette radius at its display size (art/destinations.md). */
     radius: number;
-    safeRadius: number;
+    /**
+     * The station's exclusion zone: no rock, moving-rock path or enemy group is placed inside it
+     * and enemy ships move outside it. It grants no protection (gameplay/rules.md "Protection").
+     */
+    exclusionRadius: number;
+    /** Ada within this of a station's centre discovers it and cues its first meeting. */
+    discoveryRadius: number;
   };
 }
 
@@ -297,12 +303,13 @@ export const ECONOMY: EconomyCatalog = {
     // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
     chance: 1,
     destinationClearance: 1200,
+    discoveryRadius: 320,
+    exclusionRadius: 320,
     indicatorRange: TARGET_MARKER_RANGE,
     jitter: STATION_JITTER,
     minimumSpacing: (STATION_CELL_SIZE - STATION_JITTER) / Math.SQRT2,
     originClearance: 3000,
     radius: 60,
-    safeRadius: 320,
   },
   trackPrices: {
     engine: [180, 360],

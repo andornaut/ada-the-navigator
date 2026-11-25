@@ -3,12 +3,12 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { frigateEscortStation } from "./frigateEscorts.ts";
 import { liveEnemy } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import type { LegacyGuardHomePorts } from "./legacyGuardHomes.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
 import { stationGuardSite } from "./stationGuardSite.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import type { SpaceObject, Vec } from "./types.ts";
@@ -64,7 +64,7 @@ export function questGuardHomePorts(context: StationPlacementContext): LegacyGua
     if (authority.status !== "present" || worldDistance(world, authority.center, site) !== 0) {
       return false;
     }
-    const protection = protectedRadius(context.content, site);
+    const protection = exclusionZoneRadius(context.content, site);
     if (protection === null || site.hp <= 0) {
       return false;
     }
@@ -85,7 +85,7 @@ export function questGuardHomePorts(context: StationPlacementContext): LegacyGua
       if (guard.routeId !== site.id || !guard.enemy) {
         return null;
       }
-      const protection = protectedRadius(context.content, site);
+      const protection = exclusionZoneRadius(context.content, site);
       if (protection === null) {
         return null;
       }

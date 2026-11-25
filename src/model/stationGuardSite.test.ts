@@ -35,7 +35,7 @@ it("resolves exact loaded identity before retained state and returns the site's 
   flight.objects.unshift({ ...site, id: "nearest-other-site", x: 0, y: 0 });
   expect(stationGuardSite({ content: CONTENT, flight }, guard)).toEqual({
     center: { x: site.x, y: site.y },
-    clearanceRadius: CONTENT.tuning.safeRadius,
+    clearanceRadius: CONTENT.tuning.exclusionRadius,
     homeCandidate: { ...guard.enemy.home },
     id: site.id,
     status: "present",
@@ -49,7 +49,7 @@ it("resolves a full retained friendly station without activation or array-presen
   flight.world.notables[site.id] = station;
   expect(stationGuardSite({ content: CONTENT, flight }, guard)).toEqual({
     center: { x: station.x, y: station.y },
-    clearanceRadius: ECONOMY.station.safeRadius,
+    clearanceRadius: ECONOMY.station.exclusionRadius,
     homeCandidate: { ...guard.enemy.home },
     id: site.id,
     status: "present",

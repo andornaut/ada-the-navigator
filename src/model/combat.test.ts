@@ -377,7 +377,7 @@ describe("integrated combat", () => {
     expect(salvageTarget(CONTENT, flight)).toBeUndefined();
     target.enemy!.disabled = true;
     expect(salvageTarget(CONTENT, flight)).toBe(target);
-    flight.player = { x: 120 - CONTENT.tuning.safeRadius - 1, y: 0 };
+    flight.player = { x: 120 - CONTENT.tuning.exclusionRadius - 1, y: 0 };
     expect(salvageTarget(CONTENT, flight)).toBeUndefined();
     expect(salvage(CONTENT, flight)).toBe(false);
     flight.player = { x: 0, y: 0 };
@@ -899,7 +899,7 @@ describe("integrated combat", () => {
       expect(guard.enemy?.archetype).toBe(archetype);
       expect(
         Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
-      ).toBeGreaterThan(CONTENT.tuning.safeRadius);
+      ).toBeGreaterThan(CONTENT.tuning.exclusionRadius);
       expect(ensureRouteEncounter(CONTENT, "quest", flight)).toBe(guard);
       flight.player = { x: destination.x, y: destination.y };
       expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
@@ -1405,7 +1405,7 @@ describe("combat admission and subframe firing", () => {
         for (const destination of [first, second]) {
           expect(
             Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
-          ).toBeGreaterThanOrEqual(CONTENT.tuning.safeRadius);
+          ).toBeGreaterThanOrEqual(CONTENT.tuning.exclusionRadius);
         }
         expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
         expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
@@ -1465,7 +1465,7 @@ it("settles a translated route guard after destination relocation without resett
   for (const target of [relocated, friendly]) {
     expect(
       Math.hypot(guard.x - target.x, guard.y - target.y) - guard.radius,
-    ).toBeGreaterThanOrEqual(CONTENT.tuning.safeRadius);
+    ).toBeGreaterThanOrEqual(CONTENT.tuning.exclusionRadius);
   }
   expect(guard.enemy!.hardpoints).toEqual(saved.hardpoints);
   expect({
@@ -1510,7 +1510,7 @@ describe("capital local-area separation", () => {
       const first = ensureRouteEncounter(CONTENT, firstDestination.id, flight)!;
       expect(first.x).toBeCloseTo(firstDestination.x);
       expect(first.y).toBeCloseTo(
-        firstDestination.y + CONTENT.tuning.safeRadius + first.radius + 120,
+        firstDestination.y + CONTENT.tuning.exclusionRadius + first.radius + 120,
       );
       first.enemy!.hardpoints[0]!.hp = 2;
       const saved = structuredClone(first);
@@ -1738,7 +1738,7 @@ describe("capital local-area separation", () => {
     placed.objects.push(first, second, third);
     settleRouteEncounters(CONTENT, placed);
     // The earlier blocked frigate advances along +x by one stride; nearby frigates keep their places.
-    const stride = 2 * (first.radius + CONTENT.tuning.safeRadius + 120);
+    const stride = 2 * (first.radius + CONTENT.tuning.exclusionRadius + 120);
     expect({ x: first.x, y: first.y }).toEqual({ x: stride, y: 600 });
     expect({ x: second.x, y: second.y }).toEqual({ x: 40, y: 600 });
     expect({ x: third.x, y: third.y }).toEqual({ x: 240, y: 600 });

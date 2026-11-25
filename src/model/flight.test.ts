@@ -276,7 +276,9 @@ describe("flight boundaries", () => {
     });
     const a = ensureDestination(CONTENT, "growers", flight);
     const b = ensureDestination(CONTENT, "workshop", flight);
-    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(CONTENT.tuning.safeRadius * 2);
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(
+      CONTENT.tuning.exclusionRadius * 2,
+    );
     const previous = { x: a.x, y: a.y };
     expect(placeDestinationAhead(CONTENT, "growers", flight)).toBe(a);
     flight.player.x += CONTENT.tuning.chunkSize * 10;
@@ -318,7 +320,7 @@ it("retains nonzero movement-facing through released coasting and rest before pl
   expect(first.x).toBeGreaterThan(before.x);
   expect(second.x).toBeGreaterThan(before.x);
   expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
-    CONTENT.tuning.safeRadius * 2,
+    CONTENT.tuning.exclusionRadius * 2,
   );
 });
 
@@ -330,7 +332,7 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
   expect(first.y).toBeLessThan(flight.player.y);
   expect(second.y).toBeLessThan(flight.player.y);
   expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
-    CONTENT.tuning.safeRadius * 2,
+    CONTENT.tuning.exclusionRadius * 2,
   );
   syncFlightRegion(CONTENT, flight);
   expect(flight.objects).toContain(first);

@@ -1,7 +1,7 @@
 import type { GameContent } from "../data/types.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { liveEnemy } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
 import { questGuardFormationAt } from "./questGuardPlacement.ts";
 import { requiredPlanActors } from "./requiredEncounterPlans.ts";
 import type { RequiredWorldReservation } from "./requiredWorldReservations.ts";
@@ -28,7 +28,7 @@ export function requiredRouteGeometry(
       continue;
     }
     const site = byId.get(guard.routeId);
-    if (!site || site.hp <= 0 || protectedRadius(content, site) === null) {
+    if (!site || site.hp <= 0 || exclusionZoneRadius(content, site) === null) {
       continue;
     }
     const formation = questGuardFormationAt({ flight }, guard, guard.enemy.home);

@@ -46,7 +46,7 @@ export const HUNTING_PACKS = {
   /** Inclusive pack size. */
   count: [3, 4] as const,
   destinations: ["whale", "family"] as readonly string[],
-  /** Pack centre from the destination, outside its safe area. */
+  /** Pack centre from the destination, outside its exclusion zone. */
   distance: 520,
   /** A pack this close to the destination's route guard moves to the far side. */
   galaxies: [3] as readonly GalaxyNumber[],

@@ -97,66 +97,6 @@ export function ensureNeedleDebris(content: GameContent, flight: FlightState): v
   }
 }
 
-/** First swept entry into any channel capsule, including the hostile body's whole radius. */
-export function needleChannelEntry(
-  context: { readonly radius?: number },
-  flight: FlightState,
-  from: Vec,
-  to: Vec,
-): number | null {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const square = dx * dx + dy * dy;
-  if (needleChannelContains(context, flight, from)) {
-    return 0;
-  }
-  if (!square) {
-    return null;
-  }
-  let entry = Infinity;
-  const accept = (value: number) => {
-    if (value >= 0 && value <= 1) {
-      entry = Math.min(entry, value);
-    }
-  };
-  for (const course of activeNeedleCourses(flight)) {
-    const radius = course.width / 2 + (context.radius ?? 0);
-    for (let index = 1; index < course.path.length; index++) {
-      const a = course.path[index - 1]!;
-      const b = course.path[index]!;
-      for (const end of [a, b]) {
-        const x = from.x - end.x;
-        const y = from.y - end.y;
-        const along = x * dx + y * dy;
-        const discriminant = along * along - square * (x * x + y * y - radius * radius);
-        if (discriminant >= 0) {
-          accept((-along - Math.sqrt(discriminant)) / square);
-        }
-      }
-      const length = Math.hypot(b.x - a.x, b.y - a.y);
-      if (!length) {
-        continue;
-      }
-      const ux = (b.x - a.x) / length;
-      const uy = (b.y - a.y) / length;
-      const x = (from.x - a.x) * ux + (from.y - a.y) * uy;
-      const y = -(from.x - a.x) * uy + (from.y - a.y) * ux;
-      const vx = dx * ux + dy * uy;
-      const vy = -dx * uy + dy * ux;
-      if (vy) {
-        for (const edge of [-radius, radius]) {
-          const t = (edge - y) / vy;
-          const across = x + vx * t;
-          if (across >= 0 && across <= length) {
-            accept(t);
-          }
-        }
-      }
-    }
-  }
-  return Number.isFinite(entry) ? entry : null;
-}
-
 /** Layout clearance preserves live enemies and their combat identities without a defeat event. */
 export function clearNeedleEnemies(flight: FlightState): void {
   const courses = activeNeedleCourses(flight);

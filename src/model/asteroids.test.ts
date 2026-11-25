@@ -5,6 +5,7 @@ import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, seedLaunches } from "../testing/launch.ts";
 import {
   ASTEROID_SHAPES,
@@ -497,7 +498,7 @@ describe("asteroids in flight", () => {
       let rebound = 0;
       let kept = Infinity;
       for (let step = 0; step < 240; step++) {
-        // Only the rock and safe areas remain, so any shield loss would come from scenery.
+        // Only the rock and exclusion zones remain, so any shield loss would come from scenery.
         flight.objects = flight.objects.filter(
           (object) => object === wall || ["destination", "station"].includes(object.kind),
         );
@@ -634,7 +635,7 @@ describe("asteroids in flight", () => {
   };
   const drifter = (id: string, from: Vec, distance: number): SpaceObject => {
     const center = { x: from.x + distance, y: from.y };
-    // Phase 0 puts the rock on the far side of its path, outside any safe area it reaches.
+    // Phase 0 puts the rock on the far side of its path, outside any exclusion zone it reaches.
     return rock(id, {
       orbit: { ...center, phase: 0, radius: 40, rate: 0.2 },
       radius: 20,
@@ -657,7 +658,9 @@ describe("asteroids in flight", () => {
         sizes.add(ASTEROID_SHAPES.get(object.asteroid)!.size);
         for (const area of areas) {
           const safe =
-            area.kind === "station" ? ECONOMY.station.safeRadius : CONTENT.tuning.safeRadius;
+            area.kind === "station"
+              ? ECONOMY.station.exclusionRadius
+              : CONTENT.tuning.exclusionRadius;
           expect(gap(area, object), `${object.id} near ${area.id}`).toBeGreaterThan(safe);
         }
       }
@@ -677,8 +680,8 @@ describe("asteroids in flight", () => {
     expect(stations).toBeGreaterThan(0);
     expect(sizes).toContain("large");
     // Beside the launch point after its chunks paged out, regenerated layout keeps the launch
-    // point's safe radius although Ada is elsewhere.
-    const safe = CONTENT.tuning.safeRadius;
+    // point's arrival clearance although Ada is elsewhere.
+    const safe = CONTENT.tuning.exclusionRadius;
     const beside = { x: 3 * safe, y: 0 };
     flight.player = { ...beside };
     model.step(1 / 60, idle);
@@ -691,13 +694,13 @@ describe("asteroids in flight", () => {
     check();
   });
 
-  it("clears a drift path that would reach a newly placed destination's safe area", () => {
+  it("clears a drift path that would reach a newly placed destination's exclusion zone", () => {
     const flight = createFlight(CONTENT, 1, 173, progress);
     const target = ensureDestination(CONTENT, "probe", structuredClone(flight));
-    const safe = CONTENT.tuning.safeRadius;
+    const safe = CONTENT.tuning.exclusionRadius;
     const reaching = drifter("reaching", target, safe + 20 + 10);
     const clear = drifter("clear", target, safe + 20 + 40 + 10);
-    // Only the reaching rock's path, not its current position, enters the safe area.
+    // Only the reaching rock's path, not its current position, enters the exclusion zone.
     expect(Math.hypot(reaching.x - target.x, reaching.y - target.y)).toBeGreaterThan(safe);
     flight.objects.push(reaching, clear);
     ensureDestination(CONTENT, "probe", flight);
@@ -705,10 +708,10 @@ describe("asteroids in flight", () => {
     expect(flight.objects).toContain(clear);
   });
 
-  it("clears a huge rock whose drawn silhouette, not its footprint, reaches a new station's safe area", () => {
+  it("clears a huge rock whose drawn silhouette, not its footprint, reaches a new station's exclusion zone", () => {
     const flight = createFlight(CONTENT, 1, 173, progress);
     const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
-    const safe = ECONOMY.station.safeRadius;
+    const safe = ECONOMY.station.exclusionRadius;
     const shape = ASTEROID_SHAPES.get("asteroid-h2")!;
     const silhouette = placementRadius({ asteroid: shape.id, kind: "rock", radius: shape.radius });
     // The silhouette radius on the world plane reaches far past the footprint.
@@ -723,11 +726,11 @@ describe("asteroids in flight", () => {
     expect(flight.objects).toContain(clear);
   });
 
-  it("clears a drift path that would reach a newly placed station's safe area", () => {
+  it("clears a drift path that would reach a newly placed station's exclusion zone", () => {
     const flight = createFlight(CONTENT, 1, 173, progress);
     const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
     expect(flight.objects.some((o) => o.id === site.id)).toBe(false);
-    const safe = ECONOMY.station.safeRadius;
+    const safe = ECONOMY.station.exclusionRadius;
     const reaching = drifter("reaching", site, safe + 20 + 10);
     const clear = drifter("clear", site, safe + 20 + 40 + 10);
     expect(Math.hypot(reaching.x - site.x, reaching.y - site.y)).toBeGreaterThan(safe);
@@ -739,6 +742,7 @@ describe("asteroids in flight", () => {
 
   it("keeps collision damage when a legacy orbit settles at its current centre", () => {
     const { flight, model } = launched();
+    endArrivalGrace(flight);
     const shield = flight.shield;
     const rate = -0.3;
     const radius = 60;
@@ -755,7 +759,7 @@ describe("asteroids in flight", () => {
     flight.velocity = { x: 175, y: 0 };
     let pushed = 0;
     for (let step = 0; step < 480; step++) {
-      // Only the rock and safe areas remain, so any shield loss would come from the rock.
+      // Only the rock and exclusion zones remain, so any shield loss would come from the rock.
       flight.objects = flight.objects.filter(
         (object) => object === moving || ["destination", "station"].includes(object.kind),
       );

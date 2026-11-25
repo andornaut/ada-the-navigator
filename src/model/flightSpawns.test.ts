@@ -35,7 +35,7 @@ const grid = periodicWorldGrid(context, CONTENT.tuning.chunkSize);
 const GALAXY: GalaxyNumber = 5;
 const WORLD_SEED = 4471;
 const ROUTE = { from: 8000, to: 27000, y: 2600 } as const;
-// Chunks this close to either end are loaded beside Ada, inside her safe radius.
+// Chunks this close to either end are loaded beside Ada, inside her clearance.
 const END_CHUNKS = 3;
 const PLANNED = /^(pack:|rock:|rock-feature:|moving:)/;
 

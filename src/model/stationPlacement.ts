@@ -3,9 +3,9 @@ import type { GameContent } from "../data/types.ts";
 import { type Silhouette, worldSceneryBodyContact } from "./asteroids.ts";
 import { outlineContact, outlinesContact, type Parts, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
+import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
-import { protectedRadius } from "./protectedPlaces.ts";
 import { shipBody } from "./shipBody.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
@@ -62,7 +62,7 @@ export function stationFormationClear(
     }
     for (const other of [...objects, ...actors.slice(index + 1)]) {
       const point = worldPoint(world, actor, other);
-      const protection = protectedRadius(content, other);
+      const protection = exclusionZoneRadius(content, other);
       if (protection !== null && worldDistance(world, actor, other) <= protection + reach) {
         return false;
       }

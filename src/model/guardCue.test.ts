@@ -104,7 +104,7 @@ describe("a blocking guard's cue", () => {
     const shield = flight.shield;
     patrol(flight, guard, 180);
     expect(worldDistance(flightWorldContext(flight), start, guard)).toBeGreaterThan(20);
-    flight.player = { x: site.x - CONTENT.tuning.safeRadius / 2, y: site.y };
+    flight.player = { x: site.x - CONTENT.tuning.exclusionRadius / 2, y: site.y };
     patrol(flight, guard, 60);
     flight.player = { x: site.x, y: site.y };
     patrol(flight, guard, 60);

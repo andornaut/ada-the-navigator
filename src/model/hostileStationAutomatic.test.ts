@@ -37,7 +37,7 @@ function atCandidate() {
   model.startGalaxy(5);
   const flight = model.state.flight!;
   const context = flightWorldContext(flight);
-  const protection = ECONOMY.station.safeRadius + CONTENT.tuning.safeRadius;
+  const protection = ECONOMY.station.exclusionRadius + CONTENT.tuning.exclusionRadius;
   const before = structuredClone(model.state);
   const site = hostileStationSites(
     { ...context, galaxy: 5, geographySeed: flight.seed },

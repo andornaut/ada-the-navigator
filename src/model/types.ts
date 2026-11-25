@@ -166,8 +166,6 @@ export interface FlightState {
   phantom?: PhantomFlight;
   /** Travel arrival points; encounters stay clear of them as of the flight's start. */
   arrivals?: Vec[];
-  /** Flight time when Ada's arrival grace from her last launch, jump or Travel ends. */
-  arrivalGraceUntil?: number;
   world: PersistentWorldState;
   visited: Record<string, string>;
   combat?: {

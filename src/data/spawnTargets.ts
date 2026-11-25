@@ -27,7 +27,7 @@ export const SLOT_ROCKS_PER_AREA = 29.84;
  * Moving rocks (gameplay/rules.md "Space encounters and feedback"): the share of chosen rocks
  * that lead a cluster, how many placed rocks each leader pulls (equal weight, inclusive) and the
  * farthest a pulled rock's centre lies from the leader's; the seconds of straight path checked
- * against protected areas and arrival safe radii; and the speed range in world units per second,
+ * against exclusion zones and arrival clearances; and the speed range in world units per second,
  * whose top is also the fastest a rock leaves a ricochet.
  */
 export const MOVING_ROCKS = {

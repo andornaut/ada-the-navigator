@@ -99,7 +99,7 @@ describe("Later chapter first encounters", () => {
     const loom = model.state.flight!.objects.find(({ id }) => id === "elderLoom")!;
     visit(model, loom);
     model.interact();
-    model.state.flight!.player = { x: loom.x + ECONOMY.station.safeRadius * 2, y: loom.y };
+    model.state.flight!.player = { x: loom.x + ECONOMY.station.discoveryRadius * 2, y: loom.y };
     prelude.flatMap(({ lines }) => lines).forEach(() => model.dismissConversation());
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[4].needle?.met).toBe(false);
@@ -107,7 +107,7 @@ describe("Later chapter first encounters", () => {
 
   it("does not identify Munix from an invented settlement or station object", () => {
     const model = launch(5);
-    const range = ECONOMY.station.safeRadius;
+    const range = ECONOMY.station.discoveryRadius;
     const point = Array.from({ length: 32 }, (_, index) => ({
       x: index * ECONOMY.station.cellSize,
       y: 0,

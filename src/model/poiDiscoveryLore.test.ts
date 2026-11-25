@@ -234,7 +234,7 @@ it("binds a confirmed friendly station discovery to its galaxy pool and leaves r
     y: 0,
   })[0]!;
   expect(ensureStation(CONTENT, site.id, flight)?.id).toBe(site.id);
-  flight.player = { x: site.x + ECONOMY.station.safeRadius - 30, y: site.y };
+  flight.player = { x: site.x + ECONOMY.station.discoveryRadius - 30, y: site.y };
   expect(model.state.progress[1].stations).not.toContain(site.id);
   const words = deck[1].station.map(({ text }) => text);
   const played = hear(model, 10);
