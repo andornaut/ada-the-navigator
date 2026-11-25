@@ -163,13 +163,16 @@ const RESOURCES = SHAPES.filter(({ size }) => size === "medium" || size === "lar
   (shape) => ({ ...shape, id: shape.id.replace("asteroid-", "resource-"), shape: shape.id }),
 );
 
-// Crystal variants of the medium and larger shapes. Each draws its plain shape's stone with a
-// cluster of ore crystals set into the crown, inside the plain rock's drawn silhouette in every
-// frame, so its frame, pivot, collision and footprints are the plain shape's. `full` is the
-// resource rocks' cluster (three on a medium, five on a large) for an ore-field rock; ore fields
-// place only medium and large rocks. `small` is one crystal on a medium rock and two on a large
-// or huge one, for the share of other rocks `CRYSTAL_SELECTION` picks. Small rocks have none.
+// Crystal variants of the medium and larger shapes. Each draws its plain shape's stone with ore
+// set into the crown, inside the plain rock's drawn silhouette in every frame, so its frame,
+// pivot, collision and footprints are the plain shape's. A spinning medium rock has room only for
+// a flush vein (VEIN_AREA); a large or huge rock carries standing crystals. `full` is for an
+// ore-field rock (a full vein on a medium rock, the resource rocks' five crystals on a large
+// one); ore fields place only medium and large rocks. `small` (a small vein, or two crystals on a
+// large or huge rock) is for the share of other rocks `CRYSTAL_SELECTION` picks. Small rocks have
+// none.
 export type Cluster = "full" | "small";
+// Standing crystals per cluster and size; the medium counts draw the resource rocks.
 export const CLUSTER_CRYSTALS: Readonly<Record<Cluster, Readonly<Record<SizeClass, number>>>> = {
   full: { small: 0, medium: 3, large: 5, huge: 0 },
   small: { small: 0, medium: 1, large: 2, huge: 2 },
@@ -370,6 +373,9 @@ const cross3 = (a: Point, b: Point): Point => [
   a[0] * b[1] - a[1] * b[0],
 ];
 
+// The ore ramp's shadow tones, for crown facets that seat crystals.
+const seatOf = (ore: readonly string[]) => [ore[2]!, ore[3]!, ore[4]!, ore[4]!, ore[4]!];
+
 // A cluster of `count` hexagonal ore crystals growing from the crown facets nearest the highest
 // one, each tilted out along its facet's normal. A smaller cluster is the first crystals of a
 // larger one, largest first. Compact seat facets under the cluster take the ore ramp's shadow
@@ -394,7 +400,7 @@ function crystalParts(
 } {
   const rnd = mulberry(seed * 13 + 5);
   const big = spec.vertices[0] >= 12;
-  const seatRamp = [ore[2]!, ore[3]!, ore[4]!, ore[4]!, ore[4]!];
+  const seatRamp = seatOf(ore);
   const stone: Painted[] = faces.map((face) => ({ face, ramp: STONE }));
   const tops = faces
     .map((face, i) => ({ c: centroid(face), face, i, n: unit(normal(face)) }))
@@ -743,10 +749,8 @@ const ORE = ORE_RAMP;
 
 // A rock's drawing: its crystal cluster, if any, and its SVGs' declared size. The crystal variants
 // declare frame size, as the plain rocks do, so Tech loads both the same way.
-// `review` draws every crystal of the variant's cluster at that size with no fit, for review
-// sheets only: such a drawing may reach past the plain silhouette.
 // `vein` draws the cluster as a flush ore vein set into the crown instead of standing crystals.
-export type Look = { cluster?: Cluster; declared: Declared; review?: number; vein?: boolean };
+export type Look = { cluster?: Cluster; declared: Declared; vein?: boolean };
 const PLAIN: Look = { declared: "frame" };
 const RESOURCE: Look = { cluster: "full", declared: "display" };
 const lookOf = (resource: boolean) => (resource ? RESOURCE : PLAIN);
@@ -864,9 +868,11 @@ const VEIN_INSET = 0.22;
 
 // A flush ore vein: a connected patch of upward crown facets, grown from the one nearest the
 // yaw axis toward the nearest neighbours that are not thin slivers, until it covers
-// VEIN_AREA[cluster] of the upward area. Vein facets take the ore ramp. `crystal(i, lift)` is the
-// crystal set on vein facet `i`, inset by VEIN_INSET of its size: three facets meeting at a point
-// raised `lift` times the facet's size along its normal, drawn just after the facet.
+// VEIN_AREA[cluster] of the upward area. `crystal(i, lift)` is the crystal set on vein facet `i`,
+// inset by VEIN_INSET of its size: three facets meeting at a point raised `lift` times the facet's
+// size along its normal, drawn just after the facet. The vein's facets and crystals take the ore
+// ramp's shadow tones, as the crown facets under standing crystals do, so a vein shows the same
+// darker purples as a large rock's standing crystals under the same light.
 function vein(faces: readonly Face[], seed: number, cluster: Cluster) {
   const rnd = mulberry(seed * 29 + 11);
   const key = (p: Point) => p.map((v) => v.toFixed(6)).join(",");
@@ -945,9 +951,9 @@ function fittedVein(
   VEIN_FITS.set(shape.id, lifts);
   const veined = new Set(chosen);
   return [
-    ...model.faces.map((face, i) => ({ face, ramp: veined.has(i) ? ORE : STONE })),
+    ...model.faces.map((face, i) => ({ face, ramp: veined.has(i) ? seatOf(ORE) : STONE })),
     ...chosen.flatMap((i, k) =>
-      crystal(i, lifts[k]!).map((face): Painted => ({ face, on: i, ramp: ORE })),
+      crystal(i, lifts[k]!).map((face): Painted => ({ face, on: i, ramp: seatOf(ORE) })),
     ),
   ];
 }
@@ -959,7 +965,7 @@ function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
   const count = look.cluster && CLUSTER_CRYSTALS[look.cluster][shape.size];
   // A crystal variant fits its cluster inside the plain rock and must draw no cell outside it.
   const plain =
-    count && look.declared === "frame" && !look.review
+    count && look.declared === "frame"
       ? build(shape.id, model, frames, shape.width, STONE, { write: () => {} })
       : undefined;
   let drawn: Painted[] | undefined;
@@ -969,9 +975,6 @@ function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
     const fit = fittedCrystals(shape, model, count, plain);
     CRYSTAL_FITS.set(shape.id, fit.sizes);
     drawn = fit.drawn;
-  } else if (count && look.review) {
-    const parts = crystalParts(model.faces, spec, shape.seed, ORE, count, "axis");
-    drawn = [...parts.stone, ...parts.crystals.flatMap(({ faces }) => faces(look.review!))];
   } else if (count) {
     drawn = crystals(model.faces, spec, shape.seed, ORE, count);
   }
@@ -1224,7 +1227,11 @@ export function crystalVariants(plain: readonly Entry[]) {
     small: [],
   };
   const entries = CRYSTAL_VARIANTS.map((variant) => {
-    const look: Look = { cluster: variant.cluster, declared: "frame" };
+    const look: Look = {
+      cluster: variant.cluster,
+      declared: "frame",
+      ...(variant.size === "medium" ? { vein: true } : {}),
+    };
     const base = plain.find(({ id }) => id === variant.shape)!;
     let entry: Entry;
     let svgSheet: string;
