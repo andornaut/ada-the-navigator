@@ -439,3 +439,26 @@ test("the whale data keeps the shipped loop, family and still headings, with a f
     }
   }
 });
+
+test("the holodisk and its beacon are black with the pink ring, and each chevron frame is flat", () => {
+  const colours = (key: string) =>
+    objects
+      .find((object) => object.key === key)!
+      .drawn.map(({ svg }) => new Set(svg.match(/#[0-9a-f]{6}/gu)));
+  const ink = ["#3a3448", "#2a2536", "#181425"];
+  for (const key of ["holodisk", "holodiskBeacon"]) {
+    for (const frame of colours(key)) {
+      for (const pearl of ["#ffffff", "#d9dff0", "#a3aacb"]) assert.ok(!frame.has(pearl), key);
+      assert.ok(
+        ink.some((tone) => frame.has(tone)),
+        key,
+      );
+    }
+  }
+  assert.ok(colours("holodisk").every((frame) => frame.has("#e868c8")));
+  // Rest is one tone; a lit frame adds the lit chevron's.
+  assert.deepEqual(
+    colours("upgradeChevrons").map((frame) => [...frame].toSorted()),
+    [["#f0bd68"], ["#f0bd68", "#fff2cc"], ["#f0bd68", "#fff2cc"]],
+  );
+});

@@ -306,14 +306,26 @@ table are the rest frame's.
 | `hunt-glint`      |            4 | The same twinkle                                                       | rest 420 ms, glint1 60, glint2 80, glint1 60        |
 | `ammo-pack`       |            4 | A glint crosses the crate: top, top and lit side, lit side             | rest 1100 ms, glint1 70, glint2 70, glint3 70       |
 | `holodisk`        |            4 | Turn about its upright diameter: face on, 50, 90 and 130 degrees       | rest 600 ms, turn1 70, edge 70, turn2 70            |
-| `upgrade-chevron` |            3 | Climbing light: rest, lower block lit, upper block lit                 | `climb`: 900 ms unlit, 120 lit lower, 120 lit upper |
+| `upgrade-chevron` |            3 | Climbing light: rest, lower chevron lit, upper chevron lit             | `climb`: 900 ms unlit, 120 lit lower, 120 lit upper |
 | `ore-nugget`      |            1 | None                                                                   | `frames` `rest` only                                |
 
 - The twinkle strips' fourth frame repeats glint 1, as the shipped strips do,
   so `loop` indexes frames 0 to 3 unchanged.
 - `upgrade-chevron` gains `frames` `rest`, `lower` and `upper`; a `climb`
   step's `lit` names the frame to show, and a step without one shows `rest`.
-  The shipped `chevrons` offsets are gone: each frame holds both blocks.
+  The shipped `chevrons` offsets are gone: each frame holds both chevrons.
+- The upgrade pickup is two flat chevrons facing the viewer with a clear gap
+  between them, each one tone: `#f0bd68` at rest and `#fff2cc` lit. Its
+  collision part is the convex hull of the pair.
+- The holodisk is a black disc in the ink family (`#3a3448`, `#2a2536`,
+  `#181425`) with the pink hologram ring `#e868c8` and a dark hub. The
+  waypoint beacon's dish takes the same ramp under its pink lamp. On light
+  fields the body merges with the ink keyline and the ring carries the read;
+  on Phantom's field the white edge outlines the body.
+- The item icons `icon-holodisk` and `icon-holodisk-20`
+  ([shared-resource-svg.ts](tools/shared-resource-svg.ts)) match: a `#2a2536`
+  disc with a pink rim in place of the ink outline, so the disc reads on the
+  item notice's ink chip, the pink ring and the ink hub.
 - `node art/tools/friendly-contact-sheet.ts <dir>` also writes
   `friendly-pickup-loops.svg`: each strip frame by frame at 1x and 4x on the
   lightest field and on Phantom's.
@@ -393,8 +405,8 @@ Rows that change shape:
 - `holodisk-beacon` becomes `holodisk-beacon-a` and `-b`, and
   `discovery-cache` becomes `discovery-cache-lit-a`, `-lit-b` and `-hidden`:
   one row per frame, in place of `frames` indices into a strip.
-- `upgrade-chevron` is a strip of three frames, each holding both chevron
-  blocks. The shipped row drew one chevron twice from `chevrons` offsets and
+- `upgrade-chevron` is a strip of three frames, each holding both
+  chevrons. The shipped row drew one chevron twice from `chevrons` offsets and
   lit each in a `climb`; the row keeps `climb` and names the lit frames in
   `frames`.
 - `ore-nugget` draws 14 px for one unit; the five-unit chunk stays a scale of

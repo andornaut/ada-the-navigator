@@ -110,6 +110,24 @@ function frameSvg(
   return { svg: svgText(svg), silhouette: pathData(paths[0]!.loops) };
 }
 
+// The convex hull of a set of points, to two decimals, by monotone chain.
+function hull(points: readonly V2[]): V2[] {
+  const sorted = points
+    .map(([x, y]): V2 => [px(x), px(y)])
+    .toSorted((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const turn = (o: V2, a: V2, b: V2) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const chain = (list: readonly V2[]) => {
+    const out: V2[] = [];
+    for (const p of list) {
+      while (out.length >= 2 && turn(out.at(-2)!, out.at(-1)!, p) <= 1e-9) out.pop();
+      out.push(p);
+    }
+    return out.slice(0, -1);
+  };
+  return [...chain(sorted), ...chain(sorted.toReversed())];
+}
+
 export function draw(object: FriendlyObject): DrawnObject {
   const visible = object.frames.map(({ mesh }) => visibleFragments(mesh, identity));
   const [x0, y0, x1, y1] = extents(visible[0]!);
@@ -143,17 +161,19 @@ export function draw(object: FriendlyObject): DrawnObject {
     // A strip's frames share the first frame's collision parts, so the pickup's body holds
     // still through its loop.
     const traced =
-      object.collision && !(object.strip && index > 0)
-        ? traceEnemyFills(
-            id,
-            placed.map((fragment): Fill => ({
-              color: colour(fragment),
-              points: fragment.points.map(([x, y]): V2 => [px(x), px(y)]),
-            })),
-            [width, height],
-            TOLERANCES,
-          )
-        : undefined;
+      object.collision === "hull" && index === 0
+        ? { collision: [hull(placed.flatMap(({ points }) => points))], tips: [] }
+        : object.collision && !(object.strip && index > 0)
+          ? traceEnemyFills(
+              id,
+              placed.map((fragment): Fill => ({
+                color: colour(fragment),
+                points: fragment.points.map(([x, y]): V2 => [px(x), px(y)]),
+              })),
+              [width, height],
+              TOLERANCES,
+            )
+          : undefined;
     const { svg, silhouette } = frameSvg(width, height, title, placed, traced?.tips);
     const box = extents(placed);
     return {

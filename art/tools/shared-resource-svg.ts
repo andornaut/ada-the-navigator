@@ -12,9 +12,10 @@ function writeIcon(key: string, shapes: string, size = 20): void {
   writeUiIcon(`icon-${key}`, svgText(svg));
 }
 
-const holodisk = `<circle cx="10" cy="10" r="8.3" fill="#d9dff0" stroke="${ink}" stroke-width="1.5"/><circle cx="10" cy="10" r="4.9" fill="#e868c8"/><circle cx="10" cy="10" r="2" fill="${ink}"/><path d="M4.1 9a6 6 0 0 1 5.4-5.2" fill="none" stroke="#fff" stroke-width="1.45" stroke-linecap="round"/>`;
-const rimShade =
-  '<path d="M16.8 10.8a6.9 6.9 0 0 1-5.5 5.9" fill="none" stroke="#a3aacb" stroke-width="1.65" stroke-linecap="round"/>';
+// A black disc with a pink rim, so its shape reads on the item notice's ink chip, the pink
+// hologram ring and the dark hub.
+const holodisk = `<circle cx="10" cy="10" r="8.3" fill="#2a2536" stroke="#e868c8" stroke-width="1.5"/><circle cx="10" cy="10" r="4.9" fill="#e868c8"/><circle cx="10" cy="10" r="2" fill="${ink}"/><path d="M4.1 9a6 6 0 0 1 5.4-5.2" fill="none" stroke="#4a4358" stroke-width="1.45" stroke-linecap="round"/>`;
+const rimShade = `<path d="M16.8 10.8a6.9 6.9 0 0 1-5.5 5.9" fill="none" stroke="${ink}" stroke-width="1.65" stroke-linecap="round"/>`;
 // The reviewed Shop icon omits the secondary rim shade in its 16 px slot.
 writeIcon("holodisk", holodisk, 16);
 writeIcon("holodisk-20", holodisk + rimShade);

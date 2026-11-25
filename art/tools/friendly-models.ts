@@ -119,7 +119,8 @@ const SURVEY = {
   dim: glow("#3f7f7a"),
 };
 const HOLO = {
-  body: mat("#ffffff", "#d9dff0", "#a3aacb"),
+  // The disc and the beacon's dish: a black body in the ink family.
+  body: mat("#3a3448", "#2a2536", "#181425"),
   trim: mat("#4a4358", "#352f41", "#25202e"),
   lamp: glow("#e868c8"),
   dim: glow("#a83a96"),
@@ -127,7 +128,6 @@ const HOLO = {
 const STARDUST = mat("#fff2cc", "#f4d98a", "#c8a24e");
 const ORE = mat("#b07850", "#8a5a3c", "#5e3c28");
 const AMMO = mat("#b4e67e", "#8fd14f", "#5e9a2e");
-const AMBER = mat("#ffd998", "#f0bd68", "#b98838");
 const GLINT = mat("#ffffff", "#e3d6ea", "#c4afcc");
 const CACHE = {
   body: mat("#a99dba", "#7a6f8c", "#544a66"),
@@ -677,37 +677,36 @@ function ammoPack(tones: Tones): Mesh {
   return mesh;
 }
 
-// Upgrade pickup: two chevron blocks, as deep as they are tall, facing the viewer. The climbing
-// light lights the lower block, then the upper.
-const AMBER_LIT: Tones = ["#ffffff", "#ffe9c0", "#f0bd68"];
+// Upgrade pickup: two flat chevrons facing the viewer, one above the other with a clear gap
+// between them. Each is one tone; the climbing light brightens the lower, then the upper.
+const flat = (colour: string): Tones => [colour, colour, colour];
+const CHEVRON = flat("#f0bd68");
+const CHEVRON_LIT = flat("#fff2cc");
 function upgradeChevrons(lit?: "lower" | "upper"): Mesh {
   const mesh: Mesh = [];
   const chevron = [
     [-8, 0],
     [0, 6],
     [8, 0],
-    [8, -4.4],
-    [0, 1.6],
-    [-8, -4.4],
+    [8, -3.2],
+    [0, 2.8],
+    [-8, -3.2],
   ] as const;
   for (const [name, z] of [
     ["lower", 0],
-    ["upper", 7],
+    ["upper", 9.4],
   ] as const) {
     meshExtrude(
       mesh,
-      chevron.map(([x, y]): Point => {
-        const across = along(RIGHT, x, z + y);
-        return [across[0] - NEAR[0] * 3, across[1] - NEAR[1] * 3, across[2]];
-      }),
-      along(NEAR, 6),
-      lit === name ? AMBER_LIT : AMBER,
+      chevron.map(([x, y]): Point => along(RIGHT, x, z + y)),
+      along(NEAR, 1),
+      lit === name ? CHEVRON_LIT : CHEVRON,
     );
   }
   return mesh;
 }
 
-// Holodisk: one thick disc on edge: pearl rim, hologram face, dark hub. It faces the viewer at
+// Holodisk: one thick disc on edge: black rim, hologram face, dark hub. It faces the viewer at
 // rest and turns `turn` degrees about its upright diameter.
 function holodisk(turn = 0): Mesh {
   const mesh: Mesh = [];
@@ -724,7 +723,7 @@ function holodisk(turn = 0): Mesh {
 // The turn's frames in strip order: rest, turn 1, edge-on, turn 2.
 const HOLODISK_TURN = [0, 50, 90, 130] as const;
 
-// Holodisk waypoint beacon: a keel, a pearl dish tier, a dark collar and one hologram lamp.
+// Holodisk waypoint beacon: a keel, a black dish tier, a dark collar and one hologram lamp.
 function holodiskBeacon(lit: boolean): Mesh {
   const mesh: Mesh = [];
   meshTube(mesh, [0, 0, -4], [0, 0, -15], 7, 2.5, HOLO.trim, 24);
@@ -770,8 +769,9 @@ export type FriendlyObject = {
   }[];
   // Fields the manifest rows keep, beyond id, path, size and pivot.
   row: Readonly<Record<string, unknown>>;
-  // Convex collision parts ship for objects Ada collects.
-  collision?: boolean;
+  // Convex collision parts ship for objects Ada collects: traced from the drawn outline, or
+  // its convex hull for an object drawn in separate pieces.
+  collision?: boolean | "hull";
   // The frames are one manifest row: a strip in one nested root, left to right, indexed by the
   // row's `frames` names as the shipped strips are. The row takes the first frame's id.
   strip?: true;
@@ -843,6 +843,7 @@ export function friendlyObjects(): FriendlyObject[] {
     },
     {
       ...strip,
+      collision: "hull",
       key: "upgradeChevrons",
       name: "Upgrade pickup",
       fit: [16, 16],
