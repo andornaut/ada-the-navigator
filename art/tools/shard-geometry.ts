@@ -15,7 +15,7 @@ type Group = { kind: Kind; parts: Part[]; from?: number; to?: number };
 // Fixed per-shard draws: direction jitter (rad), drift in hull half-spans, signed spin (rad)
 // and lift (model units). Shard i of every archetype uses row i: wedges in cut order, then
 // loose parts in model order, then the four flecks.
-const SEEDS: readonly (readonly [number, number, number, number])[] = [
+export const SEEDS: readonly (readonly [number, number, number, number])[] = [
   [0.0251, 0.5597, -1.5187, -1.0677],
   [-0.2898, 0.5755, -0.7816, 0.8207],
   [0.2288, 0.4871, -1.2676, 2.247],
@@ -32,8 +32,8 @@ const SEEDS: readonly (readonly [number, number, number, number])[] = [
   [-0.0307, 0.702, 1.1267, 2.9774],
 ];
 // Fleck plan angles (rad) around the hull centre.
-const FLECKS = [2.0347, 0.9478, 4.0899, 0.4551];
-const FLECK_DISTANCE = 1.5;
+export const FLECKS = [2.0347, 0.9478, 4.0899, 0.4551];
+export const FLECK_DISTANCE = 1.5;
 
 // Keep the part of `poly` left of the directed line a -> b (Sutherland-Hodgman).
 function clip(

@@ -98,7 +98,10 @@ export function jets(craft: Craft, collision?: (yaw: number) => V2[][]): string 
   );
 }
 
-function packHullRoots(frame: number, sources: readonly { id: string; svg: string }[]): string {
+export function packHullRoots(
+  frame: number,
+  sources: readonly { id: string; svg: string }[],
+): string {
   const namespace = 'xmlns="http://www.w3.org/2000/svg"';
   const root = (size: number) =>
     `<svg ${namespace} width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
