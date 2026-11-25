@@ -410,6 +410,12 @@ salvaged ships do not. One nonstacking local allowance adds two slots near a
 capital ship or a hostile station. Multiple qualifying ships and stations never
 add more than two slots, and friendly stations do not qualify.
 
+The local admission budget check does not apply to salvage wrecks. A salvage
+site's disabled frigate is placed without fitting the local budget and then
+counts as a disabled hull toward other groups' budgets; its exclusion zone keeps
+ambient groups out of its neighbourhood
+([Spawn targets](rules.md#spawn-targets)).
+
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
 
@@ -436,7 +442,10 @@ its encounter spacing (the lattice pitch): the quiet distance of 1800 world unit
 rounded up to whole 512-unit chunks (at least three), divided by the square root
 of the rate. The minimum group distance is the quiet distance divided by the
 square root of the rate, and the anchor box width is the encounter spacing minus
-the minimum group distance.
+the minimum group distance. The cell occupancy, the share of lattice cells that
+hold a group, is 0.75 times the galaxy's density factor. The factor scales enemy
+densities only; the encounter rate, spacing and minimum group distance do not
+change with it.
 
 Every galaxy uses three geographic regions measured from the galactic center at
 the encounter location: inner below 10000 world units, middle from 10000 to below
@@ -449,14 +458,14 @@ boundary (9000–11000 and 24000–26000). Numeric budgets and archetype limits 
 discretely at 10000 and 25000; they do not interpolate. The fresh-chunk ledger
 continues to exclude standing, teleports and revisits for quest pacing.
 
-| Position | Galaxy    | Encounter rate | Encounter spacing (world units) | Minimum group distance | Anchor box width | Inner / middle / outer budget | Archetype limit |
-| -------: | --------- | -------------: | ------------------------------: | ---------------------: | ---------------: | ----------------------------- | --------------- |
-|        1 | Sunflower |          1.725 |                            1559 |                   1370 |              189 | 3 / 4 / 5                     | 1 / 2 / 2       |
-|        2 | Whirlpool |         1.8975 |                            1487 |                   1307 |              180 | 4 / 5 / 6                     | 2               |
-|        3 | Needle    |           2.07 |                            1423 |                   1251 |              172 | 4 / 5 / 6                     | 3               |
-|        4 | Andromeda |         2.2425 |                            1368 |                   1202 |              166 | 5 / 6 / 7                     | 4               |
-|        5 | Cartwheel |          2.415 |                            1318 |                   1158 |              160 | 5 / 6 / 7                     | 4               |
-|        6 | Phantom   |         2.5875 |                            1273 |                   1119 |              154 | 6 / 7 / 8                     | 4               |
+| Position | Galaxy    | Encounter rate | Encounter spacing (world units) | Minimum group distance | Anchor box width | Density factor | Cell occupancy | Inner / middle / outer budget | Archetype limit |
+| -------: | --------- | -------------: | ------------------------------: | ---------------------: | ---------------: | -------------: | -------------: | ----------------------------- | --------------- |
+|        1 | Sunflower |          1.725 |                            1559 |                   1370 |              189 |           0.61 |         0.4575 | 3 / 4 / 5                     | 1 / 2 / 2       |
+|        2 | Whirlpool |         1.8975 |                            1487 |                   1307 |              180 |           0.50 |          0.375 | 4 / 5 / 6                     | 2               |
+|        3 | Needle    |           2.07 |                            1423 |                   1251 |              172 |           0.50 |          0.375 | 4 / 5 / 6                     | 3               |
+|        4 | Andromeda |         2.2425 |                            1368 |                   1202 |              166 |           0.52 |           0.39 | 5 / 6 / 7                     | 4               |
+|        5 | Cartwheel |          2.415 |                            1318 |                   1158 |              160 |           0.54 |          0.405 | 5 / 6 / 7                     | 4               |
+|        6 | Phantom   |         2.5875 |                            1273 |                   1119 |              154 |           0.77 |         0.5775 | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
 galaxies retain their other encounter groups, heavy weights and archetype limits.
