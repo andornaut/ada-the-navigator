@@ -1564,7 +1564,9 @@ apply to the planner's output.
   counts as one dropped mover under the rule that blocked its last path; no
   replacement is chosen. A moving group shares one velocity, so its rocks stay
   still together.
-- Once moving, a moving rock may overlap or hit any object.
+- Once moving, a moving rock may hit any object and ricochets off other
+  ambient asteroids. Debris-river rocks, whale quest debris and legacy orbiting
+  rocks keep their authored behaviour and do not ricochet.
 
 Densities are mean counts per open 3x3-chunk area, one ninth per chunk. Each
 kind's request in a chunk shrinks by the share of the chunk covered by the
