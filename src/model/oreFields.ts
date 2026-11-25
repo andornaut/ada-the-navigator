@@ -1,7 +1,7 @@
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type { SpaceObject, Vec } from "./types.ts";
+import type { Vec } from "./types.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -32,11 +32,6 @@ export interface OreField extends Vec {
 
 /** The role that marks an ordinary rock placed in an ore field. */
 export const ORE_FIELD_ROLE = "ore-field";
-
-/** Whether a flight object is a rock placed in an ore field. */
-export function isOreFieldRock(object: Pick<SpaceObject, "kind" | "role">): boolean {
-  return object.kind === "rock" && object.role === ORE_FIELD_ROLE;
-}
 
 /** Fixed seeds for the galaxies with ore fields, so ore fields are the same on every flight. */
 const GALAXY_SEEDS: Readonly<Partial<Record<GalaxyNumber, number>>> = {

@@ -326,15 +326,15 @@ export type AssetsContext = Pick<
 >;
 
 /**
- * Art's rock frames load after the scene starts, at display size times r: each rock's frame 0
- * and the backdrop sprites first, then complete spin sets for visible variants, so starting
- * the scene never waits on 202 SVGs.
+ * Art's rock frames load after the scene starts, at display size times r: each plain and crystal
+ * rock's frame 0 and the backdrop sprites first, then complete spin sets for visible variants,
+ * so starting the scene never waits on every SVG.
  */
 export function loadAsteroidArt(scene: AssetsContext): void {
   const catalog = ASTEROID_ART;
   scene.shell.setAsteroidArt(false);
   const first = [
-    ...catalog.asteroids.map((rock) => rock.frames[0]!.file),
+    ...[...catalog.asteroids, ...catalog.crystals.rocks].map((rock) => rock.frames[0]!.file),
     ...catalog.backdrop.sprites.map((sprite) => sprite.file),
   ];
   const ready = (): void => {
@@ -882,7 +882,7 @@ function registerRockSheets(rocks: readonly AsteroidArt[], intrinsicScale: numbe
     });
   }
 }
-registerRockSheets(ASTEROID_ART.asteroids, 1);
+registerRockSheets([...ASTEROID_ART.asteroids, ...ASTEROID_ART.crystals.rocks], 1);
 
 function queueRockSvg(scene: AssetsContext, file: string, path: string): void {
   const factor = scene.asteroidArt.displayScale;

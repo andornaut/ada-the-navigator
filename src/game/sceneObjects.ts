@@ -25,6 +25,7 @@ import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import {
   type AsteroidOutline,
+  drawnRockId,
   driftChips,
   footprintOutline,
   hexNumber,
@@ -982,7 +983,15 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
   const radius = ratio
     ? Math.max(object.radius, ratio * CONTENT.tuning.flight.shipRadius * 2)
     : object.radius;
-  const rock = object.asteroid ? rockArt(object.asteroid) : undefined;
+  // A crystal rock draws its plain rock's variant, which keeps the plain rock's geometry.
+  const rock = object.asteroid
+    ? rockArt(
+        drawnRockId(scene.asteroidArt.crystals, {
+          asteroid: object.asteroid,
+          crystals: object.crystals,
+        }),
+      )
+    : undefined;
   // Art's rocks reach past their footprint; cull by the drawn silhouette's reach.
   const reach = Math.max(radius, scenerySilhouette(object)?.reach ?? 0);
   if (

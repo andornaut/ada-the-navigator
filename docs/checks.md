@@ -285,7 +285,10 @@ Mining Freighter beside a large rock, six frames 300 ms apart. `resources` captu
 dark and a light field and every UI view that draws their icons. `markers`
 takes the edge markers of an identified enemy, heavy, route guard and hostile
 station and an unidentified contact on Cartwheel's light field and Phantom's dark
-field, with Phantom's flagship as the story's target there. The nose sets
+field, with Phantom's flagship as the story's target there. `crystal-rocks`
+lays plain rocks beside small-crystal variants of the same shapes at game scale
+in each galaxy outside Cartwheel, every variant in one of them, and Cartwheel's
+first ore field, each rock full of crystals. The nose sets
 (`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,
 `nose-heavy-missile` and `nose-phaser`) fire one weapon into open space at
 headings 0 to 56 of 64 in steps of 8: Ada's idle hull, then the first four

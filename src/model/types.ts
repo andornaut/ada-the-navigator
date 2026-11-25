@@ -1,5 +1,6 @@
 import type { ActivityId } from "../data/activities.ts";
 import type { AndromedaProgress } from "../data/andromeda.ts";
+import type { CrystalFlag } from "../data/asteroidCatalog.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
 import type { HeavyHullProfile, OrdinaryHeavy } from "../data/enemyIdentity.ts";
@@ -65,6 +66,12 @@ export interface SpaceObject extends Vec {
   kind: ObjectKind;
   /** Asteroid variant id for a rock with a polygon collision shape. */
   asteroid?: string;
+  /**
+   * A crystal rock's flag, set where the rock is placed (art/asteroids.md "Crystal rocks"): it
+   * draws the plain rock's variant for the flag and yields ore (gameplay/economy.md). Absent is
+   * plain.
+   */
+  crystals?: CrystalFlag;
   /** Seeded drift path of an asteroid around its anchor `x`, `y`. */
   orbit?: Vec & { phase: number; radius: number; rate: number };
   /** A debris river rock's current and its arc position along the centre line at time 0. */
@@ -469,6 +476,8 @@ export type FlightEvent =
   | {
       type: "asteroidDestroyed";
       asteroid: string;
+      /** The rock's crystals flag, so the break draws its variant; absent for a plain rock. */
+      crystals?: CrystalFlag;
       id: string;
       x: number;
       y: number;

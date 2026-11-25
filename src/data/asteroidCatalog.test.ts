@@ -11,6 +11,7 @@ const FILE = JSON.parse(readFileSync(`${PUBLIC}/art/asteroids.json`, "utf8")) as
   string,
   unknown
 > & { asteroids: Record<string, unknown>[] };
+const CRYSTALS = FILE.crystals as Record<string, unknown>;
 const MANIFEST = JSON.parse(readFileSync(`${PUBLIC}/art/manifest.json`, "utf8")) as {
   asteroids?: string;
 };
@@ -64,6 +65,32 @@ describe("Art's asteroid catalog, version 1", () => {
     expect(Object.keys(catalog.tints).filter((id) => id !== "base" && !ids.includes(id))).toEqual(
       [],
     );
+  });
+
+  it("reads crystal variants that keep their plain rocks' size, frames and geometry", () => {
+    const { crystals } = catalog;
+    expect(crystals.ramp).toHaveLength(5);
+    expect(crystals.rocks).toHaveLength(17);
+    const plain = new Map(catalog.asteroids.map((rock) => [rock.id, rock]));
+    for (const [id, variants] of Object.entries(crystals.variants)) {
+      const base = plain.get(id)!;
+      expect(base, id).toBeDefined();
+      // Small rocks are never crystal rocks; ore fields place no huge rocks.
+      expect(Object.keys(variants).sort(), id).toEqual(
+        base.size === "small" ? [] : base.size === "huge" ? ["small"] : ["full", "small"],
+      );
+      for (const variantId of Object.values(variants)) {
+        const variant = crystals.rocks.find((rock) => rock.id === variantId)!;
+        expect(variant.size).toBe(base.size);
+        expect(variant.pivot).toEqual(base.pivot);
+        expect(variant.frame).toEqual(base.frame);
+        expect(variant.spin).toEqual(base.spin);
+        expect(
+          variant.frames.map(({ collision, footprint }) => ({ collision, footprint })),
+        ).toEqual(base.frames.map(({ collision, footprint }) => ({ collision, footprint })));
+        expect(existsSync(`${PUBLIC}${variant.svgSheet!}`), variant.svgSheet).toBe(true);
+      }
+    }
   });
 
   const first = FILE.asteroids[0]!;
@@ -134,6 +161,60 @@ describe("Art's asteroid catalog, version 1", () => {
     ],
     ["backdrop tints without the base field", { ...FILE, tints: { sunflower: {} } }],
     ["tints at the backdrop instead of the root", { ...FILE, tints: undefined }],
+    ["no crystals", { ...FILE, crystals: undefined }],
+    [
+      "a crystal selection under another flag",
+      {
+        ...FILE,
+        crystals: {
+          ...CRYSTALS,
+          selection: { ...(CRYSTALS.selection as object), flag: "ore" },
+        },
+      },
+    ],
+    [
+      "a crystal share above 1",
+      {
+        ...FILE,
+        crystals: {
+          ...CRYSTALS,
+          selection: {
+            ...(CRYSTALS.selection as object),
+            ordinary: { ...(CRYSTALS.selection as { ordinary: object }).ordinary, share: 1.5 },
+          },
+        },
+      },
+    ],
+    [
+      "a variant naming no crystal rock",
+      {
+        ...FILE,
+        crystals: { ...CRYSTALS, variants: { "asteroid-m1": { small: "asteroid-m1-glow" } } },
+      },
+    ],
+    [
+      "a variant of another size",
+      {
+        ...FILE,
+        crystals: {
+          ...CRYSTALS,
+          variants: {
+            ...(CRYSTALS.variants as object),
+            "asteroid-h1": { small: "asteroid-l1-crystals-small" },
+          },
+        },
+      },
+    ],
+    [
+      "a crystal rock no variant names",
+      {
+        ...FILE,
+        crystals: {
+          ...CRYSTALS,
+          variants: { ...(CRYSTALS.variants as object), "asteroid-h3": {} },
+        },
+      },
+    ],
   ])("rejects %s", (_, file) => {
     expect(readAsteroidCatalog(JSON.parse(JSON.stringify(file)))).toBeUndefined();
   });

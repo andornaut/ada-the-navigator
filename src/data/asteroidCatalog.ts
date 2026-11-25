@@ -53,6 +53,38 @@ export interface BackdropTint {
   readonly backdropLit: string;
   readonly backdropSide: string;
 }
+
+/** A crystal rock's look and yield flag (art/asteroids.md "Crystal rocks"); absent means plain. */
+export const CRYSTAL_FLAGS = ["small", "full"] as const;
+export type CrystalFlag = (typeof CRYSTAL_FLAGS)[number];
+
+/**
+ * Which rocks are crystal rocks: every ore-field rock takes `oreField`; an ordinary placed rock of
+ * one of `sizes`, outside the `except` galaxies, takes `value` when its seeded unit under `salt`
+ * is below `share`.
+ */
+export interface CrystalSelection {
+  readonly oreField: CrystalFlag;
+  readonly ordinary: {
+    readonly except: readonly string[];
+    readonly salt: string;
+    readonly share: number;
+    readonly sizes: readonly AsteroidSize[];
+    readonly value: CrystalFlag;
+  };
+}
+
+/** Art's crystal rocks: the selection rule and each plain rock's variants, drawn in its place. */
+export interface AsteroidCrystals {
+  /** The ore ramp, lit to shadow. */
+  readonly ramp: readonly string[];
+  readonly selection: CrystalSelection;
+  /** Each plain rock id's variant rock ids by flag; a rock without crystals has none. */
+  readonly variants: Readonly<Record<string, Partial<Record<CrystalFlag, string>>>>;
+  /** The variant rocks, outside `asteroids` so placement and saves pick only plain shapes. */
+  readonly rocks: readonly AsteroidArt[];
+}
+
 export interface AsteroidArtCatalog {
   readonly version: 1;
   readonly displayScale: number;
@@ -66,6 +98,7 @@ export interface AsteroidArtCatalog {
   };
   /** Backdrop colours for `base` and each galaxy id. */
   readonly tints: Readonly<Record<string, BackdropTint>>;
+  readonly crystals: AsteroidCrystals;
 }
 
 type Fields = Record<string, unknown>;
@@ -222,6 +255,95 @@ function readTints(value: unknown): Record<string, BackdropTint> | undefined {
   return tints;
 }
 
+const flag = (value: unknown): value is CrystalFlag => CRYSTAL_FLAGS.includes(value as CrystalFlag);
+
+/**
+ * The `crystals` key: the selection keyed by the `crystals` flag, and variants that each name a
+ * crystal rock of their plain rock's size and frame count when that plain rock is in `asteroids`.
+ * Every crystal rock is some plain rock's variant.
+ */
+function readCrystals(
+  asteroids: ReadonlyMap<string, AsteroidArt>,
+  value: unknown,
+): AsteroidCrystals | undefined {
+  const root = fields(value);
+  const selection = fields(root?.selection);
+  const ordinary = fields(selection?.ordinary);
+  const variants = fields(root?.variants);
+  if (
+    !root ||
+    !Array.isArray(root.ramp) ||
+    !root.ramp.length ||
+    !root.ramp.every(hex) ||
+    !selection ||
+    selection.flag !== "crystals" ||
+    !flag(selection.oreField) ||
+    !ordinary ||
+    !flag(ordinary.value) ||
+    !Array.isArray(ordinary.sizes) ||
+    !ordinary.sizes.every((size) => ASTEROID_SIZES.includes(size as AsteroidSize)) ||
+    !finite(ordinary.share) ||
+    ordinary.share < 0 ||
+    ordinary.share > 1 ||
+    !text(ordinary.salt) ||
+    !Array.isArray(ordinary.except) ||
+    !ordinary.except.every(text) ||
+    !variants ||
+    !Array.isArray(root.rocks)
+  ) {
+    return undefined;
+  }
+  const rocks = new Map<string, AsteroidArt>();
+  for (const entry of root.rocks as unknown[]) {
+    const rock = readAsteroid(entry);
+    if (!rock || rocks.has(rock.id) || asteroids.has(rock.id)) {
+      return undefined;
+    }
+    rocks.set(rock.id, rock);
+  }
+  const read: Record<string, Partial<Record<CrystalFlag, string>>> = {};
+  const named = new Set<string>();
+  for (const [plain, entry] of Object.entries(variants)) {
+    const byFlag = fields(entry);
+    if (!byFlag) {
+      return undefined;
+    }
+    const base = asteroids.get(plain);
+    const variant: Partial<Record<CrystalFlag, string>> = {};
+    for (const [key, id] of Object.entries(byFlag)) {
+      const rock = typeof id === "string" ? rocks.get(id) : undefined;
+      if (
+        !flag(key) ||
+        !rock ||
+        (base && (rock.size !== base.size || rock.frames.length !== base.frames.length))
+      ) {
+        return undefined;
+      }
+      variant[key] = rock.id;
+      named.add(rock.id);
+    }
+    read[plain] = variant;
+  }
+  if (named.size !== rocks.size) {
+    return undefined;
+  }
+  return {
+    ramp: [...(root.ramp as string[])],
+    rocks: [...rocks.values()],
+    selection: {
+      ordinary: {
+        except: [...(ordinary.except as string[])],
+        salt: ordinary.salt,
+        share: ordinary.share,
+        sizes: [...(ordinary.sizes as AsteroidSize[])],
+        value: ordinary.value,
+      },
+      oreField: selection.oreField,
+    },
+    variants: read,
+  };
+}
+
 /** Validate Art's asteroid catalog, version 1; any malformed part rejects the file. */
 export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefined {
   const root = fields(value);
@@ -258,6 +380,10 @@ export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefi
     ids.add(entry.id);
     asteroids.push(entry);
   }
+  const crystals = readCrystals(new Map(asteroids.map((rock) => [rock.id, rock])), root.crystals);
+  if (!crystals) {
+    return undefined;
+  }
   const sprites: BackdropSprite[] = [];
   for (const value of backdrop.sprites as unknown[]) {
     const sprite = readBackdropSprite(value);
@@ -273,6 +399,7 @@ export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefi
       sideScale: backdrop.sideScale,
       sprites,
     },
+    crystals,
     displayScale: root.displayScale,
     stone: [...(root.stone as string[])],
     tints,

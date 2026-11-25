@@ -1,4 +1,4 @@
-import type { AsteroidSize } from "../data/asteroidCatalog.ts";
+import { ASTEROID_ART, type AsteroidSize } from "../data/asteroidCatalog.ts";
 import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -30,7 +30,7 @@ import {
   SPAWN_TARGETS,
 } from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
+import { ASTEROID_SHAPES, galaxyCrystals, placementRadius } from "./asteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { ambientPackId, packMemberId } from "./geography.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
@@ -230,6 +230,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
       ],
     };
   });
+  const crystals = galaxyCrystals(ASTEROID_ART.crystals.selection, galaxy);
   return {
     admission: {
       allowance: HOSTILE_LOCAL_ALLOWANCE,
@@ -240,6 +241,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     blend: SPAWN_BLEND_WIDTH,
     chunkSize: tuning.chunkSize,
     corridor: flight.shipRadius + flight.shipRadius,
+    ...(crystals ? { crystals } : {}),
     gap: SPAWN_GAP,
     lattice: {
       cell: encounterLatticeSpacing(galaxy) * tuning.chunkSize,

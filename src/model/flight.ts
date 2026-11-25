@@ -1,6 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/runtime/random";
 
-import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
+import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
+import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
@@ -221,7 +222,7 @@ import {
   needleRims,
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
-import { isOreFieldRock, ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
+import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import {
   orePickupSize,
   pickupOutline,
@@ -1110,6 +1111,7 @@ function placeRock(placement: SpawnPlacement, existing: Set<string>, flight: Fli
     radius: shape.radius,
     x: placement.x,
     y: placement.y,
+    ...(placement.crystals ? { crystals: placement.crystals } : {}),
     ...(placement.moving ? { velocity: { ...placement.moving.velocity } } : {}),
   };
   canonicalObject(flight, object);
@@ -1297,7 +1299,7 @@ export const PLATFORM_FACING: Readonly<Vec> = { x: 1, y: 0 };
 
 /**
  * Cartwheel's seeded ore fields whose centres fall in chunk (x, y): their rocks, ordinary
- * asteroids with their size's HP marked with `ORE_FIELD_ROLE`, and,
+ * asteroids with their size's HP marked with `ORE_FIELD_ROLE` and Art's ore-field crystals, and,
  * at a guarded field, a retained platform facing `PLATFORM_FACING`. A field within the
  * ore-field clearance of a station, the hub or a quantum jump arrival is left out.
  */
@@ -1333,6 +1335,7 @@ function placeOreFields(
       const shape = ASTEROID_SHAPES.get(rock.asteroid)!;
       const object: SpaceObject = {
         ...rock,
+        crystals: ASTEROID_ART.crystals.selection.oreField,
         hp: hp[shape.size],
         id: `${field.id}:${index}`,
         kind: "rock",
@@ -4743,6 +4746,7 @@ function hit(
   if (object.asteroid) {
     events.push({
       asteroid: object.asteroid,
+      ...(object.crystals ? { crystals: object.crystals } : {}),
       id: object.id,
       type: "asteroidDestroyed",
       x: object.x,
@@ -4759,19 +4763,19 @@ function hit(
 }
 
 /**
- * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. An ore field
- * rock skips the ammo roll and gives at least `ORE_FIELDS.minimumOre`; further ore and Stardust
- * roll as usual. A moving rock rolls under its placed rock's id, so it drops what that rock
- * would have dropped had it stayed still.
+ * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. A crystal rock
+ * skips the ammo roll and gives at least `CRYSTAL_MINIMUM_ORE`; further ore and Stardust roll as
+ * usual. A moving rock rolls under its placed rock's id and keeps its flag, so it drops what that
+ * rock would have dropped had it stayed still.
  */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
   const size = asteroidSize(object);
-  const oreField = isOreFieldRock(object);
+  const crystal = object.crystals !== undefined;
   const id = object.id.startsWith(MOVING_ROCK_PREFIX)
     ? object.id.slice(MOVING_ROCK_PREFIX.length)
     : object.id;
   if (
-    !oreField &&
+    !crystal &&
     rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${id}`))
   ) {
     pushAmmoPack(content, object, flight);
@@ -4779,7 +4783,7 @@ function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightS
   }
   const next = dropRandom(flight.seed, id);
   const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
-  const loot = oreField ? { ...rolled, ore: Math.max(ORE_FIELDS.minimumOre, rolled.ore) } : rolled;
+  const loot = crystal ? { ...rolled, ore: Math.max(CRYSTAL_MINIMUM_ORE, rolled.ore) } : rolled;
   const amounts = splitResourcePickup(loot.ore);
   const orePieces = amounts.length;
   const widths = amounts.map(orePickupSize);

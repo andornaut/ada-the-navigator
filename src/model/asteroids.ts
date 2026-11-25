@@ -3,7 +3,11 @@ import {
   type AsteroidArt,
   type AsteroidArtCatalog,
   type AsteroidSize,
+  type CrystalFlag,
+  type CrystalSelection,
 } from "../data/asteroidCatalog.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import {
   closestOnSegment,
   type Contact,
@@ -90,6 +94,47 @@ function hash(seed: number, text: string): number {
 /** A stable value in [0, 1) for a seed, an id and a salt. */
 function unit(seed: number, id: string, salt: string): number {
   return hash(seed, `${id}:${salt}`) / 0x100000000;
+}
+
+/** One galaxy's ordinary crystal rule: the plain shapes it applies to, by id. */
+export interface PlacedCrystals {
+  readonly salt: string;
+  readonly share: number;
+  readonly shapes: readonly string[];
+  readonly value: CrystalFlag;
+}
+
+/**
+ * Art's ordinary crystal selection for a galaxy (art/asteroids.md "Crystal rocks"), resolved to
+ * the plain shapes of its sizes; undefined in a galaxy it excepts.
+ */
+export function galaxyCrystals(
+  selection: CrystalSelection,
+  galaxy: GalaxyNumber,
+): PlacedCrystals | undefined {
+  const { except, salt, share, sizes, value } = selection.ordinary;
+  if (except.includes(GALAXY_ID[galaxy])) {
+    return undefined;
+  }
+  const shapes = [...ASTEROID_SHAPES.values()]
+    .filter((shape) => sizes.includes(shape.size))
+    .map((shape) => shape.id);
+  return { salt, shapes, share, value };
+}
+
+/**
+ * An ordinary placed rock's crystals flag: the rule's value for a rock of one of its shapes whose
+ * unit under the world seed, its placement id and the rule's salt is below its share; otherwise
+ * absent. A moving rock passes its placed rock's id, so it keeps that rock's flag.
+ */
+export function placedRockCrystals(
+  rule: PlacedCrystals | undefined,
+  seed: number,
+  rock: { readonly id: string; readonly shape: string },
+): CrystalFlag | undefined {
+  return rule && rule.shapes.includes(rock.shape) && unit(seed, rock.id, rule.salt) < rule.share
+    ? rule.value
+    : undefined;
 }
 
 /**

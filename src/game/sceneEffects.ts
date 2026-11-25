@@ -4,7 +4,7 @@ import type { Scene } from "phaser";
 
 import { CONTENT } from "../data/content.ts";
 import { rockFrame } from "../model/asteroids.ts";
-import { playDepth, rockArt } from "./asteroidArt.ts";
+import { drawnRockId, playDepth, rockArt } from "./asteroidArt.ts";
 import { reducedAt } from "./destructionArt.ts";
 import { zipAt } from "./pickupZip.ts";
 import type { GameScene } from "./scene.ts";
@@ -142,7 +142,10 @@ export function drawZips(scene: EffectsContext): void {
   });
 }
 
-/** Each rock destroyed this step breaks where it stood, in the frame it last showed. */
+/**
+ * Each rock destroyed this step breaks where it stood, in the frame it last showed, as the rock it
+ * drew: a crystal rock's variant for its flag.
+ */
 export function startRockBreaks(scene: EffectsContext, nowMs: number): void {
   const flight = scene.model.state.flight;
   const catalog = scene.asteroidArt;
@@ -150,7 +153,7 @@ export function startRockBreaks(scene: EffectsContext, nowMs: number): void {
     return;
   }
   for (const event of scene.model.flightEvents) {
-    const art = event.type === "asteroidDestroyed" && rockArt(event.asteroid);
+    const art = event.type === "asteroidDestroyed" && rockArt(drawnRockId(catalog.crystals, event));
     if (art && event.type === "asteroidDestroyed") {
       scene.rockBreaks.push({
         art,

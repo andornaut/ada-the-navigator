@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
-import type { AsteroidSize } from "../data/asteroidCatalog.ts";
-import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
+import { type AsteroidSize, CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
+import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import {
@@ -16,7 +16,6 @@ import {
 } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog, HEAVIES } from "../data/enemyCatalog.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
-import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
@@ -37,7 +36,6 @@ import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
-import { ORE_FIELD_ROLE } from "./oreFields.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
@@ -918,7 +916,7 @@ describe("Stardust drops", () => {
     expect(dropped.every((object) => object.ammoPack && !object.upgrade)).toBe(true);
   });
 
-  it("gives at least one ore and never an ammo pack from a destroyed ore field rock", () => {
+  it("gives at least one ore and never an ammo pack from a destroyed crystal rock", () => {
     const seed = 77;
     const ids = Array.from({ length: 4000 }, (_, index) => `ore:0,0:${index}`);
     // A rock whose ammo roll hits, and one whose ordinary roll gives no ore.
@@ -931,16 +929,16 @@ describe("Stardust drops", () => {
     expect(ammoId).toBeDefined();
     expect(orelessId).toBeDefined();
     const shape = ASTEROID_SHAPES.get("asteroid-m2")!;
-    const destroy = (id: string, role?: string) => {
+    const destroy = (id: string, crystals?: CrystalFlag, moving = false) => {
       const value = flight(seed);
       value.ownedWeapons = ["phaser"];
       const rock: SpaceObject = {
         asteroid: shape.id,
+        ...(crystals ? { crystals } : {}),
         hp: 1,
-        id,
-        kind: "rock",
+        id: moving ? `${MOVING_ROCK_PREFIX}${id}` : id,
+        kind: moving ? "debris" : "rock",
         radius: shape.radius,
-        ...(role ? { role } : {}),
         x: 600,
         y: 0,
       };
@@ -949,21 +947,29 @@ describe("Stardust drops", () => {
       stepFlight(CONTENT, 1 / 60, idle, value);
       return value;
     };
+    // Both flags, on a static rock and on a moving one, which rolls under its placed rock's id.
     for (const id of [ammoId, orelessId]) {
       const rolled = rollAsteroidLoot(ASTEROID_LOOT, "medium", dropRandom(seed, id));
-      const value = destroy(id, ORE_FIELD_ROLE);
-      expect(value.objects.some((object) => object.ammoPack)).toBe(false);
-      expect(oreTotal(value.objects)).toBe(Math.max(ORE_FIELDS.minimumOre, rolled.ore));
-      expect(total(pickups(value))).toBe(rolled.stardust);
+      for (const crystals of CRYSTAL_FLAGS) {
+        for (const moving of [false, true]) {
+          const value = destroy(id, crystals, moving);
+          expect(value.objects.some((object) => object.ammoPack)).toBe(false);
+          expect(oreTotal(value.objects)).toBe(Math.max(CRYSTAL_MINIMUM_ORE, rolled.ore));
+          expect(total(pickups(value))).toBe(rolled.stardust);
+        }
+      }
     }
-    // The same rocks outside an ore field keep the ordinary roll, the exclusive ammo pack included.
+    expect(rollAsteroidLoot(ASTEROID_LOOT, "medium", dropRandom(seed, orelessId)).ore).toBeLessThan(
+      CRYSTAL_MINIMUM_ORE,
+    );
+    // The same plain rocks keep the ordinary roll, the exclusive ammo pack included.
     const ammo = destroy(ammoId);
     expect(ammo.objects.filter((object) => object.kind === "pickup")).toMatchObject([
       { ammoPack: true },
     ]);
     const plain = destroy(orelessId);
     expect(oreTotal(plain.objects)).toBe(0);
-    expect(ORE_FIELDS.minimumOre).toBe(1);
+    expect(CRYSTAL_MINIMUM_ORE).toBe(1);
   });
 });
 

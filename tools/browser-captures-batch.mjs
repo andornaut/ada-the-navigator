@@ -36,7 +36,8 @@ const [
   { JOB_POOL },
   { PROJECTS },
   { GALAXY_ID },
-  { readAsteroidCatalog },
+  { ASTEROID_ART, readAsteroidCatalog },
+  { ORE_FIELD_ROLE, oreFieldInCell },
   { backdropFixture },
   { uiIconUrl },
   { flightEncounterSeed },
@@ -65,6 +66,7 @@ const [
   import(new URL("../src/data/projects.ts", import.meta.url)),
   import(new URL("../src/data/galaxies.ts", import.meta.url)),
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
+  import(new URL("../src/model/oreFields.ts", import.meta.url)),
   import("./browser-support.mjs"),
   import(new URL("../src/data/uiIconUrl.ts", import.meta.url)),
   import(new URL("../src/model/flightTopology.ts", import.meta.url)),
@@ -74,6 +76,22 @@ const [
 
 const ALL = [1, 2, 3, 4, 5, 6];
 const scope = "Canonical visible-art batch fixture for before/after review";
+
+/**
+ * The crystal-rocks field around Ada at screen offsets: each entry's size, crystals flag (absent is
+ * plain) and slot, which turns its shape over the galaxies so every variant shows in one of them.
+ * A plain rock shares its slot with the crystal rock beside it, so the two compare.
+ */
+const CRYSTAL_FIELD = [
+  { screen: { x: -300, y: -120 }, size: "small", slot: 0 },
+  { screen: { x: -180, y: -100 }, size: "medium", slot: 0 },
+  { crystals: "small", screen: { x: -40, y: -110 }, size: "medium", slot: 0 },
+  { crystals: "small", screen: { x: 100, y: -100 }, size: "medium", slot: 1 },
+  { screen: { x: 260, y: -90 }, size: "large", slot: 0 },
+  { crystals: "small", screen: { x: -230, y: 110 }, size: "large", slot: 0 },
+  { screen: { x: -60, y: 140 }, size: "small", slot: 1 },
+  { crystals: "small", screen: { x: 180, y: 150 }, size: "huge", slot: 0 },
+];
 
 /** Runs `step` for each item in turn, one renderer at a time. */
 const inTurn = (items, step) =>
@@ -1493,10 +1511,63 @@ export function batchCaptures(ctx) {
     await ctx.pageShot("holodisk-icon.png");
   }
 
+  // Crystal rocks (art/asteroids.md "Crystal rocks") at game scale, held still: in each galaxy
+  // outside Cartwheel a field of plain rocks beside small-crystal variants of the same shapes,
+  // every variant shown in one of the galaxies, then Cartwheel's first clear ore field, each of
+  // its rocks full of crystals.
+  async function crystalRocks() {
+    const { selection } = ASTEROID_ART.crystals;
+    const shape = (size, index) => {
+      const ids = ASTEROID_ART.asteroids.filter((rock) => rock.size === size).map(({ id }) => id);
+      return ids[index % ids.length];
+    };
+    const rock = (fields) => ({
+      hp: 99,
+      kind: "rock",
+      radius: ASTEROID_ART.asteroids.find(({ id }) => id === fields.asteroid).footprintRadius,
+      ...fields,
+    });
+    const ordinary = ALL.filter((galaxy) => !selection.ordinary.except.includes(GALAXY_ID[galaxy]));
+    await inTurn(ordinary, async (galaxy) => {
+      const model = flightModel(galaxy);
+      const flight = model.state.flight;
+      const turn = ordinary.indexOf(galaxy);
+      flight.objects = CRYSTAL_FIELD.map(({ crystals, screen, size, slot }, index) =>
+        rock({
+          asteroid: shape(size, turn * 2 + slot),
+          ...(crystals ? { crystals } : {}),
+          id: `browser-crystal:${index}`,
+          ...at(flight, screen),
+        }),
+      );
+      await still(`crystal-rocks-${GALAXY_ID[galaxy]}`, model);
+    });
+    const model = flightModel(2);
+    const flight = model.state.flight;
+    let field = null;
+    for (let x = 1; !field; x++) {
+      field = oreFieldInCell(2, { x, y: 0 });
+    }
+    beside(flight, field, { x: 0, y: -20 });
+    flight.objects = field.rocks.map(({ asteroid, spinStart, x, y }, index) =>
+      rock({
+        asteroid,
+        crystals: selection.oreField,
+        id: `${field.id}:${index}`,
+        role: ORE_FIELD_ROLE,
+        spinStart,
+        x,
+        y,
+      }),
+    );
+    await still("crystal-rocks-cartwheel-ore-field", model);
+  }
+
   return {
     backdrops,
     controls,
     craft,
+    "crystal-rocks": crystalRocks,
     effects,
     "enemy-facing": enemyFacing,
     fleet,

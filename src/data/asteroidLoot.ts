@@ -21,6 +21,12 @@ export interface AsteroidLootContext {
   readonly yieldScale: number;
 }
 
+/**
+ * Least ore a destroyed crystal rock gives; it skips the ammo roll, and further ore and Stardust
+ * roll as usual (gameplay/economy.md "Earning Stardust").
+ */
+export const CRYSTAL_MINIMUM_ORE = 1;
+
 /** Raw units split independently before the class-wide ore quantity reduction. */
 export const ASTEROID_LOOT: AsteroidLootContext = {
   oreChance: 0.75,

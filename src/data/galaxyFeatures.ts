@@ -32,8 +32,6 @@ export const ORE_FIELDS = {
   jitter: 1500,
   /** Share of claim-jumper groups moved to an ore field. */
   jumperShare: 0.5,
-  /** Least ore a destroyed ore field rock gives; it skips the ammo roll (gameplay/economy.md). */
-  minimumOre: 1,
 } as const;
 
 /**

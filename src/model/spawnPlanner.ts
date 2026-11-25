@@ -7,6 +7,8 @@ import {
   weightedPick,
 } from "@andornaut/game-kit/runtime/random";
 
+import type { CrystalFlag } from "../data/asteroidCatalog.ts";
+import { type PlacedCrystals, placedRockCrystals } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellKey, type WorldGrid } from "./worldCells.ts";
 import { nearestImage, wrappedDelta } from "./worldGeometry.ts";
@@ -168,6 +170,11 @@ export interface SpawnRules {
   readonly blend?: number;
   readonly chunkSize: number;
   /**
+   * The ordinary crystal rule each static rock is flagged by under the world seed; moving rocks
+   * keep their placed rock's flag. Absent, no rock is a crystal rock.
+   */
+  readonly crystals?: PlacedCrystals;
+  /**
    * Half width of the open lanes along every chunk's edges and midlines: a static rock keeps its
    * radius plus this from each, so it sits inside one quadrant. Absent, rocks use the whole chunk.
    */
@@ -242,6 +249,8 @@ export interface SpawnPlacement extends Vec {
   readonly archetype?: string;
   readonly category: "enemy" | "rock";
   readonly chunk: string;
+  /** A crystal rock's flag; absent for a plain rock and for an enemy. */
+  readonly crystals?: CrystalFlag;
   /** The enemy group a member or escort belongs to. */
   readonly group?: string;
   readonly id: string;
@@ -768,14 +777,17 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             tally.drop(kind, placed.rejected.at(-1)!);
             continue;
           }
+          const id = `${kind}:${chunk.key}:${spawn}`;
+          const crystals = placedRockCrystals(rules.crystals, seeds.world, { id, shape: shape.id });
           const placement: SpawnPlacement = {
             category: "rock",
             chunk: chunk.key,
-            id: `${kind}:${chunk.key}:${spawn}`,
+            id,
             kind,
             radius: shape.radius,
             shape: shape.id,
             ...placed.at,
+            ...(crystals ? { crystals } : {}),
           };
           index.add(placement);
           placements.push(placement);

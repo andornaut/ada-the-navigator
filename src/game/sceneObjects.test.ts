@@ -10,7 +10,7 @@ import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { orePickupFrameSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { footprintOutline, hexNumber, playDepth, rockArt } from "./asteroidArt.ts";
+import { drawnRockId, footprintOutline, hexNumber, playDepth, rockArt } from "./asteroidArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
 
 // Execute the production render boundary without starting Phaser's DOM renderer.
@@ -94,6 +94,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     debrisPiece,
     debrisPieceIndex,
     drawStardust,
+    drawnRockId,
     footprintOutline,
     hexNumber,
     keylineSprite: vi.fn(),
@@ -219,6 +220,40 @@ describe("traveling debris rendering", () => {
     f.scene.model.state.flight.galaxy = 4;
     expect(f.context.drawTravelingDebris(f.scene, debris(), { x: 120, y: 140 })).toBe(false);
     expect(f.objectSprite).not.toHaveBeenCalled();
+  });
+});
+
+describe("crystal rock rendering", () => {
+  const rock = (asteroid: string, crystals?: SpaceObject["crystals"]): SpaceObject => ({
+    asteroid,
+    ...(crystals ? { crystals } : {}),
+    hp: 5,
+    id: "rock:0,0:3",
+    kind: "rock",
+    radius: 30,
+    x: 40,
+    y: 80,
+  });
+
+  it.each([
+    ["asteroid-m2", "small", "asteroid-m2-crystals-small"],
+    ["asteroid-l1", "full", "asteroid-l1-crystals-full"],
+    ["asteroid-h3", "small", "asteroid-h3-crystals-small"],
+    ["asteroid-m2", undefined, "asteroid-m2"],
+  ] as const)("draws %s flagged %s as %s at the plain rock's frame", (asteroid, crystals, id) => {
+    const f = fixture();
+    const object = rock(asteroid, crystals);
+    f.context.drawObject(f.scene, object);
+    const [, art, frame] = f.rockFrameTexture.mock.calls[0]!;
+    expect(art.id).toBe(id);
+    expect(frame).toBe(rockFrame(rockArt(asteroid)!, 314, false, object.id, 12.5));
+    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, `${id}-${frame}`);
+  });
+
+  it("draws the plain rock for a flag its shape has no variant for", () => {
+    const f = fixture();
+    f.context.drawObject(f.scene, rock("asteroid-h1", "full"));
+    expect(f.rockFrameTexture.mock.calls[0]![1].id).toBe("asteroid-h1");
   });
 });
 

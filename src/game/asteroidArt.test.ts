@@ -8,6 +8,7 @@ import {
   asteroidOutline,
   backdropRock,
   backdropTint,
+  drawnRockId,
   driftChips,
   footprintOutline,
   frameSilhouette,
@@ -141,6 +142,24 @@ describe("Art's asteroid sprites", () => {
     expect(playDepth(100)).toBeLessThan(playDepth(101));
     expect(playDepth(-50)).toBeGreaterThan(1.9);
     expect(playDepth(5000)).toBeLessThan(3);
-    expect(asteroidFiles(ART)).toHaveLength(204);
+    // 204 plain and backdrop SVGs, and 201 crystal frames: eight 24-frame medium variants and nine
+    // still large and huge ones.
+    expect(asteroidFiles(ART)).toHaveLength(405);
+  });
+
+  it("draws a crystal rock as its plain rock's variant for its flag, else the plain rock", () => {
+    expect(drawnRockId(ART.crystals, { asteroid: "asteroid-m1", crystals: "small" })).toBe(
+      "asteroid-m1-crystals-small",
+    );
+    expect(drawnRockId(ART.crystals, { asteroid: "asteroid-l3", crystals: "full" })).toBe(
+      "asteroid-l3-crystals-full",
+    );
+    expect(drawnRockId(ART.crystals, { asteroid: "asteroid-m1" })).toBe("asteroid-m1");
+    expect(drawnRockId(ART.crystals, { asteroid: "asteroid-s1", crystals: "small" })).toBe(
+      "asteroid-s1",
+    );
+    for (const variant of ART.crystals.rocks) {
+      expect(rockArt(variant.id)).toBe(variant);
+    }
   });
 });

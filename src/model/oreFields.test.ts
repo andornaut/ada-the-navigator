@@ -212,6 +212,7 @@ describe("ore fields", () => {
       expect(shape.size === "medium" || shape.size === "large").toBe(true);
       expect(rock).toMatchObject({
         asteroid,
+        crystals: "full",
         hp: hp[shape.size as keyof typeof hp],
         kind: "rock",
         radius: shape.radius,

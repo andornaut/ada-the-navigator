@@ -1,4 +1,5 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
@@ -371,6 +372,9 @@ function spaceObject(
       ((value.kind === "rock" || value.kind === "debris") &&
         typeof value.asteroid === "string" &&
         ASTEROID_SHAPES.has(value.asteroid))) &&
+    (value.crystals === undefined ||
+      (typeof value.asteroid === "string" &&
+        CRYSTAL_FLAGS.includes(value.crystals as CrystalFlag))) &&
     (value.orbit === undefined ||
       (value.kind === "rock" &&
         record(value.orbit) &&

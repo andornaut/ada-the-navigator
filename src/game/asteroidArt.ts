@@ -2,8 +2,10 @@ import {
   ASTEROID_ART,
   type AsteroidArt,
   type AsteroidArtCatalog,
+  type AsteroidCrystals,
   type BackdropSprite,
   type BackdropTint,
+  type CrystalFlag,
 } from "../data/asteroidCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -82,11 +84,24 @@ export function asteroidOutline(footprint: readonly (readonly Vec[])[]): Asteroi
   return { edges, parts };
 }
 
-const ROCKS = new Map(ASTEROID_ART.asteroids.map((rock) => [rock.id, rock]));
+const ROCKS = new Map(
+  [...ASTEROID_ART.asteroids, ...ASTEROID_ART.crystals.rocks].map((rock) => [rock.id, rock]),
+);
 
-/** Art's rock for an object's asteroid id. */
+/** Art's rock for a plain asteroid id or a crystal variant id. */
 export function rockArt(id: string): AsteroidArt | undefined {
   return ROCKS.get(id);
+}
+
+/**
+ * The rock Art draws for an asteroid and its crystals flag (art/asteroids.md "Crystal rocks"):
+ * `variants[asteroid][crystals]`, else the plain rock.
+ */
+export function drawnRockId(
+  crystals: AsteroidCrystals,
+  rock: { readonly asteroid: string; readonly crystals?: CrystalFlag | undefined },
+): string {
+  return (rock.crystals && crystals.variants[rock.asteroid]?.[rock.crystals]) ?? rock.asteroid;
 }
 
 const OUTLINES = new Map<string, AsteroidOutline>();
@@ -265,11 +280,15 @@ export function backdropRock(
   };
 }
 
-/** Every SVG the catalog draws: each rock frame and each backdrop sprite, once. */
+/**
+ * Every SVG the catalog draws: each plain and crystal rock frame and each backdrop sprite, once.
+ */
 export function asteroidFiles(catalog: AsteroidArtCatalog): string[] {
   return [
     ...new Set([
-      ...catalog.asteroids.flatMap((rock) => rock.frames.map((frame) => frame.file)),
+      ...[...catalog.asteroids, ...catalog.crystals.rocks].flatMap((rock) =>
+        rock.frames.map((frame) => frame.file),
+      ),
       ...catalog.backdrop.sprites.map((sprite) => sprite.file),
     ]),
   ];
