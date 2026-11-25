@@ -232,15 +232,91 @@ function decorations(): string {
   return page(rows);
 }
 
+// ------------------------------------------------------------------ disabled frames
+
+const CARD = "#3b3850";
+
+// One frame of a PNG sprite sheet, pixel for pixel, `scale` times its size.
+function spriteFrame(
+  sheet: string,
+  index: number,
+  [w, h]: readonly [number, number],
+  scale: number,
+) {
+  const data = readFileSync(`${art}ui/sprites/${sheet}.png`).toString("base64");
+  const count =
+    Number(
+      /"w": (\d+)/u.exec(
+        readFileSync(`${art}ui/sprites/${sheet}.json`, "utf8").split('"size"')[1]!,
+      )![1],
+    ) / w;
+  return {
+    width: w * scale,
+    height: h * scale,
+    ink: (x: number) =>
+      `<svg x="${x}" y="0" width="${w * scale}" height="${h * scale}" viewBox="${index * w} 0 ${w} ${h}"><image width="${count * w}" height="${h}" href="data:image/png;base64,${data}" style="image-rendering:pixelated"/></svg>`,
+  };
+}
+
+// One view of a UI icon sheet's source, `scale` times its size.
+function iconFrame(id: string, size: number, scale: number) {
+  return {
+    width: size * scale,
+    height: size * scale,
+    ink: (x: number) =>
+      `<svg x="${x}" y="0" width="${size * scale}" height="${size * scale}" viewBox="0 0 ${size} ${size}">${inner(readUiIcon(id))}</svg>`,
+  };
+}
+
+// Each new disabled frame beside its enabled state, at 1x and 4x.
+function disabled(): string {
+  const pairs = (scale: number) => [
+    [spriteFrame("ui-close", 0, [24, 24], scale), spriteFrame("ui-close", 2, [24, 24], scale)],
+    [spriteFrame("ui-switch", 0, [32, 16], scale), spriteFrame("ui-switch", 2, [32, 16], scale)],
+    [spriteFrame("ui-switch", 1, [32, 16], scale), spriteFrame("ui-switch", 3, [32, 16], scale)],
+    [iconFrame("pause", 35, scale), iconFrame("pause-disabled", 35, scale)],
+    [iconFrame("menu", 35, scale), iconFrame("menu-disabled", 35, scale)],
+    [iconFrame("icon-cargo-20", 20, scale), iconFrame("icon-cargo-20-disabled", 20, scale)],
+    [iconFrame("icon-tow-20", 20, scale), iconFrame("icon-tow-20-disabled", 20, scale)],
+  ];
+  const rows = [];
+  for (const [field, name, light] of [
+    [CARD, "the card face", false],
+    [FIELDS.sunflower, "Sunflower", true],
+    [FIELDS.phantom, "Phantom", false],
+  ] as const) {
+    for (const scale of [1, 4]) {
+      let x = GAP;
+      let height = 0;
+      const ink: string[] = [];
+      for (const pair of pairs(scale)) {
+        for (const frame of pair) {
+          ink.push(frame.ink(x));
+          x += frame.width + GAP;
+          height = Math.max(height, frame.height);
+        }
+        x += 2 * GAP;
+      }
+      rows.push({
+        field,
+        light,
+        label: `Enabled then disabled on ${name}, ${scale}x: close, switch on, switch off, pause, menu, cargo, tow`,
+        row: { height, width: x, ink: ink.join("") },
+      });
+    }
+  }
+  return page(rows);
+}
+
 function main() {
   const [out, ...only] = process.argv.slice(2);
   if (!out) {
     throw new Error(
-      "Usage: node art/tools/polish-contact-sheet.ts <dir> [glyphs|debris|decorations]",
+      "Usage: node art/tools/polish-contact-sheet.ts <dir> [glyphs|debris|decorations|disabled]",
     );
   }
   mkdirSync(out, { recursive: true });
-  const sheets = { glyphs, debris, decorations };
+  const sheets = { glyphs, debris, decorations, disabled };
   for (const [name, build] of Object.entries(sheets)) {
     if (only.length === 0 || only.includes(name)) writeFileSync(`${out}/${name}.svg`, build());
   }

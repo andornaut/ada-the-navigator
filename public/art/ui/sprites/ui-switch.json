@@ -15,6 +15,22 @@
       "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 16 },
       "sourceSize": { "w": 32, "h": 16 },
       "duration": 100
+    },
+    "ui-switch 2.aseprite": {
+      "frame": { "x": 64, "y": 0, "w": 32, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 16 },
+      "sourceSize": { "w": 32, "h": 16 },
+      "duration": 100
+    },
+    "ui-switch 3.aseprite": {
+      "frame": { "x": 96, "y": 0, "w": 32, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 16 },
+      "sourceSize": { "w": 32, "h": 16 },
+      "duration": 100
     }
   },
   "meta": {
@@ -22,11 +38,13 @@
     "version": "1.2.30-x64",
     "image": "ui-switch.png",
     "format": "RGBA8888",
-    "size": { "w": 64, "h": 16 },
+    "size": { "w": 128, "h": 16 },
     "scale": "1",
     "frameTags": [
       { "name": "on", "from": 0, "to": 0, "direction": "forward" },
-      { "name": "off", "from": 1, "to": 1, "direction": "forward" }
+      { "name": "off", "from": 1, "to": 1, "direction": "forward" },
+      { "name": "on-disabled", "from": 2, "to": 2, "direction": "forward" },
+      { "name": "off-disabled", "from": 3, "to": 3, "direction": "forward" }
     ]
   }
 }

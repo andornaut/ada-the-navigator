@@ -36,15 +36,15 @@ its tags and frame timing.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 
-| Sprite            | Sheet | Frame | Tags (inclusive indices)        | Nine-slice margins |
-| ----------------- | ----- | ----- | ------------------------------- | ------------------ |
-| ui-button         | 48x28 | 16x28 | normal 0, pressed 1, disabled 2 | 2/4/2/6 (l/t/r/b)  |
-| ui-button-primary | 48x28 | 16x28 | normal 0, pressed 1, disabled 2 | 2/4/2/6 (l/t/r/b)  |
-| ui-button-tile    | 48x28 | 16x28 | normal 0, pressed 1, disabled 2 | 2/4/2/6 (l/t/r/b)  |
-| ui-settings-card  | 16x16 | 16x16 | rest 0                          | 2 on each side     |
-| ui-close          | 48x24 | 24x24 | normal 0, pressed 1             | none               |
-| ui-switch         | 64x16 | 32x16 | on 0, off 1                     | none               |
-| ui-focus          | 16x16 | 16x16 | rest 0                          | 4 on each side     |
+| Sprite            | Sheet  | Frame | Tags (inclusive indices)                   | Nine-slice margins |
+| ----------------- | ------ | ----- | ------------------------------------------ | ------------------ |
+| ui-button         | 48x28  | 16x28 | normal 0, pressed 1, disabled 2            | 2/4/2/6 (l/t/r/b)  |
+| ui-button-primary | 48x28  | 16x28 | normal 0, pressed 1, disabled 2            | 2/4/2/6 (l/t/r/b)  |
+| ui-button-tile    | 48x28  | 16x28 | normal 0, pressed 1, disabled 2            | 2/4/2/6 (l/t/r/b)  |
+| ui-settings-card  | 16x16  | 16x16 | rest 0                                     | 2 on each side     |
+| ui-close          | 72x24  | 24x24 | normal 0, pressed 1, disabled 2            | none               |
+| ui-switch         | 128x16 | 32x16 | on 0, off 1, on-disabled 2, off-disabled 3 | none               |
+| ui-focus          | 16x16  | 16x16 | rest 0                                     | 4 on each side     |
 
 All frames last 100 ms, are unrotated and untrimmed, and retain Aseprite
 json-hash frame names and forward tags. Card slice centre is (2,2,12,12);
@@ -146,6 +146,15 @@ Prettier on the written JSON.
 | `ui-focus`          | `#fee761`     | `#ead4aa`  | Ring band                |
 | Card icons (seven)  | `#3a4466`     | `#ead4aa`  | Icon ink                 |
 
+The disabled frames are Ada's own ([Controls](controls.md)).
+`ui-close` frame 2 is the X in the disabled mark `#9a96ad` with no face.
+`art/tools/switch-disabled.ts` appends `on-disabled` and `off-disabled` to
+the recoloured `ui-switch` sheet, so its destination hash is of the
+four-frame sheet: the track and its edge in the disabled face `#2f2d3d`, the
+knob in `#9a96ad` without its shade inside its ink ring, and the tick or
+cross on the knob in `#2f2d3d`. Frames 0 and 1 of both sheets are unchanged
+pixel for pixel. Run it after `art/tools/controls.ts`.
+
 `ui-close` is not recoloured: `art/tools/card-close.ts` draws its PNG from the
 map's close glyph (`art/tools/close-glyph.ts`, the grid of `map-close.svg`) at
 (2, 2) in each 24 frame, so every card's close X is the same X on whole pixels.
@@ -176,7 +185,7 @@ where listed. The card icons are in [Settings row icons](settings-icons.md).
 | ui-button-primary.png | `6e43d89b48641b1f25d1b0da9d29726d630ba1a741f65dc51945bf4a385837a0` | `1f02dc0fcd4740333fb94eed4e0e62106e88f5f642956691e42f2c1f5656b87b` |
 | ui-button-tile.png    | `4a682b1bbd3031940b8edd1ee5456a89c1caacd673235e5661a48bae861cfa79` | `eb09220019c72ec452a2bf7950f1648c25481ed680d1433c59585348700b6ea8` |
 | ui-settings-card.png  | `ef8c2722fab1aae15b042f8dd564b3831a8c1cc68c1a3882ed5dd4ccb70f040a` | `e913c7a895aa3beaa147af8498e2e036d737de1cfcce982c679c832ac8ffaebc` |
-| ui-switch.png         | `b12161896816f9c7f62d0526bb224a4850253db7cfd6d4bb1e41cf93a69316c7` | `67e8137f4e1774ce8561797bd1e0c798adc4de782657be69435f109f392e40be` |
+| ui-switch.png         | `b12161896816f9c7f62d0526bb224a4850253db7cfd6d4bb1e41cf93a69316c7` | `8576ba5d28d40aec9673e45946fc06022b2c790a2566fd0658ba374e8c747ba1` |
 | ui-focus.png          | `890594014cd3c7bd2b5b43a726cc0d816ff1614362a3c6cbfa1f97f9bdf95af9` | `34773bdb51ed6918464b2a19d094e6bf364534a2036b03a4f1ce1261b3e12aae` |
 
 | JSON                   | Source SHA-256                                                     | Formatted destination SHA-256                                      |
@@ -229,7 +238,7 @@ control-sheet commit has the same manifest, sprite PNG and sprite JSON bytes.
 
 | Path                          | SHA-256                                                            |
 | ----------------------------- | ------------------------------------------------------------------ |
-| sprites/ui-close.json         | `50a005e8180e0cff1a99b3560b1c42fd1388762b1c3c83dad141e21497a22241` |
+| sprites/ui-close.json         | `d2c185230c625e9a5a1dfd4e94ef543a3bdff139b591c940037b4674f94fe0d2` |
 | sprites/ui-focus.json         | `7834056c978e42e737ff6949ca6a694e0e9d76c56852bcac84c75a8b24547f89` |
 | sprites/ui-settings-card.json | `b69c50ac204b47a975ba378ddce7aa803e33f92ca86698d20fe12a6ac0b2cd01` |
-| sprites/ui-switch.json        | `9bb0d78f992760f4b10422596db4f3142e318b3883efbadf9803e28c990c6079` |
+| sprites/ui-switch.json        | `3a39b4a9221beb5c9132fcd4c176698f42eb9ad0313b2a43bdb259fa9e118e61` |

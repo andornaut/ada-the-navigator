@@ -107,15 +107,18 @@ colour and keeps the existing swell and held geometry.
   `src/ui/chrome/pauseChrome.ts`): circles centred at 17.5,17.5 and two 4x13
   bars at 12,11 and 19,11 (3 apart), in the ring colour.
 
-| File                                  | Pose                   | Ink edge | Ring                | Face                 |
-| ------------------------------------- | ---------------------- | -------- | ------------------- | -------------------- |
-| `public/art/ui/icons/pause.svg`       | Rest                   | r 16.5   | Cream, r 15.5, 2 px | Navy `#262b44`, 13.5 |
-| `public/art/ui/icons/pause-press.svg` | Press frame 0 (swell)  | r 17.5   | White, r 16.5, 3 px | `#3a4466`, 13.5      |
-| `public/art/ui/icons/pause-held.svg`  | Press frame 1 and held | r 16.5   | White, r 15.5, 3 px | `#3a4466`, 12.5      |
+| File                                     | Pose                   | Ink edge | Ring                    | Face                 |
+| ---------------------------------------- | ---------------------- | -------- | ----------------------- | -------------------- |
+| `public/art/ui/icons/pause.svg`          | Rest                   | r 16.5   | Cream, r 15.5, 2 px     | Navy `#262b44`, 13.5 |
+| `public/art/ui/icons/pause-press.svg`    | Press frame 0 (swell)  | r 17.5   | White, r 16.5, 3 px     | `#3a4466`, 13.5      |
+| `public/art/ui/icons/pause-held.svg`     | Press frame 1 and held | r 16.5   | White, r 15.5, 3 px     | `#3a4466`, 12.5      |
+| `public/art/ui/icons/pause-disabled.svg` | Disabled               | r 16.5   | `#75748c`, r 15.5, 2 px | `#262b44`, 13.5      |
 
 - Menu button: the same frame, poses, timing and press area, with three 11x3
   bars at x 12, y 11, 16 and 21 (2 apart) in place of the pause bars:
-  `menu.svg`, `menu-press.svg` and `menu-held.svg` beside the pause files. It
+  `menu.svg`, `menu-press.svg`, `menu-held.svg` and `menu-disabled.svg` beside
+  the pause files; the disabled frames are the rest pose with the ring and
+  bars in `#75748c`. It
   shows on the Start screen and in Ada's room, where it opens the Menu card.
 
 - Timing stays in the `ui-pause` sheet's JSON, as in Chibi: tags `rest`
@@ -516,11 +519,12 @@ The tow hook, including its ink edge, spans columns 4 through 14 and rows 1
 through 18 of its 20 px frame, zero-indexed. Its left and right bearings are
 4 and 5 px.
 
-| Key             | Shows                                   | Colours                                                                                         |
-| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#e798cd`, shade `#d481b9` |
-| `icon-cargo-20` | A strapped crate, any carried item      | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
-| `icon-tow-20`   | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                |
+| Key                                              | Shows                                   | Colours                                                                                                |
+| ------------------------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `icon-ore-20`                                    | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#e798cd`, shade `#d481b9`        |
+| `icon-cargo-20`                                  | A strapped crate, any carried item      | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                                 |
+| `icon-tow-20`                                    | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                       |
+| `icon-cargo-20-disabled`, `icon-tow-20-disabled` | The same icons, unavailable             | The crate and the hook core in the disabled mark `#9a96ad`, the straps in `#2f2d3d`, the ink edge kept |
 
 | Mark          | Colour    | Base, on the panel | Phantom, on the panel | Sunflower, on the panel | On its ink edge |
 | ------------- | --------- | -----------------: | --------------------: | ----------------------: | --------------: |

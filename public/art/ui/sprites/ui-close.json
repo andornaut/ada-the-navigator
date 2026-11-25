@@ -15,6 +15,14 @@
       "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
       "sourceSize": { "w": 24, "h": 24 },
       "duration": 100
+    },
+    "ui-close 2.aseprite": {
+      "frame": { "x": 48, "y": 0, "w": 24, "h": 24 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+      "sourceSize": { "w": 24, "h": 24 },
+      "duration": 100
     }
   },
   "meta": {
@@ -22,11 +30,12 @@
     "version": "1.2.30-x64",
     "image": "ui-close.png",
     "format": "RGBA8888",
-    "size": { "w": 48, "h": 24 },
+    "size": { "w": 72, "h": 24 },
     "scale": "1",
     "frameTags": [
       { "name": "normal", "from": 0, "to": 0, "direction": "forward" },
-      { "name": "pressed", "from": 1, "to": 1, "direction": "forward" }
+      { "name": "pressed", "from": 1, "to": 1, "direction": "forward" },
+      { "name": "disabled", "from": 2, "to": 2, "direction": "forward" }
     ]
   }
 }
