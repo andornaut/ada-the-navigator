@@ -1,4 +1,5 @@
-// Cartwheel's eight ore-field families, each with a realization for 6 to 10 crystal rocks.
+// Cartwheel's eight ore-field families, each with a realization for 6 to 10 medium and large
+// asteroids, which draw as full crystal rocks.
 // The loose cluster keeps its seeded positions; each other family reuses its rock order, shapes
 // and start frames, with authored positions that preserve the footprint gap and field radius.
 // Writes
@@ -36,10 +37,10 @@ interface Rock {
   frames: unknown[];
 }
 
-const catalog = JSON.parse(readFileSync(`${art}resource-rocks.json`, "utf8")) as {
-  rocks: Rock[];
+const catalog = JSON.parse(readFileSync(`${art}asteroids.json`, "utf8")) as {
+  asteroids: Rock[];
 };
-const bySize = (size: Size) => catalog.rocks.filter((rock) => rock.size === size);
+const bySize = (size: Size) => catalog.asteroids.filter((rock) => rock.size === size);
 const [MEDIUM, LARGE] = [bySize("medium"), bySize("large")];
 
 const r2 = (v: number) => Math.round(v * 100) / 100 + 0;
@@ -173,7 +174,7 @@ function anchors(family: Family, count: number): Position[] {
   throw new Error(`No authored anchors for ${family}`);
 }
 
-const footprint = new Map(catalog.rocks.map((rock) => [rock.id, rock.footprintRadius]));
+const footprint = new Map(catalog.asteroids.map((rock) => [rock.id, rock.footprintRadius]));
 
 // Pick spacious anchors for the large rocks without changing their published order or frames.
 // Every candidate uses the exact footprint radii, including the smaller rocks that fill it.
@@ -231,7 +232,7 @@ writeFileSync(
   await format(
     json({
       version: 2,
-      rocks: "/art/resource-rocks.json",
+      rocks: "/art/asteroids.json",
       radius: RADIUS,
       gap: GAP,
       count: COUNT,

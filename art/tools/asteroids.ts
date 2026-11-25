@@ -1,10 +1,9 @@
 // Asteroids: seeded low-poly rocks in the shared solid-model projection, flat fills, no strokes
 // beyond a same-colour seam. Writes SVG frames or selected sheets to public/art/asteroids/, asteroids.json
 // (frame, display, pivot, drawn collision parts, world footprints, drift and spin data, backdrop
-// tints), resource-rocks.json (the medium and large shapes with an ore crystal cluster) and
-// links both from the root manifest. The crystal variants of the plain shapes go to their own
-// sheets, with their rows and selection rule staged in art/asteroid-crystal-rows.json.
-// Usage: node art/tools/asteroids.ts [--backdrop-only|--m1-sheet|--rotating-sheets|--resource-sheets|--static-sheets]
+// tints, and the crystal variants with their selection rule under `crystals`) and links it from
+// the root manifest. The crystal variants of the plain shapes go to their own sheets.
+// Usage: node art/tools/asteroids.ts [--backdrop-only|--m1-sheet|--rotating-sheets|--static-sheets]
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -37,8 +36,6 @@ import {
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const svgDir = `${art}asteroids/`;
 const catalogPath = `${art}asteroids.json`;
-const resourcePath = `${art}resource-rocks.json`;
-const crystalRowsPath = fileURLToPath(new URL("../asteroid-crystal-rows.json", import.meta.url));
 const M1_ID = "asteroid-m1";
 const sheetFile = (id: string) => `${id}-sheet.svg`;
 const sheetUrl = (id: string) => `/art/asteroids/${sheetFile(id)}`;
@@ -157,25 +154,19 @@ const BACKDROP: readonly { id: string; width: number; seed: number; aspect: numb
   { id: "backdrop-6", width: 270, seed: 239, aspect: 1.05 },
 ];
 
-// Resource rocks: every medium and large shape (same seed, aspect and width, so the same base
-// ring and footprints) with an ore crystal cluster on the crown.
-const RESOURCES = SHAPES.filter(({ size }) => size === "medium" || size === "large").map(
-  (shape) => ({ ...shape, id: shape.id.replace("asteroid-", "resource-"), shape: shape.id }),
-);
-
 // Crystal variants of the medium and larger shapes. Each draws its plain shape's stone with ore
 // set into the crown, inside the plain rock's drawn silhouette in every frame, so its frame,
 // pivot, collision and footprints are the plain shape's. A spinning medium rock has room only for
 // a flush vein (VEIN_AREA); a large or huge rock carries standing crystals. `full` is for an
-// ore-field rock (a full vein on a medium rock, the resource rocks' five crystals on a large
-// one); ore fields place only medium and large rocks. `small` (a small vein, or two crystals on a
+// ore-field rock (a full vein on a medium rock, five crystals on a large one); ore fields place
+// only medium and large rocks. `small` (a small vein, or two crystals on a
 // large or huge rock) is for the share of other rocks `CRYSTAL_SELECTION` picks. Small rocks have
 // none.
 export type Cluster = "full" | "small";
-// Standing crystals per cluster and size; the medium counts draw the resource rocks.
-export const CLUSTER_CRYSTALS: Readonly<Record<Cluster, Readonly<Record<SizeClass, number>>>> = {
-  full: { small: 0, medium: 3, large: 5, huge: 0 },
-  small: { small: 0, medium: 1, large: 2, huge: 2 },
+// Standing crystals per cluster on a large or huge rock.
+const CLUSTER_CRYSTALS: Readonly<Record<Cluster, Readonly<Record<SizeClass, number>>>> = {
+  full: { small: 0, medium: 0, large: 5, huge: 0 },
+  small: { small: 0, medium: 0, large: 2, huge: 2 },
 };
 const CRYSTAL_FULL_SIZES: readonly SizeClass[] = ["medium", "large"];
 const CRYSTAL_SMALL_SIZES: readonly SizeClass[] = ["medium", "large", "huge"];
@@ -209,11 +200,8 @@ const CRYSTAL_STATIC_PAGES = {
   small: "asteroid-crystals-small-static",
 };
 
-const ROTATING_RESOURCES = RESOURCES.filter(({ size }) => size === "medium" && CLASSES[size].spin);
 const STATIC_PLAIN = "asteroid-static";
-const STATIC_RESOURCE = "resource-static";
 const STATIC_SHAPES = SHAPES.filter(({ size }) => size === "large" || size === "huge");
-const STATIC_RESOURCES = RESOURCES.filter(({ size }) => size === "large");
 
 // ------------------------------------------------------------------ maths
 
@@ -347,7 +335,7 @@ function yawed(faces: readonly Face[], yaw: number, scale: number): Face[] {
   );
 }
 
-// ------------------------------------------------------------------ resource inset
+// ------------------------------------------------------------------ crystals
 
 // A facet with the ramp its tones come from.
 // A facet with the ramp its tones come from. `on` is the index of the facet it lies on, in the
@@ -389,7 +377,6 @@ function crystalParts(
   seed: number,
   ore: readonly string[],
   count: number,
-  anchor: "peak" | "axis" = "peak",
 ): {
   stone: Painted[];
   crystals: {
@@ -406,8 +393,8 @@ function crystalParts(
     .map((face, i) => ({ c: centroid(face), face, i, n: unit(normal(face)) }))
     .filter(({ c, n }) => n[2] > 0.6 && c[2] > spec.height * 0.8)
     .sort((a, b) => b.c[2] - a.c[2]);
-  const peak = anchor === "peak" ? tops[0]!.c : [0, 0, 0];
-  const reach = (c: Point) => Math.hypot(c[0] - peak[0]!, c[1] - peak[1]!);
+  // The crown facets nearest the yaw axis turn least across the frames.
+  const reach = (c: Point) => Math.hypot(c[0], c[1]);
   const chosen = tops.toSorted((a, b) => reach(a.c) - reach(b.c)).slice(0, count);
   const seats = chosen.map(({ c, face, i, n }) => {
     const seated =
@@ -473,18 +460,6 @@ function crystalParts(
 
 const CRYSTAL_MIN_WIDTH = 0.7;
 
-// The resource rocks' cluster: every crystal at full size.
-function crystals(
-  faces: readonly Face[],
-  spec: ClassSpec,
-  seed: number,
-  ore: readonly string[],
-  count: number,
-): Painted[] {
-  const parts = crystalParts(faces, spec, seed, ore, count);
-  return [...parts.stone, ...parts.crystals.flatMap(({ faces }) => faces(1))];
-}
-
 // ------------------------------------------------------------------ silhouette
 
 function projected(faces: readonly Painted[], pivot: V2): (Painted & { pts: V2[] })[] {
@@ -542,17 +517,12 @@ function tone(face: Face, ramp: readonly string[]): string {
   return ramp[i < 0 ? ramp.length - 1 : i]!;
 }
 
-// The viewBox is always frame px. `declared` is the SVG's intrinsic size: frame px for the plain
-// and backdrop rocks, which Tech loads at `displayScale`, or display px for the resource rocks,
-// which rasterize at the size they are drawn.
-type Declared = "frame" | "display";
-
+// The viewBox is frame px and the SVG declares frame size; Tech loads it at `displayScale`.
 function svgFrame(
   title: string,
   w: number,
   h: number,
   polys: { pts: V2[]; fill: string }[],
-  declared: Declared,
   tips: readonly { pts: V2[]; fill: string }[] = [],
 ) {
   const points = (pts: readonly V2[]) =>
@@ -565,8 +535,7 @@ function svgFrame(
         `  <polygon fill="${fill}" stroke="${fill}" stroke-width="${SEAM}" stroke-linejoin="round" points="${points(pts)}"/>`,
     ),
   ].join("\n");
-  const k = declared === "display" ? DISPLAY : 1;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w * k}" height="${h * k}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
 }
 
 // World units from the pivot for a point on the art's world plane (model units at frame scale):
@@ -598,9 +567,9 @@ interface Built {
   mask: Mask;
 }
 
-// `drawn` defaults to the model's facets in `ramp`; a resource rock passes its stone facets plus
-// the crystal cluster. The scale always comes from the stone model, so a resource rock keeps its
-// plain shape's size, base ring and footprints.
+// `drawn` defaults to the model's facets in `ramp`; a crystal variant passes its stone facets plus
+// its crystals or vein. The scale always comes from the stone model, so a variant keeps its plain
+// shape's size, base ring and footprints.
 function build(
   id: string,
   { base, faces: model }: { base: Point[]; faces: Face[] },
@@ -609,9 +578,8 @@ function build(
   ramp: readonly string[],
   {
     drawn = model.map((face) => ({ face, ramp })),
-    declared = "frame",
     write = writeFrame,
-  }: { drawn?: readonly Painted[]; declared?: Declared; write?: FrameWriter } = {},
+  }: { drawn?: readonly Painted[]; write?: FrameWriter } = {},
 ) {
   // Scale so frame 0's silhouette is the target width.
   const e0 = extent(model);
@@ -663,7 +631,7 @@ function build(
       fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
       pts: pts.map(([x, y]) => [r2(x), r2(y)] as V2),
     }));
-    write(file, svgText(svgFrame(`${id} ${k}`, w, h, fills, declared, filled)));
+    write(file, svgText(svgFrame(`${id} ${k}`, w, h, fills, filled)));
     check(`${id} ${k}`, collision, union(drawn, rasterize(tips, w, h)));
     return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!), mask: drawn };
   });
@@ -743,17 +711,14 @@ const tints = Object.fromEntries(
 
 // ------------------------------------------------------------------ main
 
-// Ore ramp, lit to shadow (art/tools/ore.ts): resource rock and ore variant crystals read as the
-// same ore as the nugget a rock releases.
+// Ore ramp, lit to shadow (art/tools/ore.ts): crystal rocks read as the same ore as the nugget a
+// rock releases.
 const ORE = ORE_RAMP;
 
-// A rock's drawing: its crystal cluster, if any, and its SVGs' declared size. The crystal variants
-// declare frame size, as the plain rocks do, so Tech loads both the same way.
-// `vein` draws the cluster as a flush ore vein set into the crown instead of standing crystals.
-export type Look = { cluster?: Cluster; declared: Declared; vein?: boolean };
-const PLAIN: Look = { declared: "frame" };
-const RESOURCE: Look = { cluster: "full", declared: "display" };
-const lookOf = (resource: boolean) => (resource ? RESOURCE : PLAIN);
+// A rock's drawing: its crystal cluster, if any. `vein` draws it as a flush ore vein set into the
+// crown instead of standing crystals.
+export type Look = { cluster?: Cluster; vein?: boolean };
+const PLAIN: Look = {};
 
 // A fitted crystal stays half a frame px inside the silhouette, so an antialiasing renderer
 // draws no crystal pixel past it either.
@@ -834,7 +799,7 @@ function fittedCrystals(
   const masks = yaws.map((yaw) => rasterize(front(model.faces, yaw), plain.w, plain.h));
   // The crown facets nearest the yaw axis turn least across the frames, so they hold the
   // largest crystals that stay inside the silhouette.
-  const { stone, crystals } = crystalParts(model.faces, spec, shape.seed, ORE, count, "axis");
+  const { stone, crystals } = crystalParts(model.faces, spec, shape.seed, ORE, count);
   // A crystal also keeps clear of the crystals already placed, so no two pass through each other.
   const placed: ReturnType<(typeof crystals)[number]["axis"]>[] = [];
   const sizes = crystals.map(({ axis, faces }) => {
@@ -962,21 +927,17 @@ function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
   const frames = spec.spin?.frames ?? 1;
-  const count = look.cluster && CLUSTER_CRYSTALS[look.cluster][shape.size];
-  // A crystal variant fits its cluster inside the plain rock and must draw no cell outside it.
-  const plain =
-    count && look.declared === "frame"
-      ? build(shape.id, model, frames, shape.width, STONE, { write: () => {} })
-      : undefined;
+  // A crystal variant fits its ore inside the plain rock and must draw no cell outside it.
+  const plain = look.cluster
+    ? build(shape.id, model, frames, shape.width, STONE, { write: () => {} })
+    : undefined;
   let drawn: Painted[] | undefined;
-  if (look.vein && look.cluster && plain) {
+  if (look.cluster && plain && look.vein) {
     drawn = fittedVein(shape, model, look.cluster, plain);
-  } else if (count && plain) {
-    const fit = fittedCrystals(shape, model, count, plain);
+  } else if (look.cluster && plain) {
+    const fit = fittedCrystals(shape, model, CLUSTER_CRYSTALS[look.cluster][shape.size], plain);
     CRYSTAL_FITS.set(shape.id, fit.sizes);
     drawn = fit.drawn;
-  } else if (count) {
-    drawn = crystals(model.faces, spec, shape.seed, ORE, count);
   }
   const { built, footprintRadius, h, pivot, w } = build(
     shape.id,
@@ -984,7 +945,7 @@ function rock(write: FrameWriter, look: Look, shape: (typeof SHAPES)[number]) {
     frames,
     shape.width,
     STONE,
-    drawn ? { declared: look.declared, drawn, write } : { declared: look.declared, write },
+    drawn ? { drawn, write } : { write },
   );
   if (plain) {
     if (w !== plain.w || h !== plain.h || !isDeepStrictEqual(pivot, plain.pivot)) {
@@ -1044,8 +1005,7 @@ function rockSheet(shape: Shape, look = PLAIN) {
     throw new Error(`Invalid rotating asteroid sheet: ${id}`);
   }
   const namespace = "http://www.w3.org/2000/svg";
-  const intrinsicScale = look.declared === "display" ? DISPLAY : 1;
-  const root = `<svg xmlns="${namespace}" width="${width * intrinsicScale}" height="${height * intrinsicScale}" viewBox="0 0 ${width} ${height}">`;
+  const root = `<svg xmlns="${namespace}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
   const roots = frames.map(({ file, source }, k) => {
     if (file !== `${id}-${k}.svg` || !source.startsWith(root) || !source.endsWith("</svg>")) {
       throw new Error(`Invalid rotating asteroid frame: ${file}`);
@@ -1064,35 +1024,14 @@ function writeChanged(path: string, text: string) {
 }
 
 type CatalogRow = { id: string; svgSheet?: string };
-type Catalog = { asteroids: CatalogRow[] };
-type ResourceCatalog = { displayScale: number; rocks: CatalogRow[] };
+type Catalog = { asteroids: CatalogRow[]; crystals?: unknown };
 
 async function catalogText(data: unknown, path = catalogPath) {
   return format(json(data), { ...(await resolveConfig(path)), filepath: path });
 }
 
-function resourceSheetRows(catalog: ResourceCatalog) {
-  const rows = catalog.rocks.filter(
-    ({ id, svgSheet }) =>
-      svgSheet !== undefined &&
-      !(
-        svgSheet === sheetUrl(STATIC_RESOURCE) && STATIC_RESOURCES.some((shape) => shape.id === id)
-      ),
-  );
-  const selected = new Map(rows.map((row) => [row.id, row]));
-  if (
-    rows.length &&
-    (catalog.displayScale !== DISPLAY ||
-      rows.length !== ROTATING_RESOURCES.length ||
-      ROTATING_RESOURCES.some(({ id }) => selected.get(id)?.svgSheet !== sheetUrl(id)))
-  ) {
-    throw new Error("Select the complete rotating Medium resource sheet set at its authored scale");
-  }
-  return selected;
-}
-
-function checkedRockSheet(row: CatalogRow, shape: Shape, resource: boolean, requireLoose: boolean) {
-  const { entry, frames, text } = rockSheet(shape, lookOf(resource));
+function checkedRockSheet(row: CatalogRow, shape: Shape, requireLoose: boolean) {
+  const { entry, frames, text } = rockSheet(shape);
   const standalone = checkRockFrames(row, entry, frames, requireLoose);
   return { entry, standalone, text };
 }
@@ -1121,18 +1060,14 @@ function checkRockFrames(
   return standalone;
 }
 
-function staticRockSheet(catalog: Catalog | ResourceCatalog, select = false) {
-  const resource = "rocks" in catalog;
-  const rows = resource ? catalog.rocks : catalog.asteroids;
-  const shapes = resource ? STATIC_RESOURCES : STATIC_SHAPES;
-  const pageId = resource ? STATIC_RESOURCE : STATIC_PLAIN;
+function staticRockSheet(catalog: Catalog, select = false) {
+  const rows = catalog.asteroids;
+  const shapes = STATIC_SHAPES;
+  const pageId = STATIC_PLAIN;
   const path = sheetUrl(pageId);
   const selected = rows.filter(({ svgSheet }) => svgSheet === path);
   if (!select && !selected.length) return undefined;
-  if (
-    (resource && catalog.displayScale !== DISPLAY) ||
-    selected.some(({ id }) => !shapes.some((shape) => shape.id === id))
-  ) {
+  if (selected.some(({ id }) => !shapes.some((shape) => shape.id === id))) {
     throw new Error(`Unexpected catalog selection for ${path}`);
   }
   const items = shapes.map((shape) => {
@@ -1140,7 +1075,7 @@ function staticRockSheet(catalog: Catalog | ResourceCatalog, select = false) {
     if (!row || (row.svgSheet !== path && (!select || row.svgSheet !== undefined))) {
       throw new Error(`Select the complete static rock set for ${path}: ${shape.id}`);
     }
-    const { entry, frames } = rockFrames(shape, lookOf(resource));
+    const { entry, frames } = rockFrames(shape, PLAIN);
     checkRockFrames(row, entry, frames, row.svgSheet === undefined);
     const { file, source } = frames[0]!;
     if (entry.spin || frames.length !== 1 || file !== `${shape.id}.svg`) {
@@ -1163,7 +1098,6 @@ function staticPage<T extends { entry: { id: string }; source: string }>(
   path: string,
   items: readonly { rectangles: { width: number; height: number }[]; value: T }[],
 ): string {
-  // Reserve the raw frame even when a resource root has a smaller, fractional intrinsic size.
   const layout = packAtlas(
     { compare: () => 0, extrude: 0, maxSize: 1280, widths: [768, 1024, 1280] },
     items,
@@ -1177,18 +1111,9 @@ function staticPage<T extends { entry: { id: string }; source: string }>(
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${roots.join("")}</svg>\n`;
 }
 
-async function selectRockSheets(
-  catalog: Catalog | ResourceCatalog,
-  shapes: readonly Shape[],
-  retireM1 = false,
-) {
-  const resource = "rocks" in catalog;
-  const rows = resource ? catalog.rocks : catalog.asteroids;
-  const catalogFile = resource ? resourcePath : catalogPath;
-  if (resource) {
-    if (catalog.displayScale !== DISPLAY) throw new Error("Unexpected resource rock display scale");
-    resourceSheetRows(catalog);
-  }
+async function selectRockSheets(catalog: Catalog, shapes: readonly Shape[], retireM1 = false) {
+  const rows = catalog.asteroids;
+  const catalogFile = catalogPath;
   const sheets = shapes.map((shape) => {
     const { id } = shape;
     const row = rows.find((candidate) => candidate.id === id);
@@ -1200,7 +1125,7 @@ async function selectRockSheets(
       id,
       path,
       row,
-      ...checkedRockSheet(row, shape, resource, !retireM1 && row.svgSheet === undefined),
+      ...checkedRockSheet(row, shape, !retireM1 && row.svgSheet === undefined),
     };
   });
 
@@ -1229,7 +1154,6 @@ export function crystalVariants(plain: readonly Entry[]) {
   const entries = CRYSTAL_VARIANTS.map((variant) => {
     const look: Look = {
       cluster: variant.cluster,
-      declared: "frame",
       ...(variant.size === "medium" ? { vein: true } : {}),
     };
     const base = plain.find(({ id }) => id === variant.shape)!;
@@ -1281,21 +1205,7 @@ export function crystalVariants(plain: readonly Entry[]) {
 }
 
 async function rebuild(catalog: Catalog, backdropOnly: boolean) {
-  const resourceCatalog =
-    !backdropOnly && existsSync(resourcePath)
-      ? (JSON.parse(readFileSync(resourcePath, "utf8")) as ResourceCatalog)
-      : undefined;
-  const selectedResources = resourceCatalog
-    ? resourceSheetRows(resourceCatalog)
-    : new Map<string, CatalogRow>();
   const staticPlain = backdropOnly ? undefined : staticRockSheet(catalog);
-  const staticResources = resourceCatalog && staticRockSheet(resourceCatalog);
-  const packedResources = new Map(
-    ROTATING_RESOURCES.flatMap((shape) => {
-      const row = selectedResources.get(shape.id);
-      return row ? [[shape.id, checkedRockSheet(row, shape, true, false)] as const] : [];
-    }),
-  );
   const selected = new Set(
     catalog.asteroids.filter(({ id, svgSheet }) => svgSheet === sheetUrl(id)).map(({ id }) => id),
   );
@@ -1312,36 +1222,15 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
         return rock(writeFrame, PLAIN, shape);
       });
 
-  // A resource rock stands on its plain shape's base: the footprints must match exactly.
-  const resources = (backdropOnly ? [] : RESOURCES).map((shape) => {
-    const packed = packedResources.get(shape.id);
-    const entry = packed
-      ? { ...packed.entry, svgSheet: sheetUrl(shape.id) }
-      : (staticResources?.entries.get(shape.id) ?? rock(writeFrame, RESOURCE, shape));
-    const plain = asteroids.find(({ id }) => id === shape.shape)!;
-    const same =
-      entry.footprintRadius === plain.footprintRadius &&
-      entry.frames.every(
-        (frame, k) =>
-          JSON.stringify(frame.footprint) === JSON.stringify(plain.frames[k]!.footprint),
-      );
-    if (!same) throw new Error(`${shape.id} footprints differ from ${shape.shape}`);
-    if (packed) writeChanged(svgDir + sheetFile(shape.id), packed.text);
-    return entry;
-  });
-  for (const page of [staticPlain, staticResources]) {
-    if (page) writeChanged(svgDir + page.file, page.text);
-  }
+  if (staticPlain) writeChanged(svgDir + staticPlain.file, staticPlain.text);
 
-  // Crystal variants are staged: their sheets ship beside the plain ones, and their rows and the
-  // selection rule wait in art/ until the runtime reads them from asteroids.json's `crystals`.
+  // The crystal variants' sheets ship beside the plain ones; their rows and selection rule go to
+  // `crystals`, outside `asteroids`, so placement and saves choose only plain shapes.
+  let crystals = catalog.crystals;
   if (!backdropOnly) {
-    const { crystals, sheets } = crystalVariants(asteroids);
-    for (const { file, text } of sheets) writeChanged(svgDir + file, text);
-    writeChanged(
-      crystalRowsPath,
-      await catalogText({ target: "/art/asteroids.json", crystals }, crystalRowsPath),
-    );
+    const variants = crystalVariants(asteroids);
+    for (const { file, text } of variants.sheets) writeChanged(svgDir + file, text);
+    crystals = variants.crystals;
   }
 
   const white = "#FFFFFF";
@@ -1372,6 +1261,7 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
       displayScale: DISPLAY,
       stone: STONE,
       asteroids: backdropOnly ? catalog.asteroids : asteroids,
+      crystals,
       backdrop: {
         sideScale: BACKDROP_SIDE,
         rule: { lift: BACKDROP_LIFT, chromaScale: BACKDROP_CHROMA, lightDrop: BACKDROP_LIGHT_DROP },
@@ -1381,21 +1271,9 @@ async function rebuild(catalog: Catalog, backdropOnly: boolean) {
     }),
   );
 
-  // Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
+  // The root manifest names the asteroid data next to the other data files.
   if (!backdropOnly) {
-    writeFileSync(
-      resourcePath,
-      await catalogText(
-        { version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources },
-        resourcePath,
-      ),
-    );
-
-    // The root manifest names the asteroid and resource rock data next to the other data files.
-    linkData("core", {
-      asteroids: "/art/asteroids.json",
-      resourceRocks: "/art/resource-rocks.json",
-    });
+    linkData("core", { asteroids: "/art/asteroids.json" });
   }
 }
 
@@ -1404,27 +1282,17 @@ if (import.meta.main) {
   const backdropOnly = args.includes("--backdrop-only");
   const m1Only = args.includes("--m1-sheet");
   const rotatingOnly = args.includes("--rotating-sheets");
-  const resourceOnly = args.includes("--resource-sheets");
   const staticOnly = args.includes("--static-sheets");
-  if ([backdropOnly, m1Only, rotatingOnly, resourceOnly, staticOnly].filter(Boolean).length > 1) {
+  if ([backdropOnly, m1Only, rotatingOnly, staticOnly].filter(Boolean).length > 1) {
     throw new Error("Choose one asteroid export mode");
   }
   if (staticOnly) {
     const plain = JSON.parse(readFileSync(catalogPath, "utf8")) as Catalog;
-    const resource = JSON.parse(readFileSync(resourcePath, "utf8")) as ResourceCatalog;
-    resourceSheetRows(resource);
-    const pages = [staticRockSheet(plain, true)!, staticRockSheet(resource, true)!];
-    for (const page of pages) {
-      for (const row of page.rows) row.svgSheet = page.path;
-    }
+    const page = staticRockSheet(plain, true)!;
+    for (const row of page.rows) row.svgSheet = page.path;
     const plainText = await catalogText(plain);
-    const resourceText = await catalogText(resource, resourcePath);
-    for (const page of pages) writeChanged(svgDir + page.file, page.text);
+    writeChanged(svgDir + page.file, page.text);
     writeChanged(catalogPath, plainText);
-    writeChanged(resourcePath, resourceText);
-  } else if (resourceOnly) {
-    const catalog = JSON.parse(readFileSync(resourcePath, "utf8")) as ResourceCatalog;
-    await selectRockSheets(catalog, ROTATING_RESOURCES);
   } else {
     const catalog =
       m1Only || rotatingOnly || backdropOnly || existsSync(catalogPath)

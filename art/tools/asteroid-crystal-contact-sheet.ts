@@ -36,14 +36,15 @@ type Row = {
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const read = <T>(path: string) => JSON.parse(readFileSync(path, "utf8")) as T;
-const catalog = read<{ asteroids: Row[] }>(`${art}asteroids.json`);
-const staged = read<{
+const catalog = read<{
+  asteroids: Row[];
   crystals: {
     selection: { ordinary: { sizes: string[]; share: number; salt: string; except: string[] } };
     variants: Record<string, Partial<Record<Cluster, string>>>;
     rocks: Row[];
   };
-}>(fileURLToPath(new URL("../asteroid-crystal-rows.json", import.meta.url)));
+}>(`${art}asteroids.json`);
+
 const galaxies = read<{
   galaxies: Record<string, { colors: { background: string }; foregroundEdge?: string }>;
 }>(`${art}galaxies.json`).galaxies;
@@ -79,11 +80,13 @@ function shipped(row: Row, k: number): string {
   return match[1]!.replace(/<title>.*?<\/title>/su, "");
 }
 
-const rows = new Map([...catalog.asteroids, ...staged.crystals.rocks].map((row) => [row.id, row]));
+const rows = new Map([...catalog.asteroids, ...catalog.crystals.rocks].map((row) => [row.id, row]));
 
 const look = (id: string) => rows.get(id)!;
 const body = (id: string, k: number) => shipped(rows.get(id)!, k);
-const CRYSTAL_SHAPES = SHAPES.filter(({ id }) => Object.keys(staged.crystals.variants[id]!).length);
+const CRYSTAL_SHAPES = SHAPES.filter(
+  ({ id }) => Object.keys(catalog.crystals.variants[id]!).length,
+);
 
 // One rock at display scale `scale` with its pivot at (x, y), over its edge: the drawing's alpha
 // at 0.5, grown by 1 display px with a square kernel, in the edge colour.
@@ -120,7 +123,7 @@ function variantSheet(field: string, edge: string, scale: number): string {
         GAP,
         y + 11,
         edge,
-        `${shape.id}: plain, small${staged.crystals.variants[shape.id]!.full ? ", full" : ""}`,
+        `${shape.id}: plain, small${catalog.crystals.variants[shape.id]!.full ? ", full" : ""}`,
       ),
     );
     y += LABEL;
@@ -201,7 +204,7 @@ function fieldSample(galaxy: (typeof FIELDS)[number]): {
   total: number;
 } {
   const [W, H] = [960, 540];
-  const { salt, share, except, sizes } = staged.crystals.selection.ordinary;
+  const { salt, share, except, sizes } = catalog.crystals.selection.ordinary;
   const seed = 0x5eed0000 + galaxy.id.length;
   const rnd = mulberry(0x0ae5 + galaxy.id.length);
   const pool = SHAPES.flatMap((shape) =>
@@ -224,7 +227,7 @@ function fieldSample(galaxy: (typeof FIELDS)[number]): {
       sizes.includes(row.size) &&
       unit(seed, placementId, salt) < share;
     picked += small ? 1 : 0;
-    const id = small ? staged.crystals.variants[plain]!.small! : plain;
+    const id = small ? catalog.crystals.variants[plain]!.small! : plain;
     placed.push({ id, k: Math.floor(rnd() * row.frames.length), x, y, r: r * 0.8 });
   }
   const drawn = placed.toSorted((a, b) => a.y - b.y).map((p) => rock(p.id, p.k, p.x, p.y, 1));
@@ -254,7 +257,7 @@ function oreFieldSample(): string {
     const layout = family.layouts.find(({ count }) => count === 8)!;
     const rocks = layout.rocks
       .map(({ id, position: [wx, wy], frame }) => ({
-        id: id.replace(/^resource-(\w+)$/u, "asteroid-$1-crystals-full"),
+        id: catalog.crystals.variants[id]!.full!,
         k: frame,
         x: cx + (wx - wy),
         y: cy + (wx + wy) / 2,
@@ -275,7 +278,7 @@ function oreFieldSample(): string {
 
 // The share of 100000 object ids the rule picks.
 function measuredShare(): number {
-  const { salt, share } = staged.crystals.selection.ordinary;
+  const { salt, share } = catalog.crystals.selection.ordinary;
   let picked = 0;
   for (let i = 0; i < 100000; i++) {
     picked += unit(0x5eed0000 + (i % 10), `rock:${i % 97},${i % 89}:${i}`, salt) < share ? 1 : 0;
@@ -300,7 +303,7 @@ async function alpha(row: Row, k: number): Promise<Uint8Array> {
 async function fits() {
   crystalVariants(catalog.asteroids as never);
   const out: Record<string, { outside: number[]; sizes?: number[]; veinLifts?: number[] }> = {};
-  for (const row of staged.crystals.rocks) {
+  for (const row of catalog.crystals.rocks) {
     const plain = look(CRYSTAL_VARIANTS.find(({ id }) => id === row.id)!.shape);
     const outside: number[] = [];
     for (let k = 0; k < row.frames.length; k++) {
