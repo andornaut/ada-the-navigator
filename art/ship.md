@@ -19,10 +19,10 @@
   duplicate geometry or alter collision.
 - Render 64 player headings from the one model and heading contract, with the
   documented frame, pivot and collision alignment. Enemy craft retain 16 headings.
-- Exhaust is a teardrop plume in two flat tones rooted on the engine mouths
-  ([Speed jets](#speed-jets)). This supersedes the three nested triangles with
-  the dark outer, and the rule that dropped the core at a display size of 42 px
-  or less: the core draws at every size. Every title, warp, map and flight
+- Exhaust is a teardrop plume in three flat tones rooted on the engine mouths:
+  a dark halo round the flame and its core ([Speed jets](#speed-jets)). This
+  supersedes the three nested triangles and the rule that dropped the core at
+  a display size of 42 px or less: the core draws at every size. Every title, warp, map and flight
   consumer draws the same plume from the same projected roots.
 - A plume is a round flame about its axis: it shows its silhouette across the
   projected axis and takes its depth on its centre line. The hull draws over
@@ -327,40 +327,47 @@ There are no animated jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
-  (6 + 24 f²). The outer flame reaches 1.1 jet lengths and the core 0.55.
+  (6 + 24 f²). The halo reaches 1.1 jet lengths, the outer flame 1 and the
+  core 0.55.
 - `profile` is the plume outline as `[t, w]` pairs: `t` the fraction of a
   layer's length from the root, `w` the fraction of its half width. The
-  teardrop is 0.8 at the root, full from 0.10 to 0.22, 0.72 at 0.45, 0.30 at
-  0.75 and a point at the tip. A layer's polygon runs down one side of the
+  teardrop is 0.85 at the root, full from 0.10 to 0.28, 0.70 at 0.5, 0.30 at
+  0.8 and a point at the tip, so its tail keeps the width the earlier
+  triangles had along their length. A layer's polygon runs down one side of the
   profile to the tip and back up the other:
   `anchor + axis * t * length * layer.length +- half * w * layer.width`.
-- `engineLevels` holds two layers per Engine level, drawn in order. Only the
+- `engineLevels` holds three layers per Engine level, drawn in order. Only the
   colours change with level; shape is the same on every paint.
 
 | Layer   | `width`, half width | `length` |
 | ------- | ------------------: | -------: |
-| `outer` |  5.8 units (2.5 px) |      1.1 |
+| `halo`  |  5.8 units (2.5 px) |      1.1 |
+| `outer` |  4.2 units (1.8 px) |        1 |
 | `core`  |  1.6 units (0.7 px) |     0.55 |
 
-| Speed `f` | Jet length | Outer reach | Core reach |
-| --------: | ---------: | ----------: | ---------: |
-|      0.25 |        7.5 |        8.25 |       4.13 |
-|       0.6 |      14.64 |       16.10 |       8.05 |
-|         1 |         30 |          33 |       16.5 |
+| Speed `f` | Jet length | Halo reach | Outer reach | Core reach |
+| --------: | ---------: | ---------: | ----------: | ---------: |
+|      0.25 |        7.5 |       8.25 |         7.5 |       4.13 |
+|       0.6 |      14.64 |      16.10 |       14.64 |       8.05 |
+|         1 |         30 |         33 |          30 |       16.5 |
+
+- At game scale the plumes match the earlier triangles' reach, the reach at
+  which they are still 3 canvas px across, and their pixel area at speeds
+  0.25, 0.6 and 1, measured on Sunflower at headings 0, 16, 32 and 48.
 
 - Each colour pair is the value at `f = 0` and `f = 1`, interpolated linearly
   in sRGB. All layers are opaque. The core draws at every display size.
 
-| Engine level | Dark field outer     | Dark field core      | Light field outer | Light field core     |
-| -----------: | -------------------- | -------------------- | ----------------- | -------------------- |
-|            1 | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` | `#1767b3`         | `#2585d0`, `#64caff` |
-|            2 | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` | `#9e3027`         | `#cf4935`, `#ee7960` |
-|            3 | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` | `#91620e`         | `#d49b22`, `#f2cf62` |
+| Engine level | Halo, both fields | Dark field outer     | Dark field core      | Light field outer | Light field core     |
+| -----------: | ----------------- | -------------------- | -------------------- | ----------------- | -------------------- |
+|            1 | `#101a2e`         | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` | `#1767b3`         | `#2585d0`, `#64caff` |
+|            2 | `#583036`         | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` | `#9e3027`         | `#cf4935`, `#ee7960` |
+|            3 | `#584a37`         | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` | `#91620e`         | `#d49b22`, `#f2cf62` |
 
 - Dark field values are `ship-jets.json` `engineLevels`. Light field values
   are `lightField.jets.shipLevels` in [galaxies.json](../public/art/galaxies.json)
-  ([Light fields](galaxies.md#light-fields)): the same two layers and shape in
-  their own colours.
+  ([Light fields](galaxies.md#light-fields)): the same three layers and shape
+  in their own colours.
 - `headings` holds all 64 headings, two mouths each, port then starboard.
   `anchor` is the plume root in frame px: the mouth centre, local
   `(+-12.25, 17.563, 2.2)`, 0.1 behind the rear wall and 1 unit above the
@@ -372,7 +379,7 @@ There are no animated jet frames.
 - A plume takes its depth on the plane that holds its axis and faces the
   viewer. `occluders` are the outlines, in frame px, of every visible hull
   region in front of that plane inside the plume's widest and longest reach
-  (`plumeReach`: 5.8 by 33 units). Draw the complete plume above the hull,
+  (`plumeReach`: the halo's 5.8 by 33 units). Draw the complete plume above the hull,
   then the hull again inside the occluders, taken from the loaded hull image.
   The nearer plume draws over the tail and the farther one passes behind it.
 - `node art/tools/ship.ts --jets-only` updates only this file.
@@ -393,29 +400,31 @@ establish visible compliance.
 `node art/tools/ship-retro-jets.ts` writes `ship-retro-jets.json`, version 1,
 with all 64 headings in the same 96 px frame and pivot as the ship.
 
-- The same `profile` and two layers at 0.85 of the forward widths: outer 4.93
-  and core 1.36 units, at the forward lengths 1.1 and 0.55. `engineLevels`
-  carries the same colours as `ship-jets.json`; light fields use
-  `lightField.jets.shipLevels` colours on these widths.
+- The same `profile` and three layers at half the forward widths: halo 2.9,
+  outer 2.1 and core 0.8 units, at the forward lengths 1.1, 1 and 0.55.
+  `engineLevels` carries the same colours as `ship-jets.json`; light fields
+  use `lightField.jets.shipLevels` colours on these widths. At game scale they
+  match the earlier reverse plumes' reach, 3 px reach and pixel area.
 - Jet length is `14.85 + 23.1 f` ship units, `length`
   `{ base: 14.85, scale: 23.1, exponent: 1 }`, so the reverse plumes outreach
   the forward ones, which matters because the wings hide part of them. Zero
   strength is off.
 
-| Strength `f` | Jet length | Outer reach | Core reach |
-| -----------: | ---------: | ----------: | ---------: |
-|         0.25 |      20.63 |       22.69 |      11.34 |
-|          0.6 |      28.71 |       31.58 |      15.79 |
-|            1 |      37.95 |       41.75 |      20.87 |
+| Strength `f` | Jet length | Halo reach | Outer reach | Core reach |
+| -----------: | ---------: | ---------: | ----------: | ---------: |
+|         0.25 |      20.63 |      22.69 |       20.63 |      11.34 |
+|          0.6 |      28.71 |      31.58 |       28.71 |      15.79 |
+|            1 |      37.95 |      41.75 |       37.95 |      20.87 |
 
 - The axis aims 10 degrees outboard of forward, `(+-sin 10, -cos 10, 0)`, and
   `half` is the round-flame vector across it, as for the forward plumes.
 - Each mouth has `anchor`, `axis` and `half` only. The root sits at the wing
-  tip (`retroRoot` in [ship-model.ts](tools/ship-model.ts)): the plume's widest
+  tip (`retroRoot` in [ship-model.ts](tools/ship-model.ts)): the halo's widest
   outboard flank leaves from the tip `(+-21.44, 20.48)`, and the root slides
   forward along the axis until its inboard root corner reaches the trailing
   edge, so no plume shows behind the wing. The local root is
-  `(+-16.77, 18.60)`. The nearer wing's plume lies at the skirt bottom
+  `(+-18.69, 19.36)`. At speeds 0.25 and 0.6 both plumes show clearly past
+  the wings at headings 0, 16, 32 and 48. The nearer wing's plume lies at the skirt bottom
   (z 0) and the farther wing's at the skirt top (z 1.2); level wings both
   take the bottom.
 - The hull draws over the reverse plumes. There is no rear clip, corner

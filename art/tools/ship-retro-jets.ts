@@ -8,7 +8,7 @@ import { FRAME, plumeSide, retroMouthAxis, retroRoot } from "./ship-model.ts";
 // Reverse plumes: the forward layers and profile at the retro widths and reach, rooted at each
 // wing tip and aimed forward and outboard. The hull draws over them.
 const plume = {
-  halfWidth: jetLayers(JET_LEVELS[0], RETRO_JET.width)[0]!.width,
+  halfWidth: Math.max(...jetLayers(JET_LEVELS[0], RETRO_JET.width).map(({ width }) => width)),
   rootShare: JET_PROFILE[0][1],
 };
 const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({

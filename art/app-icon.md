@@ -42,9 +42,9 @@ of other shapes.
 Rebuild with `node art/tools/app-icon.ts`. The exporter uses the Classic
 [ship model](ship.md) and Engine level 1 [plumes](ship.md#speed-jets) at speed
 fraction 0.6. The length curve gives 14.64 model units before projection; the
-outer flame reaches 16.1 of them. The
+halo reaches 16.1 of them. The
 plume occluders restore the painted hull where it is nearer than a plume.
-Every size reduces the one master, with both plume layers.
+Every size reduces the one master, with all three plume layers.
 
 The command writes every PNG, the two-size ICO and the contact sheet. Raster
 exports sample the projected geometry at 4× the 512 px master before

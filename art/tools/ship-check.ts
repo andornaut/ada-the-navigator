@@ -308,7 +308,7 @@ type Jets = {
   profile: number[][];
 };
 
-test("forward plumes root at the mouth centres with two layers and the hull regions over them", () => {
+test("forward plumes root at the mouth centres with three layers and the hull regions over them", () => {
   const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as Jets;
   assert.equal(jets.frame, FRAME);
   assert.deepEqual(jets.length, JET_LENGTH);
@@ -321,7 +321,8 @@ test("forward plumes root at the mouth centres with two layers and the hull regi
     assert.deepEqual(
       layers.map(({ length, name, width }) => ({ length, name, width })),
       [
-        { length: 1.1, name: "outer", width: 5.8 },
+        { length: 1.1, name: "halo", width: 5.8 },
+        { length: 1, name: "outer", width: 4.2 },
         { length: 0.55, name: "core", width: 1.6 },
       ],
     );
@@ -383,9 +384,10 @@ test("a plume layer is a closed teardrop from its root to a point", () => {
   const mouth = { anchor: [10, 20], axis: [0, 1], half: [1, 0] } as const;
   const points = plumePolygon(JET_PROFILE, mouth, { length: 1, width: 5.8 }, 30);
   assert.equal(points.length, 2 * JET_PROFILE.length - 1);
-  assert.deepEqual(points[0], [10 + 0.8 * 5.8, 20]);
+  const root = JET_PROFILE[0][1];
+  assert.deepEqual(points[0], [10 + root * 5.8, 20]);
   assert.deepEqual(points[JET_PROFILE.length - 1], [10, 50]);
-  assert.deepEqual(points.at(-1), [10 - 0.8 * 5.8, 20]);
+  assert.deepEqual(points.at(-1), [10 - root * 5.8, 20]);
   assert(Math.abs(Math.max(...points.map(([x]) => Math.abs(x - 10))) - 5.8) < 1e-12);
 });
 
@@ -398,12 +400,13 @@ test("reverse plumes leave the wing tips ahead of the trailing edge and outreach
   assert.deepEqual(
     jets.engineLevels.map(({ layers }) => layers.map(({ length, width }) => [length, width])),
     [1, 2, 3].map(() => [
-      [1.1, 4.93],
-      [0.55, 1.36],
+      [1.1, 2.9],
+      [1, 2.1],
+      [0.55, 0.8],
     ]),
   );
   assert(!("reverseStyle" in jets));
-  const plume = { halfWidth: 4.93, rootShare: JET_PROFILE[0][1] };
+  const plume = { halfWidth: 2.9, rootShare: JET_PROFILE[0][1] };
   for (const heading of jets.headings) {
     const roots = [-1, 1].map((sign) => retroRoot({ yaw: heading.index }, plume, sign));
     // One wing's plume at the skirt bottom, the other's at its top, unless both wings are level.
@@ -420,16 +423,17 @@ test("reverse plumes leave the wing tips ahead of the trailing edge and outreach
       // trailing edge from the notch (5.44, 15.68) to the tip (21.44, 20.48).
       const [tipX, tipY] = model.corner;
       assert.equal(Math.abs(tipX), 21.44);
-      const flank = root[0] + model.side[0] * 4.93;
+      const flank = root[0] + model.side[0] * plume.halfWidth;
       assert(sign * flank > 21.44 - 1e-9);
-      const corner = [root[0] - model.side[0] * 4.93 * 0.8, root[1] - model.side[1] * 4.93 * 0.8];
+      const inboard = plume.halfWidth * plume.rootShare;
+      const corner = [root[0] - model.side[0] * inboard, root[1] - model.side[1] * inboard];
       const edge = tipY - 0.3 * (21.44 - sign * corner[0]!);
       assert(Math.abs(corner[1]! - edge) < 1e-9);
     }
   }
 });
 
-test("light fields carry the same two layers in their own colours", () => {
+test("light fields carry the same three layers in their own colours", () => {
   const galaxies = JSON.parse(readFileSync(new URL("galaxies.json", assets), "utf8")) as {
     lightField: { jets: { shipLevels: unknown } };
   };

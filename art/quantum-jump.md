@@ -25,7 +25,7 @@ The nine pose definitions share `art/tools/ship-poses.ts` with the
 `ship-materials.json` contains each pose's actual ordered material paths,
 with the same frame, pivot and transform. Pose paths remain logical metadata;
 54 physical coloured pose SVGs are retired and must not be emitted. Pose
-jets are the two-layer teardrop plumes described in
+jets are the three-layer teardrop plumes described in
 [speed jets](ship.md#speed-jets), rooted at each pose's projected mouth
 centres with that pose's occluders.
 
@@ -113,7 +113,8 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
 - The jet renderer uses the selected main engine/field layers with the same
   plume profile as forward flight. Complete plumes render above the base hull;
   the hull is redrawn inside each mouth's `occluders`. The static cue's jet
-  length is 16 model units: the outer flame reaches 17.6 and the core 8.8. The projected axis and
+  length is 16 model units: the halo reaches 17.6, the outer flame 16 and the
+  core 8.8. The projected axis and
   half vectors already include the pose transform: do not normalize them or
   apply frame conversion or stretch again.
 - The runtime does not use a separate warp palette. Whitening and alpha follow

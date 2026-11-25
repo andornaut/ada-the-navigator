@@ -11,11 +11,11 @@
     "exponent": 2
   },
   "profile": [
-    [0, 0.8],
+    [0, 0.85],
     [0.1, 1],
-    [0.22, 1],
-    [0.45, 0.72],
-    [0.75, 0.3],
+    [0.28, 1],
+    [0.5, 0.7],
+    [0.8, 0.3],
     [1, 0]
   ],
   "engineLevels": [
@@ -23,10 +23,16 @@
       "level": 1,
       "layers": [
         {
-          "name": "outer",
-          "colors": ["#5b93cc", "#b9ecff"],
+          "name": "halo",
+          "colors": ["#101a2e", "#101a2e"],
           "width": 5.8,
           "length": 1.1
+        },
+        {
+          "name": "outer",
+          "colors": ["#5b93cc", "#b9ecff"],
+          "width": 4.2,
+          "length": 1
         },
         {
           "name": "core",
@@ -40,10 +46,16 @@
       "level": 2,
       "layers": [
         {
-          "name": "outer",
-          "colors": ["#a62c22", "#e74b35"],
+          "name": "halo",
+          "colors": ["#583036", "#583036"],
           "width": 5.8,
           "length": 1.1
+        },
+        {
+          "name": "outer",
+          "colors": ["#a62c22", "#e74b35"],
+          "width": 4.2,
+          "length": 1
         },
         {
           "name": "core",
@@ -57,10 +69,16 @@
       "level": 3,
       "layers": [
         {
-          "name": "outer",
-          "colors": ["#b77d22", "#e8ba3c"],
+          "name": "halo",
+          "colors": ["#584a37", "#584a37"],
           "width": 5.8,
           "length": 1.1
+        },
+        {
+          "name": "outer",
+          "colors": ["#b77d22", "#e8ba3c"],
+          "width": 4.2,
+          "length": 1
         },
         {
           "name": "core",

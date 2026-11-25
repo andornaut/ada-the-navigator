@@ -91,10 +91,16 @@
           "level": 1,
           "layers": [
             {
-              "name": "outer",
-              "colors": ["#1767b3", "#1767b3"],
+              "name": "halo",
+              "colors": ["#101a2e", "#101a2e"],
               "width": 5.8,
               "length": 1.1
+            },
+            {
+              "name": "outer",
+              "colors": ["#1767b3", "#1767b3"],
+              "width": 4.2,
+              "length": 1
             },
             {
               "name": "core",
@@ -108,10 +114,16 @@
           "level": 2,
           "layers": [
             {
-              "name": "outer",
-              "colors": ["#9e3027", "#9e3027"],
+              "name": "halo",
+              "colors": ["#583036", "#583036"],
               "width": 5.8,
               "length": 1.1
+            },
+            {
+              "name": "outer",
+              "colors": ["#9e3027", "#9e3027"],
+              "width": 4.2,
+              "length": 1
             },
             {
               "name": "core",
@@ -125,10 +137,16 @@
           "level": 3,
           "layers": [
             {
-              "name": "outer",
-              "colors": ["#91620e", "#91620e"],
+              "name": "halo",
+              "colors": ["#584a37", "#584a37"],
               "width": 5.8,
               "length": 1.1
+            },
+            {
+              "name": "outer",
+              "colors": ["#91620e", "#91620e"],
+              "width": 4.2,
+              "length": 1
             },
             {
               "name": "core",
