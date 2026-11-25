@@ -76,12 +76,11 @@ in a pair are the `-a` and `-b` blink frames.
 | Structure                                | Ids                                                      | Sheet                                       | Frame px | Display           | Pivot y | Drawn                    |
 | ---------------------------------------- | -------------------------------------------------------- | ------------------------------------------- | -------- | ----------------- | ------- | ------------------------ |
 | Sunflower station                        | `station`                                                | `/art/station-bloom-sheet.svg`              | 272, 256 | 178.5 by 168      | 0.3125  | 172 by 161               |
-| Sunflower second station                 | `station-leaf`                                           | `/art/sunflower/leaf-station-sheet.svg`     | 264, 168 | 173.25 by 110.25  | 0.50595 | 165 by 101               |
-| Growers, and with the ring               | `outpost-growers`, `outpost-growers-ring`                | `/art/sunflower/growers-bud-sheet.svg`      | 192, 144 | 176.4 by 132.3    | 0.42361 | 146 by 110, 169 by 123   |
+| Growers, and with the ring               | `outpost-growers`, `outpost-growers-ring`                | `/art/sunflower/growers-leaf-sheet.svg`     | 192, 144 | 176.4 by 132.3    | 0.45139 | 132 by 108, 165 by 121   |
 | Workshop                                 | `outpost-workshop`                                       | `/art/sunflower/workshop-bloom-sheet.svg`   | 200, 144 | 183.75 by 132.3   | 0.41667 | 151 by 122               |
 | Workshop crane                           | `outpost-workshop-crane`                                 | `/art/sunflower/workshop-boom-sheet.svg`    | 128, 64  | 117.6 by 58.8     | 0.64063 | 65 by 49                 |
 | Salvagers' yard                          | `outpost-salvagers`                                      | `/art/sunflower/salvagers-leaf-sheet.svg`   | 176, 120 | 161.7 by 110.25   | 0.48333 | 153 by 102               |
-| Mining hub, worn, repaired and bay       | `outpost-hub`, `outpost-hub-repaired`, `outpost-hub-bay` | `/art/cartwheel/wheel-hub-sheet.svg`        | 320, 320 | 175 by 175        | 0.525   | 168 by 142; bay 32 by 35 |
+| Mining hub, worn, repaired and bay       | `outpost-hub`, `outpost-hub-repaired`, `outpost-hub-bay` | `/art/cartwheel/wheel-hub-sheet.svg`        | 360, 288 | 196.875 by 157.5  | 0.58333 | 168 by 142; bay 45 by 34 |
 | Whirlpool station                        | `whirlpool-station-0` to `-3`                            | `/art/whirlpool/ramp-station-sheet.svg`     | 328, 224 | 215.25 by 147     | 0.42411 | 205 by 138               |
 | Weavers' station, and with the Loom hall | `needle-station`, `needle-station-hall`                  | `/art/needle/eye-station-sheet.svg`         | 528, 120 | 346.5 by 78.75    | 0.5     | 316 by 73, 341 by 60     |
 | Settlers' station                        | `station-settlers`                                       | `/art/andromeda/saucer-station-sheet.svg`   | 312, 232 | 204.75 by 152.25  | 0.42241 | 197 by 145               |
@@ -106,8 +105,8 @@ and Phantom settlements, and `0.4375 * 1.25` for the hub. Pivot x is 0.5.
 - The states of one structure share a frame and pivot, so a state change swaps
   in place: the growers and their ring, the hub worn and repaired, the
   Weavers' station and its Loom hall, and each settlement cracked and mended.
-- Hub worn: the large wheel's rim is open from 40 to 110 degrees, with the
-  spoke at 90 missing.
+- Hub worn: the large wheel's rim is open from 42.19 to 109.69 degrees, on the
+  rim's facets, with the spoke at 90 missing.
 - Cracked: the arm of the top slab that points down the screen ends at 0.52 of
   its length and every lamp is dim, so `-cracked-a` and `-cracked-b` share one
   root. Mended: the arm is whole with one lamp collar over the old break.
@@ -125,12 +124,12 @@ and Phantom settlements, and `0.4375 * 1.25` for the hub. Pivot x is 0.5.
   the arm that cracks, at its cracked length. `outward` is `[0, 1]` and the
   width is the shipped row's.
 - Hub `berths`, left then right, are the large wheel's rim wall at its screen
-  left and right, clear of the worn opening: frame px `(6.592, 168)` outward
-  `[-1, 0]` and `(313.408, 168)` outward `[1, 0]`, width 28.169, each 83.895
+  left and right, clear of the worn opening: frame px `(26.592, 168)` outward
+  `[-1, 0]` and `(333.408, 168)` outward `[1, 0]`, width 28.169, each 83.895
   display px to the side of the pivot.
-- The docking bay's berth is the berth drum's wall straight down the screen:
-  `(160, 303.765)` outward `[0, 1]`, width 36.742, 74.246 display px below the
-  pivot.
+- The docking bay's berth is the berth drum's wall, outward from the hub:
+  `(346.277, 264)` outward `[0.866, 0.5]`, width 36.742, 90.933 display px
+  right of the pivot and 52.5 below.
 - Weavers' station `berths` are the needle's blunt ends: `(23.25, 60)` and
   `(504.75, 60)`, outward `[-1, 0]` and `[1, 0]`, width 24.495, each 157.992
   display px from the pivot. With the Loom hall they are `(4.587, 60)` and
@@ -147,7 +146,10 @@ drawn with its whole structure and keeps only the part of the project's solid
 that the structure leaves visible, so it draws in front of its base with
 correct occlusion.
 
-- The docking bay's frames share the hub's frame and pivot, as shipped.
+- The docking bay stands off the large wheel's rim at 0 degrees, the lower
+  right on screen, where the worn and the repaired hub both have the rim. Its
+  frames share the hub's frame and pivot, as shipped, so it has no anchor in
+  `projects.json`; the producer fails unless it draws alike on both hub states.
 - The crane and the school have their own frames, with the pivot on the lifting
   drum's or the school saucer's axis. `station-rows.json` `projects` holds
   their `projects.json` entries with the new anchors, in the base's frame px
@@ -204,29 +206,32 @@ byte-identical. Each design has no engine or command part.
   `order` (the hull, then the mounts far to near), each mount's `anchor`,
   `pivot` and per-state `collision`, the hull's `collision` and `banner`. A
   mount whose intact collar shows less than half at a heading is `hidden`
-  there, and its top is not drawn: 28 mount headings of the coral station's
+  there, and its top is not drawn; it still fires and takes hits, so `hidden`
+  is drawing data only: 28 mount headings of the coral station's
   lower arms and 10 of the Garnet station's lower deck.
 - `tops` (shot origins and collision per aim) comes from the fleet's
-  `fleet-tops.json`: `pod` and `dome` for the stations and `gun` as the
-  platform's `turret`. The producer writes `tops` when that file is present.
+  [fleet-tops.json](fleet-tops.json): `pod` and `dome` for the stations and
+  `gun` as the platform's `turret`.
 - The dome on the coral hub is cut on the light turned into mesh space at
   each heading.
 
 `node art/tools/hostile-station-contact-sheet.ts <dir>` writes every heading
 of each design at 1x with intact bases and at 2x with capped and destroyed
-bases, with a dot on each top's pivot.
+bases. A second argument names a folder of the fleet's top sheets under their
+public paths; with it each armed, unhidden mount carries its top aimed
+outward.
 
 ## Replaced producers
 
 | Shipped producer                         | Replaced by                                                    | Stage |
 | ---------------------------------------- | -------------------------------------------------------------- | ----: |
-| `station.ts`                             | `flower` in the station producer, and `leafFlower`             |  1, 2 |
+| `station.ts`                             | `flower` in the station producer                               |     1 |
 | `whirlpool-station.ts`                   | `whirl`                                                        |     1 |
 | `needle-station.ts`                      | `needle`, with the Loom hall as its two-eye form               |  1, 2 |
 | `andromeda.ts`, station and settlements  | `saucer`: settlers' station, hamlet, lamphouse, courier school |  1, 2 |
 | `phantom-station.ts`, `phantom.ts`       | `twin`: station, homes, harbour and signal, cracked and mended |  1, 2 |
 | `cartwheel.ts`, hub                      | `wheels`: hub worn and repaired, docking bay                   |  1, 2 |
-| `outposts.ts`, outposts and their frames | `flower` and the leaf form: growers, workshop, salvagers       |     2 |
+| `outposts.ts`, outposts and their frames | `leafFlower` (growers, salvagers) and `flower` (workshop)      |     2 |
 | `hostile-station-export.ts` and its kin  | Three family models at 16 headings, and the Claim platform     |     3 |
 
 `primary-station-sheets.ts`, `station-model.ts` and `station-sidecars.ts`
@@ -242,16 +247,14 @@ Tech replaces, from `station-rows.json`, the rows of the same ids in the
 `phantom` manifests, and the `workshopCrane` and `courierSchool` entries of
 `projects.json` from its `projects`. A group switches in one landing with the
 removal of the sheet it replaces, so no unreferenced file ships.
-`station-leaf-a` and `-b` are new rows and wait for the second station's
-placement.
 
 Runtime values that follow the shipped frames:
 
 - `src/data/storyShips.ts`: `HUB_BERTHS` and `DOCKS` hold the hub's berths and
   the bay's in the shipped 240 px reference frame. The new points are the
   staged rows' `berths`. On screen from the pivot, at the hub's display scale,
-  they are `(-83.895, 0)`, `(83.895, 0)` and the bay's `(0, 74.246)` display
-  px, with outward directions `[-1, 0]`, `[1, 0]` and `[0, 1]`.
+  they are `(-83.895, 0)`, `(83.895, 0)` and the bay's `(90.933, 52.5)` display
+  px, with outward directions `[-1, 0]`, `[1, 0]` and `[0.866, 0.5]`.
 - [Destinations](destinations.md#collision-silhouette-dock-and-clearance) and
   [Needle](needle.md) list the Weavers' station berths as world offsets; both
   berths move to the needle's ends, and with the Loom hall both move again.
@@ -290,7 +293,7 @@ in [projects](projects.md) and the Use callout tops in
 ## Stages
 
 1. Model solids and the six main stations. Built.
-2. Outposts, the second Sunflower station, states and project solids. Built.
+2. Outposts, their states and the project solids. Built.
 3. Hostile stations and the Claim platform at 16 headings, their weapon bases
    and one hardpoints file per family. Built. Weapon tops (`pod`, `dome`,
    `gun`) are the [enemy fleet producer](enemy-redesign.md)'s.
@@ -321,18 +324,11 @@ in [projects](projects.md) and the Use callout tops in
 - `hidden` on a hardpoint heading is the fleet producer's field; the shipped
   station files do not carry it.
 - The stations' `jets` sidecar is unchanged; the designs have no drive.
-- The second Sunflower station needs a manifest id, a placement and a Map
-  entry from Tech, and Gameplay's decision on whether it is a destination,
-  where it sits, and its name and services. Its rows are staged as
-  `station-leaf-a` and `-b`, without `station` or `destination`, which would
-  make them Sunflower's own station art.
-- The leaf petals of the second station and the salvagers' yard are slabs 6
-  display px thick with their walls drawn, so the second station is 101
-  display px high against the reference sheet's 95.
-- The docking bay attaches at 45 degrees, inside the worn rim's opening (40 to
-  110 degrees). Its frames are cut against the repaired hub; over the worn hub
-  the arm meets the opening's edge. Gameplay's funding order decides whether
-  the bay can show before the repairs.
+- The growers' outpost is the leaf-petal form on a long foot, 132 by 108
+  display px against the shipped 132.3 by 110.25; with the greenhouse ring it
+  is 165 by 121 against 165.4 by 128.6. There is no second Sunflower station.
+- The leaf petals of the growers and the salvagers' yard are slabs 6 display
+  px thick with their walls drawn, where the reference sheet shows them flat.
 - The hub's berths move from the lower left and right of the hull to the
   rim's screen left and right, which the worn opening leaves whole.
 - The Weavers' station's right berth no longer moves alone when the Loom hall
