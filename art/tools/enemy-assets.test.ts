@@ -5,7 +5,9 @@ import { test } from "node:test";
 import { readMuzzleArt } from "../../src/data/enemyMuzzles.ts";
 import { INDUSTRIAL_STEMS, exportCrafts } from "./crafts.ts";
 import { jets } from "./enemies.ts";
+import { fleetCrafts } from "./fleet.ts";
 import { readManifest, type SidecarKind, type Sidecars } from "./manifest.ts";
+import { anchor, ENEMY_HEADINGS } from "./projection.ts";
 import { strictlyConvex } from "./silhouette.ts";
 
 type Parts = [number, number][][];
@@ -108,9 +110,13 @@ test("installed industrial variants retain archetype and muzzle counts in the ex
   }
 });
 
+// The small craft ship the fleet producer's files; the other crafts still ship crafts.ts.
+const fleet = fleetCrafts();
+const fleetArchetypes = new Set<string>(fleet.map(({ archetype }) => archetype));
+
 test("installed jet mouths inherit each intact source transform in every family", () => {
   for (const family of families) {
-    for (const craft of exportCrafts) {
+    for (const craft of exportCrafts.filter(({ name }) => !fleetArchetypes.has(name))) {
       const expected = JSON.parse(jets(craft)) as { headings: { mouths: unknown }[] };
       const path = installed(family, craft.name, "jets");
       const actual = JSON.parse(readFileSync(path, "utf8")) as { headings: { mouths: unknown }[] };
@@ -119,6 +125,32 @@ test("installed jet mouths inherit each intact source transform in every family"
         expected.headings.map(({ mouths }) => mouths),
         path,
       );
+    }
+  }
+});
+
+test("installed small-craft jets are the fleet models' files, with each drive mouth's anchor", () => {
+  for (const family of families) {
+    for (const craft of fleet) {
+      const path = installed(family, craft.archetype, "jets");
+      assert.equal(path, `public/art/enemies/${craft.key}-jets.json`);
+      const actual = JSON.parse(readFileSync(path, "utf8")) as {
+        frame: number;
+        headings: { mouths: { anchor: number[] }[] }[];
+      };
+      assert.equal(actual.frame, craft.frame, path);
+      assert.equal(actual.headings.length, ENEMY_HEADINGS, path);
+      for (const [yaw, { mouths }] of actual.headings.entries()) {
+        // Mesh space (forward +x, port +y) to the projection's local space (forward -y).
+        const expected = craft.mouths.map(({ at: [l, w, z] }) =>
+          anchor(ENEMY_HEADINGS, craft.frame / 2, yaw, [w, -l, z]),
+        );
+        assert.deepEqual(
+          mouths.map((mouth) => mouth.anchor),
+          expected,
+          `${path} heading ${yaw}`,
+        );
+      }
     }
   }
 });

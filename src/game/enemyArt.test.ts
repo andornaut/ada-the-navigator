@@ -4,14 +4,14 @@ import { describe, expect, it } from "vitest";
 
 import capitalHardpoints from "../../public/art/enemies/capital-hardpoints.json";
 import capitalJets from "../../public/art/enemies/capital-jets.json";
-import fighterJets from "../../public/art/enemies/fighter-jets.json";
+import fighterJets from "../../public/art/enemies/fleetFighter-jets.json";
+import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
+import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
 import frigateHardpoints from "../../public/art/enemies/frigate-hardpoints.json";
 import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import gadgetHardpoints from "../../public/art/enemies/gadget-hardpoints.json";
 import gadgetJets from "../../public/art/enemies/gadget-jets.json";
-import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
-import swarmJets from "../../public/art/enemies/swarm-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { HEAVY_PROFILE_PART_CLASSES } from "../data/enemyIdentity.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
@@ -136,17 +136,17 @@ describe("enemy frame sets", () => {
       capital: 210,
       capitalCompact: 210,
       capitalNarrow: 210,
-      fighter: 45.5,
+      fighter: 35,
       frigate: 189,
       frigateCompact: 189,
       frigateNarrow: 189,
       gadget: 245,
       hostileStation: 360.5,
-      interceptor: 38.5,
+      interceptor: 56,
       retaliator: 84,
       retaliatorCargoHauler: 84,
       retaliatorMiningFreighter: 84,
-      swarm: 35,
+      swarm: 24.5,
     });
   });
 
@@ -208,7 +208,7 @@ describe("enemy frame sets", () => {
 
   it("finds each archetype's data files in the core sidecars map", () => {
     const sidecars = readSidecars(CORE_MANIFEST.sidecars)!;
-    expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fighter-jets.json");
+    expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fleetFighter-jets.json");
     expect(enemyHardpointsPath(sidecars, "capital")).toBe("/art/enemies/capital-hardpoints.json");
     expect(enemyHardpointsPath(sidecars, "fighter")).toBeUndefined();
   });
@@ -287,9 +287,9 @@ describe("enemy jets", () => {
   });
 
   it.each([
-    ["swarm", 1, 80],
-    ["fighter", 2, 104],
-    ["interceptor", 1, 88],
+    ["swarm", 1, 56],
+    ["fighter", 2, 80],
+    ["interceptor", 1, 128],
     ["retaliator", 3, 192],
     ["frigate", 2, 432],
     ["capital", 2, 480],

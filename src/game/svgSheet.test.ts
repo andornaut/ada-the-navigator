@@ -105,9 +105,9 @@ it("retains the raw intrinsic default for an existing hull or rock and rejects d
 });
 
 it.each([
-  ["/art/enemies/fighter-sheet.svg", "enemy-fighter", 16, 104, 104],
-  ["/art/enemies/interceptor-sheet.svg", "enemy-interceptor", 16, 88, 88],
-  ["/art/enemies/swarm-sheet.svg", "enemy-swarm", 16, 80, 80],
+  ["/art/enemies/fleetFighter-sheet.svg", "enemy-fighter", 16, 80, 80],
+  ["/art/enemies/fleetInterceptor-sheet.svg", "enemy-interceptor", 16, 128, 128],
+  ["/art/enemies/fleetSwarm-sheet.svg", "enemy-swarm", 16, 56, 56],
   ["/art/asteroids/asteroid-m1-sheet.svg", "asteroid-m1", 24, 236, 145],
 ] as const)("retains every shipped member in %s", (path, prefix, count, width, height) => {
   recordExtractedAttributes();

@@ -7382,12 +7382,12 @@
     },
     {
       "id": "enemy-swarm-0",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
@@ -7398,12 +7398,12 @@
     },
     {
       "id": "enemy-swarm-1",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
@@ -7414,12 +7414,12 @@
     },
     {
       "id": "enemy-swarm-2",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
@@ -7430,12 +7430,12 @@
     },
     {
       "id": "enemy-swarm-3",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
@@ -7446,12 +7446,12 @@
     },
     {
       "id": "enemy-swarm-4",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
@@ -7462,12 +7462,12 @@
     },
     {
       "id": "enemy-swarm-5",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
@@ -7478,12 +7478,12 @@
     },
     {
       "id": "enemy-swarm-6",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
@@ -7494,12 +7494,12 @@
     },
     {
       "id": "enemy-swarm-7",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
@@ -7510,12 +7510,12 @@
     },
     {
       "id": "enemy-swarm-8",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
@@ -7526,12 +7526,12 @@
     },
     {
       "id": "enemy-swarm-9",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
@@ -7542,12 +7542,12 @@
     },
     {
       "id": "enemy-swarm-10",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
@@ -7558,12 +7558,12 @@
     },
     {
       "id": "enemy-swarm-11",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
@@ -7574,12 +7574,12 @@
     },
     {
       "id": "enemy-swarm-12",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
@@ -7590,12 +7590,12 @@
     },
     {
       "id": "enemy-swarm-13",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
@@ -7606,12 +7606,12 @@
     },
     {
       "id": "enemy-swarm-14",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
       "svgSheet": true,
-      "width": 80,
-      "height": 80,
-      "displayWidth": 35,
-      "displayHeight": 35,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
@@ -7622,7 +7622,263 @@
     },
     {
       "id": "enemy-swarm-15",
-      "path": "/art/enemies/swarm-sheet.svg",
+      "path": "/art/enemies/fleetSwarm-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-fighter-0",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-1",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-2",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-3",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-4",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-5",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-6",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-7",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-8",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-9",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-10",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-11",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-12",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-13",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-14",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-15",
+      "path": "/art/enemies/fleetFighter-sheet.svg",
       "svgSheet": true,
       "width": 80,
       "height": 80,
@@ -7634,272 +7890,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "swarm"
-    },
-    {
-      "id": "enemy-fighter-0",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-0",
-      "directionIndex": 0,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-1",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-1",
-      "directionIndex": 1,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-2",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-2",
-      "directionIndex": 2,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-3",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-3",
-      "directionIndex": 3,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-4",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-4",
-      "directionIndex": 4,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-5",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-5",
-      "directionIndex": 5,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-6",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-6",
-      "directionIndex": 6,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-7",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-7",
-      "directionIndex": 7,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-8",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-8",
-      "directionIndex": 8,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-9",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-9",
-      "directionIndex": 9,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-10",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-10",
-      "directionIndex": 10,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-11",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-11",
-      "directionIndex": 11,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-12",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-12",
-      "directionIndex": 12,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-13",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-13",
-      "directionIndex": 13,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-14",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-14",
-      "directionIndex": 14,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "archetype": "fighter"
-    },
-    {
-      "id": "enemy-fighter-15",
-      "path": "/art/enemies/fighter-sheet.svg",
-      "svgSheet": true,
-      "width": 104,
-      "height": 104,
-      "displayWidth": 45.5,
-      "displayHeight": 45.5,
-      "facing": "world-15",
-      "directionIndex": 15,
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      },
       "archetype": "fighter"
     },
     {
       "id": "enemy-interceptor-0",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
@@ -7910,12 +7910,12 @@
     },
     {
       "id": "enemy-interceptor-1",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
@@ -7926,12 +7926,12 @@
     },
     {
       "id": "enemy-interceptor-2",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
@@ -7942,12 +7942,12 @@
     },
     {
       "id": "enemy-interceptor-3",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
@@ -7958,12 +7958,12 @@
     },
     {
       "id": "enemy-interceptor-4",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
@@ -7974,12 +7974,12 @@
     },
     {
       "id": "enemy-interceptor-5",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
@@ -7990,12 +7990,12 @@
     },
     {
       "id": "enemy-interceptor-6",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
@@ -8006,12 +8006,12 @@
     },
     {
       "id": "enemy-interceptor-7",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
@@ -8022,12 +8022,12 @@
     },
     {
       "id": "enemy-interceptor-8",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
@@ -8038,12 +8038,12 @@
     },
     {
       "id": "enemy-interceptor-9",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
@@ -8054,12 +8054,12 @@
     },
     {
       "id": "enemy-interceptor-10",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
@@ -8070,12 +8070,12 @@
     },
     {
       "id": "enemy-interceptor-11",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
@@ -8086,12 +8086,12 @@
     },
     {
       "id": "enemy-interceptor-12",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
@@ -8102,12 +8102,12 @@
     },
     {
       "id": "enemy-interceptor-13",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
@@ -8118,12 +8118,12 @@
     },
     {
       "id": "enemy-interceptor-14",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
@@ -8134,12 +8134,12 @@
     },
     {
       "id": "enemy-interceptor-15",
-      "path": "/art/enemies/interceptor-sheet.svg",
+      "path": "/art/enemies/fleetInterceptor-sheet.svg",
       "svgSheet": true,
-      "width": 88,
-      "height": 88,
-      "displayWidth": 38.5,
-      "displayHeight": 38.5,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
@@ -45856,8 +45856,8 @@
       "hardpoints": "/art/enemies/capital-hardpoints.json"
     },
     "fighter": {
-      "jets": "/art/enemies/fighter-jets.json",
-      "shards": "/art/enemies/fighter-shards-packed.json"
+      "jets": "/art/enemies/fleetFighter-jets.json",
+      "shards": "/art/enemies/fleetFighter-shards-packed.json"
     },
     "frigate": {
       "jets": "/art/enemies/frigate-jets.json",
@@ -45872,8 +45872,8 @@
       "hardpoints": "/art/enemies/hostileStation-phantom-hardpoints.json"
     },
     "interceptor": {
-      "jets": "/art/enemies/interceptor-jets.json",
-      "shards": "/art/enemies/interceptor-shards-packed.json"
+      "jets": "/art/enemies/fleetInterceptor-jets.json",
+      "shards": "/art/enemies/fleetInterceptor-shards-packed.json"
     },
     "miner": {
       "jets": "/art/cartwheel/miner-jets.json"
@@ -45897,8 +45897,8 @@
       "shards": "/art/enemies/retaliatorMiningFreighter-shards-packed.json"
     },
     "swarm": {
-      "jets": "/art/enemies/swarm-jets.json",
-      "shards": "/art/enemies/swarm-shards-packed.json"
+      "jets": "/art/enemies/fleetSwarm-jets.json",
+      "shards": "/art/enemies/fleetSwarm-shards-packed.json"
     }
   }
 }

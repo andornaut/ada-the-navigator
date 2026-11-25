@@ -250,7 +250,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
 }
 
 describe("shard publication", () => {
-  const path = "/art/enemies/fighter-shards-packed.json";
+  const path = "/art/enemies/fleetFighter-shards-packed.json";
   const key = "shards-fighter";
   const event = `filecomplete-json-${key}`;
   const packSource = () =>
@@ -329,7 +329,7 @@ describe("shard publication", () => {
 
 describe("source-family manifest readiness", () => {
   it.each([
-    ["/art/needle/enemies/fighter-sheet.svg", false],
+    ["/art/needle/enemies/fleetFighter-sheet.svg", false],
     ["/art/needle/enemies/frigate-sheet.svg", true],
     ["/art/needle/enemies/heavy-profiles-sheet.svg", true],
   ] as const)("loads a cold family once and publishes a late %s retry", (path, usesDisplaySize) => {
@@ -368,11 +368,11 @@ describe("source-family manifest readiness", () => {
       "/art/enemies/retaliatorMiningFreighter-sheet.svg",
       "/art/needle/enemies/capital-sheet-2.svg",
       "/art/needle/enemies/capital-sheet.svg",
-      "/art/needle/enemies/fighter-sheet.svg",
+      "/art/needle/enemies/fleetFighter-sheet.svg",
+      "/art/needle/enemies/fleetInterceptor-sheet.svg",
+      "/art/needle/enemies/fleetSwarm-sheet.svg",
       "/art/needle/enemies/frigate-sheet.svg",
       "/art/needle/enemies/heavy-profiles-sheet.svg",
-      "/art/needle/enemies/interceptor-sheet.svg",
-      "/art/needle/enemies/swarm-sheet.svg",
     ]);
     for (const path of paths) {
       expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([

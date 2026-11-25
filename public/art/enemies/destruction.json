@@ -45,9 +45,20 @@
   },
   "archetypes": {
     "swarm": {
+      "durationMs": 390,
+      "releaseMs": 130,
+      "flashWidth": 33.961,
+      "spread": 13.2,
+      "reduced": {
+        "durationMs": 320,
+        "releaseMs": 210,
+        "spread": 5.28
+      }
+    },
+    "fighter": {
       "durationMs": 430,
       "releaseMs": 140,
-      "flashWidth": 33.961,
+      "flashWidth": 42.451,
       "spread": 16.8,
       "reduced": {
         "durationMs": 350,
@@ -55,26 +66,15 @@
         "spread": 6.72
       }
     },
-    "fighter": {
-      "durationMs": 450,
-      "releaseMs": 150,
-      "flashWidth": 42.451,
-      "spread": 19.2,
-      "reduced": {
-        "durationMs": 360,
-        "releaseMs": 240,
-        "spread": 7.68
-      }
-    },
     "interceptor": {
-      "durationMs": 440,
-      "releaseMs": 150,
-      "flashWidth": 38.61,
-      "spread": 18,
+      "durationMs": 500,
+      "releaseMs": 160,
+      "flashWidth": 42.451,
+      "spread": 24,
       "reduced": {
-        "durationMs": 350,
-        "releaseMs": 230,
-        "spread": 7.2
+        "durationMs": 390,
+        "releaseMs": 260,
+        "spread": 9.6
       }
     },
     "retaliator": {

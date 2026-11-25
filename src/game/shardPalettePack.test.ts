@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { readDestruction, readShards, shardPolygons } from "./destructionArt.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 
@@ -19,9 +20,11 @@ type Family = "coral" | Recolor;
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/${path}`, import.meta.url), "utf8"));
 const destruction = readDestruction(read("enemies/destruction.json"))!;
+// Each body's shard pack, at the path the core manifest's sidecars name.
+const sidecars = CORE_MANIFEST.sidecars as Record<string, { shards: string }>;
 
 function fixture(body: (typeof BODIES)[number]) {
-  const wrapper = read(`enemies/${body}-shards-packed.json`) as {
+  const wrapper = publicJson(sidecars[body]!.shards) as {
     core: NonNullable<ReturnType<typeof readShards>>;
     palettes: Record<Recolor, Record<string, string>>;
     version: number;

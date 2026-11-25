@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   flashAt,
   hexColor,
@@ -17,8 +18,10 @@ import { readShardPalettePack } from "./shardPalettePack.ts";
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/enemies/${path}`, import.meta.url), "utf8"));
 const data = readDestruction(read("destruction.json"))!;
+// Each archetype's shard pack, at the path the core manifest's sidecars name.
+const sidecars = CORE_MANIFEST.sidecars as Record<string, { shards: string }>;
 const shardSource = (archetype: string) => {
-  const value = read(`${archetype}-shards-packed.json`) as {
+  const value = publicJson(sidecars[archetype]!.shards) as {
     core: { archetype: string; halfSpan: number };
   };
   expect(readShardPalettePack(value, archetype)?.core).toBe(value.core);
@@ -32,11 +35,11 @@ const timing = data.archetypes.fighter!;
 
 describe("enemy destruction art", () => {
   it("reads the timings and every shard archetype", () => {
-    expect(fighterSource).toMatchObject({ archetype: "fighter", frame: 104, halfSpan: 21.44 });
+    expect(fighterSource).toMatchObject({ archetype: "fighter", frame: 80, halfSpan: 21.44 });
     expect(timing).toMatchObject({
-      durationMs: 450,
+      durationMs: 430,
       flashWidth: fighterFlashWidth,
-      releaseMs: 150,
+      releaseMs: 140,
     });
     expect(Object.keys(data.archetypes).sort()).toEqual([
       "fighter",
