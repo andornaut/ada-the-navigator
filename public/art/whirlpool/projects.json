@@ -9,7 +9,7 @@
       "site": "family",
       "frames": ["whirlpool-nursery-beacon-a", "whirlpool-nursery-beacon-b"],
       "frameMs": 1400,
-      "offset": [-54, 58],
+      "offset": [-68, 60],
       "pool": {
         "color": "#ffe9b8",
         "centre": [-6, 54],

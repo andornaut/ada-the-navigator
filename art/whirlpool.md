@@ -1,21 +1,18 @@
 # Whirlpool station, currents, debris rivers and project world changes
 
-- Rebuild the station with `node art/tools/whirlpool-station.ts`, and the rest
-  with `node art/tools/whirlpool.ts`. It writes `public/art/whirlpool/`:
-  `currents.json` (the streak spec), the river debris frames and `debris.json`,
-  the project world change frames and `projects.json`, and its own `whirlpool-`
-  entries in [Whirlpool's manifest](../public/art/whirlpool/manifest.json),
-  which names the data files as `whirlpoolCurrents`, `whirlpoolDebris` and
-  `whirlpoolProjects`. Each generator replaces its own entries in place.
+- `node art/tools/stations.ts` draws the station
+  ([Station redesign](station-redesign.md)). `node art/tools/whirlpool.ts`
+  writes `public/art/whirlpool/`: `currents.json` (the streak spec), the river
+  debris frames and `debris.json`, and the debris entries in
+  [Whirlpool's manifest](../public/art/whirlpool/manifest.json), which names
+  the data files as `whirlpoolCurrents` and `whirlpoolDebris`. Each generator
+  replaces its own entries in place.
+- `node art/tools/friendly.ts` draws the project world changes and writes
+  `projects.json`, the `whirlpoolProjects` link
+  ([Friendly object redesign](friendly-redesign.md#manifests)).
 - The build fails if the whale's lit hull (`hull[0]` in `whales.json`) falls
-  below 3:1 over the streak colour, or if the beacon glass, the lit buoy lamp
-  or the cream body falls below 5:1 on the field. Whirlpool's field is light
-  (`tint.light`), so its ink keyline carries that floor: `floorColour` in
-  [art/tools/palette.ts](tools/palette.ts) checks ink `#181425` (10.86:1 on
-  `#B8CEC4`) in place of each fill, and the fills stay as drawn. A dark field
-  checks the fills.
-- The debris models are shared in [art/tools/debris.ts](tools/debris.ts); the
-  project models are in [art/tools/whirlpool-projects.ts](tools/whirlpool-projects.ts).
+  below 3:1 over the streak colour.
+- The debris models are shared in [art/tools/debris.ts](tools/debris.ts).
 
 ## Station
 
@@ -234,38 +231,27 @@ destination. Both are passable decoration with no collision: they block neither
 Ada nor shots, and Ada draws in front of them while overlapping. Neither appears
 on the Map. The calves keep their idle loop and offsets in the beacon's light.
 
-Both are fixed flat-shaded solids in the whale convention: world light
-`(-0.25, 0.45, 1)`, five-tone ramps (thresholds 0.9, 0.78, 0.6 and 0.3), the
-frame projection, 1 frame px own-fill seams on body faces and unstroked decals.
-Frames are multiples of 16 px; each SVG's intrinsic size is its display size
-(`frame * 0.4375` times the asset's display multiplier) and its `viewBox` the frame. The pivot is the float's centre
-on the world plane: place it at the world position and sort by its screen y.
-On Whirlpool's light field both draw over the 1 px ink keyline of the
-[light-field rule](galaxies.md#light-fields) (`nurseryBeacon`, `currentBuoy`),
-10.86:1 on the field, which carries the glass and lamp floor.
+Both are [friendly objects](friendly-redesign.md), drawn from the model layer
+in the galaxy's station family palette. The pivot is the float's centre on the
+world plane: place it at the world position and sort by its screen y. On
+Whirlpool's light field both draw over the 1 px ink keyline of the
+[light-field rule](galaxies.md#light-fields) (`nurseryBeacon`, `currentBuoy`).
 
-| Change            | Ids                                                        | Frame px | Display        | Pivot        |
-| ----------------- | ---------------------------------------------------------- | -------- | -------------- | ------------ |
-| Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 80, 112  | 50.75 by 71.05 | `(0.5, 0.8)` |
-| Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 48, 64   | 31.5 by 42     | `(0.5, 0.8)` |
-
-| Part            | Colour                                                      | On `#B8CEC4` |
-| --------------- | ----------------------------------------------------------- | ------------ |
-| Cream body      | `#f7f0e2` to `#9f8f78`, the station family's cream and side | 1.46 to 1.90 |
-| Beacon glass    | `#ffe9b8` (A, white core), `#ecc98a` (B, core `#fff6dc`)    | 1.39, 1.05   |
-| Buoy lamp, band | Whale glow `#cbb8ee`, core `#f7f2ff` (A); `#4c4585` (B)     | 1.09, 5.07   |
-| Light pool      | `#ffe9b8`, four rings                                       | 1.02 to 1.09 |
+| Change            | Ids                                                        | Frame px | Display      | Pivot           |
+| ----------------- | ---------------------------------------------------------- | -------- | ------------ | --------------- |
+| Nursery beacon    | `whirlpool-nursery-beacon-a`, `whirlpool-nursery-beacon-b` | 120, 168 | 52.5 by 73.5 | `(0.5, 0.506)`  |
+| Current-map buoys | `whirlpool-current-buoy-a`, `whirlpool-current-buoy-b`     | 96, 80   | 42 by 35     | `(0.5, 0.3625)` |
 
 ### Nursery beacon
 
-`nurseryBeacon` at the family: a six-sided lantern with a cream stepped cap on
-a mast over a cream cradle float, as its shop icon's lantern over a cradle.
+`nurseryBeacon` at the family: a tall drum with one cream arm that climbs it in
+under one turn, a lamp on top and a keel below the float.
 
 - Anchor: the family destination (the smaller adult's position) plus world
-  `(-54, 58)` (`offset`), screen `(-112, 2)`: ahead of the family's heads and
-  clear of every member's frame, so the pivot sort needs no layers.
-- A slow breathe, `frameMs` 1400: A lights the glass and a tall white core; B
-  softens both. The light never goes out.
+  `(-68, 60)` (`offset`), screen `(-128, -4)`: ahead of the family's heads,
+  with the keel that hangs below the pivot clear of every member's frame, so
+  the pivot sort needs no layers.
+- A slow breathe, `frameMs` 1400: A lights the lamp; B dims it.
 - Light pool (`pool`): four filled world circles, radii 72, 56, 40 and 24,
   centred at world `(-6, 54)` from the family destination, in `#ffe9b8` at
   alpha 0.07 each with frame A and 0.05 with B. Tech draws them on the world

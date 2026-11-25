@@ -83,6 +83,15 @@ export type Structure = {
   // An overlay's project in projects.json, the fields naming its base there, and the model point
   // on its base's pivot; the base's frames have this structure's scale.
   anchor?: { project: string; on: Readonly<Record<string, string>>; base: Point };
+  // A project's sprite that the friendly producer draws (art/friendly-redesign.md), placed on
+  // this structure: the fields naming the base in projects.json, the frames, and each copy's
+  // model point on the world plane, its layer and its blink phase.
+  beacons?: {
+    project: string;
+    on: Readonly<Record<string, string>>;
+    frames: readonly string[];
+    at: readonly { point: Point; layer: "behind" | "front"; phase: 0 | 1 }[];
+  };
 };
 
 const blink = (stem: string): FrameSpec[] => [
@@ -289,6 +298,18 @@ export const STRUCTURES: readonly Structure[] = [
         row: { outpost: "salvagers" },
       },
     ],
+    // In the gaps between the leaves: behind the hub, and beside the yard at its screen left and
+    // right. Neighbours on the sides blink opposite.
+    beacons: {
+      project: "salvageBeacons",
+      on: { outpost: "salvagers" },
+      frames: ["outpost-salvagers-beacon-a", "outpost-salvagers-beacon-b"],
+      at: [
+        { point: pol(80, 225), layer: "behind", phase: 0 },
+        { point: pol(80, 135), layer: "front", phase: 1 },
+        { point: pol(80, 315), layer: "front", phase: 0 },
+      ],
+    },
   },
   {
     key: "cartwheel-hub",
@@ -724,6 +745,18 @@ function main() {
         kind: "overlay",
         frames: rows.map(({ id }) => id),
         anchors: [{ x: round(-x), y: round(-y), layer: "front", phase: 0 }],
+      };
+    }
+    if (structure.beacons) {
+      const { project, on, frames, at } = structure.beacons;
+      projects[project] = {
+        ...on,
+        kind: "overlay",
+        frames,
+        anchors: at.map(({ point, layer, phase }) => {
+          const [x, y] = place(structure, point);
+          return { x: round(x), y: round(y), layer, phase };
+        }),
       };
     }
     for (const { state, size } of drawn.states) {

@@ -4,9 +4,11 @@ Andromeda's art: the settlers' station, the settlements, the guide beacons,
 Pip's mail scooter, the two project world changes, the garnet drones and the
 portraits of Pip and the settlers.
 
-- Rebuild with `node art/tools/andromeda.ts`. It writes
-  `public/art/andromeda/` and replaces its own entries in place in
-  [Andromeda's manifest](../public/art/andromeda/manifest.json). Pip's
+- `node art/tools/stations.ts` draws the settlers' station, the settlements and
+  the courier school ([Station redesign](station-redesign.md)), and
+  `node art/tools/friendly.ts` the guide beacons, the spare beacon, the route
+  exchange and Pip's scooter ([Friendly object redesign](friendly-redesign.md)),
+  into [Andromeda's manifest](../public/art/andromeda/manifest.json). Pip's
   `craft-pip-` entries are in the [core manifest](../public/art/manifest.json),
   since the Phantom finale draws the scooter too; its files stay in
   `public/art/andromeda/`.
@@ -167,17 +169,17 @@ face.
 
 Both of Andromeda's [community projects](projects.md#world-changes) are
 overlays: every part sits beside its base, so the base frames stay unchanged
-and drawing the overlay before the base gives the same pixels as one depth
-sort of both. The generator fails if any overlay face, placed at its site,
-overlaps a base face on screen. Each overlay's pivot is its own site on the
-world plane, and `projects.json` places it with one anchor, `layer` `behind`
-(both sites are farther from the viewer than the base pivot) and `phase` 0,
-blinking on the base's clock. Reduced motion holds frame A.
+and drawing the overlay beside the base gives the same pixels as one depth
+sort of both. Each overlay's pivot is its own site on the world plane, and
+`projects.json` places it with one anchor and `phase` 0, blinking on the base's
+clock: the school `front`, drawn with the station and keeping only what the
+station leaves visible, and the spare beacon `behind`, clear of the relit
+beacon at its screen left. Reduced motion holds frame A.
 
-| Project         | Base                                                      | Anchor `(x, y)`       | Entries                                                                      |
-| --------------- | --------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------- |
-| `courierSchool` | Every settlers' station (`station` `settlers`)            | `(-123.033, -19.033)` | `station-settlers-school-a`, `-b`: `overlay`, `station`, `project`, `berths` |
-| `spareBeacon`   | The relit dark beacon (`beacon` `guide`, `state` `relit`) | `(-55.426, -2)`       | `beacon-guide-spare-a`, `-b`: `overlay`, `beacon`, `project`                 |
+| Project         | Base                                                      | Anchor `(x, y)`    | Entries                                                                      |
+| --------------- | --------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| `courierSchool` | Every settlers' station (`station` `settlers`)            | `(-194.093, 0)`    | `station-settlers-school-a`, `-b`: `overlay`, `station`, `project`, `berths` |
+| `spareBeacon`   | The relit dark beacon (`beacon` `guide`, `state` `relit`) | `(-124.709, -4.5)` | `beacon-guide-spare-a`, `-b`: `overlay`, `beacon`, `project`                 |
 
 ### Courier school
 

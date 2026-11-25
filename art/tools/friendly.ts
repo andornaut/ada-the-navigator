@@ -1,8 +1,8 @@
 // The friendly object producer (art/friendly-redesign.md). `node art/tools/friendly.ts` writes
 // the pickups, caches, landmarks, galaxy beacons, ring gates and friendly craft as sheets of
-// nested roots, their data files, and their manifest rows, data links and sidecars. The whales
-// are written beside the shipped whale art, with their rows and data link staged in
-// art/friendly-rows.json.
+// nested roots, their data files, their manifest rows, data links and sidecars, and where the
+// project sprites stand (art/tools/friendly-projects.ts). The whales are written beside the
+// shipped whale art, with their rows and data link staged in art/friendly-rows.json.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -48,6 +48,7 @@ import {
   whaleSheet,
   whaleSheetFile,
 } from "./friendly-whales.ts";
+import { PROJECTS, WHIRLPOOL_PROJECTS, WHIRLPOOL_PROJECTS_FILE } from "./friendly-projects.ts";
 import {
   linkData,
   type ManifestFile,
@@ -56,6 +57,7 @@ import {
   type Sidecars,
   writeOnce,
 } from "./manifest.ts";
+import { writeProjects } from "./projects.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
 import type { Mesh } from "./solid.ts";
@@ -589,7 +591,15 @@ function main() {
   needle.assets.push(...gateRows(gates.frames, gatePaths.get(GATE_SHEET)!));
   needle.data = { needleGates: gatePaths.get(GATE_DATA)! };
   const crafts = craftFiles(live);
+  const whirlpoolProjects = writeOnce(
+    "/art/whirlpool/",
+    new Map(),
+    new Map([[WHIRLPOOL_PROJECTS_FILE, json(WHIRLPOOL_PROJECTS)]]),
+  ).get(WHIRLPOOL_PROJECTS_FILE)!;
+  const whirlpool = (live.whirlpool ??= { assets: [] });
+  whirlpool.data = { ...whirlpool.data, whirlpoolProjects };
   writeManifests(live);
+  writeProjects(PROJECTS);
   const whales = stageWhales(staged);
   const text = json(staged);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);

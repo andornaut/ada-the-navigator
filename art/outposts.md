@@ -1,16 +1,12 @@
 # Outposts and discovery cache
 
-- Rebuild the outposts with `node art/tools/outposts.ts`. It writes
-  `public/art/outposts/<outpost>-a.svg` and `<outpost>-b.svg`, the
-  [community project](projects.md) frames and overlays beside them and
-  `public/art/projects.json`, and replaces its own outpost and project entries
-  in [Sunflower's manifest](../public/art/sunflower/manifest.json). The outpost
-  frames carry two-decimal coordinates ([SVG output](README.md#svg-output)).
-- Rebuild the cache with `node art/tools/discovery-cache.ts`. It writes
-  `public/art/discovery-cache.png` with its Aseprite data
-  `discovery-cache.json` and replaces the `discovery-cache` core manifest
-  entry, which follows the `station-*` entries and precedes the `enemy-*`
-  entries.
+- `node art/tools/stations.ts` draws the outposts and their
+  [community project](projects.md) frames into
+  [Sunflower's manifest](../public/art/sunflower/manifest.json) and writes
+  their `projects.json` entries ([Station redesign](station-redesign.md)).
+- `node art/tools/friendly.ts` draws the discovery cache: the core manifest's
+  `discovery-cache-lit-a`, `-lit-b` and `-hidden` rows, with its collision in
+  `pickups.json` ([Friendly object redesign](friendly-redesign.md)).
 
 ## Outposts
 

@@ -80,10 +80,10 @@ keeper's thank-you line.
 
 ## World changes
 
-`node art/tools/outposts.ts` writes Sunflower's world changes with the
-[outposts](outposts.md), `node art/tools/andromeda.ts` writes Andromeda's
-([Andromeda](andromeda.md#world-changes)) and `node art/tools/needle-projects.ts`
-writes Needle's ([Needle](needle.md#world-changes)). `public/art/projects.json` places
+`node art/tools/stations.ts` writes the world changes that are station frames
+and the salvage beacons' anchors ([Station redesign](station-redesign.md)), and
+`node art/tools/friendly.ts` places the other project sprites
+([Friendly object redesign](friendly-redesign.md#manifests)). `public/art/projects.json` places
 them, keyed by project id; each generator replaces only its own projects
 through `art/tools/projects.ts`, so reruns in any order leave the file
 byte-identical. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
@@ -174,20 +174,21 @@ unchanged.
 
 `salvageBeacons` at the salvagers: one beacon sprite at three anchors.
 
-| Ids                                                        | Frame px | Display         | Pivot          |
-| ---------------------------------------------------------- | -------- | --------------- | -------------- |
-| `outpost-salvagers-beacon-a`, `outpost-salvagers-beacon-b` | 20, 40   | 13.125 by 26.25 | `(0.5, 0.625)` |
+| Ids                                                        | Frame px | Display  | Pivot           |
+| ---------------------------------------------------------- | -------- | -------- | --------------- |
+| `outpost-salvagers-beacon-a`, `outpost-salvagers-beacon-b` | 48, 80   | 21 by 35 | `(0.5, 0.2125)` |
 
-| Anchor | Plan (degrees, r) | `(x, y)` frame px   | Layer    | Phase |
-| ------ | ----------------- | ------------------- | -------- | ----- |
-| 1      | 200, 70           | `(-36.232, -44.86)` | `behind` | 0     |
-| 2      | 125, 66           | `(-79.605, 8.104)`  | `front`  | 1     |
-| 3      | 0, 64             | `(55.426, 32)`      | `front`  | 0     |
+| Anchor | Plan (degrees, r) | `(x, y)` frame px | Layer    | Phase |
+| ------ | ----------------- | ----------------- | -------- | ----- |
+| 1      | 225, 80           | `(0, -61.571)`    | `behind` | 0     |
+| 2      | 135, 80           | `(-106.644, 0)`   | `front`  | 1     |
+| 3      | 315, 80           | `(106.644, 0)`    | `front`  | 0     |
 
-- A slate float `#8d9bb0`, a dark mast and a periwinkle lamp, `#8f9cf0` lit and
-  `#4a5080` dim; the pivot is the float's centre on the world plane.
-- The anchors sit in clear space: behind the back scrap stack, left of the front
-  stack and right of the dock, away from the magnet. Neighbours blink opposite.
+- The beacon is a [friendly object](friendly-redesign.md); its pivot is the
+  float's centre on the world plane, with the stalk below it.
+- The anchors sit in the gaps between the yard's leaves: behind the hub, and
+  beside the yard at its screen left and right, clear of the leaves. The
+  station producer places them from the plan points.
 
 ### Blink, keyline and reduced motion
 

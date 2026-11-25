@@ -150,11 +150,17 @@ correct occlusion.
 - The docking bay stands off the large wheel's rim at 0 degrees, the lower
   right on screen, where the worn and the repaired hub both have the rim. Its
   frames share the hub's frame and pivot, so it has no anchor in
-  `projects.json`; the producer fails unless it draws alike on both hub states.
+  `projects.json`; its berth is beside the right berth and clear of a craft
+  docked there; the producer fails unless it draws alike on both hub states.
 - The crane and the school have their own frames, with the pivot on the lifting
   drum's or the school saucer's axis. Their `projects.json` anchors are in the
   base's frame px from its pivot: `workshopCrane` `(79.179, 45.714)` and
   `courierSchool` `(-194.093, 0)`, both `layer` `front`.
+- The salvage beacons, which the friendly producer draws, stand in the gaps
+  between the salvagers' leaves at plan radius 80 (`beacons` on the structure):
+  `(0, -61.571)` behind the hub at 225 degrees, phase 0, and
+  `(-106.644, 0)` and `(106.644, 0)` beside the yard at 135 and 315 degrees,
+  `front`, phases 1 and 0.
 
 `node art/tools/station-contact-sheet.ts <dir>` writes a review sheet of each
 state's frames at 1x and 2x on its field with the destination keyline, an
@@ -235,18 +241,20 @@ outward.
 | `outposts.ts`, outposts and their frames | `leafFlower` (growers, salvagers) and `flower` (workshop)      |     2 |
 | `hostile-station-export.ts` and its kin  | Three family models at 16 headings, and the Claim platform     |     3 |
 
-`primary-station-sheets.ts`, `station-model.ts` and `station-sidecars.ts`
-retire with the producers that use them. The Needle ring gate
-(`needle-gates.ts`), beacons, buoys and lamps belong to the friendly objects
-set. The other entries of `andromeda.ts`, `cartwheel.ts`, `outposts.ts` and
-`phantom.ts` stay with their producers.
+`andromeda.ts` and `outposts.ts` are removed. `primary-station-sheets.ts`,
+`station-model.ts` and `station-sidecars.ts` retire with the producers that use
+them. The Needle ring
+gate (`needle-gates.ts`), beacons, buoys and lamps belong to the friendly
+objects set. The other entries of `cartwheel.ts` and `phantom.ts` stay with
+their producers.
 
 ## Runtime values
 
 - `src/data/storyShips.ts` holds the hub's berths and the bay's in the hub's
   360 by 288 frame: on screen from the pivot, at the hub's display scale,
   `(-83.895, 0)`, `(83.895, 0)` and the bay's `(90.933, 52.5)` display px,
-  with outward directions `[-1, 0]`, `[1, 0]` and `[0.866, 0.5]`.
+  with outward directions `[-1, 0]`, `[1, 0]` and `[0.866, 0.5]`. A craft
+  docked at the bay faces heading 8, into the berth drum.
 - `svgSheetMember` on the repeated loop rows of the Whirlpool and Phantom
   stations and on the `-cracked-b` rows names the root they share.
 

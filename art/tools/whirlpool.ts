@@ -1,8 +1,8 @@
-// Whirlpool's currents, debris rivers and project world changes (art/whirlpool.md): the current
-// streak spec Tech draws at runtime (currents.json), the river debris, an arm segment and a drum
-// slice in the Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json),
-// and the nursery beacon and current-map buoys (SVG frames and projects.json), written to
-// public/art/whirlpool/ with their entries and links in Whirlpool's manifest.
+// Whirlpool's currents and debris rivers (art/whirlpool.md): the current streak spec Tech draws at
+// runtime (currents.json) and the river debris, an arm segment and a drum slice in the Whirlpool
+// field hue inside the coral hazard contour (SVG frames and debris.json), written to
+// public/art/whirlpool/ with their entries and links in Whirlpool's manifest. The project world
+// changes are friendly objects (art/tools/friendly.ts).
 // Usage: node art/tools/whirlpool.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -24,22 +24,9 @@ import {
   TUMBLE_FRAMES,
 } from "./debris.ts";
 import { writeDebrisFrames } from "./debris-sheets.ts";
-import { linkData, replaceEntries } from "./manifest.ts";
-import { floorColour } from "./palette.ts";
+import { linkData, mergeEntries } from "./manifest.ts";
 import { stageRows } from "./polish-rows.ts";
 import { json } from "./projection.ts";
-import {
-  BUOY,
-  CREAM,
-  exportProject,
-  GLASS,
-  LAMP,
-  NURSERY,
-  NURSERY_FRAME_MS,
-  POOL_COLOR,
-  PROJECTS,
-  WAITING_LIGHTS,
-} from "./whirlpool-projects.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dir = `${art}whirlpool/`;
@@ -131,50 +118,6 @@ const pieces = [
   }),
 );
 
-// ------------------------------------------------------------------ project world changes
-
-const projectEntries = [
-  ...exportProject(dir, PUBLIC_DIR, "nurseryBeacon", NURSERY, NURSERY_FRAME_MS),
-  ...exportProject(dir, PUBLIC_DIR, "currentBuoys", BUOY),
-  ...exportProject(
-    dir,
-    PUBLIC_DIR,
-    "quietCrossing",
-    WAITING_LIGHTS,
-    PROJECTS.quietCrossing.frameMs,
-  ),
-];
-
-// The lit beacon glass and buoy lamp read as signals on the field; the cream body stays clear.
-// On a light field their ink keyline carries the floor and the fills stay as drawn.
-const MIN_LIGHT_ON_FIELD = 5;
-const LIGHT = Boolean(whirlpool.tint.light);
-for (const [name, fill] of [
-  ["beacon glass A", GLASS.a[2]!],
-  ["beacon glass B", GLASS.b[2]!],
-  ["buoy lamp A", LAMP.a[3]!],
-  ["cream body", CREAM[1]!],
-] as const) {
-  const colour = floorColour(LIGHT, fill);
-  const value = ratio(colour, BACKGROUND);
-  if (value < MIN_LIGHT_ON_FIELD) {
-    throw new Error(
-      `${name} ${colour} on field is ${value.toFixed(2)}:1, below ${MIN_LIGHT_ON_FIELD}:1`,
-    );
-  }
-}
-
-// The light pool's innermost composite: every ring at frame A's alpha over the field.
-function poolComposite(alpha: number): string {
-  const channels = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const top = channels(POOL_COLOR);
-  const base = PROJECTS.nurseryBeacon.pool.radii.reduce(
-    (under) => under.map((c, i) => c + (top[i]! - c) * alpha),
-    channels(BACKGROUND),
-  );
-  return `#${base.map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
-}
-
 // ------------------------------------------------------------------ output
 
 // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
@@ -214,32 +157,21 @@ await writeJson(`${dir}debris.json`, {
   marks: { color: CORAL, width: MARK_WIDTH, dashes: MARK_DASHES },
   debris: pieces.map(({ data }) => data),
 });
-await writeJson(`${dir}projects.json`, {
-  version: 1,
-  displayScale: DISPLAY_SCALE,
-  reducedMotion: { frame: 0 },
-  projects: PROJECTS,
-});
-
-// Every whirlpool- entry but the station's (whirlpool-station.ts), in place.
-replaceEntries(
+// The river debris rows keep their places in Whirlpool's manifest.
+mergeEntries(
   "whirlpool",
-  (id) => id.startsWith("whirlpool-") && !id.startsWith("whirlpool-station-"),
-  [
-    ...writeDebrisFrames(
-      "whirlpool",
-      pieces.flatMap(({ entries }) => entries),
-      debrisSvg,
-    ),
-    ...projectEntries,
-  ],
+  (id) => id.startsWith("whirlpool-debris-"),
+  writeDebrisFrames(
+    "whirlpool",
+    pieces.flatMap(({ entries }) => entries),
+    debrisSvg,
+  ),
 );
 
 // Whirlpool's manifest names the streak and debris data after the whale data.
 linkData("whirlpool", {
   whirlpoolCurrents: "/art/whirlpool/currents.json",
   whirlpoolDebris: "/art/whirlpool/debris.json",
-  whirlpoolProjects: "/art/whirlpool/projects.json",
 });
 
 const report = {
@@ -250,10 +182,6 @@ const report = {
   contourOnStreak: ratio(CORAL, STREAKS.color),
   contourOnBody: BODY.map((tone) => ratio(CORAL, tone)),
   bodyOnField: BODY.map((tone) => ratio(tone, BACKGROUND)),
-  creamOnField: CREAM.map((tone) => ratio(tone, BACKGROUND)),
-  glassOnField: [GLASS.a[2]!, GLASS.b[2]!].map((tone) => ratio(tone, BACKGROUND)),
-  lampOnField: [LAMP.a[3]!, LAMP.b[2]!].map((tone) => ratio(tone, BACKGROUND)),
-  poolInnerOnField: [ratio(poolComposite(PROJECTS.nurseryBeacon.pool.alpha[0]), BACKGROUND)],
 };
 console.log(
   JSON.stringify(

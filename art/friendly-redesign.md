@@ -391,8 +391,14 @@ headings, and `friendly-whales.svg`, every kind's 16 headings.
 
 `node art/tools/friendly.ts` writes every friendly row but the whales' into
 its manifest with `mergeEntries`, so each row keeps its place, with the
-`pickups`, `needleGates` and `tow` links and the craft `jets` sidecars. Every
-row is an
+`pickups`, `needleGates` and `tow` links, the craft `jets` sidecars and the
+project placements of
+[friendly-projects.ts](tools/friendly-projects.ts): the `spareBeacon`,
+`channelLights`, `practiceBerth` and `routeExchange` entries of
+`public/art/projects.json` and the whole of
+`public/art/whirlpool/projects.json` with its `whirlpoolProjects` link. The
+salvage beacons stand on the salvagers' yard, so the
+[station producer](station-redesign.md) places them. Every row is an
 `svgSheet` row whose `width` and `height` are frame px and whose display size
 is the frame times 0.4375.
 

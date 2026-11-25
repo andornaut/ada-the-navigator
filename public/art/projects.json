@@ -30,20 +30,20 @@
       "frames": ["outpost-salvagers-beacon-a", "outpost-salvagers-beacon-b"],
       "anchors": [
         {
-          "x": -36.232,
-          "y": -44.86,
+          "x": 0,
+          "y": -61.571,
           "layer": "behind",
           "phase": 0
         },
         {
-          "x": -79.605,
-          "y": 8.104,
+          "x": -106.644,
+          "y": 0,
           "layer": "front",
           "phase": 1
         },
         {
-          "x": 55.426,
-          "y": 32,
+          "x": 106.644,
+          "y": 0,
           "layer": "front",
           "phase": 0
         }
@@ -69,8 +69,8 @@
       "frames": ["beacon-guide-spare-a", "beacon-guide-spare-b"],
       "anchors": [
         {
-          "x": -55.426,
-          "y": -2,
+          "x": -124.709,
+          "y": -4.5,
           "layer": "behind",
           "phase": 0
         }

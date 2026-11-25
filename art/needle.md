@@ -472,11 +472,10 @@ silhouette.
 
 ## World changes
 
-Rebuild with `node art/tools/needle-projects.ts`. It writes the Channel lights
-lamp frames and replaces its `needle-lamp-` entries, and writes the
-`channelLights` and `loomHall` entries of
-[projects.json](../public/art/projects.json) through `art/tools/projects.ts`
-([World changes](projects.md#world-changes)). Both reveal with the shared
+`node art/tools/friendly.ts` draws the Channel lights lamp and writes the
+`channelLights` entry of [projects.json](../public/art/projects.json), and
+`node art/tools/stations.ts` draws the Loom hall and writes `loomHall`, both
+through `art/tools/projects.ts` ([World changes](projects.md#world-changes)). Both reveal with the shared
 600 ms `cubicOut` fade.
 
 ### Channel lights
@@ -484,11 +483,10 @@ lamp frames and replaces its `needle-lamp-` entries, and writes the
 `channelLights`, a `path` change along Gameplay's practice channel (`path`
 `practice`): soft lamps in pairs, one just inside each edge.
 
-- `needle-lamp-a` and `-b`: a small pearl float, a silver mast and a soft warm
-  lamp, `#ffe9b8` lit in A and `#8c7c60` dim in B, over a faint warm pool of
-  light on the world plane (radius 14, alpha 0.14 in A, 0.05 in B). Frame 48 by
-  64 (display 21 by 28), pivot `(0.5, 0.59375)`: the float's centre on the world
-  plane. `facing` `fixed`, `frameMs` 700, `project` `channelLights`.
+- `needle-lamp-a` and `-b`: the [friendly object](friendly-redesign.md) lamp,
+  lit in A and dim in B, with no light pool. Frame 56 by 72 (display 24.5 by
+  31.5), pivot `(0.5, 0.4583)`: the float's centre on the world plane.
+  `facing` `fixed`, `frameMs` 700, `project` `channelLights`.
 - `anchors`: the first pair 40 world units along the channel from its start,
   then every 80, each 4 inside its edge (`start`, `spacing`, `inset`), on both
   sides (`sides` `[-1, 1]`). `phase` `alternate`: neighbours along and across
@@ -497,8 +495,7 @@ lamp frames and replaces its `needle-lamp-` entries, and writes the
 { start, spacing, inset, sides, phase } }`, with anchor `i` at arc length
   `start + i * spacing` on the centre line, offset `side * (width / 2 - inset)`
   along its left normal (`1` left of the line's direction, `-1` right).
-- Lamp `#ffe9b8` 1.59:1, dim `#8c7c60` 2.14:1, pearl float 1.49:1, each lamp
-  over the 1 px keyline (`needleLamp`), 9.49:1.
+- Each lamp draws over the 1 px keyline (`needleLamp`), 9.49:1.
 
 ### Loom hall
 
