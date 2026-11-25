@@ -1349,10 +1349,11 @@ export function batchCaptures(ctx) {
     });
   }
 
-  // Edge markers (art/space-palette.md "Edge markers"), each target past a different edge of
-  // the game area: an identified fighter, an identified hostile station and a sensed fighter
-  // drawn as the unidentified `?`, on Cartwheel's light field and Phantom's dark field. On
-  // Phantom the battle's flagship is the story's target, the one enemy a task targets.
+  // Edge markers (art/space-palette.md "Edge markers"), each target past a different edge or
+  // corner of the game area: an identified fighter, frigate, route-guarding frigate and hostile
+  // station, and a sensed fighter drawn as the unidentified `?`, on Cartwheel's light field and
+  // Phantom's dark field, where they draw over Phantom's white outline. On Phantom the battle's
+  // flagship is the story's target, the one enemy a task targets.
   async function markers() {
     await inTurn(
       [
@@ -1378,17 +1379,42 @@ export function batchCaptures(ctx) {
           id: "browser-art:marker-contact",
           screen: { x: 0, y: 330 },
         });
+        const heavy = addEnemy(model, {
+          archetype: "frigate",
+          id: "browser-art:marker-heavy",
+          screen: { x: 520, y: -300 },
+        });
+        // A heavy still blocking a route to one of the galaxy's destinations is its guard.
+        const guardPoint = at(flight, { x: -520, y: 300 });
+        const guard = spawnChapterEnemy(
+          CONTENT,
+          "frigate",
+          "browser-art:marker-guard",
+          guardPoint,
+          flight,
+          { home: guardPoint, routeId: galaxy === 6 ? PHANTOM_DESTINATIONS[0] : "hub" },
+        );
+        assert.ok(guard?.enemy, "The route guard spawns");
+        guard.enemy.engaged = true;
+        guard.enemy.primaryCooldown = 999;
+        for (const part of guard.enemy.hardpoints) {
+          part.cooldown = 999;
+        }
         flight.markerActors = {
           encounterSeed: flightEncounterSeed(flight),
           knowledge: {
             [contact.id]: "sensed",
             [enemy.id]: "identified",
+            [guard.id]: "identified",
+            [heavy.id]: "identified",
             [station.id]: "identified",
           },
         };
         const expected = {
           [contact.id]: { identified: false, taskCategory: "generic" },
           [enemy.id]: { identified: true, symbol: "enemy", taskCategory: "generic" },
+          [guard.id]: { identified: true, symbol: "guard", taskCategory: "generic" },
+          [heavy.id]: { identified: true, symbol: "heavy", taskCategory: "generic" },
           [station.id]: { identified: true, symbol: "hostileStation", taskCategory: "generic" },
         };
         if (galaxy === 6) {
