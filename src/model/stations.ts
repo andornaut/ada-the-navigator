@@ -28,7 +28,6 @@ import {
 import { wrapPoint } from "./worldGeometry.ts";
 export {
   HUB_STATION,
-  stationId,
   type StationSite,
   worldLegacyStationById,
   worldLegacyStationsNear,

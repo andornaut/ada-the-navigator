@@ -8,7 +8,6 @@ import { SPACING, TYPE } from "./tokens.ts";
 
 export const SETTINGS_OUTER_PADDING = SPACING.panelPadding;
 export const SETTINGS_INNER_PADDING = SPACING.rowGap;
-export const SETTINGS_SECTION_GAP = SPACING.panelPadding;
 export const SETTINGS_COLUMN_GAP = 2 * SETTINGS_INNER_PADDING + PAGE_DIVIDER_STYLE.thickness;
 export const SETTINGS_TITLE_INK_TOP = CONTROL_ROW.textInset + capTop(TYPE.body);
 

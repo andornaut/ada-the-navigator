@@ -474,12 +474,6 @@ export function worldActivateRouteEncounter(
   }
 }
 
-export function retainedPackMembers(
-  content: GameContent,
-  flight: FlightState,
-): Readonly<Record<string, number>> {
-  return worldRetainedPackMembers({}, content, flight);
-}
 export function activateFlightRegion(content: GameContent, point: Vec, flight: FlightState): void {
   worldActivateFlightRegion({}, content, point, flight);
 }

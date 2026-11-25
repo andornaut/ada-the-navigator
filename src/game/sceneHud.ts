@@ -2,7 +2,6 @@
 // Functions over the scene's HudContext.
 import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Scenes, Textures } from "phaser";
 
-import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { FlightState, Vec } from "../model/types.ts";
@@ -412,26 +411,6 @@ export function keylineEdges(
     : [];
 }
 
-/** Both discovered and nearby undiscovered stations use the same canonical border icon. */
-export function drawStationEdgeMarker(scene: HudContext, at: Vec): void {
-  const outline = LIGHT_FIELD.markerOutline;
-  const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
-  // The stroke sits inside the diamond's extent.
-  const half = (diamond - stroke) / 2;
-  const points = [
-    new PhaserMath.Vector2(at.x, at.y - half),
-    new PhaserMath.Vector2(at.x + half, at.y),
-    new PhaserMath.Vector2(at.x, at.y + half),
-    new PhaserMath.Vector2(at.x - half, at.y),
-  ];
-  if (scene.light) {
-    scene.edgeMarkerInk.lineStyle(stroke + 2 * outline, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
-    scene.edgeMarkerInk.strokePoints(points, true, true);
-  }
-  scene.edgeMarkerInk.lineStyle(stroke, scene.palette.pointOfInterest, 1);
-  scene.edgeMarkerInk.strokePoints(points, true, true);
-}
-
 /** In-world holodisk beacon only; all off-screen target icons share the DOM marker layer. */
 export function drawIndicators(scene: HudContext): void {
   for (const target of scene.model.indicatorTargets) {
@@ -444,26 +423,6 @@ export function drawIndicators(scene: HudContext): void {
       scene.overlay.lineStyle(2, scene.palette.pointOfInterest, 0.9 - pulse * 0.6);
       scene.overlay.strokeCircle(point.x, point.y, 24 + pulse * 16);
     }
-  }
-}
-
-/**
- * A light field's ink stroke under an indicator (`lightField.indicatorStroke`), round joined.
- * It draws opaque on a layer at alpha 0.8, so the joins do not stack.
- */
-export function drawIndicatorInk(
-  scene: HudContext,
-  arrow: readonly [Vec, Vec, Vec],
-  ring: Vec,
-): void {
-  const width = LIGHT_FIELD.indicatorStroke;
-  const ink = scene.indicatorInk.setAlpha(0.8);
-  ink.lineStyle(width, scene.edgeInk ?? LIGHT_FIELD.ink, 1);
-  ink.strokeTriangle(arrow[0].x, arrow[0].y, arrow[1].x, arrow[1].y, arrow[2].x, arrow[2].y);
-  ink.strokeCircle(ring.x, ring.y, 3);
-  ink.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
-  for (const corner of arrow) {
-    ink.fillCircle(corner.x, corner.y, width / 2);
   }
 }
 

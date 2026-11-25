@@ -734,8 +734,6 @@ export const GALAXY_MAP_PANEL = {
 
 export const GALAXY_MAP_ACTION_WIDTH = 192;
 
-export const GALAXY_MAP_CENTRE = SCREEN.width / 2;
-
 export const GALAXY_MAP_ACTIONS = {
   // The one destination action, a primary centred on the view across: x 264 at the 720 base.
   height: TEXT_BUTTON.height,

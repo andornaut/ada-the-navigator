@@ -7,7 +7,6 @@ import { completeActivity, validActivity } from "./activities.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, completeJob, stationBoard } from "./jobs.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { taskQuestDetails } from "./questView.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { HeldJob } from "./types.ts";
@@ -17,11 +16,6 @@ const context: BoardContext = {
   hostiles: [],
   outposts: [],
   progress: { charted: [], stations: [] },
-};
-const view = {
-  galaxy: 1 as const,
-  jobDescription: () => "Survey",
-  label: (key: string) => CONTENT.labels[key]!,
 };
 
 describe("saved quest reward boundaries", () => {
@@ -52,7 +46,6 @@ describe("saved quest reward boundaries", () => {
     const restored = restoreSave(game.save())!;
     expect(restored).not.toBeNull();
     expect(restored.tasks[1]?.reward).toBe(45);
-    expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe("200 Stardust");
     expect(completeActivity(1, restored)).toBe(200);
     expect(completeActivity(1, restored)).toBe(0);
   });
@@ -77,7 +70,6 @@ describe("saved quest reward boundaries", () => {
       expect(restored.tasks[1]?.reward).toBe(base);
       expect(restored.economy.stardust).toBe(balance);
       const expected = questReward(base);
-      expect(taskQuestDetails(view, restored.tasks[1]!).reward).toBe(`${expected} Stardust`);
       expect(completeJob(context, null, restored)).toBe(expected);
       expect(completeJob(context, null, restored)).toBe(0);
       expect(restored.economy.stardust).toBe(balance);
@@ -112,9 +104,6 @@ describe("saved quest reward boundaries", () => {
       expect(restored).not.toBeNull();
       expect(validActivity(galaxy, { ...restored.tasks[galaxy] })).toBe(true);
       expect(restored.tasks[galaxy]?.reward).toBe(base);
-      expect(taskQuestDetails({ ...view, galaxy }, restored.tasks[galaxy]!).reward).toBe(
-        `${questReward(base)} Stardust`,
-      );
       expect(completeActivity(galaxy, restored)).toBe(questReward(base));
       expect(completeActivity(galaxy, restored)).toBe(0);
     },

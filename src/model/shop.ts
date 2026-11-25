@@ -20,7 +20,6 @@ export type ShopItem =
   /** The galaxy's holodisk in the mining hub's shop (gameplay/economy.md). */
   | { kind: "holodisk" };
 export type ShopTab = "weapons" | "ship";
-export const SHOP_TABS: readonly ShopTab[] = ["weapons", "ship"];
 export const SHIP_TRACKS: readonly UpgradeTrack[] = ["shield", "engine", "tractor"];
 
 export interface ShopRow {

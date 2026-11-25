@@ -21,7 +21,6 @@ import { type ShipHeadings, shipItemKey, type ShipLayoutSchema, shipTree } from 
 import { spriteIconPath } from "./spriteIconPath.ts";
 import { stardustCount } from "./statusPill.ts";
 
-export { SHIP_CARD, SHIP_CARD_STYLE } from "./layout/shipCard.ts";
 export { shipItemKey } from "./shipTree.ts";
 
 // Cargo, Equipment and Weapons occupy three inventory columns.

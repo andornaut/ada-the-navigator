@@ -742,81 +742,6 @@ export function beamAt(beam: Pick<BeamArt, "keys">, t: number): { a: number; w: 
 }
 
 /**
- * The enemy spark `scale` times Art's hit spark `t` ms after a hit at `at`, rotated by the beam's
- * screen `angle`: rays white then coral, a white core and coral flecks; under reduced motion an
- * unrotated coral ring.
- */
-export function enemySpark(
-  art: EnemyWeaponsArt,
-  beam: BeamArt,
-  at: Vec,
-  angle: number,
-  reducedMotion: boolean,
-  t: number,
-): EnemyEffect {
-  if (t < 0 || t >= beam.spark.ms) {
-    return NONE;
-  }
-  const p = t / beam.spark.ms;
-  const { obstacle, white } = art.colours;
-  if (reducedMotion) {
-    const { colour, radius, stroke } = beam.reducedMotion.spark;
-    const ring: EffectShape = {
-      alpha: 1 - p,
-      at,
-      colour,
-      halfHeight: radius,
-      halfWidth: radius,
-      kind: "ellipse",
-      stroke,
-    };
-    return { edged: [ring], shapes: [ring] };
-  }
-  const s = beam.spark.scale;
-  const point = (direction: number, radius: number): Vec => ({
-    x: at.x + Math.cos(angle + radians(direction)) * radius * s,
-    y: at.y + Math.sin(angle + radians(direction)) * radius * s,
-  });
-  const shapes: EffectShape[] = [];
-  if (p < 0.6) {
-    const k = p / 0.6;
-    for (const ray of [-150, -95, -35, 25, 80, 140]) {
-      shapes.push({
-        alpha: 1 - 0.6 * k,
-        colour: p < 0.25 ? white : obstacle,
-        from: point(ray, 1.5 + 5 * k),
-        kind: "line",
-        round: true,
-        to: point(ray, 7.5 + 3 * k),
-        width: 1.5,
-      });
-    }
-  }
-  if (p < 0.35) {
-    shapes.push({
-      alpha: 1,
-      at,
-      colour: white,
-      kind: "disc",
-      radius: (3 * (1 - p / 0.35) + 0.5) * s,
-    });
-  }
-  if (p > 0.2) {
-    const m = (p - 0.2) / 0.8;
-    for (const fleck of [-120, -10, 100]) {
-      shapes.push({
-        alpha: 1 - m,
-        at: point(fleck, 6 + 5 * (1 - (1 - m) ** 2)),
-        colour: obstacle,
-        kind: "disc",
-        radius: 1.1 * s,
-      });
-    }
-  }
-  return { edged: shapes, shapes };
-}
-
-/**
  * A coral beam `t` ms after it fires from `from` to `to` on screen: tapered glow, body and core
  * layers, its muzzle bloom, and a miss fade over the last `fade` px. On a light field the glow
  * and the bloom's outer disc are ink. Reduced motion draws a steady line over an edge.
@@ -1018,17 +943,6 @@ export function lance(
   return { edged: hitShapes, shapes: [...shapes, ...hitShapes] };
 }
 
-/** How long a lance draws from the start of its tell. */
-export function lanceMs(art: EnemyWeaponsArt): number {
-  const spec = art.lance;
-  return spec.trackMs + spec.lockMs + Math.max(spec.ms, spec.spark.ms);
-}
-
-/** How long an enemy Phaser shot draws from the start of its aim line. */
-export function phaserMs(art: EnemyWeaponsArt): number {
-  return art.phaser.aimMs + Math.max(art.phaser.ms, art.phaser.spark.ms);
-}
-
 /**
  * An enemy Phaser shot (art/weapons.md "Enemy Phaser"): the fixed aim line, coral dashes then
  * solid pale coral for its last 100 ms, an end tick and the muzzle charge for 400 ms, then the
@@ -1153,12 +1067,3 @@ export interface EnemyWeaponsView {
     readonly spawnRadius: number;
   }[];
 }
-
-/** A view with nothing to draw. */
-export const NO_ENEMY_WEAPONS: EnemyWeaponsView = {
-  lances: [],
-  mines: [],
-  phasers: [],
-  ringBolts: [],
-  rings: [],
-};

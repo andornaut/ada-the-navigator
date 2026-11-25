@@ -16,7 +16,6 @@ import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipGlyph } from "./mapScreen.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
-export const PENNY_MARKER_INSET = PENNY_MARKER.inset;
 export const PENNY_MARKERS_STYLE = `
 .ada-penny-markers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
 .ada-penny-marker{position:absolute;box-sizing:border-box;width:${units(SIZE)};

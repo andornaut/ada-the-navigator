@@ -115,35 +115,6 @@ describe("data-selected foreground boundaries", () => {
     expect(shape.colour).toBe(0xf0bd68);
     expect(draw({ edgeInk: 0xffffff, light: false }, ["missile"], [shape])).toEqual([]);
   });
-
-  it("draws direction outlines with selected ink", () => {
-    const ink = {
-      fillCircle: vi.fn(),
-      fillStyle: vi.fn(),
-      lineStyle: vi.fn(),
-      setAlpha: vi.fn(),
-      strokeCircle: vi.fn(),
-      strokeTriangle: vi.fn(),
-    };
-    ink.setAlpha.mockReturnValue(ink);
-    const context = createContext({ LIGHT_FIELD });
-    const draw = runInContext(production(hudSource, "drawIndicatorInk"), context) as (
-      scene: unknown,
-      arrow: unknown,
-      ring: unknown,
-    ) => void;
-    draw(
-      { edgeInk: 0xffffff, indicatorInk: ink },
-      [
-        { x: 0, y: 0 },
-        { x: 1, y: 0 },
-        { x: 0, y: 1 },
-      ],
-      { x: 0, y: 0 },
-    );
-    expect(ink.lineStyle).toHaveBeenCalledWith(LIGHT_FIELD.indicatorStroke, 0xffffff, 1);
-    expect(ink.fillStyle).toHaveBeenCalledWith(0xffffff, 1);
-  });
 });
 
 it("selects enemy beam boundary ink without replacing mine or signal fills", () => {

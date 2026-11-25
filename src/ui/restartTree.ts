@@ -9,8 +9,6 @@ export type ConfirmKind = "restart" | "rewind-quests";
 export type ConfirmAction<K extends ConfirmKind = ConfirmKind> =
   `close-${K}` | `${K}-cancel` | `${K}-confirm`;
 
-export type RestartAction = ConfirmAction<"restart">;
-
 /** Runtime and component fixtures consume the same confirmation data. */
 export function restartTree<K extends ConfirmKind = "restart">(
   labels: RestartLabels,

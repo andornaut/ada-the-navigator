@@ -102,7 +102,6 @@ const LEFT = [
   { x: 18, y: 41 },
 ] as const;
 const RIGHT = LEFT.map(({ x, y }) => ({ x: TOUCH_CHROME_FRAME - x, y }));
-export const MOVE_MARKERS: readonly (readonly Point[])[] = [LEFT, RIGHT];
 
 // The ring's outer ink edge, shared by its rendering and the move knob's full-strength centre.
 export const TOUCH_RING_OUTER_RADIUS = (TOUCH_CHROME_FRAME - 2) / 2;

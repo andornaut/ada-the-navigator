@@ -766,5 +766,3 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     shipOpen,
   };
 }
-
-export { PAUSE_GRID_STYLE } from "./layout/pauseCard.ts";

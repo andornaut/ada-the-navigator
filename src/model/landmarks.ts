@@ -101,17 +101,6 @@ export function landmarkById(galaxy: GalaxyNumber, id: string): LandmarkSite | u
   return landmarkSites(galaxy).find((site) => site.id === id);
 }
 
-/** The galaxy's landmarks with whether each is charted: the pause map's landmark slot. */
-export function galaxyLandmarks(
-  galaxy: GalaxyNumber,
-  progress: Pick<GalaxyProgress, "charted">,
-): readonly (LandmarkSite & { readonly charted: boolean })[] {
-  return landmarkSites(galaxy).map((site) => ({
-    ...site,
-    charted: progress.charted.includes(site.id),
-  }));
-}
-
 interface IndexedLandmark {
   readonly order: number;
   readonly site: LandmarkSite;

@@ -13,8 +13,7 @@ import type { Vec } from "./types.ts";
 
 // Each galaxy's landmarks (gameplay/quests.md "Landmarks"): nebulae, wrecks and beacons placed by
 // the galaxy's seed, so they stay in the same places on every flight like stations. Flying close
-// charts one; charted landmarks are saved with the galaxy's progress. The pause map reads them
-// through galaxyLandmarks.
+// charts one; charted landmarks are saved with the galaxy's progress.
 
 export interface LandmarkSite extends Vec {
   readonly nameWords?: string;

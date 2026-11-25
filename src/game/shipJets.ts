@@ -7,7 +7,6 @@ import {
 } from "./jetGeometry.ts";
 export {
   coreOutboardOffset,
-  jetLayerAlpha,
   jetShapeLayerAlpha,
   jetShapeLayerColor,
   layerAlpha,

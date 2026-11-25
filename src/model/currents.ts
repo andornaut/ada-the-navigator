@@ -356,9 +356,6 @@ export function streakFrame(current: CurrentPath, arc: number): { point: Vec; ta
 export function currentInCell(galaxy: GalaxyNumber, cell: Vec): Current | null {
   return worldCurrentInCell({}, galaxy, cell);
 }
-export function currentAt(galaxy: GalaxyNumber, point: Vec): Current | null {
-  return worldCurrentAt({}, galaxy, point);
-}
 export function currentsNear(galaxy: GalaxyNumber, radius: number, point: Vec): Current[] {
   return worldCurrentsNear({}, galaxy, radius, point);
 }

@@ -1,4 +1,3 @@
-import type { CommunityProject } from "../data/projects.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import type {
   DialogueChoice,
@@ -22,12 +21,6 @@ export interface ChapterResult {
   readonly complete?: boolean;
   readonly dialogue?: DialogueState;
   readonly holodisk?: { readonly giver?: string };
-}
-
-/** A funded community ally, retaining its galaxy and project identity. */
-export interface ChapterAlly {
-  readonly galaxy: GalaxyNumber;
-  readonly project: CommunityProject;
 }
 
 /** Hooks use the existing flight engine and return shared outcomes through one model owner. */
