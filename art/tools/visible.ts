@@ -98,8 +98,13 @@ function subtract(piece: V2[], cover: readonly V2[]): V2[][] {
 }
 
 // The visible fragments of a mesh that `view` turns from mesh space to view space (a rotation
-// about the vertical axis, so normals turn with it).
-export function visibleFragments(mesh: Mesh, view: (point: Point) => Point): Fragment[] {
+// about the vertical axis, so normals turn with it). With `group`, only that group's faces are
+// resolved; the others still cover them.
+export function visibleFragments(
+  mesh: Mesh,
+  view: (point: Point) => Point,
+  group?: number,
+): Fragment[] {
   const root3 = Math.sqrt(3);
   const drawn = mesh.flatMap((face) => {
     const normal = view(face.normal);
@@ -143,6 +148,7 @@ export function visibleFragments(mesh: Mesh, view: (point: Point) => Point): Fra
   });
   const out: Fragment[] = [];
   for (const [i, face] of drawn.entries()) {
+    if (group !== undefined && face.fragment.group !== group) continue;
     let pieces: V2[][] = [face.poly];
     for (const [j, other] of drawn.entries()) {
       if (

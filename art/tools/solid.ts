@@ -252,6 +252,26 @@ export function polygons(groups: Part[][], view?: View, levels: readonly number[
 }
 
 // ------------------------------------------------------------------ meshes
+// The mesh primitives every producer builds from. Angles are degrees in plan from +x toward +y.
+//
+// | Primitive     | Solid                                                                  |
+// | ------------- | ---------------------------------------------------------------------- |
+// | `meshFace`    | One planar polygon, convex or concave                                  |
+// | `meshBox`     | Axis-aligned box between two corners                                   |
+// | `meshBlock`   | Box in any unit frame, by centre and half sizes                        |
+// | `meshBar`     | Radial box about a vertical axis                                       |
+// | `meshExtrude` | Planar polygon swept along a vector                                    |
+// | `meshLoft`    | Skin through convex sections, capped                                   |
+// | `meshTube`    | Cylinder, frustum or cone on any axis; `phase` turns its facets        |
+// | `meshRing`    | Level ring of rectangular section, whole or open over a `gap` arc      |
+// | `meshHoop`    | Ring about any axis, whole or the half `toward` a direction            |
+// | `meshDome`    | Hemisphere or sphere cut on the terminator of a `light` in mesh space  |
+// | `meshBall`    | Ellipsoid cut on the terminator, with its own `terminator` share       |
+// | `meshSpiral`  | Band winding about the vertical axis                                   |
+// | `meshScale`   | The mesh scaled per axis about the origin                              |
+// | `meshPlace`   | The mesh turned about the vertical axis, scaled and moved              |
+// | `meshClip`    | The part of each face on one side of a plane through the origin (open) |
+// | `meshCapped`  | The half of a convex solid on one side of any plane, closed by a cap   |
 // General solids for the enemy fleet: closed meshes of planar faces, which art/tools/visible.ts
 // resolves face against face by exact depth, so interpenetrating solids occlude correctly.
 // Mesh space is forward +x, port +y, up +z.
@@ -466,7 +486,7 @@ export function meshLoft(
 }
 
 // Cylinder, frustum or cone from p0 to p1 with radii r0 and r1, in `sides` facets. `cap0` and
-// `cap1` tone the end discs.
+// `cap1` tone the end discs and `phase` turns the facets about the axis, in degrees.
 export function meshTube(
   mesh: Mesh,
   p0: Point,
@@ -475,7 +495,7 @@ export function meshTube(
   r1: number,
   tones: Tones,
   sides = 48,
-  caps: { cap0?: Tones; cap1?: Tones; kind?: FaceKind } = {},
+  caps: { cap0?: Tones; cap1?: Tones; kind?: FaceKind; phase?: number } = {},
 ): void {
   const axis = unit(sub(p1, p0));
   const kind = caps.kind ?? (Math.abs(axis[2]) > 0.999 ? "curved" : "round");
@@ -483,7 +503,7 @@ export function meshTube(
   const e2 = cross(axis, e1);
   const ring = (centre: Point, radius: number) =>
     Array.from({ length: sides }, (_, i) => {
-      const a = (2 * Math.PI * (i + 0.5)) / sides;
+      const a = (2 * Math.PI * (i + 0.5)) / sides + ((caps.phase ?? 0) * Math.PI) / 180;
       return add(centre, add(mul(e1, radius * Math.cos(a)), mul(e2, radius * Math.sin(a))));
     });
   const [ring0, ring1] = [ring(p0, r0), ring(p1, r1)];
@@ -596,7 +616,9 @@ export function meshBar(
   );
 }
 
-// Ring of rectangular section about the vertical axis through (cx, cy).
+// Ring of rectangular section about the vertical axis through (cx, cy). `gap` leaves the arc
+// from its first to its second angle (degrees) open, with a flat end face on each side of the
+// opening.
 export function meshRing(
   mesh: Mesh,
   [cx, cy]: readonly [number, number],
@@ -606,14 +628,19 @@ export function meshRing(
   inner: number,
   tones: Tones,
   sides = 64,
+  gap?: readonly [number, number],
 ): void {
+  const span = gap ? 360 - (gap[1] - gap[0]) : 360;
+  const count = gap ? Math.max(4, Math.round((sides * span) / 360)) : sides;
+  // A whole ring's facets start half a facet round; an open ring's start on the opening's edge.
+  const angle = (i: number) => (gap ? gap[1] + (span * i) / count : (360 * (i + 0.5)) / sides);
   const at = (radius: number, i: number, z: number): Point => {
-    const [x, y] = polar(radius, (360 * (i + 0.5)) / sides);
+    const [x, y] = polar(radius, angle(gap ? i : i % sides));
     return [cx + x, cy + y, z];
   };
-  for (let i = 0; i < sides; i++) {
-    const j = (i + 1) % sides;
-    const [x, y] = polar(1, (360 * (i + 1)) / sides);
+  for (let i = 0; i < count; i++) {
+    const j = i + 1;
+    const [x, y] = polar(1, (angle(i) + angle(i + 1)) / 2);
     const out: Point = [x, y, 0];
     meshFace(
       mesh,
@@ -640,6 +667,19 @@ export function meshRing(
       mul(out, -1),
       tones,
       "curved",
+    );
+  }
+  if (!gap) return;
+  for (const [i, side] of [
+    [0, -1],
+    [count, 1],
+  ] as const) {
+    const [x, y] = polar(1, angle(i));
+    meshFace(
+      mesh,
+      [at(inner, i, z0), at(outer, i, z0), at(outer, i, z1), at(inner, i, z1)],
+      [-y * side, x * side, 0],
+      tones,
     );
   }
 }
