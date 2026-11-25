@@ -4,7 +4,7 @@ Production plan for the friendly objects and points of interest: the pickups
 and caches, the galaxy beacons, buoys and lamps, the job landmarks, the Needle
 ring gate, the 32 friendly craft and the whales. Each is one model of connected
 solids drawn with depth-resolved occlusion. Stages 1 to 3 are built; the whales
-are planned. Stations, outposts, enemy ships and Ada's ship are outside this
+are designed and their frames planned. Stations, outposts, enemy ships and Ada's ship are outside this
 plan.
 
 ## Rules
@@ -290,6 +290,36 @@ Data files:
   points on the centre line. The lamp buoy's tow point is its float's rim on
   the side it faces.
 
+## Stage 4 design: whale swim loop
+
+[friendly-whale-models.ts](tools/friendly-whale-models.ts) builds one humpback
+at four lengths: a rounded twelve-sided body with a broad round head, a pale
+jaw along the lower head, a low back hump, a tail stock tapering into a
+horizontal notched fluke, and curved flippers swept back along the flanks.
+
+| Kind        | Length, display px | Spots               |
+| ----------- | -----------------: | ------------------- |
+| `whale`     |                100 | Six, in three pairs |
+| `adult`     |                 79 | Five, in one row    |
+| `calf`      |                 43 | Four, in two pairs  |
+| `youngCalf` |                 36 | Three, in one row   |
+
+The loop has 8 frames, in shares of the length:
+
+- The body ahead of the hump stays stiff, so its tones hold still, and heaves
+  0.01 against the tail.
+- From 0.06 aft of the middle to the fluke's root the rear body and tail stock
+  bend up and down by 0.035 at the root, as a wave that travels aft.
+- The end of the stock and the fluke turn as one stiff piece about the root,
+  along the stock's slope there plus a pitch of 0.15 radians that lags the
+  stock. The fluke's tips swing about 0.19 from top to bottom.
+- The hump and the spots ride the spine; the flippers and eyes do not move.
+
+`node art/tools/friendly-whale-sheet.ts <dir> [kind]` writes
+`friendly-whale-loop.svg`: one kind's rest pose and 8 loop frames at four
+headings, at 1x and 2x on Whirlpool's field and at 1x on Phantom's. The full
+set, 4 kinds by 16 headings by 8 frames, is not produced yet.
+
 ## Switch
 
 Tech replaces the shipped rows with the rows of the same ids from
@@ -378,4 +408,5 @@ sections, and deletes `friendly-rows.json`.
    their galaxy features and blink frames, with jets and nose sidecars. Ids
    stay `craft-{name}-{k}`. Built.
 4. The whales (Marlo, adult, calf, young calf) at 16 headings with an 8-frame
-   swim loop that bends the tail stock and fluke.
+   swim loop that bends the tail stock and fluke. The model and the loop are
+   designed; the frames are not produced.
