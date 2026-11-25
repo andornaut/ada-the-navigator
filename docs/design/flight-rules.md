@@ -60,5 +60,6 @@ and scan feedback.
 | ada-0379 | Choose moving asteroids from placed rocks                                                                  | [ada-0379.md](../work/ada-0379.md) |
 | ada-0380 | Place asteroids and enemies with one testable spawn planner                                                | [ada-0380.md](../work/ada-0380.md) |
 | ada-0381 | Steer enemy ships around moving asteroids by predicted path                                                | [ada-0381.md](../work/ada-0381.md) |
+| ada-0396 | Replace safe areas with state protection                                                                   | [ada-0396.md](../work/ada-0396.md) |
 | ada-0389 | Retire ore rocks so every static rock is an ordinary asteroid                                              | [ada-0389.md](../work/ada-0389.md) |
 | ada-0392 | Conform spawning and enemy logic to the procedural systems policy                                          | [ada-0392.md](../work/ada-0392.md) |
