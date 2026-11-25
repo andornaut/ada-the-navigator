@@ -984,8 +984,8 @@ describe("deferred core capital sheets", () => {
 
   it("rasters a vector strip at every frame's display size and cuts it into numbered frames", () => {
     const f = fixture(undefined, true);
-    const strip = core.assets.find(({ id }) => id === "stardust") as Asset;
-    expect(strip).toMatchObject({ frameWidth: 32, svgSheet: true, width: 128 });
+    const strip = core.assets.find(({ id }) => id === "ammo-pack") as Asset;
+    expect(strip).toMatchObject({ frameWidth: 40, svgSheet: true, width: 160 });
     const uri = "data:image/svg+xml;base64,PHN2Zy8+";
     f.extract.mockReturnValue(uri);
     const fail = vi.fn();
@@ -994,16 +994,16 @@ describe("deferred core capital sheets", () => {
     f.documents.set(key, {});
     f.events.emit(`filecomplete-xml-${key}`);
     expect(fail).not.toHaveBeenCalled();
-    // Four 14 by 17.5 frames side by side.
+    // Four 17.5 by 17.5 frames side by side.
     expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(strip.id, uri, {
-      height: vectorRaster(1, { displayHeight: 17.5, displayWidth: 56 }).height,
-      width: vectorRaster(1, { displayHeight: 17.5, displayWidth: 56 }).width,
+      height: vectorRaster(1, { displayHeight: 17.5, displayWidth: 70 }).height,
+      width: vectorRaster(1, { displayHeight: 17.5, displayWidth: 70 }).width,
     });
     const add = vi.fn();
-    const texture = { add, get: () => ({ height: 18, width: 56 }) };
+    const texture = { add, get: () => ({ height: 18, width: 72 }) };
     Object.assign(f.scene.textures, { get: () => texture });
     f.events.emit(`filecomplete-svg-${strip.id}`);
-    expect(add.mock.calls).toEqual([0, 1, 2, 3].map((index) => [index, 0, index * 14, 0, 14, 18]));
+    expect(add.mock.calls).toEqual([0, 1, 2, 3].map((index) => [index, 0, index * 18, 0, 18, 18]));
   });
 
   it("keeps a placeholder when one frame is invalid and cancels late events on shutdown", () => {

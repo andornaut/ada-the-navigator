@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import pickups from "../../public/art/pickups/pickups.json" with { type: "json" };
+import ore from "../../public/art/ore-nugget.json" with { type: "json" };
+import stardust from "../../public/art/stardust.json" with { type: "json" };
 import { carriesStardust } from "./drops.ts";
 import {
   orePickupFrameSize,
@@ -35,27 +36,22 @@ describe("ore pickup identity and collision", () => {
     expect(carriesStardust({ ...pickup(5), kind: "rock" })).toBe(false);
   });
 
-  it("draws ordinary ore 14 px tall and scales every canonical collision part for five", () => {
-    const frame = pickups.frames["ore-nugget"];
-    const scale = pickups.displayScale;
-    const ordinary = frame.collision.map((part) =>
-      part.map(([x, y]) => ({
-        x: (x! - frame.pivot[0]!) * scale,
-        y: (y! - frame.pivot[1]!) * scale,
-      })),
+  it("draws ordinary ore at its 9 px frame and scales the rest frame's parts by 2 for five", () => {
+    const [frame] = Object.values(ore.frames);
+    // One frame px is one display px, centred on the frame.
+    const ordinary = frame!.collision.map((part) =>
+      part.map(([x, y]) => ({ x: x! - 4.5, y: y! - 4.5 })),
     );
     expect(ordinary.length).toBeGreaterThan(0);
-    expect(orePickupSize()).toBe(14);
-    expect(orePickupSize(1)).toBe(14);
-    expect(orePickupFrameSize(1)).toEqual({ height: 17.5, width: 17.5 });
+    expect(orePickupSize()).toBe(9);
+    expect(orePickupSize(1)).toBe(9);
+    expect(orePickupFrameSize(1)).toEqual({ height: 9, width: 9 });
     expect(pickupOutline(pickup())).toEqual(ordinary);
     expect(pickupOutline(pickup(1))).toEqual(ordinary);
     expect(orePickupSize(5)).toBe(18);
-    const ratio = orePickupSize(5) / orePickupSize(1);
-    expect(ratio).toBeGreaterThan(1);
-    expect(orePickupFrameSize(5).width).toBeCloseTo(17.5 * ratio, 9);
+    expect(orePickupFrameSize(5)).toEqual({ height: 18, width: 18 });
     expect(pickupOutline(pickup(5))).toEqual(
-      ordinary.map((part) => part.map(({ x, y }) => ({ x: x * ratio, y: y * ratio }))),
+      ordinary.map((part) => part.map(({ x, y }) => ({ x: x * 2, y: y * 2 }))),
     );
     expect(pickupOutline({ ...pickup(5), role: "stardust" })).not.toEqual(pickupOutline(pickup(5)));
   });
@@ -63,12 +59,16 @@ describe("ore pickup identity and collision", () => {
   it("scales the Stardust outline for exactly five and leaves other saved amounts at native size", () => {
     const single = { ...pickup(1), role: "stardust" as const };
     const parts = pickupOutline(single)!;
-    expect(stardustPickupSize(1)).toBe(14);
+    const [rest] = Object.values(stardust.frames);
+    expect(parts).toEqual(
+      rest!.collision.map((part) => part.map(([x, y]) => ({ x: x! - 4.5, y: y! - 4.5 }))),
+    );
+    expect(stardustPickupSize(1)).toBe(9);
     expect(stardustPickupSize(5)).toBe(18);
-    expect(stardustPickupFrameSize(1)).toEqual({ height: 17.5, width: 14 });
-    const ratio = 18 / 14;
+    expect(stardustPickupFrameSize(1)).toEqual({ height: 9, width: 9 });
+    expect(stardustPickupFrameSize(5)).toEqual({ height: 18, width: 18 });
     expect(pickupOutline({ ...single, amount: 5 })).toEqual(
-      parts.map((part) => part.map(({ x, y }) => ({ x: x * ratio, y: y * ratio }))),
+      parts.map((part) => part.map(({ x, y }) => ({ x: x * 2, y: y * 2 }))),
     );
     expect(pickupOutline({ ...single, amount: 3 })).toEqual(parts);
   });

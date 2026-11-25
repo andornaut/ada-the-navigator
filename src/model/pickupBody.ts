@@ -1,20 +1,43 @@
+import ore from "../../public/art/ore-nugget.json" with { type: "json" };
 import pickups from "../../public/art/pickups/pickups.json" with { type: "json" };
+import stardust from "../../public/art/stardust.json" with { type: "json" };
 import { type Parts, partsReach, worldParts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
 import type { SpaceObject } from "./types.ts";
 
-// Pickups as drawn (`pickups.json`, art/friendly-redesign.md): each row's `collision` parts are
-// in frame px from the frame's top-left, taken from its rest frame, so the body holds still
-// through its loop. A frame draws at its frame px times `displayScale`, centred on its pivot.
+// Pickups as drawn. Stardust and ore (art/stardust.md) are 9 px pixel sheets whose Aseprite
+// frames carry `collision` parts in frame px from the frame's top-left; one frame px is one
+// display px, and five units draw the same frame at 18 px. The other pickups are `pickups.json`
+// rows (art/friendly-redesign.md) whose frames draw at frame px times `displayScale`, centred on
+// their pivot. Both take the rest frame's parts, so the body holds still through its loop.
+
+interface SheetFrame {
+  readonly collision?: readonly (readonly (readonly number[])[])[];
+  readonly sourceSize: { readonly h: number; readonly w: number };
+}
+
+type SheetId = "ore-nugget" | "stardust";
+
+const SHEETS: Readonly<Record<SheetId, SheetFrame>> = {
+  "ore-nugget": Object.values(ore.frames)[0]!,
+  stardust: Object.values(stardust.frames)[0]!,
+};
+
+/** A sheet's rest-frame parts, in display px from the frame's centre. */
+function sheetOutline(id: SheetId): Parts | undefined {
+  const { collision, sourceSize } = SHEETS[id];
+  if (!collision?.length) {
+    return undefined;
+  }
+  const { h, w } = sourceSize;
+  return collision.map((part) => part.map(([x, y]) => ({ x: x! - w / 2, y: y! - h / 2 })));
+}
 
 interface VectorFrame {
   readonly collision: readonly (readonly (readonly number[])[])[];
-  readonly drawn: readonly number[];
   readonly frame: readonly number[];
   readonly pivot: readonly number[];
 }
-
-type PickupId = "ammo-pack" | "hunt-glint" | "ore-nugget" | "stardust";
 
 const VECTOR_FRAMES = pickups.frames as Readonly<Record<string, VectorFrame>>;
 
@@ -37,22 +60,16 @@ function vectorOutline(ids: readonly string[]): Parts | undefined {
   return parts.length ? parts : undefined;
 }
 
-/** A row's largest drawn extent in display px. */
-function vectorSize(id: PickupId): number {
-  const [left, top, right, bottom] = VECTOR_FRAMES[id]!.drawn;
-  return Math.max(right! - left!, bottom! - top!) * pickups.displayScale;
+/** A sheet pickup's drawn extent in display px: its frame for one, 18 for exactly five. */
+function pickupSize(id: SheetId, amount?: number): number {
+  return amount === 5 ? 18 : SHEETS[id].sourceSize.w;
 }
 
-/** A pickup's drawn extent in display px: its frame as drawn for one, 18 for exactly five. */
-function pickupSize(id: PickupId, amount?: number): number {
-  return amount === 5 ? 18 : vectorSize(id);
-}
-
-/** A pickup frame's display size: its frame px times `displayScale`, scaled for five. */
-function pickupFrameSize(id: PickupId, amount?: number): { height: number; width: number } {
-  const [width, height] = VECTOR_FRAMES[id]!.frame;
-  const scale = (pickups.displayScale * pickupSize(id, amount)) / vectorSize(id);
-  return { height: height! * scale, width: width! * scale };
+/** A sheet pickup frame's display size: its frame px, scaled for exactly five. */
+function pickupFrameSize(id: SheetId, amount?: number): { height: number; width: number } {
+  const { h, w } = SHEETS[id].sourceSize;
+  const scale = pickupSize(id, amount) / w;
+  return { height: h * scale, width: w * scale };
 }
 
 function scaleOutline(outline: Parts | undefined, scale: number): Parts | undefined {
@@ -60,7 +77,7 @@ function scaleOutline(outline: Parts | undefined, scale: number): Parts | undefi
 }
 
 /** A Stardust gem. */
-const STARDUST = vectorOutline(["stardust"]);
+const STARDUST = sheetOutline("stardust");
 const LARGE_STARDUST = scaleOutline(STARDUST, stardustPickupSize(5) / stardustPickupSize());
 const LARGE_STARDUST_REACH = LARGE_STARDUST && partsReach(worldParts(LARGE_STARDUST));
 /** A discovery cache, lit: Ada comes within its approach range before she can reach it. */
@@ -68,7 +85,7 @@ const CACHE = vectorOutline(["discovery-cache-lit-a", "discovery-cache-lit-b"]);
 /** A hunt's lost item as its glint (art/jobs.md "Lost item glint"). */
 export const HUNT_GLINT = vectorOutline(["hunt-glint"]);
 /** A cargo piece, Art's ore nugget. */
-const ORE = vectorOutline(["ore-nugget"]);
+const ORE = sheetOutline("ore-nugget");
 const LARGE_ORE = scaleOutline(ORE, orePickupSize(5) / orePickupSize());
 
 /** Ore's drawn extent in display px: the frame as drawn for one, 18 for a five-unit chunk. */

@@ -224,9 +224,9 @@ describe("traveling debris rendering", () => {
 
 describe("ore quantity rendering", () => {
   it.each([
-    [undefined, 17.5],
-    [1, 17.5],
-    [5, 22.5],
+    [undefined, 9],
+    [1, 9],
+    [5, 18],
   ] as const)(
     "draws cargo amount %s in a %s px frame, a scale of the same centred frame",
     (amount, size) => {

@@ -238,6 +238,18 @@ describe("Art's collision data", () => {
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
+  it("gives every frame of the Stardust and ore sheets a silhouette", () => {
+    for (const [sheet, count] of [
+      ["stardust.json", 4],
+      ["ore-nugget.json", 1],
+    ] as const) {
+      const file = json(sheet) as { frames: Record<string, { collision: unknown }> };
+      const frames = Object.values(file.frames);
+      expect(frames, sheet).toHaveLength(count);
+      expect(frames.every((frame) => parts(frame.collision))).toBe(true);
+    }
+  });
+
   it("draws the cache, Stardust, ore nugget, ammo pack and upgrade pickups with outlines", () => {
     const pickup = (extra: Partial<SpaceObject>): SpaceObject => ({
       hp: 1,

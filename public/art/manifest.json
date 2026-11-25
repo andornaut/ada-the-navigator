@@ -7150,19 +7150,18 @@
     },
     {
       "id": "stardust",
-      "path": "/art/pickups/pickups-sheet.svg",
-      "svgSheet": true,
-      "width": 128,
-      "height": 40,
-      "displayWidth": 14,
-      "displayHeight": 17.5,
+      "path": "/art/stardust.png",
+      "width": 36,
+      "height": 9,
+      "displayWidth": 9,
+      "displayHeight": 9,
+      "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 32,
-      "frameHeight": 40,
-      "facing": "front",
+      "frameWidth": 9,
+      "frameHeight": 9,
       "frames": {
         "rest": 0,
         "glint1": 1,
@@ -29249,19 +29248,18 @@
     },
     {
       "id": "ore-nugget",
-      "path": "/art/pickups/pickups-sheet.svg",
-      "svgSheet": true,
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "path": "/art/ore-nugget.png",
+      "width": 9,
+      "height": 9,
+      "displayWidth": 9,
+      "displayHeight": 9,
+      "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 40,
-      "frameHeight": 40,
-      "facing": "front",
+      "frameWidth": 9,
+      "frameHeight": 9,
       "frames": {
         "rest": 0
       }

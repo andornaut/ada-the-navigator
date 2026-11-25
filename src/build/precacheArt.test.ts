@@ -60,6 +60,18 @@ describe("artUrls", () => {
     expect(urls).toContain("/art/ui/sprites/icon-holodisk-24.png");
   });
 
+  it("precaches the Stardust and ore pickup sheets the core manifest draws", () => {
+    const urls = artUrls(artFiles);
+    const manifest = read("/art/manifest.json") as { assets: { id: string; path: string }[] };
+    for (const id of ["stardust", "ore-nugget"]) {
+      const sheet = `/art/${id}.png`;
+      expect(manifest.assets.find((asset) => asset.id === id)?.path).toBe(sheet);
+      expect(urls).toContain(sheet);
+      expect(urls).toContain(`/art/${id}.json`);
+    }
+    expect(urls).not.toContain("/art/cartwheel/ore-nugget.png");
+  });
+
   it("precaches the station SVG glyphs without their retired nested sprites", () => {
     const urls = artUrls(artFiles);
     const ui = read("/art/ui/manifest.json") as { sprites: { png: string }[] };
