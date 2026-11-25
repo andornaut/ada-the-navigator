@@ -965,8 +965,8 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
         object.radius = stardustPickupReach(ECONOMY.stardustPickupRadius, object.amount);
         object.role = "stardust";
       }
-      // Asteroids are not placed in currents or ore fields, drift loops included; an ore field
-      // holds only its own rocks.
+      // Asteroids are not placed in currents, ore fields or an active Needle channel, drift loops
+      // included; an ore field holds only its own rocks.
       const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
       const at = object.orbit ?? object;
       if (
@@ -980,7 +980,8 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
         clearOfLandmarks(object, flight) &&
         (object.kind === "pickup" ||
           (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
-            worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at)))
+            worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at) &&
+            !needleChannelContains({ radius: footprint }, flight, at)))
       ) {
         canonicalObject(flight, object);
         flight.objects.push(object);

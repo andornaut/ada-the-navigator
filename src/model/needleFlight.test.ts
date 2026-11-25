@@ -6,6 +6,7 @@ import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { BEAM } from "../data/weaponCatalog.ts";
+import { placementRadius } from "./asteroids.ts";
 import { fromScreen } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
@@ -115,6 +116,34 @@ describe("mounted Needle flight physics", () => {
       }
     }
     expect(enemies).toBeGreaterThan(0);
+  });
+
+  it("keeps every generated chunk rock's footprint and drift loop outside every active channel", () => {
+    let rocks = 0;
+    // Far from the launch, so the chunks along the courses generate after the courses exist.
+    const anchor = { x: 40 * CONTENT.tuning.chunkSize, y: 0 };
+    for (const seed of [1, 2, 3, 4, 42, 417, 486273566]) {
+      const { flight } = courseFlight(anchor, seed);
+      const { eye, practice } = needleCourses(flight)!;
+      for (const gate of [...practice.gates, ...eye.gates]) {
+        flight.player = { ...gate.point };
+        stepFlight(CONTENT, 0.001, idle, flight);
+      }
+      for (const object of flight.objects) {
+        if (object.kind !== "rock" || !object.id.startsWith("chunk:")) {
+          continue;
+        }
+        rocks++;
+        const radius = placementRadius(object) + (object.orbit?.radius ?? 0);
+        expect(
+          activeNeedleCourses(flight).some((course) =>
+            inNeedleChannel({ radius }, course, object.orbit ?? object),
+          ),
+          `${seed}:${object.id}`,
+        ).toBe(false);
+      }
+    }
+    expect(rocks).toBeGreaterThan(0);
   });
 
   it("blocks a retained enemy's attempted movement into the channel without deleting it", () => {
