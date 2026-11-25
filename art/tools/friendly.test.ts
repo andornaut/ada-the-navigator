@@ -170,10 +170,8 @@ test("the mooring buoy's three arm tips lie on its frame and point away from its
 });
 
 test("the ring gate is true to Gameplay's rim across the screen at every axis", () => {
-  const shipped = JSON.parse(read("../../public/art/needle/gates.json")) as {
-    opening: number;
-    rim: typeof GATE_RIM;
-  };
+  // Gameplay's gate (gameplay/rules.md): an opening of 66 in a rim 33 to 40 world units out.
+  const shipped = { opening: 66, rim: { depth: 7, inner: 33, outer: 40 } };
   const data = JSON.parse(read(`../../public${staged.needle!.data!.needleGates}`)) as {
     frame: number;
     opening: number;

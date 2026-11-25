@@ -1,6 +1,6 @@
 import CHANNELS from "../../public/art/needle/channels.json" with { type: "json" };
 import EYE from "../../public/art/needle/eye.json" with { type: "json" };
-import GATES from "../../public/art/needle/gates.json" with { type: "json" };
+import GATES from "../../public/art/needle/ring-gates.json" with { type: "json" };
 /** Chapter rules and bounded placement tuning, in world units and seconds. */
 export const NEEDLE = {
   activityGates: 8,

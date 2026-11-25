@@ -96,12 +96,15 @@ export function createNeedleCourse(
     width: practice ? NEEDLE.practiceWidth : NEEDLE.eye.width,
   };
 }
-/** The renderer chooses only authored gate frames and uses this actual projected direction. */
+/**
+ * The renderer chooses only authored gate frames: the one whose axis, as the game projects it
+ * (`gameAxis`), lies closest to the gate's projected direction.
+ */
 export function needleGateOrientation(gate: NeedleGate): number {
   const direction = unit(toScreen(gate.tangent));
   return NEEDLE.gate.orientations.reduce(
     (best, candidate) => {
-      const alignment = Math.abs(dot(direction, unit(point(candidate.axis))));
+      const alignment = Math.abs(dot(direction, unit(point(candidate.gameAxis))));
       return alignment > best.alignment ? { alignment, index: candidate.index } : best;
     },
     { alignment: -1, index: 0 },

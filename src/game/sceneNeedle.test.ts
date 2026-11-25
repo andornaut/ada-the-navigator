@@ -212,7 +212,7 @@ describe("Needle renderer lifecycle and published gate art", () => {
     expect(gate).toHaveLength(2);
     for (const image of gate) {
       expect(f.textures.has(image.texture)).toBe(true);
-      expect([image.width, image.height, image.origin]).toEqual([63, 63, { x: 0.5, y: 0.5 }]);
+      expect([image.width, image.height, image.origin]).toEqual([126, 126, { x: 0.5, y: 0.5 }]);
       expect(
         image.texture.endsWith("back")
           ? image.depth < f.frame.playerDepth

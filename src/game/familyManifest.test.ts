@@ -784,13 +784,14 @@ describe("deferred core capital sheets", () => {
     },
   );
 
-  it("uses authored intrinsics for shipped field sheets and raw frames for Art's model-layer beacons", () => {
+  it("uses authored intrinsics for shipped field sheets and raw frames for Art's model-layer beacons and gates", () => {
     const f = fixture(undefined);
     const field = (asset: unknown) => ({ ...(asset as Asset), svgSheet: true as const });
-    const displayAssets = [field(needle.assets.find(({ id }) => id === "needle-gate-dark-0-back"))];
+    const displayAssets = [field(cartwheel.assets.find(({ id }) => id === "cartwheel-debris-0"))];
     const rawAssets = [
       field(andromeda.assets.find(({ id }) => id === "beacon-guide-lit-a")),
       field(cartwheel.assets.find(({ id }) => id === "mooring-buoy-a")),
+      field(needle.assets.find(({ id }) => id === "needle-gate-dark-0-back")),
       field(needle.assets.find(({ id }) => id === "needle-practice-berth-a")),
       sunflower.assets.find(({ id }) => id === "outpost-growers-ring-a") as Asset,
     ];

@@ -177,11 +177,10 @@ function queueEagerSvgSheets(
       try {
         const sources = frames.map((asset): Asset => {
           // These shipped sheets retain authored display intrinsics. Art's model-layer frames
-          // (the friendly objects, their beacons and project props) have the ordinary
-          // raw-intrinsic contract.
+          // (the friendly objects, their beacons, project props and the Needle ring gates) have
+          // the ordinary raw-intrinsic contract.
           const displaySized =
             asset.project === "second-docking-bay" ||
-            ("gate" in asset && (asset.gate === "dark" || asset.gate === "lit")) ||
             asset.craft ||
             asset.debris ||
             asset.outpost === "settlement" ||
