@@ -1524,12 +1524,12 @@ try {
     [ACHIEVEMENTS[0].id],
     "Only New Navigator is unlocked after the prologue",
   );
-  // Achievements is on the start screen only: the Paused card has none.
+  // The Paused card's right column holds Achievements, as the start screen's Menu does.
   await openPause();
   assert.equal(
     await page.locator('[data-dialog="pause"] [data-action="pause-achievements"]').count(),
-    0,
-    "The Paused card has no Achievements",
+    1,
+    "The Paused card holds Achievements",
   );
   await page.waitForFunction(() => window.adaWakeLock.held === 0);
   await page.locator('[data-action="pause-resume"]').click();
@@ -2901,7 +2901,7 @@ try {
   );
   events.checks.push(
     "Achievements open from the start screen's Menu in Gameplay's order, paging six at a time, " +
-      "and close back to the Menu; the start actions and the Paused card hold no Achievements",
+      "and close back to the Menu; the start actions hold no Achievements and the Paused card does",
   );
   // A held job's long Job line wraps inside the place panel, which stays clear of the tool
   // column, and selecting its target pans the chip clear of the panel's rendered height.
