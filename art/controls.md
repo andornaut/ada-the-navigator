@@ -441,7 +441,7 @@ panel. The light-field outline applies to the shield pill wherever it sits.
 | Divider         | `#57536e` | 1x16 rule between segments                                                                                                    |
 | Count           | `#ead4aa` | Cream `TYPE.label`, the Stardust and ore counts                                                                               |
 | Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline                                                                       |
-| Ore tick        | `#eaa676` | `+N` label, ore's light rust, with a 1 px ink outline                                                                         |
+| Ore tick        | `#e798cd` | `+N` label, ore's light purple, with a 1 px ink outline                                                                       |
 
 The normal panel is ink at 0.65 over the field. The track is its own ink layer at
 0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
