@@ -359,7 +359,7 @@ describe("warp material wiring", () => {
         })),
       },
     };
-    const overlay = createJumpOverlay(fixture.host, {
+    const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
       field: sheet,
       glow: sheet,
       jump: legacy,
@@ -412,7 +412,7 @@ describe("warp material wiring", () => {
   it("draws complete normal aperture warp triangles after the hull", () => {
     const fixture = dom();
     const jump = effect();
-    const overlay = createJumpOverlay(fixture.host, {
+    const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
       field: sheet,
       glow: sheet,
       jump: {
@@ -446,7 +446,7 @@ describe("warp material wiring", () => {
     "keeps coast and reduced-motion draws jet-free (reduced %s)",
     (reduced) => {
       const fixture = dom();
-      const overlay = createJumpOverlay(fixture.host, {
+      const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
         field: sheet,
         glow: sheet,
         jump: effect("bank-8"),
@@ -496,6 +496,7 @@ function galaxyConstructionOptions(): Parameters<typeof createGalaxyMap>[1] {
       number: "{number}",
       stay: "Stay",
     },
+    now: () => performance.now(),
     onClose: vi.fn(),
     onEarth: vi.fn(),
     onFlightEnd: vi.fn(),
@@ -677,6 +678,7 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
       number: "{number}",
       stay: "",
     },
+    now: () => performance.now(),
     onClose() {},
     onEarth() {},
     onFlightEnd() {},
@@ -751,6 +753,7 @@ it.each([false, true])(
         number: "{number}",
         stay: "Stay",
       },
+      now: () => performance.now(),
       onClose,
       onEarth,
       onFlightEnd() {},
@@ -878,6 +881,7 @@ it("registers native route actions once and releases selection callbacks on disp
       number: "Galaxy {number}",
       stay: "Stay",
     },
+    now: () => performance.now(),
     onClose,
     onEarth,
     onFlightEnd() {},

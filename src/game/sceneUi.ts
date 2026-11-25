@@ -42,7 +42,7 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/backStack.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
-import { screenShakes } from "../ui/deviceSettings.ts";
+import { pageStorage, screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
 import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap } from "../ui/galaxyMap.ts";
@@ -273,6 +273,8 @@ export function buildScene(scene: UiContext): void {
   };
   const stopPartial = scene.registerEntryCleanup?.(disposePartial);
   const saved = scene.initialSave;
+  // The session's clock, which the interface's timing reads through its options.
+  const clock = () => performance.now();
   const newer = saved.status === "newer";
   scene.savingUnavailable = newer || saved.status === "unavailable";
   scene.model = new GameModel(CONTENT, newer ? undefined : saved.save);
@@ -590,6 +592,7 @@ export function buildScene(scene: UiContext): void {
       soundNote: CONTENT.labels.soundNote ?? "",
     },
     noticeLabels: CONTENT.labels,
+    now: clock,
     onFeedbackChange: (settings) => {
       scene.feedbackSound.enabled = settings.sound;
       scene.screenShake = screenShakes(settings);
@@ -677,6 +680,7 @@ export function buildScene(scene: UiContext): void {
     rasterScale: scene.rasters.scale,
     requiredReady,
     shieldLabel: CONTENT.labels.shield ?? "",
+    storage: pageStorage(),
     subscribeRequired: (invalidate) => requiredLoading.subscribe(invalidate),
     update: {
       labels: {
@@ -947,7 +951,13 @@ export function buildScene(scene: UiContext): void {
   ];
   scene.quantum =
     jumpData && field && glow && star && tunnel
-      ? createJumpOverlay(scene.controls.overlay, { field, glow, jump: jumpData, star, tunnel })
+      ? createJumpOverlay(clock, scene.controls.overlay, {
+          field,
+          glow,
+          jump: jumpData,
+          star,
+          tunnel,
+        })
       : null;
   partial.push(() => scene.quantum?.dispose());
   // The home half: storybook pages, galaxy selection and Restart's confirm.
@@ -979,6 +989,7 @@ export function buildScene(scene: UiContext): void {
       stayEarth: label("galaxyStayEarth"),
       stayIn: label("galaxyStayIn"),
     },
+    now: clock,
     // In flight, the local map it opened from; at boarding, the Welcome back page.
     onClose: closeGalaxyMap,
     // In flight Earth ends the flight with the jump home; at boarding it is the room at once.

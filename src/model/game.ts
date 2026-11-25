@@ -479,6 +479,12 @@ export interface AchievementView {
 
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
+/** A source of uniform unsigned 32-bit draws, read for each new flight's geography and seed. */
+export type Entropy = () => number;
+
+/** The platform's cryptographic random source, the entropy a model draws unless given another. */
+export const cryptoEntropy: Entropy = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
+
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
   private readonly seenCacheGroups = new Set<string>();
@@ -488,6 +494,7 @@ export class GameModel {
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
   private readonly content: GameContent;
+  private readonly entropy: Entropy;
   private readonly talk: ConversationDirector;
   private pickupFeedback: PickupFeedback[] = [];
   private noticeShownFor = 0;
@@ -535,8 +542,9 @@ export class GameModel {
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
   // the farthest it opened, the opened positions still showing locked until then.
   private unlockFlight: RouteFlight | null = null;
-  constructor(content: GameContent, saved?: unknown) {
+  constructor(content: GameContent, saved?: unknown, entropy: Entropy = cryptoEntropy) {
     this.content = content;
+    this.entropy = entropy;
     const restored = restoreGameSave(content, saved);
     this.state = restored ?? newGameState();
     const navigation = restored as
@@ -2232,11 +2240,8 @@ export class GameModel {
   }
   private launch(): void {
     this.pickupFeedback = [];
-    const geography = initializeGalaxyGeography(
-      () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1,
-      this.current,
-    );
-    const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
+    const geography = initializeGalaxyGeography(this.entropy, this.current);
+    const randomSeed = this.entropy();
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
     const flight = createUnpopulatedFlight(
@@ -4681,7 +4686,7 @@ export class GameModel {
     if (scene.replayGalaxy !== undefined) {
       return [scene];
     }
-    const copy = new GameModel(this.content, JSON.stringify(this.state));
+    const copy = new GameModel(this.content, JSON.stringify(this.state), this.entropy);
     copy.simulating = true;
     copy.depletionContinuation = this.depletionContinuation;
     copy.startShown = false;

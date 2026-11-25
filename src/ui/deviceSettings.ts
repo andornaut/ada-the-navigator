@@ -31,7 +31,8 @@ export const DEVICE_STORAGE_KEYS: Readonly<Record<DeviceSetting, string>> = {
 const OFF = "off";
 const ON = "on";
 
-type DeviceStorage = Pick<Storage, "getItem" | "setItem">;
+/** Where the device settings live: the page's localStorage in play. */
+export type DeviceStorage = Pick<Storage, "getItem" | "setItem">;
 
 // A stored setting: on or off as stored, or undefined when nothing usable is stored.
 export function decodeSetting(stored: string | null): boolean | undefined {

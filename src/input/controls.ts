@@ -41,6 +41,7 @@ import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
+import type { DeviceStorage } from "../ui/deviceSettings.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
@@ -88,6 +89,10 @@ import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desk
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  /** The clock press, notice and feedback timing read, in milliseconds. */
+  readonly now: () => number;
+  /** Where the device settings are read and written; undefined where site data is blocked. */
+  readonly storage: DeviceStorage | undefined;
   readonly requiredReady?: RequiredReady;
   readonly subscribeRequired?: (invalidate: () => void) => () => void;
   readonly contextQuestDetails?: () => ContextQuestDetails | null;
@@ -201,6 +206,7 @@ const CONTROL_KEYS = new Set([
 ]);
 
 export function createControls(scene: Scene, options: ControlsOptions): Controls {
+  const { now } = options;
   const canvas = scene.game.canvas;
   const parent = canvas.parentElement;
   if (!parent) {
@@ -266,6 +272,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onVisibilityChange(value) {
       visibility = value;
     },
+    storage: options.storage,
   });
   let exitPose: ReturnType<typeof mountNavigationPose> | undefined;
   let pressedStoryButton: HTMLElement | undefined;
@@ -275,7 +282,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       guard: rootPressGuard(settings.root),
       pointerRelease: {
         onPressChange: (element) => {
-          usePress = element === settings.useButton ? { since: performance.now() } : undefined;
+          usePress = element === settings.useButton ? { since: now() } : undefined;
           weapons.setPressed(element);
           pressedStoryButton?.removeAttribute("data-story-pressed");
           pressedStoryButton =
@@ -914,9 +921,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     syncNavigationEntry();
     // Modal covers affect input eligibility, not the underlying scene paint.
     status.setShown(enabled && !pause.mapOpen());
-    notices.update(performance.now(), flightShown, noticePlaces());
+    notices.update(now(), flightShown, noticePlaces());
     weapons.setShown(flightShown);
-    weapons.updateFeedback(performance.now(), flightShown);
+    weapons.updateFeedback(now(), flightShown);
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
       target.inert = modalOpen();
@@ -937,7 +944,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       const useFocused =
         useShown && !settings.useButton.inert && settings.useButton.matches(":focus-visible");
       const pose = usePress
-        ? performance.now() - usePress.since < USE_PRESS_MS
+        ? now() - usePress.since < USE_PRESS_MS
           ? "press"
           : "held"
         : useFocused
@@ -1146,7 +1153,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     setStatus(view) {
       statusView = view;
-      status.setStatus(view, performance.now());
+      status.setStatus(view, now());
       weapons.setLightField(view.lightField);
     },
     setWeapons(choices) {

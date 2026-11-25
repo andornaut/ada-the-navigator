@@ -15,7 +15,7 @@ import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation
 import {
   type ControlVisibility,
   type DeviceSetting,
-  pageStorage,
+  type DeviceStorage,
   prefersReducedMotion,
   readDeviceSettings,
   writeSetting,
@@ -97,6 +97,8 @@ export interface SettingsOptions {
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onOpenChange: (open: boolean) => void;
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
+  // Where the device settings are read and written; undefined where site data is blocked.
+  readonly storage: DeviceStorage | undefined;
 }
 
 // The start screen's Settings glyph (art/settings-icon.md): the 20 vector gear, a mask drawn with
@@ -388,7 +390,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
   // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
   // Install joins last, shown only while the game can be installed.
-  const storage = pageStorage();
+  const { storage } = options;
   const settings = { ...readDeviceSettings(storage, prefersReducedMotion(window)) };
   const visibility = () => ({ aim: settings.aim, move: settings.move });
   const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });

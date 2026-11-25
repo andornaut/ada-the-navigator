@@ -148,6 +148,8 @@ export interface GalaxyMapArt {
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;
+  /** The clock a selection move and the unlock flight start on, in milliseconds. */
+  readonly now: () => number;
   /** X, Back, Escape and Stay return to where the galaxy map opened from. */
   readonly onClose: () => void;
   /** Earth: Ada's room. */
@@ -952,7 +954,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
 
   function beginUnlock(flight: RouteFlight): void {
     invalidatePressScope(root);
-    unlock = { flight, start: performance.now() };
+    unlock = { flight, start: options.now() };
     screen.dataset.flight = "";
     closeX.hidden = true;
     drawnLocked = new Set(flight.opened);
@@ -1243,7 +1245,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
           move = {
             from: distance,
             seconds: selectionSeconds(Math.abs(to - distance)),
-            start: performance.now(),
+            start: options.now(),
             thrust: false,
             to,
           };

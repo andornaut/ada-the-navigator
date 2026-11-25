@@ -303,6 +303,7 @@ function setup(copy: SettingsLabels = labels, detached = false) {
       onFeedbackChange,
       onOpenChange: vi.fn(),
       onVisibilityChange,
+      storage: localStorage,
     },
   );
   fixtureActionRoot(settings.root);
@@ -622,6 +623,7 @@ it("offers one Install button and cancels a deferred guide after closing Setting
     labels,
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
+    storage: localStorage,
   });
   fixtureActionRoot(settings.root);
   settings.open();
@@ -685,6 +687,7 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
     labels,
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
+    storage: localStorage,
   });
   fixtureActionRoot(settings.root);
   const nodes = (node: Element): Element[] => [node, ...node.children.flatMap(nodes)];
@@ -787,6 +790,7 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
     labels,
     onOpenChange,
     onVisibilityChange: vi.fn(),
+    storage: localStorage,
   });
   fixtureActionRoot(settings.root);
   expect(published).toEqual([
@@ -847,6 +851,7 @@ it.each(["settings", "close-settings", "close-install-steps"])(
         labels,
         onOpenChange: vi.fn(),
         onVisibilityChange: vi.fn(),
+        storage: localStorage,
       }),
     ).toThrow("no registered action binding");
     expect(append).not.toHaveBeenCalled();
@@ -901,6 +906,7 @@ it("audits Settings and Install Steps entry scopes while retaining external bind
     labels,
     onOpenChange: vi.fn(),
     onVisibilityChange: vi.fn(),
+    storage: localStorage,
   });
   fixtureActionRoot(settings.root);
   const launcher = document.createElement("button");

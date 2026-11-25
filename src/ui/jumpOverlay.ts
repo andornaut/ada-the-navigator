@@ -94,6 +94,7 @@ export function sheetFrame(
 const ready = (image: HTMLImageElement) => image.complete && image.naturalWidth > 0;
 
 export function createJumpOverlay(
+  clock: () => number,
   host: HTMLElement,
   art: JumpArt,
 ): {
@@ -471,7 +472,7 @@ export function createJumpOverlay(
         play.onDone();
         return;
       }
-      running = { ...play, covered: false, start: performance.now(), switched: false };
+      running = { ...play, covered: false, start: clock(), switched: false };
       host.append(canvas);
       request = requestAnimationFrame(render);
     },

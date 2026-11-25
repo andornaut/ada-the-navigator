@@ -604,10 +604,10 @@ function useFixture() {
       pointerHandlers = handlers;
       return () => {};
     },
+    now: () => Date.now(),
     onPageControl: (target: unknown) => target !== canvas && target !== parent,
     options: { subscribeRequired: () => () => {} },
     parent,
-    performance: { now: () => Date.now() },
     point: (event: PointerEvent) => ({ x: event.clientX, y: event.clientY }),
     readViewUnit,
     release: (pointerId: number) => state.release(pointerId),
