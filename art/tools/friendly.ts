@@ -1,7 +1,8 @@
 // The friendly object producer (art/friendly-redesign.md). `node art/tools/friendly.ts` writes
 // the pickups, caches, landmarks, galaxy beacons, ring gates and friendly craft as sheets of
-// nested roots beside the shipped art, their data files, and the manifest rows, data links and
-// sidecars that switch to them in art/friendly-rows.json.
+// nested roots, their data files, and their manifest rows, data links and sidecars. The whales
+// are written beside the shipped whale art, with their rows and data link staged in
+// art/friendly-rows.json.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +19,7 @@ import {
   drawnCrafts,
   PHANTOM_JETS_FILE,
   TOW_FILE,
+  TOW_LINE,
 } from "./friendly-craft.ts";
 import {
   type FriendlyManifest,
@@ -46,7 +48,14 @@ import {
   whaleSheet,
   whaleSheetFile,
 } from "./friendly-whales.ts";
-import { type Sidecars, writeOnce } from "./manifest.ts";
+import {
+  linkData,
+  type ManifestFile,
+  mergeEntries,
+  mergeSidecars,
+  type Sidecars,
+  writeOnce,
+} from "./manifest.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
 import type { Mesh } from "./solid.ts";
@@ -398,7 +407,7 @@ function moorings({ origin, scale }: DrawnObject) {
   });
 }
 
-// The manifest rows that replace the shipped rows of the same objects at the switch.
+// An object's manifest rows.
 function rows(object: DrawnObject, path: string) {
   const { width, height, pivot } = object;
   const frames = object.strip ? object.drawn.slice(0, 1) : object.drawn;
@@ -438,12 +447,12 @@ function collisionFile(objects: readonly DrawnObject[]): string {
   });
 }
 
-// Writes each craft's sheet, its jets file or its galaxy's tow file, and stages their rows,
+type Rows = { assets: { id: string }[]; data?: Record<string, string>; sidecars?: Sidecars };
+
+// Writes each craft's sheet, its jets file or its galaxy's tow file, and collects their rows,
 // sidecars and tow links. Phantom's craft share one jets file keyed by craft, and Cartwheel's
-// tow file keeps the tow line, as shipped.
-function stageCrafts(
-  staged: Record<string, { assets: unknown[]; data?: Record<string, string>; sidecars?: Sidecars }>,
-) {
+// tow file holds the tow line.
+function craftFiles(live: Record<string, Rows>) {
   const crafts = drawnCrafts();
   const folders = [...new Set(crafts.map(({ folder }) => folder))];
   for (const folder of folders) {
@@ -467,25 +476,19 @@ function stageCrafts(
       for (const craft of flying) files.set(craftJetsFile(craft), craftJets(craft));
     }
     if (towed.length > 0) {
-      const shipped = JSON.parse(
-        readFileSync(
-          fileURLToPath(new URL(`../../public/art/${folder}/tow.json`, import.meta.url)),
-          "utf8",
-        ),
-      ) as { line?: unknown };
       files.set(
         TOW_FILE,
         json({
           version: 1,
           displayScale: DISPLAY_SCALE,
-          ...(shipped.line === undefined ? {} : { line: shipped.line }),
+          ...(folder === "cartwheel" ? { line: TOW_LINE } : {}),
           craft: towed.map(craftTow),
         }),
       );
     }
     const paths = writeOnce(`/art/${folder}/`, new Map(), files);
     for (const craft of members) {
-      const entry = (staged[craft.manifest] ??= { assets: [] });
+      const entry = (live[craft.manifest] ??= { assets: [] });
       entry.assets.push(...craftRows(craft, paths.get(craftSheetFile(craft))!));
       if (!craft.stranded) {
         (entry.sidecars ??= {})[craft.name] = {
@@ -495,9 +498,9 @@ function stageCrafts(
     }
     if (towed.length > 0) {
       const tow = paths.get(TOW_FILE)!;
-      (staged[folder] ??= { assets: [] }).data = { ...staged[folder]!.data, tow };
+      (live[folder] ??= { assets: [] }).data = { ...live[folder]!.data, tow };
       // Core's tow link names the file that holds the tow line.
-      if (folder === "cartwheel") staged.core!.data = { ...staged.core!.data, tow };
+      if (folder === "cartwheel") live.core!.data = { ...live.core!.data, tow };
     }
   }
   return crafts;
@@ -505,7 +508,7 @@ function stageCrafts(
 
 // Writes each whale kind's sheets and the whale data, and stages their rows
 // and the `whales` link of every manifest that carries one.
-function stageWhales(staged: Record<string, { assets: unknown[]; data?: Record<string, string> }>) {
+function stageWhales(staged: Record<string, Rows>) {
   const whales = drawnWhales();
   const files = new Map<string, string>();
   for (const whale of whales) {
@@ -542,12 +545,23 @@ const PICKUPS = "pickups.json";
 const GATE_SHEET = "ring-gates-sheet.svg";
 const GATE_DATA = "ring-gates.json";
 
+// Writes the collected rows, data links and jets sidecars to their manifests. A row keeps its
+// place in its manifest, and a new one follows the row written before it.
+function writeManifests(live: Readonly<Record<string, Rows>>) {
+  for (const [file, { assets, data, sidecars }] of Object.entries(live) as [ManifestFile, Rows][]) {
+    const ids = new Set(assets.map(({ id }) => id));
+    mergeEntries(file, (id) => ids.has(id), assets);
+    if (data) linkData(file, data);
+    if (sidecars) {
+      mergeSidecars(file, (craft, kind) => kind === "jets" && craft in sidecars, sidecars);
+    }
+  }
+}
+
 function main() {
   const objects = drawnObjects();
-  const staged: Record<
-    string,
-    { assets: unknown[]; data?: Record<string, string>; sidecars?: Sidecars }
-  > = {};
+  const live: Record<string, Rows> = {};
+  const staged: Record<string, Rows> = {};
   const groups = new Map<string, DrawnObject[]>();
   for (const object of objects) {
     const key = `${object.manifest} ${object.sheet}`;
@@ -558,7 +572,7 @@ function main() {
     const files = new Map([[sheetFile(sheet), sheetText(members)]]);
     if (sheet === "pickups") files.set(PICKUPS, collisionFile(members));
     const paths = writeOnce(directory(manifest, sheet), new Map(), files);
-    const entry = (staged[manifest] ??= { assets: [] });
+    const entry = (live[manifest] ??= { assets: [] });
     entry.assets.push(...members.flatMap((object) => rows(object, paths.get(sheetFile(sheet))!)));
     if (sheet === "pickups") entry.data = { pickups: paths.get(PICKUPS)! };
   }
@@ -571,10 +585,11 @@ function main() {
       [GATE_DATA, gateData(gates)],
     ]),
   );
-  const needle = (staged.needle ??= { assets: [] });
+  const needle = (live.needle ??= { assets: [] });
   needle.assets.push(...gateRows(gates.frames, gatePaths.get(GATE_SHEET)!));
   needle.data = { needleGates: gatePaths.get(GATE_DATA)! };
-  const crafts = stageCrafts(staged);
+  const crafts = craftFiles(live);
+  writeManifests(live);
   const whales = stageWhales(staged);
   const text = json(staged);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);

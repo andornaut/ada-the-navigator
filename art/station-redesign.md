@@ -60,17 +60,18 @@ Every structure follows the same steps from model to shipped files.
    A root is drawn once per lit state; a row that repeats a state names that
    root in `svgSheetMember`. A row that carries `intrinsicWidth` has its root
    at display size.
-7. Rows. Each staged row is the shipped row of the same id with `path`,
-   `width`, `height`, `displayWidth`, `displayHeight`, `pivot`, `berths` and
-   the intrinsic size replaced.
+7. Rows. Each state's rows carry the fields that name it in the game (its
+   base, variant and project), the frame, display size and pivot, the
+   `frameMs` step, and its dock or berths.
 
 Curves are faceted: 48 to 72 sides on drums and 64 on rings. The largest
 departure from a true arc is 0.15 frame px, on the hub's large rim.
 
 ## Output
 
-`node art/tools/stations.ts` writes these sheets and
-[station-rows.json](station-rows.json). Reruns are byte-identical. Ids ending
+`node art/tools/stations.ts` writes these sheets, their rows into the
+manifests with `mergeEntries`, so each row keeps its place, and their
+`projects.json` entries. Reruns are byte-identical. Ids ending
 in a pair are the `-a` and `-b` blink frames.
 
 | Structure                                | Ids                                                      | Sheet                                       | Frame px | Display           | Pivot y | Drawn                    |
@@ -148,28 +149,23 @@ correct occlusion.
 
 - The docking bay stands off the large wheel's rim at 0 degrees, the lower
   right on screen, where the worn and the repaired hub both have the rim. Its
-  frames share the hub's frame and pivot, as shipped, so it has no anchor in
+  frames share the hub's frame and pivot, so it has no anchor in
   `projects.json`; the producer fails unless it draws alike on both hub states.
 - The crane and the school have their own frames, with the pivot on the lifting
-  drum's or the school saucer's axis. `station-rows.json` `projects` holds
-  their `projects.json` entries with the new anchors, in the base's frame px
-  from its pivot: `workshopCrane` `(79.179, 45.714)` and `courierSchool`
-  `(-194.093, 0)`, both `layer` `front`.
+  drum's or the school saucer's axis. Their `projects.json` anchors are in the
+  base's frame px from its pivot: `workshopCrane` `(79.179, 45.714)` and
+  `courierSchool` `(-194.093, 0)`, both `layer` `front`.
 
 `node art/tools/station-contact-sheet.ts <dir>` writes a review sheet of each
 state's frames at 1x and 2x on its field with the destination keyline, an
 overlay on its whole structure and alone; a third argument `marks` adds each
 pivot, berth and dock.
 
-The producer leaves the manifests and `projects.json` alone, so the shipped
-rows and sheets are unchanged and nothing reads the new files until the switch.
-
 ## Hostile stations
 
 `node art/tools/hostile-stations.ts` writes each family's hostile station and
-the Claim turret platform at 16 headings, and
-[hostile-station-rows.json](hostile-station-rows.json). Reruns are
-byte-identical. Each design has no engine or command part.
+the Claim turret platform at 16 headings, with their rows and `hardpoints`
+sidecars in the manifests. Reruns are byte-identical. Each design has no engine or command part.
 
 | Design                 | Key                    | Row prefix                    | Folder                    | Frame | Display | Mounts                                                                            |
 | ---------------------- | ---------------------- | ----------------------------- | ------------------------- | ----: | ------: | --------------------------------------------------------------------------------- |
@@ -190,8 +186,8 @@ byte-identical. Each design has no engine or command part.
   base at every heading; display size is `frame * 0.4375`.
 - Files per design: `{key}-sheet.svg` (16 hull roots, four to a row),
   `{key}-bases-sheet.svg` and `{key}-hardpoints.json`.
-- Hull rows are `{prefix}-{k}`. The platform's 16 hull rows are new: its
-  shipped hull is the one fixed frame `enemy-claim-platform`.
+- Hull rows are `{prefix}-{k}`, the platform's included: its hull turns with
+  its heading.
 - Bases are `{prefix}-{mount}-{state}-{k}` in a 32 frame px frame (display 14)
   centred on the mount's anchor, in three states: `intact` (the collar),
   `capped` (the collar closed by a low plate) and `destroyed` (a scorched
@@ -201,13 +197,15 @@ byte-identical. Each design has no engine or command part.
 - Mounts fit the enemy fleet's tops: collar radius 4.6 display px and height
   1.2, in the fleet's collar, plate and breach tones per family. A top's pivot
   is the centre of the collar's upper face.
-- `{key}-hardpoints.json` is the shipped version 1 schema. `hull` is the drawn
-  hull's `length` (fore and aft) and `width` (across) in frame px, the model's
-  extents as the enemy fleet's, and its spacing `radius`, the larger half.
-  `hardpoints`, `fill`, `weaponTops` and `tiers` are the shipped file's.
-  `headings[k]` holds `order` (the hull, then the mounts far to near), each
-  mount's `anchor`, `pivot` and per-state `collision`, the hull's `collision`
-  and `banner`. A
+- `{key}-hardpoints.json` is the version 1 schema. `hull` is the drawn hull's
+  `length` (fore and aft) and `width` (across) in frame px, the model's extents
+  as the enemy fleet's, and its spacing `radius`, the larger half. `hardpoints`,
+  `fill`, `weaponTops` and `tiers` come from the design: a station fires rapid
+  missiles from pods and the ring burst from the dome on `weapon-5`, and arms
+  6, 7 and 8 mounts at route positions 4, 5 and 6; the platform fires lasers
+  from its turrets and arms 2 and 3 mounts at positions 5 and 6. `headings[k]` holds
+  `order` (the hull, then the mounts far to near), each mount's `anchor`,
+  `pivot` and per-state `collision`, the hull's `collision` and `banner`. A
   mount whose intact collar shows less than half at a heading is `hidden`
   there, and its top is not drawn; it still fires and takes hits, so `hidden`
   is drawing data only: 28 mount headings of the coral station's
@@ -243,55 +241,14 @@ retire with the producers that use them. The Needle ring gate
 set. The other entries of `andromeda.ts`, `cartwheel.ts`, `outposts.ts` and
 `phantom.ts` stay with their producers.
 
-## Switch
+## Runtime values
 
-Tech replaces, from `station-rows.json`, the rows of the same ids in the
-`core`, `sunflower`, `cartwheel`, `whirlpool`, `needle`, `andromeda` and
-`phantom` manifests, and the `workshopCrane` and `courierSchool` entries of
-`projects.json` from its `projects`. A group switches in one landing with the
-removal of the sheet it replaces, so no unreferenced file ships.
-
-Runtime values that follow the shipped frames:
-
-- `src/data/storyShips.ts`: `HUB_BERTHS` and `DOCKS` hold the hub's berths and
-  the bay's in the shipped 240 px reference frame. The new points are the
-  staged rows' `berths`. On screen from the pivot, at the hub's display scale,
-  they are `(-83.895, 0)`, `(83.895, 0)` and the bay's `(90.933, 52.5)` display
-  px, with outward directions `[-1, 0]`, `[1, 0]` and `[0.866, 0.5]`.
-- [Destinations](destinations.md#collision-silhouette-dock-and-clearance) and
-  [Needle](needle.md) list the Weavers' station berths as world offsets; both
-  berths move to the needle's ends, and with the Loom hall both move again.
+- `src/data/storyShips.ts` holds the hub's berths and the bay's in the hub's
+  360 by 288 frame: on screen from the pivot, at the hub's display scale,
+  `(-83.895, 0)`, `(83.895, 0)` and the bay's `(90.933, 52.5)` display px,
+  with outward directions `[-1, 0]`, `[1, 0]` and `[0.866, 0.5]`.
 - `svgSheetMember` on the repeated loop rows of the Whirlpool and Phantom
-  stations and on the `-cracked-b` rows must reach the sheet loader.
-- The courier school's anchor changes `layer` from `behind` to `front`.
-
-Hostile stations switch from `hostile-station-rows.json`: the hull and base
-rows of the same ids, the platform's 16 new hull rows in place of
-`enemy-claim-platform`, and `sidecars.hostileStation.hardpoints` and
-`sidecars.platform.hardpoints` per manifest. The top rows are the fleet's
-(`fleet-top-rows.json`). `src/ui/hostileStationMapGlyph.test.ts`,
-`src/model/hostileStations.test.ts`, `src/game/enemyArt.test.ts` and
-`art/tools/hostile-station.test.ts` assert the replaced station and platform.
-
-Tests that assert the replaced art and need Tech's changes at the switch:
-
-- `src/game/stationArt.test.ts`: station frame sizes, pivots, docks and loops.
-- `src/game/familyManifest.test.ts`: station, hub and settlement sheet paths
-  per family.
-- `src/game/cartwheelArt.test.ts` and `src/model/storyShips.test.ts`: the
-  hub's frames, berths and docked spots.
-- `src/game/projectArt.test.ts`: overlay frames and anchors.
-- `src/ui/station.test.ts` and `src/game/drawOrder.test.ts`: station ids and
-  display sizes where they assert them.
-- `src/pwa/precacheArt.test.ts`: the sheet paths.
-
-Art then moves the structures into the shipped file stems, removes
-`station-rows.json` and the replaced producers and sheets, and rewrites
-[station](station.md), [outposts](outposts.md), [Cartwheel](cartwheel.md),
-[Whirlpool](whirlpool.md#station), [Needle](needle.md#weavers-station),
-[Andromeda](andromeda.md), [Phantom](phantom.md), the project world changes
-in [projects](projects.md) and the Use callout tops in
-[destinations](destinations.md).
+  stations and on the `-cracked-b` rows names the root they share.
 
 ## Stages
 
@@ -306,17 +263,10 @@ in [projects](projects.md) and the Use callout tops in
 - The Andromeda saucers read mostly by their keyline: cream on the periwinkle
   field is 2.38:1, and only the indigo keel, turret and band reach 3:1.
 - The hub's silhouette is 142 display px high against the shipped 175.
-- Hostile stations need per-family geometry (hardpoints, collision and hit
-  areas) where `src/data/hostileStations.ts` keys one geometry per route
-  position. Each manifest's `sidecars.hostileStation.hardpoints` names its
-  family's file.
 - The hostile stations and the platform are sized to the contract span in
   model space, so they draw larger than the reference sheet: 160, 160 and 160
   display px across the screen at their widest against the sheet's 137, 121
   and 141, and the platform 92 against 76.
-- The platform's hull turns with its heading, where the game draws one fixed
-  hull and moves the mounts round it. The 16 `enemy-claim-platform-{k}` rows
-  need the heading frame selection the stations use.
 - Mount collars are 9.2 display px across to fit the fleet's tops, against the
   reference's 12 (9.6 on the platform), and take the fleet's family tones in
   place of the reference's dark grey.
@@ -324,8 +274,6 @@ in [projects](projects.md) and the Use callout tops in
   lists them; the reference model placed them over the middle of each flat's
   edge. The Claim station's blades sit on the lower deck's flats.
 - Hostile stations have no dim frame: enemy rows carry no blink.
-- `hidden` on a hardpoint heading is the fleet producer's field; the shipped
-  station files do not carry it.
 - The stations' `jets` sidecar is unchanged; the designs have no drive.
 - The growers' outpost is the leaf-petal form on a long foot, 132 by 108
   display px against the shipped 132.3 by 110.25; with the greenhouse ring it

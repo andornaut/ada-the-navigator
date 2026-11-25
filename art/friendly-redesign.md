@@ -48,8 +48,8 @@ Stations, outposts, enemy ships and Ada's ship are outside this plan.
 6. Collision. The objects Ada collects are traced into strictly convex parts
    with the shared checker's thresholds and ship in
    [pickups.json](../public/art/pickups/pickups.json).
-7. Stage. [friendly-rows.json](friendly-rows.json) holds, per manifest, the
-   rows that switch to the new files. The producer leaves the manifests alone.
+7. Rows. The producer writes each object's rows, data links and sidecars into
+   its manifest; the whales stay staged (see [Whale switch](#whale-switch)).
 
 `node art/tools/friendly.ts` writes the files and rows; reruns are
 byte-identical. `node art/tools/friendly-contact-sheet.ts <dir> [scale ...]`
@@ -119,7 +119,7 @@ The pivot column is the row's `pivot.y`; `pivot.x` is 0.5 for every row.
   and the discovery cache.
 - `/art/pickups/pickups.json`: per row id, the frame size, pivot, drawn
   extents and convex collision parts in frame px, for the pickups and the
-  cache. The staged core rows name it as the `pickups` data link. An animated
+  cache. The core manifest names it as the `pickups` data link. An animated
   pickup's parts are its rest frame's, so its body holds still through its
   loop.
 - `/art/landmarks/landmarks-sheet.svg`: the survey beacon and the wreck.
@@ -154,8 +154,8 @@ units, unchanged.
   `needle-gate-{state}-{o}-{layer}` as shipped: `state` `dark` or `lit`,
   orientation `o` 0 to 4, `layer` `back` or `front`. Frame 288 (display 126),
   pivot `(0.5, 0.5)` at the ring's centre.
-- `/art/needle/ring-gates.json`: the gate data in the shape of the shipped
-  `gates.json`, staged as Needle's `needleGates` link.
+- `/art/needle/ring-gates.json`: the gate data, Needle's `needleGates`
+  link.
 - Orientation `o` puts the gate's axis at `o * 22.5` degrees on the world
   plane. Drawn extents in display px: 97 x 107 at 0 and 4, 119 x 101 at 1 and
   3, 123 x 98 at 2. The opening is 93 px wide and 76 px high at 2.
@@ -195,15 +195,12 @@ the game does, and the two cannot both be exact in this projection:
 - A gate rendered through the game's own projection would remove the mismatch
   and would no longer share the projection of every other object.
 
-`ring-gates.json` adds to the shipped fields: `collar`, `worldUnit` (display px
+`ring-gates.json` holds `opening`, `rim` and the orientations, and `collar`, `worldUnit` (display px
 per world unit), `groundDepth` (how many times farther down the screen the art
 draws a ground offset than the game), and per orientation `worldAxis`,
 `gameAxis` and `extent` (the drawn width and height in display px). `colors` holds the rim's and band's three flat tones and the two
-lamp colours in place of the shipped ramps and veil.
-
-Tests that assert the shipped gate: `src/game/familyManifest.test.ts` (sheet
-path and frame) and the readers of `src/data/needle.ts`, which imports
-`gates.json` and reads `opening`, `rim` and the orientations.
+lamp colours. `src/data/needle.ts` imports it and reads `opening`, `rim` and
+the orientations.
 
 ## Stage 3 output: friendly craft
 
@@ -275,18 +272,19 @@ Frames and ids:
 
 Data files:
 
-- The 21 flying craft each stage a `jets` sidecar in the shape of the shipped
-  story craft jets: `/art/{folder}/friendly-{name}-jets.json`, and for
+- The 21 flying craft each have a `jets` sidecar in the story craft jets
+  shape: `/art/{folder}/friendly-{name}-jets.json`, and for
   Phantom's 15 one file keyed by craft, `/art/phantom/friendly-craft-jets.json`.
   Per heading it holds each drive port's `anchor`, `axis` and `half` in frame
   px and that heading's strictly convex `collision` parts; `nose` holds the
   drawn tip and the world distance from the pivot to the point under it. The
   jet ramps are Ada's level one blues.
-- The 11 stranded craft stage their galaxy's `tow` link,
-  `/art/{galaxy}/friendly-tow.json`, in the shape of the shipped `tow.json`:
+- The 11 stranded craft are in their galaxy's `tow` link,
+  `/art/{galaxy}/friendly-tow.json`:
   per heading the `tow` point at the bow in frame px and the `collision` parts.
-  Cartwheel's file keeps the shipped tow `line`, and core's `tow` link is
-  staged to it.
+  Cartwheel's file holds the tow `line` (`TOW_LINE` in
+  [friendly-craft.ts](tools/friendly-craft.ts)), and core's `tow` link names
+  it.
 - The nose tip and the tow point are the top of the hull's forward-most
   points on the centre line. The lamp buoy's tow point is its float's rim on
   the side it faces.
@@ -389,40 +387,26 @@ Frames, ids and data:
 `friendly-whale-loop.svg`, one kind's rest pose and 8 loop frames at four
 headings, and `friendly-whales.svg`, every kind's 16 headings.
 
-## Switch
+## Manifests
 
-Tech replaces the shipped rows with the rows of the same ids from
-`friendly-rows.json`, in the manifest each is staged under. Every row is an
+`node art/tools/friendly.ts` writes every friendly row but the whales' into
+its manifest with `mergeEntries`, so each row keeps its place, with the
+`pickups`, `needleGates` and `tow` links and the craft `jets` sidecars. Every
+row is an
 `svgSheet` row whose `width` and `height` are frame px and whose display size
 is the frame times 0.4375.
 
-Rows that change shape:
+The animated pickups are vector strips in one nested root with `frames` and
+`loop` fields; the loader slices an `svgSheet` row that carries `frameWidth`
+and `frameHeight` into frames. The upgrade pickup's strip names its lit frames
+in `frames` for its `climb`.
 
-- The pickups were Aseprite PNG strips drawn at native size with frame loops.
-  Each is now a vector strip in one nested root with the same `frames` and
-  `loop` fields. The loader slices an `svgSheet` row that carries `frameWidth`
-  and `frameHeight` into frames, as it slices a PNG strip.
-- `holodisk-beacon` becomes `holodisk-beacon-a` and `-b`, and
-  `discovery-cache` becomes `discovery-cache-lit-a`, `-lit-b` and `-hidden`:
-  one row per frame, in place of `frames` indices into a strip.
-- `upgrade-chevron` is a strip of three frames, each holding both
-  chevrons. The shipped row drew one chevron twice from `chevrons` offsets and
-  lit each in a `climb`; the row keeps `climb` and names the lit frames in
-  `frames`.
-- `ore-nugget` draws 14 px for one unit; the five-unit chunk stays a scale of
-  the same frame.
-- The salvage beacon, the nursery beacon and the lamp and berth move to their
-  galaxy's `beacons-sheet.svg`, so the outposts sheet, the two nursery files
-  and Needle's projects sheet lose those roots.
-- `landmark-beacon-*` drop `intrinsicWidth` and `intrinsicHeight`, and
-  `landmark-wreck` becomes a sheet root.
-- The channel lamp carries no light pool polygon.
-- Every `ground` pivot is the model's float or hub centre, so placement offsets
-  tuned to the shipped art need a look: the salvage beacon's bud is now at the
-  pivot with its stalk below, and the current buoy and nursery beacon hang
-  their keels below the pivot.
+## Whale switch
 
-Whale rows that change at the switch:
+The whale rows and the `whales` link of Whirlpool and Phantom stay staged in
+[friendly-rows.json](friendly-rows.json) beside the shipped whale art. Tech
+replaces the shipped rows with the staged rows of the same ids, in the
+manifest each is staged under. What changes:
 
 - Every heading of a kind shares one square frame with a centre pivot, at
   display scale 0.4375. The shipped rows had a frame and a pivot per heading
@@ -435,56 +419,14 @@ Whale rows that change at the switch:
   `src/game/whaleArt.ts` reads `kinds`, `family` and `reducedMotion`, which
   keep their shape; `src/game/whaleArt.test.ts` asserts the shipped sizes.
 
-Craft rows that change at the switch:
-
-- Every craft frame grows, because the tiered hulls stand taller than the
-  shipped plates: placement that assumed a 28, 35, 42, 49 or 56 px display
-  frame needs a look. The pivot stays at the frame's centre.
-- The pivot is the middle of the hull's length and height, so each `nose`
-  distance and tow point differs from the shipped one.
-- `jets` headings gain `collision`, and `tow` headings gain `collision`.
-- Every flying craft has two jet ports, except the skimmers, Reed's ring ship
-  and the Grower with one. The shipped miner and tug had three.
-- The jets files carry Ada's blue ramps in place of the station family's warm
-  ones.
-- `visitor1` and `visitor2` each stage their own jets file; the shipped rows
-  shared one.
-
-Code and tests that read the replaced files:
-
-- `src/model/pickupBody.ts` imports the five Aseprite sidecars; it reads
-  `pickups.json` instead, where `collision` is in frame px from the frame's
-  top left and the display size is the frame times `displayScale`.
-- `src/model/collisionData.test.ts`, `src/model/economy.test.ts` and
-  `src/model/orePickups.test.ts`: frame counts and outlines of the sidecars.
-- `src/game/worldArt.test.ts`: the ammo pack, holodisk beacon and cache rows.
-- `src/game/upgradePickup.test.ts`: the chevron pair and its climb.
-- `src/model/jobs.test.ts`, `src/game/jobArt.test.ts` and
-  `src/game/landmarkScanCallout.test.ts`: the glint and landmark rows.
-- `src/game/projectArt.test.ts`, `src/game/whirlpoolProjects.test.ts`,
-  `src/game/sceneGuideLights.test.ts` and `src/game/sceneAndromeda.test.ts`:
-  project and beacon frame sizes and paths.
-- `src/game/cartwheelArt.test.ts`, `src/game/sceneObjects.test.ts`,
-  `src/game/drawOrder.test.ts` and `src/model/storyShips.test.ts`: the mooring
-  buoy's frame and `moorings`, and the ore nugget's size.
-- `src/game/familyManifest.test.ts` and the precache tests: file lists.
-- `src/game/sceneAssets.ts` names Phantom's shared jets file by path; the
-  readers of `src/game/cartwheelArt.ts` (`readCraftNose`, `storyNoses`) and
-  `src/game/towArt.ts` (`readStrandedCraft`) read the staged shapes unchanged.
-- Tests that assert a craft's frame size, sheet path, port count or nose
-  distance, among them `src/game/cartwheelArt.test.ts`,
-  `src/model/storyShips.test.ts`, `src/game/towArt.test.ts` and the Phantom
-  ally tests.
-
-After the switch Art moves each group into the producer that owns its
-manifest group, removes the replaced producers, files and their documents'
-sections, and deletes `friendly-rows.json`.
+After the switch the producer writes the whales into their manifests and
+`friendly-rows.json` is removed.
 
 ## Stages
 
 1. Pickups, caches, landmarks and galaxy beacons, buoys and lamps. Built.
-2. Ring gate, true to Gameplay's opening of 66 and rim of 33, 40 and 7 world
-   units: five axes, lit and dark, back and front layers as closed solids, a
+2. Ring gate, true to Gameplay's opening of 66 and the rim of 33, 40 and 7
+   world units ([Needle](needle.md#ring-gates)): five axes, lit and dark, back and front layers as closed solids, a
    288 px frame and the gate data file with the new extents. Built.
 3. The 32 craft at 16 headings: the yard hull with one role feature each, Elder
    Loom's saucer, Reed's ring ship, the Blocker and the lifeboat pods with

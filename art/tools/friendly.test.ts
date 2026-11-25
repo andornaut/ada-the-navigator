@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
-import { drawnCrafts } from "./friendly-craft.ts";
+import { drawnCrafts, TOW_LINE } from "./friendly-craft.ts";
 import { WHALE_KINDS, WHALE_LOOP_FRAMES } from "./friendly-whale-models.ts";
 import {
   drawWhale,
@@ -14,7 +14,7 @@ import {
 } from "./friendly-whales.ts";
 import { drawGates, drawnObjects } from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
-import { readManifest } from "./manifest.ts";
+import { GALAXIES, type ManifestFile, readManifest } from "./manifest.ts";
 import { strictlyConvex } from "./silhouette.ts";
 
 type Row = {
@@ -30,19 +30,40 @@ type Staged = Record<
   { assets: Row[]; data?: Record<string, string>; sidecars?: Record<string, { jets: string }> }
 >;
 
+type Manifest = {
+  assets: Row[];
+  sidecars?: Record<string, { jets?: string }>;
+  [link: string]: unknown;
+};
+
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
+// The whales stage their rows; every other friendly row is in its manifest.
 const staged = JSON.parse(read("../friendly-rows.json")) as Staged;
+const manifests = Object.fromEntries(
+  (["core", ...GALAXIES] as const).map((file) => [file, readManifest(file) as unknown as Manifest]),
+) as Record<ManifestFile, Manifest>;
+const link = (manifest: ManifestFile, key: string) => manifests[manifest][key] as string;
 const objects = drawnObjects();
 const gates = drawGates();
 const crafts = drawnCrafts();
 const isGate = (id: string) => id.startsWith("needle-gate-");
 const json = (path: string) => JSON.parse(read(`../../public${path}`)) as unknown;
 
-// Shipped rows whose frames the redesign splits into one row per frame.
-const SPLIT: Readonly<Record<string, readonly string[]>> = {
-  "holodisk-beacon": ["holodisk-beacon-a", "holodisk-beacon-b"],
-  "discovery-cache": ["discovery-cache-lit-a", "discovery-cache-lit-b", "discovery-cache-hidden"],
-};
+// Each drawn frame's manifest and row id; a strip is one row.
+const drawnIds: readonly [ManifestFile, string][] = [
+  ...objects.flatMap(({ manifest, drawn, strip }) =>
+    (strip ? drawn.slice(0, 1) : drawn).map(({ id }): [ManifestFile, string] => [manifest, id]),
+  ),
+  ...gates.frames.map(({ id }): [ManifestFile, string] => ["needle", id]),
+  ...crafts.flatMap(({ manifest, frames }) =>
+    frames.map(({ id }): [ManifestFile, string] => [manifest, id]),
+  ),
+];
+const row = (manifest: ManifestFile, id: string) =>
+  manifests[manifest].assets.find((entry) => entry.id === id);
+const whaleRows = Object.values(staged).flatMap(({ assets }) => assets);
+// The producer's rows: the live rows of its drawn frames and the staged whale rows.
+const produced = [...drawnIds.map(([manifest, id]) => row(manifest, id)!), ...whaleRows];
 
 test("every frame fits its frame with a margin, on a grid of 8", () => {
   for (const { name, width, height, drawn } of objects) {
@@ -71,69 +92,41 @@ test("an object's frames share one outline unless its shape changes", () => {
   }
 });
 
-test("each staged row replaces a shipped row or one frame of a split row", () => {
-  for (const [manifest, { assets }] of Object.entries(staged)) {
-    const shipped = new Set(
-      readManifest(manifest as Parameters<typeof readManifest>[0]).assets.map(({ id }) => id),
-    );
-    const split = new Set(Object.values(SPLIT).flat());
-    for (const { id } of assets) {
-      assert.ok(shipped.has(id) || split.has(id), `${manifest} ${id}`);
-    }
-    // Core ships each split row whole, or every one of its frames once switched.
-    for (const [id, frames] of Object.entries(SPLIT)) {
-      assert.ok(
-        manifest !== "core" || shipped.has(id) || frames.every((frame) => shipped.has(frame)),
-        id,
-      );
-    }
-  }
+test("every drawn frame has its row in its manifest, and only the whales stay staged", () => {
+  for (const [manifest, id] of drawnIds) assert.ok(row(manifest, id), `${manifest} ${id}`);
   assert.deepEqual(
-    Object.values(staged)
-      .flatMap(({ assets }) => assets.map(({ id }) => id))
-      .toSorted(),
-    [
-      ...objects.flatMap(({ drawn, strip }) =>
-        (strip ? drawn.slice(0, 1) : drawn).map(({ id }) => id),
-      ),
-      ...WHALE_KINDS.flatMap((kind) =>
-        Array.from({ length: 16 * WHALE_LOOP_FRAMES }, (_, index) => {
-          const [yaw, loop] = [Math.floor(index / WHALE_LOOP_FRAMES), index % WHALE_LOOP_FRAMES];
-          return `whale-${kind}-${yaw}-${loop}`;
-        }),
-      ),
-      ...gates.frames.map(({ id }) => id),
-      ...crafts.flatMap(({ frames }) => frames.map(({ id }) => id)),
-    ].toSorted(),
+    whaleRows.map(({ id }) => id).toSorted(),
+    WHALE_KINDS.flatMap((kind) =>
+      Array.from({ length: 16 * WHALE_LOOP_FRAMES }, (_, index) => {
+        const [yaw, loop] = [Math.floor(index / WHALE_LOOP_FRAMES), index % WHALE_LOOP_FRAMES];
+        return `whale-${kind}-${yaw}-${loop}`;
+      }),
+    ).toSorted(),
   );
 });
 
-test("every staged row names one nested root of its sheet with the row's frame", () => {
-  for (const { assets } of Object.values(staged)) {
-    for (const { id, path, width, height, pivot } of assets) {
-      const sheet = read(`../../public${path}`);
-      const roots = sheet.split(`<svg id="${id}" `).length - 1;
-      assert.equal(roots, 1, id);
-      assert.ok(
-        sheet.includes(`width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`),
-        id,
-      );
-      assert.ok(pivot.x > 0 && pivot.x < 1 && pivot.y > 0 && pivot.y < 1, id);
-    }
+test("every row names one nested root of its sheet with the row's frame", () => {
+  for (const { id, path, width, height, pivot } of produced) {
+    const sheet = read(`../../public${path}`);
+    const roots = sheet.split(`<svg id="${id}" `).length - 1;
+    assert.equal(roots, 1, id);
+    assert.ok(
+      sheet.includes(`width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`),
+      id,
+    );
+    assert.ok(pivot.x > 0 && pivot.x < 1 && pivot.y > 0 && pivot.y < 1, id);
   }
 });
 
 test("the sheets carry flat fills only", () => {
-  for (const path of new Set(
-    Object.values(staged).flatMap(({ assets }) => assets.map((row) => row.path)),
-  )) {
+  for (const path of new Set(produced.map((entry) => entry.path))) {
     const sheet = read(`../../public${path}`);
     assert.doesNotMatch(sheet, /gradient|filter|opacity|stroke|<image/u, path);
   }
 });
 
 test("every pickup frame ships strictly convex collision parts inside its frame", () => {
-  const file = JSON.parse(read(`../../public${staged.core!.data!.pickups}`)) as {
+  const file = JSON.parse(read(`../../public${link("core", "pickups")}`)) as {
     frames: Record<string, { frame: [number, number]; collision: [number, number][][] }>;
   };
   const collected = objects.filter(({ collision }) => collision);
@@ -155,7 +148,7 @@ test("every pickup frame ships strictly convex collision parts inside its frame"
 });
 
 test("the mooring buoy's three arm tips lie on its frame and point away from its hub", () => {
-  const buoys = staged.cartwheel!.assets.filter(({ id }) => id.startsWith("mooring-buoy-"));
+  const buoys = manifests.cartwheel.assets.filter(({ id }) => id.startsWith("mooring-buoy-"));
   assert.equal(buoys.length, 2);
   for (const { id, width, height, pivot, moorings } of buoys) {
     assert.equal(moorings?.length, 3, id);
@@ -170,9 +163,10 @@ test("the mooring buoy's three arm tips lie on its frame and point away from its
 });
 
 test("the ring gate is true to Gameplay's rim across the screen at every axis", () => {
-  // Gameplay's gate (gameplay/rules.md): an opening of 66 in a rim 33 to 40 world units out.
+  // Gameplay's opening of 66 (gameplay/rules.md), in Art's rim 33 to 40 world units out and 7
+  // deep (art/needle.md, Ring gates).
   const shipped = { opening: 66, rim: { depth: 7, inner: 33, outer: 40 } };
-  const data = JSON.parse(read(`../../public${staged.needle!.data!.needleGates}`)) as {
+  const data = JSON.parse(read(`../../public${link("needle", "needleGates")}`)) as {
     frame: number;
     opening: number;
     rim: typeof GATE_RIM;
@@ -182,7 +176,7 @@ test("the ring gate is true to Gameplay's rim across the screen at every axis", 
   assert.deepEqual(data.rim, shipped.rim);
   assert.equal(data.rim.inner * 2, data.opening);
   assert.equal(data.orientations.length, GATE_AXES.length);
-  const rows = new Set(staged.needle!.assets.filter(({ id }) => isGate(id)).map(({ id }) => id));
+  const rows = new Set(manifests.needle.assets.filter(({ id }) => isGate(id)).map(({ id }) => id));
   assert.equal(rows.size, 20);
   for (const { extent, files } of data.orientations) {
     for (const id of Object.values(files).flatMap((layers) => Object.values(layers))) {
@@ -275,11 +269,11 @@ test("the lamp buoy draws the same at every heading", () => {
   }
 });
 
-test("each flying craft stages a jets file with its ports, nose and collision per heading", () => {
+test("each flying craft has a jets file with its ports, nose and collision per heading", () => {
   const flying = crafts.filter(({ stranded }) => !stranded);
   assert.equal(flying.length, 21);
   for (const { name, manifest, frame } of flying) {
-    const path = staged[manifest]!.sidecars![name]!.jets;
+    const path = manifests[manifest].sidecars![name]!.jets!;
     const file = json(path) as Jets | Record<string, Jets>;
     const jets = (manifest === "phantom" ? (file as Record<string, Jets>)[name] : file) as Jets;
     assert.equal(jets.frame, frame, name);
@@ -301,11 +295,11 @@ test("each flying craft stages a jets file with its ports, nose and collision pe
   }
 });
 
-test("each stranded craft stages a tow point and collision per heading in its galaxy's tow file", () => {
+test("each stranded craft has a tow point and collision per heading in its galaxy's tow file", () => {
   const towed = crafts.filter(({ stranded }) => stranded);
   assert.equal(towed.length, 11);
   for (const { name, folder, frame, blink } of towed) {
-    const file = json(staged[folder]!.data!.tow!) as Tow;
+    const file = json(link(folder as ManifestFile, "tow")) as Tow;
     const entry = file.craft.find(({ id }) => id === name)!;
     assert.equal(entry.frame, frame, name);
     assert.deepEqual(entry.blink, blink ? ["a", "b"] : undefined, name);
@@ -315,9 +309,9 @@ test("each stranded craft stages a tow point and collision per heading in its ga
       convexParts(`${name} ${yaw}`, frame, heading);
     }
   }
-  // Core's tow link names Cartwheel's file, which keeps the tow line.
-  assert.equal(staged.core!.data!.tow, staged.cartwheel!.data!.tow);
-  assert.ok((json(staged.core!.data!.tow!) as { line?: unknown }).line);
+  // Core's tow link names Cartwheel's file, which holds the tow line.
+  assert.equal(link("core", "tow"), link("cartwheel", "tow"));
+  assert.deepEqual((json(link("core", "tow")) as { line?: unknown }).line, TOW_LINE);
 });
 
 type StripRow = Row & {
@@ -328,19 +322,13 @@ type StripRow = Row & {
   loop?: { frame: number; name: string; ms: number }[];
   climb?: { ms: number; lit?: string }[];
 };
-type ShippedRow = StripRow & { displayHeight: number };
-
-test("each animated pickup stages the shipped frame names and loop timings on one strip row", () => {
-  const shipped = readManifest("core").assets as ShippedRow[];
-  const rows = staged.core!.assets as StripRow[];
-  const sheet = read(`../../public${rows[0]!.path}`);
+test("each animated pickup is one strip row whose loop and climb name frames of its strip", () => {
+  const rows = manifests.core.assets as StripRow[];
+  const sheet = read(`../../public${rows.find(({ id }) => id === "stardust")!.path}`);
   for (const id of ["stardust", "hunt-glint", "ammo-pack", "holodisk", "upgrade-chevron"]) {
-    const was = shipped.find((row) => row.id === id)!;
-    const now = rows.find((row) => row.id === id)!;
+    const now = rows.find((entry) => entry.id === id)!;
     const object = objects.find(({ drawn }) => drawn[0]!.id === id)!;
-    assert.deepEqual(now.loop, was.loop, id);
-    assert.deepEqual(now.climb, was.climb, id);
-    if (was.frames) assert.deepEqual(now.frames, was.frames, id);
+    assert.ok(now.loop ?? now.climb, id);
     // The strip holds every frame the loop names, each one frame wide.
     const count = now.width / now.frameWidth!;
     assert.equal(count, object.drawn.length, id);

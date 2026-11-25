@@ -19190,6 +19190,14 @@
       "jets": "/art/enemies/fleetCapitalCrossbow-jets.json",
       "hardpoints": "/art/enemies/fleetCapitalCrossbow-hardpoints.json"
     },
+    "capitalCompact": {
+      "jets": "/art/enemies/capitalCompact-jets.json",
+      "hardpoints": "/art/enemies/capitalCompact-hardpoints.json"
+    },
+    "capitalNarrow": {
+      "jets": "/art/enemies/capitalNarrow-jets.json",
+      "hardpoints": "/art/enemies/capitalNarrow-hardpoints.json"
+    },
     "fighter": {
       "jets": "/art/enemies/fleetFighter-jets.json",
       "shards": "/art/enemies/fleetFighter-shards-packed.json"
@@ -19197,6 +19205,14 @@
     "frigate": {
       "jets": "/art/enemies/fleetFrigateTwin-jets.json",
       "hardpoints": "/art/enemies/fleetFrigateTwin-hardpoints.json"
+    },
+    "frigateCompact": {
+      "jets": "/art/enemies/frigateCompact-jets.json",
+      "hardpoints": "/art/enemies/frigateCompact-hardpoints.json"
+    },
+    "frigateNarrow": {
+      "jets": "/art/enemies/frigateNarrow-jets.json",
+      "hardpoints": "/art/enemies/frigateNarrow-hardpoints.json"
     },
     "glider": {
       "jets": "/art/needle/friendly-glider-jets.json"

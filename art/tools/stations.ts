@@ -1,11 +1,11 @@
 // The station producer (art/station-redesign.md). `node art/tools/stations.ts` writes each
-// structure's sheet of lit and dim frames beside the shipped station art, and the manifest rows
-// and project anchors that switch to them in art/station-rows.json.
+// structure's sheet of lit and dim frames, its manifest rows and its projects.json entry.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { type ManifestFile, readManifest } from "./manifest.ts";
-import { json, type Point, projectAt, round } from "./projection.ts";
+import { type ManifestFile, mergeEntries } from "./manifest.ts";
+import { writeProjects } from "./projects.ts";
+import { type Point, projectAt, round } from "./projection.ts";
 import { DESTINATION_SCALE, DISPLAY_SCALE, HUB_SCALE, type Mesh } from "./solid.ts";
 import {
   flower,
@@ -26,7 +26,7 @@ import { svgText } from "./svg-text.ts";
 import { tonePaths } from "./fleet.ts";
 import { type Fragment, loopArea, type V2, visibleFragments } from "./visible.ts";
 
-// Frame px to display px, as the shipped rows scale each kind of destination.
+// Frame px to display px for each kind of destination.
 const STATION = DISPLAY_SCALE * DESTINATION_SCALE;
 const HUB = DISPLAY_SCALE * HUB_SCALE;
 const OUTPOST = STATION * 1.4;
@@ -36,10 +36,11 @@ const MARGIN = 4;
 // The silhouette may differ from its reference size by this many display px.
 const SIZE_TOLERANCE = 1.5;
 
-// A frame of a structure's sheet. `same` names the frame whose root it shares.
-type FrameSpec = { id: string; lit: boolean; same?: string };
-// A berth in model space: its point, the level direction a craft leaves along, and the mouth
-// width the shipped row carries, in frame px.
+// A frame of a structure's sheet. `same` names the frame whose root it shares, and `index` is a
+// loop frame's place in its loop.
+type FrameSpec = { id: string; lit: boolean; same?: string; index?: number };
+// A berth in model space: its point, the level direction a craft leaves along, and its mouth
+// width in frame px.
 type Berth = { at: Point; outward: Point; width: number };
 type Row = { id: string; [key: string]: unknown };
 
@@ -56,8 +57,16 @@ export type State = {
   size?: readonly [number, number];
   berths?: readonly Berth[];
   // The outposts' dock: the body's wall on the axis straight down the screen from the pivot, as
-  // a radius in display px, and the mouth width the shipped row carries, in frame px.
+  // a radius in display px, and its mouth width in frame px.
   dock?: { radius: number; width: number };
+  // The fields that name the state in its manifest rows: the base it belongs to, its variant
+  // and the project that shows it.
+  row: Readonly<Record<string, unknown>>;
+  // The rows carry their display size as the intrinsic size, and their roots have it.
+  intrinsic?: true;
+  // The project whose funding swaps this state's frames for another state's, the fields naming
+  // the base in projects.json, and the frames it replaces.
+  replaces?: { project: string; on: Readonly<Record<string, string>>; frames: readonly string[] };
 };
 
 export type Structure = {
@@ -69,9 +78,11 @@ export type Structure = {
   origin: Point;
   // Every state shares one frame and pivot.
   states: readonly State[];
-  // An overlay's project in projects.json and the model point on its base's pivot; the base's
-  // frames have this structure's scale.
-  anchor?: { project: string; base: Point };
+  // The blink or loop step, 700 ms unless given.
+  frameMs?: number;
+  // An overlay's project in projects.json, the fields naming its base there, and the model point
+  // on its base's pivot; the base's frames have this structure's scale.
+  anchor?: { project: string; on: Readonly<Record<string, string>>; base: Point };
 };
 
 const blink = (stem: string): FrameSpec[] => [
@@ -88,7 +99,7 @@ const loop = (stem: string, count: number): FrameSpec[] =>
   Array.from({ length: count }, (_, i) => {
     const lit = i < count / 2;
     const first = lit ? 0 : count / 2;
-    return { id: `${stem}-${i}`, lit, ...(i !== first && { same: `${stem}-${first}` }) };
+    return { id: `${stem}-${i}`, lit, index: i, ...(i !== first && { same: `${stem}-${first}` }) };
   });
 
 const pol = (r: number, degrees: number, z = 0): Point => [
@@ -162,6 +173,7 @@ function settlement(
         mesh: (lit) => scaled(twin(lit, { ...options, cracked: 0 }), k),
         size: cracked,
         dock: { radius: dock, width: 22.045 },
+        row: { outpost: "settlement", variant, state: "cracked" },
       },
       {
         title: `${title}, mended`,
@@ -169,6 +181,7 @@ function settlement(
         mesh: (lit) => scaled(twin(lit, { ...options, mended: 0 }), k),
         size: mended,
         dock: { radius: dock, width: 22.045 },
+        row: { outpost: "settlement", variant, state: "mended" },
       },
     ],
   };
@@ -187,6 +200,7 @@ export const STRUCTURES: readonly Structure[] = [
         frames: blink("station"),
         mesh: (lit) => flower(lit),
         size: [172, 161],
+        row: {},
       },
     ],
   },
@@ -203,6 +217,7 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => scaled(leafFlower(lit, GROWERS), GROWERS_SCALE),
         size: [132, 108],
         dock: { radius: 30 * GROWERS_SCALE, width: 31.843 },
+        row: { outpost: "growers" },
       },
       {
         title: "Growers with greenhouseRing",
@@ -210,6 +225,12 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => scaled(leafFlower(lit, { ...GROWERS, greenhouse: true }), GROWERS_SCALE),
         size: [165, 121],
         dock: { radius: 30 * GROWERS_SCALE, width: 31.843 },
+        row: { outpost: "growers", project: "greenhouseRing" },
+        replaces: {
+          project: "greenhouseRing",
+          on: { outpost: "growers" },
+          frames: ["outpost-growers-a", "outpost-growers-b"],
+        },
       },
     ],
   },
@@ -226,6 +247,7 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => flower(lit, WORKSHOP),
         size: [151, 122],
         dock: { radius: 30, width: 29.394 },
+        row: { outpost: "workshop" },
       },
     ],
   },
@@ -236,13 +258,14 @@ export const STRUCTURES: readonly Structure[] = [
     scale: OUTPOST,
     // The lifting drum's axis.
     origin: pol(84, 0),
-    anchor: { project: "workshopCrane", base: ORIGIN },
+    anchor: { project: "workshopCrane", on: { outpost: "workshop" }, base: ORIGIN },
     states: [
       {
         title: "workshopCrane",
         frames: blink("outpost-workshop-crane"),
         mesh: (lit) => flower(lit, { ...WORKSHOP, boom: 0 }),
         overlay: true,
+        row: { outpost: "workshop", project: "workshopCrane" },
       },
     ],
   },
@@ -263,6 +286,7 @@ export const STRUCTURES: readonly Structure[] = [
           ),
         size: [153, 102],
         dock: { radius: 25 * 1.05, width: 31.843 },
+        row: { outpost: "salvagers" },
       },
     ],
   },
@@ -279,6 +303,8 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => wheels(lit, { gap: WORN }),
         size: [168, 142],
         berths: hubBerths(),
+        row: { destination: "hub", variant: "worn" },
+        intrinsic: true,
       },
       {
         title: "Mining hub, repaired",
@@ -286,6 +312,8 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => wheels(lit),
         size: [168, 142],
         berths: hubBerths(),
+        row: { destination: "hub", variant: "repaired", project: "hub-repairs" },
+        intrinsic: true,
       },
       {
         title: "dockingBay",
@@ -295,6 +323,7 @@ export const STRUCTURES: readonly Structure[] = [
         overlay: true,
         // The berth drum's wall, outward from the hub.
         berths: [{ at: pol(105, BAY, HUB_PLANE), outward: pol(1, BAY), width: 36.742 }],
+        row: { overlay: true, destination: "hub", project: "second-docking-bay" },
       },
     ],
   },
@@ -304,12 +333,15 @@ export const STRUCTURES: readonly Structure[] = [
     file: "ramp-station-sheet.svg",
     scale: STATION,
     origin: ORIGIN,
+    frameMs: 350,
     states: [
       {
         title: "Whirlpool station",
         frames: loop("whirlpool-station", 4),
         mesh: whirl,
         size: [205, 138],
+        row: { destination: "station" },
+        intrinsic: true,
       },
     ],
   },
@@ -326,6 +358,8 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => needle(lit),
         size: [316, 73],
         berths: needleBerths(129),
+        row: { destination: "station", variant: "base" },
+        intrinsic: true,
       },
       {
         title: "Weavers' station with loomHall",
@@ -333,6 +367,13 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => needle(lit, { eyes: [-36, 36], outer: 34, inner: 24, length: 138 }),
         size: [341, 60],
         berths: needleBerths(139),
+        row: { destination: "station", variant: "loom-hall", project: "loomHall" },
+        intrinsic: true,
+        replaces: {
+          project: "loomHall",
+          on: { galaxy: "needle", destination: "station" },
+          frames: ["needle-station-a", "needle-station-b"],
+        },
       },
     ],
   },
@@ -348,6 +389,8 @@ export const STRUCTURES: readonly Structure[] = [
         frames: blink("station-settlers"),
         mesh: (lit) => saucer(lit),
         size: [197, 145],
+        row: { station: "settlers" },
+        intrinsic: true,
       },
     ],
   },
@@ -358,7 +401,7 @@ export const STRUCTURES: readonly Structure[] = [
     scale: STATION,
     // The school saucer's axis.
     origin: pol(104, 135),
-    anchor: { project: "courierSchool", base: ORIGIN },
+    anchor: { project: "courierSchool", on: { station: "settlers" }, base: ORIGIN },
     states: [
       {
         title: "courierSchool",
@@ -373,6 +416,7 @@ export const STRUCTURES: readonly Structure[] = [
             width: 19.596,
           },
         ],
+        row: { overlay: true, station: "settlers", project: "courierSchool" },
       },
     ],
   },
@@ -389,6 +433,7 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => scaled(saucer(lit, HAMLET), 0.56),
         size: [80, 75],
         dock: { radius: 58 * 0.56, width: 22.045 },
+        row: { outpost: "settlement", variant: "hamlet" },
       },
     ],
   },
@@ -405,6 +450,7 @@ export const STRUCTURES: readonly Structure[] = [
         mesh: (lit) => scaled(saucer(lit, LAMPHOUSE), 0.55),
         size: [60, 76],
         dock: { radius: 44 * 0.55, width: 19.596 },
+        row: { outpost: "settlement", variant: "lamphouse" },
       },
     ],
   },
@@ -414,12 +460,15 @@ export const STRUCTURES: readonly Structure[] = [
     file: "triarm-station-sheet.svg",
     scale: STATION,
     origin: ORIGIN,
+    frameMs: 150,
     states: [
       {
         title: "Phantom station",
         frames: loop("phantom-station", 8),
         mesh: (lit) => twin(lit),
         size: [196, 169],
+        row: { destination: "station" },
+        intrinsic: true,
       },
     ],
   },
@@ -580,12 +629,10 @@ export function draw(structure: Structure): Drawn {
 
 const directory = (manifest: ManifestFile) => (manifest === "core" ? "/art/" : `/art/${manifest}/`);
 
-// The sheet of a structure and the rows that replace its shipped rows. A row keeps the fields of
-// the row it replaces; its path, sizes, pivot, dock and berths change.
+// The sheet of a structure and its manifest rows.
 function sheet(drawn: Drawn): { text: string; rows: Row[] } {
   const { structure, width, height, above } = drawn;
   const { scale, manifest } = structure;
-  const shipped: Row[] = readManifest(manifest).assets;
   const display = [round(width * scale), round(height * scale)] as const;
   const path = directory(manifest) + structure.file;
   const at = (point: Point) => {
@@ -599,19 +646,24 @@ function sheet(drawn: Drawn): { text: string; rows: Row[] } {
   const rows: Row[] = [];
   const children: string[] = [];
   for (const { state, body } of drawn.states) {
-    for (const { id, lit, same } of state.frames) {
-      const row = shipped.find((entry) => entry.id === id);
-      if (!row) throw new Error(`${id} has no row in the ${manifest} manifest`);
-      // A row that carries its intrinsic size has its root at display size.
-      const intrinsic = "intrinsicWidth" in row;
+    const berths = state.berths && {
+      berths: state.berths.map((berth) => ({
+        ...at(berth.at),
+        outward: outward(berth.outward),
+        width: berth.width,
+      })),
+    };
+    for (const { id, lit, same, index } of state.frames) {
       rows.push({
-        ...row,
+        id,
         path,
         width,
         height,
         displayWidth: display[0],
         displayHeight: display[1],
+        facing: "fixed",
         pivot: { x: 0.5, y: Math.round((above / height) * 1e5) / 1e5 },
+        frameMs: structure.frameMs ?? 700,
         ...(state.dock && {
           dock: {
             ...at([
@@ -623,19 +675,17 @@ function sheet(drawn: Drawn): { text: string; rows: Row[] } {
             width: state.dock.width,
           },
         }),
-        ...(state.berths && {
-          berths: state.berths.map((berth) => ({
-            ...at(berth.at),
-            outward: outward(berth.outward),
-            width: berth.width,
-          })),
-        }),
+        // An overlay names its base before the berths it adds.
+        ...(!state.overlay && berths),
+        ...state.row,
+        ...(index !== undefined && { frameIndex: index }),
+        ...(state.overlay && berths),
         svgSheet: true,
+        ...(state.intrinsic && { intrinsicWidth: display[0], intrinsicHeight: display[1] }),
         ...(same !== undefined && { svgSheetMember: same }),
-        ...(intrinsic && { intrinsicWidth: display[0], intrinsicHeight: display[1] }),
       });
       if (same !== undefined) continue;
-      const [w, h] = intrinsic ? display : [width, height];
+      const [w, h] = state.intrinsic ? display : [width, height];
       const root = svgText(
         `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${width} ${height}"><title>${state.title}, ${lit ? "lit" : "dim"}</title>${body(lit)}</svg>`,
       );
@@ -651,7 +701,6 @@ function sheet(drawn: Drawn): { text: string; rows: Row[] } {
   };
 }
 
-const ROWS = fileURLToPath(new URL("../station-rows.json", import.meta.url));
 const ART = fileURLToPath(new URL("../../public/", import.meta.url));
 
 function writeIfChanged(path: string, text: string) {
@@ -659,36 +708,44 @@ function writeIfChanged(path: string, text: string) {
 }
 
 function main() {
-  const manifests: Record<string, { assets: Row[] }> = {};
-  const shipped = (
-    JSON.parse(readFileSync(`${ART}art/projects.json`, "utf8")) as {
-      projects: Record<string, Record<string, unknown>>;
-    }
-  ).projects;
+  const manifests = new Map<ManifestFile, Row[]>();
   const projects: Record<string, unknown> = {};
   for (const structure of STRUCTURES) {
     const drawn = draw(structure);
     const { text, rows } = sheet(drawn);
     writeIfChanged(`${ART}${directory(structure.manifest).slice(1)}${structure.file}`, text);
-    (manifests[structure.manifest] ??= { assets: [] }).assets.push(...rows);
+    manifests.set(structure.manifest, [...(manifests.get(structure.manifest) ?? []), ...rows]);
     if (structure.anchor) {
       // The overlay's pivot from its base's pivot, in the base's frame px; its frame holds only
       // what the base leaves visible, so it draws in front.
       const [x, y] = place(structure, structure.anchor.base);
-      const entry = shipped[structure.anchor.project];
-      if (!entry) throw new Error(`projects.json has no ${structure.anchor.project}`);
       projects[structure.anchor.project] = {
-        ...entry,
+        ...structure.anchor.on,
+        kind: "overlay",
+        frames: rows.map(({ id }) => id),
         anchors: [{ x: round(-x), y: round(-y), layer: "front", phase: 0 }],
       };
     }
     for (const { state, size } of drawn.states) {
+      if (state.replaces) {
+        projects[state.replaces.project] = {
+          ...state.replaces.on,
+          kind: "replace",
+          frames: state.frames.map(({ id }) => id),
+          replaces: state.replaces.frames,
+        };
+      }
       console.log(
         `${state.title}: frame ${drawn.width} by ${drawn.height}, pivot y ${drawn.above}, drawn ${size[0].toFixed(1)} by ${size[1].toFixed(1)} display px`,
       );
     }
   }
-  writeIfChanged(ROWS, json({ ...manifests, projects }));
+  // A row keeps its place in its manifest, and a new one follows the row written before it.
+  for (const [manifest, rows] of manifests) {
+    const ids = new Set(rows.map(({ id }) => id));
+    mergeEntries(manifest, (id) => ids.has(id), rows);
+  }
+  writeProjects(projects);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

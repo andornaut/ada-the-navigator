@@ -1,8 +1,7 @@
 // The hostile station producer (art/station-redesign.md). `node art/tools/hostile-stations.ts`
-// writes each family's hostile station and the Claim platform at 16 headings beside the shipped
-// enemy art: the hull sheet, the sheet of weapon bases in their intact, destroyed and capped
-// states, and the hardpoints file, with the manifest rows and sidecars that switch to them in
-// art/hostile-station-rows.json.
+// writes each family's hostile station and the Claim platform at 16 headings: the hull sheet,
+// the sheet of weapon bases in their intact, destroyed and capped states, the hardpoints file,
+// and their manifest rows and hardpoints sidecars.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -12,7 +11,7 @@ import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio } from "./enemy-size.ts";
 import { tonePaths } from "./fleet.ts";
 import { shade } from "./fleet-models.ts";
-import { type ManifestFile, readManifest, type Sidecars } from "./manifest.ts";
+import { type ManifestFile, mergeEntries, mergeSidecars, type Sidecars } from "./manifest.ts";
 import { depth, ENEMY_HEADINGS, json, type Point, projectAt, rotate, round } from "./projection.ts";
 import type { Fill } from "./silhouette.ts";
 import { LIGHT, type Mesh, meshScale, meshTube, type Tones } from "./solid.ts";
@@ -67,9 +66,26 @@ export type Design = {
   prefix: string;
   // The tops of art/fleet-tops.json that each of its top names draws.
   tops: Readonly<Record<string, string>>;
+  // The top name each weapon draws on the mount that fires it.
+  weapons: Readonly<Record<string, string>>;
+  // The top name a mount carries whatever it fires, or null where the weapon names it.
+  top: (mount: string) => string | null;
+  // The encounter tiers: route positions, first to last, and how many mounts are armed, in the
+  // mounts' order.
+  tiers: readonly { positions: readonly [number, number]; armed: number }[];
   // The model, with the light in mesh space at the heading it is drawn at.
   build: (light: Point) => Hostile;
 };
+
+// A station fires rapid missiles from pods and the ring burst from the dome on `weapon-5`, and
+// arms six, seven and eight mounts at route positions 4, 5 and 6.
+const STATION_WEAPONS = { rapidMissile: "pod", ringBurst: "dome" } as const;
+const stationTop = (mount: string) => (mount === "weapon-5" ? "dome" : "pod");
+const STATION_TIERS = [
+  { positions: [4, 4], armed: 6 },
+  { positions: [5, 5], armed: 7 },
+  { positions: [6, 6], armed: 8 },
+] as const;
 
 export const DESIGNS: readonly Design[] = [
   {
@@ -80,6 +96,9 @@ export const DESIGNS: readonly Design[] = [
     manifest: "core",
     prefix: "enemy-hostileStation",
     tops: { pod: "pod", dome: "dome" },
+    weapons: STATION_WEAPONS,
+    top: stationTop,
+    tiers: STATION_TIERS,
     build: hostileCoral,
   },
   {
@@ -90,6 +109,9 @@ export const DESIGNS: readonly Design[] = [
     manifest: "cartwheel",
     prefix: "enemy-claim-hostileStation",
     tops: { pod: "pod", dome: "dome" },
+    weapons: STATION_WEAPONS,
+    top: stationTop,
+    tiers: STATION_TIERS,
     build: hostileClaim,
   },
   {
@@ -100,6 +122,9 @@ export const DESIGNS: readonly Design[] = [
     manifest: "andromeda",
     prefix: "enemy-garnet-hostileStation",
     tops: { pod: "pod", dome: "dome" },
+    weapons: STATION_WEAPONS,
+    top: stationTop,
+    tiers: STATION_TIERS,
     build: hostileGarnet,
   },
   {
@@ -110,6 +135,12 @@ export const DESIGNS: readonly Design[] = [
     manifest: "cartwheel",
     prefix: "enemy-claim-platform",
     tops: { turret: "gun" },
+    weapons: { laser: "turret" },
+    top: () => null,
+    tiers: [
+      { positions: [5, 5], armed: 2 },
+      { positions: [6, 6], armed: 3 },
+    ],
     build: hostilePlatform,
   },
 ];
@@ -359,7 +390,6 @@ export const order = ({ design, placements }: Drawn, yaw: number): string[] =>
     .map(({ id }) => id);
 
 const ART = fileURLToPath(new URL("../../public/", import.meta.url));
-const ROWS = fileURLToPath(new URL("../hostile-station-rows.json", import.meta.url));
 const TOPS = fileURLToPath(new URL("../fleet-tops.json", import.meta.url));
 
 type Aim = { index: number; muzzles: V2[]; collision: V2[][] };
@@ -369,23 +399,11 @@ const fleetTops = (): Record<string, { aims: Aim[] }> | undefined =>
     ? (JSON.parse(readFileSync(TOPS, "utf8")) as { tops: Record<string, { aims: Aim[] }> }).tops
     : undefined;
 
-// The version 1 hardpoints file in the shipped schema. The mounts, fill order, weapon tops and
-// tiers are the shipped file's; a mount the hull hides at a heading is `hidden` there. `tops`
-// holds the shot origins and collision of the fleet's tops once they are staged.
+// The version 1 hardpoints file. A mount the hull hides at a heading is `hidden` there. `tops`
+// holds the shot origins and collision of the fleet's tops.
 function hardpoints(drawn: Drawn): string {
   const { design, hulls, bases, placements } = drawn;
-  const sidecars = (readManifest(design.manifest).sidecars ?? {}) as Sidecars;
-  const shippedPath = sidecars[design.archetype]?.hardpoints;
-  if (!shippedPath) throw new Error(`${design.manifest} has no ${design.archetype} hardpoints`);
-  const shipped = JSON.parse(readFileSync(`${ART}${shippedPath.slice(1)}`, "utf8")) as {
-    hardpoints: { id: string }[];
-    fill: string[];
-    weaponTops: Record<string, { top: string }>;
-    tiers: unknown;
-  };
   const ids = design.mounts.map(({ id }) => id);
-  if (shipped.fill.join() !== ids.join())
-    throw new Error(`${design.key}: mounts not in fill order`);
   const staged = fleetTops();
   const moved = (frames: readonly Frame[], yaw: number, [dx, dy]: V2) =>
     frames[yaw]!.collision.map((part) => part.map(([x, y]) => [px2(x + dx), px2(y + dy)]));
@@ -399,10 +417,23 @@ function hardpoints(drawn: Drawn): string {
       width: round(design.width),
       radius: round(Math.max(design.length, design.width) / 2),
     },
-    hardpoints: shipped.hardpoints,
-    fill: shipped.fill,
-    weaponTops: shipped.weaponTops,
-    tiers: shipped.tiers,
+    hardpoints: ids.map((id) => ({
+      id,
+      role: "turret",
+      states: ["intact", "destroyed"],
+      top: design.top(id),
+      capped: true,
+    })),
+    fill: ids,
+    weaponTops: Object.fromEntries(
+      Object.entries(design.weapons).map(([weapon, top]) => [weapon, { top, aim: "target" }]),
+    ),
+    tiers: design.tiers.map(({ positions, armed }) => ({
+      positions,
+      mounts: Object.fromEntries(
+        ids.map((id, index) => [id, index < armed ? { armed: true } : null]),
+      ),
+    })),
     headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
       const ys = hulls[yaw]!.collision.flat().map(([, y]) => y);
       return {
@@ -475,7 +506,7 @@ function writeIfChanged(path: string, text: string) {
 }
 
 function main() {
-  const rows: Record<string, { assets: Row[]; sidecars: Sidecars }> = {};
+  const rows = new Map<ManifestFile, { assets: Row[]; sidecars: Sidecars }>();
   for (const source of DESIGNS) {
     const drawn = draw(source);
     const { design, hulls } = drawn;
@@ -495,56 +526,50 @@ function main() {
     const { text, member } = basesSheet(drawn);
     writeIfChanged(`${ART}${files.bases.slice(1)}`, text);
     writeIfChanged(`${ART}${files.hardpoints.slice(1)}`, hardpoints(drawn));
-    const shipped: Row[] = readManifest(design.manifest).assets;
-    const sized = (size: number) => ({
+    // A row of the hull's or a base's frame at heading `yaw`; the coral family names none.
+    const row = (id: string, path: string, size: number, yaw: number, mount?: Row) => ({
+      id,
+      path,
       width: size,
       height: size,
       displayWidth: size * DISPLAY_SCALE,
       displayHeight: size * DISPLAY_SCALE,
+      facing: `world-${yaw}`,
+      directionIndex: yaw,
+      ...mount,
+      pivot: { x: 0.5, y: 0.5 },
+      archetype: design.archetype,
+      ...(design.family !== "coral" && { family: design.family }),
+      svgSheet: true,
     });
-    const staged = (rows[design.manifest] ??= { assets: [], sidecars: {} });
+    if (!rows.has(design.manifest)) rows.set(design.manifest, { assets: [], sidecars: {} });
+    const written = rows.get(design.manifest)!;
     for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-      const id = `${design.prefix}-${yaw}`;
-      // The platform's shipped hull is one fixed frame, so its heading rows are new.
-      const row = shipped.find((entry) => entry.id === id) ?? {
-        id,
-        path: files.hull,
-        ...sized(design.frame),
-        facing: `world-${yaw}`,
-        directionIndex: yaw,
-        pivot: { x: 0.5, y: 0.5 },
-        archetype: design.archetype,
-        family: design.family,
-        svgSheet: true,
-      };
-      staged.assets.push({ ...row, path: files.hull, ...sized(design.frame), svgSheet: true });
+      written.assets.push(row(`${design.prefix}-${yaw}`, files.hull, design.frame, yaw));
     }
     for (const { id: mount } of design.mounts) {
       for (const state of STATES) {
         for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
           const id = `${design.prefix}-${mount}-${state}-${yaw}`;
-          const row = shipped.find((entry) => entry.id === id);
-          if (!row) throw new Error(`${id} has no row in the ${design.manifest} manifest`);
-          const kept = Object.fromEntries(
-            Object.entries(row).filter(([key]) => key !== "svgSheetMember"),
-          ) as Row;
-          staged.assets.push({
-            ...kept,
-            path: files.bases,
-            ...sized(BASE_FRAME),
-            svgSheet: true,
+          written.assets.push({
+            ...row(id, files.bases, BASE_FRAME, yaw, { hardpoint: mount, state }),
             ...(member.get(id) !== id && { svgSheetMember: member.get(id) }),
           });
         }
       }
     }
-    staged.sidecars[design.archetype] = { hardpoints: files.hardpoints };
+    written.sidecars[design.archetype] = { hardpoints: files.hardpoints };
     const hiddenCount = [...drawn.placements.values()].flat().filter(({ share }) => share < 0.5);
     console.log(
       `${design.key}: frame ${design.frame}, display ${design.frame * DISPLAY_SCALE}, ${design.mounts.length} mounts, ${hiddenCount.length} hidden mount headings`,
     );
   }
-  writeIfChanged(ROWS, json(rows));
+  // A row keeps its place in its manifest, and a new one follows the row written before it.
+  for (const [manifest, { assets, sidecars }] of rows) {
+    const ids = new Set(assets.map(({ id }) => id));
+    mergeEntries(manifest, (id) => ids.has(id), assets);
+    mergeSidecars(manifest, (craft, kind) => kind === "hardpoints" && craft in sidecars, sidecars);
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
