@@ -22,7 +22,7 @@ export const TITLE_SHIP_STYLE = `
 }
 `;
 
-/** The homepage ship and normal jets, including their original ordered occlusion masks. */
+/** The homepage ship and its plumes, with the hull redrawn inside the occluders of front plumes. */
 export function titleShipView(art: TitleScreenArt, paint: string | null): readonly Element[] {
   const jetSvg = () => {
     const node = document.createElementNS(SVG, "svg");
@@ -34,7 +34,7 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
   const jets = jetSvg();
   const polygons = jetPolygons(art);
   const front =
-    art.normalJets || polygons.some(({ occluders }) => occluders !== undefined) ? jetSvg() : null;
+    art.frontJets || polygons.some(({ occluders }) => occluders !== undefined) ? jetSvg() : null;
   front?.classList.add("ada-start-jets-front");
   const masks = new Map<string, string>();
   // Include every plume's extent so a mask never clips exhaust outside the sprite frame.
@@ -48,7 +48,7 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
     polygon.setAttribute("points", points);
     polygon.setAttribute("fill", fill);
     polygon.setAttribute("fill-opacity", String(opacity));
-    if (art.normalJets && front) {
+    if (art.frontJets && front) {
       front.append(polygon);
     } else if (occluders !== undefined && front) {
       const signature = JSON.stringify(occluders);
@@ -97,7 +97,7 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
   if (front) {
     parts.push(front);
   }
-  if (art.normalJets) {
+  if (art.frontJets) {
     const tail = createShipTailView(ship.size);
     tail.root.classList.add("ada-start-jets", "ada-start-tail");
     tail.set(

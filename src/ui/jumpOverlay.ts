@@ -16,7 +16,7 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "../game/quantumJump.ts";
-import { normalJetsInFront, type ShipJets } from "../game/shipJets.ts";
+import { jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";
@@ -233,8 +233,16 @@ export function createJumpOverlay(
     const geometry =
       image === pose ? warp.poses.find(({ id }) => id === options.pose)?.jets : undefined;
     const material = image === pose ? paint?.jets?.() : undefined;
-    const jets = geometry && material ? { ...geometry, layers: material.layers } : undefined;
-    const front = normalJetsInFront(jets, 0);
+    // The pose's projected mouths take the selected material's layers and the shared plume profile.
+    const jets =
+      geometry && material
+        ? {
+            ...geometry,
+            layers: material.layers,
+            ...(material.profile ? { profile: material.profile } : {}),
+          }
+        : undefined;
+    const front = jetsInFront(jets, 0);
     const drawJets = () => {
       if (jets) {
         drawShipJets(

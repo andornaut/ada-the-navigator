@@ -4,7 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
-import { normalJetsInFront, normalJetTailRegions, type ShipJets } from "../game/shipJets.ts";
+import { jetOccluderRegions, jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import {
   assertAdaActionBindings,
@@ -751,7 +751,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       }
     }
     const jets = thrust && !reduced() ? art?.jets?.() : undefined;
-    const tailRegions = normalJetTailRegions(
+    const tailRegions = jetOccluderRegions(
       jets,
       { displayHeight: SHIP.size, displayWidth: SHIP.size, pivot: { x: 0.5, y: 0.5 } },
       heading,
@@ -763,7 +763,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       ),
     );
     jetCanvas.hidden = !jets;
-    jetCanvas.style.zIndex = normalJetsInFront(jets, heading) ? "1" : "";
+    jetCanvas.style.zIndex = jetsInFront(jets, heading) ? "1" : "";
     if (jets) {
       const side = Math.max(
         1,

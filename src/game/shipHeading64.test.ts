@@ -36,6 +36,7 @@ import {
 } from "./shipArt.ts";
 import {
   engineJets,
+  jetsInFront,
   jetTriangles,
   readEngineJets,
   readJetGeometry,
@@ -58,7 +59,7 @@ describe("atomic 64-heading player package", () => {
     expect(manifest.shipHeadings).toEqual(SHIP_HEADING_CONTRACT);
     expect(forward.headings).toHaveLength(64);
     expect(reverse.headings).toHaveLength(64);
-    expect(reverse.reverseStyle).toBe("centered-main");
+    expect(reverse.profile).toEqual(forward.profile);
     expect(readEngineJets(yellowArchive)).toBeUndefined();
     expect(yellowArchive.headings).toHaveLength(32);
   });
@@ -105,22 +106,9 @@ describe("atomic 64-heading player package", () => {
       }
       for (const jets of [forward, reverse]) {
         expect(jets.headings[index]).toHaveLength(2);
+        // Forward plumes draw above the hull inside their occluders; reverse plumes draw behind it.
+        expect(jetsInFront(jets, index)).toBe(jets === forward);
         for (const mouth of jets.headings[index]!) {
-          if (jets === forward && mouth.normalAperture) {
-            expect(mouth.outerCorner).toBeUndefined();
-            expect(mouth.coreOutboard).toBeUndefined();
-            expect(mouth.normalAperture.coreWidth).toBeGreaterThan(0);
-            expect(mouth.normalAperture.coreWidth).toBeLessThan(1);
-          } else {
-            expect(mouth.outerCorner).toBeDefined();
-            if (jets === reverse) {
-              expect(mouth.coreOutboard).toBeUndefined();
-              expect(mouth.normalAperture).toBeUndefined();
-            } else {
-              expect(mouth.coreOutboard).toBe(true);
-            }
-          }
-
           const triangles = jetTriangles(
             { ...engineJets(jets, 1), headings: [[mouth]] },
             { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } },
@@ -129,19 +117,6 @@ describe("atomic 64-heading player package", () => {
           );
           expect(triangles.length).toBeGreaterThan(0);
           expect(triangles.every((triangle) => triangle.occluders === undefined)).toBe(true);
-          if (jets === reverse) {
-            expect(mouth.rearClip).toBeDefined();
-            for (const triangle of triangles) {
-              for (const point of triangle.points) {
-                const clip = mouth.rearClip!;
-                expect(
-                  clip.normal.x * point.x + clip.normal.y * point.y - clip.constant,
-                ).toBeLessThanOrEqual(1e-8);
-              }
-            }
-          } else {
-            expect(mouth.rearClip).toBeUndefined();
-          }
         }
       }
     },

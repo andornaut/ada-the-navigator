@@ -1,13 +1,8 @@
-import {
-  type JetDisplay,
-  jetTriangles,
-  normalJetTailRegions,
-  type ShipJets,
-} from "../game/shipJets.ts";
+import { type JetDisplay, jetOccluderRegions, jetPlumes, type ShipJets } from "../game/shipJets.ts";
 import type { Vec } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";
 
-/** Draws the shared projected polygons in logical canvas coordinates at the caller-selected hull order. */
+/** Draws the shared projected plumes in logical canvas coordinates at the caller-selected hull order. */
 export function drawShipJets(
   context: CanvasRenderingContext2D,
   jets: ShipJets,
@@ -18,9 +13,9 @@ export function drawShipJets(
   white = 0,
 ): void {
   context.save();
-  for (const triangle of jetTriangles(jets, display, heading, 1)) {
+  for (const plume of jetPlumes(jets, display, heading, 1)) {
     context.beginPath();
-    for (const [index, point] of triangle.points.entries()) {
+    for (const [index, point] of plume.points.entries()) {
       const x = centre.x + point.x;
       const y = centre.y + point.y;
       if (index === 0) {
@@ -30,11 +25,11 @@ export function drawShipJets(
       }
     }
     context.closePath();
-    context.globalAlpha = alpha * triangle.alpha;
-    context.fillStyle = `#${triangle.color.toString(16).padStart(6, "0")}`;
+    context.globalAlpha = alpha * plume.alpha;
+    context.fillStyle = `#${plume.color.toString(16).padStart(6, "0")}`;
     context.fill();
     if (white > 0) {
-      context.globalAlpha = alpha * triangle.alpha * white;
+      context.globalAlpha = alpha * plume.alpha * white;
       context.fillStyle = COLOURS.white;
       context.fill();
     }
@@ -42,7 +37,7 @@ export function drawShipJets(
   context.restore();
 }
 
-/** Selects actual tail pixels from the same hull image after the unchanged normal triangles. */
+/** Redraws the same hull image inside the plume occluders, over the plumes drawn in front. */
 export function drawShipTail(
   context: CanvasRenderingContext2D,
   jets: ShipJets,
@@ -51,7 +46,7 @@ export function drawShipTail(
   centre: Vec,
   drawHull: () => void,
 ): void {
-  const regions = normalJetTailRegions(jets, display, heading);
+  const regions = jetOccluderRegions(jets, display, heading);
   if (!regions.length) {
     return;
   }

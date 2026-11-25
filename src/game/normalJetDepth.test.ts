@@ -6,9 +6,9 @@ import { expect, it, vi } from "vitest";
 
 import { playDepth } from "./asteroidArt.ts";
 import { ADA_LAYERS, adaDepth, boxWith, drawnBox } from "./drawOrder.ts";
-import { normalJetsInFront } from "./shipJets.ts";
+import { jetsInFront } from "./shipJets.ts";
 
-it("places only forward normal aperture jets above the player hull, with keyline below their fill", () => {
+it("places only forward plumes with occluders above the player hull, with keyline below their fill", () => {
   const source = ts.createSourceFile(
     "scene.ts",
     readFileSync(new URL("./scene.ts", import.meta.url), "utf8"),
@@ -39,18 +39,23 @@ it("places only forward normal aperture jets above the player hull, with keyline
     `class Fixture { ${method.getText(source)} }; Fixture.prototype.placeAda`,
     { ADA_LAYERS, adaDepth, boxWith, drawnBox, playDepth },
   ) as (this: object, flames: object[], front?: boolean) => void;
-  for (const normal of [false, true]) {
+  const region = [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+  ];
+  for (const occluded of [false, true]) {
     for (const travel of ["forward", "reverse", undefined]) {
       const activeJets = {
-        headings: [[{ ...(normal ? { normalAperture: { coreWidth: 0.3 } } : {}) }]],
+        headings: [[{ ...(occluded ? { occluders: [region] } : {}) }]],
       };
       const front = evaluate(eligibility.getText(source), {
         activeJets,
-        normalJetsInFront,
+        jetsInFront,
         ship: { directionIndex: 0 },
         travel,
       }) as boolean;
-      expect(front).toBe(normal && travel === "forward");
+      expect(front).toBe(occluded && travel === "forward");
       const fixture = {
         jetKeyline: { setDepth: vi.fn() },
         jets: { setDepth: vi.fn() },

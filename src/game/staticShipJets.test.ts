@@ -9,10 +9,10 @@ import { staticShipJets } from "./staticShipJets.ts";
 const main = readEngineJets(data)!;
 
 describe("static travel jet selection", () => {
-  it("selects each canonical engine material by object identity without changing the flight curve", () => {
+  it("selects each Engine level at the authored static length", () => {
     for (const level of [1, 2, 3]) {
       const jets = staticShipJets(main, undefined, level)!;
-      expect(jets.layers).toBe(main.engineLevels[level - 1]);
+      expect(jets.layers).toEqual(main.engineLevels[level - 1]);
       expect(jets.headings).toBe(main.headings);
       const triangles = jetTriangles(
         jets,
@@ -31,25 +31,18 @@ describe("static travel jet selection", () => {
     expect(main.length).toEqual({ base: 6, exponent: 2, scale: 24 });
   });
 
-  it("preserves authored main materials and legacy field selection without a missing-geometry fallback", () => {
-    const legacy = {
-      ...main,
-      headings: main.headings.map((mouths) =>
-        mouths.map((mouth) => {
-          const copy = { ...mouth };
-          delete copy.normalAperture;
-          return copy;
-        }),
-      ),
-    };
+  it("recolours a light field's plumes from its field levels and keeps the plume shape", () => {
     for (const level of [1, 2, 3]) {
-      expect(staticShipJets(main, LIGHT_FIELD.jets.shipLevels, level)?.layers).toBe(
-        main.engineLevels[level - 1],
+      const own = main.engineLevels[level - 1]!;
+      const field = LIGHT_FIELD.jets.shipLevels[level - 1]!;
+      const jets = staticShipJets(main, LIGHT_FIELD.jets.shipLevels, level)!;
+      expect(jets.layers).toEqual(
+        own.map((layer) => ({
+          ...layer,
+          colors: field.find(({ name }) => name === layer.name)!.colors,
+        })),
       );
-      expect(staticShipJets(legacy, LIGHT_FIELD.jets.shipLevels, level)?.layers).toBe(
-        LIGHT_FIELD.jets.shipLevels[level - 1],
-      );
-      expect(staticShipJets(legacy, undefined, level)?.layers).toBe(main.engineLevels[level - 1]);
+      expect(jets.profile).toBe(main.profile);
     }
     expect(staticShipJets(undefined, LIGHT_FIELD.jets.shipLevels, 3)).toBeUndefined();
   });

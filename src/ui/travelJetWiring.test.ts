@@ -304,33 +304,22 @@ function effect(pose = "bank-16"): QuantumJump {
   };
 }
 
-function legacyGeometry(geometry: JetGeometry): JetGeometry {
+// The geometry with its occluders removed, so its plumes draw behind the hull.
+function behindGeometry(geometry: JetGeometry): JetGeometry {
   return {
     ...geometry,
     headings: geometry.headings.map((mouths) =>
-      mouths.map((mouth) => {
-        const legacy = { ...mouth };
-        Reflect.deleteProperty(legacy, "normalAperture");
-        return legacy;
-      }),
+      mouths.map(({ anchor, axis, half }) => ({ anchor, axis, half })),
     ),
   };
 }
 
-function apertureGeometry(geometry: JetGeometry): JetGeometry {
-  return {
-    ...geometry,
-    headings: geometry.headings.map((mouths) =>
-      mouths.map(({ anchor, axis, half }) => ({
-        anchor,
-        axis,
-        half,
-        normalAperture: { coreWidth: 6.875 / 18.72 },
-        occluders: [],
-      })),
-    ),
-  };
-}
+// Level `level`'s layers in the light field's colours.
+const fieldLayers = (level: number) =>
+  main.engineLevels[level - 1]!.map((layer) => ({
+    ...layer,
+    colors: LIGHT_FIELD.jets.shipLevels[level - 1]!.find(({ name }) => name === layer.name)!.colors,
+  }));
 
 function play(reducedMotion = false) {
   const scene = { center: { x: 480, y: 270 }, heading: 0, specks: [] };
@@ -349,20 +338,20 @@ describe("warp material wiring", () => {
   it("draws full-pose jets before the hull and reads engine/field changes without paint reload", () => {
     const fixture = dom();
     const jump = effect();
-    const legacy = {
+    const behind = {
       ...jump,
       warp: {
         ...jump.warp,
         poses: jump.warp.poses.map((pose) => ({
           ...pose,
-          ...(pose.jets ? { jets: legacyGeometry(pose.jets) } : {}),
+          ...(pose.jets ? { jets: behindGeometry(pose.jets) } : {}),
         })),
       },
     };
     const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
       field: sheet,
       glow: sheet,
-      jump: legacy,
+      jump: behind,
       star: sheet,
       tunnel: sheet,
     });
@@ -376,55 +365,39 @@ describe("warp material wiring", () => {
     const running = play();
     overlay.play(running);
     fixture.tick(10);
-    expect(vi.mocked(drawShipJets).mock.calls[0]![1].layers).toBe(main.engineLevels[0]);
+    expect(vi.mocked(drawShipJets).mock.calls[0]![1].layers).toEqual(main.engineLevels[0]);
     expect(vi.mocked(drawShipJets).mock.calls[0]![1].frame).toBe(256);
+    expect(vi.mocked(drawShipJets).mock.calls[0]![1].profile).toBe(main.profile);
     expect(events.indexOf("jets")).toBeLessThan(events.indexOf("image"));
     level = 3;
     fixture.tick(20);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(main.engineLevels[2]);
+    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(main.engineLevels[2]);
     overlay.setPaint({
       jets: () => staticShipJets(main, LIGHT_FIELD.jets.shipLevels, 2),
       scheme: "classic",
       sprites,
     });
     fixture.tick(30);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(main.engineLevels[1]);
-    const legacyMain = { ...main, ...legacyGeometry(main) };
+    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(fieldLayers(2));
     overlay.setPaint({
-      jets: () => staticShipJets(legacyMain, LIGHT_FIELD.jets.shipLevels, 2),
-      scheme: "classic",
-      sprites,
-    });
-    fixture.tick(40);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(LIGHT_FIELD.jets.shipLevels[1]);
-    overlay.setPaint({
-      jets: () => staticShipJets(legacyMain, undefined, 2),
+      jets: () => staticShipJets(main, undefined, 2),
       scheme: "classic",
       sprites,
     });
     fixture.tick(50);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(main.engineLevels[1]);
+    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(main.engineLevels[1]);
     expect(running.onCover).toHaveBeenCalledTimes(1);
     overlay.dispose();
     expect(fixture.callbacks.size).toBe(0);
   });
 
-  it("draws complete normal aperture warp triangles after the hull", () => {
+  it("draws Art's occluded warp plumes after the hull, then the hull inside the occluders", () => {
     const fixture = dom();
     const jump = effect();
     const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
       field: sheet,
       glow: sheet,
-      jump: {
-        ...jump,
-        warp: {
-          ...jump.warp,
-          poses: jump.warp.poses.map((pose) => ({
-            ...pose,
-            ...(pose.jets ? { jets: apertureGeometry(pose.jets) } : {}),
-          })),
-        },
-      },
+      jump,
       star: sheet,
       tunnel: sheet,
     });
@@ -698,11 +671,10 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   expect(earthMarker.querySelector(".ada-route-disc")!.textContent).toBe("");
   expect(firstMarker.querySelector(".ada-route-disc")!.textContent).toBe("1");
   expect(earthMarker.attributes.get("aria-label")).toBe("Earth");
-  let normal = false;
-  const normalMain = { ...main, ...apertureGeometry(main) };
-  const legacyMain = { ...main, ...legacyGeometry(main) };
+  let front = false;
+  const behindMain = { ...main, ...behindGeometry(main) };
   const provider = vi.fn(() =>
-    staticShipJets(normal ? normalMain : legacyMain, LIGHT_FIELD.jets.shipLevels, 3),
+    staticShipJets(front ? main : behindMain, LIGHT_FIELD.jets.shipLevels, 3),
   );
   map.setArt({
     figures: [],
@@ -715,15 +687,15 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   map.show(mapView({ from: 1, opened: [2], to: 2 }));
   fixture.tick(500);
   expect(drawShipJets).toHaveBeenCalled();
-  expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toBe(LIGHT_FIELD.jets.shipLevels[2]);
+  expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(fieldLayers(3));
   const ship = fixture.nodes.find(({ className }) => className === "ada-route-ship")!;
   expect(ship.children[0]!.tag).toBe("canvas");
   expect(ship.children[1]!.style.backgroundImage).toContain("cobalt-");
   expect(ship.children[0]!.style.zIndex).toBe("");
-  normal = true;
+  front = true;
   fixture.tick(550);
   expect(ship.children[0]!.style.zIndex).toBe("1");
-  normal = false;
+  front = false;
   fixture.tick(575);
   expect(ship.children[0]!.style.zIndex).toBe("");
   const calls = vi.mocked(drawShipJets).mock.calls.length;

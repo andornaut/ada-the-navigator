@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { drawShipTail } from "../ui/shipJetCanvas.ts";
 import { ADA_LAYERS } from "./drawOrder.ts";
-import { jetTriangles, normalJetTailRegions, type ShipJets } from "./shipJets.ts";
+import { jetOccluderRegions, jetTriangles, type ShipJets } from "./shipJets.ts";
 
 const region = [
   { x: 40, y: 40 },
@@ -16,8 +16,7 @@ const region = [
 const mouth = {
   anchor: { x: 48, y: 48 },
   axis: { x: 0, y: 1 },
-  half: { x: 9, y: 0 },
-  normalAperture: { coreWidth: 0.4 },
+  half: { x: 1, y: 0 },
   occluders: [region],
 };
 const jets: ShipJets = {
@@ -29,18 +28,14 @@ const jets: ShipJets = {
   ],
   length: { base: 6, exponent: 2, scale: 24 },
 };
-const legacyMouth = {
-  anchor: mouth.anchor,
-  axis: mouth.axis,
-  half: mouth.half,
-  occluders: mouth.occluders,
-};
+// A mouth without occluders draws behind the hull, as the reverse plumes do.
+const behindMouth = { anchor: mouth.anchor, axis: mouth.axis, half: mouth.half };
 const display = { displayHeight: 96, displayWidth: 96, pivot: { x: 0.5, y: 0.5 } };
 
-describe("normal painted-tail foreground", () => {
-  it("projects and deduplicates exact tail regions without modifying any jet vertex", () => {
+describe("hull redrawn over front plumes", () => {
+  it("projects and deduplicates exact occluder regions without modifying any jet vertex", () => {
     const before = JSON.stringify(jetTriangles(jets, display, 0, 0.8));
-    expect(normalJetTailRegions(jets, display, 0)).toEqual([
+    expect(jetOccluderRegions(jets, display, 0)).toEqual([
       [
         { x: -8, y: -8 },
         { x: 2, y: -8 },
@@ -48,14 +43,17 @@ describe("normal painted-tail foreground", () => {
       ],
     ]);
     expect(JSON.stringify(jetTriangles(jets, display, 0, 0.8))).toBe(before);
-    const legacy = { ...jets, headings: [[legacyMouth]] };
-    expect(normalJetTailRegions(legacy, display, 0)).toEqual([]);
+    const behind = { ...jets, headings: [[behindMouth]] };
+    expect(jetOccluderRegions(behind, display, 0)).toEqual([]);
     expect(
-      normalJetTailRegions({ ...jets, headings: [[{ ...mouth, occluders: [] }]] }, display, 0),
+      jetOccluderRegions({ ...jets, headings: [[{ ...mouth, occluders: [] }]] }, display, 0),
     ).toEqual([]);
+    expect(jetOccluderRegions({ ...jets, headings: [[mouth, behindMouth]] }, display, 0)).toEqual(
+      [],
+    );
   });
 
-  it("redraws the existing Canvas hull inside tail regions only, leaving legacy rendering alone", () => {
+  it("redraws the Canvas hull inside occluder regions only, leaving behind plumes alone", () => {
     const events: string[] = [];
     const context = {
       beginPath: vi.fn(),
@@ -82,7 +80,7 @@ describe("normal painted-tail foreground", () => {
     context.clip.mockClear();
     drawShipTail(
       context as unknown as CanvasRenderingContext2D,
-      { ...jets, headings: [[legacyMouth]] },
+      { ...jets, headings: [[behindMouth]] },
       display,
       0,
       { x: 100, y: 100 },
@@ -92,7 +90,7 @@ describe("normal painted-tail foreground", () => {
     expect(context.clip).not.toHaveBeenCalled();
   });
 
-  it("copies the selected painted hull above normal jets through exact tail selection", () => {
+  it("copies the selected painted hull above front plumes inside their occluders", () => {
     const image = {
       destroy: vi.fn(),
       enableFilters: vi.fn(),
@@ -145,24 +143,24 @@ describe("normal painted-tail foreground", () => {
     );
     let method: ts.MethodDeclaration | undefined;
     const visit = (node: ts.Node): void => {
-      if (ts.isMethodDeclaration(node) && node.name.getText(source) === "drawNormalTail") {
+      if (ts.isMethodDeclaration(node) && node.name.getText(source) === "drawOccludedHull") {
         method = node;
       }
       ts.forEachChild(node, visit);
     };
     visit(source);
     if (!method) {
-      throw new Error("Missing actual normal tail overlay hook");
+      throw new Error("Missing actual occluded hull overlay hook");
     }
     const draw = runInContext(
       ts.transpileModule(
-        `class Fixture { ${method.getText(source)} }; Fixture.prototype.drawNormalTail`,
+        `class Fixture { ${method.getText(source)} }; Fixture.prototype.drawOccludedHull`,
         { compilerOptions: { target: ts.ScriptTarget.ES2023 } },
       ).outputText,
       createContext({ ADA_LAYERS }),
     ) as (this: object, regions: readonly (readonly { x: number; y: number }[])[]) => void;
     const owner = { ...scene, ship };
-    draw.call(owner, normalJetTailRegions(jets, display, 0));
+    draw.call(owner, jetOccluderRegions(jets, display, 0));
     expect(image.filters.internal.addMask).toHaveBeenCalledWith(
       shape,
       false,

@@ -1,16 +1,5 @@
-import {
-  centeredReverseLayers,
-  jetShapeLayerAlpha,
-  jetShapeLayerColor,
-  jetShapePolygons,
-  validCenteredReverseShapes,
-} from "./jetGeometry.ts";
-export {
-  coreOutboardOffset,
-  jetShapeLayerAlpha,
-  jetShapeLayerColor,
-  layerAlpha,
-} from "./jetGeometry.ts";
+import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "./jetGeometry.ts";
+export { layerAlpha } from "./jetGeometry.ts";
 
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
@@ -25,38 +14,28 @@ export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "rever
 
 /** One engine mouth in a heading frame, in frame pixels. */
 export interface JetMouth {
-  /** Projected mouth midpoint. */
+  /** Projected plume root. */
   anchor: Vec;
-  /** Centered aperture profile: core base width as a fraction of the full opening. */
-  normalAperture?: { readonly coreWidth: number };
-  /** Art selects the upper or near underside corner anchoring the whole visible jet group. */
-  outerCorner?: Vec;
-  /** Uses the selected outer/core geometry to move the canonical core outboard within its outer. */
-  coreOutboard?: true;
-  /** The calibrated frame-space half-plane retaining the forward side of the wing rear. */
-  rearClip?: { readonly constant: number; readonly normal: Vec };
   /** Projected exhaust direction per ship unit. */
   axis: Vec;
-  /** Projected half mouth-width vector. */
+  /** Projected vector across the plume per ship unit, or per half mouth width on enemy craft. */
   half: Vec;
-  /** Projected surfaces nearer than this mouth's exhaust plane, in heading-frame pixels. */
+  /** Projected hull regions nearer than this mouth's exhaust plane, in heading-frame pixels. */
   occluders?: readonly (readonly Vec[])[];
   /** The engine hardpoint that drives this mouth, on a composed craft. */
   hardpoint?: string;
 }
 
 export interface JetLayer {
-  /** Authored material role, including the opaque outer layer. */
+  /** Authored layer role, such as `outer` or `core`. */
   name?: string;
   /** Linear opacity ramp over f; absent means opaque. */
   alpha?: { from: number; max: number; to: number };
   /** Colours at f = 0 and f = 1; a single colour repeats. */
   colors: readonly [number, number];
-  /** Opaque normal-aperture outer colour authored by the material compositor. */
-  normalColor?: number;
   /** Multiple of the jet length. */
   length: number;
-  /** Multiple of the half mouth width. */
+  /** Multiple of the `half` vector. */
   width: number;
 }
 
@@ -68,25 +47,21 @@ export interface JetGeometry {
   headings: readonly (readonly JetMouth[])[];
   /** Jet length in ship units: base + scale * f ^ exponent. */
   length: { base: number; exponent: number; scale: number };
+  /** Plume outline samples; absent draws a triangle from the mouth sides to the tip. */
+  profile?: JetProfile;
 }
-
-/** Largest logical player-frame dimension that omits the authored central core. */
-export const SMALL_JET_CORE_MAX_DISPLAY = 42;
 
 /** A craft's jets: the geometry and one set of layers, as an enemy's or composed craft's file. */
 export interface ShipJets extends JetGeometry {
-  /** Authored reverse profile retained for render-only size policy. */
-  reverseStyle?: "centered-main";
-  /** Triangles per mouth in draw order. */
+  /** Polygons per mouth in draw order. */
   layers: readonly JetLayer[];
 }
 
-/** Art's ship-jets.json for Ada: the geometry and her layers by Engine level. */
+/** Art's ship-jets.json or ship-retro-jets.json for Ada: the geometry and layers by Engine level. */
 export interface EngineJets extends JetGeometry {
-  /** Reverse-only centered opaque shapes using selected main exhaust materials. */
-  reverseStyle?: "centered-main";
   /** Layers by Engine level, index 0 for level 1 (`engineLevels`), never empty. */
   engineLevels: readonly (readonly JetLayer[])[];
+  profile: JetProfile;
 }
 
 /** Maps heading-frame pixels to display pixels relative to the ship sprite origin. */
@@ -143,13 +118,8 @@ function readLayer(value: unknown): JetLayer | undefined {
   if (from === undefined || to === undefined) {
     return undefined;
   }
-  const normalColor = layer.normalColor === undefined ? undefined : readColor(layer.normalColor);
-  if (layer.normalColor !== undefined && normalColor === undefined) {
-    return undefined;
-  }
   const result: JetLayer = {
     colors: [from, to],
-    ...(normalColor === undefined ? {} : { normalColor }),
     length: layer.length,
     width: layer.width,
     ...(typeof layer.name === "string" ? { name: layer.name } : {}),
@@ -223,12 +193,15 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
     frame: jets.frame,
     headings: jets.headings,
     layers: levelLayers(jets.engineLevels, level),
-    ...(jets.reverseStyle === undefined ? {} : { reverseStyle: jets.reverseStyle }),
     length: jets.length,
+    profile: jets.profile,
   };
 }
 
-/** Travel selects geometry; explicit reverse style adapts selected main material to its shapes. */
+/**
+ * Travel selects the forward or reverse geometry and its layers; a light field recolours each layer
+ * with its same-named field layer and keeps the geometry's widths and lengths.
+ */
 export function travelJets(
   main: EngineJets | undefined,
   reverse: EngineJets | undefined,
@@ -237,28 +210,20 @@ export function travelJets(
   direction: "forward" | "reverse" | undefined,
 ): ShipJets | undefined {
   const geometry = direction === "reverse" ? reverse : main;
-  if (!main || !geometry) {
+  if (!geometry) {
     return undefined;
   }
-  const authoredMaterial =
-    (direction === "reverse" && geometry.reverseStyle === "centered-main") ||
-    (direction === "forward" &&
-      geometry.headings.some((mouths) =>
-        mouths.some((mouth) => mouth.normalAperture !== undefined),
-      ));
-  const selected = levelLayers(
-    authoredMaterial ? main.engineLevels : (fieldLevels ?? main.engineLevels),
-    level,
-  );
-  const layers =
-    direction === "reverse" && geometry.reverseStyle === "centered-main"
-      ? centeredReverseLayers(
-          levelLayers(main.engineLevels, level),
-          selected,
-          levelLayers(geometry.engineLevels, level),
-        )
-      : selected;
-  return layers ? { ...engineJets(geometry, level), layers } : undefined;
+  const own = levelLayers(geometry.engineLevels, level);
+  const field = fieldLevels?.length ? levelLayers(fieldLevels, level) : undefined;
+  const layers: JetLayer[] = [];
+  for (const layer of own) {
+    const colors = field ? field.find(({ name }) => name === layer.name)?.colors : layer.colors;
+    if (!colors) {
+      return undefined;
+    }
+    layers.push({ ...layer, colors });
+  }
+  return { ...engineJets(geometry, level), layers };
 }
 
 function readOccluders(value: unknown): Vec[][] | undefined {
@@ -289,36 +254,11 @@ function readMouths(value: unknown): JetMouth[] | undefined {
     const anchor = readVec(mouth?.anchor);
     const axis = readVec(mouth?.axis);
     const half = readVec(mouth?.half);
-    const outerCorner = mouth?.outerCorner === undefined ? undefined : readVec(mouth.outerCorner);
-    const clip = fields(mouth?.rearClip);
-    const normal = readVec(clip?.normal);
-    const rearClip =
-      normal && Math.hypot(normal.x, normal.y) > 0 && finite(clip?.constant)
-        ? { constant: clip.constant, normal }
-        : undefined;
-    const malformedCorner = mouth?.outerCorner !== undefined && !outerCorner;
-    const malformedClip = mouth?.rearClip !== undefined && (!outerCorner || !rearClip);
-    const malformedCore =
-      mouth?.coreOutboard !== undefined && (mouth.coreOutboard !== true || !outerCorner);
-    const aperture = fields(mouth?.normalAperture);
-    const coreWidth = aperture?.coreWidth;
-    const normalAperture =
-      finite(coreWidth) && coreWidth > 0 && coreWidth < 1 ? { coreWidth } : undefined;
-    const malformedAperture =
-      mouth?.normalAperture !== undefined &&
-      (!normalAperture ||
-        mouth.outerCorner !== undefined ||
-        mouth.coreOutboard !== undefined ||
-        mouth.rearClip !== undefined);
     const occluders = mouth?.occluders === undefined ? undefined : readOccluders(mouth.occluders);
     if (
       !anchor ||
       !axis ||
       !half ||
-      malformedCorner ||
-      malformedClip ||
-      malformedCore ||
-      malformedAperture ||
       (mouth!.occluders !== undefined && occluders === undefined) ||
       (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
     ) {
@@ -328,10 +268,6 @@ function readMouths(value: unknown): JetMouth[] | undefined {
       anchor,
       axis,
       half,
-      ...(normalAperture ? { normalAperture } : {}),
-      ...(outerCorner ? { outerCorner } : {}),
-      ...(mouth!.coreOutboard === true ? { coreOutboard: true as const } : {}),
-      ...(rearClip ? { rearClip } : {}),
       ...(typeof mouth!.hardpoint === "string" ? { hardpoint: mouth!.hardpoint } : {}),
       ...(occluders === undefined ? {} : { occluders }),
     });
@@ -339,13 +275,28 @@ function readMouths(value: unknown): JetMouth[] | undefined {
   return mouths;
 }
 
-/** Validates a jet file's version, frame, length rule and headings. */
-/** Validates geometry independently of the selected runtime material. */
+function readProfile(value: unknown): JetProfile | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const samples: (readonly [number, number])[] = [];
+  for (const sample of value as unknown[]) {
+    if (!Array.isArray(sample) || sample.length !== 2 || !finite(sample[0]) || !finite(sample[1])) {
+      return undefined;
+    }
+    samples.push([sample[0], sample[1]]);
+  }
+  return validJetProfile(samples) ? samples : undefined;
+}
+
+/** Validates a jet file's version, frame, length rule, optional profile and headings. */
 export function readJetGeometry(value: unknown): JetGeometry | undefined {
   const root = fields(value);
   const length = fields(root?.length);
+  const profile = root?.profile === undefined ? undefined : readProfile(root.profile);
   if (
     !root ||
+    (root.profile !== undefined && !profile) ||
     root.version !== 1 ||
     !finite(root.frame) ||
     root.frame <= 0 ||
@@ -387,6 +338,7 @@ export function readJetGeometry(value: unknown): JetGeometry | undefined {
       exponent: length.exponent,
       scale: length.scale,
     },
+    ...(profile ? { profile } : {}),
   };
 }
 
@@ -398,64 +350,58 @@ export function readShipJets(value: unknown): ShipJets | undefined {
   return geometry && layers ? { ...geometry, layers } : undefined;
 }
 
-/** Validates Art's ship-jets.json, Ada's `engineLevels`; any malformed entry disables her jets. */
+/** Validates Art's Ada jet files, `engineLevels` and `profile`; any malformed entry disables them. */
 export function readEngineJets(value: unknown): EngineJets | undefined {
   const root = fields(value);
   const geometry = readJetGeometry(root);
   const engineLevels = readLevelLayers(root?.engineLevels);
-  const reverseStyle = root?.reverseStyle;
-  if (
-    reverseStyle !== undefined &&
-    (reverseStyle !== "centered-main" ||
-      !geometry ||
-      !engineLevels ||
-      geometry.headings.some((mouths) =>
-        mouths.some(
-          (mouth) =>
-            !mouth.outerCorner ||
-            !mouth.rearClip ||
-            mouth.coreOutboard !== undefined ||
-            mouth.normalAperture !== undefined,
-        ),
-      ) ||
-      engineLevels.some((layers) => !validCenteredReverseShapes(layers)))
-  ) {
-    return undefined;
-  }
-  return geometry &&
+  return geometry?.profile &&
     engineLevels &&
     readShipHeadingContract(root?.shipHeadings) &&
     geometry.headings.length === SHIP_HEADINGS
-    ? { ...geometry, engineLevels, ...(reverseStyle === undefined ? {} : { reverseStyle }) }
+    ? { ...geometry, engineLevels, profile: geometry.profile }
     : undefined;
 }
 
-/** Only explicitly normal aperture mouths draw their complete triangles in front of the hull. */
-export function normalJetsInFront(jets: JetGeometry | undefined, heading: number): boolean {
+/**
+ * Plumes whose every mouth carries hull occluders draw above the hull, which is then redrawn
+ * inside the occluders; others draw behind the hull.
+ */
+export function jetsInFront(jets: JetGeometry | undefined, heading: number): boolean {
   const mouths = jets?.headings[heading];
   return (
     mouths !== undefined &&
     mouths.length > 0 &&
-    mouths.every((mouth) => mouth.normalAperture !== undefined)
+    mouths.every((mouth) => mouth.occluders !== undefined && mouth.occluders.length > 0)
   );
 }
 
-/** Exact authored tail regions in display coordinates, deduplicated across normal plumes. */
-export function normalJetTailRegions(
-  jets: ShipJets | undefined,
+/** The occluder regions of plumes drawn in front, in display coordinates, deduplicated. */
+export function jetOccluderRegions(
+  jets: JetGeometry | undefined,
   display: JetDisplay,
   heading: number,
 ): readonly (readonly Vec[])[] {
-  if (!jets || !normalJetsInFront(jets, heading)) {
+  if (!jets || !jetsInFront(jets, heading)) {
     return [];
   }
+  const toDisplay = displayMapping(jets.frame, display);
   const regions = new Map<string, readonly Vec[]>();
-  for (const triangle of jetTriangles(jets, { ...display, includeOccluders: true }, heading, 1)) {
-    for (const region of triangle.occluders ?? []) {
+  for (const mouth of jets.headings[heading]!) {
+    for (const polygon of mouth.occluders!) {
+      const region = polygon.map(({ x, y }) => toDisplay(x, y));
       regions.set(JSON.stringify(region), region);
     }
   }
   return [...regions.values()];
+}
+
+function displayMapping(frame: number, display: JetDisplay): (x: number, y: number) => Vec {
+  const sx = display.displayWidth / frame;
+  const sy = display.displayHeight / frame;
+  const ox = display.pivot.x * frame;
+  const oy = display.pivot.y * frame;
+  return (x, y) => ({ x: (x - ox) * sx, y: (y - oy) * sy });
 }
 
 /** Jet length in ship units at speed fraction f. */
@@ -475,6 +421,58 @@ export function layerColor(layer: JetLayer, f: number): number {
   return color;
 }
 
+/** One layer's plume at one mouth in display coordinates: its outline and that outline's fill. */
+export interface JetPlume {
+  alpha: number;
+  color: number;
+  /** Authored nearer surfaces in the same pivot-relative display coordinates as the plume. */
+  occluders?: readonly (readonly Vec[])[];
+  /** The outline, for vector and canvas consumers that fill one path per plume. */
+  points: readonly Vec[];
+  /** The outline as triangles, for consumers that fill triangles. */
+  triangles: readonly (readonly [Vec, Vec, Vec])[];
+}
+
+/** Plumes per mouth in layer order; empty at f = 0. */
+export function jetPlumes(
+  jets: ShipJets,
+  display: JetDisplay,
+  direction: number,
+  f: number,
+): JetPlume[] {
+  const mouths = jets.headings[direction];
+  const fraction = Math.min(1, f);
+  if (!mouths || !(fraction > 0)) {
+    return [];
+  }
+  const toDisplay = displayMapping(jets.frame, display);
+  const map = ({ x, y }: Vec) => toDisplay(x, y);
+  const length = jetLength(jets, fraction);
+  const plumes: JetPlume[] = [];
+  for (const mouth of mouths) {
+    const occluders = display.includeOccluders
+      ? mouth.occluders?.map((polygon) => polygon.map(map))
+      : undefined;
+    for (const { layerIndex, points, triangles } of jetShapePolygons(
+      mouth,
+      jets.layers,
+      length,
+      fraction,
+      jets.profile,
+    )) {
+      const layer = jets.layers[layerIndex]!;
+      plumes.push({
+        alpha: layerAlpha(layer, fraction),
+        color: layerColor(layer, fraction),
+        ...(occluders === undefined ? {} : { occluders }),
+        points: points.map(map),
+        triangles: triangles.map(([a, b, c]) => [map(a), map(b), map(c)] as const),
+      });
+    }
+  }
+  return plumes;
+}
+
 /** Filled triangles per mouth in layer order; empty at f = 0. */
 export function jetTriangles(
   jets: ShipJets,
@@ -482,56 +480,12 @@ export function jetTriangles(
   direction: number,
   f: number,
 ): JetTriangle[] {
-  const mouths = jets.headings[direction];
-  const fraction = Math.min(1, f);
-  if (!mouths || !(fraction > 0)) {
-    return [];
-  }
-  const sx = display.displayWidth / jets.frame;
-  const sy = display.displayHeight / jets.frame;
-  const ox = display.pivot.x * jets.frame;
-  const oy = display.pivot.y * jets.frame;
-  const toDisplay = (x: number, y: number): Vec => ({
-    x: (x - ox) * sx,
-    y: (y - oy) * sy,
-  });
-  const length = jetLength(jets, fraction);
-  const triangles: JetTriangle[] = [];
-  for (const mouth of mouths) {
-    const smallProfile =
-      (mouth.normalAperture !== undefined || jets.reverseStyle === "centered-main") &&
-      Math.max(display.displayWidth, display.displayHeight) <= SMALL_JET_CORE_MAX_DISPLAY;
-    const displayOccluders = display.includeOccluders
-      ? mouth.occluders?.map((polygon) => polygon.map(({ x, y }) => toDisplay(x, y)))
-      : undefined;
-    for (const { layerIndex, points: clipped } of jetShapePolygons(
-      mouth,
-      jets.layers,
-      length,
-      fraction,
-    )) {
-      const layer = jets.layers[layerIndex]!;
-      if (layer.name === "core" && smallProfile) {
-        continue;
-      }
-      const alpha = jetShapeLayerAlpha(mouth, layer, layerIndex, fraction);
-      for (let i = 1; i + 1 < clipped.length; i++) {
-        const a = clipped[0]!,
-          b = clipped[i]!,
-          c = clipped[i + 1]!;
-        triangles.push({
-          alpha,
-          color: jetShapeLayerColor(
-            mouth,
-            layer,
-            layerIndex,
-            smallProfile && layer.name === "outer" ? layer.colors[0] : layerColor(layer, fraction),
-          ),
-          ...(displayOccluders === undefined ? {} : { occluders: displayOccluders }),
-          points: [toDisplay(a.x, a.y), toDisplay(b.x, b.y), toDisplay(c.x, c.y)],
-        });
-      }
-    }
-  }
-  return triangles;
+  return jetPlumes(jets, display, direction, f).flatMap(({ alpha, color, occluders, triangles }) =>
+    triangles.map((points) => ({
+      alpha,
+      color,
+      ...(occluders === undefined ? {} : { occluders }),
+      points,
+    })),
+  );
 }

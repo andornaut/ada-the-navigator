@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import { RETRO_JET } from "../../art/tools/ship-jet-layers.ts";
 import rearArt from "../../public/art/ship-jets.json";
 import retroArt from "../../public/art/ship-retro-jets.json";
 import { CONTENT } from "../data/content.ts";
 import { createFlight, stepFlight } from "../model/flight.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
-import { engineJets, jetTriangles, readEngineJets, shipJetDirection } from "./shipJets.ts";
+import {
+  engineJets,
+  jetsInFront,
+  jetTriangles,
+  readEngineJets,
+  shipJetDirection,
+} from "./shipJets.ts";
 
 const rear = readEngineJets(rearArt)!;
 const retro = readEngineJets(retroArt)!;
@@ -62,31 +69,32 @@ describe("velocity-directed ship jets", () => {
 });
 
 describe("canonical reverse jet data", () => {
-  it("reads the approved B geometry and centered canonical main-exhaust shape recipe", () => {
-    expect(retro).toBeDefined();
+  it("reads the teardrop at 0.85 of the forward widths and half the earlier reach", () => {
     expect(retro.headings).toHaveLength(SHIP_HEADINGS);
     expect(retro.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(retro.frame).toBe(rear.frame);
-    const oldFullLength = (rear.length.base + rear.length.scale) * 1.1;
-    expect(retro.reverseStyle).toBe("centered-main");
-    expect(retro.length.base).toBeCloseTo(oldFullLength * 0.45);
-    expect(retro.length.scale).toBeCloseTo(oldFullLength * 0.7);
-    expect(retro.length.exponent).toBe(1);
-    const rawMain = rear.engineLevels.map((layers) => {
-      const core = layers.find((layer) => layer.name === "core")!;
-      return layers.map((layer, index) => {
-        const raw = {
-          ...layer,
-          width:
-            index === 0 ? layer.width : (layers[0]!.width * 0.38671875 * layer.width) / core.width,
-        };
-        Reflect.deleteProperty(raw, "normalColor");
-        return raw;
-      });
+    expect(retro.profile).toEqual(rear.profile);
+    expect(retro.length).toEqual({
+      base: RETRO_JET.reach * RETRO_JET.length.base,
+      exponent: 1,
+      scale: RETRO_JET.reach * RETRO_JET.length.scale,
     });
-    expect(retro.engineLevels).toEqual(rawMain);
     for (const level of [1, 2, 3]) {
-      expect(engineJets(retro, level).layers).toEqual(rawMain[level - 1]);
+      const forward = engineJets(rear, level).layers;
+      const reverse = engineJets(retro, level).layers;
+      expect(reverse.map(({ colors, length, name }) => ({ colors, length, name }))).toEqual(
+        forward.map(({ colors, length, name }) => ({ colors, length, name })),
+      );
+      reverse.forEach((layer, index) =>
+        expect(layer.width).toBeCloseTo(forward[index]!.width * RETRO_JET.width, 6),
+      );
+    }
+  });
+
+  it("draws behind the hull, with no occluders, at every heading", () => {
+    for (let heading = 0; heading < SHIP_HEADINGS; heading++) {
+      expect(retro.headings[heading]!.every((mouth) => mouth.occluders === undefined)).toBe(true);
+      expect(jetsInFront(retro, heading)).toBe(false);
     }
   });
 
@@ -99,10 +107,7 @@ describe("canonical reverse jet data", () => {
       }
       expect(jetTriangles(engineJets(retro, 1), display, heading, 0)).toEqual([]);
       const triangles = jetTriangles(engineJets(retro, 1), display, heading, 1);
-      expect(triangles.length).toBeGreaterThanOrEqual(
-        retro.headings[heading]!.length *
-          retro.engineLevels[0]!.filter((layer) => layer.name !== "core").length,
-      );
+      expect(triangles.length).toBeGreaterThan(0);
       expect(
         triangles.every(({ points }) =>
           points.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)),

@@ -99,7 +99,7 @@ describe("production decoration SVG loader", () => {
     const refs = [{ alpha: 1, path: 0, slot: "top" }] as const;
     const source = new ShipMaterialSources(
       {
-        headings: new Map([[0, { distinct: refs, frontSkirt: refs }]]),
+        headings: new Map([[0, refs]]),
         paths: ["M0 0L1 0L0 1Z"],
         poses: new Map(),
       },

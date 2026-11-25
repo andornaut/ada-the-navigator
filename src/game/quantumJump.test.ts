@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import data from "../../public/art/quantum-jump.json";
 import jetData from "../../public/art/ship-jets.json";
 import { type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
-import { jetShapePolygons } from "./jetGeometry.ts";
+import { AUTHORED_JET_LENGTH, type JetProfile, jetShapePolygons } from "./jetGeometry.ts";
 import {
   canvasFit,
   emergencyGlow,
@@ -20,6 +21,7 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "./quantumJump.ts";
+import { jetsInFront } from "./shipJets.ts";
 
 const jump = readQuantumJump(data)!;
 const sheet = (id: string): SheetArt => {
@@ -82,27 +84,31 @@ describe("quantum jump data", () => {
         expect(pose.jets.length).toEqual({ base: 16, exponent: 2, scale: 0 });
         expect(pose.jets.headings[0]).toHaveLength(2);
         const layers = jetData.engineLevels[0]!.layers;
+        // Every warp mouth draws its plume above the hull and redraws the hull in its occluders.
+        expect(jetsInFront(pose.jets, 0)).toBe(true);
         for (const mouth of pose.jets.headings[0]!) {
-          expect(mouth.normalAperture).toEqual({ coreWidth: 6.1875 / 16 });
-          expect(mouth.coreOutboard).toBeUndefined();
-          expect(mouth.outerCorner).toBeUndefined();
-          expect(mouth.rearClip).toBeUndefined();
-          const triangles = jetShapePolygons(mouth, layers, pose.jets.length.base, 1);
-          expect(triangles).toHaveLength(3);
-          for (const { layerIndex, points } of triangles) {
-            expect(points).toHaveLength(3);
-            const [a, tip, b] = points;
-            expect((a!.x + b!.x) / 2).toBeCloseTo(mouth.anchor.x, 12);
-            expect((a!.y + b!.y) / 2).toBeCloseTo(mouth.anchor.y, 12);
-            const width =
-              layerIndex === 0
-                ? 1
-                : (mouth.normalAperture!.coreWidth * layers[layerIndex]!.width) / layers[2]!.width;
-            expect(a!.x - mouth.anchor.x).toBeCloseTo(mouth.half.x * width, 12);
-            expect(a!.y - mouth.anchor.y).toBeCloseTo(mouth.half.y * width, 12);
-            const length = pose.jets.length.base * layers[layerIndex]!.length;
-            expect(tip!.x).toBeCloseTo(mouth.anchor.x + mouth.axis.x * length, 12);
-            expect(tip!.y).toBeCloseTo(mouth.anchor.y + mouth.axis.y * length, 12);
+          const plumes = jetShapePolygons(
+            mouth,
+            layers,
+            pose.jets.length.base,
+            1,
+            jetData.profile as JetProfile,
+          );
+          expect(plumes.map(({ layerIndex }) => layerIndex)).toEqual([0, 1]);
+          for (const { layerIndex, points } of plumes) {
+            const expected = plumePolygon(
+              jetData.profile,
+              {
+                anchor: [mouth.anchor.x, mouth.anchor.y],
+                axis: [mouth.axis.x, mouth.axis.y],
+                half: [mouth.half.x, mouth.half.y],
+              },
+              layers[layerIndex]!,
+              AUTHORED_JET_LENGTH,
+            ).flat();
+            const actual = points.flatMap(({ x, y }) => [x, y]);
+            expect(actual).toHaveLength(expected.length);
+            actual.forEach((value, at) => expect(value).toBeCloseTo(expected[at]!, 12));
           }
         }
       }
@@ -128,7 +134,7 @@ describe("quantum jump data", () => {
         headings: [
           {
             index: 0,
-            mouths: [{ anchor: [0, 0], axis: [0, 1], coreOutboard: false, half: [2, 0] }],
+            mouths: [{ anchor: [0, 0], axis: [0, 1], half: [2, 0], occluders: {} }],
           },
         ],
       },

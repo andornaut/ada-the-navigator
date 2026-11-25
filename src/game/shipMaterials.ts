@@ -2,14 +2,22 @@ import { SVG_DECIMALS, svgText } from "../../art/tools/svg-text.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 
+/** Art's material slots in `ship-materials.json` order; each paint scheme colours every slot. */
 export const SHIP_MATERIAL_SLOTS = [
   "top",
-  "frontSides",
-  "rearSides",
+  "topTurned",
+  "wallLeft",
+  "wallRight",
+  "tailLeft",
+  "tailRight",
+  "accent",
+  "accentTurned",
+  "accentLeft",
+  "accentRight",
   "skirt",
+  "canopyHighlight",
   "canopyRoof",
-  "canopySides",
-  "engineHousing",
+  "canopyShade",
   "engineOpening",
 ] as const;
 
@@ -20,14 +28,12 @@ interface DrawRef {
   readonly path: number;
   readonly slot: MaterialSlot;
 }
-interface Profiles {
-  readonly distinct: readonly DrawRef[];
-  readonly frontSkirt: readonly DrawRef[];
-}
 export interface ShipMaterials {
-  readonly headings: ReadonlyMap<number, Profiles>;
+  /** Each heading's ordered draws, shared by every paint. */
+  readonly headings: ReadonlyMap<number, readonly DrawRef[]>;
   readonly paths: readonly string[];
-  readonly poses: ReadonlyMap<string, Profiles>;
+  /** Each warp pose's ordered draws. */
+  readonly poses: ReadonlyMap<string, readonly DrawRef[]>;
 }
 export interface MaterialSvg {
   readonly svg: string;
@@ -43,36 +49,30 @@ const slot = (value: unknown): value is MaterialSlot =>
 const pivot = (value: unknown): boolean =>
   Array.isArray(value) && value.length === 2 && value[0] === 0.5 && value[1] === 0.5;
 
-function readProfiles(paths: readonly string[], value: unknown): Profiles | undefined {
-  const profiles = fields(value);
-  const refs = (value: unknown): readonly DrawRef[] | undefined => {
-    if (!Array.isArray(value) || !value.length) {
+function readDraws(paths: readonly string[], value: unknown): readonly DrawRef[] | undefined {
+  if (!Array.isArray(value) || !value.length) {
+    return undefined;
+  }
+  const result: DrawRef[] = [];
+  for (const candidate of value as unknown[]) {
+    const ref = fields(candidate);
+    if (
+      !ref ||
+      !Number.isInteger(ref.path) ||
+      typeof ref.path !== "number" ||
+      ref.path < 0 ||
+      ref.path >= paths.length ||
+      !slot(ref.slot) ||
+      ref.alpha !== 1
+    ) {
       return undefined;
     }
-    const result: DrawRef[] = [];
-    for (const candidate of value as unknown[]) {
-      const ref = fields(candidate);
-      if (
-        !ref ||
-        !Number.isInteger(ref.path) ||
-        typeof ref.path !== "number" ||
-        ref.path < 0 ||
-        ref.path >= paths.length ||
-        !slot(ref.slot) ||
-        ref.alpha !== 1
-      ) {
-        return undefined;
-      }
-      result.push({ alpha: 1, path: ref.path, slot: ref.slot });
-    }
-    return result;
-  };
-  const distinct = refs(profiles?.distinct);
-  const frontSkirt = refs(profiles?.frontSkirt);
-  return distinct && frontSkirt ? { distinct, frontSkirt } : undefined;
+    result.push({ alpha: 1, path: ref.path, slot: ref.slot });
+  }
+  return result;
 }
 
-/** Read the producer's exact geometry and equality profiles, retaining every ordered path. */
+/** Read the producer's exact geometry and ordered draws, retaining every path. */
 export function readShipMaterials(
   expected: { readonly poses: readonly string[]; readonly warpHeading: number },
   value: unknown,
@@ -82,7 +82,7 @@ export function readShipMaterials(
   const ship = fields(root?.ship);
   const warp = fields(root?.warp);
   if (
-    root?.version !== 1 ||
+    root?.version !== 2 ||
     contract?.count !== SHIP_HEADINGS ||
     contract.version !== 2 ||
     !Array.isArray(root.paths) ||
@@ -93,7 +93,7 @@ export function readShipMaterials(
     ) ||
     !Array.isArray(root.slots) ||
     root.slots.length !== SHIP_MATERIAL_SLOTS.length ||
-    !SHIP_MATERIAL_SLOTS.every((name) => (root.slots as unknown[]).includes(name)) ||
+    !SHIP_MATERIAL_SLOTS.every((name, index) => (root.slots as unknown[])[index] === name) ||
     root.palettePath !== "/art/ship-paint.json" ||
     ship?.frame !== 96 ||
     ship.displayScale !== 0.4375 ||
@@ -110,12 +110,12 @@ export function readShipMaterials(
     return undefined;
   }
   const paths = root.paths as string[];
-  const headings = new Map<number, Profiles>();
+  const headings = new Map<number, readonly DrawRef[]>();
   for (const value of ship.headings as unknown[]) {
     const heading = fields(value);
-    const profiles = readProfiles(paths, heading?.profiles);
+    const draws = readDraws(paths, heading?.draws);
     if (
-      !profiles ||
+      !draws ||
       typeof heading?.index !== "number" ||
       !Number.isInteger(heading.index) ||
       heading.index < 0 ||
@@ -124,21 +124,21 @@ export function readShipMaterials(
     ) {
       return undefined;
     }
-    headings.set(heading.index, profiles);
+    headings.set(heading.index, draws);
   }
-  const poses = new Map<string, Profiles>();
+  const poses = new Map<string, readonly DrawRef[]>();
   for (const value of warp.poses as unknown[]) {
     const pose = fields(value);
-    const profiles = readProfiles(paths, pose?.profiles);
+    const draws = readDraws(paths, pose?.draws);
     if (
-      !profiles ||
+      !draws ||
       typeof pose?.id !== "string" ||
       !expected.poses.includes(pose.id) ||
       poses.has(pose.id)
     ) {
       return undefined;
     }
-    poses.set(pose.id, profiles);
+    poses.set(pose.id, draws);
   }
   return { headings, paths, poses };
 }
@@ -214,19 +214,17 @@ export class ShipMaterialSources {
     key: string,
     paint: string,
     frame: number,
-    profiles: Profiles | undefined,
+    draws: readonly DrawRef[] | undefined,
   ): MaterialSvg | undefined {
     const cached = this.sources.get(key);
     if (cached) {
       return cached;
     }
     const palette = this.palettes.get(paint);
-    if (!palette || !profiles) {
+    if (!palette || !draws) {
       return undefined;
     }
-    const same = palette.frontSides.toLowerCase() === palette.skirt.toLowerCase();
-    const refs = same ? profiles.frontSkirt : profiles.distinct;
-    const paths = refs.map(
+    const paths = draws.map(
       ({ path, slot }) => `<path fill="${palette[slot]}" d="${this.materials.paths[path]}"/>`,
     );
     const svg =

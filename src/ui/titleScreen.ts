@@ -1,9 +1,4 @@
-import {
-  type JetTriangle,
-  jetTriangles,
-  normalJetsInFront,
-  type ShipJets,
-} from "../game/shipJets.ts";
+import { type JetPlume, jetPlumes, jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
@@ -34,10 +29,10 @@ export interface TitleScreenArt {
     readonly url: string;
     readonly width: number;
   };
-  /** Jets and optional nearer-surface masks in logical px from the ship's pivot. */
-  readonly jets: readonly JetTriangle[];
-  /** Normal tail regions select hull pixels above intact jet polygons. */
-  readonly normalJets?: true;
+  /** Plumes and optional nearer-surface masks in logical px from the ship's pivot. */
+  readonly jets: readonly JetPlume[];
+  /** The plumes draw above the hull, which is redrawn inside their occluders. */
+  readonly frontJets?: true;
   readonly pivot: Vec;
   /** Each paint's ship frame, by scheme; Classic's under null. */
   readonly ships: ReadonlyMap<string | null, string>;
@@ -103,9 +98,9 @@ export function readTitleScreen(
   }
   const pivot = classic.pivot ?? { x: 0.5, y: 0.5 };
   const size = START_SCREEN.ship.size;
-  const triangles =
+  const plumes =
     jets && jets.headings[frame as number]
-      ? jetTriangles(
+      ? jetPlumes(
           jets,
           { displayHeight: size, displayWidth: size, includeOccluders: true, pivot },
           frame as number,
@@ -120,8 +115,8 @@ export function readTitleScreen(
       url: fieldAsset.path,
       width: fieldAsset.displayWidth,
     },
-    jets: triangles,
-    ...(normalJetsInFront(jets, frame as number) ? { normalJets: true as const } : {}),
+    jets: plumes,
+    ...(jetsInFront(jets, frame as number) ? { frontJets: true as const } : {}),
     pivot,
     ships: new Map(frames.map((asset) => [asset.paint ?? null, asset.path])),
     wordmark: {

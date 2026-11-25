@@ -86,7 +86,7 @@ import {
   ModelFeedback,
 } from "./feedback.ts";
 import { type JobArt } from "./jobArt.ts";
-import { blastEdges, foregroundEdge, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
+import { blastEdges, foregroundEdge, joinsJets, LIGHT_FIELD, lightGalaxy } from "./lightField.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { type ProjectArtSet } from "./projectArt.ts";
@@ -140,9 +140,9 @@ import { StoryShell } from "./shell.ts";
 import { selectPaintedShipAsset, skipShipPreload } from "./shipArt.ts";
 import {
   type EngineJets,
+  jetOccluderRegions,
+  jetsInFront,
   jetTriangles,
-  normalJetsInFront,
-  normalJetTailRegions,
   shipJetDirection,
   travelJets,
 } from "./shipJets.ts";
@@ -182,7 +182,7 @@ export class GameScene extends Scene {
   // What Ada held last frame in this flight, for the item notices' gains.
   held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   jets!: GameObjects.Graphics;
-  private normalTail: { image: GameObjects.Image; shape: GameObjects.Graphics } | undefined;
+  private occludedHull: { image: GameObjects.Image; shape: GameObjects.Graphics } | undefined;
   shipJets: EngineJets | undefined;
   shipRetroJets: EngineJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
@@ -675,9 +675,9 @@ export class GameScene extends Scene {
       this.events.off(Scenes.Events.SHUTDOWN, disposeRenderer);
       this.events.off(Scenes.Events.DESTROY, disposeRenderer);
       renderer.dispose();
-      this.normalTail?.image.destroy();
-      this.normalTail?.shape.destroy();
-      this.normalTail = undefined;
+      this.occludedHull?.image.destroy();
+      this.occludedHull?.shape.destroy();
+      this.occludedHull = undefined;
       this.needleFlight = undefined;
       this.needleRenderer = undefined;
       // Phaser destroys these scene-owned objects; restarted scenes recreate their draw caches.
@@ -888,8 +888,8 @@ export class GameScene extends Scene {
     clearPhantomSong(this);
     clearPhantomJump(this);
     this.jets.clear();
-    this.normalTail?.image.setVisible(false);
-    this.normalTail?.shape.clear();
+    this.occludedHull?.image.setVisible(false);
+    this.occludedHull?.shape.clear();
     this.overlay.clear();
     this.edgeMarkerInk.clear();
     this.drawHitFlash();
@@ -1142,13 +1142,10 @@ export class GameScene extends Scene {
         pivot: ship.pivot,
       };
       if (travel === "forward") {
-        tailRegions = normalJetTailRegions(activeJets, display, ship.directionIndex);
+        tailRegions = jetOccluderRegions(activeJets, display, ship.directionIndex);
       }
-      const keyline =
-        this.light &&
-        LIGHT_FIELD.keylined.includes("ship") &&
-        !(travel === "forward" && normalJetsInFront(activeJets, ship.directionIndex)) &&
-        !(travel === "reverse" && this.shipRetroJets?.reverseStyle === "centered-main");
+      // Ada's plumes take a keyline only when the light field joins her jets to her silhouette.
+      const keyline = this.light && joinsJets(LIGHT_FIELD, "ship");
       for (const { alpha, color, points } of jetTriangles(
         activeJets,
         display,
@@ -1191,10 +1188,10 @@ export class GameScene extends Scene {
     }
     this.placeAda(
       flames,
-      travel === "forward" && normalJetsInFront(activeJets, ship?.directionIndex ?? -1),
+      travel === "forward" && jetsInFront(activeJets, ship?.directionIndex ?? -1),
     );
     if (tailRegions.length) {
-      this.drawNormalTail(tailRegions);
+      this.drawOccludedHull(tailRegions);
     }
     const activeIds = new Set([...flight.objects.map((object) => object.id), ...guideLights]);
     for (const ally of flight.phantom?.allies ?? []) {
@@ -1230,20 +1227,20 @@ export class GameScene extends Scene {
     this.passable.push({ box: drawnBox(sprite), depth: sprite.depth });
   }
 
-  /** Composite actual painted tail pixels after the unchanged normal flame geometry. */
-  private drawNormalTail(regions: readonly (readonly Vec[])[]): void {
+  /** Redraws the loaded hull image inside the plume occluders, over the plumes drawn in front. */
+  private drawOccludedHull(regions: readonly (readonly Vec[])[]): void {
     if (!regions.length) {
       return;
     }
     const ship = this.ship;
-    if (!this.normalTail) {
+    if (!this.occludedHull) {
       const image = this.add.image(ship.x, ship.y, ship.texture.key).setVisible(false);
       const shape = this.make.graphics({ x: 0, y: 0 }, false);
       image.enableFilters();
       image.filters!.internal.addMask(shape, false, image.filters!.internal.camera);
-      this.normalTail = { image, shape };
+      this.occludedHull = { image, shape };
     }
-    const { image, shape } = this.normalTail;
+    const { image, shape } = this.occludedHull;
     shape.setPosition(ship.x, ship.y);
     shape.clear();
     shape.fillStyle(0xffffff, 1);

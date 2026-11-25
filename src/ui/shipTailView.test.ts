@@ -5,7 +5,7 @@ import { titleShipView } from "./titleShipView.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("orders the actual painted tail above intact normal Title triangles while preserving legacy masks", () => {
+it("orders the painted hull above front Title plumes and masks plumes that are not in front", () => {
   class Node {
     readonly attrs = new Map<string, string>();
     children: Node[] = [];
@@ -49,6 +49,13 @@ it("orders the actual painted tail above intact normal Title triangles while pre
           { x: 2, y: 2 },
           { x: 3, y: 0 },
         ],
+        triangles: [
+          [
+            { x: 0, y: 0 },
+            { x: 2, y: 2 },
+            { x: 3, y: 0 },
+          ],
+        ],
       },
     ],
     pivot: { x: 0.5, y: 0.5 },
@@ -58,13 +65,13 @@ it("orders the actual painted tail above intact normal Title triangles while pre
     ]),
     wordmark: { height: 1, url: "", width: 1 },
   };
-  for (const normal of [false, true]) {
-    const art = { ...base, ...(normal ? { normalJets: true as const } : {}) };
+  for (const inFront of [false, true]) {
+    const art = { ...base, ...(inFront ? { frontJets: true as const } : {}) };
     const nodes = titleShipView(art, "cobalt") as unknown as Node[];
     const front = nodes[2]!;
     const triangle = front.children.find((n) => n.tag === "polygon")!;
     expect(triangle.attrs.get("points")).toBe(jetPolygons(art)[0]!.points);
-    if (normal) {
+    if (inFront) {
       expect(triangle.attrs.has("mask")).toBe(false);
       const tail = nodes[3]!;
       expect(tail.classes.has("ada-start-tail")).toBe(true);

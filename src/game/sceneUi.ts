@@ -493,7 +493,7 @@ export function buildScene(scene: UiContext): void {
     scene.cache.json.get(TITLE_SCREEN_KEY),
   );
   if (!titleArt || !scene.shipJets || !hasShipHeadings(scene.shipAssets)) {
-    throw new Error("Required first-screen art or normal jets are invalid");
+    throw new Error("Required first-screen art or speed jets are invalid");
   }
   titleArts.set(scene, titleArt);
   scene.shell.setTitleArt(titleArt);

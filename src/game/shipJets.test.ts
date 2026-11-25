@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { SHIP_HEADINGS as ART_SHIP_HEADINGS } from "../../art/tools/projection.ts";
-import { JET_LEVELS } from "../../art/tools/ship-jet-layers.ts";
+import { JET_LEVELS, JET_PROFILE, JET_SHAPE } from "../../art/tools/ship-jet-layers.ts";
 import { forwardJetMouths, FRAME } from "../../art/tools/ship-model.ts";
+import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -11,6 +12,7 @@ import {
   engineJets,
   type JetDisplay,
   jetLength,
+  jetPlumes,
   jetTriangles,
   layerAlpha,
   layerColor,
@@ -22,25 +24,26 @@ import {
 } from "./shipJets.ts";
 
 const ada = readEngineJets(art)!;
-// Engine level 1, the base style the style and triangle tests check.
+// Engine level 1, the base style the shape tests check.
 const jets = engineJets(ada, 1);
-const [halo, outer, core] = jets.layers;
-// Identity mapping keeps triangle coordinates in heading-frame pixels.
+const [outer, core] = jets.layers;
+// Identity mapping keeps plume coordinates in heading-frame pixels.
 const framePixels: JetDisplay = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
 const shipDisplay: JetDisplay = { displayHeight: 42, displayWidth: 42, pivot: { x: 0.5, y: 0.5 } };
 const single: ShipJets = {
   ...jets,
   headings: Array.from({ length: SHIP_HEADINGS }, () => [
-    { anchor: { x: 50, y: 60 }, axis: { x: 0, y: 1 }, half: { x: 2, y: 0 } },
+    { anchor: { x: 50, y: 60 }, axis: { x: 0, y: 1 }, half: { x: 1, y: 0 } },
   ]),
 };
 const flat = (points: readonly { x: number; y: number }[]) => points.flatMap(({ x, y }) => [x, y]);
+const color = (value: string) => Number.parseInt(value.slice(1), 16);
 const withHeading = (heading: unknown) => ({
   ...art,
   headings: [heading, ...art.headings.slice(1)],
 });
-// Ada's file with level 1's halo changed by `change`.
-const withHalo = (change: Record<string, unknown>) => ({
+// Ada's file with level 1's outer layer changed by `change`.
+const withOuter = (change: Record<string, unknown>) => ({
   ...art,
   engineLevels: [
     {
@@ -53,13 +56,21 @@ const withHalo = (change: Record<string, unknown>) => ({
     ...art.engineLevels.slice(1),
   ],
 });
+const shoelace = (points: readonly { x: number; y: number }[]) =>
+  Math.abs(
+    points.reduce((sum, a, i) => {
+      const b = points[(i + 1) % points.length]!;
+      return sum + a.x * b.y - b.x * a.y;
+    }, 0),
+  ) / 2;
 
 describe("ship jet metadata", () => {
-  it("reads 64 headings of two mouths and three layers from Art's file", () => {
+  it("reads 64 headings of two mouths, the outer and core layers and the teardrop profile", () => {
     expect(jets.frame).toBe(96);
     expect(jets.headings).toHaveLength(64);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
-    expect(jets.layers).toHaveLength(3);
+    expect(jets.layers.map(({ name }) => name)).toEqual(["outer", "core"]);
+    expect(jets.profile).toEqual(JET_PROFILE);
     const [x, y] = art.headings[0]!.mouths[0]!.anchor;
     expect(jets.headings[0]![0]!.anchor).toEqual({ x, y });
   });
@@ -91,10 +102,16 @@ describe("ship jet metadata", () => {
       withHeading({ index: 0, mouths: [{ anchor: ["1", 2], axis: [0, 1], half: [1, 0] }] }),
     ],
     ["a heading without mouths", withHeading({ index: 0, mouths: [] })],
-    ["a malformed colour", withHalo({ color: "blue" })],
-    ["an empty alpha ramp", withHalo({ alpha: { from: 1, max: 1, to: 1 } })],
+    ["a malformed colour", withOuter({ colors: ["blue", "#ffffff"] })],
+    ["an empty alpha ramp", withOuter({ alpha: { from: 1, max: 1, to: 1 } })],
     ["a missing length curve", { ...art, length: undefined }],
     ["no engine levels", { ...art, engineLevels: undefined }],
+    ["no profile", { ...art, profile: undefined }],
+    ["a profile without its tip", { ...art, profile: art.profile.slice(0, -1) }],
+    ["a profile not from the root", { ...art, profile: art.profile.slice(1) }],
+    ["a profile out of order", { ...art, profile: [...art.profile].reverse() }],
+    ["a negative profile width", { ...art, profile: [[0, -1], ...art.profile.slice(1)] }],
+    ["a malformed profile sample", { ...art, profile: [[0], ...art.profile.slice(1)] }],
     ["no data", undefined],
   ])("rejects %s", (_, value) => {
     expect(readEngineJets(value)).toBeUndefined();
@@ -125,29 +142,24 @@ describe("authored jet occlusion", () => {
       })),
     });
 
-  it("keeps legacy mouths behind the sprite and distinguishes an explicitly clear exhaust plane", () => {
+  it("reads every forward mouth's occluders and omits them unless a consumer asks", () => {
+    expect(jets.headings.every((mouths) => mouths.every((m) => m.occluders?.length))).toBe(true);
     expect(readEngineJets(masked(undefined))!.headings[0]![0]).not.toHaveProperty("occluders");
     expect(jetTriangles(jets, framePixels, 0, 0.8)[0]).not.toHaveProperty("occluders");
-    const read = readEngineJets(masked([]))!;
-    expect(
-      jetTriangles(engineJets(read, 1), { ...framePixels, includeOccluders: true }, 0, 0.8)[0]!
-        .occluders,
-    ).toEqual([]);
   });
 
   it("preserves per-mouth nearer surfaces through engine selection and display projection", () => {
     const read = readEngineJets(masked([polygon]))!;
     const selected = engineJets(read, 2);
-    expect(jetTriangles(selected, shipDisplay, 0, 0.8)[0]).not.toHaveProperty("occluders");
-    const triangles = jetTriangles(selected, { ...shipDisplay, includeOccluders: true }, 0, 0.8);
+    const plumes = jetPlumes(selected, { ...shipDisplay, includeOccluders: true }, 0, 0.8);
     const expected = polygon.map(([x, y]) => ({
       x: ((x! - 48) * 42) / 96,
       y: ((y! - 48) * 42) / 96,
     }));
-    expect(triangles[0]!.occluders).toEqual([expected]);
-    expect(triangles[1]!.occluders).toBe(triangles[0]!.occluders);
-    expect(triangles[3]).not.toHaveProperty("occluders");
-    expect(read.headings[0]![0]!.anchor).toEqual(jets.headings[0]![0]!.anchor);
+    // Mouth 0: outer and core share its occluders; mouth 1 has none.
+    expect(plumes[0]!.occluders).toEqual([expected]);
+    expect(plumes[1]!.occluders).toBe(plumes[0]!.occluders);
+    expect(plumes[2]).not.toHaveProperty("occluders");
     const craft = {
       ...masked([polygon]),
       engineLevels: undefined,
@@ -182,51 +194,38 @@ describe("authored jet occlusion", () => {
 
 describe("jet interpolation", () => {
   it.each([
-    [0.25, 7.5, 0x73a9d9, 0xa9d3f4, 0],
-    [0.5, 12, 0x8ac0e6, 0xc6e2f8, 0],
-    [0.75, 19.5, 0xa2d6f2, 0xe2f0fb, 0.1875],
-    [1, 30, 0xb9ecff, 0xffffff, 0.5],
-  ])(
-    "at f = %s has length %s, outer %s, core %s and halo alpha %s",
-    (f, length, outerColor, coreColor, haloAlpha) => {
-      expect(jetLength(jets, f)).toBeCloseTo(length);
-      expect(layerColor({ ...outer!, colors: [0x5b93cc, 0xb9ecff] }, f)).toBe(outerColor);
-      expect(layerColor({ ...core!, colors: [0x8cc4f0, 0xffffff] }, f)).toBe(coreColor);
-      expect(layerColor({ ...halo!, colors: [0x70ace8, 0x70ace8] }, f)).toBe(0x70ace8);
-      expect(layerAlpha(halo!, f)).toBeCloseTo(haloAlpha);
-      expect(layerAlpha(outer!, f)).toBe(1);
-    },
-  );
-
-  it("scales layer lengths from the outer jet length", () => {
-    const [haloTriangle, outerTriangle, coreTriangle] = jetTriangles(single, framePixels, 0, 1);
-    expect(haloTriangle!.points[1].y - 60).toBeCloseTo(30 * 1.1);
-    expect(outerTriangle!.points[1].y - 60).toBeCloseTo(30);
-    expect(coreTriangle!.points[1].y - 60).toBeCloseTo(30 * 0.55);
+    [0.25, 7.5, 0x73a9d9, 0xa9d3f4],
+    [0.5, 12, 0x8ac0e6, 0xc6e2f8],
+    [0.75, 19.5, 0xa2d6f2, 0xe2f0fb],
+    [1, 30, 0xb9ecff, 0xffffff],
+  ])("at f = %s has length %s, outer %s and core %s, both opaque", (f, length, out, inner) => {
+    expect(jetLength(jets, f)).toBeCloseTo(length);
+    expect(layerColor(outer!, f)).toBe(out);
+    expect(layerColor(core!, f)).toBe(inner);
+    expect(layerAlpha(outer!, f)).toBe(1);
+    expect(layerAlpha(core!, f)).toBe(1);
   });
 
-  it("omits the halo at and below f = 0.6", () => {
-    expect(layerAlpha(halo!, 0.6)).toBe(0);
-    expect(jetTriangles(single, framePixels, 0, 0.6)).toHaveLength(2);
-    expect(jetTriangles(single, framePixels, 0, 0.61)).toHaveLength(3);
+  it("reaches the outer tip at the jet length and the core tip at half of it", () => {
+    const [outerPlume, corePlume] = jetPlumes(single, framePixels, 0, 1);
+    expect(Math.max(...outerPlume!.points.map(({ y }) => y)) - 60).toBeCloseTo(30);
+    expect(Math.max(...corePlume!.points.map(({ y }) => y)) - 60).toBeCloseTo(15);
   });
 });
 
 describe("jets by Engine level", () => {
   it.each(JET_LEVELS)(
     "draws engine $level in the canonical palette with unchanged layer geometry",
-    ({ core: coreColors, halo: haloColor, level, outer: outerColors }) => {
+    ({ core: coreColors, level, outer: outerColors }) => {
       const { layers } = engineJets(ada, level);
-      const color = (value: string) => Number.parseInt(value.slice(1), 16);
-      expect(layers.map((layer) => layerColor(layer, 1))).toEqual([
-        color(haloColor),
-        color(outerColors[1]),
-        color(coreColors[1]),
+      expect(layers.map(({ colors }) => colors)).toEqual([
+        outerColors.map(color),
+        coreColors.map(color),
       ]);
-      expect(layers.map(({ length, width }) => [length, width])).toEqual(
-        jets.layers.map(({ length, width }) => [length, width]),
-      );
-      expect(layers[0]!.alpha).toEqual(halo!.alpha);
+      expect(layers.map(({ length, width }) => [length, width])).toEqual([
+        [JET_SHAPE.outer.length, JET_SHAPE.outer.width],
+        [JET_SHAPE.core.length, JET_SHAPE.core.width],
+      ]);
     },
   );
 
@@ -235,11 +234,12 @@ describe("jets by Engine level", () => {
     expect(engineJets(ada, 0).layers).toBe(ada.engineLevels[0]);
     expect(engineJets(ada, 5).layers).toBe(ada.engineLevels[2]);
     expect(levelLayers(ada.engineLevels, 2.4)).toBe(ada.engineLevels[1]);
-    const { frame, headings, length } = engineJets(ada, 3);
-    expect({ frame, headings, length }).toEqual({
+    const { frame, headings, length, profile } = engineJets(ada, 3);
+    expect({ frame, headings, length, profile }).toEqual({
       frame: ada.frame,
       headings: ada.headings,
       length: ada.length,
+      profile: ada.profile,
     });
   });
 
@@ -254,50 +254,101 @@ describe("jets by Engine level", () => {
   });
 });
 
-describe("jet triangles", () => {
+describe("teardrop plumes", () => {
   it("draws nothing at f = 0", () => {
+    expect(jetPlumes(jets, shipDisplay, 0, 0)).toEqual([]);
     expect(jetTriangles(jets, shipDisplay, 0, 0)).toEqual([]);
   });
 
-  it("orders halo, outer and core per mouth", () => {
-    const triangles = jetTriangles(jets, framePixels, 3, 1);
-    const color = (value: string) => Number.parseInt(value.slice(1), 16);
-    const palette = JET_LEVELS[0];
-    const normal = jets.headings[3]![0]!.normalAperture !== undefined;
-    const firstColor = normal
-      ? (jets.layers[0]!.normalColor ?? color(palette.halo))
-      : color(palette.halo);
+  it("orders outer then core per mouth, in their interpolated colours", () => {
+    const plumes = jetPlumes(jets, framePixels, 3, 1);
     const one = [
-      [firstColor, normal ? 1 : 0.5],
-      [color(palette.outer[1]), 1],
-      [color(palette.core[1]), 1],
+      [color(JET_LEVELS[0].outer[1]), 1],
+      [color(JET_LEVELS[0].core[1]), 1],
     ];
-    expect(triangles.map(({ alpha, color }) => [color, alpha])).toEqual([...one, ...one]);
+    expect(plumes.map(({ alpha, color }) => [color, alpha])).toEqual([...one, ...one]);
   });
 
-  it("spans anchor plus or minus half times width to a tip along the rear axis", () => {
-    const [outerTriangle, coreTriangle] = jetTriangles(single, framePixels, 0, 0.5);
-    flat(outerTriangle!.points).forEach((value, at) =>
-      expect(value).toBeCloseTo([53.2, 60, 50, 72, 46.8, 60][at]!),
+  it("matches Art's plume outline for every heading, mouth and layer", () => {
+    for (const f of [0.3, 1]) {
+      const length = artJetLength(art.length, f);
+      jets.headings.forEach((mouths, heading) => {
+        const plumes = jetPlumes(jets, framePixels, heading, f);
+        expect(plumes).toHaveLength(4);
+        mouths.forEach((_, index) => {
+          const { anchor, axis, half } = art.headings[heading]!.mouths[index]!;
+          for (const [layer, shape] of [JET_SHAPE.outer, JET_SHAPE.core].entries()) {
+            const expected = plumePolygon(
+              JET_PROFILE,
+              {
+                anchor: anchor as [number, number],
+                axis: axis as [number, number],
+                half: half as [number, number],
+              },
+              shape,
+              length,
+            );
+            const actual = plumes[index * 2 + layer]!.points;
+            expect(actual).toHaveLength(expected.length);
+            flat(actual).forEach((value, at) => expect(value).toBeCloseTo(expected.flat()[at]!, 9));
+          }
+        });
+      });
+    }
+  });
+
+  it("fills exactly the concave outline with its triangles", () => {
+    for (const plume of jetPlumes(jets, framePixels, 17, 1)) {
+      const area = plume.triangles.reduce((sum, triangle) => sum + shoelace(triangle), 0);
+      expect(area).toBeCloseTo(shoelace(plume.points), 9);
+      const corners = new Set(plume.points.map(({ x, y }) => `${x},${y}`));
+      for (const triangle of plume.triangles) {
+        for (const { x, y } of triangle) {
+          expect(corners.has(`${x},${y}`)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("spans the profile across the half vector times the layer width", () => {
+    const [outerPlume] = jetPlumes(single, framePixels, 0, 0.5);
+    // Length 12; outer half width 5.8: root at 0.8 of it, full at 0.1 to 0.22, tip at 12.
+    expect(flat(outerPlume!.points.slice(0, 3))).toEqual(
+      [50 + 5.8 * 0.8, 60, 50 + 5.8, 61.2, 50 + 5.8, 62.64].map((value) =>
+        expect.closeTo(value, 9),
+      ),
     );
-    flat(coreTriangle!.points).forEach((value, at) =>
-      expect(value).toBeCloseTo([51.6, 60, 50, 66.6, 48.4, 60][at]!),
-    );
+    expect(outerPlume!.points[5]).toEqual({ x: 50, y: 72 });
+    expect(outerPlume!.points.at(-1)!.x).toBeCloseTo(50 - 5.8 * 0.8);
   });
 
   it("maps frame pixels into the 42px display relative to the sprite origin", () => {
-    const [outerTriangle] = jetTriangles(single, shipDisplay, 0, 0.5);
+    const [outerPlume] = jetPlumes(single, shipDisplay, 0, 0.5);
     const scale = 42 / 96;
-    expect(outerTriangle!.points[0].x).toBeCloseTo((53.2 - 48) * scale);
-    expect(outerTriangle!.points[1].y).toBeCloseTo((72 - 48) * scale);
+    expect(outerPlume!.points[0]!.x).toBeCloseTo((50 + 5.8 * 0.8 - 48) * scale);
+    expect(outerPlume!.points[5]!.y).toBeCloseTo((72 - 48) * scale);
+  });
+
+  it("draws one triangle per layer for a craft file without a profile", () => {
+    const { frame, headings, layers, length } = single;
+    const triangle: ShipJets = { frame, headings, layers, length };
+    const [outerTriangle, coreTriangle] = jetTriangles(triangle, framePixels, 0, 0.5);
+    expect(jetTriangles(triangle, framePixels, 0, 0.5)).toHaveLength(2);
+    flat(outerTriangle!.points).forEach((value, at) =>
+      expect(value).toBeCloseTo([55.8, 60, 50, 72, 44.2, 60][at]!),
+    );
+    flat(coreTriangle!.points).forEach((value, at) =>
+      expect(value).toBeCloseTo([51.6, 60, 50, 66, 48.4, 60][at]!),
+    );
   });
 
   it("matches the current canonical producer mouth geometry at every heading", () => {
     expect(jets.frame).toBe(FRAME);
     expect(jets.headings).toHaveLength(ART_SHIP_HEADINGS);
+    const reach = { halfWidth: JET_SHAPE.outer.width, length: 30 };
     jets.headings.forEach((mouths, heading) => {
       expect(mouths).toHaveLength(2);
-      forwardJetMouths(FRAME / 2, { yaw: heading }).forEach((mouth, index) => {
+      forwardJetMouths(FRAME / 2, { yaw: heading }, reach).forEach((mouth, index) => {
         const [x, y] = mouth.anchor;
         const [ax, ay] = mouth.axis;
         const [hx, hy] = mouth.half;
