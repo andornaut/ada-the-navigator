@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 import { HOME_COPY } from "../data/homeCopy.ts";
-import { homePageHtml, webManifestJson } from "../home-page/html.ts";
+import { homePageHtml, webManifestJson } from "./homePage.ts";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 

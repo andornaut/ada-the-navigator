@@ -11,7 +11,7 @@ import {
   type DiscreteActionSource,
   scanDiscreteActionBindings as scanSingleSource,
   scanDiscreteActionProject,
-} from "./discreteActionArchitecture.ts";
+} from "../../tools/discrete-action-architecture.ts";
 
 it("accepts registered action construction and rejects a raw replacement instead of grandfathering a file", () => {
   expect(

@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { collectUiStrings, uiStringsExport } from "../src/tools/uiStrings.ts";
+import { collectUiStrings, uiStringsExport } from "./ui-strings-collect.ts";
 
 if (process.argv.length > 3) {
   throw new Error("Usage: node tools/ui-strings.ts [output.json]");

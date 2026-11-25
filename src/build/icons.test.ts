@@ -5,7 +5,7 @@ import { hashedIconUrl } from "@andornaut/game-kit/build/hashedIcons";
 import { webManifestIconUrls } from "@andornaut/game-kit/build/precacheList";
 import { describe, expect, it } from "vitest";
 
-import { CACHE_POLICY } from "./cachePolicy.ts";
+import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 import { ICONS } from "./icons.ts";
 
 const REPO = join(import.meta.dirname, "../..");

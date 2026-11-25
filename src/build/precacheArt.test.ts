@@ -13,8 +13,8 @@ import { PROJECTS } from "../data/projects.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
+import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { CACHE_POLICY } from "./cachePolicy.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 
 const publicDir = fileURLToPath(new URL("../../public/", import.meta.url));

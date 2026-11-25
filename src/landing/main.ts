@@ -11,7 +11,7 @@ import { registerRouter } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 // marked data-steps with its kind and titled by its h2, and its close button, its only button.
 const INSTALL_ID = "install";
 const STEPS_ID = "install-steps";
-// The router the build writes (src/pwa/precachePlugin.ts), as the game page registers it.
+// The router the build writes (src/build/precachePlugin.ts), as the game page registers it.
 const SERVICE_WORKER_URL = "/sw.js";
 
 // Listens at once: beforeinstallprompt can fire before the page has drawn anything.

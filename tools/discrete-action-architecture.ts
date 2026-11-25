@@ -2,7 +2,7 @@ import { posix } from "node:path";
 
 import ts from "typescript";
 
-import { guardedRecoveryAssertion } from "./discreteActionArchitectureRecovery.ts";
+import { guardedRecoveryAssertion } from "./discrete-action-architecture-recovery.ts";
 
 export interface ActionBindingFinding {
   readonly kind:

@@ -33,7 +33,7 @@ pass. Contract and property tests and the fixed acceptance batch pin
 seed-dependent behaviour. Use `ADA_LAUNCH_SEED=<n> npm test` to replay a
 specific world on demand.
 
-The test category also checks the UI font subsets: `src/tools/uiStrings.test.ts` reads
+The test category also checks the UI font subsets: `src/tests/uiStrings.test.ts` reads
 every string the game page can set in AdaUI (the export `node tools/ui-strings.ts` writes
 for the font producer) and fails on a character the shipped WOFF2 files do not map.
 

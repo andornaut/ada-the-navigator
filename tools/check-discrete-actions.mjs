@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
-import { scanDiscreteActionProject } from "../src/testing/discreteActionArchitecture.ts";
+import { scanDiscreteActionProject } from "./discrete-action-architecture.ts";
 
 const root = process.cwd();
 const sources = [];

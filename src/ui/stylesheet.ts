@@ -31,7 +31,7 @@ import { WEAPON_STYLE } from "./weapons.ts";
 // The page's inherited text colour and its ground under the game.
 const PAGE_STYLE = `:root{color:${UNLISTED_COLOURS.pageText};background:${UNLISTED_COLOURS.pageBackground}}`;
 
-// The HTML interface's whole stylesheet, which uiStylePlugin (src/tools/uiStylePlugin.ts) serves
+// The HTML interface's whole stylesheet, which uiStylePlugin (src/build/uiStylePlugin.ts) serves
 // as a CSS module, so the page links it as a file from its own origin as the CSP's style-src
 // 'self' allows. Equal-specificity rules resolve by order: the loading bar and the conversation
 // box first, then the controls layer and its shared card styles (SETTINGS_STYLE holds the modal's),

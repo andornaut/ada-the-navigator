@@ -3,7 +3,7 @@ import "./crash/install.ts";
 import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
 import "./style.css";
 import "@andornaut/game-kit/runtime/web/ui/dom/ui.css";
-// The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/uiStylePlugin.ts).
+// The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/build/uiStylePlugin.ts).
 import "virtual:ada-ui.css";
 
 import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
@@ -304,7 +304,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
         },
         scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
         scene: [scene],
-        // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
+        // WebGL only: the build's Phaser has no Canvas renderer (src/build/phaserBuild.ts).
         type: WEBGL,
         width: SCREEN.width,
       }),

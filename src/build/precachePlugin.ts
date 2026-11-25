@@ -8,7 +8,7 @@ import {
 } from "@andornaut/game-kit/build/precachePlugin";
 import type { Plugin } from "vite";
 
-import { CACHE_POLICY } from "./cachePolicy.ts";
+import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 

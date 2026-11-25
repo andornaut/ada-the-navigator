@@ -1,8 +1,8 @@
 // The text the game page can set in the AdaUI fonts, exported for Art's font producer
 // (tools/ui-strings.ts writes var/ui-strings.json, art/tools/ui-fonts.ts reads it) and checked
-// against the shipped subsets (uiStrings.test.ts). It is a superset of the player-visible
-// strings: every string literal and template text in shipped source, the kit modules and JSON it
-// imports, the game page and the JSON art data under public/art/.
+// against the shipped subsets (src/tests/uiStrings.test.ts). It is a superset of the
+// player-visible strings: every string literal and template text in shipped source, the kit
+// modules and JSON it imports, the game page and the JSON art data under public/art/.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -52,14 +52,14 @@ function repoFiles(root: string, dir: string, keep: (path: string) => boolean): 
     .filter(keep);
 }
 
-// The bundled TypeScript under src/: neither tests, test helpers nor the build tooling in src/tools/.
+// The bundled TypeScript under src/: neither tests, test helpers nor the build code in src/build/.
 const shippedScript = (path: string) =>
   path.endsWith(".ts") &&
   !path.endsWith(".test.ts") &&
   !path.endsWith(".d.ts") &&
   !path.startsWith("src/testing/") &&
   !path.startsWith("src/tests/") &&
-  !path.startsWith("src/tools/") &&
+  !path.startsWith("src/build/") &&
   path !== "src/testSetup.ts";
 
 // A script's string literals and template text, cooked so escapes resolve, and the module

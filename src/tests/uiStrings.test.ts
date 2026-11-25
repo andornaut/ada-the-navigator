@@ -11,7 +11,7 @@ import {
   type UiString,
   uiStringsExport,
   uncoveredCharacters,
-} from "./uiStrings.ts";
+} from "../../tools/ui-strings-collect.ts";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const { decompress } = createRequire(import.meta.url)("wawoff2") as {
