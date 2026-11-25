@@ -282,7 +282,10 @@ turning away while its turrets fire astern and a retaliator holding its band
 with its nose on Ada while its launcher fires. `keep-moving` releases an idle
 pack of three retaliators sharing one home, a fighter returning home and a
 Mining Freighter beside a large rock, six frames 300 ms apart. `resources` captures the Stardust and ore pickups on a
-dark and a light field and every UI view that draws their icons. The nose sets
+dark and a light field and every UI view that draws their icons. `markers`
+takes the edge markers of an identified enemy, an identified hostile station and
+an unidentified contact on Cartwheel's light field and Phantom's dark field, with
+Phantom's flagship as the story's target there. The nose sets
 (`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,
 `nose-heavy-missile` and `nose-phaser`) fire one weapon into open space at
 headings 0 to 56 of 64 in steps of 8: Ada's idle hull, then the first four

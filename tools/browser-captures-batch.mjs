@@ -4,8 +4,8 @@ import { pauseClock, toWorld } from "./browser-support.mjs";
 
 // The visible-art batch review sets for tools/browser-captures.mjs: canonical saves of each view
 // the batch redraws (the fleet, stations, pickups, landmarks, Needle, craft and whales,
-// backdrops, Ada's ship and its fixes, weapons, effects and controls), held still on a paused
-// page clock.
+// backdrops, Ada's ship and its fixes, weapons, effects, controls and edge markers), held still
+// on a paused page clock.
 // Each set stays within the run's 120 second limit; name the sets in separate runs.
 
 const [
@@ -17,7 +17,13 @@ const [
   { enemyActorDefinition },
   { createEnemy },
   { retaliatorVariant },
-  { activateRequiredWhirlpoolRoute, ensureDestination, ensureStation, shipSpeedFraction },
+  {
+    activateRequiredWhirlpoolRoute,
+    ensureDestination,
+    ensureStation,
+    shipSpeedFraction,
+    spawnChapterEnemy,
+  },
   { stationsNear },
   { settlementsNear },
   { landmarkSites },
@@ -33,6 +39,9 @@ const [
   { readAsteroidCatalog },
   { backdropFixture },
   { uiIconUrl },
+  { flightEncounterSeed },
+  { GAME_AREA },
+  { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
   import(new URL("../src/data/content.ts", import.meta.url)),
@@ -58,6 +67,9 @@ const [
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import("./browser-support.mjs"),
   import(new URL("../src/data/uiIconUrl.ts", import.meta.url)),
+  import(new URL("../src/model/flightTopology.ts", import.meta.url)),
+  import(new URL("../src/model/edgeMarkers.ts", import.meta.url)),
+  import(new URL("../src/data/phantom.ts", import.meta.url)),
 ]);
 
 const ALL = [1, 2, 3, 4, 5, 6];
@@ -1337,6 +1349,95 @@ export function batchCaptures(ctx) {
     });
   }
 
+  // Edge markers (art/space-palette.md "Edge markers"), each target past a different edge of
+  // the game area: an identified fighter, an identified hostile station and a sensed fighter
+  // drawn as the unidentified `?`, on Cartwheel's light field and Phantom's dark field. On
+  // Phantom the battle's flagship is the story's target, the one enemy a task targets.
+  async function markers() {
+    await inTurn(
+      [
+        [6, "dark"],
+        [2, "light"],
+      ],
+      async ([galaxy, field]) => {
+        const model = flightModel(galaxy);
+        const flight = model.state.flight;
+        withoutEnemies(flight);
+        const enemy = addEnemy(model, {
+          archetype: "fighter",
+          id: "browser-art:marker-enemy",
+          screen: { x: 560, y: 0 },
+        });
+        const station = addEnemy(model, {
+          archetype: "hostileStation",
+          id: "browser-art:marker-station",
+          screen: { x: -640, y: 0 },
+        });
+        const contact = addEnemy(model, {
+          archetype: "fighter",
+          id: "browser-art:marker-contact",
+          screen: { x: 0, y: 330 },
+        });
+        flight.markerActors = {
+          encounterSeed: flightEncounterSeed(flight),
+          knowledge: {
+            [contact.id]: "sensed",
+            [enemy.id]: "identified",
+            [station.id]: "identified",
+          },
+        };
+        const expected = {
+          [contact.id]: { identified: false, taskCategory: "generic" },
+          [enemy.id]: { identified: true, symbol: "enemy", taskCategory: "generic" },
+          [station.id]: { identified: true, symbol: "hostileStation", taskCategory: "generic" },
+        };
+        if (galaxy === 6) {
+          // The battle's last phase: every settlement freed and the flagship at its waypoint.
+          const waypoint = at(flight, { x: 0, y: -340 });
+          model.state.progress[6].phantom = {
+            broken: [...PHANTOM_DESTINATIONS],
+            flagshipKnown: true,
+            freed: [...PHANTOM_DESTINATIONS],
+          };
+          Object.assign(flight.phantom, {
+            blockades: {},
+            enemyIds: [PHANTOM_FLAGSHIP],
+            phase: "flagship",
+            wave: 3,
+            waypoint,
+          });
+          delete flight.phantom.pendingEncounter;
+          const flagship = spawnChapterEnemy(
+            CONTENT,
+            "capital",
+            PHANTOM_FLAGSHIP,
+            waypoint,
+            flight,
+            { home: waypoint },
+          );
+          assert.ok(flagship?.enemy, "Phantom's flagship spawns at its waypoint");
+          flagship.enemy.primaryCooldown = 999;
+          for (const part of flagship.enemy.hardpoints) {
+            part.cooldown = 999;
+          }
+          expected[PHANTOM_FLAGSHIP] = { identified: true, symbol: "heavy", taskCategory: "story" };
+        }
+        const shown = Object.fromEntries(
+          model
+            .targetMarkers(GAME_AREA)
+            .filter(({ id }) => Object.hasOwn(expected, id))
+            .map(({ id, identified, symbol, taskCategory }) => [
+              id,
+              identified ? { identified, symbol, taskCategory } : { identified, taskCategory },
+            ]),
+        );
+        assert.deepEqual(shown, expected, `The ${field} field shows each edge marker`);
+        await open(canonical(model, `markers-${field}`));
+        await ctx.pageShot(`markers-${field}.png`);
+      },
+    );
+  }
+
   // The holodisk item icons as served: icon-holodisk-24 and the 16 and 20 px vectors at their
   // own size and at 8 times, nearest-neighbour, on the item notice's ink chip and on cream.
   async function holodiskIcon() {
@@ -1380,6 +1481,7 @@ export function batchCaptures(ctx) {
     "hostile-tops": hostileTops,
     "keep-moving": keepMoving,
     landmarks,
+    markers,
     needle,
     "nose-heavy-missile": noseSet("heavyMissile", 1),
     "nose-laser": noseSet("laser", 1),
