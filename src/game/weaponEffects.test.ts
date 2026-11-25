@@ -1,24 +1,36 @@
 import { describe, expect, it } from "vitest";
 
+import { CORE_MANIFEST } from "../testing/publicArt.ts";
 import {
   beam,
   BEAM_MISS_FADE,
   BEAM_MS,
+  beamAlpha,
   beamKeys,
   blast,
   BLAST_SECONDS,
-  BLASTS,
+  burst,
   EFFECT_COLOURS,
   type EffectShape,
+  fanBolt,
+  fanSpacing,
+  fanVolley,
   headingFactor,
-  heavyMissile,
+  heldAlpha,
+  laserBolt,
+  MINE_SPIN,
+  mineSpinStep,
+  MISSILE_HEADINGS,
+  missileFlame,
   missileFrame,
   missileKind,
-  rapidMissile,
+  missileSolid,
+  pellet,
+  type PolygonShape,
+  readWeaponSolids,
   screenAngle,
   spark,
   SPARK_MS,
-  type TaperShape,
 } from "./weaponEffects.ts";
 
 // World directions of headings 14 (screen right), 2 (down) and 13 (between).
@@ -29,6 +41,9 @@ const heading = (index: number) => ({
 const origin = { x: 0, y: 0 };
 const ofKind = <K extends EffectShape["kind"]>(shapes: readonly EffectShape[], kind: K) =>
   shapes.filter((shape): shape is Extract<EffectShape, { kind: K }> => shape.kind === kind);
+const xs = (shape: PolygonShape) => shape.points.map(({ x }) => x);
+const reach = (shape: PolygonShape) =>
+  Math.max(...shape.points.map(({ x, y }) => Math.hypot(x - origin.x, y - origin.y)));
 
 describe("weapon effect conventions", () => {
   it.each([
@@ -50,9 +65,110 @@ describe("weapon effect conventions", () => {
 
   it("tells Rapid blasts from Heavy ones by radius", () => {
     expect(missileKind(30)).toBe("rapid");
-    for (const radius of [70]) {
+    for (const radius of [60, 70]) {
       expect(missileKind(radius)).toBe("heavy");
     }
+  });
+
+  it("holds each alpha until its step ends, then the last", () => {
+    const steps = [
+      [10, 1],
+      [20, 0.5],
+    ] as const;
+    expect([0, 9.9, 10, 19.9, 20, 99].map((t) => heldAlpha(t, steps, 0.2))).toEqual([
+      1, 1, 0.5, 0.5, 0.2, 0.2,
+    ]);
+  });
+
+  it("draws a burst's tips at its radius and its notches at the waist", () => {
+    const star = burst(origin, 0, 4, 10, 0.3, EFFECT_COLOURS.amber, 1);
+    expect(star.points).toHaveLength(8);
+    const radii = star.points.map(({ x, y }) => Math.hypot(x, y));
+    radii.forEach((radius, index) => expect(radius).toBeCloseTo(index % 2 ? 3 : 10, 9));
+    expect(star.points[0]!.x).toBeCloseTo(10, 9);
+  });
+});
+
+describe("bolt, pellet and fan", () => {
+  it("draws the Laser bolt as a tail step, a pointed slug and a cream core behind its head", () => {
+    const bolt = laserBolt(origin, 0);
+    const [tail, slug, core] = bolt;
+    expect(bolt.map(({ colour }) => colour)).toEqual([
+      EFFECT_COLOURS.amber,
+      EFFECT_COLOURS.amber,
+      EFFECT_COLOURS.cream,
+    ]);
+    expect(Math.min(...xs(tail!))).toBeCloseTo(-27, 9);
+    expect(Math.max(...xs(tail!))).toBeCloseTo(-14, 9);
+    expect(Math.max(...tail!.points.map(({ y }) => y))).toBeCloseTo(0.75, 9);
+    expect(slug!.points[0]).toEqual({ x: 0, y: 0 });
+    expect(Math.min(...xs(slug!))).toBeCloseTo(-15.5, 9);
+    expect(Math.max(...slug!.points.map(({ y }) => y))).toBeCloseTo(1.5, 9);
+    expect(Math.min(...xs(core!))).toBeCloseTo(-8.68, 9);
+    // Turned to its heading: straight down points the slug's tail up.
+    expect(laserBolt(origin, Math.PI / 2)[1]!.points[3]!.y).toBeCloseTo(-15.5, 9);
+    expect(laserBolt(origin, 0, 0.4).every(({ alpha }) => alpha === 0.4)).toBe(true);
+  });
+
+  it("lights the pellet with a small cream disc up and left of its centre", () => {
+    const [body, light] = pellet({ x: 10, y: 10 });
+    expect(body).toEqual({
+      alpha: 1,
+      at: { x: 10, y: 10 },
+      colour: EFFECT_COLOURS.amber,
+      kind: "disc",
+      radius: 1.7,
+    });
+    expect(light).toMatchObject({ colour: EFFECT_COLOURS.cream, radius: 0.7 });
+    expect(light!.at.x).toBeCloseTo(9.55, 9);
+    expect(light!.at.y).toBeCloseTo(9.55, 9);
+  });
+
+  it("spaces neighbouring fan heads by h sin(16 / (n - 1)) degrees", () => {
+    expect(fanSpacing(100, 3)).toBeCloseTo(100 * Math.sin((8 * Math.PI) / 180), 9);
+    // The level 3 wedge covers about the first 50 px of travel.
+    expect(fanSpacing(29.7 + 50, 5)).toBeLessThan(5.6);
+    expect(fanSpacing(29.7 + 51, 5)).toBeGreaterThan(5.6);
+  });
+
+  it("draws a close fan as one amber wedge over a cream one, centred on the volley", () => {
+    const nose = { x: 0, y: 0 };
+    const heads = [-4, 0, 4].map((degrees) => ({
+      at: {
+        x: 20 * Math.cos((degrees * Math.PI) / 180),
+        y: 20 * Math.sin((degrees * Math.PI) / 180),
+      },
+      velocity: heading(14),
+    }));
+    const [amber, cream] = fanVolley(nose, 5, heads);
+    expect(fanVolley(nose, 5, heads)).toHaveLength(2);
+    expect(amber!.colour).toBe(EFFECT_COLOURS.amber);
+    expect(cream!.colour).toBe(EFFECT_COLOURS.cream);
+    // h is the 20 px travel plus 29.7: amber from h - 11 to h across 20 degrees.
+    const radii = amber!.points.map(({ x, y }) => Math.hypot(x, y));
+    expect(Math.max(...radii)).toBeCloseTo(49.7, 9);
+    expect(Math.min(...radii)).toBeCloseTo(38.7, 9);
+    const angles = amber!.points.map(({ x, y }) => (Math.atan2(y, x) * 180) / Math.PI);
+    expect(Math.max(...angles)).toBeCloseTo(10, 9);
+    expect(Math.min(...angles)).toBeCloseTo(-10, 9);
+    const creamRadii = cream!.points.map(({ x, y }) => Math.hypot(x, y));
+    expect(Math.max(...creamRadii)).toBeCloseTo(47.2, 9);
+    expect(Math.min(...creamRadii)).toBeCloseTo(42.7, 9);
+  });
+
+  it("splits a far fan into slugs 10 px long and 2.2 px wide with no core or tail", () => {
+    const heads = [0, 1, 2].map((index) => ({
+      at: { x: 100, y: (index - 1) * 14 },
+      velocity: heading(14),
+    }));
+    const bolts = fanVolley(origin, 3, heads);
+    expect(bolts).toHaveLength(3);
+    expect(bolts[1]).toEqual(fanBolt(heads[1]!.at, screenAngle(heading(14))));
+    const slug = fanBolt(origin, 0);
+    expect(slug.colour).toBe(EFFECT_COLOURS.amber);
+    expect(slug.points[2]!.x).toBeCloseTo(-10, 9);
+    expect(Math.max(...slug.points.map(({ y }) => y))).toBeCloseTo(1.1, 9);
+    expect(fanVolley(origin, 3, [])).toEqual([]);
   });
 });
 
@@ -66,100 +182,152 @@ describe("missiles", () => {
     expect(missileFrame("rapid", true, 50)).toBe(0);
   });
 
-  it("draws the Rapid streak 20 then 23 times f past the body, then core, fins and body", () => {
-    const right = rapidMissile(origin, heading(14), 0);
-    expect(right.map(({ kind }) => kind)).toEqual([
-      "taper",
-      "taper",
-      "polygon",
-      "polygon",
-      "polygon",
-    ]);
-    const streak = right[0] as TaperShape;
-    expect(streak.tail.at.x).toBeCloseTo(-26, 9);
-    expect(streak.head).toMatchObject({ alpha: 0.85, width: 1.6 });
-    expect((rapidMissile(origin, heading(14), 1)[0] as TaperShape).tail.at.x).toBeCloseTo(-29, 9);
-    // Heading 2 halves the trail; the body keeps its screen size.
-    const down = rapidMissile(origin, heading(2), 0);
-    expect((down[0] as TaperShape).tail.at.y).toBeCloseTo(-16, 9);
-    expect(ofKind(down, "polygon")[2]!.points[2]!.y).toBeCloseTo(-7, 9);
-    expect(ofKind(right, "polygon")[2]!.colour).toBe(EFFECT_COLOURS.white);
+  it("draws the Rapid flame 12 then 15 f px behind its 7 px tail, cream half as wide and long", () => {
+    const [amber, cream] = missileFlame("rapid", origin, heading(14), 0);
+    expect(amber!.colour).toBe(EFFECT_COLOURS.amber);
+    expect(xs(amber!)[0]).toBeCloseTo(-7, 9);
+    expect(Math.min(...xs(amber!))).toBeCloseTo(-19, 9);
+    expect(Math.min(...xs(cream!))).toBeCloseTo(-13, 9);
+    expect(amber!.points[2]!.y - amber!.points[0]!.y).toBeCloseTo(2.6, 9);
+    expect(cream!.points[2]!.y - cream!.points[0]!.y).toBeCloseTo(1.3, 9);
+    expect(Math.min(...xs(missileFlame("rapid", origin, heading(14), 1)[0]!))).toBeCloseTo(-22, 9);
+    // Heading 2 halves the flame and keeps the tail where the frame ends.
+    const down = missileFlame("rapid", origin, heading(2), 0)[0]!;
+    expect(Math.min(...down.points.map(({ y }) => y))).toBeCloseTo(-13, 9);
   });
 
-  it("draws the Heavy plume 30 then 25 px long at heading 14 over an ink keyline", () => {
-    const frame0 = heavyMissile(origin, heading(14), 0);
-    expect((frame0[0] as TaperShape).tail.at.x).toBeCloseTo(-30, 9);
-    expect((heavyMissile(origin, heading(14), 1)[0] as TaperShape).tail.at.x).toBeCloseTo(-25, 9);
-    expect(ofKind(frame0, "polygon").map(({ colour }) => colour)).toEqual([
-      EFFECT_COLOURS.ink,
-      EFFECT_COLOURS.ink,
-      EFFECT_COLOURS.ink,
-      EFFECT_COLOURS.cream,
-      EFFECT_COLOURS.cream,
-      EFFECT_COLOURS.white,
-      EFFECT_COLOURS.amber,
-      EFFECT_COLOURS.cream,
-    ]);
+  it("draws the Heavy flame 16.8 then 11.8 f px behind its 13.2 px tail, 5.6 px across", () => {
+    const [amber] = missileFlame("heavy", origin, heading(14), 0);
+    expect(Math.min(...xs(amber!))).toBeCloseTo(-30, 9);
+    expect(amber!.points[2]!.y - amber!.points[0]!.y).toBeCloseTo(5.6, 9);
+    expect(Math.min(...xs(missileFlame("heavy", origin, heading(14), 1)[0]!))).toBeCloseTo(-25, 9);
+  });
+
+  it("reads every heading and spin frame from the core manifest", () => {
+    const solids = readWeaponSolids(CORE_MANIFEST.assets)!;
+    expect(solids.rapid).toMatchObject({ height: 24.5, pivot: { x: 0.5, y: 0.5 }, width: 24.5 });
+    expect(solids.heavy).toMatchObject({ height: 42, width: 42 });
+    expect(solids.mine).toMatchObject({ height: 21, width: 21 });
+    expect(solids.rapid.ids).toEqual(
+      Array.from({ length: MISSILE_HEADINGS }, (_, k) => `weapon-rapidMissile-${k}`),
+    );
+    expect(solids.heavy.ids[31]).toBe("weapon-heavyMissile-31");
+    expect(solids.mine.ids).toEqual(
+      Array.from({ length: MINE_SPIN.frames }, (_, j) => `weapon-mine-${j}`),
+    );
+    expect(solids.mine.blink[7]).toBe("weapon-mine-blink-7");
+  });
+
+  it("reads no frames when any heading or spin step is missing", () => {
+    const assets = CORE_MANIFEST.assets;
+    expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-heavyMissile-9"))).toBe(
+      undefined,
+    );
+    expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-mine-blink-3"))).toBe(
+      undefined,
+    );
+    const resized = assets.map((asset) =>
+      asset.id === "weapon-rapidMissile-4" ? { ...asset, displayWidth: 30 } : asset,
+    );
+    expect(readWeaponSolids(resized)).toBeUndefined();
+    expect(readWeaponSolids([])).toBeUndefined();
+  });
+
+  it("picks the frame for the nearest of 32 world headings", () => {
+    const solids = readWeaponSolids(CORE_MANIFEST.assets)!;
+    const at = (k: number) => ({
+      x: Math.cos((k * Math.PI) / 16) * 400,
+      y: Math.sin((k * Math.PI) / 16) * 400,
+    });
+    expect(missileSolid(solids, "rapid", at(0))).toBe("weapon-rapidMissile-0");
+    expect(missileSolid(solids, "heavy", at(28))).toBe("weapon-heavyMissile-28");
+    expect(missileSolid(solids, "rapid", at(-1))).toBe("weapon-rapidMissile-31");
+    expect(missileSolid(solids, "rapid", at(4.4))).toBe("weapon-rapidMissile-4");
+  });
+
+  it("steps the mine's spin 11.25 degrees a frame through a quarter turn", () => {
+    expect([0, 11.2, 11.25, 89, 90, 101.25, 360].map(mineSpinStep)).toEqual([0, 0, 1, 7, 0, 1, 0]);
   });
 });
 
 describe("missile blasts", () => {
-  it("lasts as long as the Heavy blast, its longest effect", () => {
+  it("lasts 340 ms, its longest effect", () => {
     expect(BLAST_SECONDS).toBe(0.34);
   });
 
-  it("grows the ring by an ease-out cubic and draws one flash in two steps", () => {
-    const at0 = blast(origin, 30, false, 0);
-    const ellipses = ofKind(at0, "ellipse");
-    // Tint and ring at 0.5, then the flash's four circles of radius 30 x 0.42.
-    const flash = ellipses.slice(2);
-    expect(flash).toHaveLength(4);
-    expect(flash[1]!.halfWidth).toBeCloseTo(30 * 0.42, 9);
-    expect(flash[1]!.halfHeight).toBeCloseTo(30 * 0.42, 9);
-    expect(flash[1]!.alpha).toBeCloseTo(0.85 * 0.95, 9);
-    const step2 = ofKind(blast(origin, 30, false, 20), "ellipse");
-    expect(step2.at(-3)!.halfWidth).toBeCloseTo(30 * 0.42 * 0.55, 9);
-    expect(ofKind(blast(origin, 30, false, 40), "ellipse")).toHaveLength(3);
-    // The ring reaches R at G and fades to 0 at T.
-    const grown = ofKind(blast(origin, 30, false, 110), "ellipse")[1]!;
-    expect(grown.halfWidth).toBeCloseTo(30, 9);
-    expect(grown.halfHeight).toBeCloseTo(30, 9);
-    expect(grown.alpha).toBe(1);
-    expect(ofKind(blast(origin, 30, false, 165), "ellipse")[1]!.alpha).toBeCloseTo(0.5, 9);
-    expect(blast(origin, 30, false, 220)).toEqual([]);
+  it("grows an amber ring by an ease-out cubic in held alpha steps, thinning from 4 to 2 px", () => {
+    const ring = (t: number) =>
+      ofKind(blast(origin, 60, false, t), "ellipse").find(({ part }) => part === "ring")!;
+    expect(ring(0)).toMatchObject({ alpha: 1, colour: EFFECT_COLOURS.amber, stroke: 4 });
+    expect(ring(90).halfWidth).toBeCloseTo(60 * (1 - 0.5 ** 3), 9);
+    expect(ring(180)).toMatchObject({ alpha: 0.66, halfHeight: 60, halfWidth: 60 });
+    expect(ring(179).alpha).toBe(1);
+    expect(ring(260).alpha).toBe(0.33);
+    expect(ring(170).stroke).toBeCloseTo(3, 9);
+    expect(blast(origin, 60, false, 340)).toEqual([]);
+    // No tint fills the circle.
+    expect(
+      ofKind(blast(origin, 60, false, 100), "ellipse").filter(({ stroke }) => stroke === undefined),
+    ).toEqual([]);
   });
 
-  it("throws eight cream debris lines from a Heavy blast until G + 40", () => {
-    expect(ofKind(blast(origin, 60, false, 100), "line")).toHaveLength(8);
-    // Evenly round the circle: each starts 3 px past the ring and runs 6 px outward.
-    const r = 60 * (1 - (1 - 100 / BLASTS.heavy.growMs) ** 3);
-    for (const line of ofKind(blast(origin, 60, false, 100), "line")) {
-      expect(Math.hypot(line.from.x - origin.x, line.from.y - origin.y)).toBeCloseTo(r + 3, 9);
-      expect(Math.hypot(line.to.x - origin.x, line.to.y - origin.y)).toBeCloseTo(r + 9, 9);
+  it("draws a 1.2 px cream line inside the ring once it passes 6 px", () => {
+    const lines = (t: number) =>
+      ofKind(blast(origin, 60, false, t), "ellipse").filter(({ part }) => part !== "ring");
+    expect(lines(0)).toEqual([]);
+    const [line] = lines(100);
+    const r = 60 * (1 - (1 - 100 / 180) ** 3);
+    expect(line).toMatchObject({ colour: EFFECT_COLOURS.cream, stroke: 1.2 });
+    expect(line!.halfWidth).toBeCloseTo(r - 2.2, 9);
+  });
+
+  it("throws eight cream debris wedges past the ring, alpha 1 to 108 ms and 0.6 to 220 ms", () => {
+    const debris = (t: number) =>
+      ofKind(blast(origin, 60, false, t), "polygon").filter(({ part }) => part === undefined);
+    expect(debris(100)).toHaveLength(8);
+    const r = 60 * (1 - (1 - 100 / 180) ** 3);
+    for (const wedge of debris(100)) {
+      expect(wedge.colour).toBe(EFFECT_COLOURS.cream);
+      expect(reach(wedge)).toBeCloseTo(r + 10, 9);
     }
-    expect(ofKind(blast(origin, 60, false, 220), "line")).toHaveLength(0);
-    expect(ofKind(blast(origin, 30, false, 50), "line")).toHaveLength(0);
-    expect(ofKind(blast(origin, 85, false, 0), "ellipse")[2]!.halfWidth).toBeCloseTo(
-      85 * 0.34 * 1.25,
-      9,
-    );
+    const first = debris(100)[0]!.points[1]!;
+    expect((Math.atan2(first.y, first.x) * 180) / Math.PI).toBeCloseTo(22.5, 9);
+    expect(debris(107)[0]!.alpha).toBe(1);
+    expect(debris(108)[0]!.alpha).toBe(0.6);
+    expect(debris(220)).toEqual([]);
   });
 
-  it("draws a static fading ring and tint at R under reduced motion, with no flash", () => {
-    const rapid = blast(origin, 30, true, 0);
-    expect(rapid).toEqual([
-      expect.objectContaining({ alpha: 0.15, halfHeight: 30, halfWidth: 30, kind: "ellipse" }),
-      expect.objectContaining({
-        alpha: 0.9,
+  it("flashes amber and cream eight-point bursts over a white core, then a 0.55 step", () => {
+    const flash = (t: number) =>
+      ofKind(blast(origin, 60, false, t), "polygon").filter(({ part }) => part === "flash");
+    const [amber, cream] = flash(0);
+    expect(amber!.points).toHaveLength(16);
+    expect(reach(amber!)).toBeCloseTo(60 * 0.425, 9);
+    expect(Math.hypot(amber!.points[1]!.x, amber!.points[1]!.y)).toBeCloseTo(60 * 0.425 * 0.62, 9);
+    expect(reach(cream!)).toBeCloseTo(60 * 0.425 * 0.66, 9);
+    expect(Math.atan2(cream!.points[0]!.y, cream!.points[0]!.x)).toBeCloseTo(Math.PI / 8, 9);
+    const [core] = ofKind(blast(origin, 60, false, 0), "disc");
+    expect(core).toMatchObject({ alpha: 1, at: origin, colour: EFFECT_COLOURS.white });
+    expect(core!.radius).toBeCloseTo(60 * 0.425 * 0.3, 9);
+    expect(reach(flash(30)[0]!)).toBeCloseTo(60 * 0.425 * 0.55, 9);
+    expect(flash(60)).toEqual([]);
+  });
+
+  it("holds a still ring at R under reduced motion in the same alpha steps", () => {
+    expect(blast(origin, 30, true, 0)).toEqual([
+      {
+        alpha: 1,
+        at: origin,
+        colour: EFFECT_COLOURS.amber,
         halfHeight: 30,
         halfWidth: 30,
         kind: "ellipse",
-        stroke: 2,
-      }),
+        part: "ring",
+        stroke: 3,
+      },
     ]);
-    expect(ofKind(blast(origin, 60, true, 150), "ellipse")[1]).toMatchObject({ stroke: 3 });
-    expect(ofKind(blast(origin, 60, true, 150), "ellipse")[1]!.alpha).toBeCloseTo(0.45, 9);
-    expect(blast(origin, 30, true, 200)).toEqual([]);
+    expect(blast(origin, 60, true, 200)[0]).toMatchObject({ alpha: 0.66, halfWidth: 60 });
+    expect(blast(origin, 60, true, 299)[0]).toMatchObject({ alpha: 0.33 });
     expect(blast(origin, 60, true, 300)).toEqual([]);
   });
 });
@@ -174,68 +342,98 @@ describe("the Phaser beam", () => {
     expect(spark(origin, 0, false, 160)).toEqual([]);
   });
 
-  it("keys its width and alpha over 150 ms", () => {
+  it("keys its width and alpha over 150 ms and holds one band alpha in three steps", () => {
     expect(beamKeys(0)).toEqual({ a: 0.85, w: 0.55 });
     expect(beamKeys(20)).toEqual({ a: 1, w: 1 });
     expect(beamKeys(70)).toEqual({ a: 1, w: 1 });
     const fading = beamKeys(110);
     expect(fading.a).toBeCloseTo(0.5, 9);
     expect(fading.w).toBeCloseTo(0.7, 9);
-    expect(beam(origin, { x: 100, y: 0 }, true, false, 150)).toEqual([]);
+    expect([1, 0.61, 0.6, 0.31, 0.3, 0.01].map(beamAlpha)).toEqual([1, 1, 0.6, 0.6, 0.3, 0.3]);
   });
 
-  it("tapers glow, body and core from the nose and fades a miss over its last 28 px", () => {
-    const miss = beam(origin, { x: 453, y: 0 }, false, false, 30);
-    const tapers = ofKind(miss, "taper");
-    expect(tapers).toHaveLength(6);
-    const [glowSolid, glowFade] = tapers;
-    expect(glowSolid!.tail.width).toBeCloseTo(12, 9);
-    expect(glowSolid!.head.at.x).toBeCloseTo(453 - BEAM_MISS_FADE, 9);
-    expect(glowFade!.head).toMatchObject({ alpha: 0 });
-    expect(glowFade!.head.width).toBeCloseTo(7.5, 9);
-    expect(glowSolid!.tail.alpha).toBeCloseTo(0.38, 9);
-    // The muzzle bloom over the nose.
-    expect(
-      ofKind(miss, "disc")
-        .slice(-3)
-        .map(({ radius }) => radius),
-    ).toEqual([5, 2.9, 1.6]);
-  });
-
-  it("ends a hit hard at the contact with a round cap", () => {
+  it("draws opaque amber, cream and white bands with butt ends and an opaque bloom", () => {
     const hit = beam(origin, { x: 100, y: 0 }, true, false, 30);
-    const tapers = ofKind(hit, "taper");
-    expect(tapers).toHaveLength(3);
-    expect(tapers.every(({ head }) => head.at.x === 100 && head.alpha > 0)).toBe(true);
+    const bands = ofKind(hit, "polygon");
+    expect(bands.map(({ colour }) => colour)).toEqual([
+      EFFECT_COLOURS.amber,
+      EFFECT_COLOURS.cream,
+      EFFECT_COLOURS.white,
+    ]);
+    expect(bands.every(({ alpha }) => alpha === 1)).toBe(true);
+    // Butt ends: four corners, widths 8 to 5, 4.6 to 2.8 and 2.2 to 1.3 at w 1.
+    const corners = [
+      [0, -4],
+      [100, -2.5],
+      [100, 2.5],
+      [0, 4],
+    ];
+    expect(bands[0]!.points).toHaveLength(4);
+    bands[0]!.points.forEach(({ x, y }, index) => {
+      expect(x).toBeCloseTo(corners[index]![0]!, 9);
+      expect(y).toBeCloseTo(corners[index]![1]!, 9);
+    });
+    expect(bands[1]!.points[0]!.y).toBeCloseTo(-2.3, 9);
+    expect(bands[2]!.points[1]!.y).toBeCloseTo(-0.65, 9);
+    expect(ofKind(hit, "disc").map(({ alpha, radius }) => [radius, alpha])).toEqual([
+      [5, 1],
+      [3.1, 1],
+      [1.6, 1],
+    ]);
+    // Late in the flash every band and disc drops to the same held alpha.
+    const late = beam(origin, { x: 100, y: 0 }, true, false, 140);
+    expect(new Set(late.map((shape) => (shape as { alpha: number }).alpha))).toEqual(
+      new Set([0.3]),
+    );
+  });
+
+  it("tapers every band of a miss to a point over its last 28 px", () => {
+    const miss = ofKind(beam(origin, { x: 453, y: 0 }, false, false, 30), "polygon");
+    for (const band of miss) {
+      expect(band.points).toHaveLength(5);
+      expect(band.points[1]!.x).toBeCloseTo(453 - BEAM_MISS_FADE, 9);
+      expect(band.points[2]!.x).toBeCloseTo(453, 9);
+      expect(band.points[2]!.y).toBeCloseTo(0, 9);
+    }
   });
 
   it("draws a steady 6 px cream line over a 12 px amber edge under reduced motion", () => {
-    const steady = ofKind(beam(origin, { x: 100, y: 0 }, true, true, 60), "taper");
-    expect(steady.map(({ colour, tail }) => [colour, tail.width, tail.alpha])).toEqual([
+    const steady = ofKind(beam(origin, { x: 100, y: 0 }, true, true, 60), "polygon");
+    expect(
+      steady.map(({ alpha, colour, points }) => [colour, points[3]!.y - points[0]!.y, alpha]),
+    ).toEqual([
       [EFFECT_COLOURS.amber, 12, 0.35],
       [EFFECT_COLOURS.cream, 6, 1],
     ]);
-    expect(
-      ofKind(beam(origin, { x: 100, y: 0 }, true, true, 120), "taper")[1]!.tail.alpha,
-    ).toBeCloseTo(0.5, 9);
-    expect(ofKind(beam(origin, { x: 100, y: 0 }, false, true, 60), "taper")).toHaveLength(4);
+    expect(ofKind(beam(origin, { x: 100, y: 0 }, true, true, 130), "polygon")[1]!.alpha).toBe(0.6);
+    const miss = ofKind(beam(origin, { x: 100, y: 0 }, false, true, 60), "polygon");
+    expect(miss[1]!.points).toHaveLength(5);
   });
 });
 
 describe("the hit spark", () => {
-  it("plays rays, core and flecks over 160 ms, rotated by the beam", () => {
+  it("plays six ray wedges, a core and three fleck diamonds over 160 ms, turned by the hit", () => {
     const start = spark(origin, 0, false, 0);
-    expect(ofKind(start, "line")).toHaveLength(6);
-    expect(ofKind(start, "line")[0]!.colour).toBe(EFFECT_COLOURS.white);
+    const rays = ofKind(start, "polygon");
+    expect(rays).toHaveLength(6);
+    expect(rays[0]!.colour).toBe(EFFECT_COLOURS.white);
+    // A wedge 2.6 wide at 1.5 px with its tip at 8.5 px along 30 degrees.
+    expect(rays[0]!.points[1]!.x).toBeCloseTo(8.5 * Math.cos(Math.PI / 6), 9);
+    expect(rays[0]!.points[1]!.y).toBeCloseTo(8.5 * Math.sin(Math.PI / 6), 9);
+    const base = rays[0]!.points;
+    expect(Math.hypot(base[2]!.x - base[0]!.x, base[2]!.y - base[0]!.y)).toBeCloseTo(2.6, 9);
     expect(ofKind(start, "disc")).toEqual([expect.objectContaining({ radius: 3.5 })]);
-    const later = spark(origin, 0, false, 0.3 * 160);
-    expect(ofKind(later, "line")[0]!.colour).toBe(EFFECT_COLOURS.cream);
-    expect(ofKind(later, "disc").filter(({ radius }) => radius === 1.1)).toHaveLength(3);
-    expect(ofKind(spark(origin, 0, false, 0.7 * 160), "line")).toHaveLength(0);
-    const turned = ofKind(spark(origin, Math.PI / 2, false, 0), "line")[0]!;
-    const unturned = ofKind(start, "line")[0]!;
-    expect(turned.to.x).toBeCloseTo(-unturned.to.y, 9);
-    expect(turned.to.y).toBeCloseTo(unturned.to.x, 9);
+    const later = spark(origin, 0, false, 0.4 * 160);
+    expect(ofKind(later, "polygon")[0]).toMatchObject({ alpha: 0.6, colour: EFFECT_COLOURS.cream });
+    const flecks = ofKind(later, "polygon").filter(({ colour }) => colour === EFFECT_COLOURS.amber);
+    expect(flecks).toHaveLength(3);
+    expect(flecks.every(({ alpha }) => alpha === 1)).toBe(true);
+    expect(ofKind(spark(origin, 0, false, 0.7 * 160), "polygon")).toHaveLength(3);
+    expect(ofKind(spark(origin, 0, false, 0.7 * 160), "polygon")[0]!.alpha).toBe(0.5);
+    const turned = ofKind(spark(origin, Math.PI / 2, false, 0), "polygon")[0]!.points[1]!;
+    const unturned = rays[0]!.points[1]!;
+    expect(turned.x).toBeCloseTo(-unturned.y, 9);
+    expect(turned.y).toBeCloseTo(unturned.x, 9);
     expect(spark(origin, 0, false, 160)).toEqual([]);
   });
 

@@ -114,6 +114,7 @@ import { readOutpostArt, readStationArt } from "./stationArt.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
+import { readWeaponSolids } from "./weaponEffects.ts";
 import {
   AMMO_PACK_FRAMES,
   HOLODISK_FRAMES,
@@ -254,6 +255,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "warpCover"
     | "warpPaint"
     | "warpScheme"
+    | "weaponSolids"
     | "whaleArt"
     | "whaleRequests"
     | "whirlpoolProjects"
@@ -369,6 +371,7 @@ export function buildScene(scene: UiContext): void {
   scene.stardustArt = readStardustArt(scene.shipAssets);
   scene.cacheArt = readCacheArt(scene.shipAssets);
   scene.upgradePickupArt = readUpgradePickup(manifest?.assets ?? []);
+  scene.weaponSolids = readWeaponSolids(manifest?.assets ?? []);
   scene.holodiskArt = readLoopArt(scene.shipAssets, "holodisk", HOLODISK_FRAMES);
   scene.ammoPackArt = readLoopArt(scene.shipAssets, "ammo-pack", AMMO_PACK_FRAMES);
   scene.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);

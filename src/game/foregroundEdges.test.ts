@@ -158,6 +158,7 @@ it("selects enemy beam boundary ink without replacing mine or signal fills", () 
     enemyWeaponsArt: art,
     light: true,
     mineInk: new Map(),
+    mineSprites: new Map(),
     project: (point: unknown) => point,
     reducedMotion: true,
   };

@@ -1072,6 +1072,12 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
               (s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
             (s.enemyWeapon === undefined ||
               (s.enemy && s.enemyWeapon === "ringBurst" && s.projectile === "bolt")) &&
+            (s.fan === undefined ||
+              (s.projectile === "bolt" &&
+                record(s.fan) &&
+                Number.isInteger(s.fan.count) &&
+                Number(s.fan.count) > 1 &&
+                vector(s.fan.origin))) &&
             (s.fade === undefined ||
               (s.projectile === "dot" &&
                 record(s.fade) &&

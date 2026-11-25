@@ -45012,6 +45012,1302 @@
       },
       "archetype": "hostileStation",
       "svgSheet": true
+    },
+    {
+      "id": "weapon-rapidMissile-0",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-0",
+      "directionIndex": 0,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-1",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-1",
+      "directionIndex": 1,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-2",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-2",
+      "directionIndex": 2,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-3",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-3",
+      "directionIndex": 3,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-4",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-4",
+      "directionIndex": 4,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-5",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-5",
+      "directionIndex": 5,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-6",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-6",
+      "directionIndex": 6,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-7",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-7",
+      "directionIndex": 7,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-8",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-8",
+      "directionIndex": 8,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-9",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-9",
+      "directionIndex": 9,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-10",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-10",
+      "directionIndex": 10,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-11",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-11",
+      "directionIndex": 11,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-12",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-12",
+      "directionIndex": 12,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-13",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-13",
+      "directionIndex": 13,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-14",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-14",
+      "directionIndex": 14,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-15",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-15",
+      "directionIndex": 15,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-16",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-16",
+      "directionIndex": 16,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-17",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-17",
+      "directionIndex": 17,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-18",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-18",
+      "directionIndex": 18,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-19",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-19",
+      "directionIndex": 19,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-20",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-20",
+      "directionIndex": 20,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-21",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-21",
+      "directionIndex": 21,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-22",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-22",
+      "directionIndex": 22,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-23",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-23",
+      "directionIndex": 23,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-24",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-24",
+      "directionIndex": 24,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-25",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-25",
+      "directionIndex": 25,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-26",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-26",
+      "directionIndex": 26,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-27",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-27",
+      "directionIndex": 27,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-28",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-28",
+      "directionIndex": 28,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-29",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-29",
+      "directionIndex": 29,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-30",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-30",
+      "directionIndex": 30,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-rapidMissile-31",
+      "path": "/art/weapons/rapid-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 56,
+      "displayWidth": 24.5,
+      "displayHeight": 24.5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-31",
+      "directionIndex": 31,
+      "projectile": "rapidMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-0",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-0",
+      "directionIndex": 0,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-1",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-1",
+      "directionIndex": 1,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-2",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-2",
+      "directionIndex": 2,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-3",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-3",
+      "directionIndex": 3,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-4",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-4",
+      "directionIndex": 4,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-5",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-5",
+      "directionIndex": 5,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-6",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-6",
+      "directionIndex": 6,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-7",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-7",
+      "directionIndex": 7,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-8",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-8",
+      "directionIndex": 8,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-9",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-9",
+      "directionIndex": 9,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-10",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-10",
+      "directionIndex": 10,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-11",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-11",
+      "directionIndex": 11,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-12",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-12",
+      "directionIndex": 12,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-13",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-13",
+      "directionIndex": 13,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-14",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-14",
+      "directionIndex": 14,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-15",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-15",
+      "directionIndex": 15,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-16",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-16",
+      "directionIndex": 16,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-17",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-17",
+      "directionIndex": 17,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-18",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-18",
+      "directionIndex": 18,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-19",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-19",
+      "directionIndex": 19,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-20",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-20",
+      "directionIndex": 20,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-21",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-21",
+      "directionIndex": 21,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-22",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-22",
+      "directionIndex": 22,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-23",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-23",
+      "directionIndex": 23,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-24",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-24",
+      "directionIndex": 24,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-25",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-25",
+      "directionIndex": 25,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-26",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-26",
+      "directionIndex": 26,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-27",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-27",
+      "directionIndex": 27,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-28",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-28",
+      "directionIndex": 28,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-29",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-29",
+      "directionIndex": 29,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-30",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-30",
+      "directionIndex": 30,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-heavyMissile-31",
+      "path": "/art/weapons/heavy-missile-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "world-31",
+      "directionIndex": 31,
+      "projectile": "heavyMissile"
+    },
+    {
+      "id": "weapon-mine-0",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 0,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-1",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 1,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-2",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 2,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-3",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 3,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-4",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 4,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-5",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 5,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-6",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 6,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-7",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 7,
+      "blink": false,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-0",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 0,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-1",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 1,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-2",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 2,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-3",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 3,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-4",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 4,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-5",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 5,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-6",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 6,
+      "blink": true,
+      "projectile": "mine"
+    },
+    {
+      "id": "weapon-mine-blink-7",
+      "path": "/art/weapons/mine-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "fixed",
+      "spinIndex": 7,
+      "blink": true,
+      "projectile": "mine"
     }
   ],
   "spacePalette": "/art/space-palette.json",

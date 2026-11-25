@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { impactFamily, type WeaponImpact } from "../model/weaponImpacts.ts";
-import { EFFECT_COLOURS, impactEffect, SPARK_MS } from "./weaponEffects.ts";
+import { EFFECT_COLOURS, IMPACT_STYLE, impactEffect, SPARK_MS } from "./weaponEffects.ts";
 
 const context = { at: { x: 100, y: 60 }, reducedMotion: false };
 const contact: WeaponImpact = { age: 0, family: "compact", id: "contact", x: 0, y: 0 };
@@ -51,45 +51,48 @@ describe("weapon impact families", () => {
     ).not.toEqual([]);
   });
 
-  it("staggers the player Phaser rings and fades each from its own start", () => {
-    const { amber, cream } = EFFECT_COLOURS;
-    expect(playerPhaser(0)).toEqual([
-      {
-        alpha: 1,
-        at: context.at,
-        colour: cream,
-        halfHeight: 2.75,
-        halfWidth: 2.75,
-        kind: "ellipse",
-        stroke: 1.5,
-      },
-    ]);
-    for (const [age, count] of [
-      [25, 1],
-      [26, 2],
-      [51, 2],
-      [52, 3],
-      [108, 2],
-      [134, 1],
-      [160, 0],
-    ] as const) {
-      expect(playerPhaser(age)).toHaveLength(count);
+  it("grows one cream Phaser contact ring in held alpha steps over a young burst and core", () => {
+    const { amber, cream, white } = EFFECT_COLOURS;
+    const [ring, star, core] = playerPhaser(0);
+    expect(ring).toEqual({
+      alpha: 1,
+      at: context.at,
+      colour: cream,
+      halfHeight: 3,
+      halfWidth: 3,
+      kind: "ellipse",
+      stroke: 3,
+    });
+    // A four-point amber burst along the incoming direction (screen right) and a white core.
+    expect(star).toMatchObject({ alpha: 1, colour: amber, kind: "polygon" });
+    if (star?.kind !== "polygon") {
+      throw Error("Phaser burst missing");
     }
-    const rings = playerPhaser(62);
-    expect(rings.map(({ colour }) => colour)).toEqual([cream, amber, cream]);
-    for (const [index, radius, opacity] of [
-      [0, 10.93, 0.5],
-      [1, 7.5, 0.665],
-      [2, 4.07, 0.72],
+    expect(star.points).toHaveLength(8);
+    expect(star.points[0]!.x).toBeCloseTo(context.at.x + 5.5, 9);
+    expect(star.points[0]!.y).toBeCloseTo(context.at.y, 9);
+    expect(core).toEqual({ alpha: 1, at: context.at, colour: white, kind: "disc", radius: 2.2 });
+    for (const [age, count, alpha] of [
+      [71, 3, 1],
+      [72, 1, 1],
+      [80, 1, 0.6],
+      [124, 1, 0.6],
+      [125, 1, 0.3],
+      [159, 1, 0.3],
     ] as const) {
-      const ring = rings[index];
-      if (ring?.kind !== "ellipse") {
-        throw Error("Phaser ring missing");
-      }
-      expect(ring).toMatchObject({ at: context.at, halfHeight: ring.halfWidth, stroke: 1.5 });
-      expect(ring.halfWidth).toBeCloseTo(radius);
-      expect(ring.alpha).toBeCloseTo(opacity);
+      const shapes = playerPhaser(age);
+      expect(shapes).toHaveLength(count);
+      expect(shapes[0]).toHaveProperty("alpha", alpha);
     }
+    expect(playerPhaser(160)).toEqual([]);
+    const half = playerPhaser(80)[0];
+    if (half?.kind !== "ellipse") {
+      throw Error("Phaser ring missing");
+    }
+    // At k 0.5 the ring reaches 3 + 13 x 0.75 and thins to 3 - 0.8.
+    expect(half.halfWidth).toBeCloseTo(12.75, 9);
+    expect(half.halfHeight).toBe(half.halfWidth);
+    expect(half.stroke).toBeCloseTo(2.2, 9);
   });
 
   it("holds a single stationary player Phaser ring under reduced motion", () => {
@@ -108,12 +111,27 @@ describe("weapon impact families", () => {
     expect(playerPhaser(136, true)).toEqual([]);
   });
 
-  it("requires actual Lance direction and rotates its concentrated streak", () => {
+  it("requires actual Lance direction and turns its white dart and cream burst to it", () => {
     expect(impactEffect(context, { ...contact, family: "lance" })).toEqual([]);
-    const render = (direction: { x: number; y: number }) =>
-      impactEffect(context, { ...contact, direction, family: "lance" })[0];
-    expect(render({ x: 1, y: -1 })).toMatchObject({ from: { x: 82, y: 60 }, kind: "line" });
-    expect(render({ x: 1, y: 1 })).toMatchObject({ from: { x: 100, y: 42 }, kind: "line" });
+    const render = (direction: { x: number; y: number }, age = 0) =>
+      impactEffect(context, { ...contact, age, direction, family: "lance" });
+    const tail = (direction: { x: number; y: number }, age = 0) => {
+      const dart = render(direction, age)[0];
+      if (dart?.kind !== "polygon") {
+        throw Error("Lance dart missing");
+      }
+      return dart.points[0]!;
+    };
+    const [dart, star] = render({ x: 1, y: -1 });
+    expect(dart).toMatchObject({ alpha: 1, colour: EFFECT_COLOURS.white, kind: "polygon" });
+    expect(star).toMatchObject({ alpha: 1, colour: EFFECT_COLOURS.cream, kind: "polygon" });
+    expect(tail({ x: 1, y: -1 }).x).toBeCloseTo(80, 9);
+    expect(tail({ x: 1, y: -1 }).y).toBeCloseTo(60, 9);
+    expect(tail({ x: 1, y: 1 }).x).toBeCloseTo(100, 9);
+    expect(tail({ x: 1, y: 1 }).y).toBeCloseTo(40, 9);
+    // Halfway it has shrunk to half and dropped to its 0.6 step.
+    expect(tail({ x: 1, y: -1 }, (SPARK_MS * 0.5) / 1000).x).toBeCloseTo(90, 9);
+    expect(render({ x: 1, y: -1 }, (SPARK_MS * 0.5) / 1000)[0]).toHaveProperty("alpha", 0.6);
   });
 
   it("expands ripples and shockwaves, holding their envelope under reduced motion", () => {
@@ -128,7 +146,7 @@ describe("weapon impact families", () => {
       }
       expect(later.halfWidth).toBeGreaterThan(early.halfWidth);
       const held = render(0, true);
-      const faded = render(0.03, true);
+      const faded = render(0.15, true);
       expect(held?.kind).toBe("ellipse");
       if (held?.kind !== "ellipse" || faded?.kind !== "ellipse") {
         throw Error("ring missing");
@@ -138,29 +156,31 @@ describe("weapon impact families", () => {
     }
   });
 
-  it("distinguishes Mine's two fronts and subtle fill from Ring's single ripple", () => {
+  it("draws Mine's amber ring over a cream ellipse, apart from Ring's single ripple", () => {
+    const { amber, cream } = EFFECT_COLOURS;
+    const life = (SPARK_MS * IMPACT_STYLE.shockwave.duration) / 1000;
     for (const reducedMotion of [false, true]) {
-      const render = (family: "ripple" | "shockwave") =>
-        impactEffect({ ...context, reducedMotion }, { ...contact, age: 0.04, family });
-      expect(render("ripple")).toHaveLength(1);
-      const shapes = render("shockwave");
-      expect(shapes).toHaveLength(3);
-      const rings = shapes.filter(
-        (shape) => shape.kind === "ellipse" && shape.stroke !== undefined,
-      );
-      const fill = shapes.find((shape) => shape.kind === "ellipse" && shape.stroke === undefined);
-      expect(rings).toHaveLength(2);
-      if (
-        rings[0]?.kind !== "ellipse" ||
-        rings[1]?.kind !== "ellipse" ||
-        fill?.kind !== "ellipse"
-      ) {
+      const render = (family: "ripple" | "shockwave", p: number) =>
+        impactEffect({ ...context, reducedMotion }, { ...contact, age: p * life, family });
+      expect(render("ripple", 0.1)).toHaveLength(1);
+      const [ring, inner] = render("shockwave", 0.1);
+      if (ring?.kind !== "ellipse" || inner?.kind !== "ellipse") {
         throw Error("shockwave layers missing");
       }
-      expect(rings[1].halfWidth).toBeLessThan(rings[0].halfWidth);
-      expect(fill.halfWidth).toBe(rings[0].halfWidth);
-      expect(fill.alpha).toBeGreaterThan(0);
-      expect(fill.alpha).toBeLessThan(rings[1].alpha);
+      expect(ring).toMatchObject({ alpha: 1, colour: amber, part: "ring" });
+      expect(ring.stroke).toBeCloseTo(2.4 - 0.12, 9);
+      expect(inner).toMatchObject({ alpha: 1, colour: cream });
+      expect(inner.stroke).toBeUndefined();
+      expect(inner.halfWidth).toBeCloseTo(ring.halfWidth * IMPACT_STYLE.shockwave.inner, 9);
+      for (const [p, ringAlpha, innerAlpha] of [
+        [0.35, 1, 0.6],
+        [0.55, 0.6, 0.6],
+        [0.8, 0.3, undefined],
+      ] as const) {
+        const [outer, fill] = render("shockwave", p);
+        expect(outer).toHaveProperty("alpha", ringAlpha);
+        expect((fill as { alpha: number } | undefined)?.alpha).toBe(innerAlpha);
+      }
     }
   });
 

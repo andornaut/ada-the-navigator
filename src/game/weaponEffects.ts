@@ -1,9 +1,12 @@
 import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import type { Vec } from "../model/types.ts";
 import type { WeaponImpact } from "../model/weaponImpacts.ts";
+import { shipDirection } from "./shipArt.ts";
 
-// Art's weapon effects (art/weapons.md) as screen-space shapes in logical px, for the scene to
-// fill and stroke. Each shape is a plain record, so the geometry and timing are testable.
+// Art's weapon effects in their flat look (art/weapons.md "Flat look") as screen-space shapes in
+// logical px, for the scene to fill and stroke: solid shapes in opaque flat tones, tapers made by
+// geometry and fades in held steps. Each shape is a plain record, so the geometry and timing are
+// testable. The missiles and the mine draw as Art's frames (`readWeaponSolids`).
 
 /** Art's effect colours: amber is the space palette's `weapon`. */
 export const EFFECT_COLOURS = {
@@ -14,11 +17,12 @@ export const EFFECT_COLOURS = {
 } as const;
 type Colour = number;
 
-/** A filled polygon at one alpha. */
+/** A filled polygon at one alpha. A blast marks its flash bursts by `part`. */
 export interface PolygonShape {
   readonly alpha: number;
   readonly colour: Colour;
   readonly kind: "polygon";
+  readonly part?: "flash";
   readonly points: readonly Vec[];
 }
 /** A quad from tail to head along one axis, full widths and alphas interpolated linearly. */
@@ -37,8 +41,8 @@ export interface DiscShape {
   readonly radius: number;
 }
 /**
- * An axis-aligned ellipse, filled or stroked at `stroke` px. A blast marks its ring stroke and
- * flash layers by `part`, which a light field edges in ink.
+ * An axis-aligned ellipse, filled or stroked at `stroke` px. A blast marks its ring stroke by
+ * `part`, which a light field edges in ink.
  */
 export interface EllipseShape {
   readonly alpha: number;
@@ -47,7 +51,7 @@ export interface EllipseShape {
   readonly halfHeight: number;
   readonly halfWidth: number;
   readonly kind: "ellipse";
-  readonly part?: "flash" | "ring";
+  readonly part?: "ring";
   readonly stroke?: number;
 }
 /** A straight stroke, with round caps when `round`. */
@@ -95,8 +99,220 @@ function frame(head: Vec, angle: number) {
     y: head.y + u * sin + v * cos,
   });
 }
-const mirror = (points: readonly (readonly [number, number])[]) =>
-  points.map(([u, v]) => [u, -v] as const);
+const degrees = (value: number) => (value * Math.PI) / 180;
+
+/** A polygon of `points` in a (u, v) frame. */
+function polygon(
+  at: (u: number, v: number) => Vec,
+  colour: Colour,
+  alpha: number,
+  points: readonly (readonly [number, number])[],
+): PolygonShape {
+  return { alpha, colour, kind: "polygon", points: points.map(([u, v]) => at(u, v)) };
+}
+
+/** The alpha of the first held step whose end `value` is under, else `last`. */
+export function heldAlpha(
+  value: number,
+  steps: readonly (readonly [number, number])[],
+  last: number,
+): number {
+  return steps.find(([until]) => value < until)?.[1] ?? last;
+}
+
+/**
+ * A star of `points` points about `at`, the first along `angle`: tips at `radius` and the
+ * notches between them at `waist` times it.
+ */
+export function burst(
+  at: Vec,
+  angle: number,
+  points: number,
+  radius: number,
+  waist: number,
+  colour: Colour,
+  alpha: number,
+): PolygonShape {
+  const corners: Vec[] = [];
+  for (let index = 0; index < points * 2; index++) {
+    const r = index % 2 === 0 ? radius : radius * waist;
+    const a = angle + (Math.PI * index) / points;
+    corners.push({ x: at.x + Math.cos(a) * r, y: at.y + Math.sin(a) * r });
+  }
+  return { alpha, colour, kind: "polygon", points: corners };
+}
+
+/** A wedge pointing out from `at` along `angle`: its base `width` across at `from`, tip at `to`. */
+function radialWedge(
+  at: Vec,
+  angle: number,
+  from: number,
+  to: number,
+  width: number,
+  colour: Colour,
+  alpha: number,
+): PolygonShape {
+  return polygon(frame(at, angle), colour, alpha, [
+    [from, -width / 2],
+    [to, 0],
+    [from, width / 2],
+  ]);
+}
+
+/** An annular sector about `at` from radius `inner` to `outer`, `half` radians either side. */
+function sector(
+  at: Vec,
+  angle: number,
+  inner: number,
+  outer: number,
+  half: number,
+  colour: Colour,
+  alpha: number,
+): PolygonShape {
+  const steps = 6;
+  const arc = (radius: number) =>
+    Array.from({ length: steps + 1 }, (_, index) => {
+      const a = angle - half + (2 * half * index) / steps;
+      return { x: at.x + Math.cos(a) * radius, y: at.y + Math.sin(a) * radius };
+    });
+  return { alpha, colour, kind: "polygon", points: [...arc(outer), ...arc(inner).reverse()] };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Bolt, pellet and fan
+
+/** The slug outlines in (u, v) logical px back from the head. */
+const SLUG = [
+  [0, 0],
+  [-2.7, -1.5],
+  [-14, -1.5],
+  [-15.5, 0],
+  [-14, 1.5],
+  [-2.7, 1.5],
+] as const;
+const SLUG_CORE = [
+  [-1.5, 0],
+  [-3.3, -0.675],
+  [-8.68, -0.675],
+  [-8.68, 0.675],
+  [-3.3, 0.675],
+] as const;
+/** The Laser bolt's tail step: 1.5 px wide from 14 to 27 px behind the head. */
+const SLUG_TAIL = { from: 14, to: 27, width: 1.5 } as const;
+/** A far Multi-Laser bolt: the slug scaled to 10 px long and 2.2 px wide. */
+const FAN_SLUG = { length: 10, width: 2.2 } as const;
+
+/**
+ * The Multi-Laser fan's wedge (art/weapons.md "Bolt, pellet and fan"): the head distance is the
+ * travel plus the shipped bolt's 29.7 px trail, and the wedge shows while neighbouring heads are
+ * under 5.6 px apart.
+ */
+export const FAN = {
+  amber: { halfDeg: 10, inset: 11, minInner: 4 },
+  cream: { halfDeg: 7, inner: 4, outerInset: 2.5 },
+  headStart: 29.7,
+  nearSpacing: 5.6,
+  spreadDeg: 16,
+} as const;
+
+/** The Laser bolt with its head at `head`, along screen `angle`: tail step, slug and core. */
+export function laserBolt(head: Vec, angle: number, alpha = 1): PolygonShape[] {
+  const at = frame(head, angle);
+  const { amber, cream } = EFFECT_COLOURS;
+  const half = SLUG_TAIL.width / 2;
+  return [
+    polygon(at, amber, alpha, [
+      [-SLUG_TAIL.from, -half],
+      [-SLUG_TAIL.to, -half],
+      [-SLUG_TAIL.to, half],
+      [-SLUG_TAIL.from, half],
+    ]),
+    polygon(at, amber, alpha, SLUG),
+    polygon(at, cream, alpha, SLUG_CORE),
+  ];
+}
+
+/** A far Multi-Laser bolt: an amber slug 10 px long and 2.2 px wide, with no core or tail. */
+export function fanBolt(head: Vec, angle: number, alpha = 1): PolygonShape {
+  const u = FAN_SLUG.length / -SLUG[2][0];
+  const v = FAN_SLUG.width / (2 * -SLUG[2][1]);
+  return polygon(
+    frame(head, angle),
+    EFFECT_COLOURS.amber,
+    alpha,
+    SLUG.map(([a, b]) => [a * u, b * v] as const),
+  );
+}
+
+/** The distance between neighbouring heads of an `count`-bolt fan at head distance `h`. */
+export function fanSpacing(h: number, count: number): number {
+  return h * Math.sin(degrees(FAN.spreadDeg / (count - 1)));
+}
+
+/**
+ * A Multi-Laser volley of `count` bolts fired from screen point `nose`, with its bolts still in
+ * flight at `heads` (screen points and world velocities): one amber wedge with a cream inner
+ * wedge while neighbouring heads are under 5.6 px apart, else each bolt as a far slug.
+ */
+export function fanVolley(
+  nose: Vec,
+  count: number,
+  heads: readonly { readonly at: Vec; readonly velocity: Vec }[],
+  alpha = 1,
+): PolygonShape[] {
+  if (heads.length === 0) {
+    return [];
+  }
+  const mean = {
+    x: heads.reduce((sum, { at }) => sum + at.x, 0) / heads.length,
+    y: heads.reduce((sum, { at }) => sum + at.y, 0) / heads.length,
+  };
+  const travel =
+    heads.reduce((sum, { at }) => sum + Math.hypot(at.x - nose.x, at.y - nose.y), 0) / heads.length;
+  const h = travel + FAN.headStart;
+  if (count < 2 || fanSpacing(h, count) >= FAN.nearSpacing) {
+    return heads.map(({ at, velocity }) => fanBolt(at, screenAngle(velocity), alpha));
+  }
+  const angle = Math.atan2(mean.y - nose.y, mean.x - nose.x);
+  const inner = Math.max(FAN.amber.minInner, h - FAN.amber.inset);
+  const { amber, cream } = FAN;
+  const shapes = [
+    sector(nose, angle, inner, h, degrees(amber.halfDeg), EFFECT_COLOURS.amber, alpha),
+  ];
+  const creamOuter = h - cream.outerInset;
+  const creamInner = inner + cream.inner;
+  if (creamOuter > creamInner) {
+    shapes.push(
+      sector(
+        nose,
+        angle,
+        creamInner,
+        creamOuter,
+        degrees(cream.halfDeg),
+        EFFECT_COLOURS.cream,
+        alpha,
+      ),
+    );
+  }
+  return shapes;
+}
+
+/** The Scattershot pellet: an amber disc lit by a cream disc 0.45 px up and left of its centre. */
+export function pellet(at: Vec, alpha = 1): DiscShape[] {
+  return [
+    { alpha, at, colour: EFFECT_COLOURS.amber, kind: "disc", radius: 1.7 },
+    {
+      alpha,
+      at: { x: at.x - 0.45, y: at.y - 0.45 },
+      colour: EFFECT_COLOURS.cream,
+      kind: "disc",
+      radius: 0.7,
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------------------------
+// Missiles and mine frames
 
 // The Rapid Missile's blast radius at every level tells its shots and blasts from the Heavy's.
 const RAPID_BLASTS = new Set(WEAPON_CATALOG.rapidMissile.map(({ blastRadius }) => blastRadius));
@@ -117,162 +333,182 @@ export function missileFrame(
   return reducedMotion ? 0 : Math.floor(nowMs / MISSILE_FRAME_MS[kind]) % 2 === 0 ? 0 : 1;
 }
 
-/** The Rapid Missile: a white dart with amber fins and a long thin amber streak. */
-export function rapidMissile(head: Vec, velocity: Vec, frameIndex: 0 | 1): EffectShape[] {
+/**
+ * Each missile's flat flame behind its frame (art/weapons.md "Missile and mine frames"): the tail
+ * `tail` px behind the nose, an amber wedge `width` px across and its length at heading 14 in
+ * flicker frames 0 and 1, with a cream wedge half as wide and half as long.
+ */
+export const MISSILE_FLAMES = {
+  heavy: { length: [16.8, 11.8], tail: 13.2, width: 5.6 },
+  rapid: { length: [12, 15], tail: 7, width: 2.6 },
+} as const;
+
+/** A missile's flame behind its tail, the nose at `head`, along world `velocity`. */
+export function missileFlame(
+  kind: "heavy" | "rapid",
+  head: Vec,
+  velocity: Vec,
+  frameIndex: 0 | 1,
+): PolygonShape[] {
+  const { length, tail, width } = MISSILE_FLAMES[kind];
   const at = frame(head, screenAngle(velocity));
-  const f = headingFactor(velocity);
-  const { amber, cream, white } = EFFECT_COLOURS;
-  const streakTail = -(6 + (frameIndex === 0 ? 20 : 23) * f);
-  const fin = [
-    [-4.6, -1.2],
-    [-7.6, -2.8],
-    [-7.6, -1.2],
-  ] as const;
-  const polygon = (colour: Colour, points: readonly (readonly [number, number])[]) =>
-    ({
-      alpha: 1,
-      colour,
-      kind: "polygon",
-      points: points.map(([u, v]) => at(u, v)),
-    }) as const;
+  const reach = length[frameIndex] * headingFactor(velocity);
+  const wedge = (colour: Colour, across: number, long: number) =>
+    polygon(at, colour, 1, [
+      [-tail, -across / 2],
+      [-(tail + long), 0],
+      [-tail, across / 2],
+    ]);
   return [
-    {
-      colour: amber,
-      head: { alpha: 0.85, at: at(-6, 0), width: 1.6 },
-      kind: "taper",
-      tail: { alpha: 0, at: at(streakTail, 0), width: 0.5 },
-    },
-    {
-      colour: cream,
-      head: { alpha: 0.9, at: at(-6, 0), width: 1 },
-      kind: "taper",
-      tail: { alpha: 0, at: at(-(6 + 6 * f), 0), width: 0.4 },
-    },
-    polygon(amber, fin),
-    polygon(amber, mirror(fin)),
-    polygon(white, [
-      [0, 0],
-      [-2.2, -1.2],
-      [-7, -1.2],
-      [-7, 1.2],
-      [-2.2, 1.2],
-    ]),
+    wedge(EFFECT_COLOURS.amber, width, reach),
+    wedge(EFFECT_COLOURS.cream, width / 2, reach / 2),
   ];
 }
 
-/** The Heavy Missile: a fat white body, amber warhead, cream band and fins, ink keyline, plume. */
-export function heavyMissile(head: Vec, velocity: Vec, frameIndex: 0 | 1): EffectShape[] {
-  const at = frame(head, screenAngle(velocity));
-  const f = headingFactor(velocity);
-  const { amber, cream, ink, white } = EFFECT_COLOURS;
-  const tail = 13.2 + (frameIndex === 0 ? 16.8 : 11.8) * f;
-  const polygon = (colour: Colour, points: readonly (readonly [number, number])[]) =>
-    ({
-      alpha: 1,
-      colour,
-      kind: "polygon",
-      points: points.map(([u, v]) => at(u, v)),
-    }) as const;
-  const keyFin = [
-    [-7.67, -2.53],
-    [-14.18, -6.82],
-    [-15.4, -6.59],
-    [-13.61, -1.99],
-  ] as const;
-  const fin = [
-    [-8.6, -2.9],
-    [-13.6, -6],
-    [-14.6, -6],
-    [-13.2, -2.9],
-  ] as const;
-  return [
-    {
-      colour: amber,
-      head: { alpha: 0.95, at: at(-13.2, 0), width: 6.4 },
-      kind: "taper",
-      tail: { alpha: 0, at: at(-tail, 0), width: 0 },
-    },
-    {
-      colour: cream,
-      head: { alpha: 1, at: at(-13.2, 0), width: 3.2 },
-      kind: "taper",
-      tail: { alpha: 0, at: at(-(13.2 + (tail - 13.2) / 2), 0), width: 0 },
-    },
-    { alpha: 1, at: at(-13.6, 0), colour: white, kind: "disc", radius: 1.6 },
-    polygon(ink, [
-      [1, 0],
-      [-0.65, -2.01],
-      [-3.52, -3.63],
-      [-12.87, -3.39],
-      [-14.14, -2.64],
-      [-14.14, 2.64],
-      [-12.87, 3.39],
-      [-3.52, 3.63],
-      [-0.65, 2.01],
-    ]),
-    polygon(ink, keyFin),
-    polygon(ink, mirror(keyFin)),
-    polygon(cream, fin),
-    polygon(cream, mirror(fin)),
-    polygon(white, [
-      [0, 0],
-      [-1.6, -1.7],
-      [-4.2, -2.9],
-      [-12, -2.9],
-      [-13.2, -2.3],
-      [-13.2, 2.3],
-      [-12, 2.9],
-      [-4.2, 2.9],
-      [-1.6, 1.7],
-    ]),
-    polygon(amber, [
-      [0, 0],
-      [-1.6, -1.7],
-      [-3.6, -2.75],
-      [-3.6, 2.75],
-      [-1.6, 1.7],
-    ]),
-    polygon(cream, [
-      [-6.4, -2.9],
-      [-7.6, -2.9],
-      [-7.6, 2.9],
-      [-6.4, 2.9],
-    ]),
-  ];
+/** The missiles' heading frames and the mine's spin frames, a quarter turn in eight steps. */
+export const MISSILE_HEADINGS = 32;
+export const MINE_SPIN = { degreesPerFrame: 11.25, frames: 8 } as const;
+
+/** One model's frame ids by heading or spin step, shown `width` by `height` about `pivot`. */
+export interface SolidFrames {
+  readonly height: number;
+  readonly ids: readonly string[];
+  readonly pivot: Vec;
+  readonly width: number;
 }
 
-/** Each blast's timing and strokes (art/weapons.md "Missile blasts"), in ms and px. */
-export const BLASTS = {
-  heavy: {
-    debris: 8,
-    flashSteps: [
-      { q: 0.95, s: 1, toMs: 30 },
-      { q: 0.6, s: 0.55, toMs: 60 },
+/** The core manifest's missile and mine frames (art/weapons.md "Missile and mine frames"). */
+export interface WeaponSolids {
+  readonly heavy: SolidFrames;
+  readonly mine: SolidFrames & { readonly blink: readonly string[] };
+  readonly rapid: SolidFrames;
+}
+
+type Row = Readonly<Record<string, unknown>>;
+
+/**
+ * Reads the missile and mine frames from the core manifest's assets: every Rapid and Heavy
+ * heading and every lit and blinking mine spin step, one display size per model. Undefined
+ * when any frame is missing or malformed.
+ */
+export function readWeaponSolids(assets: readonly object[]): WeaponSolids | undefined {
+  const model = (
+    member: (row: Row) => boolean,
+    count: number,
+    index: (row: Row) => unknown,
+  ): SolidFrames | undefined => {
+    const ids: (string | undefined)[] = Array.from({ length: count }, () => undefined);
+    let size: Omit<SolidFrames, "ids"> | undefined;
+    for (const row of (assets as readonly Row[]).filter(member)) {
+      const at = index(row);
+      const { displayHeight: height, displayWidth: width, id } = row;
+      const pivot = row.pivot as Partial<Vec> | undefined;
+      if (
+        typeof id !== "string" ||
+        typeof at !== "number" ||
+        !Number.isInteger(at) ||
+        at < 0 ||
+        at >= count ||
+        ids[at] !== undefined ||
+        typeof width !== "number" ||
+        typeof height !== "number" ||
+        !(width > 0 && height > 0) ||
+        typeof pivot?.x !== "number" ||
+        typeof pivot.y !== "number" ||
+        (size !== undefined &&
+          (size.width !== width ||
+            size.height !== height ||
+            size.pivot.x !== pivot.x ||
+            size.pivot.y !== pivot.y))
+      ) {
+        return undefined;
+      }
+      ids[at] = id;
+      size = { height, pivot: { x: pivot.x, y: pivot.y }, width };
+    }
+    const complete = ids.filter((id): id is string => id !== undefined);
+    return size && complete.length === count ? { ...size, ids: complete } : undefined;
+  };
+  const missile = (projectile: string) =>
+    model(
+      (row) => row.projectile === projectile,
+      MISSILE_HEADINGS,
+      (row) => row.directionIndex,
+    );
+  const mine = (blink: boolean) =>
+    model(
+      (row) => row.projectile === "mine" && row.blink === blink,
+      MINE_SPIN.frames,
+      (row) => row.spinIndex,
+    );
+  const rapid = missile("rapidMissile");
+  const heavy = missile("heavyMissile");
+  const lit = mine(false);
+  const blink = mine(true);
+  return rapid && heavy && lit && blink
+    ? { heavy, mine: { ...lit, blink: blink.ids }, rapid }
+    : undefined;
+}
+
+/** A missile's frame id for its world `velocity`: the nearest of the 32 headings. */
+export function missileSolid(solids: WeaponSolids, kind: "heavy" | "rapid", velocity: Vec): string {
+  return solids[kind].ids[shipDirection(MISSILE_HEADINGS, velocity)]!;
+}
+
+/** The mine's spin step for its spin angle in degrees: `floor(th / 11.25) mod 8`. */
+export function mineSpinStep(spinDegrees: number): number {
+  const step = Math.floor(spinDegrees / MINE_SPIN.degreesPerFrame) % MINE_SPIN.frames;
+  return (step + MINE_SPIN.frames) % MINE_SPIN.frames;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Missile blasts
+
+/**
+ * The blast every missile contact shares (art/weapons.md "Blast"), in ms and px: the envelope
+ * `r = R (1 - (1 - g)^3)` for `g = min(1, t / growMs)`, ending at `totalMs`; each alpha holds
+ * its value until the step's end. Reduced motion holds the ring at `R` with the same steps.
+ */
+export const BLAST = {
+  debris: {
+    count: 8,
+    from: 3.5,
+    startDeg: 22.5,
+    steps: [
+      [108, 1],
+      [220, 0.6],
     ],
-    growMs: 180,
-    kFlash: 0.34,
-    reduced: { ms: 300, stroke: 3 },
-    ring: [4, 1.5],
-    tint: 0.16,
-    totalMs: 340,
+    to: 10,
+    width: 3.2,
   },
-  rapid: {
-    debris: 0,
-    flashSteps: [
-      { q: 0.95, s: 1, toMs: 20 },
-      { q: 0.6, s: 0.55, toMs: 40 },
+  flash: {
+    core: 0.3,
+    cream: 0.66,
+    points: 8,
+    radius: 0.425,
+    steps: [
+      [30, 1],
+      [60, 0.55],
     ],
-    growMs: 110,
-    kFlash: 0.42,
-    reduced: { ms: 200, stroke: 2 },
-    ring: [2.5, 1],
-    tint: 0.14,
-    totalMs: 220,
+    turnDeg: 22.5,
+    waist: 0.62,
   },
+  growMs: 180,
+  inner: { from: 6, inset: 2.2, stroke: 1.2 },
+  reduced: { ms: 300, stroke: 3 },
+  ring: {
+    last: 0.33,
+    steps: [
+      [180, 1],
+      [260, 0.66],
+    ],
+    stroke: [4, 2],
+  },
+  totalMs: 340,
 } as const;
 
 /** How long a blast draws, the longer of its full and reduced effects. */
-export const BLAST_SECONDS = Math.max(BLASTS.heavy.totalMs, BLASTS.heavy.reduced.ms) / 1000;
+export const BLAST_SECONDS = Math.max(BLAST.totalMs, BLAST.reduced.ms) / 1000;
 
 // A ground-plane circle of world radius r draws as this ellipse about the impact point.
 const ground = (at: Vec, r: number) => ({
@@ -285,106 +521,93 @@ const circle = (at: Vec, r: number) => ({ at, halfHeight: r, halfWidth: r });
 
 /**
  * A missile blast `t` ms after detonation at screen point `at`, an on-screen circle of radius
- * `R` px: tint, ring, inner line, debris (Heavy) and one flash, all circular, played once; under
- * reduced motion, a static circular ring and tint at `R`, fading.
+ * `R` px: the amber ring and its cream inner line, eight cream debris wedges and one flash of
+ * an amber and a cream eight-point burst over a white core, played once; under reduced motion
+ * a still ring at `R`.
  */
 export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number): EffectShape[] {
-  return blastWithRecipe(BLASTS[missileKind(radius)], at, radius, reducedMotion, t);
-}
-
-function blastWithRecipe(
-  spec: (typeof BLASTS)[keyof typeof BLASTS],
-  at: Vec,
-  radius: number,
-  reducedMotion: boolean,
-  t: number,
-): EffectShape[] {
   const { amber, cream, white } = EFFECT_COLOURS;
+  const { debris, flash, inner, reduced, ring } = BLAST;
+  const ringAlpha = heldAlpha(t, ring.steps, ring.last);
   if (reducedMotion) {
-    if (t >= spec.reduced.ms) {
-      return [];
-    }
-    const a = 1 - t / spec.reduced.ms;
-    return [
-      { ...circle(at, radius), alpha: 0.15 * a, colour: amber, kind: "ellipse" },
-      {
-        ...circle(at, radius),
-        alpha: 0.9 * a,
-        colour: amber,
-        kind: "ellipse",
-        part: "ring",
-        stroke: spec.reduced.stroke,
-      },
-    ];
+    return t >= reduced.ms
+      ? []
+      : [
+          {
+            ...circle(at, radius),
+            alpha: ringAlpha,
+            colour: amber,
+            kind: "ellipse",
+            part: "ring",
+            stroke: reduced.stroke,
+          },
+        ];
   }
-  if (t >= spec.totalMs) {
+  if (t >= BLAST.totalMs) {
     return [];
   }
-  const g = Math.min(1, t / spec.growMs);
+  const g = Math.min(1, t / BLAST.growMs);
   const r = Math.max(0.5, radius * (1 - (1 - g) ** 3));
-  const a = t <= spec.growMs ? 1 : 1 - (t - spec.growMs) / (spec.totalMs - spec.growMs);
   const shapes: EffectShape[] = [
     {
       ...circle(at, r),
-      alpha: spec.tint * (1 - t / spec.totalMs) ** 2,
-      colour: amber,
-      kind: "ellipse",
-    },
-    {
-      ...circle(at, r),
-      alpha: a,
+      alpha: ringAlpha,
       colour: amber,
       kind: "ellipse",
       part: "ring",
-      stroke: spec.ring[0] + (spec.ring[1] - spec.ring[0]) * (t / spec.totalMs),
+      stroke: ring.stroke[0] + ((ring.stroke[1] - ring.stroke[0]) * t) / BLAST.totalMs,
     },
   ];
-  if (r > 6) {
+  if (r > inner.from) {
     shapes.push({
-      ...circle(at, r - 2.2),
-      alpha: 0.8 * a,
+      ...circle(at, r - inner.inset),
+      alpha: ringAlpha,
       colour: cream,
       kind: "ellipse",
-      stroke: 1,
+      stroke: inner.stroke,
     });
   }
-  const debrisMs = spec.growMs + 40;
-  if (spec.debris && t < debrisMs) {
-    for (let i = 0; i < spec.debris; i++) {
-      const th = (2 * Math.PI * i) / spec.debris + 0.3;
-      const n = { x: Math.cos(th), y: Math.sin(th) };
-      const from = { x: at.x + (r + 3) * n.x, y: at.y + (r + 3) * n.y };
-      shapes.push({
-        alpha: 1 - t / debrisMs,
-        colour: cream,
-        from,
-        kind: "line",
-        round: true,
-        to: { x: from.x + 6 * n.x, y: from.y + 6 * n.y },
-        width: 1.5,
-      });
+  const debrisAlpha = heldAlpha(t, debris.steps, 0);
+  if (debrisAlpha > 0) {
+    for (let index = 0; index < debris.count; index++) {
+      shapes.push(
+        radialWedge(
+          at,
+          degrees(debris.startDeg + (360 * index) / debris.count),
+          r + debris.from,
+          r + debris.to,
+          debris.width,
+          cream,
+          debrisAlpha,
+        ),
+      );
     }
   }
-  const step = spec.flashSteps.find(({ toMs }) => t < toMs);
-  if (step) {
-    const fr = radius * spec.kFlash * step.s;
-    for (const [scale, colour, alpha] of [
-      [1.25, amber, 0.3],
-      [1, amber, 0.85],
-      [0.66, cream, 1],
-      [0.36, white, 1],
-    ] as const) {
-      shapes.push({
-        ...circle(at, fr * scale),
-        alpha: alpha * step.q,
-        colour,
-        kind: "ellipse",
+  const size = flash.steps.find(([until]) => t < until)?.[1];
+  if (size !== undefined) {
+    const outer = radius * flash.radius * size;
+    shapes.push(
+      { ...burst(at, 0, flash.points, outer, flash.waist, amber, 1), part: "flash" },
+      {
+        ...burst(
+          at,
+          degrees(flash.turnDeg),
+          flash.points,
+          outer * flash.cream,
+          flash.waist,
+          cream,
+          1,
+        ),
         part: "flash",
-      });
-    }
+      },
+      { alpha: 1, at, colour: white, kind: "disc", radius: outer * flash.core },
+    );
   }
   return shapes;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Beams
 
 export const BEAM_MS = BEAM.flashSeconds * 1000;
 export const SPARK_MS = BEAM.sparkSeconds * 1000;
@@ -396,7 +619,7 @@ const BEAM_KEYS = [
   { a: 1, ms: 70, w: 1 },
   { a: 0, ms: BEAM_MS, w: 0.4 },
 ] as const;
-/** A miss fades every layer over its last this many px. */
+/** A miss tapers every band to a point over its last this many px. */
 export const BEAM_MISS_FADE = 28;
 
 /** The beam's width factor `w` and alpha `a` at `t` ms, linear between keys. */
@@ -414,43 +637,42 @@ export function beamKeys(t: number): { a: number; w: number } {
   return { a: from.a + (to.a - from.a) * k, w: from.w + (to.w - from.w) * k };
 }
 
-// A taper from u0 to u1 along the beam, widths and alphas given at each end, with round caps.
-function beamLayer(
-  colour: Colour,
-  along: (u: number) => Vec,
-  length: number,
-  widths: readonly [number, number],
-  alpha: number,
-  fadeLength: number,
-): EffectShape[] {
-  const width = (u: number) => widths[0] + ((widths[1] - widths[0]) * u) / length;
-  const solidEnd = Math.max(0, length - fadeLength);
-  const shapes: EffectShape[] = [
-    { alpha, at: along(0), colour, kind: "disc", radius: width(0) / 2 },
-    {
-      colour,
-      head: { alpha, at: along(solidEnd), width: width(solidEnd) },
-      kind: "taper",
-      tail: { alpha, at: along(0), width: width(0) },
-    },
-  ];
-  if (fadeLength > 0) {
-    shapes.push({
-      colour,
-      head: { alpha: 0, at: along(length), width: width(length) },
-      kind: "taper",
-      tail: { alpha, at: along(solidEnd), width: width(solidEnd) },
-    });
-  } else {
-    shapes.push({ alpha, at: along(length), colour, kind: "disc", radius: width(length) / 2 });
-  }
-  return shapes;
+/** One alpha for every beam band from keyed alpha `a`: 1 over 0.6, 0.6 over 0.3, else 0.3. */
+export function beamAlpha(a: number): number {
+  return a > 0.6 ? 1 : a > 0.3 ? 0.6 : 0.3;
 }
 
 /**
- * The beam's outermost layers, which a light field turns to ink (art/galaxies.md "Light
- * fields"): the glow taper's start and end widths in `w` and alpha in `a`, the bloom's outer disc
- * radius in `w` and alpha in `a`, and the reduced-motion edge's alpha in `a`.
+ * An opaque beam band from `from` along screen `angle` for `length` px, its width running from
+ * `widths[0]` at the nose to `widths[1]` at the end, with butt ends; a miss tapers it to a
+ * point over its last `taper` px.
+ */
+export function beamBand(
+  from: Vec,
+  angle: number,
+  length: number,
+  widths: readonly [number, number],
+  taper: number,
+  colour: Colour,
+  alpha: number,
+): PolygonShape {
+  const width = (u: number) => widths[0] + ((widths[1] - widths[0]) * u) / length;
+  const side = (u: number, sign: number) => [u, (sign * width(u)) / 2] as const;
+  const end = length - taper;
+  return polygon(
+    frame(from, angle),
+    colour,
+    alpha,
+    taper > 0
+      ? [side(0, -1), side(end, -1), [length, 0], side(end, 1), side(0, 1)]
+      : [side(0, -1), side(length, -1), side(length, 1), side(0, 1)],
+  );
+}
+
+/**
+ * The beam's outermost band and bloom disc, which a light field turns to ink (art/galaxies.md
+ * "Light fields"): the band's start and end widths in `w` and alpha share, the bloom's outer
+ * disc radius in `w` and alpha share, and the reduced-motion edge's alpha share.
  */
 export interface BeamGlow {
   readonly bloom: { readonly alpha: number; readonly radius: number };
@@ -459,13 +681,19 @@ export interface BeamGlow {
   readonly glow: { readonly alpha: number; readonly width: readonly [number, number] };
 }
 
-/** The beam's amber glow on a dark field (art/weapons.md "Phaser beam"). */
+/** The beam's opaque amber band and bloom on a dark field (art/weapons.md "Beams"). */
 export const AMBER_BEAM_GLOW: BeamGlow = {
-  bloom: { alpha: 0.3, radius: 5 },
+  bloom: { alpha: 1, radius: 5 },
   colour: EFFECT_COLOURS.amber,
   edgeAlpha: 0.35,
-  glow: { alpha: 0.38, width: [8, 5] },
+  glow: { alpha: 1, width: [8, 5] },
 };
+
+/** The Phaser beam's cream and white bands and bloom discs, in px times `w`. */
+const PHASER_BANDS = {
+  cream: { bloom: 3.1, width: [4.6, 2.8] },
+  white: { bloom: 1.6, width: [2.2, 1.3] },
+} as const;
 
 /**
  * The Phaser beam `t` ms after firing, from the screen nose point to the contact (hit) or the
@@ -481,7 +709,7 @@ export function beam(
   return glowingBeam(AMBER_BEAM_GLOW, from, to, hit, reducedMotion, t);
 }
 
-/** The Phaser beam with the given outer glow: amber on a dark field, ink on a light one. */
+/** The Phaser beam with the given outer band: amber on a dark field, ink on a light one. */
 export function glowingBeam(
   glow: BeamGlow,
   from: Vec,
@@ -497,84 +725,65 @@ export function glowingBeam(
   if (length === 0) {
     return [];
   }
-  const at = frame(from, Math.atan2(to.y - from.y, to.x - from.x));
-  const along = (u: number) => at(u, 0);
-  const fade = hit ? 0 : Math.min(BEAM_MISS_FADE, length);
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const taper = hit ? 0 : Math.min(BEAM_MISS_FADE, length);
   const { cream, white } = EFFECT_COLOURS;
+  const band = (widths: readonly [number, number], colour: Colour, alpha: number) =>
+    beamBand(from, angle, length, widths, taper, colour, alpha);
   if (reducedMotion) {
-    const a = t <= 90 ? 1 : 1 - (t - 90) / (BEAM_MS - 90);
-    const steady = (colour: Colour, width: number, alpha: number): EffectShape[] => {
-      const solidEnd = length - fade;
-      const shapes: EffectShape[] = [
-        {
-          colour,
-          head: { alpha, at: along(solidEnd), width },
-          kind: "taper",
-          tail: { alpha, at: along(0), width },
-        },
-      ];
-      if (fade > 0) {
-        shapes.push({
-          colour,
-          head: { alpha: 0, at: along(length), width },
-          kind: "taper",
-          tail: { alpha, at: along(solidEnd), width },
-        });
-      }
-      return shapes;
-    };
+    const alpha = beamAlpha(t <= 90 ? 1 : 1 - (t - 90) / (BEAM_MS - 90));
+    const edge = BEAM.halfWidth * 2;
     return [
-      ...steady(glow.colour, BEAM.halfWidth * 2, glow.edgeAlpha * a),
-      ...steady(cream, BEAM.halfWidth, a),
+      band([edge, edge], glow.colour, glow.edgeAlpha * alpha),
+      band([BEAM.halfWidth, BEAM.halfWidth], cream, alpha),
     ];
   }
   const { a, w } = beamKeys(t);
-  const [start, end] = glow.glow.width;
-  const widthScale = (BEAM.halfWidth * 2) / AMBER_BEAM_GLOW.glow.width[0];
+  const alpha = beamAlpha(a);
+  const scaled = ([start, end]: readonly [number, number]) => [start * w, end * w] as const;
   return [
-    ...beamLayer(
-      glow.colour,
-      along,
-      length,
-      [start * widthScale * w, end * widthScale * w],
-      glow.glow.alpha * a,
-      fade,
-    ),
-    ...beamLayer(
-      cream,
-      along,
-      length,
-      [BEAM.halfWidth * w, BEAM.halfWidth * 0.6 * w],
-      0.95 * a,
-      fade,
-    ),
-    ...beamLayer(
-      white,
-      along,
-      length,
-      [BEAM.halfWidth * 0.45 * w, BEAM.halfWidth * 0.25 * w],
-      a,
-      fade,
-    ),
+    band(scaled(glow.glow.width), glow.colour, glow.glow.alpha * alpha),
+    band(scaled(PHASER_BANDS.cream.width), cream, alpha),
+    band(scaled(PHASER_BANDS.white.width), white, alpha),
     {
-      alpha: glow.bloom.alpha * a,
+      alpha: glow.bloom.alpha * alpha,
       at: from,
       colour: glow.colour,
       kind: "disc",
       radius: glow.bloom.radius * w,
     },
-    { alpha: 0.9 * a, at: from, colour: cream, kind: "disc", radius: 2.9 * w },
-    { alpha: a, at: from, colour: white, kind: "disc", radius: 1.6 * w },
+    { alpha, at: from, colour: cream, kind: "disc", radius: PHASER_BANDS.cream.bloom * w },
+    { alpha, at: from, colour: white, kind: "disc", radius: PHASER_BANDS.white.bloom * w },
   ];
 }
 
-const degrees = (value: number) => (value * Math.PI) / 180;
-const SPARK_RAYS = [-150, -95, -35, 25, 80, 140].map(degrees);
-const SPARK_FLECKS = [-120, -10, 100].map(degrees);
+// ---------------------------------------------------------------------------------------------
+// Hit sparks and contacts
 
 /**
- * The beam's hit spark `t` ms after a hit, centred on the contact and rotated by the beam's
- * screen angle: rays, core and flecks; under reduced motion an unrotated cream ring.
+ * The hit spark (art/weapons.md "Hit spark") in logical px before its family's scale: six ray
+ * wedges about the incoming axis, a white core and three amber fleck diamonds.
+ */
+const SPARK = {
+  core: { radius: 3, rest: 0.5, untilP: 0.35 },
+  flecks: { degrees: [60, 180, 300], distance: 6, fromP: 0.2, reach: 5, size: 3 },
+  rays: {
+    base: 2.6,
+    degrees: [30, 90, 150, 210, 270, 330],
+    from: [1.5, 5],
+    to: [8.5, 3],
+    untilP: 0.6,
+    whiteUntilP: 0.25,
+  },
+} as const;
+
+/** A four-point burst's notches sit at this share of its tips, as the quantum jump star's do. */
+const FOUR_POINT_WAIST = 0.3;
+
+/**
+ * The beam's hit spark `t` ms after a hit, centred on the contact and turned to the incoming
+ * screen angle: ray wedges, core and fleck diamonds; under reduced motion an unrotated cream
+ * ring.
  */
 export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number): EffectShape[] {
   if (t >= SPARK_MS) {
@@ -595,38 +804,47 @@ export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number)
       },
     ];
   }
-  const point = (direction: number, radius: number): Vec => ({
-    x: at.x + Math.cos(angle + direction) * radius,
-    y: at.y + Math.sin(angle + direction) * radius,
-  });
   const shapes: EffectShape[] = [];
-  if (p < 0.6) {
-    const k = p / 0.6;
-    for (const ray of SPARK_RAYS) {
-      shapes.push({
-        alpha: 1 - 0.6 * k,
-        colour: p < 0.25 ? white : cream,
-        from: point(ray, 1.5 + 5 * k),
-        kind: "line",
-        round: true,
-        to: point(ray, 7.5 + 3 * k),
-        width: 1.5,
-      });
+  const { core, flecks, rays } = SPARK;
+  if (p < rays.untilP) {
+    const k = p / rays.untilP;
+    for (const ray of rays.degrees) {
+      shapes.push(
+        radialWedge(
+          at,
+          angle + degrees(ray),
+          rays.from[0] + rays.from[1] * k,
+          rays.to[0] + rays.to[1] * k,
+          rays.base,
+          p < rays.whiteUntilP ? white : cream,
+          k < 0.5 ? 1 : 0.6,
+        ),
+      );
     }
   }
-  if (p < 0.35) {
-    shapes.push({ alpha: 1, at, colour: white, kind: "disc", radius: 3 * (1 - p / 0.35) + 0.5 });
+  if (p < core.untilP) {
+    shapes.push({
+      alpha: 1,
+      at,
+      colour: white,
+      kind: "disc",
+      radius: core.radius * (1 - p / core.untilP) + core.rest,
+    });
   }
-  if (p > 0.2) {
-    const m = (p - 0.2) / 0.8;
-    for (const fleck of SPARK_FLECKS) {
-      shapes.push({
-        alpha: 1 - m,
-        at: point(fleck, 6 + 5 * (1 - (1 - m) ** 2)),
-        colour: amber,
-        kind: "disc",
-        radius: 1.1,
-      });
+  if (p >= flecks.fromP) {
+    const m = (p - flecks.fromP) / (1 - flecks.fromP);
+    const half = flecks.size / 2;
+    for (const fleck of flecks.degrees) {
+      const direction = angle + degrees(fleck);
+      const centre = frame(at, direction)(flecks.distance + flecks.reach * (1 - (1 - m) ** 2), 0);
+      shapes.push(
+        polygon(frame(centre, direction), amber, m < 0.5 ? 1 : 0.5, [
+          [half, 0],
+          [0, -half],
+          [-half, 0],
+          [0, half],
+        ]),
+      );
     }
   }
   return shapes;
@@ -636,10 +854,10 @@ export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number)
 export const IMPACT_STYLE = {
   compact: { alpha: 0.8, duration: 0.8, scale: 0.75 },
   compactBright: { alpha: 1, duration: 1, scale: 0.75 },
-  lance: { duration: 1, length: 18, width: 2 },
+  lance: { duration: 1 },
   pellet: { alpha: 0.8, duration: 0.4, scale: 0.35 },
   ripple: { duration: 1, radius: 12 },
-  shockwave: { duration: 1.8, fillAlpha: 0.12, innerAlpha: 0.55, innerRadius: 0.65, radius: 16 },
+  shockwave: { duration: 1.8, inner: 0.55, radius: 16 },
 } as const;
 
 function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape): EffectShape {
@@ -694,13 +912,18 @@ function scaleImpact(at: Vec, scale: number, alpha: number, shape: EffectShape):
   };
 }
 
-const PHASER_CONTACT_RINGS = [
-  { colour: EFFECT_COLOURS.cream, peak: 1, start: 0 },
-  { colour: EFFECT_COLOURS.amber, peak: 0.85, start: 26 },
-  { colour: EFFECT_COLOURS.cream, peak: 0.72, start: 52 },
+/** Held alpha steps for a contact ring: 1 to 0.5 of its life, 0.6 to 0.78, then 0.3. */
+const CONTACT_RING_STEPS = [
+  [0.5, 1],
+  [0.78, 0.6],
 ] as const;
 
-function phaserContactRings(at: Vec, reducedMotion: boolean, age: number): EllipseShape[] {
+/**
+ * Ada's Phaser contact `age` ms after the hit (art/weapons.md "Beams"): one cream ring growing
+ * from 3 to 16 px and thinning from 3 to 1.4 px over 160 ms, with a four-point amber burst and
+ * a white core while it is young; under reduced motion one still ring.
+ */
+function phaserContact(at: Vec, angle: number, reducedMotion: boolean, age: number): EffectShape[] {
   if (reducedMotion) {
     return age < 136
       ? [
@@ -714,23 +937,32 @@ function phaserContactRings(at: Vec, reducedMotion: boolean, age: number): Ellip
         ]
       : [];
   }
-  const rings: EllipseShape[] = [];
-  for (const { colour, peak, start } of PHASER_CONTACT_RINGS) {
-    const elapsed = age - start;
-    if (elapsed >= 0 && elapsed < 108) {
-      rings.push({
-        ...circle(at, 2.75 + (14.25 * elapsed) / 108),
-        alpha: peak * Math.min(1, (108 - elapsed) / 92),
-        colour,
-        kind: "ellipse",
-        stroke: 1.5,
-      });
-    }
+  const k = age / SPARK_MS;
+  if (k >= 1) {
+    return [];
   }
-  return rings;
+  const shapes: EffectShape[] = [
+    {
+      ...circle(at, 3 + 13 * (1 - (1 - k) ** 2)),
+      alpha: heldAlpha(k, CONTACT_RING_STEPS, 0.3),
+      colour: EFFECT_COLOURS.cream,
+      kind: "ellipse",
+      stroke: 3 - 1.6 * k,
+    },
+  ];
+  if (k < 0.45) {
+    shapes.push(burst(at, angle, 4, 5.5 * (1 - k), FOUR_POINT_WAIST, EFFECT_COLOURS.amber, 1), {
+      alpha: 1,
+      at,
+      colour: EFFECT_COLOURS.white,
+      kind: "disc",
+      radius: 2.2 * (1 - k),
+    });
+  }
+  return shapes;
 }
 
-/** Existing procedural shapes for a contact; projects direction once and never infers family. */
+/** The procedural shapes for a contact; projects direction once and never infers family. */
 export function impactEffect(
   context: { readonly at: Vec; readonly reducedMotion: boolean },
   impact: Pick<WeaponImpact, "age" | "blastRadius" | "direction" | "family">,
@@ -742,13 +974,13 @@ export function impactEffect(
   }
   if (impact.family === "missile") {
     return impact.blastRadius !== undefined && impact.blastRadius > 0
-      ? blastWithRecipe(BLASTS.heavy, at, impact.blastRadius, reducedMotion, t)
+      ? blast(at, impact.blastRadius, reducedMotion, t)
       : [];
   }
-  if (impact.family === "phaserRings") {
-    return phaserContactRings(at, reducedMotion, t);
-  }
   const angle = impact.direction ? screenAngle(impact.direction) : 0;
+  if (impact.family === "phaserRings") {
+    return phaserContact(at, angle, reducedMotion, t);
+  }
   if (
     impact.family === "compact" ||
     impact.family === "compactBright" ||
@@ -760,61 +992,72 @@ export function impactEffect(
     );
   }
   if (impact.family === "lance") {
-    if (!impact.direction || t >= SPARK_MS * IMPACT_STYLE.lance.duration) {
+    const p = t / (SPARK_MS * IMPACT_STYLE.lance.duration);
+    if (!impact.direction || p >= 1) {
       return [];
     }
-    const alpha = 1 - t / (SPARK_MS * IMPACT_STYLE.lance.duration);
     if (reducedMotion) {
       return spark(at, angle, true, t);
     }
-    const point = frame(at, angle);
+    // A white dart along the incoming direction under a cream four-point burst, both shrinking.
+    const a = 1 - p;
+    const alpha = p < 0.5 ? 1 : 0.6;
     return [
-      {
-        alpha,
-        colour: EFFECT_COLOURS.white,
-        from: point(-IMPACT_STYLE.lance.length * alpha, 0),
-        kind: "line",
-        round: true,
-        to: point(4 * alpha, 0),
-        width: IMPACT_STYLE.lance.width * alpha,
-      },
-      { alpha, at, colour: EFFECT_COLOURS.cream, kind: "disc", radius: 2 * alpha },
+      polygon(frame(at, angle), EFFECT_COLOURS.white, alpha, [
+        [-20 * a, 0],
+        [0, -2.2 * a],
+        [4 * a, 0],
+        [0, 2.2 * a],
+      ]),
+      burst(at, angle, 4, 4.5 * a, FOUR_POINT_WAIST, EFFECT_COLOURS.cream, alpha),
     ];
   }
-  if (impact.family === "ripple" || impact.family === "shockwave") {
-    const style = IMPACT_STYLE[impact.family];
+  if (impact.family === "ripple") {
+    const style = IMPACT_STYLE.ripple;
     const p = t / (SPARK_MS * style.duration);
     if (p >= 1) {
       return [];
     }
     const radius = (impact.blastRadius ?? style.radius) * (reducedMotion ? 1 : 0.2 + 0.8 * p);
-    const outer: EllipseShape = {
-      ...ground(at, radius),
-      alpha: 1 - p,
-      colour: EFFECT_COLOURS.amber,
-      kind: "ellipse",
-      part: "ring",
-      stroke: 1.5,
-    };
-    if (impact.family === "ripple") {
-      return [outer];
-    }
-    const shockwave = IMPACT_STYLE.shockwave;
     return [
       {
         ...ground(at, radius),
-        alpha: shockwave.fillAlpha * (1 - p) ** 2,
+        alpha: 1 - p,
         colour: EFFECT_COLOURS.amber,
         kind: "ellipse",
-      },
-      outer,
-      {
-        ...outer,
-        ...ground(at, radius * shockwave.innerRadius),
-        alpha: shockwave.innerAlpha * (1 - p),
-        stroke: 1,
+        part: "ring",
+        stroke: 1.5,
       },
     ];
+  }
+  if (impact.family === "shockwave") {
+    // An amber ground ring thinning from 2.4 px over a cream ellipse 0.55 of its size until
+    // p 0.6; reduced motion holds both at the full radius.
+    const style = IMPACT_STYLE.shockwave;
+    const p = t / (SPARK_MS * style.duration);
+    if (p >= 1) {
+      return [];
+    }
+    const radius = (impact.blastRadius ?? style.radius) * (reducedMotion ? 1 : 0.2 + 0.8 * p);
+    const shapes: EffectShape[] = [
+      {
+        ...ground(at, radius),
+        alpha: heldAlpha(p, CONTACT_RING_STEPS, 0.3),
+        colour: EFFECT_COLOURS.amber,
+        kind: "ellipse",
+        part: "ring",
+        stroke: 2.4 - 1.2 * p,
+      },
+    ];
+    if (p < 0.6) {
+      shapes.push({
+        ...ground(at, radius * style.inner),
+        alpha: p < 0.3 ? 1 : 0.6,
+        colour: EFFECT_COLOURS.cream,
+        kind: "ellipse",
+      });
+    }
+    return shapes;
   }
   return [];
 }

@@ -3,7 +3,7 @@ import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetLayer, readJetLayers, readLevelLayers } from "./shipJets.ts";
-import type { BeamGlow, EffectShape, EllipseShape } from "./weaponEffects.ts";
+import type { BeamGlow, EffectShape } from "./weaponEffects.ts";
 
 // Art's light-field rule (art/galaxies.md "Light fields"): on a galaxy whose field is light,
 // play objects sit in ink keylines, effects draw over ink edges and the outermost glows turn to
@@ -229,37 +229,18 @@ export function thresholdSilhouette(
 }
 
 /**
- * A blast's ink edges on a light field: its ring stroke 2 `grow` wider on the same path, and a
- * `grow` px outline just outside the flash's outermost layer, each at its shape's alpha. The tint
- * fill, the inner line and the debris take none.
+ * A blast's ink edges on a light field: its ring stroke 2 `grow` wider on the same path, and its
+ * flash's outermost burst grown by `grow`, each at its shape's alpha. The inner line and the
+ * debris take none.
  */
 export function blastEdges(
   ink: number,
   grow: number,
   shapes: readonly EffectShape[],
 ): EffectShape[] {
-  const edges: EffectShape[] = [];
-  let flash: EllipseShape | undefined;
-  for (const shape of shapes) {
-    if (shape.kind !== "ellipse") {
-      continue;
-    }
-    if (shape.part === "ring" && shape.stroke !== undefined) {
-      edges.push(...inkEdges(ink, grow, [shape]));
-    } else if (shape.part === "flash" && (!flash || shape.halfWidth > flash.halfWidth)) {
-      flash = shape;
-    }
-  }
-  if (flash) {
-    edges.push({
-      ...flash,
-      colour: ink,
-      halfHeight: flash.halfHeight + grow / 2,
-      halfWidth: flash.halfWidth + grow / 2,
-      stroke: grow,
-    });
-  }
-  return edges;
+  const rings = shapes.filter((shape) => shape.kind === "ellipse" && shape.part === "ring");
+  const flash = shapes.find((shape) => shape.kind === "polygon" && shape.part === "flash");
+  return inkEdges(ink, grow, flash ? [...rings, flash] : rings);
 }
 
 /** The ink keyline's eight offsets: a square kernel `grow` px wide. */

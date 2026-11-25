@@ -100,6 +100,8 @@ export interface Shot extends Vec {
   /** World radius of a player missile's blast, which damages every enemy in it. */
   blast?: number;
   fade?: ProjectileFade;
+  /** A Multi-Laser bolt's volley, for drawing only. */
+  fan?: import("./playerProjectiles.ts").BoltFan;
   id: string;
   velocity: Vec;
   enemy: boolean;

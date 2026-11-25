@@ -322,6 +322,27 @@ describe("combat save boundary", () => {
     ).toBeNull();
   });
 
+  it("restores a Multi-Laser bolt's fan, rejecting a malformed one", () => {
+    const snapshot = combatSnapshot();
+    const bolt = { ...snapshot.flight.shots[0]!, enemy: false, projectile: "bolt" as const };
+    const withShot = (shot: object) =>
+      JSON.stringify({ ...snapshot, flight: { ...snapshot.flight, shots: [shot] } });
+    const fan = { count: 5, origin: { x: 3, y: -4 } };
+    expect(restoreSave(withShot({ ...bolt, fan }))?.flight?.shots[0]?.fan).toEqual(fan);
+    for (const malformed of [
+      { count: 1, origin: { x: 0, y: 0 } },
+      { count: 2.5, origin: { x: 0, y: 0 } },
+      { count: 3, origin: { x: "0", y: 0 } },
+      { count: 3 },
+    ]) {
+      expect(restoreSave(withShot({ ...bolt, fan: malformed }))).toBeNull();
+    }
+    // Only a bolt belongs to a fan.
+    const missile = { ...bolt, blast: 30, projectile: "missile" };
+    expect(restoreSave(withShot(missile))).not.toBeNull();
+    expect(restoreSave(withShot({ ...missile, fan }))).toBeNull();
+  });
+
   it("rejects a saved heavy whose hardpoints are another position's mounts", () => {
     // Sunflower's capital carries four weapons; Phantom's carries eight.
     const snapshot = combatSnapshot();

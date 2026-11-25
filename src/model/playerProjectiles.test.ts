@@ -36,6 +36,20 @@ describe("pure player projectile volleys", () => {
     },
   );
 
+  it("marks each Multi-Laser bolt with its volley's count and fire point, and nothing else", () => {
+    for (const level of [0, 1, 2] as const) {
+      const bolts = planPlayerVolley(WEAPON_CATALOG.multiLaser[level], context).projectiles;
+      expect(bolts.map(({ fan }) => fan)).toEqual(
+        bolts.map(() => ({ count: bolts.length, origin: context.origin })),
+      );
+    }
+    for (const weapon of ["laser", "scattershot", "rapidMissile", "heavyMissile"] as const) {
+      for (const shot of planPlayerVolley(WEAPON_CATALOG[weapon][2], context).projectiles) {
+        expect(shot.fan).toBeUndefined();
+      }
+    }
+  });
+
   it("gives bolts and dots no blast and refuses the hitscan Phaser", () => {
     for (const weapon of ["laser", "multiLaser", "scattershot"] as const) {
       for (const shot of planPlayerVolley(WEAPON_CATALOG[weapon][0], context).projectiles) {

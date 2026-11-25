@@ -19,10 +19,17 @@ export interface ProjectileFade {
   /** Weapon-relative range used for lifetime, excluding inherited launch velocity. */
   readonly projectedRange: number;
 }
+/** A bolt fired in a fan of several: the volley's bolt count and its world fire point. */
+export interface BoltFan {
+  readonly count: number;
+  readonly origin: Vec;
+}
 export interface PlayerProjectile extends Vec {
   readonly blast?: number;
   readonly damage: number;
   readonly fade?: ProjectileFade;
+  /** Presentation only: the fan a bolt belongs to, which draws as one wedge while it is close. */
+  readonly fan?: BoltFan;
   readonly life: number;
   readonly projectile: Exclude<WeaponDefinition["projectileKind"], "beam">;
   readonly velocity: Vec;
@@ -102,6 +109,11 @@ export function planPlayerVolley(
   }
   const speed = context.baseSpeed * definition.speedRatio;
   const damage = context.baseDamage * definition.damageRatio;
+  const count = definition.anglesDegrees.length;
+  const fan =
+    definition.projectileKind === "bolt" && count > 1
+      ? { fan: { count, origin: { x: context.origin.x, y: context.origin.y } } }
+      : {};
   const projectiles = definition.anglesDegrees.map((degrees): PlayerProjectile => {
     const heading = fanHeading(context.aim, degrees);
     return {
@@ -120,6 +132,7 @@ export function planPlayerVolley(
         speed,
         context.baseLifetime,
       ),
+      ...fan,
       projectile: definition.projectileKind as PlayerProjectile["projectile"],
       velocity: {
         x: heading.x * speed + (context.inheritedVelocity?.x ?? 0),

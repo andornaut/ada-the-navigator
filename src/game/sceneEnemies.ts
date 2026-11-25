@@ -502,7 +502,10 @@ export function enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
  * Art's enemy-only weapon effects and the enemy Phaser in the effect layer, each over its ink
  * edges on a light field; each mine sorts with the play objects by its centre's screen y.
  */
-export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView): void {
+export function drawEnemyWeapons(
+  scene: EnemiesContext & Pick<GameScene, "mineSprites" | "weaponSolids">,
+  view: EnemyWeaponsView,
+): void {
   const art = scene.enemyWeaponsArt;
   const used = new Set<string>();
   if (art) {
@@ -544,22 +547,62 @@ export function drawEnemyWeapons(scene: EnemiesContext, view: EnemyWeaponsView):
     for (const tell of view.phasers) {
       draw(enemyPhaser(edgeArt, screen(tell), light, motion));
     }
+    // Each mine's frame sorts with the play objects by its centre, under its own hint arc,
+    // flecks or pop; on a light field the frame takes the ink keyline.
     for (const dropped of view.mines) {
       const centre = scene.project(dropped.at);
+      const depth = playDepth(centre.y);
       let graphics = scene.mineInk.get(dropped.id);
       if (!graphics) {
         graphics = scene.add.graphics();
         scene.mineInk.set(dropped.id, graphics);
       }
-      graphics.clear().setDepth(playDepth(centre.y)).setVisible(true);
-      draw(mine(art, centre, dropped, motion), graphics);
+      graphics
+        .clear()
+        .setDepth(depth + 1e-7)
+        .setVisible(true);
+      const effect = mine(art, centre, dropped, motion);
+      draw(effect, graphics);
       used.add(dropped.id);
+      const frames = scene.weaponSolids?.mine;
+      const solid = effect.solid;
+      const texture = solid && frames && (solid.blink ? frames.blink : frames.ids)[solid.step];
+      if (!solid || !frames || !texture || !scene.textures.exists(texture)) {
+        continue;
+      }
+      let sprite = scene.mineSprites.get(dropped.id);
+      if (!sprite) {
+        sprite = scene.add.image(0, 0, texture);
+        scene.mineSprites.set(dropped.id, sprite);
+      }
+      sprite
+        .setTexture(texture)
+        .setOrigin(frames.pivot.x, frames.pivot.y)
+        .setDisplaySize(frames.width * solid.scale, frames.height * solid.scale)
+        .setPosition(centre.x, centre.y)
+        .setDepth(depth)
+        .setAlpha(solid.alpha)
+        .setVisible(true);
+      if (light) {
+        scene.keyed.push({
+          depth: undefined,
+          key: `mine:${dropped.id}`,
+          sprite,
+          width: art.lightField.edge,
+        });
+      }
     }
   }
   for (const [id, graphics] of scene.mineInk) {
     if (!used.has(id)) {
       graphics.destroy();
       scene.mineInk.delete(id);
+    }
+  }
+  for (const [id, sprite] of scene.mineSprites) {
+    if (!used.has(id)) {
+      sprite.destroy();
+      scene.mineSprites.delete(id);
     }
   }
 }

@@ -23,6 +23,7 @@ import { layerColor } from "./shipJets.ts";
 import {
   AMBER_BEAM_GLOW,
   beam,
+  beamAlpha,
   beamKeys,
   blast,
   EFFECT_COLOURS,
@@ -231,26 +232,19 @@ describe("light-field rule", () => {
     ]);
   });
 
-  it("edges a blast's ring stroke and its flash's outline in ink, never the tint fill", () => {
+  it("edges a blast's ring stroke and its outer flash burst in ink, never the debris", () => {
     const at = { x: 0, y: 0 };
     const shapes = blast(at, 60, false, 10);
-    const tint = shapes[0]!;
     const ring = shapes.find((shape) => shape.kind === "ellipse" && shape.part === "ring")!;
-    const flash = shapes.filter((shape) => shape.kind === "ellipse" && shape.part === "flash");
-    expect(tint).toMatchObject({ kind: "ellipse" });
-    expect(tint).not.toHaveProperty("stroke");
-    expect(flash).toHaveLength(4);
-    const outer = flash[0]!;
-    expect(blastEdges(INK, 1, shapes)).toEqual([
-      { ...ring, colour: INK, stroke: (ring as { stroke: number }).stroke + 2 },
-      {
-        ...outer,
-        colour: INK,
-        halfHeight: (outer as { halfHeight: number }).halfHeight + 0.5,
-        halfWidth: (outer as { halfWidth: number }).halfWidth + 0.5,
-        stroke: 1,
-      },
-    ]);
+    const flash = shapes.filter((shape) => shape.kind === "polygon" && shape.part === "flash");
+    expect(flash).toHaveLength(2);
+    expect(shapes.some((shape) => shape.kind === "polygon" && shape.part === undefined)).toBe(true);
+    expect(blastEdges(INK, 1, shapes)).toEqual(inkEdges(INK, 1, [ring, flash[0]!]));
+    expect(blastEdges(INK, 1, shapes)[0]).toEqual({
+      ...ring,
+      colour: INK,
+      stroke: (ring as { stroke: number }).stroke + 2,
+    });
     // After the flash, and under reduced motion, only the ring takes an edge.
     expect(blastEdges(INK, 1, blast(at, 60, false, 150))).toHaveLength(1);
     expect(blastEdges(INK, 1, blast(at, 60, true, 10))).toEqual([
@@ -319,26 +313,33 @@ describe("light-field rule", () => {
     });
   });
 
-  it("turns the Phaser's amber glow and outer bloom to ink, leaving body and core", () => {
+  it("turns the Phaser's amber band and outer bloom to ink, leaving cream and white", () => {
     const from = { x: 0, y: 0 };
     const to = { x: 100, y: 0 };
     const t = 40;
     const { a, w } = beamKeys(t);
+    const alpha = beamAlpha(a);
     const dark = beam(from, to, true, false, t);
     const light = glowingBeam(LIGHT_FIELD.phaser, from, to, true, false, t);
     expect(dark).toEqual(glowingBeam(AMBER_BEAM_GLOW, from, to, true, false, t));
     expect(light).toHaveLength(dark.length);
-    // The glow layer: a start cap, a taper and an end cap.
-    const glow = light.slice(0, 3);
-    expect(glow.every((shape) => shape.colour === INK)).toBe(true);
-    expect(glow[1]).toMatchObject({
-      head: { alpha: 0.9 * a, width: 6 * w },
-      kind: "taper",
-      tail: { alpha: 0.9 * a, width: 9.75 * w },
-    });
+    // The outer band: ink at the light field's widths and alpha share.
+    const band = light[0]!;
+    if (band.kind !== "polygon") {
+      throw Error("ink band missing");
+    }
+    expect(band).toMatchObject({ alpha: 0.9 * alpha, colour: INK });
+    expect(band.points[0]!.y).toBeCloseTo((-6.5 * w) / 2, 9);
+    expect(band.points[1]!.y).toBeCloseTo((-4 * w) / 2, 9);
     const bloom = light.at(-3);
-    expect(bloom).toEqual({ alpha: 0.6 * a, at: from, colour: INK, kind: "disc", radius: 5 * w });
-    expect(light.slice(3, -3)).toEqual(dark.slice(3, -3));
+    expect(bloom).toEqual({
+      alpha: 0.6 * alpha,
+      at: from,
+      colour: INK,
+      kind: "disc",
+      radius: 5 * w,
+    });
+    expect(light.slice(1, -3)).toEqual(dark.slice(1, -3));
     expect(light.slice(-2)).toEqual(dark.slice(-2));
     expect(dark[0]!.colour).toBe(EFFECT_COLOURS.amber);
   });
@@ -347,12 +348,11 @@ describe("light-field rule", () => {
     const from = { x: 0, y: 0 };
     const to = { x: 100, y: 0 };
     const [edge, ...rest] = glowingBeam(LIGHT_FIELD.phaser, from, to, true, true, 0);
-    expect(edge).toMatchObject({
-      colour: INK,
-      head: { alpha: 0.9, width: 12 },
-      kind: "taper",
-      tail: { alpha: 0.9, width: 12 },
-    });
+    if (edge?.kind !== "polygon") {
+      throw Error("ink edge missing");
+    }
+    expect(edge).toMatchObject({ alpha: 0.9, colour: INK });
+    expect(edge.points[3]!.y - edge.points[0]!.y).toBeCloseTo(12, 9);
     expect(rest).toEqual(beam(from, to, true, true, 0).slice(1));
   });
 });
