@@ -277,7 +277,11 @@ keylines. The visible-art sets (`tools/browser-captures-batch.mjs`) are `fleet`,
 `stations-whirlpool-needle`, `stations-andromeda-phantom`, `pickups`,
 `landmarks`, `needle`, `craft`, `backdrops`, `ship`, `weapons`, `weapons-flat`,
 `effects` and `controls`. `resources` captures the Stardust and ore pickups on a
-dark and a light field and every UI view that draws their icons. Each fixture is a canonical save. The flight is held still
+dark and a light field and every UI view that draws their icons. The nose sets
+(`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,
+`nose-heavy-missile` and `nose-phaser`) fire one weapon into open space at
+headings 0 to 56 of 64 in steps of 8: Ada's idle hull, then the first four
+frames after the trigger. Each fixture is a canonical save. The flight is held still
 until every enemy and rock in view draws Art's frames (`data-enemies` and
 `data-asteroids` on `#game-status`). Frames are then taken at stepped times on a
 paused page clock. A capture run fails only on a page error, a failed request or

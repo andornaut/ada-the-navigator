@@ -796,14 +796,13 @@ export function batchCaptures(ctx) {
     });
   }
 
-  /** A flight with `weapon` equipped and a retaliator held to Ada's screen right. */
-  function armed(weapon, level = 1, galaxy = 1) {
+  /** A flight in `galaxy` with nothing in view and `weapon` equipped, Ada facing `facing`. */
+  function equipped(facing, level, weapon, galaxy = 1) {
     const model = flightModel(galaxy);
     const flight = model.state.flight;
     flight.objects = [];
-    const right = toWorld({ x: 1, y: 0 });
-    const length = Math.hypot(right.x, right.y);
-    flight.facing = { x: right.x / length, y: right.y / length };
+    const length = Math.hypot(facing.x, facing.y);
+    flight.facing = { x: facing.x / length, y: facing.y / length };
     // The laser is always aboard and needs no ammo.
     if (weapon !== "laser") {
       flight.ownedWeapons = [...new Set([...flight.ownedWeapons, weapon])];
@@ -812,6 +811,11 @@ export function batchCaptures(ctx) {
     flight.weapon = weapon;
     flight.levels.weapons = { ...flight.levels.weapons, [weapon]: level };
     flight.fireCooldown = 0;
+    return model;
+  }
+  /** A flight with `weapon` equipped and a retaliator held to Ada's screen right. */
+  function armed(weapon, level = 1, galaxy = 1) {
+    const model = equipped(toWorld({ x: 1, y: 0 }), level, weapon, galaxy);
     addEnemy(model, {
       archetype: "retaliator",
       id: "browser-art:target",
@@ -819,6 +823,22 @@ export function batchCaptures(ctx) {
     });
     return model;
   }
+  // Where Ada's shots leave her hull: each weapon fired into open space at eight of the 64
+  // headings, her idle hull first, then each of the first four frames after the trigger.
+  const NOSE_HEADINGS = [0, 8, 16, 24, 32, 40, 48, 56];
+  const noseSet = (weapon, level) => () =>
+    inTurn(NOSE_HEADINGS, async (heading) => {
+      const angle = (heading * 2 * Math.PI) / 64;
+      const model = equipped({ x: Math.cos(angle), y: Math.sin(angle) }, level, weapon);
+      const name = `nose-${weapon}-${heading}`;
+      await open(canonical(model, name));
+      const page = ctx.page();
+      await ctx.frames(`${name}-idle`);
+      await ctx.release();
+      await page.keyboard.down("Space");
+      await ctx.frames(name, { after: 17, every: 17, shots: 4 });
+      await page.keyboard.up("Space");
+    });
   // Ada's weapons in their flat look, each fired once at a held retaliator, with the missiles'
   // frames and blasts; then the Phantom capital's mines held in their spin frames.
   async function weapons() {
@@ -1065,6 +1085,12 @@ export function batchCaptures(ctx) {
     hostile,
     landmarks,
     needle,
+    "nose-heavy-missile": noseSet("heavyMissile", 1),
+    "nose-laser": noseSet("laser", 1),
+    "nose-multi-laser": noseSet("multiLaser", 3),
+    "nose-phaser": noseSet("phaser", 1),
+    "nose-rapid-missile": noseSet("rapidMissile", 1),
+    "nose-scattershot": noseSet("scattershot", 1),
     pickups,
     resources,
     ship,
