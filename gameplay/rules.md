@@ -1538,8 +1538,8 @@ apply to the planner's output.
   salvage. Each salvage site has its own exclusion zone, and enemy groups avoid
   it as they avoid a required hull: a circle around the wreck reaching twice the
   900-world-unit local admission radius beyond the wreck's footprint. Rocks
-  keep the usual 20-world-unit gap from the wreck's footprint. The local
-  admission budget check does not apply to salvage wrecks
+  keep the usual 20-world-unit gap from the wreck's footprint. Local admission
+  (budget, archetype limit and capital count) does not apply to salvage wrecks
   ([Ships](ships.md#ambient-admission)).
 - Flight lanes stay: a static rock lies inside one chunk quadrant, 20 world
   units (the corridor half width) clear of the quadrant boundaries. Feature

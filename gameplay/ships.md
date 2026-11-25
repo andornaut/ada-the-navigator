@@ -410,9 +410,9 @@ salvaged ships do not. One nonstacking local allowance adds two slots near a
 capital ship or a hostile station. Multiple qualifying ships and stations never
 add more than two slots, and friendly stations do not qualify.
 
-The local admission budget check does not apply to salvage wrecks. A salvage
-site's disabled frigate is placed without fitting the local budget and then
-counts as a disabled hull toward other groups' budgets; its exclusion zone keeps
+Local admission does not apply to salvage wrecks: no budget, archetype limit or
+capital count check. A salvage site's disabled frigate is placed without those
+checks and then counts as a disabled hull toward other groups' budgets; its exclusion zone keeps
 ambient groups out of its neighbourhood
 ([Spawn targets](rules.md#spawn-targets)).
 
