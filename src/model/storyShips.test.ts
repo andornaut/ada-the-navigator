@@ -171,15 +171,15 @@ describe("Cartwheel story ships", () => {
       }
       if (bay) {
         const settled = ship(ships, "visitor-2")!;
-        expect(shipDirection(16, settled.heading)).toBe(11);
+        expect(shipDirection(16, settled.heading)).toBe(8);
         for (const elapsed of [7.51, 8, 8.49, 9.99]) {
           const approaching = ship(
             storyShips(hub, { stage: 5 }, docking, scene, scene.at + elapsed),
             "visitor-2",
           )!;
-          expect(shipDirection(16, approaching.heading)).toBe(11);
+          expect(shipDirection(16, approaching.heading)).toBe(8);
         }
-        expect(shipDirection(16, ship(ending, "visitor-2")!.heading)).toBe(11);
+        expect(shipDirection(16, ship(ending, "visitor-2")!.heading)).toBe(8);
       }
     }
     // Without nose data a pivot stays on its berth point.
@@ -188,26 +188,28 @@ describe("Cartwheel story ships", () => {
       x: hub.x + docked.hub.miner.at.x,
       y: hub.y + docked.hub.miner.at.y,
     });
-    // Art's berths at the hub scale 1.25, world units from the hub pivot (art/destinations.md).
+    // Art's berths at the hub scale 1.25, world units from the hub pivot: the large wheel's rim
+    // 83.895 display px to each side (art/station-redesign.md).
     const close = (point: Vec, x: number, y: number) => {
       expect(point.x).toBeCloseTo(x, 3);
       expect(point.y).toBeCloseTo(y, 3);
     };
-    close(docked.hub.miner.at, -4.699, 49.237);
-    close(docked.hub["visitor-1"].at, 49.237, -4.699);
+    close(docked.hub.miner.at, -41.9475, 41.9475);
+    close(docked.hub["visitor-1"].at, 41.9475, -41.9475);
     // Both funded overlay frames author the matching berth at the selected display scale.
     const bay = docked.bay["visitor-2"];
     for (const id of ["outpost-hub-bay-a", "outpost-hub-bay-b"]) {
       const frame = manifest.assets.find((asset) => asset.id === id)!;
       expect(frame.berths).toHaveLength(1);
       const berth = frame.berths![0]!;
+      // The row's pivot is the hub's (0.5, 168 / 288) rounded to five places.
       expect(bay.at.x - bay.at.y).toBeCloseTo(
         (berth.x / frame.width - frame.pivot.x) * frame.displayWidth!,
-        9,
+        2,
       );
       expect((bay.at.x + bay.at.y) / 2).toBeCloseTo(
         (berth.y / frame.height - frame.pivot.y) * frame.displayHeight!,
-        9,
+        2,
       );
       const dx = bay.heading.x - bay.heading.y;
       const dy = (bay.heading.x + bay.heading.y) / 2;

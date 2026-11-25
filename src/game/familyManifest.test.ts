@@ -470,13 +470,14 @@ describe("source-family manifest readiness", () => {
   });
 
   it.each([
-    ["/art/outposts/outposts-sheet.svg", sunflower, false],
-    ["/art/andromeda/hamlet-sheet.svg", andromeda, true],
-    ["/art/andromeda/settlers-school-sheet.svg", andromeda, true],
-    ["/art/phantom/settlements-sheet.svg", phantom, true],
+    ["/art/sunflower/growers-leaf-sheet.svg", sunflower],
+    ["/art/cartwheel/wheel-hub-sheet.svg", cartwheel],
+    ["/art/andromeda/hamlet-saucer-sheet.svg", andromeda],
+    ["/art/andromeda/saucer-school-sheet.svg", andromeda],
+    ["/art/phantom/homes-triarm-sheet.svg", phantom],
   ] as const)(
-    "loads station sheet %s at its authored dimensions",
-    (path, manifest, displaySized) => {
+    "loads station sheet %s at its raw frame or its row's intrinsic size",
+    (path, manifest) => {
       const f = fixture();
       const assets = (manifest.assets as readonly Asset[]).filter((asset) => asset.path === path);
       expect(assets.length).toBeGreaterThan(0);
@@ -488,15 +489,7 @@ describe("source-family manifest readiness", () => {
       f.documents.set(sheet, document);
       f.events.emit(`filecomplete-xml-${sheet}`, sheet, "xml", document);
       expect(fail).not.toHaveBeenCalled();
-      expect(f.extract.mock.calls).toEqual(
-        assets.map((asset) => [
-          document,
-          path,
-          displaySized
-            ? { ...asset, intrinsicHeight: asset.displayHeight, intrinsicWidth: asset.displayWidth }
-            : asset,
-        ]),
-      );
+      expect(f.extract.mock.calls).toEqual(assets.map((asset) => [document, path, asset]));
     },
   );
 

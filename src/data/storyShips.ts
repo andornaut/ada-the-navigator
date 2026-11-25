@@ -94,12 +94,13 @@ const VISITOR_2 = moored(BUOYS.visitors, "back", 14);
 export const HUB_DISPLAY_SCALE = 0.4375 * 1.25;
 
 /**
- * The hub's two berths (art/cartwheel.md "Hub") as world offsets from its pivot: frame px from
- * the 240 px frame's pivot (0.5, 0.5625), at the hub's display scale.
+ * The hub's two berths (art/station-redesign.md "Pivots, docks and berths") as world offsets
+ * from its pivot: frame px from the 360 by 288 px frame's pivot (0.5, 0.58333), at the hub's
+ * display scale. They are the large wheel's rim at its screen left and right.
  */
 const at = (x: number, y: number) =>
-  screenToWorld((x - 120) * HUB_DISPLAY_SCALE, (y - 135) * HUB_DISPLAY_SCALE);
-const HUB_BERTHS = { left: at(21.374, 175.72), right: at(218.626, 175.72) };
+  screenToWorld((x - 180) * HUB_DISPLAY_SCALE, (y - 168) * HUB_DISPLAY_SCALE);
+const HUB_BERTHS = { left: at(26.592, 168), right: at(333.408, 168) };
 
 /** A dock at its frame px, facing into it: opposite its outward screen direction, in world. */
 function dock(x: number, y: number, outward: readonly [number, number]): StoryDock {
@@ -123,17 +124,18 @@ export interface StoryDock {
 }
 
 /**
- * The hub's two berths and the second docking bay's berth (art/cartwheel.md "Hub" and "World
- * changes"), each with its outward screen direction.
+ * The hub's two berths and the second docking bay's berth on the hub's frame
+ * (art/station-redesign.md "Pivots, docks and berths"), each with its outward screen direction.
+ * The bay stands off the large wheel's rim at 0 degrees, the lower right on screen.
  */
 const DOCKS = {
   bay: {
-    ...dock(108, 194.571, [-0.612, 0.791]),
+    ...dock(346.277, 264, [0.866, 0.5]),
     approach: { at: 7.5, distance: 50 },
     standOff: 7,
   },
-  left: dock(21.374, 175.72, [-0.924, 0.382]),
-  right: dock(218.626, 175.72, [0.924, 0.382]),
+  left: dock(26.592, 168, [-1, 0]),
+  right: dock(333.408, 168, [1, 0]),
 } as const;
 
 /** Without the second bay the second visitor has no berth and waits at its buoy. */

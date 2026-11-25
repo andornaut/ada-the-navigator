@@ -7193,30 +7193,30 @@
     },
     {
       "id": "station-a",
-      "path": "/art/station-sheet.svg",
-      "width": 280,
-      "height": 220,
-      "displayWidth": 183.75,
-      "displayHeight": 144.375,
+      "path": "/art/station-bloom-sheet.svg",
+      "width": 272,
+      "height": 256,
+      "displayWidth": 178.5,
+      "displayHeight": 168,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.45
+        "y": 0.3125
       },
       "frameMs": 700,
       "svgSheet": true
     },
     {
       "id": "station-b",
-      "path": "/art/station-sheet.svg",
-      "width": 280,
-      "height": 220,
-      "displayWidth": 183.75,
-      "displayHeight": 144.375,
+      "path": "/art/station-bloom-sheet.svg",
+      "width": 272,
+      "height": 256,
+      "displayWidth": 178.5,
+      "displayHeight": 168,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.45
+        "y": 0.3125
       },
       "frameMs": 700,
       "svgSheet": true

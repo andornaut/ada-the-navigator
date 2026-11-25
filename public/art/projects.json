@@ -17,8 +17,8 @@
       "frames": ["outpost-workshop-crane-a", "outpost-workshop-crane-b"],
       "anchors": [
         {
-          "x": 0,
-          "y": 0,
+          "x": 79.179,
+          "y": 45.714,
           "layer": "front",
           "phase": 0
         }
@@ -55,9 +55,9 @@
       "frames": ["station-settlers-school-a", "station-settlers-school-b"],
       "anchors": [
         {
-          "x": -123.033,
-          "y": -19.033,
-          "layer": "behind",
+          "x": -194.093,
+          "y": 0,
+          "layer": "front",
           "phase": 0
         }
       ]

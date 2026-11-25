@@ -12867,79 +12867,81 @@
     },
     {
       "id": "whirlpool-station-0",
-      "path": "/art/whirlpool/station-sheet.svg",
-      "width": 304,
-      "height": 208,
-      "displayWidth": 199.5,
-      "displayHeight": 136.5,
+      "path": "/art/whirlpool/ramp-station-sheet.svg",
+      "width": 328,
+      "height": 224,
+      "displayWidth": 215.25,
+      "displayHeight": 147,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.42411
       },
       "frameMs": 350,
       "destination": "station",
       "frameIndex": 0,
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 136.5
+      "intrinsicWidth": 215.25,
+      "intrinsicHeight": 147
     },
     {
       "id": "whirlpool-station-1",
-      "path": "/art/whirlpool/station-sheet.svg",
-      "width": 304,
-      "height": 208,
-      "displayWidth": 199.5,
-      "displayHeight": 136.5,
+      "path": "/art/whirlpool/ramp-station-sheet.svg",
+      "width": 328,
+      "height": 224,
+      "displayWidth": 215.25,
+      "displayHeight": 147,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.42411
       },
       "frameMs": 350,
       "destination": "station",
       "frameIndex": 1,
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 136.5
+      "intrinsicWidth": 215.25,
+      "intrinsicHeight": 147,
+      "svgSheetMember": "whirlpool-station-0"
     },
     {
       "id": "whirlpool-station-2",
-      "path": "/art/whirlpool/station-sheet.svg",
-      "width": 304,
-      "height": 208,
-      "displayWidth": 199.5,
-      "displayHeight": 136.5,
+      "path": "/art/whirlpool/ramp-station-sheet.svg",
+      "width": 328,
+      "height": 224,
+      "displayWidth": 215.25,
+      "displayHeight": 147,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.42411
       },
       "frameMs": 350,
       "destination": "station",
       "frameIndex": 2,
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 136.5
+      "intrinsicWidth": 215.25,
+      "intrinsicHeight": 147
     },
     {
       "id": "whirlpool-station-3",
-      "path": "/art/whirlpool/station-sheet.svg",
-      "width": 304,
-      "height": 208,
-      "displayWidth": 199.5,
-      "displayHeight": 136.5,
+      "path": "/art/whirlpool/ramp-station-sheet.svg",
+      "width": 328,
+      "height": 224,
+      "displayWidth": 215.25,
+      "displayHeight": 147,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.42411
       },
       "frameMs": 350,
       "destination": "station",
       "frameIndex": 3,
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 136.5
+      "intrinsicWidth": 215.25,
+      "intrinsicHeight": 147,
+      "svgSheetMember": "whirlpool-station-2"
     },
     {
       "id": "whale-calf-0-0",

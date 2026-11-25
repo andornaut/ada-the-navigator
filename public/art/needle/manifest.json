@@ -3,27 +3,27 @@
   "assets": [
     {
       "id": "needle-station-a",
-      "path": "/art/needle/station-sheet.svg",
-      "width": 480,
-      "height": 160,
-      "displayWidth": 315,
-      "displayHeight": 105,
+      "path": "/art/needle/eye-station-sheet.svg",
+      "width": 528,
+      "height": 120,
+      "displayWidth": 346.5,
+      "displayHeight": 78.75,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6875
+        "y": 0.5
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 80.783,
-          "y": 110,
+          "x": 23.25,
+          "y": 60,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
-          "x": 330.631,
-          "y": 110,
+          "x": 504.75,
+          "y": 60,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -31,32 +31,32 @@
       "destination": "station",
       "variant": "base",
       "svgSheet": true,
-      "intrinsicWidth": 315,
-      "intrinsicHeight": 105
+      "intrinsicWidth": 346.5,
+      "intrinsicHeight": 78.75
     },
     {
       "id": "needle-station-b",
-      "path": "/art/needle/station-sheet.svg",
-      "width": 480,
-      "height": 160,
-      "displayWidth": 315,
-      "displayHeight": 105,
+      "path": "/art/needle/eye-station-sheet.svg",
+      "width": 528,
+      "height": 120,
+      "displayWidth": 346.5,
+      "displayHeight": 78.75,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6875
+        "y": 0.5
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 80.783,
-          "y": 110,
+          "x": 23.25,
+          "y": 60,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
-          "x": 330.631,
-          "y": 110,
+          "x": 504.75,
+          "y": 60,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -64,32 +64,32 @@
       "destination": "station",
       "variant": "base",
       "svgSheet": true,
-      "intrinsicWidth": 315,
-      "intrinsicHeight": 105
+      "intrinsicWidth": 346.5,
+      "intrinsicHeight": 78.75
     },
     {
       "id": "needle-station-hall-a",
-      "path": "/art/needle/station-sheet.svg",
-      "width": 480,
-      "height": 160,
-      "displayWidth": 315,
-      "displayHeight": 105,
+      "path": "/art/needle/eye-station-sheet.svg",
+      "width": 528,
+      "height": 120,
+      "displayWidth": 346.5,
+      "displayHeight": 78.75,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6875
+        "y": 0.5
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 80.783,
-          "y": 110,
+          "x": 4.587,
+          "y": 60,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
-          "x": 379.621,
-          "y": 110,
+          "x": 523.413,
+          "y": 60,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -98,32 +98,32 @@
       "variant": "loom-hall",
       "project": "loomHall",
       "svgSheet": true,
-      "intrinsicWidth": 315,
-      "intrinsicHeight": 105
+      "intrinsicWidth": 346.5,
+      "intrinsicHeight": 78.75
     },
     {
       "id": "needle-station-hall-b",
-      "path": "/art/needle/station-sheet.svg",
-      "width": 480,
-      "height": 160,
-      "displayWidth": 315,
-      "displayHeight": 105,
+      "path": "/art/needle/eye-station-sheet.svg",
+      "width": 528,
+      "height": 120,
+      "displayWidth": 346.5,
+      "displayHeight": 78.75,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6875
+        "y": 0.5
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 80.783,
-          "y": 110,
+          "x": 4.587,
+          "y": 60,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
-          "x": 379.621,
-          "y": 110,
+          "x": 523.413,
+          "y": 60,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -132,8 +132,8 @@
       "variant": "loom-hall",
       "project": "loomHall",
       "svgSheet": true,
-      "intrinsicWidth": 315,
-      "intrinsicHeight": 105
+      "intrinsicWidth": 346.5,
+      "intrinsicHeight": 78.75
     },
     {
       "id": "needle-gate-dark-0-back",

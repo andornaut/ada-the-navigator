@@ -114,13 +114,16 @@ describe("project world-change art", () => {
     ]);
   });
 
-  it("draws the crane in front of the workshop at its pivot", () => {
+  it("draws the crane in front of the workshop at its anchor", () => {
     const parts = outpostParts(outposts.get("workshop")!, [change("workshopCrane")], 1);
     expect(ids(parts)).toEqual([
       ["outpost-workshop-b", 0],
       ["outpost-workshop-crane-b", 1],
     ]);
-    expect(parts[1]!.offset).toEqual({ x: 0, y: 0 });
+    // The lifting drum's axis, in the workshop's frame px from its pivot, at its enlargement.
+    const scale = 0.4375 * 1.5 * 1.4;
+    expect(parts[1]!.offset.x).toBeCloseTo(79.179 * scale, 9);
+    expect(parts[1]!.offset.y).toBeCloseTo(45.714 * scale, 9);
   });
 
   it("leaves out a change whose art does not fit its outpost, and all of them without a reveal", () => {
@@ -155,12 +158,12 @@ describe("project world-change art", () => {
     const bounds = partsBounds(
       outpostParts(outposts.get("growers")!, [change("greenhouseRing")], 0),
     );
-    // The ring is 165.375 by 128.625 display px with its pivot at (0.5, 0.45).
-    expect(bounds.left).toBeCloseTo(-82.6875, 9);
-    expect(bounds.top).toBeCloseTo(-57.88125, 9);
-    expect(boundsOnScreen(screen, { x: -82.65, y: 100 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: -82.6875, y: 100 }, bounds)).toBe(false);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 57.85 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 57.9 }, bounds)).toBe(false);
+    // The leaf-petal hull with the ring is 176.4 by 132.3 display px, pivot (0.5, 0.45139).
+    expect(bounds.left).toBeCloseTo(-88.2, 9);
+    expect(bounds.top).toBeCloseTo(-132.3 * 0.45139, 9);
+    expect(boundsOnScreen(screen, { x: -88.15, y: 100 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: -88.2, y: 100 }, bounds)).toBe(false);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 59.7 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 59.75 }, bounds)).toBe(false);
   });
 });

@@ -3,51 +3,51 @@
   "assets": [
     {
       "id": "station-settlers-a",
-      "path": "/art/andromeda/settlers-station-sheet.svg",
-      "width": 304,
-      "height": 240,
-      "displayWidth": 199.5,
-      "displayHeight": 157.5,
+      "path": "/art/andromeda/saucer-station-sheet.svg",
+      "width": 312,
+      "height": 232,
+      "displayWidth": 204.75,
+      "displayHeight": 152.25,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5125
+        "y": 0.42241
       },
       "frameMs": 700,
       "station": "settlers",
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 157.5
+      "intrinsicWidth": 204.75,
+      "intrinsicHeight": 152.25
     },
     {
       "id": "station-settlers-b",
-      "path": "/art/andromeda/settlers-station-sheet.svg",
-      "width": 304,
-      "height": 240,
-      "displayWidth": 199.5,
-      "displayHeight": 157.5,
+      "path": "/art/andromeda/saucer-station-sheet.svg",
+      "width": 312,
+      "height": 232,
+      "displayWidth": 204.75,
+      "displayHeight": 152.25,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5125
+        "y": 0.42241
       },
       "frameMs": 700,
       "station": "settlers",
       "svgSheet": true,
-      "intrinsicWidth": 199.5,
-      "intrinsicHeight": 157.5
+      "intrinsicWidth": 204.75,
+      "intrinsicHeight": 152.25
     },
     {
       "id": "station-settlers-school-a",
-      "path": "/art/andromeda/settlers-school-sheet.svg",
-      "width": 64,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 63,
+      "path": "/art/andromeda/saucer-school-sheet.svg",
+      "width": 104,
+      "height": 64,
+      "displayWidth": 68.25,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.3125
+        "y": 0.46875
       },
       "frameMs": 700,
       "overlay": true,
@@ -55,8 +55,8 @@
       "project": "courierSchool",
       "berths": [
         {
-          "x": 27.101,
-          "y": 51.213,
+          "x": 52,
+          "y": 47.24,
           "outward": [0, 1],
           "width": 19.596
         }
@@ -65,15 +65,15 @@
     },
     {
       "id": "station-settlers-school-b",
-      "path": "/art/andromeda/settlers-school-sheet.svg",
-      "width": 64,
-      "height": 96,
-      "displayWidth": 42,
-      "displayHeight": 63,
+      "path": "/art/andromeda/saucer-school-sheet.svg",
+      "width": 104,
+      "height": 64,
+      "displayWidth": 68.25,
+      "displayHeight": 42,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.3125
+        "y": 0.46875
       },
       "frameMs": 700,
       "overlay": true,
@@ -81,8 +81,8 @@
       "project": "courierSchool",
       "berths": [
         {
-          "x": 27.101,
-          "y": 51.213,
+          "x": 52,
+          "y": 47.24,
           "outward": [0, 1],
           "width": 19.596
         }
@@ -91,20 +91,20 @@
     },
     {
       "id": "outpost-hamlet-a",
-      "path": "/art/andromeda/hamlet-sheet.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 76.125,
-      "displayHeight": 76.125,
+      "path": "/art/andromeda/hamlet-saucer-sheet.svg",
+      "width": 96,
+      "height": 88,
+      "displayWidth": 91.35,
+      "displayHeight": 83.738,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.36364
       },
       "frameMs": 700,
       "dock": {
-        "x": 40,
-        "y": 59.042,
+        "x": 48,
+        "y": 56.136,
         "outward": [0, 1],
         "width": 22.045
       },
@@ -114,20 +114,20 @@
     },
     {
       "id": "outpost-hamlet-b",
-      "path": "/art/andromeda/hamlet-sheet.svg",
-      "width": 80,
-      "height": 80,
-      "displayWidth": 76.125,
-      "displayHeight": 76.125,
+      "path": "/art/andromeda/hamlet-saucer-sheet.svg",
+      "width": 96,
+      "height": 88,
+      "displayWidth": 91.35,
+      "displayHeight": 83.738,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.4375
+        "y": 0.36364
       },
       "frameMs": 700,
       "dock": {
-        "x": 40,
-        "y": 59.042,
+        "x": 48,
+        "y": 56.136,
         "outward": [0, 1],
         "width": 22.045
       },
@@ -137,20 +137,20 @@
     },
     {
       "id": "outpost-lamphouse-a",
-      "path": "/art/andromeda/lamphouse-sheet.svg",
-      "width": 64,
-      "height": 80,
-      "displayWidth": 60.9,
-      "displayHeight": 76.125,
+      "path": "/art/andromeda/lamphouse-saucer-sheet.svg",
+      "width": 72,
+      "height": 96,
+      "displayWidth": 68.513,
+      "displayHeight": 91.35,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6
+        "y": 0.45833
       },
       "frameMs": 700,
       "dock": {
-        "x": 32,
-        "y": 69.213,
+        "x": 36,
+        "y": 61.983,
         "outward": [0, 1],
         "width": 19.596
       },
@@ -160,20 +160,20 @@
     },
     {
       "id": "outpost-lamphouse-b",
-      "path": "/art/andromeda/lamphouse-sheet.svg",
-      "width": 64,
-      "height": 80,
-      "displayWidth": 60.9,
-      "displayHeight": 76.125,
+      "path": "/art/andromeda/lamphouse-saucer-sheet.svg",
+      "width": 72,
+      "height": 96,
+      "displayWidth": 68.513,
+      "displayHeight": 91.35,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.6
+        "y": 0.45833
       },
       "frameMs": 700,
       "dock": {
-        "x": 32,
-        "y": 69.213,
+        "x": 36,
+        "y": 61.983,
         "outward": [0, 1],
         "width": 19.596
       },

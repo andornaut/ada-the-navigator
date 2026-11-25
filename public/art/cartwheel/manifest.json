@@ -3,94 +3,94 @@
   "assets": [
     {
       "id": "outpost-hub-a",
-      "path": "/art/cartwheel/hub-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 53.374,
-          "y": 220.72,
-          "outward": [-0.924, 0.382],
+          "x": 26.592,
+          "y": 168,
+          "outward": [-1, 0],
           "width": 28.169
         },
         {
-          "x": 250.626,
-          "y": 220.72,
-          "outward": [0.924, 0.382],
+          "x": 333.408,
+          "y": 168,
+          "outward": [1, 0],
           "width": 28.169
         }
       ],
       "destination": "hub",
       "variant": "worn",
       "svgSheet": true,
-      "intrinsicWidth": 166.25,
-      "intrinsicHeight": 175
+      "intrinsicWidth": 196.875,
+      "intrinsicHeight": 157.5
     },
     {
       "id": "outpost-hub-b",
-      "path": "/art/cartwheel/hub-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 53.374,
-          "y": 220.72,
-          "outward": [-0.924, 0.382],
+          "x": 26.592,
+          "y": 168,
+          "outward": [-1, 0],
           "width": 28.169
         },
         {
-          "x": 250.626,
-          "y": 220.72,
-          "outward": [0.924, 0.382],
+          "x": 333.408,
+          "y": 168,
+          "outward": [1, 0],
           "width": 28.169
         }
       ],
       "destination": "hub",
       "variant": "worn",
       "svgSheet": true,
-      "intrinsicWidth": 166.25,
-      "intrinsicHeight": 175
+      "intrinsicWidth": 196.875,
+      "intrinsicHeight": 157.5
     },
     {
       "id": "outpost-hub-repaired-a",
-      "path": "/art/cartwheel/hub-repaired-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 53.374,
-          "y": 220.72,
-          "outward": [-0.924, 0.382],
+          "x": 26.592,
+          "y": 168,
+          "outward": [-1, 0],
           "width": 28.169
         },
         {
-          "x": 250.626,
-          "y": 220.72,
-          "outward": [0.924, 0.382],
+          "x": 333.408,
+          "y": 168,
+          "outward": [1, 0],
           "width": 28.169
         }
       ],
@@ -98,33 +98,33 @@
       "variant": "repaired",
       "project": "hub-repairs",
       "svgSheet": true,
-      "intrinsicWidth": 166.25,
-      "intrinsicHeight": 175
+      "intrinsicWidth": 196.875,
+      "intrinsicHeight": 157.5
     },
     {
       "id": "outpost-hub-repaired-b",
-      "path": "/art/cartwheel/hub-repaired-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "berths": [
         {
-          "x": 53.374,
-          "y": 220.72,
-          "outward": [-0.924, 0.382],
+          "x": 26.592,
+          "y": 168,
+          "outward": [-1, 0],
           "width": 28.169
         },
         {
-          "x": 250.626,
-          "y": 220.72,
-          "outward": [0.924, 0.382],
+          "x": 333.408,
+          "y": 168,
+          "outward": [1, 0],
           "width": 28.169
         }
       ],
@@ -132,20 +132,20 @@
       "variant": "repaired",
       "project": "hub-repairs",
       "svgSheet": true,
-      "intrinsicWidth": 166.25,
-      "intrinsicHeight": 175
+      "intrinsicWidth": 196.875,
+      "intrinsicHeight": 157.5
     },
     {
       "id": "outpost-hub-bay-a",
-      "path": "/art/cartwheel/hub-bay-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "overlay": true,
@@ -153,9 +153,9 @@
       "project": "second-docking-bay",
       "berths": [
         {
-          "x": 140,
-          "y": 239.571,
-          "outward": [-0.612, 0.791],
+          "x": 346.277,
+          "y": 264,
+          "outward": [0.866, 0.5],
           "width": 36.742
         }
       ],
@@ -163,15 +163,15 @@
     },
     {
       "id": "outpost-hub-bay-b",
-      "path": "/art/cartwheel/hub-bay-sheet.svg",
-      "width": 304,
-      "height": 320,
-      "displayWidth": 166.25,
-      "displayHeight": 175,
+      "path": "/art/cartwheel/wheel-hub-sheet.svg",
+      "width": 360,
+      "height": 288,
+      "displayWidth": 196.875,
+      "displayHeight": 157.5,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.58333
       },
       "frameMs": 700,
       "overlay": true,
@@ -179,9 +179,9 @@
       "project": "second-docking-bay",
       "berths": [
         {
-          "x": 140,
-          "y": 239.571,
-          "outward": [-0.612, 0.791],
+          "x": 346.277,
+          "y": 264,
+          "outward": [0.866, 0.5],
           "width": 36.742
         }
       ],

@@ -37,10 +37,10 @@ describe("station art", () => {
   });
 
   it("draws both enlarged station frames at the authored destination size", () => {
-    // 280 by 220 frame px at 0.4375 times 1.5 (art/destinations.md).
+    // 272 by 256 frame px at 0.4375 times 1.5 (art/station-redesign.md).
     for (const frame of art.frames) {
-      expect(frame.displayWidth).toBeCloseTo(183.75, 3);
-      expect(frame.displayHeight).toBeCloseTo(144.375, 3);
+      expect(frame.displayWidth).toBeCloseTo(178.5, 3);
+      expect(frame.displayHeight).toBeCloseTo(168, 3);
     }
   });
 
@@ -83,7 +83,7 @@ describe("galaxy station art", () => {
       [0, 1, 2, 3].map((index) => `whirlpool-station-${index}`),
     );
     expect(eddy.frameMs).toBe(350);
-    expect(eddy.frames[0]).toMatchObject({ displayHeight: 136.5, displayWidth: 199.5 });
+    expect(eddy.frames[0]).toMatchObject({ displayHeight: 147, displayWidth: 215.25 });
     expect(stationLoopFrame(eddy, false, 1400).id).toBe("whirlpool-station-0");
     expect(stationLoopFrame(eddy, false, 1050).id).toBe("whirlpool-station-3");
     const bobbin = stationArtOf(6)!.base;
@@ -166,7 +166,7 @@ describe("outpost art", () => {
     const scale = 0.4375 * 1.5 * 1.4;
     expect(workshop.displayWidth).toBeCloseTo(workshop.width * scale, 2);
     expect(workshop.displayHeight).toBeCloseTo(workshop.height * scale, 2);
-    expect(workshop.pivot).toEqual({ x: 0.5, y: 0.675 });
+    expect(workshop.pivot).toEqual({ x: 0.5, y: 0.41667 });
   });
 
   it("skips an outpost missing a frame", () => {
