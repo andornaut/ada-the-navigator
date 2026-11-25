@@ -2,9 +2,9 @@
 
 Production plan for the enemy fleet: fourteen ship designs and nine weapon tops,
 each built as one model of connected solids and drawn at 16 headings with
-depth-resolved occlusion. Stages 1 to 3 (the model layer, the three small
-craft, the three retaliator hulls and the two frigates with their `gun` and
-`rail` tops) are built; the other stages are planned.
+depth-resolved occlusion. All five stages are built: the model layer, the three
+small craft, the three retaliator hulls, the two frigates, the six capitals and
+the nine weapon tops.
 
 ## Rules
 
@@ -141,9 +141,7 @@ state and the `pod` top, named `turret` in its rows and file:
   visible at that heading.
 - `{key}-turret-top-sheet.svg`: the top at 16 aims, centred on its pivot. It
   draws over the hull and collar at every heading.
-- `{key}-turret.json`, version 1, in the shipped retaliator's
-  `{craft}-hardpoints.json` schema, which name it takes at the switch (the
-  game's muzzle test reads every `-hardpoints.json` in the enemy folders):
+- `{key}-hardpoints.json`, version 1, in the shipped retaliator's schema:
   `headings[k]` gives the collar's `anchor`, the top's `pivot` and the collar's
   convex `collision`; `tops.turret[i]` gives the two shot origins (one per
   bright cell) and the top's convex collision at aim `i`, relative to the
@@ -159,21 +157,26 @@ state and the `pod` top, named `turret` in its rows and file:
 
 | Craft      | Key                | Frame | Display | Hull length | Hull width | Radius | Engine frame | Mount frame | `gun` frame | `rail` frame |
 | ---------- | ------------------ | ----: | ------: | ----------: | ---------: | -----: | -----------: | ----------: | ----------: | -----------: |
-| Slim delta | `fleetFrigate`     |   376 |   164.5 |      285.71 |      214.4 | 142.86 |          128 |          32 |          40 |           48 |
+| Slim delta | `fleetFrigate`     |   344 |   150.5 |      267.43 |      214.4 | 133.71 |          128 |          32 |          40 |           48 |
 | Twin hull  | `fleetFrigateTwin` |   400 |     175 |      246.86 |      214.4 | 123.43 |          256 |          32 |          40 |           48 |
 
 | Hardpoint   | Slim delta offset | Twin hull offset   | States                    |
 | ----------- | ----------------- | ------------------ | ------------------------- |
-| `engine`    | `[0, 93.71]`      | `[0, 109.71]`      | intact, destroyed         |
-| `port`      | `[-66.29, 50.29]` | `[-87.77, -22.86]` | intact, destroyed         |
-| `starboard` | `[66.29, 50.29]`  | `[87.77, -22.86]`  | intact, destroyed         |
-| `spine`     | `[0, 66.29]`      | `[0, 20.57]`       | intact, destroyed, capped |
-| `bow`       | `[0, -91.43]`     | `[0, -18.29]`      | intact, destroyed, capped |
+| `engine`    | `[0, 96]`         | `[0, 109.71]`      | intact, destroyed         |
+| `port`      | `[-76.34, 27.43]` | `[-87.77, -22.86]` | intact, destroyed         |
+| `starboard` | `[76.34, 27.43]`  | `[87.77, -22.86]`  | intact, destroyed         |
+| `spine`     | `[0, 75.43]`      | `[0, 20.57]`       | intact, destroyed, capped |
+| `bow`       | `[0, -96]`        | `[0, -18.29]`      | intact, destroyed, capped |
 
 Offsets are frame px from the hull pivot, x to starboard and y aft, as in the
 shipped layout: `port` is the mount to port on screen. The reference sheets
 draw the Heavy Missile on the other wing, because their model axes mirror on
 screen.
+
+The Slim delta is one broad deep hull with a blunt stepped bow block, a thick
+weapon shoulder close against each flank, a raised citadel aft and a stern
+engine block with twin mouths. It is 117 by 93.8 display px, and its `port` and
+`starboard` mounts stand on the shoulders.
 
 - The hull sheet has no hardpoints. Each hardpoint base is its own layer per
   state, centred on its anchor and cut by the hull at each heading: the engine
@@ -186,8 +189,7 @@ screen.
 - `{key}-parts-{size}-sheet.svg` holds every base set and top of one frame
   size, a set of 16 to a row.
 - `{key}-jets.json`: two mouths tagged `hardpoint` `engine`, and `hull`.
-- `{key}-mounts.json`, version 1, in the shipped frigate's
-  `{craft}-hardpoints.json` schema, which name it takes at the switch:
+- `{key}-hardpoints.json`, version 1, in the shipped frigate's schema:
   `hardpoints` with `capped` and `offset`, `fill`, `weaponTops`, `tiers`,
   per heading the layer `order`, each hardpoint's `anchor`, `pivot` and
   collision by state, the hull's convex `collision` and the `banner` centre,
@@ -212,13 +214,126 @@ whose `frigate` is the Slim delta, so the coral Twin hull is the new frame key
 `frigateTwin` in Whirlpool's manifest, its only user. The `frigateNarrow` and
 `frigateCompact` rows and sidecars have no replacement.
 
+### Capitals
+
+| Craft             | Key                     | Galaxy    | Family | Frame | Display | Hull length | Radius | Command frame | Engine frame |
+| ----------------- | ----------------------- | --------- | ------ | ----: | ------: | ----------: | -----: | ------------: | -----------: |
+| Hammer            | `fleetCapital`          | Sunflower | coral  |   528 |     231 |       363.3 | 181.65 |            56 |           80 |
+| Manta dreadnought | `fleetCapitalManta`     | Whirlpool | coral  |   472 |   206.5 |      349.59 | 174.79 |            56 |           56 |
+| Outrigger carrier | `fleetCapitalOutrigger` | Cartwheel | claim  |   488 |   213.5 |       347.3 | 173.65 |            56 |           80 |
+| Broad wing        | `fleetCapitalBroad`     | Andromeda | garnet |   456 |   199.5 |      319.89 | 159.94 |            56 |          160 |
+| Crossbow          | `fleetCapitalCrossbow`  | Needle    | needle |   480 |     210 |      379.29 | 189.65 |            48 |           72 |
+| Forked fortress   | `fleetCapitalForked`    | Phantom   | coral  |   512 |     224 |      388.43 | 194.22 |            56 |           80 |
+
+Every capital is 257.28 frame px wide (6 Ada widths, 112.56 display px). Its
+mount bases are frame 32, its `spread` and `lance` tops frame 56 and its
+`hopper` top frame 40.
+
+| Hardpoint                    | Hammer              | Manta dreadnought  | Outrigger carrier   | Broad wing          | Crossbow           | Forked fortress     |
+| ---------------------------- | ------------------- | ------------------ | ------------------- | ------------------- | ------------------ | ------------------- |
+| `command`                    | `[0, 61.69]`        | `[0, -15.99]`      | `[0, 52.55]`        | `[0, 15.99]`        | `[0, 49.13]`       | `[0, 43.41]`        |
+| `engine-left`, `-right`      | `[∓55.98, 148.52]`  | `[∓34.27, 171.37]` | `[∓108.08, 129.1]`  | `[∓70.83, 75.4]`    | `[∓18.28, 166.8]`  | `[∓75.4, 161.09]`   |
+| `weapon-left`, `-right`      | `[∓98.25, -153.09]` | `[∓68.55, -31.99]` | `[∓63.98, 54.84]`   | `[∓54.84, -4.57]`   | `[∓108.08, -45.7]` | `[∓91.4, -34.27]`   |
+| `weapon-rear-left`, `-right` | `[∓55.98, 82.26]`   | `[∓102.82, 15.99]` | `[∓108.08, 63.98]`  | `[∓106.25, 63.98]`  | `[∓51.41, 105.11]` | `[∓107.39, 20.56]`  |
+| `claw-left`, `-right`        | `[∓50.27, -153.09]` | `[∓43.41, -82.26]` | `[∓19.42, -143.95]` | `[∓13.71, -100.54]` | `[∓12.8, -100.54]` | `[∓35.42, -127.96]` |
+| `stern-left`, `-right`       | `[∓18.28, 107.39]`  | `[∓15.08, 82.26]`  | `[∓18.28, 127.96]`  | `[∓17.14, 102.82]`  | `[∓17.37, 109.68]` | `[∓75.4, 100.54]`   |
+
+Offsets are frame px from the hull pivot, x to starboard and y aft; every
+`-left` hardpoint is at negative x.
+
+- Each capital is its own hull in cold grey armour with a shaded keel, one band
+  in its family's hull colour and no insignia. It has the shipped capital's
+  hardpoints in the shipped order: `command`, `engine-left`, `engine-right` and
+  eight mounts in the fill order `weapon`, `weapon-rear`, `claw`, `stern`, left
+  then right.
+- The hull sheet has no hardpoints. Each is its own layer per state, cut by the
+  hull at each heading: the command tower, one drive cone per engine (a whole
+  nacelle on the Broad wing) and each mount's collar on its armour pedestal.
+- States are `intact` and `destroyed` for every hardpoint, and `capped` for the
+  `claw` and `stern` pairs, which the tiers leave unarmed at route positions 1
+  to 4. Destroyed, the tower is a low scorched stump with a breach and one
+  ember, and each engine is the frigates' wrecked cone with one ember.
+- `fill`, `weaponTops` and `tiers` equal the shipped capital's: Charged Lance
+  `lance` and Scattershot `spread` aim at the target, Mine Layer `hopper` holds
+  its aim aft, and positions 1 to 2, 3 to 4 and 5 to 6 arm four, six and eight
+  mounts.
+- `spread` has five shot origins across its mouth, `lance` one and `hopper` one
+  at the tray's leading edge.
+- `{key}-jets.json`: one mouth per engine, tagged `hardpoint` `engine-left` or
+  `engine-right`, and `hull`.
+- `{key}-hardpoints.json`, version 1, in the shipped capital's schema, with
+  `hull`, each hardpoint's `offset` and the collision of every base and top.
+- A deep hull hides a mount behind it at some headings. `headings[k]` marks
+  such a mount `hidden` when less than half of its intact collar shows, and its
+  top is not drawn at that heading. A base the hull hides whole is an empty
+  frame with no collision. Hidden: the Hammer's `weapon-rear` pair at two
+  headings each, the Broad wing's `weapon` pair at three, the Crossbow's
+  `weapon-rear` pair at five and the Forked fortress's `claw` pair at two and
+  `weapon-rear` pair at one. The frigates have none.
+- A top draws whole over its mount, so the hull does not cut a top it only
+  partly hides.
+- Capitals have no shards.
+
+Each galaxy flies one capital, and the rows are staged so that the frame key
+selects it:
+
+| Galaxy    | Capital           | Manifest  | Rows                       | Sidecar key     |
+| --------- | ----------------- | --------- | -------------------------- | --------------- |
+| Sunflower | Hammer            | core      | `enemy-capital-...`        | `capital`       |
+| Whirlpool | Manta dreadnought | Whirlpool | `enemy-capitalManta-...`   | `capitalManta`  |
+| Phantom   | Forked fortress   | Phantom   | `enemy-capitalForked-...`  | `capitalForked` |
+| Cartwheel | Outrigger carrier | Cartwheel | `enemy-claim-capital-...`  | `capital`       |
+| Andromeda | Broad wing        | Andromeda | `enemy-garnet-capital-...` | `capital`       |
+| Needle    | Crossbow          | Needle    | `enemy-needle-capital-...` | `capital`       |
+
+Three galaxies fly the coral family. Its `capital` is the Hammer, so the Manta
+dreadnought and the Forked fortress are the new frame keys `capitalManta` and
+`capitalForked`, each in its own galaxy's manifest. The `capitalNarrow` and
+`capitalCompact` rows and sidecars have no replacement.
+
+### Weapon tops
+
+Every top is a separate solid that pivots about its mount's collar centre, at
+16 aims, with its shot origins and convex collision per aim. The mount radius
+is 10.51 frame px (4.6 display px) and the collar is 2.74 frame px high.
+
+| Weapon         | Top      | Frame | Shot origins | Carried by                                | Design                                               |
+| -------------- | -------- | ----: | -----------: | ----------------------------------------- | ---------------------------------------------------- |
+| `laser`        | `gun`    |    40 |            1 | Frigate mounts, platform                  | One narrow block along the aim, bright muzzle face   |
+| `multiLaser`   | `triple` |    40 |            3 | None: the fighter fires from hull ports   | Three stub lobes fanned from a back bar, bright tips |
+| `phaser`       | `dish`   |    32 |            1 | None: the interceptor fires from its nose | Low disc wider than its collar, dark centre, one dot |
+| `rapidMissile` | `pod`    |    40 |            2 | Retaliators, hostile station              | Low flat box, two bright cells on the face           |
+| `heavyMissile` | `rail`   |    48 |            1 | Frigate `port`                            | Dark sled carrying one large missile                 |
+| `scattershot`  | `spread` |    56 |            5 | Capital mounts                            | Flared fan with a wide bright mouth                  |
+| `chargedLance` | `lance`  |    56 |            1 | Capital `weapon-left`                     | Capacitor block, two short broad rails round a slot  |
+| `mineLayer`    | `hopper` |    40 |            1 | Capital `stern-right`, held aft           | Square tray holding two round mines                  |
+| `ringBurst`    | `dome`   |    32 |            8 | Hostile station `weapon-5`                | Dome over a bright ring, no barrel                   |
+
+- Round solids (the mines and the dome) are lit per aim, so their two tones
+  meet on the light's terminator at every aim.
+- A ship's tops are in its part sheets and hardpoints file. The tops the
+  hostile station and the platform carry are produced at game scale for the
+  station switch: `/art/enemies/fleetTop-pod-sheet.svg` and
+  `fleetTop-dome-sheet.svg` in the coral, claim and garnet folders, and
+  `fleetTop-gun-sheet.svg` in the claim folder.
+- [fleet-top-rows.json](fleet-top-rows.json) stages their rows under the
+  shipped ids `enemy-{family}-hostileStation-pod-top-{i}`,
+  `enemy-{family}-hostileStation-dome-top-{i}` and
+  `enemy-claim-platform-turret-top-{i}`, apart from the fleet's rows, because
+  they switch with the stations.
+- [fleet-tops.json](fleet-tops.json) holds the shot origins and collision of
+  `gun`, `pod`, `dome`, `triple` and `dish` per aim, relative to the pivot, and
+  the mount's radius and collar height. `triple` and `dish` have no carrier, so
+  no sheet of them ships.
+
 A sheet whose frames equal one already written ships once: its rows name that
 file and its nested roots with `svgSheetMember`. The Mining Freighter's top is
-the Manta gunship's.
+the Manta gunship's, and the Manta dreadnought's and Forked fortress's `hopper`
+tops are the Hammer's.
 
 - `/art/enemies/{key}-sheet.svg`, `{key}-jets.json`, `{key}-shards-packed.json`
-  and a retaliator's `{key}-turret.json`: the coral sheet and the data
-  every family reads. A shard pack's `archetype` is its sidecar key, the stem.
+  and `{key}-hardpoints.json`: the coral sheet and the data every family
+  reads, in the core folder for every craft. A shard pack's `archetype` is its sidecar key, the stem.
 - `/art/cartwheel/enemies/{key}-sheet.svg`, `/art/andromeda/enemies/{key}-sheet.svg`
   and `/art/needle/enemies/{key}-sheet.svg`: the claim, garnet and needle sheets.
 - [fleet-rows.json](fleet-rows.json): per manifest, the `assets` rows and
@@ -231,9 +346,13 @@ with a `family` load with their galaxy, and Cartwheel's manifest test accepts
 no id outside its known groups, so the rows cannot sit in the manifests under
 other ids.
 
-`node art/tools/fleet-contact-sheet.ts <dir>` writes review sheets of every
-heading at 1x and 2x on each family's field, the retaliators composed with
-their collar and top at two aims.
+`node art/tools/fleet-contact-sheet.ts <dir> [name]` writes review sheets of
+every heading at 1x and 2x on each family's field, or only the sheets whose
+name has `name`. Retaliators are composed with their collar and top at two
+aims. A frigate shows armed, at route positions 1 to 2 and with every hardpoint
+destroyed; a capital shows its lance profile, its mine profile, route positions
+1 to 2 and every hardpoint destroyed. `fleet-weapon-tops.svg` shows the nine
+tops on a collar at 16 aims, at 1x, 2x and 4x.
 
 ## Switch
 
@@ -262,8 +381,9 @@ For the retaliators, from the same file:
   `sidecars.retaliatorMiningFreighter`: each names its own `jets`, `hardpoints`
   and `shards`.
 - Each top has two shot origins where the shipped launcher has three tips.
-- `destruction.json` needs an entry per stem, or the three share one:
-  `flashWidth` is 127.35 for each.
+- `destruction.json` needs an entry per stem: `flashWidth` is the hull's half
+  span times 1.98, so 127.354 for the Manta gunship and the Mining Freighter
+  and 106.128 for the Cargo Hauler.
 - Gameplay rolls the three hulls with equal weight in every galaxy and takes
   each hull's `hull.radius` for spacing and footprint: 64.32, 96 and 64.32
   frame px. The Cargo Hauler's 2.5 width span is its own; `ENEMY_SIZE_RATIOS`
@@ -279,6 +399,32 @@ For the frigates, from the same file:
 - The `frigateNarrow` and `frigateCompact` rows, sidecars and files are
   removed, with the profile selection that picks them.
 - `tools/enemy-hardpoints.json` takes each design's offsets.
+- A `flashWidth` for either frigate is 212.256.
+
+For the capitals, from the same file:
+
+- The `capital` hull, base and top rows of the core, Cartwheel, Andromeda and
+  Needle manifests (480 rows each), and `sidecars.capital`.
+- Whirlpool's manifest gains the 480 `enemy-capitalManta-...` rows and
+  `sidecars.capitalManta`, and Phantom's the 480 `enemy-capitalForked-...` rows
+  and `sidecars.capitalForked`. Whirlpool and Phantom select those frame keys
+  for their capitals.
+- The `capitalNarrow` and `capitalCompact` rows, sidecars and files are
+  removed, with the profile selection that picks them.
+- Every design has its own offsets, so the `capital` entry of
+  `tools/enemy-hardpoints.json` becomes one entry per design, or the game reads
+  `offset` from each hardpoints file.
+- A mount marked `hidden` at a heading draws no top there.
+- Each engine has one mouth, and `spread` has five shot origins, `lance` one
+  and `hopper` one.
+- A `flashWidth` for any capital is 254.707.
+
+For the stations, from [fleet-top-rows.json](fleet-top-rows.json): the `pod`
+and `dome` top rows of the hostile station in the core, Cartwheel and Andromeda
+manifests and the platform's `turret` top rows in Cartwheel's, with the shot
+origins and collision of [fleet-tops.json](fleet-tops.json): two for `pod`,
+eight for `dome`, one for `gun`. The frames are 40, 32 and 40 px, against the
+shipped 48, 48 and 120.
 
 Art then moves the craft into `enemies.ts`, `destruction.ts` and the family
 generators' ownership, renames the files to the `{archetype}-` stems and
@@ -323,12 +469,11 @@ and `fleet-contact-sheet.ts`.
 3. Frigates: Slim delta and Twin hull in cold armour, with engine, and `port`,
    `starboard`, `spine` and `bow` mounts in intact, destroyed and capped
    states, and the `gun` and `rail` tops. Built.
-4. Capitals: six hulls with `command`, two engines and eight mounts. The
-   Crossbow follows its rework. The narrow and compact profile rows, sheets
-   and sidecars are removed.
-5. Weapon tops: `triple`, `dish`, `spread`, `lance`, `hopper`
-   and `dome` at 16 aims with muzzles and collision, adding the ball and dome
-   solids; the platform and hostile station take the tops they carry.
+4. Capitals: six hulls with `command`, two engines and eight mounts, and the
+   `spread`, `lance` and `hopper` tops their hardpoints files need. Built.
+5. Weapon tops: `triple`, `dish` and `dome` at 16 aims with muzzles and
+   collision, and the `gun`, `pod` and `dome` tops the platform and the hostile
+   station carry. Built.
 
 Stages 3 and 4 replace `{craft}-hardpoints.json`, the part sheets and their
 manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
@@ -340,3 +485,6 @@ manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
 - Jet length follows frame size, so the tighter frames change it: the swarm's
   base length falls from 5.48 to 4.58 frame px and the interceptor's rises from
   5.74 to 6.93.
+- Whether a `hidden` mount still fires and can be hit while the hull covers it.
+- Whether a top the hull partly covers needs its own cut frames: the hull cuts
+  each base at each heading, and a top draws whole.
