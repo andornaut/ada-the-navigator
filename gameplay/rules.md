@@ -1455,20 +1455,24 @@ and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
 Moving rocks are chosen from placed slot and feature rocks at the densities in
-[Spawn targets](#spawn-targets) and keep the chosen rock's size and shape. About
-75% of moving rocks travel in groups of nearby rocks with one shared velocity.
-The rest choose their own heading and speed. Each group or solo rock rolls a
-seeded speed from 10 to 80 world units per second and travels in a straight
-line at constant velocity. It may rotate. A chosen rock starts outside the
+[Spawn targets](#spawn-targets) and keep the chosen rock's size and shape. A
+seeded half of the chosen rocks lead a small cluster: each pulls 1, 2 or 3
+(equal weight) of the nearest placed slot or feature rocks whose centres lie
+within 300 world units, fewer when fewer qualify, and the cluster shares the
+leader's velocity. The other half move alone. Every rock that moves counts
+toward the moving-rock target, so about 75% of moving rocks travel in clusters.
+Each cluster or solo rock rolls a seeded speed from 10 to 100 world units per
+second and travels in a straight line at constant velocity. It may rotate. A chosen rock starts outside the
 exclusion zones that apply to moving rocks; once moving, it may hit any object.
 Authored current debris follows its current.
 
 A moving rock that touches another asteroid ricochets off it, and both rocks
 respond. Each rock's mass is its drawn area, so a small rock deflects more than
 a large one. The pair keeps 0.3 of its closing speed along the contact normal,
-a soft knock. No rock leaves a ricochet faster than 80 world units per second.
+a soft knock. No rock leaves a ricochet faster than 100 world units per second, the top
+moving-rock speed.
 A moving rock keeps its new velocity at constant speed; a rock in a moving
-group leaves the group's shared velocity. A struck static rock drifts, slows to
+cluster leaves the cluster's shared velocity. A struck static rock drifts, slows to
 rest within about 3 seconds and stays where it settles.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
@@ -1557,12 +1561,12 @@ apply to the planner's output.
   shapes; Huge shapes do not fit.
 - Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
   fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
-  path over the next 30 seconds, up to 2400 world units, is checked against
+  path over the next 30 seconds, up to 3000 world units, is checked against
   station protected areas and launch and arrival safe radii; the Needle channel
   is not checked. A failed path redraws the rock's velocity, up to 24 times.
   After the 24th failure the rock stays where it was placed as a static rock and
   counts as one dropped mover under the rule that blocked its last path; no
-  replacement is chosen. A moving group shares one velocity, so its rocks stay
+  replacement is chosen. A cluster shares one velocity, so its rocks stay
   still together.
 - Once moving, a moving rock may hit any object and ricochets off other
   ambient asteroids. Debris-river rocks, whale quest debris and legacy orbiting
@@ -1590,24 +1594,24 @@ radii.
 
 | Galaxy    | Region | Slot rocks | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
 | --------- | ------ | ---------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
-| Sunflower | inner  |      29.84 |      1.5 |         2.15 |   0.244 |     0.200 |             0 |            0 |         0 |         0 |
-|           | middle |      29.84 |      1.6 |         2.15 |   0.200 |     0.178 |             0 |        0.067 |         0 |         0 |
-|           | outer  |      29.84 |      1.5 |         2.15 |   0.178 |     0.155 |         0.044 |        0.067 |         0 |         0 |
-| Whirlpool | inner  |      29.84 |      1.3 |         2.52 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-|           | middle |      29.84 |      1.2 |         2.52 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-|           | outer  |      29.84 |      1.1 |         2.52 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-| Needle    | inner  |      29.84 |      1.3 |         2.49 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-|           | middle |      29.84 |      1.4 |         2.49 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-|           | outer  |      29.84 |      1.4 |         2.49 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-| Andromeda | inner  |      29.84 |      1.4 |         2.41 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-|           | middle |      29.84 |      1.5 |         2.41 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-|           | outer  |      29.84 |      1.4 |         2.41 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-| Cartwheel | inner  |      29.84 |      1.4 |         2.34 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-|           | middle |      29.84 |      1.4 |         2.34 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-|           | outer  |      29.84 |      1.3 |         2.34 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-| Phantom   | inner  |      29.84 |      1.4 |         3.66 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
-|           | middle |      29.84 |      1.4 |         3.66 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
-|           | outer  |      29.84 |      1.3 |         3.66 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
+| Sunflower | inner  |      29.84 |      1.5 |         4.30 |   0.244 |     0.200 |             0 |            0 |         0 |         0 |
+|           | middle |      29.84 |      1.6 |         4.30 |   0.200 |     0.178 |             0 |        0.067 |         0 |         0 |
+|           | outer  |      29.84 |      1.5 |         4.30 |   0.178 |     0.155 |         0.044 |        0.067 |         0 |         0 |
+| Whirlpool | inner  |      29.84 |      1.3 |         5.04 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+|           | middle |      29.84 |      1.2 |         5.04 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+|           | outer  |      29.84 |      1.1 |         5.04 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+| Needle    | inner  |      29.84 |      1.3 |         4.98 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
+|           | middle |      29.84 |      1.4 |         4.98 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
+|           | outer  |      29.84 |      1.4 |         4.98 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
+| Andromeda | inner  |      29.84 |      1.4 |         4.82 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
+|           | middle |      29.84 |      1.5 |         4.82 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
+|           | outer  |      29.84 |      1.4 |         4.82 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
+| Cartwheel | inner  |      29.84 |      1.4 |         4.68 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
+|           | middle |      29.84 |      1.4 |         4.68 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
+|           | outer  |      29.84 |      1.3 |         4.68 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
+| Phantom   | inner  |      29.84 |      1.4 |         7.32 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
+|           | middle |      29.84 |      1.4 |         7.32 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
+|           | outer  |      29.84 |      1.3 |         7.32 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
 
 A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
 in every galaxy and region, deliver at least 90% of their requested count. A
