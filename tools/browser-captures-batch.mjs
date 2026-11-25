@@ -1125,8 +1125,9 @@ export function batchCaptures(ctx) {
 
   // Enemy facing in Sunflower, each case released from its saved start and stepped five frames
   // 200 ms of clock time apart: a fighter crossing close past Ada with its nose on her, a
-  // fighter pulling out of a finished burst, a fighter strafing in its band, and a frigate
-  // moving away from Ada, its hull turning to its heading while its turrets fire astern.
+  // fighter pulling out of a finished burst, a fighter strafing in its band, a frigate moving
+  // away from Ada, its hull turning to its heading while its turrets fire astern, and a
+  // retaliator holding its standoff band with its nose on Ada while its launcher fires.
   async function enemyFacing() {
     const unit = (vector) => {
       const size = Math.hypot(vector.x, vector.y);
@@ -1180,6 +1181,15 @@ export function batchCaptures(ctx) {
           for (const part of enemy.hardpoints) {
             part.cooldown = 0.2;
           }
+        },
+      ],
+      [
+        "retaliator",
+        { x: -260, y: -60 },
+        "retaliator",
+        (flight, enemy) => {
+          enemy.facing = toAda(flight, enemy);
+          enemy.primaryCooldown = 0;
         },
       ],
     ];
