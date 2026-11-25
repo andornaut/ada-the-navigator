@@ -10,6 +10,8 @@ import {
   readDestruction,
   readShards,
   reducedAt,
+  shardAlpha,
+  shardFamily,
   shardPolygons,
   wreckFlashAt,
 } from "./destructionArt.ts";
@@ -59,7 +61,7 @@ describe("enemy destruction art", () => {
   });
 
   it("draws the idle frame's shards unmoved at the start", () => {
-    const polygons = shardPolygons(data, fighter, timing.durationMs, 0, 0);
+    const polygons = shardPolygons(data, "coral", fighter, timing.durationMs, 0, 0);
     const source = fighter.headings[0]!.shards.flatMap((shard) => shard.polygons);
     expect(polygons).toHaveLength(source.length);
     for (const polygon of polygons) {
@@ -74,9 +76,9 @@ describe("enemy destruction art", () => {
     }
   });
 
-  it("drifts, shrinks to 65%, cools 55% and fades shards out by the end", () => {
+  it("drifts, shrinks to 65%, cools 55% toward the family's tone and is gone by the end", () => {
     const shard = fighter.headings[3]!.shards[0]!;
-    const end = shardPolygons(data, fighter, timing.durationMs, 3, timing.durationMs);
+    const end = shardPolygons(data, "coral", fighter, timing.durationMs, 3, timing.durationMs);
     const [x, y] = [shard.polygons[0]!.points[0]!, shard.polygons[0]!.points[1]!];
     const [cx, cy] = shard.centroid;
     const spin = fighter.shards[shard.shard]!.spin;
@@ -98,12 +100,45 @@ describe("enemy destruction art", () => {
     expect(end.every((polygon) => polygon.alpha === 0)).toBe(true);
   });
 
-  it("keeps hull shards opaque until 30% and fades flecks out by 60%", () => {
-    const at = (u: number) => shardPolygons(data, fighter, 1000, 0, u * 1000);
+  it("cools each family toward its own darkest hull tone", () => {
+    expect(data.shards.cool).toEqual({
+      amount: 0.55,
+      families: { claim: "#703921", coral: "#7f4b3d", garnet: "#823643", needle: "#75313a" },
+    });
+    const half = (family: "claim" | "needle") =>
+      shardPolygons(data, family, fighter, 1000, 0, 500).map(({ color }) => color);
+    // The same moment without cooling, so the draw order matches.
+    const uncooled = {
+      ...data,
+      shards: { ...data.shards, cool: { ...data.shards.cool, amount: 0 } },
+    };
+    const source = shardPolygons(uncooled, "coral", fighter, 1000, 0, 500);
+    expect(half("claim")).toEqual(
+      source.map(({ color }) => mixColor(color, hexColor("#703921"), 0.55 * 0.5)),
+    );
+    expect(half("needle")).toEqual(
+      source.map(({ color }) => mixColor(color, hexColor("#75313a"), 0.55 * 0.5)),
+    );
+    expect(shardFamily("garnet")).toBe("garnet");
+    expect(shardFamily(undefined)).toBe("coral");
+    expect(shardFamily("unknown")).toBe("coral");
+  });
+
+  it("holds hull shards at 1, 0.6 and 0.3 and fades flecks out by 60%", () => {
+    expect([0, 0.549, 0.55, 0.799, 0.8, 0.999, 1].map((u) => shardAlpha(data, u))).toEqual([
+      1, 1, 0.6, 0.6, 0.3, 0.3, 0,
+    ]);
+    const at = (u: number) => shardPolygons(data, "coral", fighter, 1000, 0, u * 1000);
     const kinds = fighter.headings[0]!.shards.map((shard) => fighter.shards[shard.shard]!.kind);
     expect(kinds).toContain("fleck");
-    expect(at(0.3).some((polygon) => polygon.alpha === 1)).toBe(true);
+    expect(new Set(at(0.7).map(({ alpha }) => alpha))).toEqual(new Set([0.6, 0]));
     expect(at(0.6).filter((polygon) => polygon.alpha === 0).length).toBeGreaterThan(0);
+    const { fade, ...rest } = data.shards;
+    expect(readDestruction({ ...data, shards: { ...rest, fade: { steps: [] } } })).toBeUndefined();
+    expect(
+      readDestruction({ ...data, shards: { ...rest, fade: { exponent: 1.3, from: 0.3 } } }),
+    ).toBeUndefined();
+    expect(fade.steps).toHaveLength(3);
   });
 
   it("flashes for 80 ms at full then reduced width", () => {

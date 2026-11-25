@@ -1,6 +1,6 @@
-// Enemy destruction rendered from Art's data (art/destruction.md): coral shards that drift,
-// spin, shrink, cool and fade behind a brief flash; under reduced motion the idle frame
-// tints, shrinks and fades instead.
+// Enemy destruction rendered from Art's data (art/destruction.md): shards that drift, spin,
+// shrink, cool toward their family's own tone and fade in held steps behind a brief flash;
+// under reduced motion the idle frame tints, shrinks and fades instead.
 
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
 
@@ -10,6 +10,9 @@ export interface DestructionTiming {
   readonly reduced: { readonly durationMs: number; readonly releaseMs: number };
   readonly releaseMs: number;
 }
+
+/** The enemy paint families, each with its own shard cool target. */
+export type ShardFamily = "claim" | "coral" | "garnet" | "needle";
 
 export interface DestructionData {
   readonly archetypes: Readonly<Record<string, DestructionTiming>>;
@@ -27,9 +30,13 @@ export interface DestructionData {
   readonly pickups: { readonly settleMs: number };
   readonly reduced: { readonly shrink: number; readonly tint: string };
   readonly shards: {
-    readonly cool: { readonly amount: number; readonly color: string };
+    readonly cool: {
+      readonly amount: number;
+      readonly families: Readonly<Record<ShardFamily, string>>;
+    };
     readonly ease: number;
-    readonly fade: { readonly exponent: number; readonly from: number };
+    /** Held alpha steps in ascending `from`: each holds from its `u` until the next. */
+    readonly fade: { readonly steps: readonly { readonly alpha: number; readonly from: number }[] };
     readonly fleckFadeEnd: number;
     readonly shrink: number;
   };
@@ -60,16 +67,59 @@ function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const FAMILIES: readonly ShardFamily[] = ["claim", "coral", "garnet", "needle"];
+
+function shardLook(value: unknown): boolean {
+  if (!record(value) || !record(value.cool) || !record(value.fade)) {
+    return false;
+  }
+  const { families } = value.cool;
+  const { steps } = value.fade;
+  return (
+    typeof value.cool.amount === "number" &&
+    record(families) &&
+    FAMILIES.every((family) => typeof families[family] === "string") &&
+    Array.isArray(steps) &&
+    steps.length > 0 &&
+    steps.every(
+      (step, index) =>
+        record(step) &&
+        typeof step.alpha === "number" &&
+        typeof step.from === "number" &&
+        (index === 0 ? step.from === 0 : step.from > (steps[index - 1] as { from: number }).from),
+    )
+  );
+}
+
 /** Art's destruction.json, version 1, or undefined to keep the placeholder. */
 export function readDestruction(value: unknown): DestructionData | undefined {
   return record(value) &&
     value.version === 1 &&
     record(value.archetypes) &&
-    record(value.shards) &&
+    shardLook(value.shards) &&
     record(value.flash) &&
     record(value.reduced)
     ? (value as unknown as DestructionData)
     : undefined;
+}
+
+/** A paint family's shard cool target key: coral for an unknown or absent family. */
+export function shardFamily(family: string | undefined): ShardFamily {
+  return FAMILIES.find((entry) => entry === family) ?? "coral";
+}
+
+/** A hull or part shard's alpha at `u`: the last step at or before it, gone at the end. */
+export function shardAlpha(data: DestructionData, u: number): number {
+  if (u >= 1) {
+    return 0;
+  }
+  let alpha = 1;
+  for (const step of data.shards.fade.steps) {
+    if (u >= step.from) {
+      alpha = step.alpha;
+    }
+  }
+  return alpha;
 }
 
 /** An enemy archetype's shard file, version 1, with all sixteen enemy headings. */
@@ -99,10 +149,11 @@ export function mixColor(from: number, to: number, amount: number): number {
 
 /**
  * The shards of heading `heading` at `timeMs` into a `durationMs` destruction, in draw
- * order (ascending nearness).
+ * order (ascending nearness), cooling toward `family`'s own tone.
  */
 export function shardPolygons(
   data: DestructionData,
+  family: ShardFamily,
   shards: ShardData,
   durationMs: number,
   heading: number,
@@ -111,8 +162,8 @@ export function shardPolygons(
   const u = Math.min(1, Math.max(0, timeMs / durationMs));
   const e = 1 - (1 - u) ** data.shards.ease;
   const shrink = 1 - (1 - data.shards.shrink) * u;
-  const cool = hexColor(data.shards.cool.color);
-  const { exponent, from } = data.shards.fade;
+  const cool = hexColor(data.shards.cool.families[family]);
+  const held = shardAlpha(data, u);
   const view = shards.headings[heading] ?? shards.headings[0];
   return (view?.shards ?? [])
     .map((entry) => ({ entry, order: entry.nearness + entry.nearnessDrift * e }))
@@ -124,12 +175,7 @@ export function shardPolygons(
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       const [cx, cy] = entry.centroid;
-      const alpha =
-        kind === "fleck"
-          ? Math.max(0, 1 - u / data.shards.fleckFadeEnd)
-          : u < from
-            ? 1
-            : Math.max(0, 1 - (u - from) / (1 - from)) ** exponent;
+      const alpha = kind === "fleck" ? Math.max(0, 1 - u / data.shards.fleckFadeEnd) : held;
       return entry.polygons.map((polygon) => {
         const points: number[] = [];
         for (let index = 0; index + 1 < polygon.points.length; index += 2) {

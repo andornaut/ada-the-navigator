@@ -29,7 +29,7 @@ import {
 } from "./asteroidArt.ts";
 import { hubLayers } from "./cartwheelArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece } from "./debrisArt.ts";
-import { reducedAt, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
+import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import {
@@ -849,6 +849,7 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
   const pieces: EffectShape[] = [];
   for (const polygon of shardPolygons(
     data,
+    shardFamily(family?.family),
     shards,
     timing.durationMs,
     frame.directionIndex ?? 0,

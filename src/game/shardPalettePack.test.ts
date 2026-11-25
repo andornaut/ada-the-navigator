@@ -63,8 +63,8 @@ describe("candidate shard palette pack", () => {
       const duration = destruction.archetypes[body]!.durationMs;
       for (const heading of [0, 7, 15]) {
         for (const time of [0, duration * 0.45, duration]) {
-          expect(shardPolygons(destruction, view, duration, heading, time)).toStrictEqual(
-            shardPolygons(destruction, source, duration, heading, time),
+          expect(shardPolygons(destruction, family, view, duration, heading, time)).toStrictEqual(
+            shardPolygons(destruction, family, source, duration, heading, time),
           );
         }
       }
