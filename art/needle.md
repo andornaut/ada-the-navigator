@@ -407,37 +407,14 @@ accent and a mic boom).
 
 ## Needle drones
 
-Rebuild with `node art/tools/needle-drones.ts`, which takes the same
-`--offsets <file.json>` as `heavies.ts`. It draws the shared models in process,
-writes `public/art/needle/enemies/` and replaces the `enemy-needle-` entries of
-the crafts it draws in place in Needle's manifest, before the story craft.
-
 Needle's drones and heavies are one family: the four drones, the frigate and
 the capital in crimson lacquer. Needle's roster adds no archetype and no
 platform.
 
-- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
-  [coral family](enemies.md); only fills and jet colours change, as for the
-  [claim jumpers](heavies.md#cartwheel-claim-jumpers). Every SVG and shards
-  file goes through the colour swap below and every jets file through the
-  Needle jet colours; the tool stops on any colour outside the family.
-- Hardpoints files are the coral family's, byte-identical: the same `order`,
-  `anchor`, `pivot`, `muzzles`, `banner` and `collision` per heading and aim,
-  and the same [weapon mounts](heavies.md#mounts), with every mount, its capped
-  plate, the armed mounts of each position tier and the top of every weapon a
-  mount can hold (`fill`, `tiers`, `weaponTops`). Jets files keep
-  the coral shape, lengths, layers, mouth data and per-heading
-  [collision](enemies.md#collision), and the frames draw the coral notch tips. Destruction uses the shared `destruction.json` timing and flash
-  with the Needle shards.
-- File names are the coral names in `public/art/needle/enemies/`, less the
-  [shared files](README.md#ada-contract-and-validation): the heavies' and
-  industrial stems' hardpoints are the coral files in `public/art/enemies/`.
-  The Retaliator and Mining Freighter share the core hull SVGs after a byte
-  comparison. The Cargo Hauler uses the Retaliator hull. Ids are the
-  coral ids with `enemy-needle-` in place of `enemy-`, such as
-  `enemy-needle-frigate-3` and `enemy-needle-capital-turret-top-9`, with the
-  coral entry's fields, its own `path` and `family` `needle`. No Needle id
-  matches `enemy-{archetype}-{index}`.
+- The [enemy fleet producer](enemy-redesign.md) draws them in the Needle
+  colours. Their rows in Needle's manifest take the coral ids with
+  `enemy-needle-` in place of `enemy-`, such as `enemy-needle-frigate-3`, with
+  `family` `needle`. No Needle id matches `enemy-{archetype}-{index}`.
 - Gadget's insignia (the ink claw on an amber disc) stays: these are Gadget's
   drones.
 

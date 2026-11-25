@@ -207,21 +207,6 @@ function familyHullSheets(
   return { directory, groups };
 }
 
-export function packInstalledSmallHullSheets(
-  manifest: SmallFamilyManifest,
-  files: Map<string, string>,
-  entries: readonly AssetRow[],
-): readonly AssetRow[] {
-  const { groups } = familyHullSheets(manifest, entries, (file) => files.get(file), false);
-  if (!groups.length) return entries;
-  const replacements = new Map(groups.flatMap(({ rows }) => rows.map((row) => [row.id, row])));
-  for (const { file, loose, text } of groups) {
-    for (const name of loose) files.delete(name);
-    files.set(file, text);
-  }
-  return entries.map((row) => replacements.get(row.id) ?? row);
-}
-
 function writeReviewFamilySheets(): void {
   const manifests = Object.keys(SMALL_FAMILIES) as SmallFamilyManifest[];
   const plans = manifests.map((manifest) => {

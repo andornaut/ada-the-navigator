@@ -204,33 +204,12 @@ the frigate and the capital recoloured into garnet, Gadget's drones hunting in
 the open. Sunflower keeps the coral originals and Cartwheel the
 [claim jumpers](heavies.md#cartwheel-claim-jumpers).
 
-- Rebuild with `node art/tools/garnet-drones.ts`, which takes the same
-  `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
-  process, writes `public/art/andromeda/enemies/` and replaces its own entries
-  in place in Andromeda's manifest, after the destinations and before the
-  story craft.
-- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
-  coral family; only fills change. Every SVG and shards file goes through the
-  colour swap below, every jets file through the garnet jet colours, and the
-  tool stops on any colour outside the family. Jets files keep the coral
-  per-heading [collision](enemies.md#collision), and the frames draw the coral
-  notch tips. Hardpoints files are the coral
-  family's, byte-identical, with the [weapon mounts](heavies.md#mounts): every
-  mount, its capped plate, the armed mounts of each position tier and the top
-  of every weapon a mount can hold (`fill`, `tiers`, `weaponTops`),
-  the [Disabled banner](heavies.md#disabled-banner) centres and the collision.
-  Destruction uses the shared `destruction.json` timing and flash with the
-  garnet shards.
-- File names are the coral names in `public/art/andromeda/enemies/`, less the
-  [shared files](README.md#ada-contract-and-validation): the heavies' and
-  industrial stems' hardpoints are the coral files in `public/art/enemies/`.
-  The Retaliator and Mining Freighter share the core hull SVGs after a byte
-  comparison. The Cargo Hauler uses the Retaliator hull. Ids are
-  the coral ids with `enemy-garnet-` in place of `enemy-`, such as
-  `enemy-garnet-frigate-3` and `enemy-garnet-capital-turret-top-9`. Each entry
-  has the coral entry's fields, its own `path`, the coral `archetype` and
-  `family` `garnet`. No garnet id matches `enemy-{archetype}-{index}`, so the
-  coral heading sets stay complete.
+- The [enemy fleet producer](enemy-redesign.md) draws the drones, the frigate,
+  the capital and the retaliators in the garnet colours. Their rows in
+  Andromeda's manifest take the coral ids with `enemy-garnet-` in place of
+  `enemy-`, such as `enemy-garnet-frigate-3`, with `family` `garnet`. No
+  garnet id matches `enemy-{archetype}-{index}`, so the coral heading sets
+  stay complete.
 
 Contrast is WCAG against Andromeda's field `#9298B5`, a light field. The
 garnet drones, frigate, capital and hostile station take the 1 px ink

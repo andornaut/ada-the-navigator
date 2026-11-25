@@ -31,16 +31,6 @@ const miningPaint = {
   recess: "#324b4c",
 };
 
-const industrialColors = new Set([...Object.values(cargoPaint), ...Object.values(miningPaint)]);
-
-// Industrial paint belongs to the hull across all salvage fleets.
-export function isIndustrialHullColor(file: string, color: string): boolean {
-  return (
-    /^retaliator(?:CargoHauler|MiningFreighter)?-(?:\d+\.svg|shards\.json)$/u.test(file) &&
-    industrialColors.has(color)
-  );
-}
-
 function solid(
   paint: { side: string; rear: string },
   plan: Plan,

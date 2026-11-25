@@ -167,13 +167,6 @@ export function mergeEntries(
   });
 }
 
-// Selects the ids of the named crafts under `prefix`: `{prefix}{name}` and `{prefix}{name}-...`,
-// so `enemy-claim-retaliator-` never selects `enemy-claim-retaliatorCargoHauler-`.
-export const craftIds =
-  (prefix: string, names: readonly string[]) =>
-  (id: string): boolean =>
-    names.some((name) => id === prefix + name || id.startsWith(`${prefix}${name}-`));
-
 // Links data files from a manifest by key, after its existing links.
 export function linkData(file: ManifestFile, links: Readonly<Record<string, string>>) {
   editManifest(file, (manifest) => Object.assign(manifest, links));
@@ -263,24 +256,6 @@ export function storedAt<T extends { id: string; path?: unknown }>(
     throw new Error(`${entry.id}: ${String(entry.path)} was not written`);
   }
   return { ...entry, path };
-}
-
-/** The `kind` sidecar `file`'s manifest maps for each of `crafts`, by its file name. */
-export function sidecarCopies(
-  file: ManifestFile,
-  kind: SidecarKind,
-  crafts: Iterable<string>,
-): Map<string, string> {
-  const sidecars = (readManifest(file).sidecars ?? {}) as Sidecars;
-  return new Map(
-    [...crafts].map((craft) => {
-      const path = sidecars[craft]?.[kind];
-      if (path === undefined) {
-        throw new Error(`${manifestUrl(file)} has no ${craft}.${kind}; run its generator first`);
-      }
-      return [`${craft}-${kind}.json`, path];
-    }),
-  );
 }
 
 // Sets the sidecar paths `owns` selects by craft and kind and keeps every other one, so each

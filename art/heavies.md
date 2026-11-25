@@ -19,9 +19,8 @@ each sprite's drawn silhouette ([Collision](#collision)).
   `art/tools/projection.ts`. `art/tools/enemies.ts` replaces only its own hull
   entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}` and the industrial
   stems' `enemy-{retaliatorCargoHauler,retaliatorMiningFreighter}-{k}`.
-- Every enemy producer owns exactly the ids of the crafts it draws
-  (`craftIds` in `art/tools/manifest.ts`), never a whole family prefix, and
-  writes them with `mergeEntries`: each existing entry keeps its position, so
+- Every enemy producer owns exactly the ids of the crafts it draws, never a
+  whole family prefix, and writes them with `mergeEntries`: each existing entry keeps its position, so
   entries of several producers can interleave and reruns stay byte-identical.
 - Each also lists its crafts' data files in the manifest's
   [`sidecars` map](README.md#ada-contract-and-validation) with
@@ -438,8 +437,6 @@ armour with the existing rust, steel and ember weapon and wreck colours.
   claim colours, and the
   [hostile station producer](station-redesign.md#hostile-stations) the
   platform's hull and bases.
-- `art/tools/claim-jumpers.ts` holds the claim palette and the recolour from
-  the coral family that the destruction producer applies to the claim shards.
 - Rows sit in [Cartwheel's manifest](../public/art/cartwheel/manifest.json)
   under the coral ids with `enemy-claim-` in place of `enemy-`, such as
   `enemy-claim-frigate-3` and `enemy-claim-capital-turret-top-9`, with the
