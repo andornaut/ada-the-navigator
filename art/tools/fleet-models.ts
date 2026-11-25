@@ -245,6 +245,8 @@ export type FleetCraft = {
   stem: string;
   // The sidecar key and file stem.
   key: string;
+  // The hull's own lateral span in Ada widths, when not its archetype's contract span.
+  span?: number;
   design: string;
   parts: FleetPart[];
   mouths: FleetMouth[];
@@ -530,8 +532,17 @@ export const FRIGATE_MOUNT_RADIUS = MOUNT_RADIUS;
 
 // ------------------------------------------------------------------ retaliators
 
-const nozzles = (m: Mesh, p: Paint, l0: number, l1: number, z: number, r: number, r1: number) => {
-  for (const w of [-5.5, 0, 5.5]) pod(m, l0, l1, w, z, r, p.dark, 12, { r1, aft: p.glow });
+const nozzles = (
+  m: Mesh,
+  p: Paint,
+  breadths: readonly number[],
+  l0: number,
+  l1: number,
+  z: number,
+  r: number,
+  r1: number,
+) => {
+  for (const w of breadths) pod(m, l0, l1, w, z, r, p.dark, 12, { r1, aft: p.glow });
 };
 
 // Manta gunship: tall centre body, two thick wedge wings, two short dark intake lobes that end
@@ -598,46 +609,67 @@ function manta(p: Paint): FleetCraft {
   };
 }
 
-// Cargo Hauler: bow cab, slim spine, two plain cargo blocks a side of unequal length with a gap
-// between them, a stern engine house with three nozzles and the launcher in a well on the spine.
+// Cargo Hauler: one long hull, a tall spine with low saddle blocks hugging each side and a
+// crate on each aft saddle, a bow cab, a stern engine house with three nozzles that carries the
+// span, and the launcher in a lowered section of the spine. Its span is 2.5 Ada widths.
 function cargoHauler(p: Paint): FleetCraft {
   const window: Tones = [p.saddle[2], p.saddle[2], p.saddle[2]];
   const house: Tones = [p.saddle[1], p.saddle[2], p.saddle[2]];
+  const nozzleBreadths = [-13, 0, 13];
   return {
     archetype: "retaliator",
     stem: "retaliatorCargoHauler",
     key: "fleetRetaliatorCargoHauler",
     design: "Cargo Hauler",
+    span: 2.5,
     parts: [
       solid("body", (m) => {
         hull(
           m,
           [
-            [30, 3.5, 2, 7, 1, 1],
-            [25, 7, 0, 11, 2.5, 2],
-            [19, 7, 0, 11, 2.5, 2],
+            [38, 4.05, 2, 7.8, 1, 1],
+            [33, 9, 0, 13, 2.5, 2],
+            [27, 9, 0, 13, 2.5, 2],
           ],
           p.cargo,
         );
-        bx(m, 21, 24, -4.6, 4.6, 10.8, 12, window);
+        bx(m, 29, 32, -5.58, 5.58, 12.8, 14, window);
         hull(
           m,
           [
-            [20, 3.6, 2, 7, 1, 1],
-            [-22, 3.6, 2, 7, 1, 1],
+            [28, 7, 0, 13, 3, 2],
+            [9, 7, 0, 13, 3, 2],
+          ],
+          p.cargo,
+        );
+        // The lowered section that seats the launcher.
+        hull(
+          m,
+          [
+            [10, 6, 0, 9.5, 2, 1.5],
+            [-4, 6, 0, 9.5, 2, 1.5],
+          ],
+          p.cargo,
+        );
+        hull(
+          m,
+          [
+            [-3, 7, 0, 13, 3, 2],
+            [-30, 7, 0, 13, 3, 2],
           ],
           p.cargo,
         );
         for (const side of [1, -1]) {
-          bx(m, 0, 17, side * 4.4, side * 28.15, 1, 9, p.saddle);
-          bx(m, -18, -8, side * 4.4, side * 23, 1, 8, p.saddle);
+          bx(m, 4, 26, side * 6.5, side * 17, 1, 8, p.saddle);
+          bx(m, -27, -6, side * 6.5, side * 19, 1, 9, p.saddle);
+          bx(m, -22, -12, side * 9, side * 17, 9, 12, p.cargo);
         }
-        bx(m, -27, -20, -9, 9, 1, 10, house);
+        bx(m, -41, -29, -23.45, 23.45, 1, 13, house);
       }),
-      solid("nozzles", (m) => nozzles(m, p, -30, -26, 5.5, 2.8, 1.9), true),
+      solid("nozzles", (m) => nozzles(m, p, nozzleBreadths, -46, -40, 7, 3.4, 3.4 * 0.68), true),
     ],
-    mouths: [-5.5, 0, 5.5].map((w) => ({ at: [-30, w, 5.5] as Point, radius: 2.8 })),
-    mount: { at: [-4, 0, 7], radius: WELL_RADIUS },
+    mouths: nozzleBreadths.map((w) => ({ at: [-46, w, 7] as Point, radius: 3.4 })),
+    mount: { at: [3, 0, 9.5], radius: WELL_RADIUS },
     fleck: p.saddle,
     cuts: [-90, -45, 0, 45, 90, 180],
   };
@@ -702,7 +734,7 @@ function miningFreighter(p: Paint): FleetCraft {
         true,
       ),
       solid("visor", (m) => bx(m, 2.5, 5.5, -5, 5, 16, 18.4, p.dark), true),
-      solid("nozzles", (m) => nozzles(m, p, -25, -20.5, 7, 3.2, 2.1), true),
+      solid("nozzles", (m) => nozzles(m, p, [-5.5, 0, 5.5], -25, -20.5, 7, 3.2, 2.1), true),
     ],
     mouths: [-5.5, 0, 5.5].map((w) => ({ at: [-25, w, 7] as Point, radius: 3.2 })),
     mount: { at: [-5, 0, 15], radius: MOUNT_RADIUS },

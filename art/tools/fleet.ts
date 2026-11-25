@@ -103,7 +103,7 @@ const vertices = (mesh: Mesh) => mesh.flatMap((face) => face.points);
 function scaled(paint: Paint, craft: FleetCraft): Scaled {
   const points = craft.parts.flatMap(({ mesh }) => vertices(mesh));
   const span = Math.max(...points.map(([, w]) => w)) - Math.min(...points.map(([, w]) => w));
-  const target = enemySizeRatio(craft.archetype) * ADA_MODEL_SPAN;
+  const target = (craft.span ?? enemySizeRatio(craft.archetype)) * ADA_MODEL_SPAN;
   const k = target / span;
   const parts = craft.parts.map((part) => ({ ...part, mesh: meshScale(part.mesh, [k, k, k]) }));
   const { heavy, mount, muzzle, ...rest } = craft;
