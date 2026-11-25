@@ -948,8 +948,9 @@ enemies and keep their own waiting behaviour.
   so a request is clamped between the floor and its cap. Patrol and
   investigation paces already exceed the floor, except a `siege` patrol at
   0.5 x 0.5 = 0.25, which meets it, and the flagship's at 0.5 x 0.25 = 0.125,
-  which rises to 0.25. A collision bounce or contact slide can briefly drop
-  actual speed below the floor; the ship regains it with `accelerationSeconds`.
+  which rises to 0.25. The floor applies to the requested speed: actual speed
+  can dip below it briefly in a sharp turn, a collision bounce or a contact
+  slide, and the ship regains it with `accelerationSeconds`.
 - **Idle patrol:** the existing seeded offset ellipse through home
   ([Patrol and investigation](#patrol-and-investigation)), radius 80 to 150 and
   ratio 0.7 to 1, at 0.5 of combat speed. It reaches at most 300 world units
@@ -967,16 +968,20 @@ enemies and keep their own waiting behaviour.
   its circling side, at least at the minimum speed, moving in or out only to
   regain the band. When peer separation would cancel its request below the
   floor, it strafes on its circling side at the floor.
-- **Escort stations:** an engaged escort circles its leader on its station ring,
-  60 beyond the leader's spacing radius. The stations of one leader's escorts
-  turn together on the leader's seeded side, at the rate that moves each escort
-  at the minimum speed relative to its leader, so the escorts keep their equal
-  angles. An escort on station keeps its nose on Ada and strafes.
+- **Escort stations:** an escort with a live leader circles it on its station
+  ring, 60 beyond the leader's spacing radius, whether engaged or idle. The
+  stations of one leader's escorts turn together on the leader's seeded side, so
+  the escorts keep their equal angles. The ring's rate moves each escort along
+  it at the minimum speed plus its leader's top patrol speed, so an escort keeps
+  the floor even when its leader moves against the ring. An escort on station
+  keeps its nose on Ada and strafes while it sees her, even beyond its firing
+  range, and faces its travel otherwise.
 - **Turret holds:** a frigate or capital that would hold a point instead circles
   it at least at the minimum speed, its centre on a circle of radius 2r around
   the point on its seeded side, r being its spacing radius ([Hulls](#hulls)): 126
   world units for a Shoulder frigate, 170 for a Hammer capital. Its turrets track
-  Ada as usual. Station guards keep their station-centred circle.
+  Ada as usual. A `siege` heavy within 4r of Ada circles her at 2r instead of
+  pressing straight in. Station guards keep their station-centred circle.
 - **Packs:** the members of one pack, two or more live ships sharing a pack ID,
   patrol one shared route instead of their own: the standard seeded ellipse,
   seeded from the pack ID, through the pack anchor, the mean of the live members'
@@ -990,8 +995,9 @@ enemies and keep their own waiting behaviour.
 - **Peers and obstacles:** patrol, investigation and the holds above apply the
   existing peer separation, as engaged steering does. A ship that a peer still
   blocks slides along the contact on its circling side instead of stopping. A
-  ship whose obstacle steering finds no clear course reverses its course, and a
-  patroller flips its patrol direction, instead of stopping. A position limit,
+  solo ship whose obstacle steering finds no clear course reverses its course,
+  and a solo patroller flips its patrol direction, instead of stopping; pack
+  members keep their pack's seeded direction. A position limit,
   such as a Phantom blockade's 600 reach, never holds a ship still: at the limit
   it turns along it.
 - **Stand-down:** when Phantom's drones stand down after the flagship is
@@ -1001,9 +1007,11 @@ enemies and keep their own waiting behaviour.
 | ------------------ | ------------------------------------------------------ |
 | Minimum speed      | 0.25 of current top speed                              |
 | Turret hold circle | Radius 2r around the held point                        |
+| Siege circling     | Radius 2r around Ada once within 4r                    |
 | Pack pair spacing  | Larger of the galaxy's member spacing and rA + rB + 20 |
 | Miner edge offset  | r + 20 from the drawn outline to the miner's centre    |
-| Miner dwell        | Seeded 6 to 12 seconds per rock                        |
+| Miner tracing pace | The minimum speed                                      |
+| Miner dwell        | Seeded 6 to 12 seconds per rock, from arrival          |
 | Miner recent picks | The last 3 rocks are excluded from the next pick       |
 | Miner leash        | The existing 2000 industrial home radius               |
 
@@ -1017,14 +1025,18 @@ Mica's mining ship is a finale ally and Cartwheel's story miner is a story ship,
 neither an enemy. Unengaged and not returning, the Mining Freighter traces
 asteroid edges:
 
-- **Edge:** it follows one rock's drawn outline with its centre r + 20 from the
-  outline, r being its spacing radius (30), so its hull keeps at least 20 world
-  units from the rock. It traces on its seeded side at its patrol pace, 0.5 of
-  its top speed. Obstacle steering checks the traced rock at that edge offset
-  instead of the avoidance berths; every other obstacle keeps the berths.
-- **Dwell:** it follows one rock's edge for a seeded 6 to 12 seconds, from its
-  ship ID and pick count, then picks the next rock. It picks at once when the
-  traced rock is destroyed or starts moving.
+- **Edge:** it follows one rock's drawn outline, targeting its centre r + 20
+  from the outline, r being its spacing radius (30), so its hull keeps about 20
+  world units from the rock. The offset is the target; the Freighter never
+  touches the rock. It traces on its seeded side at the minimum speed, 0.25 of
+  its current top speed (30 world units per second at its class top speed of
+  120), so it holds close to the offset. Obstacle steering checks the traced rock
+  at that edge offset instead of the avoidance berths; every other obstacle keeps
+  the berths.
+- **Dwell:** counting from its arrival at the rock, it follows the edge for a
+  seeded 6 to 12 seconds, seeded from its ship ID and pick count, then picks the
+  next rock. It picks at once when the traced rock is destroyed or starts
+  moving.
 - **Next rock:** the nearest qualifying rock to its current position that is not
   among its last 3 picks. A rock qualifies when it is live and at rest, its
   traced loop lies within 2000 world units of home and outside protected areas,
@@ -1033,8 +1045,8 @@ asteroid edges:
   the nearest point of that loop, then traces it.
 - **No rock:** with no qualifying rock it patrols home on the standard ellipse
   and checks again after each seeded 6 to 12 second dwell.
-- **State:** the traced rock's ID, its start time and the last 3 picks are saved
-  with the ship's other enemy state and survive Continue.
+- **State:** the traced rock's ID, the arrival time, the pick count and the last
+  3 picks are saved with the ship's other enemy state and survive Continue.
 
 Engagement, retreat and return are unchanged; a returning Mining Freighter
 resumes tracing once it reaches home.
