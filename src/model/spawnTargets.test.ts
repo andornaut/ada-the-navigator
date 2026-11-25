@@ -19,9 +19,6 @@ const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `$
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // Overlap within the group: two frigate hulls (radius 50) at the spawner's member spacing of
-  // 100 leave less than the gap between them, so a two-frigate group never fits.
-  frigate: ["5:1", "5:2", "6:0", "6:1", "6:2"],
   // The arrival calm radius.
   interceptor: ["2:0", "4:0"],
   // Overlap: the static rock target exceeds the room between the lanes and the enemy groups.

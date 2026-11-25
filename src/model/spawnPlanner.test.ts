@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type EnemyTarget,
   type ExclusionZone,
   planRegion,
   SPAWN_RULE,
@@ -86,7 +87,8 @@ describe("planRegion", () => {
       expect(placements.length).toBeGreaterThan(40);
       for (const [a, b] of pairs(placements)) {
         expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(
-          a.radius + b.radius + rules.gap,
+          // Formation spacings land on exactly two radii plus the gap, up to rounding.
+          a.radius + b.radius + rules.gap - 1e-9,
         );
       }
     }
@@ -280,8 +282,9 @@ describe("planRegion", () => {
           expect(escorts).toHaveLength(own.length * (target.escorts?.perLeader ?? 0));
           for (const escort of escorts) {
             const leader = own.find((member) => member.id === escort.leader)!;
+            // The test heavy's ring of 70 widens to its hull, the escort's and the gap: 88.
             expect(Math.hypot(escort.x - leader.x, escort.y - leader.y)).toBeCloseTo(
-              target.escorts!.ring,
+              Math.max(target.escorts!.ring, target.radius + escort.radius + rules.gap),
             );
           }
         }
@@ -290,6 +293,70 @@ describe("planRegion", () => {
       }
     }
     expect(groups).toBeGreaterThan(40);
+  });
+
+  describe("spaces members by their hulls plus the gap", () => {
+    const pair = (target: EnemyTarget) =>
+      planRegion(
+        { ...rules, bands: [{ ...band, enemies: [target], moving: [], rocks: [] }], gap: 20 },
+        1,
+        { ...region, columns: 1, rows: 1 },
+      );
+    const leaders = (plan: SpawnPlan) =>
+      plan.placements.filter((placement) => placement.category === "enemy" && !placement.leader);
+
+    it("fits a two-frigate group exactly two hulls plus the gap apart", () => {
+      const plan = pair({
+        density: 1,
+        escorts: { kind: "escort", perLeader: 2, radius: 10, ring: 110 },
+        groupSize: [2, 2],
+        kind: "frigate",
+        radius: 50,
+        spacing: 100,
+      });
+      expect(plan.report.kinds.frigate).toMatchObject({ delivered: 1, requested: 1 });
+      const [a, b] = leaders(plan);
+      expect(Math.abs(a!.x - b!.x)).toBeCloseTo(50 + 50 + 20);
+      for (const escort of plan.placements.filter((placement) => placement.leader)) {
+        const leader = plan.placements.find((placement) => placement.id === escort.leader)!;
+        // The ring of 110 already clears both hulls and the gap.
+        expect(Math.hypot(escort.x - leader.x, escort.y - leader.y)).toBeCloseTo(110);
+      }
+    });
+
+    it("keeps the member spacing for hulls it already clears", () => {
+      const plan = pair({
+        density: 1,
+        groupSize: [3, 3],
+        kind: "fighter",
+        radius: 10,
+        spacing: 100,
+      });
+      const xs = leaders(plan)
+        .map((member) => member.x)
+        .sort((p, q) => p - q);
+      expect(xs).toHaveLength(3);
+      expect(xs[1]! - xs[0]!).toBeCloseTo(100);
+      expect(xs[2]! - xs[1]!).toBeCloseTo(100);
+    });
+
+    it("widens an escort ring so escorts clear each other", () => {
+      const plan = pair({
+        density: 1,
+        escorts: { kind: "escort", perLeader: 6, radius: 10, ring: 30 },
+        groupSize: [1, 1],
+        kind: "capital",
+        radius: 10,
+        spacing: 100,
+      });
+      const escorts = plan.placements.filter((placement) => placement.leader);
+      expect(escorts).toHaveLength(6);
+      // Six escorts of radius 10 need a chord of 40, so a ring of 40 / (2 sin 30 degrees) = 40.
+      for (const [index, escort] of escorts.entries()) {
+        const next = escorts[(index + 1) % escorts.length]!;
+        expect(Math.hypot(escort.x - next.x, escort.y - next.y)).toBeCloseTo(40);
+      }
+    });
   });
 
   it("tries further anchors before dropping a group", () => {

@@ -44,7 +44,10 @@ export interface EscortTarget {
   readonly kind: string;
   readonly perLeader: number;
   readonly radius: number;
-  /** Distance from the leader's centre to each escort's. */
+  /**
+   * Distance from the leader's centre to each escort's, widened so each escort keeps the gap from
+   * its leader and its neighbours on the ring.
+   */
   readonly ring: number;
 }
 
@@ -56,7 +59,7 @@ export interface EnemyTarget {
   readonly groupSize: readonly [number, number];
   readonly kind: string;
   readonly radius: number;
-  /** Distance between neighbouring members on the group's line. */
+  /** Distance between neighbouring members on the group's line, widened to two hulls plus the gap. */
   readonly spacing: number;
 }
 
@@ -164,6 +167,9 @@ export const SPAWN_RULE = {
   overlap: "overlap",
 } as const;
 
+/** Spacings computed to exactly two radii plus the gap still clear it in floating point. */
+const EPSILON = 1e-9;
+
 interface Footprint extends Vec {
   readonly radius: number;
 }
@@ -202,7 +208,10 @@ class SpatialIndex {
     for (let x = x0; x <= x1; x++) {
       for (let y = y0; y <= y1; y++) {
         for (const other of this.buckets.get(`${x},${y}`) ?? []) {
-          if (Math.hypot(other.x - at.x, other.y - at.y) < other.radius + at.radius + gap) {
+          if (
+            Math.hypot(other.x - at.x, other.y - at.y) <
+            other.radius + at.radius + gap - EPSILON
+          ) {
             return false;
           }
         }
@@ -531,7 +540,15 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
               attempt === 0
                 ? seeded
                 : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
-            const candidate = groupFormation(chunk, group, target, members, anchor, next());
+            const candidate = groupFormation(
+              rules.gap,
+              chunk,
+              group,
+              target,
+              members,
+              anchor,
+              next(),
+            );
             const rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
             if (rule) {
               rejected.push(rule);
@@ -594,11 +611,29 @@ function placeRock(
   return { rejected };
 }
 
+/** Line spacing between neighbouring members: their spacing, or wider for hulls plus the gap. */
+function lineSpacing(gap: number, target: EnemyTarget): number {
+  return Math.max(target.spacing, 2 * target.radius + gap);
+}
+
 /**
- * A whole group at an anchor: members on a line through it, `spacing` apart, and each leader's
- * escorts evenly on its ring from `phase`.
+ * Escort ring radius: the escort ring, or wider so each escort keeps the gap from its leader and
+ * from its neighbours on the ring.
+ */
+function escortRing(gap: number, leader: number, escort: EscortTarget): number {
+  const neighbours =
+    escort.perLeader > 1
+      ? (2 * escort.radius + gap) / (2 * Math.sin(Math.PI / escort.perLeader))
+      : 0;
+  return Math.max(escort.ring, leader + escort.radius + gap, neighbours);
+}
+
+/**
+ * A whole group at an anchor: members on a line through it, `lineSpacing` apart, and each
+ * leader's escorts evenly on its `escortRing` from `phase`.
  */
 function groupFormation(
+  gap: number,
   chunk: Chunk,
   group: string,
   target: EnemyTarget,
@@ -607,6 +642,8 @@ function groupFormation(
   phase: number,
 ): SpawnPlacement[] {
   const formation: SpawnPlacement[] = [];
+  const spacing = lineSpacing(gap, target);
+  const ring = target.escorts ? escortRing(gap, target.radius, target.escorts) : 0;
   for (let member = 0; member < members; member++) {
     const leader: SpawnPlacement = {
       category: "enemy",
@@ -615,7 +652,7 @@ function groupFormation(
       id: `${group}:${member}`,
       kind: target.kind,
       radius: target.radius,
-      x: anchor.x + (member - (members - 1) / 2) * target.spacing,
+      x: anchor.x + (member - (members - 1) / 2) * spacing,
       y: anchor.y,
     };
     formation.push(leader);
@@ -634,8 +671,8 @@ function groupFormation(
         kind: escort.kind,
         leader: leader.id,
         radius: escort.radius,
-        x: leader.x + Math.cos(angle) * escort.ring,
-        y: leader.y + Math.sin(angle) * escort.ring,
+        x: leader.x + Math.cos(angle) * ring,
+        y: leader.y + Math.sin(angle) * ring,
       });
     }
   }
@@ -656,7 +693,7 @@ function formationBlocked(
         .some(
           (other) =>
             Math.hypot(other.x - member.x, other.y - member.y) <
-            other.radius + member.radius + rules.gap,
+            other.radius + member.radius + rules.gap - EPSILON,
         )
         ? SPAWN_RULE.overlap
         : undefined);
