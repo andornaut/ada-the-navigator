@@ -3101,8 +3101,8 @@ try {
       const button = (node) => ({ text: node.textContent.trim(), unavailable: unavailable(node) });
       return {
         endpoints: [...card.querySelectorAll(".ada-quest-endpoint")].map((node) => ({
-          disabled: node.disabled,
           kind: node.querySelector("small")?.textContent ?? "",
+          unavailable: unavailable(node),
         })),
         footer: [...card.querySelectorAll(".ada-quest-footer .ada-button")].map(button),
         lines: [...card.querySelectorAll(".ada-quest-list .ada-button")].map(
@@ -3143,7 +3143,7 @@ try {
       pager: [1, 0],
     });
     await checkQuestColumn(insets, view, name);
-    // The job's detail page: From its mapped station, To its unmapped target, disabled.
+    // The job's detail page: From its mapped station, To its unmapped target, refused.
     await questsList.locator(`.ada-quest-list [data-quest-id="${unmappedJob}"]`).click();
     await questsList.locator(".ada-quest-route").waitFor({ state: "visible" });
     await page.screenshot({ path: `${output}/quests-detail-endpoints-${size}.png` });
@@ -3152,10 +3152,10 @@ try {
     assert.deepEqual(
       detail.endpoints,
       [
-        { disabled: false, kind: CONTENT.labels.questFrom },
-        { disabled: true, kind: CONTENT.labels.questTo },
+        { kind: CONTENT.labels.questFrom, unavailable: false },
+        { kind: CONTENT.labels.questTo, unavailable: true },
       ],
-      `${size}: the detail page shows From enabled and the unmapped To disabled`,
+      `${size}: the detail page shows From available and the unmapped To refused`,
     );
     await questsList.locator('[data-action="quest-back"]').click();
     await questsList.locator(".ada-quest-list").waitFor({ state: "visible" });
@@ -3173,7 +3173,7 @@ try {
   save("quests-proof.json", questProofs);
   events.checks.push(
     "The shared Quests list pages three quests two at a time with Previous and Next, keeps a " +
-      "line whose target is unmapped, and its detail page disables the unmapped To endpoint, " +
+      "line whose target is unmapped, and its detail page refuses the unmapped To endpoint, " +
       "at 1280x720 and at 720x360 with phone insets",
   );
   // Back to title from a flight in danger: the start screen with the flight kept and saved, no
