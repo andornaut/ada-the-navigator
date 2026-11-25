@@ -1,7 +1,7 @@
 # Cheats
 
 The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
-The user approved this list on 2026-11-18, with cheats that never touch the save.
+The user approved this list on 2026-11-18.
 
 Choose **Cheats** directly from Menu or Pause in a browser tab or installed
 app. The modal has two unlabeled columns with three aligned rows each. The
@@ -15,20 +15,19 @@ choice persists on this device with the other Settings preferences. Its readout
 stays at the bottom right of the device viewport, inside the safe area and
 above the game and letterbox bands.
 
-## Cheat session
+## Save
 
-Using any cheat first saves play up to that moment, then starts a cheat
-session. From then on nothing is saved, earned or banked: story progress, unlocks, ownership, levels, Stardust, ore, jobs,
-achievements and statistics all stay as they were in the save before the first
-cheat. Returning to the start screen from play, by Back to title or by closing and
-reopening the game, ends the session; Continue then loads the save as it was
-before the first cheat. No cheat grants an achievement or counts toward one, and
-an unlock marks nothing cleared: no chapter, holodisk, quest, landmark or
+Cheats act on the real save like normal play. Cheats, and play after them,
+save, earn and bank as usual: story progress, unlocks, ownership, levels,
+Stardust, ore, jobs, achievements and statistics. Returning to the start screen
+or reopening the game keeps cheated progress, and Continue loads the real save.
+An unlock marks nothing cleared: no chapter, holodisk, quest, landmark or
 project counts as done.
 
-Cheats also work on the start screen: their grants apply to the cheat session
-that the next Start or Continue begins, and returning to the start screen from
-play ends it.
+Cheats also work on the start screen and apply to the next Start or Continue.
+**Restart** on the start screen returns to a new save;
+[What each event keeps](../../gameplay/rules.md#what-each-event-keeps) lists
+what it clears and keeps.
 
 ## Cheats
 
@@ -50,8 +49,6 @@ play ends it.
 
 ## Other actions
 
-The selective reset starts no cheat session.
-
 - **Reset jobs, projects & quests** asks for confirmation before rewinding the
   stored campaign to the Earth opening of Sunflower and relocking later galaxies.
   It clears jobs, project funding and reveals, story progress, and holodisks.
@@ -59,9 +56,7 @@ The selective reset starts no cheat session.
   Past contributions stay spent. Already-earned one-time rewards stay recorded,
   and new repeatable jobs and activities still pay their usual rewards.
   Cancel or X returns to Cheats. A failed write leaves the save and current view
-  in place. The action uses the stored save, so session-only cheats stay temporary.
-
-Open **Restart** from the Start screen to restart the entire game.
+  in place.
 
 ## Work items
 

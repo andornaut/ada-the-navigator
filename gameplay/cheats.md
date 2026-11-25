@@ -2,9 +2,9 @@
 
 See [Cheats](../docs/design/cheats.md#cheats).
 
-## Cheat session
+## Save
 
-See [Cheat session](../docs/design/cheats.md#cheat-session).
+See [Save](../docs/design/cheats.md#save).
 
 ## Cheats
 
