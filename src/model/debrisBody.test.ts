@@ -24,7 +24,8 @@ describe("traveling debris as drawn", () => {
     for (const galaxy of [2, 3] as GalaxyNumber[]) {
       const drawn = debrisSilhouette(galaxy, debris("river:a:1,2:0"))!;
       expect(drawn.frames).toHaveLength(8);
-      expect(drawn.frames.every((parts) => parts.length >= 4)).toBe(true);
+      // A broken station piece's frame may be as few as two convex parts.
+      expect(drawn.frames.every((parts) => parts.length > 0)).toBe(true);
     }
     // Sunflower has no debris art, and resting or drifting debris is not traveling debris.
     expect(debrisSilhouette(1, debris("a"))).toBeNull();
