@@ -22,6 +22,7 @@ import {
   setFooterAction,
   SETTINGS_INSTALL_BUTTON,
   STANDARD_CARD_TEXT_BUTTON,
+  SWITCH_FRAME,
   SWITCH_ROW_PARTS,
   switchState,
   TEXT_TOKENS,
@@ -37,6 +38,19 @@ const manifest = json("manifest.json") as {
   sprites: { json: string; key: string; slice?: Record<string, number> }[];
 };
 const entry = (key: string) => manifest.sprites.find((sprite) => sprite.key === key)!;
+// An Aseprite sheet of one row of frames, with its tags.
+interface SpriteSheet {
+  frames: Record<string, { frame: { x: number } }>;
+  meta: { frameTags: { from: number; name: string }[]; size: { h: number; w: number } };
+}
+// Each tag's frame x in a sheet.
+const tagX = (sheet: SpriteSheet): Record<string, number> =>
+  Object.fromEntries(
+    sheet.meta.frameTags.map(({ from, name }) => [
+      name,
+      Object.values(sheet.frames)[from]!.frame.x,
+    ]),
+  );
 // The CSS rule for a selector in the modal styles.
 const rule = (selector: string) => {
   const start = MODAL_STYLE.indexOf(`${selector}{`);
@@ -68,6 +82,23 @@ describe("Settings control rows", () => {
     } else {
       expect(rule(`${UI_SCOPE} .ada-switch`)).toContain(
         `background:url('/art/ui/sprites/ui-switch.png') ${position}`,
+      );
+    }
+  });
+
+  it("sizes the switch to the whole sheet and positions every tag, disabled ones included", () => {
+    const sheet = json("sprites/ui-switch.json") as SpriteSheet;
+    const { height, width } = CONTROL_ROW.switch;
+    expect(sheet.meta.size).toEqual({ h: height, w: 4 * width });
+    expect(tagX(sheet)).toEqual(
+      Object.fromEntries(Object.entries(SWITCH_FRAME).map(([tag, frame]) => [tag, frame * width])),
+    );
+    expect(rule(`${UI_SCOPE} .ada-switch`)).toContain(
+      `0 0 / ${units(sheet.meta.size.w)} ${units(sheet.meta.size.h)}`,
+    );
+    for (const [tag, x] of Object.entries(tagX(sheet)).filter(([, left]) => left > 0)) {
+      expect(rule(`${UI_SCOPE} .ada-switch[data-tag=${tag}]`)).toContain(
+        `background-position:${units(-x)} 0`,
       );
     }
   });
@@ -356,6 +387,23 @@ describe("modal text", () => {
     );
     expect(mapCloseStyle(".map-close")).toContain("--ada-close-rest:ButtonFace");
     expect(mapCloseStyle(".map-close")).toContain("var(--ada-close-ink,ButtonText)");
+  });
+
+  it("sizes the close art and its glyph mask to the whole sheet, disabled frame included", () => {
+    const sheet = json("sprites/ui-close.json") as SpriteSheet;
+    const { height, width } = CARD_CLOSE.art;
+    expect(sheet.meta.size).toEqual({ h: height, w: CARD_CLOSE.sheetWidth });
+    expect(CARD_CLOSE.sheetWidth).toBe(3 * width);
+    expect(tagX(sheet)).toEqual(
+      Object.fromEntries(
+        Object.entries(CARD_CLOSE.frame).map(([tag, frame]) => [tag, frame * width]),
+      ),
+    );
+    const size = `${units(CARD_CLOSE.sheetWidth)} ${units(height)}`;
+    expect(rule(`${UI_SCOPE} .ada-close::before`)).toContain(`0 0 / ${size}`);
+    expect(rule(`${UI_SCOPE} .ada-close:focus-visible:not(:active)::before`)).toContain(
+      `${size} no-repeat`,
+    );
   });
 
   it("keeps the 48 close target fixed while aligning framed close ink 6 from the corner", () => {

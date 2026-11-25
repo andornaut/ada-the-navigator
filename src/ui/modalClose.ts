@@ -7,7 +7,7 @@ import { units } from "./layout/css.ts";
 
 // Mask only the idle atlas frame. The active sprite keeps its own face and ink.
 const CLOSE_GLYPH_MASK = `mask:url('/art/ui/sprites/ui-close.png') 0 0 /
-  ${units(2 * CARD_CLOSE.art.width)} ${units(CARD_CLOSE.art.height)} no-repeat`;
+  ${units(CARD_CLOSE.sheetWidth)} ${units(CARD_CLOSE.art.height)} no-repeat`;
 
 /** Give close buttons a filled focus cue, using the idle art as the glyph. */
 export function modalCloseStyle(

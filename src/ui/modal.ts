@@ -116,6 +116,19 @@ const CLOSE_HIT = CARD_CLOSE.hit;
 // The shared card and control styles apply in the controls overlay and on the start screen.
 export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 
+// ui-switch.png's frames by tag, left to right in one row of switch-sized frames.
+export const SWITCH_FRAME = { off: 1, "off-disabled": 3, on: 0, "on-disabled": 2 } as const;
+
+// Each switch frame after the first, by the data-tag that selects it.
+const SWITCH_FRAME_STYLE = Object.entries(SWITCH_FRAME)
+  .filter(([, frame]) => frame > 0)
+  .map(
+    ([tag, frame]) => `${UI_SCOPE} .ada-switch[data-tag=${tag}]{
+  background-position:${units(-frame * CONTROL_ROW.switch.width)} 0
+}`,
+  )
+  .join("\n");
+
 // The shared renderer and existing specialised actions retain their own focus treatment.
 export const LEGACY_TEXT_BUTTON = `.ada-button:not(:where(
   .ui-standard-button,.ada-compact,.ada-story-button,.ada-quest-list *,
@@ -347,7 +360,7 @@ ${UI_SCOPE} .ada-close::before{
   content:"";
   width:${units(CARD_CLOSE.art.width)};
   height:${units(CARD_CLOSE.art.height)};
-  background:url('/art/ui/sprites/ui-close.png') 0 0 / ${units(2 * CARD_CLOSE.art.width)} ${units(
+  background:url('/art/ui/sprites/ui-close.png') 0 0 / ${units(CARD_CLOSE.sheetWidth)} ${units(
     CARD_CLOSE.art.height,
   )};
   image-rendering:pixelated
@@ -359,7 +372,7 @@ ${UI_SCOPE} :where(.ada-card-frame,.ada-modal:not(.ada-interaction-modal) > .ada
   pointer-events:none
 }
 ${UI_SCOPE} .ada-close:active::before{
-  background-position:${units(-CARD_CLOSE.art.width)} 0
+  background-position:${units(-CARD_CLOSE.frame.pressed * CARD_CLOSE.art.width)} 0
 }
 ${modalCloseStyle(`${UI_SCOPE} .ada-close`, {
   face: TEXT_TOKENS.label,
@@ -635,13 +648,11 @@ ${UI_SCOPE} .ada-switch{
   width:${units(CONTROL_ROW.switch.width)};
   height:${units(CONTROL_ROW.switch.height)};
   background:url('/art/ui/sprites/ui-switch.png') 0 0 / ${units(
-    2 * CONTROL_ROW.switch.width,
+    Object.keys(SWITCH_FRAME).length * CONTROL_ROW.switch.width,
   )} ${units(CONTROL_ROW.switch.height)};
   image-rendering:pixelated
 }
-${UI_SCOPE} .ada-switch[data-tag=off]{
-  background-position:${units(-CONTROL_ROW.switch.width)} 0
-}
+${SWITCH_FRAME_STYLE}
 
 ${UI_SCOPE} .ada-icon{
   flex:none;

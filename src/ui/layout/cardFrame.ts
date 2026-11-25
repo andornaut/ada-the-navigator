@@ -8,13 +8,18 @@ export { CARD_CONTENT, UI_FONT_FACE } from "../../data/layout.ts";
 // The pressed frame includes a face, with the same ink bearings for its white X.
 const IDLE_CLOSE_INK = { right: 6, top: 6 } as const;
 
+// ui-close.png's frames by tag, left to right in one row of art-sized frames.
+const CLOSE_FRAME = { disabled: 2, normal: 0, pressed: 1 } as const;
+
 export const CARD_CLOSE = {
   art: CARD_CLOSE_ART,
+  frame: CLOSE_FRAME,
   framedPaintShift: {
     x: CARD_CLOSE_ART.x + IDLE_CLOSE_INK.right - CARD_CONTENT.closeInset,
     y: CARD_CONTENT.closeInset - CARD_CLOSE_ART.y - IDLE_CLOSE_INK.top,
   },
   hit: hitAround(HIT_RULE, CARD_CLOSE_ART),
+  sheetWidth: Object.keys(CLOSE_FRAME).length * CARD_CLOSE_ART.width,
 } as const;
 
 // The title's clearance on each side: the full positioned close target plus a gap, mirrored, or

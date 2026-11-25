@@ -6,8 +6,8 @@ import { UI_ICON_SHEETS, uiIconUrl } from "./uiIconUrl.ts";
 
 it("maps every packed icon to one view in its physical SVG sheet", () => {
   const sheets = new Set(Object.values(UI_ICON_SHEETS));
-  expect(Object.keys(UI_ICON_SHEETS)).toHaveLength(105);
-  expect(sheets.size).toBe(6);
+  expect(Object.keys(UI_ICON_SHEETS)).toHaveLength(109);
+  expect(sheets.size).toBe(8);
   for (const sheet of sheets) {
     const keys = Object.keys(UI_ICON_SHEETS).filter((key) => UI_ICON_SHEETS[key] === sheet);
     const svg = readFileSync(
@@ -22,4 +22,13 @@ it("maps every packed icon to one view in its physical SVG sheet", () => {
       expect(uiIconUrl(key)).toBe(`/art/ui/icons/${sheet}#${key}`);
     }
   }
+});
+
+it.each([
+  ["icon-cargo-20-disabled", "icons-20x20-disabled.svg"],
+  ["icon-tow-20-disabled", "icons-20x20-disabled.svg"],
+  ["menu-disabled", "icons-35x35-disabled.svg"],
+  ["pause-disabled", "icons-35x35-disabled.svg"],
+])("resolves the disabled %s to its staged sheet", (key, sheet) => {
+  expect(uiIconUrl(key)).toBe(`/art/ui/icons/${sheet}#${key}`);
 });

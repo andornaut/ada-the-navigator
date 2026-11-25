@@ -1,4 +1,4 @@
-// Checked <view> IDs in the six static UI sheets. Each key is the original SVG basename.
+// Checked <view> IDs in the eight static UI sheets. Each key is the original SVG basename.
 export const UI_ICON_SHEETS: Readonly<Record<string, string>> = {
   achievements: "icons-20x20.svg",
   "ammo-energy": "icons-20x20.svg",
@@ -11,6 +11,7 @@ export const UI_ICON_SHEETS: Readonly<Record<string, string>> = {
   "icon-aim-controls": "icons-16x16.svg",
   "icon-browser-menu": "icons-16x16.svg",
   "icon-cargo-20": "icons-20x20.svg",
+  "icon-cargo-20-disabled": "icons-20x20-disabled.svg",
   "icon-fps-counter": "icons-16x16.svg",
   "icon-holodisk": "icons-16x16.svg",
   "icon-holodisk-20": "icons-20x20.svg",
@@ -71,6 +72,7 @@ export const UI_ICON_SHEETS: Readonly<Record<string, string>> = {
   "icon-sound": "icons-16x16.svg",
   "icon-stardust-20": "icons-20x20.svg",
   "icon-tow-20": "icons-20x20.svg",
+  "icon-tow-20-disabled": "icons-20x20-disabled.svg",
   "icon-use-control": "icons-16x16.svg",
   "map-beacon": "icons-20x20.svg",
   "map-close": "icons-20x20.svg",
@@ -92,9 +94,11 @@ export const UI_ICON_SHEETS: Readonly<Record<string, string>> = {
   "map-zoom-in": "icons-20x20.svg",
   "map-zoom-out": "icons-20x20.svg",
   menu: "icons-35x35.svg",
+  "menu-disabled": "icons-35x35-disabled.svg",
   "menu-held": "icons-35x35.svg",
   "menu-press": "icons-35x35.svg",
   pause: "icons-35x35.svg",
+  "pause-disabled": "icons-35x35-disabled.svg",
   "pause-held": "icons-35x35.svg",
   "pause-press": "icons-35x35.svg",
   settings: "icons-20x20.svg",
