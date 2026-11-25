@@ -75,29 +75,31 @@ Positions are in [Layout](layout.md#edge-markers). Markers draw on the canvas
 above every play object and under the sticks and the HTML HUD, at alpha 1.
 Sizes are logical px, scaled by `s`.
 
-| Kind                                               | Glyph                                                                                      | Colour            |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------- |
-| Enemy (swarm, fighter, interceptor, retaliator)    | Filled disc, 6 across                                                                      | `threat`          |
-| Heavy (frigate, capital, platform, Admiral Archie) | Filled disc, 10 across                                                                     | `threat`          |
-| Guard (a heavy that still blocks a route)          | The heavy's disc, 10 across, with an ink `#181425` bar 7 wide and 2 tall across its centre | `threat`, ink bar |
-| Station (seen stations and outposts)               | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins     | `pointOfInterest` |
+| Kind                                                                                     | Glyph                                                                                      | Colour            |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------- |
+| Enemy (swarm, fighter, interceptor, retaliator)                                          | Filled disc, 6 across                                                                      | `threat`          |
+| Heavy (frigate, capital, Admiral Archie's flagship, ore-field platform, hostile station) | Filled disc, 12 across                                                                     | `threat`          |
+| Guard (a heavy that still blocks a route)                                                | The heavy's disc, 12 across, with an ink `#181425` bar 7 wide and 2 tall across its centre | `threat`, ink bar |
+| Station (seen stations and outposts)                                                     | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins     | `pointOfInterest` |
 
 Every enemy marker (enemy, heavy, guard and hostile station) is `threat` red
 in every galaxy, including an enemy that is a task's target: a task colour
-never replaces the red on an enemy marker.
+never replaces the red on an enemy marker. Heavies keep the larger disc as
+their distinct marker; a hostile station draws the heavy disc, not a badge.
 
 `threat` is the one red in space, used only for these markers and the
-[hit flash](layout.md#hit-flash). It is at least
-5.2:1 on every dark galaxy's background (Whirlpool 5.22:1, the default 5.28:1,
-Cartwheel 5.32:1, Phantom 6.13:1). It matches `obstacle` in luminance
+[hit flash](layout.md#hit-flash). Bare `threat` is 3.11:1 on Phantom's
+field (1.90:1 on its backdrop detail), so on Phantom every marker draws over a
+1 px white outline, the same `foregroundEdge` white as Phantom's other edges:
+8.63:1 on the field and 5.27:1 on backdrop detail. It matches `obstacle` in luminance
 (1.03:1), so the dot shape and the border position, not lightness, tell the
 markers apart from coral art. `pointOfInterest` is 7.1:1 or more there.
 
 The guard's bar is a no-entry sign on the heavy's own disc: a guard is a heavy
 that blocks a route. The bar is 6.49:1 against `threat`, so the guard reads
 apart from the heavy at 1x and in greyscale, where the two discs share a
-lightness. The bar's corners sit 1.4 inside the disc's edge (the disc spans
-4.9 either side at the bar's top and bottom), so the bar never meets the field.
+lightness. The bar's corners sit 2.36 inside the disc's edge, so the bar never
+meets the field.
 
 When a guard is disabled, its marker becomes the heavy marker in place: the bar
 fades from alpha 1 to 0 over `EDGE_MARKERS.swapMs` 150 ms, linear, over the
@@ -108,7 +110,8 @@ On a light field (`tint.light`) each marker draws over an ink outline
 (`lightField.markerOutline` 1): a disc over an ink disc 1 larger in radius,
 the diamond over an ink stroke 2 wider (4) on the same path. The guard's bar
 draws on the disc in the same ink on every field, so it adds no outline. Ink on
-Sunflower is 10.90:1; bare `threat` there is 1.75:1.
+Sunflower is 10.90:1; bare `threat` there is 1.68:1. Phantom's white outline
+follows the same geometry as the ink outline.
 
 ## In-between
 
