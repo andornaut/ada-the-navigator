@@ -1652,12 +1652,12 @@ more ([route sky](route-sky.md#guard)).
 Panel states (the panel shows the ship's galaxy, the locked galaxy last
 tapped or focused, or Earth while its marker is tapped or focused):
 
-| State       | `Galaxy {number}` | Name             | Flavour                                                                           | Capture                                                     | Action                                                                         |
-| ----------- | ----------------- | ---------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Open        | `#B8B3C9`         | White, the name  | Cream, the flavour line                                                           | Its own field                                               | Live: "Jump to {galaxy}", or "Stay in {galaxy}" on the galaxy Ada is flying in |
-| Placeholder | `#B8B3C9`         | White, the name  | Cream, the flavour line, then "Story in development." in `#B8B3C9`                | Its [placeholder preview](galaxies.md#placeholder-previews) | As Open                                                                        |
-| Locked      | `#B8B3C9`         | "...", `#B8B3C9` | "...", `#B8B3C9`                                                                  | The locked greyscale                                        | Unavailable: "Progress the story to unlock", disabled face, refusal cue        |
-| Earth       | "Home", `#B8B3C9` | White, "Earth"   | Cream, "Ada’s life on Earth. Time here stands still while she’s aboard the ship." | Ada's room picture                                          | Live: "Jump to Earth", or "Stay on Earth" at boarding                          |
+| State       | `Galaxy {number}` | Name             | Flavour                                                                           | Capture                                       | Action                                                                         |
+| ----------- | ----------------- | ---------------- | --------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| Open        | `#B8B3C9`         | White, the name  | Cream, the flavour line                                                           | Its own field                                 | Live: "Jump to {galaxy}", or "Stay in {galaxy}" on the galaxy Ada is flying in |
+| Placeholder | `#B8B3C9`         | White, the name  | Cream, the flavour line, then "Story in development." in `#B8B3C9`                | Its [preview card](galaxies.md#preview-cards) | As Open                                                                        |
+| Locked      | `#B8B3C9`         | "...", `#B8B3C9` | "...", `#B8B3C9`                                                                  | The locked greyscale                          | Unavailable: "Progress the story to unlock", disabled face, refusal cue        |
+| Earth       | "Home", `#B8B3C9` | White, "Earth"   | Cream, "Ada’s life on Earth. Time here stands still while she’s aboard the ship." | Ada's room picture                            | Live: "Jump to Earth", or "Stay on Earth" at boarding                          |
 
 Greyed text is the supporting colour `#B8B3C9`, 5.53:1 on the card face; the
 disabled label colour `#9A96AD` is 3.93:1 there, below 4.5:1. The panel keeps

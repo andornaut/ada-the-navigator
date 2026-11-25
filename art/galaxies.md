@@ -6,9 +6,7 @@
   project's Prettier settings, and links it from the core manifest as
   `galaxyFields`. The build validates each emitted foreground boundary at
   5:1 on its base field, or each legacy space signal when no boundary applies,
-  and checks the [marker](#markers) ink and distance floors. It also draws the
-  [placeholder previews](#placeholder-previews); `--fields-only` preserves
-  existing selector previews.
+  and checks the [marker](#markers) ink and distance floors.
 - `galaxies` maps each stable galaxy id to its `tint`, `colors` and `marker`.
   It holds no position or number: route order, numbers, names and flavour
   lines are Gameplay's, and keys sit in id order.
@@ -201,16 +199,13 @@ them after a [ship model](ship.md) change.
 - Locked: unchanged. A base-field capture in greyscale, each pixel `30 + 0.6 Y`
   (`preview.locked`), with `Y` the ITU-R 601 luma, truncated. Every locked
   galaxy shares one grey range, so a locked preview gives away no hue.
-- Placeholder: the galaxy's [placeholder preview](#placeholder-previews)
-  until its galaxy is built and captured; locked, its locked file.
 
 ### Preview cards
 
 The accepted previews are authored cards, staged as `previews` in
 [polish-rows.json](polish-rows.json): `card-{galaxy}.png` and
 `card-{galaxy}-locked.png` for all six galaxies in `public/art/previews/`,
-180 by 90, opaque. They replace the captures in `public/previews/` and the
-placeholder previews when Tech switches the selector to them
+180 by 90, opaque. The selector draws them in place of the captures
 ([handoff](polish-handoff.md)). Rebuild with
 `node art/tools/galaxy-previews.ts` after a change to a main station or to
 [Ada's ship](ship.md); it reads the main station sheets of the
@@ -279,27 +274,6 @@ Each gets its own character within the system:
 On Sunflower the backdrop takes no keyline: the [light-field rule](#light-fields)
 keylines play objects only, and the plates step darker within the caps, so the
 ink keyline keeps 9.6:1 or more over every plate.
-
-## Placeholder previews
-
-Needle and Andromeda retain authored selector placeholders until their own
-selector captures are supplied. `galaxies.ts` can draw these placeholders:
-`public/art/previews/galaxy-{id}.png` and `galaxy-{id}-locked.png`, 180x90,
-opaque. The core manifest lists them as `galaxy-preview-{id}` and
-`galaxy-preview-{id}-locked`, each with `placeholder: true`.
-
-- Field tones only: the galaxy's `background`, `environment` and
-  `environmentDetail`, no signals, ship or HUD.
-- A motif centred on the first-destination point (60, 45): Needle a thin
-  edge-on line of stars at -12 degrees with a small central bulge, Andromeda a
-  two-armed spiral tilted 18 degrees.
-- Marked as a placeholder by a dashed 1 px `environmentDetail` frame 2 in from
-  the edge and a hatched lower-right corner.
-- The locked file draws the same placeholder on the base field and applies
-  the locked rule above.
-
-A capture replaces a placeholder once its galaxy is built; the placeholder's
-files and manifest entries go with it.
 
 ## Space palette
 
