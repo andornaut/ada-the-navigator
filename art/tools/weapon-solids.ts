@@ -33,8 +33,10 @@ const BLINK: Tones = ["#ffffff", "#ffffff", "#e8e8f0"];
 const MISSILE_HEADINGS = 32;
 const SHEET_COLUMNS = 8;
 // The mine's studs repeat every quarter turn: eight frames step it 11.25 degrees.
-const MINE_FRAMES = 8;
+export const MINE_FRAMES = 8;
 const MINE_STUDS = 4;
+/** Degrees the studs turn from one mine frame to the next. */
+export const MINE_FRAME_DEGREES = 360 / MINE_STUDS / MINE_FRAMES;
 
 // A missile's fins: two level and one upright, `thick` through, from the root chord to the
 // swept tip chord at `reach` out (`upright` up for the upright one). Lengths are display px
@@ -109,22 +111,33 @@ function heavyMissile(): Mesh {
   return mesh;
 }
 
-// The mine with its studs turned `degrees`: a ball, a belt, four studs, a collar and a lamp.
-function mine(degrees: number, lamp: Tones): Mesh {
-  const mesh: Mesh = [];
-  meshBall(mesh, [0, 0, 0], [4.7, 4.7, 4.5], CORAL, { sides: 20, bands: 10 });
-  meshTube(mesh, [0, 0, -1.1], [0, 0, 1.1], 5, 5, DARK, 28);
-  for (let i = 0; i < MINE_STUDS; i++) {
-    const a = ((degrees + (360 / MINE_STUDS) * i) * Math.PI) / 180;
-    const [x, y] = [Math.cos(a), Math.sin(a)];
-    meshTube(mesh, [x * 4.6, y * 4.6, 0], [x * 7.4, y * 7.4, 0], 1.9, 1, CORAL, 10, {
-      kind: "round",
-    });
-  }
-  meshTube(mesh, [0, 0, 4.2], [0, 0, 5], 2.3, 2.3, DARK, 16);
-  meshDome(mesh, [0, 0, 5], 1.6, lamp, { sides: 14, bands: 5 });
-  return mesh;
+// The mine with its studs turned `degrees` as its convex solids, in logical px: a ball, a belt,
+// four studs, a collar and a lamp.
+export function mineSolids(degrees: number, lamp: Tones = AMBER): Mesh[] {
+  const solid = (build: (mesh: Mesh) => void): Mesh => {
+    const mesh: Mesh = [];
+    build(mesh);
+    return mesh;
+  };
+  return [
+    solid((mesh) => meshBall(mesh, [0, 0, 0], [4.7, 4.7, 4.5], CORAL, { sides: 20, bands: 10 })),
+    solid((mesh) => meshTube(mesh, [0, 0, -1.1], [0, 0, 1.1], 5, 5, DARK, 28)),
+    ...Array.from({ length: MINE_STUDS }, (_, i) => {
+      const a = ((degrees + (360 / MINE_STUDS) * i) * Math.PI) / 180;
+      const [x, y] = [Math.cos(a), Math.sin(a)];
+      return solid((mesh) =>
+        meshTube(mesh, [x * 4.6, y * 4.6, 0], [x * 7.4, y * 7.4, 0], 1.9, 1, CORAL, 10, {
+          kind: "round",
+        }),
+      );
+    }),
+    solid((mesh) => meshTube(mesh, [0, 0, 4.2], [0, 0, 5], 2.3, 2.3, DARK, 16)),
+    solid((mesh) => meshDome(mesh, [0, 0, 5], 1.6, lamp, { sides: 14, bands: 5 })),
+  ];
 }
+
+// The mine as one mesh.
+export const mine = (degrees: number, lamp: Tones): Mesh => mineSolids(degrees, lamp).flat();
 
 // Mesh space (forward +x, port +y) to the projection's local space (forward -y), at heading
 // `yaw` of the missile headings.
@@ -222,12 +235,7 @@ function main() {
   ).flatMap(([prefix, title, lamp, blink]) =>
     Array.from({ length: MINE_FRAMES }, (_, spin) => ({
       id: `${prefix}-${spin}`,
-      svg: frame(
-        `${title} ${spin}`,
-        MINE,
-        mine((spin * 360) / MINE_STUDS / MINE_FRAMES, lamp),
-        still,
-      ),
+      svg: frame(`${title} ${spin}`, MINE, mine(spin * MINE_FRAME_DEGREES, lamp), still),
       spin,
       blink,
     })),
@@ -255,7 +263,7 @@ function main() {
       rapidMissile: { tail: 7, flame: { width: 2.6, length: [12, 15] } },
       heavyMissile: { tail: 13.2, flame: { width: 5.6, length: [16.8, 11.8] } },
     },
-    mine: { frames: MINE_FRAMES, degreesPerFrame: 360 / MINE_STUDS / MINE_FRAMES },
+    mine: { frames: MINE_FRAMES, degreesPerFrame: MINE_FRAME_DEGREES },
   });
 }
 
