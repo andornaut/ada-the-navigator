@@ -301,10 +301,14 @@ export function outlines(polys: readonly (readonly V2[])[]): V2[][] {
 // less than `least` square px.
 export function tidy(loop: readonly V2[], decimals: number, least = 0.002): V2[] {
   const scale = 10 ** decimals;
-  let points = loop.map(([x, y]): V2 => [
-    Math.round(x * scale) / scale + 0,
-    Math.round(y * scale) / scale + 0,
-  ]);
+  // Points that round onto the point before them go first, so a corner between two of them
+  // stays.
+  let points = loop
+    .map(([x, y]): V2 => [Math.round(x * scale) / scale + 0, Math.round(y * scale) / scale + 0])
+    .filter((p, i, all) => {
+      const a = all[(i + all.length - 1) % all.length]!;
+      return p[0] !== a[0] || p[1] !== a[1];
+    });
   for (let changed = true; changed && points.length >= 3;) {
     changed = false;
     const kept: V2[] = [];
