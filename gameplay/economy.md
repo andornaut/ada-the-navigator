@@ -195,9 +195,10 @@ Every static rock is an ordinary asteroid. Its contents are decided by this
 roll when it is destroyed: ore and Stardust, an ammo pack or nothing. Ore comes
 from destroyed asteroids in every galaxy. Cartwheel's ore fields are clusters of
 ordinary rocks, which makes Cartwheel richest in ore. A crystal rock shows
-purple ore crystals: every ore-field rock, and about 1 in 4 ordinary asteroids
-in other galaxies, chosen once per rock by its seed so it never changes on
-Continue. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
+purple ore crystals and is medium or larger: every ore-field rock, and about 1
+in 4 medium-or-larger ordinary asteroids in other galaxies, chosen once per rock
+by its seed so it never changes on Continue. Small asteroids are never crystal
+rocks and keep the ammo roll. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
 any further ore and Stardust roll as usual. Ore aboard fuels
 shield recharge starting 25 seconds after the last hit, at 4% of maximum
 shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
