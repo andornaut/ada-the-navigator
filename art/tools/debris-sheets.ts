@@ -1,14 +1,11 @@
-// Write review sheets and print candidate rows with node art/tools/debris-sheets.ts.
-import { existsSync, readFileSync } from "node:fs";
-
+// Packs a galaxy's eight debris tumble frames into one sheet of nested roots once its manifest
+// rows select the sheet, for the debris producers (cartwheel-props.ts, whirlpool.ts).
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
 import { GALAXIES, readManifest, writeOnce } from "./manifest.ts";
 
-const targets = ["needle", "whirlpool"] as const;
-type DebrisGalaxy = "cartwheel" | (typeof targets)[number];
+type DebrisGalaxy = "cartwheel" | "needle" | "whirlpool";
 type AssetRow = { id: string; path?: string } & Record<string, unknown>;
-const publicSvg = (path: string) => new URL(`../../public${path}`, import.meta.url);
 const svgRoot = (width: number, height: number, rawWidth = width, rawHeight = height) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${rawWidth} ${rawHeight}">`;
 
@@ -16,7 +13,6 @@ function planSheets(
   galaxy: DebrisGalaxy,
   entries: readonly AssetRow[],
   source: (file: string) => string | undefined,
-  review: boolean,
 ) {
   const directory = `/art/${galaxy}/`;
   const installed: AssetRow[] = readManifest(galaxy).assets;
@@ -29,8 +25,8 @@ function planSheets(
     const names = Array.from({ length: 8 }, (_, index) => `${stem}-${index}.svg`);
     const ids = names.map((_, index) => `${id}-${index}`);
     const packed = ids.filter((name) => current.get(name)?.svgSheet === true).length;
-    if (!review && packed === 0) continue;
-    if (packed !== (review ? 0 : ids.length)) throw new Error(`Unexpected selection for ${id}`);
+    if (packed === 0) continue;
+    if (packed !== ids.length) throw new Error(`Unexpected selection for ${id}`);
     const sheet = `${stem}-sheet.svg`;
     const path = directory + sheet;
     const { width, height } = input.get(ids[0]!) ?? {};
@@ -73,7 +69,7 @@ function planSheets(
         row.height !== height ||
         typeof row.displayWidth !== "number" ||
         typeof row.displayHeight !== "number" ||
-        current.get(id)?.path !== (review ? original : path)
+        current.get(id)?.path !== path
       ) {
         throw new Error(`Invalid registration for ${id}`);
       }
@@ -98,7 +94,7 @@ export function writeDebrisFrames(
   entries: readonly AssetRow[],
   files: Map<string, string>,
 ): readonly AssetRow[] {
-  const { directory, groups } = planSheets(galaxy, entries, (file) => files.get(file), false);
+  const { directory, groups } = planSheets(galaxy, entries, (file) => files.get(file));
   const replacements = new Map(groups.flatMap(({ rows }) => rows.map((row) => [row.id, row])));
   for (const { names, sheet, svg } of groups) {
     for (const file of names) files.delete(file);
@@ -107,37 +103,3 @@ export function writeDebrisFrames(
   writeOnce(directory, new Map(), files);
   return entries.map((row) => replacements.get(row.id) ?? row);
 }
-
-function writeReviewSheets(): void {
-  const plans = targets.map((galaxy) => ({
-    galaxy,
-    ...planSheets(
-      galaxy,
-      readManifest(galaxy).assets,
-      (file) => readFileSync(publicSvg(`/art/${galaxy}/${file}`), "utf8"),
-      true,
-    ),
-  }));
-  for (const { directory, groups } of plans) {
-    for (const { sheet, svg } of groups) {
-      const file = publicSvg(directory + sheet);
-      if (existsSync(file) && readFileSync(file, "utf8") !== svg) {
-        throw new Error(`Review sheet already exists with different bytes: ${directory}${sheet}`);
-      }
-    }
-  }
-  for (const { directory, groups } of plans) {
-    writeOnce(directory, new Map(), new Map(groups.map(({ sheet, svg }) => [sheet, svg])));
-  }
-  console.log(
-    JSON.stringify(
-      Object.fromEntries(
-        plans.map(({ galaxy, groups }) => [galaxy, groups.flatMap(({ rows }) => rows)]),
-      ),
-      null,
-      2,
-    ),
-  );
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) writeReviewSheets();
