@@ -339,7 +339,7 @@ function main() {
     }
   }
   // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
-  const outputEntries = packInstalledIndustrialHulls("core", files, entries);
+  const outputEntries = packInstalledIndustrialHulls(files, entries);
   const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
 
   // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
