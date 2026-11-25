@@ -80,6 +80,17 @@ export function unexpectedFailures(failedRequests) {
   );
 }
 
+// A file at `url` as the installed build serves it to `target`'s page: Art's files live in the
+// build's update groups, which only the page's service worker serves. Answers with the status
+// and body calls of a Playwright response.
+export async function served(target, url) {
+  const { body, status } = await target.evaluate(async (href) => {
+    const response = await fetch(href);
+    return { body: await response.text(), status: response.status };
+  }, String(url));
+  return { json: () => JSON.parse(body), status: () => status, text: () => body };
+}
+
 // No outside requests are needed to render the built game.
 export function previewOnly(route) {
   if (new URL(route.request().url()).origin === previewOrigin) {

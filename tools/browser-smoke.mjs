@@ -18,6 +18,7 @@ import {
   reportViolations,
   reseedFlight,
   save,
+  served,
   storageKey,
   unexpectedFailures,
 } from "./browser-support.mjs";
@@ -1295,7 +1296,7 @@ try {
   // fades in.
   const { BACKGROUND_ART } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const artManifest = await (
-    await page.request.get("http://ada-preview:4173/art/manifest.json")
+    await served(page, "http://ada-preview:4173/art/manifest.json")
   ).json();
   const artUrl = (id) => `url("${artManifest.assets.find((entry) => entry.id === id)?.path}")`;
   for (const { aboardShip, art, background } of launchPages) {
@@ -1414,7 +1415,8 @@ try {
     .locator(".ada-galaxy-shot")
     .evaluate((shot) => shot.style.backgroundImage);
   assert.equal(preview, 'url("/art/previews/card-sunflower.png")');
-  const previewResponse = await page.request.get(
+  const previewResponse = await served(
+    page,
     "http://ada-preview:4173/art/previews/card-sunflower.png",
   );
   assert.equal(previewResponse.status(), 200, "Galaxy preview cards must be served");
@@ -3799,7 +3801,7 @@ try {
   }
   const glyphStatuses = await Promise.all(
     weaponImages.map(async (icon) =>
-      (await page.request.get(`http://ada-preview:4173${weaponGlyphPath(icon.weapon)}`)).status(),
+      (await served(page, `http://ada-preview:4173${weaponGlyphPath(icon.weapon)}`)).status(),
     ),
   );
   assert.deepEqual(
@@ -3909,7 +3911,7 @@ try {
     `Pause must draw its vector art: ${pauseImage}`,
   );
   assert.equal(
-    (await page.request.get(new URL(uiIconUrl("pause"), "http://ada-preview:4173").href)).status(),
+    (await served(page, new URL(uiIconUrl("pause"), "http://ada-preview:4173").href)).status(),
     200,
     "The real pause button resource must be served",
   );
@@ -4988,7 +4990,8 @@ try {
   await page.addInitScript(() => performance.setResourceTimingBufferSize(10000));
   await page.reload();
   await continueFlight();
-  const claimManifestResponse = await page.request.get(
+  const claimManifestResponse = await served(
+    page,
     "http://ada-preview:4173/art/cartwheel/manifest.json",
   );
   assert.equal(claimManifestResponse.status(), 200);
@@ -5017,14 +5020,14 @@ try {
     import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
     import(new URL("../src/data/galaxies.ts", import.meta.url)),
   ]);
-  const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
+  const asteroidResponse = await served(page, "http://ada-preview:4173/art/asteroids.json");
   assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
   const rockArt = readAsteroidCatalog(await asteroidResponse.json());
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
   // Both backdrop rock depths, each in its layer about the camera's world position times its
   // parallax (art/backdrop.md).
   const rockDebris = (
-    await (await page.request.get("http://ada-preview:4173/art/backdrop-lattice.json")).json()
+    await (await served(page, "http://ada-preview:4173/art/backdrop-lattice.json")).json()
   ).debris;
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
@@ -5083,11 +5086,11 @@ try {
     return serialized;
   }
   await page.setViewportSize({ width: 1280, height: 720 });
-  const paletteResponse = await page.request.get("http://ada-preview:4173/art/space-palette.json");
+  const paletteResponse = await served(page, "http://ada-preview:4173/art/space-palette.json");
   assert.equal(paletteResponse.status(), 200, "Approved space palette must be served");
   const { colors: approvedColors } = await paletteResponse.json();
   // In flight, space takes the galaxy's field colours; the combat fixtures fly in galaxy one.
-  const galaxiesResponse = await page.request.get("http://ada-preview:4173/art/galaxies.json");
+  const galaxiesResponse = await served(page, "http://ada-preview:4173/art/galaxies.json");
   assert.equal(galaxiesResponse.status(), 200, "Approved galaxy fields must be served");
   const { galaxies: galaxyFields } = await galaxiesResponse.json();
   const paletteColors = {
@@ -5096,7 +5099,8 @@ try {
   };
   // Empty space shows galaxy one's backdrop layers (art/backdrop.md): each channel within its sky
   // ends and plate steps, give or take a darker plate over the darker sky.
-  const backdropResponse = await page.request.get(
+  const backdropResponse = await served(
+    page,
     "http://ada-preview:4173/art/sunflower/backdrop-lattice.json",
   );
   assert.equal(backdropResponse.status(), 200, "Galaxy one's backdrop must be served");
@@ -5121,7 +5125,7 @@ try {
   };
   // A new hull faces up, heading 12; its disabled engine's base centres on that heading's anchor.
   const capitalLayout = await (
-    await page.request.get("http://ada-preview:4173/art/enemies/fleetCapital-hardpoints.json")
+    await served(page, "http://ada-preview:4173/art/enemies/fleetCapital-hardpoints.json")
   ).json();
   const disabledAnchor = capitalLayout.headings[12].hardpoints.find(
     (part) => part.id === "engine-left",
@@ -5368,7 +5372,8 @@ try {
       })
       .join("")}`;
   async function galaxyBackdrop(galaxy) {
-    const response = await page.request.get(
+    const response = await served(
+      page,
       `http://ada-preview:4173/art/${GALAXY_ID[galaxy]}/backdrop-lattice.json`,
     );
     assert.equal(response.status(), 200, `Galaxy ${galaxy}'s backdrop must be served`);
