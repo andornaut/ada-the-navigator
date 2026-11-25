@@ -18,6 +18,13 @@ const COUNT = [3, 7] as const;
 const GROUP_SHARE = 0.75;
 const SPEED = [10, 80] as const;
 const SIZE_LIMITS = [0.6, 0.9, 0.99, 1] as const;
+/** The movers' requested counts, grouping, occupancy and speeds, for planners modelling this target. */
+export const BALLISTIC_REQUEST = {
+  count: COUNT,
+  groupShare: GROUP_SHARE,
+  occupancy: 3 * ORIGINAL_ENCOUNTERS.chance,
+  speed: SPEED,
+} as const;
 const VARIANTS = ASTEROID_SIZES.map((size) =>
   [...ASTEROID_SHAPES.values()].filter((shape) => shape.size === size),
 );
