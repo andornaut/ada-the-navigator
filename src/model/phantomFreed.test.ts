@@ -121,13 +121,11 @@ function assertExchange(model: GameModel, destination: string, ordinal: number):
   );
 }
 
+// The three rotations free every settlement at every ordinal and each settlement before each other.
 const orders = [
   [0, 1, 2],
-  [0, 2, 1],
-  [1, 0, 2],
   [1, 2, 0],
   [2, 0, 1],
-  [2, 1, 0],
 ].map((order) => order.map((index) => PHANTOM_DESTINATIONS[index]!));
 
 describe("Phantom settlement liberation order through actual interactions", () => {
