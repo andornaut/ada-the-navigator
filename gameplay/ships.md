@@ -399,7 +399,8 @@ Sunflower retains its stage-specific roster and type gates below. Later
 galaxies retain their other encounter groups, heavy weights and archetype limits.
 Swarm maxima retain their route-position bonus; their ambient minimum stays two.
 Ambient fighters target four without a route bonus and downscale to the local budget.
-Spawn targets remain independent of admission.
+Spawn target densities do not change with admission; admission applies to the
+planner's output.
 These budgets are not strict physical population caps: subsequent movement can
 bring ships together. They do not freeze or despawn existing enemies.
 
