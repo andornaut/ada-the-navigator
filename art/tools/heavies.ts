@@ -3,11 +3,8 @@
 // `{craft}-jets.json`. Art's layout holds every hardpoint and weapon mount position; the catalog
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
-// Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
-// Pack retained parts with --noncore-capital-part-sheets, --frigate-part-sheets or
-// --gadget-part-sheets.
-// Use --heavy-hull-sheets to write review sheets and print candidate manifest rows.
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+// Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir>]
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
@@ -53,9 +50,7 @@ import {
 import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
-import { heavySurface } from "./heavy-surface.ts";
 import { svgText } from "./svg-text.ts";
-import { packInstalledIndustrialTurrets } from "./industrial-sheets.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio, normalizeHeavy, sizeReceipts } from "./enemy-size.ts";
 import {
   GALAXIES,
@@ -66,7 +61,6 @@ import {
   type SidecarKind,
   sidecarsIn,
   storedAt,
-  writeOnce,
 } from "./manifest.ts";
 import {
   anchor,
@@ -1798,18 +1792,6 @@ export function checkMounts(craft: HeavyCraft, layout: MountLayout): void {
   }
 }
 
-// Gadget's weapons and tiers are the capital's.
-export function checkGadget(capitalFile: string, gadgetFile: string): void {
-  const c = JSON.parse(capitalFile) as MountLayout;
-  const g = JSON.parse(gadgetFile) as MountLayout;
-  if (JSON.stringify(c.weaponTops) !== JSON.stringify(g.weaponTops)) {
-    throw new Error("gadget hardpoints: weaponTops differ from the capital's");
-  }
-  if (JSON.stringify(c.tiers) !== JSON.stringify(g.tiers)) {
-    throw new Error("gadget hardpoints: tiers differ from the capital's");
-  }
-}
-
 // One entry per top design, in first-use order (hardpoints, then tiers); designs sharing a name
 // must be identical.
 export function sharedTops(craft: HeavyCraft, placed: readonly Placed[]): Top[] {
@@ -1919,12 +1901,14 @@ export function hardpointsFile(
   });
 }
 
-// The coral heavies, which Cartwheel's claim family recolours, and Gadget's own capital.
+// The industrial retaliator models, which the enemy size test checks.
 export const industrialHeavies = [
   retaliatorCraft(),
   ...industrialCrafts.map((source) => retaliatorCraft(source)),
 ];
-const drawn: HeavyCraft[] = [...heavies, gadget, ...industrialHeavies];
+// The enemy fleet producer (art/tools/fleet.ts) draws the frigates, capitals and retaliators; this
+// tool draws Gadget's own capital.
+const drawn: HeavyCraft[] = [gadget];
 
 // Manifest ids this tool owns: every `enemy-{craft}-` entry of the crafts it draws.
 const owns = (id: string) =>
@@ -1942,16 +1926,12 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29 } as const;
+const PART_GROUPS = { gadget: 29 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
 type HeadingSelection = { craft: SheetCraft; section: "part" | "hull" };
 
 // Use the checked Frigate viewport as the ceiling for hull sheet XML.
 const HULL_SHEET_EDGE = 1728;
-
-function hullCrafts(manifest: ManifestFile): readonly SheetCraft[] {
-  return manifest === "core" ? ["capital", "frigate", "gadget"] : ["capital", "frigate"];
-}
 
 type HeavySheetTarget = { manifest: ManifestFile; prefix: string; directory: string };
 
@@ -1960,26 +1940,6 @@ const corePartTarget = {
   prefix: "enemy-",
   directory: "/art/enemies/",
 } satisfies HeavySheetTarget;
-
-const familyPartTargets = {
-  andromeda: {
-    manifest: "andromeda",
-    prefix: "enemy-garnet-",
-    directory: "/art/andromeda/enemies/",
-  },
-  cartwheel: {
-    manifest: "cartwheel",
-    prefix: "enemy-claim-",
-    directory: "/art/cartwheel/enemies/",
-  },
-  needle: {
-    manifest: "needle",
-    prefix: "enemy-needle-",
-    directory: "/art/needle/enemies/",
-  },
-} satisfies Record<string, HeavySheetTarget>;
-
-const publicHeavySvg = (path: string) => new URL(`../../public${path}`, import.meta.url);
 
 const batchSheetPrefix = (craft: SheetCraft) => `${craft}-parts-batch-`;
 
@@ -2045,7 +2005,6 @@ function heavyHeadingSheets(
   selection: HeadingSelection,
   text: (file: string) => string | undefined,
   entries: readonly Entry[],
-  selecting: boolean,
 ) {
   const { manifest, prefix, directory } = target;
   const { craft, section } = selection;
@@ -2057,13 +2016,12 @@ function heavyHeadingSheets(
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
   const packed = current.filter(({ svgSheet }) => svgSheet === true).length;
   const batch =
-    !selecting &&
     section === "part" &&
     installed.some(
       ({ path }) =>
         typeof path === "string" && path.startsWith(directory + batchSheetPrefix(craft)),
     );
-  if (!selecting && !batch && packed === 0) return undefined;
+  if (!batch && packed === 0) return undefined;
 
   const selected = entries.filter(owns);
   const groups = new Map<string, Entry[]>();
@@ -2143,15 +2101,6 @@ function heavyHeadingSheets(
         ) {
           throw new Error(`Invalid ${manifest} ${craft} part batch selection or source: ${row.id}`);
         }
-        const original = publicHeavySvg(directory + file);
-        if (
-          manifest === "core" &&
-          craft === "capital" &&
-          existsSync(original) &&
-          readFileSync(original, "utf8") !== source
-        ) {
-          throw new Error(`The capital producer does not match the standalone frame: ${file}`);
-        }
         retired.add(file);
         ownedPaths.add(directory + file);
         replacements.set(row.id, replacement);
@@ -2211,16 +2160,6 @@ function heavyHeadingSheets(
         ) {
           throw new Error(`${manifest} does not own the expected frame: ${id}`);
         }
-        const original = publicHeavySvg(oldPath);
-        if (
-          section === "part" &&
-          craft === "capital" &&
-          manifest === "core" &&
-          (!packed || existsSync(original)) &&
-          readFileSync(original, "utf8") !== source
-        ) {
-          throw new Error(`The capital producer does not match the standalone frame: ${file}`);
-        }
         retired.add(file);
         ownedPaths.add(oldPath);
         replacements.set(id, { ...row, path, svgSheet: true });
@@ -2250,121 +2189,25 @@ function applyHeavySheets(
 }
 
 /** Keep installed part and hull sheets and exclude their loose frames from an ordinary export. */
-export function packInstalledHeavyParts(
-  manifest: "core" | keyof typeof familyPartTargets,
-  files: Map<string, string>,
-  entries: readonly Entry[],
-) {
-  const target = manifest === "core" ? corePartTarget : familyPartTargets[manifest];
+function packInstalledHeavyParts(files: Map<string, string>, entries: readonly Entry[]) {
   const text = (file: string) => files.get(file);
-  const capitalPack = heavyHeadingSheets(
-    target,
-    { craft: "capital", section: "part" },
+  const parts = heavyHeadingSheets(
+    corePartTarget,
+    { craft: "gadget", section: "part" },
     text,
     entries,
-    false,
   );
-  const frigatePack = heavyHeadingSheets(
-    target,
-    { craft: "frigate", section: "part" },
+  const hull = heavyHeadingSheets(
+    corePartTarget,
+    { craft: "gadget", section: "hull" },
     text,
     entries,
-    false,
   );
-  const gadgetPack =
-    manifest === "core"
-      ? heavyHeadingSheets(target, { craft: "gadget", section: "part" }, text, entries, false)
-      : undefined;
-  const hulls = hullCrafts(manifest).map((craft) =>
-    heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
-  );
-  let outputEntries = applyHeavySheets(files, entries, capitalPack);
-  outputEntries = applyHeavySheets(files, outputEntries, frigatePack);
-  outputEntries = applyHeavySheets(files, outputEntries, gadgetPack);
-  for (const hull of hulls) outputEntries = applyHeavySheets(files, outputEntries, hull);
-  return { outputEntries, retiredCapital: capitalPack?.retired ?? [] };
-}
-
-function packRetainedHeavySheets(target: HeavySheetTarget, selection: HeadingSelection) {
-  return heavyHeadingSheets(
-    target,
-    selection,
-    (file) => readFileSync(publicHeavySvg(target.directory + file), "utf8"),
-    readManifest(target.manifest).assets,
-    true,
-  )!;
-}
-
-function packRetainedHeavyParts(craft: SheetCraft, targets: readonly HeavySheetTarget[]): void {
-  const plans = targets.map((target) => ({
-    target,
-    pack: packRetainedHeavySheets(target, { craft, section: "part" }),
-  }));
-  for (const { target, pack } of plans) {
-    const paths = writeOnce(target.directory, new Map(), pack.sheets);
-    mergeEntries(
-      target.manifest,
-      (id) => pack.replacements.has(id),
-      [...pack.replacements.values()].map((entry) => storedAt(paths, entry)),
-    );
-  }
-}
-
-function writeReviewHeavyHullSheets(): void {
-  const targets = [corePartTarget, ...Object.values(familyPartTargets)];
-  const plans = targets.map((target) => ({
-    target,
-    packs: hullCrafts(target.manifest).map((craft) =>
-      packRetainedHeavySheets(target, { craft, section: "hull" }),
-    ),
-  }));
-  for (const { target, packs } of plans) {
-    for (const pack of packs) {
-      for (const [file, text] of pack.sheets) {
-        const output = publicHeavySvg(target.directory + file);
-        if (existsSync(output) && readFileSync(output, "utf8") !== text) {
-          throw new Error(
-            `Review sheet already exists with different bytes: ${target.directory}${file}`,
-          );
-        }
-      }
-    }
-  }
-  for (const { target, packs } of plans) {
-    writeOnce(target.directory, new Map(), new Map(packs.flatMap(({ sheets }) => [...sheets])));
-  }
-  const rows = plans.map(({ target, packs }) => [
-    target.manifest,
-    packs.flatMap(({ replacements }) => [...replacements.values()]),
-  ]);
-  console.log(JSON.stringify(Object.fromEntries(rows), null, 2));
+  return applyHeavySheets(files, applyHeavySheets(files, entries, parts), hull);
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.includes("--heavy-hull-sheets")) {
-    if (args.length !== 1) throw new Error("--heavy-hull-sheets takes no other options");
-    writeReviewHeavyHullSheets();
-    return;
-  }
-  const retained = args.find(
-    (arg) =>
-      arg === "--noncore-capital-part-sheets" ||
-      arg === "--frigate-part-sheets" ||
-      arg === "--gadget-part-sheets",
-  );
-  if (retained) {
-    if (args.length !== 1) throw new Error(`${retained} takes no other options`);
-    const families = Object.values(familyPartTargets);
-    if (retained === "--gadget-part-sheets") {
-      packRetainedHeavyParts("gadget", [corePartTarget]);
-    } else if (retained === "--frigate-part-sheets") {
-      packRetainedHeavyParts("frigate", [corePartTarget, ...families]);
-    } else {
-      packRetainedHeavyParts("capital", families);
-    }
-    return;
-  }
   const flag = (name: string) => {
     const at = args.indexOf(name);
     return at === -1 ? undefined : args[at + 1];
@@ -2372,24 +2215,13 @@ async function main() {
   const root = fileURLToPath(new URL("../../", import.meta.url));
   const offsetsPath = flag("--offsets") ?? `${root}tools/enemy-hardpoints.json`;
   const out = flag("--out");
-  const selecting = args.includes("--capital-part-sheets");
-  if (selecting && out !== undefined)
-    throw new Error("--capital-part-sheets requires the core manifest");
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
-  const craftsToBuild = selecting ? [capital] : drawn;
-  const results = craftsToBuild.map((craft) => {
+  const results = drawn.map((craft) => {
     const styled = restrainHeavyHull(craft);
     return build(styled, place(offsets, styled));
   });
-  if (!selecting) {
-    const layoutOf = (name: string) =>
-      results[drawn.findIndex((craft) => craft.name === name)]!.files.get(
-        `${name}-hardpoints.json`,
-      )!;
-    checkGadget(layoutOf("capital"), layoutOf("gadget"));
-  }
   mkdirSync(dir, { recursive: true });
   const files = new Map<string, string>();
   const entries: Entry[] = [];
@@ -2401,43 +2233,21 @@ async function main() {
       const text = file.endsWith(".json")
         ? await format(content, { ...(await resolveConfig(path)), filepath: path })
         : file.endsWith(".svg")
-          ? svgText(heavySurface("core", file, content) ?? content)
+          ? svgText(content)
           : content;
       files.set(file, text);
     }
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    let retiredCapital: Iterable<string>;
-    if (selecting) {
-      const pack = heavyHeadingSheets(
-        corePartTarget,
-        { craft: "capital", section: "part" },
-        (file) => files.get(file),
-        entries,
-        true,
-      )!;
-      retiredCapital = pack.retired;
-      const paths = writeOnce("/art/enemies/", new Map(), pack.sheets);
-      mergeEntries(
-        "core",
-        (id) => pack.replacements.has(id),
-        [...pack.replacements.values()].map((entry) => storedAt(paths, entry)),
-      );
-    } else {
-      const installed = packInstalledHeavyParts("core", files, entries);
-      retiredCapital = installed.retiredCapital;
-      const outputEntries = packInstalledIndustrialTurrets("core", files, installed.outputEntries);
-      // A craft drawn like another (the cargo hauler is the retaliator) uses that craft's files.
-      const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
-      mergeEntries(
-        "core",
-        owns,
-        outputEntries.map((entry) => storedAt(paths, entry)),
-      );
-      mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
-    }
-    for (const file of retiredCapital) rmSync(dir + file, { force: true });
+    const outputEntries = packInstalledHeavyParts(files, entries);
+    const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
+    mergeEntries(
+      "core",
+      owns,
+      outputEntries.map((entry) => storedAt(paths, entry)),
+    );
+    mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
   } else {
     for (const [file, text] of files) {
       writeFileSync(`${dir}${file}`, text);

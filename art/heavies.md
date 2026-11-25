@@ -7,10 +7,12 @@ leaves unused shows a capped plate. Tech composes each frame from layers;
 Gameplay owns the rules for damage, speed, disabling and defeat. Contact uses
 each sprite's drawn silhouette ([Collision](#collision)).
 
-- Rebuild with `node art/tools/heavies.ts`. It checks
-  `tools/enemy-hardpoints.json` against Art's layout, writes
-  `public/art/enemies/` and replaces its own manifest entries in the core
-  manifest in place, after the sector one enemies.
+- Rebuild with `node art/tools/heavies.ts`. It draws Gadget's own capital,
+  checks `tools/enemy-hardpoints.json` against Art's layout, writes
+  `public/art/enemies/` and replaces the `enemy-gadget-` entries in the core
+  manifest in place. The [enemy fleet producer](enemy-redesign.md) draws the
+  frigates, capitals and retaliators; the frigate and capital models here are
+  the class contract Gadget's capital shares and the enemy size test checks.
   `--offsets <file.json>` reads another file in the same format; `--out <dir>`
   writes the files and a `manifest-entries.json` to that directory and leaves
   the manifest alone.
@@ -20,18 +22,15 @@ each sprite's drawn silhouette ([Collision](#collision)).
   entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}` and the industrial
   stems' `enemy-{retaliatorCargoHauler,retaliatorMiningFreighter}-{k}`.
 - Every enemy producer owns exactly the ids of the crafts it draws, never a
-  whole family prefix, and writes them with `mergeEntries`: each existing entry keeps its position, so
-  entries of several producers can interleave and reruns stay byte-identical.
+  whole family prefix, and writes them with `mergeEntries`: each existing
+  entry keeps its position, so entries of several producers can interleave and
+  reruns stay byte-identical.
 - Each also lists its crafts' data files in the manifest's
   [`sidecars` map](README.md#ada-contract-and-validation) with
   `mergeSidecars`, owning only its own crafts and kinds. In core,
-  `art/tools/enemies.ts` writes the sector one enemies' `jets`,
-  `art/tools/heavies.ts` every craft's `hardpoints` and the jets of the hulls
-  it draws (frigate, capital, Gadget's capital), `art/tools/destruction.ts`
-  the retaliator and industrial `shards`, `art/tools/fleet.ts` the small
-  craft's, and `art/tools/hostile-stations.ts` the hostile station's and the
-  platform's `hardpoints`.
-  The family producers write every kind of their own crafts.
+  `art/tools/heavies.ts` writes Gadget's `jets` and `hardpoints` and
+  `art/tools/hostile-stations.ts` the hostile station's `hardpoints`; the
+  fleet crafts' entries name the [enemy fleet](enemy-redesign.md)'s files.
 
 ## Crafts
 
