@@ -308,15 +308,64 @@ function disabled(): string {
   return page(rows);
 }
 
+// ------------------------------------------------------------------ missiles and mine
+
+// Every missile heading and mine frame at 1x and 4x, with the light-field ink keyline on the
+// light field and bare on the dark one.
+function weapons(): string {
+  const rows = [];
+  for (const [sheet, name] of [
+    ["weapons/rapid-missile-sheet.svg", "Rapid Missile, headings 0 to 31"],
+    ["weapons/heavy-missile-sheet.svg", "Heavy Missile, headings 0 to 31"],
+    ["weapons/mine-sheet.svg", "Mine, spin frames 0 to 7 lit, then on a blink"],
+  ] as const) {
+    const frames = [...roots(sheet).values()];
+    for (const [field, light] of [
+      [FIELDS.sunflower, true],
+      [FIELDS.phantom, false],
+    ] as const) {
+      for (const scale of [1, 4]) {
+        let x = GAP;
+        let y = 0;
+        let width = 0;
+        const ink: string[] = [];
+        const [w, h] = [frames[0]!.width * DISPLAY * scale, frames[0]!.height * DISPLAY * scale];
+        for (const [index, frame] of frames.entries()) {
+          if (index > 0 && index % 16 === 0) {
+            x = GAP;
+            y += h + GAP;
+          }
+          const silhouette = /<path [^>]*\bd="([^"]+)"\/>/u.exec(frame.svg)![1]!;
+          const keyline = light
+            ? `<path fill="${INK}" stroke="${INK}" stroke-width="${2 / DISPLAY}" stroke-linejoin="round" d="${silhouette}"/>`
+            : "";
+          ink.push(
+            `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="0 0 ${frame.width} ${frame.height}">${keyline}${frame.svg}</svg>`,
+          );
+          x += w + GAP;
+          width = Math.max(width, x);
+        }
+        rows.push({
+          field,
+          light,
+          label: `${name}, ${scale}x`,
+          row: { height: y + h, width, ink: ink.join("") },
+        });
+      }
+    }
+  }
+  return page(rows);
+}
+
 function main() {
   const [out, ...only] = process.argv.slice(2);
   if (!out) {
     throw new Error(
-      "Usage: node art/tools/polish-contact-sheet.ts <dir> [glyphs|debris|decorations|disabled]",
+      "Usage: node art/tools/polish-contact-sheet.ts <dir> [glyphs|debris|decorations|disabled|weapons]",
     );
   }
   mkdirSync(out, { recursive: true });
-  const sheets = { glyphs, debris, decorations, disabled };
+  const sheets = { glyphs, debris, decorations, disabled, weapons };
   for (const [name, build] of Object.entries(sheets)) {
     if (only.length === 0 || only.includes(name)) writeFileSync(`${out}/${name}.svg`, build());
   }

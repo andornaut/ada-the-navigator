@@ -29,21 +29,33 @@ the test pins listed.
 
 ## Specification only: renderer changes
 
-| Effect                         | Specification                                        | Tech change                                                                                                                         |
-| ------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Bolt, pellet, Multi-Laser fan  | [Weapons, flat look](weapons.md#bolt-pellet-and-fan) | `src/game/weaponEffects.ts`: slug polygons, lit pellet, fan wedge under 5.6 px head spacing                                         |
-| Blast, beams, contacts, sparks | [Weapons, flat look](weapons.md#blast)               | `src/game/weaponEffects.ts`, `src/game/enemyWeaponsArt.ts`: flat shapes, stepped alpha                                              |
-| Ring burst, shockwave          | [Weapons, flat look](weapons.md#ring-burst-and-mine) | `src/game/enemyWeaponsArt.ts`                                                                                                       |
-| Missiles and mine              | [Weapons, flat look](weapons.md#missiles)            | Draw Art's frames once produced; the flat flames are drawn in code                                                                  |
-| Pull streak                    | [Stardust](stardust.md#optional-pull-streak)         | `src/game/stardustArt.ts`: two wedges                                                                                               |
-| Tow line                       | [Cartwheel props](cartwheel-props.md#tow-line)       | `src/game/towArt.ts`: wider cable, one clamp block, no beads                                                                        |
-| Lost item ping                 | [Jobs](jobs.md)                                      | Ring width and stepped alpha                                                                                                        |
-| Quantum jump iris rim          | [Quantum jump](quantum-jump.md#rendering)            | A 5 px `#dcc3f2` rim from r to r + 5 and a 3 px ink `#181425` ring from r + 5 to r + 8, in place of the 3 px rim and 1 px cyan line |
+| Effect                         | Specification                                                               | Tech change                                                                                                                                                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bolt, pellet, Multi-Laser fan  | [Weapons, flat look](weapons.md#bolt-pellet-and-fan)                        | `src/game/weaponEffects.ts`: slug polygons, lit pellet, fan wedge under 5.6 px head spacing                                                                                                                 |
+| Blast, beams, contacts, sparks | [Weapons, flat look](weapons.md#blast)                                      | `src/game/weaponEffects.ts`, `src/game/enemyWeaponsArt.ts`: flat shapes, stepped alpha                                                                                                                      |
+| Ring burst, shockwave          | [Weapons, flat look](weapons.md#ring-burst-and-mine)                        | `src/game/enemyWeaponsArt.ts`                                                                                                                                                                               |
+| Missiles and mine              | [Weapons, frames](weapons.md#missile-and-mine-frames), rows `weapon-solids` | `src/game/weaponEffects.ts`, `src/game/enemyWeaponsArt.ts`: add the staged rows to the core manifest, draw the frame for the heading or spin step in place of the polygons, and draw the flat flame in code |
+| Pull streak                    | [Stardust](stardust.md#optional-pull-streak)                                | `src/game/stardustArt.ts`: two wedges                                                                                                                                                                       |
+| Tow line                       | [Cartwheel props](cartwheel-props.md#tow-line)                              | `src/game/towArt.ts`: wider cable, one clamp block, no beads                                                                                                                                                |
+| Lost item ping                 | [Jobs](jobs.md)                                                             | Ring width and stepped alpha                                                                                                                                                                                |
+| Quantum jump iris rim          | [Quantum jump](quantum-jump.md#rendering)                                   | A 5 px `#dcc3f2` rim from r to r + 5 and a 3 px ink `#181425` ring from r + 5 to r + 8, in place of the 3 px rim and 1 px cyan line                                                                         |
 
 Tests to rerun with the effect changes: `weaponEffects.test.ts`,
 `weaponImpacts.test.ts`, `enemyWeaponsArt.test.ts`, `destructionArt.test.ts`,
 `shardPalettePack.test.ts`, `stardustArt.test.ts`, `towArt.test.ts`,
 `lightField.test.ts` and `quantumJump.test.ts`.
+
+## Disabled frames
+
+Added in place; every existing frame and view is unchanged. Tech selects
+them in place of element opacity ([Controls](controls.md)).
+
+| Sprite                  | New frame or view                                         | Tech wiring                                                                       |
+| ----------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `ui-close` (72 by 24)   | Tag `disabled`, frame 2                                   | Show it for a disabled close                                                      |
+| `ui-switch` (128 by 16) | Tags `on-disabled` and `off-disabled`, frames 2 and 3     | Show them for a disabled switch row                                               |
+| `icons-35x35.svg`       | Views `pause-disabled` and `menu-disabled`                | Add both ids to `src/data/uiIconUrl.ts` and show them for a disabled disc         |
+| `icons-20x20.svg`       | Views `icon-cargo-20-disabled` and `icon-tow-20-disabled` | Add both ids to `src/data/uiIconUrl.ts` and show them on a disabled ship card row |
 
 ## For Gameplay
 

@@ -500,8 +500,27 @@ The envelope and timing are unchanged: radius `r = R (1 - (1 - g)^3)` for
 | Shockwave     | A fading ellipse stroke                   | An amber ground-plane ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6                                                                   |
 
 The mine's coral tones are `#d68b72`, `#a8654f` and `#7f4b3d`; its spin and
-blink timings are unchanged. The missile and mine models are small enough
-that Art supplies them as frames: they are not yet produced.
+blink timings are unchanged.
+
+### Missile and mine frames
+
+`node art/tools/weapon-solids.ts` builds the three models and writes their
+frames beside the shipped art, with their manifest rows staged as
+`weapon-solids` in [polish-rows.json](polish-rows.json). Frame px times
+0.4375 is logical px; every pivot is the frame's centre.
+
+| Sheet                                  | Ids                                                    | Frame | Frames                                                                                  |
+| -------------------------------------- | ------------------------------------------------------ | ----: | --------------------------------------------------------------------------------------- |
+| `/art/weapons/rapid-missile-sheet.svg` | `weapon-rapidMissile-{k}`, `k` 0 to 31                 |    56 | Heading `k` of 32, `facing` `world-{k}`; the nose at the pivot                          |
+| `/art/weapons/heavy-missile-sheet.svg` | `weapon-heavyMissile-{k}`, `k` 0 to 31                 |    96 | The same                                                                                |
+| `/art/weapons/mine-sheet.svg`          | `weapon-mine-{j}`, `weapon-mine-blink-{j}`, `j` 0 to 7 |    48 | Spin step `j` of 11.25 degrees, a quarter turn in eight; the mine's centre at the pivot |
+
+The missile frames hold the body and fins; the game draws the flat flame
+behind the tail, 7 px (Rapid) or 13.2 px (Heavy) behind the nose along the
+projected heading. Show the mine's frame `floor(th / 11.25) mod 8` for its
+spin angle `th`, from the blink set while it blinks. On a light field each
+frame takes the ink keyline. `node art/tools/polish-contact-sheet.ts <dir>
+weapons` writes the review sheet.
 
 ## Pickups
 
