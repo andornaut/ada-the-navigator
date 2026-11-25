@@ -97,7 +97,10 @@ diameter.
 | `capital`     | Outrigger carrier (Cartwheel) |  151.9 x 112.6 |                           81 |
 | `capital`     | Forked fortress (Phantom)     |  169.9 x 112.6 |                           91 |
 | Flagship      | Admiral Archie's own design   |  122.5 x 112.6 |                           65 |
-| `platform`    | Ore-field platform            |        75 x 75 |                           40 |
+| `platform`    | Ore-field platform            |    69.3 x 69.3 |                           37 |
+| Station       | Hostile station (Andromeda)   |  131.3 x 113.7 |                           70 |
+| Station       | Hostile station (Cartwheel)   |  131.3 x 131.3 |                           70 |
+| Station       | Hostile station (Phantom)     |  131.3 x 131.3 |                           70 |
 
 - **Hits:** shots, beams, blasts, mines and contacts test the drawn convex
   outline of the hull's current heading frame, plus a heavy's hardpoint bases
