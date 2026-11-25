@@ -242,7 +242,7 @@ describe("Cartwheel art", () => {
     expect(noses["visitor-1"]).toEqual(noses["visitor-2"]);
     expect(noses.miner![10]).toBeGreaterThan(noses["visitor-1"]![10]!);
     // A file without a full, well-formed nose array reads as none.
-    const jets = json("/art/cartwheel/miner-jets.json") as { nose: unknown[] };
+    const jets = json(cartwheelJets("miner")) as { nose: unknown[] };
     expect(readCraftNose({ ...jets, nose: jets.nose.slice(1) })).toBeUndefined();
     expect(
       readCraftNose({ ...jets, nose: [{ distance: -1, tip: [0, 0] }, ...jets.nose.slice(1)] }),

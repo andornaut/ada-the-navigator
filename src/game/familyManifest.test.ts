@@ -586,8 +586,8 @@ describe("source-family manifest readiness", () => {
   });
 });
 
-const phantomJetsKey = "phantom-story-craft-jets";
-const phantomJetsPath = "/art/phantom/story-craft-jets.json";
+const phantomJetsKey = "phantom-friendly-craft-jets";
+const phantomJetsPath = "/art/phantom/friendly-craft-jets.json";
 const phantomJetsEvent = `filecomplete-json-${phantomJetsKey}`;
 
 function phantomJetsFixture() {
@@ -740,7 +740,7 @@ const [first, second, top] = [
 ] as const;
 
 describe("deferred core capital sheets", () => {
-  it("extracts craft and debris at their authored intrinsic size and raw viewBox", () => {
+  it("extracts Art's model-layer craft at their raw frame and debris at its authored intrinsic size", () => {
     const f = fixture(undefined);
     const craft = core.assets.find(({ id }) => id === "craft-miner-0") as Asset;
     const stranded = cartwheel.assets.find(({ id }) => id === "craft-stranded-hauler-0") as Asset;
@@ -748,16 +748,20 @@ describe("deferred core capital sheets", () => {
     const frames = [craft, stranded, debris];
     f.queueCore(f.scene, () => true, vi.fn(), frames);
     const document = {};
-    for (const asset of frames) {
+    for (const asset of [craft, stranded]) {
       const key = vectorSheetKey(asset.path);
       f.documents.set(key, document);
       f.events.emit(`filecomplete-xml-${key}`);
-      expect(f.extract).toHaveBeenCalledWith(document, asset.path, {
-        ...asset,
-        intrinsicHeight: asset.displayHeight,
-        intrinsicWidth: asset.displayWidth,
-      });
+      expect(f.extract).toHaveBeenCalledWith(document, asset.path, asset);
     }
+    const key = vectorSheetKey(debris.path);
+    f.documents.set(key, document);
+    f.events.emit(`filecomplete-xml-${key}`);
+    expect(f.extract).toHaveBeenCalledWith(document, debris.path, {
+      ...debris,
+      intrinsicHeight: debris.displayHeight,
+      intrinsicWidth: debris.displayWidth,
+    });
     expect(f.svg.mock.calls).toEqual(
       frames.map((asset) => [f.scene, { ...asset, path: `data:${asset.id}` }]),
     );

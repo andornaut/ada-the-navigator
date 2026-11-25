@@ -157,9 +157,9 @@ describe("tow art", () => {
     expect(craftHeading({ x: 0, y: 0 }, { x: 0, y: 10 })).toBe(4);
     const pod = readStrandedCraft(tow, manifest.assets).get("stranded-ore-pod")!;
     const frame = pod.frames[2]![0]!;
-    // Heading 2's lug at (32, 33.835) of the 64 px frame, shown at 28 px.
+    // Heading 2's tow point at (36, 48.986) of the 72 px frame, shown at 31.5 px.
     expect(towOffset(pod, frame, 2).x).toBeCloseTo(0, 9);
-    expect(towOffset(pod, frame, 2).y).toBeCloseTo((33.835 - 32) * (28 / 64), 9);
+    expect(towOffset(pod, frame, 2).y).toBeCloseTo((48.986 - 36) * (31.5 / 72), 9);
   });
 
   it("draws the line straight when taut and sagged by sqrt(3 d (L - d) / 8) when slack", () => {

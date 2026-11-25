@@ -78,7 +78,7 @@ describe("sidecars map", () => {
       "tug",
       "voronguide",
     ];
-    const pack = "/art/phantom/story-craft-jets.json";
+    const pack = "/art/phantom/friendly-craft-jets.json";
     const hasPack = existsSync(new URL(`../../public${pack}`, import.meta.url));
     // Beside the story craft, Phantom carries its Forked fortress capital's data files.
     expect(GALAXY_MANIFESTS.get(6)!.sidecars).toEqual(

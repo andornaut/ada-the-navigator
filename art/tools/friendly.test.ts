@@ -315,8 +315,9 @@ test("each stranded craft stages a tow point and collision per heading in its ga
       convexParts(`${name} ${yaw}`, frame, heading);
     }
   }
-  const shipped = json("/art/cartwheel/tow.json") as { line: unknown };
-  assert.deepEqual((json(staged.core!.data!.tow!) as { line: unknown }).line, shipped.line);
+  // Core's tow link names Cartwheel's file, which keeps the tow line.
+  assert.equal(staged.core!.data!.tow, staged.cartwheel!.data!.tow);
+  assert.ok((json(staged.core!.data!.tow!) as { line?: unknown }).line);
 });
 
 type StripRow = Row & {

@@ -83,7 +83,7 @@ describe("split art manifest", () => {
 
   it("reads each galaxy's stranded craft data apart from its links", () => {
     for (const [galaxy, manifest] of GALAXY_MANIFESTS) {
-      expect(manifest.tow, GALAXY_ID[galaxy]).toBe(`/art/${GALAXY_ID[galaxy]}/tow.json`);
+      expect(manifest.tow, GALAXY_ID[galaxy]).toBe(`/art/${GALAXY_ID[galaxy]}/friendly-tow.json`);
       expect(manifest.links).not.toHaveProperty("tow");
     }
     // Core's tow, which holds the tow line, keeps its name once the galaxies' links merge.

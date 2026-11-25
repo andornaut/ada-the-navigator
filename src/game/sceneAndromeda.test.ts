@@ -87,7 +87,10 @@ describe("Andromeda authored rendering", () => {
     const frame = selectEnemyFrame(craft, { x: 100, y: 0 });
     expect(drawAndromeda(context, pip)).toBe(true);
     expect(calls.sprite).toHaveBeenCalledWith(context, pip.id, frame.id);
-    expect(calls.sprite.mock.results[0]!.value.setDisplaySize).toHaveBeenCalledWith(35, 35);
+    expect(calls.sprite.mock.results[0]!.value.setDisplaySize).toHaveBeenCalledWith(
+      frame.displayWidth,
+      frame.displayHeight,
+    );
     expect(pip.kind).toBe("destination");
     expect(pip.enemy).toBeUndefined();
   });

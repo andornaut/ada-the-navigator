@@ -177,11 +177,10 @@ function queueEagerSvgSheets(
       try {
         const sources = frames.map((asset): Asset => {
           // These shipped sheets retain authored display intrinsics. Art's model-layer frames
-          // (the friendly objects, their beacons, project props and the Needle ring gates) have
-          // the ordinary raw-intrinsic contract.
+          // (the friendly objects and craft, their beacons, project props and the Needle ring
+          // gates) have the ordinary raw-intrinsic contract.
           const displaySized =
             asset.project === "second-docking-bay" ||
-            asset.craft ||
             asset.debris ||
             asset.outpost === "settlement" ||
             (asset.station === "settlers" && asset.overlay === true) ||
@@ -490,8 +489,8 @@ export function queueGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void
   queueGalaxyAssets(scene, undefined, galaxy);
 }
 
-const PHANTOM_CRAFT_JETS_PATH = "/art/phantom/story-craft-jets.json";
-const PHANTOM_CRAFT_JETS_KEY = "phantom-story-craft-jets";
+const PHANTOM_CRAFT_JETS_PATH = "/art/phantom/friendly-craft-jets.json";
+const PHANTOM_CRAFT_JETS_KEY = "phantom-friendly-craft-jets";
 
 function queuePhantomCraftJets(scene: AssetsContext, craft: readonly string[]): void {
   if (craft.length === 0 || craft.every((id) => scene.cache.json.exists(`craft-jets-${id}`))) {

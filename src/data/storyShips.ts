@@ -46,11 +46,11 @@ export const MOORING_BUOY = {
 /**
  * Where story craft and buoys may stand while Ada is docked at the hub: the view's
  * half-extents in game area units, less a margin for the HUD and the touch controls and the
- * largest drawn half-size, the miner's 56 display px frame.
+ * largest drawn half-size, the miner's 63 display px frame.
  */
 export const STORY_VIEW = (() => {
   const margin = 40;
-  const drawnHalf = 28;
+  const drawnHalf = 31.5;
   return {
     drawnHalf,
     halfHeight: SCREEN.height / 2 - margin - drawnHalf,
