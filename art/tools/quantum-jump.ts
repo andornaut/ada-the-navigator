@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { ellipse, line } from "@andornaut/art-kit/build/draw";
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 import { encodeLossyWebp } from "@andornaut/art-kit/build/webp";
 import { format, resolveConfig } from "prettier";
@@ -9,9 +8,9 @@ import { format, resolveConfig } from "prettier";
 import { linkData, placeEntries } from "./manifest.ts";
 import {
   blend,
-  blur,
   disc,
   filled,
+  fillPolygon,
   over,
   resize,
   rgba,
@@ -19,9 +18,8 @@ import {
   writePng,
 } from "./paint.ts";
 import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
-import { Random } from "./random.ts";
 import { SHIP_HEADING_CONTRACT } from "./projection.ts";
-import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
+import { LOGICAL_PER_DESIGN } from "./shimmer.ts";
 import { DISPLAY, FRAME, forwardJetMouths, SCHEMES } from "./ship-model.ts";
 import { AUTHORED_JET_CURVE } from "./ship-jet-svg.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
@@ -38,166 +36,181 @@ const RED = "e43b44";
 // Emergency tint: the red wash over the charge frame and the red still in-between.
 const RED_WASH = 0.15;
 
-const view = centredView(CANVAS.width, CANVAS.height, 1);
 const toward = (image: RgbaImage, colour: string, t: number) =>
   blend(image, filled(rgba(colour), image.width, image.height), t);
-// Reduced motion: 25% band contrast, no sparkle, 45% toward the space background.
-const still = toward(shimmer(view, { contrast: 0.25, sparkle: false }), SPACE_BG, 0.45);
+const mix = (from: string, to: string, t: number) => {
+  const [a, b] = [rgba(from), rgba(to)];
+  return [0, 1, 2].map((c) => Math.round(a[c]! + (b[c]! - a[c]!) * t)) as [number, number, number];
+};
+// Shapes draw at SS times the frame and reduce onto it, for clean flat edges.
+const SS = 2;
+const polar = (radius: number, degrees: number): [number, number] => [
+  radius * Math.cos((degrees * Math.PI) / 180),
+  radius * Math.sin((degrees * Math.PI) / 180),
+];
+
+// The warp tunnel: eight flat walls round the jump centre, in nested depth steps that halve in
+// size, each wall one tone under the one light from the upper left and each step deeper toward
+// the deepest ramp value, with a flat core. Eight wedges run outward on the wall seams, lilac
+// and cyan in turn. Six frames loop: each advances the depth a sixth of a step and every wedge
+// a sixth of its run.
+const TUNNEL = {
+  cycle: 6,
+  sides: 8,
+  // Depth steps drawn, the outermost reaching past the canvas corners.
+  steps: 4,
+  // The outermost step's corner radius as a share of the canvas half-diagonal.
+  reach: 1.1,
+  light: [-0.6, -0.8],
+  // A wall is lit above this share of the light and shaded below its negative.
+  facing: 0.45,
+  // How far the deepest step moves toward the deepest ramp value.
+  darkness: 0.72,
+  // The jump step's bright frame: this far toward the lightest ramp value.
+  bright: 0.3,
+  wedges: { length: 46, halfWidth: 2.2, from: 0.16, run: 0.5, stagger: 0.37 },
+} as const;
+
+function tunnel(phase: number, bright = false): RgbaImage {
+  const { height, width } = CANVAS;
+  const out = filled(rgba(IN_BETWEEN[2]), width * SS, height * SS);
+  const [cx, cy] = [(width * SS) / 2, (height * SS) / 2];
+  const reach = Math.hypot(width / 2, height / 2) * TUNNEL.reach * SS;
+  const corner = 180 / TUNNEL.sides;
+  const lift = (tone: readonly number[]) =>
+    bright
+      ? tone.map((v, c) => Math.round(v + (rgba(IN_BETWEEN[4])[c]! - v) * TUNNEL.bright))
+      : tone;
+  const paint = (tone: readonly number[]) =>
+    [...lift(tone), 255] as unknown as ReturnType<typeof rgba>;
+  const radius = (step: number) => reach * 0.5 ** (step - phase);
+  for (let step = 0; step < TUNNEL.steps; step++) {
+    const depth = Math.min(1, (step + 1 - phase) / TUNNEL.steps);
+    for (let i = 0; i < TUNNEL.sides; i++) {
+      const [a0, a1] = [corner + 2 * corner * i, corner + 2 * corner * (i + 1)];
+      const middle = (((a0 + a1) / 2) * Math.PI) / 180;
+      // The wall faces the jump centre.
+      const lit = -Math.cos(middle) * -TUNNEL.light[0] - Math.sin(middle) * -TUNNEL.light[1];
+      const wall =
+        lit > TUNNEL.facing ? IN_BETWEEN[3] : lit > -TUNNEL.facing ? IN_BETWEEN[2] : IN_BETWEEN[1];
+      const at = (r: number, degrees: number): [number, number] => {
+        const [x, y] = polar(r, degrees);
+        return [cx + x, cy + y];
+      };
+      fillPolygon(
+        out,
+        [
+          at(radius(step), a0),
+          at(radius(step), a1),
+          at(radius(step + 1), a1),
+          at(radius(step + 1), a0),
+        ],
+        paint(mix(wall, IN_BETWEEN[0], TUNNEL.darkness * depth)),
+      );
+    }
+  }
+  fillPolygon(
+    out,
+    Array.from({ length: TUNNEL.sides }, (_, i): [number, number] => {
+      const [x, y] = polar(radius(TUNNEL.steps), corner + 2 * corner * i);
+      return [cx + x, cy + y];
+    }),
+    paint(rgba(IN_BETWEEN[0]).slice(0, 3)),
+  );
+  const { from, halfWidth, length, run, stagger } = TUNNEL.wedges;
+  for (let i = 0; i < TUNNEL.sides; i++) {
+    const seam = corner + 2 * corner * i;
+    const start = reach * (from + run * ((phase + i * stagger) % 1));
+    const [bx, by] = polar(start, seam);
+    const [tx, ty] = polar(start + length * SS, seam);
+    const [nx, ny] = polar(halfWidth * SS, seam + 90);
+    fillPolygon(
+      out,
+      [
+        [cx + bx, cy + by],
+        [cx + tx + nx, cy + ty + ny],
+        [cx + tx - nx, cy + ty - ny],
+      ],
+      rgba(i % 2 === 1 ? SHIMMER : IN_BETWEEN[4]),
+    );
+  }
+  return resize(out, width, height);
+}
+
+// The field frames of the renderer in use: the flat tunnel at one phase per hold. Reduced
+// motion holds a still one 45% toward the space background.
+const still = toward(tunnel(0), SPACE_BG, 0.45);
 const FIELDS: readonly (readonly [string, RgbaImage])[] = [
-  ["close", shimmer(view, { phase: 0 })],
-  ["tight", shimmer(view, { phase: 0.18 })],
-  // The one bright frame: 22% toward the lightest ramp value.
-  ["jump", toward(shimmer(view, { phase: 0.36 }), IN_BETWEEN[4], 0.22)],
-  ["open", shimmer(view, { phase: 0.54 })],
-  ["clear", shimmer(view, { phase: 0.7 })],
+  ["close", tunnel(0)],
+  ["tight", tunnel(2 / TUNNEL.cycle)],
+  // The one bright frame.
+  ["jump", tunnel((TUNNEL.cycle - 1) / TUNNEL.cycle, true)],
+  ["open", tunnel(3 / TUNNEL.cycle)],
+  ["clear", tunnel(4 / TUNNEL.cycle)],
   ["still", still],
   ["still-emergency", toward(still, RED, RED_WASH)],
 ];
 
-// The warp tunnel: the in-between field wrapped round the jump centre, angle to field x and
-// depth (inverse radius) to field y, both mirrored because the field does not tile. The far end
-// darkens toward the deepest ramp value and streaks run outward in the rim and shimmer colours.
-// Six frames loop: each advances the depth a sixth of the mirrored period and every streak a
-// whole number of laps per loop.
-// Within `coreRadius` the darkening reaches the full deepest value, hiding the depth aliasing.
-const TUNNEL = {
-  coreRadius: 40,
-  cycle: 6,
-  darkRadius: 150,
-  darkness: 0.75,
-  depth: 5200,
-  streaks: 70,
-} as const;
-
-function tunnel(source: RgbaImage, step: number): RgbaImage {
-  const { height, width } = source;
-  const out = blankImage(width, height);
-  const [cx, cy] = [width / 2, height / 2];
-  const period = 2 * (height - 1);
-  const deep = rgba(IN_BETWEEN[0]);
-  const sample = (u: number, v: number, c: number) => {
-    const [x0, y0] = [Math.floor(u), Math.floor(v)];
-    const [x1, y1] = [Math.min(x0 + 1, width - 1), Math.min(y0 + 1, height - 1)];
-    const [fx, fy] = [u - x0, v - y0];
-    const at = (x: number, y: number) => source.data[(y * width + x) * 4 + c]!;
-    const top = at(x0, y0) * (1 - fx) + at(x1, y0) * fx;
-    const bottom = at(x0, y1) * (1 - fx) + at(x1, y1) * fx;
-    return top * (1 - fy) + bottom * fy;
-  };
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const [dx, dy] = [x + 0.5 - cx, y + 0.5 - cy];
-      const r = Math.hypot(dx, dy);
-      const u = (Math.abs(Math.atan2(dy, dx)) / Math.PI) * (width - 1);
-      const depth = TUNNEL.depth / Math.max(r, 6) + (step * period) / TUNNEL.cycle;
-      const v = Math.abs((depth % period) - (height - 1));
-      const near = Math.min(
-        1,
-        Math.max(0, 1 - r / TUNNEL.darkRadius) ** 1.5 * TUNNEL.darkness +
-          Math.max(0, 1 - r / TUNNEL.coreRadius) * (1 - TUNNEL.darkness),
-      );
-      const i = (y * width + x) * 4;
-      for (let c = 0; c < 3; c++) {
-        out.data[i + c] = Math.round(sample(u, v, c) * (1 - near) + deep[c]! * near);
-      }
-      out.data[i + 3] = 255;
-    }
-  }
-  // Streaks at 2x, reduced onto the tunnel.
-  const layer = blankImage(width * 2, height * 2);
-  const random = new Random(23);
-  for (let n = 0; n < TUNNEL.streaks; n++) {
-    const angle = random.random() * 2 * Math.PI;
-    const base = random.random();
-    const laps = 1 + Math.floor(random.random() * 2);
-    const s = (base + (step * laps) / TUNNEL.cycle) % 1;
-    const r0 = 30 + s * s * 520;
-    const r1 = r0 * (1.25 + 0.5 * s);
-    const colour = n % 3 === 0 ? SHIMMER : IN_BETWEEN[4];
-    const end = (radius: number) => ({
-      x: 2 * (cx + Math.cos(angle) * radius),
-      y: 2 * (cy + Math.sin(angle) * radius),
-    });
-    line(
-      { fill: rgba(colour, Math.round(70 + 150 * s)), width: s < 0.6 ? 2 : 4 },
-      [end(r0), end(r1)],
-      layer,
-    );
-  }
-  over(out, resize(layer, width, height));
-  return out;
-}
-
-const tunnelSource = FIELDS[0]![1];
-const TUNNEL_FRAMES: readonly (readonly [string, RgbaImage])[] = [
-  ...Array.from({ length: TUNNEL.cycle }, (_, i) => [`t${i}`, tunnel(tunnelSource, i)] as const),
-];
-// The jump step's bright tunnel: the next loop frame 22% toward the lightest ramp value, as the
-// field's jump frame.
+const TUNNEL_FRAMES: readonly (readonly [string, RgbaImage])[] = Array.from(
+  { length: TUNNEL.cycle },
+  (_, i) => [`t${i}`, tunnel(i / TUNNEL.cycle)] as const,
+);
 const TUNNEL_SHEET: readonly (readonly [string, RgbaImage])[] = [
   ...TUNNEL_FRAMES,
-  ["jump", toward(tunnel(tunnelSource, TUNNEL.cycle - 1), IN_BETWEEN[4], 0.22)],
+  ["jump", tunnel((TUNNEL.cycle - 1) / TUNNEL.cycle, true)],
 ];
 
-// Charge glow round the ship: a soft disc, radius 26 + 10 g design px, alpha 120 g.
+// Charge glow round the ship: two flat discs, the outer of radius 26 + 10 g design px at alpha
+// 0.35 g and the inner 0.72 of it at alpha 0.55 g over the outer.
 const GLOW_SIZE = 112;
+const GLOW_DISCS = { inner: 0.72, alpha: [0.35, 0.55] } as const;
 const LEVELS: readonly (readonly [string, number, string])[] = [
   ["full", 1, GLOW],
   ["mid", 0.6, GLOW],
   ["low", 0.2, GLOW],
   ["emergency", 1, RED],
 ];
+
 function glow(level: number, colour: string): RgbaImage {
-  const image = blankImage(GLOW_SIZE, GLOW_SIZE);
-  const c = GLOW_SIZE / 2;
+  const image = blankImage(GLOW_SIZE * SS, GLOW_SIZE * SS);
+  const c = (GLOW_SIZE * SS) / 2;
+  const outer = (26 + 10 * level) * LOGICAL_PER_DESIGN * SS;
+  const [far, near] = [GLOW_DISCS.alpha[0] * level, GLOW_DISCS.alpha[1] * level];
+  disc(image, [c, c], outer, rgba(colour, Math.round(255 * far)));
   disc(
     image,
     [c, c],
-    (26 + 10 * level) * LOGICAL_PER_DESIGN,
-    rgba(colour, Math.trunc(120 * level)),
+    outer * GLOW_DISCS.inner,
+    rgba(colour, Math.round(255 * (1 - (1 - far) * (1 - near)))),
   );
-  blur(image, 8 * LOGICAL_PER_DESIGN);
-  return image;
+  return resize(image, GLOW_SIZE, GLOW_SIZE);
 }
 
-// The jump frame's star: four 3 px arms of 18 px, four 2 px diagonals and a white core.
+// The jump frame's star: a four-point lilac burst 18 px to its points, a white four-point burst
+// of 10 px over it and a white core.
 const STAR = 37;
+const STAR_BURSTS = [
+  { radius: 18, waist: 0.3, colour: IN_BETWEEN[4] },
+  { radius: 10.2, waist: 0.34, colour: "ffffff" },
+] as const;
+const STAR_CORE = 3.6;
+
 function star(): RgbaImage {
-  const image = blankImage(STAR, STAR);
-  const c = (STAR - 1) / 2;
-  const light = rgba(IN_BETWEEN[4]);
-  for (const [dx, dy] of [
-    [1, 0],
-    [-1, 0],
-    [0, 1],
-    [0, -1],
-  ] as const) {
-    line(
-      { fill: light, width: 3 },
-      [
-        { x: c, y: c },
-        { x: c + dx * 18, y: c + dy * 18 },
-      ],
+  const scale = 4;
+  const image = blankImage(STAR * scale, STAR * scale);
+  const c = (STAR * scale) / 2;
+  for (const { colour, radius, waist } of STAR_BURSTS) {
+    fillPolygon(
       image,
+      Array.from({ length: 8 }, (_, i): [number, number] => {
+        const [x, y] = polar(radius * scale * (i % 2 === 0 ? 1 : waist), 45 * i);
+        return [c + x, c + y];
+      }),
+      rgba(colour),
     );
   }
-  for (const [dx, dy] of [
-    [1, 1],
-    [-1, 1],
-    [1, -1],
-    [-1, -1],
-  ] as const) {
-    line(
-      { fill: light, width: 2 },
-      [
-        { x: c, y: c },
-        { x: c + dx * 18 * 0.45, y: c + dy * 18 * 0.45 },
-      ],
-      image,
-    );
-  }
-  ellipse({ fill: rgba("ffffff") }, { x0: c - 5, y0: c - 5, x1: c + 5, y1: c + 5 }, image);
-  return image;
+  disc(image, [c, c], STAR_CORE * scale, rgba("ffffff"));
+  return resize(image, STAR, STAR);
 }
 
 function sheet(frames: readonly RgbaImage[], columns: number): RgbaImage {

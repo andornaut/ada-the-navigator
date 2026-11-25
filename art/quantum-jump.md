@@ -154,8 +154,8 @@ cross-fades into the destination's ship by 750 ms (`crossFadeToMs`), or out
 on a destination without it. From the route map it holds the route map ship's
 heading.
 
-`still` is the field at 25% band contrast with no sparkle, blended 45% toward
-the space background `#292734`, so the luminance change stays gentle. It
+`still` is the tunnel's first frame blended 45% toward the space background
+`#292734`, so the luminance change stays gentle. It
 draws at the field canvas rule: 960 by 540 logical px centred on the view at
 scale `max(1, viewWidth / 960, viewHeight / 540)`.
 
@@ -166,28 +166,41 @@ three. The emergency charge steps add one red-tinted phase, still under three.
 
 ## In-between field and tunnel
 
-The field frames are the shimmer of [shimmer.ts](tools/shimmer.ts) at phases
-0, 0.18, 0.36, 0.54 and 0.7; `jump` is phase 0.36 blended 22% toward
-`#dcc3f2`. Diagonal sine bands blend through `#3a2f6b`, `#5f4fa3`, `#7f6abd`,
-`#9b82d4` and `#c4a6e2`, with a faint `#8fe0f2` tint on the bright crests,
-soft `#dcc3f2` glows and `#8fe0f2` and `#f3e6ff` sparkles.
+The tunnel is flat and faceted: eight walls round the canvas centre, their
+corners at 22.5 degrees and every 45 after, in four nested depth steps. The
+outermost step's corners lie 1.1 canvas half-diagonals out (606 px) and each
+step is half the size of the one outside it. Every wall is one flat tone
+under the one light from the upper left `(-0.6, -0.8)`: `#9b82d4` where the
+wall faces it by more than 0.45, `#3a2f6b` where it faces away by more than
+0.45 and `#5f4fa3` between. Each step blends toward `#1f1a38` by 0.72 times
+its depth, a quarter per step, and the core inside the last step is
+`#1f1a38`. Nothing is blurred or textured.
 
-The tunnel wraps the phase 0 field round the canvas centre: angle to field x
-and depth (5200 over the radius) to field y, both mirrored because the field
-does not tile, sampled bilinearly. It darkens toward `#1f1a38` by
-`0.75 (1 - r / 150)^1.5`, reaching the full colour at the centre within 40 px.
-70 streaks run outward in `#dcc3f2` and `#8fe0f2` (one in three), 1 px, 2 px
-past 60% of their run, their alpha rising with radius. Frames `t0` to `t5`
-loop: each advances the depth a sixth of the mirrored period and every streak
-one or two laps per loop. `jump` is the next loop frame blended 22% toward
-`#dcc3f2`. The steps run `t0` to `t4` through close and tight, `jump`, then
-`t0` to `t5` and `t0` to `t1` from open.
+Eight wedges run outward on the wall seams, 46 px long and 4.4 px wide at
+their outer end, `#dcc3f2` and `#8fe0f2` in turn. Wedge `i` starts
+`0.16 + 0.5 ((phase + 0.37 i) mod 1)` of the 606 px out.
+
+Frames `t0` to `t5` loop at phases 0 to 5/6: each grows every depth step by
+a sixth of a doubling and moves every wedge a sixth of its run. `jump` is
+the phase 5/6 frame with every tone 30% toward `#dcc3f2`. The steps run `t0`
+to `t4` through close and tight, `jump`, then `t0` to `t5` and `t0` to `t1`
+from open.
+
+The field frames `close`, `tight`, `open` and `clear` are the tunnel at
+phases 0, 2/6, 3/6 and 4/6, and `jump` its bright frame.
+
+The glow is two flat discs in `#a8dcff` (`#e43b44` for `emergency`): the
+outer of radius `(26 + 10 g) * 360 / 390` px at alpha `0.35 g` and the inner
+0.72 of that radius at alpha `0.55 g` over it, for `g` 1 (`full`,
+`emergency`), 0.6 (`mid`) and 0.2 (`low`). The star is a four-point
+`#dcc3f2` burst 18 px to its points with a 0.3 waist, a white four-point
+burst of 10.2 px with a 0.34 waist over it and a white core of radius 3.6.
 
 | Id                    | Frames                                                                         | Size                        |
 | --------------------- | ------------------------------------------------------------------------------ | --------------------------- |
 | `quantum-jump-tunnel` | `t0` to `t5`, `jump`, stacked                                                  | 960 by 540 each, opaque     |
 | `quantum-jump-field`  | `close`, `tight`, `jump`, `open`, `clear`, `still`, `still-emergency`, stacked | 960 by 540 each, opaque     |
-| `quantum-jump-glow`   | `full`, `mid`, `low`, `emergency`                                              | 112 by 112 each, soft alpha |
+| `quantum-jump-glow`   | `full`, `mid`, `low`, `emergency`                                              | 112 by 112 each, flat alpha |
 | `quantum-jump-star`   | `jump`                                                                         | 37 by 37, opaque or clear   |
 
 The tunnel and field sheets are lossy WebP at quality 90; the glow and star
