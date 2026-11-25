@@ -111,7 +111,9 @@ On a light field (`tint.light`) each marker draws over an ink outline
 the diamond over an ink stroke 2 wider (4) on the same path. The guard's bar
 draws on the disc in the same ink on every field, so it adds no outline. Ink on
 Sunflower is 10.90:1; bare `threat` there is 1.68:1. Phantom's white outline
-follows the same geometry as the ink outline.
+follows the same geometry as the ink outline. The 24 px edge badges (stations
+and the unidentified `?`) take the same field edge: their 1 px border is the
+field's foreground edge, white on Phantom and ink on light fields.
 
 ## In-between
 
