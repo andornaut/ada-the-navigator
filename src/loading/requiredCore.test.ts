@@ -8,6 +8,7 @@ import { validateBootCore } from "./requiredCore.ts";
 function fixture() {
   const files: Record<string, string> = {
     "art-manifest": "manifest.json",
+    "enemy-weapons": "enemy-weapons.json",
     "quantum-jump": "quantum-jump.json",
     "ship-material-palettes": "ship-paint.json",
     "ship-materials": "ship-materials.json",
@@ -48,3 +49,8 @@ it.each(["ship-materials", "ship-material-palettes", "quantum-jump"])(
     expect(() => validateBootCore(f.cache, () => true)).toThrow("materials");
   },
 );
+it.each([undefined, { version: 1 }])("rejects missing or malformed enemy weapon art", (value) => {
+  const f = fixture();
+  f.data.set("enemy-weapons", value);
+  expect(() => validateBootCore(f.cache, () => true)).toThrow("enemy weapon");
+});

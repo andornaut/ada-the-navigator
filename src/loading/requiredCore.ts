@@ -1,4 +1,5 @@
 import { ECONOMY } from "../data/economy.ts";
+import { readEnemyWeaponsArt } from "../game/enemyWeaponsArt.ts";
 import { hasPlayerHeadingPackage } from "../game/playerHeadingPackage.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
 import { readEngineJets } from "../game/shipJets.ts";
@@ -39,6 +40,9 @@ export function validateBootCore(
     typeof root.shipMaterials !== "string"
   ) {
     throw new Error("Required ship material link is missing");
+  }
+  if (!readEnemyWeaponsArt(cache.get("enemy-weapons"))) {
+    throw new Error("Required enemy weapon art is invalid");
   }
   const jump = readQuantumJump(cache.get("quantum-jump"));
   const geometry =
