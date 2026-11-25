@@ -645,8 +645,8 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 An ore field is a seeded cluster of 6 to 10 ordinary rocks about 900 world units
 across, placed like stations: at least 3000 world units apart and 1500 from the
 hub, stations and quantum jump arrivals. Its rocks are ordinary medium and large
-asteroids with ordinary asteroid HP, 5 for medium and 10 for large. A destroyed
-ore-field rock skips the ammo roll and gives at least 1 ore; any further ore and
+asteroids with ordinary asteroid HP, 5 for medium and 10 for large. Every ore-field rock is a crystal rock: when destroyed it
+skips the ammo roll and gives at least 1 ore; any further ore and
 Stardust roll as usual ([Economy](economy.md#earning-stardust)). A field holds
 only its own rocks: chunk generation keeps other asteroids out of a 600 world
 unit radius around its centre, its 450 radius plus a 150 margin. A claim-jumper

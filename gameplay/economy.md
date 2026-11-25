@@ -171,7 +171,7 @@ moment. Its notice names what it gave:
 
 Each destroyed fighter, fighter escort, swarm ship, interceptor and retaliator
 rolls a 10% chance to drop an ammo pack in addition to its Stardust.
-Destroyed asteroids other than ore-field rocks roll by size: 0.5% for small, 1%
+Destroyed asteroids other than crystal rocks roll by size: 0.5% for small, 1%
 for medium, 2% for large and 4% for huge. Ammo drops require owning a weapon
 other than Laser. The pack's contents are chosen when Ada collects it, using the
 weights Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and
@@ -194,9 +194,11 @@ asteroids' own and does not follow enemy destruction timing.
 Every static rock is an ordinary asteroid. Its contents are decided by this
 roll when it is destroyed: ore and Stardust, an ammo pack or nothing. Ore comes
 from destroyed asteroids in every galaxy. Cartwheel's ore fields are clusters of
-ordinary rocks, which makes Cartwheel richest in ore. A destroyed ore-field rock
-skips the ammo roll and gives at least 1 ore; any further ore and Stardust roll
-as usual. Ore aboard fuels
+ordinary rocks, which makes Cartwheel richest in ore. A crystal rock shows
+purple ore crystals: every ore-field rock, and about 1 in 4 ordinary asteroids
+in other galaxies, chosen once per rock by its seed so it never changes on
+Continue. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
+any further ore and Stardust roll as usual. Ore aboard fuels
 shield recharge starting 25 seconds after the last hit, at 4% of maximum
 shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
 so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge

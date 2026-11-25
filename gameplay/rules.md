@@ -481,7 +481,7 @@ and its contents are decided when it is destroyed by the size-based asteroid
 yields, 75% initial ore split, 25% expected ore quantity reduction and 0.8
 rock ore and Stardust scaling in [Economy](economy.md#earning-stardust), including the exclusive ammo outcome.
 Cartwheel's ore fields are clusters of ordinary medium and large rocks with
-ordinary asteroid HP: 5 for medium and 10 for large. A destroyed ore-field rock
+ordinary asteroid HP: 5 for medium and 10 for large. Every ore-field rock is a crystal rock: when destroyed it
 skips the ammo roll and gives at least 1 ore; any further ore and Stardust roll
 as usual.
 Cartwheel has no damaging hazards.
@@ -1461,8 +1461,8 @@ loot and safe corridors. Caches and other points of interest are independent
 of the rock targets, and the rock targets do not change cache placement.
 Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
 interest, guards and platforms. Their rocks are ordinary medium and large
-asteroids with ordinary asteroid HP, 5 for medium and 10 for large. A destroyed
-ore-field rock skips the ammo roll and gives at least 1 ore; any further ore and
+asteroids with ordinary asteroid HP, 5 for medium and 10 for large. Every ore-field rock is a crystal rock: when destroyed it
+skips the ammo roll and gives at least 1 ore; any further ore and
 Stardust roll as usual. Their approved variety catalog has eight total
 pattern families, each with realizations for counts 6 through 10: 40 count-specific
 records, not 40 distinct patterns. The families are loose cluster, crescent, two
