@@ -27,6 +27,7 @@ import {
   classic,
   DISPLAY,
   drawn,
+  drawnParts,
   ENGINE_MATERIAL_RELATIONSHIPS,
   forwardJetMouths,
   FRAME,
@@ -42,6 +43,7 @@ import {
   UP,
 } from "./ship-model.ts";
 import { svgPaths } from "./ship-paths.ts";
+import { WARP_FRAME, WARP_HEADING, WARP_POSES } from "./ship-poses.ts";
 import { jetLength, plumePolygon, type PlumeMouth } from "./ship-plume.ts";
 import { paintShip } from "./ship-raster.ts";
 
@@ -213,13 +215,61 @@ test("one light from the upper left tones every heading in the declared slots", 
   assert(headOn.has("top") && headOn.has("topTurned"));
 });
 
-test("the tail rises from the ridge at the canopy's rear edge, behind the whole canopy", () => {
+test("the tail rises from the ridge 2 units behind the canopy's rear edge", () => {
   const { apex, nose, shoulder } = shipVertices();
   const { centre, along } = CANOPY;
-  assert.equal(shoulder[1], centre + along);
+  assert.equal(shoulder[1], centre + along + 2);
   // On the ridge line from the nose through (0, 6, 9.5), so the wing tops keep their plane.
   assert(Math.abs((shoulder[2] - nose[2]) / (shoulder[1] - nose[1]) - 8.3 / 38) < 1e-12);
   assert.deepEqual(apex, [0, 17, 15]);
+});
+
+// Canopy samples, at 8 per frame px on each axis, whose topmost drawn fragment is a tail face.
+function canopyUnderTail(frame: number, pose: Parameters<typeof drawnParts>[1]): number {
+  const SS = 8;
+  const W = frame * SS;
+  const top = new Int8Array(W * W).fill(-1);
+  const glass = new Uint8Array(W * W);
+  const tail = new Set(["steep", "block", "wall", "mouth--1", "mouth-1"]);
+  for (const { outline, part } of drawnParts(frame / 2, pose)) {
+    const kind = part === "bubble" || part === "lip" ? 0 : tail.has(part) ? 1 : 2;
+    const ys = outline.map(([, y]) => y * SS);
+    for (
+      let y = Math.max(0, Math.floor(Math.min(...ys)));
+      y <= Math.min(W - 1, Math.ceil(Math.max(...ys)));
+      y++
+    ) {
+      const centre = y + 0.5;
+      const xs: number[] = [];
+      for (const [i, a] of outline.entries()) {
+        const b = outline[(i + 1) % outline.length]!;
+        const [ay, by] = [a[1] * SS, b[1] * SS];
+        if (ay <= centre !== by <= centre) {
+          xs.push((a[0] + ((centre - ay) / (by - ay)) * (b[0] - a[0])) * SS);
+        }
+      }
+      xs.sort((p, q) => p - q);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        const to = Math.min(W, Math.ceil(xs[i + 1]! - 0.5));
+        for (let x = Math.max(0, Math.ceil(xs[i]! - 0.5)); x < to; x++) {
+          top[y * W + x] = kind;
+          if (kind === 0) glass[y * W + x] = 1;
+        }
+      }
+    }
+  }
+  return top.reduce((n, kind, i) => n + (glass[i] && kind === 1 ? 1 : 0), 0);
+}
+
+test("no tail face covers the canopy at any heading or jump pose", () => {
+  for (const yaw of ALL) assert.equal(canopyUnderTail(FRAME, { yaw }), 0, `heading ${yaw}`);
+  for (const { id, ...shape } of WARP_POSES) {
+    assert.equal(
+      canopyUnderTail(WARP_FRAME, { ...shape, yaw: WARP_HEADING }),
+      0,
+      `jump pose ${id}`,
+    );
+  }
 });
 
 test("the tip caps are the outer 28 percent of each half span", () => {

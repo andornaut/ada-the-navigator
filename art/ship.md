@@ -131,8 +131,8 @@ A model or paint change regenerates all of these, in this order:
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
 - The hull is a pyramid on the swept delta plan: triangular in rear view, with
   a low ridge under the canopy that climbs steeply behind it to a rear-centre
-  apex. The climb starts at the canopy's rear edge, so the tail meets the
-  canopy without cutting it, so the top of the rear triangle reads as a small white tail. No fin.
+  apex. The climb starts 2 units behind the canopy's rear edge, so no tail face
+  covers the canopy in any view, so the top of the rear triangle reads as a small white tail. No fin.
   The six-point plan matches the selected plan coordinates at scale 0.32:
   `localX = planY * 0.32`, `localY = planX * 0.32`. Reversing mapped vertex
   order preserves counterclockwise top winding. No interior, seams or panel
@@ -146,13 +146,15 @@ A model or paint change regenerates all of these, in this order:
 | Wing tips | (±21.44, 20.48, 1.2) | Swept-back tips                           |
 | Notches   | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
 | Tail      | (0, 24.32, 1.2)      | Tail tip                                  |
-| Shoulder  | (0, 7, 9.72)         | Ridge kink at the canopy's rear edge      |
+| Shoulder  | (0, 9, 10.16)        | Ridge kink behind the canopy              |
 | Apex      | (0, 17, 15)          | Rear-centre top                           |
-| Corners   | (±4.20, 13.06, 9.85) | Where wall, steep face and tail side meet |
+| Corners   | (±4.25, 13.16, 9.52) | Where wall, steep face and tail side meet |
 
 - The ridge runs from the nose through (0, 6, 9.5); the shoulder is the point
-  on it at the canopy's rear edge, local Y 7, so the wing tops keep their
-  plane and the whole canopy lies ahead of the steep faces.
+  on it 2 units behind the canopy's rear edge, local Y 9, so the wing tops keep
+  their plane and no steep face, tail side or rear wall covers any canopy
+  pixel at the 64 headings or in the nine jump poses (`ship-check.ts` counts
+  them at 8 samples per frame px).
 
 - The notches lie ahead of the apex, so no single rear face can rise from the
   notched outline to the apex without overhanging. The rear splits into planar

@@ -259,10 +259,11 @@ const HULL = {
   ],
   // Vertical edge strip round the plan; the upper faces start at its top.
   skirt: 1.2,
-  // The ridge runs low from the nose through `ridge` to the shoulder, which sits on it at the
-  // canopy's rear edge so the tail meets the canopy without cutting it; from there the ridge
-  // climbs steeply to the rear-centre apex. Local (x, y, z).
+  // The ridge runs low from the nose through `ridge` to the shoulder, which sits on it `gap`
+  // behind the canopy's rear edge, so no tail face covers the canopy in any view or jump pose;
+  // from there the ridge climbs steeply to the rear-centre apex. Local (x, y, z).
   ridge: [0, 6, 9.5],
+  gap: 2,
   apex: [0, 17, 15],
   // Rear faces lean forward from the skirt top, degrees from horizontal.
   lean: 76,
@@ -316,8 +317,9 @@ function vertices() {
     Point,
   ];
   const { apex, ridge } = HULL;
-  // The shoulder: the ridge line from the nose through `ridge`, at the canopy's rear edge.
-  const rear = CANOPY.centre + CANOPY.along;
+  // The shoulder: the ridge line from the nose through `ridge`, `gap` behind the canopy's rear
+  // edge.
+  const rear = CANOPY.centre + CANOPY.along + HULL.gap;
   const t = (rear - nose[1]) / (ridge[1] - nose[1]);
   const shoulder: Point = [0, rear, nose[2] + (ridge[2] - nose[2]) * t];
   const corner = (tip: Point, notch: Point) =>
@@ -856,6 +858,14 @@ function slotted(pivot: number, pose: Pose) {
     fragments.set(key, value);
   }
   return value;
+}
+
+/** The visible fragments in draw order with the model part each belongs to, for checks. */
+export function drawnParts(pivot: number, pose: Pose): { outline: V2[]; part: string }[] {
+  return ordered(viewer(pose), geometry().tree).flatMap((surface) => {
+    const outline = visibleOutline(pivot, pose, surface.kind, surface.points);
+    return outline.length < 3 ? [] : [{ outline, part: surface.kind ?? surface.color }];
+  });
 }
 
 /** Visible vector fragments, geometrically clipped and ordered at their actual depths. */
