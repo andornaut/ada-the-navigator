@@ -5105,6 +5105,9 @@ try {
   const rockDebris = (
     await (await served(page, "http://ada-preview:4173/art/backdrop-lattice.json")).json()
   ).debris;
+  // An enemy missile carries its weapon's blast radius, which picks its Rapid or Heavy look.
+  const catalog = await import(new URL("../src/data/weaponCatalog.ts", import.meta.url));
+  const rapidBlast = catalog.weaponAt("rapidMissile", 1).blastRadius;
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
@@ -5144,6 +5147,7 @@ try {
     });
     if (missile) {
       flight.shots.push({
+        blast: rapidBlast,
         damage: CONTENT.tuning.flight.playerShotDamage,
         enemy: true,
         hitIds: [],

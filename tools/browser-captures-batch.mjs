@@ -472,7 +472,7 @@ export function batchCaptures(ctx) {
     ship.state.flight.objects = [];
     ship.state.flight.cargo = 12;
     ship.state.economy.stardust = 345;
-    await open(canonical(ship, "resources-ship"));
+    await open(canonical(ship, "resources-ship"), { frozen: false });
     const shipPage = ctx.page();
     await shipPage.clock.resume();
     await shipPage.locator('[data-action="pause"]').click();
@@ -489,7 +489,7 @@ export function batchCaptures(ctx) {
     )[0];
     docked.state.docked = nearest.id;
     docked.state.flight.cargo = 12;
-    await open(canonical(docked, "resources-station"));
+    await open(canonical(docked, "resources-station"), { frozen: false });
     const station = ctx.page();
     await station.clock.resume();
     const view = async (action, file) => {
@@ -513,7 +513,7 @@ export function batchCaptures(ctx) {
     Object.assign(quest.state.progress[2], { deposited: 3, stage: 1 });
     quest.state.flight.cargo = 4;
     withoutEnemies(quest.state.flight);
-    await open(canonical(quest, "resources-quest"));
+    await open(canonical(quest, "resources-quest"), { frozen: false });
     const questPage = ctx.page();
     await questPage.clock.resume();
     await questPage.locator('[data-action="pause"]').click();
@@ -1157,7 +1157,10 @@ export function batchCaptures(ctx) {
       icons.map((icon) => cell(icon, ground)),
     );
     const body = "margin:0;padding:16px;background:#7a7a7a;display:flex;flex-wrap:wrap;gap:16px";
-    await page.setContent(`<body style="${body}">${cells.join("")}</body>`);
+    // The empty icon link keeps the browser from asking for a /favicon.ico the build lacks.
+    await page.setContent(
+      `<head><link rel="icon" href="data:,"></head><body style="${body}">${cells.join("")}</body>`,
+    );
     await page.waitForFunction(() =>
       [...document.images].every((image) => image.complete && image.naturalWidth > 0),
     );
