@@ -204,6 +204,30 @@ them after a [ship model](ship.md) change.
 - Placeholder: the galaxy's [placeholder preview](#placeholder-previews)
   until its galaxy is built and captured; locked, its locked file.
 
+### Preview cards
+
+The accepted previews are authored cards, staged as `previews` in
+[polish-rows.json](polish-rows.json): `card-{galaxy}.png` and
+`card-{galaxy}-locked.png` for all six galaxies in `public/art/previews/`,
+180 by 90, opaque. They replace the captures in `public/previews/` and the
+placeholder previews when Tech switches the selector to them
+([handoff](polish-handoff.md)). Rebuild with
+`node art/tools/galaxy-previews.ts` after a change to a main station or to
+[Ada's ship](ship.md); it reads the main station sheets of the
+[station redesign](polish-production.md) and fails without them.
+
+| Part    | Rule                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Field   | The galaxy's `background`                                                                                                                                                |
+| Plates  | A lighter plate, the field 10% toward white, over `(0, 85.5) (99, 29.7) (180, 52.2) (180, 90) (0, 90)`; a darker one, 7% toward ink, over `(75.6, 0) (180, 0) (180, 27)` |
+| Station | The galaxy's main station, lit, fitted inside 108 by 70 at no more than 0.65 of its game size, centred on (64, 45)                                                       |
+| Ada     | Her idle frame at heading 56, 21 px wide, centred on (148, 60)                                                                                                           |
+| Edge    | Half a px of ink round the station and Ada, white on Phantom                                                                                                             |
+| Locked  | The card in grey by the locked rule, `30 + 0.6 Y`                                                                                                                        |
+
+A card is an illustration, not a view to scale. Cartwheel's card shows the
+repaired hub.
+
 ## Backdrop haze
 
 A galaxy may add a backdrop haze: soft field-coloured shapes fixed to the
