@@ -2660,6 +2660,22 @@ try {
       getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
     );
     const box = (selector) => screen.querySelector(selector).getBoundingClientRect();
+    // A footer action's label advance, from its text nodes, in logical px.
+    const label = (selector) => {
+      const range = document.createRange();
+      const walker = document.createTreeWalker(
+        screen.querySelector(selector),
+        NodeFilter.SHOW_TEXT,
+      );
+      const widths = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.textContent.trim()) {
+          range.selectNodeContents(node);
+          widths.push(range.getBoundingClientRect().width);
+        }
+      }
+      return widths.reduce((sum, width) => sum + width, 0) / unit;
+    };
     return {
       close: box('[data-action="map-close"]'),
       galaxies: box('[data-action="map-galaxies"]'),
@@ -2669,25 +2685,31 @@ try {
       quests: box('[data-action="map-quests"]'),
       tools: box(".ada-map-tools"),
       closeX: box('[data-action="map-close-x"]'),
+      labels: [
+        label('[data-action="map-quests"]'),
+        label('[data-action="map-galaxies"]'),
+        label('[data-action="map-close"]'),
+      ],
       unit,
     };
   });
   const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
-  // The footer (art/map.md "Footer"): Quests, Galaxies, then Close, each 98 by 48 and BUTTON_GAP
-  // (16) apart face to face on one row, Back's right under the X. Device-pixel snapping
-  // puts each width within 0.1 either side.
+  // The footer (art/map.md "Footer"): Quests, Galaxies, then Close, each its label plus 16 on
+  // each side and 48 high, BUTTON_GAP (16) apart face to face on one row, Back's right under the
+  // X. Device-pixel snapping puts each width within half a logical px of its label's.
   const footer = [hudRow.quests, hudRow.galaxies, hudRow.close];
   assert.ok(
     footer.every(
-      (button) =>
-        Math.abs(button.width / hudRow.unit - 98) <= 0.1 &&
+      (button, index) =>
+        Math.abs(button.width / hudRow.unit - (hudRow.labels[index] + 32)) <= 0.5 &&
         Math.abs(button.height / hudRow.unit - 48) <= 0.1 &&
         Math.abs(button.top - hudRow.close.top) <= 0.5,
     ) &&
       Math.abs(logical(hudRow.galaxies.left - hudRow.quests.right) - 16) <= 0.1 &&
       Math.abs(logical(hudRow.close.left - hudRow.galaxies.right) - 16) <= 0.1 &&
       Math.abs(hudRow.close.right - hudRow.closeX.right) <= 0.5,
-    `Quests, Galaxies and Close are 98 by 48, 16 apart, Back under the X: ${JSON.stringify(hudRow)}`,
+    `Quests, Galaxies and Close are their labels plus 32 by 48, 16 apart, Back under the X: ${ 
+      JSON.stringify(hudRow)}`,
   );
   // The three zoom tools keep their spacing with the X at the right edge.
   assert.ok(
