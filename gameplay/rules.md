@@ -1545,6 +1545,13 @@ visually distinct, and keep the hull and hardpoints readable during combat.
 Missile launchers fire straight-flying missiles, visually distinct from ordinary
 shots. No missile homes.
 
+Every enemy ship that can move keeps moving at all times, at least at a quarter
+of its top speed: on a patrol, holding its band, circling its station or, for the
+Mining Freighter, tracing the edges of nearby asteroids. Arriving home, losing
+sight of Ada and blocking a peer never stop it. Only destroyed, disabled,
+salvaged and engineless ships, platforms and hostile stations come to rest
+([Keep moving](ships.md#keep-moving)).
+
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
 block required quest routes in the first five galaxies. A required story or quest

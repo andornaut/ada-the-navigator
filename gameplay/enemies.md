@@ -14,6 +14,10 @@ See [Observation and intents](ships.md#observation-and-intents).
 
 See [Patrol and investigation](ships.md#patrol-and-investigation).
 
+## Keep moving
+
+See [Keep moving](ships.md#keep-moving).
+
 ## Obstacle clearance
 
 See [Obstacle clearance](ships.md#obstacle-clearance).

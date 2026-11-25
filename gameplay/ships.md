@@ -220,8 +220,8 @@ Recovery requires actual line of sight, perception, engagement admission and the
 home leash; otherwise fixed last-seen investigation gives way to home patrol
 ([Retreat policy](#bounded-retreat-follow-up)). `strafe` passes no closer
 than 150 world units and loops back beyond 420; `siege`
-advances at half top speed; `escort` holds station 60 beyond its leader's
-spacing radius ([Hulls](#hulls)),
+advances at half top speed; `escort` circles its leader on a station ring 60
+beyond the leader's spacing radius ([Hulls](#hulls), [Keep moving](#keep-moving)),
 intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
 A ship that touches Ada still bounces off without damage. Finite pursuit and
 return home still apply.
@@ -924,14 +924,120 @@ change archetype maximum speeds.
 Unengaged retaliators keep their body's idle patrol within 2000 world units of
 home. The Manta gunship flies the standard patrol. The Cargo Hauler patrols
 around home with its patrol radii widened by the 180 approach radius. The Mining
-Freighter anchors its patrol beside the nearest live asteroid it can reach,
-standing off the asteroid's reach, its own reach, the avoidance clearance and
-its patrol extent, and patrols home when no asteroid qualifies.
+Freighter traces the edges of nearby asteroids ([Miners](#miners)) and patrols
+home when no asteroid qualifies.
 
 Platforms have no navigation and remain stationary. Disabled or salvaged ships
 do not patrol or investigate. A ship with every engine destroyed has no thrust
-and coasts to rest. Patrol changes neither aggression, engagement admission,
-pursuit leashes nor targeting permission.
+and coasts to rest. Every other ship keeps moving ([Keep moving](#keep-moving)).
+Patrol changes neither aggression, engagement admission, pursuit leashes nor
+targeting permission.
+
+### Keep moving
+
+Every enemy ship that can move keeps moving at all times: patrolling, holding a
+band, circling a station, tracing asteroid edges or travelling. Only a destroyed,
+disabled or salvaged ship, a ship with every engine destroyed, a fixed `platform`
+and a hostile station come to rest. Story ships, allies and whales are not
+enemies and keep their own waiting behaviour.
+
+- **Minimum speed:** a ship's requested speed never falls below 0.25 of its
+  current top speed: its class `maxSpeed` times its working engine share, slowed
+  by Marlo's song where that applies. The floor lies below every directional cap,
+  including the forward-gun sideways (0.8) and backing-off (0.6) strafe limits,
+  so a request is clamped between the floor and its cap. Patrol and
+  investigation paces already exceed the floor, except a `siege` patrol at
+  0.5 x 0.5 = 0.25, which meets it, and the flagship's at 0.5 x 0.25 = 0.125,
+  which rises to 0.25. A collision bounce or contact slide can briefly drop
+  actual speed below the floor; the ship regains it with `accelerationSeconds`.
+- **Idle patrol:** the existing seeded offset ellipse through home
+  ([Patrol and investigation](#patrol-and-investigation)), radius 80 to 150 and
+  ratio 0.7 to 1, at 0.5 of combat speed. It reaches at most 300 world units
+  from home, inside every home leash and the 2000 industrial leash. Station
+  guards keep their station-centred circle and the Cargo Hauler its widened
+  patrol.
+- **Returning:** a returning ship that reaches home joins its idle patrol, or
+  for the Mining Freighter its edge tracing, without stopping. No return sets a
+  ship's velocity to zero.
+- **Lost line of sight:** an engaged ship that cannot see Ada keeps flying: it
+  investigates her fixed last-seen position and patrols around it until it sees
+  her again or its chase ends. It never waits in place for line of sight.
+- **Band holds:** a forward-gun ship (swarm, fighter, interceptor or retaliator)
+  holding its standoff band keeps its nose on Ada and strafes along the band on
+  its circling side, at least at the minimum speed, moving in or out only to
+  regain the band. When peer separation would cancel its request below the
+  floor, it strafes on its circling side at the floor.
+- **Escort stations:** an engaged escort circles its leader on its station ring,
+  60 beyond the leader's spacing radius. The stations of one leader's escorts
+  turn together on the leader's seeded side, at the rate that moves each escort
+  at the minimum speed relative to its leader, so the escorts keep their equal
+  angles. An escort on station keeps its nose on Ada and strafes.
+- **Turret holds:** a frigate or capital that would hold a point instead circles
+  it at least at the minimum speed, its centre on a circle of radius 2r around
+  the point on its seeded side, r being its spacing radius ([Hulls](#hulls)): 126
+  world units for a Shoulder frigate, 170 for a Hammer capital. Its turrets track
+  Ada as usual. Station guards keep their station-centred circle.
+- **Packs:** the members of one pack, two or more live ships sharing a pack ID,
+  patrol one shared route instead of their own: the standard seeded ellipse,
+  seeded from the pack ID, through the pack anchor, the mean of the live members'
+  homes. Members fly it in ship ID order, each at least the pair spacing behind
+  the one ahead along the route: the larger of the galaxy's member spacing and
+  rA + rB + 20, where rA and rB are the two ships' spacing radii. When the route
+  is shorter than the sum of the pair spacings around it, its radii grow until it
+  fits. An engaged pack that loses sight of Ada searches on the same shared route
+  through her last-seen position. Escorts with a live leader follow the escort
+  rule instead.
+- **Peers and obstacles:** patrol, investigation and the holds above apply the
+  existing peer separation, as engaged steering does. A ship that a peer still
+  blocks slides along the contact on its circling side instead of stopping. A
+  ship whose obstacle steering finds no clear course reverses its course, and a
+  patroller flips its patrol direction, instead of stopping. A position limit,
+  such as a Phantom blockade's 600 reach, never holds a ship still: at the limit
+  it turns along it.
+- **Stand-down:** when Phantom's drones stand down after the flagship is
+  salvaged, they stop firing and patrol home.
+
+| Value              | Setting                                                |
+| ------------------ | ------------------------------------------------------ |
+| Minimum speed      | 0.25 of current top speed                              |
+| Turret hold circle | Radius 2r around the held point                        |
+| Pack pair spacing  | Larger of the galaxy's member spacing and rA + rB + 20 |
+| Miner edge offset  | r + 20 from the drawn outline to the miner's centre    |
+| Miner dwell        | Seeded 6 to 12 seconds per rock                        |
+| Miner recent picks | The last 3 rocks are excluded from the next pick       |
+| Miner leash        | The existing 2000 industrial home radius               |
+
+These values are authored data.
+
+#### Miners
+
+The Mining Freighter retaliator body is the only enemy miner. Cartwheel's claim
+jumpers are `fighter` groups that harass miners and patrol like other fighters;
+Mica's mining ship is a finale ally and Cartwheel's story miner is a story ship,
+neither an enemy. Unengaged and not returning, the Mining Freighter traces
+asteroid edges:
+
+- **Edge:** it follows one rock's drawn outline with its centre r + 20 from the
+  outline, r being its spacing radius (30), so its hull keeps at least 20 world
+  units from the rock. It traces on its seeded side at its patrol pace, 0.5 of
+  its top speed. Obstacle steering checks the traced rock at that edge offset
+  instead of the avoidance berths; every other obstacle keeps the berths.
+- **Dwell:** it follows one rock's edge for a seeded 6 to 12 seconds, from its
+  ship ID and pick count, then picks the next rock. It picks at once when the
+  traced rock is destroyed or starts moving.
+- **Next rock:** the nearest qualifying rock to its current position that is not
+  among its last 3 picks. A rock qualifies when it is live and at rest, its
+  traced loop lies within 2000 world units of home and outside protected areas,
+  safe areas and the Needle channel, and the straight course to its loop clears
+  other scenery at the passage berth. The Freighter travels at its patrol pace to
+  the nearest point of that loop, then traces it.
+- **No rock:** with no qualifying rock it patrols home on the standard ellipse
+  and checks again after each seeded 6 to 12 second dwell.
+- **State:** the traced rock's ID, its start time and the last 3 picks are saved
+  with the ship's other enemy state and survive Continue.
+
+Engagement, retreat and return are unchanged; a returning Mining Freighter
+resumes tracing once it reaches home.
 
 ### Obstacle clearance
 
@@ -1065,6 +1171,12 @@ actual intents and adapter commands in the following scenarios:
   `rearmSeconds`, or at once when hit.
 - A pack losing its configured fraction flees; damage can make one member flee
   before the group. Initial counts persist and unloading is not a casualty.
+- Every former resting state keeps a moving ship at or above its minimum speed:
+  arriving home, lost line of sight, a band hold, an escort station, a turret
+  hold, an idle pack, peer contact, an obstacle with no clear course and a
+  position limit. A Mining Freighter traces one rock's edge for its dwell, then
+  moves to another. Destroyed, disabled, salvaged and engineless ships, platforms
+  and hostile stations still come to rest.
 - A destroyed frigate weapon stops firing while the other weapon continues. A
   heavy with every engine lost keeps its prior momentum and coasts to rest.
 - Capital hull HP reaching zero destroys it, whatever its hardpoints. Destroying
