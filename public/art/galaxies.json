@@ -63,7 +63,7 @@
       "join": true,
       "exempt": ["ship"]
     },
-    "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+    "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards", "towClamp"],
     "destinationKeyline": {
       "width": 2,
       "kinds": ["station", "outpost", "storyPlace"]

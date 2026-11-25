@@ -129,10 +129,14 @@ glint, growing from 8 to 28 px across over 1200 ms, its 1 px
 glint shows. On a light field it draws over a 3 px ink ring at the same alpha.
 Reduced motion draws no ping.
 
-Accepted flat look ([handoff](polish-handoff.md)): the same ellipse and
-growth, with a stroke `2 - p` px wide for progress `p`, 2 px narrowing to
-1 px, at alpha 1 to `p` 0.5, 0.6 to 0.8, then 0.3, in place of the 1 px
-stroke fading from 0.9 to 0.
+Accepted flat look ([handoff](polish-handoff.md)), staged whole as
+`effects-ping` in [polish-rows.json](polish-rows.json) to replace
+`glint.ping`: the same ellipse and growth, with `width` `[2, 1]`, the stroke
+at progress `p` 0 and 1 and linear between, and `fade.steps` in place of
+`alpha`: alpha 1 from `p` 0, 0.6 from 0.5 and 0.3 from 0.8. `lightInk` is 4,
+a px of ink each side of the widest stroke. The shipped ping is 1 px wide,
+fading from 0.9 to 0 over a 3 px ink ring. `jobs.json` keeps it until the
+reader accepts the new shapes.
 
 | Mark              | Whirlpool | Cartwheel | Phantom | Sunflower           |
 | ----------------- | --------- | --------- | ------- | ------------------- |

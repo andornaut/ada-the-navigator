@@ -29,6 +29,7 @@ import {
 } from "./debris.ts";
 import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, readManifest, replaceEntries } from "./manifest.ts";
+import { stageRows } from "./polish-rows.ts";
 import { json } from "./projection.ts";
 import { ORE_PICKUP, PICKUP_SIZE } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
@@ -165,6 +166,29 @@ await writeJson(`${dir}tow.json`, {
     ],
   },
   craft: craft.map(({ data }) => data),
+});
+
+// The staged tow line (art/cartwheel-props.md, Tow line): a wider cable and one clamp block at
+// the craft end, with no beads and no cap. It replaces `line` whole.
+stageRows("effects-tow", {
+  file: "/art/cartwheel/tow.json",
+  line: {
+    layers: [
+      { name: "outer", color: steelDarkSide.toUpperCase(), width: 3 },
+      { name: "core", color: "#B8BFC9", width: 1.4 },
+    ],
+    // The light-field ink stroke under the cable.
+    lightInk: 4.2,
+    // A block at the tow point: `before` px along the line toward Ada to `after` px past the
+    // point and `across` px wide, with a lit band `face.depth` px deep on its screen-upper edge.
+    clamp: {
+      color: steelDarkSide.toUpperCase(),
+      before: 3.2,
+      after: 2.6,
+      across: 5.2,
+      face: { color: "#B8BFC9", depth: 2.2 },
+    },
+  },
 });
 
 // The nugget and the tow line serve every galaxy's cargo and rescues, so they are core; the

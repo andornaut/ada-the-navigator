@@ -7,6 +7,7 @@ import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
 import { editManifest, readManifest, replaceEntries } from "./manifest.ts";
+import { stageRows } from "./polish-rows.ts";
 import { SVG_DECIMALS, svgText } from "./svg-text.ts";
 import { hex, rgb } from "./oklab.ts";
 import { json } from "./projection.ts";
@@ -672,4 +673,30 @@ const data = {
   },
 };
 writeFileSync(`${art}jobs.json`, json(data));
+// The staged ping (art/jobs.md): a stroke that narrows with progress `p` and fades in held
+// steps. It replaces `glint.ping` whole.
+stageRows("effects-ping", {
+  file: "/art/jobs.json",
+  glint: {
+    ping: {
+      colour: data.glint.ping.colour,
+      // The stroke at p 0 and at p 1, linear between.
+      width: [2, 1],
+      // The light-field ink ring: a px of ink each side of the widest stroke.
+      lightInk: 4,
+      from: data.glint.ping.from,
+      to: data.glint.ping.to,
+      aspect: data.glint.ping.aspect,
+      ms: data.glint.ping.ms,
+      fade: {
+        steps: [
+          { from: 0, alpha: 1 },
+          { from: 0.5, alpha: 0.6 },
+          { from: 0.8, alpha: 0.3 },
+        ],
+      },
+      reducedMotion: data.glint.ping.reducedMotion,
+    },
+  },
+});
 await prettify(`${art}jobs.json`);

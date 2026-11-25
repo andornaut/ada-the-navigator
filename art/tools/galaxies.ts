@@ -142,7 +142,7 @@ const LIGHT_FIELD = {
   // A craft's jets join its keyline silhouette (hull, hardpoints, turret tops and drawn jets),
   // except Ada's, which take none (art/ship.md, Speed jets).
   jetKeyline: { join: true, exempt: ["ship"] },
-  effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+  effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards", "towClamp"],
   // Places Ada visits take a wider keyline, so they read at a glance on a light field
   // (art/destinations.md): every station, outpost, settlement and story place.
   destinationKeyline: { width: 2, kinds: ["station", "outpost", "storyPlace"] },

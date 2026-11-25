@@ -198,12 +198,19 @@ logical px):
   6 px from the craft end.
 - Cap at the tow point: a `#4F5462` disc of radius 1.8 with a `#B8BFC9` centre
   of radius 0.8.
-- Accepted flat look ([handoff](polish-handoff.md)): the outer stroke is 3 px
-  and the core 1.4 px; the bead row and the round cap are replaced by one
-  clamp block at the craft end, a `#4F5462` rectangle from 3.2 px before the
-  tow point to 2.6 px past it and 5.2 px across the line, with a `#B8BFC9`
-  face over its upper 2.2 px. On a light field the cable draws over a 4.2 px
-  ink stroke and the block takes the ink keyline.
+- Accepted flat look ([handoff](polish-handoff.md)), staged whole as
+  `effects-tow` in [polish-rows.json](polish-rows.json) to replace `line`:
+  - `layers`: the outer stroke `#4F5462` 3 px wide and the core `#B8BFC9`
+    1.4 px wide.
+  - `lightInk` 4.2: the ink stroke under the cable on a light field.
+  - `clamp`: one `#4F5462` block at the tow point in place of the bead row
+    and the round cap, from `before` 3.2 px along the line toward Ada to
+    `after` 2.6 px past the point and `across` 5.2 px wide, with a
+    `face` band `#B8BFC9` `depth` 2.2 px on its screen-upper edge. On a
+    light field it takes the ink keyline as the effect kind `towClamp`
+    ([light fields](galaxies.md#light-fields)).
+  - No `beads` and no `cap`. `tow.json` keeps the shipped line until the
+    reader accepts a line without them.
 - `craft[i].headings[k].tow` is the tow point for heading `k` in frame px of
   that craft's frame (the pod's lug, the hauler's nose).
 - Draw the line under both Ada and the craft, so it leaves from under Ada's

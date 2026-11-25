@@ -5342,6 +5342,65 @@
       }
     }
   },
+  "effects-ping": {
+    "file": "/art/jobs.json",
+    "glint": {
+      "ping": {
+        "colour": "pointOfInterest",
+        "width": [2, 1],
+        "lightInk": 4,
+        "from": 8,
+        "to": 28,
+        "aspect": 0.5,
+        "ms": 1200,
+        "fade": {
+          "steps": [
+            {
+              "from": 0,
+              "alpha": 1
+            },
+            {
+              "from": 0.5,
+              "alpha": 0.6
+            },
+            {
+              "from": 0.8,
+              "alpha": 0.3
+            }
+          ]
+        },
+        "reducedMotion": false
+      }
+    }
+  },
+  "effects-tow": {
+    "file": "/art/cartwheel/tow.json",
+    "line": {
+      "layers": [
+        {
+          "name": "outer",
+          "color": "#4F5462",
+          "width": 3
+        },
+        {
+          "name": "core",
+          "color": "#B8BFC9",
+          "width": 1.4
+        }
+      ],
+      "lightInk": 4.2,
+      "clamp": {
+        "color": "#4F5462",
+        "before": 3.2,
+        "after": 2.6,
+        "across": 5.2,
+        "face": {
+          "color": "#B8BFC9",
+          "depth": 2.2
+        }
+      }
+    }
+  },
   "field": {
     "manifest": "core",
     "links": {
