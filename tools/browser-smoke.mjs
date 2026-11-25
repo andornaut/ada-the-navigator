@@ -3027,11 +3027,11 @@ try {
       "line wraps in the place panel, left of the footer, and the selected target pans clear " +
       "of the panel's rendered height",
   );
-  // The survey pips at 35% surveyed (art/map.md "Header"): three cream discs, then seven rings.
-  // Galaxy one's survey counts about 53 places, so its percent steps 33, 35, 37 and never reads 34;
-  // 35 is the first at or above it. The safe fixture charts what lies in range of Ada first, so
-  // the flight charts nothing more before the map opens, then charts survey landmarks in catalog
-  // order until the header reads 35.
+  // The survey pips in the 30s (art/map.md "Header"): three cream discs, then seven rings.
+  // Galaxy one's survey counts more than 50 places, so one landmark can step its percent by two;
+  // the fixture takes the first percent at or above 35. The safe fixture charts what lies in range
+  // of Ada first, so the flight charts nothing more before the map opens, then charts survey
+  // landmarks in catalog order until the header reads at least 35.
   const [{ chartLandmarks, landmarkSites }, { withinChartingRadius }] = await Promise.all([
     import(new URL("../src/model/landmarks.ts", import.meta.url)),
     import(new URL("../src/model/map.ts", import.meta.url)),
@@ -3048,7 +3048,11 @@ try {
       pipsProgress.charted.push(site.id);
     }
   }
-  assert.equal(pipsInput.map.mapped, 35, "The pip fixture's survey reads 35%");
+  const pipsPercent = pipsInput.map.mapped;
+  assert.ok(
+    pipsPercent >= 35 && pipsPercent < 40,
+    `The pip fixture's survey reads 35 to 39%: ${pipsPercent}`,
+  );
   await seedOnce(pipsInput.save(), "ada-browser.map-pips-35.v1");
   await openPause();
   await page.locator('[data-action="pause-map"]').click();
@@ -3059,14 +3063,14 @@ try {
     ["map-pips-35-1280x720", "map-pips-35-720x360-insets"].map((name) => ({
       ...mapHeaders[name].pips,
       filled: 3,
-      percent: 35,
+      percent: pipsPercent,
     })),
-    "At 35% surveyed the header fills three pips and leaves seven rings",
+    `At ${pipsPercent}% surveyed the header fills three pips and leaves seven rings`,
   );
   save("map-header-proof.json", mapHeaders);
   events.checks.push(
-    "At 35% surveyed the map header shows three cream pips and seven rings at 1280x720 and at " +
-      "720x360 with phone insets",
+    "At 35 to 39% surveyed the map header shows three cream pips and seven rings at 1280x720 " +
+      "and at 720x360 with phone insets",
   );
   // The shared Quests list's proofs (art/map.md "Quests modal"): three quests across two
   // galaxies page two at a time, and the held job's target is unmapped, so its detail page's To
