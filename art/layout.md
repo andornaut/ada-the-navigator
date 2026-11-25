@@ -1532,17 +1532,17 @@ by 10.5 and the weapon targets (bottom + 40.5) by 3. It shares rows with the
 count pills (+ 34.5 to + 48.5), and clears the pause press area's bottom
 (+ 42.75) by 0.75. Across, the box is centred and 480 wide;
 Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
-"General Gadget" (131.15). With six weapons the leftmost target is Laser's
+"Unknown voice" (129.35; "Admiral Archie" is 125.81). With six weapons the leftmost target is Laser's
 (target 5, no count pill) and the leftmost count pill is target 4's.
 
 | View                  | Box              | Ada's tab        | Widest other tab | Pause press right | Target 5 left | Target 4 (pill centre) | Nearest across                     |
 | --------------------- | ---------------- | ---------------- | ---------------- | ----------------- | ------------- | ---------------------- | ---------------------------------- |
-| 720x360, 1280x720     | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 54.75             | 382.5         | 439.5 (463.5)          | 73.25 to pause, 123.35 to target 5 |
-| 720x360, phone insets | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 85.75             | 351.5         | 408.5 (432.5)          | 42.25 to pause, 92.35 to target 5  |
-| 844x390               | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 83.75             | 412.58        | 469.58 (493.58)        | 73.79 to pause, 123.89 to target 5 |
-| 844x390, insets 43    | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 85.75             | 410.58        | 467.58 (491.58)        | 71.79 to pause, 121.89 to target 5 |
+| 720x360, 1280x720     | 120 to 600       | 184 to 226.23    | 128 to 257.35    | 54.75             | 382.5         | 439.5 (463.5)          | 73.25 to pause, 125.15 to target 5 |
+| 720x360, phone insets | 120 to 600       | 184 to 226.23    | 128 to 257.35    | 85.75             | 351.5         | 408.5 (432.5)          | 42.25 to pause, 94.15 to target 5  |
+| 844x390               | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 286.89 | 83.75             | 412.58        | 469.58 (493.58)        | 73.79 to pause, 125.69 to target 5 |
+| 844x390, insets 43    | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 286.89 | 85.75             | 410.58        | 467.58 (491.58)        | 71.79 to pause, 123.69 to target 5 |
 
-- No overlaps: every tab ends at least 92.35 left of any weapon column and
+- No overlaps: every tab ends at least 94.15 left of any weapon column and
   starts at least 42.25 right of the pause press area, the two it shares rows
   with; the status pill ends above the tab. The `+N` labels and the item notice
   draw over it.

@@ -26,7 +26,7 @@ The salvage fleets carry shared weapon signals and insignia:
 - Dark visor `#2a2433` with `#1e1a26` sides.
 - Combat hulls use forward pincers or tines. Industrial hulls carry role-specific paint
   across fleets, while their aimed tops and jets use the local fleet palette.
-- Every drone carries General Gadget's [insignia](#insignia).
+- Every drone carries Admiral Archie's [insignia](#insignia).
 
 ## Crafts
 
@@ -63,7 +63,7 @@ and a connected stern.
 One mark for the whole fleet: an ink `#181425` horseshoe claw opening toward
 the nose, its prong tips hooked inward, closing on an amber `#f0bd68` disc.
 Ink on the coral hull is 6.69:1. The same mark is the medal and cap badge on
-General Gadget's portrait ([Conversation portraits](conversation.md)).
+Admiral Archie's portrait ([Conversation portraits](conversation.md)).
 
 - Two flat `decal` parts per craft in `crafts.ts`: the claw outline (radius
   `r`) and a 12-sided disc of radius `0.26 r` centred `0.2 r` forward of the

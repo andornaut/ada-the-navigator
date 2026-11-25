@@ -38,7 +38,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `ada-portrait`, `ada-portrait-compact`                                                                     | `happy` 0, `neutral` 1                                                                                   |
 | `astra-portrait`, `astra-portrait-compact`                                                                 | `idle` 0, `speaking-1` to `speaking-4` 1 to 4                                                            |
-| `gadget-portrait`, `gadget-portrait-compact`                                                               | `unknown-idle` 0, `unknown-speaking-1` to `-4` 1 to 4, `named-idle` 5, `named-speaking-1` to `-4` 6 to 9 |
+| `archie-portrait`, `archie-portrait-compact`                                                               | `unknown-idle` 0, `unknown-speaking-1` to `-4` 1 to 4, `named-idle` 5, `named-speaking-1` to `-4` 6 to 9 |
 | `grandma-portrait`, `grandma-portrait-compact`                                                             | `neutral` 0                                                                                              |
 | `penny-portrait`, `penny-portrait-compact`                                                                 | `happy` 0, `neutral` 1, `upset` 2                                                                        |
 | `pip-portrait`, `pip-portrait-compact`                                                                     | `happy` 0, `neutral` 1, `worried` 2                                                                      |
@@ -103,7 +103,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   uniform and cap (`#e43b44`, light `#f6757a`, shade `#a22633`), amber buttons
   and claw insignia. The named idle frame copies the approved neutral source
   exactly; speaking varies only the mouth through open, half, open, closed.
-  The legacy `gadget` filenames, ids and reveal frame ordering remain stable.
+  The `archie` files and ids keep the reveal frame ordering.
 - Admiral Archie unnamed (`unknown-*`): the same bust and cap as a faceless
   `#100e1a` silhouette rim-lit `#6b7aa0` and `#68386c`, over static (navy
   `#3a4466` and `#1d2032` noise and a rolling scanline) and torn by two glitch

@@ -141,7 +141,7 @@ through them, so they have no hit circle.
 | `blocker`  | 53, 38.6                   | Chartreuse wedge, oversized graphite engine pods, a wide ram bar, high beams                                 |
 
 Ada's wingspan is 42.88 model units. The blocking pilot reads as pushy (a loud
-hot rod with a ram bar and white high beams) without General Gadget's coral,
+hot rod with a ram bar and white high beams) without Admiral Archie's coral,
 forward pincers, dark visor or insignia. Its chartreuse stays clear of the
 holodisk magenta `#E868C8`, the coral drones and the
 [claim jumpers](heavies.md#cartwheel-claim-jumpers)' rust and ember.

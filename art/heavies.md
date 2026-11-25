@@ -1,18 +1,18 @@
 # Heavies
 
-The frigate, the capital and Gadget's own capital are a hull plus destructible
+The frigate, the capital and Admiral Archie's own capital are a hull plus destructible
 hardpoints, and every turret aims at Ada independently of the hull. Each class
 is drawn once with every weapon mount it can carry; a mount its position tier
 leaves unused shows a capped plate. Tech composes each frame from layers;
 Gameplay owns the rules for damage, speed, disabling and defeat. Contact uses
 each sprite's drawn silhouette ([Collision](#collision)).
 
-- Rebuild with `node art/tools/heavies.ts`. It draws Gadget's own capital,
+- Rebuild with `node art/tools/heavies.ts`. It draws Archie's own capital,
   checks `tools/enemy-hardpoints.json` against Art's layout, writes
-  `public/art/enemies/` and replaces the `enemy-gadget-` entries in the core
+  `public/art/enemies/` and replaces the `enemy-archie-` entries in the core
   manifest in place. The [enemy fleet producer](enemy-redesign.md) draws the
   frigates, capitals and retaliators; the frigate and capital models here are
-  the class contract Gadget's capital shares and the enemy size test checks.
+  the class contract Archie's capital shares and the enemy size test checks.
   `--offsets <file.json>` reads another file in the same format; `--out <dir>`
   writes the files and a `manifest-entries.json` to that directory and leaves
   the manifest alone.
@@ -26,7 +26,7 @@ each sprite's drawn silhouette ([Collision](#collision)).
 - Each also lists its crafts' data files in the manifest's
   [`sidecars` map](README.md#ada-contract-and-validation) with
   `mergeSidecars`, owning only its own crafts and kinds. In core,
-  `art/tools/heavies.ts` writes Gadget's `jets` and `hardpoints` and
+  `art/tools/heavies.ts` writes Archie's `jets` and `hardpoints` and
   `art/tools/hostile-stations.ts` the hostile station's `hardpoints`; the
   fleet crafts' entries name the [enemy fleet](enemy-redesign.md)'s files.
 
@@ -35,7 +35,7 @@ each sprite's drawn silhouette ([Collision](#collision)).
 Every canvas uses `display = frame * 0.4375` once. Physical size is the
 intact assembled local X span, including physical bases and source-oriented
 tops, relative to Ada's source-model span. Canonical body ratios come from
-`src/data/enemyDimensions.ts`: frigate 5, capital 6, Gadget flagship 6 and
+`src/data/enemyDimensions.ts`: frigate 5, capital 6, Archie flagship 6 and
 platform 4. Frames grow only when the actual parts and all turret aims require
 more canvas space. Damage and capped states inherit the intact transform.
 
@@ -57,7 +57,7 @@ have a capped state. Runtime selection and damage values remain consumer data.
   `weapon-left`. The aft nacelle cowls use chamfered facets, and one tapered
   recess continues aft of the Mine launcher at `stern-right`. Its eight
   mounts sit in four pairs on the shoulders, wings, forward deck and stern.
-- Gadget: General Gadget's own capital, Phantom's heavy ([Gadget](#gadget)).
+- Archie: Admiral Archie's own capital, Phantom's heavy ([Archie](#archie)).
 
 ## Layout and the catalog
 
@@ -100,7 +100,7 @@ runtime world offsets. Derived raw anchors and pivots are the placement contract
 | `spine` (centreline) | `[0, 0.025]` | capped           | armed  | armed  |
 | `bow` (centreline)   | `[0, -0.22]` | capped           | capped | armed  |
 
-| Capital and Gadget mounts         | Capital offset   | Gadget offset    | Positions 1 to 2 | 3 to 4 | 5 to 6 |
+| Capital and Archie mounts         | Capital offset   | Archie offset    | Positions 1 to 2 | 3 to 4 | 5 to 6 |
 | --------------------------------- | ---------------- | ---------------- | ---------------- | ------ | ------ |
 | `weapon-left`, `weapon-right`     | `[∓0.35, -0.3]`  | `[∓0.36, -0.3]`  | armed            | armed  | armed  |
 | `weapon-rear-left`, `-rear-right` | `[∓0.42, 0.08]`  | `[∓0.44, 0.1]`   | armed            | armed  | armed  |
@@ -108,7 +108,7 @@ runtime world offsets. Derived raw anchors and pivots are the placement contract
 | `stern-left`, `stern-right`       | `[∓0.1, 0.31]`   | `[∓0.11, 0.33]`  | capped           | capped | armed  |
 
 The armed counts are the Heavies table's weapon counts: frigate 2, 3 and 4,
-capital and Gadget 4, 6 and 8.
+capital and Archie 4, 6 and 8.
 
 ### Weapon tops
 
@@ -116,7 +116,7 @@ One top per weapon, the same design on every mount and class, so a turret reads
 its weapon and echoes the player weapon's glyph (`{a}-{t}-top-{i}`). Each class
 draws the tops of the weapons it can hold.
 
-| Weapon         | Top      | Frigate | Capital, Gadget |
+| Weapon         | Top      | Frigate | Capital, Archie |
 | -------------- | -------- | :-----: | :-------------: |
 | `laser`        | `gun`    |   yes   |                 |
 | `heavyMissile` | `rail`   |   yes   |                 |
@@ -166,11 +166,11 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 
 | Sprite                            |         Frame |       Display |
 | --------------------------------- | ------------: | ------------: |
-| Frigate, capital and Gadget hulls | 432, 480, 560 | 189, 210, 245 |
+| Frigate, capital and Archie hulls | 432, 480, 560 | 189, 210, 245 |
 | Weapon mount base (every state)   |            48 |            21 |
 | Frigate engine                    |            80 |            35 |
-| Capital command; Gadget command   |        72; 80 |      31.5; 35 |
-| Capital engine; Gadget engine     |        88; 96 |      38.5; 42 |
+| Capital command; Archie command   |        72; 80 |      31.5; 35 |
+| Capital engine; Archie engine     |        88; 96 |      38.5; 42 |
 | Top `pod`                         |            40 |          17.5 |
 | Tops `dome`, `hopper`             |            48 |            21 |
 | Top `spread`                      |            56 |          24.5 |
@@ -205,11 +205,11 @@ like the hull frame.
 - `hardpoints[]`, in Art's order: `id`, `role`, `states`
   (`["intact", "destroyed"]`) and `top`: the one top design the hardpoint
   always carries, or `null`. Weapon mounts are `null`: their top is the ship's
-  weapon's. A mount heavy (frigate, capital, Gadget) adds `capped`, whether the
+  weapon's. A mount heavy (frigate, capital, Archie) adds `capped`, whether the
   mount has capped plate sprites.
 - `fill` (mount heavies): the weapon mount ids in fill order.
 - `weaponTops` (mount heavies): every weapon the class can hold mapped to
-  `{ "top", "aim" }`, `aim` being `target` or `aft`. Gadget's equals the
+  `{ "top", "aim" }`, `aim` being `target` or `aft`. Archie's equals the
   capital's.
 - `tiers[]` (mount heavies): `positions` (`[1, 2]`, `[3, 4]`, `[5, 6]`) and
   `mounts`, every mount id in fill order mapped to `{ "armed": true }` or `null`
@@ -232,7 +232,7 @@ weapon bases draw their capped state.
 `art/tools/heavies.ts` fails unless `weaponTops` covers the class's weapons,
 every top has 16 aims each with a muzzle and collision, each band arms the
 catalog's mounts in fill order, every armed mount has a pivot at every heading,
-and Gadget's `weaponTops` and `tiers` equal the capital's.
+and Archie's `weaponTops` and `tiers` equal the capital's.
 
 Sample (capital, abridged):
 
@@ -334,7 +334,7 @@ which are relative to the pivot like muzzles.
 [shared tracer](ship.md#shared-tracer); the frames have no strokes, so nothing
 grows. Each sprite takes the first Douglas-Peucker tolerance of 0.4 and 0.3
 frame px that passes the 0.98 floor. Only the destroyed weapon mount stump at
-heading 7 needs 0.3 (20 sprites, every frigate, capital and Gadget weapon
+heading 7 needs 0.3 (20 sprites, every frigate, capital and Archie weapon
 mount); at 0.4 its ragged scorch paint, quantized by the cell grid, reaches
 0.9797. When the tracer cuts notch tips, the frames draw them under the faces.
 
@@ -345,7 +345,7 @@ notch tips.
 | ----------------------------------- | -------- | ----------------------- |
 | Frigate hull                        | 8 to 14  | 0.9973 to 0.9982        |
 | Capital hull                        | 18 to 25 | 0.9979 to 0.9988        |
-| Gadget hull                         | 17 to 24 | 0.998 to 0.999          |
+| Archie hull                         | 17 to 24 | 0.998 to 0.999          |
 | Platform hull                       | 26       | 0.997                   |
 | Engines and command, intact         | 1 to 18  | 0.992 to 0.999          |
 | Engines and command, destroyed      | 1 to 10  | 0.991 to 0.998          |
@@ -367,17 +367,17 @@ Draw a mouth only while that engine is intact.
 | --------- | -----: | ---------------------------------------- | ----: | -----: |
 | `frigate` |      2 | `engine` (both)                          |    10 |     11 |
 | `capital` |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
-| `gadget`  |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
+| `archie`  |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
 
-## Gadget
+## Archie
 
-General Gadget's own capital, Phantom's heavy: the capital class's mounts,
+Admiral Archie's own capital, Phantom's heavy: the capital class's mounts,
 tiers and tops on a more threatening hull, in the coral family palette.
 
-- Archetype `gadget`: files `gadget-*` in `public/art/enemies/`, manifest ids
-  `enemy-gadget-{k}`, `enemy-gadget-{h}-{state}-{k}` and
-  `enemy-gadget-{t}-top-{i}` in the core manifest, `gadget-hardpoints.json`
-  and `gadget-jets.json`. Frame 560 at the capital's scale; `sizeRatio` 5
+- Archetype `archie`: files `archie-*` in `public/art/enemies/`, manifest ids
+  `enemy-archie-{k}`, `enemy-archie-{h}-{state}-{k}` and
+  `enemy-archie-{t}-top-{i}` in the core manifest, `archie-hardpoints.json`
+  and `archie-jets.json`. Frame 560 at the capital's scale; `sizeRatio` 5
   scales its offsets.
 - Hull: a serrated claw hull whose prongs reach 142 units forward, saw-toothed
   wing edges, two wing patch plates, a raised `coralRear` dorsal ridge from the
@@ -405,7 +405,7 @@ The frigate and capital use cold armour on the hull, intact engines and intact
 command tower. Core uses slate blue and violet, Cartwheel uses muted green,
 Andromeda uses lavender and indigo, and Needle uses steel blue and plum.
 Near-black recesses and limited pale trim define the facets. Weapons, capped
-mounts, wrecks and jets keep their family colours. Gadget retains coral armour.
+mounts, wrecks and jets keep their family colours. Archie retains coral armour.
 
 The coral turret top is `#c27a62`. Coral wreck materials use the following
 colours.
@@ -464,9 +464,9 @@ own figures.
 | Burn (deck paint)     | `#6e4436`            | `#613e30` | 3.73:1 |  7.18:1 |
 | Claw ink, wreck ember | `#181425`, `#f0a07c` | unchanged |        |         |
 
-Speed jets ramp slow to fast, in place of Gadget's jet colours:
+Speed jets ramp slow to fast, in place of Archie's jet colours:
 
-| Layer | Gadget                 | Claim                  | Fill, slow and fast | Keyline |
+| Layer | Archie                 | Claim                  | Fill, slow and fast | Keyline |
 | ----- | ---------------------- | ---------------------- | ------------------: | ------: |
 | Outer | `#b8644c` to `#f0a07c` | `#bc4524` to `#fa6d38` |      2.08:1, 1.14:1 |  7.18:1 |
 | Core  | `#d68b72` to `#ffe2c8` | `#fa6d38` to `#ffebda` |      1.14:1, 2.17:1 |  7.18:1 |

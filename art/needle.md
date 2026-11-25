@@ -324,7 +324,7 @@ slung low on struts from the rear flanks, with lavender tail bands and blue bow
 lamps; a small pearl stern pod between them and blue lamps at the rim's beam.
 No wings or tail. Modelled in design units and built at 1.2 times: length 50.7
 and span 43 model units (1.18 by 1.0 Ada widths). Not coral, amber or Ada's
-white and blue, and no Gadget insignia.
+white and blue, and no Admiral Archie insignia.
 
 - A non-hostile story craft in the [Cartwheel story craft](cartwheel.md#story-craft)
   contract: 16 headings in 22.5 degree steps (heading `k` faces world angle
@@ -415,7 +415,7 @@ platform.
   colours. Their rows in Needle's manifest take the coral ids with
   `enemy-needle-` in place of `enemy-`, such as `enemy-needle-frigate-3`, with
   `family` `needle`. No Needle id matches `enemy-{archetype}-{index}`.
-- Gadget's insignia (the ink claw on an amber disc) stays: these are Gadget's
+- Archie's insignia (the ink claw on an amber disc) stays: these are Archie's
   drones.
 
 | Role                   | Coral                           | Needle    |   Fill | Keyline |
@@ -436,7 +436,7 @@ Needle scorch is 3.44:1 on the crimson top and burn 2.97:1, so wrecks read on
 the hull; the wreck ember is 6.19:1 on scorch. Each craft draws over the 1 px
 keyline, 9.49:1; unkeylined, the fighter's edge median would be 1.96:1.
 
-| Layer | Gadget                 | Needle                 | Fill, slow and fast | Keyline |
+| Layer | Archie                 | Needle                 | Fill, slow and fast | Keyline |
 | ----- | ---------------------- | ---------------------- | ------------------: | ------: |
 | Outer | `#b8644c` to `#f0a07c` | `#993847` to `#ed7477` |      3.67:1, 1.50:1 |  9.49:1 |
 | Core  | `#d68b72` to `#ffe2c8` | `#d65b6c` to `#ffe7e9` |      1.98:1, 1.61:1 |  9.49:1 |

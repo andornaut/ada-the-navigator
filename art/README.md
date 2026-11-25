@@ -43,7 +43,7 @@ Gameplay supplies semantic requirements.
 ## Actors
 
 - [Ship geometry](ship.md), [sector one enemies](enemies.md) and
-  [heavies](heavies.md) cover spacecraft. The heavies include General Gadget's
+  [heavies](heavies.md) cover spacecraft. The heavies include Admiral Archie's
   capital, destructible hardpoints, aimed turrets and capped weapon mounts.
 - [Cartwheel claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers)
   and [Andromeda garnet drones](andromeda.md#garnet-drones) cover regional enemies.
@@ -123,7 +123,7 @@ Channel lights, Elder Loom's saucer and portrait, the crimson drones and the
 Phantom its station, the Blurb settlements, its smoke-bank nebulae, the finale
 ally craft and the `allies` link.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
-General Gadget's and Grandma's are in core. The station, discovery cache, coral
+Admiral Archie's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every
 galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Phantom
@@ -229,8 +229,8 @@ from `art/tools/friendly.ts` ([Friendly object redesign](friendly-redesign.md));
 and the small enemy craft from `art/tools/fleet.ts`
 ([Enemy fleet redesign](enemy-redesign.md)). Asteroid, whale and debris SVGs
 are deterministic exports from `art/tools/asteroids.ts`, `art/tools/whales.ts`,
-`art/tools/cartwheel-props.ts` and `art/tools/whirlpool.ts`, with Gadget's
-capital's layered sprites from `art/tools/heavies.ts`. Needle's channels, sky
+`art/tools/cartwheel-props.ts` and `art/tools/whirlpool.ts`, with Admiral
+Archie's capital's layered sprites from `art/tools/heavies.ts`. Needle's channels, sky
 and portraits come from `art/tools/needle-channels.ts`, `needle-sky.ts` and
 `needle-portraits.ts`, and the finale allies' data from `art/tools/allies.ts`.
 The
@@ -251,7 +251,7 @@ Portrait and holodisk sheets ship as PNG only: the manifest gives their frames a
 Needle's Avi portraits, `phantom-portraits.ts` Phantom's Blurb portraits, and
 `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
 `cartwheel-portraits.ts` each galaxy's cast, from the bust parts in `art/tools/bust.ts`.
-`art/tools/portraits.ts` draws the Astra, General Gadget and Grandma portraits and the compact
+`art/tools/portraits.ts` draws the Astra, Admiral Archie and Grandma portraits and the compact
 conversation sheets. No generated kit source or assets
 from another game's build pipeline are required.
 

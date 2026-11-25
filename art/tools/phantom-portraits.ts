@@ -1,5 +1,5 @@
 // Phantom's speakers as Blurbs (goo): Dollop, the third settlement's Blurb, and the settlements'
-// greeter, each one neutral frame in the conversation format. General Gadget, Phantom's keeper
+// greeter, each one neutral frame in the conversation format. Admiral Archie, Phantom's keeper
 // once the chapter is complete, uses his named portrait (art/conversation.md).
 // Contract: art/conversation.md (Cast portraits) and art/phantom.md (Portraits).
 // Usage: node art/tools/phantom-portraits.ts [--packed-candidate]

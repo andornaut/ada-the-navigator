@@ -298,8 +298,8 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Ada tab            | `#70ace8` | Her ship's blue accent                       |
 | Astra tab          | `#8fe0f2` | Her teal light                               |
 | Penny tab          | `#feae34` | Her golden coat                              |
-| Unknown voice tab  | `#b8b3c9` | General Gadget before he is named            |
-| General Gadget tab | `#d68b72` | The drones' coral hull                       |
+| Unknown voice tab  | `#b8b3c9` | Admiral Archie before he is named            |
+| Admiral Archie tab | `#d68b72` | The drones' coral hull                       |
 | Mom tab            | `#9fd98a` | Her green cardigan                           |
 | Dad tab            | `#c4a6ec` | His purple T-shirt                           |
 | Pip tab            | `#9fb0ff` | The courier cap                              |
@@ -357,7 +357,7 @@ panel with the backdrop in sRGB using the encoded alpha byte (`0x8c` for
 | Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
 | Penny label    | `#181425` | `#feae34`                                  | 9.71:1   |
 | Unknown voice  | `#181425` | `#b8b3c9`                                  | 8.86:1   |
-| General Gadget | `#181425` | `#d68b72`                                  | 6.69:1   |
+| Admiral Archie | `#181425` | `#d68b72`                                  | 6.69:1   |
 | Pip            | `#181425` | `#9fb0ff`                                  | 8.69:1   |
 | Wick           | `#181425` | `#e0b48e`                                  | 9.51:1   |
 | Settler        | `#181425` | `#f0c0e0`                                  | 11.43:1  |
@@ -403,9 +403,9 @@ Rendered contrast varies with the painted field and passing objects.
 | Astra          | `#8fe0f2` | 9.84:1                 | 9.80:1                 | 11.13:1                     |
 | Penny          | `#feae34` | 7.89:1                 | 7.86:1                 | 8.93:1                      |
 | Unknown voice  | `#b8b3c9` | 7.20:1                 | 7.17:1                 | 8.15:1                      |
-| General Gadget | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.15:1                      |
+| Admiral Archie | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.15:1                      |
 
-Over white the fills alone fall to 1.49:1 (Astra) to 2.69:1 (General Gadget);
+Over white the fills alone fall to 1.49:1 (Astra) to 2.69:1 (Admiral Archie);
 the 1 ink edge holds 18.02:1 there, so the tab's outline reads over every
 backdrop.
 

@@ -78,7 +78,7 @@ Sizes are logical px, scaled by `s`.
 | Kind                                               | Glyph                                                                                      | Colour            |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------- |
 | Enemy (swarm, fighter, interceptor, retaliator)    | Filled disc, 6 across                                                                      | `threat`          |
-| Heavy (frigate, capital, platform, General Gadget) | Filled disc, 10 across                                                                     | `threat`          |
+| Heavy (frigate, capital, platform, Admiral Archie) | Filled disc, 10 across                                                                     | `threat`          |
 | Guard (a heavy that still blocks a route)          | The heavy's disc, 10 across, with an ink `#181425` bar 7 wide and 2 tall across its centre | `threat`, ink bar |
 | Station (seen stations and outposts)               | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins     | `pointOfInterest` |
 

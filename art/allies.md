@@ -44,7 +44,7 @@ Every new craft is a non-hostile story craft in the
 - No craft has wings, a tailplane or a tail fin, and no two of the new craft
   share an archetype; the trainee takes Pip's on purpose.
 - None is coral, threat red or Ada's white and blue, and none carries pincers,
-  a dark visor or General Gadget's insignia. Each takes its home galaxy's
+  a dark visor or Admiral Archie's insignia. Each takes its home galaxy's
   family: Sunflower's outposts, Whirlpool's whale tones and buoys, Needle's
   Weavers, Andromeda's settlers and Cartwheel's hub.
 

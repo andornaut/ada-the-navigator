@@ -2,8 +2,8 @@
 
 Phantom's art: a smoke-and-violet field, Phantom's own station and the
 three Blurb settlements. Each uses folded or faceted organic material in a
-distinct colour family. Gadget's home guard is the shared [coral family](enemies.md) and his
-flagship the [Gadget capital](heavies.md#gadget), both in core.
+distinct colour family. Admiral Archie's home guard is the shared [coral family](enemies.md) and his
+flagship the [Archie capital](heavies.md#archie), both in core.
 
 - `node art/tools/stations.ts` draws the station and the settlements into
   [Phantom's manifest](../public/art/phantom/manifest.json)
@@ -148,5 +148,5 @@ highlight and three bubbles.
 | Dollop  | `dollop`        | (5, 2) | Orchid `#e48fd4` (shade `#b05aa6`, light `#ffd6f4`), a cream-dollop curl, blush                                         |
 | Settler | `blurb-settler` | (5, 3) | Every settlement greeter but Dollop: violet-blue `#a896ec`, no peak, a floating bubble, an amber scarf with a red patch |
 
-General Gadget, Phantom's keeper once the chapter is complete, uses his named
+Admiral Archie, Phantom's keeper once the chapter is complete, uses his named
 portrait ([Conversation portraits](conversation.md)).

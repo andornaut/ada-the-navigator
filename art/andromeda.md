@@ -200,7 +200,7 @@ standby light on the pad blinks: `#70ace8` in frame A, `#3f5878` in B.
 ## Garnet drones
 
 Andromeda's drones and heavies are one family: the four sector one drones,
-the frigate and the capital recoloured into garnet, Gadget's drones hunting in
+the frigate and the capital recoloured into garnet, Archie's drones hunting in
 the open. Sunflower keeps the coral originals and Cartwheel the
 [claim jumpers](heavies.md#cartwheel-claim-jumpers).
 
@@ -235,9 +235,9 @@ the holodisk magenta `#E868C8`, at a higher chroma than coral. Claw ink is
 6.12:1 on the garnet hull; scorch is 3.70:1 on it, so deck wrecks read; the
 wreck ember is 5.20:1 on garnet scorch and 1.36:1 on the field.
 
-Speed jets ramp slow to fast, in place of Gadget's jet colours:
+Speed jets ramp slow to fast, in place of Archie's jet colours:
 
-| Layer | Gadget                 | Garnet                 | Fill, slow and fast | Keyline |
+| Layer | Archie                 | Garnet                 | Fill, slow and fast | Keyline |
 | ----- | ---------------------- | ---------------------- | ------------------: | ------: |
 | Outer | `#b8644c` to `#f0a07c` | `#c1445c` to `#fb8898` |      1.74:1, 1.23:1 |  6.33:1 |
 | Core  | `#d68b72` to `#ffe2c8` | `#e47485` to `#ffe0e0` |      1.03:1, 2.30:1 |  6.33:1 |
