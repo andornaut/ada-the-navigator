@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { SCREEN } from "../data/screen.ts";
+import { nosePoint, shipSilhouette } from "../model/nose.ts";
 import { playDepth } from "./asteroidArt.ts";
 import {
   ADA_LAYERS,
@@ -9,9 +11,17 @@ import {
   boxWith,
   drawnBox,
   EDGE_MARKER_DEPTH,
+  effectBox,
   overlaps,
   type Placed,
 } from "./drawOrder.ts";
+import {
+  clipBehind,
+  type EffectShape,
+  laserBolt,
+  missileFlame,
+  screenAngle,
+} from "./weaponEffects.ts";
 
 interface Frame {
   readonly displayHeight: number;
@@ -177,4 +187,85 @@ describe("Ada's draw order among the objects she flies through", () => {
     // Shots and indicators draw at 3, the destruction flash at 4.
     expect(EDGE_MARKER_DEPTH).toBeGreaterThan(4);
   });
+});
+
+describe("Ada's own shots leaving her nose", () => {
+  const project = ({ x, y }: { x: number; y: number }) => ({ x: x - y, y: (x + y) / 2 });
+  const centre = { x: SCREEN.width / 2, y: SCREEN.height / 2 };
+  const onScreen = (point: { x: number; y: number }) => {
+    const at = project(point);
+    return { x: centre.x + at.x, y: centre.y + at.y };
+  };
+  const hullBox = (heading: number) =>
+    effectBox(
+      shipSilhouette(heading).map((part) => ({
+        alpha: 1,
+        colour: 0,
+        kind: "polygon" as const,
+        points: part.map(({ x, y }) => ({ x: centre.x + x, y: centre.y + y })),
+      })),
+    )!;
+
+  it("bounds every effect shape kind, and nothing for no shapes", () => {
+    expect(effectBox([])).toBeUndefined();
+    expect(
+      effectBox([
+        { alpha: 1, at: { x: 10, y: 10 }, colour: 0, kind: "disc", radius: 2 },
+        {
+          alpha: 1,
+          colour: 0,
+          from: { x: 0, y: 4 },
+          kind: "line",
+          round: false,
+          to: { x: 20, y: 4 },
+          width: 2,
+        },
+      ]),
+    ).toEqual({ bottom: 12, left: -1, right: 21, top: 3 });
+  });
+
+  it.each([0, 16, 32, 48])(
+    "draws heading %i's fresh Laser bolt and missile flame beneath the hull, then above it",
+    (heading) => {
+      const facing = {
+        x: Math.cos((heading * Math.PI) / 32),
+        y: Math.sin((heading * Math.PI) / 32),
+      };
+      const hull = hullBox(heading);
+      const angle = screenAngle(facing);
+      const at = (travel: number) => {
+        const nose = onScreen(nosePoint(facing, { x: 0, y: 0 }));
+        return { x: nose.x + Math.cos(angle) * travel, y: nose.y + Math.sin(angle) * travel };
+      };
+      // A bolt's trail and a Heavy flame reach back across the hull from a head at the nose.
+      expect(overlaps(effectBox(laserBolt(at(8), angle))!, hull)).toBe(true);
+      // Cut at the nose, a fresh bolt and flame start within a pixel of the drawn tip.
+      const nose = at(0);
+      const behind = (shapes: readonly EffectShape[]) =>
+        Math.min(
+          ...shapes.flatMap((shape) =>
+            shape.kind === "polygon"
+              ? shape.points.map(
+                  ({ x, y }) => (x - nose.x) * Math.cos(angle) + (y - nose.y) * Math.sin(angle),
+                )
+              : [],
+          ),
+        );
+      expect(behind(laserBolt(at(8), angle))).toBeLessThan(-18);
+      expect(behind(clipBehind(nose, angle, laserBolt(at(8), angle)))).toBeGreaterThan(-1e-9);
+      const flame = clipBehind(nose, angle, missileFlame("heavy", at(20), facing, 0));
+      expect(behind(flame)).toBeGreaterThan(-1e-9);
+      expect(clipBehind(nose, angle, missileFlame("heavy", at(8), facing, 0))).toEqual([]);
+      // A bolt well clear of the nose is unchanged.
+      expect(clipBehind(nose, angle, laserBolt(at(80), angle))).toEqual(laserBolt(at(80), angle));
+      expect(overlaps(effectBox(missileFlame("heavy", at(8), facing, 0))!, hull)).toBe(true);
+      expect(overlaps(effectBox(laserBolt(at(80), angle))!, hull)).toBe(false);
+      expect(overlaps(effectBox(missileFlame("heavy", at(80), facing, 0))!, hull)).toBe(false);
+      // That layer sits just beneath the hull and above every other layer of Ada's.
+      expect(ADA_LAYERS.launch).toBeLessThan(0);
+      for (const layer of [ADA_LAYERS.jets, ADA_LAYERS.jetKeyline, ADA_LAYERS.towLine]) {
+        expect(ADA_LAYERS.launch).toBeGreaterThan(layer);
+      }
+    },
+  );
 });

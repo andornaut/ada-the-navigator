@@ -159,6 +159,38 @@ function radialWedge(
   ]);
 }
 
+/**
+ * The shapes with every polygon cut at the line through `from` across screen `angle`, keeping
+ * only what lies ahead of it: a fresh shot's trail drawn from its fire point rather than behind
+ * it. Polygons wholly behind drop out; other shapes pass unchanged.
+ */
+export function clipBehind(
+  from: Vec,
+  angle: number,
+  shapes: readonly EffectShape[],
+): EffectShape[] {
+  const ahead = (point: Vec) =>
+    (point.x - from.x) * Math.cos(angle) + (point.y - from.y) * Math.sin(angle);
+  return shapes.flatMap((shape): EffectShape[] => {
+    if (shape.kind !== "polygon") {
+      return [shape];
+    }
+    const points: Vec[] = [];
+    shape.points.forEach((point, index) => {
+      const next = shape.points[(index + 1) % shape.points.length]!;
+      const [a, b] = [ahead(point), ahead(next)];
+      if (a >= 0) {
+        points.push(point);
+      }
+      if (a >= 0 ? b < 0 : b >= 0) {
+        const t = a / (a - b);
+        points.push({ x: point.x + (next.x - point.x) * t, y: point.y + (next.y - point.y) * t });
+      }
+    });
+    return points.length >= 3 ? [{ ...shape, points }] : [];
+  });
+}
+
 // ---------------------------------------------------------------------------------------------
 // Bolt, pellet and fan
 

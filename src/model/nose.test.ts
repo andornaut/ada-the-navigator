@@ -10,6 +10,7 @@ import {
   SHIP_HEADINGS,
   SHIP_NOSE,
   shipHeading,
+  shipSilhouette,
 } from "./nose.ts";
 
 const headingDirection = (index: number) => ({
@@ -79,6 +80,19 @@ describe("Ada's ship nose", () => {
       };
       expect(screen.x).toBeCloseTo(ahead.x, 2);
       expect(screen.y + HEIGHT * scale).toBeCloseTo(ahead.y, 2);
+    },
+  );
+
+  it.each([0, 8, 13, 16, 24, 32, 40, 48, 56, 61])(
+    "fires heading %i's shots from within 1 px of the drawn silhouette's forward tip",
+    (index) => {
+      const facing = headingDirection(index);
+      const ahead = project(facing);
+      const along = ({ x, y }: { x: number; y: number }) => x * ahead.x + y * ahead.y;
+      const points = shipSilhouette(index).flat();
+      const tip = points.reduce((best, point) => (along(point) > along(best) ? point : best));
+      const origin = project(nosePoint(facing, { x: 0, y: 0 }));
+      expect(Math.hypot(origin.x - tip.x, origin.y - tip.y)).toBeLessThan(1);
     },
   );
 

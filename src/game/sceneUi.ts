@@ -202,6 +202,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "jets"
     | "jobArt"
     | "jumping"
+    | "launchInk"
     | "lightGalaxies"
     | "litCaches"
     | "light"
@@ -329,6 +330,7 @@ export function buildScene(scene: UiContext): void {
   // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
   scene.enemyJets = scene.add.graphics().setDepth(1);
   scene.overlay = scene.add.graphics().setDepth(3);
+  scene.launchInk = scene.add.graphics();
   scene.indicatorInk = scene.add.graphics().setDepth(3 - 1e-6);
   scene.edgeMarkerInk = scene.add.graphics().setDepth(EDGE_MARKER_DEPTH);
   scene.hitFlashInk = scene.add.graphics().setDepth(HIT_FLASH_DEPTH);

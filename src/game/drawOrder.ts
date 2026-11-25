@@ -3,6 +3,9 @@
 // she is never hidden. Solid objects (rocks, enemies, debris) keep the plain sort: Ada never
 // overlaps them.
 
+import type { Vec } from "../model/types.ts";
+import type { EffectShape } from "./weaponEffects.ts";
+
 /** A drawn rectangle in screen px. */
 export interface DrawnBox {
   readonly bottom: number;
@@ -28,10 +31,15 @@ export interface PassableDraw {
 }
 
 /**
- * Ada's layers below her hull, by depth offset: her jets, the jets' and hull's keylines, then
- * her tow line. A lift clears the lowest of them.
+ * Ada's layers below her hull, by depth offset: her own shots still over her hull, her jets, the
+ * jets' and hull's keylines, then her tow line. A lift clears the lowest of them.
  */
-export const ADA_LAYERS = { jetKeyline: -2e-6, jets: -1e-6, towLine: -3e-6 } as const;
+export const ADA_LAYERS = {
+  jetKeyline: -2e-6,
+  jets: -1e-6,
+  launch: -0.5e-6,
+  towLine: -3e-6,
+} as const;
 
 // Above an overlapped object and its parts (1e-7 apart) with Ada's lowest layer still above it.
 const LIFT = 5e-6;
@@ -78,6 +86,35 @@ export function boxWith(box: DrawnBox, points: readonly { x: number; y: number }
     }),
     box,
   );
+}
+
+/** The smallest rectangle holding every drawn effect shape, or undefined for none. */
+export function effectBox(shapes: readonly EffectShape[]): DrawnBox | undefined {
+  const spans = shapes.flatMap((shape): { at: Vec; x: number; y: number }[] => {
+    if (shape.kind === "disc") {
+      return [{ at: shape.at, x: shape.radius, y: shape.radius }];
+    }
+    if (shape.kind === "ellipse") {
+      const grow = (shape.stroke ?? 0) / 2;
+      return [{ at: shape.at, x: shape.halfWidth + grow, y: shape.halfHeight + grow }];
+    }
+    if (shape.kind === "line") {
+      return [shape.from, shape.to].map((at) => ({ at, x: shape.width / 2, y: shape.width / 2 }));
+    }
+    if (shape.kind === "polygon") {
+      return shape.points.map((at) => ({ at, x: 0, y: 0 }));
+    }
+    return [shape.head, shape.tail].map(({ at, width }) => ({ at, x: width / 2, y: width / 2 }));
+  });
+  if (!spans.length) {
+    return undefined;
+  }
+  return {
+    bottom: Math.max(...spans.map(({ at, y }) => at.y + y)),
+    left: Math.min(...spans.map(({ at, x }) => at.x - x)),
+    right: Math.max(...spans.map(({ at, x }) => at.x + x)),
+    top: Math.min(...spans.map(({ at, y }) => at.y - y)),
+  };
 }
 
 /** Whether two drawn rectangles share any area. */

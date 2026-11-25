@@ -25,7 +25,7 @@ import {
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot } from "../model/itemGains.ts";
-import { shipHeading } from "../model/nose.ts";
+import { nosePoint, shipHeading, shipSilhouette } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { direction } from "../model/shipPhysics.ts";
 import { type StoryNoses } from "../model/storyShips.ts";
@@ -64,7 +64,10 @@ import {
   ADA_LAYERS,
   adaDepth,
   boxWith,
+  type DrawnBox,
   drawnBox,
+  effectBox,
+  overlaps,
   type PassableDraw,
   type Placed,
 } from "./drawOrder.ts";
@@ -174,6 +177,7 @@ import { type UpgradePickupArt } from "./upgradePickup.ts";
 import {
   ADA_MISSILES,
   beam,
+  clipBehind,
   type EffectShape,
   fanVolley,
   heldFade,
@@ -207,6 +211,10 @@ export class GameScene extends Scene {
   shipRetroJets: EngineJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
   overlay!: GameObjects.Graphics;
+  /** Ada's own shots still over her hull draw just beneath it, so they leave from her nose. */
+  launchInk!: GameObjects.Graphics;
+  /** Ada's missile frames still over her hull this frame, which draw with `launchInk`. */
+  launching: GameObjects.Image[] = [];
   edgeMarkerInk!: GameObjects.Graphics;
   /** The hit flash's band around the game area, redrawn each frame while it fades. */
   hitFlashInk!: GameObjects.Graphics;
@@ -902,7 +910,9 @@ export class GameScene extends Scene {
    * Ada's and the enemies' traveling shots (art/weapons.md "Bolt, pellet and fan", "Missiles"
    * and "Enemy shots"): bolts, fans, pellets and missile frames over their flames, each past its
    * fade point at the held fade. Ring burst bolts draw with the enemy weapons. Where a field edge
-   * exists the edged parts draw over it and the missile frames take its keyline.
+   * exists the edged parts draw over it and the missile frames take its keyline. Ada's own shots
+   * draw just beneath her hull while they overlap her drawn silhouette's bounds, with a bolt's
+   * trail and a missile's flame cut at her nose.
    */
   private drawShots(flight: FlightState): void {
     const art = this.enemyWeaponsArt;
@@ -913,6 +923,26 @@ export class GameScene extends Scene {
         effect.shapes,
         shotEdge ? inkEdges(this.edgeInk, shotEdge, effect.edged) : [],
       );
+    const hull = effectBox(
+      shipSilhouette(shipHeading(flight.facing)).map((part) => ({
+        alpha: 1,
+        colour: 0,
+        kind: "polygon" as const,
+        points: part.map(({ x, y }) => ({ x: SCREEN.width / 2 + x, y: SCREEN.height / 2 + y })),
+      })),
+    );
+    const launched = (box: DrawnBox | undefined) =>
+      hull !== undefined && box !== undefined && overlaps(box, hull);
+    // A launching bolt's trail and missile flame start at her nose, never reaching behind it.
+    const tip = this.project(nosePoint(flight.facing, flight.player));
+    const launch = (shapes: readonly EffectShape[], angle?: number) =>
+      angle !== undefined && launched(effectBox(shapes)) ? clipBehind(tip, angle, shapes) : shapes;
+    const drawOwn = (drawn: readonly EffectShape[], angle?: number) => {
+      const shapes = launch(drawn, angle);
+      const edges = shotEdge ? inkEdges(this.edgeInk, shotEdge, shapes) : [];
+      const ink = launched(effectBox([...edges, ...shapes])) ? this.launchInk : this.overlay;
+      drawEffect(this, shapes, edges, ink);
+    };
     const fans = new Map<
       string,
       { enemy: boolean; heads: { at: Vec; velocity: Vec }[]; nose: Vec }
@@ -928,22 +958,26 @@ export class GameScene extends Scene {
       if (shot.projectile === "missile" && shot.blast !== undefined) {
         const kind = missileKind(shot.blast);
         const frame = missileFrame(kind, this.reducedMotion, this.time.now);
-        drawEffect(
-          this,
+        const flame =
           shot.enemy && art
             ? enemyMissileFlame(art, kind, point, shot.velocity, frame)
-            : missileFlame(kind, point, shot.velocity, frame),
-        );
+            : launch(missileFlame(kind, point, shot.velocity, frame), screenAngle(shot.velocity));
+        const own = !shot.enemy && launched(effectBox(flame));
+        drawEffect(this, flame, [], own ? this.launchInk : this.overlay);
         const model = shot.enemy && art ? art.missiles[kind] : ADA_MISSILES[kind];
         if (this.drawMissileFrame(shot.id, model, point, shot.velocity)) {
           missiles.add(shot.id);
+          const sprite = this.missileSprites.get(shot.id)!;
+          if (!shot.enemy && launched(drawnBox(sprite))) {
+            this.launching.push(sprite);
+          }
         }
       } else if (shot.projectile === "dot") {
-        draw(
-          shot.enemy && art
-            ? enemyPellet(art, point, shot.velocity, alpha)
-            : { edged: pellet(point, alpha), shapes: pellet(point, alpha) },
-        );
+        if (shot.enemy && art) {
+          draw(enemyPellet(art, point, shot.velocity, alpha));
+        } else {
+          drawOwn(pellet(point, alpha));
+        }
       } else if (shot.projectile !== "missile" && shot.fan) {
         const { count, origin } = shot.fan;
         const key = `${shot.enemy}:${count}:${origin.x}:${origin.y}`;
@@ -954,8 +988,8 @@ export class GameScene extends Scene {
         if (shot.enemy && art) {
           draw(enemyBolt(art, point, shot.velocity, alpha));
         } else {
-          const shapes = laserBolt(point, screenAngle(shot.velocity), alpha);
-          draw({ edged: shapes, shapes });
+          const angle = screenAngle(shot.velocity);
+          drawOwn(laserBolt(point, angle, alpha), angle);
         }
       }
     }
@@ -963,8 +997,7 @@ export class GameScene extends Scene {
       if (enemy && art) {
         draw(enemyFan(art, nose, heads));
       } else {
-        const shapes = fanVolley(nose, heads);
-        draw({ edged: shapes, shapes });
+        drawOwn(fanVolley(nose, heads));
       }
     }
     for (const [id, sprite] of this.missileSprites) {
@@ -994,6 +1027,7 @@ export class GameScene extends Scene {
       .setOrigin(solid.pivot.x, solid.pivot.y)
       .setDisplaySize(solid.width, solid.height)
       .setPosition(point.x, point.y)
+      .setDepth(this.overlay.depth)
       .setVisible(true);
     if (this.light && LIGHT_FIELD.effects.includes("missile")) {
       this.keyed.push({
@@ -1025,6 +1059,8 @@ export class GameScene extends Scene {
     this.occludedHull?.image.setVisible(false);
     this.occludedHull?.shape.clear();
     this.overlay.clear();
+    this.launchInk.clear();
+    this.launching = [];
     this.edgeMarkerInk.clear();
     this.drawHitFlash();
     this.enemyJets.clear();
@@ -1279,6 +1315,11 @@ export class GameScene extends Scene {
       flames,
       travel === "forward" && jetsInFront(activeJets, ship?.directionIndex ?? -1),
     );
+    const launchDepth = this.ship.depth + ADA_LAYERS.launch;
+    this.launchInk.setDepth(launchDepth);
+    for (const sprite of this.launching) {
+      sprite.setDepth(launchDepth);
+    }
     if (tailRegions.length) {
       this.drawOccludedHull(tailRegions);
     }
