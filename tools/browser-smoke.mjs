@@ -5193,9 +5193,11 @@ try {
   const combatSnapshots = {};
   const pixels = {};
   const heavyColors = {
-    // The Hammer's cold armour mid tone and its tops' gun tone, from art/tools/fleet-models.ts,
-    // and the dark mouth only a wrecked drive cone shows.
+    // The Hammer's cold armour lit, mid and shade tones and its tops' gun tone, from
+    // art/tools/fleet-models.ts, and the dark mouth only a wrecked drive cone shows.
     hull: "#555c77",
+    hullLit: "#777f9c",
+    hullShade: "#394159",
     scorch: "#16131c",
     turretTop: "#c27a62",
   };
@@ -5394,7 +5396,8 @@ try {
     offset: { x: -90, y: 90 },
   });
   assert.ok(
-    pixels.capital.counts.hull > pixels.capital.area * 0.15,
+    pixels.capital.counts.hullLit + pixels.capital.counts.hull + pixels.capital.counts.hullShade >
+      pixels.capital.area * 0.15,
     "The capital must draw Art's slate armour",
   );
   assert.ok(
