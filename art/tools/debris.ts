@@ -9,8 +9,17 @@ import { svgText } from "./svg-text.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import type { Point } from "./projection.ts";
 import { TOLERANCES, traceFills } from "./silhouette.ts";
-import { type Mesh, meshBar, meshScale, meshSpiral, meshTube, type Tones } from "./solid.ts";
-import { type Fragment, pathData, tonePaths, type V2, visibleFragments } from "./visible.ts";
+import { tonePaths } from "./fleet.ts";
+import {
+  type Mesh,
+  meshBar,
+  meshFace,
+  meshScale,
+  meshSpiral,
+  meshTube,
+  type Tones,
+} from "./solid.ts";
+import { type Fragment, type V2, visibleFragments } from "./visible.ts";
 
 // Contour outside the silhouette, in display px.
 export const CONTOUR = 1.5;
@@ -70,6 +79,8 @@ export function debrisPaint(body: readonly string[]): DebrisPaint {
   return { main: [body[0]!, body[2]!, body[4]!], second: [body[1]!, body[3]!, deep] };
 }
 
+const DEGREES = Math.PI / 180;
+
 // ------------------------------------------------------------------ models
 // Model units are display px before the piece's scale; each model is centred on its bounds.
 
@@ -85,7 +96,8 @@ function centred(mesh: Mesh): Mesh {
   }));
 }
 
-// A level band of a ring: centre radius, width, base and top, between two plan angles.
+// A level band of a ring, closed on every side: centre radius, width, base and top, between
+// two plan angles.
 function arc(
   mesh: Mesh,
   radius: number,
@@ -94,15 +106,47 @@ function arc(
   [from, to]: readonly [number, number],
   tones: Tones,
 ): void {
-  meshSpiral(mesh, from, to - from, () => ({ radius, width, top, base }), tones, 6);
+  const STEP = 6;
+  meshSpiral(
+    mesh,
+    0,
+    from,
+    to,
+    { radius: () => radius, width: () => width, top: () => top, bottom: () => base },
+    tones,
+    STEP,
+  );
+  const at = (r: number, degrees: number, z: number): Point => [
+    r * Math.cos(degrees * DEGREES),
+    r * Math.sin(degrees * DEGREES),
+    z,
+  ];
+  const [inner, outer] = [radius - width / 2, radius + width / 2];
+  // The underside and the starting end, which the spiral leaves open.
+  const count = Math.max(1, Math.round((to - from) / STEP));
+  for (let i = 0; i < count; i++) {
+    const [a, b] = [from + ((to - from) * i) / count, from + ((to - from) * (i + 1)) / count];
+    meshFace(
+      mesh,
+      [at(inner, a, base), at(outer, a, base), at(outer, b, base), at(inner, b, base)],
+      [0, 0, -1],
+      tones,
+    );
+  }
+  meshFace(
+    mesh,
+    [at(inner, from, base), at(outer, from, base), at(outer, from, top), at(inner, from, top)],
+    [Math.sin(from * DEGREES), -Math.cos(from * DEGREES), 0],
+    tones,
+  );
 }
 
 // Cartwheel: a wheel-rim segment with the stub of its spoke.
 export function rimSegment({ main, second }: DebrisPaint): Mesh {
   const mesh: Mesh = [];
   arc(mesh, 30, 11, [-5, 5], [-42, 42], main);
-  meshBar(mesh, 0, [13, 25.5], 8, [-3, 3], second);
-  meshBar(mesh, 0, [9, 13], 11, [-4.5, 4.5], main);
+  meshBar(mesh, 0, 13, 25.5, 8, -3, 3, second);
+  meshBar(mesh, 0, 9, 13, 11, -4.5, 4.5, main);
   return centred(mesh);
 }
 
@@ -121,7 +165,7 @@ export function drumSlice({ main, second }: DebrisPaint): Mesh {
   const mesh: Mesh = [];
   meshTube(mesh, [0, 0, -6], [0, 0, 6], 11, 11, second);
   meshTube(mesh, [0, 0, 6], [0, 0, 9], 6.5, 6.5, main);
-  meshBar(mesh, 20, [8, 23], 10, [-4, 4], main);
+  meshBar(mesh, 20, 8, 23, 10, -4, 4, main);
   return centred(mesh);
 }
 
@@ -129,7 +173,7 @@ export function drumSlice({ main, second }: DebrisPaint): Mesh {
 export function eyeSegment({ main, second }: DebrisPaint): Mesh {
   const mesh: Mesh = [];
   arc(mesh, 19, 8, [-3.5, 3.5], [-55, 55], main);
-  meshBar(mesh, 0, [20, 27], 9, [-4.5, 4.5], second);
+  meshBar(mesh, 0, 20, 27, 9, -4.5, 4.5, second);
   return centred(mesh);
 }
 
@@ -155,7 +199,6 @@ function turn(axis: Point, angle: number, [x, y, z]: Point): Point {
   ];
 }
 
-const DEGREES = Math.PI / 180;
 const TUMBLE_AXIS = turn(unit([1, -1, 0]), TILT * DEGREES, [0, 0, 1]);
 const LEAN_AXIS = unit([1, 1, 0]);
 
@@ -176,6 +219,9 @@ export const placedFragments = (visible: readonly Fragment[], x: number, y: numb
     ...fragment,
     points: fragment.points.map(([px, py]): V2 => [px + x, py + y]),
   }));
+
+export const pathData = (loops: readonly V2[][]) =>
+  loops.map((loop) => `M${loop.map(([x, y]) => `${x},${y}`).join("L")}Z`).join("");
 
 // One path per tone, the silhouette first; `silhouette` is its path data.
 export function frameInk(visible: readonly Fragment[]): { ink: string[]; silhouette: string } {

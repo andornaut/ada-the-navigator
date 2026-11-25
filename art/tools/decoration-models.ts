@@ -8,11 +8,13 @@ import type { Point } from "./projection.ts";
 import {
   type Mesh,
   meshBar,
+  meshBlock,
   meshDome,
   meshExtrude,
+  meshFace,
   meshHoop,
-  meshMove,
-  meshOrientedBox,
+  meshPlace,
+  meshRing,
   meshSpiral,
   meshTube,
   type Tones,
@@ -45,14 +47,14 @@ const UP: Point = [0, 0, 1];
 const ball = (mesh: Mesh, centre: Point, radius: number) =>
   meshDome(mesh, centre, radius, MAIN, { full: true, sides: 56, bands: 14 });
 
-// A level ring about (x, y) from z0 to z1.
+// A level ring about `centre` from z0 to z1.
 const ring = (
   mesh: Mesh,
-  [x, y]: readonly [number, number],
+  centre: readonly [number, number],
   [z0, z1]: readonly [number, number],
-  radii: readonly [number, number],
+  [outer, inner]: readonly [number, number],
   tones: Tones,
-) => meshHoop(mesh, [x, y, (z0 + z1) / 2], UP, radii, z1 - z0, tones, 96);
+) => meshRing(mesh, centre, z0, z1, outer, inner, tones, 96);
 
 // A drum or frustum about (x, y) from z0 to z1, `base` wide below and `top` wide above.
 const drum = (
@@ -104,7 +106,7 @@ function armSlab(
   arms = 3,
 ): void {
   for (let i = 0; i < arms; i++) {
-    meshBar(mesh, turn + (360 / arms) * i, [0, reach], width, levels, MAIN);
+    meshBar(mesh, turn + (360 / arms) * i, 0, reach, width, levels[0], levels[1], MAIN);
   }
   drum(mesh, [0, 0], levels, [width * 0.62, width * 0.62], MAIN, 24);
 }
@@ -167,7 +169,7 @@ export function decorationMesh(galaxy: GalaxyId, variant: number): Mesh {
   } else if (galaxy === "cartwheel") {
     if (variant === 0) {
       ring(mesh, [0, 0], [-14, 14], [200, 158], MAIN);
-      for (const spoke of SPOKES) meshBar(mesh, spoke, [30, 160], 34, [-9, 9], SECOND);
+      for (const spoke of SPOKES) meshBar(mesh, spoke, 30, 160, 34, -9, 9, SECOND);
       drum(mesh, [0, 0], [-45, 45], [40, 40], SECOND);
     } else if (variant === 1) {
       for (const [z, outer] of [
@@ -176,15 +178,15 @@ export function decorationMesh(galaxy: GalaxyId, variant: number): Mesh {
       ] as const) {
         ring(mesh, [0, 0], [z - 13, z + 13], [outer, outer - 40], MAIN);
         for (const spoke of SPOKES) {
-          meshBar(mesh, spoke, [26, outer - 38], 30, [z - 8, z + 8], SECOND);
+          meshBar(mesh, spoke, 26, outer - 38, 30, z - 8, z + 8, SECOND);
         }
       }
       drum(mesh, [0, 0], [-150, 150], [34, 34], SECOND);
     } else {
       const axle = unit([1, 0.15, 0]);
-      meshHoop(mesh, [0, 0, 0], axle, [200, 160], 30, MAIN, 72);
+      meshHoop(mesh, [0, 0, 0], axle, 200, 160, 30, MAIN, 72);
       for (const spoke of [cross(axle, UP), UP]) {
-        meshOrientedBox(mesh, [0, 0, 0], [spoke, cross(axle, spoke), axle], [162, 16, 9], SECOND);
+        meshBlock(mesh, [0, 0, 0], [spoke, cross(axle, spoke), axle], [162, 16, 9], SECOND);
       }
       meshTube(mesh, scaled(axle, -120), scaled(axle, 120), 36, 36, SECOND);
     }
@@ -196,22 +198,31 @@ export function decorationMesh(galaxy: GalaxyId, variant: number): Mesh {
         [1, 470, 60],
       ] as const
     )[variant]!;
+    const shape = {
+      radius: (travelled: number) => inner + (150 * travelled) / sweep + 22,
+      width: (travelled: number) => 52 - (14 * travelled) / sweep,
+      top: (travelled: number) => 14 - (10 * travelled) / sweep,
+      bottom: (travelled: number) => -14 + (4 * travelled) / sweep,
+    };
     for (let i = 0; i < arms; i++) {
-      meshSpiral(
+      const turn = (360 / arms) * i + 40;
+      meshSpiral(mesh, turn, 0, sweep, shape, MAIN, 4);
+      // The arm's starting end, which the spiral leaves open.
+      const [x, y] = polar(1, turn);
+      const [near, far] = [
+        shape.radius(0) - shape.width(0) / 2,
+        shape.radius(0) + shape.width(0) / 2,
+      ];
+      meshFace(
         mesh,
-        (360 / arms) * i + 40,
-        sweep,
-        (travelled) => {
-          const t = travelled / sweep;
-          return {
-            radius: inner + 150 * t + 22,
-            width: 52 - 14 * t,
-            top: 14 - 10 * t,
-            base: -14 + 4 * t,
-          };
-        },
+        [
+          [x * near, y * near, shape.bottom(0)],
+          [x * far, y * far, shape.bottom(0)],
+          [x * far, y * far, shape.top(0)],
+          [x * near, y * near, shape.top(0)],
+        ],
+        [y, -x, 0],
         MAIN,
-        4,
       );
     }
     drum(mesh, [0, 0], [-44, 44], [78, 78], SECOND);
@@ -228,7 +239,7 @@ export function decorationMesh(galaxy: GalaxyId, variant: number): Mesh {
       needle(mesh, level, 270, 32);
     } else {
       const through = unit([1, 0.15, 0]);
-      meshHoop(mesh, [0, 0, 0], through, [150, 104], 34, MAIN, 72);
+      meshHoop(mesh, [0, 0, 0], through, 150, 104, 34, MAIN, 72);
       needle(mesh, through, 260, 34);
     }
   } else if (galaxy === "andromeda") {
@@ -258,7 +269,7 @@ export function decorationMesh(galaxy: GalaxyId, variant: number): Mesh {
       const part: Mesh = [];
       armSlab(part, reach, width, [20, 20 + width * 0.42], turn);
       drum(part, [0, 0], [-reach * 0.8, 20], [6, width * 0.45], SECOND);
-      mesh.push(...meshMove(part, [x, y, 0]));
+      mesh.push(...meshPlace(part, 0, 1, [x, y, 0]));
     }
   }
   return mesh;

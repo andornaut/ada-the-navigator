@@ -10,7 +10,9 @@ import { decorationMesh } from "./decoration-models.ts";
 import { type ManifestFile, readManifest, replaceEntries } from "./manifest.ts";
 import { stageRows } from "./polish-rows.ts";
 import { svgText } from "./svg-text.ts";
-import { loopArea, pathData, tonePaths, type V2, visibleFragments } from "./visible.ts";
+import { pathData } from "./debris.ts";
+import { tonePaths } from "./fleet.ts";
+import { loopArea, type V2, visibleFragments } from "./visible.ts";
 
 type GalaxyId = Exclude<ManifestFile, "core">;
 
@@ -359,9 +361,9 @@ function resolve(galaxy: GalaxyId, variant: number): Resolved {
     ...fragment,
     points: fragment.points.map(([x, y]): V2 => [x * k + tx, y * k + ty]),
   }));
-  const paths = tonePaths(fitted, 1, SLIVER).map(({ fill, loops }) => ({
+  const paths = tonePaths(fitted).map(({ fill, loops }) => ({
     tone: Number(fill),
-    loops,
+    loops: loops.filter((loop) => Math.abs(loopArea(loop)) >= SLIVER),
   }));
   const silhouette = paths[0]!.loops;
   const sign = Math.sign(
