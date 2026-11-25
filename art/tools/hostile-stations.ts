@@ -166,9 +166,12 @@ function base(paint: MountPaint, at: Point, state: State): Mesh {
 }
 
 // A design scaled to its contract span, in frame px: the hull at each heading and its mounts.
-// `span` is the contract span in display px.
+// `length` and `width` are the drawn hull's extents fore and aft and across, in frame px, as the
+// enemy fleet's.
 type Scaled = Design & {
   frame: number;
+  length: number;
+  width: number;
   hulls: Mesh[];
   mounts: { id: string; at: Point }[];
 };
@@ -210,7 +213,19 @@ function scaled(design: Design): Scaled {
       }
     }
   }
-  return { ...design, frame: Math.ceil((2 * extent + 2) / 8) * 8, hulls, mounts: mounted };
+  const points = source.hull.flatMap((face) => face.points);
+  const along = (axis: 0 | 1) =>
+    (Math.max(...points.map((point) => point[axis])) -
+      Math.min(...points.map((point) => point[axis]))) *
+    k;
+  return {
+    ...design,
+    frame: Math.ceil((2 * extent + 2) / 8) * 8,
+    length: along(0),
+    width: along(1),
+    hulls,
+    mounts: mounted,
+  };
 }
 
 const pathData = (loops: readonly V2[][]) =>
@@ -378,6 +393,12 @@ function hardpoints(drawn: Drawn): string {
     version: 1,
     archetype: design.archetype,
     frame: design.frame,
+    // The drawn hull in frame px; `radius` is the spacing and footprint radius.
+    hull: {
+      length: round(design.length),
+      width: round(design.width),
+      radius: round(Math.max(design.length, design.width) / 2),
+    },
     hardpoints: shipped.hardpoints,
     fill: shipped.fill,
     weaponTops: shipped.weaponTops,

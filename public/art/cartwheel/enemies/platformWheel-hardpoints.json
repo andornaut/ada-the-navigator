@@ -2,6 +2,11 @@
   "version": 1,
   "archetype": "platform",
   "frame": 216,
+  "hull": {
+    "length": 158.464,
+    "width": 158.464,
+    "radius": 79.232
+  },
   "hardpoints": [
     {
       "id": "port",

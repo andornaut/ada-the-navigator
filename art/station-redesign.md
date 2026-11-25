@@ -201,10 +201,13 @@ byte-identical. Each design has no engine or command part.
 - Mounts fit the enemy fleet's tops: collar radius 4.6 display px and height
   1.2, in the fleet's collar, plate and breach tones per family. A top's pivot
   is the centre of the collar's upper face.
-- `{key}-hardpoints.json` is the shipped version 1 schema. `hardpoints`,
-  `fill`, `weaponTops` and `tiers` are the shipped file's. `headings[k]` holds
-  `order` (the hull, then the mounts far to near), each mount's `anchor`,
-  `pivot` and per-state `collision`, the hull's `collision` and `banner`. A
+- `{key}-hardpoints.json` is the shipped version 1 schema. `hull` is the drawn
+  hull's `length` (fore and aft) and `width` (across) in frame px, the model's
+  extents as the enemy fleet's, and its spacing `radius`, the larger half.
+  `hardpoints`, `fill`, `weaponTops` and `tiers` are the shipped file's.
+  `headings[k]` holds `order` (the hull, then the mounts far to near), each
+  mount's `anchor`, `pivot` and per-state `collision`, the hull's `collision`
+  and `banner`. A
   mount whose intact collar shows less than half at a heading is `hidden`
   there, and its top is not drawn; it still fires and takes hits, so `hidden`
   is drawing data only: 28 mount headings of the coral station's

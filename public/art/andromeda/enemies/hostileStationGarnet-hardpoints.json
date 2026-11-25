@@ -2,6 +2,11 @@
   "version": 1,
   "archetype": "hostileStation",
   "frame": 376,
+  "hull": {
+    "length": 300.16,
+    "width": 259.946,
+    "radius": 150.08
+  },
   "hardpoints": [
     {
       "id": "weapon-0",
