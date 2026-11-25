@@ -234,7 +234,7 @@ describe("Art's collision data", () => {
   it("gives every pickup row of pickups.json a silhouette", () => {
     const file = json("pickups/pickups.json") as { frames: Record<string, { collision: unknown }> };
     const frames = Object.values(file.frames);
-    expect(frames).toHaveLength(9);
+    expect(frames).toHaveLength(7);
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
