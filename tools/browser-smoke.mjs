@@ -2990,7 +2990,8 @@ try {
     const target = screen.querySelector('.ada-map-places [data-place="growers"]');
     return {
       chip: box(target),
-      face: getComputedStyle(target).backgroundColor,
+      // The chip's task face; selection mixes it with ink.
+      face: target.style.getPropertyValue("--face"),
       jobHeight: jobLine ? box(jobLine).height : 0,
       jobText: jobLine?.textContent ?? "",
       lineHeight: jobLine ? parseFloat(getComputedStyle(jobLine).lineHeight) : 0,
@@ -3000,10 +3001,13 @@ try {
     };
   });
   assert.match(jobPanel.jobText, /^Job: Deliver /u, "The job's target shows its Job line");
+  // Growers also serves galaxy one's story, and story quests take the task tint before station
+  // jobs (gameplay/quests.md "Marker eligibility").
+  const { TASK_COLORS } = await import(new URL("../src/data/taskCategories.ts", import.meta.url));
   assert.equal(
     jobPanel.face,
-    "rgb(254, 174, 52)",
-    "A held job's target chip has main's orange face",
+    TASK_COLORS.story,
+    "A held job's target that is also the story target takes the story tint",
   );
   assert.ok(
     jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
@@ -3019,9 +3023,9 @@ try {
     `Selecting pans the chip clear of the wrapped panel: ${JSON.stringify(jobPanel)}`,
   );
   events.checks.push(
-    "A held job's target chip has main's orange face; its long Job line wraps in the place " +
-      "panel, left of the footer, and the selected target pans clear of the panel's " +
-      "rendered height",
+    "A held job's target chip that also serves the story takes the story tint; its long Job " +
+      "line wraps in the place panel, left of the footer, and the selected target pans clear " +
+      "of the panel's rendered height",
   );
   // The survey pips at 35% surveyed (art/map.md "Header"): three cream discs, then seven rings.
   // Galaxy one's survey counts about 53 places, so its percent steps 33, 35, 37 and never reads 34;
