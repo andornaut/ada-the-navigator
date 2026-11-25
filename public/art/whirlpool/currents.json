@@ -4,28 +4,40 @@
     "color": "#296362",
     "minFlow": 0.06,
     "lanes": {
-      "spacing": 46,
+      "spacing": 56,
       "min": 3,
-      "jitter": 0.12,
+      "jitter": 0,
       "jitterStep": 0.618034
     },
     "rows": {
-      "spacing": 64,
+      "spacing": 72,
       "stagger": 0.5,
-      "phase": 0.3,
+      "phase": 0,
       "phaseStep": 0.414214
     },
-    "chevron": {
-      "arm": [6, 7],
-      "tip": 0.6,
-      "back": 0.6
-    },
-    "stroke": [1.1, 0.7],
-    "alpha": [0.3, 0.7],
-    "join": "round",
-    "cap": "butt",
+    "alpha": [0.3, 0.5],
     "reducedMotion": {
       "time": 0
-    }
+    },
+    "dart": {
+      "arm": [6, 7],
+      "tip": 0.6,
+      "back": 0.6,
+      "notch": 0.05
+    },
+    "steps": [
+      {
+        "flow": 0,
+        "q": 0.3
+      },
+      {
+        "flow": 0.34,
+        "q": 0.65
+      },
+      {
+        "flow": 0.67,
+        "q": 1
+      }
+    ]
   }
 }

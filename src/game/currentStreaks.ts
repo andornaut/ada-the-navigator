@@ -1,16 +1,21 @@
 import { type Current, streakFrame } from "../model/currents.ts";
 import type { Vec } from "../model/types.ts";
 
-// Art's Whirlpool current streaks (art/whirlpool.md "Current streaks"): chevrons on the world
-// plane, drawn at runtime from currents.json.
+// Art's Whirlpool current streaks (art/whirlpool.md "Current streaks", "Ordered darts"): filled
+// darts on the world plane, drawn at runtime from currents.json.
 
-/** A pair [a, b] reads as a + b f for the flow fraction f. */
+/** A pair [a, b] reads as a + b q for the dart's size step q. */
 type Linear = readonly [number, number];
 
 export interface StreakSpec {
   readonly alpha: Linear;
-  readonly chevron: { readonly arm: Linear; readonly back: number; readonly tip: number };
   readonly color: string;
+  readonly dart: {
+    readonly arm: Linear;
+    readonly back: number;
+    readonly notch: number;
+    readonly tip: number;
+  };
   readonly lanes: {
     readonly jitter: number;
     readonly jitterStep: number;
@@ -25,7 +30,8 @@ export interface StreakSpec {
     readonly spacing: number;
     readonly stagger: number;
   };
-  readonly stroke: Linear;
+  /** Size steps in ascending `flow`: each step's `q` holds from its flow until the next. */
+  readonly steps: readonly { readonly flow: number; readonly q: number }[];
 }
 
 type Fields = Record<string, unknown>;
@@ -44,31 +50,44 @@ export function readStreakSpec(value: unknown): StreakSpec | undefined {
   const streaks = fields(root?.streaks);
   const lanes = fields(streaks?.lanes);
   const rows = fields(streaks?.rows);
-  const chevron = fields(streaks?.chevron);
+  const dart = fields(streaks?.dart);
   const reduced = fields(streaks?.reducedMotion);
+  const steps = streaks?.steps;
   if (
     root?.version !== 1 ||
     !streaks ||
     typeof streaks.color !== "string" ||
     !finite(streaks.minFlow) ||
-    !linear(streaks.stroke) ||
     !linear(streaks.alpha) ||
+    !Array.isArray(steps) ||
+    steps.length === 0 ||
+    !steps.every(
+      (step, index) =>
+        all(fields(step), ["flow", "q"]) &&
+        (index === 0
+          ? (step as Fields).flow === 0
+          : ((step as Fields).flow as number) > ((steps[index - 1] as Fields).flow as number)),
+    ) ||
     !all(lanes, ["spacing", "min", "jitter", "jitterStep"]) ||
     !((lanes.spacing as number) > 0) ||
     !all(rows, ["spacing", "stagger", "phase", "phaseStep"]) ||
     !((rows.spacing as number) > 0) ||
-    !chevron ||
-    !linear(chevron.arm) ||
-    !finite(chevron.tip) ||
-    !finite(chevron.back) ||
+    !dart ||
+    !linear(dart.arm) ||
+    !all(dart, ["tip", "back", "notch"]) ||
     !all(reduced, ["time"])
   ) {
     return undefined;
   }
   return {
     alpha: streaks.alpha,
-    chevron: { arm: chevron.arm, back: chevron.back, tip: chevron.tip },
     color: streaks.color,
+    dart: {
+      arm: dart.arm,
+      back: dart.back as number,
+      notch: dart.notch as number,
+      tip: dart.tip as number,
+    },
     lanes: {
       jitter: lanes.jitter as number,
       jitterStep: lanes.jitterStep as number,
@@ -83,12 +102,12 @@ export function readStreakSpec(value: unknown): StreakSpec | undefined {
       spacing: rows.spacing as number,
       stagger: rows.stagger as number,
     },
-    stroke: streaks.stroke,
+    steps: (steps as Fields[]).map(({ flow, q }) => ({ flow: flow as number, q: q as number })),
   };
 }
 
 const frac = (value: number): number => value - Math.floor(value);
-const at = (pair: Linear, f: number): number => pair[0] + pair[1] * f;
+const at = (pair: Linear, q: number): number => pair[0] + pair[1] * q;
 
 /** Lanes across a current of width `w`: max(min, round(w / spacing)). */
 export function laneCount(spec: StreakSpec, width: number): number {
@@ -114,24 +133,32 @@ export function laneSpeed(peak: number, width: number, offset: number): number {
   return peak * (1 - ((2 * offset) / width) ** 2);
 }
 
-/** A chevron's reach, stroke width and alpha at flow fraction `f`. */
-export function chevronStyle(
-  spec: StreakSpec,
-  f: number,
-): { alpha: number; reach: number; width: number } {
-  return { alpha: at(spec.alpha, f), reach: at(spec.chevron.arm, f), width: at(spec.stroke, f) };
+/** The size step at flow fraction `f`: the last step whose flow is at or below it. */
+export function dartStep(spec: StreakSpec, f: number): number {
+  let q = spec.steps[0]!.q;
+  for (const step of spec.steps) {
+    if (f >= step.flow) {
+      q = step.q;
+    }
+  }
+  return q;
 }
 
-/** A chevron's extent from its centre: its farthest point, a back corner or the tip. */
+/** A dart's arm and alpha at flow fraction `f`, both from its size step. */
+export function dartStyle(spec: StreakSpec, f: number): { alpha: number; reach: number } {
+  const q = dartStep(spec, f);
+  return { alpha: at(spec.alpha, q), reach: at(spec.dart.arm, q) };
+}
+
+/** A dart's extent from its centre: its farthest point, a back corner, the tip or the notch. */
 export function markRadius(spec: StreakSpec, reach: number): number {
-  return reach * Math.max(Math.hypot(spec.chevron.back, 1), spec.chevron.tip);
+  return reach * Math.max(Math.hypot(spec.dart.back, 1), spec.dart.tip, spec.dart.notch);
 }
 
 export interface StreakMark {
   readonly alpha: number;
-  /** Back, tip, back: world points of the two-segment polyline, pointing downstream. */
-  readonly points: readonly [Vec, Vec, Vec];
-  readonly width: number;
+  /** Back corner, tip, back corner, notch: world points of the filled dart, pointing downstream. */
+  readonly points: readonly [Vec, Vec, Vec, Vec];
 }
 
 /**
@@ -154,21 +181,26 @@ export function streakMarks(
     const { point, tangent } = streakFrame(current, arc);
     return { x: point.x - tangent.y * offset, y: point.y + tangent.x * offset };
   };
-  // A chevron keeps one frame: its centre's tangent, so a bend never bends its arms.
-  const chevron = (arc: number, offset: number, reach: number): [Vec, Vec, Vec] => {
+  // A dart keeps one frame: its centre's tangent, so a bend never bends its arms.
+  const dart = (arc: number, offset: number, reach: number): [Vec, Vec, Vec, Vec] => {
     const { tangent } = streakFrame(current, arc);
     const centre = place(arc, offset);
     const local = (along: number, across: number): Vec => ({
       x: centre.x + tangent.x * along - tangent.y * across,
       y: centre.y + tangent.y * along + tangent.x * across,
     });
-    const back = -spec.chevron.back * reach;
-    return [local(back, -reach), local(spec.chevron.tip * reach, 0), local(back, reach)];
+    const back = -spec.dart.back * reach;
+    return [
+      local(back, -reach),
+      local(spec.dart.tip * reach, 0),
+      local(back, reach),
+      local(-spec.dart.notch * reach, 0),
+    ];
   };
   const marks: StreakMark[] = [];
   // Inside a bend tighter than a lane's offset its marks would fold onto each other: a mark
   // whose disc meets a kept mark's is left out (markRadius; a grid of the largest diameter).
-  const cell = 2 * markRadius(spec, chevronStyle(spec, 1).reach);
+  const cell = 2 * markRadius(spec, dartStyle(spec, 1).reach);
   const kept = new Map<string, { centre: Vec; radius: number }[]>();
   const clear = (centre: Vec, radius: number): boolean => {
     const cx = Math.floor(centre.x / cell);
@@ -200,15 +232,11 @@ export function streakMarks(
       if (f <= spec.minFlow || !near(centre)) {
         continue;
       }
-      const { alpha, reach, width } = chevronStyle(spec, f);
+      const { alpha, reach } = dartStyle(spec, f);
       if (!clear(centre, markRadius(spec, reach))) {
         continue;
       }
-      marks.push({
-        alpha,
-        points: chevron(arc, offset, reach),
-        width,
-      });
+      marks.push({ alpha, points: dart(arc, offset, reach) });
     }
   }
   return marks;

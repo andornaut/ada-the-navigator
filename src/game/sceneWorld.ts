@@ -213,9 +213,9 @@ export function drawStoryShips(scene: WorldContext, flight: FlightState): void {
 }
 
 /**
- * Whirlpool's current streaks from Art's spec (currentStreaks.ts): chevrons on the world
- * plane in each lane, moving with the lane's flow and fading with it, on the field above the
- * specks and backdrop rocks and below every play object.
+ * Whirlpool's current streaks from Art's spec (currentStreaks.ts): filled darts on the world
+ * plane in each lane, moving with the lane's flow and stepping in size and alpha with it, on the
+ * field above the specks and backdrop rocks and below every play object.
  */
 export function drawCurrents(scene: WorldContext, flight: FlightState): void {
   const spec = scene.streakSpec;
@@ -245,14 +245,13 @@ export function drawCurrents(scene: WorldContext, flight: FlightState): void {
       near,
     );
     for (const mark of marks) {
-      scene.ink.lineStyle(mark.width, color, mark.alpha);
-      scene.ink.strokePoints(
+      scene.ink.fillStyle(color, mark.alpha);
+      scene.ink.fillPoints(
         mark.points.map((point) => {
           const at = scene.project(point);
           return new PhaserMath.Vector2(at.x, at.y);
         }),
-        false,
-        false,
+        true,
       );
     }
   }
