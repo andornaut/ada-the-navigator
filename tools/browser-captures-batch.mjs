@@ -497,17 +497,26 @@ export function batchCaptures(ctx) {
       await station.waitForTimeout(300);
       await ctx.pageShot(file);
     };
-    await station.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
+    // A restored docked save can open without the station menu; the page is then kept as is.
+    const menu = await station
+      .locator('[data-action="open-shop"]')
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(
+        () => true,
+        () => false,
+      );
     await ctx.pageShot("resources-station-welcome.png");
-    await view("open-shop", "resources-station-shop.png");
-    await station.locator(".ada-shop-row:has(.ada-price)").first().click();
-    await station.waitForTimeout(300);
-    await ctx.pageShot("resources-station-confirm.png");
-    await view("confirm-cancel-x", "resources-station-shop-again.png");
-    await view("shop-back", "resources-station-welcome-again.png");
-    await view("open-jobs", "resources-station-jobs.png");
-    await view("jobs-back", "resources-station-welcome-after-jobs.png");
-    await view("open-exchange", "resources-station-exchange.png");
+    if (menu) {
+      await view("open-shop", "resources-station-shop.png");
+      await station.locator(".ada-shop-row:has(.ada-price)").first().click();
+      await station.waitForTimeout(300);
+      await ctx.pageShot("resources-station-confirm.png");
+      await view("confirm-cancel-x", "resources-station-shop-again.png");
+      await view("shop-back", "resources-station-welcome-again.png");
+      await view("open-jobs", "resources-station-jobs.png");
+      await view("jobs-back", "resources-station-welcome-after-jobs.png");
+      await view("open-exchange", "resources-station-exchange.png");
+    }
     // Cartwheel's story at its first mining milestone: the Quests detail's ore objectives.
     const quest = flightModel(2);
     Object.assign(quest.state.progress[2], { deposited: 3, stage: 1 });
