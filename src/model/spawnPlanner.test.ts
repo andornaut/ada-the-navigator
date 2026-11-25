@@ -44,6 +44,7 @@ const rules: SpawnRules = {
   chunkSize: 512,
   corridor: 20,
   gap: 40,
+  order: ["enemies", "rocks", "moving"],
   search: 256,
   tries: 12,
 };
@@ -310,6 +311,43 @@ describe("planRegion", () => {
       expect(report.delivered + report.dropped).toBe(report.requested);
     }
     expect(retried).toBeGreaterThan(0);
+  });
+
+  it("plans passes in the rules' order, so earlier passes claim space first", () => {
+    const without = (omit: "enemies" | "rocks") => ({
+      ...rules,
+      bands: [{ ...band, moving: [], [omit]: [] }],
+    });
+    const ofCategory = (plan: SpawnPlan, category: "enemy" | "rock") =>
+      plan.placements.filter((placement) => placement.category === category);
+    const rocksFirst = { ...rules, order: ["rocks", "moving", "enemies"] as const };
+    let shortfall = 0;
+    for (const seed of SEEDS) {
+      const enemiesFirst = planRegion(rules, seed, region);
+      expect(ofCategory(enemiesFirst, "enemy")).toEqual(
+        ofCategory(planRegion(without("rocks"), seed, region), "enemy"),
+      );
+      const rocks = planRegion(rocksFirst, seed, region);
+      expect(ofCategory(rocks, "rock").map(({ id, x, y }) => [id, x, y])).toEqual(
+        ofCategory(
+          planRegion({ ...without("enemies"), order: rocksFirst.order }, seed, region),
+          "rock",
+        ).map(({ id, x, y }) => [id, x, y]),
+      );
+      shortfall += rocks.report.kinds.small!.delivered - enemiesFirst.report.kinds.small!.delivered;
+    }
+    // Static rocks placed after the enemy groups lose room to them.
+    expect(shortfall).toBeGreaterThan(0);
+  });
+
+  it("refuses an order that omits or repeats a pass or moves rocks before placing them", () => {
+    for (const order of [
+      ["enemies", "rocks"],
+      ["enemies", "rocks", "rocks"],
+      ["moving", "rocks", "enemies"],
+    ] as const) {
+      expect(() => planRegion({ ...rules, order }, 1, region)).toThrow(RangeError);
+    }
   });
 
   it("drops a rock that cannot fit a quadrant between the lanes", () => {

@@ -68,6 +68,9 @@ export interface SpawnBand {
   readonly rocks: readonly RockTarget[];
 }
 
+/** A planning pass: whole enemy groups, static rocks, or moving rocks chosen from placed rocks. */
+export type SpawnPass = "enemies" | "moving" | "rocks";
+
 export interface SpawnRules {
   /** Ascending by `from`; the first starts at 0. */
   readonly bands: readonly SpawnBand[];
@@ -79,6 +82,11 @@ export interface SpawnRules {
   readonly corridor?: number;
   /** Free space required between any two placed footprints. */
   readonly gap: number;
+  /**
+   * Every pass once, in planning order; earlier passes claim space first. Moving rocks follow
+   * static rocks, since they are chosen from them.
+   */
+  readonly order: readonly SpawnPass[];
   /** World units an enemy group's later anchor tries may move from its seeded anchor. */
   readonly search: number;
   /** Candidate positions per rock, or anchors per enemy group, before it is dropped. */
@@ -278,7 +286,10 @@ function validate(rules: SpawnRules, region: SpawnRegion): void {
     ) ||
     !rules.bands.length ||
     rules.bands[0]!.from !== 0 ||
-    rules.bands.some((band, index) => index > 0 && band.from <= rules.bands[index - 1]!.from)
+    rules.bands.some((band, index) => index > 0 && band.from <= rules.bands[index - 1]!.from) ||
+    rules.order.length !== 3 ||
+    !(["enemies", "moving", "rocks"] as const).every((pass) => rules.order.includes(pass)) ||
+    rules.order.indexOf("moving") < rules.order.indexOf("rocks")
   ) {
     throw new RangeError("Invalid spawn rules or region");
   }
@@ -369,8 +380,9 @@ function velocity(next: Random, speed: readonly [number, number]): Vec {
 }
 
 /**
- * Plans one region's asteroids and enemies from a seed: static rocks, then moving rocks chosen
- * from them, then whole enemy groups, all sharing one spatial index. A rock, or every member and
+ * Plans one region's asteroids and enemies from a seed, pass by pass in `rules.order`: whole
+ * enemy groups, static rocks, and moving rocks chosen from the placed static rocks, all sharing
+ * one spatial index. A rock, or every member and
  * escort of a group, is accepted only where each footprint plus `gap` is clear of every placed
  * footprint and of the others in its group and touches no applicable exclusion zone, within
  * `tries` positions or group anchors; otherwise it is dropped whole and reported. Every count
@@ -392,150 +404,158 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     excludedBy(rules, region, category, at) ??
     (index.clear(rules.gap, at) ? undefined : SPAWN_RULE.overlap);
 
-  for (const kind of kindsOf(rules, (band) => band.rocks)) {
-    for (const chunk of area) {
-      const target = chunk.band.rocks.find((rock) => rock.kind === kind);
-      if (!target || !target.shapes.length) {
-        continue;
-      }
-      const count = chanceRound(stream(kind, chunk, "count"), target.density);
-      const next = stream(kind, chunk, "place");
-      tally.request(kind, count);
-      for (let spawn = 0; spawn < count; spawn++) {
-        const shape = weightedPick(
-          next,
-          target.shapes,
-          target.shapes.map((option) => option.weight),
-        );
-        const placed = placeRock(rules, size, chunk, next, shape.radius, (at) =>
-          blocked("rock", at),
-        );
-        if (typeof placed === "string") {
-          tally.drop(kind, placed);
+  const rocks = () => {
+    for (const kind of kindsOf(rules, (band) => band.rocks)) {
+      for (const chunk of area) {
+        const target = chunk.band.rocks.find((rock) => rock.kind === kind);
+        if (!target || !target.shapes.length) {
           continue;
         }
-        placed.rejected.forEach((rule) => tally.reject(kind, rule));
-        if (!placed.at) {
-          tally.drop(kind, placed.rejected.at(-1)!);
-          continue;
-        }
-        const placement: SpawnPlacement = {
-          category: "rock",
-          chunk: chunk.key,
-          id: `${kind}:${chunk.key}:${spawn}`,
-          kind,
-          radius: shape.radius,
-          shape: shape.id,
-          ...placed.at,
-        };
-        index.add(placement);
-        placements.push(placement);
-        tally.deliver(kind);
-      }
-    }
-  }
-
-  for (const kind of kindsOf(rules, (band) => band.moving)) {
-    for (const chunk of area) {
-      const target = chunk.band.moving.find((moving) => moving.kind === kind);
-      if (!target) {
-        continue;
-      }
-      const count = chanceRound(stream(kind, chunk, "count"), target.density);
-      tally.request(kind, count);
-      if (!count) {
-        continue;
-      }
-      const eligible = placements.filter((placement) => {
-        if (
-          placement.chunk !== chunk.key ||
-          placement.moving ||
-          !target.from.includes(placement.kind)
-        ) {
-          return false;
-        }
-        const rule = excludedBy(rules, region, "moving", placement);
-        if (rule) {
-          tally.reject(kind, rule);
-        }
-        return !rule;
-      });
-      const order = shuffled(stream(kind, chunk, "choose"), eligible);
-      const anchor = order[0];
-      const grouped = count > 1 ? Math.ceil(count * target.groupShare) : 0;
-      const group = anchor
-        ? [...order]
-            .sort(
-              (a, b) =>
-                Math.hypot(a.x - anchor.x, a.y - anchor.y) -
-                Math.hypot(b.x - anchor.x, b.y - anchor.y),
-            )
-            .slice(0, grouped)
-        : [];
-      const solos = order.filter((rock) => !group.includes(rock)).slice(0, count - group.length);
-      const shared = velocity(stream(kind, chunk, "group-motion"), target.speed);
-      for (const [rocks, isGroup] of [
-        [group, true],
-        [solos, false],
-      ] as const) {
-        for (const rock of rocks) {
-          const motion = isGroup
-            ? { ...shared }
-            : velocity(randomStream(seed, `spawn:${kind}:${rock.id}:solo-motion`), target.speed);
-          placements[placements.indexOf(rock)] = {
-            ...rock,
-            moving: { grouped: isGroup, kind, velocity: motion },
+        const count = chanceRound(stream(kind, chunk, "count"), target.density);
+        const next = stream(kind, chunk, "place");
+        tally.request(kind, count);
+        for (let spawn = 0; spawn < count; spawn++) {
+          const shape = weightedPick(
+            next,
+            target.shapes,
+            target.shapes.map((option) => option.weight),
+          );
+          const placed = placeRock(rules, size, chunk, next, shape.radius, (at) =>
+            blocked("rock", at),
+          );
+          if (typeof placed === "string") {
+            tally.drop(kind, placed);
+            continue;
+          }
+          placed.rejected.forEach((rule) => tally.reject(kind, rule));
+          if (!placed.at) {
+            tally.drop(kind, placed.rejected.at(-1)!);
+            continue;
+          }
+          const placement: SpawnPlacement = {
+            category: "rock",
+            chunk: chunk.key,
+            id: `${kind}:${chunk.key}:${spawn}`,
+            kind,
+            radius: shape.radius,
+            shape: shape.id,
+            ...placed.at,
           };
+          index.add(placement);
+          placements.push(placement);
           tally.deliver(kind);
         }
       }
-      const missing = count - group.length - solos.length;
-      if (missing > 0) {
-        tally.drop(kind, SPAWN_RULE.noSourceRock, missing);
-      }
     }
-  }
-
-  for (const kind of kindsOf(rules, (band) => band.enemies)) {
-    for (const chunk of area) {
-      const target = chunk.band.enemies.find((enemy) => enemy.kind === kind);
-      if (!target) {
-        continue;
-      }
-      const groups = chanceRound(stream(kind, chunk, "count"), target.density);
-      const next = stream(kind, chunk, "place");
-      tally.request(kind, groups, "groups");
-      for (let number = 0; number < groups; number++) {
-        const group = `${kind}:${chunk.key}:${number}`;
-        const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
-        const seeded = { x: chunk.origin.x + next() * size, y: chunk.origin.y + next() * size };
-        const rejected: string[] = [];
-        let formation: SpawnPlacement[] | undefined;
-        for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
-          const anchor =
-            attempt === 0
-              ? seeded
-              : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
-          const candidate = groupFormation(chunk, group, target, members, anchor, next());
-          const rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
-          if (rule) {
-            rejected.push(rule);
-          } else {
-            formation = candidate;
-          }
-        }
-        rejected.forEach((rule) => tally.reject(kind, rule));
-        if (!formation) {
-          tally.drop(kind, rejected.at(-1)!);
+  };
+  const moving = () => {
+    for (const kind of kindsOf(rules, (band) => band.moving)) {
+      for (const chunk of area) {
+        const target = chunk.band.moving.find((moving) => moving.kind === kind);
+        if (!target) {
           continue;
         }
-        for (const placement of formation) {
-          index.add(placement);
-          placements.push(placement);
+        const count = chanceRound(stream(kind, chunk, "count"), target.density);
+        tally.request(kind, count);
+        if (!count) {
+          continue;
         }
-        tally.deliver(kind);
+        const eligible = placements.filter((placement) => {
+          if (
+            placement.chunk !== chunk.key ||
+            placement.moving ||
+            !target.from.includes(placement.kind)
+          ) {
+            return false;
+          }
+          const rule = excludedBy(rules, region, "moving", placement);
+          if (rule) {
+            tally.reject(kind, rule);
+          }
+          return !rule;
+        });
+        const order = shuffled(stream(kind, chunk, "choose"), eligible);
+        const anchor = order[0];
+        const grouped = count > 1 ? Math.ceil(count * target.groupShare) : 0;
+        const group = anchor
+          ? [...order]
+              .sort(
+                (a, b) =>
+                  Math.hypot(a.x - anchor.x, a.y - anchor.y) -
+                  Math.hypot(b.x - anchor.x, b.y - anchor.y),
+              )
+              .slice(0, grouped)
+          : [];
+        const solos = order.filter((rock) => !group.includes(rock)).slice(0, count - group.length);
+        const shared = velocity(stream(kind, chunk, "group-motion"), target.speed);
+        for (const [rocks, isGroup] of [
+          [group, true],
+          [solos, false],
+        ] as const) {
+          for (const rock of rocks) {
+            const motion = isGroup
+              ? { ...shared }
+              : velocity(randomStream(seed, `spawn:${kind}:${rock.id}:solo-motion`), target.speed);
+            placements[placements.indexOf(rock)] = {
+              ...rock,
+              moving: { grouped: isGroup, kind, velocity: motion },
+            };
+            tally.deliver(kind);
+          }
+        }
+        const missing = count - group.length - solos.length;
+        if (missing > 0) {
+          tally.drop(kind, SPAWN_RULE.noSourceRock, missing);
+        }
       }
     }
+  };
+  const enemies = () => {
+    for (const kind of kindsOf(rules, (band) => band.enemies)) {
+      for (const chunk of area) {
+        const target = chunk.band.enemies.find((enemy) => enemy.kind === kind);
+        if (!target) {
+          continue;
+        }
+        const groups = chanceRound(stream(kind, chunk, "count"), target.density);
+        const next = stream(kind, chunk, "place");
+        tally.request(kind, groups, "groups");
+        for (let number = 0; number < groups; number++) {
+          const group = `${kind}:${chunk.key}:${number}`;
+          const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
+          const seeded = { x: chunk.origin.x + next() * size, y: chunk.origin.y + next() * size };
+          const rejected: string[] = [];
+          let formation: SpawnPlacement[] | undefined;
+          for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
+            const anchor =
+              attempt === 0
+                ? seeded
+                : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
+            const candidate = groupFormation(chunk, group, target, members, anchor, next());
+            const rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
+            if (rule) {
+              rejected.push(rule);
+            } else {
+              formation = candidate;
+            }
+          }
+          rejected.forEach((rule) => tally.reject(kind, rule));
+          if (!formation) {
+            tally.drop(kind, rejected.at(-1)!);
+            continue;
+          }
+          for (const placement of formation) {
+            index.add(placement);
+            placements.push(placement);
+          }
+          tally.deliver(kind);
+        }
+      }
+    }
+  };
+  const passes: Readonly<Record<SpawnPass, () => void>> = { enemies, moving, rocks };
+  for (const pass of rules.order) {
+    passes[pass]();
   }
   return { placements, report: tally.report() };
 }
