@@ -154,7 +154,7 @@
         }
       ]
     },
-    "holodiskBeacon": "base"
+    "holodiskBeacon": "holodisk-beacon-a"
   },
   "galaxies": {
     "andromeda": {

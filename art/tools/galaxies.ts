@@ -164,7 +164,8 @@ const LIGHT_FIELD = {
       { name: "core", colors: ["#a8654f", "#d68b72"], width: 0.8, length: 0.55 },
     ],
   },
-  holodiskBeacon: "base",
+  // The waypoint beacon holds its frame A row, lit, with no pulse.
+  holodiskBeacon: "holodisk-beacon-a",
 } as const;
 
 const lightnessOf = (colour: string) => toOklab(rgb(colour))[0];
