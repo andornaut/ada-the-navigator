@@ -221,8 +221,8 @@ describe("missile blasts as screen circles", () => {
   });
 
   it("routes a covered turret's share to the turret it covers deepest, else the hull", () => {
-    // Above a frigate by 1.25 Heavy radii, the circle reaches a turret's drawn base.
-    const target = enemyAt("frigate", { x: 0, y: 1.25 * HEAVY });
+    // One Heavy radius to a frigate's side, the circle covers its hull and a side turret's base.
+    const target = enemyAt("frigate", { x: -HEAVY, y: 0 });
     const hull = target.hp;
     const parts = target.enemy!.hardpoints.map(({ hp }) => hp);
     const flight = flightWith([target]);

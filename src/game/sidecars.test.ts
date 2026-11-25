@@ -47,10 +47,13 @@ describe("sidecars map", () => {
   it("gives a galaxy manifest without the map no sidecars, and rejects one with a malformed map", () => {
     expect(readGalaxyManifest({ assets: [], version: 1 })!.sidecars).toEqual(new Map());
     expect(readGalaxyManifest({ assets: [], sidecars: [], version: 1 })).toBeUndefined();
-    for (const galaxy of [1, 3] as const) {
-      expect(publicJson(`/art/${GALAXY_ID[galaxy]}/manifest.json`)).not.toHaveProperty("sidecars");
-      expect(GALAXY_MANIFESTS.get(galaxy)!.sidecars.size, GALAXY_ID[galaxy]).toBe(0);
-    }
+    expect(publicJson("/art/sunflower/manifest.json")).not.toHaveProperty("sidecars");
+    expect(GALAXY_MANIFESTS.get(1)!.sidecars.size).toBe(0);
+    // Whirlpool carries only its own coral designs' data files: the Twin hull and Manta dreadnought.
+    expect([...GALAXY_MANIFESTS.get(3)!.sidecars.keys()].sort()).toEqual([
+      "capitalManta",
+      "frigateTwin",
+    ]);
     const sidecars = GALAXY_MANIFESTS.get(1)!.sidecars;
     expect(enemyJetsPath(sidecars, "fighter")).toBeUndefined();
     expect(enemyHardpointsPath(sidecars, "capital")).toBeUndefined();
@@ -77,8 +80,20 @@ describe("sidecars map", () => {
     ];
     const pack = "/art/phantom/story-craft-jets.json";
     const hasPack = existsSync(new URL(`../../public${pack}`, import.meta.url));
+    // Beside the story craft, Phantom carries its Forked fortress capital's data files.
     expect(GALAXY_MANIFESTS.get(6)!.sidecars).toEqual(
-      new Map(craft.map((id) => [id, { jets: hasPack ? pack : `/art/phantom/${id}-jets.json` }])),
+      new Map<string, { hardpoints?: string; jets: string }>([
+        ...craft.map(
+          (id) => [id, { jets: hasPack ? pack : `/art/phantom/${id}-jets.json` }] as const,
+        ),
+        [
+          "capitalForked",
+          {
+            hardpoints: "/art/enemies/fleetCapitalForked-hardpoints.json",
+            jets: "/art/enemies/fleetCapitalForked-jets.json",
+          },
+        ],
+      ]),
     );
     if (hasPack) {
       expect(Object.keys(publicJson(pack) as Record<string, unknown>).sort()).toEqual(craft);

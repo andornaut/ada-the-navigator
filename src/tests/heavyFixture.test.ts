@@ -131,14 +131,15 @@ it("resolves Gadget from its final saved identity and level before creating stat
   expect(canonical).not.toBe(enemyActorDefinition(6, "capital", PHANTOM_FLAGSHIP_ID, 1));
 });
 
-it("retains industrial variant/cache identity and one canonical Rapid shot despite three visual tips", () => {
+it("retains each retaliator hull's variant/cache identity and one canonical Rapid shot per pod", () => {
   const identities = new Map(
     Array.from({ length: 16 }, (_, index) => `fixture-industrial:${index}`).map((id) => [
       enemyAssetKey({ archetype: "retaliator", id }),
       id,
     ]),
   );
-  expect([...identities.keys()].sort()).toEqual([...INDUSTRIAL_BODY_KEYS].sort());
+  // The Manta gunship and the two industrial bodies roll with equal weight.
+  expect([...identities.keys()].sort()).toEqual(["retaliator", ...INDUSTRIAL_BODY_KEYS].sort());
   for (const [variant, id] of identities) {
     const { definitions, fixture } = fixtureFactory();
     const restored = restoreSave(

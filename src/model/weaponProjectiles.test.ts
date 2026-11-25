@@ -192,10 +192,13 @@ describe("Phaser hitscan beam", () => {
     const reach = Math.hypot(fired.to.x - fired.from.x, fired.to.y - fired.from.y);
     const spark = structuredClone(activeWeaponImpacts(flight));
     expect(spark).toHaveLength(1);
-    // At fire the beam runs along the aim to its length; the contact sits on the hull surface.
+    // At fire the beam runs along the aim to its length; the contact sits on the hull surface,
+    // which may meet the beam anywhere across its width, so within the half-width of its end.
     const atFire = drawnBeamFlash(flight, flash);
     expect(atFire.from).toEqual(fired.from);
-    expect(Math.hypot(atFire.to.x - fired.to.x, atFire.to.y - fired.to.y)).toBeLessThan(1);
+    expect(Math.hypot(atFire.to.x - fired.to.x, atFire.to.y - fired.to.y)).toBeLessThanOrEqual(
+      BEAM.halfWidth,
+    );
     // Mid-flash, Ada flies down and turns toward it without firing again.
     flight.fireCooldown = 100;
     const turn = { ...idle, aim: { x: 0, y: 1 }, fire: false, move: { x: 0, y: 1 } };
