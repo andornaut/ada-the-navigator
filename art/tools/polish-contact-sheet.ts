@@ -317,6 +317,8 @@ function weapons(): string {
   for (const [sheet, name] of [
     ["weapons/rapid-missile-sheet.svg", "Rapid Missile, headings 0 to 31"],
     ["weapons/heavy-missile-sheet.svg", "Heavy Missile, headings 0 to 31"],
+    ["weapons/enemy-rapid-missile-sheet.svg", "Enemy Rapid Missile, headings 0 to 31"],
+    ["weapons/enemy-heavy-missile-sheet.svg", "Enemy Heavy Missile, headings 0 to 31"],
     ["weapons/mine-sheet.svg", "Mine, spin frames 0 to 7 lit, then on a blink"],
   ] as const) {
     const frames = [...roots(sheet).values()];

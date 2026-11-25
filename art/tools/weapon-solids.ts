@@ -1,6 +1,6 @@
-// The missiles and the mine as solid models (art/weapons.md, Flat look): the Rapid and Heavy
-// missiles at 32 headings without their flames, which the game draws, and the mine through a
-// quarter turn of its spin, lit and on a blink. `node art/tools/weapon-solids.ts` writes their
+// The missiles and the mine as solid models (art/weapons.md, Missile and mine frames): Ada's and
+// the enemies' Rapid and Heavy missiles at 32 headings without their flames, which the game
+// draws, and the mine through a quarter turn of its spin, lit and on a blink. `node art/tools/weapon-solids.ts` writes their
 // sheets beside the shipped art and stages their manifest rows.
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -29,6 +29,16 @@ const AMBER: Tones = ["#f0bd68", "#b98a40", "#8a6630"];
 const CORAL: Tones = ["#d68b72", "#a8654f", "#7f4b3d"];
 const DARK: Tones = ["#2a2433", "#1e1a26", "#16131c"];
 const BLINK: Tones = ["#ffffff", "#ffffff", "#e8e8f0"];
+// The coral family's salvage plate (art/enemies.md) as a material.
+const PLATE: Tones = ["#e6a890", "#b98774", "#8f6859"];
+
+// A missile's materials: Ada's white body with amber and cream parts, or the enemy's coral body
+// with white and plate parts.
+type MissileTones = { body: Tones; fins: Tones; warhead: Tones };
+const ADA_RAPID: MissileTones = { body: WHITE, fins: AMBER, warhead: WHITE };
+const ADA_HEAVY: MissileTones = { body: WHITE, fins: CREAM, warhead: AMBER };
+const ENEMY_RAPID: MissileTones = { body: CORAL, fins: WHITE, warhead: CORAL };
+const ENEMY_HEAVY: MissileTones = { body: CORAL, fins: PLATE, warhead: WHITE };
 
 const MISSILE_HEADINGS = 32;
 const SHEET_COLUMNS = 8;
@@ -79,10 +89,10 @@ function fins(mesh: Mesh, { from, reach, root, thick, tip, tones, upright }: Fin
   );
 }
 
-function rapidMissile(): Mesh {
+function rapidMissile({ body, fins: finTones, warhead }: MissileTones): Mesh {
   const mesh: Mesh = [];
-  meshTube(mesh, [-7, 0, 0], [-2.2, 0, 0], 1.5, 1.5, WHITE, 12, { kind: "round", cap0: DARK });
-  meshTube(mesh, [-2.2, 0, 0], [0.6, 0, 0], 1.5, 0.2, WHITE, 12, { kind: "round" });
+  meshTube(mesh, [-7, 0, 0], [-2.2, 0, 0], 1.5, 1.5, body, 12, { kind: "round", cap0: DARK });
+  meshTube(mesh, [-2.2, 0, 0], [0.6, 0, 0], 1.5, 0.2, warhead, 12, { kind: "round" });
   fins(mesh, {
     root: [-7.4, -4.4],
     tip: [-7.8, -7],
@@ -90,15 +100,15 @@ function rapidMissile(): Mesh {
     reach: 3.2,
     upright: 3,
     thick: 1,
-    tones: AMBER,
+    tones: finTones,
   });
   return mesh;
 }
 
-function heavyMissile(): Mesh {
+function heavyMissile({ body, fins: finTones, warhead }: MissileTones): Mesh {
   const mesh: Mesh = [];
-  meshTube(mesh, [-13.2, 0, 0], [-4.2, 0, 0], 2.9, 2.9, WHITE, 14, { kind: "round", cap0: DARK });
-  meshTube(mesh, [-4.2, 0, 0], [1, 0, 0], 2.9, 0.3, AMBER, 14, { kind: "round" });
+  meshTube(mesh, [-13.2, 0, 0], [-4.2, 0, 0], 2.9, 2.9, body, 14, { kind: "round", cap0: DARK });
+  meshTube(mesh, [-4.2, 0, 0], [1, 0, 0], 2.9, 0.3, warhead, 14, { kind: "round" });
   fins(mesh, {
     root: [-13.2, -8.6],
     tip: [-14.4, -12.6],
@@ -106,7 +116,7 @@ function heavyMissile(): Mesh {
     reach: 6,
     upright: 5.4,
     thick: 1.4,
-    tones: CREAM,
+    tones: finTones,
   });
   return mesh;
 }
@@ -181,6 +191,11 @@ function sheet(size: number, frames: readonly { id: string; svg: string }[]): st
   return `${root(SHEET_COLUMNS * size, Math.ceil(frames.length / SHEET_COLUMNS) * size)}${roots.join("")}</svg>\n`;
 }
 
+// Each missile's tail, logical px behind the nose, and its flame: width at the tail and length
+// at heading 14 in flicker frames 0 and 1.
+const RAPID_FLAME = { tail: 7, flame: { width: 2.6, length: [12, 15] } };
+const HEAVY_FLAME = { tail: 13.2, flame: { width: 5.6, length: [16.8, 11.8] } };
+
 const DIRECTORY = "/art/weapons/";
 const row = (id: string, path: string, size: number) => ({
   id,
@@ -201,14 +216,28 @@ function main() {
       key: "rapidMissile",
       file: "rapid-missile-sheet.svg",
       title: "Rapid Missile",
-      mesh: rapidMissile(),
+      mesh: rapidMissile(ADA_RAPID),
       size: 56,
     },
     {
       key: "heavyMissile",
       file: "heavy-missile-sheet.svg",
       title: "Heavy Missile",
-      mesh: heavyMissile(),
+      mesh: heavyMissile(ADA_HEAVY),
+      size: 96,
+    },
+    {
+      key: "enemyRapidMissile",
+      file: "enemy-rapid-missile-sheet.svg",
+      title: "Enemy Rapid Missile",
+      mesh: rapidMissile(ENEMY_RAPID),
+      size: 56,
+    },
+    {
+      key: "enemyHeavyMissile",
+      file: "enemy-heavy-missile-sheet.svg",
+      title: "Enemy Heavy Missile",
+      mesh: heavyMissile(ENEMY_HEAVY),
       size: 96,
     },
   ]) {
@@ -258,10 +287,13 @@ function main() {
     manifest: "core",
     assets,
     // What the renderer needs beside the frames, in logical px along the heading from the nose.
+    // The enemy missiles are the same models, so they keep the same flame geometry.
     missiles: {
       headings: MISSILE_HEADINGS,
-      rapidMissile: { tail: 7, flame: { width: 2.6, length: [12, 15] } },
-      heavyMissile: { tail: 13.2, flame: { width: 5.6, length: [16.8, 11.8] } },
+      rapidMissile: RAPID_FLAME,
+      heavyMissile: HEAVY_FLAME,
+      enemyRapidMissile: RAPID_FLAME,
+      enemyHeavyMissile: HEAVY_FLAME,
     },
     mine: { frames: MINE_FRAMES, degreesPerFrame: MINE_FRAME_DEGREES },
   });
