@@ -40,7 +40,8 @@ rectangle. Measure label centring against these faces, not the nine-slice
 margins or press target. Never shrink a label to fit; grow the button or reword
 the label. Primary and secondary share one silhouette; role sets colour and
 the pressed pose keeps its geometry. A disabled control keeps its label
-and layout, cannot activate and is skipped by keyboard navigation.
+and layout at full opacity, cannot activate and is skipped by keyboard
+navigation. Its colours are in [Disabled states](#disabled-states).
 
 Current Ada row widths still depend on the shared grid and wrapping styles,
 and Start still uses its fixed title width. See the
@@ -161,26 +162,29 @@ A repeat activation during the cue does not restart it.
 
 ## Colour tokens
 
-| Token          | Colour    | Use                                                                      |
-| -------------- | --------- | ------------------------------------------------------------------------ |
-| Card face      | `#3b3850` | Settings card and modal ground                                           |
-| Card shade     | `#2f2d3d` | Card lower-right edge                                                    |
-| Card rim       | `#6b6685` | Card upper-left edge                                                     |
-| Ink            | `#181425` | Outlines, fringes and button labels                                      |
-| Primary face   | `#bfa06f` | Muted gold main action                                                   |
-| Primary lip    | `#8a7148` | Primary lower lip                                                        |
-| Primary rim    | `#d2b886` | Primary top highlight                                                    |
-| Secondary face | `#9690b4` | Other actions                                                            |
-| Secondary lip  | `#5f5980` | Secondary lower lip                                                      |
-| Secondary rim  | `#aaa4c6` | Secondary top highlight                                                  |
-| Disabled face  | `#2f2d3d` | Flat unavailable control                                                 |
-| Focus ring     | `#ead4aa` | Cream band with ink fringes                                              |
-| Close X        | `#ead4aa` | Normal close mark; white on `#403d55` pressed                            |
-| Switch on      | `#2f7d76` | Track, with `#1f5a55` edge                                               |
-| Switch off     | `#57536e` | Track, with `#403d55` edge                                               |
-| Switch knob    | `#ffffff` | Knob, shaded `#c9c4d8`                                                   |
-| Card icons     | `#ead4aa` | Settings row and install step icons                                      |
-| Modal dim      | `#101926` | At alpha 0.70 over the whole view, under every modal card (`.ada-modal`) |
+| Token                | Colour    | Use                                                                      |
+| -------------------- | --------- | ------------------------------------------------------------------------ |
+| Card face            | `#3b3850` | Settings card and modal ground                                           |
+| Card shade           | `#2f2d3d` | Card lower-right edge                                                    |
+| Card rim             | `#6b6685` | Card upper-left edge                                                     |
+| Ink                  | `#181425` | Outlines, fringes and button labels                                      |
+| Primary face         | `#bfa06f` | Muted gold main action                                                   |
+| Primary lip          | `#8a7148` | Primary lower lip                                                        |
+| Primary rim          | `#d2b886` | Primary top highlight                                                    |
+| Secondary face       | `#9690b4` | Other actions                                                            |
+| Secondary lip        | `#5f5980` | Secondary lower lip                                                      |
+| Secondary rim        | `#aaa4c6` | Secondary top highlight                                                  |
+| Disabled face        | `#2f2d3d` | Flat disabled or unavailable control                                     |
+| Disabled mark        | `#9a96ad` | Icons, glyphs and marks of a disabled control, the Disabled label colour |
+| Disc disabled        | `#75748c` | Ring, bars and glyph of a disabled or empty HUD disc                     |
+| Quantity unavailable | `#514b68` | Flat face of an unavailable Exchange quantity                            |
+| Focus ring           | `#ead4aa` | Cream band with ink fringes                                              |
+| Close X              | `#ead4aa` | Normal close mark; white on `#403d55` pressed                            |
+| Switch on            | `#2f7d76` | Track, with `#1f5a55` edge                                               |
+| Switch off           | `#57536e` | Track, with `#403d55` edge                                               |
+| Switch knob          | `#ffffff` | Knob, shaded `#c9c4d8`                                                   |
+| Card icons           | `#ead4aa` | Settings row and install step icons                                      |
+| Modal dim            | `#101926` | At alpha 0.70 over the whole view, under every modal card (`.ada-modal`) |
 
 Runtime text is drawn by the game, never baked into sprites.
 
@@ -198,14 +202,83 @@ Runtime text is drawn by the game, never baked into sprites.
 Tile rows (shop items, ammunition, projects and jobs) draw their second line
 and Owned in row supporting, on the `#46425e` tile face, and every text of an
 unaffordable or busy row in row disabled, on the flat `#2f2d3d` face, so row
-text is 5:1 or more. Glyphs keep their `disabled` frames (`#9a96ad`, marks at
-3:1 or more).
+text is 5:1 or more. Glyphs keep their `disabled` frames (`#9a96ad`, 4.69:1
+on that face).
 
-Labels meet 4.5:1 and essential marks 3:1. Card icons, the close X and the focus
+Enabled labels meet 4.5:1 and essential marks 3:1; disabled labels and marks
+meet 3:1 ([Disabled states](#disabled-states)). Card icons, the close X and the focus
 ring are 7.76:1 on the card; the focus ring is 10.11:1 on the page background
 `#292734`. The pressed close X is 10.41:1 on `#403d55`. The switch tick is
 4.87:1 on the on track. Primary and secondary faces are 4.54:1 and 3.72:1
 against the card, and 5.91:1 and 4.84:1 against the page background.
+
+## Disabled states
+
+A disabled or unavailable control reads as present but unavailable through its
+own colours. No control, label or icon is dimmed with element opacity, in any
+state. Every figure below is measured between opaque colours.
+
+One rule sets every family:
+
+- A control that owns a rectangular button face replaces it with the flat
+  Disabled face `#2f2d3d`, using its sheet's `disabled` frame: no lip, no rim
+  and no press displacement.
+- A control with a round face, or with no face of its own, keeps that face or
+  ground.
+- Text takes Disabled label `#9a96ad`, or Row disabled `#a6a2b8` inside a tile
+  row. Icons, glyphs, rings and marks take Disabled mark `#9a96ad`, or Disc
+  disabled `#75748c` on a HUD disc.
+- Text and marks are 3:1 or more against their face and lower than the enabled
+  state's contrast. The Disabled face is 1.19:1 against the card `#3b3850`,
+  1.41:1 against a tile `#46425e` and 1.09:1 against the page background
+  `#292734`: the label and mark carry the control's presence, not the face.
+
+A disabled control is skipped by keyboard navigation; an unavailable one stays
+focusable and underlines its label on focus. Both keep the look below at rest,
+and an attempted activation plays the [refusal cue](#refusal-cue), which tints
+the label and glyph red `#e4574e` for its 320ms and then returns them to the
+disabled colours.
+
+| Family                                                                | Face                                                             | Frame or border                                                                                                                 | Text                                                                    | Icon or mark                                                          | Text and icon on face                                   | Enabled, for comparison      |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------- |
+| Standard text button, primary                                         | Disabled face `#2f2d3d`                                          | `ui-button-primary` frame 2 (`disabled`), flat over the full 48                                                                 | Disabled label `#9a96ad`                                                | Disabled mark `#9a96ad`                                               | 4.69:1                                                  | Ink on `#bfa06f`, 7.27:1     |
+| Standard text button, secondary                                       | Disabled face `#2f2d3d`                                          | `ui-button` frame 2 (`disabled`), flat over the full 48                                                                         | Disabled label `#9a96ad`                                                | Disabled mark `#9a96ad`                                               | 4.69:1                                                  | Ink on `#9690b4`, 5.96:1     |
+| Compact or small button                                               | Disabled face `#2f2d3d`                                          | The same sheets' frame 2, flat over the full 28                                                                                 | Disabled label `#9a96ad`; Row disabled `#a6a2b8` inside a busy tile row | Disabled mark `#9a96ad`                                               | 4.69:1; 5.42:1 in a row                                 | Ink, 7.27:1 or 5.96:1        |
+| Shop, ammunition, job and project rows (unaffordable, busy or locked) | Disabled face `#2f2d3d`, the well included                       | `ui-button-tile` frame 2 (`disabled`), flat over the full height                                                                | Row disabled `#a6a2b8`, every line and the price                        | Disabled mark `#9a96ad`: mask ink, or the glyph's `-disabled.svg`     | Text 5.42:1, glyph 4.69:1, price 7.27:1 on its ink pill | Cream on `#46425e`, 6.58:1   |
+| Exchange quantity                                                     | Quantity unavailable `#514b68`, 1.60:1 against its row `#302e42` | None: a flat face with no frame                                                                                                 | Cream `#ead4aa`                                                         | The resource icon, unchanged                                          | 5.67:1                                                  | Ink on `#9690b4`, 5.96:1     |
+| Ship card row                                                         | None: the card `#3b3850`                                         | None                                                                                                                            | Disabled label `#9a96ad`                                                | Disabled mark `#9a96ad`: mask ink, or the icon's disabled counterpart | 3.93:1                                                  | Cream, 7.76:1                |
+| Station page buttons (tabs)                                           | Disabled face `#2f2d3d`                                          | `ui-button` frame 2 (`disabled`)                                                                                                | Disabled label `#9a96ad`, no underline                                  | Disabled mark `#9a96ad`                                               | 4.69:1                                                  | Ink on `#9690b4`, 5.96:1     |
+| Switch row                                                            | None: the card `#3b3850`                                         | The switch's `on-disabled` or `off-disabled` frame: Disabled face track, Disabled mark knob with its tick or cross in `#2f2d3d` | Disabled label `#9a96ad`                                                | Disabled mark `#9a96ad`, the leading icon                             | Label and icon 3.93:1; knob 4.69:1 on its track         | Cream, 7.76:1                |
+| Close X                                                               | None: the card `#3b3850`                                         | `ui-close` `disabled` frame: the X alone, no face                                                                               | None                                                                    | Disabled mark `#9a96ad`                                               | 3.93:1                                                  | Cream, 7.76:1                |
+| Pause and Menu discs                                                  | Navy `#262b44`, as at rest                                       | The rest pose's ink edge; ring in Disc disabled `#75748c`                                                                       | None                                                                    | Disc disabled `#75748c`, the bars                                     | 3.07:1; ring 3.23:1 on the page background              | Cream, 9.59:1                |
+| Weapon disc                                                           | The weapon's solid face, navy `#262b44` when selected            | The annulus with both ink fringes; band in Disc disabled `#75748c`                                                              | Count pill unchanged                                                    | Disc disabled `#75748c`, the glyph                                    | 3.07:1 or more on every weapon face                     | Idle 6.83:1, selected 9.59:1 |
+
+- The current Station page button is a selection, not a disabled state: it
+  shares the flat `#2f2d3d` face but keeps a cream label (9.27:1) and the
+  primary underline ([Station pages](shop.md#station-pages)).
+- The Exchange quantity is the one exception to the Disabled face: its row
+  ground `#302e42` is 1.02:1 against `#2f2d3d`, so the flat face would not
+  show there.
+- Owned and Funded rows that cannot activate are status rows. They keep the
+  enabled tile face and text, without press displacement.
+- A disabled weapon disc draws its band and glyph in the Empty glyph colour at
+  every level and selection. Disc disabled is 3.07:1 on navy, 3.23:1 on the base field,
+  3.75:1 on dark plum, 3.22:1 on sunflower, 3.19:1 on dark teal and 3.97:1 on
+  ink.
+- Map place chips and quest markers are never disabled. A quest route endpoint
+  that refuses follows the faceless rule: Disabled label on the card, 3.93:1.
+
+Sprite coverage:
+
+| Sprite                                             | Disabled frame                                                                                       |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `ui-button`, `ui-button-primary`, `ui-button-tile` | Frame 2 (`disabled`) covers it                                                                       |
+| Shop, job and project glyphs                       | The `-disabled.svg` counterparts cover them                                                          |
+| Weapon discs                                       | Drawn from colour tokens; no sprite                                                                  |
+| `ui-close`                                         | Art adds a `disabled` frame: the X in `#9a96ad`                                                      |
+| `ui-switch`                                        | Art adds `on-disabled` and `off-disabled` frames                                                     |
+| Pause and Menu                                     | Art adds `pause-disabled.svg` and `menu-disabled.svg`: the rest pose with ring and bars in `#75748c` |
+| Ship card colour icons                             | Art adds disabled counterparts of `icon-cargo-20` and `icon-tow-20` in `#9a96ad`                     |
 
 ## Conversation box
 
@@ -579,6 +652,7 @@ provides the selection cue on every weapon.
 | Selected     | Cream `#ead4aa`                     | Cream `#ead4aa`, full opacity      | 9.59:1                             |
 | Refused      | The current state's ring            | `#e4574e`, full opacity during cue | 3.82:1                             |
 | Empty        | Muted lavender, or the level's tier | `#75748c`, full opacity            | 3.07:1                             |
+| Disabled     | `#75748c`                           | `#75748c`, full opacity            | 3.07:1                             |
 
 - Every state and level has the same visible outer diameter, 33 logical px
   including ink. The 4 px annulus contains an outer 1 px ink fringe, a 2 px
