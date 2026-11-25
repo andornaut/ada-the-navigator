@@ -106,12 +106,12 @@ The production build writes `/sw.js`, the kit's router service worker scoped to
 every file with its SHA-256 and size: the game page at `/play/`, the build output
 it loads, the web app manifest and its icons, every file under `public/art/`
 except `app-icon/`, and the galaxy selector previews under `public/previews/`.
-`/.game-kit/build.json` is served `no-store` and each manifest as immutable
-([`src/headers/securityPolicy.ts`](headers/securityPolicy.ts)). Each update group
-([`src/pwa/precachePlugin.ts`](pwa/precachePlugin.ts)) ships as a gzip archive at
-`/.game-kit/group-<sha256>.bin`, served as emitted without HTTP coding, and as a
-decoded copy at `/.game-kit/archive-<sha256>-0.bin` for installed builds on
-GameKit 0.72.0 or earlier.
+Each update group ([`src/pwa/precachePlugin.ts`](pwa/precachePlugin.ts)) ships
+as a gzip archive at `/.game-kit/group-<sha256>.bin`, served as emitted without
+HTTP coding, and as a decoded copy at `/.game-kit/archive-<sha256>-0.bin` for
+installed builds on GameKit 0.72.0 or earlier. `/.game-kit/build.json` is served
+`no-store`, and each manifest and group archive as immutable
+([`src/headers/securityPolicy.ts`](headers/securityPolicy.ts)).
 
 The page's launch ([`src/pwa/index.ts`](pwa/index.ts)) runs from the boot shell
 before the game module downloads. A production launch requires Service Worker,

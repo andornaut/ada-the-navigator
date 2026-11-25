@@ -51,6 +51,18 @@ export const FILE_RULES = [
     headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
     path: "/.game-kit/manifest-*",
   },
+  {
+    comment: "Each update group's gzip archive, named by its decoded SHA-256.",
+    headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
+    path: "/.game-kit/group-*",
+  },
+  {
+    comment:
+      "Each update group's decoded archive, named by its SHA-256, for builds on GameKit 0.72.0 " +
+      "or earlier.",
+    headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
+    path: "/.game-kit/archive-*",
+  },
 ] as const;
 
 // Optional Cloudflare Web Analytics on the landing page. Game HTML excludes edge injection;

@@ -56,7 +56,7 @@ describe("the security headers", () => {
     ]);
   });
 
-  it("keeps hashed assets and build manifests immutable, the build pointer unstored and game HTML byte-stable", () => {
+  it("keeps content-addressed files immutable, the build pointer unstored and game HTML byte-stable", () => {
     expect(FILE_RULES).toEqual([
       expect.objectContaining({
         headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
@@ -73,6 +73,14 @@ describe("the security headers", () => {
       expect.objectContaining({
         headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
         path: "/.game-kit/manifest-*",
+      }),
+      expect.objectContaining({
+        headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
+        path: "/.game-kit/group-*",
+      }),
+      expect.objectContaining({
+        headers: [["Cache-Control", "public, max-age=31536000, immutable"]],
+        path: "/.game-kit/archive-*",
       }),
     ]);
     expect(COMMON_RULE.headers.map(([name]) => name)).not.toContain("Cache-Control");
