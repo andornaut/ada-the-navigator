@@ -8,7 +8,6 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
-import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
@@ -34,16 +33,6 @@ function fixture(variant: IndustrialBodyKey) {
     { archetype: "retaliator", id, packId: null, phase: 0.4, weaponLevel: 1 },
     { x: 0, y: 0 },
   );
-  const shape = [...ASTEROID_SHAPES.values()][0]!;
-  const rock = {
-    asteroid: shape.id,
-    hp: 1,
-    id: "actual-rock",
-    kind: "rock" as const,
-    radius: shape.radius,
-    x: 1000,
-    y: 0,
-  };
   const context: EnemyContext = {
     adaWidth: CONTENT.tuning.flight.shipRadius * 2,
     dt: SIMULATION_STEP_SECONDS,
@@ -54,9 +43,6 @@ function fixture(variant: IndustrialBodyKey) {
     player: { x: 300, y: 0 },
     playerVelocity: { x: 0, y: 0 },
     retaliatorNavigation: {
-      asteroids: [
-        { id: rock.id, physicalReach: placementRadius(rock), position: { x: rock.x, y: rock.y } },
-      ],
       physicalReach: partsReach(worldParts(enemyPhysicalBody(ROUTE_POSITION[1], state)!)),
     },
     routePosition: 1,
@@ -80,7 +66,19 @@ function advance(value: ReturnType<typeof fixture>, state: EnemyState, industria
     },
   };
 }
-it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
+it("patrols an idle Mining Freighter with no traced rock around home, without the planner", () => {
+  const value = fixture("retaliatorMiningFreighter");
+  const plan = vi.spyOn(planner, "retaliatorNavigation");
+  let state = structuredClone(value.state);
+  let legacy = structuredClone(value.state);
+  for (let step = 0; step < 90; step++) {
+    state = advance(value, state, true);
+    legacy = advance(value, legacy, false);
+  }
+  expect(plan).not.toHaveBeenCalled();
+  expect(state).toEqual(legacy);
+});
+it.each(["retaliatorCargoHauler"] as const)(
   "uses %s idle input through the existing seeded ellipse and resumes its exact future",
   (variant) => {
     const value = fixture(variant);
@@ -165,19 +163,11 @@ it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
     const plan = vi.spyOn(planner, "retaliatorNavigation");
     const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
     model.step(SIMULATION_STEP_SECONDS, idle);
-    expect(plan).toHaveBeenCalled();
+    // The Mining Freighter traces rocks or patrols home without the industrial planner.
+    expect(plan.mock.calls.length > 0).toBe(variant === "retaliatorCargoHauler");
     expect(actor.enemy!.engaged).toBe(false);
-    if (variant === "retaliatorMiningFreighter") {
-      expect(plan.mock.calls.some(([context]) => context.asteroids.length > 0)).toBe(true);
-    }
     for (const [context] of plan.mock.calls) {
       expect(context.pursuit.homeRadius).toBe(2000);
-      for (const asteroid of context.asteroids) {
-        const actual = flight.objects.find((o) => o.id === asteroid.id)!;
-        expect(actual.kind).toBe("rock");
-        expect(asteroid.position).toEqual({ x: actual.x, y: actual.y });
-        expect(asteroid.physicalReach).toBe(placementRadius(actual));
-      }
     }
     const saved = model.save();
     const resumed = relaunch(CONTENT, saved);

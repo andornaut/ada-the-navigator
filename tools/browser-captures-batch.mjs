@@ -1221,6 +1221,95 @@ export function batchCaptures(ctx) {
     });
   }
 
+  // Every ship keeps moving in Sunflower, each case released from its saved start and stepped
+  // six frames 300 ms of clock time apart: an idle pack of three retaliators sharing one home,
+  // which patrol apart, a fighter returning to its home, which loops on past it, and a Mining
+  // Freighter tracing the edge of a large rock.
+  async function keepMoving() {
+    const rockArt = readAsteroidCatalog(await ctx.served("/art/asteroids.json"));
+    assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
+    const idle = (enemy) => {
+      enemy.engaged = false;
+    };
+    let minerIndex = 0;
+    while (
+      retaliatorVariant({ archetype: "retaliator", id: `browser-art:miner:${minerIndex}` }) !==
+      "retaliatorMiningFreighter"
+    ) {
+      minerIndex++;
+    }
+    const cases = [
+      [
+        "idle-pack",
+        (model) => {
+          const home = at(model.state.flight, { x: -60, y: 0 });
+          const screens = [
+            { x: -90, y: -30 },
+            { x: -40, y: 0 },
+            { x: -90, y: 30 },
+          ];
+          for (const [index, screen] of screens.entries()) {
+            addEnemy(model, {
+              archetype: "retaliator",
+              id: `browser-art:pack:${index}`,
+              screen,
+              setup: (enemy) => {
+                idle(enemy);
+                enemy.home = { ...home };
+                enemy.packId = "browser-art:pack";
+              },
+            });
+          }
+        },
+      ],
+      [
+        "returning",
+        (model) => {
+          addEnemy(model, {
+            archetype: "fighter",
+            screen: { x: 140, y: -40 },
+            setup: (enemy) => {
+              idle(enemy);
+              enemy.returning = true;
+            },
+          });
+        },
+      ],
+      [
+        "miner",
+        (model) => {
+          const flight = model.state.flight;
+          const art = rockArt.asteroids.find((entry) => entry.size === "large");
+          const rock = at(flight, { x: 60, y: -40 });
+          flight.objects.push({
+            asteroid: art.id,
+            hp: 99,
+            id: "browser-art:rock",
+            kind: "rock",
+            radius: art.footprintRadius,
+            x: rock.x,
+            y: rock.y,
+          });
+          addEnemy(model, {
+            archetype: "retaliator",
+            id: `browser-art:miner:${minerIndex}`,
+            screen: { x: -160, y: -40 },
+            setup: idle,
+          });
+        },
+      ],
+    ];
+    await inTurn(cases, async ([name, setup]) => {
+      const model = flightModel(1);
+      model.state.flight.objects = [];
+      setup(model);
+      const fixture = `keep-moving-${name}`;
+      await open(canonical(model, fixture));
+      await ctx.release();
+      await ctx.frames(fixture, { every: 300, shots: 6 });
+    });
+  }
+
   // The hostile stations' pod and dome tops in each family and the Claim platform's gun tops,
   // aimed at Ada, at 2 device px per CSS px: the Claim station and platform in Cartwheel, the
   // garnet station in Andromeda and the coral station in Phantom, each still, in a close-up, and
@@ -1289,6 +1378,7 @@ export function batchCaptures(ctx) {
     "holodisk-icon": holodiskIcon,
     hostile,
     "hostile-tops": hostileTops,
+    "keep-moving": keepMoving,
     landmarks,
     needle,
     "nose-heavy-missile": noseSet("heavyMissile", 1),

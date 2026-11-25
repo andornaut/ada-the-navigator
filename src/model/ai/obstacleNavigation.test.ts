@@ -145,7 +145,8 @@ it("bounds tiny-step prediction while checking the exact first runtime pose", ()
       state,
       { x: 1, y: 0 },
     ),
-  ).toEqual({ x: 0, y: 0 });
+    // With no clear course the ship reverses instead of stopping.
+  ).toEqual({ x: -1, y: 0 });
   expect(blockedQueries).toBeLessThan(100);
 });
 

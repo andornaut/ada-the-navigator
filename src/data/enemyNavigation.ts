@@ -1,3 +1,5 @@
+import type { IndustrialBodyKey } from "./enemyIdentity.ts";
+
 /** Existing strafe approach and pass steering factors. */
 export const ENEMY_STRAFE = {
   bendGain: 2,
@@ -41,3 +43,33 @@ export const ENEMY_FORWARD_GUNS: ForwardGuns = {
   lateralShare: 0.8,
   reverseShare: 0.6,
 };
+
+/**
+ * Every enemy ship that can move keeps moving (gameplay/ships.md "Keep moving"). Its request never
+ * falls below `minimumShare` of its current top speed. A turret ship that would hold a point
+ * circles it at `turretHoldRadii` times its spacing radius. Pack members on their shared route keep
+ * at least the galaxy's member spacing and the sum of both spacing radii plus `packGap` apart. A
+ * miner traces a rock's drawn outline with its centre its spacing radius plus `edgeGap` from it,
+ * for a seeded `dwellSeconds` per rock, and never picks one of its last `recentPicks` again.
+ */
+export interface EnemyKeepMoving {
+  dwellSeconds: readonly [number, number];
+  edgeGap: number;
+  minimumShare: number;
+  packGap: number;
+  recentPicks: number;
+  turretHoldRadii: number;
+}
+
+/** The keep-moving values (gameplay/ships.md "Keep moving"). */
+export const ENEMY_KEEP_MOVING: EnemyKeepMoving = {
+  dwellSeconds: [6, 12],
+  edgeGap: 20,
+  minimumShare: 0.25,
+  packGap: 20,
+  recentPicks: 3,
+  turretHoldRadii: 2,
+};
+
+/** The industrial retaliator bodies that mine: the Mining Freighter traces asteroid edges. */
+export const MINING_HULLS: readonly IndustrialBodyKey[] = ["retaliatorMiningFreighter"];

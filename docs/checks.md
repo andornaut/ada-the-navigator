@@ -279,7 +279,9 @@ keylines. The visible-art sets (`tools/browser-captures-batch.mjs`) are `fleet`,
 `effects` and `controls`. `enemy-facing` releases a fighter crossing past Ada, a
 fighter pulling out of a burst, a fighter strafing in its band, a frigate
 turning away while its turrets fire astern and a retaliator holding its band
-with its nose on Ada while its launcher fires. `resources` captures the Stardust and ore pickups on a
+with its nose on Ada while its launcher fires. `keep-moving` releases an idle
+pack of three retaliators sharing one home, a fighter returning home and a
+Mining Freighter beside a large rock, six frames 300 ms apart. `resources` captures the Stardust and ore pickups on a
 dark and a light field and every UI view that draws their icons. The nose sets
 (`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,
 `nose-heavy-missile` and `nose-phaser`) fire one weapon into open space at

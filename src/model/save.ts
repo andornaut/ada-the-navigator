@@ -6,6 +6,7 @@ import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { enemyActorAvailable, isEnemyActorKind } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { type HeavyHullProfile, isHeavyHullProfile, wreckEnemyId } from "../data/enemyIdentity.ts";
+import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
@@ -164,6 +165,8 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     !(value.returnSeconds === undefined || nonnegative(value.returnSeconds)) ||
     !(value.retreat === undefined || retreatState(value.age as number, value.retreat)) ||
     !(value.firePhasesInitialized === undefined || value.firePhasesInitialized === true) ||
+    !(value.patrolFlip === undefined || patrolFlip(value.age as number, value.patrolFlip)) ||
+    !(value.miner === undefined || minerState(value.age as number, value.miner)) ||
     !finite(value.phase) ||
     !vector(value.facing) ||
     !nullableVector(value.heading) ||
@@ -196,6 +199,28 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
           (Number.isInteger(part.burst) && (part.burst as number) >= 0)) &&
         nullableVector(part.aim),
     )
+  );
+}
+/** A flipped patrol: its side and the age it flipped at, no later than the ship's age. */
+function patrolFlip(age: number, value: unknown): boolean {
+  return (
+    record(value) &&
+    (value.side === 1 || value.side === -1) &&
+    nonnegative(value.at) &&
+    (value.at as number) <= age
+  );
+}
+/** A miner's tracing: its rock or none, its pick time, pick count and up to its recent picks. */
+function minerState(age: number, value: unknown): boolean {
+  return (
+    record(value) &&
+    (value.rock === null || typeof value.rock === "string") &&
+    nonnegative(value.since) &&
+    (value.since as number) <= age &&
+    Number.isInteger(value.count) &&
+    nonnegative(value.count) &&
+    strings(value.picks) &&
+    (value.picks as string[]).length <= ENEMY_KEEP_MOVING.recentPicks
   );
 }
 function retreatState(age: number, value: unknown): boolean {

@@ -16,16 +16,31 @@ export function avoidObstacles(
   state: EnemyState,
   request: Point,
 ): Point {
+  return steerAroundObstacles(physics, query, stepSeconds, speed, state, request).request;
+}
+
+/**
+ * The obstacle-steered request, and whether no course was clear: then the ship reverses its
+ * request instead of stopping (gameplay/ships.md "Keep moving").
+ */
+export function steerAroundObstacles(
+  physics: ShipPhysics,
+  query: NavigationQuery,
+  stepSeconds: number,
+  speed: number,
+  state: EnemyState,
+  request: Point,
+): { blocked: boolean; request: Point } {
   const share = Math.min(1, magnitude(request));
   if (!share || !speed) {
-    return request;
+    return { blocked: false, request };
   }
   const horizon = navigationHorizon(physics);
   const pose = { facing: state.facing, position: state.position, time: 0 };
   if (!query.clear(pose, ENEMY_AVOIDANCE.passageClearance)) {
     const escape = query.escape(pose, ENEMY_AVOIDANCE.passageClearance);
     if (escape) {
-      return { x: escape.x * share, y: escape.y * share };
+      return { blocked: false, request: { x: escape.x * share, y: escape.y * share } };
     }
   }
   const desired = direction(request);
@@ -73,7 +88,7 @@ export function avoidObstacles(
   // Prefer the wide travel berth; a constrained passage retains its own non-contact clearance.
   for (const clearance of [ENEMY_AVOIDANCE.clearance, ENEMY_AVOIDANCE.passageClearance]) {
     if (safe(desired, clearance)) {
-      return { x: desired.x * share, y: desired.y * share };
+      return { blocked: false, request: { x: desired.x * share, y: desired.y * share } };
     }
     // A local detour must still make forward progress toward the existing navigation request.
     for (let step = 1; step < ENEMY_AVOIDANCE.steeringDirections / 4; step++) {
@@ -81,10 +96,12 @@ export function avoidObstacles(
       for (const sign of [side, -side]) {
         const course = rotate(desired, angle * sign);
         if (safe(course, clearance)) {
-          return { x: course.x * share, y: course.y * share };
+          return { blocked: false, request: { x: course.x * share, y: course.y * share } };
         }
       }
     }
   }
-  return { x: 0, y: 0 };
+  // With no clear course the ship reverses rather than waiting for a request that never changes
+  // while it stands still.
+  return { blocked: true, request: { x: 0 - desired.x * share, y: 0 - desired.y * share } };
 }

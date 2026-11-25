@@ -4,10 +4,8 @@ import { ENEMY_NAVIGATION } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { enemyRandom } from "../data/enemyRandom.ts";
 import { retaliatorNavigation, type RetaliatorNavigationContext } from "./retaliatorNavigation.ts";
-import { worldDistance } from "./worldContacts.ts";
 
 const context: RetaliatorNavigationContext = {
-  asteroids: [],
   navigation: ENEMY_NAVIGATION,
   physicalReach: 20,
   pursuit: { homeRadius: 2000 },
@@ -55,49 +53,12 @@ describe("industrial idle navigation", () => {
       250, 250,
     ]);
   });
-  it("chooses nearest usable real asteroid and clears its full physical footprint", () => {
-    const asteroids = [
-      { id: "far", physicalReach: 40, position: { x: 1000, y: 0 } },
-      { id: "near", physicalReach: 40, position: { x: 700, y: 0 } },
-    ];
-    const plan = retaliatorNavigation({ ...context, asteroids }, miner)!;
-    expect(plan).toEqual({ anchor: { x: 260, y: 0 }, patrolRadius: [80, 150] });
-    expect(worldDistance(context, plan.anchor, asteroids[1]!.position) - 300).toBe(140);
-    expect(worldDistance(context, miner.home, plan.anchor) + 300).toBeLessThanOrEqual(2000);
-    expect(
-      retaliatorNavigation({ ...context, asteroids: [...asteroids].reverse() }, miner),
-    ).toEqual(plan);
-  });
-  it("breaks equal-distance ties by stable ID independently of candidate order", () => {
-    const asteroids = [
-      { id: "b", physicalReach: 40, position: { x: 0, y: 700 } },
-      { id: "a", physicalReach: 40, position: { x: 700, y: 0 } },
-    ];
-    const plan = retaliatorNavigation({ ...context, asteroids }, miner);
-    expect(plan?.anchor).toEqual({ x: 260, y: 0 });
-    expect(
-      retaliatorNavigation({ ...context, asteroids: [...asteroids].reverse() }, miner),
-    ).toEqual(plan);
-  });
-  it("projects toroidal candidates near home while retaining the same physical clearance", () => {
-    const wrapped = {
-      ...context,
-      asteroids: [{ id: "across", physicalReach: 40, position: { x: -4800, y: 0 } }],
-      worldSide: 10000,
-    };
-    const subject = { ...miner, home: { x: 4500, y: 0 } };
-    expect(retaliatorNavigation(wrapped, subject)?.anchor).toEqual({ x: 4760, y: 0 });
-  });
-  it("falls back to home for absent, overlapping, invalid or unreachable asteroids without mutation", () => {
-    const asteroids = [
-      { id: "overlap", physicalReach: 40, position: { x: 100, y: 0 } },
-      { id: "outside", physicalReach: 40, position: { x: 3000, y: 0 } },
-      { id: "invalid", physicalReach: -1, position: { x: 700, y: 0 } },
-    ];
-    const before = JSON.stringify({ asteroids, context, miner });
-    const fallback = { anchor: miner.home, patrolRadius: [80, 150] };
-    expect(retaliatorNavigation(context, miner)).toEqual(fallback);
-    expect(retaliatorNavigation({ ...context, asteroids }, miner)).toEqual(fallback);
-    expect(JSON.stringify({ asteroids, context, miner })).toBe(before);
+  it("patrols the Mining Freighter around home, its asteroid work being edge tracing", () => {
+    const before = JSON.stringify({ context, miner });
+    expect(retaliatorNavigation(context, miner)).toEqual({
+      anchor: miner.home,
+      patrolRadius: [80, 150],
+    });
+    expect(JSON.stringify({ context, miner })).toBe(before);
   });
 });

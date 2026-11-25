@@ -27,6 +27,8 @@ import { navigationLookAhead } from "./prediction.ts";
 export interface NavigationWorld extends WorldContext {
   readonly drawnOf: (object: SpaceObject) => Silhouette | null;
   readonly frameOf: (object: SpaceObject) => number;
+  /** A rock a miner traces: it is checked at `clearance` at most instead of the berths. */
+  readonly traced?: { readonly clearance: number; readonly id: string };
 }
 
 /** Bounds follow immutable outline identity; positions, frames and poses are not cached. */
@@ -166,7 +168,13 @@ export function worldNavigationQuery(
       );
     });
   };
-  const contact = (pose: NavigationPose, clearance: number, obstacle: Obstacle): Contact | null => {
+  /** The traced rock is checked at its edge clearance instead of a wider berth. */
+  const berth = (clearance: number, obstacle: Obstacle): number =>
+    context.traced && obstacle.object.id === context.traced.id
+      ? Math.min(clearance, context.traced.clearance)
+      : clearance;
+  const contact = (pose: NavigationPose, wanted: number, obstacle: Obstacle): Contact | null => {
+    const clearance = berth(wanted, obstacle);
     bodyAt(pose);
     const { drawn, frame, outline, reach } = obstacle;
     const centre = centreAt(pose, obstacle);
@@ -197,9 +205,10 @@ export function worldNavigationQuery(
           );
   };
   return {
-    clear(pose, clearance) {
+    clear(pose, wanted) {
       bodyAt(pose);
       return !obstacles.some((obstacle) => {
+        const clearance = berth(wanted, obstacle);
         const { outline } = obstacle;
         if (!outline) {
           return contact(pose, clearance, obstacle) !== null;

@@ -1,7 +1,6 @@
 import type { EnemyDefinition, EnemyNavigation, Point } from "../data/enemyCatalog.ts";
 import { type EnemyIdentity, retaliatorVariant } from "../data/enemyIdentity.ts";
-import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
-import { type WorldContext, worldDistance, worldPoint } from "./worldContacts.ts";
+import type { WorldContext } from "./worldContacts.ts";
 
 /** Peaceful industrial routes keep their existing extent independently of combat pursuit. */
 export const INDUSTRIAL_HOME_RADIUS = 2000;
@@ -16,8 +15,6 @@ export interface RetaliatorNavigationContext extends WorldContext {
   readonly navigation: EnemyNavigation;
   readonly pursuit: Pick<EnemyDefinition["pursuit"], "homeRadius">;
   readonly physicalReach: number;
-  /** Caller supplies only bounded, live, physical asteroid candidates. */
-  readonly asteroids: readonly RetaliatorAsteroid[];
 }
 
 export interface RetaliatorNavigationPlan {
@@ -53,34 +50,6 @@ export function retaliatorNavigation(
       ],
     };
   }
-  let selected: RetaliatorAsteroid | undefined;
-  let anchor: Point | undefined;
-  let nearest = Infinity;
-  const orbitReach = fallback.patrolRadius[1] * extent;
-  for (const asteroid of context.asteroids) {
-    if (!Number.isFinite(asteroid.physicalReach) || asteroid.physicalReach < 0) {
-      continue;
-    }
-    const distance = worldDistance(context, actor.home, asteroid.position);
-    const standOff =
-      asteroid.physicalReach + context.physicalReach + ENEMY_AVOIDANCE.clearance + orbitReach;
-    if (!Number.isFinite(distance) || distance <= standOff) {
-      continue;
-    }
-    const point = worldPoint(context, actor.home, asteroid.position);
-    const share = (distance - standOff) / distance;
-    const candidate = {
-      x: actor.home.x + (point.x - actor.home.x) * share,
-      y: actor.home.y + (point.y - actor.home.y) * share,
-    };
-    if (worldDistance(context, actor.home, candidate) + orbitReach > leash) {
-      continue;
-    }
-    if (distance < nearest || (distance === nearest && asteroid.id < selected!.id)) {
-      selected = asteroid;
-      nearest = distance;
-      anchor = candidate;
-    }
-  }
-  return anchor ? { ...fallback, anchor } : fallback;
+  // The Mining Freighter traces asteroid edges instead (enemyAi.ts); its fallback is home.
+  return fallback;
 }

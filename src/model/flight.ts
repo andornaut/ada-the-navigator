@@ -26,7 +26,7 @@ import {
   retaliatorVariant,
   WRECK_ID_PREFIX,
 } from "../data/enemyIdentity.ts";
-import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
+import { ENEMY_AVOIDANCE, ENEMY_KEEP_MOVING, MINING_HULLS } from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
@@ -46,6 +46,7 @@ import {
   weaponAt,
   type WeaponDefinition,
 } from "../data/weaponCatalog.ts";
+import { minerNeedsPick, outlineEdge, type TracedEdge } from "./ai/edgeTrace.ts";
 import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { worldNavigationQuery } from "./ai/worldNavigation.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
@@ -74,8 +75,10 @@ import {
 } from "./currents.ts";
 import {
   averageVelocity,
+  circlingSide,
   createEnemy,
   damageEnemy,
+  type EnemyContext,
   enemyDefeated,
   enemyFireLine,
   enemyIntegrity,
@@ -2214,6 +2217,173 @@ function guardPatrolFrame(
   return anchor ? { ...anchor, center: worldPoint(world, guard, anchor.center) } : undefined;
 }
 
+/** Whether a ship is at rest: no orbit and no velocity. */
+const atRest = (object: SpaceObject): boolean =>
+  !object.orbit && !(object.velocity && (object.velocity.x || object.velocity.y));
+
+/** The loop samples a miner checks for protected areas, safe areas and the Needle channel. */
+const MINER_LOOP_SAMPLES = 16;
+
+/**
+ * A Mining Freighter's runtime facts (gameplay/ships.md "Miners"): its traced rock's edge while
+ * that rock is live and at rest, and, when it picks, the rocks that qualify. A rock qualifies when
+ * it is live and at rest, its traced loop `offset` beyond its reach lies within the industrial
+ * leash of home and clear of protected areas, safe areas and the Needle channel, and the straight
+ * course to the loop clears other scenery at the passage berth.
+ */
+function minerInput(
+  content: GameContent,
+  flight: FlightState,
+  asteroids: () => ReturnType<typeof retaliatorAsteroidQuery>,
+  offset: number,
+  object: SpaceObject,
+): NonNullable<EnemyContext["miner"]> {
+  const state = object.enemy!;
+  const world = flightWorldContext(flight);
+  const traced = state.miner?.rock
+    ? flight.objects.find(
+        (other) =>
+          other.id === state.miner!.rock && other.kind === "rock" && other.hp > 0 && atRest(other),
+      )
+    : undefined;
+  let edge: TracedEdge | undefined;
+  if (traced) {
+    const centre = worldPoint(world, object, traced);
+    const drawn = drawnOf(flight, traced);
+    const frames = drawn?.frames.length ?? 0;
+    const outline = drawn?.frames[((frameOf(flight, traced) % frames) + frames) % frames];
+    if (outline) {
+      edge = outlineEdge(worldParts(outline), centre, object);
+    } else {
+      const away = worldDelta(world, centre, object);
+      const distance = Math.hypot(away.x, away.y);
+      edge = {
+        around: distance,
+        distance: Math.max(0, distance - placementRadius(traced)),
+        normal: distance ? { x: away.x / distance, y: away.y / distance } : { x: 0, y: -1 },
+      };
+    }
+  }
+  if (!minerNeedsPick(ENEMY_KEEP_MOVING, edge !== undefined, state)) {
+    return edge ? { edge } : {};
+  }
+  const blocked = (point: Vec): boolean =>
+    needleChannelContains({ radius: object.radius }, flight, point) ||
+    flight.objects.some((other) => {
+      const radius = exclusionZoneRadius(content, other);
+      return radius !== null && worldDistance(world, point, other) <= radius + object.radius;
+    });
+  const candidates = asteroids()(INDUSTRIAL_HOME_RADIUS, state.home).filter((rock) => {
+    const actual = flight.objects.find((other) => other.id === rock.id);
+    const loop = rock.physicalReach + offset;
+    if (
+      !actual ||
+      !atRest(actual) ||
+      worldDistance(world, state.home, rock.position) + loop > INDUSTRIAL_HOME_RADIUS
+    ) {
+      return false;
+    }
+    const centre = worldPoint(world, object, rock.position);
+    for (let index = 0; index < MINER_LOOP_SAMPLES; index++) {
+      const angle = (index / MINER_LOOP_SAMPLES) * Math.PI * 2;
+      if (blocked({ x: centre.x + Math.cos(angle) * loop, y: centre.y + Math.sin(angle) * loop })) {
+        return false;
+      }
+    }
+    const away = worldDelta(world, centre, object);
+    const distance = Math.hypot(away.x, away.y) || 1;
+    const entry = {
+      x: centre.x + (away.x / distance) * loop,
+      y: centre.y + (away.y / distance) * loop,
+    };
+    return !flight.objects.some(
+      (other) =>
+        other.id !== rock.id &&
+        other.hp > 0 &&
+        SCENERY.includes(other.kind) &&
+        worldSceneryBlocksSegment(
+          world,
+          other,
+          object,
+          entry,
+          ENEMY_AVOIDANCE.passageClearance + object.radius,
+          frameOf(flight, other),
+          drawnOf(flight, other),
+        ),
+    );
+  });
+  return {
+    candidates: candidates.map((rock) => ({ id: rock.id, position: rock.position })),
+    ...(edge ? { edge } : {}),
+  };
+}
+
+/**
+ * A moving enemy's velocity for one movement substep (gameplay/ships.md "Keep moving"): where a
+ * peer would block it, it slides along the contact on its circling side at the same speed, and
+ * at a Phantom blockade's reach it turns along the limit instead of pressing into it.
+ */
+function keepClear(
+  content: GameContent,
+  flight: FlightState,
+  blockade: boolean,
+  velocity: Vec,
+  drift: Vec,
+  dt: number,
+  object: SpaceObject,
+): Vec {
+  const enemy = object.enemy!;
+  const speed = Math.hypot(velocity.x, velocity.y);
+  if (!speed) {
+    return velocity;
+  }
+  const world = flightWorldContext(flight);
+  const side = circlingSide(enemy);
+  /** `velocity` without its component into `normal`, kept at speed, else along on `side`. */
+  const slide = (normal: Vec, current: Vec): Vec => {
+    const into = current.x * normal.x + current.y * normal.y;
+    if (into >= 0) {
+      return current;
+    }
+    const along = { x: current.x - into * normal.x, y: current.y - into * normal.y };
+    const size = Math.hypot(along.x, along.y);
+    const course =
+      size > speed / 2
+        ? { x: along.x / size, y: along.y / size }
+        : { x: -normal.y * side, y: normal.x * side };
+    return { x: course.x * speed, y: course.y * speed };
+  };
+  let next = velocity;
+  const ahead = { x: object.x + (next.x + drift.x) * dt, y: object.y + (next.y + drift.y) * dt };
+  const peer = flight.objects.find(
+    (other) =>
+      other !== object &&
+      other.kind === "enemy" &&
+      other.hp > 0 &&
+      !other.enemy?.salvaged &&
+      exclusionZoneRadius(content, other) === null &&
+      worldDistance(world, other, ahead) < enemySpacing(object, other),
+  );
+  if (peer) {
+    const away = worldDelta(world, peer, object);
+    const size = Math.hypot(away.x, away.y);
+    if (size) {
+      next = slide({ x: away.x / size, y: away.y / size }, next);
+    }
+  }
+  if (blockade && !enemy.fleeing) {
+    const offset = worldDelta(world, enemy.home, {
+      x: object.x + (next.x + drift.x) * dt,
+      y: object.y + (next.y + drift.y) * dt,
+    });
+    const reach = Math.hypot(offset.x, offset.y);
+    if (reach >= PHANTOM_TUNING.blockadeReach && reach > 0) {
+      next = slide({ x: -offset.x / reach, y: -offset.y / reach }, next);
+    }
+  }
+  return next;
+}
+
 /**
  * The first time each flight Ada comes within Talk range of a destination its guard still blocks
  * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
@@ -3514,16 +3684,16 @@ function enemies(
   events: FlightEvent[],
   shotDelays: Map<string, number>,
 ): void {
-  if (flight.galaxy === 6 && flight.phantom?.phase === "salvaged") {
+  // Once the flagship is salvaged Phantom's drones stand down: they patrol home and never fire.
+  const standDown = flight.galaxy === 6 && flight.phantom?.phase === "salvaged";
+  if (standDown) {
     flight.shots = flight.shots.filter((shot) => !shot.enemy);
     flight.mines = [];
     for (const object of flight.objects) {
       if (object.enemy) {
         object.enemy.engaged = false;
-        object.enemy.velocity = { x: 0, y: 0 };
       }
     }
-    return;
   }
   const aimVelocity = averageAimVelocity(dt, flight);
   // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
@@ -3608,7 +3778,7 @@ function enemies(
       song === 1
         ? base
         : { ...base, physics: { ...base.physics, maxSpeed: base.physics.maxSpeed * song } };
-    const targetable = !adaProtected(flight);
+    const targetable = !standDown && !adaProtected(flight);
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
     const escortLeader =
@@ -3620,34 +3790,47 @@ function enemies(
     const approach = escortLeader
       ? frigateEscortStation(ROUTE_POSITION[flight.galaxy], escortLeader, state.phase)
       : flight.player;
+    const industrialVariant = retaliatorVariant(state);
+    const minerOffset =
+      industrialVariant && MINING_HULLS.includes(industrialVariant)
+        ? spacingRadius(ROUTE_POSITION[flight.galaxy], state) + ENEMY_KEEP_MOVING.edgeGap
+        : null;
     const navigationQuery = worldNavigationQuery(
       {
         ...flightWorldContext(flight),
         drawnOf: (entry) => drawnOf(flight, entry),
         frameOf: (entry) => frameOf(flight, entry),
+        // A miner checks its traced rock at the edge gap instead of the avoidance berths.
+        ...(minerOffset !== null && state.miner?.rock
+          ? { traced: { clearance: ENEMY_KEEP_MOVING.edgeGap / 2, id: state.miner.rock } }
+          : {}),
       },
       flight.objects,
       definition,
       { ...state, position: before, radius: object.radius },
     );
     const stationGuardAnchor = guardPatrolFrame(content, flight, object);
-    const industrialVariant = retaliatorVariant(state);
     const industrialBody = industrialVariant
       ? enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], state)
       : null;
     const industrialInput =
       industrialVariant && definition.navigation && industrialBody
-        ? {
-            asteroids:
-              industrialVariant === "retaliatorMiningFreighter"
-                ? (industrialAsteroids ??= retaliatorAsteroidQuery(
-                    flightWorldContext(flight),
-                    content.tuning.chunkSize,
-                    flight.objects,
-                  ))(INDUSTRIAL_HOME_RADIUS, state.home)
-                : [],
-            physicalReach: partsReach(worldParts(industrialBody)),
-          }
+        ? { physicalReach: partsReach(worldParts(industrialBody)) }
+        : undefined;
+    const minerFacts =
+      minerOffset !== null && definition.navigation
+        ? minerInput(
+            content,
+            flight,
+            () =>
+              (industrialAsteroids ??= retaliatorAsteroidQuery(
+                flightWorldContext(flight),
+                content.tuning.chunkSize,
+                flight.objects,
+              )),
+            minerOffset,
+            object,
+          )
         : undefined;
     // Small craft drift with a current; frigates, capitals and platforms are too heavy.
     const drift = DRIFT_PROOF.includes(state.archetype)
@@ -3667,7 +3850,9 @@ function enemies(
         initialPackSizes: combat(flight).initialPackSizes,
         lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
         loadedPackMembers,
+        ...(minerFacts ? { miner: minerFacts } : {}),
         ...(navigationQuery ? { navigationQuery } : {}),
+        packSpacing: SPAWNER_POLICIES[flight.galaxy].memberSpacing,
         peers,
         player: flight.player,
         playerDisplacement,
@@ -3681,8 +3866,8 @@ function enemies(
         routePosition: ROUTE_POSITION[flight.galaxy],
         ...(industrialInput ? { retaliatorNavigation: industrialInput } : {}),
         ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
-        summoned: flight.summonedGuards?.includes(object.id) ?? false,
-        ...(flight.summonedGuards?.includes(object.id)
+        summoned: (!standDown && flight.summonedGuards?.includes(object.id)) ?? false,
+        ...(!standDown && flight.summonedGuards?.includes(object.id)
           ? {
               summonTarget: guardApproach(
                 flightWorldContext(flight),
@@ -3709,6 +3894,9 @@ function enemies(
       continue;
     }
     let velocity = intent.velocity;
+    // Only a ship under power slides along a peer or a limit; one coasting keeps to its physics.
+    const powered =
+      definition.navigation !== null && !intent.effects.disabled && !intent.effects.movementStopped;
     // Enemies bounce off scenery by the same rule as Ada; exclusion zones and peers still block.
     const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
     const onContact = (normal: Vec, surface: Vec): void => {
@@ -3720,6 +3908,18 @@ function enemies(
       Math.ceil((Math.hypot(velocity.x + drift.x, velocity.y + drift.y) * dt) / 4),
     );
     for (let i = 0; i < steps; i++) {
+      if (powered) {
+        velocity = keepClear(
+          content,
+          flight,
+          Boolean(blockade),
+          velocity,
+          drift,
+          dt / steps,
+          object,
+        );
+      }
+      object.enemy.velocity = { ...velocity };
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
         point[axis] += ((velocity[axis] + drift[axis]) * dt) / steps;
@@ -3743,7 +3943,10 @@ function enemies(
                   other.hp > 0 &&
                   !other.enemy?.salvaged &&
                   worldDistance(flightWorldContext(flight), other, point) <
-                    enemySpacing(object, other)),
+                    enemySpacing(object, other) &&
+                  // Two ships already overlapping may still move apart.
+                  worldDistance(flightWorldContext(flight), other, point) <=
+                    worldDistance(flightWorldContext(flight), other, object)),
           );
         if (!blocked) {
           object[axis] = point[axis];

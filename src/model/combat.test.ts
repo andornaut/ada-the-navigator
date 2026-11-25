@@ -1566,8 +1566,12 @@ describe("capital local-area separation", () => {
       expect(second.x).toBeLessThan(startDistance / 2);
       stopEngines(first);
       const stopped = { x: first.x, y: first.y };
+      const coast = Math.hypot(first.enemy!.velocity.x, first.enemy!.velocity.y);
       stepFlight(CONTENT, 3, idle, flight);
-      expect({ x: first.x, y: first.y }).toEqual(stopped);
+      // Without engines it only coasts out its momentum, which a peer contact slide may carry.
+      expect(Math.hypot(first.x - stopped.x, first.y - stopped.y)).toBeLessThanOrEqual(
+        coast * enemyCatalog[firstKind].physics.brakingSeconds + 1e-6,
+      );
       expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
         radius + capitalHullGap,
       );

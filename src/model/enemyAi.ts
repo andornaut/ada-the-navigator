@@ -10,15 +10,32 @@ import {
   type RetreatPolicy,
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
-import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
+import { type HeavyHullProfile, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
-import { ENEMY_STEERING, ENEMY_STRAFE, type ForwardGuns } from "../data/enemyNavigation.ts";
+import {
+  ENEMY_KEEP_MOVING,
+  ENEMY_STEERING,
+  ENEMY_STRAFE,
+  type ForwardGuns,
+  MINING_HULLS,
+} from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
 import type { WeaponLevel } from "../data/types.ts";
+import { seeded } from "./ai/course.ts";
+import {
+  edgeCourse,
+  leadCourse,
+  minerNeedsPick,
+  type MinerRock,
+  type MinerState,
+  pickMinerRock,
+  type TracedEdge,
+} from "./ai/edgeTrace.ts";
 import type { NavigationQuery } from "./ai/navigationQuery.ts";
-import { avoidObstacles } from "./ai/obstacleNavigation.ts";
+import { steerAroundObstacles } from "./ai/obstacleNavigation.ts";
+import { packAnchor, type PackMember, packSlot } from "./ai/packRoute.ts";
 import {
   type StationGuardAnchor,
   stationGuardPatrol,
@@ -93,9 +110,16 @@ export interface EnemyState {
   id: string;
   /** Where the ship last saw Ada; an engaged ship steers here while she is unseen. */
   lastSeen: Point | null;
+  /** A Mining Freighter's edge tracing; absent until its first pick. */
+  miner?: MinerState;
   /** Seconds since the ship last saw Ada. */
   lastSeenAge: number;
   packId: string | null;
+  /**
+   * A solo patrol's flipped direction and the age it flipped at, set when obstacle steering
+   * finds no clear course; absent, the ship patrols on its seeded side.
+   */
+  patrolFlip?: { at: number; side: -1 | 1 };
   phase: number;
   position: Point;
   primaryCooldown: number;
@@ -119,10 +143,17 @@ export interface EnemyState {
 export interface EnemyContext extends WorldContext {
   /** Validated exact route-site frame for local guard home patrol and return only. */
   stationGuardAnchor?: StationGuardAnchor;
-  /** Bounded actual asteroid facts for industrial idle routes only. */
-  retaliatorNavigation?: Pick<RetaliatorNavigationContext, "asteroids" | "physicalReach">;
+  /** The industrial body's physical reach, present for industrial idle routes only. */
+  retaliatorNavigation?: Pick<RetaliatorNavigationContext, "physicalReach">;
   /** Optional hull-clearance steering, separate from perception and weapon intent. */
   navigationQuery?: NavigationQuery;
+  /**
+   * A Mining Freighter's runtime facts: the qualifying rocks when it picks, and its traced
+   * rock's edge while that rock is live and at rest.
+   */
+  miner?: { readonly candidates?: readonly MinerRock[]; readonly edge?: TracedEdge };
+  /** The galaxy's encounter member spacing, the least gap on a pack's shared route. */
+  packSpacing?: number;
   /** Admission for new sight aggression only; damage, summons and existing pursuit bypass it. */
   engagementAdmitted?: boolean;
   /** Local current velocity, in addition to the hull's retained physics velocity. */
@@ -194,15 +225,6 @@ export interface EnemyIntent {
 const magnitude = (point: Point): number => Math.hypot(point.x, point.y);
 const unit = direction;
 const UP: Point = { x: 0, y: -1 };
-
-/** A ship's seeded value in [0, 1) from its id, fixed for its life. */
-function seeded(id: string, salt: number): number {
-  let value = 2166136261 ^ salt;
-  for (let index = 0; index < id.length; index++) {
-    value = Math.imul(value ^ id.charCodeAt(index), 16777619);
-  }
-  return (value >>> 0) / 2 ** 32;
-}
 
 const rotate = (vector: Point, angle: number): Point => ({
   x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
@@ -485,6 +507,193 @@ function arrive(
   return { x: (offset.x / distance) * arrival, y: (offset.y / distance) * arrival };
 }
 
+const scaled = (vector: Point, size: number): Point => ({ x: vector.x * size, y: vector.y * size });
+
+/** How far inward a circling course turns from afar, relative to its sideways share. */
+const LOOP_INWARD = 3;
+
+/**
+ * A unit course circling `point` at `radius` on `side`: sideways on the circle, bending outward
+ * inside it and inward beyond it, at most LOOP_INWARD to one.
+ */
+function circling(
+  context: WorldContext,
+  point: Point,
+  radius: number,
+  side: number,
+  state: EnemyState,
+): Point {
+  const offset = worldDelta(context, point, state.position);
+  const distance = magnitude(offset);
+  const outward = distance
+    ? scaled(offset, 1 / distance)
+    : rotate(UP, seeded(state.id, 15) * Math.PI * 2);
+  const correction = Math.max(-LOOP_INWARD, Math.min(1, 1 - distance / radius));
+  return unit({
+    x: outward.x * correction - side * outward.y,
+    y: outward.y * correction + side * outward.x,
+  });
+}
+
+/**
+ * A request that follows a moving `target` with `velocity`: its velocity as a share of `speed`
+ * plus a closing term that reaches full speed `brakingSeconds` of travel out, capped at 1.
+ */
+function follow(
+  definition: EnemyDefinition,
+  context: WorldContext,
+  speed: number,
+  target: Point,
+  velocity: Point,
+  state: EnemyState,
+): Point {
+  const reach = Math.max(0.001, speed * definition.physics.brakingSeconds);
+  const offset = worldDelta(context, state.position, target);
+  const request = {
+    x: velocity.x / Math.max(0.001, speed) + offset.x / reach,
+    y: velocity.y / Math.max(0.001, speed) + offset.y / reach,
+  };
+  const size = magnitude(request);
+  return size > 1 ? scaled(request, 1 / size) : request;
+}
+
+/** A noncombat course with the existing peer separation, at the same pace. */
+function separated(
+  definition: EnemyDefinition,
+  context: EnemyContext,
+  course: Point,
+  state: EnemyState,
+): Point {
+  const pace = magnitude(course);
+  const push = separation(definition, context, state);
+  if (!pace || (!push.x && !push.y)) {
+    return course;
+  }
+  const steered = unit({ x: course.x / pace + push.x, y: course.y / pace + push.y });
+  return magnitude(steered) ? scaled(steered, pace) : course;
+}
+
+/** A movable ship's request raised to ENEMY_KEEP_MOVING.minimumShare, along its facing at rest. */
+function keepMoving(state: EnemyState, request: Point): Point {
+  const share = magnitude(request);
+  const floor = ENEMY_KEEP_MOVING.minimumShare;
+  if (share >= floor) {
+    return request;
+  }
+  const course = share ? scaled(request, 1 / share) : unit(state.facing);
+  return scaled(magnitude(course) ? course : UP, floor);
+}
+
+/** Whether a ship flies a mining hull, which traces asteroid edges while idle. */
+const mining = (state: EnemyState): boolean => {
+  const variant = retaliatorVariant(state);
+  return variant !== undefined && MINING_HULLS.includes(variant);
+};
+
+/** A solo patrol's direction: its flipped side, else its seeded side. */
+const patrolSide = (state: EnemyState): -1 | 1 =>
+  state.patrolFlip?.side ?? (seeded(state.id, 14) < 0.5 ? -1 : 1);
+
+/** A miner has reached its traced edge within this many edge offsets of the outline. */
+const MINER_ARRIVAL = 3;
+
+/** Seconds a flipped patrol keeps its new direction before obstacle steering may flip it again. */
+const FLIP_SECONDS = 2;
+
+/**
+ * The live members of a ship's pack that fly its shared route, the ship included: two or more
+ * ships sharing its pack id, less escorts with a live leader. Empty when the ship flies alone.
+ */
+function packMembers(context: EnemyContext, state: EnemyState): PackMember[] {
+  if (state.packId === null) {
+    return [];
+  }
+  const peers = context.peers.filter(
+    (peer) =>
+      peer.id !== state.id &&
+      peer.packId === state.packId &&
+      peer.hp > 0 &&
+      !peer.disabled &&
+      !escorted(context, peer),
+  );
+  if (!peers.length || escorted(context, state)) {
+    return [];
+  }
+  return [state, ...peers].map((member) => ({
+    age:
+      member.id === state.id
+        ? (context.peers.find((peer) => peer.id === state.id)?.age ?? state.age)
+        : member.age,
+    home: member.home,
+    id: member.id,
+    spacing: spacingRadius(context.routePosition, member),
+  }));
+}
+
+/**
+ * A pack member's request on its pack's shared route through `anchor` (gameplay/ships.md "Keep
+ * moving"), or null for a ship flying alone.
+ */
+function packCourse(
+  definition: EnemyDefinition,
+  context: EnemyContext,
+  speed: number,
+  anchor: Point | null,
+  state: EnemyState,
+): Point | null {
+  const members = packMembers(context, state);
+  if (!members.length || !definition.navigation || state.packId === null) {
+    return null;
+  }
+  const combatShare =
+    definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
+  const pace = speed * definition.navigation.patrolShare * combatShare;
+  const slot = packSlot(
+    definition.navigation,
+    { gap: ENEMY_KEEP_MOVING.packGap, memberSpacing: context.packSpacing ?? 0 },
+    state.packId,
+    anchor ?? packAnchor(context, state.home, members),
+    pace,
+    members,
+    state.id,
+  );
+  return slot
+    ? follow(definition, context, speed, slot.point, scaled(slot.tangent, pace), state)
+    : null;
+}
+
+/**
+ * An escort's request on its leader's station ring: its station `gap` from the leader turns with
+ * the leader's age on the leader's seeded side, moving the escort at the minimum share of its
+ * speed relative to the leader, so a leader's escorts keep their equal angles.
+ */
+function escortRing(
+  definition: EnemyDefinition,
+  context: EnemyContext,
+  speed: number,
+  leader: EnemyState,
+  state: EnemyState,
+): Point {
+  const gap = spacingRadius(context.routePosition, leader) + escortTuning.stationGap;
+  const side = seeded(leader.id, 14) < 0.5 ? -1 : 1;
+  const rate = (ENEMY_KEEP_MOVING.minimumShare * speed) / gap;
+  const angle = state.phase + side * rate * leader.age;
+  const radial = { x: Math.cos(angle), y: Math.sin(angle) };
+  const station = {
+    x: leader.position.x + radial.x * gap,
+    y: leader.position.y + radial.y * gap,
+  };
+  const turning = scaled({ x: -radial.y * side, y: radial.x * side }, rate * gap);
+  return follow(
+    definition,
+    context,
+    speed,
+    station,
+    { x: leader.velocity.x + turning.x, y: leader.velocity.y + turning.y },
+    state,
+  );
+}
+
 /**
  * Smooth approach to a seeded ellipse passing through its anchor. The flow uses current
  * position and fixed ship identity, so resuming or changing frame rate never rerolls a route.
@@ -506,7 +715,7 @@ function navigate(
       context,
       stationAnchor,
       state.home,
-      seeded(state.id, 14) < 0.5 ? -1 : 1,
+      patrolSide(state),
       state.position,
     );
     const radius = stationGuardPatrolRadius(context, stationAnchor, state.home);
@@ -532,7 +741,7 @@ function navigate(
     tuning.ellipseRatio[0] +
     seeded(state.id, 12) * (tuning.ellipseRatio[1] - tuning.ellipseRatio[0]);
   const heading = state.phase + seeded(state.id, 13) * Math.PI * 2;
-  const side = seeded(state.id, 14) < 0.5 ? -1 : 1;
+  const side = patrolSide(state);
   const offset = rotate({ x: radius, y: 0 }, heading);
   const relative = worldDelta(context, anchor, state.position);
   const local = rotate({ x: relative.x - offset.x, y: relative.y - offset.y }, -heading);
@@ -574,7 +783,7 @@ function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefi
 }
 
 /** The side a ship circles or passes Ada on, +1 or -1, fixed for the ship by its phase. */
-const circlingSide = (state: EnemyState): number => (Math.cos(state.phase) >= 0 ? 1 : -1);
+export const circlingSide = (state: EnemyState): number => (Math.cos(state.phase) >= 0 ? 1 : -1);
 
 /**
  * Steering that holds `band` from Ada along `aim`: straight in beyond the far edge, straight out
@@ -707,10 +916,19 @@ function steering(
   distance: number,
   state: EnemyState,
 ): Point {
+  const leader = escorted(context, state);
   if (state.returning) {
-    return definition.navigation
-      ? navigate(definition, context, context.stationGuardAnchor, state.home, true, state)
-      : arrive(definition, context, maxSpeed, state.home, state);
+    if (!definition.navigation) {
+      return arrive(definition, context, maxSpeed, state.home, state);
+    }
+    // A returning pack member makes for its place on the pack's route through home.
+    return separated(
+      definition,
+      context,
+      packCourse(definition, context, maxSpeed, null, state) ??
+        navigate(definition, context, context.stationGuardAnchor, state.home, true, state),
+      state,
+    );
   }
   if (retreatActive(state)) {
     return retreatCourse(definition.retreats[state.retreat!.kind], state);
@@ -720,14 +938,38 @@ function steering(
       state.retreat?.endedAt !== undefined &&
       state.lastSeen !== null &&
       state.lastSeenAge < definition.pursuit.unseenSeconds;
-    const industrial =
+    const peaceful =
       state.archetype === "retaliator" &&
       !state.engaged &&
       !state.fleeing &&
       !investigate &&
       !context.stationGuardAnchor &&
-      definition.navigation &&
-      context.retaliatorNavigation
+      definition.navigation !== null;
+    // An idle Mining Freighter traces its picked rock's edge (gameplay/ships.md "Miners").
+    const edge = context.miner?.edge;
+    if (peaceful && mining(state) && state.miner?.rock && edge && definition.navigation) {
+      const offset = spacingRadius(context.routePosition, state) + ENEMY_KEEP_MOVING.edgeGap;
+      const pace = definition.navigation.patrolShare;
+      // Turning in by its velocity's lag around the curve keeps the hull on the edge.
+      const course = leadCourse(
+        pace * maxSpeed,
+        definition.physics.accelerationSeconds,
+        edge,
+        edgeCourse(offset, patrolSide(state), edge),
+      );
+      return separated(definition, context, scaled(course, pace), state);
+    }
+    // An idle escort with a live leader keeps its station ring.
+    if (leader && !investigate && definition.navigation) {
+      return separated(
+        definition,
+        context,
+        escortRing(definition, context, maxSpeed, leader, state),
+        state,
+      );
+    }
+    const industrial =
+      peaceful && !mining(state) && definition.navigation && context.retaliatorNavigation
         ? retaliatorNavigation(
             {
               ...context.retaliatorNavigation,
@@ -745,26 +987,46 @@ function steering(
             navigation: { ...definition.navigation, patrolRadius: industrial.patrolRadius },
           }
         : definition;
-    return navigate(
-      idleDefinition,
+    const pack =
+      !industrial && !context.stationGuardAnchor
+        ? packCourse(definition, context, maxSpeed, investigate ? state.lastSeen : null, state)
+        : null;
+    return separated(
+      definition,
       context,
-      investigate ? undefined : context.stationGuardAnchor,
-      investigate ? state.lastSeen! : (industrial?.anchor ?? state.home),
-      investigate,
+      pack ??
+        navigate(
+          idleDefinition,
+          context,
+          investigate ? undefined : context.stationGuardAnchor,
+          investigate ? state.lastSeen! : (industrial?.anchor ?? state.home),
+          investigate,
+          state,
+        ),
       state,
     );
   }
   const behaviour = definition.behaviour;
   if (context.visibility !== "visible") {
-    // An engaged ship that has lost sight of Ada makes for where it last saw her; a siege ship
-    // keeps to its slow advance.
+    // An engaged ship that has lost sight of Ada searches where it last saw her, a pack on its
+    // shared route through that point; a siege ship keeps to its slow advance.
     if (definition.navigation) {
-      return navigate(
+      const pack =
+        state.lastSeen && !leader
+          ? packCourse(definition, context, maxSpeed, state.lastSeen, state)
+          : null;
+      return separated(
         definition,
         context,
-        state.lastSeen === null ? context.stationGuardAnchor : undefined,
-        state.lastSeen ?? state.home,
-        state.lastSeen !== null,
+        pack ??
+          navigate(
+            definition,
+            context,
+            state.lastSeen === null ? context.stationGuardAnchor : undefined,
+            state.lastSeen ?? state.home,
+            state.lastSeen !== null,
+            state,
+          ),
         state,
       );
     }
@@ -796,29 +1058,29 @@ function steering(
     unit({ x: aim.x * scale + push.x, y: aim.y * scale + push.y });
   const side = circlingSide(state);
   const band = definition.standoff;
-  /** Holds `edges` from Ada, or presses in without a band (a heavy). */
+  /** Strafing along the band on the circling side, for a hold that separation cancels. */
+  const along = { x: -aim.y * side, y: aim.x * side };
+  /**
+   * Holds `edges` from Ada, or presses in without a band (a heavy). Peer separation that cancels
+   * the hold leaves the ship strafing on its circling side.
+   */
   const hold = (edges = band, range = distance): Point => {
     if (!edges) {
       return toward(1);
     }
     const held = holdBand(edges, aim, range, side);
-    return unit({ x: held.x + push.x, y: held.y + push.y });
+    const course = unit({ x: held.x + push.x, y: held.y + push.y });
+    return magnitude(course) ? course : along;
   };
-  const capital = escorted(context, state);
-  if (capital) {
-    // Escorts hold a station beyond the capital's spacing radius and intercept Ada when she
-    // comes close to it.
-    const hull = spacingRadius(context.routePosition, capital);
-    const reach = worldDistance(context, capital.position, context.player);
+  if (leader) {
+    // Escorts circle their leader on its station ring and intercept Ada when she comes close
+    // to it.
+    const hull = spacingRadius(context.routePosition, leader);
+    const reach = worldDistance(context, leader.position, context.player);
     if (reach <= escortTuning.interceptRadius + hull) {
       return hold();
     }
-    const gap = hull + escortTuning.stationGap;
-    const station = {
-      x: capital.position.x + Math.cos(state.phase) * gap,
-      y: capital.position.y + Math.sin(state.phase) * gap,
-    };
-    return arrive(definition, context, maxSpeed, station, state);
+    return escortRing(definition, context, maxSpeed, leader, state);
   }
   switch (behaviour.kind) {
     case "chase": {
@@ -876,9 +1138,19 @@ function steering(
     case "siege":
       break;
   }
-  // Siege advances slowly while the turrets fire.
-  const advance = toward(1);
-  return { x: advance.x * behaviour.speedFraction, y: advance.y * behaviour.speedFraction };
+  // Siege advances slowly while the turrets fire. Close in, a turret ship circles the point it
+  // would hold, Ada, at ENEMY_KEEP_MOVING.turretHoldRadii of its spacing radius.
+  const holdRadius =
+    ENEMY_KEEP_MOVING.turretHoldRadii * spacingRadius(context.routePosition, state);
+  const point = { x: state.position.x + aim.x * distance, y: state.position.y + aim.y * distance };
+  const advance =
+    distance > (1 + LOOP_INWARD) * holdRadius
+      ? toward(1)
+      : unit({
+          x: circling(context, point, holdRadius, side, state).x + push.x,
+          y: circling(context, point, holdRadius, side, state).y + push.y,
+        });
+  return scaled(magnitude(advance) ? advance : along, behaviour.speedFraction);
 }
 
 function firingInterval(profile: Pick<FireProfile, "interval">): number {
@@ -1040,15 +1312,46 @@ export function stepEnemy(
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
+  // An idle Mining Freighter picks its next rock when its dwell ends or its rock is gone or
+  // moving; the runtime supplies the qualifying rocks for that step.
+  if (
+    mining(next) &&
+    definition.navigation &&
+    !next.engaged &&
+    !next.returning &&
+    context.miner?.candidates &&
+    minerNeedsPick(ENEMY_KEEP_MOVING, context.miner.edge !== undefined, state)
+  ) {
+    next.miner = pickMinerRock(context, ENEMY_KEEP_MOVING, context.miner.candidates, next);
+  }
+  // Its dwell runs from its arrival on the edge, so travel to a rock never eats into it.
+  const minerEdge = context.miner?.edge;
+  if (
+    next.miner?.rock &&
+    minerEdge &&
+    minerEdge.distance >
+      MINER_ARRIVAL * (spacingRadius(context.routePosition, next) + ENEMY_KEEP_MOVING.edgeGap)
+  ) {
+    next.miner = { ...next.miner, since: next.age };
+  }
   // A disabled heavy stops steering and coasts to rest.
   let request = effects.disabled
     ? { x: 0, y: 0 }
     : summoned
       ? unit(worldDelta(context, state.position, context.summonTarget ?? context.player))
       : steering(acting, context, speed, aim, distance, next);
+  // A tracing miner turns with its own turnSeconds, so it holds the edge's curve.
+  const tracing =
+    mining(next) &&
+    next.miner?.rock &&
+    context.miner?.edge !== undefined &&
+    !next.engaged &&
+    !next.returning &&
+    !next.fleeing;
   const navigating =
     definition.navigation &&
     !summoned &&
+    !tracing &&
     (next.returning ||
       (!next.fleeing &&
         (!next.engaged || !context.targetable || context.visibility !== "visible")));
@@ -1099,15 +1402,43 @@ export function stepEnemy(
     !next.fleeing &&
     !breakingOff &&
     next.engaged &&
-    fighting;
+    // An escort on its station ring keeps its nose on Ada while it sees her.
+    (fighting || (observed && escorted(context, next) !== undefined));
   if (holdNose) {
     if (magnitude(pointed)) {
       next.facing = turnToward(context.dt, physics.aimTurnSeconds, pointed, state.facing);
     }
     request = strafeLimited(forward, next.facing, request);
   }
+  // A ship that can move keeps moving at least at the minimum share; one without navigation
+  // (a platform), engines or weapons stays as its physics leaves it.
+  if (
+    definition.navigation &&
+    fullSpeed > 0 &&
+    !effects.defeated &&
+    !effects.disabled &&
+    !effects.movementStopped
+  ) {
+    request = keepMoving(state, request);
+  }
   if (context.navigationQuery && !effects.disabled && !effects.movementStopped) {
-    request = avoidObstacles(physics, context.navigationQuery, context.dt, speed, state, request);
+    const steered = steerAroundObstacles(
+      physics,
+      context.navigationQuery,
+      context.dt,
+      speed,
+      state,
+      request,
+    );
+    request = steered.request;
+    // A patroller with no clear course flips its patrol direction instead of stopping.
+    if (
+      steered.blocked &&
+      navigating &&
+      (!state.patrolFlip || next.age - state.patrolFlip.at >= FLIP_SECONDS)
+    ) {
+      next.patrolFlip = { at: next.age, side: patrolSide(state) === 1 ? -1 : 1 };
+    }
   }
   if (
     effects.defeated ||
