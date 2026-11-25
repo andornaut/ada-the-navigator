@@ -236,7 +236,7 @@ source. It prints an `ada-browser-UUID` name; collect that run with:
 node tools/browser-check.mjs collect ada-browser-UUID
 ```
 
-Exit 75 means the browser is still running. A run fails after 600 seconds
+Exit 75 means the browser is still running. A run fails after 900 seconds
 (`tools/smoke-limit.mjs`), and its preview server stops 30 seconds later.
 Collection saves browser and preview
 logs, browser evidence and `verification.json` in `.check-results/<browser-name>/`
@@ -255,7 +255,7 @@ HTTP preview origin as secure (`launchBrowser` in `tools/browser-support.mjs`).
 A run fails on every failed request except an update group archive
 (`/.game-kit/group-<sha256>.bin`) aborted by a page closing mid-download.
 
-The smoke has a 600 second limit.
+The smoke has a 900 second limit.
 
 ### Art review captures
 
