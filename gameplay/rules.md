@@ -1457,10 +1457,11 @@ but carry a light tint of color; asteroids are play objects, not background.
 Moving rocks are chosen from placed slot and feature rocks at the densities in
 [Spawn targets](#spawn-targets) and keep the chosen rock's size and shape. A
 seeded half of the chosen rocks lead a small cluster: each pulls 1, 2 or 3
-(equal weight) of the nearest placed slot or feature rocks whose centres lie
-within 300 world units, fewer when fewer qualify, and the cluster shares the
-leader's velocity. The other half move alone. Every rock that moves counts
-toward the moving-rock target, so about 75% of moving rocks travel in clusters.
+(equal weight) of the nearest placed slot or feature rocks in its own chunk
+whose centres lie within 300 world units, fewer when fewer qualify, and the
+cluster shares the leader's velocity. The other half move alone. Every rock that
+moves counts toward the moving-rock target, so about 60% of moving rocks travel
+in clusters. A destroyed moving rock drops loot like a static rock of its size.
 Each cluster or solo rock rolls a seeded speed from 10 to 100 world units per
 second and travels in a straight line at constant velocity. It may rotate. A chosen rock starts outside the
 exclusion zones that apply to moving rocks; once moving, it may hit any object.
