@@ -1,11 +1,16 @@
-// Rare decorative compositions: muted native SVG forms, using each galaxy's existing planet palette.
+// Rare giant decorations: muted native SVG frames in each galaxy's own decoration tones. Every
+// galaxy has three solid formations (art/tools/decoration-models.ts), resolved by depth into
+// flat tones. Sunflower and Andromeda also keep their three flat planet frames, six in all.
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
+import { decorationMesh } from "./decoration-models.ts";
 import { type ManifestFile, readManifest, replaceEntries } from "./manifest.ts";
+import { stageRows } from "./polish-rows.ts";
 import { svgText } from "./svg-text.ts";
+import { loopArea, pathData, tonePaths, type V2, visibleFragments } from "./visible.ts";
 
 type GalaxyId = Exclude<ManifestFile, "core">;
 
@@ -25,6 +30,47 @@ export interface DecorationRecipe {
   }[];
 }
 
+const FRAME = [1024, 768] as const;
+// Clear frame px round a solid formation.
+const MARGIN = 60;
+// The formation's visible span in logical px at size scale 1.
+const SPAN = 720;
+// The galaxies whose flat planet frames stay beside the solid formations.
+const PLANET_FRAMES: readonly GalaxyId[] = ["sunflower", "andromeda"];
+// Their six-frame sheet, staged beside the shipped three-frame sheet until the switch.
+const STAGED_SHEET = "decoration-set-sheet.svg";
+
+type Drawing = { kind: "planet" | "solid"; variant: number };
+
+// A galaxy's frames in sprite order. `staged` is the set after the switch.
+function drawings(galaxy: GalaxyId, staged: boolean): Drawing[] {
+  const planets = [0, 1, 2].map((variant): Drawing => ({ kind: "planet", variant }));
+  const solids = [0, 1, 2].map((variant): Drawing => ({ kind: "solid", variant }));
+  if (!PLANET_FRAMES.includes(galaxy)) return solids;
+  return staged ? [...planets, ...solids] : planets;
+}
+
+const draw = (c: Colours, galaxy: GalaxyId, { kind, variant }: Drawing) =>
+  kind === "planet" ? decorationDrawing(c, galaxy, variant) : solidDrawing(c, galaxy, variant);
+
+const BLACK = { body: "#000000", lit: "#000000", night: "#000000", ring: "#000000" };
+
+function sprites(galaxy: GalaxyId, staged: boolean): DecorationRecipe["sprites"] {
+  return drawings(galaxy, staged).map((drawing, index) => {
+    const { bodies } = draw(BLACK, galaxy, drawing);
+    const xs = bodies.flatMap((body) =>
+      body.polygons.flatMap((polygon) => polygon.outer.map((point) => point[0])),
+    );
+    const width = SPAN / (Math.max(...xs) - Math.min(...xs));
+    return {
+      asset: `backdrop-decoration-${galaxy}-${index + 1}`,
+      width: n(width),
+      height: n(width * 0.75),
+      bodies,
+    };
+  });
+}
+
 /** Display geometry and placement are shared by the runtime and native Art proofs. */
 export function decorationRecipe(galaxy: GalaxyId): DecorationRecipe {
   return {
@@ -39,27 +85,49 @@ export function decorationRecipe(galaxy: GalaxyId): DecorationRecipe {
       { scale: 2, weight: 3 },
       { scale: 3, weight: 1 },
     ],
-    sprites: [1, 2, 3].map((variant) => {
-      const { bodies } = decorationDrawing(
-        { body: "#000000", lit: "#000000", night: "#000000", ring: "#000000" },
-        galaxy,
-        variant - 1,
-      );
-      const xs = bodies.flatMap((body) =>
-        body.polygons.flatMap((polygon) => polygon.outer.map((point) => point[0])),
-      );
-      const width = 720 / (Math.max(...xs) - Math.min(...xs));
-      return {
-        asset: `backdrop-decoration-${galaxy}-${variant}`,
-        width: n(width),
-        height: n(width * 0.75),
-        bodies,
-      };
-    }),
+    sprites: sprites(galaxy, false),
   };
 }
 
-/** Write only the galaxy's rare decoration assets and matching manifest entries. */
+function frames(colours: Colours, galaxy: GalaxyId, staged: boolean) {
+  return drawings(galaxy, staged).map((drawing, index) => ({
+    entry: {
+      id: `backdrop-decoration-${galaxy}-${index + 1}`,
+      path: `/art/${galaxy}/decoration-${index + 1}.svg`,
+      width: FRAME[0],
+      height: FRAME[1],
+      kind: "backdrop-decoration",
+      facing: "fixed",
+      pivot: { x: 0.5, y: 0.5 },
+    },
+    svg: svgText(draw(colours, galaxy, drawing).svg),
+  }));
+}
+
+// The frames as one sheet of nested roots, `width` px wide.
+function sheetSvg(sheet: string, width: number, members: ReturnType<typeof frames>): string {
+  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: width, widths: [width] }, [
+    {
+      value: sheet,
+      rectangles: members.map(({ entry }) => ({ width: entry.width, height: entry.height })),
+    },
+  ])?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== members.length) {
+    throw new Error(`Cannot pack ${sheet}`);
+  }
+  const roots = members.map(({ entry, svg }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${entry.id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${page.height}" viewBox="0 0 ${width} ${page.height}">${roots.join("")}</svg>\n`;
+}
+
+/**
+ * Write the galaxy's rare decoration assets and matching manifest entries. A galaxy that keeps
+ * its planet frames also writes its six-frame sheet beside the shipped one and stages the
+ * manifest rows and backdrop sprites that switch to it.
+ */
 export function writeDecorations(
   palette: Readonly<Record<string, string>>,
   galaxy: GalaxyId,
@@ -74,66 +142,48 @@ export function writeDecorations(
   const prefix = `backdrop-decoration-${galaxy}-`;
   const directory = `/art/${galaxy}/`;
   const sheet = `${directory}decoration-sheet.svg`;
-  const frames = decorationRecipe(galaxy).sprites.map((sprite, variant) => ({
-    entry: {
-      id: sprite.asset,
-      path: `${directory}decoration-${variant + 1}.svg`,
-      width: 1024,
-      height: 768,
-      kind: "backdrop-decoration",
-      facing: "fixed",
-      pivot: { x: 0.5, y: 0.5 },
-    },
-    svg: svgText(decorationSvg(colours, galaxy, variant)),
-  }));
+  const live = frames(colours, galaxy, false);
   const owns = (id: string) => id.startsWith(prefix);
   const installed: readonly { id: string; path?: unknown; svgSheet?: unknown }[] =
     readManifest(galaxy).assets;
   const rows = installed.filter(({ id, path }) => owns(id) || path === sheet);
   const write = (path: string, svg: string) => writeFileSync(art + path.slice("/art/".length), svg);
 
+  if (PLANET_FRAMES.includes(galaxy)) {
+    const staged = `${directory}${STAGED_SHEET}`;
+    const members = frames(colours, galaxy, true);
+    write(staged, sheetSvg(staged, 3 * FRAME[0], members));
+    stageRows(`decorations-${galaxy}`, {
+      manifest: galaxy,
+      replaces: sheet,
+      assets: members.map(({ entry }) => ({ ...entry, path: staged, svgSheet: true })),
+      backdrop: { decorations: { sprites: sprites(galaxy, true) } },
+    });
+  }
+
   if (!rows.some(({ path, svgSheet }) => path === sheet || svgSheet === true)) {
-    for (const { entry, svg } of frames) write(entry.path, svg);
+    for (const { entry, svg } of live) write(entry.path, svg);
     replaceEntries(
       galaxy,
       owns,
-      frames.map(({ entry }) => entry),
+      live.map(({ entry }) => entry),
     );
     return;
   }
   if (
-    rows.length !== frames.length ||
+    rows.length !== live.length ||
     rows.some(
       ({ id, path, svgSheet }, index) =>
-        id !== frames[index]!.entry.id || path !== sheet || svgSheet !== true,
+        id !== live[index]!.entry.id || path !== sheet || svgSheet !== true,
     )
   ) {
     throw new Error(`Invalid ${galaxy} backdrop decoration sheet selection`);
   }
-
-  const width = 2048;
-  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: width, widths: [width] }, [
-    {
-      value: sheet,
-      rectangles: frames.map(({ entry }) => ({ width: entry.width, height: entry.height })),
-    },
-  ])?.pages[0];
-  const slots = page?.placed[0]?.at;
-  if (!page || slots?.length !== frames.length) {
-    throw new Error(`Cannot pack ${galaxy} backdrop decorations`);
-  }
-  const members = frames.map(({ entry, svg }, index) => {
-    const { x, y } = slots[index]!;
-    return `<svg id="${entry.id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
-  });
-  write(
-    sheet,
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${page.height}" viewBox="0 0 ${width} ${page.height}">${members.join("")}</svg>\n`,
-  );
+  write(sheet, sheetSvg(sheet, 2 * FRAME[0], live));
   replaceEntries(
     galaxy,
     owns,
-    frames.map(({ entry }) => ({ ...entry, path: sheet, svgSheet: true })),
+    live.map(({ entry }) => ({ ...entry, path: sheet, svgSheet: true })),
   );
 }
 
@@ -205,35 +255,7 @@ const around = (x: number, y: number, r: number, count = 14) =>
     (_, i) =>
       [n(x + Math.cos((i * tau) / count) * r), n(y + Math.sin((i * tau) / count) * r)] as const,
   );
-function fragment(
-  c: Colours,
-  x: number,
-  y: number,
-  r: number,
-  stretch: number,
-  rotation: number,
-  seed: number,
-) {
-  const points = Array.from({ length: 7 }, (_, i) => {
-    const a = (i * tau) / 7 + rotation;
-    const reach = r * (0.86 + 0.14 * Math.sin(seed * 1.7 + i * 4.1));
-    return [n(x + Math.cos(a) * reach * stretch), n(y + Math.sin(a) * reach)] as const;
-  });
-  return (
-    polygon(points, c.body) +
-    polygon([points[0]!, points[1]!, points[2]!, [x, y]], c.lit) +
-    polygon([points[3]!, points[4]!, points[5]!, [x, y]], c.night)
-  );
-}
-function planet(
-  c: Colours,
-  x: number,
-  y: number,
-  r: number,
-  id: string,
-  gas = false,
-  eclipse = false,
-) {
+function planet(c: Colours, x: number, y: number, r: number, id: string, gas = false) {
   const previous = current;
   current = id === "giant" ? "formation" : id;
   record(around(x, y, r));
@@ -254,7 +276,7 @@ function planet(
       c.ring,
     );
   }
-  ink += `<ellipse cx="${x + r * (eclipse ? 0.11 : 0.45)}" cy="${y + r * 0.12}" rx="${r * (eclipse ? 0.94 : 0.88)}" ry="${r * 1.04}" fill="${c.night}"/>`;
+  ink += `<ellipse cx="${x + r * 0.45}" cy="${y + r * 0.12}" rx="${r * 0.88}" ry="${r * 1.04}" fill="${c.night}"/>`;
   recording = wasRecording;
   return ink + "</g>";
 }
@@ -293,148 +315,100 @@ function rings(
     ? `<g ${transform}><path d="M${x - rx} ${y} A${rx} ${ry} 0 0 0 ${x + rx} ${y}" fill="none" stroke="${c.ring}" stroke-width="13"/><path d="M${x - rx * 0.88} ${y} A${rx * 0.88} ${ry * 0.82} 0 0 0 ${x + rx * 0.88} ${y}" fill="none" stroke="${c.body}" stroke-width="20"/></g>`
     : `<g ${transform}><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="none" stroke="${c.ring}" stroke-width="13"/><ellipse cx="${x}" cy="${y}" rx="${rx * 0.88}" ry="${ry * 0.82}" fill="none" stroke="${c.body}" stroke-width="20"/></g>`;
 }
-function spiral(c: Colours, variant: number) {
-  let ink = "";
-  for (let arm = 0; arm < 3; arm++)
-    for (let i = 0; i < 10; i++) {
-      const r = 70 + i * 42,
-        a = (arm * tau) / 3 + i * 0.23 + variant * 0.18;
-      ink += fragment(
-        c,
-        512 + Math.cos(a) * r,
-        384 + Math.sin(a) * r * 0.66,
-        22 + i * 1.7,
-        1.3,
-        a,
-        i + arm * 13,
-      );
+// The three tones of a solid formation, light to dark, as planet palette keys: lit, body and
+// night. Sunflower takes the three tones of its planet frames, and Andromeda its ring tone as
+// the darkest, so each galaxy's solids span the range its planet frames already ship.
+const SOLID_TONES: Readonly<Partial<Record<GalaxyId, readonly (keyof Colours)[]>>> = {
+  sunflower: ["body", "night", "ring"],
+  andromeda: ["lit", "body", "ring"],
+};
+const solidTones = (c: Colours, galaxy: GalaxyId) =>
+  (SOLID_TONES[galaxy] ?? ["lit", "body", "night"]).map((key) => c[key]);
+
+// A loop smaller than this many square frame px is a sliver between facets and is not drawn.
+const SLIVER = 12;
+
+type Resolved = { paths: { tone: number; loops: V2[][] }[]; bodies: DecorationBody[] };
+const resolved = new Map<string, Resolved>();
+
+const inside = ([x, y]: V2, ring: readonly V2[]) => {
+  let hit = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [a, b] = [ring[i]!, ring[j]!];
+    if (a[1] > y !== b[1] > y && x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0]) {
+      hit = !hit;
     }
-  for (const [x, y] of [
-    [246, 260],
-    [756, 480],
-  ])
-    for (let i = 0; i < 5; i++)
-      ink += fragment(
-        c,
-        x + Math.cos(i * 2.4) * 52,
-        y + Math.sin(i * 2.4) * 32,
-        24,
-        1.4,
-        i,
-        i + variant,
-      );
-  return ink;
-}
-function brokenRing(c: Colours, variant: number, sparse = false) {
-  let ink = "";
-  const count = sparse ? 9 : 25;
-  for (let i = 0; i < count; i++) {
-    const a = (i * tau) / count + variant * 0.19;
-    if (!sparse && ((a > 0.4 && a < 1.15) || (a > 3.3 && a < 4.05))) continue;
-    ink += fragment(
-      c,
-      512 + Math.cos(a) * 410,
-      384 + Math.sin(a) * 245,
-      sparse ? 17 : 38 + (i % 3) * 5,
-      1.4,
-      a,
-      i + variant,
-    );
   }
-  return ink;
-}
-function slab(c: Colours, variant: number) {
-  const shift = variant * 9;
-  return (
-    polygon(
-      [
-        [74, 320],
-        [375, 210 + shift],
-        [475, 333],
-        [322, 390],
-        [130, 392],
-      ],
-      c.body,
-    ) +
-    polygon(
-      [
-        [399, 210 + shift],
-        [687, 200],
-        [606, 354],
-        [494, 330],
-      ],
-      c.lit,
-    ) +
-    polygon(
-      [
-        [708, 203],
-        [964, 274],
-        [875, 405],
-        [626, 360],
-      ],
-      c.body,
-    ) +
-    polygon(
-      [
-        [133, 409],
-        [322, 404],
-        [472, 351],
-        [431, 457],
-        [235, 473],
-      ],
-      c.night,
-    ) +
-    polygon(
-      [
-        [502, 349],
-        [606, 372],
-        [864, 423],
-        [650, 480],
-        [454, 459],
-      ],
-      c.night,
-    )
+  return hit;
+};
+
+// The formation fitted to the frame inside the margin and centred, as tone paths and the bodies
+// of its silhouette: the largest piece is `formation`, each further piece `part-2` onward, and
+// openings through a piece are its holes.
+function resolve(galaxy: GalaxyId, variant: number): Resolved {
+  const key = `${galaxy} ${variant}`;
+  const cached = resolved.get(key);
+  if (cached) return cached;
+  const visible = visibleFragments(decorationMesh(galaxy, variant), (point) => point);
+  const xs = visible.flatMap(({ points }) => points.map(([x]) => x));
+  const ys = visible.flatMap(({ points }) => points.map(([, y]) => y));
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const k = Math.min((FRAME[0] - 2 * MARGIN) / (x1 - x0), (FRAME[1] - 2 * MARGIN) / (y1 - y0));
+  const [tx, ty] = [FRAME[0] / 2 - (k * (x0 + x1)) / 2, FRAME[1] / 2 - (k * (y0 + y1)) / 2];
+  const fitted = visible.map((fragment) => ({
+    ...fragment,
+    points: fragment.points.map(([x, y]): V2 => [x * k + tx, y * k + ty]),
+  }));
+  const paths = tonePaths(fitted, 1, SLIVER).map(({ fill, loops }) => ({
+    tone: Number(fill),
+    loops,
+  }));
+  const silhouette = paths[0]!.loops;
+  const sign = Math.sign(
+    loopArea(silhouette.toSorted((a, b) => Math.abs(loopArea(b)) - Math.abs(loopArea(a)))[0]!),
   );
-}
-function stream(c: Colours, variant: number, shift: number) {
-  let ink = "";
-  for (let i = 0; i < 18; i++)
-    ink += fragment(
-      c,
-      40 + i * 55,
-      318 - i * 3 + Math.sin(i * 1.8 + variant) * 20 + shift,
-      13 + (i % 3) * 4,
-      1.6,
-      -0.1,
-      i,
+  const outers = silhouette
+    .filter((loop) => Math.sign(loopArea(loop)) === sign)
+    .toSorted((a, b) => Math.abs(loopArea(b)) - Math.abs(loopArea(a)));
+  const holes = silhouette.filter((loop) => Math.sign(loopArea(loop)) !== sign);
+  const normal = (loop: readonly V2[]) =>
+    loop.map(
+      ([x, y]) => [Number((x / FRAME[0]).toFixed(6)), Number((y / FRAME[1]).toFixed(6))] as const,
     );
-  return ink;
-}
-function hollow(c: Colours, variant: number) {
-  const outer = around(512, 384, 280, 11),
-    inner = around(504, 377, 150, 8).reverse();
-  const points = (ps: readonly (readonly [number, number])[]) =>
-    ps.map(([x, y]) => `${x} ${y}`).join(" L");
-  record(outer, [inner]);
-  return (
-    path(`M${points(outer)} Z M${points(inner)} Z`, c.body).replace(
-      "<path ",
-      '<path fill-rule="evenodd" ',
-    ) +
-    polygon(
-      [
-        [245, 376],
-        [329, 207],
-        [495, 116],
-        [485, 217],
-        [361, 284],
+  const result = {
+    paths,
+    bodies: outers.map((outer, index) => ({
+      id: index === 0 ? "formation" : `part-${index + 1}`,
+      polygons: [
+        {
+          outer: normal(outer),
+          holes: holes.filter((hole) => inside(hole[0]!, outer)).map(normal),
+        },
       ],
-      c.lit,
-    ) +
-    fragment(c, 808, 477, 81, 1.5, 0.3, variant)
-  );
+    })),
+  };
+  resolved.set(key, result);
+  return result;
 }
-export function decorationDrawing(
+
+function solidDrawing(
+  c: Colours,
+  galaxy: GalaxyId,
+  variant: number,
+): { svg: string; bodies: DecorationBody[] } {
+  const { bodies, paths } = resolve(galaxy, variant);
+  const tones = solidTones(c, galaxy);
+  const ink = paths
+    .map(({ loops, tone }) => `<path fill="${tones[tone]}" d="${pathData(loops)}"/>`)
+    .join("");
+  return {
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME[0]}" height="${FRAME[1]}" viewBox="0 0 ${FRAME[0]} ${FRAME[1]}">${ink}</svg>\n`,
+    bodies,
+  };
+}
+
+// The flat planet frames Sunflower and Andromeda keep.
+function decorationDrawing(
   c: Colours,
   galaxy: GalaxyId,
   variant: number,
@@ -470,24 +444,9 @@ export function decorationDrawing(
       rings(c, 512, 384, 470, 140, -18 + v * 9, true) +
       rings(c, 570, 365, 400, 205, 24 - v * 7, true);
     ink += planet(c, 112, 584, 38, "moon");
-  } else if (galaxy === "whirlpool") {
-    if (v === 1) ink += planet(c, 520, 385, 335, "giant");
-    ink += spiral(c, v);
-    if (v === 2) ink += fragment(c, 550, 350, 145, 1.3, 0.2, 11);
-  } else if (galaxy === "needle") {
-    if (v === 1) ink += planet(c, 510, 384, 335, "giant");
-    else ink += slab(c, v);
-    ink += stream(c, v, v === 0 ? 160 : -90);
-  } else if (galaxy === "andromeda") {
+  } else {
     ink += planet(c, 512 + v * 12, 384, 335, "giant", true);
     ink += planet(c, 108, 180, 36, "moon1") + planet(c, 903, 579, 44, "moon2");
-  } else if (galaxy === "cartwheel") {
-    if (v === 1) ink += planet(c, 512, 384, 335, "giant");
-    if (v === 2) ink += hollow(c, v);
-    else ink += brokenRing(c, v);
-  } else {
-    ink += planet(c, 512, 384, 335, "giant", false, true) + brokenRing(c, v, true);
-    if (v === 2) ink += fragment(c, 890, 620, 155, 1.2, -0.3, 7);
   }
   return {
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768">${ink}</svg>\n`,
@@ -495,6 +454,12 @@ export function decorationDrawing(
   };
 }
 
-export function decorationSvg(c: Colours, galaxy: GalaxyId, variant: number): string {
-  return decorationDrawing(c, galaxy, variant).svg;
+/** One live frame of a galaxy's set, by sprite index. */
+export function decorationSvg(c: Colours, galaxy: GalaxyId, index: number): string {
+  return draw(c, galaxy, drawings(galaxy, false)[index]!).svg;
+}
+
+/** Every frame of a galaxy's set after the switch, in sprite order. */
+export function decorationSet(c: Colours, galaxy: GalaxyId): string[] {
+  return drawings(galaxy, true).map((drawing) => draw(c, galaxy, drawing).svg);
 }

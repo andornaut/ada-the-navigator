@@ -61,14 +61,16 @@ bounding-box entry rate or the fraction of nonempty cameras does not establish
 this target. Prefer the lowest measured parallax that preserves a distant feel
 with bounded overlap and quiet stretches.
 
-The recipe's three `sprites` entries hold `asset`, `width`, `height` and
-`bodies`. Each body's normalized `polygons` have an `outer` ring and optional
-`holes`; polygons combine by union. Coordinates follow the actual clipped
-visible drawing, including ring and hollow openings. A body represents an
-independent object or a recognizable formation containing smaller components;
-standalone moons have separate ids. The producer derives display size from the
-visible formation span, not transparent canvas margins. Independent bodies
-remain visibly larger than the canonical 42-pixel ship at minimum scale.
+The recipe's `sprites` entries hold `asset`, `width`, `height` and `bodies`;
+a galaxy has three or six, and the runtime picks among however many it lists.
+Each body's normalized `polygons` have an `outer` ring and optional
+`holes`; polygons combine by union. Coordinates follow the actual visible
+drawing, with ring and hoop openings as holes. A solid formation's largest
+connected piece is the body `formation` and each further piece `part-2`
+onward; a planet frame's standalone moons have separate ids. The producer
+derives display size from the visible formation span, not transparent canvas
+margins. Independent bodies remain visibly larger than the canonical 42-pixel
+ship at minimum scale.
 
 The native SVG sources are 1024 by 768, tagged `kind: backdrop-decoration`
 in the galaxy manifest. The consumer caps the longest texture edge at 1024,
@@ -78,21 +80,56 @@ visible encounter proofs use the opaque geometry. Decorations have no model
 objects, collision, loot, discovery, landmark or map role. Functional landmarks,
 route-map compositions and story-room art remain separate.
 
-| Galaxy    | Recurrent rare signature                                           |
-| --------- | ------------------------------------------------------------------ |
-| Sunflower | Golden ringed planets, overlapping broad rings and polygon regions |
-| Whirlpool | Large asteroid spirals with concentrated arm pockets               |
-| Needle    | Long narrow debris streams and enormous fractured slabs            |
-| Andromeda | Blue-violet gas planets, broad curved bands and distant moons      |
-| Cartwheel | Broken asteroid rings and hollow faceted rock formations           |
-| Phantom   | Dark eclipsed planets, sparse fragment arcs and subtle silhouettes |
+Every galaxy has three solid formations on its own theme, modelled in
+[decoration-models.ts](tools/decoration-models.ts) as connected solids and
+resolved by depth into flat tones under the one light from the upper left:
+tops lightest, walls facing left mid, walls facing right darkest, round
+bodies in two tones on a clean terminator. A formation is fitted inside a
+60 px margin of its frame and centred. Sunflower and Andromeda also keep
+their three flat planet frames, so their sets hold six frames: the planets
+as sprites 1 to 3 and the solids as 4 to 6.
+
+| Galaxy    | Frames | Solid formations                                                                                                           |
+| --------- | -----: | -------------------------------------------------------------------------------------------------------------------------- |
+| Sunflower |      6 | A planet inside one broad ring; a bloom of eight petals round a seed dome; a small ringed planet and three moons in an arc |
+| Cartwheel |      3 | One wheel lying on its axle; two wheels on one long axle; one wheel on edge with its axle through it                       |
+| Whirlpool |      3 | Two, three and one spiral arms round a domed drum                                                                          |
+| Andromeda |      6 | One saucer with its lamp; two saucers stacked on one stem; three saucers stepping down in size                             |
+| Needle    |      3 | A needle through one level eye ring; two eye rings on one needle; a needle threaded through an upright eye                 |
+| Phantom   |      3 | One three-armed slab on a spindle; a slab over its turned double; a large and a small slab, each on its spindle            |
+
+Sunflower's and Andromeda's planet frames are golden ringed planets with
+overlapping broad rings and polygon regions, and blue-violet gas planets
+with broad curved bands and distant moons.
 
 [backdrop-decorations.ts](tools/backdrop-decorations.ts) is the native
 composition producer. `backdrop.ts` writes its assets and recipes only after
-the existing galaxy contrast checks pass. Each composition uses opaque
-colours from that galaxy's planet recipe at full strength (before
+the existing galaxy contrast checks pass. Each frame uses opaque colours
+from that galaxy's planet recipe at full strength (before
 [muting](#muting)), so overlapping forms do not compound alpha or add palette
-entries.
+entries. A solid formation takes three of them, light to dark: lit, body
+and night. Its main solid uses all three, its second solid the two darker
+ones, and a planet's ring the darkest alone. Sunflower's solids take body,
+night and ring, the three tones of its planet frames, and Andromeda's take
+lit, body and ring.
+
+| Galaxy    | Solid tones (contrast on the field)            | Maximum |
+| --------- | ---------------------------------------------- | ------: |
+| Sunflower | `#DACDAF` 1.05, `#CEBC85` 1.14, `#CDB47C` 1.22 |  1.22:1 |
+| Cartwheel | `#B8AAA9` 1.12, `#B8A2A2` 1.04, `#B4918D` 1.13 |  1.13:1 |
+| Whirlpool | `#CCD6D8` 1.12, `#C2D0D5` 1.05, `#A9C1C9` 1.13 |  1.13:1 |
+| Andromeda | `#A2A1AE` 1.12, `#9C9BAD` 1.04, `#8787A7` 1.22 |  1.22:1 |
+| Needle    | `#CBC6BE` 1.12, `#C6C0B3` 1.05, `#B8B099` 1.14 |  1.14:1 |
+| Phantom   | `#6A6277` 1.49, `#61586F` 1.29, `#524C5D` 1.05 |  1.49:1 |
+
+Sunflower's and Andromeda's six-frame sets are staged: the producer writes
+`decoration-set-sheet.svg` (3072 by 1536) beside the three-frame
+`decoration-sheet.svg` and records the six manifest rows and the six
+`decorations.sprites` entries under `decorations-sunflower` and
+`decorations-andromeda` in [polish-rows.json](polish-rows.json). The live
+manifests and `backdrop.json` files keep the three planet frames until the
+rows are applied. `node art/tools/polish-contact-sheet.ts <dir> decorations`
+writes a review sheet of every frame on its field.
 
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
   on the plates' Graphics, one object per mode.
