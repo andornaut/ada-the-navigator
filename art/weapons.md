@@ -14,10 +14,10 @@ timed against them. `src/data/weaponCatalog.ts` holds the current tuning.
 | ------------- | ---------------- | ------------ | -------------------- | ------------------------------------ |
 | Laser         | 0.30/0.25/0.20 s | 500/600/700  | 1/1.25/1.5           | Bolt                                 |
 | Rapid Missile | 0.30/0.25/0.20 s | 500/600/700  | 1.5/1.5/1.5          | Missile, blast R 30                  |
-| Heavy Missile | 2 s              | 400          | 8/12/16              | Missile, blast R 60                  |
-| Multi-Laser   | 0.30 s           | 400/500/600  | 0.7 per bolt         | Fan of 3/4/5 bolts across ±8 degrees |
+| Heavy Missile | 2 s              | 400          | 5/6/7                | Missile, blast R 60                  |
+| Multi-Laser   | 0.40 s           | 400/500/600  | 0.7 per bolt         | Fan of 3/4/5 bolts across ±8 degrees |
 | Scattershot   | 1 s              | 600          | 0.8/1/1.2 per pellet | Fan of 7/9/11 pellets                |
-| Phaser        | 1 s              | n/a          | 13/3, 6.5, 9.75      | Instant beam, fire-time coverage     |
+| Phaser        | 1 s              | n/a          | 4/6/8                | Instant beam, fire-time coverage     |
 
 Levels 2 and 3 change intervals, damage, blast radius and beam range as the
 catalogue sets them. The effects below take the level's blast radius and beam
