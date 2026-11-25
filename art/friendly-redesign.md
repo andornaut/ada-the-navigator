@@ -3,8 +3,8 @@
 Production plan for the friendly objects and points of interest: the pickups
 and caches, the galaxy beacons, buoys and lamps, the job landmarks, the Needle
 ring gate, the 32 friendly craft and the whales. Each is one model of connected
-solids drawn with depth-resolved occlusion. Stages 1 and 2 are built; the other
-stages are planned. Stations, outposts, enemy ships and Ada's ship are outside this
+solids drawn with depth-resolved occlusion. Stages 1 to 3 are built; the whales
+are planned. Stations, outposts, enemy ships and Ada's ship are outside this
 plan.
 
 ## Rules
@@ -54,13 +54,16 @@ plan.
 
 `node art/tools/friendly.ts` writes the files and rows; reruns are
 byte-identical. `node art/tools/friendly-contact-sheet.ts <dir> [scale ...]`
-writes a review sheet of every frame on its galaxy's field with the keyline.
+writes two review sheets with the keyline: `friendly-objects.svg`, every fixed
+object's frames on its galaxy's field, and `friendly-craft.svg`, every craft's
+16 headings on its home galaxy's field.
 
 The model layer gained these solids for the friendly objects: `meshRing` (a
 ring on the vertical axis), `meshHoop` (a ring about any axis, whole or the
 half on one side of a plane, with end caps), `meshDome`, `meshSpiral`,
-`meshBlock` and `meshBar` (oriented boxes), `meshPlace` (turn, scale and move)
-and `meshCapped` (a convex solid cut by a plane and closed).
+`meshBlock` and `meshBar` (oriented boxes), `meshPlace` (turn, scale and move),
+`meshCapped` (a convex solid cut by a plane and closed) and `meshBall` (an
+ellipsoid in two tones split on the light).
 
 ## Groups and the producers they replace
 
@@ -201,6 +204,92 @@ Tests that assert the shipped gate: `src/game/familyManifest.test.ts` (sheet
 path and frame) and the readers of `src/data/needle.ts`, which imports
 `gates.json` and reads `opening`, `rim` and the orientations.
 
+## Stage 3 output: friendly craft
+
+[friendly-craft-models.ts](tools/friendly-craft-models.ts) builds the 32 craft
+in display px and [friendly-craft.ts](tools/friendly-craft.ts) draws them. A
+craft is modelled forward along +x and built once per heading, so each rounded
+part splits its two tones on the light as that heading sees it.
+
+- The yard hull has three tiers: a lower hull with a sloped nose, a full-width
+  stern engine block with two jet ports, and a cabin tier with a canopy front.
+  Each role adds one feature.
+- A lifeboat is one rounded capsule with one window band, one stern port, one
+  lamp and one feature of its galaxy. Blink frame A lights the lamp and frame B
+  darkens it; the two share one outline.
+- Needle's three slim hulls differ by one feature: the stranded glider's long
+  cabin with one window band, the student's lamp drum and lavender livery, and
+  Avi's blunt nose behind one bumper block.
+- The Blocker is a broad blunt chartreuse hull with an oversized engine tier
+  and two white high beams.
+- Elder Loom's saucer keeps the id `craft-glider` and Reed's ring ship
+  `craft-reed`.
+- The stranded lamp buoy is a small guide beacon, drawn the same at all 16
+  headings; only its tow point turns.
+
+| Craft                      | Manifest  | Feature                                   | Frame | Drawn at heading 0, display px |
+| -------------------------- | --------- | ----------------------------------------- | ----: | -----------------------------: |
+| `miner`                    | core      | Two side bins, one drill cone on a collar |   144 |                        50 x 35 |
+| `pip`                      | core      | One roof lamp                             |   104 |                        37 x 24 |
+| `stranded-scrap-barge`     | sunflower | One short scrap hold                      |   112 |                        39 x 26 |
+| `stranded-seed-pod`        | sunflower | Petal cup at the stern                    |    80 |                        28 x 24 |
+| `visitor1`, `visitor2`     | cartwheel | Long cabin with one window band           |   104 |                        37 x 26 |
+| `blocker`                  | cartwheel | Two white high beams                      |    96 |                        39 x 26 |
+| `stranded-hauler`          | cartwheel | Two side bins, no drill                   |   128 |                        47 x 33 |
+| `stranded-ore-pod`         | cartwheel | White wheel rim at the waist              |    72 |                        24 x 21 |
+| `stranded-current-skimmer` | whirlpool | Flat rounded hull, one stern drum         |    96 |                        33 x 22 |
+| `stranded-whirlpool-pod`   | whirlpool | Family drum on its back                   |    72 |                        24 x 24 |
+| `glider`                   | needle    | Saucer in three tiers, centred dome       |   112 |                        41 x 28 |
+| `stranded-glider`          | needle    | Long cabin with one window band           |   128 |                        45 x 29 |
+| `stranded-needle-pod`      | needle    | Blunt needle cone at each end             |    88 |                        29 x 20 |
+| `stranded-courier`         | andromeda | Slate livery, no lamp                     |   104 |                        37 x 24 |
+| `stranded-lamp-buoy`       | andromeda | Small guide beacon                        |    72 |                        20 x 28 |
+| `stranded-traveler-pod`    | phantom   | Three arms in a Y at the stern            |    80 |                        28 x 25 |
+| `barge`                    | phantom   | Cargo hold in two stepped tiers           |   136 |                        47 x 30 |
+| `grower`                   | phantom   | Garden dome                               |    72 |                        24 x 20 |
+| `crane`                    | phantom   | Jib tier along the roof                   |   112 |                        42 x 30 |
+| `salvager`                 | phantom   | Magnet drum on a blunt bow                |   112 |                        43 x 29 |
+| `driller`                  | phantom   | Blunt drill cone on a collar              |   120 |                        42 x 29 |
+| `tug`                      | phantom   | Push block across the bow                 |   104 |                        41 x 30 |
+| `buoytender`               | phantom   | Two buoys on deck                         |   112 |                        39 x 28 |
+| `voronguide`               | phantom   | Small skimmer                             |    80 |                        27 x 18 |
+| `reed`                     | phantom   | Spindle hull through an eye ring          |    88 |                        32 x 21 |
+| `student`                  | phantom   | Lamp drum on the roof, lavender livery    |    96 |                        33 x 22 |
+| `loomship`                 | phantom   | Cloth bed and beam drum                   |   104 |                        39 x 29 |
+| `avipracticeglider`        | phantom   | Blunt nose behind one bumper block        |    88 |                        30 x 20 |
+| `trainee`                  | phantom   | Second canopy                             |   104 |                        37 x 26 |
+| `beacontender`             | phantom   | Upright guide beacon on the aft deck      |   120 |                        42 x 36 |
+| `courierrunner`            | phantom   | Small courier with one roof lamp          |    80 |                        28 x 19 |
+
+Frames and ids:
+
+- Ids are `craft-{name}-{k}` for heading `k` of 16, and
+  `craft-{name}-{k}-a` and `-b` for the five lifeboats and the lamp buoy.
+- A craft's frame is square, a multiple of 8 frame px, with the pivot at
+  `(0.5, 0.5)`: the middle of the hull's length and height. It fits all 16
+  headings with 1 px of margin. Display size is the frame times 0.4375.
+- `/art/{folder}/friendly-{name}-sheet.svg`: 16 nested roots four to a row, or
+  32 with the A frames first. The folder is the manifest's, except `miner` in
+  `cartwheel` and `pip` in `andromeda`, as shipped.
+
+Data files:
+
+- The 21 flying craft each stage a `jets` sidecar in the shape of the shipped
+  story craft jets: `/art/{folder}/friendly-{name}-jets.json`, and for
+  Phantom's 15 one file keyed by craft, `/art/phantom/friendly-craft-jets.json`.
+  Per heading it holds each drive port's `anchor`, `axis` and `half` in frame
+  px and that heading's strictly convex `collision` parts; `nose` holds the
+  drawn tip and the world distance from the pivot to the point under it. The
+  jet ramps are Ada's level one blues.
+- The 11 stranded craft stage their galaxy's `tow` link,
+  `/art/{galaxy}/friendly-tow.json`, in the shape of the shipped `tow.json`:
+  per heading the `tow` point at the bow in frame px and the `collision` parts.
+  Cartwheel's file keeps the shipped tow `line`, and core's `tow` link is
+  staged to it.
+- The nose tip and the tow point are the top of the hull's forward-most
+  points on the centre line. The lamp buoy's tow point is its float's rim on
+  the side it faces.
+
 ## Switch
 
 Tech replaces the shipped rows with the rows of the same ids from
@@ -233,6 +322,21 @@ Rows that change shape:
   pivot with its stalk below, and the current buoy and nursery beacon hang
   their keels below the pivot.
 
+Craft rows that change at the switch:
+
+- Every craft frame grows, because the tiered hulls stand taller than the
+  shipped plates: placement that assumed a 28, 35, 42, 49 or 56 px display
+  frame needs a look. The pivot stays at the frame's centre.
+- The pivot is the middle of the hull's length and height, so each `nose`
+  distance and tow point differs from the shipped one.
+- `jets` headings gain `collision`, and `tow` headings gain `collision`.
+- Every flying craft has two jet ports, except the skimmers, Reed's ring ship
+  and the Grower with one. The shipped miner and tug had three.
+- The jets files carry Ada's blue ramps in place of the station family's warm
+  ones.
+- `visitor1` and `visitor2` each stage their own jets file; the shipped rows
+  shared one.
+
 Code and tests that read the replaced files:
 
 - `src/model/pickupBody.ts` imports the five Aseprite sidecars; it reads
@@ -251,6 +355,13 @@ Code and tests that read the replaced files:
   `src/game/drawOrder.test.ts` and `src/model/storyShips.test.ts`: the mooring
   buoy's frame and `moorings`, and the ore nugget's size.
 - `src/game/familyManifest.test.ts` and the precache tests: file lists.
+- `src/game/sceneAssets.ts` names Phantom's shared jets file by path; the
+  readers of `src/game/cartwheelArt.ts` (`readCraftNose`, `storyNoses`) and
+  `src/game/towArt.ts` (`readStrandedCraft`) read the staged shapes unchanged.
+- Tests that assert a craft's frame size, sheet path, port count or nose
+  distance, among them `src/game/cartwheelArt.test.ts`,
+  `src/model/storyShips.test.ts`, `src/game/towArt.test.ts` and the Phantom
+  ally tests.
 
 After the switch Art moves each group into the producer that owns its
 manifest group, removes the replaced producers, files and their documents'
@@ -265,6 +376,6 @@ sections, and deletes `friendly-rows.json`.
 3. The 32 craft at 16 headings: the yard hull with one role feature each, Elder
    Loom's saucer, Reed's ring ship, the Blocker and the lifeboat pods with
    their galaxy features and blink frames, with jets and nose sidecars. Ids
-   stay `craft-{name}-{k}`.
+   stay `craft-{name}-{k}`. Built.
 4. The whales (Marlo, adult, calf, young calf) at 16 headings with an 8-frame
    swim loop that bends the tail stock and fluke.
