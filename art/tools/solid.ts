@@ -761,6 +761,58 @@ export function meshDome(
   }
 }
 
+// Ellipsoid with radii `radii` about `centre`, in two flat tones that meet where the unit
+// normal's share of the light equals `terminator`. `light` is the light in mesh space, as for
+// meshDome.
+export function meshBall(
+  mesh: Mesh,
+  centre: Point,
+  radii: Point,
+  tones: Tones,
+  options: { sides?: number; bands?: number; light?: Point; terminator?: number } = {},
+): void {
+  const { sides = 24, bands = 12, light = LIGHT, terminator = 0.3 } = options;
+  const at = (lat: number, lon: number): Point => {
+    const [a, b] = [(lat * Math.PI) / 180, (lon * Math.PI) / 180];
+    return [
+      centre[0] + radii[0] * Math.cos(a) * Math.cos(b),
+      centre[1] + radii[1] * Math.cos(a) * Math.sin(b),
+      centre[2] + radii[2] * Math.sin(a),
+    ];
+  };
+  const outward = (p: Point, power: number): Point => [
+    (p[0] - centre[0]) / radii[0] ** power,
+    (p[1] - centre[1]) / radii[1] ** power,
+    (p[2] - centre[2]) / radii[2] ** power,
+  ];
+  const lit = (p: Point) => dot(unit(outward(p, 2)), light) - terminator;
+  for (let i = 0; i < bands; i++) {
+    const [la0, la1] = [-90 + (180 * i) / bands, -90 + (180 * (i + 1)) / bands];
+    for (let j = 0; j < sides; j++) {
+      const [lo0, lo1] = [(360 * j) / sides, (360 * (j + 1)) / sides];
+      let facet = [at(la0, lo0), at(la0, lo1), at(la1, lo1), at(la1, lo0)];
+      if (i === bands - 1) facet = facet.slice(0, 3);
+      if (i === 0) facet = facet.slice(1);
+      const hint = outward(mean(facet), 1);
+      for (const [sign, kind] of [
+        [1, "lit"],
+        [-1, "shade"],
+      ] as const) {
+        const part: Point[] = [];
+        for (const [k, a] of facet.entries()) {
+          const b = facet[(k + 1) % facet.length]!;
+          const [da, db] = [sign * lit(a), sign * lit(b)];
+          if (da >= 0) part.push(a);
+          if (da > 0 !== db > 0 && Math.abs(da - db) > 1e-12) {
+            part.push(add(a, mul(sub(b, a), da / (da - db))));
+          }
+        }
+        if (part.length >= 3) meshFace(mesh, part, hint, tones, kind);
+      }
+    }
+  }
+}
+
 // Spiral band about the vertical axis. The functions take the angle travelled in degrees from
 // `from` to `to` and give the band's centre radius, width, top and bottom; `turn` is the angle
 // the band starts at.

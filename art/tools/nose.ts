@@ -32,7 +32,7 @@ function noseTip(craft: NoseCraft): { reach: number; tip: Point } {
 
 // World units from the pivot to the point under the nose tip on the centre line at heading `yaw`:
 // the art's projection at display scale through the inverse of the game's (x - y, (x + y) / 2).
-function noseDistance(reach: number, yaw: number): number {
+export function noseDistance(reach: number, yaw: number): number {
   const [x, y] = projectAt(0, 0, rotate(ENEMY_HEADINGS, yaw, [...uv(reach, 0), 0]));
   const [sx, sy] = [x * DISPLAY_SCALE, y * DISPLAY_SCALE];
   return round(Math.hypot(sy + sx / 2, sy - sx / 2));
