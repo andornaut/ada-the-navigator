@@ -250,3 +250,271 @@ export function polygons(groups: Part[][], view?: View, levels: readonly number[
     .sort((a, b) => a.level - b.level || b.depth - a.depth)
     .flatMap(({ group }) => group.flatMap((part) => faces(part, view)));
 }
+
+// ------------------------------------------------------------------ meshes
+// General solids for the enemy fleet: closed meshes of planar faces, which art/tools/visible.ts
+// resolves face against face by exact depth, so interpenetrating solids occlude correctly.
+// Mesh space is forward +x, port +y, up +z.
+
+// Flat tones of one material: tops, walls facing the light (screen left) and walls facing away.
+export type Tones = readonly [top: string, left: string, right: string];
+// How a face picks its tone: `flat` and `curved` by its view normal (`curved` keeps the top tone
+// for level caps only), `round` by the light, in two tones.
+export type FaceKind = "flat" | "curved" | "round";
+// A convex planar polygon with its outward unit normal. `group` names the destruction shard
+// the face belongs to.
+export type MeshFace = {
+  points: Point[];
+  normal: Point;
+  tones: Tones;
+  kind: FaceKind;
+  group?: number;
+};
+export type Mesh = MeshFace[];
+
+const sub = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add = (a: Point, b: Point): Point => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul = (a: Point, k: number): Point => [a[0] * k, a[1] * k, a[2] * k];
+const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a: Point, b: Point): Point => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
+const norm = (a: Point) => Math.hypot(a[0], a[1], a[2]);
+const unit = (a: Point): Point => mul(a, 1 / norm(a));
+const mean = (points: readonly Point[]): Point =>
+  mul(
+    points.reduce((sum, p) => add(sum, p), [0, 0, 0] as Point),
+    1 / points.length,
+  );
+
+// Newell normal of a planar polygon, unnormalised.
+function newell(points: readonly Point[]): Point {
+  let n: Point = [0, 0, 0];
+  for (const [i, a] of points.entries()) {
+    n = add(n, cross(a, points[(i + 1) % points.length]!));
+  }
+  return n;
+}
+
+// A planar polygon as convex pieces: itself when convex, else ear-clipped triangles.
+function convexPieces(points: readonly Point[], normal: Point): Point[][] {
+  const turn = (a: Point, b: Point, c: Point) => dot(cross(sub(b, a), sub(c, b)), normal);
+  const ring = points.filter((p, i) => norm(sub(p, points[(i + 1) % points.length]!)) > 1e-9);
+  if (ring.length < 3) return [];
+  const convex = ring.every(
+    (p, i) => turn(p, ring[(i + 1) % ring.length]!, ring[(i + 2) % ring.length]!) >= -1e-9,
+  );
+  if (convex) return [ring];
+  const rest = [...ring];
+  const pieces: Point[][] = [];
+  while (rest.length > 3) {
+    const ear = rest.findIndex((b, i) => {
+      const a = rest[(i + rest.length - 1) % rest.length]!;
+      const c = rest[(i + 1) % rest.length]!;
+      if (turn(a, b, c) <= 1e-12) return false;
+      return rest.every(
+        (p) =>
+          p === a ||
+          p === b ||
+          p === c ||
+          turn(a, b, p) < -1e-12 ||
+          turn(b, c, p) < -1e-12 ||
+          turn(c, a, p) < -1e-12,
+      );
+    });
+    if (ear === -1) throw new Error("A mesh face is not a simple polygon");
+    pieces.push([
+      rest[(ear + rest.length - 1) % rest.length]!,
+      rest[ear]!,
+      rest[(ear + 1) % rest.length]!,
+    ]);
+    rest.splice(ear, 1);
+  }
+  pieces.push(rest);
+  return pieces;
+}
+
+// Adds a planar polygon whose outward side is the side `hint` points to.
+export function meshFace(
+  mesh: Mesh,
+  points: readonly Point[],
+  hint: Point,
+  tones: Tones,
+  kind: FaceKind = "flat",
+): void {
+  let normal = newell(points);
+  if (norm(normal) < 1e-9) return;
+  normal = unit(normal);
+  let ring = [...points];
+  if (dot(normal, hint) < 0) {
+    normal = mul(normal, -1);
+    ring = ring.toReversed();
+  }
+  for (const piece of convexPieces(ring, normal)) {
+    mesh.push({ points: piece, normal, tones, kind });
+  }
+}
+
+// Axis-aligned box between two corners.
+export function meshBox(mesh: Mesh, a: Point, b: Point, tones: Tones): void {
+  const lo = a.map((v, i) => Math.min(v, b[i]!));
+  const hi = a.map((v, i) => Math.max(v, b[i]!));
+  const corner = (i: number, j: number, k: number): Point => [
+    i ? hi[0]! : lo[0]!,
+    j ? hi[1]! : lo[1]!,
+    k ? hi[2]! : lo[2]!,
+  ];
+  for (const s of [0, 1]) {
+    const out = s ? 1 : -1;
+    meshFace(
+      mesh,
+      [corner(s, 0, 0), corner(s, 1, 0), corner(s, 1, 1), corner(s, 0, 1)],
+      [out, 0, 0],
+      tones,
+    );
+    meshFace(
+      mesh,
+      [corner(0, s, 0), corner(1, s, 0), corner(1, s, 1), corner(0, s, 1)],
+      [0, out, 0],
+      tones,
+    );
+    meshFace(
+      mesh,
+      [corner(0, 0, s), corner(1, 0, s), corner(1, 1, s), corner(0, 1, s)],
+      [0, 0, out],
+      tones,
+    );
+  }
+}
+
+// A planar polygon, convex or concave, swept along `sweep`.
+export function meshExtrude(
+  mesh: Mesh,
+  points: readonly Point[],
+  sweep: Point,
+  tones: Tones,
+  kind: FaceKind = "flat",
+): void {
+  let ring = [...points];
+  let normal = newell(ring);
+  if (dot(normal, sweep) < 0) {
+    ring = ring.toReversed();
+    normal = mul(normal, -1);
+  }
+  normal = unit(normal);
+  meshFace(mesh, ring, mul(sweep, -1), tones);
+  meshFace(
+    mesh,
+    ring.map((p) => add(p, sweep)),
+    sweep,
+    tones,
+  );
+  for (const [i, a] of ring.entries()) {
+    const b = ring[(i + 1) % ring.length]!;
+    if (norm(sub(b, a)) < 1e-9) continue;
+    meshFace(mesh, [a, b, add(b, sweep), add(a, sweep)], cross(sub(b, a), normal), tones, kind);
+  }
+}
+
+// Skin between successive convex sections with equal point counts, capped at both ends.
+export function meshLoft(
+  mesh: Mesh,
+  sections: readonly (readonly Point[])[],
+  tones: Tones,
+  kind: FaceKind = "flat",
+): void {
+  for (const [s, s0] of sections.slice(0, -1).entries()) {
+    const s1 = sections[s + 1]!;
+    const [c0, c1] = [mean(s0), mean(s1)];
+    const axis = unit(sub(c1, c0));
+    const middle = mul(add(c0, c1), 0.5);
+    for (let i = 0; i < s0.length; i++) {
+      const j = (i + 1) % s0.length;
+      const quad = [s0[i]!, s0[j]!, s1[j]!, s1[i]!] as const;
+      const out = sub(mean(quad), middle);
+      const hint = sub(out, mul(axis, dot(out, axis)));
+      const first = cross(sub(quad[1], quad[0]), sub(quad[3], quad[0]));
+      const second = cross(sub(quad[2], quad[1]), sub(quad[2], quad[3]));
+      const n = norm(first) > norm(second) ? first : second;
+      const flat =
+        norm(n) < 1e-9 ||
+        (Math.abs(dot(unit(n), sub(quad[2], quad[0]))) < 1e-6 &&
+          Math.abs(dot(unit(n), sub(quad[3], quad[1]))) < 1e-6);
+      if (flat) {
+        meshFace(mesh, quad, hint, tones, kind);
+      } else {
+        meshFace(mesh, [quad[0], quad[1], quad[2]], hint, tones, kind);
+        meshFace(mesh, [quad[0], quad[2], quad[3]], hint, tones, kind);
+      }
+    }
+  }
+  const [first, last] = [sections[0]!, sections.at(-1)!];
+  meshFace(mesh, first, sub(mean(first), mean(sections[1]!)), tones);
+  meshFace(mesh, last, sub(mean(last), mean(sections.at(-2)!)), tones);
+}
+
+// Cylinder, frustum or cone from p0 to p1 with radii r0 and r1, in `sides` facets. `cap0` and
+// `cap1` tone the end discs.
+export function meshTube(
+  mesh: Mesh,
+  p0: Point,
+  p1: Point,
+  r0: number,
+  r1: number,
+  tones: Tones,
+  sides = 48,
+  caps: { cap0?: Tones; cap1?: Tones; kind?: FaceKind } = {},
+): void {
+  const axis = unit(sub(p1, p0));
+  const kind = caps.kind ?? (Math.abs(axis[2]) > 0.999 ? "curved" : "round");
+  const e1 = unit(cross(axis, Math.abs(axis[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]));
+  const e2 = cross(axis, e1);
+  const ring = (centre: Point, radius: number) =>
+    Array.from({ length: sides }, (_, i) => {
+      const a = (2 * Math.PI * (i + 0.5)) / sides;
+      return add(centre, add(mul(e1, radius * Math.cos(a)), mul(e2, radius * Math.sin(a))));
+    });
+  const [ring0, ring1] = [ring(p0, r0), ring(p1, r1)];
+  for (let i = 0; i < sides; i++) {
+    const j = (i + 1) % sides;
+    const middle = mul(add(add(ring0[i]!, ring0[j]!), add(ring1[i]!, ring1[j]!)), 0.25);
+    const onAxis = add(p0, mul(axis, dot(sub(middle, p0), axis)));
+    const facet =
+      r0 < 1e-6
+        ? [ring0[i]!, ring1[j]!, ring1[i]!]
+        : r1 < 1e-6
+          ? [ring0[i]!, ring0[j]!, ring1[i]!]
+          : [ring0[i]!, ring0[j]!, ring1[j]!, ring1[i]!];
+    meshFace(mesh, facet, sub(middle, onAxis), tones, kind);
+  }
+  if (r0 > 1e-6) meshFace(mesh, ring0, mul(axis, -1), caps.cap0 ?? tones);
+  if (r1 > 1e-6) meshFace(mesh, ring1, axis, caps.cap1 ?? tones);
+}
+
+// The mesh scaled by (kx, ky, kz) about the origin.
+export function meshScale(mesh: Mesh, [kx, ky, kz]: Point): Mesh {
+  return mesh.map((face) => ({
+    ...face,
+    points: face.points.map(([x, y, z]): Point => [x * kx, y * ky, z * kz]),
+    normal: unit([face.normal[0] / kx, face.normal[1] / ky, face.normal[2] / kz]),
+  }));
+}
+
+// Keeps the part of each face on the side of the plane through the origin that `inward` points
+// to; clipped faces stay convex.
+export function meshClip(mesh: Mesh, inward: Point): Mesh {
+  const out: Mesh = [];
+  for (const face of mesh) {
+    const points: Point[] = [];
+    for (const [i, p] of face.points.entries()) {
+      const q = face.points[(i + 1) % face.points.length]!;
+      const [sp, sq] = [dot(p, inward), dot(q, inward)];
+      if (sp >= 0) points.push(p);
+      if (sp >= 0 !== sq >= 0) points.push(add(p, mul(sub(q, p), sp / (sp - sq))));
+    }
+    if (points.length >= 3 && norm(newell(points)) > 1e-9) out.push({ ...face, points });
+  }
+  return out;
+}
