@@ -414,7 +414,7 @@ For the capitals, from the same file:
 - Every design has its own offsets, so the `capital` entry of
   `tools/enemy-hardpoints.json` becomes one entry per design, or the game reads
   `offset` from each hardpoints file.
-- A mount marked `hidden` at a heading draws no top there.
+- A mount marked `hidden` at a heading draws no top there. It still fires and takes hits.
 - Each engine has one mouth, and `spread` has five shot origins, `lance` one
   and `hopper` one.
 - A `flashWidth` for any capital is 254.707.
@@ -485,6 +485,5 @@ manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
 - Jet length follows frame size, so the tighter frames change it: the swarm's
   base length falls from 5.48 to 4.58 frame px and the interceptor's rises from
   5.74 to 6.93.
-- Whether a `hidden` mount still fires and can be hit while the hull covers it.
 - Whether a top the hull partly covers needs its own cut frames: the hull cuts
   each base at each heading, and a top draws whole.
