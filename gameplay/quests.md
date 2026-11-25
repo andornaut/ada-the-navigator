@@ -338,6 +338,12 @@ unknown target keeps its question-mark glyph. Its tint can indicate the task
 category without revealing the target's name or kind. Multiple contributions
 still produce one marker. Follow the work item for the overlap rule and evidence.
 
+Every identified enemy marker is threat red. Heavies (frigates, capitals, the
+flagship, ore-field platforms and hostile stations) use a distinct heavy enemy
+marker, also threat red; small craft and retaliators use the standard enemy
+marker. An unidentified marker whose target is a story or job task keeps its
+task colour; every other unidentified marker keeps the generic colour.
+
 ### Marker acceptance matrix
 
 Review all four edges, corners, narrow viewports, overlap, and the visible
