@@ -210,13 +210,13 @@ function patrolFlip(age: number, value: unknown): boolean {
     (value.at as number) <= age
   );
 }
-/** A miner's tracing: its rock or none, its pick time, pick count and up to its recent picks. */
+/** A miner's tracing: its rock or none, its arrival time, pick count and up to its recent picks. */
 function minerState(age: number, value: unknown): boolean {
   return (
     record(value) &&
     (value.rock === null || typeof value.rock === "string") &&
-    nonnegative(value.since) &&
-    (value.since as number) <= age &&
+    nonnegative(value.arrived) &&
+    (value.arrived as number) <= age &&
     Number.isInteger(value.count) &&
     nonnegative(value.count) &&
     strings(value.picks) &&

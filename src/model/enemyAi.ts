@@ -1,4 +1,4 @@
-import type { EnemyActorKind } from "../data/enemyActors.ts";
+import { type EnemyActorKind, shipCatalogEntry } from "../data/enemyActors.ts";
 import {
   ENEMY_AIM,
   type EnemyDefinition,
@@ -663,9 +663,24 @@ function packCourse(
 }
 
 /**
+ * A leader's top patrol speed: its class top speed at its patrol share, and for a siege leader its
+ * behaviour's speed share too. None for a ship without navigation.
+ */
+function topPatrolSpeed(leader: EnemyState): number {
+  const definition = shipCatalogEntry(leader.archetype);
+  if (!definition?.navigation) {
+    return 0;
+  }
+  const combatShare =
+    definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
+  return definition.physics.maxSpeed * definition.navigation.patrolShare * combatShare;
+}
+
+/**
  * An escort's request on its leader's station ring: its station `gap` from the leader turns with
- * the leader's age on the leader's seeded side, moving the escort at the minimum share of its
- * speed relative to the leader, so a leader's escorts keep their equal angles.
+ * the leader's age on the leader's seeded side, so a leader's escorts keep their equal angles. The
+ * ring moves each escort at the minimum share of its speed plus its leader's top patrol speed, so
+ * it keeps the floor even when its leader moves against the ring.
  */
 function escortRing(
   definition: EnemyDefinition,
@@ -676,7 +691,7 @@ function escortRing(
 ): Point {
   const gap = spacingRadius(context.routePosition, leader) + escortTuning.stationGap;
   const side = seeded(leader.id, 14) < 0.5 ? -1 : 1;
-  const rate = (ENEMY_KEEP_MOVING.minimumShare * speed) / gap;
+  const rate = (ENEMY_KEEP_MOVING.minimumShare * speed + topPatrolSpeed(leader)) / gap;
   const angle = state.phase + side * rate * leader.age;
   const radial = { x: Math.cos(angle), y: Math.sin(angle) };
   const station = {
@@ -949,7 +964,11 @@ function steering(
     const edge = context.miner?.edge;
     if (peaceful && mining(state) && state.miner?.rock && edge && definition.navigation) {
       const offset = spacingRadius(context.routePosition, state) + ENEMY_KEEP_MOVING.edgeGap;
-      const pace = definition.navigation.patrolShare;
+      // It travels to the rock at its patrol pace and traces the edge at the minimum speed.
+      const pace =
+        edge.distance > MINER_ARRIVAL * offset
+          ? definition.navigation.patrolShare
+          : ENEMY_KEEP_MOVING.minimumShare;
       // Turning in by its velocity's lag around the curve keeps the hull on the edge.
       const course = leadCourse(
         pace * maxSpeed,
@@ -1332,7 +1351,7 @@ export function stepEnemy(
     minerEdge.distance >
       MINER_ARRIVAL * (spacingRadius(context.routePosition, next) + ENEMY_KEEP_MOVING.edgeGap)
   ) {
-    next.miner = { ...next.miner, since: next.age };
+    next.miner = { ...next.miner, arrived: next.age };
   }
   // A disabled heavy stops steering and coasts to rest.
   let request = effects.disabled

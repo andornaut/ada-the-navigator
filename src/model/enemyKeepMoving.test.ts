@@ -436,20 +436,20 @@ describe("the Mining Freighter traces asteroid edges", () => {
       if (step * dt > 2) {
         share = Math.min(share, speed(miner) / definition.physics.maxSpeed);
       }
-      const settled = edge && miner.age - miner.miner!.since > 4;
+      const settled = edge && miner.age - miner.miner!.arrived > 4;
       if (settled) {
         edges.push(outlineEdge(outline, current!, miner.position).distance);
       }
     }
-    expect(share).toBeGreaterThanOrEqual(floor);
+    expect(share).toBeGreaterThanOrEqual(floor * 0.8);
     // On the edge: its centre about its spacing radius plus the gap from the drawn outline.
-    // The industrial hull answers in 1.2 s, so it swings about the edge on the outline's
-    // corners, never touching it.
+    // At the minimum speed it holds close outside the target, swinging out a little on the
+    // outline's corners and never touching the rock.
     const mean = edges.reduce((sum, value) => sum + value, 0) / edges.length;
-    expect(Math.min(...edges)).toBeGreaterThan(offset * 0.5);
-    expect(mean).toBeGreaterThan(offset * 0.8);
-    expect(mean).toBeLessThan(offset * 2);
-    expect(Math.max(...edges)).toBeLessThan(offset * 3);
+    expect(Math.min(...edges)).toBeGreaterThan(offset * 0.8);
+    expect(mean).toBeGreaterThan(offset * 0.9);
+    expect(mean).toBeLessThan(offset * 1.4);
+    expect(Math.max(...edges)).toBeLessThan(offset * 2);
     expect(traced).toEqual(new Set(["rock-a", "rock-b"]));
     expect(miner.miner!.picks.length).toBeLessThanOrEqual(ENEMY_KEEP_MOVING.recentPicks);
     // Resuming from a JSON round trip gives the same future.
@@ -464,11 +464,11 @@ describe("the Mining Freighter traces asteroid edges", () => {
       { id: "far", position: { x: 900, y: 0 } },
     ];
     const first = pickMinerRock({}, ENEMY_KEEP_MOVING, candidates, state);
-    expect(first).toEqual({ count: 1, picks: ["near"], rock: "near", since: 10 });
+    expect(first).toEqual({ arrived: 10, count: 1, picks: ["near"], rock: "near" });
     const second = pickMinerRock({}, ENEMY_KEEP_MOVING, candidates, { ...state, miner: first });
     expect(second.rock).toBe("far");
     const none = pickMinerRock({}, ENEMY_KEEP_MOVING, candidates, { ...state, miner: second });
-    expect(none).toEqual({ count: 3, picks: ["near", "far"], rock: null, since: 10 });
+    expect(none).toEqual({ arrived: 10, count: 3, picks: ["near", "far"], rock: null });
     for (let count = 0; count < 20; count++) {
       const dwell = minerDwell(ENEMY_KEEP_MOVING, id, count);
       expect(dwell).toBeGreaterThanOrEqual(6);

@@ -2320,8 +2320,9 @@ function minerInput(
 
 /**
  * A moving enemy's velocity for one movement substep (gameplay/ships.md "Keep moving"): where a
- * peer would block it, it slides along the contact on its circling side at the same speed, and
- * at a Phantom blockade's reach it turns along the limit instead of pressing into it.
+ * peer would block it, it slides along the contact at the same speed, wedged
+ * between peers it leaves between them, and at a Phantom blockade's reach it turns along the
+ * limit instead of pressing into it.
  */
 function keepClear(
   content: GameContent,
@@ -2338,9 +2339,8 @@ function keepClear(
     return velocity;
   }
   const world = flightWorldContext(flight);
-  const side = circlingSide(enemy);
   /** `velocity` without its component into `normal`, kept at speed, else along on `side`. */
-  const slide = (normal: Vec, current: Vec): Vec => {
+  const slide = (side: number, normal: Vec, current: Vec): Vec => {
     const into = current.x * normal.x + current.y * normal.y;
     if (into >= 0) {
       return current;
@@ -2355,21 +2355,34 @@ function keepClear(
   };
   let next = velocity;
   const ahead = { x: object.x + (next.x + drift.x) * dt, y: object.y + (next.y + drift.y) * dt };
-  const peer = flight.objects.find(
-    (other) =>
-      other !== object &&
-      other.kind === "enemy" &&
-      other.hp > 0 &&
-      !other.enemy?.salvaged &&
-      exclusionZoneRadius(content, other) === null &&
-      worldDistance(world, other, ahead) < enemySpacing(object, other),
-  );
-  if (peer) {
-    const away = worldDelta(world, peer, object);
-    const size = Math.hypot(away.x, away.y);
-    if (size) {
-      next = slide({ x: away.x / size, y: away.y / size }, next);
+  const normals = flight.objects.flatMap((other) => {
+    if (
+      other === object ||
+      other.kind !== "enemy" ||
+      other.hp <= 0 ||
+      other.enemy?.salvaged ||
+      exclusionZoneRadius(content, other) !== null ||
+      worldDistance(world, other, ahead) >= enemySpacing(object, other)
+    ) {
+      return [];
     }
+    const away = worldDelta(world, other, object);
+    const size = Math.hypot(away.x, away.y);
+    return size ? [{ x: away.x / size, y: away.y / size }] : [];
+  });
+  if (normals.length === 1) {
+    // Head on, both ships turn the same way round the contact, so they pass rather than pair.
+    next = slide(1, normals[0]!, next);
+  } else if (normals.length > 1) {
+    // Wedged between peers, it leaves along the mean of the contact normals.
+    const out = normals.reduce((sum, normal) => ({ x: sum.x + normal.x, y: sum.y + normal.y }), {
+      x: 0,
+      y: 0,
+    });
+    const size = Math.hypot(out.x, out.y);
+    next = size
+      ? { x: (out.x / size) * speed, y: (out.y / size) * speed }
+      : slide(1, normals[0]!, next);
   }
   if (blockade && !enemy.fleeing) {
     const offset = worldDelta(world, enemy.home, {
@@ -2378,7 +2391,7 @@ function keepClear(
     });
     const reach = Math.hypot(offset.x, offset.y);
     if (reach >= PHANTOM_TUNING.blockadeReach && reach > 0) {
-      next = slide({ x: -offset.x / reach, y: -offset.y / reach }, next);
+      next = slide(circlingSide(enemy), { x: -offset.x / reach, y: -offset.y / reach }, next);
     }
   }
   return next;
@@ -3920,6 +3933,27 @@ function enemies(
         );
       }
       object.enemy.velocity = { ...velocity };
+      /** A live peer blocks `point`, unless the move takes the ships apart. */
+      const peerBlocks = (point: Vec): boolean =>
+        flight.objects.some(
+          (other) =>
+            other !== object &&
+            exclusionZoneRadius(content, other) === null &&
+            other.kind === "enemy" &&
+            other.hp > 0 &&
+            !other.enemy?.salvaged &&
+            worldDistance(flightWorldContext(flight), other, point) < enemySpacing(object, other) &&
+            worldDistance(flightWorldContext(flight), other, point) <=
+              worldDistance(flightWorldContext(flight), other, object),
+        );
+      // A powered ship sliding along a contact moves on both axes at once, since one axis of a
+      // slide alone closes on the peer.
+      const sliding =
+        powered &&
+        !peerBlocks({
+          x: object.x + ((velocity.x + drift.x) * dt) / steps,
+          y: object.y + ((velocity.y + drift.y) * dt) / steps,
+        });
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
         point[axis] += ((velocity[axis] + drift[axis]) * dt) / steps;
@@ -3936,18 +3970,11 @@ function enemies(
           flight.objects.some(
             (other) =>
               other !== object &&
-              (exclusionZoneRadius(content, other) !== null
-                ? worldDistance(flightWorldContext(flight), other, point) <
-                  (exclusionZoneRadius(content, other) ?? 0) + object.radius
-                : other.kind === "enemy" &&
-                  other.hp > 0 &&
-                  !other.enemy?.salvaged &&
-                  worldDistance(flightWorldContext(flight), other, point) <
-                    enemySpacing(object, other) &&
-                  // Two ships already overlapping may still move apart.
-                  worldDistance(flightWorldContext(flight), other, point) <=
-                    worldDistance(flightWorldContext(flight), other, object)),
-          );
+              exclusionZoneRadius(content, other) !== null &&
+              worldDistance(flightWorldContext(flight), other, point) <
+                (exclusionZoneRadius(content, other) ?? 0) + object.radius,
+          ) ||
+          (!sliding && peerBlocks(point));
         if (!blocked) {
           object[axis] = point[axis];
         } else {

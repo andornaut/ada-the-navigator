@@ -5,16 +5,19 @@ import { direction } from "../shipPhysics.ts";
 import { type WorldContext, worldDistance } from "../worldContacts.ts";
 import { seeded } from "./course.ts";
 
-/** A miner's saved tracing: the rock it traces, when it picked it, its picks and their count. */
+/** A miner's saved tracing: the rock it traces, its arrival there, its picks and their count. */
 export interface MinerState {
+  /**
+   * The ship age it arrived at the traced rock's edge, from which its dwell runs; while it
+   * travels to the rock, or patrols home with none, the current age.
+   */
+  arrived: number;
   /** Picks so far, which seed each dwell. */
   count: number;
   /** Its most recent picks, newest last, which the next pick skips. */
   picks: string[];
   /** The traced rock's id, or null while it patrols home with none. */
   rock: string | null;
-  /** The ship age at the pick. */
-  since: number;
 }
 
 /** A rock the miner may pick next, as the runtime qualifies it. */
@@ -56,7 +59,7 @@ export function minerNeedsPick(
   return (
     !state ||
     (state.rock !== null && !traced) ||
-    miner.age - state.since >= minerDwell(keep, miner.id, state.count)
+    miner.age - state.arrived >= minerDwell(keep, miner.id, state.count)
   );
 }
 
@@ -74,7 +77,7 @@ export function pickMinerRock(
     readonly position: Point;
   },
 ): MinerState {
-  const previous = miner.miner ?? { count: 0, picks: [], rock: null, since: miner.age };
+  const previous = miner.miner ?? { arrived: miner.age, count: 0, picks: [], rock: null };
   let best: MinerRock | undefined;
   let nearest = Infinity;
   for (const rock of candidates) {
@@ -88,10 +91,10 @@ export function pickMinerRock(
     }
   }
   return {
+    arrived: miner.age,
     count: previous.count + 1,
     picks: best ? [...previous.picks, best.id].slice(-keep.recentPicks) : [...previous.picks],
     rock: best?.id ?? null,
-    since: miner.age,
   };
 }
 
