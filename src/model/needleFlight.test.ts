@@ -389,6 +389,8 @@ describe("mounted Needle flight physics", () => {
       point,
     );
     enemy.primaryCooldown = 0;
+    // The Phaser fires along the facing, so the nose starts on Ada at the origin.
+    enemy.facing = { x: -1, y: 0 };
     flight.objects = [
       {
         ...point,
