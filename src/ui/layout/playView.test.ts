@@ -626,7 +626,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [603, 273],
     282,
     [320, 348],
-    [533, 203],
+    [523, 193],
   ],
   [
     "844x390, phone insets",
@@ -636,7 +636,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [662, 273],
     311,
     [313, 341],
-    [592, 203],
+    [582, 193],
   ],
   [
     "1280x720",
@@ -646,7 +646,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [603, 318],
     282,
     [342, 370],
-    [533, 248],
+    [523, 238],
   ],
   [
     "2404x1080 at dpr 2.5",
@@ -656,7 +656,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [684, 273],
     322,
     [320, 348],
-    [614, 203],
+    [604, 193],
   ],
   [
     "2560x1080",
@@ -666,7 +666,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     [736, 273],
     348,
     [320, 348],
-    [666, 203],
+    [656, 193],
   ],
 ];
 
@@ -701,7 +701,7 @@ describe("touch controls", () => {
   it("reexports the canonical stick geometry", () => {
     expect(TOUCH_STICK).toBe(CANONICAL_TOUCH_STICK);
     expect(CANONICAL_TOUCH_STICK).toMatchObject({ bottom: 50, side: 80 });
-    expect(USE_DISC.fromAim).toEqual({ x: -70, y: -70 });
+    expect(USE_DISC.fromAim).toEqual({ x: -80, y: -80 });
   });
 
   it("rest the drawn edges 80 from the outer screen sides and 50 above the bottom", () => {
@@ -749,29 +749,29 @@ describe("touch controls", () => {
   });
 
   it.each([
-    ["the 720 base", view, NO_INSETS, { x: 533, y: 203 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 533, y: 248 }],
-    ["the 720 base with phone insets", view, phone, { x: 533, y: 203 }],
+    ["the 720 base", view, NO_INSETS, { x: 523, y: 193 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 523, y: 238 }],
+    ["the 720 base with phone insets", view, phone, { x: 523, y: 193 }],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       phone,
-      { x: 592, y: 203 },
+      { x: 582, y: 193 },
     ],
   ] as const)(
-    "centre the Use disc (-70, -70) from the aim ring's centre at %s",
+    "centre the Use disc USE_DISC.fromAim from the aim ring's centre at %s",
     (_, size, insets, at) => {
       const { aim } = stickRestCentres(size, insets);
       const disc = useDiscLayout(size, insets);
       expect(disc.centre).toEqual(at);
-      expect(disc.centre).toEqual({ x: aim.x - 70, y: aim.y - 70 });
+      expect(disc.centre).toEqual({ x: aim.x + USE_DISC.fromAim.x, y: aim.y + USE_DISC.fromAim.y });
       expect(disc.awayFrom).toEqual(aim);
       expect(disc.frame).toEqual({ height: 75, width: 75, x: at.x - 37, y: at.y - 37 });
     },
   );
 
   it("press Use within 100 of its centre, outside the aim target and on its own side of the midpoint", () => {
-    expect(USE_DISC).toEqual({ frame: 75, fromAim: { x: -70, y: -70 }, radius: 100 });
+    expect(USE_DISC).toEqual({ frame: 75, fromAim: { x: -80, y: -80 }, radius: 100 });
     const disc = useDiscLayout(view, NO_INSETS);
     const { centre } = disc;
     expect(usePressed(disc, centre)).toBe(true);
@@ -794,10 +794,10 @@ describe("touch controls", () => {
     }
   });
 
-  it("reaches the conversation box's lower right by 22.5 regardless of phone insets", () => {
+  it("reaches the conversation box's lower right by 32.5 regardless of phone insets", () => {
     for (const [insets, depth] of [
-      [NO_INSETS, 22.5],
-      [phone, 22.5],
+      [NO_INSETS, 32.5],
+      [phone, 32.5],
     ] as const) {
       const disc = useDiscLayout(view, insets);
       const box = conversationBoxRect(insets, view);
