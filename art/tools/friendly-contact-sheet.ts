@@ -4,10 +4,13 @@
 // field with the 1 px ink keyline; the objects every galaxy shows are on the lightest field and
 // on Phantom's with its white edge. A 42 px square beside each row is Ada's frame. The ring gate
 // rows show each axis lit and dark with a stand-in for Ada between the back and front layers,
-// then each layer alone.
+// then each layer alone. `<dir>/friendly-craft.svg` shows each craft's 16 headings at the same
+// scales on its home galaxy's field, blink frames B after frames A, and the finale allies again
+// on Phantom's field.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
+import { type CraftFrame, type DrawnCraft, drawnCrafts } from "./friendly-craft.ts";
 import { type DrawnObject, drawnObjects, drawGates, type GateFrame } from "./friendly.ts";
 
 const INK = "#181425";
@@ -134,4 +137,80 @@ function main() {
   );
 }
 
+// Every craft's headings, eight to a row.
+function craftSheet(out: string, scales: readonly number[]) {
+  const crafts = drawnCrafts();
+  const parts: string[] = [];
+  const perRow = 8;
+  let y = 0;
+  let width = 420;
+  const band = (field: Field, members: readonly DrawnCraft[], yaws: readonly number[]) => {
+    const { name, field: fill, edge } = FIELDS[field];
+    const top = y;
+    const rows: string[] = [];
+    const art = ({ silhouette, svg }: CraftFrame, frame: number, x: number, size: number) => {
+      const inner = svg.replace(/^<svg[^>]*>|<title>.*?<\/title>|<\/svg>$/gu, "");
+      const keyline = `<path d="${silhouette}" fill="none" stroke="${edge}" stroke-width="${2 / DISPLAY_SCALE}" stroke-linejoin="miter" stroke-miterlimit="2.5"/>`;
+      return `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="0 0 ${frame} ${frame}" overflow="visible">${keyline}${inner}</svg>`;
+    };
+    y += GAP;
+    for (const craft of members) {
+      const [x0, y0, x1, y1] = craft.frames[0]!.drawn;
+      const drawn = `${Math.round((x1 - x0) * DISPLAY_SCALE)} x ${Math.round((y1 - y0) * DISPLAY_SCALE)}`;
+      rows.push(
+        `<text x="${GAP}" y="${y + 10}" font-family="DejaVu Sans" font-size="10" fill="${edge}">${name}: ${craft.title} (craft-${craft.name}), frame ${craft.frame}, drawn ${drawn} px at heading 0</text>`,
+      );
+      y += LABEL;
+      const shown = craft.frames.filter(({ yaw }) => yaws.includes(yaw));
+      for (const scale of scales) {
+        const size = craft.frame * DISPLAY_SCALE * scale;
+        for (let start = 0; start < shown.length; start += perRow) {
+          let x = GAP;
+          if (scale === scales[0] && start === 0) {
+            rows.push(
+              `<rect x="${x + 0.5}" y="${y + 0.5}" width="${ADA}" height="${ADA}" fill="none" stroke="${edge}" stroke-opacity="0.4"/>`,
+            );
+          }
+          x += ADA + GAP;
+          for (const frame of shown.slice(start, start + perRow)) {
+            rows.push(art(frame, craft.frame, x, size));
+            x += size + GAP;
+          }
+          width = Math.max(width, x);
+          y += Math.max(size, start === 0 ? ADA : 0) + GAP;
+        }
+      }
+    }
+    parts.push(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${fill}"/>`, ...rows);
+  };
+  const all = Array.from({ length: 16 }, (_, yaw) => yaw);
+  for (const field of [
+    "sunflower",
+    "cartwheel",
+    "whirlpool",
+    "needle",
+    "andromeda",
+    "phantom",
+  ] as const) {
+    band(
+      field,
+      crafts.filter(({ galaxy }) => galaxy === field),
+      all,
+    );
+  }
+  band(
+    "phantom",
+    crafts.filter(({ galaxy, manifest }) => manifest === "phantom" && galaxy !== "phantom"),
+    [0, 4, 8, 12],
+  );
+  writeFileSync(
+    `${out}/friendly-craft.svg`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}">${parts.join("")}</svg>\n`,
+  );
+}
+
 main();
+{
+  const [out, ...rest] = process.argv.slice(2);
+  craftSheet(out!, rest.length ? rest.map(Number) : [1, 2]);
+}

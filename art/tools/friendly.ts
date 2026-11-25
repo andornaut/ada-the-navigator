@@ -1,13 +1,24 @@
 // The friendly object producer (art/friendly-redesign.md). `node art/tools/friendly.ts` writes
-// the pickups, caches, landmarks and galaxy beacons as sheets of nested roots beside the shipped
-// art, the pickups' collision parts, and the manifest rows that switch to them in
-// art/friendly-rows.json.
+// the pickups, caches, landmarks, galaxy beacons, ring gates and friendly craft as sheets of
+// nested roots beside the shipped art, their data files, and the manifest rows, data links and
+// sidecars that switch to them in art/friendly-rows.json.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { tonePaths } from "./fleet.ts";
+import {
+  craftJets,
+  craftJetsFile,
+  craftRows,
+  craftSheet,
+  craftSheetFile,
+  craftTow,
+  drawnCrafts,
+  PHANTOM_JETS_FILE,
+  TOW_FILE,
+} from "./friendly-craft.ts";
 import {
   type FriendlyManifest,
   type FriendlyObject,
@@ -24,7 +35,7 @@ import {
   ringGate,
   WORLD_UNIT,
 } from "./friendly-models.ts";
-import { writeOnce } from "./manifest.ts";
+import { type Sidecars, writeOnce } from "./manifest.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
 import type { Mesh } from "./solid.ts";
@@ -375,6 +386,71 @@ function collisionFile(objects: readonly DrawnObject[]): string {
   });
 }
 
+// Writes each craft's sheet, its jets file or its galaxy's tow file, and stages their rows,
+// sidecars and tow links. Phantom's craft share one jets file keyed by craft, and Cartwheel's
+// tow file keeps the tow line, as shipped.
+function stageCrafts(
+  staged: Record<string, { assets: unknown[]; data?: Record<string, string>; sidecars?: Sidecars }>,
+) {
+  const crafts = drawnCrafts();
+  const folders = [...new Set(crafts.map(({ folder }) => folder))];
+  for (const folder of folders) {
+    const members = crafts.filter((craft) => craft.folder === folder);
+    const flying = members.filter(({ stranded }) => !stranded);
+    const towed = members.filter(({ stranded }) => stranded);
+    const files = new Map<string, string>();
+    for (const craft of members) files.set(craftSheetFile(craft), craftSheet(craft));
+    if (folder === "phantom") {
+      files.set(
+        PHANTOM_JETS_FILE,
+        json(
+          Object.fromEntries(
+            flying
+              .toSorted((a, b) => (a.name < b.name ? -1 : 1))
+              .map((craft) => [craft.name, JSON.parse(craftJets(craft)) as unknown]),
+          ),
+        ),
+      );
+    } else {
+      for (const craft of flying) files.set(craftJetsFile(craft), craftJets(craft));
+    }
+    if (towed.length > 0) {
+      const shipped = JSON.parse(
+        readFileSync(
+          fileURLToPath(new URL(`../../public/art/${folder}/tow.json`, import.meta.url)),
+          "utf8",
+        ),
+      ) as { line?: unknown };
+      files.set(
+        TOW_FILE,
+        json({
+          version: 1,
+          displayScale: DISPLAY_SCALE,
+          ...(shipped.line === undefined ? {} : { line: shipped.line }),
+          craft: towed.map(craftTow),
+        }),
+      );
+    }
+    const paths = writeOnce(`/art/${folder}/`, new Map(), files);
+    for (const craft of members) {
+      const entry = (staged[craft.manifest] ??= { assets: [] });
+      entry.assets.push(...craftRows(craft, paths.get(craftSheetFile(craft))!));
+      if (!craft.stranded) {
+        (entry.sidecars ??= {})[craft.name] = {
+          jets: paths.get(folder === "phantom" ? PHANTOM_JETS_FILE : craftJetsFile(craft))!,
+        };
+      }
+    }
+    if (towed.length > 0) {
+      const tow = paths.get(TOW_FILE)!;
+      (staged[folder] ??= { assets: [] }).data = { ...staged[folder]!.data, tow };
+      // Core's tow link names the file that holds the tow line.
+      if (folder === "cartwheel") staged.core!.data = { ...staged.core!.data, tow };
+    }
+  }
+  return crafts;
+}
+
 const ROWS = fileURLToPath(new URL("../friendly-rows.json", import.meta.url));
 const PICKUPS = "pickups.json";
 const GATE_SHEET = "ring-gates-sheet.svg";
@@ -382,7 +458,10 @@ const GATE_DATA = "ring-gates.json";
 
 function main() {
   const objects = drawnObjects();
-  const staged: Record<string, { assets: unknown[]; data?: Record<string, string> }> = {};
+  const staged: Record<
+    string,
+    { assets: unknown[]; data?: Record<string, string>; sidecars?: Sidecars }
+  > = {};
   const groups = new Map<string, DrawnObject[]>();
   for (const object of objects) {
     const key = `${object.manifest} ${object.sheet}`;
@@ -409,12 +488,19 @@ function main() {
   const needle = (staged.needle ??= { assets: [] });
   needle.assets.push(...gateRows(gates.frames, gatePaths.get(GATE_SHEET)!));
   needle.data = { needleGates: gatePaths.get(GATE_DATA)! };
+  const crafts = stageCrafts(staged);
   const text = json(staged);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   for (const { name, width, height, pivot, drawn } of objects) {
     const [x0, y0, x1, y1] = drawn[0]!.drawn;
     console.log(
       `${name}: frame ${width} x ${height}, pivot ${pivot.join(", ")}, drawn ${round((x1 - x0) * DISPLAY_SCALE)} x ${round((y1 - y0) * DISPLAY_SCALE)} display px, ${drawn.length} frame(s)`,
+    );
+  }
+  for (const { name, frame, frames } of crafts) {
+    const [x0, y0, x1, y1] = frames[0]!.drawn;
+    console.log(
+      `craft-${name}: frame ${frame}, drawn ${round((x1 - x0) * DISPLAY_SCALE)} x ${round((y1 - y0) * DISPLAY_SCALE)} display px at heading 0, ${frames.length} frames`,
     );
   }
   console.log(

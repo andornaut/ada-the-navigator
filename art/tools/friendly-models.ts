@@ -19,13 +19,13 @@ import {
   type Tones,
 } from "./solid.ts";
 
-const mat = (top: string, left = shade(top, 0.76), right = shade(top, 0.56)): Tones => [
+export const mat = (top: string, left = shade(top, 0.76), right = shade(top, 0.56)): Tones => [
   top,
   left,
   right,
 ];
 // A lamp keeps its colour on lit and left faces.
-const glow = (colour: string): Tones => [colour, colour, shade(colour, 0.85)];
+export const glow = (colour: string): Tones => [colour, colour, shade(colour, 0.85)];
 
 const polar = (radius: number, degrees: number): [number, number] => [
   radius * Math.cos((degrees * Math.PI) / 180),
@@ -316,12 +316,15 @@ const quietCrossing = (lit: boolean) =>
     keel: 14,
   });
 
-type GuideLamp = "lit" | "dim" | "dark" | "standby";
+export type GuideLamp = "lit" | "dim" | "dark" | "standby";
 
 // Guide beacon: a saucer float carrying a stout tower in tiers and one large lamp. The dented
 // beacon's lamp house sits knocked off the tower's axis; the relit one carries a repair collar
 // in place of the trim band.
-function guideBeacon(lamp: GuideLamp, state: "sound" | "dented" | "repaired" = "sound"): Mesh {
+export function guideBeacon(
+  lamp: GuideLamp,
+  state: "sound" | "dented" | "repaired" = "sound",
+): Mesh {
   const { body, trim } = ANDROMEDA;
   const mesh: Mesh = [];
   drum(mesh, O, 0, 5, 20, body, 40);

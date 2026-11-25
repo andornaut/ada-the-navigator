@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
+import { drawnCrafts } from "./friendly-craft.ts";
 import { drawGates, drawnObjects } from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { readManifest } from "./manifest.ts";
@@ -16,13 +17,18 @@ type Row = {
   pivot: { x: number; y: number };
   moorings?: { x: number; y: number; outward: [number, number] }[];
 };
-type Staged = Record<string, { assets: Row[]; data?: Record<string, string> }>;
+type Staged = Record<
+  string,
+  { assets: Row[]; data?: Record<string, string>; sidecars?: Record<string, { jets: string }> }
+>;
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 const staged = JSON.parse(read("../friendly-rows.json")) as Staged;
 const objects = drawnObjects();
 const gates = drawGates();
+const crafts = drawnCrafts();
 const isGate = (id: string) => id.startsWith("needle-gate-");
+const json = (path: string) => JSON.parse(read(`../../public${path}`)) as unknown;
 
 // Shipped rows whose frames the redesign splits into one row per frame.
 const SPLIT: Readonly<Record<string, readonly string[]>> = {
@@ -75,6 +81,7 @@ test("each staged row replaces a shipped row or one frame of a split row", () =>
     [
       ...objects.flatMap(({ drawn }) => drawn.map(({ id }) => id)),
       ...gates.frames.map(({ id }) => id),
+      ...crafts.flatMap(({ frames }) => frames.map(({ id }) => id)),
     ].toSorted(),
   );
 });
@@ -124,7 +131,9 @@ test("every pickup frame ships strictly convex collision parts inside its frame"
 });
 
 test("the mooring buoy's three arm tips lie on its frame and point away from its hub", () => {
-  for (const { id, width, height, pivot, moorings } of staged.cartwheel!.assets) {
+  const buoys = staged.cartwheel!.assets.filter(({ id }) => id.startsWith("mooring-buoy-"));
+  assert.equal(buoys.length, 2);
+  for (const { id, width, height, pivot, moorings } of buoys) {
     assert.equal(moorings?.length, 3, id);
     for (const { x, y, outward } of moorings!) {
       assert.ok(x > 0 && x < width && y > 0 && y < height, id);
@@ -180,4 +189,110 @@ test("each ring gate layer is one closed half: the layers' outlines differ and b
       assert.notEqual(back!.silhouette, front!.silhouette);
     }
   }
+});
+
+type Heading = {
+  mouths?: { anchor: [number, number]; axis: [number, number]; half: [number, number] }[];
+  tow?: [number, number];
+  collision: [number, number][][];
+};
+type Jets = { frame: number; headings: Heading[]; nose: { distance: number; tip: number[] }[] };
+type Tow = { craft: { id: string; frame: number; blink?: string[]; headings: Heading[] }[] };
+
+const inside = (frame: number, [x, y]: readonly number[]) =>
+  x! > 0 && x! < frame && y! > 0 && y! < frame;
+const convexParts = (id: string, frame: number, { collision }: Heading) => {
+  assert.ok(collision.length > 0, id);
+  for (const part of collision) {
+    assert.ok(strictlyConvex(part), id);
+    for (const point of part) assert.ok(inside(frame + 1e-9, point) || point.includes(0), id);
+  }
+};
+
+test("the 32 craft each draw 16 headings inside a square frame, with blink frames for the lifeboats", () => {
+  assert.equal(crafts.length, 32);
+  assert.equal(new Set(crafts.map(({ name }) => name)).size, 32);
+  for (const { name, frame, frames, blink } of crafts) {
+    assert.equal(frame % 8, 0, name);
+    assert.equal(frames.length, blink ? 32 : 16, name);
+    for (const { id, drawn } of frames) {
+      assert.ok(drawn[0] >= 1 && drawn[1] >= 1, id);
+      assert.ok(drawn[2] <= frame - 1 && drawn[3] <= frame - 1, id);
+    }
+    if (!blink) continue;
+    for (let yaw = 0; yaw < 16; yaw++) {
+      const [a, b] = frames.filter((frame) => frame.yaw === yaw);
+      assert.deepEqual([a!.blink, b!.blink], ["a", "b"], name);
+      assert.equal(a!.silhouette, b!.silhouette, name);
+      assert.notEqual(a!.svg, b!.svg, name);
+    }
+  }
+});
+
+test("every craft carries Ada's canopy blue and jet blue, and none carries red", () => {
+  const red = (colour: string) => {
+    const [r, g, b] = [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16));
+    return r! > 150 && g! < 80 && b! < 100;
+  };
+  for (const { name, frames, fixed } of crafts) {
+    const colours = new Set(frames.flatMap(({ svg }) => svg.match(/#[0-9a-f]{6}/gu) ?? []));
+    assert.deepEqual([...colours].filter(red), [], name);
+    if (fixed) continue;
+    assert.ok(colours.has("#2585d0"), `${name} canopy`);
+    assert.ok(colours.has("#86deff"), `${name} jets`);
+  }
+});
+
+test("the lamp buoy draws the same at every heading", () => {
+  const buoy = crafts.find(({ name }) => name === "stranded-lamp-buoy")!;
+  for (const blink of ["a", "b"]) {
+    const art = buoy.frames
+      .filter((frame) => frame.blink === blink)
+      .map(({ svg }) => svg.replace(/<title>.*?<\/title>/u, ""));
+    assert.equal(new Set(art).size, 1);
+  }
+});
+
+test("each flying craft stages a jets file with its ports, nose and collision per heading", () => {
+  const flying = crafts.filter(({ stranded }) => !stranded);
+  assert.equal(flying.length, 21);
+  for (const { name, manifest, frame } of flying) {
+    const path = staged[manifest]!.sidecars![name]!.jets;
+    const file = json(path) as Jets | Record<string, Jets>;
+    const jets = (manifest === "phantom" ? (file as Record<string, Jets>)[name] : file) as Jets;
+    assert.equal(jets.frame, frame, name);
+    assert.equal(jets.headings.length, 16, name);
+    assert.equal(jets.nose.length, 16, name);
+    for (const [yaw, heading] of jets.headings.entries()) {
+      assert.ok(heading.mouths!.length >= 1, name);
+      for (const { anchor, axis, half } of heading.mouths!) {
+        assert.ok(inside(frame, anchor), name);
+        // The jet leaves aft, opposite the nose, and its base lies across it.
+        const [nx, ny] = [jets.nose[yaw]!.tip[0]! - frame / 2, jets.nose[yaw]!.tip[1]! - frame / 2];
+        assert.ok(axis[0] * nx + axis[1] * ny < 0, `${name} ${yaw}`);
+        assert.ok(Math.hypot(...half) > 0.5, name);
+      }
+      convexParts(`${name} ${yaw}`, frame, heading);
+      assert.ok(inside(frame, jets.nose[yaw]!.tip), name);
+      assert.ok(jets.nose[yaw]!.distance > 0, name);
+    }
+  }
+});
+
+test("each stranded craft stages a tow point and collision per heading in its galaxy's tow file", () => {
+  const towed = crafts.filter(({ stranded }) => stranded);
+  assert.equal(towed.length, 11);
+  for (const { name, folder, frame, blink } of towed) {
+    const file = json(staged[folder]!.data!.tow!) as Tow;
+    const entry = file.craft.find(({ id }) => id === name)!;
+    assert.equal(entry.frame, frame, name);
+    assert.deepEqual(entry.blink, blink ? ["a", "b"] : undefined, name);
+    assert.equal(entry.headings.length, 16, name);
+    for (const [yaw, heading] of entry.headings.entries()) {
+      assert.ok(inside(frame, heading.tow!), name);
+      convexParts(`${name} ${yaw}`, frame, heading);
+    }
+  }
+  const shipped = json("/art/cartwheel/tow.json") as { line: unknown };
+  assert.deepEqual((json(staged.core!.data!.tow!) as { line: unknown }).line, shipped.line);
 });
