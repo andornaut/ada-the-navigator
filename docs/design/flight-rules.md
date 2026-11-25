@@ -58,3 +58,5 @@ and scan feedback.
 | ada-0376 | Lose carried Ore on shield depletion                                                                       | [ada-0376.md](../work/ada-0376.md) |
 | ada-0378 | Make asteroids ricochet off one another                                                                    | [ada-0378.md](../work/ada-0378.md) |
 | ada-0379 | Choose moving asteroids from placed rocks                                                                  | [ada-0379.md](../work/ada-0379.md) |
+| ada-0380 | Place asteroids and enemies with one testable spawn planner                                                | [ada-0380.md](../work/ada-0380.md) |
+| ada-0381 | Steer enemy ships around moving asteroids by predicted path                                                | [ada-0381.md](../work/ada-0381.md) |

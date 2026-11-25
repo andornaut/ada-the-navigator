@@ -73,3 +73,4 @@ Open **Restart** from the Start screen to restart the entire game.
 | ada-0319 | Apply Art's Cheats card review and wire the FPS counter icon             | [ada-0319.md](../work/ada-0319.md) |
 | ada-0356 | Fit Cheats in two columns and open it from game navigation               | [ada-0356.md](../work/ada-0356.md) |
 | ada-0372 | Keep full-save restart on the Start screen                               | [ada-0372.md](../work/ada-0372.md) |
+| ada-0382 | Remove the cheat session so cheats act on the real save                  | [ada-0382.md](../work/ada-0382.md) |
