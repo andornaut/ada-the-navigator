@@ -402,7 +402,9 @@ describe("emitted primitive marker geometry", () => {
       f.globals,
     );
     code.drawStation(f.scene, f.target, { x: -100, y: 100 }, 20);
-    expect(f.ink.strokeEllipse).toHaveBeenCalled();
+    // The approach ring marks Talk range, where Use offers Dock.
+    const ring = CONTENT.tuning.talkRange;
+    expect(f.ink.strokeEllipse).toHaveBeenCalledWith(-100, 100, ring * 2, ring);
     expect(f.displayed).not.toHaveBeenCalled();
     code.drawStation(f.scene, f.target, { x: -20, y: 100 }, 20);
     expect(f.displayed).toHaveBeenCalledWith("target", f.scene.litCaches);

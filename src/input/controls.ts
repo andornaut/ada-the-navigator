@@ -68,7 +68,7 @@ import {
   type PauseState,
 } from "../ui/pauseCard.ts";
 import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
-import { refusalPose, refusalStart } from "../ui/refusal.ts";
+import { refusalPose } from "../ui/refusal.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
   createSettings,
@@ -179,7 +179,7 @@ export interface Controls {
   setAchievements(entries: readonly AchievementEntry[]): void;
   // What Use does here and its name, or undefined with nothing in reach.
   setContext(context: UseContext | undefined): void;
-  // Plays the refusal cue on the Use disc; a repeat while it plays does not restart it.
+  // Plays the refusal cue on the Use disc; a repeat while it plays restarts it.
   refuseUse(): void;
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
@@ -235,7 +235,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let context: UseContext | undefined;
   // The shared dispatcher supplies the Use press timestamp for its visual frames.
   let usePress: { readonly since: number } | undefined;
-  // When the Use disc's refusal cue started, if one has played.
+  // When the Use disc's latest refusal cue started, if one has played.
   let useRefused: number | undefined;
   let useShown = false;
   let visibility = { aim: true, move: true };
@@ -1079,7 +1079,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     overlay: settings.root,
     reducedMotion: () => reducedMotion,
     refuseUse() {
-      useRefused = refusalStart(now(), useRefused);
+      useRefused = now();
     },
     registerBack: (layer) => backStack.register(layer),
     reset,

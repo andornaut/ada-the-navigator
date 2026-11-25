@@ -744,9 +744,12 @@ export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec
   keylineSprite(scene, "discoveryCache", object.id, sprite);
 }
 
-/** Fallback without the station art: a ring hull and its approach ring. */
+/**
+ * Fallback without the station art: a ring hull and its approach ring, at Talk range, where Use
+ * offers Dock.
+ */
 export function drawStationPlaceholder(scene: ObjectsContext, point: Vec, radius: number): void {
-  const ring = ECONOMY.station.exclusionRadius;
+  const ring = CONTENT.tuning.talkRange;
   scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.35);
   scene.ink.strokeEllipse(point.x, point.y, ring * 2, ring);
   scene.ink.fillStyle(scene.palette.environment);

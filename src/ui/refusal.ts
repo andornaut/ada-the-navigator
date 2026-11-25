@@ -35,28 +35,22 @@ export interface RefusalPose {
 
 /**
  * The refusal cue's pose `elapsed` ms after it starts, for a control drawn on the canvas, which the
- * kit's DOM cue cannot reach (art/controls.md "Refusal cue"): the tint shows on the beats from 80
- * to 160 and 240 to 320 ms, and the control shakes 3 px right and back four times, 40 ms each way.
- * Reduced motion holds the tint for the whole cue with no shake. Null outside the cue.
+ * kit's DOM cue cannot reach. It reads the CUE the kit's cue plays, with the kit's beats: the tint
+ * shows on every even step (0 to 80 and 160 to 240 ms) and the control shakes 3 px right and back
+ * on each step, half a step each way, four times. Reduced motion holds the tint for the whole cue
+ * with no shake. Null outside the cue; a repeat refusal restarts it, as the kit's does.
  */
 export function refusalPose(reducedMotion: boolean, elapsed: number): RefusalPose | null {
-  if (!(elapsed >= 0) || elapsed >= REFUSAL.durationMs) {
+  if (!(elapsed >= 0) || elapsed >= CUE.steps * CUE.stepMs) {
     return null;
   }
   if (reducedMotion) {
     return { shake: 0, tinted: true };
   }
-  const half = REFUSAL.stepMs / 2;
-  const phase = elapsed % REFUSAL.stepMs;
+  const half = CUE.stepMs / 2;
+  const phase = elapsed % CUE.stepMs;
   return {
-    shake: (REFUSAL.shakePx * (phase < half ? phase : REFUSAL.stepMs - phase)) / half,
-    tinted: Math.floor(elapsed / REFUSAL.stepMs) % 2 === 1,
+    shake: (CUE.shake * (phase < half ? phase : CUE.stepMs - phase)) / half,
+    tinted: Math.floor(elapsed / CUE.stepMs) % 2 === 0,
   };
-}
-
-/** When a refusal at `now` starts its cue: a repeat while one still plays keeps that cue's start. */
-export function refusalStart(now: number, started: number | undefined): number {
-  return started !== undefined && now - started >= 0 && now - started < REFUSAL.durationMs
-    ? started
-    : now;
 }

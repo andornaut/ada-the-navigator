@@ -154,10 +154,10 @@ it("keeps navigation inactive behind direct modal scopes outside the controls mo
 
 describe("the Use disc's refusal cue", () => {
   it.each([
-    [40, "dock-rest", 43],
-    [100, "dock-refused", 40 + 3 * (20 / 40)],
-    [200, "dock-rest", 40 + 3 * (40 / 40)],
-    [260, "dock-refused", 40 + 3 * (20 / 40)],
+    [40, "dock-refused", 43],
+    [100, "dock-rest", 40 + 3 * (20 / 40)],
+    [200, "dock-refused", 40 + 3 * (40 / 40)],
+    [260, "dock-rest", 40 + 3 * (20 / 40)],
     [320, "dock-rest", 40],
   ])("at %i ms shows %s with the disc at x %d", (elapsed, frame, x) => {
     const view = render(true, false, true, false, true, { now: 1000 + elapsed, refusedAt: 1000 });

@@ -1085,7 +1085,7 @@ export function batchCaptures(ctx) {
     await ctx.pageShot("controls-paint-notice.png");
     // The use-refusal view (art/controls.md "Use disc", Refused): an engaged fighter beside the
     // station puts Ada in danger, so a tap on Dock plays the Use disc's refusal cue with its
-    // notice, taken on the cue's first tinted beat.
+    // notice, taken about 40 ms in, inside the cue's first tinted beat (0 to 80 ms).
     const refusal = stationModel(1);
     addEnemy(refusal, { archetype: "fighter", screen: { x: 160, y: 40 } });
     refusal.state.flight.dangerFor = 1;
@@ -1097,7 +1097,7 @@ export function batchCaptures(ctx) {
     const useBox = await use.boundingBox();
     assert.ok(useBox, "The Use disc has a frame");
     await refusalPage.touchscreen.tap(useBox.x + useBox.width / 2, useBox.y + useBox.height / 2);
-    await refusalPage.waitForTimeout(100);
+    await refusalPage.waitForTimeout(40);
     await ctx.pageShot("controls-use-refusal.png");
   }
 
