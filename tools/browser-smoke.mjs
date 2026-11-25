@@ -2030,10 +2030,16 @@ try {
     const beforeCheat = await readSave();
     const unlock = cheatDialog.locator('[data-cheat="unlockAllWeapons"]');
     await unlock.click();
-    // The cheat applies to play at once, disables itself and saves like normal play.
-    await page.waitForFunction(
-      () => document.querySelector('[data-cheat="unlockAllWeapons"]')?.disabled === true,
-    );
+    // The cheat applies to play at once, turns unavailable and saves like normal play. An
+    // exhausted grant stays focusable with the shared refusal and its reason.
+    await page.waitForFunction(() => {
+      const grant = document.querySelector('[data-cheat="unlockAllWeapons"]');
+      return (
+        grant?.disabled === false &&
+        grant.getAttribute("aria-disabled") === "true" &&
+        grant.getAttribute("aria-description") === "Action unavailable."
+      );
+    });
     await page.waitForTimeout(1200);
     const afterCheat = await readSave();
     assert.deepEqual(afterCheat.progress, beforeCheat.progress);
@@ -2211,7 +2217,9 @@ try {
   const installedGrant = cheatsProof().locator('[data-cheat="unlockAllWeapons"]');
   await installedGrant.click();
   await page.waitForFunction(
-    () => document.querySelector('[data-cheat="unlockAllWeapons"]')?.disabled === true,
+    () =>
+      document.querySelector('[data-cheat="unlockAllWeapons"]')?.getAttribute("aria-disabled") ===
+      "true",
   );
   assert.deepEqual((await readSave()).economy, guardedSave.economy);
   await cheatsProof().locator('[data-action="close-cheats"]').click();
