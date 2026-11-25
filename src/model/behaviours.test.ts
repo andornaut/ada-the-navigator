@@ -159,7 +159,8 @@ describe("strafe", () => {
         }
       },
     });
-    expect(phases.slice(0, 4)).toEqual(["attack", "pass", "attack", "pass"]);
+    // Past closest approach the pass loops on, then the next approach begins.
+    expect(phases.slice(0, 5)).toEqual(["attack", "pass", "loop", "attack", "pass"]);
     expect(closest).toBeGreaterThanOrEqual(behaviour.passDistance);
     expect(crossed).toBe(true);
     expect(farthestAfterPass).toBeGreaterThanOrEqual(behaviour.loopDistance);
@@ -645,22 +646,19 @@ describe("independent weapon aim", () => {
     },
   );
 
-  it("turns the retaliator's gun independently of its hull", () => {
+  it("points the retaliator's fixed forward launcher along its hull", () => {
     const definition = enemyCatalog.retaliator;
     const base = {
       ...spawn("retaliator", { x: 0, y: 0 }, false),
       aim: { x: 1, y: 0 },
       lastSeen: target,
     };
-    const aims = [
+    for (const facing of [
       { x: 0, y: -1 },
       { x: -1, y: 0 },
-    ].map((facing) => stepEnemy(definition, unseen([base]), { ...base, facing }).state.aim!);
-    expect(aims[0]).toEqual(aims[1]);
-    const wanted = rotate(target, aimDrift(base.id, base.age));
-    expect(between(aims[0]!, wanted)).toBeCloseTo(
-      between({ x: 1, y: 0 }, wanted) * Math.exp(-dt / definition.physics.aimTurnSeconds),
-      9,
-    );
+    ]) {
+      const { state } = stepEnemy(definition, unseen([base]), { ...base, facing });
+      expect(state.aim).toEqual(state.facing);
+    }
   });
 });

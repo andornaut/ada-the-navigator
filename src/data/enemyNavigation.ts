@@ -22,3 +22,22 @@ export const ENEMY_STEERING = {
   arrivalRadius: 5,
   swarmWobbleRadiansPerSecond: 3,
 } as const;
+
+/**
+ * Fixed forward hull guns fire only along the hull facing, and only while the aim point is within
+ * `arcRadians` either side of it. While the ship fights Ada its hull keeps its nose on her,
+ * turning with its aimTurnSeconds, and its requested speed is capped by direction: full speed
+ * ahead, `lateralShare` of its top speed sideways and `reverseShare` straight back.
+ */
+export interface ForwardGuns {
+  arcRadians: number;
+  lateralShare: number;
+  reverseShare: number;
+}
+
+/** The nose arc and strafing speeds of every ship with fixed forward guns (gameplay/ships.md). */
+export const ENEMY_FORWARD_GUNS: ForwardGuns = {
+  arcRadians: (20 * Math.PI) / 180,
+  lateralShare: 0.8,
+  reverseShare: 0.6,
+};

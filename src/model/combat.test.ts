@@ -50,6 +50,7 @@ import {
 } from "./flight.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
+import { direction as unit } from "./shipPhysics.ts";
 import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -584,6 +585,8 @@ describe("integrated combat", () => {
         enemyDefinition(6, "interceptor", "phaser-proof"),
         "phaser-proof",
       );
+      // Its fixed nose Phaser points at Ada.
+      target.enemy!.facing = { x: -1, y: 0 };
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, idle, flight);
       return flight;
@@ -623,6 +626,7 @@ describe("integrated combat", () => {
       enemyDefinition(6, "interceptor", "phaser-proof"),
       "phaser-proof",
     );
+    target.enemy!.facing = { x: -1, y: 0 };
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     const [beam] = activeEnemyBeams(flight);
@@ -671,6 +675,7 @@ describe("integrated combat", () => {
       enemyDefinition(6, "interceptor", "phaser-proof"),
       "phaser-proof",
     );
+    target.enemy!.facing = { x: -1, y: 0 };
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     // A rock rolls between them after the line appears: the line and beam stop at it.
@@ -928,6 +933,10 @@ describe("integrated combat", () => {
     expect(flight.objects[0]?.enemy?.hp).toBe(2);
     expect(flight.objects[0]?.enemy?.id).toBe("legacy");
     expect(routeBlocked("old-destination", flight)).toBe(false);
+    // It fires once its fixed nose guns turn onto Ada.
+    for (let frame = 0; frame < 30 && !flight.shots.some((shot) => shot.enemy); frame++) {
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+    }
     expect(flight.shots.some((shot) => shot.enemy)).toBe(true);
   });
 
@@ -1288,6 +1297,7 @@ describe("combat admission and subframe firing", () => {
   it("ages and moves a new shot only after its fire delay, then gives it a full subsequent slice", () => {
     const flight = empty();
     const target = ship("fighter", { x: 300, y: 0 });
+    target.enemy!.facing = unit({ x: flight.player.x - 300, y: flight.player.y });
     target.enemy!.primaryCooldown = 0.012;
     flight.objects.push(target);
     const dt = 1 / 60;
@@ -1324,6 +1334,7 @@ describe("combat admission and subframe firing", () => {
         y: flight.player.y + offset.y,
       });
       target.cooldown = 999;
+      target.enemy!.facing = unit({ x: -offset.x, y: -offset.y });
       target.enemy!.primaryCooldown = 0.012;
       flight.objects.push(target);
       stepFlight(CONTENT, 1 / 60, input, flight);
@@ -1339,6 +1350,7 @@ describe("combat admission and subframe firing", () => {
     const flight = empty();
     const target = ship("swarm", { x: 15, y: 0 });
     target.cooldown = 999;
+    target.enemy!.facing = unit({ x: flight.player.x - 15, y: flight.player.y });
     target.enemy!.primaryCooldown = 0.012;
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);

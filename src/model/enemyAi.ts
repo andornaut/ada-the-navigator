@@ -12,7 +12,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
-import { ENEMY_STEERING, ENEMY_STRAFE } from "../data/enemyNavigation.ts";
+import { ENEMY_STEERING, ENEMY_STRAFE, type ForwardGuns } from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/shipPhysics.ts";
@@ -47,8 +47,11 @@ export interface HardpointState {
 export interface TacticState {
   /** Hull plus hardpoint hp at the previous step, so a drop shows a hit. */
   integrity: number;
-  /** `attack` presses in; `retreat` pulls away (hitAndRun); `pass` flies through (strafe). */
-  phase: "attack" | "retreat" | "pass";
+  /**
+   * `attack` presses in; `retreat` pulls away (hitAndRun); `pass` flies through to its closest
+   * approach and `loop` carries on past it until the next approach (strafe).
+   */
+  phase: "attack" | "retreat" | "pass" | "loop";
   /** Seconds in the current phase. */
   seconds: number;
   /** Volleys fired in the current attack. */
@@ -589,6 +592,22 @@ function holdBand(
   return { x: aim.x * radial - aim.y * across, y: aim.y * radial + aim.x * across };
 }
 
+/**
+ * A movement request capped by its direction relative to the hull `facing`: full speed ahead,
+ * `lateralShare` sideways and `reverseShare` straight back, along two half-ellipses between them.
+ */
+export function strafeLimited(guns: ForwardGuns, facing: Point, request: Point): Point {
+  const size = magnitude(request);
+  if (!size) {
+    return request;
+  }
+  const ahead = (request.x * facing.x + request.y * facing.y) / size;
+  const across = (request.y * facing.x - request.x * facing.y) / size;
+  const cap =
+    1 / Math.hypot(ahead / (ahead >= 0 ? 1 : guns.reverseShare), across / guns.lateralShare);
+  return size <= cap ? request : { x: (request.x * cap) / size, y: (request.y * cap) / size };
+}
+
 const retreatActive = (state: EnemyState): boolean =>
   state.retreat !== undefined && state.retreat.endedAt === undefined;
 const retreatReady = (definition: EnemyDefinition, state: EnemyState): boolean =>
@@ -619,15 +638,16 @@ function retreatCourse(policy: RetreatPolicy, state: EnemyState): Point {
 
 /**
  * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst within its
- * bounded retreat policy and cooldown; strafe holds its course for a
- * pass once near Ada and loops back beyond its loop distance. Leaving the engagement resets to a
- * fresh attack.
+ * bounded retreat policy and cooldown; strafe holds its course for a pass once near Ada, loops
+ * on once the range to her opens (`opening`, past closest approach) and comes back beyond its
+ * loop distance. Leaving the engagement resets to a fresh attack.
  */
 function nextTactic(
   definition: EnemyDefinition,
   context: WorldContext,
   next: EnemyState,
   distance: number,
+  opening: boolean,
   state: EnemyState,
 ): TacticState {
   const integrity = enemyIntegrity(next);
@@ -662,8 +682,14 @@ function nextTactic(
     if (tactic.phase === "attack" && distance <= behaviour.passDistance * ENEMY_STRAFE.passEntry) {
       return enter("pass");
     }
-    if (tactic.phase === "pass" && distance >= behaviour.loopDistance) {
+    if (
+      (tactic.phase === "pass" || tactic.phase === "loop") &&
+      distance >= behaviour.loopDistance
+    ) {
       return enter("attack");
+    }
+    if (tactic.phase === "pass" && opening) {
+      return enter("loop");
     }
   }
   return tactic;
@@ -821,7 +847,7 @@ function steering(
     }
     case "strafe": {
       const floor = behaviour.passDistance;
-      if (state.tactic.phase === "pass") {
+      if (state.tactic.phase === "pass" || state.tactic.phase === "loop") {
         // A pass keeps its course, so momentum carries the ship past Ada before it loops back. A
         // course that would come within the floor's margin bends away from her.
         const course = magnitude(state.velocity) ? unit(state.velocity) : aim;
@@ -999,7 +1025,17 @@ export function stepEnemy(
       : definition;
   next.tactic = completedRetreat
     ? freshTactic(enemyIntegrity(next))
-    : nextTactic(acting, context, next, distance, state);
+    : nextTactic(
+        acting,
+        context,
+        next,
+        distance,
+        // The range to Ada opens once her relative motion has passed its closest approach.
+        (state.velocity.x - context.playerVelocity.x) * aim.x +
+          (state.velocity.y - context.playerVelocity.y) * aim.y <
+          0,
+        state,
+      );
   // Each working engine gives an equal share of top speed; losing one slows the ship through
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
@@ -1022,6 +1058,54 @@ export function stepEnemy(
         turnSeconds: Math.max(definition.physics.turnSeconds, definition.navigation!.turnSeconds),
       }
     : definition.physics;
+  const skill = leadSkill(context.lead, state.id);
+  const drift = aimDrift(state.id, state.age);
+  /**
+   * An aimed weapon's wanted line from `origin`: it leads a seen Ada by the ship's skill at its
+   * shot's speed, then drifts sideways. Null when the origin is on the target.
+   */
+  const lineOfFire = (origin: Point, profile: FireProfile): Point | null => {
+    // A hitscan beam aims at Ada directly.
+    const direct = profile.projectile === "beam";
+    const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
+    const point = leadPoint(
+      origin,
+      worldPoint(context, origin, target),
+      velocity,
+      profile.projectileSpeed,
+      skill,
+    );
+    const line = unit(worldDelta(context, origin, point));
+    if (!magnitude(line)) {
+      return null;
+    }
+    return direct ? line : rotate(line, drift);
+  };
+  const guns = definition.guns;
+  /** A fixed forward hull weapon, which fires along the facing within its arc. */
+  const forward = guns.kind === "turrets" ? null : guns;
+  /** The hull weapon's aim point, which a forward-gun ship's nose turns toward. */
+  const pointed = lineOfFire(state.position, definition.fire) ?? aim;
+  /** A retreat or a strafe loop past closest approach breaks off. */
+  const breakingOff = retreatActive(next) || next.tactic.phase === "loop";
+  // A forward-gun ship fighting Ada keeps its nose on her aim point; its velocity still follows
+  // the tactic, its requested speed capped by direction relative to the facing.
+  const holdNose =
+    forward !== null &&
+    !summoned &&
+    !effects.defeated &&
+    !effects.disabled &&
+    !next.returning &&
+    !next.fleeing &&
+    !breakingOff &&
+    next.engaged &&
+    fighting;
+  if (holdNose) {
+    if (magnitude(pointed)) {
+      next.facing = turnToward(context.dt, physics.aimTurnSeconds, pointed, state.facing);
+    }
+    request = strafeLimited(forward, next.facing, request);
+  }
   if (context.navigationQuery && !effects.disabled && !effects.movementStopped) {
     request = avoidObstacles(physics, context.navigationQuery, context.dt, speed, state, request);
   }
@@ -1039,19 +1123,20 @@ export function stepEnemy(
     const thrust = effects.movementStopped
       ? { direction: { x: 0, y: 0 }, speed: 0 }
       : { direction: request, speed: speed * Math.min(1, magnitude(request)) };
+    // A ship holding its nose on Ada slides from rest straight onto its request.
     const motion = stepShipMotion(
       physics,
       context.dt,
-      { maxSpeed: fullSpeed, restHeading: state.facing },
+      holdNose ? { maxSpeed: fullSpeed } : { maxSpeed: fullSpeed, restHeading: state.facing },
       thrust,
       { heading: state.heading, velocity: state.velocity },
     );
     next.velocity = motion.velocity;
     next.heading = motion.heading;
-    // The hull turns toward its velocity with the short shared hullTurnSeconds, so
+    // Otherwise the hull turns toward its velocity with the short shared hullTurnSeconds, so
     // collision slides do not snap it, and keeps its facing at rest. The heading starts
     // from the hull, so velocity and hull swing round together.
-    if (magnitude(motion.velocity)) {
+    if (!holdNose && magnitude(motion.velocity)) {
       next.facing = turnToward(
         context.dt,
         SHARED_SHIP_PHYSICS.hullTurnSeconds,
@@ -1074,11 +1159,15 @@ export function stepEnemy(
     !effects.disabled &&
     !next.returning &&
     !next.fleeing &&
+    !breakingOff &&
     next.engaged &&
     context.targetable &&
     context.visibility === "visible" &&
     context.inPlayView &&
-    distance <= definition.engagement;
+    distance <= definition.engagement &&
+    // A fixed forward weapon fires only while its aim point is inside the nose arc.
+    (forward === null ||
+      pointed.x * next.facing.x + pointed.y * next.facing.y >= Math.cos(forward.arcRadians));
   const phasedHeavy = definition.fireClockPolicy === "staggered-and-paused";
   if (phasedHeavy && canFire && !state.firePhasesInitialized) {
     // A legacy active clock or burst resumes as saved rather than receiving a second phase.
@@ -1098,23 +1187,12 @@ export function stepEnemy(
     }
     next.firePhasesInitialized = true;
   }
-  const skill = leadSkill(context.lead, state.id);
-  const drift = aimDrift(state.id, state.age);
-  /**
-   * Weapons track the target independently of the hull, turning with aimTurnSeconds. An aimed
-   * weapon leads a seen Ada by the ship's skill at its shot's speed, then drifts sideways.
-   */
+  /** Turrets track their line of fire independently of the hull, turning with aimTurnSeconds. */
   const track = (origin: Point, current: Point | null, profile: FireProfile): Point | null => {
-    // A hitscan beam aims at Ada directly.
-    const direct = profile.projectile === "beam";
-    const speed = profile.projectileSpeed;
-    const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
-    const point = leadPoint(origin, worldPoint(context, origin, target), velocity, speed, skill);
-    const line = unit(worldDelta(context, origin, point));
-    if (!magnitude(line)) {
+    const wanted = lineOfFire(origin, profile);
+    if (!wanted) {
       return current;
     }
-    const wanted = direct ? line : rotate(line, drift);
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
   let volleys = 0;
@@ -1194,7 +1272,8 @@ export function stepEnemy(
     }
     return { burst: bolt, cooldown: delay - context.dt };
   };
-  next.aim = track(state.position, state.aim, definition.fire);
+  // A fixed forward hull weapon aims along the facing; hardpoint weapons are turrets.
+  next.aim = forward ? { ...next.facing } : track(state.position, state.aim, definition.fire);
   const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0

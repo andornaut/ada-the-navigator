@@ -1123,6 +1123,78 @@ export function batchCaptures(ctx) {
     });
   }
 
+  // Enemy facing in Sunflower, each case released from its saved start and stepped five frames
+  // 200 ms of clock time apart: a fighter crossing close past Ada with its nose on her, a
+  // fighter pulling out of a finished burst, a fighter strafing in its band, and a frigate
+  // moving away from Ada, its hull turning to its heading while its turrets fire astern.
+  async function enemyFacing() {
+    const unit = (vector) => {
+      const size = Math.hypot(vector.x, vector.y);
+      return { x: vector.x / size, y: vector.y / size };
+    };
+    const toAda = (flight, enemy) =>
+      unit({ x: flight.player.x - enemy.position.x, y: flight.player.y - enemy.position.y });
+    const cases = [
+      [
+        "pass",
+        { x: -60, y: 30 },
+        "fighter",
+        (flight, enemy) => {
+          const bearing = toAda(flight, enemy);
+          const across = { x: -bearing.y, y: bearing.x };
+          enemy.facing = across;
+          enemy.heading = across;
+          enemy.velocity = { x: across.x * 160, y: across.y * 160 };
+          enemy.primaryCooldown = 0;
+        },
+      ],
+      [
+        "retreat",
+        { x: 160, y: -40 },
+        "fighter",
+        (flight, enemy) => {
+          enemy.facing = toAda(flight, enemy);
+          enemy.primaryCooldown = 0;
+          enemy.tactic.volleys = 3;
+        },
+      ],
+      [
+        "strafe",
+        { x: 280, y: 40 },
+        "fighter",
+        (flight, enemy) => {
+          enemy.facing = toAda(flight, enemy);
+          enemy.primaryCooldown = 0.3;
+        },
+      ],
+      [
+        "frigate",
+        { x: -170, y: -20 },
+        "frigate",
+        (flight, enemy) => {
+          const bearing = toAda(flight, enemy);
+          enemy.facing = bearing;
+          enemy.heading = { x: -bearing.x, y: -bearing.y };
+          enemy.velocity = { x: -bearing.x * 100, y: -bearing.y * 100 };
+          enemy.firePhasesInitialized = true;
+          for (const part of enemy.hardpoints) {
+            part.cooldown = 0.2;
+          }
+        },
+      ],
+    ];
+    await inTurn(cases, async ([name, screen, archetype, setup]) => {
+      const model = flightModel(1);
+      const flight = model.state.flight;
+      flight.objects = [];
+      addEnemy(model, { archetype, screen, setup: (enemy) => setup(flight, enemy) });
+      const fixture = `enemy-facing-${name}`;
+      await open(canonical(model, fixture));
+      await ctx.release();
+      await ctx.frames(fixture, { every: 200, shots: 5 });
+    });
+  }
+
   // The hostile stations' pod and dome tops in each family and the Claim platform's gun tops,
   // aimed at Ada, at 2 device px per CSS px: the Claim station and platform in Cartwheel, the
   // garnet station in Andromeda and the coral station in Phantom, each still, in a close-up, and
@@ -1184,6 +1256,7 @@ export function batchCaptures(ctx) {
     controls,
     craft,
     effects,
+    "enemy-facing": enemyFacing,
     fleet,
     "fleet-craft": fleetCraft,
     "fleet-tops": fleetTops,

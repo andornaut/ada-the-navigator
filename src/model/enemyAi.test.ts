@@ -28,6 +28,7 @@ import {
   leadSkill,
   stepDebris,
   stepEnemy,
+  strafeLimited,
 } from "./enemyAi.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { stepShipMotion } from "./shipPhysics.ts";
@@ -153,7 +154,7 @@ describe("enemy rules", () => {
   });
 
   it("fires only while the ship is inside the current play view, still pursuing outside it", () => {
-    const state = spawn("swarm");
+    const state = { ...spawn("swarm"), facing: { x: 1, y: 0 } };
     const inside = stepEnemy(enemyCatalog.swarm, observation(state), state);
     expect(inside.fire.length).toBeGreaterThan(0);
     const outside = stepEnemy(
@@ -283,9 +284,8 @@ describe("enemy rules", () => {
     const result = stepEnemy(definition, context, state);
     expect(result.state.returning).toBe(true);
     expect(result.state.lastSeen).toEqual({ x: 300, y: 0 });
-    // The interceptor's beam aims directly along its last-seen line, without projectile drift.
-    expect(result.aim.x).toBeCloseTo(1, 12);
-    expect(result.aim.y).toBeCloseTo(0, 12);
+    // The interceptor's fixed nose guns aim along its hull.
+    expect(result.aim).toEqual(result.state.facing);
     expect(result.fire).toEqual([]);
   });
 
@@ -326,7 +326,8 @@ describe("enemy rules", () => {
         const intent = stepEnemy(definition, { ...observation(state), player }, state);
         firedReturning ||= intent.state.returning && intent.fire.length > 0;
         fire = intent.fire;
-        state = { ...intent.state, position };
+        // The nose stays on Ada, so the fixed guns can fire on the step the ship re-engages.
+        state = { ...intent.state, facing: { x: 1, y: 0 }, position };
         elapsed += 1 / 60;
       }
       // It holds fire while returning, then fires on the step it re-engages.
@@ -505,7 +506,11 @@ describe("enemy rules", () => {
     expect(Math.hypot(idle.velocity.x, idle.velocity.y)).toBeGreaterThan(0);
     expect(idle.state.engaged).toBe(false);
     expect(idle.fire).toEqual([]);
-    const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, state);
+    // Facing Ada, its forward launcher bears on her.
+    const hit = {
+      ...damageEnemy(definition, { amount: 1, hardpointId: null }, state),
+      facing: { x: 1, y: 0 },
+    };
     expect(
       stepEnemy(definition, observation(hit), hit).fire.map((shot) => [shot.weapon, shot.level]),
     ).toEqual([["rapidMissile", 1]]);
@@ -717,7 +722,7 @@ describe("enemy rules", () => {
 });
 
 it("counts dormant pack survivors for morale without exposing hidden positions to steering or fire", () => {
-  const state = { ...spawn("swarm"), packId: "pack" };
+  const state = { ...spawn("swarm"), facing: { x: 1, y: 0 }, packId: "pack" };
   const context = {
     ...observation(state),
     dormantPackMembers: { pack: 3 },
@@ -1038,16 +1043,18 @@ describe("enemy ship physics and hull rotation", () => {
     expect(rotated.facing).toEqual({ x: 1, y: 0 });
   });
 
-  it("fires along the smoothed aim rather than straight at the target", () => {
-    const definition = enemyCatalog.fighter;
-    const state = { ...spawn("fighter"), aim: { x: 0, y: 1 }, engaged: true };
+  it("fires a turret along the smoothed aim rather than straight at the target", () => {
+    // A turret hull weapon, as a mechanism fixture: catalog hulls carry turrets on hardpoints.
+    const definition: EnemyDefinition = { ...enemyCatalog.retaliator, guns: { kind: "turrets" } };
+    const state = { ...spawn("retaliator", definition), aim: { x: 0, y: 1 }, engaged: true };
     const context = observation(state);
     const result = stepEnemy(definition, context, state);
     expect(result.fire).toHaveLength(definition.fire.angles.length);
     const centre = result.fire[definition.fire.angles.indexOf(0)]!;
-    expect(centre.aim).toEqual(result.state.aim);
     for (const [index, shot] of result.fire.entries()) {
-      expect(shot.aim).toEqual(fanHeading(result.state.aim!, definition.fire.angles[index]!));
+      const fan = fanHeading(result.state.aim!, definition.fire.angles[index]!);
+      expect(shot.aim.x).toBeCloseTo(fan.x, 12);
+      expect(shot.aim.y).toBeCloseTo(fan.y, 12);
     }
     const wanted = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
     expect(degreesBetween(centre.aim, wanted)).toBeCloseTo(
@@ -1299,7 +1306,11 @@ describe("enemy damage", () => {
 
   it("fires each volley with its profile's damage", () => {
     const definition = enemyDefinition(2, "fighter", "damage-profile", 3);
-    const state = { ...spawn("fighter", definition), weaponLevel: 3 as const };
+    const state = {
+      ...spawn("fighter", definition),
+      facing: { x: 1, y: 0 },
+      weaponLevel: 3 as const,
+    };
     const result = stepEnemy(definition, observation(state), state);
     expect(result.fire.length).toBeGreaterThan(0);
     for (const shot of result.fire) {
@@ -1349,5 +1360,341 @@ describe("new sight engagement admission", () => {
         returning,
       ).state.engaged,
     ).toBe(stepEnemy(enemyCatalog.fighter, observation(returning), returning).state.engaged);
+  });
+});
+
+describe("small craft nose fire and large ship facing", () => {
+  type Vector = { x: number; y: number };
+  const degreesBetween = (a: Vector, b: Vector) =>
+    (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
+  const dot = (a: Vector, b: Vector) => a.x * b.x + a.y * b.y;
+  const toward = (from: Vector, to: Vector) => {
+    const size = Math.hypot(to.x - from.x, to.y - from.y);
+    return { x: (to.x - from.x) / size, y: (to.y - from.y) / size };
+  };
+  /** Explicit test values, independent of the shipped catalog values. */
+  const guns = {
+    arcRadians: (20 * Math.PI) / 180,
+    kind: "forward" as const,
+    lateralShare: 0.8,
+    reverseShare: 0.6,
+  };
+  const arcDegrees = 20;
+  const driftDegrees = (ENEMY_AIM.driftRadians * 180) / Math.PI;
+  // Ada holds still, so the aim point is her position turned by at most the aim drift.
+  const reach = arcDegrees + driftDegrees + 1e-6;
+  const nosed = (archetype: EnemyArchetype, patch: Partial<EnemyDefinition> = {}) => ({
+    ...enemyCatalog[archetype],
+    guns,
+    ...patch,
+  });
+  const ada = { x: 0, y: 0 };
+  interface Step {
+    before: EnemyState;
+    intent: ReturnType<typeof stepEnemy>;
+  }
+  /** Steps a ship at 60 Hz for `seconds` against a still Ada, moving it by its velocity. */
+  function fly(definition: EnemyDefinition, seconds: number, state: EnemyState): Step[] {
+    const steps: Step[] = [];
+    let current = state;
+    for (let frame = 0; frame < Math.round(seconds * 60); frame++) {
+      const intent = stepEnemy(
+        definition,
+        { ...observation(current), peers: [current], player: ada },
+        current,
+      );
+      steps.push({ before: current, intent });
+      const { velocity } = intent.state;
+      current = {
+        ...intent.state,
+        position: {
+          x: current.position.x + velocity.x / 60,
+          y: current.position.y + velocity.y / 60,
+        },
+      };
+    }
+    return steps;
+  }
+  const last = (steps: Step[]) => steps[steps.length - 1]!.intent.state;
+  /** Every shot leaves along the facing, with Ada's aim point inside the nose arc. */
+  function expectNoseShots(definition: EnemyDefinition, steps: Step[]) {
+    for (const { before, intent } of steps) {
+      for (const [index, shot] of intent.fire.entries()) {
+        const fan = fanHeading(
+          intent.state.facing,
+          definition.fire.angles[index % definition.fire.angles.length]!,
+        );
+        expect(shot.aim.x).toBeCloseTo(fan.x, 9);
+        expect(shot.aim.y).toBeCloseTo(fan.y, 9);
+        expect(degreesBetween(intent.state.facing, toward(before.position, ada))).toBeLessThan(
+          reach,
+        );
+      }
+    }
+  }
+
+  it("caps a strafing request by its direction relative to the facing", () => {
+    const facing = { x: 1, y: 0 };
+    expect(strafeLimited(guns, facing, { x: 1, y: 0 })).toEqual({ x: 1, y: 0 });
+    expect(strafeLimited(guns, facing, { x: 0, y: -1 }).y).toBeCloseTo(-0.8, 12);
+    expect(strafeLimited(guns, facing, { x: -1, y: 0 }).x).toBeCloseTo(-0.6, 12);
+    const ahead = strafeLimited(guns, facing, { x: Math.SQRT1_2, y: Math.SQRT1_2 });
+    expect(Math.hypot(ahead.x, ahead.y)).toBeCloseTo(
+      1 / Math.hypot(Math.SQRT1_2, Math.SQRT1_2 / 0.8),
+      12,
+    );
+    expect(ahead.x).toBeCloseTo(ahead.y, 12);
+    const behind = strafeLimited(guns, facing, { x: -Math.SQRT1_2, y: Math.SQRT1_2 });
+    expect(Math.hypot(behind.x, behind.y)).toBeCloseTo(
+      1 / Math.hypot(Math.SQRT1_2 / 0.6, Math.SQRT1_2 / 0.8),
+      12,
+    );
+    // A request already inside the cap is unchanged.
+    expect(strafeLimited(guns, facing, { x: 0, y: 0.5 })).toEqual({ x: 0, y: 0.5 });
+  });
+
+  it("holds a small craft's fire until its nose turns Ada's aim point into the arc", () => {
+    const definition = nosed("fighter");
+    const state = { ...spawn("fighter", definition), engaged: true, position: { x: -300, y: 0 } };
+    const steps = fly(definition, 1, state);
+    // The nose turns from straight up toward the drifted aim point with aimTurnSeconds.
+    const pointed = rotate({ x: 1, y: 0 }, aimDrift(state.id, state.age));
+    expect(degreesBetween(steps[0]!.intent.state.facing, pointed)).toBeCloseTo(
+      degreesBetween({ x: 0, y: -1 }, pointed) *
+        Math.exp(-1 / 60 / definition.physics.aimTurnSeconds),
+      6,
+    );
+    const first = steps.findIndex(({ intent }) => intent.fire.length > 0);
+    expect(first).toBeGreaterThan(0);
+    for (const { before, intent } of steps.slice(0, first)) {
+      expect(degreesBetween(intent.state.facing, toward(before.position, ada))).toBeGreaterThan(
+        arcDegrees - driftDegrees,
+      );
+    }
+    expectNoseShots(definition, steps);
+  });
+
+  it("fires a fighter crossing past Ada only inside the nose arc, never astern", () => {
+    // A long burst keeps the fighter attacking through the crossing.
+    const definition = nosed("fighter", { behaviour: { burstVolleys: 99, kind: "hitAndRun" } });
+    const steps = fly(definition, 2, {
+      ...spawn("fighter", definition),
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      heading: { x: 1, y: 0 },
+      position: { x: -20, y: 40 },
+      velocity: { x: 160, y: 0 },
+    });
+    expectNoseShots(definition, steps);
+    expect(steps.some(({ intent }) => intent.fire.length > 0)).toBe(true);
+    const outside = steps.filter(
+      ({ before, intent }) =>
+        degreesBetween(intent.state.facing, toward(before.position, ada)) > reach,
+    );
+    expect(outside.length).toBeGreaterThan(0);
+    expect(outside.every(({ intent }) => intent.fire.length === 0)).toBe(true);
+    for (const { before, intent } of steps) {
+      for (const shot of intent.fire) {
+        expect(dot(shot.aim, toward(before.position, ada))).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("turns a hit-and-run fighter to its travel and holds fire through the retreat", () => {
+    const definition = nosed("fighter");
+    const start = spawn("fighter", definition);
+    const steps = fly(definition, 1.5, {
+      ...start,
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      position: { x: -250, y: 0 },
+      // A finished burst pulls it out on this step.
+      tactic: { ...start.tactic, volleys: 3 },
+    });
+    expect(steps[0]!.intent.state.tactic.phase).toBe("retreat");
+    const retreating = steps.filter(({ intent }) => intent.state.tactic.phase === "retreat");
+    expect(retreating.length).toBeGreaterThan(30);
+    expect(retreating.every(({ intent }) => intent.fire.length === 0)).toBe(true);
+    const late = retreating[retreating.length - 1]!.intent.state;
+    expect(degreesBetween(late.facing, late.velocity)).toBeLessThan(5);
+    expect(dot(late.facing, toward(late.position, ada))).toBeLessThan(0);
+  });
+
+  it("keeps a standoff fighter's nose on Ada while it strafes sideways and backs off", () => {
+    const definition = nosed("fighter");
+    const maxSpeed = definition.physics.maxSpeed;
+    // The hitAndRun attack band centres on 250: the request there is straight sideways.
+    const strafe = fly(definition, 1, {
+      ...spawn("fighter", definition),
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      position: { x: -250, y: 0 },
+      primaryCooldown: 999,
+    });
+    const side = last(strafe);
+    expect(degreesBetween(side.facing, toward(side.position, ada))).toBeLessThan(
+      driftDegrees + 0.5,
+    );
+    const speed = Math.hypot(side.velocity.x, side.velocity.y);
+    expect(speed).toBeGreaterThan(0.5 * maxSpeed);
+    expect(speed).toBeLessThan(0.8 * maxSpeed * 1.02);
+    expect(Math.abs(dot(side.velocity, side.facing))).toBeLessThan(0.25 * speed);
+    // Inside the band it backs straight off at up to the backing-off share, nose still on Ada.
+    const backing = fly(definition, 0.6, {
+      ...spawn("fighter", definition),
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      position: { x: -120, y: 0 },
+      primaryCooldown: 999,
+    });
+    for (const { intent } of backing) {
+      const { facing, velocity } = intent.state;
+      expect(-dot(velocity, facing)).toBeLessThan(0.6 * maxSpeed * 1.02);
+    }
+    const back = last(backing);
+    expect(-dot(back.velocity, back.facing)).toBeGreaterThan(0.4 * maxSpeed);
+    expect(degreesBetween(back.facing, toward(back.position, ada))).toBeLessThan(
+      driftDegrees + 0.5,
+    );
+  });
+
+  it("breaks off an interceptor's pass after closest approach at full speed, holding fire", () => {
+    const definition = nosed("interceptor");
+    const speed = definition.physics.maxSpeed;
+    const start = spawn("interceptor", definition);
+    const steps = fly(definition, 1.2, {
+      ...start,
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      heading: { x: 1, y: 0 },
+      position: { x: -200, y: 160 },
+      tactic: { ...start.tactic, phase: "pass" },
+      velocity: { x: speed, y: 0 },
+    });
+    const looped = steps.findIndex(({ intent }) => intent.state.tactic.phase === "loop");
+    expect(looped).toBeGreaterThan(0);
+    // It loops once the range opens, at its closest approach.
+    const turn = steps[looped]!.before;
+    expect(dot(turn.velocity, toward(turn.position, ada))).toBeLessThan(0);
+    expect(
+      dot(steps[looped - 1]!.before.velocity, toward(steps[looped - 1]!.before.position, ada)),
+    ).toBeGreaterThanOrEqual(0);
+    const after = steps.slice(looped);
+    expect(after.every(({ intent }) => intent.fire.length === 0)).toBe(true);
+    const end = last(steps);
+    expect(end.tactic.phase).toBe("loop");
+    expect(degreesBetween(end.facing, end.velocity)).toBeLessThan(5);
+    // Uncapped by the strafe limits, unlike the 0.6 share a nose on Ada would allow backing off.
+    expect(Math.hypot(end.velocity.x, end.velocity.y)).toBeGreaterThan(0.8 * speed);
+    expectNoseShots(definition, steps);
+  });
+
+  it("turns a frigate's hull to its heading while a turret fires at Ada astern", () => {
+    const definition = enemyCatalog.frigate;
+    const start = spawn("frigate");
+    const speed = definition.physics.maxSpeed;
+    const steps = fly(definition, 0.6, {
+      ...start,
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      firePhasesInitialized: true,
+      hardpoints: start.hardpoints.map((part) => ({ ...part, cooldown: 0.3 })),
+      heading: { x: -1, y: 0 },
+      position: { x: -300, y: 0 },
+      velocity: { x: -speed, y: 0 },
+    });
+    const end = last(steps);
+    expect(degreesBetween(end.facing, end.velocity)).toBeLessThan(5);
+    expect(dot(end.facing, toward(end.position, ada))).toBeLessThan(0);
+    const astern = steps.flatMap(({ intent }) =>
+      intent.fire.filter((shot) => dot(shot.aim, intent.state.facing) < -0.9),
+    );
+    expect(astern.length).toBeGreaterThan(0);
+  });
+
+  it("fires a retaliator's forward launcher only along its facing, inside the arc", () => {
+    const definition = nosed("retaliator");
+    // Ada abeam: no shot, and the launcher points along the hull.
+    const abeam = {
+      ...spawn("retaliator", definition),
+      engaged: true,
+      position: { x: -300, y: 0 },
+    };
+    const held = stepEnemy(definition, { ...observation(abeam), player: ada }, abeam);
+    expect(held.fire).toEqual([]);
+    expect(held.state.aim).toEqual(held.state.facing);
+    const steps = fly(definition, 3, abeam);
+    expectNoseShots(definition, steps);
+    expect(steps.some(({ intent }) => intent.fire.length > 0)).toBe(true);
+    for (const { intent } of steps) {
+      expect(intent.state.aim).toEqual(intent.state.facing);
+    }
+  });
+
+  it("holds a retaliator's nose on Ada while it strafes in its band", () => {
+    const definition = nosed("retaliator");
+    const maxSpeed = definition.physics.maxSpeed;
+    const steps = fly(definition, 2, {
+      ...spawn("retaliator", definition),
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      position: { x: -300, y: 0 },
+    });
+    // The nose turns onto the aim point with the class's aimTurnSeconds, then holds Ada inside
+    // the arc as she slides across it.
+    for (const { before, intent } of steps.slice(30)) {
+      expect(degreesBetween(intent.state.facing, toward(before.position, ada))).toBeLessThan(
+        arcDegrees,
+      );
+    }
+    const end = last(steps);
+    const range = Math.hypot(end.position.x, end.position.y);
+    const band = definition.standoff!;
+    expect(range).toBeGreaterThan(band.near);
+    expect(range).toBeLessThan(band.far);
+    const speed = Math.hypot(end.velocity.x, end.velocity.y);
+    expect(speed).toBeGreaterThan(0.3 * maxSpeed);
+    expect(speed).toBeLessThan(0.8 * maxSpeed * 1.02);
+    expect(Math.abs(dot(end.velocity, end.facing))).toBeLessThan(0.5 * speed);
+    expectNoseShots(definition, steps);
+    expect(steps.some(({ intent }) => intent.fire.length > 0)).toBe(true);
+  });
+
+  it("gives every ship with fixed forward guns the shared nose values and a hull turn rate", () => {
+    const kinds = Object.fromEntries(
+      Object.entries(enemyCatalog).map(([kind, ship]) => [kind, ship.guns.kind]),
+    );
+    expect(kinds).toEqual({
+      capital: "turrets",
+      fighter: "forward",
+      frigate: "turrets",
+      interceptor: "forward",
+      platform: "turrets",
+      retaliator: "forward",
+      swarm: "forward",
+    });
+    for (const ship of Object.values(enemyCatalog)) {
+      if (ship.guns.kind !== "turrets") {
+        expect(ship.guns).toEqual(guns);
+        expect(ship.physics.aimTurnSeconds).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("steps nose fire deterministically across a JSON round trip", () => {
+    const definition = nosed("fighter", { behaviour: { burstVolleys: 99, kind: "hitAndRun" } });
+    const state: EnemyState = {
+      ...spawn("fighter", definition),
+      engaged: true,
+      facing: { x: 1, y: 0 },
+      heading: { x: 1, y: 0 },
+      position: { x: -20, y: 40 },
+      velocity: { x: 160, y: 0 },
+    };
+    const first = fly(definition, 1, state);
+    expect(fly(definition, 1, state)).toEqual(first);
+    const middle = first[29]!.intent.state;
+    const resumed = fly(definition, 0.5, JSON.parse(JSON.stringify(middle)) as EnemyState);
+    expect(resumed).toEqual(fly(definition, 0.5, middle));
   });
 });

@@ -78,6 +78,7 @@ import {
   damageEnemy,
   enemyDefeated,
   enemyFireLine,
+  enemyIntegrity,
   type EnemyState,
   type FireIntent,
   hardpointOffset,
@@ -3530,6 +3531,8 @@ function enemies(
         object,
       );
       object.enemy.hp = object.hp;
+      // Its saved damage is not a fresh hit.
+      object.enemy.tactic.integrity = enemyIntegrity(object.enemy);
     }
     // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
     object.radius = enemyRadiusForFlight(

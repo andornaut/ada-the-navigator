@@ -218,7 +218,7 @@ function retreatState(age: number, value: unknown): boolean {
 function tacticState(value: unknown): boolean {
   return (
     record(value) &&
-    ["attack", "retreat", "pass"].includes(String(value.phase)) &&
+    ["attack", "retreat", "pass", "loop"].includes(String(value.phase)) &&
     ["integrity", "seconds", "volleys"].every((key) => nonnegative(value[key]))
   );
 }

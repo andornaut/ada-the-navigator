@@ -6,6 +6,7 @@ import {
   type HeavyHullProfile,
   PHANTOM_FLAGSHIP_ID,
 } from "./enemyIdentity.ts";
+import { ENEMY_FORWARD_GUNS, type ForwardGuns } from "./enemyNavigation.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
   enemyShipFireMultiplier,
@@ -138,6 +139,15 @@ export const ENEMY_NAVIGATION: EnemyNavigation = {
   turnSeconds: 0.8,
 };
 
+/**
+ * How a ship's hull weapon is mounted, which also sets how its hull faces. `turrets`: every
+ * weapon tracks Ada and the hull faces its travel. `forward`: fixed forward guns (ForwardGuns);
+ * the hull keeps its nose on Ada and strafes while fighting her. Hardpoint weapons are turrets.
+ */
+export type EnemyGuns = { kind: "turrets" } | ({ kind: "forward" } & ForwardGuns);
+const FORWARD_GUNS: EnemyGuns = { kind: "forward", ...ENEMY_FORWARD_GUNS };
+const TURRETS: EnemyGuns = { kind: "turrets" };
+
 export interface EnemyDefinition {
   readonly assetKey?: EnemyGeometryKey;
   aggression: "sight" | "retaliate";
@@ -147,6 +157,7 @@ export interface EnemyDefinition {
   engagement: number;
   fire: FireProfile;
   fireClockPolicy: "continuous" | "staggered-and-paused";
+  guns: EnemyGuns;
   hardpoints: HardpointDefinition[];
   hp: number;
   /** A disable-only ship retains this hull HP after any hit. */
@@ -470,7 +481,7 @@ export const SMALL_CRAFT_WEAPONS = {
 export const AUTHORED_PURSUIT_HOME_RADIUS = 2000;
 
 /** Shared ship-sized defaults; each archetype states its own physics. */
-const base: Omit<EnemyDefinition, "physics"> = {
+const base: Omit<EnemyDefinition, "guns" | "physics"> = {
   aggression: "sight",
   behaviour: { kind: "chase" },
   engagement: 360,
@@ -501,6 +512,7 @@ export const enemyCatalog = {
     behaviour: siege,
     engagement: 750,
     fireClockPolicy: "staggered-and-paused",
+    guns: TURRETS,
     // Five Ada widths across: hit areas stay apart and the whole hull reads on screen.
     hardpoints: [
       command,
@@ -519,6 +531,7 @@ export const enemyCatalog = {
   fighter: {
     ...base,
     behaviour: { burstVolleys: 3, kind: "hitAndRun" },
+    guns: FORWARD_GUNS,
     physics: SHIP_PHYSICS.fighter,
     pursuit: { ...base.pursuit, homeRadius: 2500 },
     standoff: { far: 350, near: 250 },
@@ -528,6 +541,7 @@ export const enemyCatalog = {
     behaviour: siege,
     engagement: 500,
     fireClockPolicy: "staggered-and-paused",
+    guns: TURRETS,
     hardpoints: [
       engine("engine", 0, 0.3675428571428571),
       ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),
@@ -545,6 +559,7 @@ export const enemyCatalog = {
     behaviour: { kind: "strafe", loopDistance: 420, passDistance: 150 },
     engagement: 260,
     fire: enemyFire("interceptor", SMALL_CRAFT_WEAPONS.interceptor),
+    guns: FORWARD_GUNS,
     hp: 3,
     physics: SHIP_PHYSICS.interceptor,
     pursuit: { ...base.pursuit, homeRadius: 3000 },
@@ -556,6 +571,7 @@ export const enemyCatalog = {
     ...base,
     behaviour: { kind: "siege", speedFraction: 0 },
     engagement: 520,
+    guns: TURRETS,
     hardpoints: mountedHardpoints("platform", platformMounts, platformMounts.tiers[0]!, 6),
     hp: 12,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
@@ -569,6 +585,7 @@ export const enemyCatalog = {
     ...base,
     aggression: "retaliate",
     fire: enemyFire("retaliator", SMALL_CRAFT_WEAPONS.retaliator),
+    guns: FORWARD_GUNS,
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
     pursuit: { ...base.pursuit, homeRadius: 1000 },
@@ -579,6 +596,7 @@ export const enemyCatalog = {
     ...base,
     behaviour: { kind: "swarm" },
     fire: enemyFire("swarm", SMALL_CRAFT_WEAPONS.swarm),
+    guns: FORWARD_GUNS,
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,

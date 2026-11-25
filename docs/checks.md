@@ -276,7 +276,9 @@ keylines. The visible-art sets (`tools/browser-captures-batch.mjs`) are `fleet`,
 `fleet-tops`, `fleet-craft`, `hostile`, `stations-sunflower-cartwheel`,
 `stations-whirlpool-needle`, `stations-andromeda-phantom`, `pickups`,
 `landmarks`, `needle`, `craft`, `backdrops`, `ship`, `weapons`, `weapons-flat`,
-`effects` and `controls`. `resources` captures the Stardust and ore pickups on a
+`effects` and `controls`. `enemy-facing` releases a fighter crossing past Ada, a
+fighter pulling out of a burst, a fighter strafing in its band and a frigate
+turning away while its turrets fire astern. `resources` captures the Stardust and ore pickups on a
 dark and a light field and every UI view that draws their icons. The nose sets
 (`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,
 `nose-heavy-missile` and `nose-phaser`) fire one weapon into open space at
