@@ -34,10 +34,18 @@ Spans are Ada widths from `src/data/enemyDimensions.ts`.
 | Weapon tops   | `gun`, `triple`, `dish`, `pod`, `rail` |      | Aimed tops with capped and destroyed mount states         |     5 |
 |               | `spread`, `lance`, `hopper`, `dome`    |      |                                                           |       |
 
-Frigates: Slim delta in Sunflower, Cartwheel and Phantom; Twin hull in
-Whirlpool, Andromeda and Needle. Capitals: Hammer (Sunflower), Manta dreadnought
-(Whirlpool), Outrigger carrier (Cartwheel), Broad wing (Andromeda), Crossbow
-(Needle), Forked fortress (Phantom).
+- Retaliators roll Manta gunship, Cargo Hauler and Mining Freighter with equal
+  weight in every galaxy, so each of the three ships in every family. The two
+  stems keep their role paint, with the launcher top and jets in the family's.
+- Frigates: Slim delta in Sunflower, Cartwheel and Phantom; Twin hull in
+  Whirlpool, Andromeda and Needle.
+- Capitals: Hammer (Sunflower), Manta dreadnought (Whirlpool), Outrigger carrier
+  (Cartwheel), Broad wing (Andromeda), Crossbow (Needle), Forked fortress
+  (Phantom).
+- The `frigateNarrow`, `frigateCompact`, `capitalNarrow` and `capitalCompact`
+  profile variants retire with their hulls. General Gadget's flagship keeps its
+  shipped design.
+- Health and speed are unchanged.
 
 ## Pipeline
 
@@ -62,12 +70,20 @@ Every class follows the same steps from model to shipped files.
    path is the silhouette and no seam between two tones shows the field. Every
    frame passes through `svgText` at one decimal and the 16 frames pack into
    one sheet of nested roots, four to a row (`packHullRoots` in `enemies.ts`).
-5. Collision. `traceEnemyFills` traces each heading's fragments into strictly
-   convex parts with the shared checker's thresholds; notch tips draw under the
-   paths. The parts ship in the jets file as `headings[k].collision`.
+5. Collision. Hits test the drawn convex outline at the current heading.
+   `traceEnemyFills` traces each heading's fragments into strictly convex
+   parts with the shared checker's thresholds; notch tips draw under the
+   paths. The parts ship per hull and heading as `headings[k].collision`.
 6. Jets. `jetsFile` in `crafts.ts` writes the version 1 jets file. Each mouth
    is the aft disc of a drive cone or engine pod, and the jet base is 0.75 of
    its diameter. `familyColors` carries the claim, garnet and needle ramps.
+   The file adds `hull`, in frame px: the drawn `length` and `width`, and
+   `radius`, the larger of half the length and half the width, which is the
+   spacing and footprint radius. A small craft's `headings[k].muzzles` is its
+   shot origin in frame px: the flush port its weapon fires from, which aims
+   independently of the hull. The fighter's fan of three leaves from its one
+   nose origin. Ships with hardpoints carry `hull` and the hardpoint offsets in
+   `{craft}-hardpoints.json`.
 7. Shards. The hull parts split along the craft's wedge cuts, loose parts
    stay whole and four flecks follow, with the seeds of `shard-geometry.ts`.
    Each shard is resolved for occlusion on its own, and ships as the version 2
@@ -93,11 +109,13 @@ Layers per class:
 
 `node art/tools/fleet.ts` writes these files and rows. Reruns are byte-identical.
 
-| Craft        | Key                | Frame | Display | Mouths |
-| ------------ | ------------------ | ----: | ------: | -----: |
-| Pincer drone | `fleetSwarm`       |    56 |    24.5 |      1 |
-| Arrowhead    | `fleetFighter`     |    80 |      35 |      2 |
-| Spear        | `fleetInterceptor` |   128 |      56 |      1 |
+| Craft        | Key                | Frame | Display | Mouths | Hull length | Hull width | Radius |
+| ------------ | ------------------ | ----: | ------: | -----: | ----------: | ---------: | -----: |
+| Pincer drone | `fleetSwarm`       |    56 |    24.5 |      1 |       31.33 |       34.3 |  17.15 |
+| Arrowhead    | `fleetFighter`     |    80 |      35 |      2 |       54.51 |      42.88 |  27.26 |
+| Spear        | `fleetInterceptor` |   128 |      56 |      1 |       96.25 |      42.88 |  48.13 |
+
+Hull sizes are frame px; display px are 0.4375 times them.
 
 - `/art/enemies/{key}-sheet.svg`, `{key}-jets.json` and
   `{key}-shards-packed.json`: the coral sheet and the data every family reads.
@@ -126,6 +144,8 @@ Tech replaces, from `fleet-rows.json`:
   `displayWidth` and `displayHeight` change.
 - `sidecars.swarm`, `sidecars.fighter` and `sidecars.interceptor` in the same
   four manifests.
+- The shot origin and the spacing radius, read from the jets file's
+  `headings[k].muzzles` and `hull.radius`.
 - `destruction.json` `archetypes.{archetype}`: `flashWidth` is the new half
   span times 1.98 (33.96 for the swarm, 42.45 for the fighter and interceptor);
   durations and `spread` follow the new frame sizes.
@@ -166,12 +186,13 @@ and `fleet-contact-sheet.ts`.
 1. Small craft: Pincer drone, Arrowhead, Spear. Built.
 2. Retaliator hulls: Manta gunship, Cargo Hauler, Mining Freighter. Adds the
    thick wedge wing solid, the turret base with intact and destroyed states,
-   the `pod` top at 16 aims with its muzzles, and `{craft}-hardpoints.json`.
-   The stems keep their role paint in every fleet.
+   the `pod` top at 16 aims with its muzzles, and `{craft}-hardpoints.json`
+   with hull size and the turret offset. All three ship in every family.
 3. Frigates: Slim delta and Twin hull in cold armour, with engine, and `port`,
    `starboard`, `spine` and `bow` mounts in intact, destroyed and capped states.
 4. Capitals: six hulls with `command`, two engines and eight mounts. The
-   Crossbow follows its rework.
+   Crossbow follows its rework. The narrow and compact profile rows, sheets
+   and sidecars are removed.
 5. Weapon tops: `gun`, `triple`, `dish`, `rail`, `spread`, `lance`, `hopper`
    and `dome` at 16 aims with muzzles and collision, adding the ball and dome
    solids; the platform and hostile station take the tops they carry.
@@ -183,10 +204,6 @@ manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
 
 ## Decisions needed
 
-- Which shipped ids carry the per-galaxy frigate and capital designs: the
-  manifests hold `frigate`, `frigateNarrow`, `frigateCompact`, `capital`,
-  `capitalNarrow` and `capitalCompact` in each family, and the redesign has two
-  frigates and six capitals.
 - Whether the redesigned craft carry General Gadget's insignia. The models have
   none.
 - Jet length follows frame size, so the tighter frames change it: the swarm's
