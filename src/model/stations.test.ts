@@ -35,10 +35,10 @@ function sites(galaxy: GalaxyNumber, span = 15): StationSite[] {
   return found;
 }
 const site = sites(1, 3)[0]!;
-// Ada waits 200 from the station's centre: inside its safe area, outside Talk range.
+// Ada waits 200 from the station's centre: inside its protected area, outside Talk range.
 const approach = { x: site.x + 200 * Math.SQRT1_2, y: site.y + 200 * Math.SQRT1_2 };
 
-/** A flight parked inside a station's safe area with nothing else nearby. */
+/** A flight parked inside a station's protected area with nothing else nearby. */
 function atStation(seed = 5): FlightState {
   const flight = createFlight(CONTENT, 1, seed, { known: [] });
   flight.player = { ...approach };
@@ -185,10 +185,9 @@ describe("station placement", () => {
   });
 });
 
-describe("station safe area", () => {
-  it("protects Ada from enemy fire inside the safe area and ends danger", () => {
+describe("station proximity", () => {
+  it("gives Ada no protection from enemy fire beside a station", () => {
     const flight = atStation();
-    flight.dangerFor = 2;
     flight.shots.push({
       ...flight.player,
       damage: 1,
@@ -200,12 +199,11 @@ describe("station safe area", () => {
       velocity: { x: 0, y: 0 },
     });
     stepFlight(CONTENT, 0.05, idle, flight);
-    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
-    expect(flight.dangerFor).toBe(0);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 1);
     expect(flight.shots).toEqual([]);
   });
 
-  it("keeps enemies from entering the safe area or targeting Ada inside it", () => {
+  it("keeps enemies out of the station's protected area while they fire at Ada inside it", () => {
     const flight = atStation();
     const at = { x: site.x + safeRadius + 40, y: site.y };
     const definition = enemyCatalog.fighter;
@@ -218,20 +216,21 @@ describe("station safe area", () => {
       radius: CONTENT.tuning.flight.shipRadius,
     });
     flight.player = { x: site.x + 100, y: site.y };
+    let fired = 0;
     for (let step = 0; step < 120; step++) {
       stepFlight(CONTENT, 1 / 30, idle, flight);
       const enemy = flight.objects.find((object) => object.id === "f")!;
       expect(distance(enemy, site)).toBeGreaterThanOrEqual(
         safeRadius + CONTENT.tuning.flight.shipRadius - 1e-6,
       );
+      fired = Math.max(fired, flight.shots.filter((shot) => shot.enemy).length);
     }
-    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
-    expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
+    expect(fired).toBeGreaterThan(0);
   });
 });
 
 describe("station discovery and docking", () => {
-  it("discovers a station in its safe area and offers it as a travel destination", () => {
+  it("discovers a station within its discovery range and offers it as a travel destination", () => {
     const model = launched();
     expect(model.state.progress[1].stations).toEqual([site.id]);
     expect(model.destinations()).toContainEqual({ id: site.id, label: "Station" });

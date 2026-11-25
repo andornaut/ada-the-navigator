@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { protectAda } from "../testing/arrivalGrace.ts";
 import { markerModel } from "../testing/markerModel.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import {
@@ -56,6 +57,8 @@ function guarded(wrapped = false) {
   const guard = spawnQuestFrigateAt(CONTENT, flight, "route:quest", site.id, home!)!;
   expect(guard).not.toBeNull();
   const followers = flight.objects.filter((object) => object.enemy?.escortOf === guard.id);
+  // Ada stays protected, so the guard keeps its patrol rather than engaging her.
+  protectAda(flight);
   emptyMotionCells(flight);
   return { flight, followers, guard, site };
 }

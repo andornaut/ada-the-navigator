@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -22,6 +23,7 @@ describe("Shield depletion ore loss", () => {
       expect(flight.cargo).toBe(ore);
       expect(model.state.economy.cargo).toBe(19);
       flight.shield = CONTENT.tuning.hazardDamage;
+      endArrivalGrace(flight);
       flight.objects = [{ ...flight.player, hp: 1, id: "depletion", kind: "hazard", radius: 1000 }];
       model.step(0.1, idle);
       expect(model.state.flight).toBeNull();

@@ -405,14 +405,23 @@ function requiredPlacementClear(
   });
 }
 
-function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
-  return (
-    needleChannelContains({}, flight, point) ||
-    flight.objects.some((o) => {
-      const radius = protectedRadius(content, o);
-      return radius !== null && worldDistance(flightWorldContext(flight), point, o) <= radius;
-    })
-  );
+/** Starts Ada's arrival grace at a launch, jump or Travel arrival. */
+export function beginArrivalGrace(content: GameContent, flight: FlightState): void {
+  flight.arrivalGraceUntil = flight.time + content.tuning.flight.arrivalGrace;
+}
+
+/** Whether Ada is still within the arrival grace of her last launch, jump or Travel arrival. */
+export function arrivalGraceActive(flight: Pick<FlightState, "arrivalGraceUntil" | "time">) {
+  return flight.arrivalGraceUntil !== undefined && flight.time < flight.arrivalGraceUntil;
+}
+
+/**
+ * Whether enemies may not target or damage Ada: during her arrival grace, or inside the Needle
+ * channel, which no enemy or enemy shot enters. Docking and dialogue pause the flight. Stations,
+ * destinations and arrival points give no combat protection.
+ */
+function adaProtected(flight: FlightState): boolean {
+  return arrivalGraceActive(flight) || needleChannelContains({}, flight, flight.player);
 }
 /**
  * An object's whole reach for clearances: a drawn rock's silhouette radius, else its radius, and
@@ -430,10 +439,10 @@ function clearOf(flight: FlightState, clearance: number, point: Vec, object: Spa
   return worldDistance(flightWorldContext(flight), reach, point) > clearance + reach.radius;
 }
 /**
- * Whether an object's whole footprint stays outside every safe area and the safe radius of
+ * Whether an object's whole footprint stays outside every protected area and the arrival clearance of
  * every launch point, so no rock or drift path reaches one.
  */
-function clearOfSafeAreas(content: GameContent, object: SpaceObject, flight: FlightState) {
+function clearOfProtectedAreas(content: GameContent, object: SpaceObject, flight: FlightState) {
   return (
     requiredPlacementClear(content, flight, object) &&
     flight.objects.every((o) => {
@@ -850,7 +859,7 @@ function placeStation(site: Vec & { id: string }, flight: FlightState): SpaceObj
     y: site.y,
   };
   flight.objects.push(station);
-  // A station's safe area holds no layout object or drift path from chunks generated before it.
+  // A station's protected area holds no layout object or drift path from chunks generated before it.
   clearLayoutObjects(
     (object) =>
       object === station ||
@@ -1216,7 +1225,7 @@ function placePack(
 }
 
 /**
- * The chunk's discovery caches on their template slots, clear of Ada, safe areas and landmark
+ * The chunk's discovery caches on their template slots, clear of Ada, protected areas and landmark
  * charting ranges.
  */
 function placeCaches(
@@ -1260,7 +1269,7 @@ function placeCaches(
       !Object.hasOwn(flight.world.notables, cache.id) &&
       !Object.hasOwn(flight.world.notables, object.id) &&
       clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
-      clearOfSafeAreas(content, object, flight) &&
+      clearOfProtectedAreas(content, object, flight) &&
       clearOfLandmarks(object, flight)
     ) {
       canonicalObject(flight, object);
@@ -1324,7 +1333,7 @@ function placeOreFields(
         !existing.has(object.id) &&
         !Object.hasOwn(flight.world.notables, object.id) &&
         clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
-        clearOfSafeAreas(content, object, flight) &&
+        clearOfProtectedAreas(content, object, flight) &&
         flight.objects.every(
           (other) =>
             other.kind !== "rock" ||
@@ -1411,7 +1420,7 @@ export function placeExplorationSite(
       // Planned chunks keep enemy groups out of the wreck's neighbourhood and rocks off its hull.
       const wreck = spawnEnemy(content, flight, "frigate", id, { x: site.x, y: site.y });
       if (
-        !clearOfSafeAreas(content, wreck, flight) ||
+        !clearOfProtectedAreas(content, wreck, flight) ||
         !stationFormationClear(questGuardPlacementContext(content, flight), [wreck])
       ) {
         continue;
@@ -2628,7 +2637,7 @@ function destinationClear(content: GameContent, flight: FlightState, point: Vec)
   );
 }
 
-/** A seeded chapter site uses the same destination creation and safe-area clearance as exploration. */
+/** A seeded chapter site uses the same destination creation and protected-area clearance as exploration. */
 export function ensureDestinationAt(
   content: GameContent,
   id: string,
@@ -2645,16 +2654,12 @@ export function ensureDestinationAt(
   const object: SpaceObject = { ...point, hp: 1, id, kind: "destination", radius: 30, role: id };
   canonicalObject(flight, object);
   flight.objects.push(object);
-  // A destination's safe area holds no layout object or drift path from earlier chunks.
+  // A destination's protected area holds no layout object or drift path from earlier chunks.
   clearLayoutObjects(
     (o) => o.kind === "destination" || clearOf(flight, content.tuning.safeRadius, object, o),
     flight,
   );
   relocateRouteGuards(content, flight);
-  flight.shots = flight.shots.filter(
-    (s) =>
-      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
-  );
   return object;
 }
 
@@ -2684,10 +2689,6 @@ function heldDestination(
   clearLayoutObjects(
     (o) => o.kind === "destination" || clearOf(flight, content.tuning.safeRadius, object, o),
     flight,
-  );
-  flight.shots = flight.shots.filter(
-    (s) =>
-      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
   );
   return object;
 }
@@ -3115,12 +3116,9 @@ export function teleport(content: GameContent, id: string, flight: FlightState):
   flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
+  beginArrivalGrace(content, flight);
   const key = chunk(flight, content, object);
   markVisited(flight.visited, key);
-  flight.shots = flight.shots.filter(
-    (s) =>
-      !s.enemy || worldDistance(flightWorldContext(flight), s, object) > content.tuning.safeRadius,
-  );
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   return true;
 }
@@ -3250,7 +3248,7 @@ export function inBattle(
 }
 /**
  * Whether Ada is in danger (rules.md): in battle, or with an enemy shot in flight inside the
- * battle square. Danger has no release time and no safe-area exemption.
+ * battle square. Danger has no release time.
  */
 export function inDanger(
   content: GameContent,
@@ -3266,9 +3264,9 @@ export function inDanger(
     })
   );
 }
-/** Removes `amount` HP from Ada's shield unless she is in a safe area. */
-function damage(content: GameContent, amount: number, flight: FlightState): void {
-  if (safe(content, flight.player, flight)) {
+/** Removes `amount` HP from Ada's shield unless she is protected (adaProtected). */
+function damage(amount: number, flight: FlightState): void {
+  if (adaProtected(flight)) {
     return;
   }
   flight.shield = Math.max(0, flight.shield - amount);
@@ -3470,7 +3468,7 @@ function move(
 }
 /**
  * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
- * with targetable saying neither it nor Ada is inside a friendly safe zone.
+ * with targetable saying Ada is not protected (adaProtected).
  */
 function presses(targetable: boolean, flight: FlightState, object: SpaceObject): boolean {
   const state = object.enemy;
@@ -3487,13 +3485,10 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
 }
 
 /** Whether drones are near: a live enemy presses Ada, as the danger it sets measures. */
-export function dronesNear(content: GameContent, flight: FlightState): boolean {
-  const adaSafe = safe(content, flight.player, flight);
+export function dronesNear(flight: FlightState): boolean {
+  const targetable = !adaProtected(flight);
   return flight.objects.some(
-    (object) =>
-      object.kind === "enemy" &&
-      object.hp > 0 &&
-      presses(!adaSafe && !safe(content, object, flight), flight, object),
+    (object) => object.kind === "enemy" && object.hp > 0 && presses(targetable, flight, object),
   );
 }
 
@@ -3576,8 +3571,7 @@ function enemies(
         return (
           definition.aggression === "sight" &&
           visibility.get(object.id) &&
-          !safe(content, flight.player, flight) &&
-          !safe(content, object, flight) &&
+          !adaProtected(flight) &&
           worldDistance(flightWorldContext(flight), object, flight.player) <= definition.perception
         );
       })
@@ -3601,7 +3595,7 @@ function enemies(
       song === 1
         ? base
         : { ...base, physics: { ...base.physics, maxSpeed: base.physics.maxSpeed * song } };
-    const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
+    const targetable = !adaProtected(flight);
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
     const escortLeader =
@@ -3702,7 +3696,7 @@ function enemies(
       continue;
     }
     let velocity = intent.velocity;
-    // Enemies bounce off scenery by the same rule as Ada; safe areas and peers still block.
+    // Enemies bounce off scenery by the same rule as Ada; protected areas and peers still block.
     const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
     const onContact = (normal: Vec, surface: Vec): void => {
       velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, velocity);
@@ -3931,7 +3925,7 @@ function stepMines(content: GameContent, dt: number, flight: FlightState): void 
       !needleChannelContains({}, flight, flight.player) &&
       mineTouches(mine, body, worldPoint(flightWorldContext(flight), mine, flight.player))
     ) {
-      damage(content, mine.damage, flight);
+      damage(mine.damage, flight);
       mine.end = { age: 0, kind: "pop" };
     }
   }
@@ -4161,10 +4155,6 @@ function shots(
       shot.y = next.y;
       canonicalPosition(flight, shot);
       if (shot.enemy) {
-        if (safe(content, shot, flight)) {
-          shot.life = 0;
-          continue;
-        }
         const struck = touchesAda(flight, shot, radius);
         const blocked = flight.objects.find(
           (object) =>
@@ -4239,7 +4229,7 @@ function enemyImpact(content: GameContent, shot: Shot, struck: boolean, flight: 
     blastFlashes.set(flight, blasts);
   }
   if (struck || (shot.blast !== undefined && blastCoversAda(flight, shot, shot.blast))) {
-    damage(content, shot.damage, flight);
+    damage(shot.damage, flight);
   }
 }
 
@@ -5303,7 +5293,7 @@ function stepEnemyBeams(
         }
         if (touchesAda(flight, point, halfWidth)) {
           reach = at;
-          damage(content, beam.damage, flight);
+          damage(beam.damage, flight);
           break;
         }
       }
@@ -5669,7 +5659,7 @@ export function stepFlight(
       if (object.kind === "hazard" && touchesAda(flight, object, object.radius)) {
         object.cooldown = Math.max(0, (object.cooldown ?? 0) - slice);
         if (!object.cooldown) {
-          damage(content, content.tuning.hazardDamage, flight);
+          damage(content.tuning.hazardDamage, flight);
           object.cooldown = content.tuning.flight.damageInterval;
         }
       }

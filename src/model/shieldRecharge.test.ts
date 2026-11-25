@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -34,6 +35,7 @@ function launched() {
   model.startGalaxy(1);
   playOpening(model);
   calm(model.state.flight!);
+  endArrivalGrace(model.state.flight!);
   return model;
 }
 

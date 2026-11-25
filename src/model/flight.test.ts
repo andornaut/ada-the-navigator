@@ -355,7 +355,7 @@ describe("drones near", () => {
     stepFlight(CONTENT, 0.05, idle, flight);
     expect(flight.shield).toBeLessThan(CONTENT.tuning.shieldMax);
     expect(flight.dangerFor).toBe(0);
-    expect(dronesNear(CONTENT, flight)).toBe(false);
+    expect(dronesNear(flight)).toBe(false);
     const { perception } = enemyDefinition(1, "fighter");
     const drone = (x: number, engaged: boolean) => {
       const at = { x, y: flight.player.y };
@@ -374,11 +374,11 @@ describe("drones near", () => {
       };
     };
     flight.objects = [drone(flight.player.x + perception - 1, false)];
-    expect(dronesNear(CONTENT, flight)).toBe(false);
+    expect(dronesNear(flight)).toBe(false);
     flight.objects = [drone(flight.player.x + perception + 1, true)];
-    expect(dronesNear(CONTENT, flight)).toBe(false);
+    expect(dronesNear(flight)).toBe(false);
     flight.objects = [drone(flight.player.x + perception - 1, true)];
-    expect(dronesNear(CONTENT, flight)).toBe(true);
+    expect(dronesNear(flight)).toBe(true);
   });
 });
 

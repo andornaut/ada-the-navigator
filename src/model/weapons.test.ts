@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
-import { ensureDestination, stepFlight } from "./flight.ts";
+import { beginArrivalGrace, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
@@ -18,6 +19,7 @@ function launched(): GameModel {
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];
+  endArrivalGrace(model.state.flight!);
   return model;
 }
 /** Ada finds a weapon, as an upgrade pickup that gives it does. */
@@ -144,17 +146,11 @@ describe("owned upgrade weapons", () => {
     expect(model.state.progress[1].deposited).toBe(42);
   });
 
-  it("keeps friendly arrivals protected without losing an owned upgrade", () => {
+  it("keeps Ada protected during her arrival grace without losing an owned upgrade", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     const flight = model.state.flight!;
-    flight.objects.push({
-      ...flight.player,
-      hp: 1,
-      id: "growers",
-      kind: "destination",
-      radius: 30,
-    });
+    beginArrivalGrace(CONTENT, flight);
     flight.shield = CONTENT.tuning.hazardDamage;
     flight.sinceDamage = 0;
     incoming(flight);

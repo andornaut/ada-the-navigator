@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { bedroomBackground } from "../ui/bedroom.ts";
 import { stepFlight } from "./flight.ts";
@@ -41,6 +42,7 @@ function incoming(flight: FlightState): void {
 }
 function deplete(model: GameModel): void {
   const flight = model.state.flight!;
+  endArrivalGrace(flight);
   flight.objects = [];
   flight.shield = CONTENT.tuning.hazardDamage;
   incoming(flight);
@@ -140,6 +142,7 @@ describe("quantum jump home", () => {
   // Depletes the shield with the flight's objects in place.
   function depleteHere(model: GameModel): void {
     const flight = model.state.flight!;
+    endArrivalGrace(flight);
     flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);

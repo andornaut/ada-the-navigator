@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 
@@ -82,6 +83,7 @@ describe("what each event keeps (rules.md)", () => {
     flight.objects = [];
     delete flight.tow;
     flight.shield = 1;
+    endArrivalGrace(flight);
     flight.shots.push({
       ...flight.player,
       damage: 1,

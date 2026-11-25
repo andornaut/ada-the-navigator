@@ -11,6 +11,7 @@ import {
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening } from "../testing/launch.ts";
 import {
   ConversationDirector,
@@ -648,6 +649,7 @@ describe("drone engagements in flight", () => {
     model.startGalaxy(galaxy);
     const flight = model.state.flight!;
     flight.player = { x: flight.player.x + 6000, y: flight.player.y };
+    endArrivalGrace(flight);
     flight.objects = Array.from({ length: count }, (_, index) => {
       const definition = enemyCatalog[archetype];
       const at = {

@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { actualGap } from "../testing/aiGeometry.ts";
+import { protectAda } from "../testing/arrivalGrace.ts";
 import { markerModel } from "../testing/markerModel.ts";
 import { ASTEROID_SHAPES, worldSceneryBodyContact } from "./asteroids.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
@@ -44,6 +45,8 @@ it.each([false, true])(
     const home = questFrigateHome(CONTENT, flight, "route:quest", destination.id)!;
     expect(home).not.toBeNull();
     const guard = spawnQuestFrigateAt(CONTENT, flight, "route:quest", destination.id, home)!;
+    // Ada stays protected, so the guard keeps its patrol rather than engaging her.
+    protectAda(flight);
     expect(guard).not.toBeNull();
     const grid = worldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
     flight.chunks = [

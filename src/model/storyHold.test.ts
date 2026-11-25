@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
@@ -81,6 +82,7 @@ describe("Story Back to title and Continue", () => {
     model.startGalaxy(1);
     const flight = model.state.flight!;
     flight.shield = CONTENT.tuning.hazardDamage;
+    endArrivalGrace(flight);
     flight.objects = [{ ...flight.player, hp: 1, id: "depletion", kind: "hazard", radius: 1000 }];
     model.step(0.1, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
     model.storyNext();

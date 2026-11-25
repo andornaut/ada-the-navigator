@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
@@ -375,6 +376,7 @@ describe("held story title consumer", () => {
     model.startGalaxy(1);
     const flight = model.state.flight!;
     flight.shield = CONTENT.tuning.hazardDamage;
+    endArrivalGrace(flight);
     flight.objects = [{ ...flight.player, hp: 1, id: "depletion", kind: "hazard", radius: 1000 }];
     model.step(0.1, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
     model.storyNext();

@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GameContent } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -184,6 +185,7 @@ describe("mechanical outcome retention", () => {
     const flight = model.state.flight!;
     flight.objects = [];
     flight.shield = 1;
+    endArrivalGrace(flight);
     flight.shots.push({
       ...flight.player,
       damage: 1,

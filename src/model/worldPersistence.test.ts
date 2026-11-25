@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
@@ -100,6 +101,7 @@ describe("persistent geography fresh entry", () => {
     const first = game.state.flight!;
     const geography = structuredClone(game.state.progress[1].geography);
     first.shield = CONTENT.tuning.hazardDamage;
+    endArrivalGrace(first);
     first.objects = [{ ...first.player, hp: 1, id: "depletion", kind: "hazard", radius: 1000 }];
     game.step(0.1, idle);
     expect(game.state.flight).toBeNull();

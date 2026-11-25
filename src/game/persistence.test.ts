@@ -13,6 +13,7 @@ import { SAVE_VERSION } from "../model/save.ts";
 import { stationsNear } from "../model/stations.ts";
 import type { FlightState } from "../model/types.ts";
 import { collectWeapon } from "../model/weapons.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createAdaSaves, SAVE_FORMAT, SAVE_KEYS, saves } from "./persistence.ts";
 
@@ -142,6 +143,7 @@ describe("canonical Ada save storage", () => {
     const flight = model.state.flight!;
     flight.objects = [];
     flight.shield = 1;
+    endArrivalGrace(flight);
     flight.shots.push({
       ...flight.player,
       damage: 1,

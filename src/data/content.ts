@@ -739,6 +739,8 @@ export const CONTENT: GameContent = {
     encounterFreshDistance: 600,
     flight: {
       arrivalCalm: 2000,
+      // Provisional until Gameplay sets the arrival grace.
+      arrivalGrace: 3,
       damageInterval: 1,
       enemyFireInterval: 2.5,
       enemyHp: 2,

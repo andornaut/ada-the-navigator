@@ -5,6 +5,7 @@ import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
 import { restoreSave } from "../model/save.ts";
 import type { FlightInput } from "../model/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import { storyPageView } from "../ui/storybook.ts";
 
@@ -18,6 +19,7 @@ function depleted() {
   const flight = model.state.flight!;
   flight.objects = [];
   flight.cargo = 5;
+  endArrivalGrace(flight);
   flight.shield = 1;
   flight.shots.push({
     ...flight.player,

@@ -199,6 +199,8 @@ export interface GameContent {
       rockRicochet: RockRicochet;
       /** No encounter ship is placed this close to a flight's start or a jump arrival. */
       arrivalCalm: number;
+      /** Seconds after a launch, jump or Travel arrival during which enemies hold fire at Ada. */
+      arrivalGrace: number;
       pickupRadius: number;
       pieceRadius: number;
       /**

@@ -825,6 +825,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         !Number.isSafeInteger(f.cargo) ||
         !ammoCounts(f.ammo) ||
         (f.lastBump !== undefined && !Number.isFinite(f.lastBump)) ||
+        (f.arrivalGraceUntil !== undefined && !nonnegative(f.arrivalGraceUntil)) ||
         (f.tow !== undefined && !vector(f.tow)) ||
         (f.calf !== undefined &&
           !(

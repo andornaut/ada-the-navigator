@@ -11,6 +11,7 @@ import { requiredReady } from "../loading/required.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
 import { direction } from "../model/shipPhysics.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
@@ -51,6 +52,7 @@ function setup(quantum = true) {
   model.startGalaxy(1);
   const flight = model.state.flight!;
   flight.objects = [];
+  endArrivalGrace(flight);
   flight.facing = { x: 1, y: 0 };
   flight.player = { x: 10000, y: 10000 };
   flight.cargo = 9;

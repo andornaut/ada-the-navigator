@@ -16,7 +16,7 @@ function launched() {
 }
 
 describe("required chapter encounters", () => {
-  it("keeps an explicit seeded site at its supplied point and clears unsafe enemy shots", () => {
+  it("keeps an explicit seeded site at its supplied point and leaves enemy shots in flight", () => {
     const flight = launched();
     const point = { x: 10000, y: 10000 };
     flight.shots = [
@@ -25,7 +25,7 @@ describe("required chapter encounters", () => {
         damage: 1,
         enemy: true,
         hitIds: [],
-        id: "unsafe",
+        id: "incoming",
         life: 1,
         piercing: false,
         velocity: { x: 0, y: 0 },
@@ -33,7 +33,7 @@ describe("required chapter encounters", () => {
     ];
     const site = ensureDestinationAt(CONTENT, "settlement:0,0", point, flight);
     expect(site).toMatchObject({ ...point, id: "settlement:0,0", kind: "destination" });
-    expect(flight.shots).toEqual([]);
+    expect(flight.shots.map(({ id }) => id)).toEqual(["incoming"]);
     expect(ensureDestinationAt(CONTENT, site.id, { x: 0, y: 0 }, flight)).toBe(site);
     expect(site).toMatchObject(point);
     expect(flight.objects.filter((o) => o.id === site.id)).toHaveLength(1);

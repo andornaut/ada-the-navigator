@@ -105,6 +105,7 @@ import {
   activateRequiredCartwheelRoute,
   activateRequiredWhirlpoolRoute,
   activateRouteEncounter,
+  beginArrivalGrace,
   carryPickup,
   createUnpopulatedFlight,
   dockFlight,
@@ -2296,6 +2297,7 @@ export class GameModel {
     } else {
       populateFlight(this.content, this.current, flight);
     }
+    beginArrivalGrace(this.content, flight);
     this.state.flight = flight;
     delete this.state.economy.cargo;
     this.state.mode = "space";
@@ -2875,7 +2877,7 @@ export class GameModel {
       capitalInSight: heavyInSight("capital", SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
-      dronesNear: dronesNear(this.content, f),
+      dronesNear: dronesNear(f),
       encounters: this.encounterCues(f),
       frigateInSight: heavyInSight("frigate", SCREEN, f),
       guardCues: events.flatMap((event) =>
