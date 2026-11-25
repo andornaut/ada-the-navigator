@@ -1,33 +1,50 @@
 import type { EnemyActorKind } from "./enemyActors.ts";
 import { enemyRandom } from "./enemyRandom.ts";
-import type { RoutePosition } from "./galaxies.ts";
+import { GALAXY_ID, ROUTE, type RoutePosition } from "./galaxies.ts";
 import type { SHIP_PHYSICS } from "./shipPhysics.ts";
 
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
 export const WRECK_ID_PREFIX = "wreck:";
 export const INDUSTRIAL_BODY_KEYS = ["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const;
 export type IndustrialBodyKey = (typeof INDUSTRIAL_BODY_KEYS)[number];
-export const HEAVY_PROFILE_PART_CLASSES = {
-  capitalCompact: "capital",
-  capitalNarrow: "capital",
-  frigateCompact: "frigate",
-  frigateNarrow: "frigate",
-} as const;
-export type HeavyProfileAssetKey = keyof typeof HEAVY_PROFILE_PART_CLASSES;
-export type OrdinaryHeavy = (typeof HEAVY_PROFILE_PART_CLASSES)[HeavyProfileAssetKey];
+export type OrdinaryHeavy = "capital" | "frigate";
+/** A retired narrow or compact hull profile, which older saves may record and no hull draws. */
 export type HeavyHullProfile = "compact" | "narrow";
+export const HULL_DESIGN_KEYS = [
+  "capitalBroad",
+  "capitalCrossbow",
+  "capitalForked",
+  "capitalManta",
+  "capitalOutrigger",
+  "frigateTwin",
+] as const;
+export type HullDesignKey = (typeof HULL_DESIGN_KEYS)[number];
+/**
+ * The galaxies whose frigates and capitals fly a design other than the class's own, by stable
+ * galaxy id (art/enemy-redesign.md "Frigates" and "Capitals"). The others fly the class's own:
+ * the Slim delta frigate and the Hammer capital.
+ */
+export const HULL_DESIGNS: Readonly<
+  Record<OrdinaryHeavy, Readonly<Record<string, HullDesignKey>>>
+> = {
+  capital: {
+    andromeda: "capitalBroad",
+    cartwheel: "capitalOutrigger",
+    needle: "capitalCrossbow",
+    phantom: "capitalForked",
+    whirlpool: "capitalManta",
+  },
+  frigate: { andromeda: "frigateTwin", needle: "frigateTwin", whirlpool: "frigateTwin" },
+};
 export type EnemyAssetKey =
-  | Exclude<keyof typeof SHIP_PHYSICS, "ada">
-  | "gadget"
-  | "hostileStation"
-  | HeavyProfileAssetKey
-  | IndustrialBodyKey;
-export type EnemyGeometryKey = EnemyAssetKey | "hostileStationAndromeda" | "hostileStationPhantom";
+  Exclude<keyof typeof SHIP_PHYSICS, "ada"> | "gadget" | "hostileStation" | IndustrialBodyKey;
+export type EnemyGeometryKey =
+  EnemyAssetKey | HullDesignKey | "hostileStationAndromeda" | "hostileStationPhantom";
 
 export interface EnemyIdentity {
   readonly archetype: EnemyActorKind;
   readonly id?: string | undefined;
-  /** Absent on standard hulls, including pre-profile saves. */
+  /** A retired profile; absent on every new hull. */
   readonly hullProfile?: HeavyHullProfile | undefined;
 }
 
@@ -35,44 +52,42 @@ export function ordinaryHeavy(kind: EnemyActorKind): kind is OrdinaryHeavy {
   return kind === "capital" || kind === "frigate";
 }
 
-const ordinaryProfiles = [undefined, "compact", "narrow"] as const;
-
-/** The paired manifests supply all three profiles in each regional palette and the core fallback. */
-export function ordinaryPackHullProfile(identity: EnemyIdentity): HeavyHullProfile | undefined {
-  return selectOrdinaryHeavyProfile(ordinaryProfiles, identity);
-}
-
-function canCarryHeavyProfile({ archetype, id }: EnemyIdentity): boolean {
-  return (
-    ordinaryHeavy(archetype) &&
-    Boolean(id && id !== PHANTOM_FLAGSHIP_ID && !id.startsWith("route:"))
-  );
-}
-
-export function isHeavyHullProfile(
-  identity: EnemyIdentity,
-  value: unknown,
-): value is HeavyHullProfile {
-  return canCarryHeavyProfile(identity) && (value === "compact" || value === "narrow");
-}
-
-/** Resolve only caller-authorized profiles for a newly admitted ordinary ship. */
-export function selectOrdinaryHeavyProfile(
-  choices: readonly (HeavyHullProfile | undefined)[],
-  identity: EnemyIdentity,
-): HeavyHullProfile | undefined {
-  if (!canCarryHeavyProfile(identity)) {
+/**
+ * The design an ordinary heavy flies in the galaxy `galaxyId`, where it is not the class's own.
+ * General Gadget's flagship keeps its own design.
+ */
+export function hullDesign(
+  { archetype, id }: Pick<EnemyIdentity, "archetype" | "id">,
+  galaxyId: string | undefined,
+): HullDesignKey | undefined {
+  if (!ordinaryHeavy(archetype) || galaxyId === undefined || id === PHANTOM_FLAGSHIP_ID) {
     return undefined;
   }
-  const candidates = [...new Set(choices)];
-  const roll = enemyRandom(`heavy-hull-profile:${identity.id}`)();
-  return candidates[Math.floor(roll * candidates.length)];
+  const designs = HULL_DESIGNS[archetype];
+  return Object.hasOwn(designs, galaxyId) ? designs[galaxyId] : undefined;
 }
 
-export function heavyProfilePartClass(asset: string): "frigate" | "capital" | undefined {
-  return Object.hasOwn(HEAVY_PROFILE_PART_CLASSES, asset)
-    ? HEAVY_PROFILE_PART_CLASSES[asset as HeavyProfileAssetKey]
-    : undefined;
+/** The class whose frames and hardpoints schema a hull design shares, or undefined for a class. */
+export function hullDesignClass(key: string): "capital" | "frigate" | "retaliator" | undefined {
+  if (INDUSTRIAL_BODY_KEYS.some((body) => body === key)) {
+    return "retaliator";
+  }
+  if (!HULL_DESIGN_KEYS.some((design) => design === key)) {
+    return undefined;
+  }
+  return key.startsWith("capital") ? "capital" : "frigate";
+}
+
+/** A saved hull profile, kept only where an ordinary ship could have carried one. */
+export function isHeavyHullProfile(
+  { archetype, id }: EnemyIdentity,
+  value: unknown,
+): value is HeavyHullProfile {
+  return (
+    ordinaryHeavy(archetype) &&
+    Boolean(id && id !== PHANTOM_FLAGSHIP_ID && !id.startsWith("route:")) &&
+    (value === "compact" || value === "narrow")
+  );
 }
 
 /** Visual identity uses its own stream and never changes the gameplay archetype or world rolls. */
@@ -80,14 +95,7 @@ export function enemyAssetKey(identity: EnemyIdentity): EnemyAssetKey {
   if (identity.archetype === "capital" && identity.id === PHANTOM_FLAGSHIP_ID) {
     return "gadget";
   }
-  const { archetype, hullProfile } = identity;
-  if (
-    (archetype === "capital" || archetype === "frigate") &&
-    isHeavyHullProfile(identity, hullProfile)
-  ) {
-    return `${archetype}${hullProfile === "compact" ? "Compact" : "Narrow"}`;
-  }
-  return retaliatorVariant(identity) ?? archetype;
+  return retaliatorVariant(identity) ?? identity.archetype;
 }
 
 /** Shares the rendering identity stream with idle navigation. */
@@ -100,11 +108,19 @@ export function retaliatorVariant(identity: EnemyIdentity): IndustrialBodyKey | 
   ];
 }
 
-/** The art family supplies station geometry while the actor and texture identities stay stable. */
+/**
+ * The art family supplies station geometry while the actor and texture identities stay stable;
+ * a frigate or capital takes its galaxy's design.
+ */
 export function enemyGeometryKey(
   identity: EnemyIdentity,
   position?: RoutePosition,
 ): EnemyGeometryKey {
+  const galaxyId = position === undefined ? undefined : GALAXY_ID[ROUTE[position - 1]!];
+  const design = hullDesign(identity, galaxyId);
+  if (design) {
+    return design;
+  }
   if (identity.archetype === "hostileStation") {
     if (position === 4) {
       return "hostileStationAndromeda";

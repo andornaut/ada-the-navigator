@@ -98,7 +98,7 @@ describe("projectile contact positions and detonation", () => {
       enemy.hp = 10;
       return rock({ enemy, hp: 10, id, kind: "enemy", radius: 20, x, y });
     };
-    const near = mob("near", 160, 45);
+    const near = mob("near", 160, 52);
     const far = mob("far", 225, 20);
     flight.objects = [direct, near, far];
     flight.shots = [missile()];

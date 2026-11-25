@@ -3,8 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { readMuzzleArt } from "../../src/data/enemyMuzzles.ts";
-import { INDUSTRIAL_STEMS, exportCrafts } from "./crafts.ts";
-import { jets } from "./enemies.ts";
+import { INDUSTRIAL_STEMS } from "./crafts.ts";
 import { fleetCrafts } from "./fleet.ts";
 import { readManifest, type SidecarKind, type Sidecars } from "./manifest.ts";
 import { anchor, ENEMY_HEADINGS } from "./projection.ts";
@@ -18,7 +17,12 @@ type File = Omit<Parameters<typeof readMuzzleArt>[0], "hardpoints"> & {
   archetype: string;
   headings: {
     index: number;
-    hardpoints: { id: string; pivot?: number[]; collision: Record<string, Parts> }[];
+    hardpoints: {
+      id: string;
+      hidden?: true;
+      pivot?: number[];
+      collision: Record<string, Parts>;
+    }[];
   }[];
   tops: Record<string, { index: number; collision: Parts; muzzles: number[][] }[]>;
 };
@@ -63,7 +67,8 @@ test("installed v1 metadata keeps every physical state and independently aimed t
     for (const heading of file.headings) {
       for (const part of heading.hardpoints) {
         for (const polygons of Object.values(part.collision)) {
-          assert.ok(polygons.length > 0, path);
+          // A base the hull hides whole at a heading is an empty frame with no collision.
+          assert.ok(polygons.length > 0 || part.hidden, path);
           for (const polygon of polygons) {
             assert.ok(strictlyConvex(polygon), path);
             for (const [x, y] of polygon) inside(x, y);
@@ -91,9 +96,9 @@ test("installed v1 metadata keeps every physical state and independently aimed t
   }
 });
 
-test("installed industrial variants retain archetype and muzzle counts in the existing muzzle reader", () => {
+test("installed retaliator bodies keep one turret with a shot origin per pod cell in the muzzle reader", () => {
   for (const { file, path } of files.filter(({ stem }) =>
-    Object.values(INDUSTRIAL_STEMS).some((name) => name === stem),
+    ["retaliator", ...Object.values(INDUSTRIAL_STEMS)].some((name) => name === stem),
   )) {
     assert.equal(file.archetype, "retaliator", path);
     assert.deepEqual(
@@ -104,53 +109,50 @@ test("installed industrial variants retain archetype and muzzle counts in the ex
     const art = readMuzzleArt(file);
     assert.equal(art.pivots.get("turret")!.length, 16, path);
     assert.ok(
-      art.tops.get("turret")!.every((tips) => tips.length === 3),
+      art.tops.get("turret")!.every((tips) => tips.length === 2),
       path,
     );
   }
 });
 
-// The small craft ship the fleet producer's files; the other crafts still ship crafts.ts.
-const fleet = fleetCrafts();
-const fleetArchetypes = new Set<string>(fleet.map(({ archetype }) => archetype));
+// Every manifest's sidecars name the fleet producer's jets: each family's own class keys and
+// the coral galaxies' design keys (frigateTwin, capitalManta, capitalForked).
+const crafts = new Map(fleetCrafts().map((craft) => [craft.key, craft]));
+const fleetJets = (
+  ["core", "whirlpool", "phantom", "andromeda", "cartwheel", "needle"] as const
+).flatMap((manifest) =>
+  Object.entries((readManifest(manifest).sidecars ?? {}) as Sidecars).flatMap(([key, entry]) => {
+    const stem = /^\/art\/enemies\/(fleet[A-Za-z]+)-jets\.json$/u.exec(entry.jets ?? "")?.[1];
+    return stem ? [{ key, manifest, path: `public${entry.jets}`, stem }] : [];
+  }),
+);
 
-test("installed jet mouths inherit each intact source transform in every family", () => {
-  for (const family of families) {
-    for (const craft of exportCrafts.filter(({ name }) => !fleetArchetypes.has(name))) {
-      const expected = JSON.parse(jets(craft)) as { headings: { mouths: unknown }[] };
-      const path = installed(family, craft.name, "jets");
-      const actual = JSON.parse(readFileSync(path, "utf8")) as { headings: { mouths: unknown }[] };
-      assert.deepEqual(
-        actual.headings.map(({ mouths }) => mouths),
-        expected.headings.map(({ mouths }) => mouths),
-        path,
+test("every fleet craft ships its producer's jets file, with each mouth's anchor", () => {
+  // The Slim delta is held while Art reworks it; its galaxies keep the shipped frigate.
+  const held = new Set(["fleetFrigate"]);
+  assert.deepEqual(
+    new Set(fleetJets.map(({ stem }) => stem)),
+    new Set([...crafts.keys()].filter((key) => !held.has(key))),
+  );
+  for (const { key, manifest, path, stem } of fleetJets) {
+    const craft = crafts.get(stem)!;
+    assert.ok(craft, `${manifest} ${key}: ${path}`);
+    const actual = JSON.parse(readFileSync(path, "utf8")) as {
+      frame: number;
+      headings: { mouths: { anchor: number[] }[] }[];
+    };
+    assert.equal(actual.frame, craft.frame, path);
+    assert.equal(actual.headings.length, ENEMY_HEADINGS, path);
+    for (const [yaw, { mouths }] of actual.headings.entries()) {
+      // Mesh space (forward +x, port +y) to the projection's local space (forward -y).
+      const expected = craft.mouths.map(({ at: [l, w, z] }) =>
+        anchor(ENEMY_HEADINGS, craft.frame / 2, yaw, [w, -l, z]),
       );
-    }
-  }
-});
-
-test("installed small-craft jets are the fleet models' files, with each drive mouth's anchor", () => {
-  for (const family of families) {
-    for (const craft of fleet) {
-      const path = installed(family, craft.archetype, "jets");
-      assert.equal(path, `public/art/enemies/${craft.key}-jets.json`);
-      const actual = JSON.parse(readFileSync(path, "utf8")) as {
-        frame: number;
-        headings: { mouths: { anchor: number[] }[] }[];
-      };
-      assert.equal(actual.frame, craft.frame, path);
-      assert.equal(actual.headings.length, ENEMY_HEADINGS, path);
-      for (const [yaw, { mouths }] of actual.headings.entries()) {
-        // Mesh space (forward +x, port +y) to the projection's local space (forward -y).
-        const expected = craft.mouths.map(({ at: [l, w, z] }) =>
-          anchor(ENEMY_HEADINGS, craft.frame / 2, yaw, [w, -l, z]),
-        );
-        assert.deepEqual(
-          mouths.map((mouth) => mouth.anchor),
-          expected,
-          `${path} heading ${yaw}`,
-        );
-      }
+      assert.deepEqual(
+        mouths.map((mouth) => mouth.anchor),
+        expected,
+        `${path} heading ${yaw}`,
+      );
     }
   }
 });

@@ -5109,19 +5109,20 @@ try {
   const combatSnapshots = {};
   const pixels = {};
   const heavyColors = {
-    // Core capital's slate armour flank, from art/tools/heavy-surface.ts.
+    // The Hammer's cold armour mid tone and its tops' gun tone, from art/tools/fleet-models.ts,
+    // and the dark mouth only a wrecked drive cone shows.
     hull: "#555c77",
-    scorch: "#5c3a31",
+    scorch: "#16131c",
     turretTop: "#c27a62",
   };
   // A new hull faces up, heading 12; its disabled engine's base centres on that heading's anchor.
   const capitalLayout = await (
-    await page.request.get("http://ada-preview:4173/art/enemies/capital-hardpoints.json")
+    await page.request.get("http://ada-preview:4173/art/enemies/fleetCapital-hardpoints.json")
   ).json();
   const disabledAnchor = capitalLayout.headings[12].hardpoints.find(
     (part) => part.id === "engine-left",
   ).anchor;
-  const capitalScale = 210 / capitalLayout.frame;
+  const capitalScale = 231 / capitalLayout.frame;
   const disabledCentre = {
     x: 180 + (disabledAnchor[0] - capitalLayout.frame / 2) * capitalScale,
     y: 180 + (disabledAnchor[1] - capitalLayout.frame / 2) * capitalScale,

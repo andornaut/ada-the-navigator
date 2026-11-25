@@ -191,13 +191,14 @@ describe("artUrls", () => {
     };
     const headings = (archetype: string) =>
       Array.from({ length: 16 }, (_, index) => `enemy-${archetype}-${index}`);
-    // Each archetype's file stem, and the alias drawn from its sheet.
-    for (const [archetype, stem, alias] of [
+    // Each body's file stem: every hull has its own sheet.
+    for (const [archetype, stem] of [
       ["swarm", "fleetSwarm"],
       ["fighter", "fleetFighter"],
       ["interceptor", "fleetInterceptor"],
-      ["retaliator", "retaliator", "retaliatorCargoHauler"],
-      ["retaliatorMiningFreighter", "retaliatorMiningFreighter"],
+      ["retaliator", "fleetRetaliator"],
+      ["retaliatorCargoHauler", "fleetRetaliatorCargoHauler"],
+      ["retaliatorMiningFreighter", "fleetRetaliatorMiningFreighter"],
     ] as const) {
       const sheet = `/art/enemies/${stem}-sheet.svg`;
       const ids = headings(archetype);
@@ -206,16 +207,7 @@ describe("artUrls", () => {
         svg.matchAll(/<svg\b[^>]*\bid="(enemy-[a-zA-Z]+-\d+)"/gu),
         ([, id]) => id,
       );
-      const expected = [
-        ...ids.map((id) => ({ id, svgSheet: true, svgSheetMember: undefined })),
-        ...(alias === undefined
-          ? []
-          : headings(alias).map((id, index) => ({
-              id,
-              svgSheet: true,
-              svgSheetMember: ids[index],
-            }))),
-      ];
+      const expected = ids.map((id) => ({ id, svgSheet: true, svgSheetMember: undefined }));
       expect(urls.filter((url) => url === sheet)).toEqual([sheet]);
       expect(
         core.assets
@@ -226,9 +218,6 @@ describe("artUrls", () => {
       expect(urls).toContain(`/art/enemies/${stem}-jets.json`);
       for (let index = 0; index < 16; index++) {
         expect(urls).not.toContain(`/art/enemies/${archetype}-${index}.svg`);
-        if (alias) {
-          expect(urls).not.toContain(`/art/enemies/${alias}-${index}.svg`);
-        }
       }
     }
   });

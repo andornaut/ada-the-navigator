@@ -1,21 +1,24 @@
 import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
-import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
-import capitalCompact from "../../public/art/enemies/capitalCompact-hardpoints.json" with { type: "json" };
-import capitalNarrow from "../../public/art/enemies/capitalNarrow-hardpoints.json" with { type: "json" };
+import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoints.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
 import fighter from "../../public/art/enemies/fleetFighter-jets.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
 import interceptor from "../../public/art/enemies/fleetInterceptor-jets.json" with { type: "json" };
+import retaliator from "../../public/art/enemies/fleetRetaliator-jets.json" with { type: "json" };
+import cargoParts from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json" with { type: "json" };
+import cargoJets from "../../public/art/enemies/fleetRetaliatorCargoHauler-jets.json" with { type: "json" };
+import miningParts from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
+import miningJets from "../../public/art/enemies/fleetRetaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/fleetSwarm-jets.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
-import frigateCompact from "../../public/art/enemies/frigateCompact-hardpoints.json" with { type: "json" };
-import frigateNarrow from "../../public/art/enemies/frigateNarrow-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
-import retaliatorParts from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
-import retaliator from "../../public/art/enemies/retaliator-jets.json" with { type: "json" };
-import miningParts from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
-import miningJets from "../../public/art/enemies/retaliatorMiningFreighter-jets.json" with { type: "json" };
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { type EnemyGeometryKey, enemyGeometryKey } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
@@ -94,6 +97,7 @@ interface HardpointsFile {
     collision?: RawParts;
     hardpoints: {
       id: string;
+      hidden?: true;
       pivot?: number[];
       collision?: { capped?: RawParts; intact?: RawParts; destroyed?: RawParts };
     }[];
@@ -158,18 +162,22 @@ function heavyOutline(file: HardpointsFile, jets?: JetsFile): EnemyOutline | und
     for (const heading of file.headings) {
       const part = heading.hardpoints.find((entry) => entry.id === id);
       const { capped, destroyed, intact } = part?.collision ?? {};
+      // A base the hull hides whole at this heading has no collision; its top still has.
+      const hidden = part?.hidden === true;
       if (
         !part ||
-        !intact?.length ||
-        (damageable && !destroyed?.length) ||
-        (cappable.has(id) && !capped?.length)
+        (!intact?.length && !hidden) ||
+        (damageable && !destroyed?.length && !hidden) ||
+        (cappable.has(id) && !capped?.length && !hidden)
       ) {
         return undefined;
       }
       bases[heading.index] = {
-        ...(capped?.length ? { capped: display(centre, capped) } : {}),
-        destroyed: display(centre, destroyed ?? intact!),
-        intact: display(centre, intact),
+        ...(capped?.length || (hidden && cappable.has(id))
+          ? { capped: display(centre, capped ?? []) }
+          : {}),
+        destroyed: display(centre, destroyed ?? intact ?? []),
+        intact: display(centre, intact ?? []),
       };
       pivots[heading.index] = part.pivot
         ? {
@@ -232,21 +240,20 @@ for (const [archetype, outline] of [
   ["fighter", smallOutline(fighter as JetsFile)],
   ["interceptor", smallOutline(interceptor as JetsFile)],
   ["retaliator", smallOutline(retaliator as JetsFile)],
-  ["frigate", heavyOutline(frigate as HardpointsFile)],
   ["capital", heavyOutline(capital as HardpointsFile)],
-  ["capitalCompact", heavyOutline(capitalCompact as HardpointsFile)],
-  ["capitalNarrow", heavyOutline(capitalNarrow as HardpointsFile)],
-  ["frigateCompact", heavyOutline(frigateCompact as HardpointsFile)],
-  ["frigateNarrow", heavyOutline(frigateNarrow as HardpointsFile)],
+  ["capitalBroad", heavyOutline(capitalBroad as HardpointsFile)],
+  ["capitalCrossbow", heavyOutline(capitalCrossbow as HardpointsFile)],
+  ["capitalForked", heavyOutline(capitalForked as HardpointsFile)],
+  ["capitalManta", heavyOutline(capitalManta as HardpointsFile)],
+  ["capitalOutrigger", heavyOutline(capitalOutrigger as HardpointsFile)],
+  ["frigate", heavyOutline(frigate as HardpointsFile)],
+  ["frigateTwin", heavyOutline(frigateTwin as HardpointsFile)],
   ["gadget", heavyOutline(gadget as HardpointsFile)],
   ["hostileStation", heavyOutline(station as HardpointsFile)],
   ["hostileStationAndromeda", heavyOutline(ring as HardpointsFile)],
   ["hostileStationPhantom", heavyOutline(phantomStation as HardpointsFile)],
   ["platform", heavyOutline(platform as HardpointsFile)],
-  [
-    "retaliatorCargoHauler",
-    heavyOutline(retaliatorParts as HardpointsFile, retaliator as JetsFile),
-  ],
+  ["retaliatorCargoHauler", heavyOutline(cargoParts as HardpointsFile, cargoJets as JetsFile)],
   [
     "retaliatorMiningFreighter",
     heavyOutline(miningParts as HardpointsFile, miningJets as JetsFile),

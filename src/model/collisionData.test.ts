@@ -65,10 +65,16 @@ describe("Art's collision data", () => {
     },
   );
 
-  // The claim frigate and capital share the coral hardpoints files.
+  // Every frigate and capital design ships its own hardpoints file in the core folder.
   it.each([
     ["frigate", ["enemies"]],
-    ["capital", ["enemies"]],
+    ["fleetFrigateTwin", ["enemies"]],
+    ["fleetCapital", ["enemies"]],
+    ["fleetCapitalBroad", ["enemies"]],
+    ["fleetCapitalCrossbow", ["enemies"]],
+    ["fleetCapitalForked", ["enemies"]],
+    ["fleetCapitalManta", ["enemies"]],
+    ["fleetCapitalOutrigger", ["enemies"]],
     ["gadget", ["enemies"]],
     ["platform", ["cartwheel/enemies"]],
   ] as const)("gives the %s its hull, hardpoint and top silhouettes", (archetype, families) => {
@@ -79,6 +85,7 @@ describe("Art's collision data", () => {
           collision: unknown;
           hardpoints: {
             collision: { capped?: unknown; destroyed: unknown; intact: unknown };
+            hidden?: true;
             id: string;
           }[];
         }[];
@@ -91,9 +98,15 @@ describe("Art's collision data", () => {
           file.hardpoints.map((part) => part.id).sort(),
         );
         for (const part of heading.hardpoints) {
-          expect(parts(part.collision.intact) && parts(part.collision.destroyed)).toBe(true);
+          // A base the hull hides whole at this heading is an empty frame with no collision.
+          const drawn = (value: unknown) =>
+            parts(value) || (part.hidden === true && Array.isArray(value) && value.length === 0);
+          expect(drawn(part.collision.intact) && drawn(part.collision.destroyed)).toBe(true);
           const capped = file.hardpoints.find(({ id }) => id === part.id)!.capped === true;
-          expect(parts(part.collision.capped), `${part.id} capped`).toBe(capped);
+          expect(
+            part.collision.capped !== undefined && drawn(part.collision.capped),
+            `${part.id} capped`,
+          ).toBe(capped);
         }
       }
       for (const aims of Object.values(file.tops)) {
@@ -131,16 +144,26 @@ describe("Art's collision data", () => {
   });
 
   it("outlines a mount its tier leaves unused as its capped plate and an aft top opposite the hull", () => {
-    const file = json("enemies/capital-hardpoints.json") as {
-      headings: {
-        hardpoints: {
-          collision: Record<string, Raw>;
-          id: string;
-          pivot?: number[];
+    // Each route position's galaxy flies its own capital design.
+    const designs = {
+      1: "fleetCapital",
+      2: "fleetCapitalManta",
+      3: "fleetCapitalCrossbow",
+      4: "fleetCapitalBroad",
+      5: "fleetCapitalOutrigger",
+    } as const;
+    const fileAt = (position: keyof typeof designs) =>
+      json(`enemies/${designs[position]}-hardpoints.json`) as {
+        frame: number;
+        headings: {
+          hardpoints: {
+            collision: Record<string, Raw>;
+            id: string;
+            pivot?: number[];
+          }[];
         }[];
-      }[];
-      tops: Record<string, { collision: Raw }[]>;
-    };
+        tops: Record<string, { collision: Raw }[]>;
+      };
     // A capital whose position 5 loadout carries the mine layer, a single-mount weapon dealt to
     // one of the first mounts in fill order.
     const ids = Array.from({ length: 200 }, (_, index) => `capital:${index}`);
@@ -158,20 +181,23 @@ describe("Art's collision data", () => {
     );
     enemy.facing = facing(3);
     enemy.aim = facing(6);
-    const placed = file.headings[3]!.hardpoints.find((part) => part.id === "stern-right")!;
     const scale = (parts: Raw, origin: number[]) =>
       parts.map((part) =>
         part.map(([x, y]) => ({ x: (x! + origin[0]!) * 0.4375, y: (y! + origin[1]!) * 0.4375 })),
       );
-    const centre = [-240, -240];
     for (const position of [1, 2, 3, 4] as const) {
+      const design = fileAt(position);
+      const placed = design.headings[3]!.hardpoints.find((part) => part.id === "stern-right")!;
+      const centre = [-design.frame / 2, -design.frame / 2];
       expect(enemyPartOutline(position, enemy, "stern-right")).toEqual(
         scale(placed.collision.capped!, centre),
       );
     }
     // The mine layer's hopper holds aim (3 + 8) mod 16 whatever the turret's aim.
+    const file = fileAt(5);
+    const centre = [-file.frame / 2, -file.frame / 2];
     const mount = file.headings[3]!.hardpoints.find((part) => part.id === hopper)!;
-    const pivot = [mount.pivot![0]! - 240, mount.pivot![1]! - 240];
+    const pivot = [mount.pivot![0]! - file.frame / 2, mount.pivot![1]! - file.frame / 2];
     const armed = [
       ...scale(mount.collision.intact!, centre),
       ...scale(file.tops.hopper![11]!.collision, pivot),

@@ -12,7 +12,7 @@ import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
-import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import {
@@ -27,6 +27,7 @@ import { readShards } from "./destructionArt.ts";
 import {
   composedArchetypes,
   ENEMY_HEADINGS,
+  type EnemyArt,
   enemyArt,
   type EnemyFamily,
   enemyFrameSets,
@@ -58,6 +59,8 @@ const source = ts.createSourceFile(
 const names = new Set([
   "PHANTOM_CRAFT_JETS_KEY",
   "PHANTOM_CRAFT_JETS_PATH",
+  "coralSidecars",
+  "enemyArtKey",
   "enemyJetCacheKey",
   "ensureEnemyFamilyManifest",
   "loadEnemyParts",
@@ -70,6 +73,7 @@ const names = new Set([
   "shardPacks",
   "queueGalaxyArt",
   "queueGalaxyAssets",
+  "queueCoralEnemyData",
   "queueEagerSvgSheets",
   "queueEnemyPartSheets",
   "queueEnemyJets",
@@ -173,6 +177,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     composedArchetypes,
     craftFrameSets,
     enemyArt,
+    enemyAssetKey,
     enemyFrameSets,
     enemyHardpointsPath,
     enemyJetsPath,
@@ -183,7 +188,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     galaxyLoadsAtOnce,
     galaxyManifestKey,
     galaxyTowKey,
-    heavyProfilePartClass,
+    hullDesign,
     loadingRockSheets: new WeakMap(),
     materialShipHeading: () => undefined,
     mergeEnemyAssets,
@@ -212,6 +217,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     context.loadSvg = svg;
   }
   return {
+    artKey: context.enemyArtKey as (value: typeof scene, archetype: string, id?: string) => string,
     backdrop,
     cache,
     documents,
@@ -329,8 +335,8 @@ describe("shard publication", () => {
 describe("source-family manifest readiness", () => {
   it.each([
     ["/art/needle/enemies/fleetFighter-sheet.svg", false],
-    ["/art/needle/enemies/frigate-sheet.svg", true],
-    ["/art/needle/enemies/heavy-profiles-sheet.svg", true],
+    ["/art/needle/enemies/fleetFrigateTwin-sheet.svg", true],
+    ["/art/needle/enemies/fleetCapitalCrossbow-sheet.svg", true],
   ] as const)("loads a cold family once and publishes a late %s retry", (path, usesDisplaySize) => {
     const f = fixture();
     const key = galaxyManifestKey(4);
@@ -345,12 +351,8 @@ describe("source-family manifest readiness", () => {
     const paths = [...new Set(hulls.map((asset) => asset.path))];
     const hullIds = [
       "capital",
-      "capitalCompact",
-      "capitalNarrow",
       "fighter",
       "frigate",
-      "frigateCompact",
-      "frigateNarrow",
       "interceptor",
       "retaliator",
       "retaliatorCargoHauler",
@@ -359,19 +361,18 @@ describe("source-family manifest readiness", () => {
     ].flatMap((body) =>
       Array.from({ length: ENEMY_HEADINGS }, (_, heading) => `enemy-needle-${body}-${heading}`),
     );
-    expect(hulls).toHaveLength(192);
+    expect(hulls).toHaveLength(128);
     expect(hulls.map(({ id }) => id).sort()).toEqual(hullIds.sort());
     expect(hulls.every(({ svgSheet }) => svgSheet)).toBe(true);
     expect([...paths].sort()).toEqual([
-      "/art/enemies/retaliator-sheet.svg",
-      "/art/enemies/retaliatorMiningFreighter-sheet.svg",
-      "/art/needle/enemies/capital-sheet-2.svg",
-      "/art/needle/enemies/capital-sheet.svg",
+      "/art/enemies/fleetRetaliatorCargoHauler-sheet.svg",
+      "/art/enemies/fleetRetaliatorMiningFreighter-sheet.svg",
+      "/art/needle/enemies/fleetCapitalCrossbow-sheet.svg",
       "/art/needle/enemies/fleetFighter-sheet.svg",
+      "/art/needle/enemies/fleetFrigateTwin-sheet.svg",
       "/art/needle/enemies/fleetInterceptor-sheet.svg",
+      "/art/needle/enemies/fleetRetaliator-sheet.svg",
       "/art/needle/enemies/fleetSwarm-sheet.svg",
-      "/art/needle/enemies/frigate-sheet.svg",
-      "/art/needle/enemies/heavy-profiles-sheet.svg",
     ]);
     for (const path of paths) {
       expect(f.xml.mock.calls.filter(([, url]) => url === path)).toEqual([
@@ -402,35 +403,6 @@ describe("source-family manifest readiness", () => {
     expect(f.readArt).toHaveBeenCalledTimes(1);
     f.events.emit("complete");
     expect(f.readArt).toHaveBeenCalledTimes(2);
-  });
-
-  it("publishes a regional profile only once the shared hardpoint textures are ready", () => {
-    const family = GALAXY_FAMILIES.find(({ family }) => family === "needle")!;
-    const f = fixture(family);
-    const manifest = readGalaxyManifest<Asset>(needle)!;
-    const profile = "frigateNarrow";
-    const assets = manifest.assets.filter(
-      ({ archetype }) => archetype === profile || archetype === "frigate",
-    );
-    f.scene.manifest.assets.push(...assets);
-    f.scene.familyParts.set(family.family, assets.filter(enemyPartFrame));
-    f.scene.galaxyManifests.set(4, manifest);
-    const jetsPath = enemyJetsPath(manifest.sidecars, profile)!;
-    f.cache.set(`enemy-jet:${jetsPath}`, publicJson(jetsPath));
-    f.cache.set(
-      "needle-hardpoints-frigateNarrow",
-      publicJson(enemyHardpointsPath(manifest.sidecars, profile)!),
-    );
-    for (const asset of assets.filter(({ archetype }) => archetype === profile)) {
-      f.textures.add(asset.id);
-    }
-    f.publishArt(f.scene);
-    expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(false);
-    for (const asset of assets.filter(enemyPartFrame)) {
-      f.textures.add(asset.id);
-    }
-    f.publishArt(f.scene);
-    expect(f.scene.familyArts.get(family.family)?.has(profile)).toBe(true);
   });
 
   it.each([false, true])("shares only matching Core and Needle jet URLs (legacy: %s)", (legacy) => {
@@ -618,8 +590,9 @@ const phantomJetsEvent = `filecomplete-json-${phantomJetsKey}`;
 
 function phantomJetsFixture() {
   const f = fixture();
-  const manifest = readGalaxyManifest(phantom)!;
-  const craft = [...manifest.sidecars.keys()];
+  const manifest = readGalaxyManifest<Asset>(phantom)!;
+  // The story craft, apart from the enemy designs Phantom's manifest also carries.
+  const craft = [...craftFrameSets(manifest.assets).keys()];
   const sidecars = new Map(craft.map((id) => [id, { jets: phantomJetsPath }]));
   const records =
     enemyJetsPath(manifest.sidecars, craft[0]!) === phantomJetsPath
@@ -629,6 +602,70 @@ function phantomJetsFixture() {
         );
   return { ...f, craft, manifest: { ...manifest, sidecars }, records };
 }
+
+describe("a galaxy manifest's coral enemy rows", () => {
+  const whirlpool = publicJson("/art/whirlpool/manifest.json") as {
+    assets: Asset[];
+    sidecars: Record<string, { hardpoints: string; jets: string }>;
+  };
+  const rows = whirlpool.assets.filter(({ id }) => id.startsWith("enemy-"));
+  const { hardpoints, jets } = whirlpool.sidecars.frigateTwin!;
+
+  it("load with their galaxy under the coral keys and leave core's coral rows as they were", () => {
+    const f = fixture();
+    f.scene.family = undefined;
+    Object.assign(f.scene.galaxyManifestPaths, { 3: "/art/whirlpool/manifest.json" });
+    f.scene.model.state.flight.galaxy = 3;
+    const swarm = (core.assets as Asset[]).filter(({ id }) => /^enemy-swarm-\d+$/u.test(id));
+    f.scene.shipAssets.push(...swarm);
+    swarm.forEach(({ id }) => f.textures.add(id));
+    f.cache.set("art-manifest", core);
+    f.cache.set(`enemy-jet:${core.sidecars.swarm.jets}`, publicJson(core.sidecars.swarm.jets));
+    f.loadWorld(f.scene, 3);
+    const key = galaxyManifestKey(3);
+    f.cache.set(key, { ...whirlpool, assets: rows });
+    f.events.emit(`filecomplete-json-${key}`);
+    expect(f.scene.partAssets.map(({ id }) => id)).toEqual(
+      rows.filter(enemyPartFrame).map(({ id }) => id),
+    );
+    expect(f.json).toHaveBeenCalledWith(`enemy-jet:${jets}`, jets);
+    expect(f.json).toHaveBeenCalledWith("enemy-hardpoints-frigateTwin", hardpoints);
+
+    f.cache.set(`enemy-jet:${jets}`, publicJson(jets));
+    f.cache.set("enemy-hardpoints-frigateTwin", publicJson(hardpoints));
+    rows.forEach(({ id }) => f.textures.add(id));
+    f.publishArt(f.scene);
+    const twin = f.scene.enemyArt.get("frigateTwin") as EnemyArt<Asset>;
+    expect(twin.frames.map(({ id }) => id)).toEqual(
+      Array.from({ length: ENEMY_HEADINGS }, (_, index) => `enemy-frigateTwin-${index}`),
+    );
+    expect(twin.jets?.headings).toHaveLength(ENEMY_HEADINGS);
+    expect(twin.parts?.bases.get("engine")?.get("destroyed")).toHaveLength(ENEMY_HEADINGS);
+    const coral = f.scene.enemyArt.get("swarm") as EnemyArt<Asset>;
+    expect(coral.frames).toEqual(swarm);
+    expect(coral.jets?.headings).toHaveLength(ENEMY_HEADINGS);
+    expect(f.scene.enemyArt.has("frigate")).toBe(false);
+  });
+
+  it.each([
+    [1, undefined, "frigate", "capital"],
+    [2, "claim", "frigate", "capital"],
+    [3, undefined, "frigateTwin", "capitalManta"],
+    [4, "needle", "frigate", "capital"],
+    [5, "garnet", "frigate", "capital"],
+    [6, undefined, "frigate", "capitalForked"],
+  ] as const)(
+    "draws galaxy %i's heavies in family %s under %s and %s",
+    (galaxy, name, frigate, capital) => {
+      const f = fixture();
+      f.scene.family = GALAXY_FAMILIES.find(({ family }) => family === name);
+      f.scene.model.state.flight.galaxy = galaxy;
+      expect(f.artKey(f.scene, "frigate", "ordinary:frigate:0")).toBe(frigate);
+      expect(f.artKey(f.scene, "capital", "ordinary:capital:0")).toBe(capital);
+      expect(f.artKey(f.scene, "capital", "phantomFlagship")).toBe("gadget");
+    },
+  );
+});
 
 describe("Phantom story craft jets", () => {
   it("queues one optional pack and publishes the original payloads under all fifteen cache keys", () => {
@@ -834,8 +871,8 @@ describe("deferred core capital sheets", () => {
     expect(f.xml).toHaveBeenCalledExactlyOnceWith(commandKey, commandSheet);
     expect(f.extract).toHaveBeenCalledExactlyOnceWith(cached, topSheet, {
       ...top,
-      intrinsicHeight: 52.5,
-      intrinsicWidth: 52.5,
+      intrinsicHeight: 24.5,
+      intrinsicWidth: 24.5,
     });
     expect(f.scene.loads.waitFor).not.toHaveBeenCalled();
     f.textures.add(top.id);
@@ -879,8 +916,8 @@ describe("deferred core capital sheets", () => {
     expect(f.xml).toHaveBeenCalledExactlyOnceWith(key, top.path);
     expect(f.extract).toHaveBeenLastCalledWith(document, top.path, {
       ...alias,
-      intrinsicHeight: 52.5,
-      intrinsicWidth: 52.5,
+      intrinsicHeight: 24.5,
+      intrinsicWidth: 24.5,
     });
     expect(f.svg.mock.calls).toEqual([
       [f.scene, { ...top, path: "data:shared" }],
@@ -903,7 +940,7 @@ describe("deferred core capital sheets", () => {
     f.extract.mockReturnValue(uri);
     f.documents.set(vectorSheetKey(topSheet), {});
     f.loadParts(f.scene, "capital");
-    expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(top.id, uri, { height: 53, width: 53 });
+    expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(top.id, uri, { height: 25, width: 25 });
     expect(fileFilter("svg")).toBe("linear");
     f.textures.add(top.id);
     f.scene.rasters.loaded(top.id);

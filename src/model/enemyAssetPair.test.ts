@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import platformFile from "../../public/art/cartwheel/enemies/platform-hardpoints.json";
-import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
+import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
@@ -18,8 +18,8 @@ const at = (index: number) => ({
 
 it("projects every raw hardpoint anchor once for each drawn hull heading", () => {
   const cases = [
-    { definition: enemyDefinition(6, "frigate", "raw-frigate"), file: frigateFile },
-    { definition: enemyDefinition(6, "capital", "raw-capital"), file: capitalFile },
+    { definition: enemyDefinition(1, "frigate", "raw-frigate"), file: frigateFile },
+    { definition: enemyDefinition(1, "capital", "raw-capital"), file: capitalFile },
     { definition: enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID), file: gadgetFile },
     { definition: enemyDefinition(6, "platform", "raw-platform"), file: platformFile },
   ];
@@ -80,7 +80,7 @@ it("uses each industrial primary turret while emitting one canonical Rapid shot"
     const shot = result.fire[0]!;
     expect(shot.weapon).toBe("rapidMissile");
     const layout = muzzleLayout(definition, muzzleArtForDefinition(definition))!;
-    expect(layout.primary!.tips.every((tips) => tips.length === 3)).toBe(true);
+    expect(layout.primary!.tips.every((tips) => tips.length === 2)).toBe(true);
     const offset = muzzleOffset(layout, null, state.facing, result.state.aim!, 0)!;
     expect(shot.origin.x).toBeCloseTo(state.position.x + offset.x, 9);
     expect(shot.origin.y).toBeCloseTo(state.position.y + offset.y, 9);

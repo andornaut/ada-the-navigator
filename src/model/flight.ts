@@ -24,7 +24,6 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import {
   type HeavyHullProfile,
   ordinaryHeavy,
-  ordinaryPackHullProfile,
   PHANTOM_FLAGSHIP_ID,
   retaliatorVariant,
   WRECK_ID_PREFIX,
@@ -1951,7 +1950,6 @@ function generateRegion(
         packId,
         next() * Math.PI * 2,
         null,
-        ordinaryPackHullProfile({ archetype, id }),
       );
       leader.persistent = false;
       return leader;
@@ -2070,7 +2068,6 @@ function admitGroup(
       packId,
       phase,
       typeof escortOf === "function" ? escortOf(i) : escortOf,
-      profiled ? ordinaryPackHullProfile({ archetype, id }) : undefined,
     );
     if (group.role) {
       object.role = group.role;

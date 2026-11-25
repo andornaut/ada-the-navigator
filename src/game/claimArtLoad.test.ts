@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { HEAVY_PROFILE_PART_CLASSES } from "../data/enemyIdentity.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { galaxyLoadsAtOnce } from "./artManifest.ts";
 import {
@@ -28,9 +27,7 @@ const present = (path: string) => existsSync(new URL(`../../public${path}`, impo
 describe("claim jumper art loading", () => {
   it("resolves every claim archetype's hull frames from Cartwheel's manifest", () => {
     const hulls = enemyFrameSets(claim, CLAIM);
-    expect([...hulls.keys()].sort()).toEqual(
-      [...CLAIM_WIRED, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
-    );
+    expect([...hulls.keys()].sort()).toEqual([...CLAIM_WIRED].sort());
     for (const [archetype, frames] of hulls) {
       expect(frames.length, archetype).toBe(archetype === "platform" ? 1 : 16);
       for (const frame of frames) {
@@ -62,8 +59,18 @@ describe("claim jumper art loading", () => {
       expect(due, body).toHaveLength(count);
       for (const part of due) {
         expect(part.id.startsWith(`enemy-claim-${body}-`), part.id).toBe(true);
-        // The cargo hauler's parts are the retaliator's files.
-        const files = body === "retaliatorCargoHauler" ? "retaliator" : body;
+        // Each fleet body's parts are its design's files: the claim capital is the Outrigger
+        // carrier, and the Mining Freighter draws the Manta gunship's top.
+        const fleet: Readonly<Record<string, string>> = {
+          capital: "fleetCapitalOutrigger",
+          frigate: "frigate",
+          retaliator: "fleetRetaliator",
+          retaliatorCargoHauler: "fleetRetaliatorCargoHauler",
+          retaliatorMiningFreighter: part.id.includes("-turret-top-")
+            ? "fleetRetaliator"
+            : "fleetRetaliatorMiningFreighter",
+        };
+        const files = fleet[body] ?? body;
         expect(part.path.startsWith(`/art/cartwheel/enemies/${files}-`), part.path).toBe(true);
         expect(present(part.path), part.path).toBe(true);
         allDue.push(part.id);

@@ -83,11 +83,7 @@ describe("Cartwheel art", () => {
         "retaliatorCargoHauler",
         "retaliatorMiningFreighter",
         "frigate",
-        "frigateCompact",
-        "frigateNarrow",
         "capital",
-        "capitalCompact",
-        "capitalNarrow",
         "hostileStation",
       ].flatMap((body) => Array.from({ length: 16 }, (_, index) => `enemy-claim-${body}-${index}`)),
       "enemy-claim-platform",
@@ -122,7 +118,9 @@ describe("Cartwheel art", () => {
         .get(3)!
         .every(
           (id) =>
-            /^(whale|whirlpool|nebula-whirlpool|craft-stranded)-/.test(id) ||
+            /^(whale|whirlpool|nebula-whirlpool|craft-stranded|enemy-frigateTwin|enemy-capitalManta)-/.test(
+              id,
+            ) ||
             portrait(id) ||
             whirlpoolDecorations.has(id),
         ),

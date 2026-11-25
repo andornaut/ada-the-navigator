@@ -2,18 +2,17 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import capitalHardpoints from "../../public/art/enemies/capital-hardpoints.json";
-import capitalJets from "../../public/art/enemies/capital-jets.json";
+import capitalHardpoints from "../../public/art/enemies/fleetCapital-hardpoints.json";
+import capitalJets from "../../public/art/enemies/fleetCapital-jets.json";
 import fighterJets from "../../public/art/enemies/fleetFighter-jets.json";
 import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
+import retaliatorJets from "../../public/art/enemies/fleetRetaliator-jets.json";
 import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
 import frigateHardpoints from "../../public/art/enemies/frigate-hardpoints.json";
 import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import gadgetHardpoints from "../../public/art/enemies/gadget-hardpoints.json";
 import gadgetJets from "../../public/art/enemies/gadget-jets.json";
-import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { HEAVY_PROFILE_PART_CLASSES } from "../data/enemyIdentity.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
 import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
@@ -57,11 +56,15 @@ const coreSidecars = readSidecars(CORE_MANIFEST.sidecars)!;
 const galaxySidecars = new Map(
   [...GALAXY_MANIFESTS].map(([galaxy, { sidecars }]) => [GALAXY_ID[galaxy], sidecars]),
 );
-// The sidecars of the manifest whose entries sit in an art directory: a galaxy's or the core's.
-const sidecarsAt = (directory: string) =>
-  galaxySidecars.get(/^\/art\/([a-z]+)\//u.exec(directory)?.[1] ?? "") ?? coreSidecars;
-function nativePartFrames(directory: string, archetype: string): number {
-  const file = json(enemyHardpointsPath(sidecarsAt(directory), archetype)) as {
+// The manifest that lists each entry, a galaxy's or the core's, whose sidecars name its files.
+const ownerOf = new Map<string, string>([
+  ...CORE_MANIFEST.assets.map(({ id }) => [id, "core"] as const),
+  ...[...GALAXY_MANIFESTS].flatMap(([galaxy, { assets }]) =>
+    assets.map(({ id }) => [id, GALAXY_ID[galaxy]] as const),
+  ),
+]);
+function nativePartFrames(owner: string, archetype: string): number {
+  const file = json(enemyHardpointsPath(galaxySidecars.get(owner) ?? coreSidecars, archetype)) as {
     hardpoints: { capped?: boolean; states: string[]; top: string | null }[];
     weaponTops?: Record<string, { top: string }>;
   };
@@ -111,12 +114,8 @@ describe("enemy frame sets", () => {
   it("reads sixteen sized headings for each coral archetype from Art's manifest", () => {
     expect([...art.keys()].sort()).toEqual([
       "capital",
-      "capitalCompact",
-      "capitalNarrow",
       "fighter",
       "frigate",
-      "frigateCompact",
-      "frigateNarrow",
       "gadget",
       "hostileStation",
       "interceptor",
@@ -133,19 +132,15 @@ describe("enemy frame sets", () => {
       }),
     );
     expect(sizes).toEqual({
-      capital: 210,
-      capitalCompact: 210,
-      capitalNarrow: 210,
+      capital: 231,
       fighter: 35,
       frigate: 189,
-      frigateCompact: 189,
-      frigateNarrow: 189,
       gadget: 245,
       hostileStation: 360.5,
       interceptor: 56,
-      retaliator: 84,
-      retaliatorCargoHauler: 84,
-      retaliatorMiningFreighter: 84,
+      retaliator: 70,
+      retaliatorCargoHauler: 122.5,
+      retaliatorMiningFreighter: 77,
       swarm: 24.5,
     });
   });
@@ -160,11 +155,7 @@ describe("enemy frame sets", () => {
         .sort(),
     ).toEqual([
       "capital",
-      "capitalCompact",
-      "capitalNarrow",
       "frigate",
-      "frigateCompact",
-      "frigateNarrow",
       "gadget",
       "hostileStation",
       "retaliator",
@@ -186,15 +177,10 @@ describe("enemy frame sets", () => {
     const parts = assets.filter(enemyPartFrame);
     // Each composed archetype of each family has 16 frames per hardpoint state, capped plate and
     // top design, as its hardpoints file and tiers list them.
-    const sets = new Set(
-      parts.map(
-        (asset) =>
-          `${asset.path!.slice(0, asset.path!.lastIndexOf("/") + 1)}|${enemyFrameKey(asset)}`,
-      ),
-    );
+    const sets = new Set(parts.map((asset) => `${ownerOf.get(asset.id)}|${enemyFrameKey(asset)}`));
     const expected = [...sets].reduce((sum, key) => {
-      const [dir, archetype] = key.split("|") as [string, string];
-      return sum + nativePartFrames(dir, archetype);
+      const [owner, archetype] = key.split("|") as [string, string];
+      return sum + nativePartFrames(owner, archetype);
     }, 0);
     expect(parts).toHaveLength(expected);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
@@ -209,7 +195,9 @@ describe("enemy frame sets", () => {
   it("finds each archetype's data files in the core sidecars map", () => {
     const sidecars = readSidecars(CORE_MANIFEST.sidecars)!;
     expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fleetFighter-jets.json");
-    expect(enemyHardpointsPath(sidecars, "capital")).toBe("/art/enemies/capital-hardpoints.json");
+    expect(enemyHardpointsPath(sidecars, "capital")).toBe(
+      "/art/enemies/fleetCapital-hardpoints.json",
+    );
     expect(enemyHardpointsPath(sidecars, "fighter")).toBeUndefined();
   });
 });
@@ -290,9 +278,9 @@ describe("enemy jets", () => {
     ["swarm", 1, 56],
     ["fighter", 2, 80],
     ["interceptor", 1, 128],
-    ["retaliator", 3, 192],
+    ["retaliator", 3, 160],
     ["frigate", 2, 432],
-    ["capital", 2, 480],
+    ["capital", 2, 528],
   ] as const)("draws %s with %i mouths of two haloless layers", (name, mouths, frame) => {
     const set = galaxy(name);
     expect(set.jets?.frame).toBe(frame);
@@ -572,7 +560,7 @@ describe("composed heavies", () => {
 
   it("centres each base on its anchor and each top on its pivot, in display px", () => {
     const hull = capital.frames[4]!;
-    const scale = 210 / 480;
+    const scale = hull.displayWidth! / capitalHardpoints.frame;
     const placed = capitalHardpoints.headings[4]!.hardpoints.find(
       (part) => part.id === "weapon-left",
     )!;
@@ -580,9 +568,9 @@ describe("composed heavies", () => {
     const base = sprites.find((part) => part.hardpoint === "weapon-left" && part.layer === "base")!;
     const top = sprites.find((part) => part.hardpoint === "weapon-left" && part.layer === "top")!;
     expect(base.frame.id).toBe("enemy-capital-weapon-left-intact-4");
-    expect(base.offset.x).toBeCloseTo((placed.anchor[0]! - 240) * scale, 9);
-    expect(base.offset.y).toBeCloseTo((placed.anchor[1]! - 240) * scale, 9);
-    expect(top.offset.y).toBeCloseTo((placed.pivot![1]! - 240) * scale, 9);
+    expect(base.offset.x).toBeCloseTo((placed.anchor[0]! - capitalHardpoints.frame / 2) * scale, 9);
+    expect(base.offset.y).toBeCloseTo((placed.anchor[1]! - capitalHardpoints.frame / 2) * scale, 9);
+    expect(top.offset.y).toBeCloseTo((placed.pivot![1]! - capitalHardpoints.frame / 2) * scale, 9);
   });
 
   it("aims each top by world angle, whatever the hull heading", () => {
@@ -590,15 +578,30 @@ describe("composed heavies", () => {
     expect(aimIndex(world(22.5 * 5))).toBe(5);
     expect(aimIndex(world(-22.5))).toBe(15);
     for (const heading of [0, 7, 12]) {
-      const tops = composeEnemy(capital, pose([], world(22.5 * 9)), capital.frames[heading]!)
-        .filter((part) => part.layer === "top")
-        .map((part) => part.frame.id);
-      expect(tops.sort()).toEqual([
-        "enemy-capital-lance-top-9",
-        "enemy-capital-spread-top-9",
-        "enemy-capital-spread-top-9",
-        "enemy-capital-spread-top-9",
-      ]);
+      const sprites = composeEnemy(capital, pose([], world(22.5 * 9)), capital.frames[heading]!);
+      // An armed mount the hull hides at this heading draws no top.
+      const hidden = new Set(
+        capitalHardpoints.headings[heading]!.hardpoints.flatMap((part) =>
+          "hidden" in part && part.hidden ? [part.id] : [],
+        ),
+      );
+      const armed = sprites.filter(
+        (part) =>
+          part.layer === "base" &&
+          capitalHardpoints.fill.includes(part.hardpoint ?? "") &&
+          part.frame.id.includes("-intact-"),
+      );
+      const tops = sprites.filter((part) => part.layer === "top");
+      expect(armed).toHaveLength(4);
+      expect(tops.map((part) => part.hardpoint).sort()).toEqual(
+        armed
+          .map((part) => part.hardpoint)
+          .filter((id) => !hidden.has(id!))
+          .sort(),
+      );
+      expect(
+        tops.every((part) => /^enemy-capital-(lance|spread)-top-9$/u.test(part.frame.id)),
+      ).toBe(true);
     }
   });
 
@@ -639,7 +642,7 @@ describe("composed heavies", () => {
 
   it("places each barrel tip at the pivot plus the top's muzzle at its aim", () => {
     const hull = capital.frames[2]!;
-    const scale = 210 / 480;
+    const scale = hull.displayWidth! / capitalHardpoints.frame;
     const pivot = capitalHardpoints.headings[2]!.hardpoints.find(
       (part) => part.id === "weapon-right",
     )!.pivot!;
@@ -647,8 +650,14 @@ describe("composed heavies", () => {
     const triple = pose([], world(22.5 * 3), 1, { "weapon-right": "scattershot" });
     const tips = turretMuzzles(capital, triple, hull, "weapon-right");
     expect(tips).toHaveLength(5);
-    expect(tips[1]!.x).toBeCloseTo((pivot[0]! + muzzles[1]![0]! - 240) * scale, 9);
-    expect(tips[1]!.y).toBeCloseTo((pivot[1]! + muzzles[1]![1]! - 240) * scale, 9);
+    expect(tips[1]!.x).toBeCloseTo(
+      (pivot[0]! + muzzles[1]![0]! - capitalHardpoints.frame / 2) * scale,
+      9,
+    );
+    expect(tips[1]!.y).toBeCloseTo(
+      (pivot[1]! + muzzles[1]![1]! - capitalHardpoints.frame / 2) * scale,
+      9,
+    );
     expect(turretMuzzles(capital, pose(["weapon-right"]), hull, "weapon-right")).toEqual([]);
     expect(turretMuzzles(capital, pose(), hull, "command")).toEqual([]);
     // Tier tops: the claw's capped plate has none, the rear mount's pod has its own.
@@ -701,7 +710,8 @@ describe("composed heavies", () => {
     };
     const sprites = composeEnemy(mounted, pose([], world(22.5 * 4)), hull);
     expect(sprites.map((part) => part.frame.id)).toEqual(["enemy-retaliator-0", "top-4"]);
-    expect(sprites[1]!.offset.y).toBeCloseTo(-6 * (84 / 192), 9);
+    // The pivot's 6 frame px above the anchor, at the hull's display px per layout frame px.
+    expect(sprites[1]!.offset.y).toBeCloseTo(-6 * (hull.displayWidth! / 192), 9);
   });
 
   it(`flashes a hit hardpoint for ${HIT_FLASH_MS} ms after its hit points drop`, () => {
@@ -716,10 +726,11 @@ describe("composed heavies", () => {
 });
 
 describe("enemy SVGs", () => {
-  it("reads composed SVG dimensions and native industrial hulls with exact raw viewBoxes", () => {
+  it("reads composed SVG dimensions and the fleet sheets' frame-px roots with exact raw viewBoxes", () => {
     const composed = new Set([
       "capital",
       "frigate",
+      "frigateTwin",
       "gadget",
       "hostileStation",
       "platform",
@@ -736,15 +747,15 @@ describe("enemy SVGs", () => {
         width: number;
       })[]
     ).filter((asset) => composed.has(enemyFrameKey(asset) ?? ""));
-    const groups = new Map<string, { directory: string; archetype: string }>();
+    const groups = new Map<string, { owner: string; archetype: string }>();
     for (const asset of heavies) {
-      const directory = asset.path.slice(0, asset.path.lastIndexOf("/") + 1);
+      const owner = ownerOf.get(asset.id)!;
       const archetype = enemyFrameKey(asset)!;
-      groups.set(directory + archetype, { archetype, directory });
+      groups.set(`${owner}|${archetype}`, { archetype, owner });
     }
     const expected = [...groups.values()].reduce(
-      (sum, { archetype, directory }) =>
-        sum + nativePartFrames(directory, archetype) + (archetype === "platform" ? 1 : 16),
+      (sum, { archetype, owner }) =>
+        sum + nativePartFrames(owner, archetype) + (archetype === "platform" ? 1 : 16),
       0,
     );
     expect(heavies).toHaveLength(expected);
@@ -759,9 +770,10 @@ describe("enemy SVGs", () => {
       const root = roots[0] ?? "";
       const size = (name: string) =>
         Number(new RegExp(`\\b${name}="([\\d.]+)"`, "u").exec(root)?.[1]);
-      const nativeHull = asset.archetype === "retaliator" && !enemyPartFrame(asset);
+      // The fleet producer's sheets, hulls and parts alike, size each root in frame px.
+      const framePx = /\/fleet[A-Z][^/]*$/u.test(asset.path);
       expect([size("width"), size("height")], asset.path).toEqual(
-        nativeHull ? [asset.width, asset.height] : [asset.displayWidth, asset.displayHeight],
+        framePx ? [asset.width, asset.height] : [asset.displayWidth, asset.displayHeight],
       );
       expect(root, asset.path).toContain(`viewBox="0 0 ${asset.width} ${asset.height}"`);
     }
@@ -793,7 +805,6 @@ describe("claim jumper art", () => {
         "retaliatorCargoHauler",
         "retaliatorMiningFreighter",
         "swarm",
-        ...Object.keys(HEAVY_PROFILE_PART_CLASSES),
       ].sort(),
     );
     for (const name of ["swarm", "fighter", "interceptor", "retaliator"]) {
@@ -847,9 +858,7 @@ describe("claim jumper art", () => {
   });
 
   it("composes the claim frigate and capital, drawing a destroyed hardpoint's destroyed base", () => {
-    expect([...sets.keys()].sort()).toEqual(
-      [...CLAIM_WIRED, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
-    );
+    expect([...sets.keys()].sort()).toEqual([...CLAIM_WIRED].sort());
     for (const name of ["frigate", "capital"]) {
       const art = claim.get(name)!;
       expect(art.frames).toHaveLength(16);
@@ -884,36 +893,39 @@ describe("galaxy enemy families", () => {
       (asset) => asset.family === "garnet",
     );
     expect([...enemyFrameSets(assets, garnet.prefix).keys()].sort()).toEqual(
-      [...garnet.wired, ...Object.keys(HEAVY_PROFILE_PART_CLASSES)].sort(),
+      [...garnet.wired].sort(),
     );
   });
 });
 
-it.each([undefined, "andromeda", "cartwheel", "needle"])(
-  "registers every ordinary heavy profile and composes the exact %s palette",
-  (galaxy) => {
-    const keys = Object.keys(HEAVY_PROFILE_PART_CLASSES);
-    const family = galaxyFamily(galaxy, keys[0]!);
-    const own = assets.filter((frame) => frame.family === family?.family);
-    const sidecars = (galaxy && galaxySidecars.get(galaxy)) || coreSidecars;
-    const sets = enemyFrameSets(own, family?.prefix);
-    const art = enemyArt(
-      (key) => json(enemyJetsPath(sidecars, key)),
-      (key) => json(enemyHardpointsPath(sidecars, key)),
-      composedArchetypes(own),
-      own,
-      sets,
-      family?.prefix,
-      family?.family,
-    );
-    for (const [key, partClass] of Object.entries(HEAVY_PROFILE_PART_CLASSES)) {
-      expect(galaxyFamily(galaxy, key)).toBe(family);
-      const profile = art.get(key);
-      expect(profile?.frames).toHaveLength(16);
-      expect(profile?.jets?.headings).toHaveLength(16);
-      expect(profile?.parts?.layout.headings).toHaveLength(16);
-      expect(profile?.parts?.bases).toEqual(art.get(partClass)?.parts?.bases);
-      expect(profile?.parts?.tops).toEqual(art.get(partClass)?.parts?.tops);
-    }
-  },
-);
+it.each([
+  [undefined, ["capital", "frigate"]],
+  ["cartwheel", ["capital", "frigate"]],
+  ["andromeda", ["capital", "frigate"]],
+  ["needle", ["capital", "frigate"]],
+  ["whirlpool", ["capitalManta", "frigateTwin"]],
+  ["phantom", ["capitalForked"]],
+] as const)("composes every frigate and capital design %s flies", (galaxy, keys) => {
+  // A family's own class rows are its design; a coral galaxy's designs are its own keys.
+  const family = galaxyFamily(galaxy, "capital");
+  const own = assets.filter((frame) => frame.family === family?.family);
+  const sidecars = (galaxy && galaxySidecars.get(galaxy)) || coreSidecars;
+  const art = enemyArt(
+    (key) => json(enemyJetsPath(sidecars, key)),
+    (key) => json(enemyHardpointsPath(sidecars, key)),
+    composedArchetypes(own),
+    own,
+    enemyFrameSets(own, family?.prefix),
+    family?.prefix,
+    family?.family,
+  );
+  for (const key of keys) {
+    const design = art.get(key);
+    expect(design?.frames, key).toHaveLength(16);
+    expect(design?.jets?.headings, key).toHaveLength(16);
+    expect(design?.parts?.layout.headings, key).toHaveLength(16);
+    expect(
+      design?.parts?.bases.get("engine") ?? design?.parts?.bases.get("engine-left"),
+    ).toBeDefined();
+  }
+});

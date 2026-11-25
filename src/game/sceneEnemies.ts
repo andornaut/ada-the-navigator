@@ -157,7 +157,7 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     return;
   }
   const definition = enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy);
-  const art = familyArt(scene, enemy.archetype, enemy.id, enemy.hullProfile);
+  const art = familyArt(scene, enemy.archetype, enemy.id);
   if (art) {
     drawEnemySprite(scene, art, point, object.id, enemy);
     return;

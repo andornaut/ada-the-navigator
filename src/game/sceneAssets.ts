@@ -6,12 +6,7 @@ import { GameObjects, Loader, Scenes } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
-import {
-  enemyAssetKey,
-  type HeavyHullProfile,
-  heavyProfilePartClass,
-  INDUSTRIAL_BODY_KEYS,
-} from "../data/enemyIdentity.ts";
+import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
@@ -193,7 +188,6 @@ function queueEagerSvgSheets(
             asset.outpost === "settlement" ||
             (asset.station === "settlers" && asset.overlay === true) ||
             asset.archetype === "frigate" ||
-            heavyProfilePartClass(asset.archetype ?? "") !== undefined ||
             asset.archetype === "capital" ||
             asset.archetype === "gadget";
           const size = displaySized
@@ -574,6 +568,12 @@ function queueGalaxyAssets(
         ),
       );
     }
+    // The galaxy's own coral (unprefixed) enemy rows join core's, with their data files.
+    scene.partAssets = mergeEnemyAssets(
+      scene.partAssets,
+      manifest.assets.filter((asset) => enemyPartFrame(asset) && asset.family === undefined),
+    );
+    queueCoralEnemyData(scene, manifest.assets, manifest.sidecars);
   }
   const allies = manifest.links.allies;
   if (galaxy === 6 && !familySubset && allies && !scene.cache.json.exists(PHANTOM_ALLIES_ART)) {
@@ -633,8 +633,7 @@ function queueGalaxyAssets(
   queuePhantomCraftJets(scene, packedCraft);
   for (const { family, prefix, wired } of GALAXY_FAMILIES) {
     for (const [archetype, frames] of enemyFrameSets(assets, prefix)) {
-      const partClass = heavyProfilePartClass(archetype) ?? archetype;
-      if (!wired.has(partClass)) {
+      if (!wired.has(archetype)) {
         continue;
       }
       const jets = frames.length > 1 ? enemyJetsPath(sidecars, archetype) : undefined;
@@ -659,7 +658,7 @@ function queueGalaxyAssets(
           coreSidecars && enemyShardsPath(coreSidecars, archetype),
         );
       }
-      const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(partClass)
+      const hardpoints = composedArchetypes(scene.familyParts.get(family) ?? []).has(archetype)
         ? enemyHardpointsPath(sidecars, archetype)
         : undefined;
       if (hardpoints) {
@@ -973,20 +972,74 @@ export function rockFrameTexture(
   return frames.frame((file) => rockTexture(scene, file), art, frame);
 }
 
+/**
+ * Queues the jets and hardpoints files of a manifest's coral (unprefixed) enemy rows from that
+ * manifest's sidecars, under the coral keys: core's at boot, and a galaxy's own when it loads.
+ */
+export function queueCoralEnemyData(
+  scene: Pick<AssetsContext, "load">,
+  assets: readonly Asset[],
+  sidecars: Sidecars,
+): void {
+  const coral = assets.filter((asset) => asset.family === undefined);
+  const composed = composedArchetypes(coral);
+  for (const archetype of enemyFrameSets(coral).keys()) {
+    const jets = enemyJetsPath(sidecars, archetype);
+    if (jets) {
+      queueEnemyJets(scene, jets);
+    }
+    const hardpoints = composed.has(archetype)
+      ? enemyHardpointsPath(sidecars, archetype)
+      : undefined;
+    if (hardpoints) {
+      scene.load.json(`enemy-hardpoints-${archetype}`, hardpoints);
+    }
+  }
+}
+
+/**
+ * The sidecars the coral family reads: core's, then each loaded galaxy manifest's entries for
+ * the coral (unprefixed) hull sets it carries itself.
+ */
+function coralSidecars(scene: AssetsContext): Sidecars | undefined {
+  const core = scene.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
+  const sidecars = readSidecars(core?.sidecars);
+  if (!sidecars) {
+    return undefined;
+  }
+  const merged = new Map(sidecars);
+  for (const manifest of scene.galaxyManifests.values()) {
+    const coral = manifest.assets.filter((asset) => asset.family === undefined);
+    for (const archetype of enemyFrameSets(coral).keys()) {
+      const own = manifest.sidecars.get(archetype);
+      if (own) {
+        merged.set(archetype, own);
+      }
+    }
+  }
+  return merged;
+}
+
 /** Archetypes without a complete loaded frame set keep their vector placeholders. */
 export function readEnemyArt(scene: AssetsContext): void {
   const cachedJets = (sidecars: Sidecars | undefined, archetype: string): unknown => {
     const path = sidecars && enemyJetsPath(sidecars, archetype);
     return path === undefined ? undefined : scene.cache.json.get(enemyJetCacheKey(path));
   };
-  const core = scene.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
-  const coreSidecars = readSidecars(core?.sidecars);
+  const coral = coralSidecars(scene);
+  // Core's loaded frames and parts, and the coral rows of each loaded galaxy manifest.
+  const coralAssets = mergeEnemyAssets(
+    scene.shipAssets,
+    [...scene.galaxyManifests.values()].flatMap(({ assets }) =>
+      assets.filter((asset) => asset.family === undefined && scene.textures.exists(asset.id)),
+    ),
+  );
   scene.enemyArt = enemyArt(
-    (archetype) => cachedJets(coreSidecars, archetype),
+    (archetype) => cachedJets(coral, archetype),
     (archetype) => scene.cache.json.get(`enemy-hardpoints-${archetype}`),
     composedArchetypes(scene.partAssets),
-    scene.shipAssets,
-    enemyFrameSets(scene.shipAssets),
+    coralAssets,
+    enemyFrameSets(coralAssets),
   );
   for (const { family, galaxy, prefix, wired } of GALAXY_FAMILIES) {
     const owner = GALAXY_NUMBERS.find((id) => GALAXY_ID[id] === galaxy);
@@ -1003,12 +1056,7 @@ export function readEnemyArt(scene: AssetsContext): void {
       prefix,
       family,
     );
-    scene.familyArts.set(
-      family,
-      new Map(
-        [...art].filter(([archetype]) => wired.has(heavyProfilePartClass(archetype) ?? archetype)),
-      ),
-    );
+    scene.familyArts.set(family, new Map([...art].filter(([archetype]) => wired.has(archetype))));
   }
 }
 
@@ -1021,17 +1069,34 @@ export function familyOf(scene: AssetsContext, archetype: string): EnemyFamily |
   return galaxyFamily(galaxy === undefined ? undefined : GALAXY_ID[galaxy], archetype);
 }
 
+/**
+ * The key a craft's art draws under in the flight's galaxy. A frigate or capital flying its
+ * galaxy's own design draws its family's class frames, which are that family's design, else the
+ * coral design's frame key (`frigateTwin`, `capitalManta`, `capitalForked`).
+ */
+export function enemyArtKey(scene: AssetsContext, archetype: string, id?: string): string {
+  if (archetype === "capital" || archetype === "frigate") {
+    const galaxy = scene.model.state.flight?.galaxy;
+    const design = hullDesign(
+      { archetype, id },
+      galaxy === undefined ? undefined : GALAXY_ID[galaxy],
+    );
+    if (design) {
+      return familyOf(scene, archetype) ? archetype : design;
+    }
+  }
+  return archetype === "capital" || archetype === "retaliator"
+    ? enemyAssetKey({ archetype, id })
+    : archetype;
+}
+
 /** A craft's art in its galaxy's family, while that family's frames are loaded. */
 export function familyArt(
   scene: AssetsContext,
   archetype: string,
   id?: string,
-  hullProfile?: HeavyHullProfile,
 ): EnemyArt<Asset> | undefined {
-  const key =
-    archetype === "capital" || archetype === "frigate" || archetype === "retaliator"
-      ? enemyAssetKey({ archetype, hullProfile, id })
-      : archetype;
+  const key = enemyArtKey(scene, archetype, id);
   const family = familyOf(scene, key);
   return family ? scene.familyArts.get(family.family)?.get(key) : scene.enemyArt.get(key);
 }
@@ -1156,9 +1221,15 @@ function queueEnemyPartSheets(scene: AssetsContext, parts: readonly Asset[]): vo
  */
 export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   const family = familyOf(scene, archetype);
-  // A shared family can come from a different galaxy than the current flight.
+  // A shared family can come from a different galaxy than the current flight. Coral parts are
+  // known once the flight's galaxy manifest, which can carry its own coral rows, has loaded.
+  const galaxy = scene.model.state.flight?.galaxy;
   const parts = enemyPartsToLoad(
-    ensureEnemyFamilyManifest(scene, family, archetype),
+    family
+      ? ensureEnemyFamilyManifest(scene, family, archetype)
+      : galaxy === undefined ||
+          scene.galaxyManifests.has(galaxy) ||
+          !scene.galaxyManifestPaths[galaxy],
     (id) => scene.textures.exists(id),
     family ? (scene.familyParts.get(family.family) ?? []) : scene.partAssets,
     archetype,
@@ -1166,7 +1237,7 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   if (parts === null) {
     return;
   }
-  const key = `${family?.family ?? "coral"}:${heavyProfilePartClass(archetype) ?? archetype}`;
+  const key = `${family?.family ?? "coral"}:${archetype}`;
   if (parts.some((part) => part.svgSheet)) {
     if (!scene.partLoads.has(key)) {
       scene.partLoads.add(key);

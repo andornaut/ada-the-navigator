@@ -5,79 +5,35 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import {
   enemyAssetKey,
   enemyGeometryKey,
-  HEAVY_PROFILE_PART_CLASSES,
+  HULL_DESIGNS,
   PHANTOM_FLAGSHIP_ID,
-  selectOrdinaryHeavyProfile,
 } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition } from "../data/enemyMuzzles.ts";
-import { createEnemy, enemyFireLine, hardpointOffset } from "./enemyAi.ts";
+import { GALAXY_ID, ROUTE_POSITION } from "../data/galaxies.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { GameModel } from "./game.ts";
 import { restoreGameSave } from "./save.ts";
 
 const home = { x: 5000, y: -5000 };
 
 it.each([
-  ["frigate", "narrow", "frigateNarrow"],
-  ["frigate", "compact", "frigateCompact"],
-  ["capital", "narrow", "capitalNarrow"],
-  ["capital", "compact", "capitalCompact"],
-] as const)(
-  "binds %s %s to %s without changing its loadout or HP",
-  (archetype, hullProfile, key) => {
-    const id = "ordinary:heavy:0";
-    const stock = enemyDefinition(1, archetype, id);
-    const selected = enemyDefinition(1, archetype, id, 1, hullProfile);
-    expect(selected).toEqual({ ...stock, assetKey: key });
-    expect(muzzleArtForDefinition(selected)).toBe(MUZZLE_ART[key]);
-
-    const identity = { archetype, id, packId: null, phase: 0 };
-    const actor = createEnemy(selected, { ...identity, hullProfile }, home);
-    const defaultActor = createEnemy(stock, identity, home);
-    expect(enemyAssetKey(actor)).toBe(key);
-    expect(enemyGeometryKey(actor)).toBe(key);
-    expect(enemyEquipmentDefinition(1, actor)).toBe(selected);
-    expect(enemyEquipmentDefinition(1, defaultActor)).toBe(stock);
-    expect(enemyHull(actor)).not.toEqual(enemyHull(defaultActor));
-    expect(enemyPhysicalBody(1, actor)).not.toEqual(enemyPhysicalBody(1, defaultActor));
-    expect(HEAVY_PROFILE_PART_CLASSES[key]).toBe(archetype);
-
-    const mounts = stock.hardpoints.filter(({ kind }) => kind === "weapon");
-    const adaWidth = CONTENT.tuning.flight.shipRadius * 2;
-    expect(
-      mounts.map((mount) => hardpointOffset(selected, adaWidth, actor.facing, mount)),
-    ).not.toEqual(
-      mounts.map((mount) => hardpointOffset(stock, adaWidth, defaultActor.facing, mount)),
-    );
-    for (const state of [actor, defaultActor]) {
-      for (const mount of state.hardpoints) {
-        mount.aim = { x: 1, y: 0 };
-      }
-    }
-    const fireLines = mounts.map(({ id }) => enemyFireLine(selected, adaWidth, id, 0, actor));
-    expect(fireLines.every((line) => line !== null)).toBe(true);
-    expect(fireLines).not.toEqual(
-      mounts.map(({ id }) => enemyFireLine(stock, adaWidth, id, 0, defaultActor)),
-    );
-  },
-);
-
-it("gives each new ordinary actor a stable choice from explicit eligible profiles", () => {
-  const id = "ordinary:selection";
-  const identity = { archetype: "capital", id } as const;
-  const choices = [undefined, "narrow", "compact"] as const;
-  const first = selectOrdinaryHeavyProfile(choices, identity);
-  expect(choices).toContain(first);
-  expect(selectOrdinaryHeavyProfile(choices, { ...identity })).toBe(first);
-  expect(selectOrdinaryHeavyProfile(["narrow"], identity)).toBe("narrow");
-  expect(selectOrdinaryHeavyProfile([], identity)).toBeUndefined();
-  for (const authoredId of [PHANTOM_FLAGSHIP_ID, "route:growers"]) {
-    expect(selectOrdinaryHeavyProfile(["narrow"], { ...identity, id: authoredId })).toBeUndefined();
-  }
-  expect(enemyAssetKey({ ...identity, hullProfile: "compact", id: PHANTOM_FLAGSHIP_ID })).toBe(
-    "gadget",
-  );
+  ["frigate", "narrow"],
+  ["frigate", "compact"],
+  ["capital", "narrow"],
+  ["capital", "compact"],
+] as const)("draws a saved %s %s profile as its class's stock hull", (archetype, hullProfile) => {
+  const id = "ordinary:heavy:0";
+  const stock = enemyDefinition(1, archetype, id);
+  expect(enemyDefinition(1, archetype, id, 1, hullProfile)).toEqual(stock);
+  const identity = { archetype, id, packId: null, phase: 0 };
+  const actor = createEnemy(stock, { ...identity, hullProfile }, home);
+  const defaultActor = createEnemy(stock, identity, home);
+  expect(enemyAssetKey(actor)).toBe(archetype);
+  expect(enemyGeometryKey(actor)).toBe(archetype);
+  expect(enemyHull(actor)).toEqual(enemyHull(defaultActor));
+  expect(enemyPhysicalBody(1, actor)).toEqual(enemyPhysicalBody(1, defaultActor));
 });
 
 it("restores explicit actors and wrecks in v14 while absent profiles keep stock identity", () => {
@@ -143,4 +99,49 @@ it("rejects a profile ledger for aliased, unrepresented or nonordinary pack IDs"
     state.profiledPacks = { [id]: "capital" };
     expect(restoreGameSave(CONTENT, invalid)).toBeNull();
   }
+});
+
+it.each([
+  [1, "frigate", "capital"],
+  [2, "frigate", "capitalOutrigger"],
+  [3, "frigateTwin", "capitalManta"],
+  [4, "frigateTwin", "capitalCrossbow"],
+  [5, "frigateTwin", "capitalBroad"],
+  [6, "frigate", "capitalForked"],
+] as const)("flies galaxy %i's frigates as %s and capitals as %s", (galaxy, frigate, capital) => {
+  const position = ROUTE_POSITION[galaxy as GalaxyNumber];
+  for (const [archetype, key] of [
+    ["frigate", frigate],
+    ["capital", capital],
+  ] as const) {
+    const id = `ordinary:${archetype}:0`;
+    const definition = enemyDefinition(galaxy, archetype, id);
+    expect(definition.assetKey).toBe(key);
+    expect(muzzleArtForDefinition(definition)).toBe(MUZZLE_ART[key]);
+    expect(MUZZLE_ART[key]).toBeDefined();
+    expect(enemyGeometryKey({ archetype, id }, position)).toBe(key);
+    expect(HULL_DESIGNS[archetype][GALAXY_ID[galaxy as GalaxyNumber]] ?? archetype).toBe(key);
+  }
+  // General Gadget's flagship keeps its own design in Phantom.
+  expect(enemyGeometryKey({ archetype: "capital", id: PHANTOM_FLAGSHIP_ID }, position)).toBe(
+    "gadget",
+  );
+});
+
+it("draws each galaxy's frigate and capital design with its own hull", () => {
+  const facing = { x: 1, y: 0 };
+  const hulls = [1, 2, 3, 4, 5, 6].map((galaxy) =>
+    JSON.stringify(
+      enemyHull(
+        { archetype: "capital", facing, id: "ordinary:capital:0" },
+        ROUTE_POSITION[galaxy as GalaxyNumber],
+      ),
+    ),
+  );
+  expect(new Set(hulls).size).toBe(6);
+  const frigate = (galaxy: GalaxyNumber) =>
+    enemyHull({ archetype: "frigate", facing, id: "ordinary:frigate:0" }, ROUTE_POSITION[galaxy]);
+  expect(frigate(3)).toEqual(frigate(5));
+  expect(frigate(1)).toEqual(frigate(2));
+  expect(frigate(1)).not.toEqual(frigate(3));
 });

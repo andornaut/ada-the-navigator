@@ -9,7 +9,7 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { enemyAssetKey, heavyProfilePartClass, wreckEnemyId } from "../data/enemyIdentity.ts";
+import { wreckEnemyId } from "../data/enemyIdentity.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
@@ -41,6 +41,7 @@ import {
 } from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";
 import {
+  enemyArtKey,
   familyArt,
   familyOf,
   filterTexture,
@@ -828,11 +829,11 @@ export function drawWreck(scene: ObjectsContext, object: SpaceObject, point: Vec
   }
   const data = scene.destruction;
   const id = wreckEnemyId(object.id);
-  const key = enemyAssetKey({ archetype: wreck.archetype, hullProfile: wreck.hullProfile, id });
+  const key = enemyArtKey(scene, wreck.archetype, id);
   const family = familyOf(scene, key);
   const shards = (family ? scene.familyShards.get(family.family) : scene.shards)?.get(key);
   const timing = data?.archetypes[wreck.archetype];
-  const art = familyArt(scene, wreck.archetype, id, wreck.hullProfile);
+  const art = familyArt(scene, wreck.archetype, id);
   if (!data || !shards || !timing || !art) {
     drawWreckPlaceholder(scene, object.id, wreck, point);
     return;
@@ -935,12 +936,9 @@ export function drawWreckPlaceholder(
 
 export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
   // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
-  const assetKey = object.enemy && enemyAssetKey(object.enemy);
+  const assetKey = object.enemy && enemyArtKey(scene, object.enemy.archetype, object.enemy.id);
   const family = (assetKey && familyOf(scene, assetKey)?.family) ?? "coral";
-  if (
-    assetKey &&
-    !scene.partLoads.has(`${family}:${heavyProfilePartClass(assetKey) ?? assetKey}`)
-  ) {
+  if (assetKey && !scene.partLoads.has(`${family}:${assetKey}`)) {
     loadEnemyParts(scene, assetKey);
   }
   const point = scene.project(object);

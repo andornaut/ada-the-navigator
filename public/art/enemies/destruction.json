@@ -91,7 +91,7 @@
     "retaliatorCargoHauler": {
       "durationMs": 600,
       "releaseMs": 190,
-      "flashWidth": 127.354,
+      "flashWidth": 106.128,
       "spread": 33.6,
       "reduced": {
         "durationMs": 450,

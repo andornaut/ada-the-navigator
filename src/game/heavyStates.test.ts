@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import capitalHardpoints from "../../public/art/enemies/capital-hardpoints.json";
+import capitalHardpoints from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import { ART_MANIFEST } from "../testing/publicArt.ts";
 import {
   bannerOffset,
@@ -43,8 +43,10 @@ describe("disabled banner", () => {
     for (const heading of [0, 5, 12]) {
       const [x, y] = capitalHardpoints.headings[heading]!.banner;
       const offset = bannerOffset(capital, capital.frames[heading]!)!;
-      expect(offset.x).toBeCloseTo((x! - 240) * (210 / 480), 9);
-      expect(offset.y).toBeCloseTo((y! - 240) * (210 / 480), 9);
+      const { frame } = capitalHardpoints;
+      const scale = capital.frames[heading]!.displayWidth! / frame;
+      expect(offset.x).toBeCloseTo((x! - frame / 2) * scale, 9);
+      expect(offset.y).toBeCloseTo((y! - frame / 2) * scale, 9);
     }
   });
 });

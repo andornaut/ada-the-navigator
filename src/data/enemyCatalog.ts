@@ -1,8 +1,8 @@
 import type { EnemyActorKind } from "./enemyActors.ts";
 import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
 import {
-  enemyAssetKey,
   type EnemyGeometryKey,
+  enemyGeometryKey,
   type HeavyHullProfile,
   PHANTOM_FLAGSHIP_ID,
 } from "./enemyIdentity.ts";
@@ -932,11 +932,11 @@ export function enemyDefinition(
     );
   }
   const route = ROUTE_POSITION[galaxy];
-  const assetKey = enemyAssetKey({
-    archetype,
-    ...(hullProfile === undefined ? {} : { hullProfile }),
-    id: shipId,
-  });
+  // The galaxy's hull design, such as the Twin hull frigate, supplies muzzles and collision.
+  const assetKey = enemyGeometryKey(
+    { archetype, ...(hullProfile === undefined ? {} : { hullProfile }), id: shipId },
+    route,
+  );
   const loadout = heavyLoadout(archetype, route, shipId);
   const flagship = galaxy === 6 && archetype === "capital" && shipId === PHANTOM_FLAGSHIP_ID;
   const weapons = loadout ? [...loadout.values()].join(",") : "";

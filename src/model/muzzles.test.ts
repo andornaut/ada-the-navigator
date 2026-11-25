@@ -2,9 +2,9 @@ import { readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import capitalFile from "../../public/art/enemies/capital-hardpoints.json";
+import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
+import cargoFile from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json";
 import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
-import retaliatorFile from "../../public/art/enemies/retaliator-hardpoints.json";
 import {
   enemyCatalog,
   type EnemyDefinition,
@@ -91,14 +91,14 @@ describe("drawn muzzles", () => {
     expect(offset.y).toBeCloseTo(expected.y, 9);
   });
 
-  it("cycles a triple top's barrels by volley", () => {
-    const tips = retaliatorFile.tops.turret[3]!.muzzles;
-    expect(tips).toHaveLength(3);
+  it("cycles a pod top's two shot origins by volley", () => {
+    const tips = cargoFile.tops.turret[3]!.muzzles;
+    expect(tips).toHaveLength(2);
     const layout = muzzleLayout(enemyCatalog.retaliator, MUZZLE_ART.retaliatorCargoHauler)!;
     const first = muzzleOffset(layout, null, at(0), at(3 * 22.5), 0)!;
     const second = muzzleOffset(layout, null, at(0), at(3 * 22.5), 1)!;
     expect(second).not.toEqual(first);
-    expect(muzzleOffset(layout, null, at(0), at(3 * 22.5), 3)).toEqual(first);
+    expect(muzzleOffset(layout, null, at(0), at(3 * 22.5), 2)).toEqual(first);
   });
 
   it("defines no muzzle for a turretless part, an unknown turret or a ship without that art", () => {
@@ -186,27 +186,31 @@ describe("drawn muzzles", () => {
   });
 
   it("reads every hardpoints file Art exports, at Art's enemy display scale", () => {
-    // The claim family shares the coral hardpoints files and adds the platform's; the cargo
-    // hauler reads the retaliator's.
+    // The claim family adds the platform's file; every fleet design reads its own
+    // fleet{Key}-hardpoints.json in the core folder.
     const variants = new Map([
       ["hostileStation-andromeda", "hostileStationAndromeda"],
       ["hostileStation-phantom", "hostileStationPhantom"],
     ]);
+    const key = (name: string) =>
+      name.startsWith("fleet") ? `${name[5]!.toLowerCase()}${name.slice(6)}` : name;
     const files = ["enemies", "andromeda/enemies", "cartwheel/enemies"].flatMap((dir) =>
       readdirSync(new URL(`../../public/art/${dir}/`, import.meta.url))
         .filter((name) => name.endsWith("-hardpoints.json"))
         .map((name) => name.replace("-hardpoints.json", "")),
     );
     expect(Object.keys(MUZZLE_ART).sort()).toEqual(
-      [
-        ...new Set([...files.map((name) => variants.get(name) ?? name), "retaliatorCargoHauler"]),
-      ].sort(),
+      [...new Set(files.map((name) => variants.get(name) ?? key(name)))].sort(),
     );
     expect(Object.keys(MUZZLE_ART)).toContain("gadget");
     const manifest = ART_MANIFEST as unknown as {
       assets: { displayWidth?: number; id: string; width: number }[];
     };
+    // A family's design draws as that family's capital.
     const stations = new Map([
+      ["capitalBroad", "enemy-garnet-capital-0"],
+      ["capitalCrossbow", "enemy-needle-capital-0"],
+      ["capitalOutrigger", "enemy-claim-capital-0"],
       ["hostileStation", "enemy-claim-hostileStation-0"],
       ["hostileStationAndromeda", "enemy-garnet-hostileStation-0"],
       ["hostileStationPhantom", "enemy-hostileStation-0"],

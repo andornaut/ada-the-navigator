@@ -1,4 +1,4 @@
-import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { HULL_DESIGN_KEYS, hullDesignClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import type { Vec } from "../model/types.ts";
 import { type EnemyJetFamily, readEnemyJets } from "./enemyJetPalette.ts";
 import { shipDirection } from "./shipArt.ts";
@@ -25,6 +25,8 @@ export interface EnemyFrame {
 /** One hardpoint in a hull heading: its base sprite centre and, for a turret, its top pivot. */
 export interface HeadingPart {
   anchor: Vec;
+  /** The hull hides most of the mount at this heading, so its top is not drawn; it still fires. */
+  hidden?: true;
   pivot?: Vec;
 }
 
@@ -153,14 +155,21 @@ export function galaxyFamily(
     (entry) =>
       (entry.galaxy === galaxy ||
         (galaxy === "phantom" && archetype === "platform" && entry.family === "claim")) &&
-      entry.wired.has(heavyProfilePartClass(archetype) ?? archetype),
+      entry.wired.has(archetype),
   );
 }
 
+/** A frame's key: its archetype, or the hull design its id names (a retaliator body or a design). */
 export function enemyFrameKey(asset: Pick<EnemyFrame, "archetype" | "id">): string | undefined {
-  return asset.archetype === "retaliator"
-    ? (INDUSTRIAL_BODY_KEYS.find((key) => asset.id.includes(`${key}-`)) ?? asset.archetype)
-    : asset.archetype;
+  const designs: readonly string[] =
+    asset.archetype === "retaliator"
+      ? INDUSTRIAL_BODY_KEYS
+      : asset.archetype === "frigate"
+        ? HULL_DESIGN_KEYS.filter((key) => key.startsWith("frigate"))
+        : asset.archetype === "capital"
+          ? HULL_DESIGN_KEYS.filter((key) => key.startsWith("capital"))
+          : [];
+  return designs.find((key) => asset.id.includes(`${key}-`)) ?? asset.archetype;
 }
 
 export function mergeEnemyAssets<T extends { id: string }>(
@@ -260,9 +269,8 @@ export function enemyPartsToLoad<T extends EnemyFrame>(
   parts: readonly T[],
   archetype: string,
 ): readonly T[] | null {
-  const partClass = heavyProfilePartClass(archetype) ?? archetype;
   return known
-    ? parts.filter((part) => enemyFrameKey(part) === partClass && !loaded(part.id))
+    ? parts.filter((part) => enemyFrameKey(part) === archetype && !loaded(part.id))
     : null;
 }
 
@@ -371,9 +379,7 @@ export function readHardpointLayout(
   value: unknown,
 ): HardpointLayout | undefined {
   const root = fields(value);
-  const layoutClass =
-    heavyProfilePartClass(archetype) ??
-    (INDUSTRIAL_BODY_KEYS.some((key) => key === archetype) ? "retaliator" : archetype);
+  const layoutClass = hullDesignClass(archetype) ?? archetype;
   if (
     root?.version !== 1 ||
     root.archetype !== layoutClass ||
@@ -436,11 +442,16 @@ export function readHardpointLayout(
         !definition ||
         !anchor ||
         parts.has(definition.id) ||
-        ((definition.top || tiered(definition.id)) && !pivot)
+        ((definition.top || tiered(definition.id)) && !pivot) ||
+        (placed?.hidden !== undefined && placed.hidden !== true)
       ) {
         return undefined;
       }
-      parts.set(definition.id, pivot ? { anchor, pivot } : { anchor });
+      parts.set(definition.id, {
+        anchor,
+        ...(placed?.hidden ? { hidden: true as const } : {}),
+        ...(pivot ? { pivot } : {}),
+      });
     }
     const banner = readVec(heading.banner);
     if (parts.size !== hardpoints.length || (heading.banner !== undefined && !banner)) {
@@ -665,13 +676,9 @@ export function enemyArt<T extends EnemyFrame>(
       frames,
       jets: parsed?.headings.length === ENEMY_HEADINGS ? parsed : undefined,
     };
-    const profileClass = heavyProfilePartClass(archetype);
-    if (profileClass && !art.jets) {
-      continue;
-    }
-    if (profileClass || composed.has(archetype)) {
+    if (composed.has(archetype)) {
       const layout = readHardpointLayout(archetype, layouts(archetype));
-      const parts = layout && readPartArt(profileClass ?? archetype, layout, assets, prefix);
+      const parts = layout && readPartArt(archetype, layout, assets, prefix);
       if (!parts) {
         continue;
       }
@@ -756,7 +763,7 @@ export function composeEnemy<T extends EnemyFrame>(
         offset: hullOffset(hull, frame, placed.anchor),
       });
     }
-    if (intact && mount.top && placed.pivot) {
+    if (intact && mount.top && placed.pivot && !placed.hidden) {
       sprites.push({
         frame: parts.tops.get(mount.top)![topAim(mount.aft, index, pose.aim(id))]!,
         hardpoint: id,

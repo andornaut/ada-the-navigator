@@ -1,16 +1,19 @@
 import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
-import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
-import capitalCompact from "../../public/art/enemies/capitalCompact-hardpoints.json" with { type: "json" };
-import capitalNarrow from "../../public/art/enemies/capitalNarrow-hardpoints.json" with { type: "json" };
+import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoints.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
+import retaliator from "../../public/art/enemies/fleetRetaliator-hardpoints.json" with { type: "json" };
+import cargo from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json" with { type: "json" };
+import mining from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
-import frigateCompact from "../../public/art/enemies/frigateCompact-hardpoints.json" with { type: "json" };
-import frigateNarrow from "../../public/art/enemies/frigateNarrow-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
-import retaliator from "../../public/art/enemies/retaliator-hardpoints.json" with { type: "json" };
-import mining from "../../public/art/enemies/retaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
 import { type EnemyGeometryKey } from "./enemyIdentity.ts";
 
@@ -117,18 +120,20 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
 /** Art's drawn mounts for every archetype with a hardpoints file, Gadget's capital included. */
 export const MUZZLE_ART: Partial<Record<EnemyGeometryKey, MuzzleArt>> = {
   capital: readMuzzleArt(capital),
-  capitalCompact: readMuzzleArt(capitalCompact),
-  capitalNarrow: readMuzzleArt(capitalNarrow),
+  capitalBroad: readMuzzleArt(capitalBroad),
+  capitalCrossbow: readMuzzleArt(capitalCrossbow),
+  capitalForked: readMuzzleArt(capitalForked),
+  capitalManta: readMuzzleArt(capitalManta),
+  capitalOutrigger: readMuzzleArt(capitalOutrigger),
   frigate: readMuzzleArt(frigate),
-  frigateCompact: readMuzzleArt(frigateCompact),
-  frigateNarrow: readMuzzleArt(frigateNarrow),
+  frigateTwin: readMuzzleArt(frigateTwin),
   gadget: readMuzzleArt(gadget),
   hostileStation: readMuzzleArt(station),
   hostileStationAndromeda: readMuzzleArt(ring),
   hostileStationPhantom: readMuzzleArt(phantomStation),
   platform: readMuzzleArt(platform),
   retaliator: readMuzzleArt(retaliator),
-  retaliatorCargoHauler: readMuzzleArt(retaliator),
+  retaliatorCargoHauler: readMuzzleArt(cargo),
   retaliatorMiningFreighter: readMuzzleArt(mining),
 };
 

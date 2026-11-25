@@ -5,7 +5,7 @@ import { GameObjects, Loader, Scene, Scenes } from "phaser";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { heavyProfilePartClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
+import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { HIT_SHAKE } from "../data/layout.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -70,10 +70,7 @@ import {
 } from "./drawOrder.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
-  composedArchetypes,
   type EnemyArt,
-  enemyFrameSets,
-  enemyHardpointsPath,
   enemyJetsPath,
   enemyShardsPath,
   HitFlashes,
@@ -102,8 +99,8 @@ import {
   loadSvg,
   materialShipHeading,
   paintInUse,
+  queueCoralEnemyData,
   queueCoreSvgSheets,
-  queueEnemyJets,
   queueShipMaterialSources,
   queueSvg,
   rasterAgain,
@@ -553,19 +550,7 @@ export class GameScene extends Scene {
           throw new Error("The art manifest's sidecars map is malformed");
         }
         queueShipMaterialSources(this, manifest);
-        const composed = composedArchetypes(manifest.assets);
-        for (const archetype of enemyFrameSets(manifest.assets).keys()) {
-          const jets = enemyJetsPath(sidecars, archetype);
-          if (jets) {
-            queueEnemyJets(this, jets);
-          }
-          const hardpoints = composed.has(heavyProfilePartClass(archetype) ?? archetype)
-            ? enemyHardpointsPath(sidecars, archetype)
-            : undefined;
-          if (hardpoints) {
-            this.load.json(`enemy-hardpoints-${archetype}`, hardpoints);
-          }
-        }
+        queueCoralEnemyData(this, manifest.assets, sidecars);
         // Story craft that several galaxies fly are in core; their jets load with it.
         for (const craft of craftFrameSets(manifest.assets).keys()) {
           const jets = enemyJetsPath(sidecars, craft);

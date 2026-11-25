@@ -4,7 +4,6 @@ import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { type EncounterEntry, enemyCatalog } from "../data/enemyCatalog.ts";
-import { ordinaryPackHullProfile } from "../data/enemyIdentity.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
@@ -474,9 +473,7 @@ describe("per-role encounter restore", () => {
     expect(resumed.state.flight).toEqual(model.state.flight);
     expect(members(resumed, packId).map(({ id }) => id)).toEqual([leader]);
     expect(resumed.state.flight!.combat!.profiledPacks?.[packId]).toBe("capital");
-    expect(members(resumed, packId)[0]!.enemy!.hullProfile).toBe(
-      ordinaryPackHullProfile({ archetype: "capital", id: leader }),
-    );
+    expect(members(resumed, packId)[0]!.enemy!.hullProfile).toBeUndefined();
     expect(members(resumed, escorts)).toHaveLength(4);
     return { content, escorts, leader, model: resumed, packId };
   }
@@ -530,69 +527,6 @@ describe("per-role encounter restore", () => {
       ),
     ).toBe(true);
     expect(flight.combat!.initialPackSizes).toMatchObject({ [escorts]: 4, [packId]: 1 });
-  });
-
-  it.each([true, false])("preserves a paged frigate with profile ledger present=%s", (modern) => {
-    const content = structuredClone(CONTENT);
-    content.tuning.flight.arrivalCalm = 0;
-    content.tuning.flight.objectsPerChunk = 0;
-    const model = new GameModel(content);
-    let leader: SpaceObject | undefined;
-    for (let seed = 0; seed < 32 && !leader; seed++) {
-      const flight = chartFlight(content, 4, seed);
-      flight.player = { x: 14000, y: 4000 };
-      stepFlight(content, 0.001, idle, flight);
-      leader = flight.objects.find(
-        ({ enemy }) => enemy?.archetype === "frigate" && enemy.hullProfile !== undefined,
-      );
-      if (leader) {
-        Object.assign(model.state, {
-          flight,
-          mode: "space",
-          selectedGalaxy: 4,
-          started: true,
-          unlocked: [1, 4],
-        });
-      }
-    }
-    expect(leader).toBeDefined();
-    const leaderId = leader!.id;
-    const flight = model.state.flight!;
-    const packId = leader!.enemy!.packId!;
-    const escorts = flight.objects.filter(({ enemy }) => enemy?.escortOf === leaderId);
-    expect(escorts).toHaveLength(2);
-    expect(flight.combat!.profiledPacks?.[packId]).toBe("frigate");
-    const profile = ordinaryPackHullProfile({ archetype: "frigate", id: leaderId });
-    expect(leader!.enemy!.hullProfile).toBe(profile);
-    expect(profile).toBeDefined();
-    if (!modern) {
-      delete flight.combat!.profiledPacks;
-      for (const { enemy } of flight.objects) {
-        if (enemy?.hullProfile !== undefined) {
-          Reflect.deleteProperty(enemy, "hullProfile");
-        }
-      }
-    }
-    const saved = model.save();
-    expect(
-      restoreSave(saved)?.flight?.objects.find(({ id }) => id === leaderId)?.enemy?.hullProfile,
-    ).toBe(modern ? profile : undefined);
-    revisit(content, model, escorts, () => {
-      expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(1);
-      expect(members(model, packId)).toHaveLength(0);
-      expect(restoreSave(model.save())?.flight?.combat?.profiledPacks?.[packId]).toBe(
-        modern ? "frigate" : undefined,
-      );
-    });
-    const returned = members(model, packId)[0]!;
-    expect(returned.id).toBe(leaderId);
-    expect(returned.enemy?.hullProfile).toBe(modern ? profile : undefined);
-    expect(members(model, escorts[0]!.enemy!.packId!)).toHaveLength(2);
-    destroy(model, returned);
-    expect(flight.objects.find(({ id }) => id === `wreck:${leaderId}`)?.wreck).toMatchObject({
-      archetype: "frigate",
-      ...(modern ? { hullProfile: profile } : {}),
-    });
   });
 
   it("restores an unloaded capital as the capital while lost escorts stay lost", () => {
