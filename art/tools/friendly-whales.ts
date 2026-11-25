@@ -128,21 +128,37 @@ export const WHALE_MANIFEST = {
   calf: "whirlpool",
   youngCalf: "whirlpool",
 } as const;
-export const whaleSheetFile = (kind: WhaleKind, yaw: number) => `friendly-${kind}-${yaw}-sheet.svg`;
+// The longest edge of a whale sheet, in logical px: the shipped sheets' ceiling.
+export const WHALE_SHEET_EDGE = 2048;
+// How a kind's frames pack: as many whole headings to a sheet as fit a square of that edge.
+export function whaleLayout(frame: number) {
+  const columns = Math.floor(WHALE_SHEET_EDGE / frame);
+  const headings = Math.min(ENEMY_HEADINGS, Math.floor((columns * columns) / WHALE_LOOP_FRAMES));
+  return { columns, headings, sheets: Math.ceil(ENEMY_HEADINGS / headings) };
+}
+export const whaleSheetFile = (kind: WhaleKind, sheet: number) =>
+  `friendly-${kind}-sheet-${sheet}.svg`;
 export const WHALE_DATA_FILE = "friendly-whales.json";
 
-// One heading's loop frames as a sheet of nested roots in a row, each carrying its manifest id.
-export function whaleSheet({ frame, headings }: DrawnWhale, yaw: number): string {
+// Sheet `sheet` of a kind: its headings' loop frames as nested roots, heading by heading, each
+// carrying its manifest id.
+export function whaleSheet({ frame, headings }: DrawnWhale, sheet: number): string {
   const namespace = 'xmlns="http://www.w3.org/2000/svg"';
+  const layout = whaleLayout(frame);
   const root = `<svg ${namespace} width="${frame}" height="${frame}" viewBox="0 0 ${frame} ${frame}">`;
-  const roots = headings[yaw]!.frames.map(({ id, svg }, index) => {
+  const frames = headings
+    .slice(sheet * layout.headings, (sheet + 1) * layout.headings)
+    .flatMap((heading) => heading.frames);
+  const roots = frames.map(({ id, svg }, index) => {
     if (!svg.startsWith(root) || !svg.endsWith("</svg>")) {
       throw new Error(`Unexpected frame root: ${id}`);
     }
-    return `<svg id="${id}" x="${index * frame}" y="0" ${svg.slice("<svg ".length)}`;
+    const [x, y] = [(index % layout.columns) * frame, Math.floor(index / layout.columns) * frame];
+    return `<svg id="${id}" x="${x}" y="${y}" ${svg.slice("<svg ".length)}`;
   });
-  const width = roots.length * frame;
-  return `<svg ${namespace} width="${width}" height="${frame}" viewBox="0 0 ${width} ${frame}">${roots.join("")}</svg>\n`;
+  const width = Math.min(frames.length, layout.columns) * frame;
+  const height = Math.ceil(frames.length / layout.columns) * frame;
+  return `<svg ${namespace} width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${roots.join("")}</svg>\n`;
 }
 
 export function whaleRows({ kind, frame, headings }: DrawnWhale, yaw: number, path: string) {
@@ -178,7 +194,8 @@ export function whaleData(whales: readonly DrawnWhale[], shipped: ShippedWhales)
     version: 1,
     displayScale: DISPLAY_SCALE,
     headings: ENEMY_HEADINGS,
-    sheets: "/art/whales/friendly-{kind}-{heading}-sheet.svg",
+    // Sheet `floor(heading / headingsPerSheet)` of a kind holds that heading's loop frames.
+    sheets: "/art/whales/friendly-{kind}-sheet-{sheet}.svg",
     palette: {
       hull: WHALE.hull,
       throat: WHALE.throat,
@@ -203,6 +220,7 @@ export function whaleData(whales: readonly DrawnWhale[], shipped: ShippedWhales)
         spots: { count: spots.length * (pairs ? 2 : 1), pattern: pairs ? "pairs" : "row" },
         loop: was.loop,
         stationaryHeading: was.stationaryHeading,
+        headingsPerSheet: whaleLayout(frame).headings,
         headings: headings.map(({ footprintRadius }, index) => ({
           index,
           frame: { width: frame, height: frame },

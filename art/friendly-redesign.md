@@ -353,8 +353,17 @@ Frames, ids and data:
 - A kind's frame is square, a multiple of 8 frame px, and fits every heading
   and loop frame with 1 px of margin. The pivot is `(0.5, 0.5)`, the middle of
   the body on the world plane. Display size is the frame times 0.4375.
-- `/art/whales/friendly-{kind}-{k}-sheet.svg`: one heading's 8 loop frames as
-  nested roots in a row.
+- `/art/whales/friendly-{kind}-sheet-{n}.svg`: nine sheets of nested roots.
+  A sheet holds as many whole headings of a kind as fit a square 2048 logical
+  px on its longest edge, heading by heading with no gutters: Marlo four
+  sheets of four headings (2016 x 2016), the adult three of six, six and four
+  headings (1848 x 1848 and 1848 x 1320), the calf one (2016 x 1440) and the
+  young calf one (2040 x 960). Each row names its sheet in `path`; the data
+  file's `headingsPerSheet` gives the same split.
+- Coordinates keep one decimal. Against three decimals, one decimal moves the
+  99th percentile of frame pixels by 2 levels for Marlo and the adult and by
+  3 at the calves' worst headings, at display size; two decimals hold 1 level
+  and cost 37% more compressed bytes.
 - `/art/friendly-whales.json`, staged as the `whales` link of Whirlpool and
   Phantom, in the shape of the shipped `whales.json`. The loop timings, each
   kind's `stationaryHeading`, `reducedMotion` and the `family` offsets are
@@ -408,7 +417,8 @@ Whale rows that change at the switch:
   at display scale 1.
 - The whales draw larger than the shipped ones and each footprint radius
   grows with them, so spacing tuned to the shipped radii needs a look.
-- The sheets are `friendly-{kind}-{k}-sheet.svg`, and the data file's
+- The sheets are `friendly-{kind}-sheet-{n}.svg`, several headings to a
+  sheet, and the data file's
   `palette` and `sheets` fields differ from the shipped `palette` and `files`.
   `src/game/whaleArt.ts` reads `kinds`, `family` and `reducedMotion`, which
   keep their shape; `src/game/whaleArt.test.ts` asserts the shipped sizes.

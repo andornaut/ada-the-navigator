@@ -41,6 +41,7 @@ import {
   WHALE_DATA_FILE,
   WHALE_MANIFEST,
   whaleData,
+  whaleLayout,
   whaleRows,
   whaleSheet,
   whaleSheetFile,
@@ -482,21 +483,23 @@ function stageCrafts(
   return crafts;
 }
 
-// Writes each whale kind's sheets, one per heading, and the whale data, and stages their rows
+// Writes each whale kind's sheets and the whale data, and stages their rows
 // and the `whales` link of every manifest that carries one.
 function stageWhales(staged: Record<string, { assets: unknown[]; data?: Record<string, string> }>) {
   const whales = drawnWhales();
   const files = new Map<string, string>();
   for (const whale of whales) {
-    for (const yaw of whale.headings.keys()) {
-      files.set(whaleSheetFile(whale.kind, yaw), whaleSheet(whale, yaw));
+    for (let sheet = 0; sheet < whaleLayout(whale.frame).sheets; sheet++) {
+      files.set(whaleSheetFile(whale.kind, sheet), whaleSheet(whale, sheet));
     }
   }
   const paths = writeOnce("/art/whales/", new Map(), files);
   for (const whale of whales) {
     const entry = (staged[WHALE_MANIFEST[whale.kind]] ??= { assets: [] });
+    const { headings } = whaleLayout(whale.frame);
     for (const yaw of whale.headings.keys()) {
-      entry.assets.push(...whaleRows(whale, yaw, paths.get(whaleSheetFile(whale.kind, yaw))!));
+      const sheet = Math.floor(yaw / headings);
+      entry.assets.push(...whaleRows(whale, yaw, paths.get(whaleSheetFile(whale.kind, sheet))!));
     }
   }
   const shipped = JSON.parse(

@@ -2,7 +2,7 @@
   "version": 1,
   "displayScale": 0.4375,
   "headings": 16,
-  "sheets": "/art/whales/friendly-{kind}-{heading}-sheet.svg",
+  "sheets": "/art/whales/friendly-{kind}-sheet-{sheet}.svg",
   "palette": {
     "hull": ["#aaa5e6", "#7f78c2", "#544d91"],
     "throat": ["#e6e0f8", "#c9c0e8", "#9a90c4"],
@@ -45,6 +45,7 @@
         "swimMs": 150
       },
       "stationaryHeading": 4,
+      "headingsPerSheet": 4,
       "headings": [
         {
           "index": 0,
@@ -270,6 +271,7 @@
         "swimMs": 150
       },
       "stationaryHeading": 6,
+      "headingsPerSheet": 6,
       "headings": [
         {
           "index": 0,
@@ -495,6 +497,7 @@
         "swimMs": 100
       },
       "stationaryHeading": 6,
+      "headingsPerSheet": 16,
       "headings": [
         {
           "index": 0,
@@ -720,6 +723,7 @@
         "swimMs": 100
       },
       "stationaryHeading": 7,
+      "headingsPerSheet": 16,
       "headings": [
         {
           "index": 0,

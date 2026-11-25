@@ -5,7 +5,13 @@ import { test } from "node:test";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { drawnCrafts } from "./friendly-craft.ts";
 import { WHALE_KINDS, WHALE_LOOP_FRAMES } from "./friendly-whale-models.ts";
-import { drawWhale, whaleFootprint, whaleFrame } from "./friendly-whales.ts";
+import {
+  drawWhale,
+  WHALE_SHEET_EDGE,
+  whaleFootprint,
+  whaleFrame,
+  whaleLayout,
+} from "./friendly-whales.ts";
 import { drawGates, drawnObjects } from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { readManifest } from "./manifest.ts";
@@ -375,6 +381,19 @@ test("each whale kind stages 16 headings of 8 loop frames in one square frame", 
     const manifest = kind === "whale" || kind === "adult" ? "core" : "whirlpool";
     const rows = staged[manifest]!.assets.filter(({ id }) => id.startsWith(`whale-${kind}-`));
     assert.equal(rows.length, 16 * WHALE_LOOP_FRAMES, kind);
+    // Whole headings share a sheet, and no sheet is longer than the ceiling on either edge.
+    const sheets = [...new Set(rows.map(({ path }) => path))];
+    assert.equal(sheets.length, whaleLayout(frame).sheets, kind);
+    for (const path of sheets) {
+      const [, wide, tall] = /^<svg [^>]*width="(\d+)" height="(\d+)"/u.exec(
+        read(`../../public${path}`),
+      )!;
+      assert.ok(Number(wide) <= WHALE_SHEET_EDGE && Number(tall) <= WHALE_SHEET_EDGE, path);
+    }
+    for (let yaw = 0; yaw < 16; yaw++) {
+      const paths = rows.filter(({ id }) => id.startsWith(`whale-${kind}-${yaw}-`));
+      assert.equal(new Set(paths.map(({ path }) => path)).size, 1, `${kind} ${yaw}`);
+    }
     for (const { id, width, height, pivot } of rows) {
       assert.deepEqual([width, height, pivot.x, pivot.y], [frame, frame, 0.5, 0.5], id);
     }
