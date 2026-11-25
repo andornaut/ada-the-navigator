@@ -20,6 +20,7 @@ import {
   fleet,
   HEAVY_MOUNT_RADIUS,
   HEAVY_TOPS,
+  WEAPON_TOPS,
   stump,
   type FleetTop,
   collar,
@@ -72,6 +73,70 @@ function topLight(aim: number): Point {
   return [-turned[1], turned[0], z];
 }
 
+type ScaledTop = FleetTop & { frame: number; aims: Mesh[] };
+// A top design at scale k, with its mesh per aim.
+function scaledTop(
+  paint: Paint,
+  build: (p: Paint, r: number, light?: Point) => FleetTop,
+  k: number,
+): ScaledTop {
+  const scale = (mesh: Mesh) => meshScale(mesh, [k, k, k]);
+  const top = build(paint, HEAVY_MOUNT_RADIUS);
+  const mesh = scale(top.mesh);
+  return {
+    mesh,
+    aims: Array.from({ length: ENEMY_HEADINGS }, (_, aim) =>
+      scale(build(paint, HEAVY_MOUNT_RADIUS, topLight(aim)).mesh),
+    ),
+    muzzles: top.muzzles.map((point) => at(k, point)),
+    frame: fit(vertices(mesh)),
+  };
+}
+
+// The tops no fleet hull carries (`WEAPON_TOPS`), at game scale: 1 display px of the model is
+// 1 / DISPLAY_SCALE frame px. `collar` is a mount's collar under the top's pivot, for review
+// sheets.
+export function weaponTops(designs: typeof WEAPON_TOPS = WEAPON_TOPS) {
+  const paint = FLEET_PAINT.coral;
+  const k = 1 / DISPLAY_SCALE;
+  const seat = { at: [0, 0, 0] as Point, radius: HEAVY_MOUNT_RADIUS };
+  const lift = mountPivot(seat)[2];
+  const ring = meshScale(collar(paint, seat), [k, k, k]).map((face) => ({
+    ...face,
+    points: face.points.map(([x, y, z]): Point => [x, y, z - lift * k]),
+  }));
+  const size = fit(vertices(ring));
+  return {
+    radius: round(HEAVY_MOUNT_RADIUS * k),
+    collarHeight: round(lift * k),
+    collar: draw(
+      "fleetTop collar",
+      "Weapon mount collar",
+      size,
+      shift(visibleFragments(ring, view(0)), size / 2, size / 2),
+      PART_TOLERANCES,
+    ),
+    collarFrame: size,
+    tops: Object.entries(designs).map(([name, { build, carrier }]) => {
+      const top = scaledTop(paint, build, k);
+      return {
+        name,
+        carrier,
+        top,
+        frames: Array.from({ length: ENEMY_HEADINGS }, (_, aim) =>
+          draw(
+            `fleetTop ${name} ${aim}`,
+            `Weapon top ${name} ${aim}`,
+            top.frame,
+            shift(visibleFragments(top.aims[aim]!, view(aim)), top.frame / 2, top.frame / 2),
+            PART_TOLERANCES,
+          ),
+        ),
+      };
+    }),
+  };
+}
+
 // A craft scaled to its contract span, in frame units, with its frame size.
 // `length` and `width` are the drawn ship's extents fore and aft and across, in frame units: the
 // hull, and a frigate's or capital's intact engines and command tower.
@@ -86,7 +151,7 @@ export type Scaled = FleetCraft & {
   // A frigate's hardpoint layers and the tops its mounts carry, by top design.
   layers?: Layer[];
   // `aims` is the top's mesh per aim, each lit for that aim.
-  tops?: Record<string, FleetTop & { frame: number; aims: Mesh[] }>;
+  tops?: Record<string, ScaledTop>;
 };
 // One hardpoint of a frigate or capital: its base sprite's centre, its top's pivot when it is a
 // weapon mount, and its base solids by state.
@@ -197,22 +262,7 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
     ];
     result.tops = Object.fromEntries(
       Object.entries(HEAVY_TOPS[craft.archetype as keyof typeof HEAVY_TOPS]).map(
-        ([name, build]) => {
-          const top = build(paint, HEAVY_MOUNT_RADIUS);
-          const mesh = scale(top.mesh);
-          const aims = Array.from({ length: ENEMY_HEADINGS }, (_, aim) =>
-            scale(build(paint, HEAVY_MOUNT_RADIUS, topLight(aim)).mesh),
-          );
-          return [
-            name,
-            {
-              mesh,
-              aims,
-              muzzles: top.muzzles.map((point) => at(k, point)),
-              frame: fit(vertices(mesh)),
-            },
-          ];
-        },
+        ([name, build]) => [name, scaledTop(paint, build, k)],
       ),
     );
     // The hull frame holds every hardpoint state, and every top at every aim on every mount.
@@ -937,6 +987,10 @@ export const recolour = (family: FleetFamily, text: string): string => {
 
 // The switch rows, by manifest: the producer leaves the manifests to the switch.
 const ROWS = fileURLToPath(new URL("../fleet-rows.json", import.meta.url));
+// The rows of the tops the hostile station and the platform carry, and every standalone top's
+// shot origins and collision per aim, relative to its pivot.
+const TOP_ROWS = fileURLToPath(new URL("../fleet-top-rows.json", import.meta.url));
+const TOPS = fileURLToPath(new URL("../fleet-tops.json", import.meta.url));
 const MANIFESTS: Readonly<Record<FleetFamily, ManifestFile>> = {
   coral: "core",
   claim: "cartwheel",
@@ -986,7 +1040,7 @@ function packRows(size: number, sets: readonly Sheet[]): string {
 // The manifest rows that replace the shipped rows of the same ids at the switch. `member` names
 // the nested root of an identical sheet another row set already ships.
 function entries(
-  craft: Scaled,
+  craft: { archetype: string },
   family: FleetFamily,
   { fields, ids, size }: Sheet,
   path: string,
@@ -1209,6 +1263,67 @@ async function main() {
   }
   const text = json(rows);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
+  // The tops no fleet hull carries. A carried design's sheet is written in each family that
+  // draws it, and its rows are staged apart from the fleet's, for the station and platform
+  // switch. Every design's shot origins and collision are staged as data.
+  const tops = weaponTops();
+  const topRows: Record<string, { assets: unknown[] }> = {};
+  for (const { carrier, frames, name, top } of tops.tops) {
+    for (const family of carrier?.families ?? []) {
+      const manifest = MANIFESTS[family];
+      const directory = manifest === "core" ? "/art/enemies/" : `/art/${manifest}/enemies/`;
+      const file = `fleetTop-${name}-sheet.svg`;
+      const set: Sheet = {
+        file,
+        size: top.frame,
+        ids: frames.map(
+          (_, index) => `${prefix(family)}${carrier!.stem}-${carrier!.top}-top-${index}`,
+        ),
+        frames: frames.map((each) => ({ ...each, svg: recolour(family, each.svg) })),
+        fields: (aimIndex) => ({ aimIndex, top: carrier!.top }),
+      };
+      const path = writeOnce(
+        directory,
+        new Map(),
+        new Map([[file, sheet(set.size, set.frames, set.ids)]]),
+      ).get(file)!;
+      (topRows[manifest] ??= { assets: [] }).assets.push(
+        ...entries({ archetype: carrier!.stem }, family, set, path),
+      );
+    }
+  }
+  const staged: readonly (readonly [string, string])[] = [
+    [TOP_ROWS, json(topRows)],
+    [
+      TOPS,
+      json({
+        version: 1,
+        mount: { radius: tops.radius, collarHeight: tops.collarHeight },
+        tops: Object.fromEntries(
+          tops.tops.map(({ carrier, frames, name, top }) => [
+            name,
+            {
+              frame: top.frame,
+              ...(carrier ? { carrier: `${carrier.stem} ${carrier.top}` } : {}),
+              aims: frames.map(({ collision }, aim) => ({
+                index: aim,
+                muzzles: top.muzzles.map((point) => anchor(ENEMY_HEADINGS, 0, aim, local(point))),
+                collision: collision.map((part) =>
+                  part.map(([x, y]) => [px2(x - top.frame / 2), px2(y - top.frame / 2)]),
+                ),
+              })),
+            },
+          ]),
+        ),
+      }),
+    ],
+  ];
+  for (const [path, content] of staged) {
+    if (!existsSync(path) || readFileSync(path, "utf8") !== content) writeFileSync(path, content);
+  }
+  console.log(
+    `weapon tops: ${tops.tops.map(({ name, top }) => `${name} ${top.frame}`).join(", ")}`,
+  );
   for (const craft of crafts) {
     console.log(
       `${craft.key}: ${craft.design}, frame ${craft.frame}, display ${craft.frame * DISPLAY_SCALE}` +

@@ -609,12 +609,86 @@ export function hopperTop(p: Paint, r: number, light?: Point): FleetTop {
   return { mesh, muzzles: [[0.9 * r, 0, 0.2 * r]] };
 }
 
+// Multi-Laser `triple`: a wide head of three stub lobes fanned from a back bar, each with a bright
+// tip that is a shot origin.
+export function tripleTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -0.85 * r, -0.2 * r, -1.0 * r, 1.0 * r, 0, 0.55 * r, p.turret);
+  const along = (degrees: number, reach: number): Point => [
+    -0.3 * r + reach * Math.cos((degrees * Math.PI) / 180),
+    reach * Math.sin((degrees * Math.PI) / 180),
+    0.3 * r,
+  ];
+  const fan = [-32, 0, 32];
+  for (const degrees of fan) {
+    meshTube(mesh, along(degrees, 0), along(degrees, 1.15 * r), 0.29 * r, 0.29 * r, p.turret, 10);
+    meshTube(mesh, along(degrees, 1.15 * r), along(degrees, 1.4 * r), 0.3 * r, 0.3 * r, p.gun, 10);
+  }
+  return { mesh, muzzles: fan.map((degrees) => along(degrees, 1.4 * r)) };
+}
+
+// Phaser `dish`: a low round disc wider than its collar, a dark centre and one bright emitter
+// dot, which is the shot origin.
+export function dishTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  const disc = (z0: number, z1: number, radius: number, tones: Tones, sides: number) =>
+    meshTube(mesh, [0, 0, z0 * r], [0, 0, z1 * r], radius * r, radius * r, tones, sides);
+  disc(0, 0.28, 1.15, p.turret, 24);
+  disc(0.28, 0.46, 0.68, p.dark, 18);
+  disc(0.46, 0.6, 0.26, p.gun, 12);
+  return { mesh, muzzles: [[0, 0, 0.6 * r]] };
+}
+
+// Ring Burst `dome`: a dome over a bright ring, with no barrel. It fires all round, from eight
+// shot origins on the ring. `light` is the light in the top's own space at the aim it is drawn at.
+export function domeTop(p: Paint, r: number, light?: Point): FleetTop {
+  const mesh: Mesh = [];
+  meshTube(mesh, [0, 0, 0], [0, 0, 0.25 * r], r, r, p.turret, 20);
+  meshTube(mesh, [0, 0, 0.25 * r], [0, 0, 0.5 * r], 0.9 * r, 0.9 * r, p.gun, 20);
+  meshDome(mesh, [0, 0, 0.5 * r], 0.74 * r, p.plate, {
+    sides: 16,
+    bands: 4,
+    ...(light ? { light } : {}),
+  });
+  return {
+    mesh,
+    muzzles: Array.from({ length: 8 }, (_, i): Point => [
+      0.9 * r * Math.cos((i * Math.PI) / 4),
+      0.9 * r * Math.sin((i * Math.PI) / 4),
+      0.375 * r,
+    ]),
+  };
+}
+
+type TopBuilder = (p: Paint, r: number, light?: Point) => FleetTop;
+// The tops no fleet hull carries, at game scale. `carrier` is the shipped top a design replaces:
+// its frame key, its `top` name and the families that draw it. The fighter and interceptor fire
+// the Multi-Laser and Phaser from hull ports, so `triple` and `dish` have no carrier.
+export const WEAPON_TOPS: Readonly<
+  Record<
+    string,
+    {
+      build: TopBuilder;
+      carrier?: { stem: string; top: string; families: readonly FleetFamily[] };
+    }
+  >
+> = {
+  gun: { build: gunTop, carrier: { stem: "platform", top: "turret", families: ["claim"] } },
+  pod: {
+    build: podTop,
+    carrier: { stem: "hostileStation", top: "pod", families: ["coral", "claim", "garnet"] },
+  },
+  dome: {
+    build: domeTop,
+    carrier: { stem: "hostileStation", top: "dome", families: ["coral", "claim", "garnet"] },
+  },
+  triple: { build: tripleTop },
+  dish: { build: dishTop },
+};
+
 // The top designs a class's mounts carry.
 export const HEAVY_TOPS: Readonly<
-  Record<
-    "frigate" | "capital",
-    Readonly<Record<string, (p: Paint, r: number, light?: Point) => FleetTop>>
-  >
+  Record<"frigate" | "capital", Readonly<Record<string, TopBuilder>>>
 > = {
   frigate: { gun: gunTop, rail: railTop },
   capital: { spread: spreadTop, lance: lanceTop, hopper: hopperTop },

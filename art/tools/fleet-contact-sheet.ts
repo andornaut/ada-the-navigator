@@ -7,7 +7,8 @@
 // aimed ahead, then at route positions 1 to 2 (spine and bow capped) aimed off the bow, then
 // with every hardpoint destroyed. A capital shows its lance profile fully armed and aimed ahead,
 // its mine profile aimed off the bow with the hopper held aft, route positions 1 to 2 (the claw
-// and stern pairs capped), then every hardpoint destroyed.
+// and stern pairs capped), then every hardpoint destroyed. `<dir>/fleet-weapon-tops.svg` shows
+// every weapon top on a mount collar at its 16 aims, at 1x, 2x and 4x.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -24,8 +25,9 @@ import {
   recolour,
   type Scaled,
   topFrame,
+  weaponTops,
 } from "./fleet.ts";
-import type { FleetFamily } from "./fleet-models.ts";
+import { type FleetFamily, HEAVY_TOPS, WEAPON_TOPS } from "./fleet-models.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 type Field = { name: string; field: string; edge: string; family: FleetFamily };
@@ -185,6 +187,61 @@ function sheet(crafts: readonly Scaled[], fields: readonly Field[] = FIELDS): st
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}"><rect width="100%" height="100%" fill="#F4F4F2"/>${parts.join("")}</svg>\n`;
 }
 
+// Every weapon top on a mount collar at its 16 aims, at 1x, 2x and 4x on each family's field.
+function topSheet(): string {
+  const { gun, pod, dome, triple, dish } = WEAPON_TOPS;
+  const { rail } = HEAVY_TOPS.frigate;
+  const { spread, lance, hopper } = HEAVY_TOPS.capital;
+  const set = weaponTops({
+    gun: gun!,
+    triple: triple!,
+    dish: dish!,
+    pod: pod!,
+    rail: { build: rail! },
+    spread: { build: spread! },
+    lance: { build: lance! },
+    hopper: { build: hopper! },
+    dome: dome!,
+  });
+  const cell = Math.max(set.collarFrame, ...set.tops.map(({ top }) => top.frame));
+  const nested = (size: number, svg: string) =>
+    `<svg x="${(cell - size) / 2}" y="${(cell - size) / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner(svg)}</svg>`;
+  const parts: string[] = [];
+  let y = GAP;
+  let width = 0;
+  for (const { name, field, edge, family } of FIELDS) {
+    for (const scale of [1, 2, 4]) {
+      const top = y;
+      const size = cell * DISPLAY_SCALE * scale;
+      const cells: string[] = [];
+      y += LABEL;
+      for (const design of set.tops) {
+        let x = GAP;
+        for (const frame of design.frames) {
+          const outline = (silhouette: string, frameSize: number) =>
+            `<path transform="translate(${(cell - frameSize) / 2} ${(cell - frameSize) / 2})" d="${silhouette}" fill="none" stroke="${edge}" stroke-width="${2 / DISPLAY_SCALE}" stroke-miterlimit="2.5"/>`;
+          cells.push(
+            `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="0 0 ${cell} ${cell}" overflow="visible">${outline(set.collar.silhouette, set.collarFrame)}${outline(frame.silhouette, design.top.frame)}${recolour(family, nested(set.collarFrame, set.collar.svg) + nested(design.top.frame, frame.svg))}</svg>`,
+          );
+          x += size + GAP;
+        }
+        cells.push(
+          `<text x="${x}" y="${y + size / 2 + 4}" font-family="DejaVu Sans" font-size="11" fill="${edge}">${design.name}</text>`,
+        );
+        width = Math.max(width, x + 60);
+        y += size + GAP;
+      }
+      parts.push(
+        `<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${field}"/>`,
+        `<text x="${GAP}" y="${top + 12}" font-family="DejaVu Sans" font-size="11" fill="${edge}">${name}, ${scale}x, aims 0 to 15</text>`,
+        ...cells,
+      );
+      y += GAP;
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}"><rect width="100%" height="100%" fill="#F4F4F2"/>${parts.join("")}</svg>\n`;
+}
+
 function main() {
   const [out, only] = process.argv.slice(2);
   if (!out) throw new Error("Usage: node art/tools/fleet-contact-sheet.ts <dir> [name]");
@@ -208,6 +265,9 @@ function main() {
   for (const [name, drawn, fields] of sheets) {
     if (only && !name.includes(only)) continue;
     writeFileSync(`${out}/fleet-${name}.svg`, sheet(drawn, fields));
+  }
+  if (!only || "weapon-tops".includes(only)) {
+    writeFileSync(`${out}/fleet-weapon-tops.svg`, topSheet());
   }
 }
 
