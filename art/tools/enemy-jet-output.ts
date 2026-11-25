@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 
 import { selectEnemyJetPalette } from "../../src/game/enemyJetPalette.ts";
-import { readManifest, type Sidecars, writeOnce } from "./manifest.ts";
+import { readManifest, type Sidecars } from "./manifest.ts";
 
 const families = {
   core: "coral",
@@ -87,27 +87,4 @@ export function installedEnemyJetOutput() {
     }
     return selected;
   };
-}
-
-export function writeEnemyAssets(
-  owner: Owner,
-  directory: string,
-  copies: ReadonlyMap<string, string>,
-  generated: Map<string, string>,
-): Map<string, string> {
-  const select = installedEnemyJetOutput();
-  const aliases = new Map<string, string>();
-  for (const [file, source] of generated) {
-    const selected = select(owner, file, source);
-    if (!selected) continue;
-    if (owner === "core") {
-      generated.set(file, selected.content);
-    } else {
-      generated.delete(file);
-      aliases.set(file, selected.path);
-    }
-  }
-  const paths = writeOnce(directory, copies, generated);
-  for (const [file, path] of aliases) paths.set(file, path);
-  return paths;
 }

@@ -71,7 +71,7 @@ Every class follows the same steps from model to shipped files.
    largest tone first and each path also covers every later tone, so the first
    path is the silhouette and no seam between two tones shows the field. Every
    frame passes through `svgText` at one decimal and the 16 frames pack into
-   one sheet of nested roots, four to a row (`packHullRoots` in `enemies.ts`).
+   one sheet of nested roots, four to a row (`packHullRoots` in `hull-roots.ts`).
 5. Collision. Hits test the drawn convex outline at the current heading.
    `traceEnemyFills` traces each heading's fragments into strictly convex
    parts with the shared checker's thresholds; notch tips draw under the
@@ -424,9 +424,9 @@ station in the core, Cartwheel and Andromeda manifests and the platform's
 [fleet-tops.json](fleet-tops.json): two for `pod`, eight for `dome`, one for
 `gun`.
 
-Art then moves the craft into `enemies.ts`, `destruction.ts` and the family
-generators' ownership, renames the files to the `{archetype}-` stems and
-removes `fleet-rows.json` and the replaced sheets and models.
+The fleet producer keeps the craft. Art then renames the files to the
+`{archetype}-` stems and removes `fleet-rows.json` and the replaced sheets and
+models.
 
 Tests that assert the replaced art and need Tech's changes at the switch:
 
@@ -452,7 +452,7 @@ Reused: `projection.ts` (heading rotation, projection, jet anchors, JSON
 layout), `svg-text.ts`, `manifest.ts` (`writeOnce`, `mergeEntries`,
 `mergeSidecars`), `enemy-size.ts` (Ada's span and the contract ratios),
 `enemy-outline.ts` and `silhouette.ts` (collision tracing and checks),
-`crafts.ts` (`jetsFile`, display scale), `enemies.ts` (`packHullRoots`),
+`crafts.ts` (`jetsFile`, display scale), `hull-roots.ts` (`packHullRoots`),
 `shard-geometry.ts` (seeds and flecks) and `shard-palette-pack.ts`.
 
 New: the mesh solids in `solid.ts`, `visible.ts`, `fleet-models.ts`, `fleet.ts`

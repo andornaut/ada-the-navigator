@@ -227,13 +227,13 @@ come from `art/tools/stations.ts` and `art/tools/hostile-stations.ts`
 galaxy beacons, ring gates, friendly craft and the project sprites' placements
 from `art/tools/friendly.ts` ([Friendly object redesign](friendly-redesign.md));
 and the small enemy craft from `art/tools/fleet.ts`
-([Enemy fleet redesign](enemy-redesign.md)). Enemy, asteroid, whale and debris
-SVGs are deterministic exports from `art/tools/enemies.ts`,
-`art/tools/asteroids.ts`, `art/tools/whales.ts`, `art/tools/cartwheel-props.ts`
-and `art/tools/whirlpool.ts`, with the heavies' layered sprites from
-`art/tools/heavies.ts`. Needle's channels, sky and portraits come from
-`art/tools/needle-channels.ts`, `needle-sky.ts` and `needle-portraits.ts`, and
-the finale allies' data from `art/tools/allies.ts`. The
+([Enemy fleet redesign](enemy-redesign.md)). Asteroid, whale and debris SVGs
+are deterministic exports from `art/tools/asteroids.ts`, `art/tools/whales.ts`,
+`art/tools/cartwheel-props.ts` and `art/tools/whirlpool.ts`, with Gadget's
+capital's layered sprites from `art/tools/heavies.ts`. Needle's channels, sky
+and portraits come from `art/tools/needle-channels.ts`, `needle-sky.ts` and
+`needle-portraits.ts`, and the finale allies' data from `art/tools/allies.ts`.
+The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
 Phantom come from `art/tools/backdrop.ts`; edit the generators and regenerate
 the matching outputs. `art/tools/silhouette.ts` is the shared

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 import { DISPLAY_SCALE, jetsFile } from "./crafts.ts";
-import { packHullRoots } from "./enemies.ts";
+import { packHullRoots } from "./hull-roots.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio } from "./enemy-size.ts";
 import {

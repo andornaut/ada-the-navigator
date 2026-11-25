@@ -47,7 +47,6 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
-import { writeEnemyAssets } from "./enemy-jet-output.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { restrainHeavyHull } from "./heavy-restraint.ts";
 import { svgText } from "./svg-text.ts";
@@ -61,6 +60,7 @@ import {
   type SidecarKind,
   sidecarsIn,
   storedAt,
+  writeOnce,
 } from "./manifest.ts";
 import {
   anchor,
@@ -1554,20 +1554,6 @@ function svg(size: number, title: string, list: readonly Fill[], tips: readonly 
   return svgFrame(size, title, svgPolygons([...tips, ...list]));
 }
 
-/** The usual heavy viewport and polygon writer with explicit layers for a prepared curved hull. */
-export function preparedStationHullSvg(
-  size: number,
-  title: string,
-  layers: readonly { faces: readonly Face[]; mask?: string }[],
-  definitions: readonly string[] = [],
-): string {
-  const content = layers.flatMap(({ faces, mask }) => {
-    const polygons = svgPolygons(fills(size, 0, faces));
-    return mask ? [`<g mask="url(#${mask})">`, ...polygons, "</g>"] : polygons;
-  });
-  return svgFrame(size, title, [...definitions, ...content]);
-}
-
 // ---------------------------------------------------------------- export
 
 const yaws = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => yaw);
@@ -2241,7 +2227,7 @@ async function main() {
   }
   if (out === undefined) {
     const outputEntries = packInstalledHeavyParts(files, entries);
-    const paths = writeEnemyAssets("core", "/art/enemies/", new Map(), files);
+    const paths = writeOnce("/art/enemies/", new Map(), files);
     mergeEntries(
       "core",
       owns,

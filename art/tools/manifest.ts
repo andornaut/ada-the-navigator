@@ -178,17 +178,6 @@ export const SIDECAR_KINDS = ["jets", "hardpoints", "shards"] as const;
 export type SidecarKind = (typeof SIDECAR_KINDS)[number];
 export type Sidecars = Record<string, Partial<Record<SidecarKind, string>>>;
 
-// The enemy archetypes whose `jets` sidecar in `file` names an enemy fleet file
-// (art/tools/fleet.ts): the fleet producer owns their rows, jets and shards there.
-export function fleetArchetypes(file: ManifestFile): Set<string> {
-  const sidecars = (readManifest(file).sidecars ?? {}) as Sidecars;
-  return new Set(
-    Object.entries(sidecars)
-      .filter(([, kinds]) => kinds.jets?.startsWith("/art/enemies/fleet"))
-      .map(([craft]) => craft),
-  );
-}
-
 const SIDECAR_FILE = /^([a-zA-Z0-9]+)-(jets|hardpoints|shards)\.json$/;
 
 /** The sidecars among `paths` (each file name a generator produced, to the public path holding it). */

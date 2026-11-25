@@ -18,9 +18,7 @@ each sprite's drawn silhouette ([Collision](#collision)).
   the manifest alone.
 - Models, projection and part order are shared with the
   [sector one enemies](enemies.md) through `art/tools/crafts.ts` and
-  `art/tools/projection.ts`. `art/tools/enemies.ts` replaces only its own hull
-  entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}` and the industrial
-  stems' `enemy-{retaliatorCargoHauler,retaliatorMiningFreighter}-{k}`.
+  `art/tools/projection.ts`.
 - Every enemy producer owns exactly the ids of the crafts it draws, never a
   whole family prefix, and writes them with `mergeEntries`: each existing
   entry keeps its position, so entries of several producers can interleave and

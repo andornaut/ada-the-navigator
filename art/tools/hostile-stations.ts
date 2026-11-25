@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
-import { packHullRoots } from "./enemies.ts";
+import { packHullRoots } from "./hull-roots.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio } from "./enemy-size.ts";
 import { tonePaths } from "./fleet.ts";
