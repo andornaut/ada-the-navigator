@@ -294,7 +294,7 @@ test("a plume layer is a closed teardrop from its root to a point", () => {
   assert.deepEqual(points[0], [10 + 0.8 * 5.8, 20]);
   assert.deepEqual(points[JET_PROFILE.length - 1], [10, 50]);
   assert.deepEqual(points.at(-1), [10 - 0.8 * 5.8, 20]);
-  assert.equal(Math.max(...points.map(([x]) => Math.abs(x - 10))), 5.8);
+  assert(Math.abs(Math.max(...points.map(([x]) => Math.abs(x - 10))) - 5.8) < 1e-12);
 });
 
 test("reverse plumes root under the wing tips at half the earlier reach", () => {
