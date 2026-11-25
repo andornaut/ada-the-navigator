@@ -4509,7 +4509,8 @@ function hit(
   if (object.kind === "debris") {
     events.push({ id: object.id, type: "debrisCleared" });
   }
-  if (object.kind === "rock") {
+  // A planned moving rock drops loot like the static rock it was chosen from.
+  if (object.kind === "rock" || object.id.startsWith(MOVING_ROCK_PREFIX)) {
     dropFromRock(content, object, flight);
   }
 }
@@ -4517,19 +4518,23 @@ function hit(
 /**
  * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. An ore field
  * rock skips the ammo roll and gives at least `ORE_FIELDS.minimumOre`; further ore and Stardust
- * roll as usual.
+ * roll as usual. A moving rock rolls under its placed rock's id, so it drops what that rock
+ * would have dropped had it stayed still.
  */
 function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
   const size = asteroidSize(object);
   const oreField = isOreFieldRock(object);
+  const id = object.id.startsWith(MOVING_ROCK_PREFIX)
+    ? object.id.slice(MOVING_ROCK_PREFIX.length)
+    : object.id;
   if (
     !oreField &&
-    rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${object.id}`))
+    rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${id}`))
   ) {
     pushAmmoPack(content, object, flight);
     return;
   }
-  const next = dropRandom(flight.seed, object.id);
+  const next = dropRandom(flight.seed, id);
   const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
   const loot = oreField ? { ...rolled, ore: Math.max(ORE_FIELDS.minimumOre, rolled.ore) } : rolled;
   const amounts = splitResourcePickup(loot.ore);

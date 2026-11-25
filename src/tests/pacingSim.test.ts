@@ -23,6 +23,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { asteroidSize } from "../model/asteroids.ts";
 import { createFlight } from "../model/flight.ts";
+import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 
 const spawnWeights = CONTENT.tuning.flight.spawnWeights;
 
@@ -48,9 +49,13 @@ describe("pacing simulation world", () => {
             }
           }
         }
+        // Moving rocks drop loot too, so the simulation mines them under their placed ids.
         const rocks = flight.objects
-          .filter((object) => object.kind === "rock")
-          .map((object) => `${object.id}:${asteroidSize(object)}@${object.x},${object.y}`);
+          .filter((object) => object.kind === "rock" || object.id.startsWith(MOVING_ROCK_PREFIX))
+          .map(
+            (object) =>
+              `${object.id.replace(MOVING_ROCK_PREFIX, "")}:${asteroidSize(object)}@${object.x},${object.y}`,
+          );
         const caches = flight.objects
           .filter((object) => object.kind === "pickup" && object.amount !== undefined)
           .map((object) => `${object.id}@${object.x},${object.y}=${object.amount}`);

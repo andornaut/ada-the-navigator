@@ -460,7 +460,7 @@ function planCell(options: WorldOptions, cell: { x: number; y: number }): CellPl
 /**
  * One chunk's layout objects and encounter pack, as flight.ts generates them with Ada at
  * `player`: the spawn planner's rocks and enemy group, and the template's discovery caches.
- * Moving rocks are debris, which drops nothing, so they are omitted.
+ * Moving rocks drop loot like static rocks and are mined at their planned positions.
  */
 export function generateChunk(
   options: WorldOptions,
@@ -491,7 +491,7 @@ export function generateChunk(
     };
   }
   for (const placement of plan.placements) {
-    if (placement.category === "rock" && !placement.moving) {
+    if (placement.category === "rock") {
       chunk.rocks.push({
         id: placement.id,
         size: ASTEROID_SHAPES.get(placement.shape!)!.size,

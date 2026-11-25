@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
+import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -39,6 +40,7 @@ import { nosePoint } from "./nose.ts";
 import { ORE_FIELD_ROLE } from "./oreFields.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
 import {
@@ -159,6 +161,41 @@ describe("guaranteed destruction loot", () => {
       }
     },
   );
+
+  it("drops a destroyed moving rock's loot as its static rock of the same size would", () => {
+    const drops = (id: string, moving: boolean, size: AsteroidSize) => {
+      const value = flight();
+      const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === size)!;
+      const rock: SpaceObject = {
+        asteroid: shape.id,
+        hp: 1,
+        id: moving ? `${MOVING_ROCK_PREFIX}${id}` : id,
+        kind: moving ? "debris" : "rock",
+        radius: shape.radius,
+        x: 600,
+        y: 0,
+        ...(moving ? { velocity: { x: 0, y: 40 } } : {}),
+      };
+      value.objects.push(rock);
+      value.shots.push(killShot(rock), killShot(rock));
+      stepFlight(CONTENT, 1 / 60, idle, value);
+      expect(rock.hp).toBeLessThanOrEqual(0);
+      return value.objects
+        .filter((object) => object.kind === "pickup")
+        .map((object) => `${object.role}:${object.amount ?? 1}`)
+        .sort();
+    };
+    let dropped = 0;
+    for (const size of ["small", "medium", "large", "huge"] as const) {
+      for (let index = 0; index < 6; index++) {
+        const id = `rock:${index},0:${size}`;
+        const still = drops(id, false, size);
+        dropped += still.length;
+        expect(drops(id, true, size), id).toEqual(still);
+      }
+    }
+    expect(dropped).toBeGreaterThan(0);
+  });
 
   it.each(["rock"] as const)(
     "supports ore-only, Stardust-only and mixed %s outcomes without a bonus",
