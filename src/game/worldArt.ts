@@ -1,9 +1,10 @@
 import { carriesStardust } from "../model/drops.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 
-// Art's looping world sheets: the discovery cache (art/outposts.md), the holodisk pickup and
-// beacon (art/holodisk.md) and the ammo pack (art/weapons.md "Ammo pack"). Each names its frames
-// and loops through `loop` steps.
+// Art's looping world sheets: the holodisk pickup (art/holodisk.md) and the ammo pack
+// (art/weapons.md "Ammo pack") name their frames and loop through `loop` steps. The discovery
+// cache and the holodisk beacon (art/friendly-redesign.md) are one row per frame: lit A and B
+// alternate each `frameMs`, and the cache has a hidden row.
 
 export interface LoopAsset {
   readonly displayHeight?: number;
@@ -67,9 +68,7 @@ export function loopFrame(
   return art.loop[0]!.frame;
 }
 
-export const CACHE_FRAMES = ["hidden", "litA", "litB"] as const;
 export const HOLODISK_FRAMES = ["rest", "turn1", "edge", "turn2"] as const;
-export const BEACON_FRAMES = ["base", "bright"] as const;
 export const AMMO_PACK_FRAMES = ["rest", "glint1", "glint2", "glint3"] as const;
 
 /** A discovery cache: a Stardust pickup placed as a discovery, not a drop. */
@@ -77,20 +76,66 @@ export function isDiscoveryCache(object: SpaceObject): boolean {
   return object.role === "discovery" && carriesStardust(object);
 }
 
+/** A world object's blink rows: frame A, then B, each `frameMs`. */
+export interface BlinkArt<T extends LoopAsset = LoopAsset> {
+  readonly frameMs: number;
+  readonly frames: readonly [T, T];
+}
+
+/** The discovery cache's lit blink and its hidden row. */
+export interface CacheArt<T extends LoopAsset = LoopAsset> {
+  readonly hidden: T;
+  readonly lit: BlinkArt<T>;
+}
+
+type BlinkAsset = LoopAsset & { readonly frameMs?: number };
+
+/** Both rows of a blink, or undefined to keep the placeholder. */
+export function readBlinkRows<T extends BlinkAsset>(
+  assets: readonly T[],
+  idA: string,
+  idB: string,
+): BlinkArt<T> | undefined {
+  const a = assets.find((asset) => asset.id === idA);
+  const b = assets.find((asset) => asset.id === idB);
+  if (!a || !b || !(a.frameMs! > 0) || !(a.displayWidth! > 0) || !(b.displayWidth! > 0)) {
+    return undefined;
+  }
+  return { frameMs: a.frameMs!, frames: [a, b] };
+}
+
+/** The cache's hidden, lit A and lit B rows, or undefined to keep the placeholder. */
+export function readCacheArt<T extends BlinkAsset>(assets: readonly T[]): CacheArt<T> | undefined {
+  const lit = readBlinkRows(assets, "discovery-cache-lit-a", "discovery-cache-lit-b");
+  const hidden = assets.find((asset) => asset.id === "discovery-cache-hidden");
+  return lit && hidden && hidden.displayWidth! > 0 ? { hidden, lit } : undefined;
+}
+
+/** The holodisk waypoint beacon's blink, or undefined to keep the placeholder. */
+export function readBeaconArt<T extends BlinkAsset>(assets: readonly T[]): BlinkArt<T> | undefined {
+  return readBlinkRows(assets, "holodisk-beacon-a", "holodisk-beacon-b");
+}
+
+/** The blink's row at timeMs: A, then B; reduced motion holds A. */
+export function blinkRow<T extends LoopAsset>(
+  art: BlinkArt<T>,
+  reducedMotion: boolean,
+  timeMs: number,
+): T {
+  return art.frames[reducedMotion || Math.floor(timeMs / art.frameMs) % 2 === 0 ? 0 : 1];
+}
+
 /**
- * A cache is hidden until Ada first comes within approachRadius, then loops litA and litB;
- * reduced motion holds litA once lit.
+ * A cache is hidden until Ada first comes within approachRadius, then blinks lit A and B;
+ * reduced motion holds lit A once lit.
  */
-export function cacheFrame(
-  art: LoopArt,
+export function cacheRow<T extends LoopAsset>(
+  art: CacheArt<T>,
   lit: boolean,
   reducedMotion: boolean,
   timeMs: number,
-): number {
-  if (!lit) {
-    return art.frames.hidden!;
-  }
-  return reducedMotion ? art.frames.litA! : loopFrame(art, 0, timeMs);
+): T {
+  return lit ? blinkRow(art.lit, reducedMotion, timeMs) : art.hidden;
 }
 
 /** Whether Ada is within approachRadius world units of the cache. */
@@ -114,11 +159,6 @@ export function holodiskFrame(
  */
 export function ammoPackFrame(art: LoopArt, reducedMotion: boolean, ms: number): number {
   return reducedMotion ? art.frames.rest! : loopFrame(art, 0, ms);
-}
-
-/** The beacon pulses base and bright; reduced motion holds base. */
-export function beaconFrame(art: LoopArt, reducedMotion: boolean, timeMs: number): number {
-  return reducedMotion ? art.frames.base! : loopFrame(art, 0, timeMs);
 }
 
 /**

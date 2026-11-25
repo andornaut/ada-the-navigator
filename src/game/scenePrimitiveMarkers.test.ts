@@ -15,7 +15,7 @@ import { GAME_AREA } from "../model/edgeMarkers.ts";
 import { createEnemy } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
-import { stardustPickupReach, stardustPickupSize } from "../model/pickupBody.ts";
+import { stardustPickupFrameSize, stardustPickupReach } from "../model/pickupBody.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
@@ -485,16 +485,17 @@ describe("emitted primitive marker geometry", () => {
       stardustDrawn: () => point,
       stardustFrame: () => 2,
       stardustPhase: () => 0,
-      stardustPickupSize,
+      stardustPickupFrameSize,
     });
 
     code.drawStardust(scene, { ...f.target, amount: 1 }, point, 9);
     code.drawStardust(scene, { ...f.target, amount: 5 }, point, 9);
 
     expect(sprite.setDisplaySize.mock.calls).toEqual([
-      [9, 9],
-      [18, 18],
+      [stardustPickupFrameSize(1).width, stardustPickupFrameSize(1).height],
+      [stardustPickupFrameSize(5).width, stardustPickupFrameSize(5).height],
     ]);
+    expect(stardustPickupFrameSize(5).width).toBeGreaterThan(stardustPickupFrameSize(1).width);
     expect(objectSprite).toHaveBeenCalledTimes(2);
     expect(objectSprite).toHaveBeenLastCalledWith(scene, "target", "stardust", 2);
     expect(sprite.setOrigin).toHaveBeenLastCalledWith(0.5, 0.5);

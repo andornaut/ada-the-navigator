@@ -28,19 +28,19 @@ export const STORY_SHIP_CRAFT: Readonly<Record<StoryShipId, string>> = {
 };
 
 /**
- * Art's mooring buoy (art/cartwheel.md "Mooring buoy") in frame px: the frame, its pivot on
- * the world plane, its display scale and the three arm tips with their outward screen
- * directions. The scene draws the manifest entry; these values place the moored craft.
+ * Art's mooring buoy (art/friendly-redesign.md "Stage 1 output") in frame px: the frame, its
+ * pivot at the float's centre, its display scale and the three arm cleats with their outward
+ * screen directions. The scene draws the manifest entry; these values place the moored craft.
  */
 export const MOORING_BUOY = {
   displayScale: 0.4375,
-  frame: { height: 96, width: 96 },
+  frame: { height: 80, width: 112 },
   moorings: {
-    back: { outward: [0.534, -0.845], x: 61.019, y: 42.409 },
-    left: { outward: [-1, 0], x: 10.033, y: 63 },
-    right: { outward: [1, 0], x: 85.967, y: 63 },
+    back: { outward: [0.421, -0.907], x: 68.341, y: 12.623 },
+    left: { outward: [-0.988, 0.153], x: 9.944, y: 46.339 },
+    right: { outward: [0.866, 0.5], x: 89.716, y: 58.679 },
   },
-  pivot: { x: 0.5, y: 0.65625 },
+  pivot: { x: 0.5, y: 0.5875 },
 } as const;
 
 /**

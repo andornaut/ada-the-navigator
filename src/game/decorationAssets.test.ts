@@ -20,7 +20,13 @@ const code = source.statements
   .filter(
     (node) =>
       (ts.isFunctionDeclaration(node) &&
-        ["loadSvg", "materialShipHeading", "materialShipFrames"].includes(node.name?.text ?? "")) ||
+        [
+          "loadSvg",
+          "materialShipHeading",
+          "materialShipFrames",
+          "sliceStrip",
+          "vectorStrip",
+        ].includes(node.name?.text ?? "")) ||
       (ts.isVariableStatement(node) &&
         node.declarationList.declarations.some(
           (declaration) => declaration.name.getText(source) === "materialCaches",

@@ -116,9 +116,9 @@ import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
 import {
   AMMO_PACK_FRAMES,
-  BEACON_FRAMES,
-  CACHE_FRAMES,
   HOLODISK_FRAMES,
+  readBeaconArt,
+  readCacheArt,
   readLoopArt,
 } from "./worldArt.ts";
 
@@ -367,7 +367,7 @@ export function buildScene(scene: UiContext): void {
   scene.outpostArt = readOutpostArt(scene.shipAssets);
   scene.projectArt = readProjectArt(scene.shipAssets, scene.outpostArt, PROJECTS_FILE);
   scene.stardustArt = readStardustArt(scene.shipAssets);
-  scene.cacheArt = readLoopArt(scene.shipAssets, "discovery-cache", CACHE_FRAMES);
+  scene.cacheArt = readCacheArt(scene.shipAssets);
   scene.upgradePickupArt = readUpgradePickup(manifest?.assets ?? []);
   scene.holodiskArt = readLoopArt(scene.shipAssets, "holodisk", HOLODISK_FRAMES);
   scene.ammoPackArt = readLoopArt(scene.shipAssets, "ammo-pack", AMMO_PACK_FRAMES);
@@ -378,7 +378,7 @@ export function buildScene(scene: UiContext): void {
     ...(manifest?.jobs ? { jobs: manifest.jobs } : {}),
     ...(manifest?.backdropLayers ? { backdropLayers: manifest.backdropLayers } : {}),
   };
-  scene.beaconArt = readLoopArt(scene.shipAssets, "holodisk-beacon", BEACON_FRAMES);
+  scene.beaconArt = readBeaconArt(scene.shipAssets);
   scene.destruction = readDestruction(scene.cache.json.get("destruction"));
   for (const archetype of [
     ...Object.keys(scene.destruction?.archetypes ?? {}),

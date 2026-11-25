@@ -80,6 +80,8 @@ const names = new Set([
   "queuePhantomCraftJets",
   "svgSheets",
   "loadSvg",
+  "sliceStrip",
+  "vectorStrip",
   "queueSvg",
   "rasterAgain",
   "readEnemyArt",
@@ -782,35 +784,35 @@ describe("deferred core capital sheets", () => {
     },
   );
 
-  it("uses authored intrinsics for eager field sheets and preserves raw outpost project frames", () => {
+  it("uses authored intrinsics for shipped field sheets and raw frames for Art's model-layer beacons", () => {
     const f = fixture(undefined);
-    const fieldAssets = [
-      andromeda.assets.find(({ id }) => id === "beacon-guide-lit-a"),
-      cartwheel.assets.find(({ id }) => id === "mooring-buoy-a"),
-      needle.assets.find(({ id }) => id === "needle-gate-dark-0-back"),
-      needle.assets.find(({ id }) => id === "needle-practice-berth-a"),
-    ].map((asset) => ({ ...(asset as Asset), svgSheet: true as const }));
-    const outpost = sunflower.assets.find(({ id }) => id === "outpost-growers-ring-a") as Asset;
+    const field = (asset: unknown) => ({ ...(asset as Asset), svgSheet: true as const });
+    const displayAssets = [field(needle.assets.find(({ id }) => id === "needle-gate-dark-0-back"))];
+    const rawAssets = [
+      field(andromeda.assets.find(({ id }) => id === "beacon-guide-lit-a")),
+      field(cartwheel.assets.find(({ id }) => id === "mooring-buoy-a")),
+      field(needle.assets.find(({ id }) => id === "needle-practice-berth-a")),
+      sunflower.assets.find(({ id }) => id === "outpost-growers-ring-a") as Asset,
+    ];
     const document = {};
     const fail = vi.fn();
-    f.queueCore(f.scene, () => true, fail, [...fieldAssets, outpost]);
-    for (const asset of [...fieldAssets, outpost]) {
+    f.queueCore(f.scene, () => true, fail, [...displayAssets, ...rawAssets]);
+    for (const asset of [...displayAssets, ...rawAssets]) {
       const key = vectorSheetKey(asset.path);
       f.documents.set(key, document);
       f.events.emit(`filecomplete-xml-${key}`);
     }
     expect(f.extract.mock.calls).toEqual([
-      ...fieldAssets.map((asset) => [
+      ...displayAssets.map((asset) => [
         document,
         asset.path,
         { ...asset, intrinsicHeight: asset.displayHeight, intrinsicWidth: asset.displayWidth },
       ]),
-      [document, outpost.path, outpost],
+      ...rawAssets.map((asset) => [document, asset.path, asset]),
     ]);
-    expect(f.svg.mock.calls.map(([, asset]) => asset.id)).toEqual([
-      ...fieldAssets.map(({ id }) => id),
-      outpost.id,
-    ]);
+    expect(f.svg.mock.calls.map(([, asset]) => asset.id)).toEqual(
+      [...displayAssets, ...rawAssets].map(({ id }) => id),
+    );
     expect(fail).not.toHaveBeenCalled();
   });
 
@@ -955,7 +957,11 @@ describe("deferred core capital sheets", () => {
     };
     const resizeBase = vi.fn();
     const remove = vi.fn();
-    const original = { get: () => ({ setSize: resizeBase }), source: [source] };
+    const original = {
+      get: () => ({ setSize: resizeBase }),
+      getFrameNames: () => [],
+      source: [source],
+    };
     const get = vi.fn((key: string) =>
       key === top.id ? original : { getSourceImage: () => newImage },
     );
@@ -973,6 +979,30 @@ describe("deferred core capital sheets", () => {
     expect(source.filter).toBe("linear");
     expect(remove).toHaveBeenCalledExactlyOnceWith(replacement);
     expect(f.xml).not.toHaveBeenCalled();
+  });
+
+  it("rasters a vector strip at every frame's display size and cuts it into numbered frames", () => {
+    const f = fixture(undefined, true);
+    const strip = core.assets.find(({ id }) => id === "stardust") as Asset;
+    expect(strip).toMatchObject({ frameWidth: 32, svgSheet: true, width: 128 });
+    const uri = "data:image/svg+xml;base64,PHN2Zy8+";
+    f.extract.mockReturnValue(uri);
+    const fail = vi.fn();
+    f.queueCore(f.scene, () => true, fail, [strip]);
+    const key = vectorSheetKey(strip.path);
+    f.documents.set(key, {});
+    f.events.emit(`filecomplete-xml-${key}`);
+    expect(fail).not.toHaveBeenCalled();
+    // Four 14 by 17.5 frames side by side.
+    expect(f.loadRaster).toHaveBeenCalledExactlyOnceWith(strip.id, uri, {
+      height: vectorRaster(1, { displayHeight: 17.5, displayWidth: 56 }).height,
+      width: vectorRaster(1, { displayHeight: 17.5, displayWidth: 56 }).width,
+    });
+    const add = vi.fn();
+    const texture = { add, get: () => ({ height: 18, width: 56 }) };
+    Object.assign(f.scene.textures, { get: () => texture });
+    f.events.emit(`filecomplete-svg-${strip.id}`);
+    expect(add.mock.calls).toEqual([0, 1, 2, 3].map((index) => [index, 0, index * 14, 0, 14, 18]));
   });
 
   it("keeps a placeholder when one frame is invalid and cancels late events on shutdown", () => {

@@ -1,7 +1,8 @@
 import type { Vec } from "../model/types.ts";
 import { loopFrame, loopPhase } from "./worldArt.ts";
 
-// Art's Stardust pickup (art/stardust.md): a 9x9 gem whose glint loops from a per-pickup phase.
+// Art's Stardust pickup (art/friendly-redesign.md "Pickup animations"): a vector strip whose
+// glint loops from a per-pickup phase.
 
 export interface StardustAsset {
   readonly displayHeight?: number;

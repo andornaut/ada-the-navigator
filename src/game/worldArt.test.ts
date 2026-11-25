@@ -6,26 +6,26 @@ import type { SpaceObject } from "../model/types.ts";
 import {
   AMMO_PACK_FRAMES,
   ammoPackFrame,
-  BEACON_FRAMES,
-  beaconFrame,
-  CACHE_FRAMES,
+  blinkRow,
   cacheApproached,
-  cacheFrame,
+  cacheRow,
   HOLODISK_FRAMES,
   holodiskFrame,
   holodiskWaypoint,
   isDiscoveryCache,
   type LoopAsset,
   loopPhase,
+  readBeaconArt,
+  readCacheArt,
   readLoopArt,
 } from "./worldArt.ts";
 
 const manifest = JSON.parse(
   readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-) as { assets: LoopAsset[] };
-const cache = readLoopArt(manifest.assets, "discovery-cache", CACHE_FRAMES)!;
+) as { assets: (LoopAsset & { frameMs?: number; path?: string })[] };
+const cache = readCacheArt(manifest.assets)!;
 const holodisk = readLoopArt(manifest.assets, "holodisk", HOLODISK_FRAMES)!;
-const beacon = readLoopArt(manifest.assets, "holodisk-beacon", BEACON_FRAMES)!;
+const beacon = readBeaconArt(manifest.assets)!;
 const ammoPack = readLoopArt(manifest.assets, "ammo-pack", AMMO_PACK_FRAMES)!;
 
 const object = (overrides: Partial<SpaceObject>): SpaceObject => ({
@@ -39,13 +39,13 @@ const object = (overrides: Partial<SpaceObject>): SpaceObject => ({
 });
 
 describe("ammo pack art", () => {
-  it("reads the core manifest's 16 by 16 clip, centred, and its four named frames", () => {
+  it("reads the core manifest's four-frame crate strip, centred, and its named frames", () => {
     expect(ammoPack.asset).toMatchObject({
-      displayHeight: 16,
-      displayWidth: 16,
-      frameHeight: 16,
-      frameWidth: 16,
-      path: "/art/pickups/ammo-pack.png",
+      displayHeight: 17.5,
+      displayWidth: 17.5,
+      frameHeight: 40,
+      frameWidth: 40,
+      path: "/art/pickups/pickups-sheet.svg",
       pivot: { x: 0.5, y: 0.5 },
     });
     expect(ammoPack.frames).toEqual({ glint1: 1, glint2: 2, glint3: 3, rest: 0 });
@@ -71,22 +71,37 @@ describe("ammo pack art", () => {
 
 describe("discovery cache art", () => {
   it("reads the hidden frame and the 1000 ms lit loop from Art's manifest", () => {
-    expect(cache.frames).toEqual({ hidden: 0, litA: 1, litB: 2 });
-    expect(cache.loopMs).toBe(1000);
-    expect(cache.asset.displayWidth).toBe(31);
+    expect(cache.hidden.id).toBe("discovery-cache-hidden");
+    expect(cache.lit.frames.map(({ id }) => id)).toEqual([
+      "discovery-cache-lit-a",
+      "discovery-cache-lit-b",
+    ]);
+    expect(cache.lit.frameMs).toBe(500);
+    expect(cache.hidden).toMatchObject({
+      displayHeight: 35,
+      displayWidth: 28,
+      path: "/art/pickups/pickups-sheet.svg",
+      pivot: { x: 0.5, y: 0.5 },
+    });
   });
 
-  it("stays hidden before Ada approaches, then alternates litA and litB every 500 ms", () => {
-    expect(cacheFrame(cache, false, false, 600)).toBe(0);
-    expect(cacheFrame(cache, true, false, 0)).toBe(1);
-    expect(cacheFrame(cache, true, false, 499)).toBe(1);
-    expect(cacheFrame(cache, true, false, 500)).toBe(2);
-    expect(cacheFrame(cache, true, false, 1000)).toBe(1);
+  it("stays hidden before Ada approaches, then alternates lit A and B every 500 ms", () => {
+    const id = (lit: boolean, ms: number) => cacheRow(cache, lit, false, ms).id;
+    expect(id(false, 600)).toBe("discovery-cache-hidden");
+    expect(id(true, 0)).toBe("discovery-cache-lit-a");
+    expect(id(true, 499)).toBe("discovery-cache-lit-a");
+    expect(id(true, 500)).toBe("discovery-cache-lit-b");
+    expect(id(true, 1000)).toBe("discovery-cache-lit-a");
   });
 
-  it("under reduced motion shows hidden, then litA without the loop", () => {
-    expect(cacheFrame(cache, false, true, 500)).toBe(0);
-    expect(cacheFrame(cache, true, true, 500)).toBe(1);
+  it("under reduced motion shows hidden, then lit A without the blink", () => {
+    expect(cacheRow(cache, false, true, 500).id).toBe("discovery-cache-hidden");
+    expect(cacheRow(cache, true, true, 500).id).toBe("discovery-cache-lit-a");
+  });
+
+  it("keeps the placeholder without every cache row", () => {
+    const rows = manifest.assets.filter(({ id }) => id !== "discovery-cache-hidden");
+    expect(readCacheArt(rows)).toBeUndefined();
   });
 
   it("is approached within the given world distance", () => {
@@ -122,12 +137,13 @@ describe("holodisk art", () => {
     expect(Math.max(...phases)).toBeLessThan(810);
   });
 
-  it("pulses the beacon base and bright every 600 ms and holds base under reduced motion", () => {
-    expect(beacon.loopMs).toBe(1200);
-    expect(beaconFrame(beacon, false, 599)).toBe(0);
-    expect(beaconFrame(beacon, false, 600)).toBe(1);
-    expect(beaconFrame(beacon, false, 1200)).toBe(0);
-    expect(beaconFrame(beacon, true, 600)).toBe(0);
+  it("blinks the beacon A and B every 600 ms and holds A under reduced motion", () => {
+    expect(beacon.frameMs).toBe(600);
+    const id = (reduced: boolean, ms: number) => blinkRow(beacon, reduced, ms).id;
+    expect(id(false, 599)).toBe("holodisk-beacon-a");
+    expect(id(false, 600)).toBe("holodisk-beacon-b");
+    expect(id(false, 1200)).toBe("holodisk-beacon-a");
+    expect(id(true, 600)).toBe("holodisk-beacon-a");
   });
 
   it("marks the waypoint only while the holodisk destination is placed and not recovered", () => {

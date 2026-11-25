@@ -15405,35 +15405,35 @@
     },
     {
       "id": "needle-lamp-a",
-      "path": "/art/needle/projects-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 21,
-      "displayHeight": 28,
-      "facing": "fixed",
+      "path": "/art/needle/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 72,
+      "displayWidth": 24.5,
+      "displayHeight": 31.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.59375
+        "y": 0.4583333333333333
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "channelLights",
-      "svgSheet": true
+      "project": "channelLights"
     },
     {
       "id": "needle-lamp-b",
-      "path": "/art/needle/projects-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 21,
-      "displayHeight": 28,
-      "facing": "fixed",
+      "path": "/art/needle/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 56,
+      "height": 72,
+      "displayWidth": 24.5,
+      "displayHeight": 31.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.59375
+        "y": 0.4583333333333333
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "channelLights",
-      "svgSheet": true
+      "project": "channelLights"
     },
     {
       "id": "marsh-portrait",
@@ -19148,35 +19148,35 @@
     },
     {
       "id": "needle-practice-berth-a",
-      "path": "/art/needle/projects-sheet.svg",
-      "width": 80,
-      "height": 64,
-      "displayWidth": 35,
-      "displayHeight": 28,
-      "facing": "fixed",
+      "path": "/art/needle/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 88,
+      "height": 56,
+      "displayWidth": 38.5,
+      "displayHeight": 24.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.5
+        "y": 0.5178571428571429
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "practiceBerth",
-      "svgSheet": true
+      "project": "practiceBerth"
     },
     {
       "id": "needle-practice-berth-b",
-      "path": "/art/needle/projects-sheet.svg",
-      "width": 80,
-      "height": 64,
-      "displayWidth": 35,
-      "displayHeight": 28,
-      "facing": "fixed",
+      "path": "/art/needle/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 88,
+      "height": 56,
+      "displayWidth": 38.5,
+      "displayHeight": 24.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.5
+        "y": 0.5178571428571429
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "practiceBerth",
-      "svgSheet": true
+      "project": "practiceBerth"
     }
   ],
   "needleGates": "/art/needle/gates.json",

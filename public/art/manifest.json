@@ -6989,18 +6989,19 @@
     },
     {
       "id": "holodisk",
-      "path": "/art/holodisk.png",
-      "width": 44,
-      "height": 11,
-      "displayWidth": 16,
-      "displayHeight": 16,
-      "facing": "front",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 160,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 11,
-      "frameHeight": 11,
+      "frameWidth": 40,
+      "frameHeight": 40,
+      "facing": "front",
       "frames": {
         "rest": 0,
         "turn1": 1,
@@ -7031,35 +7032,34 @@
       ]
     },
     {
-      "id": "holodisk-beacon",
-      "path": "/art/holodisk-beacon.png",
-      "width": 38,
-      "height": 19,
-      "displayWidth": 28,
+      "id": "holodisk-beacon-a",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 72,
+      "height": 64,
+      "displayWidth": 31.5,
       "displayHeight": 28,
-      "facing": "front",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 19,
-      "frameHeight": 19,
-      "frames": {
-        "base": 0,
-        "bright": 1
+      "facing": "front",
+      "frameMs": 600
+    },
+    {
+      "id": "holodisk-beacon-b",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 72,
+      "height": 64,
+      "displayWidth": 31.5,
+      "displayHeight": 28,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
       },
-      "loop": [
-        {
-          "frame": 0,
-          "name": "base",
-          "ms": 600
-        },
-        {
-          "frame": 1,
-          "name": "bright",
-          "ms": 600
-        }
-      ]
+      "facing": "front",
+      "frameMs": 600
     },
     {
       "id": "quantum-jump-field",
@@ -7150,18 +7150,19 @@
     },
     {
       "id": "stardust",
-      "path": "/art/stardust.png",
-      "width": 36,
-      "height": 9,
-      "displayWidth": 9,
-      "displayHeight": 9,
-      "facing": "front",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 40,
+      "displayWidth": 14,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 9,
-      "frameHeight": 9,
+      "frameWidth": 32,
+      "frameHeight": 40,
+      "facing": "front",
       "frames": {
         "rest": 0,
         "glint1": 1,
@@ -7261,65 +7262,63 @@
     },
     {
       "id": "landmark-wreck",
-      "path": "/art/landmarks/wreck.svg",
-      "width": 189,
-      "height": 113.4,
-      "displayWidth": 189,
-      "displayHeight": 113.4,
-      "facing": "fixed",
+      "path": "/art/landmarks/landmarks-sheet.svg",
+      "svgSheet": true,
+      "width": 440,
+      "height": 240,
+      "displayWidth": 192.5,
+      "displayHeight": 105,
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "facing": "fixed"
     },
     {
       "id": "landmark-beacon-a",
-      "path": "/art/landmarks/beacon-sheet.svg",
-      "width": 48,
-      "height": 30,
-      "displayWidth": 108,
-      "displayHeight": 67.5,
-      "facing": "fixed",
+      "path": "/art/landmarks/landmarks-sheet.svg",
+      "svgSheet": true,
+      "width": 216,
+      "height": 160,
+      "displayWidth": 94.5,
+      "displayHeight": 70,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameMs": 700,
-      "svgSheet": true,
-      "intrinsicWidth": 108,
-      "intrinsicHeight": 67.5
+      "facing": "fixed",
+      "frameMs": 700
     },
     {
       "id": "landmark-beacon-b",
-      "path": "/art/landmarks/beacon-sheet.svg",
-      "width": 48,
-      "height": 30,
-      "displayWidth": 108,
-      "displayHeight": 67.5,
-      "facing": "fixed",
+      "path": "/art/landmarks/landmarks-sheet.svg",
+      "svgSheet": true,
+      "width": 216,
+      "height": 160,
+      "displayWidth": 94.5,
+      "displayHeight": 70,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameMs": 700,
-      "svgSheet": true,
-      "intrinsicWidth": 108,
-      "intrinsicHeight": 67.5
+      "facing": "fixed",
+      "frameMs": 700
     },
     {
       "id": "hunt-glint",
-      "path": "/art/hunt-glint.png",
-      "width": 60,
-      "height": 15,
-      "displayWidth": 15,
-      "displayHeight": 15,
-      "facing": "front",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 40,
+      "displayWidth": 10.5,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 15,
-      "frameHeight": 15,
+      "frameWidth": 24,
+      "frameHeight": 40,
+      "facing": "front",
       "frames": {
         "rest": 0,
         "glint1": 1,
@@ -7349,36 +7348,48 @@
       ]
     },
     {
-      "id": "discovery-cache",
-      "path": "/art/discovery-cache.png",
-      "width": 63,
-      "height": 21,
-      "displayWidth": 31,
-      "displayHeight": 31,
-      "facing": "front",
+      "id": "discovery-cache-lit-a",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 64,
+      "height": 80,
+      "displayWidth": 28,
+      "displayHeight": 35,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 21,
-      "frameHeight": 21,
-      "frames": {
-        "hidden": 0,
-        "litA": 1,
-        "litB": 2
+      "facing": "front",
+      "frameMs": 500
+    },
+    {
+      "id": "discovery-cache-lit-b",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 64,
+      "height": 80,
+      "displayWidth": 28,
+      "displayHeight": 35,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
       },
-      "loop": [
-        {
-          "frame": 1,
-          "name": "litA",
-          "ms": 500
-        },
-        {
-          "frame": 2,
-          "name": "litB",
-          "ms": 500
-        }
-      ]
+      "facing": "front",
+      "frameMs": 500
+    },
+    {
+      "id": "discovery-cache-hidden",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 64,
+      "height": 80,
+      "displayWidth": 28,
+      "displayHeight": 35,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "facing": "front"
     },
     {
       "id": "enemy-swarm-0",
@@ -29238,18 +29249,19 @@
     },
     {
       "id": "ore-nugget",
-      "path": "/art/cartwheel/ore-nugget.png",
-      "width": 9,
-      "height": 9,
-      "displayWidth": 9,
-      "displayHeight": 9,
-      "facing": "front",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 9,
-      "frameHeight": 9,
+      "frameWidth": 40,
+      "frameHeight": 40,
+      "facing": "front",
       "frames": {
         "rest": 0
       }
@@ -34176,26 +34188,24 @@
     },
     {
       "id": "upgrade-chevron",
-      "path": "/art/pickups/upgrade-chevron.svg",
-      "width": 12,
-      "height": 8,
-      "displayWidth": 12,
-      "displayHeight": 8,
-      "facing": "fixed",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 120,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "chevrons": [
-        {
-          "name": "lower",
-          "offset": [0, 2.4]
-        },
-        {
-          "name": "upper",
-          "offset": [0, -2.4]
-        }
-      ],
+      "frameWidth": 40,
+      "frameHeight": 40,
+      "facing": "fixed",
+      "frames": {
+        "rest": 0,
+        "lower": 1,
+        "upper": 2
+      },
       "climb": [
         {
           "ms": 900
@@ -34212,18 +34222,19 @@
     },
     {
       "id": "ammo-pack",
-      "path": "/art/pickups/ammo-pack.png",
-      "width": 64,
-      "height": 16,
-      "displayWidth": 16,
-      "displayHeight": 16,
-      "facing": "front",
+      "path": "/art/pickups/pickups-sheet.svg",
+      "svgSheet": true,
+      "width": 160,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "frameWidth": 16,
-      "frameHeight": 16,
+      "frameWidth": 40,
+      "frameHeight": 40,
+      "facing": "front",
       "frames": {
         "rest": 0,
         "glint1": 1,
@@ -44828,5 +44839,6 @@
       "jets": "/art/enemies/fleetSwarm-jets.json",
       "shards": "/art/enemies/fleetSwarm-shards-packed.json"
     }
-  }
+  },
+  "pickups": "/art/pickups/pickups.json"
 }

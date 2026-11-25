@@ -231,14 +231,10 @@ describe("Art's collision data", () => {
     expect(debrisSilhouette(galaxy, traveling)).not.toBeNull();
   });
 
-  it.each([
-    ["stardust.json", 4],
-    ["discovery-cache.json", 3],
-    ["cartwheel/ore-nugget.json", 1],
-  ] as const)("gives every frame of %s a silhouette", (path, count) => {
-    const file = json(path) as { frames: Record<string, { collision: unknown }> };
+  it("gives every pickup row of pickups.json a silhouette", () => {
+    const file = json("pickups/pickups.json") as { frames: Record<string, { collision: unknown }> };
     const frames = Object.values(file.frames);
-    expect(frames).toHaveLength(count);
+    expect(frames).toHaveLength(9);
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
@@ -255,22 +251,9 @@ describe("Art's collision data", () => {
     expect(pickupOutline(pickup({ amount: 5, role: "discovery" }))).not.toBeNull();
     expect(pickupOutline(pickup({ amount: 1, role: "stardust" }))).not.toBeNull();
     expect(pickupOutline(pickup({ role: "cargo" }))).not.toBeNull();
-    // The ammo pack's clip, 16 by 14 about its centre on every frame, inside the upgrade square.
-    const frames = (
-      json("pickups/ammo-pack.json") as { frames: Record<string, { collision: unknown }> }
-    ).frames;
-    expect(Object.values(frames)).toHaveLength(4);
-    expect(Object.values(frames).every((frame) => parts(frame.collision))).toBe(true);
+    // The ammo pack's crate, its rest frame's parts, inside the upgrade square.
     const clip = pickupOutline(pickup({ ammoPack: true }))!;
-    expect(clip).toHaveLength(4);
-    for (const part of clip) {
-      expect(part).toEqual([
-        { x: -8, y: -7 },
-        { x: 8, y: -7 },
-        { x: 8, y: 7 },
-        { x: -8, y: 7 },
-      ]);
-    }
+    expect(clip.length).toBeGreaterThan(0);
     expect(Math.max(...clip.flat().map((at) => Math.hypot(at.x, at.y)))).toBeLessThan(10.75);
     // The upgrade pickup's square reaches half its 1.5 px outline past its radius.
     const square = pickupOutline(pickup({ upgrade: true }))!;

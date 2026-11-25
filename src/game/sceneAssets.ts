@@ -176,13 +176,12 @@ function queueEagerSvgSheets(
       }
       try {
         const sources = frames.map((asset): Asset => {
-          // Field props and non-outpost project sheets retain authored display intrinsics.
-          // Authored outpost project overlays have the ordinary raw-intrinsic contract.
+          // These shipped sheets retain authored display intrinsics. Art's model-layer frames
+          // (the friendly objects, their beacons and project props) have the ordinary
+          // raw-intrinsic contract.
           const displaySized =
-            (asset.project !== undefined && asset.outpost === undefined) ||
-            ("beacon" in asset && asset.beacon === "guide") ||
+            asset.project === "second-docking-bay" ||
             ("gate" in asset && (asset.gate === "dark" || asset.gate === "lit")) ||
-            ("moorings" in asset && Array.isArray(asset.moorings)) ||
             asset.craft ||
             asset.debris ||
             asset.outpost === "settlement" ||
@@ -1324,8 +1323,16 @@ export function replaceImage(scene: AssetsContext, key: string, from: string): v
   );
   const sizes = users.map((user) => [user.displayWidth, user.displayHeight] as const);
   const source = texture.source[0]!;
+  const before = { height: source.height, width: source.width };
   source.updateSource(scene.textures.get(from).getSourceImage() as HTMLImageElement);
   texture.get("__BASE").setSize(source.width, source.height);
+  // A sliced strip's frames keep their share of the new raster.
+  const sx = source.width / before.width;
+  const sy = source.height / before.height;
+  for (const name of texture.getFrameNames()) {
+    const frame = texture.get(name);
+    frame.setSize(frame.cutWidth * sx, frame.cutHeight * sy, frame.cutX * sx, frame.cutY * sy);
+  }
   users.forEach((user, index) => {
     const [width, height] = sizes[index]!;
     user
@@ -1341,8 +1348,43 @@ export function filterTexture(scene: AssetsContext, key: string, filter: Texture
 }
 
 /**
+ * A vector strip's grid: an SVG row with `frameWidth` and `frameHeight` holds its frames left
+ * to right in rows, and its display size is one frame's.
+ */
+export function vectorStrip(
+  asset: Pick<Asset, "frameHeight" | "frameWidth" | "height" | "width">,
+): { readonly columns: number; readonly rows: number } | undefined {
+  const { frameHeight, frameWidth, height, width } = asset;
+  if (!(frameWidth! > 0) || !(frameHeight! > 0)) {
+    return undefined;
+  }
+  return {
+    columns: Math.max(1, Math.round(width / frameWidth!)),
+    rows: Math.max(1, Math.round(height / frameHeight!)),
+  };
+}
+
+/** Cuts a loaded strip texture into numbered frames, as a spritesheet's are. */
+function sliceStrip(
+  scene: AssetsContext,
+  key: string,
+  { columns, rows }: { readonly columns: number; readonly rows: number },
+): void {
+  const texture = scene.textures.get(key);
+  const base = texture.get("__BASE");
+  const width = base.width / columns;
+  const height = base.height / rows;
+  for (let index = 0; index < columns * rows; index++) {
+    const x = (index % columns) * width;
+    const y = Math.floor(index / columns) * height;
+    texture.add(index, 0, x, y, width, height);
+  }
+}
+
+/**
  * Queues a manifest SVG at its display size times the raster scale (vectorRaster), or at its
- * own size times it when it declares none.
+ * own size times it when it declares none. A vector strip rasters every frame at the row's
+ * display size and is cut into numbered frames once loaded.
  */
 export function loadSvg(scene: AssetsContext, asset: Asset): void {
   if (asset.kind === "backdrop-decoration") {
@@ -1361,12 +1403,20 @@ export function loadSvg(scene: AssetsContext, asset: Asset): void {
   if (!path) {
     return;
   }
+  const strip = vectorStrip(asset);
+  if (strip) {
+    scene.load.once(`filecomplete-svg-${asset.id}`, () => sliceStrip(scene, asset.id, strip));
+  }
+  const { columns, rows } = strip ?? { columns: 1, rows: 1 };
   queueSvg(scene, {
     key: asset.id,
     path,
     size: (scale) =>
       displayHeight !== undefined && displayWidth !== undefined
-        ? vectorRaster(scale, { displayHeight, displayWidth })
+        ? vectorRaster(scale, {
+            displayHeight: displayHeight * rows,
+            displayWidth: displayWidth * columns,
+          })
         : { scale },
   });
 }

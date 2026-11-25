@@ -1,7 +1,7 @@
 // Drawing flight objects: rocks, stations, outposts, destinations, pickups and wrecks.
 // Functions over the scene's ObjectsContext.
 import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
-import { Math as PhaserMath, type Scene, TintModes } from "phaser";
+import { Math as PhaserMath, type Scene } from "phaser";
 
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -15,7 +15,7 @@ import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemyHull } from "../model/enemyBody.ts";
-import { orePickupSize, stardustPickupSize } from "../model/pickupBody.ts";
+import { orePickupFrameSize, stardustPickupFrameSize } from "../model/pickupBody.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
@@ -69,14 +69,14 @@ import {
   stationFrameIndex,
   stationLoopFrame,
 } from "./stationArt.ts";
-import { litChevron, UPGRADE_CHEVRON } from "./upgradePickup.ts";
+import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 import { familyMembers, type WhaleKind, whaleLoopFrame, whalePhase } from "./whaleArt.ts";
 import {
   ammoPackFrame,
-  beaconFrame,
+  blinkRow,
   cacheApproached,
-  cacheFrame,
+  cacheRow,
   holodiskFrame,
   holodiskWaypoint,
   isDiscoveryCache,
@@ -235,34 +235,25 @@ export function drawTravelingDebris(
 }
 
 /**
- * The upgrade pickup's two chevrons in the square's amber (art/weapons.md "Pickups"): the
- * climb loops from the still frame when the pickup first draws, lighting each chevron white
- * for its step; reduced motion holds the still frame.
+ * The upgrade pickup's chevron strip (art/friendly-redesign.md "Pickup animations"): the climb
+ * loops from the still frame when the pickup first draws, showing each step's lit frame;
+ * reduced motion holds the still frame.
  */
-export function drawUpgradeChevrons(
-  scene: ObjectsContext,
-  object: SpaceObject,
-  point: Vec,
-  color: number,
-): void {
+export function drawUpgradeChevrons(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
   const art = scene.upgradePickupArt;
   if (!art || !scene.textures.exists(UPGRADE_CHEVRON)) {
     return;
   }
   const since = scene.pickupSeen.get(object.id) ?? scene.time.now;
   scene.pickupSeen.set(object.id, since);
-  const lit = litChevron(art, scene.reducedMotion, scene.time.now - since);
-  for (const chevron of art.chevrons) {
-    const key = partKey(object.id, `chevron:${chevron.name}`);
-    const sprite = objectSprite(scene, key, UPGRADE_CHEVRON)
-      .setOrigin(0.5)
-      .setDisplaySize(art.size.width, art.size.height)
-      .setPosition(point.x + chevron.offset.x, point.y + chevron.offset.y)
-      .setDepth(playDepth(point.y))
-      .setTint(chevron.name === lit ? 0xffffff : color)
-      .setTintMode(TintModes.FILL);
-    keylineSprite(scene, "upgradePickup", key, sprite);
-  }
+  const frame = upgradeFrame(art, scene.reducedMotion, scene.time.now - since);
+  const key = partKey(object.id, "chevrons");
+  const sprite = objectSprite(scene, key, UPGRADE_CHEVRON, frame)
+    .setOrigin(art.pivot.x, art.pivot.y)
+    .setDisplaySize(art.size.width, art.size.height)
+    .setPosition(point.x, point.y)
+    .setDepth(playDepth(point.y));
+  keylineSprite(scene, "upgradePickup", key, sprite);
 }
 
 /**
@@ -679,17 +670,15 @@ export function drawHolodisk(scene: ObjectsContext, object: SpaceObject, point: 
     flight &&
     holodiskWaypoint(scene.model.state.progress[flight.galaxy].holodisk, [object])
   ) {
-    // A light field holds the beacon on its base frame, with no pulse.
-    const held =
-      (scene.fieldLight ?? scene.light) ? beacon.frames[LIGHT_FIELD.holodiskBeacon] : undefined;
-    objectSprite(
-      scene,
-      `${object.id}${BEACON_SUFFIX}`,
-      beacon.asset.id,
-      held ?? beaconFrame(beacon, scene.reducedMotion, scene.time.now),
-    )
-      .setDisplaySize(beacon.asset.displayWidth!, beacon.asset.displayHeight!)
-      .setOrigin(beacon.asset.pivot.x, beacon.asset.pivot.y)
+    // A light field holds the beacon on its lit A frame, with no pulse.
+    const row = blinkRow(
+      beacon,
+      scene.reducedMotion || Boolean(scene.fieldLight ?? scene.light),
+      scene.time.now,
+    );
+    objectSprite(scene, `${object.id}${BEACON_SUFFIX}`, row.id)
+      .setDisplaySize(row.displayWidth!, row.displayHeight!)
+      .setOrigin(row.pivot.x, row.pivot.y)
       .setPosition(point.x, point.y)
       .setDepth(1.5);
   }
@@ -736,15 +725,10 @@ export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec
   if (cacheApproached(CONTENT.tuning.safeRadius, flight.player, object)) {
     scene.litCaches.add(object.id);
   }
-  const frame = cacheFrame(
-    art,
-    scene.litCaches.has(object.id),
-    scene.reducedMotion,
-    scene.time.now,
-  );
-  const sprite = objectSprite(scene, object.id, art.asset.id, frame)
-    .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
-    .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
+  const row = cacheRow(art, scene.litCaches.has(object.id), scene.reducedMotion, scene.time.now);
+  const sprite = objectSprite(scene, object.id, row.id)
+    .setDisplaySize(row.displayWidth!, row.displayHeight!)
+    .setOrigin(row.pivot.x, row.pivot.y)
     .setPosition(point.x, point.y);
   keylineSprite(scene, "discoveryCache", object.id, sprite);
 }
@@ -807,9 +791,9 @@ export function drawStardust(
     stardustPhase(object.id, art.loopMs),
     scene.time.now,
   );
-  const size = stardustPickupSize(object.amount);
+  const { height, width } = stardustPickupFrameSize(object.amount);
   const sprite = objectSprite(scene, object.id, art.asset.id, frame)
-    .setDisplaySize(size, size)
+    .setDisplaySize(width, height)
     .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
     .setPosition(at.x, at.y);
   keylineSprite(scene, "stardust", object.id, sprite);
@@ -1008,14 +992,14 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         scene.ink.lineStyle(1.5, color);
       }
       if (object.role === "cargo" && scene.textures.exists("ore-nugget")) {
-        // Five ore uses the shared larger footprint, with the same nearest-filtered rest frame.
-        const size = orePickupSize(object.amount);
+        // Five ore uses the shared larger footprint, a scale of the same frame.
+        const { height, width } = orePickupFrameSize(object.amount);
         keylineSprite(
           scene,
           "orePickup",
           object.id,
-          objectSprite(scene, object.id, "ore-nugget", 0)
-            .setDisplaySize(size, size)
+          objectSprite(scene, object.id, "ore-nugget")
+            .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setPosition(point.x, point.y)
             .setDepth(playDepth(point.y)),
@@ -1027,7 +1011,7 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         scene.ink.fillStyle(color);
         scene.ink.fillCircle(point.x, point.y, radius / 3);
       } else if (object.upgrade) {
-        drawUpgradeChevrons(scene, object, point, color);
+        drawUpgradeChevrons(scene, object, point);
       }
       break;
     case "rock":

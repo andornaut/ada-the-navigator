@@ -17551,95 +17551,97 @@
     },
     {
       "id": "whirlpool-nursery-beacon-a",
-      "path": "/art/whirlpool/whirlpool-nursery-beacon-a.svg",
-      "width": 80,
-      "height": 112,
-      "displayWidth": 50.75,
-      "displayHeight": 71.05,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 120,
+      "height": 168,
+      "displayWidth": 52.5,
+      "displayHeight": 73.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.8
+        "y": 0.5059523809523809
       },
+      "facing": "fixed",
       "frameMs": 1400,
       "project": "nurseryBeacon"
     },
     {
       "id": "whirlpool-nursery-beacon-b",
-      "path": "/art/whirlpool/whirlpool-nursery-beacon-b.svg",
-      "width": 80,
-      "height": 112,
-      "displayWidth": 50.75,
-      "displayHeight": 71.05,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 120,
+      "height": 168,
+      "displayWidth": 52.5,
+      "displayHeight": 73.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.8
+        "y": 0.5059523809523809
       },
+      "facing": "fixed",
       "frameMs": 1400,
       "project": "nurseryBeacon"
     },
     {
       "id": "whirlpool-current-buoy-a",
-      "path": "/art/whirlpool/whirlpool-current-buoy-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 31.5,
-      "displayHeight": 42,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 80,
+      "displayWidth": 42,
+      "displayHeight": 35,
       "pivot": {
         "x": 0.5,
-        "y": 0.8
+        "y": 0.3625
       },
-      "project": "currentBuoys",
-      "svgSheet": true
+      "facing": "fixed",
+      "project": "currentBuoys"
     },
     {
       "id": "whirlpool-current-buoy-b",
-      "path": "/art/whirlpool/whirlpool-current-buoy-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 31.5,
-      "displayHeight": 42,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 80,
+      "displayWidth": 42,
+      "displayHeight": 35,
       "pivot": {
         "x": 0.5,
-        "y": 0.8
+        "y": 0.3625
       },
-      "project": "currentBuoys",
-      "svgSheet": true
+      "facing": "fixed",
+      "project": "currentBuoys"
     },
     {
       "id": "whirlpool-quiet-crossing-a",
-      "path": "/art/whirlpool/whirlpool-quiet-crossing-sheet.svg",
-      "width": 112,
-      "height": 48,
-      "displayWidth": 63.7,
-      "displayHeight": 27.3,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 152,
+      "height": 64,
+      "displayWidth": 66.5,
+      "displayHeight": 28,
       "pivot": {
         "x": 0.5,
-        "y": 0.6
+        "y": 0.53125
       },
+      "facing": "fixed",
       "frameMs": 1000,
-      "project": "quietCrossing",
-      "svgSheet": true
+      "project": "quietCrossing"
     },
     {
       "id": "whirlpool-quiet-crossing-b",
-      "path": "/art/whirlpool/whirlpool-quiet-crossing-sheet.svg",
-      "width": 112,
-      "height": 48,
-      "displayWidth": 63.7,
-      "displayHeight": 27.3,
-      "facing": "fixed",
+      "path": "/art/whirlpool/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 152,
+      "height": 64,
+      "displayWidth": 66.5,
+      "displayHeight": 28,
       "pivot": {
         "x": 0.5,
-        "y": 0.6
+        "y": 0.53125
       },
+      "facing": "fixed",
       "frameMs": 1000,
-      "project": "quietCrossing",
-      "svgSheet": true
+      "project": "quietCrossing"
     },
     {
       "id": "brine-portrait",

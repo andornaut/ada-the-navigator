@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import ore from "../../public/art/cartwheel/ore-nugget.json" with { type: "json" };
+import pickups from "../../public/art/pickups/pickups.json" with { type: "json" };
 import { carriesStardust } from "./drops.ts";
-import { orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
+import {
+  orePickupFrameSize,
+  orePickupSize,
+  pickupOutline,
+  stardustPickupFrameSize,
+  stardustPickupSize,
+} from "./pickupBody.ts";
 import type { SpaceObject } from "./types.ts";
 
 const pickup = (amount?: number): SpaceObject => ({
@@ -29,32 +35,40 @@ describe("ore pickup identity and collision", () => {
     expect(carriesStardust({ ...pickup(5), kind: "rock" })).toBe(false);
   });
 
-  it("keeps ordinary ore at native size and scales every canonical collision part for five", () => {
-    const frame = Object.values(ore.frames)[0]!;
+  it("draws ordinary ore 14 px tall and scales every canonical collision part for five", () => {
+    const frame = pickups.frames["ore-nugget"];
+    const scale = pickups.displayScale;
     const ordinary = frame.collision.map((part) =>
-      part.map(([x, y]) => ({ x: x! - frame.sourceSize.w / 2, y: y! - frame.sourceSize.h / 2 })),
+      part.map(([x, y]) => ({
+        x: (x! - frame.pivot[0]!) * scale,
+        y: (y! - frame.pivot[1]!) * scale,
+      })),
     );
     expect(ordinary.length).toBeGreaterThan(0);
-    expect(orePickupSize()).toBe(frame.sourceSize.w);
-    expect(orePickupSize(1)).toBe(frame.sourceSize.w);
+    expect(orePickupSize()).toBe(14);
+    expect(orePickupSize(1)).toBe(14);
+    expect(orePickupFrameSize(1)).toEqual({ height: 17.5, width: 17.5 });
     expect(pickupOutline(pickup())).toEqual(ordinary);
     expect(pickupOutline(pickup(1))).toEqual(ordinary);
     expect(orePickupSize(5)).toBe(18);
-    const ratio = orePickupSize(5) / frame.sourceSize.w;
+    const ratio = orePickupSize(5) / orePickupSize(1);
     expect(ratio).toBeGreaterThan(1);
+    expect(orePickupFrameSize(5).width).toBeCloseTo(17.5 * ratio, 9);
     expect(pickupOutline(pickup(5))).toEqual(
       ordinary.map((part) => part.map(({ x, y }) => ({ x: x * ratio, y: y * ratio }))),
     );
     expect(pickupOutline({ ...pickup(5), role: "stardust" })).not.toEqual(pickupOutline(pickup(5)));
   });
 
-  it("scales the Stardust full-glint outline for exactly five and leaves other saved amounts at native size", () => {
+  it("scales the Stardust outline for exactly five and leaves other saved amounts at native size", () => {
     const single = { ...pickup(1), role: "stardust" as const };
     const parts = pickupOutline(single)!;
-    expect(stardustPickupSize(1)).toBe(9);
+    expect(stardustPickupSize(1)).toBe(14);
     expect(stardustPickupSize(5)).toBe(18);
+    expect(stardustPickupFrameSize(1)).toEqual({ height: 17.5, width: 14 });
+    const ratio = 18 / 14;
     expect(pickupOutline({ ...single, amount: 5 })).toEqual(
-      parts.map((part) => part.map(({ x, y }) => ({ x: x * 2, y: y * 2 }))),
+      parts.map((part) => part.map(({ x, y }) => ({ x: x * ratio, y: y * ratio }))),
     );
     expect(pickupOutline({ ...single, amount: 3 })).toEqual(parts);
   });

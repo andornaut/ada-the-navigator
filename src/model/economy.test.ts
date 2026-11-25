@@ -1132,7 +1132,7 @@ describe("tractor beam and pickup reach", () => {
     ["east", { x: 1, y: 0 }],
     ["south", { x: 0, y: 1 }],
   ] as const)("collects the lit cache from its rendered outline to the %s", (_, axis) => {
-    // Use the actual renderer manifest as the test oracle for the compact sidecar.
+    // Use the actual renderer manifest's lit rows as the test oracle for the pickup data.
     const manifest = JSON.parse(
       readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
     ) as {
@@ -1140,34 +1140,21 @@ describe("tractor beam and pickup reach", () => {
         id: string;
         displayWidth: number;
         displayHeight: number;
-        frames: { litA: number; litB: number };
         pivot: Vec;
       }[];
     };
-    const asset = manifest.assets.find(({ id }) => id === "discovery-cache")!;
     const sheet = JSON.parse(
-      readFileSync(new URL("../../public/art/discovery-cache.json", import.meta.url), "utf8"),
+      readFileSync(new URL("../../public/art/pickups/pickups.json", import.meta.url), "utf8"),
     ) as {
-      frames: Record<
-        string,
-        {
-          collision: [number, number][][];
-          sourceSize: { w: number; h: number };
-        }
-      >;
-      meta: { displayGeometry: unknown };
+      frames: Record<string, { collision: [number, number][][]; frame: [number, number] }>;
     };
-    expect(sheet.meta.displayGeometry).toEqual({
-      height: asset.displayHeight,
-      pivot: asset.pivot,
-      width: asset.displayWidth,
-    });
-    const drawn = [asset.frames.litA, asset.frames.litB].flatMap((index) => {
-      const frame = sheet.frames[`discovery-cache ${index}.aseprite`]!;
+    const drawn = ["discovery-cache-lit-a", "discovery-cache-lit-b"].flatMap((id) => {
+      const asset = manifest.assets.find((row) => row.id === id)!;
+      const frame = sheet.frames[id]!;
       return frame.collision.map((part) =>
         part.map(([x, y]) => ({
-          x: (x / frame.sourceSize.w - asset.pivot.x) * asset.displayWidth,
-          y: (y / frame.sourceSize.h - asset.pivot.y) * asset.displayHeight,
+          x: ((x - asset.pivot.x * frame.frame[0]) * asset.displayWidth) / frame.frame[0],
+          y: ((y - asset.pivot.y * frame.frame[1]) * asset.displayHeight) / frame.frame[1],
         })),
       );
     });

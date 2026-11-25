@@ -80,8 +80,12 @@ test("each staged row replaces a shipped row or one frame of a split row", () =>
     for (const { id } of assets) {
       assert.ok(shipped.has(id) || split.has(id), `${manifest} ${id}`);
     }
-    for (const id of Object.keys(SPLIT)) {
-      assert.ok(manifest !== "core" || shipped.has(id), id);
+    // Core ships each split row whole, or every one of its frames once switched.
+    for (const [id, frames] of Object.entries(SPLIT)) {
+      assert.ok(
+        manifest !== "core" || shipped.has(id) || frames.every((frame) => shipped.has(frame)),
+        id,
+      );
     }
   }
   assert.deepEqual(

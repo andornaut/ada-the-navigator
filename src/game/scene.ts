@@ -169,7 +169,7 @@ import {
 } from "./weaponEffects.ts";
 import { type WhaleArt } from "./whaleArt.ts";
 import { type WhirlpoolProjects } from "./whirlpoolProjects.ts";
-import { type LoopArt } from "./worldArt.ts";
+import { type BlinkArt, type CacheArt, type LoopArt } from "./worldArt.ts";
 
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
@@ -315,9 +315,9 @@ export class GameScene extends Scene {
   debrisArt: ReadonlyMap<GalaxyNumber, DebrisArt> = new Map();
   streakSpec: StreakSpec | undefined;
   stardustArt: StardustArt<Asset> | undefined;
-  cacheArt: LoopArt<Asset> | undefined;
+  cacheArt: CacheArt<Asset> | undefined;
   holodiskArt: LoopArt<Asset> | undefined;
-  beaconArt: LoopArt<Asset> | undefined;
+  beaconArt: BlinkArt<Asset> | undefined;
   ammoPackArt: LoopArt<Asset> | undefined;
   // Discovery caches Ada has approached in this flight; a lit cache stays lit.
   litCaches = new Set<string>();

@@ -8,7 +8,7 @@ import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
-import { orePickupSize } from "../model/pickupBody.ts";
+import { orePickupFrameSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { footprintOutline, hexNumber, playDepth, rockArt } from "./asteroidArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
@@ -98,7 +98,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     hexNumber,
     keylineSprite: vi.fn(),
     objectSprite,
-    orePickupSize,
+    orePickupFrameSize,
     playDepth,
     rockArt,
     rockFrame,
@@ -224,32 +224,37 @@ describe("traveling debris rendering", () => {
 
 describe("ore quantity rendering", () => {
   it.each([
-    [undefined, 9],
-    [1, 9],
-    [5, 18],
-  ] as const)("draws cargo amount %s at %s using the same centered rest frame", (amount, size) => {
-    const f = fixture();
-    const object: SpaceObject = {
-      ...(amount === undefined ? {} : { amount }),
-      hp: 1,
-      id: "ore",
-      kind: "pickup",
-      radius: 6,
-      role: "cargo",
-      x: 40,
-      y: 80,
-    };
-    const before = structuredClone(object);
-    f.context.drawObject(f.scene, object);
-    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget", 0);
-    expect(f.sprite.setDisplaySize).toHaveBeenCalledExactlyOnceWith(size, size);
-    expect(f.sprite.setOrigin).toHaveBeenCalledWith(0.5);
-    expect(f.sprite.setPosition).toHaveBeenCalledWith(120, 140);
-    expect(f.sprite.setDepth).toHaveBeenCalledWith(playDepth(140));
-    expect(f.drawStardust).not.toHaveBeenCalled();
-    expect(f.ink.strokeRect).not.toHaveBeenCalled();
-    expect(object).toEqual(before);
-  });
+    [undefined, 17.5],
+    [1, 17.5],
+    [5, 22.5],
+  ] as const)(
+    "draws cargo amount %s in a %s px frame, a scale of the same centred frame",
+    (amount, size) => {
+      const f = fixture();
+      const object: SpaceObject = {
+        ...(amount === undefined ? {} : { amount }),
+        hp: 1,
+        id: "ore",
+        kind: "pickup",
+        radius: 6,
+        role: "cargo",
+        x: 40,
+        y: 80,
+      };
+      const before = structuredClone(object);
+      f.context.drawObject(f.scene, object);
+      expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget");
+      const [width, height] = f.sprite.setDisplaySize.mock.calls[0] as [number, number];
+      expect(width).toBeCloseTo(size, 9);
+      expect(height).toBeCloseTo(size, 9);
+      expect(f.sprite.setOrigin).toHaveBeenCalledWith(0.5);
+      expect(f.sprite.setPosition).toHaveBeenCalledWith(120, 140);
+      expect(f.sprite.setDepth).toHaveBeenCalledWith(playDepth(140));
+      expect(f.drawStardust).not.toHaveBeenCalled();
+      expect(f.ink.strokeRect).not.toHaveBeenCalled();
+      expect(object).toEqual(before);
+    },
+  );
 
   it("keeps amount-5 Stardust on its own renderer instead of the ore texture", () => {
     const f = fixture();
@@ -272,7 +277,7 @@ describe("ore quantity rendering", () => {
     expect(f.objectSprite).not.toHaveBeenCalled();
   });
 
-  it("keeps the large ore rest frame under reduced motion", () => {
+  it("keeps the large ore frame under reduced motion", () => {
     const f = fixture(1, true, true);
     const object: SpaceObject = {
       amount: 5,
@@ -285,7 +290,10 @@ describe("ore quantity rendering", () => {
       y: 80,
     };
     f.context.drawObject(f.scene, object);
-    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget", 0);
-    expect(f.sprite.setDisplaySize).toHaveBeenCalledExactlyOnceWith(18, 18);
+    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(f.scene, object.id, "ore-nugget");
+    expect(f.sprite.setDisplaySize).toHaveBeenCalledExactlyOnceWith(
+      orePickupFrameSize(5).width,
+      orePickupFrameSize(5).height,
+    );
   });
 });

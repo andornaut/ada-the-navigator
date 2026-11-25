@@ -266,7 +266,7 @@ describe("Cartwheel story ships", () => {
     expect(buoy.pivot).toEqual(MOORING_BUOY.pivot);
     expect(buoy.displayWidth! / buoy.width).toBe(MOORING_BUOY.displayScale);
     expect(buoy.moorings).toEqual(
-      ["left", "right", "back"].map(
+      ["right", "left", "back"].map(
         (tip) => MOORING_BUOY.moorings[tip as keyof typeof MOORING_BUOY.moorings],
       ),
     );

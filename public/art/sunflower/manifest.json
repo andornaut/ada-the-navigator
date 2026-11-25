@@ -215,37 +215,37 @@
     },
     {
       "id": "outpost-salvagers-beacon-a",
-      "path": "/art/outposts/outposts-sheet.svg",
-      "width": 20,
-      "height": 40,
-      "displayWidth": 18.375,
-      "displayHeight": 36.75,
-      "facing": "fixed",
+      "path": "/art/sunflower/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 80,
+      "displayWidth": 21,
+      "displayHeight": 35,
       "pivot": {
         "x": 0.5,
-        "y": 0.625
+        "y": 0.2125
       },
+      "facing": "fixed",
       "frameMs": 700,
       "outpost": "salvagers",
-      "project": "salvageBeacons",
-      "svgSheet": true
+      "project": "salvageBeacons"
     },
     {
       "id": "outpost-salvagers-beacon-b",
-      "path": "/art/outposts/outposts-sheet.svg",
-      "width": 20,
-      "height": 40,
-      "displayWidth": 18.375,
-      "displayHeight": 36.75,
-      "facing": "fixed",
+      "path": "/art/sunflower/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 80,
+      "displayWidth": 21,
+      "displayHeight": 35,
       "pivot": {
         "x": 0.5,
-        "y": 0.625
+        "y": 0.2125
       },
+      "facing": "fixed",
       "frameMs": 700,
       "outpost": "salvagers",
-      "project": "salvageBeacons",
-      "svgSheet": true
+      "project": "salvageBeacons"
     },
     {
       "id": "bramble-portrait",

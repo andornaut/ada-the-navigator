@@ -183,122 +183,123 @@
     },
     {
       "id": "beacon-guide-lit-a",
-      "path": "/art/andromeda/beacon-lit-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 104,
+      "height": 152,
+      "displayWidth": 45.5,
+      "displayHeight": 66.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.75
+        "y": 0.7105263157894737
       },
-      "frameMs": 700,
+      "facing": "fixed",
       "beacon": "guide",
-      "state": "lit",
-      "svgSheet": true
+      "frameMs": 700,
+      "state": "lit"
     },
     {
       "id": "beacon-guide-lit-b",
-      "path": "/art/andromeda/beacon-lit-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 104,
+      "height": 152,
+      "displayWidth": 45.5,
+      "displayHeight": 66.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.75
+        "y": 0.7105263157894737
       },
-      "frameMs": 700,
+      "facing": "fixed",
       "beacon": "guide",
-      "state": "lit",
-      "svgSheet": true
+      "frameMs": 700,
+      "state": "lit"
     },
     {
       "id": "beacon-guide-relit-a",
-      "path": "/art/andromeda/beacon-relit-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 104,
+      "height": 152,
+      "displayWidth": 45.5,
+      "displayHeight": 66.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.75
+        "y": 0.7105263157894737
       },
-      "frameMs": 700,
+      "facing": "fixed",
       "beacon": "guide",
-      "state": "relit",
-      "svgSheet": true
+      "frameMs": 700,
+      "state": "relit"
     },
     {
       "id": "beacon-guide-relit-b",
-      "path": "/art/andromeda/beacon-relit-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 104,
+      "height": 152,
+      "displayWidth": 45.5,
+      "displayHeight": 66.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.75
+        "y": 0.7105263157894737
       },
-      "frameMs": 700,
+      "facing": "fixed",
       "beacon": "guide",
-      "state": "relit",
-      "svgSheet": true
+      "frameMs": 700,
+      "state": "relit"
     },
     {
       "id": "beacon-guide-dented",
-      "path": "/art/andromeda/beacon-dented.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 104,
+      "height": 152,
+      "displayWidth": 45.5,
+      "displayHeight": 66.5,
       "pivot": {
         "x": 0.5,
-        "y": 0.75
+        "y": 0.7105263157894737
       },
+      "facing": "fixed",
       "beacon": "guide",
       "state": "dented"
     },
     {
       "id": "beacon-guide-spare-a",
-      "path": "/art/andromeda/beacon-spare-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 112,
+      "displayWidth": 42,
+      "displayHeight": 49,
       "pivot": {
         "x": 0.5,
-        "y": 0.625
+        "y": 0.6428571428571429
       },
+      "facing": "fixed",
       "frameMs": 700,
       "overlay": true,
       "beacon": "guide",
-      "project": "spareBeacon",
-      "svgSheet": true
+      "project": "spareBeacon"
     },
     {
       "id": "beacon-guide-spare-b",
-      "path": "/art/andromeda/beacon-spare-sheet.svg",
-      "width": 48,
-      "height": 64,
-      "displayWidth": 47.25,
-      "displayHeight": 63,
-      "facing": "fixed",
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 96,
+      "height": 112,
+      "displayWidth": 42,
+      "displayHeight": 49,
       "pivot": {
         "x": 0.5,
-        "y": 0.625
+        "y": 0.6428571428571429
       },
+      "facing": "fixed",
       "frameMs": 700,
       "overlay": true,
       "beacon": "guide",
-      "project": "spareBeacon",
-      "svgSheet": true
+      "project": "spareBeacon"
     },
     {
       "id": "andromeda-haze",
@@ -26626,35 +26627,35 @@
     },
     {
       "id": "andromeda-route-exchange-a",
-      "path": "/art/andromeda/route-exchange-sheet.svg",
-      "width": 64,
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
       "height": 64,
-      "displayWidth": 33.6,
-      "displayHeight": 33.6,
-      "facing": "fixed",
+      "displayWidth": 35,
+      "displayHeight": 28,
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.53125
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "routeExchange",
-      "svgSheet": true
+      "project": "routeExchange"
     },
     {
       "id": "andromeda-route-exchange-b",
-      "path": "/art/andromeda/route-exchange-sheet.svg",
-      "width": 64,
+      "path": "/art/andromeda/beacons-sheet.svg",
+      "svgSheet": true,
+      "width": 80,
       "height": 64,
-      "displayWidth": 33.6,
-      "displayHeight": 33.6,
-      "facing": "fixed",
+      "displayWidth": 35,
+      "displayHeight": 28,
       "pivot": {
         "x": 0.5,
-        "y": 0.5625
+        "y": 0.53125
       },
+      "facing": "fixed",
       "frameMs": 700,
-      "project": "routeExchange",
-      "svgSheet": true
+      "project": "routeExchange"
     }
   ],
   "backdropHaze": "/art/andromeda/haze.json",
