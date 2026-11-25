@@ -12945,16 +12945,16 @@
     },
     {
       "id": "whale-calf-0-0",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -12962,16 +12962,16 @@
     },
     {
       "id": "whale-calf-0-1",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -12979,16 +12979,16 @@
     },
     {
       "id": "whale-calf-0-2",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -12996,16 +12996,16 @@
     },
     {
       "id": "whale-calf-0-3",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13013,16 +13013,16 @@
     },
     {
       "id": "whale-calf-0-4",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13030,16 +13030,16 @@
     },
     {
       "id": "whale-calf-0-5",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13047,16 +13047,16 @@
     },
     {
       "id": "whale-calf-0-6",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13064,16 +13064,16 @@
     },
     {
       "id": "whale-calf-0-7",
-      "path": "/art/whales/calf-0-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.5509,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13081,16 +13081,16 @@
     },
     {
       "id": "whale-calf-1-0",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13098,16 +13098,16 @@
     },
     {
       "id": "whale-calf-1-1",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13115,16 +13115,16 @@
     },
     {
       "id": "whale-calf-1-2",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13132,16 +13132,16 @@
     },
     {
       "id": "whale-calf-1-3",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13149,16 +13149,16 @@
     },
     {
       "id": "whale-calf-1-4",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13166,16 +13166,16 @@
     },
     {
       "id": "whale-calf-1-5",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13183,16 +13183,16 @@
     },
     {
       "id": "whale-calf-1-6",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13200,16 +13200,16 @@
     },
     {
       "id": "whale-calf-1-7",
-      "path": "/art/whales/calf-1-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13217,16 +13217,16 @@
     },
     {
       "id": "whale-calf-2-0",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13234,16 +13234,16 @@
     },
     {
       "id": "whale-calf-2-1",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13251,16 +13251,16 @@
     },
     {
       "id": "whale-calf-2-2",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13268,16 +13268,16 @@
     },
     {
       "id": "whale-calf-2-3",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13285,16 +13285,16 @@
     },
     {
       "id": "whale-calf-2-4",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13302,16 +13302,16 @@
     },
     {
       "id": "whale-calf-2-5",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13319,16 +13319,16 @@
     },
     {
       "id": "whale-calf-2-6",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13336,16 +13336,16 @@
     },
     {
       "id": "whale-calf-2-7",
-      "path": "/art/whales/calf-2-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58622
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13353,16 +13353,16 @@
     },
     {
       "id": "whale-calf-3-0",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13370,16 +13370,16 @@
     },
     {
       "id": "whale-calf-3-1",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13387,16 +13387,16 @@
     },
     {
       "id": "whale-calf-3-2",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13404,16 +13404,16 @@
     },
     {
       "id": "whale-calf-3-3",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13421,16 +13421,16 @@
     },
     {
       "id": "whale-calf-3-4",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13438,16 +13438,16 @@
     },
     {
       "id": "whale-calf-3-5",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13455,16 +13455,16 @@
     },
     {
       "id": "whale-calf-3-6",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13472,16 +13472,16 @@
     },
     {
       "id": "whale-calf-3-7",
-      "path": "/art/whales/calf-3-sheet.svg",
-      "width": 36,
-      "height": 34,
-      "displayWidth": 36,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.60874
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13489,16 +13489,16 @@
     },
     {
       "id": "whale-calf-4-0",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13506,16 +13506,16 @@
     },
     {
       "id": "whale-calf-4-1",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13523,16 +13523,16 @@
     },
     {
       "id": "whale-calf-4-2",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13540,16 +13540,16 @@
     },
     {
       "id": "whale-calf-4-3",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13557,16 +13557,16 @@
     },
     {
       "id": "whale-calf-4-4",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13574,16 +13574,16 @@
     },
     {
       "id": "whale-calf-4-5",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13591,16 +13591,16 @@
     },
     {
       "id": "whale-calf-4-6",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13608,16 +13608,16 @@
     },
     {
       "id": "whale-calf-4-7",
-      "path": "/art/whales/calf-4-sheet.svg",
-      "width": 43,
-      "height": 31,
-      "displayWidth": 43,
-      "displayHeight": 31,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.4491,
-        "y": 0.62587
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13625,16 +13625,16 @@
     },
     {
       "id": "whale-calf-5-0",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13642,16 +13642,16 @@
     },
     {
       "id": "whale-calf-5-1",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13659,16 +13659,16 @@
     },
     {
       "id": "whale-calf-5-2",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13676,16 +13676,16 @@
     },
     {
       "id": "whale-calf-5-3",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13693,16 +13693,16 @@
     },
     {
       "id": "whale-calf-5-4",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13710,16 +13710,16 @@
     },
     {
       "id": "whale-calf-5-5",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13727,16 +13727,16 @@
     },
     {
       "id": "whale-calf-5-6",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13744,16 +13744,16 @@
     },
     {
       "id": "whale-calf-5-7",
-      "path": "/art/whales/calf-5-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13761,16 +13761,16 @@
     },
     {
       "id": "whale-calf-6-0",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13778,16 +13778,16 @@
     },
     {
       "id": "whale-calf-6-1",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13795,16 +13795,16 @@
     },
     {
       "id": "whale-calf-6-2",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13812,16 +13812,16 @@
     },
     {
       "id": "whale-calf-6-3",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13829,16 +13829,16 @@
     },
     {
       "id": "whale-calf-6-4",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13846,16 +13846,16 @@
     },
     {
       "id": "whale-calf-6-5",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13863,16 +13863,16 @@
     },
     {
       "id": "whale-calf-6-6",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -13880,16 +13880,16 @@
     },
     {
       "id": "whale-calf-6-7",
-      "path": "/art/whales/calf-6-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -13897,16 +13897,16 @@
     },
     {
       "id": "whale-calf-7-0",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -13914,16 +13914,16 @@
     },
     {
       "id": "whale-calf-7-1",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -13931,16 +13931,16 @@
     },
     {
       "id": "whale-calf-7-2",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -13948,16 +13948,16 @@
     },
     {
       "id": "whale-calf-7-3",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -13965,16 +13965,16 @@
     },
     {
       "id": "whale-calf-7-4",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -13982,16 +13982,16 @@
     },
     {
       "id": "whale-calf-7-5",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -13999,16 +13999,16 @@
     },
     {
       "id": "whale-calf-7-6",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14016,16 +14016,16 @@
     },
     {
       "id": "whale-calf-7-7",
-      "path": "/art/whales/calf-7-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.46973,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14033,16 +14033,16 @@
     },
     {
       "id": "whale-calf-8-0",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14050,16 +14050,16 @@
     },
     {
       "id": "whale-calf-8-1",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14067,16 +14067,16 @@
     },
     {
       "id": "whale-calf-8-2",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14084,16 +14084,16 @@
     },
     {
       "id": "whale-calf-8-3",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14101,16 +14101,16 @@
     },
     {
       "id": "whale-calf-8-4",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14118,16 +14118,16 @@
     },
     {
       "id": "whale-calf-8-5",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14135,16 +14135,16 @@
     },
     {
       "id": "whale-calf-8-6",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14152,16 +14152,16 @@
     },
     {
       "id": "whale-calf-8-7",
-      "path": "/art/whales/calf-8-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45234,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14169,16 +14169,16 @@
     },
     {
       "id": "whale-calf-9-0",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14186,16 +14186,16 @@
     },
     {
       "id": "whale-calf-9-1",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14203,16 +14203,16 @@
     },
     {
       "id": "whale-calf-9-2",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14220,16 +14220,16 @@
     },
     {
       "id": "whale-calf-9-3",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14237,16 +14237,16 @@
     },
     {
       "id": "whale-calf-9-4",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14254,16 +14254,16 @@
     },
     {
       "id": "whale-calf-9-5",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14271,16 +14271,16 @@
     },
     {
       "id": "whale-calf-9-6",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14288,16 +14288,16 @@
     },
     {
       "id": "whale-calf-9-7",
-      "path": "/art/whales/calf-9-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50132,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14305,16 +14305,16 @@
     },
     {
       "id": "whale-calf-10-0",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14322,16 +14322,16 @@
     },
     {
       "id": "whale-calf-10-1",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14339,16 +14339,16 @@
     },
     {
       "id": "whale-calf-10-2",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14356,16 +14356,16 @@
     },
     {
       "id": "whale-calf-10-3",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14373,16 +14373,16 @@
     },
     {
       "id": "whale-calf-10-4",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14390,16 +14390,16 @@
     },
     {
       "id": "whale-calf-10-5",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14407,16 +14407,16 @@
     },
     {
       "id": "whale-calf-10-6",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14424,16 +14424,16 @@
     },
     {
       "id": "whale-calf-10-7",
-      "path": "/art/whales/calf-10-sheet.svg",
-      "width": 38,
-      "height": 34,
-      "displayWidth": 38,
-      "displayHeight": 34,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.58002
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14441,16 +14441,16 @@
     },
     {
       "id": "whale-calf-11-0",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14458,16 +14458,16 @@
     },
     {
       "id": "whale-calf-11-1",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14475,16 +14475,16 @@
     },
     {
       "id": "whale-calf-11-2",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14492,16 +14492,16 @@
     },
     {
       "id": "whale-calf-11-3",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14509,16 +14509,16 @@
     },
     {
       "id": "whale-calf-11-4",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14526,16 +14526,16 @@
     },
     {
       "id": "whale-calf-11-5",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14543,16 +14543,16 @@
     },
     {
       "id": "whale-calf-11-6",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14560,16 +14560,16 @@
     },
     {
       "id": "whale-calf-11-7",
-      "path": "/art/whales/calf-11-sheet.svg",
-      "width": 36,
-      "height": 33,
-      "displayWidth": 36,
-      "displayHeight": 33,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49868,
-        "y": 0.56137
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14577,16 +14577,16 @@
     },
     {
       "id": "whale-calf-12-0",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14594,16 +14594,16 @@
     },
     {
       "id": "whale-calf-12-1",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14611,16 +14611,16 @@
     },
     {
       "id": "whale-calf-12-2",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14628,16 +14628,16 @@
     },
     {
       "id": "whale-calf-12-3",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14645,16 +14645,16 @@
     },
     {
       "id": "whale-calf-12-4",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14662,16 +14662,16 @@
     },
     {
       "id": "whale-calf-12-5",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14679,16 +14679,16 @@
     },
     {
       "id": "whale-calf-12-6",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14696,16 +14696,16 @@
     },
     {
       "id": "whale-calf-12-7",
-      "path": "/art/whales/calf-12-sheet.svg",
-      "width": 43,
-      "height": 30,
-      "displayWidth": 43,
-      "displayHeight": 30,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54766,
-        "y": 0.55862
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14713,16 +14713,16 @@
     },
     {
       "id": "whale-calf-13-0",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14730,16 +14730,16 @@
     },
     {
       "id": "whale-calf-13-1",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14747,16 +14747,16 @@
     },
     {
       "id": "whale-calf-13-2",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14764,16 +14764,16 @@
     },
     {
       "id": "whale-calf-13-3",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14781,16 +14781,16 @@
     },
     {
       "id": "whale-calf-13-4",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14798,16 +14798,16 @@
     },
     {
       "id": "whale-calf-13-5",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14815,16 +14815,16 @@
     },
     {
       "id": "whale-calf-13-6",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14832,16 +14832,16 @@
     },
     {
       "id": "whale-calf-13-7",
-      "path": "/art/whales/calf-13-sheet.svg",
-      "width": 49,
-      "height": 25,
-      "displayWidth": 49,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.56708
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14849,16 +14849,16 @@
     },
     {
       "id": "whale-calf-14-0",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -14866,16 +14866,16 @@
     },
     {
       "id": "whale-calf-14-1",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -14883,16 +14883,16 @@
     },
     {
       "id": "whale-calf-14-2",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -14900,16 +14900,16 @@
     },
     {
       "id": "whale-calf-14-3",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -14917,16 +14917,16 @@
     },
     {
       "id": "whale-calf-14-4",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -14934,16 +14934,16 @@
     },
     {
       "id": "whale-calf-14-5",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -14951,16 +14951,16 @@
     },
     {
       "id": "whale-calf-14-6",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -14968,16 +14968,16 @@
     },
     {
       "id": "whale-calf-14-7",
-      "path": "/art/whales/calf-14-sheet.svg",
-      "width": 50,
-      "height": 25,
-      "displayWidth": 50,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51658
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -14985,16 +14985,16 @@
     },
     {
       "id": "whale-calf-15-0",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 0,
@@ -15002,16 +15002,16 @@
     },
     {
       "id": "whale-calf-15-1",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 1,
@@ -15019,16 +15019,16 @@
     },
     {
       "id": "whale-calf-15-2",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 2,
@@ -15036,16 +15036,16 @@
     },
     {
       "id": "whale-calf-15-3",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 3,
@@ -15053,16 +15053,16 @@
     },
     {
       "id": "whale-calf-15-4",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 4,
@@ -15070,16 +15070,16 @@
     },
     {
       "id": "whale-calf-15-5",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 5,
@@ -15087,16 +15087,16 @@
     },
     {
       "id": "whale-calf-15-6",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 6,
@@ -15104,16 +15104,16 @@
     },
     {
       "id": "whale-calf-15-7",
-      "path": "/art/whales/calf-15-sheet.svg",
-      "width": 49,
-      "height": 27,
-      "displayWidth": 49,
-      "displayHeight": 27,
+      "path": "/art/whales/friendly-calf-sheet-0.svg",
+      "width": 144,
+      "height": 144,
+      "displayWidth": 63,
+      "displayHeight": 63,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.53027,
-        "y": 0.58239
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "calf",
       "loopFrame": 7,
@@ -15121,16 +15121,16 @@
     },
     {
       "id": "whale-youngCalf-0-0",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15138,16 +15138,16 @@
     },
     {
       "id": "whale-youngCalf-0-1",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15155,16 +15155,16 @@
     },
     {
       "id": "whale-youngCalf-0-2",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15172,16 +15172,16 @@
     },
     {
       "id": "whale-youngCalf-0-3",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15189,16 +15189,16 @@
     },
     {
       "id": "whale-youngCalf-0-4",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15206,16 +15206,16 @@
     },
     {
       "id": "whale-youngCalf-0-5",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15223,16 +15223,16 @@
     },
     {
       "id": "whale-youngCalf-0-6",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15240,16 +15240,16 @@
     },
     {
       "id": "whale-youngCalf-0-7",
-      "path": "/art/whales/youngCalf-0-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
-        "x": 0.552,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15257,16 +15257,16 @@
     },
     {
       "id": "whale-youngCalf-1-0",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15274,16 +15274,16 @@
     },
     {
       "id": "whale-youngCalf-1-1",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15291,16 +15291,16 @@
     },
     {
       "id": "whale-youngCalf-1-2",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15308,16 +15308,16 @@
     },
     {
       "id": "whale-youngCalf-1-3",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15325,16 +15325,16 @@
     },
     {
       "id": "whale-youngCalf-1-4",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15342,16 +15342,16 @@
     },
     {
       "id": "whale-youngCalf-1-5",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15359,16 +15359,16 @@
     },
     {
       "id": "whale-youngCalf-1-6",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15376,16 +15376,16 @@
     },
     {
       "id": "whale-youngCalf-1-7",
-      "path": "/art/whales/youngCalf-1-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15393,16 +15393,16 @@
     },
     {
       "id": "whale-youngCalf-2-0",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15410,16 +15410,16 @@
     },
     {
       "id": "whale-youngCalf-2-1",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15427,16 +15427,16 @@
     },
     {
       "id": "whale-youngCalf-2-2",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15444,16 +15444,16 @@
     },
     {
       "id": "whale-youngCalf-2-3",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15461,16 +15461,16 @@
     },
     {
       "id": "whale-youngCalf-2-4",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15478,16 +15478,16 @@
     },
     {
       "id": "whale-youngCalf-2-5",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15495,16 +15495,16 @@
     },
     {
       "id": "whale-youngCalf-2-6",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15512,16 +15512,16 @@
     },
     {
       "id": "whale-youngCalf-2-7",
-      "path": "/art/whales/youngCalf-2-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
-        "y": 0.58831
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15529,16 +15529,16 @@
     },
     {
       "id": "whale-youngCalf-3-0",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15546,16 +15546,16 @@
     },
     {
       "id": "whale-youngCalf-3-1",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15563,16 +15563,16 @@
     },
     {
       "id": "whale-youngCalf-3-2",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15580,16 +15580,16 @@
     },
     {
       "id": "whale-youngCalf-3-3",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15597,16 +15597,16 @@
     },
     {
       "id": "whale-youngCalf-3-4",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15614,16 +15614,16 @@
     },
     {
       "id": "whale-youngCalf-3-5",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15631,16 +15631,16 @@
     },
     {
       "id": "whale-youngCalf-3-6",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15648,16 +15648,16 @@
     },
     {
       "id": "whale-youngCalf-3-7",
-      "path": "/art/whales/youngCalf-3-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.61072
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15665,16 +15665,16 @@
     },
     {
       "id": "whale-youngCalf-4-0",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15682,16 +15682,16 @@
     },
     {
       "id": "whale-youngCalf-4-1",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15699,16 +15699,16 @@
     },
     {
       "id": "whale-youngCalf-4-2",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15716,16 +15716,16 @@
     },
     {
       "id": "whale-youngCalf-4-3",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15733,16 +15733,16 @@
     },
     {
       "id": "whale-youngCalf-4-4",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15750,16 +15750,16 @@
     },
     {
       "id": "whale-youngCalf-4-5",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15767,16 +15767,16 @@
     },
     {
       "id": "whale-youngCalf-4-6",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15784,16 +15784,16 @@
     },
     {
       "id": "whale-youngCalf-4-7",
-      "path": "/art/whales/youngCalf-4-sheet.svg",
-      "width": 36,
-      "height": 26,
-      "displayWidth": 36,
-      "displayHeight": 26,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
-        "x": 0.448,
-        "y": 0.62528
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15801,16 +15801,16 @@
     },
     {
       "id": "whale-youngCalf-5-0",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15818,16 +15818,16 @@
     },
     {
       "id": "whale-youngCalf-5-1",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15835,16 +15835,16 @@
     },
     {
       "id": "whale-youngCalf-5-2",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15852,16 +15852,16 @@
     },
     {
       "id": "whale-youngCalf-5-3",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -15869,16 +15869,16 @@
     },
     {
       "id": "whale-youngCalf-5-4",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -15886,16 +15886,16 @@
     },
     {
       "id": "whale-youngCalf-5-5",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -15903,16 +15903,16 @@
     },
     {
       "id": "whale-youngCalf-5-6",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -15920,16 +15920,16 @@
     },
     {
       "id": "whale-youngCalf-5-7",
-      "path": "/art/whales/youngCalf-5-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -15937,16 +15937,16 @@
     },
     {
       "id": "whale-youngCalf-6-0",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -15954,16 +15954,16 @@
     },
     {
       "id": "whale-youngCalf-6-1",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -15971,16 +15971,16 @@
     },
     {
       "id": "whale-youngCalf-6-2",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -15988,16 +15988,16 @@
     },
     {
       "id": "whale-youngCalf-6-3",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16005,16 +16005,16 @@
     },
     {
       "id": "whale-youngCalf-6-4",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16022,16 +16022,16 @@
     },
     {
       "id": "whale-youngCalf-6-5",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16039,16 +16039,16 @@
     },
     {
       "id": "whale-youngCalf-6-6",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16056,16 +16056,16 @@
     },
     {
       "id": "whale-youngCalf-6-7",
-      "path": "/art/whales/youngCalf-6-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16073,16 +16073,16 @@
     },
     {
       "id": "whale-youngCalf-7-0",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16090,16 +16090,16 @@
     },
     {
       "id": "whale-youngCalf-7-1",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16107,16 +16107,16 @@
     },
     {
       "id": "whale-youngCalf-7-2",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16124,16 +16124,16 @@
     },
     {
       "id": "whale-youngCalf-7-3",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16141,16 +16141,16 @@
     },
     {
       "id": "whale-youngCalf-7-4",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16158,16 +16158,16 @@
     },
     {
       "id": "whale-youngCalf-7-5",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16175,16 +16175,16 @@
     },
     {
       "id": "whale-youngCalf-7-6",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16192,16 +16192,16 @@
     },
     {
       "id": "whale-youngCalf-7-7",
-      "path": "/art/whales/youngCalf-7-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
-        "x": 0.47015,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16209,16 +16209,16 @@
     },
     {
       "id": "whale-youngCalf-8-0",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16226,16 +16226,16 @@
     },
     {
       "id": "whale-youngCalf-8-1",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16243,16 +16243,16 @@
     },
     {
       "id": "whale-youngCalf-8-2",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16260,16 +16260,16 @@
     },
     {
       "id": "whale-youngCalf-8-3",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16277,16 +16277,16 @@
     },
     {
       "id": "whale-youngCalf-8-4",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16294,16 +16294,16 @@
     },
     {
       "id": "whale-youngCalf-8-5",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16311,16 +16311,16 @@
     },
     {
       "id": "whale-youngCalf-8-6",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16328,16 +16328,16 @@
     },
     {
       "id": "whale-youngCalf-8-7",
-      "path": "/art/whales/youngCalf-8-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
-        "x": 0.45156,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16345,16 +16345,16 @@
     },
     {
       "id": "whale-youngCalf-9-0",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16362,16 +16362,16 @@
     },
     {
       "id": "whale-youngCalf-9-1",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16379,16 +16379,16 @@
     },
     {
       "id": "whale-youngCalf-9-2",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16396,16 +16396,16 @@
     },
     {
       "id": "whale-youngCalf-9-3",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16413,16 +16413,16 @@
     },
     {
       "id": "whale-youngCalf-9-4",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16430,16 +16430,16 @@
     },
     {
       "id": "whale-youngCalf-9-5",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16447,16 +16447,16 @@
     },
     {
       "id": "whale-youngCalf-9-6",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16464,16 +16464,16 @@
     },
     {
       "id": "whale-youngCalf-9-7",
-      "path": "/art/whales/youngCalf-9-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
-        "x": 0.50011,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16481,16 +16481,16 @@
     },
     {
       "id": "whale-youngCalf-10-0",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16498,16 +16498,16 @@
     },
     {
       "id": "whale-youngCalf-10-1",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16515,16 +16515,16 @@
     },
     {
       "id": "whale-youngCalf-10-2",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16532,16 +16532,16 @@
     },
     {
       "id": "whale-youngCalf-10-3",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16549,16 +16549,16 @@
     },
     {
       "id": "whale-youngCalf-10-4",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16566,16 +16566,16 @@
     },
     {
       "id": "whale-youngCalf-10-5",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16583,16 +16583,16 @@
     },
     {
       "id": "whale-youngCalf-10-6",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16600,16 +16600,16 @@
     },
     {
       "id": "whale-youngCalf-10-7",
-      "path": "/art/whales/youngCalf-10-sheet.svg",
-      "width": 32,
-      "height": 28,
-      "displayWidth": 32,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
-        "y": 0.57871
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16617,16 +16617,16 @@
     },
     {
       "id": "whale-youngCalf-11-0",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16634,16 +16634,16 @@
     },
     {
       "id": "whale-youngCalf-11-1",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16651,16 +16651,16 @@
     },
     {
       "id": "whale-youngCalf-11-2",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16668,16 +16668,16 @@
     },
     {
       "id": "whale-youngCalf-11-3",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16685,16 +16685,16 @@
     },
     {
       "id": "whale-youngCalf-11-4",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16702,16 +16702,16 @@
     },
     {
       "id": "whale-youngCalf-11-5",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16719,16 +16719,16 @@
     },
     {
       "id": "whale-youngCalf-11-6",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16736,16 +16736,16 @@
     },
     {
       "id": "whale-youngCalf-11-7",
-      "path": "/art/whales/youngCalf-11-sheet.svg",
-      "width": 30,
-      "height": 28,
-      "displayWidth": 30,
-      "displayHeight": 28,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
-        "x": 0.49989,
-        "y": 0.55838
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16753,16 +16753,16 @@
     },
     {
       "id": "whale-youngCalf-12-0",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16770,16 +16770,16 @@
     },
     {
       "id": "whale-youngCalf-12-1",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16787,16 +16787,16 @@
     },
     {
       "id": "whale-youngCalf-12-2",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16804,16 +16804,16 @@
     },
     {
       "id": "whale-youngCalf-12-3",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16821,16 +16821,16 @@
     },
     {
       "id": "whale-youngCalf-12-4",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16838,16 +16838,16 @@
     },
     {
       "id": "whale-youngCalf-12-5",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16855,16 +16855,16 @@
     },
     {
       "id": "whale-youngCalf-12-6",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -16872,16 +16872,16 @@
     },
     {
       "id": "whale-youngCalf-12-7",
-      "path": "/art/whales/youngCalf-12-sheet.svg",
-      "width": 36,
-      "height": 25,
-      "displayWidth": 36,
-      "displayHeight": 25,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
-        "x": 0.54844,
-        "y": 0.5571
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -16889,16 +16889,16 @@
     },
     {
       "id": "whale-youngCalf-13-0",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -16906,16 +16906,16 @@
     },
     {
       "id": "whale-youngCalf-13-1",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -16923,16 +16923,16 @@
     },
     {
       "id": "whale-youngCalf-13-2",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -16940,16 +16940,16 @@
     },
     {
       "id": "whale-youngCalf-13-3",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -16957,16 +16957,16 @@
     },
     {
       "id": "whale-youngCalf-13-4",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -16974,16 +16974,16 @@
     },
     {
       "id": "whale-youngCalf-13-5",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -16991,16 +16991,16 @@
     },
     {
       "id": "whale-youngCalf-13-6",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -17008,16 +17008,16 @@
     },
     {
       "id": "whale-youngCalf-13-7",
-      "path": "/art/whales/youngCalf-13-sheet.svg",
-      "width": 41,
-      "height": 21,
-      "displayWidth": 41,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.56565
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -17025,16 +17025,16 @@
     },
     {
       "id": "whale-youngCalf-14-0",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -17042,16 +17042,16 @@
     },
     {
       "id": "whale-youngCalf-14-1",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -17059,16 +17059,16 @@
     },
     {
       "id": "whale-youngCalf-14-2",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -17076,16 +17076,16 @@
     },
     {
       "id": "whale-youngCalf-14-3",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -17093,16 +17093,16 @@
     },
     {
       "id": "whale-youngCalf-14-4",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -17110,16 +17110,16 @@
     },
     {
       "id": "whale-youngCalf-14-5",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -17127,16 +17127,16 @@
     },
     {
       "id": "whale-youngCalf-14-6",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -17144,16 +17144,16 @@
     },
     {
       "id": "whale-youngCalf-14-7",
-      "path": "/art/whales/youngCalf-14-sheet.svg",
-      "width": 42,
-      "height": 21,
-      "displayWidth": 42,
-      "displayHeight": 21,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
-        "y": 0.51628
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -17161,16 +17161,16 @@
     },
     {
       "id": "whale-youngCalf-15-0",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 0,
@@ -17178,16 +17178,16 @@
     },
     {
       "id": "whale-youngCalf-15-1",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 1,
@@ -17195,16 +17195,16 @@
     },
     {
       "id": "whale-youngCalf-15-2",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 2,
@@ -17212,16 +17212,16 @@
     },
     {
       "id": "whale-youngCalf-15-3",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 3,
@@ -17229,16 +17229,16 @@
     },
     {
       "id": "whale-youngCalf-15-4",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 4,
@@ -17246,16 +17246,16 @@
     },
     {
       "id": "whale-youngCalf-15-5",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 5,
@@ -17263,16 +17263,16 @@
     },
     {
       "id": "whale-youngCalf-15-6",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 6,
@@ -17280,16 +17280,16 @@
     },
     {
       "id": "whale-youngCalf-15-7",
-      "path": "/art/whales/youngCalf-15-sheet.svg",
-      "width": 41,
-      "height": 23,
-      "displayWidth": 41,
-      "displayHeight": 23,
+      "path": "/art/whales/friendly-youngCalf-sheet-0.svg",
+      "width": 120,
+      "height": 120,
+      "displayWidth": 52.5,
+      "displayHeight": 52.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
-        "x": 0.52985,
-        "y": 0.5807
+        "x": 0.5,
+        "y": 0.5
       },
       "kind": "youngCalf",
       "loopFrame": 7,
@@ -18753,7 +18753,7 @@
       "svgSheet": true
     }
   ],
-  "whales": "/art/whales.json",
+  "whales": "/art/friendly-whales.json",
   "whirlpoolCurrents": "/art/whirlpool/currents.json",
   "whirlpoolDebris": "/art/whirlpool/debris.json",
   "whirlpoolProjects": "/art/whirlpool/projects.json",

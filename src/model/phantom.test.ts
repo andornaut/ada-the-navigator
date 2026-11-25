@@ -34,6 +34,9 @@ import {
   phantomAllyRoster,
   phantomEscortSlot,
   phantomSongSpeed,
+  phantomWhaleKind,
+  phantomWhaleOffsets,
+  phantomWhaleReach,
   rotatePhantomAllies,
   stepPhantomAllies,
 } from "./phantomAllies.ts";
@@ -526,6 +529,19 @@ describe("Phantom allies", () => {
     const turned = phantomEscortSlot({ x: 0, y: 0 }, { x: 1, y: 0 }, 21, allies, 0);
     expect(turned.x).toBeLessThan(0);
   });
+  it("flies the whales side by side with their drawn whales 16 world units apart", () => {
+    expect(phantomWhaleKind({ id: "marlo" })).toBe("whale");
+    expect(phantomWhaleKind({ id: "project:3:nurseryBeacon" })).toBe("adult");
+    const pair = phantomWhaleOffsets([{ id: "marlo" }, { id: "project:3:nurseryBeacon" }]);
+    const apart = pair[1]! - pair[0]!;
+    expect(apart).toBeCloseTo(phantomWhaleReach("whale") + 16 + phantomWhaleReach("adult"), 9);
+    expect(apart).toBeGreaterThan(120);
+    expect(apart).toBeLessThan(122);
+    // The pair is centred on Ada's track; a lone whale flies on it.
+    expect(pair[0]! + pair[1]!).toBeCloseTo(0, 9);
+    expect(phantomWhaleOffsets([{ id: "marlo" }])).toEqual([0]);
+  });
+
   it("keeps the whales nonfiring and takes song range from the current roster", () => {
     const context = fixture();
     const roster = phantomAllyRoster(

@@ -415,7 +415,21 @@ test("each whale kind stages 16 headings of 8 loop frames in one square frame", 
 });
 
 test("the whale data keeps the shipped loop, family and still headings, with a footprint per heading", () => {
-  const shipped = json("/art/whales.json") as WhaleData;
+  // The values of the replaced whales.json, which the switch removed.
+  const shipped = {
+    family: [
+      { kind: "adult", offset: [0, 0] },
+      { kind: "calf", offset: [38, 40] },
+      { kind: "youngCalf", offset: [-18, 58] },
+    ],
+    kinds: [
+      { loop: { frames: 8, idleMs: 300, swimMs: 150 }, stationaryHeading: 4 },
+      { loop: { frames: 8, idleMs: 300, swimMs: 150 }, stationaryHeading: 6 },
+      { loop: { frames: 8, idleMs: 200, swimMs: 100 }, stationaryHeading: 6 },
+      { loop: { frames: 8, idleMs: 200, swimMs: 100 }, stationaryHeading: 7 },
+    ],
+    reducedMotion: { frame: 0 },
+  };
   for (const manifest of ["whirlpool", "phantom"]) {
     const data = json(staged[manifest]!.data!.whales!) as WhaleData;
     assert.equal(data.headings, 16);

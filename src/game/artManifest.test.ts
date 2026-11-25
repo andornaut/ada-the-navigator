@@ -49,7 +49,7 @@ describe("split art manifest", () => {
     });
     expect(GALAXY_MANIFESTS.get(3)!.links).toEqual({
       backdrop: "/art/whirlpool/backdrop.json",
-      whales: "/art/whales.json",
+      whales: "/art/friendly-whales.json",
       whirlpoolCurrents: "/art/whirlpool/currents.json",
       whirlpoolDebris: "/art/whirlpool/debris.json",
       whirlpoolProjects: "/art/whirlpool/projects.json",
@@ -60,7 +60,7 @@ describe("split art manifest", () => {
     expect(phantom.links).toEqual({
       allies: "/art/phantom/allies.json",
       backdrop: "/art/phantom/backdrop.json",
-      whales: "/art/whales.json",
+      whales: "/art/friendly-whales.json",
     });
     expect(phantom.assets.map(({ id }) => id)).toEqual(
       expect.arrayContaining([

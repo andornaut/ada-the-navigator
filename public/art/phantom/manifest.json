@@ -13646,5 +13646,5 @@
     }
   },
   "allies": "/art/phantom/allies.json",
-  "whales": "/art/whales.json"
+  "whales": "/art/friendly-whales.json"
 }

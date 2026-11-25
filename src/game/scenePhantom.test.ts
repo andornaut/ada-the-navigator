@@ -253,11 +253,15 @@ describe("Phantom song rendering", () => {
       drawPhantomAllies(view);
       expect(layers).toHaveLength(2);
       const [field, ring] = layers;
-      expect(field!.moveTo.mock.calls).toEqual(
-        (reducedMotion ? [450, 450] : [450, 450, 112.5, 337.5]).map((radius) =>
-          vertex(marlo, radius),
-        ),
+      const expected = (reducedMotion ? [450, 450] : [450, 450, 112.5, 337.5]).map((radius) =>
+        vertex(marlo, radius),
       );
+      expect(field!.moveTo.mock.calls).toHaveLength(expected.length);
+      // Marlo flies beside the nursery whale, off Ada's track, so compare to rounding.
+      field!.moveTo.mock.calls.forEach(([x, y]: number[], index: number) => {
+        expect(x).toBeCloseTo(expected[index]![0]!, 9);
+        expect(y).toBeCloseTo(expected[index]![1]!, 9);
+      });
       expect(ring!.moveTo).toHaveBeenCalledOnce();
 
       clearPhantomSong(view);

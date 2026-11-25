@@ -8,6 +8,7 @@ import {
   type PhantomAlly,
   type PhantomAllySpec,
   phantomSongSpeed,
+  phantomWhaleKind,
 } from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { playDepth } from "./asteroidArt.ts";
@@ -249,7 +250,7 @@ function drawAllyBody(
   };
   if (ally.behavior === "whale") {
     const key = `${id}#whale`;
-    drawWhale(scene, "whale", key, ally, {
+    drawWhale(scene, phantomWhaleKind(ally), key, ally, {
       heading: shipDirection(16, ally.facing),
       moving: speed > 1,
       present: (frame) => {

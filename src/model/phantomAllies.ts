@@ -1,3 +1,4 @@
+import WHALES from "../../public/art/friendly-whales.json" with { type: "json" };
 import { CALF } from "../data/activities.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_TUNING as T } from "../data/phantom.ts";
@@ -100,6 +101,33 @@ export function phantomEscortSlot(
     Math.atan2(heading.y, heading.x) + Math.PI + (index * Math.PI * 2) / Math.max(1, allies.length);
   return { x: player.x + Math.cos(angle) * ring, y: player.y + Math.sin(angle) * ring };
 }
+/** The whale Art draws for a whale ally (art/allies.md): Marlo, or the nursery's adult. */
+export function phantomWhaleKind(ally: Pick<PhantomAllySpec, "id">): "adult" | "whale" {
+  return ally.id === "marlo" ? "whale" : "adult";
+}
+
+/** A whale kind's drawn reach: its largest footprint radius over every heading, world units. */
+export function phantomWhaleReach(kind: "adult" | "whale"): number {
+  const art = WHALES.kinds.find((entry) => entry.kind === kind)!;
+  return Math.max(...art.headings.map(({ footprintRadius }) => footprintRadius));
+}
+
+/**
+ * Whale allies side by side across Ada's heading, centred on her track: neighbouring drawn
+ * whales stay `neighborGap` world units apart (gameplay/ships.md "Whale").
+ */
+export function phantomWhaleOffsets(whales: readonly Pick<PhantomAllySpec, "id">[]): number[] {
+  const reaches = whales.map((whale) => phantomWhaleReach(phantomWhaleKind(whale)));
+  const offsets: number[] = [];
+  let at = 0;
+  reaches.forEach((reach, index) => {
+    at += index === 0 ? 0 : reaches[index - 1]! + T.neighborGap + reach;
+    offsets.push(at);
+  });
+  const centre = ((offsets[0] ?? 0) + (offsets.at(-1) ?? 0)) / 2;
+  return offsets.map((offset) => offset - centre);
+}
+
 /** The same role slots place arriving allies and receive them when they have no target. */
 function phantomAllyFormation(
   flight: Pick<FlightState, "player" | "facing">,
@@ -112,8 +140,7 @@ function phantomAllyFormation(
     if (ally.behavior !== "whale") {
       return phantomEscortSlot(flight.player, heading, ally.radius, escorts, escorts.indexOf(ally));
     }
-    const offset =
-      (whales.indexOf(ally) - (whales.length - 1) / 2) * (2 * ally.radius + T.neighborGap);
+    const offset = phantomWhaleOffsets(whales)[whales.indexOf(ally)]!;
     return {
       x: flight.player.x - heading.x * T.whaleFollow - heading.y * offset,
       y: flight.player.y - heading.y * T.whaleFollow + heading.x * offset,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import whales from "../../public/art/friendly-whales.json";
 import core from "../../public/art/manifest.json";
-import whales from "../../public/art/whales.json";
 import { CONTENT } from "../data/content.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { ART_MANIFEST as manifest } from "../testing/publicArt.ts";
@@ -34,8 +34,8 @@ describe("whale art", () => {
 
   it("keeps the raw viewport separate from the intrinsic size for the same heading", () => {
     const frame = art.kinds.get("adult")!.frames[6]![0]!;
-    expect([frame.displayWidth, frame.displayHeight]).toEqual([91, 48]);
-    expect(whaleViewBox(art, frame)).toEqual({ height: 109.714, width: 208 });
+    expect([frame.displayWidth, frame.displayHeight]).toEqual([115.5, 115.5]);
+    expect(whaleViewBox(art, frame)).toEqual({ height: 264, width: 264 });
     expect(whaleViewBox(art, { ...frame, kind: "calf" })).not.toEqual(whaleViewBox(art, frame));
   });
 
@@ -53,8 +53,8 @@ describe("whale art", () => {
 
   it("clears the whale's widest footprint with the trapping debris ring", () => {
     const footprints = art.kinds.get("whale")!.footprints;
-    expect(Math.min(...footprints)).toBeCloseTo(42.63, 2);
-    expect(Math.max(...footprints)).toBeCloseTo(48.22, 2);
+    expect(Math.min(...footprints)).toBeCloseTo(51.518, 2);
+    expect(Math.max(...footprints)).toBeCloseTo(58.484, 2);
     const { asteroids, spacing } = CONTENT.tuning.whaleDebris;
     const radius = Math.max(...asteroids.map((id) => ASTEROID_SHAPES.get(id)!.radius));
     expect(spacing).toBe(86);
@@ -105,11 +105,11 @@ describe("whale art", () => {
     ).toBeUndefined();
   });
 
-  it("reads Marlo from the fresh Phantom core and preserves Whirlpool's full-family requirement", () => {
+  it("reads Marlo and the adult from the fresh Phantom core and preserves Whirlpool's full-family requirement", () => {
     const frames = core.assets.filter(whaleFrameAsset) as WhaleFrame[];
     expect(readWhaleArt(whales, frames)).toBeUndefined();
     const marlo = readMarloArt(whales, frames);
-    expect([...marlo!.kinds.keys()]).toEqual(["whale"]);
+    expect([...marlo!.kinds.keys()]).toEqual(["whale", "adult"]);
     expect(marlo?.family).toEqual([]);
     expect(marlo?.kinds.get("whale")).toEqual(art.kinds.get("whale"));
     expect(

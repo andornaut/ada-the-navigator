@@ -58,12 +58,16 @@ export function readWhaleArt<T extends WhaleFrame>(
   return readWhaleKinds(KINDS, data, assets);
 }
 
-/** Phantom uses Marlo's core frames and the shared metadata, without Whirlpool's family frames. */
+/**
+ * Phantom uses the core frames of Marlo and the nursery's adult and the shared metadata,
+ * without Whirlpool's calves.
+ */
 export function readMarloArt<T extends WhaleFrame>(
   data: unknown,
   assets: readonly T[],
 ): WhaleArt<T> | undefined {
-  return readWhaleKinds(["whale"], data, assets);
+  const art = readWhaleKinds(["whale", "adult"], data, assets);
+  return art && { ...art, family: [] };
 }
 
 function readWhaleKinds<T extends WhaleFrame>(
