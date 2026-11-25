@@ -129,13 +129,18 @@
   "eyelids": {
     "base": 70,
     "swell": 260,
-    "spread": 25
+    "spread": 0
   },
   "debris": {
     "rows": 3,
-    "spacing": 34,
+    "spacing": 44,
     "gap": 12,
     "rowStep": 26,
-    "drift": [6, 12]
+    "drift": [6, 12],
+    "pieces": ["needle-debris-plate", "needle-debris-girder", "needle-debris-plate"],
+    "frame": {
+      "index": 1,
+      "row": 3
+    }
   }
 }

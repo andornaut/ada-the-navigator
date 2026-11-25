@@ -77,6 +77,22 @@ describe("Needle course geometry", () => {
       expect(piece).not.toHaveProperty("damage");
     }
   });
+  it("orders the Eye's 360 eyelid pieces by row, with tumble frames by index and row", () => {
+    const eye = course();
+    const eyelids = (seed: number) =>
+      needleDebris(eye, seed).filter((piece) => !piece.id.endsWith(":inside"));
+    const pieces = eyelids(42);
+    expect(pieces).toHaveLength(360);
+    const plate = "needle-debris-plate";
+    expect(NEEDLE.eye.debris.pieces).toEqual([plate, "needle-debris-girder", plate]);
+    for (const piece of pieces) {
+      const [index, , row] = piece.id.split(":").slice(-3).map(Number) as [number, number, number];
+      expect(piece.piece, piece.id).toBe(NEEDLE.eye.debris.pieces[row]);
+      expect(piece.tumblePhase, piece.id).toBe(((index + 3 * row) % 8) * 45);
+    }
+    // No spread: the eyelid positions do not depend on the seed.
+    expect(eyelids(7).map(({ x, y }) => ({ x, y }))).toEqual(pieces.map(({ x, y }) => ({ x, y })));
+  });
   it("translates the authored Eye without replacing its path, gates, disk or pack", () => {
     const eye = course();
     const offset = { x: anchor.x + NEEDLE.eyeOffset.x, y: anchor.y + NEEDLE.eyeOffset.y };

@@ -260,7 +260,11 @@ export interface NeedleDebrisDescriptor extends Vec {
   readonly tumbleDegreesPerSecond: number;
   readonly tumblePhase: number;
 }
-/** Bounded descriptors use the published belt geometry and normal debris movement. */
+/**
+ * Bounded descriptors use the published belt geometry and normal debris movement. Each eyelid
+ * row carries its own piece, and piece `index` in row `row` starts on tumble frame
+ * `(index * frame.index + row * frame.row) mod frames` (art/needle.md "Ordered Eye").
+ */
 export function needleDebris(
   course: NeedleCourse,
   seed: number,
@@ -276,20 +280,32 @@ export function needleDebris(
   let along = 0;
   let segmentIndex = 0;
   let segmentStart = 0;
-  const emit = (at: Vec, tangent: Vec, id: string) => {
+  const frames = NEEDLE.channels.debris.tumble.frames;
+  const emit = (
+    at: Vec,
+    tangent: Vec,
+    id: string,
+    order?: { readonly index: number; readonly row: number },
+  ) => {
     const rate =
       NEEDLE.eye.debris.drift[0]! +
       next() * (NEEDLE.eye.debris.drift[1]! - NEEDLE.eye.debris.drift[0]!);
     const [slow, fast] = NEEDLE.channels.debris.tumble.degPerSecond;
+    const random = () =>
+      NEEDLE.channels.debris.pieces[Math.floor(next() * NEEDLE.channels.debris.pieces.length)]!.id;
+    const piece = order ? NEEDLE.eye.debris.pieces[order.row]! : random();
+    const tumbleDegreesPerSecond = slow! + next() * (fast! - slow!);
+    const frame = order
+      ? (order.index * NEEDLE.eye.debris.frame.index + order.row * NEEDLE.eye.debris.frame.row) %
+        frames
+      : undefined;
     debris.push({
       ...at,
       id,
-      piece:
-        NEEDLE.channels.debris.pieces[Math.floor(next() * NEEDLE.channels.debris.pieces.length)]!
-          .id,
+      piece,
       radius: NEEDLE.debrisRadius,
-      tumbleDegreesPerSecond: slow! + next() * (fast! - slow!),
-      tumblePhase: next() * 360,
+      tumbleDegreesPerSecond,
+      tumblePhase: frame === undefined ? next() * 360 : (frame * 360) / frames,
       velocity: { x: tangent.x * rate, y: tangent.y * rate },
     });
   };
@@ -321,6 +337,7 @@ export function needleDebris(
           { x: center.x - tangent.y * across, y: center.y + tangent.x * across },
           tangent,
           `needle:${course.kind}:debris:${index}:${sign}:${row}`,
+          { index, row },
         );
       }
     }
