@@ -49,6 +49,9 @@ Gameplay supplies semantic requirements.
   and [Andromeda garnet drones](andromeda.md#garnet-drones) cover regional enemies.
 - The [enemy fleet redesign](enemy-redesign.md) plans the replacement fleet and
   documents its producer.
+- The [friendly object redesign](friendly-redesign.md) plans the replacement
+  pickups, beacons, gate, friendly craft and whales and documents their
+  producer.
 - [Whirlpool whales](whales.md), [portrait provenance](portraits.md) and
   [conversation portraits](conversation.md) cover the cast.
 - [Finale allies](allies.md) covers the Phantom battle's allies, Marlo's song
