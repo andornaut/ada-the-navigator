@@ -67,19 +67,19 @@ describe("Art's collision data", () => {
 
   // Every frigate and capital design ships its own hardpoints file in the core folder.
   it.each([
-    ["fleetFrigate", ["enemies"]],
-    ["fleetFrigateTwin", ["enemies"]],
-    ["fleetCapital", ["enemies"]],
-    ["fleetCapitalBroad", ["enemies"]],
-    ["fleetCapitalCrossbow", ["enemies"]],
-    ["fleetCapitalForked", ["enemies"]],
-    ["fleetCapitalManta", ["enemies"]],
-    ["fleetCapitalOutrigger", ["enemies"]],
-    ["gadget", ["enemies"]],
-    ["platform", ["cartwheel/enemies"]],
-  ] as const)("gives the %s its hull, hardpoint and top silhouettes", (archetype, families) => {
-    for (const family of families) {
-      const file = json(`${family}/${archetype}-hardpoints.json`) as {
+    ["fleetFrigate", ["enemies/fleetFrigate"]],
+    ["fleetFrigateTwin", ["enemies/fleetFrigateTwin"]],
+    ["fleetCapital", ["enemies/fleetCapital"]],
+    ["fleetCapitalBroad", ["enemies/fleetCapitalBroad"]],
+    ["fleetCapitalCrossbow", ["enemies/fleetCapitalCrossbow"]],
+    ["fleetCapitalForked", ["enemies/fleetCapitalForked"]],
+    ["fleetCapitalManta", ["enemies/fleetCapitalManta"]],
+    ["fleetCapitalOutrigger", ["enemies/fleetCapitalOutrigger"]],
+    ["gadget", ["enemies/gadget"]],
+    ["platform", ["cartwheel/enemies/platformWheel"]],
+  ] as const)("gives the %s its hull, hardpoint and top silhouettes", (_, files) => {
+    for (const stem of files) {
+      const file = json(`${stem}-hardpoints.json`) as {
         hardpoints: { capped?: boolean; id: string }[];
         headings: {
           collision: unknown;

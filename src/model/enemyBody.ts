@@ -1,5 +1,6 @@
-import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
-import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
+import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
+import station from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
+import platform from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
 import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
 import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
@@ -17,8 +18,7 @@ import miningParts from "../../public/art/enemies/fleetRetaliatorMiningFreighter
 import miningJets from "../../public/art/enemies/fleetRetaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/fleetSwarm-jets.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
-import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
-import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
+import phantomStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { type EnemyGeometryKey, enemyGeometryKey } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
@@ -90,16 +90,18 @@ interface JetsFile {
 }
 
 interface HardpointsFile {
+  archetype?: string;
   frame: number;
   hardpoints: { id: string; states?: string[]; top: string | null }[];
   headings: {
     index: number;
     collision?: RawParts;
     hardpoints: {
-      id: string;
-      hidden?: true;
-      pivot?: number[];
+      anchor?: number[];
       collision?: { capped?: RawParts; intact?: RawParts; destroyed?: RawParts };
+      hidden?: boolean;
+      id: string;
+      pivot?: number[];
     }[];
   }[];
   tiers?: {
@@ -138,6 +140,45 @@ function smallOutline(file: JetsFile): EnemyOutline | undefined {
   );
 }
 
+type HeadingMount = HardpointsFile["headings"][number]["hardpoints"][number];
+
+/**
+ * A mount's collision at a heading. A hostile station mount the hull hides there carries none,
+ * yet it still takes hits: its collar's parts come from the nearest heading that draws them,
+ * moved by the difference of the two anchors (art/station-redesign.md). A fleet hull's hidden
+ * base keeps its empty collision (art/enemy-redesign.md).
+ */
+function mountCollision(
+  file: HardpointsFile,
+  index: number,
+  part: HeadingMount,
+): NonNullable<HeadingMount["collision"]> {
+  const own = part.collision ?? {};
+  if (file.archetype !== "hostileStation" || !part.hidden || own.intact?.length || !part.anchor) {
+    return own;
+  }
+  for (let step = 1; step <= HEADINGS / 2; step++) {
+    for (const near of [index - step, index + step]) {
+      const heading = file.headings.find((entry) => entry.index === (near + HEADINGS) % HEADINGS);
+      const drawn = heading?.hardpoints.find((entry) => entry.id === part.id);
+      if (!drawn?.anchor || !drawn.collision?.intact?.length) {
+        continue;
+      }
+      const dx = part.anchor[0]! - drawn.anchor[0]!;
+      const dy = part.anchor[1]! - drawn.anchor[1]!;
+      const move = (parts: RawParts): RawParts =>
+        parts.map((polygon) => polygon.map(([x, y]) => [x! + dx, y! + dy]));
+      const { capped, destroyed, intact } = drawn.collision;
+      return {
+        ...(capped ? { capped: move(capped) } : {}),
+        ...(destroyed ? { destroyed: move(destroyed) } : {}),
+        intact: move(intact!),
+      };
+    }
+  }
+  return own;
+}
+
 function heavyOutline(file: HardpointsFile, jets?: JetsFile): EnemyOutline | undefined {
   if (jets && jets.frame !== file.frame) {
     return undefined;
@@ -161,8 +202,8 @@ function heavyOutline(file: HardpointsFile, jets?: JetsFile): EnemyOutline | und
     const pivots: (Vec | null)[] = [];
     for (const heading of file.headings) {
       const part = heading.hardpoints.find((entry) => entry.id === id);
-      const { capped, destroyed, intact } = part?.collision ?? {};
-      // A base the hull hides whole at this heading has no collision; its top still has.
+      const { capped, destroyed, intact } = part ? mountCollision(file, heading.index, part) : {};
+      // A fleet base the hull hides whole at this heading has no collision; its top still has.
       const hidden = part?.hidden === true;
       if (
         !part ||

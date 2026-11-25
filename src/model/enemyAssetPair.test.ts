@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import platformFile from "../../public/art/cartwheel/enemies/platform-hardpoints.json";
+import platformFile from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json";
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";

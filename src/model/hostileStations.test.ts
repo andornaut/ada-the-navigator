@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
-import ring from "../../public/art/andromeda/enemies/hostileStation-andromeda-hardpoints.json" with { type: "json" };
+import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
 import garnetManifest from "../../public/art/andromeda/manifest.json" with { type: "json" };
+import claimStation from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
 import claimManifest from "../../public/art/cartwheel/manifest.json" with { type: "json" };
-import claimStation from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
-import coralStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };
+import coralStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import coralManifest from "../../public/art/manifest.json" with { type: "json" };
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -171,13 +171,21 @@ it("rejects whole footprints at friendly protection, outer hulls and overlapping
   const blockedBefore = structuredClone(blocked);
   expect(spawnPlannedHostileStation(CONTENT, blocked, plan).status).toBe("rejected");
   expect(blocked).toEqual(blockedBefore);
-  const openCenter = flight();
+  // A defender at the station's centre overlaps it only where the drawn hull covers the centre.
+  const covers = worldParts(body).some((part) => {
+    const sides = part.map((a, index) => {
+      const b = part[(index + 1) % part.length]!;
+      return Math.sign((b.x - a.x) * -a.y - (b.y - a.y) * -a.x);
+    });
+    return sides.every((side) => side >= 0) || sides.every((side) => side <= 0);
+  });
+  const center = flight();
   expect(
-    spawnPlannedHostileStation(CONTENT, openCenter, {
+    spawnPlannedHostileStation(CONTENT, center, {
       ...plan,
       defenders: [{ ...plan.defenders[0]!, point: plan.point }, plan.defenders[1]!],
     }).status,
-  ).toBe("created");
+  ).toBe(covers ? "rejected" : "created");
   const overlap = flight();
   const overlapBefore = structuredClone(overlap);
   expect(
@@ -355,8 +363,16 @@ it.each([
       },
       frame,
     );
-    expect(sprites.filter(({ layer }) => layer === "top")).toHaveLength(count);
-    expect(new Set(intent.fire.map(({ hardpointId }) => hardpointId)).size).toBe(count);
+    // A mount the hull hides at this heading draws no top and still fires.
+    const firing = new Set(intent.fire.map(({ hardpointId }) => hardpointId));
+    expect(firing.size).toBe(count);
+    const placed = renderer.parts!.layout.headings[frame.directionIndex!]!.parts;
+    expect(
+      sprites.filter(({ layer }) => layer === "top").map(({ hardpoint }) => hardpoint),
+    ).toEqual(expect.arrayContaining([...firing].filter((id) => !placed.get(id!)!.hidden)));
+    expect(sprites.filter(({ layer }) => layer === "top")).toHaveLength(
+      [...firing].filter((id) => !placed.get(id!)!.hidden).length,
+    );
     const ringShots = intent.fire.filter((shot) => shot.weapon === "ringBurst");
     expect(ringShots).toHaveLength(8);
     for (const shot of ringShots) {
@@ -375,14 +391,17 @@ it.each([
       const pivot = art.pivots.get(id)![heading]!;
       const tips = art.tops.get(mount.top)![mount.aft ? (heading + 8) % 16 : aim]!;
       const tip = tips[shot.volley % tips.length]!;
-      const top = sprites.find((sprite) => sprite.layer === "top" && sprite.hardpoint === id)!;
-      expect(top.offset).toEqual({
-        x: pivot.x * ENEMY_DISPLAY_SCALE,
-        y: pivot.y * ENEMY_DISPLAY_SCALE,
-      });
+      const offset = { x: pivot.x * ENEMY_DISPLAY_SCALE, y: pivot.y * ENEMY_DISPLAY_SCALE };
+      // A hidden mount draws no top; its shots still leave from its pivot.
+      const top = sprites.find((sprite) => sprite.layer === "top" && sprite.hardpoint === id);
+      if (top) {
+        expect(top.offset).toEqual(offset);
+      } else {
+        expect(placed.get(id)!.hidden).toBe(true);
+      }
       const delta = fromScreen({
-        x: top.offset.x + tip.x * ENEMY_DISPLAY_SCALE,
-        y: top.offset.y + tip.y * ENEMY_DISPLAY_SCALE,
+        x: offset.x + tip.x * ENEMY_DISPLAY_SCALE,
+        y: offset.y + tip.y * ENEMY_DISPLAY_SCALE,
       });
       expect(shot.origin.x).toBeCloseTo(plan.point.x + delta.x, 9);
       expect(shot.origin.y).toBeCloseTo(plan.point.y + delta.y, 9);
