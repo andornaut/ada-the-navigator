@@ -233,26 +233,6 @@ describe("prologue", () => {
     ]);
   });
 
-  it("answers the new holodisk question, then returns it to the list without it", () => {
-    const model = started();
-    while (!model.storyView?.page.questions) {
-      model.storyNext();
-    }
-    const hub = model.storyView.page.id;
-    expect(model.storyView.choices[0]?.label).toBe("What's a holodisk?");
-    model.storyChoose(0);
-    expect(model.storyView?.page).toMatchObject({
-      background: "aboard",
-      speaker: "Astra",
-      text:
-        "A disk that holds part of my memory. Each one you find helps me remember, maybe even how " +
-        "I came to Earth, and shows me new places to jump.",
-    });
-    model.storyNext();
-    expect(model.storyView?.page.id).toBe(hub);
-    expect(model.storyView?.choices.map(({ label }) => label)).toEqual(questions.slice(1));
-  });
-
   it("returns each answer to the question list without that question, until Continue", () => {
     const model = started();
     while (!model.storyView?.page.questions) {
@@ -265,7 +245,7 @@ describe("prologue", () => {
       model.storyChoose(index);
       answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
       // Ada and Penny still stand while Astra answers.
-      expect(model.storyView?.page.background).toBe("aboard");
+      expect(model.storyView?.page).toMatchObject({ background: "aboard", speaker: "Astra" });
       model.storyNext();
       expect(model.storyView?.page.id).toBe(hub);
       expect(model.storyView?.choices.map(({ label }) => label)).not.toContain(remaining[index]);
