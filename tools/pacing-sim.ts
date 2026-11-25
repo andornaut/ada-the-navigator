@@ -431,7 +431,7 @@ function planCell(options: WorldOptions, cell: { x: number; y: number }): CellPl
   const reach = chunkSpawnReach(rules);
   const region = chunkSpawnRegion(
     rules,
-    worldSpawnExclusions({}, galaxy, [FLIGHT_START], reach, centre),
+    worldSpawnExclusions({}, galaxy, seed, [FLIGHT_START], reach, centre),
     worldSpawnSites({}, galaxy, reach + spawnGatherReach(rules), centre),
     cell,
   );

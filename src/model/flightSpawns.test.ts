@@ -89,7 +89,7 @@ function planned(seeds: SpawnSeeds, key: string): Map<string, Seen> {
   const reach = chunkSpawnReach(rules);
   const region = chunkSpawnRegion(
     rules,
-    worldSpawnExclusions(context, GALAXY, [{ x: 0, y: 0 }], reach, centre),
+    worldSpawnExclusions(context, GALAXY, WORLD_SEED, [{ x: 0, y: 0 }], reach, centre),
     worldSpawnSites(context, GALAXY, reach + spawnGatherReach(rules), centre),
     cell,
   );

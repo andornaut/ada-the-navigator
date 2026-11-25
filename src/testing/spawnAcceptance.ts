@@ -97,20 +97,21 @@ export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptan
     const planned = AREA_CHUNKS + 2 * AREA_MARGIN;
     // Every planned chunk lies within this distance of the sampled point.
     const reach = planned * grid.pitch;
+    const seed = ACCEPTANCE_SEEDS[sample % ACCEPTANCE_SEEDS.length]!;
     // Rocks are planned in the area alone, so only enemy zones need the margin's reach.
     const exclusions = [
       ...worldSpawnExclusions(
         context,
         galaxy,
+        seed,
         [{ x: 0, y: 0 }],
         AREA_CHUNKS * grid.pitch,
         point,
       ).filter((zone) => !zone.applies.includes("enemy")),
-      ...worldSpawnExclusions(context, galaxy, [{ x: 0, y: 0 }], reach, point).filter((zone) =>
-        zone.applies.includes("enemy"),
+      ...worldSpawnExclusions(context, galaxy, seed, [{ x: 0, y: 0 }], reach, point).filter(
+        (zone) => zone.applies.includes("enemy"),
       ),
     ];
-    const seed = ACCEPTANCE_SEEDS[sample % ACCEPTANCE_SEEDS.length]!;
     const plan = planRegion(
       rules,
       { encounter: seed, world: seed },

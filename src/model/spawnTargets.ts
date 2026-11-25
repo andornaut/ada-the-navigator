@@ -5,13 +5,15 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   encounterRate,
   enemyCatalog,
+  enemyDefinition,
   enemyEncounterTuning,
   escortTuning,
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
-import { byPosition } from "../data/galaxies.ts";
+import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
+import { PROCEDURAL_POIS } from "../data/proceduralPois.ts";
 import {
   FIGHTER_GROUP_TARGET,
   HOSTILE_LOCAL_ALLOWANCE,
@@ -28,9 +30,13 @@ import {
 } from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
+import { partsReach, worldParts } from "./convex.ts";
 import { worldCurrentsNear } from "./currents.ts";
+import { createEnemy } from "./enemyAi.ts";
+import { enemyPhysicalBody } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
+import { proceduralPoisNear } from "./proceduralPois.ts";
 import { worldFitsEncounter } from "./spawner.ts";
 import {
   enemyGroupReach,
@@ -59,6 +65,8 @@ export const MOVING_PATH_SECONDS = 30;
 
 const tuning = CONTENT.tuning;
 const flight = tuning.flight;
+/** Free space between placed footprints: Ada's diameter. */
+const SPAWN_GAP = 2 * flight.shipRadius;
 
 /** Shapes of the weighted sizes, each size's weight split evenly over its variants. */
 function sized(sizes: Readonly<Partial<Record<AsteroidSize, number>>>): SpawnShape[] {
@@ -223,7 +231,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     blend: SPAWN_BLEND_WIDTH,
     chunkSize: tuning.chunkSize,
     corridor: flight.shipRadius + flight.shipRadius,
-    gap: 2 * flight.shipRadius,
+    gap: SPAWN_GAP,
     lattice: {
       cell: encounterLatticeSpacing(galaxy) * tuning.chunkSize,
       occupancy: ENCOUNTER_OCCUPANCY,
@@ -243,20 +251,45 @@ const disc = (rule: string, applies: ExclusionZone["applies"], at: Vec, radius: 
   shape: { kind: "disc" as const, radius, x: at.x, y: at.y },
 });
 
+const wreckReaches = new Map<GalaxyNumber, number>();
+
+/** A salvage site's disabled frigate's physical reach: its hull and parts. */
+function salvageWreckReach(galaxy: GalaxyNumber): number {
+  let reach = wreckReaches.get(galaxy);
+  if (reach === undefined) {
+    const definition = enemyDefinition(galaxy, "frigate");
+    const state = createEnemy(
+      definition,
+      { archetype: "frigate", id: "salvage", packId: null, phase: 0 },
+      { x: 0, y: 0 },
+    );
+    const body = enemyPhysicalBody(ROUTE_POSITION[galaxy], state);
+    const hull = definition.sizeRatio * flight.shipRadius;
+    reach = body ? Math.max(hull, partsReach(worldParts(body))) : hull;
+    wreckReaches.set(galaxy, reach);
+  }
+  return reach;
+}
+
 /**
  * The seeded world's exclusion zones within `radius` of a point, as `generate` applies them:
  * station protected areas, quantum and launch arrivals (a safe radius for rocks, the calm radius
- * for enemies), landmark charting ranges, currents and ore fields. Protected areas and arrival
+ * for enemies), landmark charting ranges, currents, ore fields and salvage sites. A salvage
+ * site's disabled frigate keeps rocks the spawn gap from its hull and enemy groups out of its
+ * local admission neighbourhood, so the site is planned before them. Protected areas and arrival
  * safe radii also bound moving rocks' paths, since they absorb moving rocks. Flight-state zones
  * (the player, story destinations, required routes and the Needle channel) are the caller's.
  */
 export function worldSpawnExclusions(
   context: WorldCellContext,
   galaxy: GalaxyNumber,
+  seed: number,
   arrivals: readonly Vec[],
   radius: number,
   point: Vec,
 ): ExclusionZone[] {
+  const wreck = salvageWreckReach(galaxy);
+  const neighbourhood = 2 * SPAWNER_POLICIES[galaxy].localRadius + wreck;
   const near = (at: Vec, reach: number) =>
     (context.worldSide === undefined
       ? Math.hypot(at.x - point.x, at.y - point.y)
@@ -286,6 +319,19 @@ export function worldSpawnExclusions(
     ...worldOreFieldsNear(context, galaxy, radius + ORE_FIELD_CLEAR_RADIUS, point).map((field) =>
       disc("ore-field", ["rock", "moving"], field, ORE_FIELD_CLEAR_RADIUS),
     ),
+    ...proceduralPoisNear(
+      { ...context, opportunityEligibility: { jobTemplates: [] } },
+      galaxy,
+      seed,
+      Math.min(PROCEDURAL_POIS.maxQueryRadius, radius + neighbourhood),
+      point,
+    )
+      .filter((site) => site.opportunity.kind === "salvage")
+      .flatMap((site) => [
+        // Rocks keep the spawn gap from the wreck's hull.
+        disc("salvage", ["rock", "moving"], site, wreck + SPAWN_GAP),
+        disc("salvage", ["enemy"], site, neighbourhood),
+      ]),
   ];
 }
 

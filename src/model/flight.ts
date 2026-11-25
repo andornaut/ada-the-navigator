@@ -982,7 +982,14 @@ function flightSpawnExclusions(
     sites: [...routes.map(({ site }) => site), ...occupants.sites],
   };
   return [
-    ...worldSpawnExclusions(context, flight.galaxy, arrivalPoints(flight), radius, point),
+    ...worldSpawnExclusions(
+      context,
+      flight.galaxy,
+      flight.seed,
+      arrivalPoints(flight),
+      radius,
+      point,
+    ),
     ...disc("player-safe", ["rock", "moving"], flight.player, content.tuning.safeRadius),
     ...flight.objects.flatMap((object) => {
       const reach = protectedRadius(content, object);
@@ -1393,22 +1400,8 @@ export function placeExplorationSite(
     }
     if (site.opportunity.kind === "salvage") {
       const id = `${site.id}:salvage`;
-      const point = { x: site.x, y: site.y };
-      const policy = SPAWNER_POLICIES[flight.galaxy];
-      if (
-        !worldFitsEncounter(
-          hostileStationContext(flight),
-          policy,
-          worldSpawnerStage(world, policy, point),
-          content.tuning.flight.shipRadius,
-          requiredPopulation(flight),
-          point,
-          { archetype: "frigate", count: 1 },
-        )
-      ) {
-        continue;
-      }
-      const wreck = spawnEnemy(content, flight, "frigate", id, point);
+      // Planned chunks keep enemy groups out of the wreck's neighbourhood and rocks off its hull.
+      const wreck = spawnEnemy(content, flight, "frigate", id, { x: site.x, y: site.y });
       if (
         !clearOfSafeAreas(content, wreck, flight) ||
         !stationFormationClear(questGuardPlacementContext(content, flight), [wreck])

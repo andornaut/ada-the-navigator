@@ -16,9 +16,19 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const pilot = { ...idle, move: { x: 1, y: 0 }, throttle: 0.25 };
 
 function fixture(kind: "resources" | "salvage") {
+  const admitted = approach(kind, kind === "resources" ? 13 : 12)!;
+  expect(admitted).toBeDefined();
+  expect(admitted.progress.explorationSites?.[admitted.candidate.id]).toBe(false);
+  return admitted;
+}
+
+/**
+ * Pilots fresh flight toward the nearest site of a kind in a seeded galaxy, or returns undefined
+ * when none lies near the galaxy's dark beacon route.
+ */
+function approach(kind: "resources" | "salvage", seed: number) {
   const world = { worldSide: GALAXY_SIDE };
   const galaxy = kind === "resources" ? 1 : 5;
-  const seed = kind === "resources" ? 13 : 12;
   const model = new GameModel(CONTENT);
   const progress = model.state.progress[galaxy];
   progress.geography = { seed, sitePolicy: "seeded", version: 1 };
@@ -37,7 +47,7 @@ function fixture(kind: "resources" | "salvage") {
     center,
   ).find((site) => site.opportunity.kind === kind);
   if (!candidate) {
-    throw new Error(`No ${kind} candidate for seed ${seed}`);
+    return undefined;
   }
   flight.player = { x: candidate.x - CONTENT.tuning.talkRange * 2, y: candidate.y };
   const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);
@@ -49,15 +59,12 @@ function fixture(kind: "resources" | "salvage") {
   };
   // The fixture supplies a real near-threshold saved ledger. Content admission comes from step.
   model.step(0.01, idle);
-  // Ambient groups would fill the wreck's local admission budget; this fixture clears them.
-  flight.objects = flight.objects.filter((object) => !object.enemy?.packId?.startsWith("pack:"));
   expect(progress.explorationSites).toBeUndefined();
   expect(flight.exploration.pacing?.freshSeconds).toBe(ROUTE_OPPORTUNITY_SECONDS - 0.001);
   model.step(0.01, pilot);
   expect(flight.exploration.pacing?.freshSeconds).toBe(ROUTE_OPPORTUNITY_SECONDS - 0.001);
   flight.freshChunk = worldCellKey(grid, worldCellAt(grid, flight.player));
   model.step(0.01, pilot);
-  expect(progress.explorationSites?.[candidate.id]).toBe(false);
   return { candidate, flight, model, progress };
 }
 
@@ -99,6 +106,21 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
     model.map!.places.find(({ id }) => id === candidate.id),
   );
 });
+
+it("admits salvage sites among Andromeda's planned enemy groups", () => {
+  // Enemy groups keep out of each salvage wreck's local neighbourhood, so every site that
+  // seeds 12 to 63 place near the dark beacon route admits.
+  const seeds = Array.from({ length: 52 }, (_, index) => 12 + index);
+  const approached = seeds.flatMap((seed) => {
+    const site = approach("salvage", seed);
+    return site ? [site] : [];
+  });
+  const admitted = approached.filter(
+    ({ candidate, progress }) => progress.explorationSites?.[candidate.id] === false,
+  );
+  expect(approached.length).toBeGreaterThan(3);
+  expect(admitted).toHaveLength(approached.length);
+}, 60_000);
 
 it("materializes the actual disabled frigate and salvages once through contextual Use after Continue", () => {
   const { candidate, flight, model } = fixture("salvage");
