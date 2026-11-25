@@ -14,8 +14,8 @@ export const AREAS_PER_BAND = 160;
 /** Sampled areas are this many chunks on a side. */
 const AREA_CHUNKS = 3;
 /**
- * Chunks of enemy groups planned around each area, uncounted, so group spacing and admission
- * meet the area's neighbours; rocks are planned in the area alone.
+ * Chunks of enemy groups planned around each area, uncounted, as flight plans the neighbouring
+ * lattice cells; rocks are planned in the area alone.
  */
 const AREA_MARGIN = 4;
 
@@ -49,9 +49,9 @@ const cache = new Map<string, BandAcceptance>();
  * Samples a band's 3x3-chunk areas uniformly by area across the band's ring of the torus world,
  * plans each with the spawn target catalog, the seeded world's exclusion zones around the launch
  * point and its ore field sites, and totals each kind's requests and deliveries. Enemy groups in
- * a margin of uncounted chunks around each area are planned with it, so group spacing and
- * admission see the area's neighbours. Requests are per open area and, near a region boundary, blended; each area
- * is judged against its own reduced, blended request.
+ * a margin of uncounted chunks around each area are planned with it, as in flight. Requests are
+ * per open area and, near a region boundary, blended; each area is judged against its own
+ * reduced, blended request.
  */
 export function bandAcceptance(galaxy: GalaxyNumber, band: number): BandAcceptance {
   const key = `${galaxy}:${band}`;

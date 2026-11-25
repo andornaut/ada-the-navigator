@@ -117,16 +117,14 @@ export interface EnemyLattice {
 }
 
 /**
- * Local admission for whole enemy groups: placed members, escorts included, within twice
- * `localRadius` plus both reaches of a group's anchor count against the band's budget and
- * archetype limit, and against `maxNearbyCapitals`. A capital in the group or nearby adds
- * `allowance` to the budget.
+ * Admission for a whole enemy group, counted over its own members and escorts alone: they must
+ * fit the band's budget and archetype limit and hold at most `maxCapitals` capitals, and a
+ * capital in the group adds `allowance` to the budget. Groups elsewhere never count.
  */
 export interface SpawnAdmission {
   readonly allowance: number;
   readonly capital: string;
-  readonly localRadius: number;
-  readonly maxNearbyCapitals: number;
+  readonly maxCapitals: number;
 }
 
 export interface SpawnRules {
@@ -641,7 +639,6 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     return share;
   };
   const placements: SpawnPlacement[] = [];
-  const enemyPlacements: SpawnPlacement[] = [];
   const stream = (kind: string, chunk: Chunk, part: string) =>
     randomStream(seed, `spawn:${kind}:${chunk.key}:${part}`);
   // The first applicable rule a candidate breaks, or undefined when it is accepted.
@@ -799,7 +796,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       let rule: string | undefined = SPAWN_RULE.admission;
       for (let count = members; count >= (target.smallest ?? members); count--) {
         const candidate = groupFormation(rules.gap, chunk, group, target, count, anchor, phase);
-        if (!admitted(rules, chunk.band, enemyPlacements, anchor, candidate)) {
+        if (!admitted(rules, chunk.band, candidate)) {
           continue;
         }
         rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
@@ -820,7 +817,6 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
     for (const placement of formation) {
       index.add(placement);
       placements.push(placement);
-      enemyPlacements.push(placement);
     }
     tally.deliver(kind);
   };
@@ -1073,16 +1069,10 @@ function gathered(
     : seeded;
 }
 
-/**
- * Whether a group fits the local admission at its anchor: placed enemies whose footprints lie
- * within twice the local radius plus the group's reach count against the band's budget, distinct
- * archetype limit and the capital limit, and a capital in the group or nearby adds the allowance.
- */
+/** Whether a group's own members and escorts fit the band's admission. */
 function admitted(
   rules: SpawnRules,
   band: SpawnBand,
-  placed: readonly SpawnPlacement[],
-  anchor: Vec,
   formation: readonly SpawnPlacement[],
 ): boolean {
   const admission = rules.admission;
@@ -1090,24 +1080,12 @@ function admitted(
   if (!admission || !local) {
     return true;
   }
-  const reach = Math.max(
-    0,
-    ...formation.map(
-      (member) => Math.hypot(member.x - anchor.x, member.y - anchor.y) + member.radius,
-    ),
-  );
-  const nearby = placed.filter(
-    (other) =>
-      Math.hypot(other.x - anchor.x, other.y - anchor.y) <=
-      admission.localRadius * 2 + reach + other.radius,
-  );
-  const all = [...nearby, ...formation];
-  const capitals = all.filter((member) => member.archetype === admission.capital).length;
+  const capitals = formation.filter((member) => member.archetype === admission.capital).length;
   const cap = local.cap + (capitals > 0 ? admission.allowance : 0);
   return (
-    all.length <= cap &&
-    new Set(all.map((member) => member.archetype)).size <= local.archetypes &&
-    capitals <= admission.maxNearbyCapitals
+    formation.length <= cap &&
+    new Set(formation.map((member) => member.archetype)).size <= local.archetypes &&
+    capitals <= admission.maxCapitals
   );
 }
 

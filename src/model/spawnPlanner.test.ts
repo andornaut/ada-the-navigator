@@ -471,7 +471,7 @@ describe("planRegion", () => {
       planRegion(
         {
           ...rules,
-          admission: { allowance, capital: "capital", localRadius: 900, maxNearbyCapitals: 1 },
+          admission: { allowance, capital: "capital", maxCapitals: 1 },
           bands: [{ admission, enemies, from: 0, moving: [], rocks: [] }],
           gap: 20,
         },
@@ -487,26 +487,23 @@ describe("planRegion", () => {
       ...(smallest === undefined ? {} : { smallest }),
     });
 
-    it("drops whole groups beyond the budget", () => {
-      const plan = admitting([fighters()], { archetypes: 2, cap: 5 });
-      expect(plan.placements).toHaveLength(3);
-      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 1, requested: 4 });
-      expect(plan.report.kinds.fighter!.drops).toEqual({ [SPAWN_RULE.admission]: 3 });
+    it("admits each group on its own members, whatever groups lie nearby", () => {
+      // Four groups of three in one chunk each fit a budget of three.
+      const plan = admitting([fighters()], { archetypes: 1, cap: 3 });
+      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 4, requested: 4 });
+      expect(plan.placements).toHaveLength(12);
     });
 
-    it("shrinks a group down to its smallest size to fit the budget", () => {
-      const plan = admitting([fighters(1)], { archetypes: 2, cap: 5 });
-      expect(plan.placements).toHaveLength(5);
-      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 2, requested: 4 });
+    it("drops a group over its own budget", () => {
+      const plan = admitting([fighters()], { archetypes: 2, cap: 2 });
+      expect(plan.placements).toEqual([]);
+      expect(plan.report.kinds.fighter!.drops).toEqual({ [SPAWN_RULE.admission]: 4 });
     });
 
-    it("limits distinct archetypes", () => {
-      const swarm = { ...fighters(), density: 1, groupSize: [1, 1] as const, kind: "swarm" };
-      const plan = admitting([fighters(), swarm], { archetypes: 1, cap: 20 });
-      expect(new Set(plan.placements.map((placement) => placement.archetype))).toEqual(
-        new Set(["fighter"]),
-      );
-      expect(plan.report.kinds.swarm!.drops).toEqual({ [SPAWN_RULE.admission]: 1 });
+    it("shrinks a group over its own budget down to its smallest size", () => {
+      const plan = admitting([fighters(1)], { archetypes: 2, cap: 2 });
+      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 4, requested: 4 });
+      expect(plan.placements).toHaveLength(8);
     });
 
     const capital: EnemyTarget = {
@@ -524,14 +521,22 @@ describe("planRegion", () => {
       spacing: 100,
     };
 
-    it("adds the allowance for a capital and limits capitals nearby", () => {
-      const plan = admitting([capital], { archetypes: 2, cap: 1 });
+    it("adds the allowance for a capital in the group", () => {
       // A capital with two escorts fits a budget of 1 only with the allowance of 2.
-      expect(plan.report.kinds.capital).toMatchObject({ delivered: 1, requested: 2 });
-      expect(plan.report.kinds.capital!.drops).toEqual({ [SPAWN_RULE.admission]: 1 });
+      expect(admitting([capital], { archetypes: 2, cap: 1 }).report.kinds.capital).toMatchObject({
+        delivered: 2,
+        requested: 2,
+      });
       expect(
-        admitting([capital], { archetypes: 2, cap: 1 }, 0).report.kinds.capital!.delivered,
-      ).toBe(0);
+        admitting([capital], { archetypes: 2, cap: 1 }, 0).report.kinds.capital!.drops,
+      ).toEqual({ [SPAWN_RULE.admission]: 2 });
+    });
+
+    it("limits the group's distinct archetypes", () => {
+      // The capital and its fighter escorts are two archetypes.
+      expect(admitting([capital], { archetypes: 1, cap: 5 }).report.kinds.capital!.drops).toEqual({
+        [SPAWN_RULE.admission]: 2,
+      });
     });
   });
 

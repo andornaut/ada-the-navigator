@@ -226,8 +226,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     admission: {
       allowance: HOSTILE_LOCAL_ALLOWANCE,
       capital: "capital",
-      localRadius: policy.localRadius,
-      maxNearbyCapitals: policy.maxNearbyCapitals,
+      maxCapitals: policy.maxNearbyCapitals,
     },
     bands,
     blend: SPAWN_BLEND_WIDTH,
