@@ -871,36 +871,37 @@ function driveCone(
   if (state === "ember") bx(m, cut - 0.4, cut, w - ember, w + ember, z - ember, z + ember, p.gun);
 }
 
-// Slim delta: fine prow, narrow hull, low ridge citadel, thick wedge wings set aft and twin
-// drive cones in one stern block. `port` and `starboard` stand on wing pedestals, `spine` on the
-// main hull aft of the citadel and `bow` on a prow pedestal.
+// Slim delta: one broad deep hull with a blunt stepped bow block, a thick weapon shoulder close
+// against each flank, a raised citadel aft and twin drive cones in one stern block. `port` and
+// `starboard` stand on the shoulders, `spine` on the main hull aft of the citadel and `bow` on the
+// bow block.
 function slimDelta(p: Paint): FleetCraft {
-  const wingMount = { l: -22, w: 29 };
-  let deck = 0;
+  const shoulder = { l: -12, w: 33.4, hw: 13.5, z: 14 };
   const body = solid("body", (m) => {
     hull(
       m,
       [
-        [50, 3, -3, 3],
-        [34, 6, -5, 3],
-        [-40, 6, -5, 3],
+        [40, 6, -4, 3],
+        [28, 12, -6, 3],
+        [-40, 12, -6, 3],
       ],
       p.under,
     );
+    // The bow block: a blunt chamfered face, a step below the main deck.
     hull(
       m,
       [
-        [66, 2.5, 4, 9, 1, 1],
-        [52, 7, 1, 14, 3, 2],
-        [30, 8, 0, 15, 3, 2],
+        [58, 12, 3, 12, 2, 2],
+        [50, 16, 0, 15, 3, 2],
+        [30, 16, 0, 15, 3, 2],
       ],
       p.armour,
     );
     hull(
       m,
       [
-        [32, 10, 0, 18, 4, 3],
-        [-36, 10, 0, 18, 4, 3],
+        [34, 20, 0, 20, 4, 3],
+        [-40, 20, 0, 20, 4, 3],
       ],
       p.armour,
     );
@@ -908,45 +909,39 @@ function slimDelta(p: Paint): FleetCraft {
     hull(
       m,
       [
-        [27, 10.3, -0.1, 18.3, 4.1, 3.1],
-        [22, 10.3, -0.1, 18.3, 4.1, 3.1],
+        [28, 20.3, -0.1, 20.3, 4.1, 3.1],
+        [23, 20.3, -0.1, 20.3, 4.1, 3.1],
       ],
       p.hull,
     );
     hull(
       m,
       [
-        [-4, 6, 18, 21.5, 2, 2],
-        [-22, 6.5, 18, 23.5, 2, 2],
+        [4, 10, 20, 25, 2, 2],
+        [-17, 11, 20, 26.5, 2, 2],
       ],
       p.armour,
     );
-    const top = wedge(
-      m,
-      [
-        [10, 9],
-        [-12, 46.9],
-        [-30, 46.9],
-        [-38, 28],
-        [-38, 9],
-      ],
-      2,
-      12,
-      5,
-      p.armour,
-    );
-    deck = top(wingMount.w);
+    bx(m, 4, 4.8, -6.5, 6.5, 21.4, 23.4, p.dark);
     for (const side of [1, -1]) {
-      pedestal(m, p, wingMount.l, side * wingMount.w, deck - 2, deck + 1);
+      hull(
+        m,
+        [
+          [14, 9.5, 2, 10, 2, 2],
+          [6, shoulder.hw, 0, shoulder.z, 3, 2],
+          [-34, shoulder.hw, 0, shoulder.z, 3, 2],
+          [-40, 11, 2, 11, 2, 2],
+        ],
+        p.armour,
+        side * shoulder.w,
+      );
     }
-    pedestal(m, p, 40, 0, 13, 15);
-    bx(m, 46, 49, -3.6, 3.6, 13.7, 14.9, p.dark);
   });
   const engine = (wrecked: boolean): Mesh => {
     const m: Mesh = [];
-    bx(m, -48, -34, -11, 11, 1, 16, p.dark);
-    driveCone(m, p, 5.5, 8.32, -59, -46, wrecked ? "ember" : "intact");
-    driveCone(m, p, -5.5, 8.32, -59, -46, wrecked ? "destroyed" : "intact");
+    bx(m, -48, -36, -14, 14, 1, 17, p.dark);
+    driveCone(m, p, 6.6, 9, -59, -46, wrecked ? "ember" : "intact");
+    driveCone(m, p, -6.6, 9, -59, -46, wrecked ? "destroyed" : "intact");
     return m;
   };
   return {
@@ -956,22 +951,22 @@ function slimDelta(p: Paint): FleetCraft {
     design: "Slim delta",
     families: ["coral", "claim"],
     parts: [body],
-    mouths: [5.5, -5.5].map((w) => ({ at: [-59, w, 8.32] as Point, radius: 6.6 })),
+    mouths: [6.6, -6.6].map((w) => ({ at: [-59, w, 9] as Point, radius: 6.6 })),
     heavy: {
       blocks: [
         {
           id: "engine",
           role: "engine",
-          at: [-41, 0, 8.5],
+          at: [-42, 0, 9],
           intact: engine(false),
           destroyed: engine(true),
         },
       ],
       mounts: [
-        { id: "port", at: [wingMount.l, -wingMount.w, deck + 1], capped: false },
-        { id: "starboard", at: [wingMount.l, wingMount.w, deck + 1], capped: false },
-        { id: "spine", at: [-29, 0, 18], capped: true },
-        { id: "bow", at: [40, 0, 15], capped: true },
+        { id: "port", at: [shoulder.l, -shoulder.w, shoulder.z], capped: false },
+        { id: "starboard", at: [shoulder.l, shoulder.w, shoulder.z], capped: false },
+        { id: "spine", at: [-33, 0, 20], capped: true },
+        { id: "bow", at: [42, 0, 15], capped: true },
       ],
     },
     fleck: p.armour,
