@@ -2,7 +2,7 @@
   "version": 2,
   "core": {
     "version": 1,
-    "archetype": "fleetFighter",
+    "archetype": "fighter",
     "frame": 80,
     "halfSpan": 21.44,
     "shards": [

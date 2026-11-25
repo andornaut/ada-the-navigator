@@ -295,7 +295,7 @@ export function shards(craft: Scaled): string {
   }));
   return json({
     version: 1,
-    archetype: craft.key,
+    archetype: craft.archetype,
     frame: craft.frame,
     halfSpan: round(craft.halfSpan),
     shards: all.map(({ kind }, i) => {

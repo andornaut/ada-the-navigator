@@ -2,7 +2,7 @@
   "version": 2,
   "core": {
     "version": 1,
-    "archetype": "fleetSwarm",
+    "archetype": "swarm",
     "frame": 56,
     "halfSpan": 17.152,
     "shards": [

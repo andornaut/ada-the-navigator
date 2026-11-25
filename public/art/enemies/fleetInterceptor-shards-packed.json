@@ -2,7 +2,7 @@
   "version": 2,
   "core": {
     "version": 1,
-    "archetype": "fleetInterceptor",
+    "archetype": "interceptor",
     "frame": 128,
     "halfSpan": 21.44,
     "shards": [
