@@ -145,3 +145,26 @@ it("draws each galaxy's frigate and capital design with its own hull", () => {
   expect(frigate(1)).toEqual(frigate(2));
   expect(frigate(1)).not.toEqual(frigate(3));
 });
+
+it("rolls the Manta gunship, Cargo Hauler and Mining Freighter with equal weight", () => {
+  const ids = Array.from(
+    { length: 6000 },
+    (_, index) => `pack:${index % 97},${index}:${index % 5}`,
+  );
+  const counts = new Map<string, number>();
+  for (const id of ids) {
+    const key = enemyAssetKey({ archetype: "retaliator", id });
+    expect(enemyAssetKey({ archetype: "retaliator", id })).toBe(key);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  expect([...counts.keys()].sort()).toEqual([
+    "retaliator",
+    "retaliatorCargoHauler",
+    "retaliatorMiningFreighter",
+  ]);
+  for (const count of counts.values()) {
+    expect(count / ids.length).toBeCloseTo(1 / 3, 1);
+  }
+  // A retaliator without an id flies the Manta gunship.
+  expect(enemyAssetKey({ archetype: "retaliator" })).toBe("retaliator");
+});

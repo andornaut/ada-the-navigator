@@ -98,13 +98,19 @@ export function enemyAssetKey(identity: EnemyIdentity): EnemyAssetKey {
   return retaliatorVariant(identity) ?? identity.archetype;
 }
 
-/** Shares the rendering identity stream with idle navigation. */
+/** The retaliator hulls, rolled with equal weight in every galaxy: the Manta gunship first. */
+const RETALIATOR_BODIES = [undefined, ...INDUSTRIAL_BODY_KEYS] as const;
+
+/**
+ * A retaliator's industrial body, or undefined for the Manta gunship, which flies the class's
+ * own hull. Shares the rendering identity stream with idle navigation.
+ */
 export function retaliatorVariant(identity: EnemyIdentity): IndustrialBodyKey | undefined {
   if (identity.archetype !== "retaliator" || !identity.id) {
     return undefined;
   }
-  return INDUSTRIAL_BODY_KEYS[
-    Math.floor(enemyRandom(`retaliator-body:${identity.id}`)() * INDUSTRIAL_BODY_KEYS.length)
+  return RETALIATOR_BODIES[
+    Math.floor(enemyRandom(`retaliator-body:${identity.id}`)() * RETALIATOR_BODIES.length)
   ];
 }
 

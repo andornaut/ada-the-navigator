@@ -28,13 +28,16 @@ function actor(variant: (typeof INDUSTRIAL_BODY_KEYS)[number]) {
 const cargo = actor("retaliatorCargoHauler");
 const miner = actor("retaliatorMiningFreighter");
 describe("industrial idle navigation", () => {
-  it("retains the original asset identity stream and legacy identity fallbacks", () => {
+  it("rolls the three hulls from the asset identity stream and keeps identity fallbacks", () => {
     for (let index = 0; index < 100; index++) {
       const id = `industrial:${index}`;
-      const old = INDUSTRIAL_BODY_KEYS[Math.floor(enemyRandom(`retaliator-body:${id}`)() * 2)];
+      // The Manta gunship, then the two industrial bodies, with equal weight.
+      const body = [undefined, ...INDUSTRIAL_BODY_KEYS][
+        Math.floor(enemyRandom(`retaliator-body:${id}`)() * 3)
+      ];
       const identity = { archetype: "retaliator" as const, id };
-      expect(enemyAssetKey(identity)).toBe(old);
-      expect(retaliatorVariant(identity)).toBe(old);
+      expect(enemyAssetKey(identity)).toBe(body ?? "retaliator");
+      expect(retaliatorVariant(identity)).toBe(body);
     }
     expect(enemyAssetKey({ archetype: "retaliator" })).toBe("retaliator");
     expect(enemyAssetKey({ archetype: "capital", id: "phantomFlagship" })).toBe("gadget");
