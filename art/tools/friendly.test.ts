@@ -78,16 +78,9 @@ test("every frame fits its frame with a margin, on a grid of 8", () => {
   }
 });
 
-test("Stardust and ore draw 14 display px tall", () => {
-  for (const key of ["stardust", "oreNugget"]) {
-    const [, top, , bottom] = objects.find((object) => object.key === key)!.drawn[0]!.drawn;
-    assert.ok(Math.abs((bottom - top) * DISPLAY_SCALE - 14) < 0.01, key);
-  }
-});
-
 test("an object's frames share one outline unless its shape changes", () => {
   for (const { key, drawn } of objects) {
-    if (key === "guideBeacon" || key === "stardust" || key === "huntGlint" || key === "holodisk") {
+    if (key === "guideBeacon" || key === "huntGlint" || key === "holodisk") {
       continue;
     }
     assert.equal(new Set(drawn.map(({ silhouette }) => silhouette)).size, 1, key);
@@ -326,8 +319,8 @@ type StripRow = Row & {
 };
 test("each animated pickup is one strip row whose loop and climb name frames of its strip", () => {
   const rows = manifests.core.assets as StripRow[];
-  const sheet = read(`../../public${rows.find(({ id }) => id === "stardust")!.path}`);
-  for (const id of ["stardust", "hunt-glint", "ammo-pack", "holodisk", "upgrade-chevron"]) {
+  const sheet = read(`../../public${rows.find(({ id }) => id === "hunt-glint")!.path}`);
+  for (const id of ["hunt-glint", "ammo-pack", "holodisk", "upgrade-chevron"]) {
     const now = rows.find((entry) => entry.id === id)!;
     const object = objects.find(({ drawn }) => drawn[0]!.id === id)!;
     assert.ok(now.loop ?? now.climb, id);
@@ -346,7 +339,11 @@ test("each animated pickup is one strip row whose loop and climb name frames of 
     );
     for (const other of others) assert.notEqual(other, rest, id);
   }
-  assert.deepEqual(rows.find(({ id }) => id === "ore-nugget")!.frames, { rest: 0 });
+  // Stardust and ore draw the resource pickups' pixel sheets, not friendly roots.
+  for (const id of ["stardust", "ore-nugget"]) {
+    assert.ok(!objects.some(({ drawn }) => drawn[0]!.id === id), id);
+    assert.ok(!sheet.includes(`<svg id="${id}" `), id);
+  }
 });
 
 type WhaleData = {

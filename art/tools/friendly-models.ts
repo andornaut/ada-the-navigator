@@ -125,8 +125,6 @@ const HOLO = {
   lamp: glow("#e868c8"),
   dim: glow("#a83a96"),
 };
-const STARDUST = mat("#fff2cc", "#f4d98a", "#c8a24e");
-const ORE = mat("#b07850", "#8a5a3c", "#5e3c28");
 const AMMO = mat("#b4e67e", "#8fd14f", "#5e9a2e");
 const GLINT = mat("#ffffff", "#e3d6ea", "#c4afcc");
 const CACHE = {
@@ -632,20 +630,9 @@ const TWINKLE = [
 const twinkle = (tones: readonly [Tones, Tones, Tones], radius: number, height: number) =>
   TWINKLE.map(([turn, level]) => crystal(tones[level], radius, height, turn));
 
-// Stardust: one eight-faced crystal.
-const stardust = () =>
-  twinkle([STARDUST, ["#ffffff", "#fff2cc", "#f4d98a"], ["#ffffff", "#fffbe9", "#fff2cc"]], 6, 8);
 // Lost item glint: one slim crystal.
 const huntGlint = () =>
   twinkle([GLINT, ["#ffffff", "#f1eaf4", "#e3d6ea"], ["#ffffff", "#ffffff", "#f1eaf4"]], 4.5, 9);
-
-// Ore: a squat six-sided crystal with a bevelled crown.
-function oreNugget(): Mesh {
-  const mesh: Mesh = [];
-  meshTube(mesh, [0, 0, -4], [0, 0, 2], 6.5, 6.5, ORE, 6, { kind: "flat" });
-  meshTube(mesh, [0, 0, 2], [0, 0, 5.5], 6.5, 3.4, ORE, 6, { kind: "flat" });
-  return mesh;
-}
 
 // A chamfered box section at station `l`: half breadth, bottom, top and chamfer.
 function section(l: number, half: number, bottom: number, top: number, chamfer: number): Point[] {
@@ -782,8 +769,8 @@ const blink = (id: string, name: string, model: (lit: boolean) => Mesh) => [
   { id: `${id}-b`, title: `${name} B`, mesh: model(false) },
 ];
 
-// The twinkle's frames and loop, as the shipped Stardust and lost item strips define them: the
-// strip's fourth frame repeats glint 1.
+// The twinkle's frames and loop, as the shipped lost item strip defines them: the strip's fourth
+// frame repeats glint 1.
 const GLINT_LOOP = {
   frames: { rest: 0, glint1: 1, glint2: 2 },
   loop: [
@@ -808,22 +795,6 @@ export function friendlyObjects(): FriendlyObject[] {
   const front = { facing: "front" };
   const fixed = { facing: "fixed" };
   return [
-    {
-      ...strip,
-      key: "stardust",
-      name: "Stardust",
-      fit: [14, 14],
-      frames: frames("stardust", "Stardust", stardust()),
-      row: { ...front, ...GLINT_LOOP },
-    },
-    {
-      ...strip,
-      key: "oreNugget",
-      name: "Ore",
-      fit: [14, 14],
-      frames: frames("ore-nugget", "Ore", [oreNugget()]),
-      row: { ...front, frames: { rest: 0 } },
-    },
     {
       ...strip,
       key: "ammoPack",

@@ -68,8 +68,6 @@ ellipsoid in two tones split on the light).
 
 | Group                                            | Stage | Replaces                                                                                                                                                                              |
 | ------------------------------------------------ | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Stardust                                         |     1 | `stardust.ts`: `stardust.png` and `stardust.json`                                                                                                                                     |
-| Ore                                              |     1 | `cartwheel-props.ts`: `cartwheel/ore-nugget.png` and `ore-nugget.json`                                                                                                                |
 | Ammo pack                                        |     1 | `ammo-pack.ts`: `pickups/ammo-pack.png` and `ammo-pack.json`                                                                                                                          |
 | Upgrade pickup                                   |     1 | `upgrade-pickup.ts`: `pickups/upgrade-chevron.svg`                                                                                                                                    |
 | Lost item glint                                  |     1 | `job-art.ts`: `hunt-glint.png` and `hunt-glint.json`                                                                                                                                  |
@@ -88,18 +86,14 @@ ellipsoid in two tones split on the light).
 The nebula landmark, the search area, the tow line, map marks, job row icons
 and Projects tab icons are unchanged.
 
-Stardust and ore leave the redesign: they are the 9 px pixel sheets of
+Stardust and ore are outside the redesign: they are the 9 px pixel sheets of
 [Stardust](stardust.md) and the [ore nugget](cartwheel-props.md#ore-nugget),
-staged in [resource-rows.json](resource-rows.json). The `stardust` and
-`ore-nugget` roots of the pickups sheet and their `pickups.json` frames ship
-until the core rows switch to those sheets, then leave this producer.
+and the pickups sheet and `pickups.json` carry neither.
 
 ## Stage 1 output
 
 | Object                   | Row ids                                                                       |     Frame | Drawn, display px | Pivot   |
 | ------------------------ | ----------------------------------------------------------------------------- | --------: | ----------------: | ------- |
-| Stardust                 | `stardust`                                                                    |   32 x 40 |           13 x 14 | centre  |
-| Ore                      | `ore-nugget`                                                                  |   40 x 40 |           13 x 14 | centre  |
 | Ammo pack                | `ammo-pack`                                                                   |   40 x 40 |           16 x 15 | centre  |
 | Upgrade pickup           | `upgrade-chevron`                                                             |   40 x 40 |           14 x 16 | centre  |
 | Lost item glint          | `hunt-glint`                                                                  |   24 x 40 |            9 x 15 | centre  |
@@ -306,12 +300,10 @@ table are the rest frame's.
 
 | Pickup            | Strip frames | Animation                                                              | Loop, as shipped                                    |
 | ----------------- | -----------: | ---------------------------------------------------------------------- | --------------------------------------------------- |
-| `stardust`        |            4 | Twinkle: the crystal turns a quarter facet and back as its tones light | rest 420 ms, glint1 60, glint2 80, glint1 60        |
-| `hunt-glint`      |            4 | The same twinkle                                                       | rest 420 ms, glint1 60, glint2 80, glint1 60        |
+| `hunt-glint`      |            4 | Twinkle: the crystal turns a quarter facet and back as its tones light | rest 420 ms, glint1 60, glint2 80, glint1 60        |
 | `ammo-pack`       |            4 | A glint crosses the crate: top, top and lit side, lit side             | rest 1100 ms, glint1 70, glint2 70, glint3 70       |
 | `holodisk`        |            4 | Turn about its upright diameter: face on, 50, 90 and 130 degrees       | rest 600 ms, turn1 70, edge 70, turn2 70            |
 | `upgrade-chevron` |            3 | Climbing light: rest, lower chevron lit, upper chevron lit             | `climb`: 900 ms unlit, 120 lit lower, 120 lit upper |
-| `ore-nugget`      |            1 | None                                                                   | `frames` `rest` only                                |
 
 - The twinkle strips' fourth frame repeats glint 1, as the shipped strips do,
   so `loop` indexes frames 0 to 3 unchanged.
