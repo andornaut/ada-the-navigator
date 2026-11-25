@@ -103,7 +103,7 @@ function fragments(craft: Scaled, yaw: number, mesh: Mesh): Fragment[] {
 
 // One path per tone, largest first. Each path also covers every later tone, so no seam between
 // two tones shows what lies under the craft; the first path is the silhouette.
-function tonePaths(visible: readonly Fragment[]): { fill: string; loops: V2[][] }[] {
+export function tonePaths(visible: readonly Fragment[]): { fill: string; loops: V2[][] }[] {
   const areas = new Map<string, number>();
   for (const fragment of visible) {
     areas.set(colour(fragment), (areas.get(colour(fragment)) ?? 0) + loopArea(fragment.points));

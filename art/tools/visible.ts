@@ -2,19 +2,13 @@
 // face covers, resolved face against face with exact planar depth, and the visible fragments
 // merge into outlines per flat tone.
 import { type Point, projectAt } from "./projection.ts";
-import type { FaceKind, Mesh, Tones } from "./solid.ts";
+import { type FaceKind, LIGHT, type Mesh, type Tones } from "./solid.ts";
 
 export type V2 = [number, number];
 // A visible convex piece of one face, in screen px from the pivot. `slot` is the index of the
 // face's tone in its material and `tones` that material.
 export type Fragment = { points: V2[]; tones: Tones; slot: 0 | 1 | 2; group?: number };
 
-// The one light, from the upper left, in view space.
-const LIGHT = (() => {
-  const light = [-0.2, 0.5, 0.84] as const;
-  const length = Math.hypot(...light);
-  return light.map((v) => v / length) as unknown as Point;
-})();
 // A face turned less than this toward the viewer at +(1, 1, 1) is not drawn.
 const FACING = 0.05;
 const DEPTH = 1e-5;
@@ -25,8 +19,11 @@ const AREA = 1e-7;
 const EDGE = 1e-9;
 
 // The tone slot of a face from its unit view normal: tops lightest, walls facing screen left mid,
-// walls facing right darkest; round faces take two tones on the light terminator.
+// walls facing right darkest; round faces take two tones on the light terminator, and faces
+// already split on it (`lit`, `shade`) keep their side's tone.
 export function toneSlot(kind: FaceKind, [nx, ny, nz]: Point): 0 | 1 | 2 {
+  if (kind === "lit") return 0;
+  if (kind === "shade") return 1;
   if (kind === "round") {
     return nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2] > 0.42 - EDGE ? 0 : 1;
   }

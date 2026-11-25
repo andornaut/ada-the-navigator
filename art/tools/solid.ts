@@ -259,8 +259,18 @@ export function polygons(groups: Part[][], view?: View, levels: readonly number[
 // Flat tones of one material: tops, walls facing the light (screen left) and walls facing away.
 export type Tones = readonly [top: string, left: string, right: string];
 // How a face picks its tone: `flat` and `curved` by its view normal (`curved` keeps the top tone
-// for level caps only), `round` by the light, in two tones.
-export type FaceKind = "flat" | "curved" | "round";
+// for level caps only), `round` by the light, in two tones. `lit` and `shade` are the two sides
+// of a round surface split on the light terminator.
+export type FaceKind = "flat" | "curved" | "round" | "lit" | "shade";
+
+// The one light, from the upper left, in view space.
+export const LIGHT: Point = (() => {
+  const light = [-0.2, 0.5, 0.84] as const;
+  const length = Math.hypot(...light);
+  return [light[0] / length, light[1] / length, light[2] / length];
+})();
+// A round surface is lit where its unit normal's share of the light exceeds this.
+export const TERMINATOR = 0.42;
 // A convex planar polygon with its outward unit normal. `group` names the destruction shard
 // the face belongs to.
 export type MeshFace = {
@@ -515,6 +525,362 @@ export function meshClip(mesh: Mesh, inward: Point): Mesh {
       if (sp >= 0 !== sq >= 0) points.push(add(p, mul(sub(q, p), sp / (sp - sq))));
     }
     if (points.length >= 3 && norm(newell(points)) > 1e-9) out.push({ ...face, points });
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ rings, domes and placement
+
+const polar = (radius: number, degrees: number): readonly [number, number] => [
+  radius * Math.cos((degrees * Math.PI) / 180),
+  radius * Math.sin((degrees * Math.PI) / 180),
+];
+
+// Box centred at `centre` with half sizes along the unit frame `ex`, `ey`, `ez`.
+export function meshBlock(
+  mesh: Mesh,
+  centre: Point,
+  frame: readonly [Point, Point, Point],
+  half: Point,
+  tones: Tones,
+): void {
+  const [ex, ey, ez] = frame;
+  const sides = [
+    [ex, half[0], ey, half[1], ez, half[2]],
+    [ey, half[1], ez, half[2], ex, half[0]],
+    [ez, half[2], ex, half[0], ey, half[1]],
+  ] as const;
+  for (const [axis, s, u, su, w, sw] of sides) {
+    for (const sign of [1, -1]) {
+      const o = add(centre, mul(axis, sign * s));
+      meshFace(
+        mesh,
+        [
+          add(o, add(mul(u, su), mul(w, sw))),
+          add(o, add(mul(u, -su), mul(w, sw))),
+          add(o, add(mul(u, -su), mul(w, -sw))),
+          add(o, add(mul(u, su), mul(w, -sw))),
+        ],
+        mul(axis, sign),
+        tones,
+      );
+    }
+  }
+}
+
+// Radial box about the vertical axis through (cx, cy): from radius r0 to r1 at `degrees`,
+// `width` wide, between heights z0 and z1.
+export function meshBar(
+  mesh: Mesh,
+  degrees: number,
+  r0: number,
+  r1: number,
+  width: number,
+  z0: number,
+  z1: number,
+  tones: Tones,
+  [cx, cy]: readonly [number, number] = [0, 0],
+): void {
+  const [x, y] = polar(1, degrees);
+  const middle = (r0 + r1) / 2;
+  meshBlock(
+    mesh,
+    [cx + x * middle, cy + y * middle, (z0 + z1) / 2],
+    [
+      [x, y, 0],
+      [-y, x, 0],
+      [0, 0, 1],
+    ],
+    [(r1 - r0) / 2, width / 2, (z1 - z0) / 2],
+    tones,
+  );
+}
+
+// Ring of rectangular section about the vertical axis through (cx, cy).
+export function meshRing(
+  mesh: Mesh,
+  [cx, cy]: readonly [number, number],
+  z0: number,
+  z1: number,
+  outer: number,
+  inner: number,
+  tones: Tones,
+  sides = 64,
+): void {
+  const at = (radius: number, i: number, z: number): Point => {
+    const [x, y] = polar(radius, (360 * (i + 0.5)) / sides);
+    return [cx + x, cy + y, z];
+  };
+  for (let i = 0; i < sides; i++) {
+    const j = (i + 1) % sides;
+    const [x, y] = polar(1, (360 * (i + 1)) / sides);
+    const out: Point = [x, y, 0];
+    meshFace(
+      mesh,
+      [at(inner, i, z1), at(outer, i, z1), at(outer, j, z1), at(inner, j, z1)],
+      [0, 0, 1],
+      tones,
+    );
+    meshFace(
+      mesh,
+      [at(inner, i, z0), at(outer, i, z0), at(outer, j, z0), at(inner, j, z0)],
+      [0, 0, -1],
+      tones,
+    );
+    meshFace(
+      mesh,
+      [at(outer, i, z0), at(outer, j, z0), at(outer, j, z1), at(outer, i, z1)],
+      out,
+      tones,
+      "curved",
+    );
+    meshFace(
+      mesh,
+      [at(inner, i, z0), at(inner, j, z0), at(inner, j, z1), at(inner, i, z1)],
+      mul(out, -1),
+      tones,
+      "curved",
+    );
+  }
+}
+
+// Ring of rectangular section about any axis: radii `outer` and `inner`, `thick` along the
+// axis. With `toward`, a vector in the ring's plane, only the half ring on that side is built,
+// closed by its two end caps.
+export function meshHoop(
+  mesh: Mesh,
+  centre: Point,
+  axis: Point,
+  outer: number,
+  inner: number,
+  thick: number,
+  tones: Tones,
+  sides = 40,
+  toward?: Point,
+): void {
+  const ax = unit(axis);
+  const e1 = unit(cross(ax, Math.abs(ax[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0]));
+  const e2 = cross(ax, e1);
+  const h = mul(ax, thick / 2);
+  const start =
+    toward === undefined ? 0 : Math.atan2(dot(toward, e2), dot(toward, e1)) - Math.PI / 2;
+  const span = toward === undefined ? 2 * Math.PI : Math.PI;
+  const steps = toward === undefined ? sides : Math.floor(sides / 2);
+  const directions = Array.from({ length: steps + 1 }, (_, i) => {
+    const a = start + (span * i) / steps;
+    return add(mul(e1, Math.cos(a)), mul(e2, Math.sin(a)));
+  });
+  const at = (d: Point, radius: number, side: number) =>
+    add(add(centre, mul(d, radius)), mul(h, side));
+  for (const [i, d0] of directions.slice(0, -1).entries()) {
+    const d1 = directions[i + 1]!;
+    const out = add(d0, d1);
+    meshFace(
+      mesh,
+      [at(d0, outer, -1), at(d1, outer, -1), at(d1, outer, 1), at(d0, outer, 1)],
+      out,
+      tones,
+    );
+    meshFace(
+      mesh,
+      [at(d0, inner, -1), at(d1, inner, -1), at(d1, inner, 1), at(d0, inner, 1)],
+      mul(out, -1),
+      tones,
+    );
+    meshFace(
+      mesh,
+      [at(d0, inner, 1), at(d0, outer, 1), at(d1, outer, 1), at(d1, inner, 1)],
+      ax,
+      tones,
+    );
+    meshFace(
+      mesh,
+      [at(d0, inner, -1), at(d0, outer, -1), at(d1, outer, -1), at(d1, inner, -1)],
+      mul(ax, -1),
+      tones,
+    );
+  }
+  if (toward !== undefined) {
+    for (const d of [directions[0]!, directions.at(-1)!]) {
+      meshFace(
+        mesh,
+        [at(d, inner, -1), at(d, outer, -1), at(d, outer, 1), at(d, inner, 1)],
+        mul(toward, -1),
+        tones,
+      );
+    }
+  }
+}
+
+// Hemisphere on the level plane through `centre`, or a full sphere. Each facet is split on the
+// light terminator, so its two tones meet on a true curve. `light` is the light in mesh space:
+// a model drawn turned passes the light turned back by its heading.
+export function meshDome(
+  mesh: Mesh,
+  centre: Point,
+  radius: number,
+  tones: Tones,
+  options: { sides?: number; bands?: number; full?: boolean; light?: Point } = {},
+): void {
+  const { sides = 28, bands = 7, full = false, light = LIGHT } = options;
+  const steps = bands * (full ? 2 : 1);
+  const latitude = (i: number) => (full ? -90 : 0) + ((full ? 180 : 90) * i) / steps;
+  const at = (lat: number, lon: number): Point => {
+    const [a, b] = [(lat * Math.PI) / 180, (lon * Math.PI) / 180];
+    return add(
+      centre,
+      mul([Math.cos(a) * Math.cos(b), Math.cos(a) * Math.sin(b), Math.sin(a)], radius),
+    );
+  };
+  const limit = TERMINATOR * radius;
+  for (let i = 0; i < steps; i++) {
+    const [la0, la1] = [latitude(i), latitude(i + 1)];
+    for (let j = 0; j < sides; j++) {
+      const [lo0, lo1] = [(360 * j) / sides, (360 * (j + 1)) / sides];
+      let facet = [at(la0, lo0), at(la0, lo1), at(la1, lo1), at(la1, lo0)];
+      if (la1 > 89.9) facet = facet.slice(0, 3);
+      if (la0 < -89.9) facet = facet.slice(1);
+      const hint = sub(mean(facet), centre);
+      for (const [sign, kind] of [
+        [1, "lit"],
+        [-1, "shade"],
+      ] as const) {
+        const part: Point[] = [];
+        for (const [k, a] of facet.entries()) {
+          const b = facet[(k + 1) % facet.length]!;
+          const da = sign * (dot(sub(a, centre), light) - limit);
+          const db = sign * (dot(sub(b, centre), light) - limit);
+          if (da >= 0) part.push(a);
+          if (da > 0 !== db > 0 && Math.abs(da - db) > 1e-12) {
+            part.push(add(a, mul(sub(b, a), da / (da - db))));
+          }
+        }
+        if (part.length >= 3) meshFace(mesh, part, hint, tones, kind);
+      }
+    }
+  }
+}
+
+// Spiral band about the vertical axis. The functions take the angle travelled in degrees from
+// `from` to `to` and give the band's centre radius, width, top and bottom; `turn` is the angle
+// the band starts at.
+export function meshSpiral(
+  mesh: Mesh,
+  turn: number,
+  from: number,
+  to: number,
+  shape: {
+    radius: (travelled: number) => number;
+    width: (travelled: number) => number;
+    top: (travelled: number) => number;
+    bottom: (travelled: number) => number;
+  },
+  tones: Tones,
+  step = 5,
+): void {
+  const count = Math.max(1, Math.round((to - from) / step));
+  const stations = Array.from({ length: count + 1 }, (_, i) => {
+    const travelled = from + ((to - from) * i) / count;
+    const [x, y] = polar(1, turn + travelled);
+    const d: Point = [x, y, 0];
+    const [r, w] = [shape.radius(travelled), shape.width(travelled)];
+    const [t, b] = [shape.top(travelled), shape.bottom(travelled)];
+    const corner = (radius: number, z: number): Point => [x * radius, y * radius, z];
+    return {
+      d,
+      innerTop: corner(r - w / 2, t),
+      outerTop: corner(r + w / 2, t),
+      innerBottom: corner(r - w / 2, b),
+      outerBottom: corner(r + w / 2, b),
+    };
+  });
+  const up: Point = [0, 0, 1];
+  for (const [i, s0] of stations.slice(0, -1).entries()) {
+    const s1 = stations[i + 1]!;
+    const out = add(s0.d, s1.d);
+    meshFace(mesh, [s0.innerTop, s0.outerTop, s1.outerTop], up, tones);
+    meshFace(mesh, [s0.innerTop, s1.outerTop, s1.innerTop], up, tones);
+    meshFace(
+      mesh,
+      [s0.outerBottom, s1.outerBottom, s1.outerTop, s0.outerTop],
+      out,
+      tones,
+      "curved",
+    );
+    meshFace(
+      mesh,
+      [s0.innerBottom, s1.innerBottom, s1.innerTop, s0.innerTop],
+      mul(out, -1),
+      tones,
+      "curved",
+    );
+  }
+  const end = stations.at(-1)!;
+  meshFace(
+    mesh,
+    [end.innerBottom, end.outerBottom, end.outerTop, end.innerTop],
+    [-end.d[1], end.d[0], 0],
+    tones,
+  );
+}
+
+// The mesh turned `degrees` about the vertical axis, scaled by `k` and moved by `offset`.
+export function meshPlace(mesh: Mesh, degrees = 0, k = 1, offset: Point = [0, 0, 0]): Mesh {
+  const [c, s] = polar(1, degrees);
+  const turn = ([x, y, z]: Point): Point => [x * c - y * s, x * s + y * c, z];
+  return mesh.map((face) => ({
+    ...face,
+    points: face.points.map((p) => add(mul(turn(p), k), offset)),
+    normal: turn(face.normal),
+  }));
+}
+
+// The half of a convex solid on the side of the plane through `point` that `inward` points to,
+// closed by a cap over the cut.
+export function meshCapped(mesh: Mesh, point: Point, inward: Point, tones: Tones): Mesh {
+  const n = unit(inward);
+  const out: Mesh = [];
+  const cut: Point[] = [];
+  for (const face of mesh) {
+    const points: Point[] = [];
+    for (const [i, p] of face.points.entries()) {
+      const q = face.points[(i + 1) % face.points.length]!;
+      const [sp, sq] = [dot(sub(p, point), n), dot(sub(q, point), n)];
+      if (sp >= 0) points.push(p);
+      if (sp >= 0 !== sq >= 0) points.push(add(p, mul(sub(q, p), sp / (sp - sq))));
+    }
+    if (points.length < 3 || norm(newell(points)) <= 1e-9) continue;
+    out.push({ ...face, points });
+    cut.push(...points.filter((p) => Math.abs(dot(sub(p, point), n)) < 1e-6));
+  }
+  if (cut.length < 3) return out;
+  // The cut's convex hull in the plane, by monotone chain.
+  const u = unit(cross(n, Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0]));
+  const v = cross(n, u);
+  const flat = cut
+    .map((p) => [dot(sub(p, point), u), dot(sub(p, point), v)] as const)
+    .toSorted((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const turn = (
+    o: readonly [number, number],
+    a: readonly [number, number],
+    b: readonly [number, number],
+  ) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const chain = (points: readonly (readonly [number, number])[]) => {
+    const hull: (readonly [number, number])[] = [];
+    for (const p of points) {
+      while (hull.length >= 2 && turn(hull.at(-2)!, hull.at(-1)!, p) <= 1e-9) hull.pop();
+      hull.push(p);
+    }
+    return hull.slice(0, -1);
+  };
+  const hull = [...chain(flat), ...chain(flat.toReversed())];
+  if (hull.length >= 3) {
+    meshFace(
+      out,
+      hull.map(([x, y]) => add(point, add(mul(u, x), mul(v, y)))),
+      mul(n, -1),
+      tones,
+    );
   }
   return out;
 }
