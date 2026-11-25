@@ -126,7 +126,7 @@ target is that a fully upgraded Ada at position 6 meets about the same pressure 
 a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
-enemy-only weapon fire rate and the encounter rate at every position, so the whole curve can be
+enemy-only weapon fire rate and the enemy group densities in [Spawn targets](rules.md#spawn-targets) at every position, so the whole curve can be
 tuned at once. Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
 independently of hull HP, part HP and mount counts, so tuning them leaves
 the economy unchanged. It is not a player setting: there is one forgiving difficulty.
@@ -160,7 +160,7 @@ Heavies:
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
   aim allows for (see [Enemy aim](#enemy-aim)). Notice and fire rates are
   relative to the base catalog. The Fire column applies to enemy-only weapons; shared
-  weapons use the equipped-level rate shares below. Encounter rates are in [Ambient admission](#ambient-admission).
+  weapons use the equipped-level rate shares below. Enemy group densities are in [Spawn targets](rules.md#spawn-targets).
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP: 5, 5, 6, 6, 7 and 7 along the route. The flagship's
   parts have 9 HP. A `platform` hull has half the frigate hull.
@@ -372,10 +372,8 @@ duplicate on revisit/Continue. A disabled or destroyed leader retains the
 existing escort fallback. Capital formations and legacy compatibility remain
 unchanged. Existing required-guard assertions remain required.
 
-Encounter frequency uses a baseline of 1.725, which is 15% above 1.5, multiplied
-by the route factors below. The route increments are additive: 100%, 110%,
-120%, 130%, 140% and 150%, not a compounded 10% increase. This changes encounter
-frequency only, not HP, fire rate, speed, `difficultyScale` or asteroid density.
+Ambient enemy group densities by galaxy and region are in
+[Spawn targets](rules.md#spawn-targets).
 
 Every galaxy uses three geographic regions measured from the galactic center at
 the encounter location: inner below 10000 world units, middle from 10000 to below
@@ -388,20 +386,20 @@ boundary (9000–11000 and 24000–26000). Numeric budgets and archetype limits 
 discretely at 10000 and 25000; they do not interpolate. The fresh-chunk ledger
 continues to exclude standing, teleports and revisits for quest pacing.
 
-| Position | Galaxy    | Route factor | Encounter rate | Inner / middle / outer budget | Archetype limit |
-| -------: | --------- | -----------: | -------------: | ----------------------------- | --------------- |
-|        1 | Sunflower |         100% |          1.725 | 3 / 4 / 5                     | 1 / 2 / 2       |
-|        2 | Whirlpool |         110% |         1.8975 | 4 / 5 / 6                     | 2               |
-|        3 | Needle    |         120% |           2.07 | 4 / 5 / 6                     | 3               |
-|        4 | Andromeda |         130% |         2.2425 | 5 / 6 / 7                     | 4               |
-|        5 | Cartwheel |         140% |          2.415 | 5 / 6 / 7                     | 4               |
-|        6 | Phantom   |         150% |         2.5875 | 6 / 7 / 8                     | 4               |
+| Position | Galaxy    | Inner / middle / outer budget | Archetype limit |
+| -------: | --------- | ----------------------------- | --------------- |
+|        1 | Sunflower | 3 / 4 / 5                     | 1 / 2 / 2       |
+|        2 | Whirlpool | 4 / 5 / 6                     | 2               |
+|        3 | Needle    | 4 / 5 / 6                     | 3               |
+|        4 | Andromeda | 5 / 6 / 7                     | 4               |
+|        5 | Cartwheel | 5 / 6 / 7                     | 4               |
+|        6 | Phantom   | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
 galaxies retain their other encounter groups, heavy weights and archetype limits.
 Swarm maxima retain their route-position bonus; their ambient minimum stays two.
 Ambient fighters target four without a route bonus and downscale to the local budget.
-Spawn-cell frequency remains independent of admission.
+Spawn targets remain independent of admission.
 These budgets are not strict physical population caps: subsequent movement can
 bring ships together. They do not freeze or despawn existing enemies.
 
@@ -632,8 +630,8 @@ length and width, so hits match what is drawn. Sprites keep their drawn sizes.
 
 This module supplies pure observation-to-intent rules. Overall encounter placement,
 quiet travel and optional versus required fights belong to the version one rules.
-[Ambient admission](#ambient-admission) defines encounter rates and the three
-geographic encounter regions. These do not change enemy intent rules.
+[Spawn targets](rules.md#spawn-targets) sets ambient enemy group densities, and
+[Ambient admission](#ambient-admission) defines the three geographic encounter regions. These do not change enemy intent rules.
 All numeric catalog values are provisional tuning, not user-selected values.
 Each archetype's maximum speed is fixed in world units ([Ships](#values)).
 Frigates and capitals may block required quest routes in the first five chapters;

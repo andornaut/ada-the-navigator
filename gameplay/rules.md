@@ -1144,10 +1144,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
   encounter is placed within 2000 world units of a flight's start or any quantum
   jump arrival, so every launch begins calm.
-- Ambient encounter frequency and the three capped fresh-exploration budget
-  stages in every galaxy follow [Ships](ships.md#ambient-admission). Fresh flights
-  reset the stage; roster and type gates remain galaxy-specific. This density
-  tuning does not change enemy HP, fire rate, speed or asteroid density.
+- Ambient enemy group densities follow [Spawn targets](#spawn-targets), and the
+  three capped fresh-exploration budget stages in every galaxy follow
+  [Ships](ships.md#ambient-admission). Fresh flights reset the stage; roster and
+  type gates remain galaxy-specific.
 
 ## Interactions and navigation
 
@@ -1402,12 +1402,11 @@ about 2 logical pixels for about 100 ms; Art and Tech pin the final values.
 Reduced motion disables both the shake and the red line.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety. Ambient ordinary and resource asteroids use a density multiplier
-of 1.70 in every galaxy. Preserve the composition weights,
-size distribution, HP, loot and safe corridors. Caches, other points of
-interest and enemy pacing are independent. Measure actual accepted asteroid counts after clearance
-rejections; the placement target alone does not establish an accepted-count
-ratio. A higher object-candidate count must not increase cache placement.
+and variety. Ambient slot, resource and feature rock densities are in
+[Spawn targets](#spawn-targets). Preserve the slot and resource rock size
+distributions, HP, loot and safe corridors. Caches and other points of interest
+are independent of the rock targets, and the rock targets do not change cache
+placement.
 Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
 interest, guards and platforms. Their approved variety catalog has eight total
 pattern families, each with realizations for counts 6 through 10: 40 count-specific
@@ -1430,10 +1429,8 @@ independent placement angle and 610-world-unit distance; platforms retain their
 fixed positive-X facing and do not rotate with the rocks. Field frequency, loot,
 guard counts, points of interest and saved field identities do not change.
 
-The density exception preserves counts and guard coupling while allowing this
-variety catalog. Apply the increase through ambient
-ordinary and resource rocks. Compare accepted ambient counts with the previous
-tuning, and report authored fields separately and any shortfall due to clearance.
+Spawn targets do not apply to authored ore fields; their counts and guard
+coupling stay as above.
 Ordinary asteroids have stationary centres and may rotate slowly;
 they do not translate in circles or oscillate. Legacy orbiting rocks settle at
 their current positions without a position jump, with HP and drops unchanged.
@@ -1452,14 +1449,14 @@ Ships bounce off them, with bump damage as for any asteroid. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
-Ballistic asteroid encounters target three times their original frequency independently
-of enemy encounters. About 75% of moving rocks on these routes travel in groups
-with one shared velocity. The rest choose their own heading and speed. Each
-group or solo rock rolls a seeded speed from 10 to 80 world units per second
-and travels in a straight line at constant velocity. It may rotate, and it
-keeps clear of protected places. For each rock, the seeded size weights are 60%
-Small, 30% Medium, 9% Large and 1% Huge before clearance checks. Authored
-current debris follows its current.
+Moving rocks are chosen from placed slot and feature rocks at the densities in
+[Spawn targets](#spawn-targets) and keep the chosen rock's size and shape. About
+75% of moving rocks travel in groups of nearby rocks with one shared velocity.
+The rest choose their own heading and speed. Each group or solo rock rolls a
+seeded speed from 10 to 80 world units per second and travels in a straight
+line at constant velocity. It may rotate. A chosen rock starts outside the
+exclusion zones that apply to moving rocks; once moving, it may overlap or hit
+any object. Authored current debris follows its current.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
@@ -1493,6 +1490,61 @@ marker exception. Spawn guards near their station/objective outside protected
 clearance and patrol there, never remotely summon them toward Ada. Existing
 approved marker eligibility remains separate. Factory/world reservation interfaces are present at the inspected source;
 production lifecycle checks and acceptance are not established by this rule.
+
+### Spawn targets
+
+One seeded planner places ambient enemy groups, static rocks and moving rocks,
+after the required sites and guards above. It plans enemy groups first, then
+static rocks (slot rocks, resources and features), then moving rocks, which it
+chooses only from placed slot and feature rocks. All placements share one
+spatial index.
+
+- A spawn is accepted only when its footprint is at least 20 world units (Ada's
+  diameter) from every placed footprint. A rock gets 24 seeded positions and an
+  enemy group 24 anchors; a spawn with no clear position is dropped.
+- An enemy group, with all its members and escorts, is placed whole or not at
+  all: the planner tries other anchors, then drops the group. Group sizes follow
+  each galaxy's roster in [Ships](ships.md).
+- Stations and points of interest never block a spawn. The existing exclusion
+  zones still apply, including the arrival calm radius, protected areas, the
+  Needle channel, currents and ore fields.
+- Flight lanes stay: a static rock lies inside one chunk quadrant, 20 world
+  units (the corridor half width) clear of the quadrant boundaries. Feature
+  rocks use only shapes that fit a quadrant between lanes, which leaves Large
+  shapes; Huge shapes do not fit.
+- Once moving, a moving rock may overlap or hit any object.
+
+Densities are mean counts per 3x3-chunk area, one ninth per chunk. Enemy columns
+count groups; `frigate` and `capital` groups include their escorts. Regions are
+the [geographic regions](ships.md#ambient-admission) by distance from the galactic
+center: inner below 10000 world units, middle from 10000 to below 25000 and
+outer from 25000 (planner bands 0, 1 and 2). Rock targets are interim until they
+are re-measured with enemy groups placed first.
+
+| Galaxy    | Region | Slot rocks | Resources | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
+| --------- | ------ | ---------: | --------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
+| Sunflower | inner  |      29.87 |      12.2 |      1.5 |         3.72 |   0.363 |     0.306 |             0 |            0 |         0 |         0 |
+|           | middle |      29.88 |      12.3 |      1.6 |         3.81 |   0.244 |     0.288 |             0 |        0.150 |         0 |         0 |
+|           | outer  |      30.06 |      12.1 |      1.5 |         3.71 |   0.356 |     0.231 |         0.100 |        0.050 |         0 |         0 |
+| Whirlpool | inner  |       28.0 |       9.9 |      1.3 |         4.22 |   0.181 |     0.231 |         0.094 |        0.131 |     0.113 |         0 |
+|           | middle |       28.0 |      10.4 |      1.2 |         4.01 |   0.231 |     0.175 |         0.144 |        0.081 |     0.169 |         0 |
+|           | outer  |       27.7 |       9.9 |      1.1 |         3.97 |   0.231 |     0.275 |         0.138 |        0.063 |     0.138 |         0 |
+| Needle    | inner  |      29.95 |      12.4 |      1.3 |         4.38 |   0.206 |     0.238 |         0.194 |        0.075 |     0.138 |     0.063 |
+|           | middle |      29.73 |      12.7 |      1.4 |         4.55 |   0.163 |     0.244 |         0.188 |        0.075 |     0.169 |     0.069 |
+|           | outer  |      29.78 |      12.6 |      1.4 |         4.47 |   0.144 |     0.238 |         0.213 |        0.069 |     0.131 |     0.100 |
+| Andromeda | inner  |      29.75 |      12.5 |      1.4 |         4.96 |   0.138 |     0.313 |         0.100 |        0.106 |     0.181 |     0.069 |
+|           | middle |      29.82 |      12.2 |      1.5 |         4.63 |   0.150 |     0.244 |         0.138 |        0.056 |     0.213 |     0.088 |
+|           | outer  |      29.81 |      12.3 |      1.4 |         4.86 |   0.169 |     0.275 |         0.094 |        0.094 |     0.256 |     0.094 |
+| Cartwheel | inner  |      29.90 |      12.1 |      1.4 |         5.33 |   0.238 |     0.419 |         0.125 |        0.119 |     0.131 |     0.050 |
+|           | middle |       28.7 |      11.7 |      1.4 |         5.14 |   0.275 |     0.356 |         0.081 |        0.100 |     0.175 |     0.044 |
+|           | outer  |       28.8 |      12.0 |      1.3 |         5.19 |   0.225 |     0.369 |         0.119 |        0.113 |     0.125 |     0.038 |
+| Phantom   | inner  |      29.76 |      12.3 |      1.4 |         5.49 |   0.156 |     0.219 |         0.194 |        0.094 |     0.356 |     0.119 |
+|           | middle |      29.58 |      12.2 |      1.4 |         5.59 |   0.156 |     0.238 |         0.131 |        0.075 |     0.350 |     0.144 |
+|           | outer  |      29.85 |      12.3 |      1.3 |         5.50 |   0.150 |     0.231 |         0.131 |        0.069 |     0.400 |     0.106 |
+
+A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
+in every galaxy and region, deliver at least 90% of their requested count. The
+check runs in the default test suite.
 
 ### Hostile station sites and map knowledge
 
