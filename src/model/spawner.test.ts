@@ -288,6 +288,23 @@ describe("spawner admission", () => {
     }
   });
 
+  it("spaces a group's members by their member spacing or two footprints plus the gap", () => {
+    const andromeda = SPAWNER_POLICIES[5];
+    const position = ROUTE_POSITION[5];
+    // Twin hull frigates (58) sit 2 * 58 + 20 = 136 apart, wider than the member spacing, and
+    // each frigate's fighter escorts (13) station 60 beyond it.
+    expect(andromeda.memberSpacing).toBeLessThan(136);
+    const frigates = {
+      archetype: "frigate",
+      count: 2,
+      escorts: { archetype: "fighter", count: 4 },
+    } as const;
+    expect(groupReach(andromeda, position, frigates)).toBeCloseTo(Math.hypot(68, 118) + 13);
+    // Swarms (8) keep the wider member spacing.
+    const swarms = { archetype: "swarm", count: 3 } as const;
+    expect(groupReach(andromeda, position, swarms)).toBe(andromeda.memberSpacing + 8);
+  });
+
   it("keeps complete symmetric groups within their reserved footprint", () => {
     const plan = { archetype: "swarm", count: 3 } as const;
     const reach = groupReach(policy, positionOf(policy), plan);

@@ -66,6 +66,19 @@ it("uses authoritative IDs and actual assembled bodies for opposite defender slo
   }
 });
 
+it("spaces defenders by the station's and their own spacing radii and the member spacing", () => {
+  for (const galaxy of [2, 5, 6] as const) {
+    const site = { id: "geographic-point", x: 40000, y: 0 };
+    const plan = planHostileStationFormation({ galaxy }, identities, site)!;
+    // Station r 70, swarm r 8, then the galaxy's member spacing.
+    const gap = 70 + 8 + SPAWNER_POLICIES[galaxy].memberSpacing;
+    expect(plan.defenders.map(({ point }) => point)).toEqual([
+      { x: site.x - gap, y: site.y },
+      { x: site.x + gap, y: site.y },
+    ]);
+  }
+});
+
 function fixture() {
   const siteContext = { galaxy: 5 as const, geographySeed: 173, worldSide: GALAXY_SIDE };
   const site = hostileStationSites(siteContext, {

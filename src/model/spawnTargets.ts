@@ -37,7 +37,7 @@ import { hostileStationSites } from "./hostileStationSites.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
-import { worldFitsEncounter } from "./spawner.ts";
+import { SPAWN_GAP, worldFitsEncounter } from "./spawner.ts";
 import {
   enemyGroupReach,
   type EnemyTarget,
@@ -63,8 +63,6 @@ export const MOVING_PATH_SECONDS = 30;
 
 const tuning = CONTENT.tuning;
 const flight = tuning.flight;
-/** Free space between placed footprints: Ada's diameter. */
-const SPAWN_GAP = 2 * flight.shipRadius;
 
 /** Shapes of the weighted sizes, each size's weight split evenly over its variants. */
 function sized(sizes: Readonly<Partial<Record<AsteroidSize, number>>>): SpawnShape[] {

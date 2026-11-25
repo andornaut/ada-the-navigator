@@ -1,3 +1,4 @@
+import { CONTENT } from "../data/content.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";
 import { type EncounterEntry, type EnemyArchetype, escortTuning } from "../data/enemyCatalog.ts";
 import { classSpacingRadius } from "../data/enemySpacing.ts";
@@ -49,9 +50,13 @@ export function memberPosition(spacing: number, count: number, centre: Vec, inde
   return { x: centre.x + (index - (count - 1) / 2) * spacing, y: centre.y };
 }
 
+/** Free space required between any two placed spawn footprints: Ada's diameter. */
+export const SPAWN_GAP = 2 * CONTENT.tuning.flight.shipRadius;
+
 /**
  * Includes every hull and escort station when checking safe areas and overlapping groups, by
- * each class's largest spacing radius at the route position.
+ * each class's largest spacing radius at the route position. Neighbouring members sit their
+ * member spacing apart, or two footprints plus the spawn gap where that is wider.
  */
 export function groupReach(
   policy: SpawnerPolicy,
@@ -59,12 +64,12 @@ export function groupReach(
   plan: EncounterPlan,
 ): number {
   const hull = classSpacingRadius(position, plan.archetype);
-  const line = (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 + hull;
+  const half =
+    (Math.max(0, plan.count - 1) * Math.max(policy.memberSpacing, 2 * hull + SPAWN_GAP)) / 2;
+  const line = half + hull;
   const escort = plan.escorts
-    ? Math.hypot(
-        plan.archetype === "frigate" ? (Math.max(0, plan.count - 1) * policy.memberSpacing) / 2 : 0,
-        hull + escortTuning.stationGap,
-      ) + classSpacingRadius(position, plan.escorts.archetype)
+    ? Math.hypot(plan.archetype === "frigate" ? half : 0, hull + escortTuning.stationGap) +
+      classSpacingRadius(position, plan.escorts.archetype)
     : 0;
   return Math.max(line, escort);
 }

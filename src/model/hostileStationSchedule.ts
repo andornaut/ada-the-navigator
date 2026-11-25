@@ -1,14 +1,10 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { enemyActorAvailable } from "../data/enemyActors.ts";
+import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { partsReach, worldParts } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
 import type { PlannedHostileStation, StationMaterialization } from "./hostileStations.ts";
 import {
   type HostileStationSite,
@@ -23,23 +19,10 @@ export interface HostileStationIdentities {
   readonly defenderIds: readonly string[];
 }
 
-function hullReach(
-  galaxy: GalaxyNumber,
-  kind: "hostileStation" | "swarm",
-  id: string,
-): number | null {
-  // Geometry templates never sample equipment: actual construction owns the equipped roll.
-  const definition = enemyActorDefinition(galaxy, kind, id);
-  const template = createEnemy(
-    definition,
-    { archetype: kind, id, packId: null, phase: 0 },
-    { x: 0, y: 0 },
-  );
-  const body = enemyPhysicalBody(ROUTE_POSITION[galaxy], template);
-  return body ? partsReach(worldParts(body)) : null;
-}
-
-/** Stable slots derive from real hull extents and the existing encounter member spacing. */
+/**
+ * Stable slots derive from the station's and its defenders' spacing radii and the existing
+ * encounter member spacing.
+ */
 export function planHostileStationFormation(
   context: Pick<HostileStationSitesContext, "galaxy" | "worldSide">,
   identities: HostileStationIdentities,
@@ -53,13 +36,12 @@ export function planHostileStationFormation(
   ) {
     return null;
   }
-  const body = hullReach(context.galaxy, "hostileStation", identities.bodyId);
-  const defenders = identities.defenderIds.map((id) => hullReach(context.galaxy, "swarm", id));
-  if (body === null || defenders.some((reach) => reach === null)) {
-    return null;
-  }
-  const gap =
-    body + Math.max(...(defenders as number[])) + SPAWNER_POLICIES[context.galaxy].memberSpacing;
+  const position = ROUTE_POSITION[context.galaxy];
+  const body = spacingRadius(position, { archetype: "hostileStation", id: identities.bodyId });
+  const defenders = identities.defenderIds.map((id) =>
+    spacingRadius(position, { archetype: "swarm", id }),
+  );
+  const gap = body + Math.max(...defenders) + SPAWNER_POLICIES[context.galaxy].memberSpacing;
   return {
     defenders: identities.defenderIds.map((id, index) => {
       const point = memberPosition(gap * 2, identities.defenderIds.length, site, index);
