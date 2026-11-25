@@ -5,48 +5,42 @@ import { oklchToSrgb } from "@andornaut/art-kit/build/colour";
 
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { facesViewer, type Point, projectAt, rotate, round, SHIP_HEADINGS } from "./projection.ts";
+import { paintRegions } from "./ship-paths.ts";
 import type { V2 } from "./silhouette.ts";
 import {
-  convexParts,
   ordered,
-  outside,
   partition,
-  plane,
   planarTriangles,
   split,
   type Surface,
   type Tree,
-  type Plane as CutPlane,
 } from "./ship-surface.ts";
 
-// Material-tagged solid facets retain local geometry before clipping and depth ordering.
-type Face = {
-  color: string;
-  layer: number;
-  points: Point[];
-  part?: string;
-  silhouette?: boolean;
-  twoSided?: boolean;
-  opening?: boolean;
-  canopyFace?: boolean;
-  collarFace?: boolean;
-};
-
-// Hull and glazing materials retain their authored references; engine surfaces derive from them.
-// Flame materials are independent of the housing and opening.
-export interface Paint {
-  readonly canopyRoof: string;
-  readonly canopySides: string;
-  readonly engineHousing: string;
-  readonly engineOpening: string;
-  readonly frontSides: string;
-  readonly rearSides: string;
-  // Hull top.
-  readonly top: string;
-  readonly skirt: string;
-}
+// Material slots in ship-paint.json and ship-materials.json. Hull, tail and accent each have a
+// lit top, a turned top and a left and right wall tone; the light picks the tone per view.
+export const PAINT_SLOTS = [
+  "top",
+  "topTurned",
+  "wallLeft",
+  "wallRight",
+  "tailLeft",
+  "tailRight",
+  "accent",
+  "accentTurned",
+  "accentLeft",
+  "accentRight",
+  "skirt",
+  "canopyHighlight",
+  "canopyRoof",
+  "canopyShade",
+  "engineOpening",
+] as const;
+export type PaintSlot = (typeof PAINT_SLOTS)[number];
+export type Paint = Readonly<Record<PaintSlot, string>>;
 
 export interface Scheme {
+  // The authored glazing reference the canopy shade and the engine opening derive from.
+  readonly canopySides: string;
   readonly id: string;
   readonly name: string;
   readonly paint: Paint;
@@ -60,67 +54,47 @@ export const ENGINE_MATERIAL_RELATIONSHIPS = {
 } as const;
 
 /** Openings share Classic's luminous reference while retaining paint-derived hues. */
-export function engineMaterials(base: string) {
+export function engineOpening(base: string): string {
   const reference = ENGINE_MATERIAL_RELATIONSHIPS;
+  if (base === reference.referenceWall) return reference.referenceOpening;
   const [wallL, wallA, wallB] = toOklab(rgb(reference.referenceWall));
   const [openingL, openingA, openingB] = toOklab(rgb(reference.referenceOpening));
   const [L, a, b] = toOklab(rgb(base));
   const chroma = Math.hypot(a, b),
     hue = Math.atan2(b, a);
-  const colour = (lightness: number, C: number, h: number) =>
-    hex(fromOklab(Math.min(1, Math.max(0, lightness)), C * Math.cos(h), C * Math.sin(h)));
-  const engineHousing = colour(
-    L + reference.housingLightnessLift,
-    chroma * reference.housingChromaRatio,
-    hue,
-  );
-  const referenceHousing = colour(
-    wallL + reference.housingLightnessLift,
-    Math.hypot(wallA, wallB) * reference.housingChromaRatio,
-    Math.atan2(wallB, wallA),
-  );
-  const housingL = toOklab(rgb(engineHousing))[0];
-  const referenceHousingL = toOklab(rgb(referenceHousing))[0];
+  const lifted = (lightness: number, C: number, h: number) =>
+    toOklab(
+      rgb(
+        hex(
+          fromOklab(
+            Math.min(1, Math.max(0, lightness + reference.housingLightnessLift)),
+            C * reference.housingChromaRatio * Math.cos(h),
+            C * reference.housingChromaRatio * Math.sin(h),
+          ),
+        ),
+      ),
+    )[0];
+  const housingL = lifted(L, chroma, hue);
+  const referenceHousingL = lifted(wallL, Math.hypot(wallA, wallB), Math.atan2(wallB, wallA));
   const headroom = (openingL - referenceHousingL) / (1 - referenceHousingL);
   const openingHue = Math.atan2(openingB, openingA) + hue - Math.atan2(wallB, wallA);
-  return {
-    engineHousing,
-    engineOpening:
-      base === reference.referenceWall
-        ? reference.referenceOpening
-        : hex(
-            oklchToSrgb([
-              Math.max(openingL, housingL + (1 - housingL) * headroom),
-              Math.hypot(openingA, openingB),
-              (openingHue * 180) / Math.PI,
-            ]),
-          ),
-  };
+  return hex(
+    oklchToSrgb([
+      Math.max(openingL, housingL + (1 - housingL) * headroom),
+      Math.hypot(openingA, openingB),
+      (openingHue * 180) / Math.PI,
+    ]),
+  );
 }
 
-const CLASSIC = {
-  canopyRoof: "#2585d0",
-  canopySides: "#1767b3",
-  ...engineMaterials("#1767b3"),
-  frontSides: "#929ca3",
-  rearSides: "#28558a",
-  skirt: "#abbfce",
-  top: "#ffffff",
-} as const;
-// Purchased paints retain their authored facet ratios independently of Classic.
-const PALETTE_RATIOS = {
-  frontSides: "#b2bec6",
-  rearSides: "#647d8d",
-  skirt: "#abbfce",
-} as const;
 const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
 const luminance = (hex: string) =>
   channels(hex)
     .map(linear)
     .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i]!, 0);
-function tone(top: string, reference: string): string {
-  const factor = luminance(reference);
+// The colour scaled in linear light by a factor.
+function scaled(top: string, factor: number): string {
   return (
     "#" +
     channels(top)
@@ -134,34 +108,100 @@ function tone(top: string, reference: string): string {
       .join("")
   );
 }
+// Tone steps below a top colour, each the sRGB level of a neutral grey whose linear luminance
+// scales the top: the turned top, the left and right walls and the tail block's two sides.
+export const TONE_STEPS = {
+  turned: 0.95,
+  wallLeft: 0.78,
+  wallRight: 0.62,
+  tailLeft: 0.53,
+  tailRight: 0.37,
+} as const;
+const step = (top: string, level: number) => scaled(top, linear(level));
+// The skirt keeps its fixed linear-luminance reference under every top.
+const SKIRT_REFERENCE = "#abbfce";
+
+// A per-channel sRGB mix, t of the way from a to b.
+function mix(a: string, b: string, t: number): string {
+  const [p, q] = [a, b].map((c) => [1, 3, 5].map((i) => Number.parseInt(c.slice(i, i + 2), 16)));
+  return `#${p!
+    .map((c, i) =>
+      Math.round(c + (q![i]! - c) * t)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+// Canopy highlight: the roof colour mixed 45 percent toward white.
+export const highlight = (roof: string) => mix(roof, "#ffffff", 0.45);
+// Canopy shade: 45 percent of the way from the roof to the glazing reference.
+export const shade = (roof: string, sides: string) => mix(roof, sides, 0.45);
+
+function accentTones(accent: string) {
+  return {
+    accent,
+    accentTurned: step(accent, TONE_STEPS.turned),
+    accentLeft: step(accent, TONE_STEPS.wallLeft),
+    accentRight: step(accent, TONE_STEPS.wallRight),
+  };
+}
+function glazing(canopyRoof: string, canopySides: string) {
+  return {
+    canopyHighlight: highlight(canopyRoof),
+    canopyRoof,
+    canopyShade: shade(canopyRoof, canopySides),
+    engineOpening: engineOpening(canopySides),
+  };
+}
+// Classic's hull and tail tones are authored; its accent tones derive like every paint's.
+const CLASSIC: Scheme = {
+  id: "classic",
+  name: "Classic",
+  canopySides: "#1767b3",
+  paint: {
+    top: "#ffffff",
+    topTurned: "#ebf1f7",
+    wallLeft: "#b4c4d6",
+    wallRight: "#8497ae",
+    tailLeft: "#7890ad",
+    tailRight: "#4d6584",
+    skirt: SKIRT_REFERENCE,
+    ...accentTones("#2456b8"),
+    ...glazing("#2585d0", "#1767b3"),
+  },
+};
 function painted(
   id: string,
   name: string,
   top: string,
+  accent: string,
   canopyRoof: string,
   canopySides: string,
 ): Scheme {
   return {
     id,
     name,
+    canopySides,
     paint: {
       top,
-      canopyRoof,
-      canopySides,
-      ...engineMaterials(canopySides),
-      frontSides: tone(top, PALETTE_RATIOS.frontSides),
-      rearSides: tone(top, PALETTE_RATIOS.rearSides),
-      skirt: tone(top, PALETTE_RATIOS.skirt),
+      topTurned: step(top, TONE_STEPS.turned),
+      wallLeft: step(top, TONE_STEPS.wallLeft),
+      wallRight: step(top, TONE_STEPS.wallRight),
+      tailLeft: step(top, TONE_STEPS.tailLeft),
+      tailRight: step(top, TONE_STEPS.tailRight),
+      skirt: scaled(top, luminance(SKIRT_REFERENCE)),
+      ...accentTones(accent),
+      ...glazing(canopyRoof, canopySides),
     },
   };
 }
 export const SCHEMES: readonly Scheme[] = [
-  { id: "classic", name: "Classic", paint: CLASSIC },
-  painted("cobalt", "Cobalt", "#6f9ff0", "#eef5ff", "#b4c8e6"),
-  painted("seafoam", "Seafoam", "#d4f6ea", "#14697a", "#0d4c59"),
-  painted("graphite", "Crimson", "#d96b73", "#382a32", "#251d24"),
-  painted("iris", "Iris", "#d9ccff", "#3a2b8c", "#271c66"),
-  painted("amber", "Amber", "#f4b665", "#24577b", "#173a57"),
+  CLASSIC,
+  painted("cobalt", "Cobalt", "#6f9ff0", "#16245c", "#eef5ff", "#b4c8e6"),
+  painted("seafoam", "Seafoam", "#d4f6ea", "#f07a5a", "#14697a", "#0d4c59"),
+  painted("graphite", "Crimson", "#d96b73", "#f6efe6", "#382a32", "#251d24"),
+  painted("iris", "Iris", "#d9ccff", "#e0489f", "#3a2b8c", "#271c66"),
+  painted("amber", "Amber", "#f4b665", "#12233a", "#24577b", "#173a57"),
 ];
 export const classic = SCHEMES[0]!;
 // UP projects straight up.
@@ -292,273 +332,16 @@ function vertices() {
   };
 }
 
-// Upper faces, each a planar polygon wound to face up: per side the wing face, which
-// carries the canopy, then the steep face, the wall, which holds the mouth, and the tail
-// side, which rise behind the canopy.
-type Part = "side" | "steep" | "wall" | "wing";
-
-function upperFaces(): { part: Part; points: Point[] }[] {
-  const v = vertices();
-  const up = (points: Point[]) => (normal(points)[2] < 0 ? points.toReversed() : points);
-  const sides = [
-    [v.tipL, v.notchL, v.cornerL],
-    [v.tipR, v.notchR, v.cornerR],
-  ] as const;
-  const faces = (part: Part, pick: (side: (typeof sides)[number]) => Point[]) =>
-    sides.map((side) => ({ part, points: up(pick(side)) }));
-  return [
-    ...faces("wing", ([tip]) => [v.nose, tip, v.shoulder]),
-    ...faces("steep", ([tip, , corner]) => [v.shoulder, tip, corner, v.apex]),
-    ...faces("wall", ([tip, notch, corner]) => [tip, notch, corner]),
-    ...faces("side", ([, notch, corner]) => [notch, v.tail, v.apex, corner]),
-  ];
-}
-
-// Wing roof height under the canopy: the lower of the two wing planes.
-function roof(x: number, y: number): number {
-  const v = vertices();
-  const height = ({ d, n }: Plane) => (d - n[0] * x - n[1] * y) / n[2];
-  return Math.min(
-    height(through(v.nose, v.tipL, v.shoulder)),
-    height(through(v.nose, v.shoulder, v.tipR)),
-  );
-}
-
-// Nose: the midpoint of the plan's forward-most vertices at the skirt top (local forward
-// is negative Y).
-export function nose(): Point {
-  const hull = plan(HULL.skirt, HULL.plan);
-  const front = Math.min(...hull.map(([, y]) => y));
-  const tip = hull.filter(([, y]) => y === front);
-  const mean = (axis: number) => tip.reduce((sum, point) => sum + point[axis]!, 0) / tip.length;
-  return [mean(0), mean(1), mean(2)];
-}
-
-// Engine mouths on the wing walls: |x| from inner to outer, z from the skirt top up by
-// low and high, the top kept 0.6 under the wall's top edge.
-const MOUTHS = { inner: 9.5, outer: 15, low: 0.3, high: 2.6 };
-
-// Mouth quad on the sign side's wall, lifted 0.03 off it, wound outward: outer low,
-// inner low, inner high, outer high.
-function mouthBase(sign: number): Point[] {
-  const v = vertices();
-  const [tip, notch, corner] =
-    sign === 1 ? [v.tipR, v.notchR, v.cornerR] : [v.tipL, v.notchL, v.cornerL];
-  const { d, n } = leaning(tip, notch);
-  const at = (x: number, z: number): Point => [x, (d - n[0] * x - n[2] * z) / n[1] + 0.03, z];
-  const edge = (x: number) => tip[2] + ((corner[2] - tip[2]) * (x - tip[0])) / (corner[0] - tip[0]);
-  const { high, inner, low, outer } = MOUTHS;
-  const z0 = HULL.skirt + low;
-  const top = (x: number) => Math.min(HULL.skirt + high, edge(x) - 0.6);
-  const quad = [
-    at(sign * outer, z0),
-    at(sign * inner, z0),
-    at(sign * inner, top(sign * inner)),
-    at(sign * outer, top(sign * outer)),
-  ];
-  return sign === 1 ? quad : quad.toReversed();
-}
-
-export const ENGINE_OPENING_SCALE = 1.25;
-export const NORMAL_CORE_BASE_SCALE = 0.9;
-const NORMAL_CORE_WIDTH =
-  (MOUTHS.outer - MOUTHS.inner) * ENGINE_OPENING_SCALE * NORMAL_CORE_BASE_SCALE;
-
-function normalRearRoot(sign: number) {
-  const v = vertices();
-  const wing = sign < 0 ? v.tipL : v.tipR;
-  const notch = sign < 0 ? v.notchL : v.notchR;
-  const outer: Point = [wing[0], wing[1], HULL.skirt];
-  const inner: Point = [notch[0], notch[1], HULL.skirt];
-  const middle = outer.map((value, i) => round((value + inner[i]!) / 2)) as unknown as Point;
-  const half = outer.map((value, i) => round((value - inner[i]!) / 2)) as unknown as Point;
-  const width = round(2 * Math.abs(half[0]));
-  return { root: [outer, inner] as const, middle, half, width, wing, notch };
-}
-
-/** Luminous lower corners meet the fixed normal core; height fits the unchanged rear wall. */
-export function engineOpeningGeometry(sign: number) {
-  const original = mouthBase(sign);
-  const v = vertices();
-  const housing = sign < 0 ? [v.tipL, v.notchL, v.cornerL] : [v.tipR, v.notchR, v.cornerR];
-  const { root, middle, half, width } = normalRearRoot(sign);
-  const factor = NORMAL_CORE_WIDTH / width;
-  const [outer, inner] = [1, -1].map(
-    (side) => middle.map((value, i) => value + side * half[i]! * factor) as unknown as Point,
-  ) as [Point, Point];
-  const [tip, notch, corner] = housing as [Point, Point, Point];
-  const { d, n } = leaning(tip, notch);
-  const edge = (x: number) => tip[2] + ((corner[2] - tip[2]) * (x - tip[0])) / (corner[0] - tip[0]);
-  const referenceHeight =
-    (Math.max(...original.map((p) => p[2])) - Math.min(...original.map((p) => p[2]))) *
-    ENGINE_OPENING_SCALE;
-  const height = Math.min(referenceHeight, edge(outer[0]) - outer[2], edge(inner[0]) - inner[2]);
-  const top = (p: Point): Point => {
-    const z = p[2] + height;
-    return [p[0], (d - n[0] * p[0] - n[2] * z) / n[1], z];
-  };
-  const quad = [outer, inner, top(inner), top(outer)];
-  const points = sign === 1 ? quad : quad.toReversed();
-  const centre = points.reduce<Point>(
-    (sum, p) => p.map((value, i) => sum[i]! + value / points.length) as unknown as Point,
-    [0, 0, 0],
-  );
-  return {
-    original,
-    points,
-    centre,
-    housing,
-    height,
-    referenceHeight,
-    referenceScale: ENGINE_OPENING_SCALE,
-    root,
-  };
-}
-
-/** Fixed rear-face roots and core reference do not depend on the relocated luminous geometry. */
-export function normalJetStation(pose: Pose, sign: number) {
-  return {
-    ...normalRearRoot(sign),
-    coreWidth: NORMAL_CORE_WIDTH / normalRearRoot(sign).width,
-    near: jetAttachmentForPose(pose, sign).near,
-  };
-}
-
-function mouth(sign: number): Point[] {
-  return engineOpeningGeometry(sign).points;
-}
-
-/** A near wing attaches at the visible skirt bottom; equal-depth wings share that choice. */
-export function jetAttachmentForPose(pose: Pose, sign: number) {
-  const { tipL, tipR, notchL, notchR } = vertices();
-  const tips = [tipL, tipR];
-  const depths = tips.map((tip) => {
-    const [x, y, z] = place(pose, tip);
-    return x + y + z;
-  });
-  const index = sign < 0 ? 0 : 1;
-  const near = depths[index]! >= depths[1 - index]! - 1e-9;
-  const tip = tips[index]!,
-    notch = sign < 0 ? notchL : notchR;
-  const z = near ? 0 : HULL.skirt;
-  return { corner: [tip[0], tip[1], z] as Point, notch: [notch[0], notch[1], z] as Point, near };
-}
-
-export function jetAttachment(yaw: number, sign: number) {
-  return jetAttachmentForPose({ yaw }, sign);
-}
-
-/** Project the same forward hardpoints through ordinary, banked or stretched ship poses. */
-export function forwardJetMouths(pivot: number, pose: Pose) {
-  const projected = (centre: number, point: Point) =>
-    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
-  const occluders = tailOccluders(pivot, pose);
-  return [-1, 1].map((sign) => {
-    const { root, coreWidth } = normalJetStation(pose, sign);
-    const [outer, inner] = root.map((point) => projected(pivot, point)) as [
-      [number, number],
-      [number, number],
-    ];
-    return {
-      anchor: [(outer[0] + inner[0]) / 2, (outer[1] + inner[1]) / 2] as [number, number],
-      axis: projected(0, [0, 1, 0]),
-      half: [(outer[0] - inner[0]) / 2, (outer[1] - inner[1]) / 2] as [number, number],
-      normalAperture: { coreWidth },
-      occluders,
-    };
-  });
-}
-
-/** Retro exhaust points forward and outward, retaining the true rear wall's plane. */
-export function retroMouthAxis(sign: number): {
-  axis: Point;
-  corner: Point;
-  half: Point;
-  rearNormal: Point;
-} {
-  const { tipL, tipR, notchL, notchR } = vertices();
-  const tip = sign < 0 ? tipL : tipR;
-  const notch = sign < 0 ? notchL : notchR;
-  const halfWidth = (MOUTHS.outer - MOUTHS.inner) / 2;
-  const angle = (10 * Math.PI) / 180;
-  const slope = (tip[1] - notch[1]) / (tip[0] - notch[0]);
-  return {
-    axis: [sign * Math.sin(angle), -Math.cos(angle), 0],
-    corner: tip,
-    half: [sign * halfWidth, 0, 0],
-    rearNormal: [-slope, 1, 0],
-  };
-}
-
-// Mouth middle and half width along its base, outer minus inner over two.
-export function mouthAxis(sign: number): { half: Point; middle: Point } {
-  const quad = mouthBase(sign);
-  const [outerLow, innerLow] = sign === 1 ? [quad[0]!, quad[1]!] : [quad[3]!, quad[2]!];
-  const middle = quad.reduce<Point>(
-    (sum, [x, y, z]) => [sum[0] + x / 4, sum[1] + y / 4, sum[2] + z / 4],
-    [0, 0, 0],
-  );
-  const half: Point = [(outerLow[0] - innerLow[0]) / 2, (outerLow[1] - innerLow[1]) / 2, 0];
-  return { half, middle };
-}
-
-// Stable materials follow the physical facet role, not the viewing direction.
-function shade(paint: Paint, upper: readonly { part: Part; points: Point[] }[]) {
-  return new Map(
-    upper.map(({ part }, i) => [
-      i,
-      part === "wing"
-        ? paint.top
-        : part === "steep"
-          ? paint.frontSides
-          : part === "wall"
-            ? paint.engineHousing
-            : paint.rearSides,
-    ]),
-  );
-}
-
-function model(pose: Pose, paint: Paint): Face[] {
-  const faces: Face[] = [];
-  const outline = plan(HULL.skirt, HULL.plan);
-  // One fixed skirt material surrounds the hull.
-  for (let i = 0; i < outline.length; i++) {
-    const a = outline[(i + 1) % outline.length]!;
-    const b = outline[i]!;
-    faces.push({
-      color: paint.skirt,
-      layer: 2,
-      points: [a, b, [b[0], b[1], 0], [a[0], a[1], 0]],
-    });
-  }
-  const upper = upperFaces();
-  const color = shade(paint, upper);
-  const rear = place(pose, [0, 1, 0]);
-  const tailLayer = rear[0] + rear[1] > 0 ? 6 : 3;
-  for (const [i, { part, points }] of upper.entries()) {
-    const layer = part === "wing" ? 3 : tailLayer;
-    faces.push({
-      color: color.get(i) ?? paint.rearSides,
-      layer,
-      points,
-      part: part,
-      opening: true,
-    });
-  }
-  for (const sign of [-1, 1]) {
-    faces.push({
-      color: paint.engineOpening,
-      layer: 6.5,
-      points: mouth(sign),
-      part: `mouth-${sign}`,
-    });
-  }
-  canopy(faces, paint);
-  closeOpening(faces, paint);
-  return faces;
-}
-
-const turned = (pose: Pose, points: readonly Point[]) => points.map((point) => place(pose, point));
+const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const unit = (a: Point): Point => {
+  const length = Math.hypot(...a);
+  return [a[0] / length, a[1] / length, a[2] / length];
+};
+const add = (a: Point, b: Point, t = 1): Point => [
+  a[0] + b[0] * t,
+  a[1] + b[1] * t,
+  a[2] + b[2] * t,
+];
 
 // Newell normal of a polygon, unnormalized.
 function normal(points: readonly Point[]): Point {
@@ -573,306 +356,408 @@ function normal(points: readonly Point[]): Point {
   }
   return [nx, ny, nz];
 }
+// The polygon wound so its normal points along the hint.
+const facing = (hint: Point, points: Point[]) =>
+  dot(normal(points), hint) < 0 ? points.toReversed() : points;
 
-const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+// A face's material. The three shells take a tone from the light per view; glass takes its
+// bands from the smooth canopy surface; the skirt and the mouths are flat.
+type Material = "accent" | "engineOpening" | "glass" | "hull" | "skirt" | "tail";
+type Face = { material: Material; part?: string; points: Point[] };
 
-// Closed opaque canopy sampled from the continuous upper and lower profiles.
-const CANOPY = { a: 9, b: 9, centre: -3, segments: 48 };
+// The wing tip caps: everything outboard of the chord at this |x|, parallel to the hull axis,
+// which is the outer 28 percent of the 21.44 unit half span.
+export const TIP_CAP_X = 15.4;
 
-function canopy(faces: Face[], paint: Paint): void {
-  const { a, b, centre, segments } = CANOPY;
-  const rings = Array.from({ length: 13 }, (_, i) => i * 7.5);
+// A polygon cut at the cap chords: the part inboard of both, and the parts outboard.
+function capSplit(points: readonly Point[]): { caps: Point[][]; inboard: Point[] } {
+  const right = split({ normal: [1, 0, 0], distance: TIP_CAP_X }, points);
+  const left = split({ normal: [-1, 0, 0], distance: TIP_CAP_X }, right.back);
+  return { caps: [right.front, left.front], inboard: left.back };
+}
 
-  const at = (u: number, v: number, deform = true): Point => {
-    const theta = (u / segments) * 2 * Math.PI;
-    const phi = (v * Math.PI) / 180;
-    const x = a * Math.cos(phi) * Math.cos(theta);
-    const y = centre + b * Math.cos(phi) * Math.sin(theta);
-    const base = canopyBase(x, y) + hoodSeat(x, y),
-      t = (y - centre) / b;
-    const across = Math.sqrt(Math.max(0, 1 - t * t));
-    if (across < 1e-7) return [x, y, y > centre ? 9.5 : roof(0, centre - b)];
-    const top = continuousUpper(y);
-    const fraction = Math.min(1, Math.sin(phi) / across);
-    const lower = Math.max(0, Math.min(1, (0.65 - fraction) / 0.65));
-    const lowerWeight = lower * lower * lower * (10 - 15 * lower + 6 * lower * lower);
-    return [
-      x,
-      y,
-      base + (top - base) * fraction + (deform ? (lowerEnvelope(y) - base) * lowerWeight : 0),
-    ];
-  };
-
-  // One closed surface removes overlapping shell/closure materials.
-  const rim = [
-    ...Array.from({ length: segments }, (_, u) => at(u, 0)),
-    ...Array.from({ length: segments }, (_, u) => rings.slice(1).map((v) => at(u, v))).flat(),
-  ];
-  const seed = [0, segments / 4, segments / 2, (segments * 3) / 4];
-  const inside: Point = [0, 0, 0].map((_, j) =>
-    seed.reduce((v, i) => v + rim[i]![j]! / 4, 0),
-  ) as unknown as Point;
-  let closure = [
-    [seed[0]!, seed[1]!, seed[2]!],
-    [seed[0]!, seed[3]!, seed[1]!],
-    [seed[0]!, seed[2]!, seed[3]!],
-    [seed[1]!, seed[3]!, seed[2]!],
-  ];
-  const orient = (f: number[]) =>
-    dot(normal(f.map((i) => rim[i]!)), minus(rim[f[0]!]!, inside)) < 0 ? f.toReversed() : f;
-  closure = closure.map(orient);
-  for (let i = 0; i < rim.length; i++) {
-    if (seed.includes(i)) continue;
-    const seen = closure.filter(
-      (f) => dot(normal(f.map((j) => rim[j]!)), minus(rim[i]!, rim[f[0]!]!)) > 1e-8,
+// Upper faces, each a planar polygon wound to face up. Per side: the wing top, which carries
+// the canopy; the steep face and the rear wall, which holds the mouth; and the tail side.
+// The tail block is both tail sides and the steep faces inboard of the notch.
+function upperFaces(): Face[] {
+  const v = vertices();
+  const up = (points: Point[]) => facing([0, 0, 1], points);
+  const faces: Face[] = [];
+  for (const [tip, notch, corner] of [
+    [v.tipL, v.notchL, v.cornerL],
+    [v.tipR, v.notchR, v.cornerR],
+  ] as const) {
+    const wing = capSplit(up([v.nose, tip, v.shoulder]));
+    faces.push({ material: "hull", part: "wing", points: wing.inboard });
+    for (const points of wing.caps) faces.push({ material: "accent", part: "cap", points });
+    const steep = up([v.shoulder, tip, corner, v.apex]);
+    const outboard = split(
+      { normal: [Math.sign(tip[0]), 0, 0], distance: Math.abs(notch[0]) },
+      steep,
     );
-    if (!seen.length) continue;
-    const edges = new Map<string, number[]>();
-    for (const f of seen)
-      for (let k = 0; k < 3; k++) {
-        const a = f[k]!,
-          b = f[(k + 1) % 3]!,
-          key = [a, b].sort((a, b) => a - b).join(",");
-        if (edges.has(key)) edges.delete(key);
-        else edges.set(key, [a, b]);
-      }
-    closure = closure.filter((f) => !seen.includes(f));
-    for (const edge of edges.values()) closure.push(orient([...edge, i]));
+    faces.push({ material: "hull", part: "steep", points: outboard.front });
+    faces.push({ material: "tail", part: "block", points: outboard.back });
+    const wall = capSplit(up([tip, notch, corner]));
+    faces.push({ material: "hull", part: "wall", points: wall.inboard });
+    for (const points of wall.caps) faces.push({ material: "accent", part: "cap", points });
+    faces.push({ material: "tail", part: "block", points: up([notch, v.tail, v.apex, corner]) });
   }
-  canopyClosedPlanes = closure.map((f) => {
-    const points = f.map((i) => rim[i]!),
-      n = normal(points);
-    return { n, d: dot(n, points[0]!) };
-  });
-  const rimDepth = 0.18;
-  for (const f of closure) {
-    const vertices = f.map((i) => rim[i]!);
-    const roof: Point[] = [],
-      edge: Point[] = [];
-    for (let i = 0; i < vertices.length; i++) {
-      const a = vertices[i]!,
-        b = vertices[(i + 1) % vertices.length]!;
-      const da = a[2] - lowerEnvelope(a[1]) - rimDepth,
-        db = b[2] - lowerEnvelope(b[1]) - rimDepth;
-      if (da >= 0) roof.push(a);
-      if (da <= 0) edge.push(a);
-      if (da * db < 0) {
-        const t = da / (da - db);
-        const p: Point = [
-          a[0] + t * (b[0] - a[0]),
-          a[1] + t * (b[1] - a[1]),
-          a[2] + t * (b[2] - a[2]),
-        ];
-        roof.push(p);
-        edge.push(p);
-      }
-    }
-    if (roof.length >= 3)
-      faces.push({ color: paint.canopyRoof, layer: 5, canopyFace: true, points: roof });
-    if (edge.length >= 3)
-      faces.push({ color: paint.canopySides, layer: 5, canopyFace: true, points: edge });
-  }
+  return faces.filter(({ points }) => points.length >= 3);
 }
 
-// Canopy highlight: the roof colour mixed 45 percent toward white.
-export function highlight(roof: string): string {
-  const channels = [1, 3, 5].map((i) => Number.parseInt(roof.slice(i, i + 2), 16));
-  return `#${channels
-    .map((c) =>
-      Math.round(c + (255 - c) * 0.45)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("")}`;
+// The ridge height at local y: the wing planes at x = 0, continued aft of the shoulder.
+function ridge(y: number): number {
+  const v = vertices();
+  const { d, n } = through(v.nose, v.shoulder, v.tipR);
+  return (d - n[1] * y) / n[2];
+}
+// Nose: the midpoint of the plan's forward-most vertices at the skirt top (local forward
+// is negative Y).
+export function nose(): Point {
+  const hull = plan(HULL.skirt, HULL.plan);
+  const front = Math.min(...hull.map(([, y]) => y));
+  const tip = hull.filter(([, y]) => y === front);
+  const mean = (axis: number) => tip.reduce((sum, point) => sum + point[axis]!, 0) / tip.length;
+  return [mean(0), mean(1), mean(2)];
 }
 
-// Preserve the original canopy coordinates while the surrounding roof becomes slightly higher.
-function referenceCanopyRoof(x: number, y: number): number {
-  const v = vertices(),
-    shoulder: Point = [0, 6, 7.5];
-  const height = ({ d, n }: Plane) => (d - n[0] * x - n[1] * y) / n[2];
-  return Math.min(
-    height(through(v.nose, v.tipL, shoulder)),
-    height(through(v.nose, shoulder, v.tipR)),
+// Engine mouths: one plain rectangle on each rear wall, |x| from inner to outer, from low to
+// high up the wall above the skirt top, kept `inset` inside the wall's edges and lifted
+// `lift` off it. No frame.
+const MOUTHS = { inner: 8.8, outer: 15.7, low: 0.3, high: 2.8, inset: 0.35, lift: 0.05 };
+
+function wallOf(sign: number): [Point, Point, Point] {
+  const v = vertices();
+  return sign < 0 ? [v.tipL, v.notchL, v.cornerL] : [v.tipR, v.notchR, v.cornerR];
+}
+
+// Mouth polygon on the sign side's wall, wound outward.
+function mouth(sign: number): Point[] {
+  const [tip, notch, corner] = wallOf(sign);
+  const along = unit(minus(notch, tip));
+  let out = unit(cross(along, minus(corner, tip)));
+  if (out[1] < 0) out = [-out[0], -out[1], -out[2]];
+  let rise = cross(out, along);
+  if (rise[2] < 0) rise = [-rise[0], -rise[1], -rise[2]];
+  const length = Math.hypot(...minus(notch, tip));
+  const at = (x: number) => (Math.abs(x - Math.abs(tip[0])) / Math.abs(notch[0] - tip[0])) * length;
+  const { high, inner, inset, lift, low, outer } = MOUTHS;
+  let rect: Point[] = [
+    [at(outer), low, 0],
+    [at(inner), low, 0],
+    [at(inner), high, 0],
+    [at(outer), high, 0],
+  ];
+  // The wall triangle in its own plane, wound counterclockwise.
+  const wall: Point[] = [
+    [0, 0, 0],
+    [length, 0, 0],
+    [dot(minus(corner, tip), along), dot(minus(corner, tip), rise), 0],
+  ];
+  for (const [i, a] of wall.entries()) {
+    const b = wall[(i + 1) % wall.length]!;
+    const edge = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const inward: Point = [-(b[1] - a[1]) / edge, (b[0] - a[0]) / edge, 0];
+    rect = split({ normal: inward, distance: dot(inward, a) + inset }, rect).front;
+  }
+  return facing(
+    out,
+    rect.map(([x, y]) => add(add(add(tip, along, x), rise, y), out, lift)),
   );
 }
 
-// Connect the raised roof's opening to the unchanged original canopy base.
-function closeOpening(faces: Face[], paint: Paint): void {
-  const wingColors = shade(paint, upperFaces());
-  const ring = Array.from({ length: 48 }, (_, i) => {
-    const a = (i * Math.PI) / 24,
-      x = 9 * Math.cos(a),
-      y = -3 + 9 * Math.sin(a);
-    const outerX = Math.sign(x) * openingWidth(y, Math.abs(x));
-    return {
-      upper: [outerX, y, roof(outerX, y)] as Point,
-      lower: [x, y, canopyBase(x, y) + hoodSeat(x, y) - rearUndersideDrop(y)] as Point,
-    };
-  });
-  for (let i = 0; i < ring.length; i++) {
-    const a = ring[i]!,
-      b = ring[(i + 1) % ring.length]!;
-    faces.push({
-      color: wingColors.get(a.upper[0] + b.upper[0] < 0 ? 0 : 1) ?? paint.frontSides,
-      layer: 4,
-      part: "collar",
-      collarFace: true,
-      points: [a.upper, b.upper, b.lower, a.lower],
-      twoSided: true,
-    });
-  }
+// Forward plumes lie in the exhaust plane through the mouth centres, rooted `clear` behind the
+// wall at the centre of each mouth.
+const PLUME = { clear: 0.1, height: 1 };
+
+/** The forward plume's root on the sign side: the mouth centre, local. */
+export function plumeRoot(sign: number): Point {
+  const [tip, notch] = wallOf(sign);
+  const { d, n } = leaning(tip, notch);
+  const x = (sign * (MOUTHS.inner + MOUTHS.outer)) / 2;
+  const z = HULL.skirt + PLUME.height;
+  return [x, (d - n[0] * x - n[2] * z) / n[1] + PLUME.clear, z];
 }
 
-// The existing front stays unchanged; the rear base closes into the locked kink.
-function canopyBase(x: number, y: number): number {
-  const t = Math.max(0, Math.min(1, (y + 3) / 9)),
-    blend = t * t * (3 - 2 * t);
-  return referenceCanopyRoof(x, y) + 2 * blend;
-}
+// Reverse plumes root under each wing tip and aim outboard of forward, in degrees.
+export const RETRO = { angle: 10, root: [19.6, 17, 0.5] } as const;
 
-// One cubic Bezier spans the whole crown, with a rounded front and horizontal rear contact.
-function continuousUpper(y: number): number {
-  const z0 = roof(0, -12);
-  let low = 0,
-    high = 1;
-  for (let i = 0; i < 28; i++) {
-    const t = (low + high) / 2,
-      u = 1 - t;
-    const py = -12 * u * u * u - 8.027496906094033 * u * u * t + 15.6 * u * t * t + 6 * t * t * t;
-    if (py < y) low = t;
-    else high = t;
-  }
-  const t = (low + high) / 2,
-    u = 1 - t;
-  return z0 * u * u * u + 3 * 13 * u * u * t + 3 * 9.5 * u * t * t + 9.5 * t * t * t;
-}
-
-// The underside and opening collar retain their C2 hood seating. The upper crown
-// uses one Bezier from the exact hood endpoint, with no localized height blend.
-function hoodSeat(x: number, y: number): number {
-  const t = Math.max(0, Math.min(1, (y + 12) / 4));
-  const weight = 1 - t * t * t * (10 - 15 * t + 6 * t * t);
-  return (roof(x, y) - canopyBase(x, y)) * weight;
-}
-
-// The lower rear gains fullness; C2-zero ends preserve both contacts and the front.
-function lowerEnvelope(y: number): number {
-  const t = Math.max(0, Math.min(1, (y + 12) / 18)),
-    u = 2 * t - 1;
-  return roof(0, -12) * (1 - t) + 9.5 * t - 5.7 * Math.sqrt(Math.max(0, 1 - u * u)) * (1 + 0.3 * u);
-}
-function rearUndersideDrop(y: number): number {
-  const u = (y + 3) / 9,
-    x = 9 * Math.sqrt(Math.max(0, 1 - u * u));
-  return canopyBase(x, y) + hoodSeat(x, y) - lowerEnvelope(y);
-}
-
-// The interior aperture follows the lowered glazing depth, leaving the outer wing edge intact.
-function openingWidth(y: number, oldWidth: number): number {
-  const lower = lowerEnvelope(y);
-  const slope = roof(0, y) - roof(1, y);
-  const depthWidth = (roof(0, y) - lower + 0.16) / slope;
-  const wingEdge = (21.44 * (y + 32)) / 52.48;
-  return Math.max(oldWidth, Math.min(wingEdge - 0.65, depthWidth));
-}
-const apertureRing = Array.from({ length: 48 }, (_, i) => {
-  const a = (i * Math.PI) / 24,
-    x = 9 * Math.cos(a),
-    y = -3 + 9 * Math.sin(a);
-  return [Math.sign(x) * openingWidth(y, Math.abs(x)), y];
-});
-let canopyClosedPlanes: { n: Point; d: number }[] = [];
-
-const openingVolumes = convexParts(apertureRing as [number, number][]).map((ids) => {
-  const points = ids.map((i) => apertureRing[i]!);
-  const area = points.reduce((s, a, i) => {
-      const b = points[(i + 1) % points.length]!;
-      return s + a[0]! * b[1]! - b[0]! * a[1]!;
-    }, 0),
-    sign = area > 0 ? 1 : -1;
-  const boundaries: CutPlane[] = points.map((a, i) => {
-    const b = points[(i + 1) % points.length]!,
-      dx = b[0]! - a[0]!,
-      dy = b[1]! - a[1]!,
-      length = Math.hypot(dx, dy),
-      normal: Point = [(sign * dy) / length, (-sign * dx) / length, 0];
-    return { normal, distance: normal[0] * a[0]! + normal[1] * a[1]! };
-  });
+/** Reverse exhaust: its root under the wing, its forward and outboard axis and its side. */
+export function retroMouthAxis(sign: number): {
+  axis: Point;
+  corner: Point;
+  root: Point;
+  side: Point;
+} {
+  const { tipL, tipR } = vertices();
+  const angle = (RETRO.angle * Math.PI) / 180;
   return {
-    boundaries,
-    x0: Math.min(...points.map((p) => p[0]!)),
-    x1: Math.max(...points.map((p) => p[0]!)),
-    y0: Math.min(...points.map((p) => p[1]!)),
-    y1: Math.max(...points.map((p) => p[1]!)),
+    axis: [sign * Math.sin(angle), -Math.cos(angle), 0],
+    corner: sign < 0 ? tipL : tipR,
+    root: [sign * RETRO.root[0], RETRO.root[1], RETRO.root[2]],
+    side: [sign * Math.cos(angle), Math.sin(angle), 0],
   };
-});
-const prepared = new Map<string, { surfaces: Surface[]; tree: Tree | null }>();
-function geometry(paint: Paint) {
-  const key = JSON.stringify(paint);
-  const existing = prepared.get(key);
-  if (existing) return existing;
-  const faces = model({ yaw: 0 }, paint);
-  const bodyPlanes = canopyClosedPlanes.map(({ n, d }) => {
-    const length = Math.hypot(...n);
-    return { normal: n.map((c) => c / length) as unknown as Point, distance: d / length };
-  });
-  const surfaces: Surface[] = [];
-  for (const face of faces) {
-    if (face.silhouette) continue;
-    let pieces = planarTriangles({
-      color: face.color,
-      points: face.points,
-      ...(face.part === undefined ? {} : { kind: face.part }),
-      ...(face.twoSided === undefined ? {} : { twoSided: face.twoSided }),
-    });
-    if (face.opening)
-      for (const opening of openingVolumes)
-        pieces = pieces.flatMap((piece) => {
-          const xs = piece.points.map((p) => p[0]),
-            ys = piece.points.map((p) => p[1]);
-          if (
-            Math.max(...xs) < opening.x0 ||
-            Math.min(...xs) > opening.x1 ||
-            Math.max(...ys) < opening.y0 ||
-            Math.min(...ys) > opening.y1
-          )
-            return [piece];
-          return outside(opening.boundaries, piece);
-        });
-    if (face.collarFace) pieces = pieces.flatMap((piece) => outside(bodyPlanes, piece));
-    surfaces.push(...pieces);
+}
+
+/** Project the forward plume roots through ordinary, banked or stretched ship poses. */
+export function forwardJetMouths(
+  pivot: number,
+  pose: Pose,
+  reach: { halfWidth: number; length: number },
+) {
+  const projected = (centre: number, point: Point) =>
+    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
+  return [-1, 1].map((sign) => ({
+    anchor: projected(pivot, plumeRoot(sign)),
+    axis: projected(0, [0, 1, 0]),
+    half: projected(0, [sign, 0, 0]),
+    occluders: plumeOccluders(pivot, pose, sign, reach),
+  }));
+}
+
+// The light, fixed in the view: from the upper left, in world axes with the viewer at +(1, 1, 1).
+export const LIGHT: Point = unit([-0.2, 0.5, 0.84]);
+// A shell face is a top when its normal's z is above TOP; a top is lit when it meets the light
+// at LIT or more; other faces are left walls when they face screen left.
+const SHELL = { lit: 0.6, top: 0.6 };
+const SHELL_SLOTS = {
+  accent: ["accent", "accentTurned", "accentLeft", "accentRight"],
+  hull: ["top", "topTurned", "wallLeft", "wallRight"],
+  tail: ["top", "topTurned", "tailLeft", "tailRight"],
+} as const;
+
+function shellSlot(material: keyof typeof SHELL_SLOTS, world: Point): PaintSlot {
+  const [lit, turnedTop, left, right] = SHELL_SLOTS[material];
+  if (world[2] > SHELL.top) return dot(world, LIGHT) >= SHELL.lit ? lit : turnedTop;
+  return world[1] >= world[0] ? left : right;
+}
+
+function model(): Face[] {
+  const faces: Face[] = [];
+  const outline = plan(HULL.skirt, HULL.plan);
+  // The skirt surrounds the hull; its parts on the tip caps take the accent.
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[(i + 1) % outline.length]!;
+    const b = outline[i]!;
+    const { caps, inboard } = capSplit([a, b, [b[0], b[1], 0], [a[0], a[1], 0]]);
+    faces.push({ material: "skirt", points: inboard });
+    for (const points of caps) faces.push({ material: "accent", part: "cap", points });
   }
-  const value = { surfaces, tree: partition(surfaces) };
-  prepared.set(key, value);
-  return value;
+  faces.push(...upperFaces());
+  for (const sign of [-1, 1]) {
+    faces.push({ material: "engineOpening", part: `mouth-${sign}`, points: mouth(sign) });
+  }
+  faces.push(...canopy());
+  return faces.filter(({ points }) => points.length >= 3);
+}
+
+const turned = (pose: Pose, points: readonly Point[]) => points.map((point) => place(pose, point));
+
+// The canopy: a closed bubble on an elliptical plan, semi-axes `across` and `along` the hull,
+// centred at local y `centre`, its crown `crown` above the ridge. It sits `base` above the
+// ridge on a saddle that falls `saddle` of the wing's slope across the hull, and carries its
+// own lower envelope `lip` deep, so its outline does not follow the roof crease.
+const CANOPY = {
+  across: 8.8,
+  along: 10,
+  centre: -3,
+  crown: 4.4,
+  base: 0.15,
+  lip: 0.5,
+  saddle: 0.62,
+  segments: 72,
+  rings: 14,
+  // Inside this radius the crown is one planar polygon.
+  flat: 0.3,
+};
+// Glass bands by the smooth surface normal's meeting with the light.
+const GLASS = { highlight: 0.93, shade: 0.36 };
+
+// The wing top's fall per unit across the hull.
+function wingFall(): number {
+  const v = vertices();
+  const { n } = through(v.nose, v.shoulder, v.tipR);
+  return n[0] / n[2];
+}
+
+// The bubble surface at plan angle a (0 forward, a quarter turn to +x) and radius r of 1.
+function bubble(a: number, r: number): Point {
+  const { across, along, base, centre, crown, saddle } = CANOPY;
+  const x = across * r * Math.sin(a);
+  const y = centre - along * r * Math.cos(a);
+  const soft = wingFall() * saddle * across * (x / across) ** 2;
+  return [x, y, ridge(y) - soft + base + crown * Math.sqrt(Math.max(0, 1 - r * r))];
+}
+
+// The smooth bubble's outward normal above local (x, y); the lip takes the rim's.
+function bubbleNormal([x, y]: Point, lip: boolean): Point {
+  const { across, along, centre, crown, saddle } = CANOPY;
+  const [u, v] = [x / across, (y - centre) / along];
+  const inside = 1 - u * u - v * v;
+  if (lip || inside < 0.002) return unit([u / across, v / along, 0]);
+  const fall = crown / Math.sqrt(inside);
+  const zx = -2 * wingFall() * saddle * u - (fall * u) / across;
+  const zy = ridge(1) - ridge(0) - (fall * v) / along;
+  return unit([-zx, -zy, 1]);
+}
+
+function canopy(): Face[] {
+  const { centre, flat, lip, rings, segments } = CANOPY;
+  const faces: Face[] = [];
+  const radius = (ring: number) => flat + ((1 - flat) * (ring - 1)) / (rings - 1);
+  // The crown ring lies in one plane, so the crown is an exact planar face.
+  const level = Array.from({ length: 8 }, (_, i) => bubble((i * Math.PI) / 4, flat)[2]).reduce(
+    (sum, z) => sum + z / 8,
+    0,
+  );
+  const [fore, aft] = [bubble(0, flat), bubble(Math.PI, flat)];
+  const slope = (aft[2] - fore[2]) / (aft[1] - fore[1]);
+  const at = (segment: number, ring: number): Point => {
+    const p = bubble((2 * Math.PI * (segment % segments)) / segments, radius(ring));
+    return ring === 1 ? [p[0], p[1], level + slope * (p[1] - centre)] : p;
+  };
+  const up: Point = [0, 0, 1];
+  faces.push({
+    material: "glass",
+    part: "bubble",
+    points: facing(
+      up,
+      Array.from({ length: segments }, (_, i) => at(i, 1)),
+    ),
+  });
+  for (let i = 0; i < segments; i++) {
+    for (let ring = 1; ring < rings; ring++) {
+      const q = [at(i, ring), at(i + 1, ring), at(i + 1, ring + 1), at(i, ring + 1)] as const;
+      for (const points of [
+        [q[0], q[1], q[2]],
+        [q[0], q[2], q[3]],
+      ])
+        faces.push({ material: "glass", part: "bubble", points: facing(up, points) });
+    }
+    const [a, b] = [at(i, rings), at(i + 1, rings)];
+    const out: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - centre, 0];
+    faces.push({
+      material: "glass",
+      part: "lip",
+      points: facing(out, [a, b, [b[0], b[1], b[2] - lip], [a[0], a[1], a[2] - lip]]),
+    });
+  }
+  return faces;
+}
+
+let prepared: { surfaces: Surface[]; tree: Tree | null } | undefined;
+// The solid is the same under every paint: surfaces carry their material in `color`.
+function geometry() {
+  prepared ??= (() => {
+    const surfaces = model().flatMap((face) =>
+      planarTriangles({
+        color: face.material,
+        points: face.points,
+        ...(face.part === undefined ? {} : { kind: face.part }),
+      }),
+    );
+    return { surfaces, tree: partition(surfaces) };
+  })();
+  return prepared;
+}
+
+// The pose's linear map as the images of the local axes.
+function basis(pose: Pose): [Point, Point, Point] {
+  const origin = place(pose, [0, 0, 0]);
+  return ([0, 1, 2] as const).map((i) =>
+    minus(place(pose, [i === 0 ? 1 : 0, i === 1 ? 1 : 0, i === 2 ? 1 : 0]), origin),
+  ) as [Point, Point, Point];
 }
 function viewer(pose: Pose): Point {
-  const origin = place(pose, [0, 0, 0]);
-  const basis = ([0, 1, 2] as const).map((i) => {
-    const p = place(pose, [i === 0 ? 1 : 0, i === 1 ? 1 : 0, i === 2 ? 1 : 0]);
-    return p.map((c, j) => c - origin[j]!) as unknown as Point;
-  });
-  const determinant = dot(basis[0]!, cross(basis[1]!, basis[2]!));
+  const b = basis(pose);
+  const determinant = dot(b[0], cross(b[1], b[2]));
   return [
-    dot(cross(basis[1]!, basis[2]!), [1, 1, 1]) / determinant,
-    dot(cross(basis[2]!, basis[0]!), [1, 1, 1]) / determinant,
-    dot(cross(basis[0]!, basis[1]!), [1, 1, 1]) / determinant,
+    dot(cross(b[1], b[2]), [1, 1, 1]) / determinant,
+    dot(cross(b[2], b[0]), [1, 1, 1]) / determinant,
+    dot(cross(b[0], b[1]), [1, 1, 1]) / determinant,
   ];
 }
-/** The raised luminous surface stays inside its actual housing even at grazing angles. */
-function visibleOutline(pivot: number, pose: Pose, surface: Surface): V2[] {
-  const points = turned(pose, surface.points as Point[]);
-  if (!surface.twoSided && !facesViewer(points)) return [];
+// A local surface normal in world axes for this pose.
+function worldNormal(pose: Pose, n: Point): Point {
+  const b = basis(pose);
+  const [c0, c1, c2] = [cross(b[1], b[2]), cross(b[2], b[0]), cross(b[0], b[1])];
+  return unit([
+    c0[0] * n[0] + c1[0] * n[1] + c2[0] * n[2],
+    c0[1] * n[0] + c1[1] * n[1] + c2[1] * n[2],
+    c0[2] * n[0] + c1[2] * n[1] + c2[2] * n[2],
+  ]);
+}
+
+// A polygon with a value per vertex, cut where the linear value crosses the threshold.
+type Valued = { points: Point[]; values: number[] };
+function cut({ points, values }: Valued, threshold: number): { above: Valued; below: Valued } {
+  const above: Valued = { points: [], values: [] };
+  const below: Valued = { points: [], values: [] };
+  for (const [i, a] of points.entries()) {
+    const b = points[(i + 1) % points.length]!;
+    const [da, db] = [values[i]! - threshold, values[(i + 1) % points.length]! - threshold];
+    const target = da >= 0 ? above : below;
+    target.points.push(a);
+    target.values.push(values[i]!);
+    if (da >= 0 !== db >= 0) {
+      const p = add(a, minus(b, a), da / (da - db));
+      for (const side of [above, below]) {
+        side.points.push(p);
+        side.values.push(threshold);
+      }
+    }
+  }
+  return { above, below };
+}
+
+// A glass fragment in its flat bands for this pose: highlight, roof and shade.
+function glassBands(pose: Pose, surface: Surface): { points: Point[]; slot: PaintSlot }[] {
+  const lip = surface.kind === "lip";
+  const values = surface.points.map((p) => dot(worldNormal(pose, bubbleNormal(p, lip)), LIGHT));
+  const bands: { points: Point[]; slot: PaintSlot }[] = [];
+  for (let i = 1; i + 1 < surface.points.length; i++) {
+    const ids = [0, i, i + 1];
+    const high = cut(
+      { points: ids.map((id) => surface.points[id]!), values: ids.map((id) => values[id]!) },
+      GLASS.highlight,
+    );
+    const low = cut(high.below, GLASS.shade);
+    bands.push(
+      { points: high.above.points, slot: "canopyHighlight" },
+      { points: low.above.points, slot: "canopyRoof" },
+      { points: low.below.points, slot: "canopyShade" },
+    );
+  }
+  return bands.filter(({ points }) => points.length >= 3);
+}
+
+// A surface's fragments with their paint slots for this pose.
+function toned(pose: Pose, surface: Surface): { points: readonly Point[]; slot: PaintSlot }[] {
+  const material = surface.color as Material;
+  if (material === "glass") return glassBands(pose, surface);
+  if (material === "skirt" || material === "engineOpening") {
+    return [{ points: surface.points, slot: material }];
+  }
+  const world = unit(normal(turned(pose, surface.points)));
+  return [{ points: surface.points, slot: shellSlot(material, world) }];
+}
+
+/** The raised luminous surface stays inside its actual wall even at grazing angles. */
+function visibleOutline(
+  pivot: number,
+  pose: Pose,
+  kind: string | undefined,
+  local: readonly Point[],
+): V2[] {
+  const points = turned(pose, local);
+  if (!facesViewer(points)) return [];
   let projected: Point[] = points.map((p) => {
     const [x, y] = projectAt(pivot, pivot, p);
     return [x, y, 0];
   });
-  const sign = surface.kind === "mouth--1" ? -1 : surface.kind === "mouth-1" ? 1 : undefined;
+  const sign = kind === "mouth--1" ? -1 : kind === "mouth-1" ? 1 : undefined;
   if (sign !== undefined) {
-    const housing = turned(pose, engineOpeningGeometry(sign).housing).map((p) =>
-      projectAt(pivot, pivot, p),
-    );
+    const housing = turned(pose, wallOf(sign)).map((p) => projectAt(pivot, pivot, p));
     const area = housing.reduce((sum, a, i) => {
       const b = housing[(i + 1) % housing.length]!;
       return sum + a[0] * b[1] - b[0] * a[1];
@@ -880,92 +765,90 @@ function visibleOutline(pivot: number, pose: Pose, surface: Surface): V2[] {
     const winding = area > 0 ? 1 : -1;
     for (const [i, a] of housing.entries()) {
       const b = housing[(i + 1) % housing.length]!;
-      const normal: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
-      projected = split({ normal, distance: normal[0] * a[0] + normal[1] * a[1] }, projected).back;
+      const edge: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
+      projected = split(
+        { normal: edge, distance: edge[0] * a[0] + edge[1] * a[1] },
+        projected,
+      ).back;
       if (projected.length < 3) return [];
     }
   }
   return projected.map(([x, y]) => [x, y]);
 }
 
-/** Visible vector fragments, geometrically clipped and ordered at their actual depths. */
-export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string; outline: V2[] }[] {
-  return ordered(viewer(pose), geometry(paint).tree).flatMap((surface) => {
-    const outline = visibleOutline(pivot, pose, surface);
-    return outline.length < 3 ? [] : [{ color: surface.color, outline }];
-  });
-}
-/** Actual visible tail-side regions used to redraw the painted hull above normal flames. */
-export function tailOccluders(pivot: number, pose: Pose): V2[][] {
-  return ordered(viewer(pose), geometry(classic.paint).tree).flatMap((surface) => {
-    if (surface.kind !== "side") return [];
-    const outline = visibleOutline(pivot, pose, surface);
-    return outline.length < 3
-      ? []
-      : [outline.map(([x, y]) => [Number(x.toFixed(4)), Number(y.toFixed(4))] as V2)];
-  });
+const fragments = new Map<string, { outline: V2[]; slot: PaintSlot }[]>();
+// Visible fragments with their slots for a pose, shared by every paint.
+function slotted(pivot: number, pose: Pose) {
+  const key = JSON.stringify([
+    pivot,
+    pose.yaw,
+    pose.roll ?? 0,
+    pose.stretch ?? 1,
+    pose.squash ?? 1,
+  ]);
+  let value = fragments.get(key);
+  if (!value) {
+    value = ordered(viewer(pose), geometry().tree).flatMap((surface) =>
+      toned(pose, surface).flatMap(({ points, slot }) => {
+        const outline = visibleOutline(pivot, pose, surface.kind, points);
+        return outline.length < 3 ? [] : [{ outline, slot }];
+      }),
+    );
+    fragments.set(key, value);
+  }
+  return value;
 }
 
-/** Surfaces nearer than the horizontal exhaust plane, in the same frame as jet anchors. */
-export function mouthOccluders(
-  bounds: { length: number; width: number },
+/** Visible vector fragments, geometrically clipped and ordered at their actual depths. */
+export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string; outline: V2[] }[] {
+  return slotted(pivot, pose).map(({ outline, slot }) => ({ color: paint[slot], outline }));
+}
+
+/**
+ * The hull nearer than a forward plume, as outlines in the frame of the jet anchors: every
+ * visible surface above the exhaust plane, inside the plume's widest and longest reach.
+ */
+export function plumeOccluders(
+  pivot: number,
+  pose: Pose,
   sign: number,
-  yaw: number,
-  pivot = FRAME / 2,
-  station?: { middle: Point; half: Point },
+  reach: { halfWidth: number; length: number },
 ): V2[][] {
-  const { middle, half } = station ?? mouthAxis(sign);
+  const root = plumeRoot(sign);
   const corners = [
-    [-bounds.width, 0],
-    [bounds.width, 0],
-    [bounds.width, bounds.length],
-    [-bounds.width, bounds.length],
-  ].map(([w, l]) =>
-    projectAt(
-      pivot,
-      pivot,
-      place({ yaw }, [
-        middle[0] + w! * half[0],
-        middle[1] + w! * half[1] + l!,
-        middle[2] + w! * half[2],
-      ]),
-    ),
-  );
-  const sign2 =
+    [-reach.halfWidth, 0],
+    [reach.halfWidth, 0],
+    [reach.halfWidth, reach.length],
+    [-reach.halfWidth, reach.length],
+  ].map(([w, l]) => projectAt(pivot, pivot, place(pose, [root[0] + w!, root[1] + l!, root[2]])));
+  const winding =
     corners.reduce((s, a, i) => {
       const b = corners[(i + 1) % 4]!;
       return s + a[0] * b[1] - b[0] * a[1];
     }, 0) > 0
       ? 1
       : -1;
-  const limits: CutPlane[] = corners.map((a, i) => {
-    const b = corners[(i + 1) % 4]!,
-      dx = b[0] - a[0],
-      dy = b[1] - a[1],
-      n = Math.hypot(dx, dy),
-      normal: Point = [(sign2 * dy) / n, (-sign2 * dx) / n, 0];
-    return { normal, distance: normal[0] * a[0] + normal[1] * a[1] };
+  const limits = corners.map((a, i) => {
+    const b = corners[(i + 1) % 4]!;
+    const edge: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
+    return { normal: edge, distance: edge[0] * a[0] + edge[1] * a[1] };
   });
-  const slope = half[2] / half[0];
-  const boundary: CutPlane = {
-    normal: [-slope, 0, 1],
-    distance: middle[2] - slope * middle[0],
-  };
-  return geometry(classic.paint).surfaces.flatMap((surface) => {
-    if (!station && surface.kind === `mouth-${sign}`) return [];
-    const points = split(boundary, surface.points).front;
-    if (points.length < 3 || !plane(points)) return [];
-    let projected = visibleOutline(pivot, { yaw }, { ...surface, points }).map(([x, y]): Point => [
+  const fragments = ordered(viewer(pose), geometry().tree).flatMap((surface) => {
+    const above = split({ normal: [0, 0, 1], distance: root[2] }, surface.points).front;
+    if (above.length < 3) return [];
+    let projected = visibleOutline(pivot, pose, surface.kind, above).map(([x, y]): Point => [
       x,
       y,
       0,
     ]);
-    if (projected.length < 3) return [];
     for (const limit of limits) {
-      projected = split(limit, projected).back;
       if (projected.length < 3) return [];
+      projected = split(limit, projected).back;
     }
-    if (!plane(projected)) return [];
-    return [projected.map((p) => [Number(p[0].toFixed(4)), Number(p[1].toFixed(4))] as V2)];
+    const outline = projected.map(([x, y]): V2 => [x, y]);
+    return outline.length < 3 ? [] : [{ color: "hull", outline }];
   });
+  return paintRegions(fragments).flatMap(({ loops }) =>
+    loops.map((loop) => loop.map(([x, y]): V2 => [Number(x.toFixed(4)), Number(y.toFixed(4))])),
+  );
 }

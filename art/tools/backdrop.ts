@@ -82,8 +82,8 @@ const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b
 const SHIP_WHITE = classic.paint.top.toUpperCase();
 const SHIP_HULL_DARK = [
   classic.paint.top,
-  classic.paint.frontSides,
-  classic.paint.rearSides,
+  classic.paint.wallRight,
+  classic.paint.tailRight,
   classic.paint.skirt,
 ]
   .sort((a, b) => luminance(float(a)) - luminance(float(b)))[0]!

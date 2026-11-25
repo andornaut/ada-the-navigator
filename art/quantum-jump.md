@@ -24,10 +24,10 @@ The nine pose definitions share `art/tools/ship-poses.ts` with the
 [shared material geometry](ship.md#shared-material-geometry) exporter.
 `ship-materials.json` contains each pose's actual ordered material paths,
 with the same frame, pivot and transform. Pose paths remain logical metadata;
-54 physical coloured pose SVGs are retired and must not be emitted. Normal
-pose jets share the opening-centred `normalAperture` profile, opaque outer
-material and clear-front composition described in [speed jets](ship.md#speed-jets).
-The reverse profile is unchanged.
+54 physical coloured pose SVGs are retired and must not be emitted. Pose
+jets are the two-layer teardrop plumes described in
+[speed jets](ship.md#speed-jets), rooted at each pose's projected mouth
+centres with that pose's occluders.
 
 ## Timeline
 
@@ -111,16 +111,13 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   version 1 geometry has the same 256 frame and one heading at index 0, with
   projected mouths for that exact bank, roll, stretch and squash.
 - The jet renderer uses the selected main engine/field layers with the same
-  rear-face normal-aperture profile and solid outer as forward flight. Complete
-  triangles render above the base hull; the actual painted tail is redrawn above
-  overlapping flames using the shared projected tail regions.
-  The static outer cue retains 16 model units; core and halo lengths are the
-  canonical 0.55 and 1.1 ratios. The projected axis already includes the pose
-  transform: do not normalize it or apply frame conversion or stretch again.
-- Shared polygon construction comes from `src/game/jetGeometry.ts`; producer
-  and runtime use the same pure geometry. The runtime does not import Art's
-  build tools or use a separate warp palette. Whitening and alpha follow the
-  existing ship step, and non-thrust poses retain no jets.
+  plume profile as forward flight. Complete plumes render above the base hull;
+  the hull is redrawn inside each mouth's `occluders`. The static outer cue
+  retains 16 model units and the core half of that. The projected axis and
+  half vectors already include the pose transform: do not normalize them or
+  apply frame conversion or stretch again.
+- The runtime does not use a separate warp palette. Whitening and alpha follow
+  the existing ship step, and non-thrust poses retain no jets.
 - From the route map the charge steps draw the sprite at the jump centre,
   turning from the heading the route map ship shows.
 - A flight destination arrives with the ship at heading 48 at the jump centre,
@@ -221,8 +218,8 @@ sheets are PNG.
   (the sheet id) and `poses`, each with `id`, `roll`, `stretch`, `squash`,
   `thrust` and `paths` (one hull SVG path per paint scheme id), plus optional
   `jets` for thrust poses: `{ version, frame, length, headings }`. Each
-  heading mouth uses `anchor`, `axis`, `half`, `outerCorner` and
-  `coreOutboard: true`; forward poses have no `rearClip`.
+  heading mouth uses `anchor`, `axis`, `half` and `occluders`, as in
+  `ship-jets.json`.
 - `iris` (`rim`, `line`), `streak`, `emergency` and `reducedMotion`
   (`durationMs`, `still`, `steps`, `ship`) as above.
 - CLEANUP (added 2026-11-12): each phase also keeps `iris`, `field`, `white`,

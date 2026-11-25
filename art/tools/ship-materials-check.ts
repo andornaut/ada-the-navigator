@@ -8,7 +8,7 @@ import {
   SHIP_MATERIAL_SLOTS,
   type ShipMaterialDraw,
 } from "./ship-material-geometry.ts";
-import { drawn, FRAME, SCHEMES } from "./ship-model.ts";
+import { drawn, FRAME, PAINT_SLOTS, SCHEMES } from "./ship-model.ts";
 import { svgPaths } from "./ship-paths.ts";
 import { WARP_FRAME, WARP_HEADING, WARP_POSES } from "./ship-poses.ts";
 
@@ -21,38 +21,37 @@ const palette = JSON.parse(readFileSync(new URL("ship-paint.json", art), "utf8")
 const resolved = (draws: readonly ShipMaterialDraw[], paint: (typeof palette.schemes)[number]) =>
   draws.map((draw) => ({ fill: paint[draw.slot], path: contract.paths[draw.path] }));
 
-test("semantic profiles reproduce canonical in-memory heading and warp drawings", () => {
+test("the published file is the producer's current output", () => {
+  assert.deepEqual(
+    JSON.parse(readFileSync(new URL("ship-materials.json", art), "utf8")),
+    JSON.parse(JSON.stringify(contract)),
+  );
+});
+
+test("slot draws reproduce the in-memory heading and warp drawings under every paint", () => {
   for (const paint of palette.schemes) {
     const scheme = SCHEMES.find(({ id }) => id === paint.id)!;
-    const profile = paint.frontSides === paint.skirt ? "frontSkirt" : "distinct";
     for (const heading of contract.ship.headings) {
       const reference = svgPaths(drawn(FRAME / 2, scheme.paint, { yaw: heading.index })).map(
         ({ color, path }) => ({ fill: color, path }),
       );
-      assert.deepEqual(
-        resolved(heading.profiles[profile], paint),
-        reference,
-        `${paint.id} ${heading.index}`,
-      );
+      assert.deepEqual(resolved(heading.draws, paint), reference, `${paint.id} ${heading.index}`);
     }
     for (const pose of contract.warp.poses) {
       const authored = WARP_POSES.find(({ id }) => id === pose.id)!;
       const reference = svgPaths(
         drawn(WARP_FRAME / 2, scheme.paint, { ...authored, thrust: false, yaw: WARP_HEADING }),
       ).map(({ color, path }) => ({ fill: color, path }));
-      assert.deepEqual(
-        resolved(pose.profiles[profile], paint),
-        reference,
-        `${paint.id} ${pose.id}`,
-      );
+      assert.deepEqual(resolved(pose.draws, paint), reference, `${paint.id} ${pose.id}`);
     }
   }
 });
 
 test("shared geometry retains canonical headings, pivots and all authored warp poses", () => {
-  assert.equal(contract.version, 1);
+  assert.equal(contract.version, 2);
   assert.deepEqual(contract.shipHeadings, SHIP_HEADING_CONTRACT);
   assert.deepEqual(contract.slots, SHIP_MATERIAL_SLOTS);
+  assert.deepEqual(contract.slots, PAINT_SLOTS);
   assert.equal(contract.palettePath, "/art/ship-paint.json");
   assert.equal(contract.ship.frame, 96);
   assert.equal(contract.ship.displayScale, 42 / 96);
@@ -92,19 +91,21 @@ test("shared geometry retains canonical headings, pivots and all authored warp p
   );
 });
 
-test("path references are opaque, valid and deduplicated without merging Classic materials", () => {
+test("path references are opaque, valid and deduplicated, one path per slot", () => {
   assert.equal(new Set(contract.paths).size, contract.paths.length);
   for (const entry of [...contract.ship.headings, ...contract.warp.poses]) {
-    for (const profile of Object.values(entry.profiles)) {
-      for (const draw of profile) {
-        assert.equal(draw.alpha, 1);
-        assert.ok(
-          Number.isInteger(draw.path) && draw.path >= 0 && draw.path < contract.paths.length,
-        );
-        assert.ok(SHIP_MATERIAL_SLOTS.includes(draw.slot));
-      }
+    for (const draw of entry.draws) {
+      assert.equal(draw.alpha, 1);
+      assert.ok(Number.isInteger(draw.path) && draw.path >= 0 && draw.path < contract.paths.length);
+      assert.ok(SHIP_MATERIAL_SLOTS.includes(draw.slot));
     }
+    assert.equal(new Set(entry.draws.map(({ slot }) => slot)).size, entry.draws.length);
   }
-  assert.equal(SCHEMES[0]!.paint.frontSides === SCHEMES[0]!.paint.skirt, false);
-  assert.ok(SCHEMES.slice(1).every(({ paint }) => paint.frontSides === paint.skirt));
+});
+
+test("no paint gives two slots one colour, so a path per slot leaves no shared-colour seam", () => {
+  for (const { id, paint } of SCHEMES) {
+    const colours = PAINT_SLOTS.map((slot) => paint[slot].toLowerCase());
+    assert.equal(new Set(colours).size, colours.length, id);
+  }
 });

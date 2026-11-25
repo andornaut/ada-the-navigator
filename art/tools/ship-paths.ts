@@ -248,11 +248,10 @@ export function paintRegions(
       }
       const id = pattern[i]!;
       const polygons = grouped.get(id) ?? [];
-      polygons.push(
-        ...visible
-          .map(({ points }) => points.map(([x, y]): Xy => [x, y]))
-          .filter((p) => Math.abs(area(p)) > EPSILON),
-      );
+      for (const { points } of visible) {
+        const polygon = points.map(([x, y]): Xy => [x, y]);
+        if (Math.abs(area(polygon)) > EPSILON) polygons.push(polygon);
+      }
       grouped.set(id, polygons);
       indices.set(id, i);
     }

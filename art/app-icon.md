@@ -1,8 +1,7 @@
 # App icon
 
 The app icon shows Ada's Classic ship facing the upper right at heading 46 of
-64, with two normal jets at medium thrust. The hull uses the shared ship model
-and its original rear attachments. All exports use the opaque dark lavender
+64, with two plumes at medium thrust. The hull uses the shared ship model. All exports use the opaque dark lavender
 background.
 
 ## Files
@@ -27,9 +26,9 @@ neighbour sampling, 32 px favicon enlarged with nearest neighbour sampling.
 ## Palette and maskable safe zone
 
 - Background: `#292734`.
-- Hull: the Classic ship paint, top `#ffffff`, steep panels `#929ca3`, rear
-  panels `#28558a` and skirt `#abbfce`.
-- Walls and canopy sides `#1767b3`, canopy roof `#2585d0`, engine mouths `#64caff`.
+- Hull, canopy and mouths: the Classic [ship paint](ship.md#paint-schemes)
+  under the model's light, with accent `#2456b8` tip caps.
+- Plumes: Engine level 1's dark-field outer and core.
 
 The regular composition centres the combined hull and jet bounds and scales
 their farthest point to 48% of the canvas width. The maskable icon scales the
@@ -41,11 +40,10 @@ of other shapes.
 ## Export and integration
 
 Rebuild with `node art/tools/app-icon.ts`. The exporter uses the Classic
-[ship model](ship.md) and Engine level 1 normal jet data at speed fraction
-0.6. The length curve gives 14.64 model units before projection. The exported
-tail regions restore the painted hull where the jets pass behind it. The
-launcher PNGs use all the normal layers. At 16 and 32 px the shared small
-display profile uses the blue centre and omits the pale core.
+[ship model](ship.md) and Engine level 1 [plumes](ship.md#speed-jets) at speed
+fraction 0.6. The length curve gives 14.64 model units before projection. The
+plume occluders restore the painted hull where it is nearer than a plume.
+Every size reduces the one master, with both plume layers.
 
 The command writes every PNG, the two-size ICO and the contact sheet. Raster
 exports sample the projected geometry at 4× the 512 px master before

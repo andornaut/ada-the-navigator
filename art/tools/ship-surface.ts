@@ -174,6 +174,12 @@ export function convexParts(points: readonly (readonly [number, number])[]): num
 
 /** Keep only the parts outside a convex volume, for the roof opening and inset collar. */
 export function outside(boundaries: readonly Plane[], surface: Surface): Surface[] {
+  // A surface wholly beyond one boundary stays whole: cutting it at the others only dices it.
+  for (const boundary of boundaries) {
+    if (surface.points.every((p) => dot(boundary.normal, p) - boundary.distance >= -EPSILON)) {
+      return [surface];
+    }
+  }
   let inside = surface.points;
   const result: Surface[] = [];
   for (const boundary of boundaries) {

@@ -42,11 +42,11 @@ The title ship is the in-game ship art, not a separate drawing.
 - Frame: the selected paint's `ship-52` (Classic `ship-52` before a paint is
   chosen), nose right with a slight climb, its 96 frame drawn 280 by 280.
 - Speed jets from `ship-jets.json` at `f = 0.8` (`title-screen.json`
-  `ship.jetSpeed`): 21.36 ship units long, the halo at alpha 0.25, drawn behind
-  the frame at the frame's scale (280 / 96), as in flight.
+  `ship.jetSpeed`): 21.36 ship units long, both plume layers at the frame's
+  scale (280 / 96), composed with the hull as in flight.
 - Held still: no bob, flicker or jet change (`ship.animated` is false).
 - Ink extents at the [layout](layout.md#start-screen) position: hull 281 to
-  484 by 48 to 141 in play-view px, jets reaching 226.3.
+  484 by 42 to 141 in play-view px, jets reaching 232.8.
 
 ## Field
 

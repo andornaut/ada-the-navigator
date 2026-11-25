@@ -91,28 +91,16 @@
           "level": 1,
           "layers": [
             {
-              "name": "halo",
-              "color": "#70ace8",
-              "width": 2.4,
-              "length": 1.1,
-              "alpha": {
-                "from": 0,
-                "to": 1,
-                "max": 0
-              },
-              "normalColor": "#101a2e"
-            },
-            {
               "name": "outer",
               "colors": ["#1767b3", "#1767b3"],
-              "width": 1.6,
+              "width": 5.8,
               "length": 1
             },
             {
               "name": "core",
               "colors": ["#2585d0", "#64caff"],
-              "width": 0.8,
-              "length": 0.55
+              "width": 1.6,
+              "length": 0.5
             }
           ]
         },
@@ -120,28 +108,16 @@
           "level": 2,
           "layers": [
             {
-              "name": "halo",
-              "color": "#e34a3c",
-              "width": 2.4,
-              "length": 1.1,
-              "alpha": {
-                "from": 0,
-                "to": 1,
-                "max": 0
-              },
-              "normalColor": "#583036"
-            },
-            {
               "name": "outer",
               "colors": ["#9e3027", "#9e3027"],
-              "width": 1.6,
+              "width": 5.8,
               "length": 1
             },
             {
               "name": "core",
               "colors": ["#cf4935", "#ee7960"],
-              "width": 0.8,
-              "length": 0.55
+              "width": 1.6,
+              "length": 0.5
             }
           ]
         },
@@ -149,28 +125,16 @@
           "level": 3,
           "layers": [
             {
-              "name": "halo",
-              "color": "#e3b13f",
-              "width": 2.4,
-              "length": 1.1,
-              "alpha": {
-                "from": 0,
-                "to": 1,
-                "max": 0
-              },
-              "normalColor": "#584a37"
-            },
-            {
               "name": "outer",
               "colors": ["#91620e", "#91620e"],
-              "width": 1.6,
+              "width": 5.8,
               "length": 1
             },
             {
               "name": "core",
               "colors": ["#d49b22", "#f2cf62"],
-              "width": 0.8,
-              "length": 0.55
+              "width": 1.6,
+              "length": 0.5
             }
           ]
         }

@@ -33,7 +33,7 @@ const CANVAS = { width: 960, height: 540 } as const;
 const HEADING = (SHIP_HEADINGS * 281.25) / 360;
 // Logical px per ship frame px, and the canvas point (logical px) under the frame centre.
 const SCALE = 5.85;
-const CENTRE: Xy = [476, 245];
+const CENTRE: Xy = [476, 257];
 // The subject band: the canopy and the hull round it (art/layout.md, run anchor).
 const SUBJECT = { top: 172, bottom: 256 } as const;
 // Treatment d's blur, 1.2 design px, in logical px.
@@ -56,6 +56,8 @@ const RIM = { clear: 2, opaque: 6 } as const;
 
 const HOLODISK = { pink: "#ffb3ec", magenta: "#e868c8", plum: "#a83a96" } as const;
 const ASTRA = "#8fe0f2";
+// Astra's light over the canopy, logical px: its tail stays inside the holodisk box.
+const ASTRA_LIGHT = { rx: 115.6, ry: 80.9 } as const;
 const ENGINE = "#64caff";
 const EMERGENCY = { glow: "#ff6a6a", engine: "#ff8a7a", light: "#e05a5a", deep: "#300c14" };
 
@@ -68,9 +70,14 @@ const faces = drawn(FRAME / 2, classic.paint, { yaw: HEADING });
 
 // The canopy roof's bounds on the canvas, logical px: the dome the subject band holds and the
 // point the drive and Astra's light key from.
+const GLAZING = [
+  classic.paint.canopyHighlight,
+  classic.paint.canopyRoof,
+  classic.paint.canopyShade,
+];
 const canopy = (() => {
   const points = faces
-    .filter(({ color }) => color.toLowerCase() === classic.paint.canopyRoof.toLowerCase())
+    .filter(({ color }) => GLAZING.includes(color))
     .flatMap(({ outline }) => outline.map((p) => toCanvas(p as unknown as Xy)));
   const xs = points.map(([x]) => x);
   const ys = points.map(([, y]) => y);
@@ -79,7 +86,7 @@ const canopy = (() => {
 const CANOPY_CENTRE: Xy = [(canopy.x0 + canopy.x1) / 2, (canopy.y0 + canopy.y1) / 2];
 // Astra's drive: on the hull just ahead of the canopy, toward the nose.
 const DRIVE: Xy = [
-  canopy.x1 + (canopy.x1 - canopy.x0) * 0.28,
+  canopy.x1 + (canopy.x1 - canopy.x0) * 0.225,
   CANOPY_CENTRE[1] + (canopy.y1 - canopy.y0) * 0.35,
 ];
 
@@ -528,12 +535,11 @@ function holodisk(doc: Doc, frame: number) {
         opacity: 230 / 255,
       });
     }
-    const w = canopy.x1 - canopy.x0;
     const light = glow(
       doc,
       CANOPY_CENTRE,
-      w * 0.9,
-      w * 0.63,
+      ASTRA_LIGHT.rx,
+      ASTRA_LIGHT.ry,
       mute(rgb(ASTRA)),
       frame === 2 ? 110 : 150,
       [8, SOFTEN],

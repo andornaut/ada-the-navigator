@@ -8,14 +8,12 @@ import {
   DISPLAY,
   drawn,
   FRAME,
-  highlight,
   forwardJetMouths,
   nose,
   SCHEMES,
   UP,
 } from "./ship-model.ts";
-import { JET_LENGTH, JET_LEVELS } from "./ship-jet-layers.ts";
-import { normalJetLayers } from "./ship-normal-materials.ts";
+import { JET_LENGTH, JET_LEVELS, JET_PROFILE, JET_SHAPE, jetLayers } from "./ship-jet-layers.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
@@ -25,21 +23,21 @@ const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const paintOnly = process.argv.includes("--paint-only");
 const jetsOnly = process.argv.includes("--jets-only");
 
-// Speed jets use centred, foreground normal apertures with the selected Engine-level materials.
+// Speed jets: plume roots at the mouth centres per heading, the profile and the layers by
+// Engine level, with the hull regions that draw over a plume at its longest.
 function jets(): string {
+  const reach = { halfWidth: JET_SHAPE.outer.width, length: JET_LENGTH.base + JET_LENGTH.scale };
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
-    mouths: forwardJetMouths(FRAME / 2, { yaw }),
+    mouths: forwardJetMouths(FRAME / 2, { yaw }, reach),
   }));
   const contract = {
     version: 1,
     shipHeadings: SHIP_HEADING_CONTRACT,
     frame: 96,
     length: JET_LENGTH,
-    engineLevels: JET_LEVELS.map((entry) => ({
-      level: entry.level,
-      layers: normalJetLayers(entry),
-    })),
+    profile: JET_PROFILE,
+    engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
     headings,
   };
   return json(contract);
@@ -50,25 +48,18 @@ function jets(): string {
 const SILHOUETTE_TOLERANCE = 0.5;
 
 // The drawn silhouette of idle heading `yaw` as convex parts in frame px, traced from the
-// frame's fills (no strokes, so no growth) and checked against them. Paint schemes share the
-// geometry; every scheme must trace to the same parts.
+// frame's fills (no strokes, so no growth) and checked against them. The solid is the same
+// under every paint, so the one set serves all six.
 function collision(yaw: number): V2[][] {
-  const traced = SCHEMES.map((scheme) => {
-    const mask = rasterize(
-      drawn(FRAME / 2, scheme.paint, { yaw }).map(({ outline }) => outline),
-      FRAME,
-      FRAME,
-    );
-    const { collision: parts, tips } = trace(mask, SILHOUETTE_TOLERANCE);
-    if (tips.length) throw new Error(`ship ${yaw} ${scheme.id}: the outline has a notch tip`);
-    check(`ship ${yaw} ${scheme.id}`, parts, mask);
-    return parts;
-  });
-  const [first] = traced;
-  if (traced.some((parts) => JSON.stringify(parts) !== JSON.stringify(first))) {
-    throw new Error(`ship ${yaw}: paint schemes trace to different collision parts`);
-  }
-  return first!;
+  const mask = rasterize(
+    drawn(FRAME / 2, classic.paint, { yaw }).map(({ outline }) => outline),
+    FRAME,
+    FRAME,
+  );
+  const { collision: parts, tips } = trace(mask, SILHOUETTE_TOLERANCE);
+  if (tips.length) throw new Error(`ship ${yaw}: the outline has a notch tip`);
+  check(`ship ${yaw}`, parts, mask);
+  return parts;
 }
 
 // Nose and drawn silhouette per heading in frame px, projected like the frames; shots leave
@@ -93,11 +84,11 @@ if (!jetsOnly)
     `${output}ship-paint.json`,
     json({
       version: 1,
-      schemes: SCHEMES.map(({ id, name, paint }) => ({
+      schemes: SCHEMES.map(({ canopySides, id, name, paint }) => ({
         id,
         name,
         ...paint,
-        canopyHighlight: highlight(paint.canopyRoof),
+        canopySides,
       })),
     }),
   );

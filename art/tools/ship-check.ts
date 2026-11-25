@@ -4,36 +4,46 @@ import test from "node:test";
 
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
+import { rgb, toOklab } from "./oklab.ts";
+import {
+  anchor,
+  ENEMY_HEADINGS,
+  SHIP_HEADINGS,
+  SHIP_HEADING_CONTRACT,
+  vector,
+} from "./projection.ts";
+import {
+  JET_LENGTH,
+  JET_LEVELS,
+  JET_PROFILE,
+  JET_SHAPE,
+  jetLayers,
+  LIGHT_FIELD_JET_LEVELS,
+  RETRO_JET,
+} from "./ship-jet-layers.ts";
+import { AUTHORED_JET_CURVE, AUTHORED_JET_LENGTH } from "./ship-jet-svg.ts";
 import {
   classic,
   DISPLAY,
   drawn,
   ENGINE_MATERIAL_RELATIONSHIPS,
-  engineOpeningGeometry,
-  ENGINE_OPENING_SCALE,
-  NORMAL_CORE_BASE_SCALE,
-  FRAME,
   forwardJetMouths,
-  jetAttachment,
-  normalJetStation,
+  FRAME,
+  PAINT_SLOTS,
+  plumeRoot,
+  retroMouthAxis,
   SCHEMES,
+  TIP_CAP_X,
+  TONE_STEPS,
   UP,
 } from "./ship-model.ts";
-import { AUTHORED_JET_CURVE, AUTHORED_JET_LENGTH } from "./ship-jet-svg.ts";
-import { paintShip } from "./ship-raster.ts";
 import { svgPaths } from "./ship-paths.ts";
-import { rgb, toOklab } from "./oklab.ts";
-import {
-  ENEMY_HEADINGS,
-  projectAt,
-  rotate,
-  round,
-  SHIP_HEADINGS,
-  SHIP_HEADING_CONTRACT,
-} from "./projection.ts";
+import { plumePolygon } from "./ship-plume.ts";
+import { paintShip } from "./ship-raster.ts";
 
 const assets = new URL("../../public/art/", import.meta.url);
 const worldView = (degrees: number) => (degrees * SHIP_HEADINGS) / 360;
+const ALL = Array.from({ length: SHIP_HEADINGS }, (_, index) => index);
 
 test("a sampled canopy tangency retains closed vector material contours", () => {
   const fragments = drawn(48, classic.paint, { yaw: worldView(73.125) });
@@ -49,37 +59,65 @@ const luminance = (hex: string) =>
     0,
   );
 
-test("exported Classic materials and purchased paint ratios match their contracts", () => {
+test("exported paints match the schemes: authored Classic tones and derived steps", () => {
   const metadata = JSON.parse(readFileSync(new URL("ship-paint.json", assets), "utf8")) as {
-    schemes: { id: string; name: string; top: string; price?: number }[];
+    schemes: Record<string, string | undefined>[];
   };
   assert.deepEqual(
     metadata.schemes.map(({ id }) => id),
     ["classic", "cobalt", "seafoam", "graphite", "iris", "amber"],
   );
   assert.deepEqual(
-    metadata.schemes.map(({ id, name, top }) => ({ id, name, top })),
-    SCHEMES.map(({ id, name, paint }) => ({ id, name, top: paint.top })),
+    metadata.schemes,
+    SCHEMES.map(({ canopySides, id, name, paint }) => ({ id, name, ...paint, canopySides })),
   );
-  assert.equal(metadata.schemes.find(({ id }) => id === "amber")!.top, "#f4b665");
   assert(metadata.schemes.every((scheme) => scheme.price === undefined));
-  assert.equal(classic.paint.frontSides, "#929ca3");
-  assert.equal(classic.paint.rearSides, "#28558a");
+  assert.deepEqual(
+    PAINT_SLOTS.map((slot) => classic.paint[slot]),
+    [
+      "#ffffff",
+      "#ebf1f7",
+      "#b4c4d6",
+      "#8497ae",
+      "#7890ad",
+      "#4d6584",
+      "#2456b8",
+      "#2251af",
+      "#1a418f",
+      "#123271",
+      "#abbfce",
+      "#87bce5",
+      "#2585d0",
+      "#1f78c3",
+      "#86deff",
+    ],
+  );
+  assert.deepEqual(
+    SCHEMES.map(({ paint }) => paint.accent),
+    ["#2456b8", "#16245c", "#f07a5a", "#f6efe6", "#e0489f", "#12233a"],
+  );
+  // Each derived tone keeps its step's linear luminance ratio to its top after byte rounding.
+  const steps = [
+    ["top", "topTurned", TONE_STEPS.turned],
+    ["top", "wallLeft", TONE_STEPS.wallLeft],
+    ["top", "wallRight", TONE_STEPS.wallRight],
+    ["top", "tailLeft", TONE_STEPS.tailLeft],
+    ["top", "tailRight", TONE_STEPS.tailRight],
+    ["accent", "accentTurned", TONE_STEPS.turned],
+    ["accent", "accentLeft", TONE_STEPS.wallLeft],
+    ["accent", "accentRight", TONE_STEPS.wallRight],
+  ] as const;
   for (const { id, paint } of SCHEMES) {
-    const exported = metadata.schemes.find((scheme) => scheme.id === id)!;
-    for (const [material, color] of Object.entries(paint))
-      assert.equal(exported[material as keyof typeof exported], color);
-  }
-  const purchasedRatios = { frontSides: "#b2bec6", rearSides: "#647d8d", skirt: "#abbfce" };
-  for (const { paint } of SCHEMES.filter(({ id }) => id !== "classic"))
-    for (const tier of ["frontSides", "rearSides", "skirt"] as const) {
-      const expected = luminance(purchasedRatios[tier]);
-      const actual = luminance(paint[tier]) / luminance(paint.top);
-      assert(
-        Math.abs(actual - expected) < 0.006,
-        `${tier} must preserve the luminance ratio after byte rounding`,
-      );
+    for (const [top, slot, level] of steps) {
+      if (id === "classic" && top === "top") continue;
+      const actual = luminance(paint[slot]) / luminance(paint[top]);
+      assert(Math.abs(actual - linear(level)) < 0.02, `${id} ${slot}`);
     }
+    if (id !== "classic") {
+      const skirt = luminance(paint.skirt) / luminance(paint.top);
+      assert(Math.abs(skirt - luminance("#abbfce")) < 0.006, `${id} skirt`);
+    }
+  }
   assert.deepEqual([FRAME, DISPLAY, UP], [96, 42, 40]);
 });
 
@@ -148,171 +186,149 @@ test("the opaque hull and canopy leave no enclosed background slivers", () => {
   }
 });
 
-const contains = (points: readonly (readonly number[])[], [x, y]: readonly number[]) => {
-  let inside = false;
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const a = points[i]!,
-      b = points[j]!;
-    if (
-      a[1]! > y! !== b[1]! > y! &&
-      x! < ((b[0]! - a[0]!) * (y! - a[1]!)) / (b[1]! - a[1]!) + a[0]!
-    )
-      inside = !inside;
-  }
-  return inside;
-};
-
-// Distance from `point` to the segment from `a` to `b`.
-const segmentDistance = (
-  [x, y]: readonly number[],
-  [ax, ay]: readonly number[],
-  [bx, by]: readonly number[],
-) => {
-  const [dx, dy] = [bx! - ax!, by! - ay!];
-  const t = Math.max(0, Math.min(1, ((x! - ax!) * dx + (y! - ay!) * dy) / (dx * dx + dy * dy)));
-  return Math.hypot(x! - ax! - t * dx, y! - ay! - t * dy);
-};
-
-// A point on an outline's edge counts as on it within 1e-6; one farther outside does not.
-const onOrInside = (points: readonly (readonly number[])[], point: readonly number[]) =>
-  contains(points, point) ||
-  points.some((a, i) => segmentDistance(point, a, points[(i + 1) % points.length]!) <= 1e-6);
-
-test("title jet anchors are the rear root midpoints on the actual visible rear mouths", () => {
-  const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
-    frame: number;
-    headings: { index: number; mouths: { anchor: number[]; occluders?: number[][][] }[] }[];
-  };
-  assert.equal(jets.frame, FRAME);
-  assert.equal(jets.headings.length, SHIP_HEADINGS);
-  const yaw = worldView(292.5);
-  const mouths = drawn(48, classic.paint, { yaw }).filter(
-    ({ color }) => color === classic.paint.engineOpening,
-  );
-  const published = jets.headings.find(({ index }) => index === yaw)!.mouths;
-  assert.equal(published.length, 2);
-  for (const [index, mouth] of published.entries()) {
-    // The anchor is the midpoint of the rear root segment's projected, rounded ends.
-    const ends = normalJetStation({ yaw }, index === 0 ? -1 : 1).root.map((point) =>
-      projectAt(48, 48, rotate(SHIP_HEADINGS, yaw, point)),
-    );
-    const midpoint = [0, 1].map((axis) => (ends[0]![axis]! + ends[1]![axis]!) / 2);
-    const rounded = [0, 1].map((axis) => (round(ends[0]![axis]!) + round(ends[1]![axis]!)) / 2);
-    for (const axis of [0, 1]) {
-      assert(Math.abs(mouth.anchor[axis]! - rounded[axis]!) <= 1e-9, "anchor is the root midpoint");
+test("one light from the upper left tones every heading in the declared slots", () => {
+  const roles = Object.fromEntries(PAINT_SLOTS.map((slot) => [slot, slot])) as typeof classic.paint;
+  const seen = new Set<string>();
+  for (const yaw of ALL) {
+    const slots = new Set(drawn(48, roles, { yaw }).map(({ color }) => color));
+    for (const slot of slots) {
+      assert(PAINT_SLOTS.includes(slot as (typeof PAINT_SLOTS)[number]));
+      seen.add(slot);
     }
+    // Every heading shows the canopy roof, the wing top and a tip cap.
+    assert(slots.has("canopyRoof"), `heading ${yaw} canopy`);
+    assert(slots.has("top") || slots.has("topTurned"), `heading ${yaw} wing top`);
     assert(
-      mouths.some(({ outline }) => onOrInside(outline, midpoint)),
-      "the root midpoint must lie on an actual cyan engine opening",
+      ["accent", "accentTurned", "accentLeft", "accentRight"].some((slot) => slots.has(slot)),
+      `heading ${yaw} tip cap`,
     );
-    assert(Array.isArray(mouth.occluders));
-    for (const polygon of mouth.occluders!)
-      assert(
-        polygon.length >= 3 && polygon.every((p) => p.length === 2 && p.every(Number.isFinite)),
+  }
+  assert.deepEqual([...seen].sort(), [...PAINT_SLOTS].sort());
+  // Head on, the ridge parts the lit wing top from the turned one.
+  const headOn = new Set(drawn(48, roles, { yaw: 8 }).map(({ color }) => color));
+  assert(headOn.has("top") && headOn.has("topTurned"));
+});
+
+test("the tip caps are the outer 28 percent of each half span", () => {
+  const span = retroMouthAxis(1).corner[0];
+  assert.equal(span, 21.44);
+  assert.equal(TIP_CAP_X, 15.4);
+  assert.equal(Math.round(((span - TIP_CAP_X) / span) * 100), 28);
+});
+
+test("the canopy is three flat bands with a soft shade step under every paint", () => {
+  for (const { id, paint } of SCHEMES) {
+    const [highlightL, roofL, shadeL] = [
+      paint.canopyHighlight,
+      paint.canopyRoof,
+      paint.canopyShade,
+    ].map((colour) => toOklab(rgb(colour))[0]);
+    assert(highlightL! > roofL!, `${id} highlight is lighter than its roof`);
+    assert(shadeL! < roofL! && roofL! - shadeL! < 0.08, `${id} shade is a soft step`);
+  }
+});
+
+test("engine openings keep Classic's luminous brightness and paint-derived hues", () => {
+  assert.equal(classic.canopySides, ENGINE_MATERIAL_RELATIONSHIPS.referenceWall);
+  assert.deepEqual(
+    SCHEMES.map(({ paint }) => paint.engineOpening),
+    ["#86deff", "#e4f6ff", "#80e5db", "#dac3ff", "#b0d3ff", "#82e0fa"],
+  );
+});
+
+type Mouth = { anchor: number[]; axis: number[]; half: number[]; occluders?: number[][][] };
+type Jets = {
+  engineLevels: { level: number; layers: { name: string; width: number; length: number }[] }[];
+  frame: number;
+  headings: { index: number; mouths: Mouth[] }[];
+  length: { base: number; exponent: number; scale: number };
+  profile: number[][];
+};
+
+test("forward plumes root at the mouth centres with two layers and the hull regions over them", () => {
+  const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as Jets;
+  assert.equal(jets.frame, FRAME);
+  assert.deepEqual(jets.length, JET_LENGTH);
+  assert.deepEqual(jets.profile, JET_PROFILE);
+  assert.deepEqual(
+    jets.engineLevels,
+    JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
+  );
+  for (const { layers } of jets.engineLevels) {
+    assert.deepEqual(
+      layers.map(({ length, name, width }) => ({ length, name, width })),
+      [
+        { length: 1, name: "outer", width: 5.8 },
+        { length: 0.5, name: "core", width: 1.6 },
+      ],
+    );
+  }
+  for (const sign of [-1, 1]) {
+    const root = plumeRoot(sign);
+    assert.equal(root[0], sign * 12.25);
+    assert.equal(root[2], 2.2);
+  }
+  const reach = { halfWidth: JET_SHAPE.outer.width, length: JET_LENGTH.base + JET_LENGTH.scale };
+  for (const heading of jets.headings) {
+    assert.deepEqual(heading.mouths, forwardJetMouths(FRAME / 2, { yaw: heading.index }, reach));
+    for (const [index, mouth] of heading.mouths.entries()) {
+      assert.deepEqual(
+        mouth.anchor,
+        anchor(SHIP_HEADINGS, FRAME / 2, heading.index, plumeRoot(index === 0 ? -1 : 1)),
       );
+      assert.deepEqual(mouth.axis, vector(SHIP_HEADINGS, heading.index, [0, 1, 0]));
+      assert(Array.isArray(mouth.occluders));
+      for (const key of ["normalAperture", "outerCorner", "coreOutboard", "rearClip"]) {
+        assert(!(key in mouth));
+      }
+    }
   }
+  // Head on, the hull hides both plume roots.
+  assert(jets.headings[8]!.mouths.every((mouth) => mouth.occluders!.length > 0));
 });
 
-test("engine openings use Classic luminous brightness and paint-derived hues with unchanged glazing", () => {
-  assert.equal(classic.paint.canopySides, "#1767b3");
-  assert.equal(classic.paint.canopyRoof, "#2585d0");
-  assert.equal(classic.paint.engineOpening, "#86deff");
-  const measure = (color: string) => {
-    const [L, a, b] = toOklab(rgb(color));
-    return { L, C: Math.hypot(a, b), h: Math.atan2(b, a) };
-  };
-  const reference = measure(ENGINE_MATERIAL_RELATIONSHIPS.referenceOpening);
-  const glazingReference = measure(classic.paint.canopySides);
-  const approved = ["#86deff", "#e4f6ff", "#80e5db", "#dac3ff", "#b0d3ff", "#82e0fa"];
-  for (const [index, { paint }] of SCHEMES.entries()) {
-    const glazingL = toOklab(rgb(paint.canopySides))[0];
-    const housingL = toOklab(rgb(paint.engineHousing))[0];
-    const openingL = toOklab(rgb(paint.engineOpening))[0];
-    assert(housingL > glazingL, "housing must be lighter than its unchanged glazing reference");
-    assert(openingL > housingL, "opening must remain lighter than its housing");
-    assert.equal(
-      paint.engineOpening,
-      approved[index],
-      "opening must match the approved shared-reference preview",
-    );
-    const opening = measure(paint.engineOpening);
-    assert(opening.L >= reference.L - 0.002, "paint must not inherit a dim opening lightness");
-    assert(opening.C <= reference.C + 0.001, "gamut mapping must not increase target chroma");
-    const hue = reference.h + measure(paint.canopySides).h - glazingReference.h;
-    const hueError = Math.abs(Math.atan2(Math.sin(opening.h - hue), Math.cos(opening.h - hue)));
-    assert(
-      hueError < (2 * Math.PI) / 180,
-      "gamut mapping must preserve paint hue within byte quantization",
-    );
-  }
+test("a plume layer is a closed teardrop from its root to a point", () => {
+  const mouth = { anchor: [10, 20], axis: [0, 1], half: [1, 0] } as const;
+  const points = plumePolygon(JET_PROFILE, mouth, { length: 1, width: 5.8 }, 30);
+  assert.equal(points.length, 2 * JET_PROFILE.length - 1);
+  assert.deepEqual(points[0], [10 + 0.8 * 5.8, 20]);
+  assert.deepEqual(points[JET_PROFILE.length - 1], [10, 50]);
+  assert.deepEqual(points.at(-1), [10 - 0.8 * 5.8, 20]);
+  assert.equal(Math.max(...points.map(([x]) => Math.abs(x - 10))), 5.8);
 });
 
-test("normal apertures share the rear face above the skirt and contained root segments", () => {
-  const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as {
-    headings: {
-      index: number;
-      mouths: {
-        anchor: number[];
-        half: number[];
-        axis: number[];
-        normalAperture: { coreWidth: number };
-        occluders: unknown[];
-        outerCorner?: unknown;
-        coreOutboard?: unknown;
-        rearClip?: unknown;
-      }[];
-    }[];
-  };
-  assert.equal(jetAttachment(worldView(135), -1).corner[2], 0);
-  assert.equal(jetAttachment(worldView(135), 1).corner[2], 1.2);
+test("reverse plumes root under the wing tips at half the earlier reach", () => {
+  const jets = JSON.parse(readFileSync(new URL("ship-retro-jets.json", assets), "utf8")) as Jets;
+  assert.deepEqual(jets.length, { base: 7.425, scale: 11.55, exponent: 1 });
+  assert.equal(RETRO_JET.reach, 0.5);
+  assert.deepEqual(jets.profile, JET_PROFILE);
+  assert.deepEqual(
+    jets.engineLevels.map(({ layers }) => layers.map(({ width }) => width)),
+    [1, 2, 3].map(() => [4.93, 1.36]),
+  );
+  assert(!("reverseStyle" in jets));
   for (const heading of jets.headings) {
     for (const [index, mouth] of heading.mouths.entries()) {
-      const sign = index === 0 ? -1 : 1;
-      const station = normalJetStation({ yaw: heading.index }, sign);
-      assert.deepEqual(station.root, [
-        [sign * 21.44, 20.48, 1.2],
-        [sign * 5.44, 15.68, 1.2],
-      ]);
-      assert.deepEqual(station.middle, [sign * 13.44, 18.08, 1.2]);
-      assert.equal(station.half[2], 0);
-      assert(Math.abs(station.width - 16) < 1e-12);
-      assert(Math.abs(station.coreWidth * station.width - 6.1875) < 1e-12);
-      assert(Math.abs(Math.abs(station.middle[0]) - 13.44) < 1e-12);
-      assert(Math.abs(mouth.normalAperture.coreWidth - 6.1875 / 16) < 1e-12);
-      assert(Array.isArray(mouth.occluders), "normal tail overlay regions must be explicit");
-      if (heading.index === 52) assert(mouth.occluders.length > 0);
-      assert.equal(mouth.outerCorner, undefined);
-      assert.equal(mouth.coreOutboard, undefined);
-      assert.equal(mouth.rearClip, undefined);
+      const model = retroMouthAxis(index === 0 ? -1 : 1);
+      assert.deepEqual(model.root, [(index === 0 ? -1 : 1) * 19.6, 17, 0.5]);
+      assert.deepEqual(mouth.anchor, anchor(SHIP_HEADINGS, FRAME / 2, heading.index, model.root));
+      assert.deepEqual(mouth.axis, vector(SHIP_HEADINGS, heading.index, model.axis));
+      assert.deepEqual(Object.keys(mouth).sort(), ["anchor", "axis", "half"]);
     }
   }
 });
 
-test("luminous apertures meet fixed normal-core roots without changing the housing", () => {
-  assert.equal(ENGINE_OPENING_SCALE, 1.25);
-  assert.equal(NORMAL_CORE_BASE_SCALE, 0.9);
-  for (const sign of [-1, 1]) {
-    const station = normalJetStation({ yaw: 52 }, sign);
-    const { points, height, referenceHeight, housing } = engineOpeningGeometry(sign);
-    const lower = points.filter((p) => Math.abs(p[2] - 1.2) < 1e-10);
-    assert.equal(lower.length, 2);
-    assert(Math.abs(Math.abs(lower[0]![0] - lower[1]![0]) - 6.1875) < 1e-10);
-    for (const side of [1, -1]) {
-      const expected = station.middle.map(
-        (v, i) => v + side * station.half[i]! * station.coreWidth,
-      );
-      assert(lower.some((p) => p.every((v, i) => Math.abs(v - expected[i]!) < 1e-10)));
-    }
-    assert(height > 0 && height <= referenceHeight);
-    const [tip, , corner] = housing;
-    for (const p of points) {
-      const upper = tip![2] + ((corner![2] - tip![2]) * (p[0] - tip![0])) / (corner![0] - tip![0]);
-      assert(p[2] >= 1.2 - 1e-10 && p[2] <= upper + 1e-10);
-    }
-  }
+test("light fields carry the same two layers in their own colours", () => {
+  const galaxies = JSON.parse(readFileSync(new URL("galaxies.json", assets), "utf8")) as {
+    lightField: { jets: { shipLevels: unknown } };
+  };
+  assert.deepEqual(
+    galaxies.lightField.jets.shipLevels,
+    LIGHT_FIELD_JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
+  );
 });
 
-test("warp poses publish projected uncut groups without scaling authored thrust twice", () => {
+test("warp poses publish projected plume roots without scaling authored thrust twice", () => {
   const { warp } = JSON.parse(readFileSync(new URL("quantum-jump.json", assets), "utf8")) as {
     warp: {
       frame: number;
@@ -352,43 +368,14 @@ test("warp poses publish projected uncut groups without scaling authored thrust 
     assert.deepEqual(pose.jets!.headings, [
       {
         index: 0,
-        mouths: forwardJetMouths(warp.frame / 2, { ...pose, yaw: warp.heading }),
+        mouths: forwardJetMouths(
+          warp.frame / 2,
+          { roll: pose.roll, squash: pose.squash, stretch: pose.stretch, yaw: warp.heading },
+          { halfWidth: JET_SHAPE.outer.width, length: AUTHORED_JET_LENGTH },
+        ),
       },
     ]);
-    for (const mouth of pose.jets!.headings[0]!.mouths) {
-      assert(Math.abs(mouth.normalAperture.coreWidth - 6.1875 / 16) < 1e-12);
-      assert(Array.isArray(mouth.occluders), "warp retains projected tail overlay regions");
-      assert(!("rearClip" in mouth), "forward warp groups must remain uncut");
-    }
   }
-});
-
-test("enlarged luminous openings stay within the housing at grazing views", () => {
-  const inside = (polygon: readonly (readonly number[])[], p: readonly number[]) => {
-    const distances = polygon.map((a, i) => {
-      const b = polygon[(i + 1) % polygon.length]!;
-      return (b[0]! - a[0]!) * (p[1]! - a[1]!) - (b[1]! - a[1]!) * (p[0]! - a[0]!);
-    });
-    return distances.every((d) => d >= -1e-7) || distances.every((d) => d <= 1e-7);
-  };
-  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    const housings = [-1, 1].map((sign) =>
-      engineOpeningGeometry(sign).housing.map((p) =>
-        projectAt(48, 48, rotate(SHIP_HEADINGS, yaw, p)),
-      ),
-    );
-    for (const opening of drawn(48, classic.paint, { yaw }).filter(
-      (f) => f.color === classic.paint.engineOpening,
-    ))
-      assert(housings.some((housing) => opening.outline.every((p) => inside(housing, p))));
-  }
-  const image = blankImage(96, 96);
-  paintShip(image, drawn(48, classic.paint, { yaw: worldView(146.25) }));
-  assert.equal(
-    image.data[(58 * 96 + 66) * 4 + 3],
-    0,
-    "raised aperture must not add an exterior hull pixel",
-  );
 });
 
 test("the active player package publishes one complete 64-heading contract without changing enemy or archive counts", () => {

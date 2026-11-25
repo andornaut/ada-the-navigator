@@ -22,12 +22,12 @@ jump-home page.
 - The shared ship model in [ship-model.ts](tools/ship-model.ts) (`drawn`, the
   Classic paint), the same faces as the `ship-50` sprite frame: heading 50 of
   64, up and to the right, the engine mouths toward the viewer.
-- 5.85 logical px per frame px, the frame centre on canvas (476, 245), so the
-  canopy spans canvas rows 172 to 256.
+- 5.85 logical px per frame px, the frame centre on canvas (476, 257), so the
+  canopy spans canvas rows 170 to 256.
 - The ship is one path per paint colour (the shared opaque paint regions, as
   the sprite frames use).
-- A soft engine glow from each mouth (the `ship-jets.json` anchors at heading
-  50): `#64caff`, 34 by 24 px, peak alpha 170, blurred 6 px, drawn under the
+- A soft engine glow from each mouth centre (the `ship-jets.json` anchors at
+  heading 50): `#64caff`, 34 by 24 px, peak alpha 170, blurred 6 px, drawn under the
   hull.
 - Each glow is a radial gradient fitted to its blurred profile: alpha
   `peak (1 - d)^2` over the ellipse, convolved with its blur, its stops
@@ -69,8 +69,8 @@ In the SVG:
 
 | Asset              | SVG size   | Display (logical px) | Subject band | `focus`        |
 | ------------------ | ---------- | -------------------- | ------------ | -------------- |
-| `aboard`           | 960 by 540 | 960 by 540           | 172..256     | (493.9, 213.5) |
-| `aboard-emergency` | 960 by 540 | 960 by 540           | 172..256     | (493.9, 213.5) |
+| `aboard`           | 960 by 540 | 960 by 540           | 172..256     | (493.9, 213.2) |
+| `aboard-emergency` | 960 by 540 | 960 by 540           | 172..256     | (493.9, 213.2) |
 
 - Drawn as every story background ([storybook](storybook.md#canvas)): centred
   across, offset down by the [run anchor](layout.md#storybook-page) so the
@@ -88,7 +88,7 @@ speaker; the background stays still.
 
 Inserting a holodisk plays on the ship from outside, on the narration page
 "Ada slides the holodisk into Astra's drive.": Astra's drive is a point on the
-hull just ahead of the canopy, toward the nose (canvas (594.1, 246)).
+hull just ahead of the canopy, toward the nose (canvas (594.1, 243.3)).
 
 | Overlay             | Shows                                                                                      | Hold   |
 | ------------------- | ------------------------------------------------------------------------------------------ | ------ |
@@ -97,6 +97,8 @@ hull just ahead of the canopy, toward the nose (canvas (594.1, 246)).
 | `aboard-holodisk-2` | Link: a ring of 16 magenta `#e868c8` dots and Astra's teal light (`#8fe0f2`) in the canopy | 400 ms |
 | `aboard-holodisk-3` | Restored: the ring wider and Astra's light brighter                                        | 600 ms |
 
+- Astra's light is a 115.6 by 80.9 px glow about the canopy's centre, peak
+  alpha 110 on Link and 150 on Restored.
 - Each overlay is that frame's full scene framed to one box (canvas (379,
   136), 285 by 183 logical px) round every holodisk addition, so each alone
   shows its frame over `aboard`. It is clear for 2 logical px in from its edge
