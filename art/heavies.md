@@ -361,7 +361,6 @@ notch tips.
 | Tops `gun`, `triple`, `pod`, `rail` | 1 to 10  | 0.982 to 0.996          |
 | Tops `spread`, `dish`, `lance`      | 2 to 20  | 0.980 to 0.992          |
 | Tops `dome`, `hopper`               | 2 to 22  | 0.983 to 0.999          |
-| Platform turret top                 | 3 to 9   | 0.988 to 0.997          |
 
 ## Speed jets
 
@@ -439,9 +438,11 @@ armour with the existing rust, steel and ember weapon and wreck colours.
   `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
   process, writes `public/art/cartwheel/enemies/` and replaces its own entries
   in place in [Cartwheel's manifest](../public/art/cartwheel/manifest.json),
-  after the hub and buoy and before the story craft. Of the platform it draws
-  the gun top; the hull and bases are the
-  [hostile station producer's](station-redesign.md#hostile-stations).
+  after the hub and buoy and before the story craft. The platform's hull and
+  bases are the
+  [hostile station producer's](station-redesign.md#hostile-stations), and its
+  turret top is the enemy fleet's `gun`
+  ([Weapon tops](enemy-redesign.md#weapon-tops)).
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
   core family. The intact armour uses the heavy surface palette. Other SVGs
   and shards use the claim colours, and jets use the claim jet colours.
@@ -527,8 +528,7 @@ Its assembled body spans 4 Ada source widths.
   facing `k`; `headings[k]` of `platform-hardpoints.json` places the turrets and
   orders the layers.
 - Bases `platform-{port,starboard,aft}-{intact,destroyed,capped}-{k}.svg`
-  use frame 80 (display 35); shared top `platform-turret-top-{i}.svg` uses
-  frame 120 (display 52.5) and retains two muzzles per aim. There are no engines.
+  use frame 80 (display 35). There are no engines.
 - Intact bases have a steel pad and rust collar under the aimed top.
   Destroyed bases have a soot stump, breach, ember and burn paint. Unused
   bases keep a capped pad without a top.

@@ -1,6 +1,6 @@
 // Cartwheel's claim jumpers: the shared drone and heavy models recoloured into rust, steel and
-// ember, and the turret platform's gun top. The enemy fleet producer draws the small craft and
-// the hostile station producer the platform's hull and bases. Contract: art/heavies.md (Cartwheel
+// ember. The enemy fleet producer draws the small craft and the platform's gun top, and the
+// hostile station producer the platform's hull and bases. Contract: art/heavies.md (Cartwheel
 // claim jumpers).
 // Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
 import { packInstalledClaimHullPage } from "./claim-hull-page.ts";
@@ -425,9 +425,9 @@ async function main() {
   const offsetsPath = at === -1 ? `${root}tools/enemy-hardpoints.json` : args[at + 1]!;
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
 
-  // The enemy fleet's craft and the platform's hull and bases are the fleet's and the hostile
-  // station producer's (art/tools/hostile-stations.ts); this tool draws the rest and the
-  // platform's turret top.
+  // The enemy fleet's craft and the platform's top are the fleet producer's, and the platform's
+  // hull and bases the hostile station producer's (art/tools/hostile-stations.ts); this tool draws
+  // the rest.
   const fleet = fleetArchetypes("cartwheel");
   const own = crafts.filter(({ name }) => !fleet.has(name));
   const files = new Map<string, string>();
@@ -451,15 +451,6 @@ async function main() {
       files.set(file, content);
     }
     entries.push(...result.entries.map(claimEntry));
-  }
-  const styledPlatform = restrainHeavyHull(platform, { platformPaint: claim });
-  const built = build(styledPlatform, place(offsets, styledPlatform));
-  const top = /^platform-turret-top-/;
-  for (const [file, content] of built.files) {
-    if (top.test(file)) files.set(file, content);
-  }
-  for (const entry of built.entries) {
-    if (top.test(entry.id.slice("enemy-".length))) entries.push(claimEntry(entry));
   }
 
   const dir = `${root}public/art/cartwheel/enemies/`;
@@ -504,11 +495,10 @@ async function main() {
   // Only these crafts' ids; hostile-stations.ts writes `enemy-claim-hostileStation-`.
   mergeEntries(
     "cartwheel",
-    (id) =>
-      craftIds(
-        PREFIX,
-        [...own, ...heavies, ...industrialHeavies].map(({ name }) => name),
-      )(id) || id.startsWith(`${PREFIX}platform-turret-top-`),
+    craftIds(
+      PREFIX,
+      [...own, ...heavies, ...industrialHeavies].map(({ name }) => name),
+    ),
     outputEntries.map((entry) => storedAt(paths, entry)),
     (id) => id.startsWith("craft-"),
   );
