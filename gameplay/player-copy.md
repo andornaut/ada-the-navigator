@@ -1260,9 +1260,9 @@ or replay rewards.
   Restart.
 - Restart card: Restart? with Restart and Cancel.
 - Settings: FPS counter (On or Off), Off by default. The choice stays on the device across sessions and updates.
-- Cheats (browser tab only): Open Cheats (Settings button); the Cheats modal
-  with the action labels in [Cheats](../docs/design/cheats.md), Show tips again,
-  Reset save and Close. Reset save card: Reset save? with Reset and Cancel.
+- Cheats opens from Menu or Pause in a browser tab or installed app. See
+  [Cheats](../docs/design/cheats.md) for action labels. Back returns to the
+  invoking menu.
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
