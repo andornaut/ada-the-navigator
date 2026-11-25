@@ -32,6 +32,9 @@ export type Paint = {
   mining: Tones;
   scoop: Tones;
   metal: Tones;
+  // Cold armour of the frigates, and its shaded underside.
+  armour: Tones;
+  under: Tones;
 };
 
 const INK = [0x18, 0x14, 0x25] as const;
@@ -51,7 +54,14 @@ const glow = (colour: string): Tones => [colour, colour, shade(colour, 0.85)];
 
 const AMBER: Tones = ["#f0bd68", "#b98a40", "#8a6630"];
 const VISOR: Tones = ["#2a2433", "#1e1a26", "#16131c"];
-const paint = (hull: Tones, plate: string, turret: string, gun: Tones, dark: Tones): Paint => ({
+const paint = (
+  hull: Tones,
+  plate: string,
+  turret: string,
+  gun: Tones,
+  dark: Tones,
+  armour: Tones,
+): Paint => ({
   hull,
   plate: mat(plate),
   turret: mat(turret),
@@ -64,19 +74,34 @@ const paint = (hull: Tones, plate: string, turret: string, gun: Tones, dark: Ton
   mining: ["#65a097", "#467971", "#355d58"],
   scoop: ["#3a6864", "#294946", "#1f3836"],
   metal: mat("#a1aaa0"),
+  armour,
+  under: [armour[1], armour[2], shade(armour[2], 0.8)],
 });
 
 export const FLEET_PAINT: Readonly<Record<FleetFamily, Paint>> = {
-  coral: paint(["#d68b72", "#a8654f", "#7f4b3d"], "#e6a890", "#c27a62", AMBER, VISOR),
+  coral: paint(["#d68b72", "#a8654f", "#7f4b3d"], "#e6a890", "#c27a62", AMBER, VISOR, [
+    "#809caa",
+    "#58717f",
+    "#405563",
+  ]),
   claim: paint(
     ["#bd7042", "#924e28", "#703921"],
     "#b5a998",
     "#a95e30",
     ["#fa6d38", "#bc4524", "#8c331b"],
     ["#2b1d1c", "#1f1514", "#17100f"],
+    ["#8d9f89", "#627967", "#43594b"],
   ),
-  garnet: paint(["#e47485", "#b0495b", "#823643"], "#deb7b6", "#c65c6d", AMBER, VISOR),
-  needle: paint(["#d65b6c", "#a14350", "#75313a"], "#d7cfc9", "#b44858", AMBER, VISOR),
+  garnet: paint(["#e47485", "#b0495b", "#823643"], "#deb7b6", "#c65c6d", AMBER, VISOR, [
+    "#9b91af",
+    "#706985",
+    "#514c68",
+  ]),
+  needle: paint(["#d65b6c", "#a14350", "#75313a"], "#d7cfc9", "#b44858", AMBER, VISOR, [
+    "#879eaf",
+    "#607889",
+    "#40586a",
+  ]),
 };
 
 // Speed jet ramps, slow to fast, per family.
@@ -143,7 +168,7 @@ function wing(
 }
 
 // A pair of thick tapering wings from a one-side planform of (l, w): underside at zb, top at
-// zr on the root and zt on the tip.
+// zr on the root and zt on the tip. Returns the top's height at breadth w.
 function wedge(
   mesh: Mesh,
   plan: readonly (readonly [number, number])[],
@@ -151,7 +176,7 @@ function wedge(
   zr: number,
   zt: number,
   tones: Tones,
-): void {
+): (w: number) => number {
   const breadths = plan.map(([, w]) => w);
   const [w0, w1] = [Math.min(...breadths), Math.max(...breadths)];
   const top = (w: number) => zr + ((zt - zr) * (Math.abs(w) - w0)) / (w1 - w0);
@@ -177,6 +202,7 @@ function wedge(
       );
     }
   }
+  return top;
 }
 
 // Fore-and-aft tube at breadth w and height z: radius r at its aft end l0 and r1 at l1.
@@ -205,8 +231,16 @@ export type FleetPart = { name: string; loose?: true; mesh: Mesh };
 export type FleetMouth = { at: Point; radius: number };
 // An aimed weapon mount: the centre of its collar's foot on the deck, and the collar's radius.
 export type FleetMount = { at: Point; radius: number };
+// A frigate's hardpoints. The engine is one hardpoint about `at`, with its drive solids intact
+// and wrecked. Each weapon mount stands on the deck at `at`; `capped` mounts also have a capped
+// plate for the route positions that leave them unarmed. Ids follow the shipped layout: `port`
+// is the mount to port on screen, at negative breadth.
+export type FleetHeavy = {
+  engine: { at: Point; intact: Mesh; destroyed: Mesh };
+  mounts: { id: string; at: Point; capped: boolean }[];
+};
 export type FleetCraft = {
-  archetype: "swarm" | "fighter" | "interceptor" | "retaliator";
+  archetype: "swarm" | "fighter" | "interceptor" | "retaliator" | "frigate";
   // The frame key of the shipped rows the craft replaces: `enemy-{stem}-{index}`.
   stem: string;
   // The sidecar key and file stem.
@@ -218,6 +252,12 @@ export type FleetCraft = {
   muzzle?: Point;
   // The aimed launcher of a retaliator, which carries the `pod` top.
   mount?: FleetMount;
+  // The engine and weapon mounts of a frigate.
+  heavy?: FleetHeavy;
+  // The families that fly the craft, when not all of them.
+  families?: readonly FleetFamily[];
+  // Where a family's rows go when not under `stem` in the family's own manifest.
+  rows?: Partial<Record<FleetFamily, { stem: string; manifest?: "whirlpool" }>>;
   // The material of the destruction flecks.
   fleck: Tones;
   // Destruction wedge cut angles in degrees about the origin, forward at -90 and port at 0.
@@ -442,6 +482,52 @@ export function podTop(p: Paint, r: number): FleetTop {
   };
 }
 
+// A destroyed mount: a low scorched stump with a breach.
+export function stump(p: Paint, { at, radius }: FleetMount): Mesh {
+  const mesh: Mesh = [];
+  const top = at[2] + COLLAR_HEIGHT * 0.6;
+  const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
+  meshTube(mesh, at, [at[0], at[1], top], radius, radius, p.dark, 16);
+  meshTube(
+    mesh,
+    [at[0], at[1], top],
+    [at[0], at[1], top + 0.1],
+    0.6 * radius,
+    0.6 * radius,
+    breach,
+    12,
+  );
+  return mesh;
+}
+
+// An unarmed mount: the collar closed by a low plate.
+export function capped(p: Paint, mount: FleetMount): Mesh {
+  const mesh = collar(p, mount);
+  const [l, w, z] = mountPivot(mount);
+  meshTube(mesh, [l, w, z], [l, w, z + 0.5], 0.7 * mount.radius, 0.7 * mount.radius, p.plate, 12);
+  return mesh;
+}
+
+// Laser `gun`: one narrow block along the aim with a bright muzzle face.
+export function gunTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -0.9 * r, 1.1 * r, -0.36 * r, 0.36 * r, 0, 0.62 * r, p.turret);
+  bx(mesh, 1.1 * r, 1.3 * r, -0.3 * r, 0.3 * r, 0.1 * r, 0.52 * r, p.gun);
+  return { mesh, muzzles: [[1.3 * r, 0, 0.31 * r]] };
+}
+
+// Heavy Missile `rail`: a dark sled carrying one large missile.
+export function railTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -1.0 * r, 1.2 * r, -0.5 * r, 0.5 * r, 0, 0.3 * r, p.dark);
+  pod(mesh, -0.9 * r, 0.9 * r, 0, 0.66 * r, 0.38 * r, p.plate, 12);
+  pod(mesh, 0.9 * r, 1.6 * r, 0, 0.66 * r, 0.38 * r, p.gun, 12, { r1: 0.06 * r });
+  return { mesh, muzzles: [[1.6 * r, 0, 0.66 * r]] };
+}
+
+export const FRIGATE_TOPS = { gun: gunTop, rail: railTop } as const;
+export const FRIGATE_MOUNT_RADIUS = MOUNT_RADIUS;
+
 // ------------------------------------------------------------------ retaliators
 
 const nozzles = (m: Mesh, p: Paint, l0: number, l1: number, z: number, r: number, r1: number) => {
@@ -625,6 +711,217 @@ function miningFreighter(p: Paint): FleetCraft {
   };
 }
 
+// ------------------------------------------------------------------ frigates
+
+// A short pedestal in armour under a mount on a sloped deck.
+const pedestal = (m: Mesh, p: Paint, l: number, w: number, z0: number, z1: number) =>
+  meshTube(m, [l, w, z0], [l, w, z1], MOUNT_RADIUS * 1.15, MOUNT_RADIUS * 1.15, p.armour, 16);
+
+// A drive cone: its dark nozzle flaring aft from l1 to l0, with the glow in its mouth while the
+// engine runs. A wrecked cone loses its flared lip and its mouth is dark, the first with one ember.
+function driveCone(
+  m: Mesh,
+  p: Paint,
+  w: number,
+  z: number,
+  l0: number,
+  l1: number,
+  state: "intact" | "destroyed" | "ember",
+): void {
+  if (state === "intact") {
+    pod(m, l0, l1, w, z, 6.6, p.dark, 18, { r1: 4.4, aft: p.glow });
+    return;
+  }
+  const cut = l0 + (l1 - l0) * 0.25;
+  const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
+  pod(m, cut, l1, w, z, 5.4, p.dark, 18, { r1: 4.4, aft: breach });
+  if (state === "ember") bx(m, cut - 0.4, cut, w - 1.2, w + 1.2, z - 1.2, z + 1.2, p.gun);
+}
+
+// Slim delta: fine prow, narrow hull, low ridge citadel, thick wedge wings set aft and twin
+// drive cones in one stern block. `port` and `starboard` stand on wing pedestals, `spine` on the
+// main hull aft of the citadel and `bow` on a prow pedestal.
+function slimDelta(p: Paint): FleetCraft {
+  const wingMount = { l: -22, w: 29 };
+  let deck = 0;
+  const body = solid("body", (m) => {
+    hull(
+      m,
+      [
+        [50, 3, -3, 3],
+        [34, 6, -5, 3],
+        [-40, 6, -5, 3],
+      ],
+      p.under,
+    );
+    hull(
+      m,
+      [
+        [66, 2.5, 4, 9, 1, 1],
+        [52, 7, 1, 14, 3, 2],
+        [30, 8, 0, 15, 3, 2],
+      ],
+      p.armour,
+    );
+    hull(
+      m,
+      [
+        [32, 10, 0, 18, 4, 3],
+        [-36, 10, 0, 18, 4, 3],
+      ],
+      p.armour,
+    );
+    // The one band in the family's hull colour.
+    hull(
+      m,
+      [
+        [27, 10.3, -0.1, 18.3, 4.1, 3.1],
+        [22, 10.3, -0.1, 18.3, 4.1, 3.1],
+      ],
+      p.hull,
+    );
+    hull(
+      m,
+      [
+        [-4, 6, 18, 21.5, 2, 2],
+        [-22, 6.5, 18, 23.5, 2, 2],
+      ],
+      p.armour,
+    );
+    const top = wedge(
+      m,
+      [
+        [10, 9],
+        [-12, 46.9],
+        [-30, 46.9],
+        [-38, 28],
+        [-38, 9],
+      ],
+      2,
+      12,
+      5,
+      p.armour,
+    );
+    deck = top(wingMount.w);
+    for (const side of [1, -1]) {
+      pedestal(m, p, wingMount.l, side * wingMount.w, deck - 2, deck + 1);
+    }
+    pedestal(m, p, 40, 0, 13, 15);
+    bx(m, 46, 49, -3.6, 3.6, 13.7, 14.9, p.dark);
+  });
+  const engine = (wrecked: boolean): Mesh => {
+    const m: Mesh = [];
+    bx(m, -48, -34, -11, 11, 1, 16, p.dark);
+    driveCone(m, p, 5.5, 8.32, -59, -46, wrecked ? "ember" : "intact");
+    driveCone(m, p, -5.5, 8.32, -59, -46, wrecked ? "destroyed" : "intact");
+    return m;
+  };
+  return {
+    archetype: "frigate",
+    stem: "frigate",
+    key: "fleetFrigate",
+    design: "Slim delta",
+    families: ["coral", "claim"],
+    parts: [body],
+    mouths: [5.5, -5.5].map((w) => ({ at: [-59, w, 8.32] as Point, radius: 6.6 })),
+    heavy: {
+      engine: { at: [-41, 0, 8.5], intact: engine(false), destroyed: engine(true) },
+      mounts: [
+        { id: "port", at: [wingMount.l, -wingMount.w, deck + 1], capped: false },
+        { id: "starboard", at: [wingMount.l, wingMount.w, deck + 1], capped: false },
+        { id: "spine", at: [-29, 0, 18], capped: true },
+        { id: "bow", at: [40, 0, 15], capped: true },
+      ],
+    },
+    fleck: p.armour,
+    cuts: [],
+  };
+}
+
+// Twin hull: two parallel hulls on a low bridge deck, a centre command pod and one drive cone
+// per hull. `port` and `starboard` stand one on each hull, `spine` and `bow` on the centre pod.
+function twinHull(p: Paint): FleetCraft {
+  const beam = 38.4;
+  const body = solid("body", (m) => {
+    for (const side of [1, -1]) {
+      hull(
+        m,
+        [
+          [54, 2.5, 4, 9, 1, 1],
+          [42, 8.5, 0, 17, 4, 3],
+          [-36, 8.5, 0, 17, 4, 3],
+          [-43, 7, 2, 15, 3, 2],
+        ],
+        p.armour,
+        side * beam,
+      );
+      hull(
+        m,
+        [
+          [-14, 6, 17, 22, 2, 2],
+          [-36, 6, 17, 22, 2, 2],
+        ],
+        p.under,
+        side * beam,
+      );
+    }
+    bx(m, -22, 20, -31, 31, 5, 11, p.under);
+    hull(
+      m,
+      [
+        [34, 3.5, 8, 13, 1, 1],
+        [24, 8, 5, 21, 4, 3],
+        [-16, 8, 5, 21, 4, 3],
+        [-22, 6, 8, 18, 3, 2],
+      ],
+      p.armour,
+    );
+    // The one band in the family's hull colour.
+    hull(
+      m,
+      [
+        [21, 8.2, 4.9, 21.2, 4.1, 3.1],
+        [16, 8.2, 4.9, 21.2, 4.1, 3.1],
+      ],
+      p.hull,
+    );
+    bx(m, 24.5, 27.5, -4, 4, 20.2, 21.8, p.dark);
+  });
+  const engine = (wrecked: boolean): Mesh => {
+    const m: Mesh = [];
+    driveCone(m, p, beam, 8.5, -54, -42, wrecked ? "ember" : "intact");
+    driveCone(m, p, -beam, 8.5, -54, -42, wrecked ? "destroyed" : "intact");
+    return m;
+  };
+  return {
+    archetype: "frigate",
+    stem: "frigateTwin",
+    key: "fleetFrigateTwin",
+    design: "Twin hull",
+    families: ["coral", "garnet", "needle"],
+    // Whirlpool alone flies the coral Twin hull, so its rows are Whirlpool's; Andromeda and Needle
+    // fly it as their family's frigate.
+    rows: {
+      coral: { stem: "frigateTwin", manifest: "whirlpool" },
+      garnet: { stem: "frigate" },
+      needle: { stem: "frigate" },
+    },
+    parts: [body],
+    mouths: [beam, -beam].map((w) => ({ at: [-54, w, 8.5] as Point, radius: 6.6 })),
+    heavy: {
+      engine: { at: [-48, 0, 8.5], intact: engine(false), destroyed: engine(true) },
+      mounts: [
+        { id: "port", at: [10, -beam, 17], capped: false },
+        { id: "starboard", at: [10, beam, 17], capped: false },
+        { id: "spine", at: [-9, 0, 21], capped: true },
+        { id: "bow", at: [8, 0, 21], capped: true },
+      ],
+    },
+    fleck: p.armour,
+    cuts: [],
+  };
+}
+
 export const fleet = (p: Paint): FleetCraft[] => [
   pincer(p),
   arrowhead(p),
@@ -632,4 +929,6 @@ export const fleet = (p: Paint): FleetCraft[] => [
   manta(p),
   cargoHauler(p),
   miningFreighter(p),
+  slimDelta(p),
+  twinHull(p),
 ];
