@@ -598,6 +598,102 @@ describe("planRegion", () => {
     expect(movers).toBeGreaterThan(20);
   });
 
+  it("keeps enemy group anchors apart across chunk boundaries", () => {
+    const solo: EnemyTarget = {
+      density: 3,
+      groupSize: [1, 1],
+      kind: "fighter",
+      radius: 10,
+      spacing: 100,
+    };
+    const pair = { ...region, columns: 2, rows: 1 };
+    const spaced = (seed: number, groupSpacing?: number) =>
+      planRegion(
+        {
+          ...rules,
+          bands: [{ ...band, enemies: [solo], moving: [], rocks: [] }],
+          gap: 20,
+          ...(groupSpacing === undefined ? {} : { groupSpacing }),
+        },
+        seed,
+        pair,
+      );
+    const crossing = (plan: SpawnPlan) =>
+      pairs(plan.placements).filter(
+        ([a, b]) => a.chunk !== b.chunk && Math.hypot(a.x - b.x, a.y - b.y) < 400,
+      ).length;
+    let crowded = 0;
+    let rejected = 0;
+    for (const seed of SEEDS) {
+      // Without spacing, single-ship groups in neighbouring chunks may sit closer than 400.
+      crowded += crossing(spaced(seed));
+      const plan = spaced(seed, 400);
+      for (const [a, b] of pairs(plan.placements)) {
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(400);
+      }
+      expect(plan.placements.length).toBeGreaterThan(1);
+      rejected += plan.report.kinds.fighter!.rejections[SPAWN_RULE.groupSpacing] ?? 0;
+    }
+    expect(crowded).toBeGreaterThan(0);
+    expect(rejected).toBeGreaterThan(0);
+  });
+
+  it("counts only the report's chunks while planning their neighbours", () => {
+    const centre = { cell: { x: 0, y: 0 }, columns: 1, rows: 1 };
+    for (const seed of SEEDS) {
+      const plan = planRegion(rules, seed, { ...region, report: centre });
+      const alone = planRegion(rules, seed, { ...region, ...centre });
+      expect(plan.placements.some((placement) => placement.chunk !== "0,0")).toBe(true);
+      for (const kind of ["big", "small", "heavy", "fighter", "mover"]) {
+        expect(plan.report.kinds[kind]?.requested ?? 0).toBe(
+          alone.report.kinds[kind]?.requested ?? 0,
+        );
+      }
+      expect(plan.report.kinds.small!.delivered).toBe(
+        plan.placements.filter(
+          (placement) => placement.kind === "small" && placement.chunk === "0,0",
+        ).length,
+      );
+    }
+  });
+
+  it("shrinks requests by the share of the chunk that applicable zones cover", () => {
+    // A band along x = 128 of half width 128 covers the chunk's left half.
+    const half: ExclusionZone = {
+      applies: ["rock"],
+      rule: "current",
+      shape: {
+        halfWidth: 128,
+        kind: "path",
+        points: [
+          { x: 128, y: -1000 },
+          { x: 128, y: 1500 },
+        ],
+      },
+    };
+    const target = (openArea: boolean) =>
+      planRegion(
+        {
+          ...rules,
+          bands: [
+            {
+              ...band,
+              enemies: [{ ...band.enemies[1]!, density: 4 }],
+              moving: [],
+              rocks: [{ ...band.rocks[1]!, density: 8 }],
+            },
+          ],
+          openArea,
+        },
+        1,
+        { cell: { x: 0, y: 0 }, columns: 1, exclusions: [half], rows: 1 },
+      ).report.kinds;
+    expect(target(true).small!.requested).toBe(4);
+    expect(target(false).small!.requested).toBe(8);
+    // The zone applies to rocks alone, so enemy requests keep their full density.
+    expect(target(true).fighter!.requested).toBe(4);
+  });
+
   it("drops a rock that cannot fit a quadrant between the lanes", () => {
     const huge = {
       ...rules,

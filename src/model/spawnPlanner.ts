@@ -147,6 +147,13 @@ export interface SpawnRules {
   readonly order: readonly SpawnPass[];
   /** World units an enemy group's later anchor tries may move from its seeded anchor. */
   readonly search: number;
+  /**
+   * Whether densities count per open area: each chunk's requests for a kind shrink by the share
+   * of the chunk that zones applying to the kind cover.
+   */
+  readonly openArea?: boolean;
+  /** Least distance between the anchors of any two enemy groups. Absent, groups may crowd. */
+  readonly groupSpacing?: number;
   /** Candidate positions per rock, or anchors per enemy group, before it is dropped. */
   readonly tries: number;
   readonly worldSide?: number;
@@ -170,6 +177,11 @@ export interface SpawnRegion {
   readonly columns: number;
   readonly exclusions: readonly ExclusionZone[];
   readonly rows: number;
+  /**
+   * The chunks the report counts; the others are planned so that counted spawns meet their
+   * neighbours as they would in flight. Absent, every chunk counts.
+   */
+  readonly report?: { readonly cell: Vec; readonly columns: number; readonly rows: number };
   /** Points enemy groups may gather beside, by site kind. */
   readonly sites?: Readonly<Record<string, readonly Vec[]>>;
 }
@@ -223,6 +235,7 @@ export interface SpawnPlan {
 export const SPAWN_RULE = {
   admission: "admission",
   corridor: "corridor",
+  groupSpacing: "group-spacing",
   noSourceRock: "no-source-rock",
   overlap: "overlap",
 } as const;
@@ -339,6 +352,8 @@ class Tally {
 
 interface Chunk {
   readonly band: SpawnBand;
+  /** Whether the report counts this chunk's spawns. */
+  readonly counted: boolean;
   readonly key: string;
   readonly origin: Vec;
 }
@@ -350,9 +365,13 @@ function validate(rules: SpawnRules, region: SpawnRegion): void {
     rules.tries < 1 ||
     region.columns < 0 ||
     region.rows < 0 ||
-    ![rules.gap, rules.search, rules.corridor ?? 0, rules.blend ?? 0].every(
-      (value) => Number.isFinite(value) && value >= 0,
-    ) ||
+    ![
+      rules.gap,
+      rules.search,
+      rules.corridor ?? 0,
+      rules.blend ?? 0,
+      rules.groupSpacing ?? 0,
+    ].every((value) => Number.isFinite(value) && value >= 0) ||
     !rules.bands.length ||
     rules.bands[0]!.from !== 0 ||
     rules.bands.some((band, index) => index > 0 && band.from <= rules.bands[index - 1]!.from) ||
@@ -422,6 +441,44 @@ function zoneGap(rules: SpawnRules, shape: ExclusionShape, from: Vec, to: Vec = 
   return nearest - shape.halfWidth;
 }
 
+/** Sample points per chunk side when measuring the share of a chunk that zones cover. */
+const OPEN_SAMPLES = 8;
+
+/**
+ * The share of a chunk outside every zone that applies to a category, sampled on an even grid of
+ * point centres; zones that cannot reach the chunk are skipped.
+ */
+function openShare(
+  rules: SpawnRules,
+  region: SpawnRegion,
+  category: SpawnCategory,
+  size: number,
+  origin: Vec,
+): number {
+  const centre = { x: origin.x + size / 2, y: origin.y + size / 2 };
+  const zones = region.exclusions.filter(
+    (zone) =>
+      zone.applies.includes(category) &&
+      zoneGap(rules, zone.shape, centre) < (size / 2) * Math.SQRT2,
+  );
+  if (!zones.length) {
+    return 1;
+  }
+  let open = 0;
+  for (let column = 0; column < OPEN_SAMPLES; column++) {
+    for (let row = 0; row < OPEN_SAMPLES; row++) {
+      const point = {
+        x: origin.x + ((column + 0.5) * size) / OPEN_SAMPLES,
+        y: origin.y + ((row + 0.5) * size) / OPEN_SAMPLES,
+      };
+      if (zones.every((zone) => zoneGap(rules, zone.shape, point) >= 0)) {
+        open++;
+      }
+    }
+  }
+  return open / OPEN_SAMPLES ** 2;
+}
+
 /** The rule of the first applicable zone the footprint touches. */
 function excludedBy(
   rules: SpawnRules,
@@ -487,7 +544,19 @@ function chunks(rules: SpawnRules, grid: WorldGrid, region: SpawnRegion): Chunk[
       const cell = { x: region.cell.x + column, y: region.cell.y + row };
       const origin = { x: cell.x * grid.pitch + grid.phase, y: cell.y * grid.pitch + grid.phase };
       const centre = { x: origin.x + grid.pitch / 2, y: origin.y + grid.pitch / 2 };
-      list.push({ band: spawnBandAt(rules, centre), key: worldCellKey(grid, cell), origin });
+      const report = region.report;
+      const counted =
+        !report ||
+        (cell.x >= report.cell.x &&
+          cell.x < report.cell.x + report.columns &&
+          cell.y >= report.cell.y &&
+          cell.y < report.cell.y + report.rows);
+      list.push({
+        band: spawnBandAt(rules, centre),
+        counted,
+        key: worldCellKey(grid, cell),
+        origin,
+      });
     }
   }
   return list;
@@ -529,7 +598,24 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   const size = grid.pitch;
   const area = chunks(rules, grid, region);
   const index = new SpatialIndex(Math.max(64, size / 4));
-  const tally = new Tally();
+  const reported = new Tally();
+  // Spawns in chunks the report leaves out are planned but not counted.
+  const ignored = new Tally();
+  const anchors: Vec[] = [];
+  const shares = new Map<string, number>();
+  // The share of a chunk outside the zones that apply to a category, which scales its requests.
+  const open = (chunk: Chunk, category: SpawnCategory): number => {
+    if (!rules.openArea) {
+      return 1;
+    }
+    const key = `${chunk.key}:${category}`;
+    let share = shares.get(key);
+    if (share === undefined) {
+      share = openShare(rules, region, category, size, chunk.origin);
+      shares.set(key, share);
+    }
+    return share;
+  };
   const placements: SpawnPlacement[] = [];
   const enemyPlacements: SpawnPlacement[] = [];
   const stream = (kind: string, chunk: Chunk, part: string) =>
@@ -542,11 +628,15 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   const rocks = () => {
     for (const kind of kindsOf(rules, (band) => band.rocks)) {
       for (const chunk of area) {
+        const tally = chunk.counted ? reported : ignored;
         const target = chunk.band.rocks.find((rock) => rock.kind === kind);
         if (!target || !target.shapes.length) {
           continue;
         }
-        const count = chanceRound(stream(kind, chunk, "count"), target.density);
+        const count = chanceRound(
+          stream(kind, chunk, "count"),
+          target.density * open(chunk, "rock"),
+        );
         const next = stream(kind, chunk, "place");
         tally.request(kind, count);
         for (let spawn = 0; spawn < count; spawn++) {
@@ -586,11 +676,15 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   const moving = () => {
     for (const kind of kindsOf(rules, (band) => band.moving)) {
       for (const chunk of area) {
+        const tally = chunk.counted ? reported : ignored;
         const target = chunk.band.moving.find((moving) => moving.kind === kind);
         if (!target) {
           continue;
         }
-        const count = chanceRound(stream(kind, chunk, "count"), target.density);
+        const count = chanceRound(
+          stream(kind, chunk, "count"),
+          target.density * open(chunk, "moving"),
+        );
         tally.request(kind, count);
         if (!count) {
           continue;
@@ -664,11 +758,15 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   const enemies = () => {
     for (const kind of kindsOf(rules, (band) => band.enemies)) {
       for (const chunk of area) {
+        const tally = chunk.counted ? reported : ignored;
         const target = chunk.band.enemies.find((enemy) => enemy.kind === kind);
         if (!target) {
           continue;
         }
-        const groups = chanceRound(stream(kind, chunk, "count"), target.density);
+        const groups = chanceRound(
+          stream(kind, chunk, "count"),
+          target.density * open(chunk, "enemy"),
+        );
         const next = stream(kind, chunk, "place");
         tally.request(kind, groups, "groups");
         for (let number = 0; number < groups; number++) {
@@ -686,6 +784,14 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
                 ? seeded
                 : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
             const phase = next();
+            const spacing = rules.groupSpacing ?? 0;
+            if (
+              spacing > 0 &&
+              anchors.some((other) => Math.hypot(other.x - anchor.x, other.y - anchor.y) < spacing)
+            ) {
+              rejected.push(SPAWN_RULE.groupSpacing);
+              continue;
+            }
             // The drawn size, or the largest smaller size down to `smallest` the budget admits.
             let rule: string | undefined = SPAWN_RULE.admission;
             for (let count = members; count >= (target.smallest ?? members); count--) {
@@ -704,6 +810,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
               rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
               if (!rule) {
                 formation = candidate;
+                anchors.push(anchor);
               }
               break;
             }
@@ -730,7 +837,7 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   for (const pass of rules.order) {
     passes[pass]();
   }
-  return { placements, report: tally.report() };
+  return { placements, report: reported.report() };
 }
 
 /**
