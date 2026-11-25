@@ -561,7 +561,7 @@ cream, with the "+" in the rim's accent colour.
 | Shield level                   | `icon-shop-shield.svg`                    | The level's tier                                 | The shield pill's shield icon |
 | Engine level                   | `icon-shop-engine-tuning.svg`             | The level's tier                                 | Nothing: it fades in place    |
 | Tractor beam level             | `icon-shop-tractor-beam.svg`              | The level's tier                                 | Nothing: it fades in place    |
-| Paint scheme                   | `icon-shop-ship-paint.svg`                | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
+| Paint scheme                   | The scheme's shop ship swatch at 20 by 20 | The scheme's `top` (`ship-paint.json`)           | Nothing: it fades in place    |
 
 The accents are the job orange and tow steel of the cargo icons, the selected
 weapon disc's gold and the holodisk's pink. A level reached by an upgrade drop
@@ -570,7 +570,8 @@ show at that level: orange `#ff8f1f` at level 2 and
 purple `#a66bff` at level 3, for a weapon, the Shield, the Engine or the
 Tractor beam alike, so a level always reads in one colour. A newly gained
 weapon keeps the gold; its ammunition is unchanged. A paint scheme takes its
-own top colour. Equipment notices draw their normal 20 by 20 SVGs with
+own top colour, and its icon is the ship in that scheme, the same heading-48
+swatch the shop row shows, so the wing-tip accent appears on the ship itself. Equipment notices draw their normal 20 by 20 SVGs with
 smooth sampling. A weapon level uses the plain 20 by 20 HUD mask, and the
 rim shows the tier. Shop rows use the 24 by 24 badge composite.
 
