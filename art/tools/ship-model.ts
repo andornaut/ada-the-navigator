@@ -259,9 +259,10 @@ const HULL = {
   ],
   // Vertical edge strip round the plan; the upper faces start at its top.
   skirt: 1.2,
-  // The ridge runs low from the nose to the shoulder at the canopy's rear edge, then
+  // The ridge runs low from the nose through `ridge` to the shoulder, which sits on it at the
+  // canopy's rear edge so the tail meets the canopy without cutting it; from there the ridge
   // climbs steeply to the rear-centre apex. Local (x, y, z).
-  shoulder: [0, 6, 9.5],
+  ridge: [0, 6, 9.5],
   apex: [0, 17, 15],
   // Rear faces lean forward from the skirt top, degrees from horizontal.
   lean: 76,
@@ -314,7 +315,11 @@ function vertices() {
     Point,
     Point,
   ];
-  const { apex, shoulder } = HULL;
+  const { apex, ridge } = HULL;
+  // The shoulder: the ridge line from the nose through `ridge`, at the canopy's rear edge.
+  const rear = CANOPY.centre + CANOPY.along;
+  const t = (rear - nose[1]) / (ridge[1] - nose[1]);
+  const shoulder: Point = [0, rear, nose[2] + (ridge[2] - nose[2]) * t];
   const corner = (tip: Point, notch: Point) =>
     meet(through(shoulder, tip, apex), leaning(tip, notch), through(notch, tail, apex));
   const rightCorner = corner(tipR, notchR);
@@ -331,6 +336,9 @@ function vertices() {
     tipR,
   };
 }
+
+/** The named hull vertices, local. */
+export const shipVertices = () => vertices();
 
 const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const unit = (a: Point): Point => {
@@ -479,24 +487,48 @@ export function plumeRoot(sign: number): Point {
   return [x, (d - n[0] * x - n[2] * z) / n[1] + PLUME.clear, z];
 }
 
-// Reverse plumes root under each wing tip and aim outboard of forward, in degrees.
-export const RETRO = { angle: 10, root: [19.6, 17, 0.5] } as const;
+// Reverse plumes aim this many degrees outboard of forward.
+export const RETRO = { angle: 10 } as const;
 
-/** Reverse exhaust: its root under the wing, its forward and outboard axis and its side. */
-export function retroMouthAxis(sign: number): {
-  axis: Point;
-  corner: Point;
-  root: Point;
-  side: Point;
-} {
+/** Reverse exhaust: its wing tip, its forward and outboard axis and its side, local. */
+export function retroMouthAxis(sign: number): { axis: Point; corner: Point; side: Point } {
   const { tipL, tipR } = vertices();
   const angle = (RETRO.angle * Math.PI) / 180;
   return {
     axis: [sign * Math.sin(angle), -Math.cos(angle), 0],
     corner: sign < 0 ? tipL : tipR,
-    root: [sign * RETRO.root[0], RETRO.root[1], RETRO.root[2]],
     side: [sign * Math.cos(angle), Math.sin(angle), 0],
   };
+}
+
+/**
+ * A reverse plume's root, local: the plume's widest outboard flank leaves from the wing tip, and
+ * the root slides forward along the axis until its inboard corner reaches the trailing edge, so
+ * none of it shows behind the wing. The nearer wing's plume lies at the skirt bottom and the
+ * farther wing's at the skirt top. `halfWidth` is the outer layer's half width and `rootShare`
+ * the profile's width at the root.
+ */
+export function retroRoot(
+  pose: Pose,
+  plume: { halfWidth: number; rootShare: number },
+  sign: number,
+): Point {
+  const v = vertices();
+  const { axis, corner: tip, side } = retroMouthAxis(sign);
+  const notch = sign < 0 ? v.notchL : v.notchR;
+  const widest = add(tip, side, -plume.halfWidth);
+  const inboard = add(widest, side, -plume.halfWidth * plume.rootShare);
+  // How far a point lies behind the trailing edge, along local y.
+  const slope = (tip[1] - notch[1]) / (Math.abs(tip[0]) - Math.abs(notch[0]));
+  const behind = (p: Point) => p[1] - (tip[1] + slope * (sign * p[0] - Math.abs(tip[0])));
+  const slide = Math.max(0, behind(inboard) / -(axis[1] - slope * sign * axis[0]));
+  const [x, y] = add(widest, axis, slide);
+  const depth = (p: Point) => {
+    const [wx, wy, wz] = place(pose, p);
+    return wx + wy + wz;
+  };
+  const near = depth(tip) >= depth(sign < 0 ? v.tipR : v.tipL) - 1e-9;
+  return [x, y, near ? 0 : HULL.skirt];
 }
 
 /** Project the forward plume roots through ordinary, banked or stretched ship poses. */
@@ -507,12 +539,39 @@ export function forwardJetMouths(
 ) {
   const projected = (centre: number, point: Point) =>
     projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
-  return [-1, 1].map((sign) => ({
-    anchor: projected(pivot, plumeRoot(sign)),
-    axis: projected(0, [0, 1, 0]),
-    half: projected(0, [sign, 0, 0]),
-    occluders: plumeOccluders(pivot, pose, sign, reach),
-  }));
+  return [-1, 1].map((sign) => {
+    const half = plumeSide(pose, [0, 1, 0], [sign, 0, 0]);
+    return {
+      anchor: projected(pivot, plumeRoot(sign)),
+      axis: projected(0, [0, 1, 0]),
+      half,
+      occluders: plumeOccluders(pivot, pose, sign, reach, half),
+    };
+  });
+}
+
+/**
+ * The projected vector across a plume per ship unit of half width. A plume is a round flame
+ * about its axis, so it shows its silhouette: across the projected axis, as wide as its round
+ * section projects. It points to the side of local `side`.
+ */
+export function plumeSide(pose: Pose, axis: Point, side: Point): [number, number] {
+  const origin = place(pose, [0, 0, 0]);
+  const along = unit(minus(place(pose, axis), origin));
+  const [ax, ay] = projectAt(0, 0, along);
+  const length = Math.hypot(ax, ay);
+  let n: [number, number] = [-ay / length, ax / length];
+  const [sx, sy] = projectAt(0, 0, minus(place(pose, side), origin));
+  if (n[0] * sx + n[1] * sy < 0) n = [-n[0], -n[1]];
+  // A world offset u moves the screen point along n by back . u; over a round section about the
+  // axis (u perpendicular to it) that peaks at the length of back's part across the axis.
+  const back: Point = [
+    (n[0] * Math.sqrt(3)) / 2 + n[1] / 2,
+    (-n[0] * Math.sqrt(3)) / 2 + n[1] / 2,
+    -n[1],
+  ];
+  const width = Math.hypot(...add(back, along, -dot(back, along))) * (pose.squash ?? 1);
+  return [round(n[0] * width), round(n[1] * width)];
 }
 
 // The light, fixed in the view: from the upper left, in world axes with the viewer at +(1, 1, 1).
@@ -557,7 +616,7 @@ const turned = (pose: Pose, points: readonly Point[]) => points.map((point) => p
 // centred at local y `centre`, its crown `crown` above the ridge. It sits `base` above the
 // ridge on a saddle that falls `saddle` of the wing's slope across the hull, and carries its
 // own lower envelope `lip` deep, so its outline does not follow the roof crease.
-const CANOPY = {
+export const CANOPY = {
   across: 8.8,
   along: 10,
   centre: -3,
@@ -805,22 +864,47 @@ export function drawn(pivot: number, paint: Paint, pose: Pose): { color: string;
 }
 
 /**
+ * The plane a plume's depth is taken on: it holds the plume's axis through `root` and faces the
+ * viewer, so a flame with volume is as near as its centre line. Local axes, front toward the
+ * viewer.
+ */
+function plumeDepthPlane(
+  pose: Pose,
+  root: Point,
+  axis: Point,
+): { distance: number; normal: Point } {
+  const b = basis(pose);
+  const world = minus(place(pose, axis), place(pose, [0, 0, 0]));
+  const view: Point = [1, 1, 1];
+  let n = cross(world, cross(world, view));
+  if (dot(n, view) < 0) n = [-n[0], -n[1], -n[2]];
+  const normal: Point = [dot(b[0], n), dot(b[1], n), dot(b[2], n)];
+  return { distance: dot(normal, root), normal };
+}
+
+/**
  * The hull nearer than a forward plume, as outlines in the frame of the jet anchors: every
- * visible surface above the exhaust plane, inside the plume's widest and longest reach.
+ * visible surface in front of the plume's depth plane, inside its widest and longest reach.
  */
 export function plumeOccluders(
   pivot: number,
   pose: Pose,
   sign: number,
   reach: { halfWidth: number; length: number },
+  half: readonly [number, number],
 ): V2[][] {
   const root = plumeRoot(sign);
+  const anchor = projectAt(pivot, pivot, place(pose, root));
+  const axis = projectAt(0, 0, minus(place(pose, [0, 1, 0]), place(pose, [0, 0, 0])));
   const corners = [
     [-reach.halfWidth, 0],
     [reach.halfWidth, 0],
     [reach.halfWidth, reach.length],
     [-reach.halfWidth, reach.length],
-  ].map(([w, l]) => projectAt(pivot, pivot, place(pose, [root[0] + w!, root[1] + l!, root[2]])));
+  ].map(([w, l]): [number, number] => [
+    anchor[0] + half[0] * w! + axis[0] * l!,
+    anchor[1] + half[1] * w! + axis[1] * l!,
+  ]);
   const winding =
     corners.reduce((s, a, i) => {
       const b = corners[(i + 1) % 4]!;
@@ -833,8 +917,9 @@ export function plumeOccluders(
     const edge: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
     return { normal: edge, distance: edge[0] * a[0] + edge[1] * a[1] };
   });
+  const depth = plumeDepthPlane(pose, root, [0, 1, 0]);
   const fragments = ordered(viewer(pose), geometry().tree).flatMap((surface) => {
-    const above = split({ normal: [0, 0, 1], distance: root[2] }, surface.points).front;
+    const above = split(depth, surface.points).front;
     if (above.length < 3) return [];
     let projected = visibleOutline(pivot, pose, surface.kind, above).map(([x, y]): Point => [
       x,

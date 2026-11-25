@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { filled, fillPolygon, over, resize, rgba, writePng, type Xy } from "./paint.ts";
 import { SPACE_BG } from "./palette.ts";
-import { JET_LENGTH, JET_LEVELS, JET_PROFILE, JET_SHAPE, jetLayers } from "./ship-jet-layers.ts";
+import { JET_LENGTH, JET_LEVELS, JET_PROFILE, jetLayers, plumeReach } from "./ship-jet-layers.ts";
 import { classic, drawn, forwardJetMouths, FRAME } from "./ship-model.ts";
 import { jetLength, plumeColor, plumePolygon } from "./ship-plume.ts";
 import { paintShip } from "./ship-raster.ts";
@@ -25,7 +25,7 @@ const layers = jetLayers(JET_LEVELS[0]);
 const mouths = forwardJetMouths(
   FRAME / 2,
   { yaw: HEADING },
-  { halfWidth: JET_SHAPE.outer.width, length: JET_LENGTH.base + JET_LENGTH.scale },
+  plumeReach(JET_LENGTH.base + JET_LENGTH.scale),
 );
 const plumes = mouths.flatMap((mouth) =>
   layers.map((layer) => ({

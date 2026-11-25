@@ -13,7 +13,7 @@ import {
   SCHEMES,
   UP,
 } from "./ship-model.ts";
-import { JET_LENGTH, JET_LEVELS, JET_PROFILE, JET_SHAPE, jetLayers } from "./ship-jet-layers.ts";
+import { JET_LENGTH, JET_LEVELS, JET_PROFILE, jetLayers, plumeReach } from "./ship-jet-layers.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
 import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
@@ -26,7 +26,7 @@ const jetsOnly = process.argv.includes("--jets-only");
 // Speed jets: plume roots at the mouth centres per heading, the profile and the layers by
 // Engine level, with the hull regions that draw over a plume at its longest.
 function jets(): string {
-  const reach = { halfWidth: JET_SHAPE.outer.width, length: JET_LENGTH.base + JET_LENGTH.scale };
+  const reach = plumeReach(JET_LENGTH.base + JET_LENGTH.scale);
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: forwardJetMouths(FRAME / 2, { yaw }, reach),

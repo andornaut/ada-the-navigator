@@ -17,7 +17,7 @@
 The root requires `shipHeadings: { count: 64, version: 2 }`, independently of
 its version 1 effect and pose geometry encoding. The fixed warp world angle is
 270 degrees (heading 48). Pose geometry retains local heading 0, the same 54
-hull paths, bank/roll/stretch transforms, pivots and authored 16-unit outer jet
+hull paths, bank/roll/stretch transforms, pivots and authored 16-unit jet
 length.
 
 The nine pose definitions share `art/tools/ship-poses.ts` with the
@@ -112,8 +112,8 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
   projected mouths for that exact bank, roll, stretch and squash.
 - The jet renderer uses the selected main engine/field layers with the same
   plume profile as forward flight. Complete plumes render above the base hull;
-  the hull is redrawn inside each mouth's `occluders`. The static outer cue
-  retains 16 model units and the core half of that. The projected axis and
+  the hull is redrawn inside each mouth's `occluders`. The static cue's jet
+  length is 16 model units: the outer flame reaches 17.6 and the core 8.8. The projected axis and
   half vectors already include the pose transform: do not normalize them or
   apply frame conversion or stretch again.
 - The runtime does not use a separate warp palette. Whitening and alpha follow

@@ -1235,7 +1235,7 @@ at 844x390 the logical view is 779.08x360 and `x0` is 29.
 | Available rect   | 16 to 704, 16 to 344         | 43 to 677, 16 to 341          | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
 | Field            | -120 to 840, -120 to 540     | -120 to 840, -120 to 540      | -91 to 869, -120 to 540       | -91 to 869, -120 to 540       |
 | Ship frame       | 238 to 518, -56 to 224       | 238 to 518, -56 to 224        | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
-| Ship ink         | 232.8 to 484, 42 to 141      | 232.8 to 484, 42 to 141       | 261.8 to 513, 42 to 141       | 261.8 to 513, 42 to 141       |
+| Ship ink         | 225.7 to 484, 42 to 141      | 225.7 to 484, 42 to 141       | 254.7 to 513, 42 to 141       | 254.7 to 513, 42 to 141       |
 | Wordmark         | 225 to 495, 148 to 250       | 225 to 495, 148 to 250        | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
 | Note line box    | Centre 360, 320 to 340       | Centre 360, 320 to 340        | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
 | Menu             | 2.25 to 54.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 | 31.25 to 83.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 |
@@ -1245,7 +1245,7 @@ Clearances, smallest at 720x360 with insets:
 
 | Pair                              | Arithmetic      | Result                                    |
 | --------------------------------- | --------------- | ----------------------------------------- |
-| Menu to ship ink                  | `232.8 - 85.75` | 147.05                                    |
+| Menu to ship ink                  | `225.7 - 85.75` | 139.95                                    |
 | Menu to wordmark                  | `225 - 85.75`   | 139.25                                    |
 | Ship ink to Exit, shown           | `636.5 - 484`   | 152.5, beside the HUD row, never under it |
 | Wordmark to Exit, shown           | `636.5 - 495`   | 141.5 (170.5 at 844x390 with insets)      |

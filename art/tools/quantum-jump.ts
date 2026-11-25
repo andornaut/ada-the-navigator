@@ -21,7 +21,7 @@ import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
 import { SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { LOGICAL_PER_DESIGN } from "./shimmer.ts";
 import { DISPLAY, FRAME, forwardJetMouths, SCHEMES } from "./ship-model.ts";
-import { JET_SHAPE } from "./ship-jet-layers.ts";
+import { plumeReach } from "./ship-jet-layers.ts";
 import { AUTHORED_JET_CURVE } from "./ship-jet-svg.ts";
 import { writeShipMaterials } from "./ship-materials.ts";
 import { WARP_FRAME, WARP_HEADING, WARP_POSES as POSES } from "./ship-poses.ts";
@@ -481,7 +481,7 @@ const effect = {
                   mouths: forwardJetMouths(
                     WARP_FRAME / 2,
                     { yaw: WARP_HEADING, roll, squash, stretch },
-                    { halfWidth: JET_SHAPE.outer.width, length: AUTHORED_JET_CURVE.base },
+                    plumeReach(AUTHORED_JET_CURVE.base),
                   ),
                 },
               ],

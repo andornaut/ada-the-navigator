@@ -16,13 +16,14 @@ import {
   JET_LENGTH,
   JET_LEVELS,
   JET_PROFILE,
-  JET_SHAPE,
   jetLayers,
   LIGHT_FIELD_JET_LEVELS,
+  plumeReach,
   RETRO_JET,
 } from "./ship-jet-layers.ts";
 import { AUTHORED_JET_CURVE, AUTHORED_JET_LENGTH } from "./ship-jet-svg.ts";
 import {
+  CANOPY,
   classic,
   DISPLAY,
   drawn,
@@ -31,14 +32,17 @@ import {
   FRAME,
   PAINT_SLOTS,
   plumeRoot,
+  plumeSide,
   retroMouthAxis,
+  retroRoot,
   SCHEMES,
+  shipVertices,
   TIP_CAP_X,
   TONE_STEPS,
   UP,
 } from "./ship-model.ts";
 import { svgPaths } from "./ship-paths.ts";
-import { plumePolygon } from "./ship-plume.ts";
+import { jetLength, plumePolygon, type PlumeMouth } from "./ship-plume.ts";
 import { paintShip } from "./ship-raster.ts";
 
 const assets = new URL("../../public/art/", import.meta.url);
@@ -209,6 +213,15 @@ test("one light from the upper left tones every heading in the declared slots", 
   assert(headOn.has("top") && headOn.has("topTurned"));
 });
 
+test("the tail rises from the ridge at the canopy's rear edge, behind the whole canopy", () => {
+  const { apex, nose, shoulder } = shipVertices();
+  const { centre, along } = CANOPY;
+  assert.equal(shoulder[1], centre + along);
+  // On the ridge line from the nose through (0, 6, 9.5), so the wing tops keep their plane.
+  assert(Math.abs((shoulder[2] - nose[2]) / (shoulder[1] - nose[1]) - 8.3 / 38) < 1e-12);
+  assert.deepEqual(apex, [0, 17, 15]);
+});
+
 test("the tip caps are the outer 28 percent of each half span", () => {
   const span = retroMouthAxis(1).corner[0];
   assert.equal(span, 21.44);
@@ -258,8 +271,8 @@ test("forward plumes root at the mouth centres with two layers and the hull regi
     assert.deepEqual(
       layers.map(({ length, name, width }) => ({ length, name, width })),
       [
-        { length: 1, name: "outer", width: 5.8 },
-        { length: 0.5, name: "core", width: 1.6 },
+        { length: 1.1, name: "outer", width: 5.8 },
+        { length: 0.55, name: "core", width: 1.6 },
       ],
     );
   }
@@ -268,7 +281,7 @@ test("forward plumes root at the mouth centres with two layers and the hull regi
     assert.equal(root[0], sign * 12.25);
     assert.equal(root[2], 2.2);
   }
-  const reach = { halfWidth: JET_SHAPE.outer.width, length: JET_LENGTH.base + JET_LENGTH.scale };
+  const reach = plumeReach(JET_LENGTH.base + JET_LENGTH.scale);
   for (const heading of jets.headings) {
     assert.deepEqual(heading.mouths, forwardJetMouths(FRAME / 2, { yaw: heading.index }, reach));
     for (const [index, mouth] of heading.mouths.entries()) {
@@ -287,6 +300,35 @@ test("forward plumes root at the mouth centres with two layers and the hull regi
   assert(jets.headings[8]!.mouths.every((mouth) => mouth.occluders!.length > 0));
 });
 
+// Whether a point lies in a simple polygon, by crossings to its right.
+function inside([x, y]: readonly number[], polygon: readonly (readonly number[])[]): boolean {
+  let crossings = 0;
+  for (const [i, a] of polygon.entries()) {
+    const b = polygon[(i + 1) % polygon.length]!;
+    if (a[1]! <= y !== b[1]! <= y) {
+      if (a[0]! + ((y - a[1]!) * (b[0]! - a[0]!)) / (b[1]! - a[1]!) > x) crossings++;
+    }
+  }
+  return crossings % 2 === 1;
+}
+
+test("the start screen's lower plume draws over the tail and the upper one under it", () => {
+  const jets = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as Jets;
+  const title = JSON.parse(readFileSync(new URL("title-screen.json", assets), "utf8")) as {
+    ship: { frame: number; jetSpeed: number };
+  };
+  const length = jetLength(jets.length, title.ship.jetSpeed);
+  const mouths = jets.headings[title.ship.frame]!.mouths;
+  const covered = (mouth: Mouth) =>
+    plumePolygon(JET_PROFILE, mouth as PlumeMouth, { length: 1.1, width: 5.8 }, length)
+      .slice(2, 2 * JET_PROFILE.length - 3)
+      .filter((point) => mouth.occluders!.some((polygon) => inside(point, polygon))).length;
+  const lower = mouths.reduce((a, b) => (a.anchor[1]! > b.anchor[1]! ? a : b));
+  const upper = mouths.find((mouth) => mouth !== lower)!;
+  assert.equal(covered(lower), 0);
+  assert(upper.occluders!.length > 0);
+});
+
 test("a plume layer is a closed teardrop from its root to a point", () => {
   const mouth = { anchor: [10, 20], axis: [0, 1], half: [1, 0] } as const;
   const points = plumePolygon(JET_PROFILE, mouth, { length: 1, width: 5.8 }, 30);
@@ -297,23 +339,42 @@ test("a plume layer is a closed teardrop from its root to a point", () => {
   assert(Math.abs(Math.max(...points.map(([x]) => Math.abs(x - 10))) - 5.8) < 1e-12);
 });
 
-test("reverse plumes root under the wing tips at half the earlier reach", () => {
+test("reverse plumes leave the wing tips ahead of the trailing edge and outreach the forward plumes", () => {
   const jets = JSON.parse(readFileSync(new URL("ship-retro-jets.json", assets), "utf8")) as Jets;
-  assert.deepEqual(jets.length, { base: 7.425, scale: 11.55, exponent: 1 });
-  assert.equal(RETRO_JET.reach, 0.5);
+  assert.deepEqual(jets.length, { base: 14.85, scale: 23.1, exponent: 1 });
+  assert.equal(RETRO_JET.reach, 1);
+  assert(jetLength(jets.length, 1) > jetLength(JET_LENGTH, 1));
   assert.deepEqual(jets.profile, JET_PROFILE);
   assert.deepEqual(
-    jets.engineLevels.map(({ layers }) => layers.map(({ width }) => width)),
-    [1, 2, 3].map(() => [4.93, 1.36]),
+    jets.engineLevels.map(({ layers }) => layers.map(({ length, width }) => [length, width])),
+    [1, 2, 3].map(() => [
+      [1.1, 4.93],
+      [0.55, 1.36],
+    ]),
   );
   assert(!("reverseStyle" in jets));
+  const plume = { halfWidth: 4.93, rootShare: JET_PROFILE[0][1] };
   for (const heading of jets.headings) {
+    const roots = [-1, 1].map((sign) => retroRoot({ yaw: heading.index }, plume, sign));
+    // One wing's plume at the skirt bottom, the other's at its top, unless both wings are level.
+    assert(roots.some(([, , z]) => z === 0));
     for (const [index, mouth] of heading.mouths.entries()) {
-      const model = retroMouthAxis(index === 0 ? -1 : 1);
-      assert.deepEqual(model.root, [(index === 0 ? -1 : 1) * 19.6, 17, 0.5]);
-      assert.deepEqual(mouth.anchor, anchor(SHIP_HEADINGS, FRAME / 2, heading.index, model.root));
+      const sign = index === 0 ? -1 : 1;
+      const model = retroMouthAxis(sign);
+      const root = roots[index]!;
+      assert.deepEqual(mouth.anchor, anchor(SHIP_HEADINGS, FRAME / 2, heading.index, root));
       assert.deepEqual(mouth.axis, vector(SHIP_HEADINGS, heading.index, model.axis));
+      assert.deepEqual(mouth.half, plumeSide({ yaw: heading.index }, model.axis, model.side));
       assert.deepEqual(Object.keys(mouth).sort(), ["anchor", "axis", "half"]);
+      // The widest outboard flank passes the wing tip, and the inboard root corner sits on the
+      // trailing edge from the notch (5.44, 15.68) to the tip (21.44, 20.48).
+      const [tipX, tipY] = model.corner;
+      assert.equal(Math.abs(tipX), 21.44);
+      const flank = root[0] + model.side[0] * 4.93;
+      assert(sign * flank > 21.44 - 1e-9);
+      const corner = [root[0] - model.side[0] * 4.93 * 0.8, root[1] - model.side[1] * 4.93 * 0.8];
+      const edge = tipY - 0.3 * (21.44 - sign * corner[0]!);
+      assert(Math.abs(corner[1]! - edge) < 1e-9);
     }
   }
 });
@@ -371,7 +432,7 @@ test("warp poses publish projected plume roots without scaling authored thrust t
         mouths: forwardJetMouths(
           warp.frame / 2,
           { roll: pose.roll, squash: pose.squash, stretch: pose.stretch, yaw: warp.heading },
-          { halfWidth: JET_SHAPE.outer.width, length: AUTHORED_JET_LENGTH },
+          plumeReach(AUTHORED_JET_LENGTH),
         ),
       },
     ]);

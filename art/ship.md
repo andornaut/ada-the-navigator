@@ -24,8 +24,10 @@
   the dark outer, and the rule that dropped the core at a display size of 42 px
   or less: the core draws at every size. Every title, warp, map and flight
   consumer draws the same plume from the same projected roots.
-- The hull draws over reverse plumes; the hull nearer than a forward plume
-  draws over it. Jets take no keyline.
+- A plume is a round flame about its axis: it shows its silhouette across the
+  projected axis and takes its depth on its centre line. The hull draws over
+  reverse plumes; the hull nearer than a forward plume draws over it. Jets
+  take no keyline.
 
 ## Model consumers
 
@@ -41,6 +43,7 @@ A model or paint change regenerates all of these, in this order:
 | App icon                                 | `node art/tools/app-icon.ts`                                         | `app-icon/` ([app icon](app-icon.md))                                                    |
 | Aboard scenes                            | `node art/tools/aboard.ts`                                           | `aboard.svg`, `aboard-emergency.svg`, `aboard-holodisk-{0..3}.svg` ([aboard](aboard.md)) |
 | Jump pose plumes                         | `node art/tools/quantum-jump.ts`                                     | `quantum-jump.json` `warp.poses[].jets` ([quantum jump](quantum-jump.md#warp-ship))      |
+| Galaxy preview cards                     | `node art/tools/galaxy-previews.ts`                                  | `previews/card-{galaxy}.png` and `-locked` ([preview cards](galaxies.md#preview-cards))  |
 | Title screen ship                        | none: the runtime draws `ship-52` and its plumes from the data above | [title screen](title-screen.md)                                                          |
 
 - `art/tools/ship-check.ts` and `art/tools/ship-materials-check.ts` pin the
@@ -128,7 +131,8 @@ A model or paint change regenerates all of these, in this order:
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
 - The hull is a pyramid on the swept delta plan: triangular in rear view, with
   a low ridge under the canopy that climbs steeply behind it to a rear-centre
-  apex, so the top of the rear triangle reads as a small white tail. No fin.
+  apex. The climb starts at the canopy's rear edge, so the tail meets the
+  canopy without cutting it, so the top of the rear triangle reads as a small white tail. No fin.
   The six-point plan matches the selected plan coordinates at scale 0.32:
   `localX = planY * 0.32`, `localY = planX * 0.32`. Reversing mapped vertex
   order preserves counterclockwise top winding. No interior, seams or panel
@@ -142,9 +146,13 @@ A model or paint change regenerates all of these, in this order:
 | Wing tips | (±21.44, 20.48, 1.2) | Swept-back tips                           |
 | Notches   | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
 | Tail      | (0, 24.32, 1.2)      | Tail tip                                  |
-| Shoulder  | (0, 6, 9.5)          | Ridge kink at the canopy's rear edge      |
+| Shoulder  | (0, 7, 9.72)         | Ridge kink at the canopy's rear edge      |
 | Apex      | (0, 17, 15)          | Rear-centre top                           |
-| Corners   | (±4.18, 13.02, 9.98) | Where wall, steep face and tail side meet |
+| Corners   | (±4.20, 13.06, 9.85) | Where wall, steep face and tail side meet |
+
+- The ridge runs from the nose through (0, 6, 9.5); the shoulder is the point
+  on it at the canopy's rear edge, local Y 7, so the wing tops keep their
+  plane and the whole canopy lies ahead of the steep faces.
 
 - The notches lie ahead of the apex, so no single rear face can rise from the
   notched outline to the apex without overhanging. The rear splits into planar
@@ -317,7 +325,7 @@ There are no animated jet frames.
 
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
-  (6 + 24 f²).
+  (6 + 24 f²). The outer flame reaches 1.1 jet lengths and the core 0.55.
 - `profile` is the plume outline as `[t, w]` pairs: `t` the fraction of a
   layer's length from the root, `w` the fraction of its half width. The
   teardrop is 0.8 at the root, full from 0.10 to 0.22, 0.72 at 0.45, 0.30 at
@@ -329,8 +337,14 @@ There are no animated jet frames.
 
 | Layer   | `width`, half width | `length` |
 | ------- | ------------------: | -------: |
-| `outer` |  5.8 units (2.5 px) |        1 |
-| `core`  |  1.6 units (0.7 px) |      0.5 |
+| `outer` |  5.8 units (2.5 px) |      1.1 |
+| `core`  |  1.6 units (0.7 px) |     0.55 |
+
+| Speed `f` | Jet length | Outer reach | Core reach |
+| --------: | ---------: | ----------: | ---------: |
+|      0.25 |        7.5 |        8.25 |       4.13 |
+|       0.6 |      14.64 |       16.10 |       8.05 |
+|         1 |         30 |          33 |       16.5 |
 
 - Each colour pair is the value at `f = 0` and `f = 1`, interpolated linearly
   in sRGB. All layers are opaque. The core draws at every display size.
@@ -349,13 +363,16 @@ There are no animated jet frames.
   `anchor` is the plume root in frame px: the mouth centre, local
   `(+-12.25, 17.563, 2.2)`, 0.1 behind the rear wall and 1 unit above the
   skirt top. `axis` is the projected exhaust direction per ship unit and
-  `half` the projected vector across the plume per ship unit.
-- A plume lies in the horizontal exhaust plane through its root. `occluders`
-  are the outlines, in frame px, of every visible hull region above that plane
-  inside the plume's widest and longest reach. Draw the complete plume above
-  the hull, then the hull again inside the occluders, taken from the loaded
-  hull image. The plume's outboard root corner lies inside the swept wall, so
-  the hull always covers part of the root.
+  `half` the projected vector across the plume per ship unit of half width:
+  perpendicular to the projected axis on screen, as long as a round section
+  of unit radius about the axis projects, pointing to the mouth's outboard
+  side.
+- A plume takes its depth on the plane that holds its axis and faces the
+  viewer. `occluders` are the outlines, in frame px, of every visible hull
+  region in front of that plane inside the plume's widest and longest reach
+  (`plumeReach`: 5.8 by 33 units). Draw the complete plume above the hull,
+  then the hull again inside the occluders, taken from the loaded hull image.
+  The nearer plume draws over the tail and the farther one passes behind it.
 - `node art/tools/ship.ts --jets-only` updates only this file.
   [ship-plume.ts](tools/ship-plume.ts) is the pure polygon and colour helper
   every Art drawing of the plume uses.
@@ -375,14 +392,30 @@ establish visible compliance.
 with all 64 headings in the same 96 px frame and pivot as the ship.
 
 - The same `profile` and two layers at 0.85 of the forward widths: outer 4.93
-  and core 1.36 units. `engineLevels` carries the same colours as
-  `ship-jets.json`; light fields use `lightField.jets.shipLevels` colours on
-  these widths.
-- Reach is half the earlier reach: `0.5 * (14.85 + 23.1 f)` ship units,
-  `length` `{ base: 7.425, scale: 11.55, exponent: 1 }`. Zero strength is off.
-- Each mouth has `anchor`, `axis` and `half` only. The root is under the wing
-  tip at local `(+-19.6, 17, 0.5)`; the axis aims 10 degrees outboard of
-  forward, `(+-sin 10, -cos 10, 0)`.
+  and core 1.36 units, at the forward lengths 1.1 and 0.55. `engineLevels`
+  carries the same colours as `ship-jets.json`; light fields use
+  `lightField.jets.shipLevels` colours on these widths.
+- Jet length is `14.85 + 23.1 f` ship units, `length`
+  `{ base: 14.85, scale: 23.1, exponent: 1 }`, so the reverse plumes outreach
+  the forward ones, which matters because the wings hide part of them. Zero
+  strength is off.
+
+| Strength `f` | Jet length | Outer reach | Core reach |
+| -----------: | ---------: | ----------: | ---------: |
+|         0.25 |      20.63 |       22.69 |      11.34 |
+|          0.6 |      28.71 |       31.58 |      15.79 |
+|            1 |      37.95 |       41.75 |      20.87 |
+
+- The axis aims 10 degrees outboard of forward, `(+-sin 10, -cos 10, 0)`, and
+  `half` is the round-flame vector across it, as for the forward plumes.
+- Each mouth has `anchor`, `axis` and `half` only. The root sits at the wing
+  tip (`retroRoot` in [ship-model.ts](tools/ship-model.ts)): the plume's widest
+  outboard flank leaves from the tip `(+-21.44, 20.48)`, and the root slides
+  forward along the axis until its inboard root corner reaches the trailing
+  edge, so no plume shows behind the wing. The local root is
+  `(+-16.77, 18.60)`. The nearer wing's plume lies at the skirt bottom
+  (z 0) and the farther wing's at the skirt top (z 1.2); level wings both
+  take the bottom.
 - The hull draws over the reverse plumes. There is no rear clip, corner
   attachment or wing-edge ink.
 - Actual backward velocity relative to facing selects retro jets with the

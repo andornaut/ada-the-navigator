@@ -11,12 +11,19 @@ export const JET_PROFILE = [
   [0.75, 0.3],
   [1, 0],
 ] as const;
+// The outer flame reaches 1.1 jet lengths and the core 0.55.
 export const JET_SHAPE = {
-  outer: { width: 5.8, length: 1 },
-  core: { width: 1.6, length: 0.5 },
+  outer: { width: 5.8, length: 1.1 },
+  core: { width: 1.6, length: 0.55 },
 } as const;
-// Reverse plumes: the same layers at this share of the widths and of the earlier reach.
-export const RETRO_JET = { width: 0.85, reach: 0.5, length: { base: 14.85, scale: 23.1 } } as const;
+/** A plume's widest half width and longest reach in ship units at jet length `length`. */
+export const plumeReach = (length: number) => ({
+  halfWidth: JET_SHAPE.outer.width,
+  length: length * JET_SHAPE.outer.length,
+});
+// Reverse plumes: the same layers at this share of the widths, on a jet length in ship units of
+// `reach * (base + scale * f)`, so they outreach the forward plumes, which the wings partly hide.
+export const RETRO_JET = { width: 0.85, reach: 1, length: { base: 14.85, scale: 23.1 } } as const;
 // Colours by Engine level at f = 0 and f = 1: pale blue at base, red at level 2 and
 // amber-yellow at level 3.
 export const JET_LEVELS = [
