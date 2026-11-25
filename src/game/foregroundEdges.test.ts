@@ -117,7 +117,7 @@ describe("data-selected foreground boundaries", () => {
   });
 });
 
-it("selects enemy beam boundary ink without replacing mine or signal fills", () => {
+it("selects enemy beam boundary ink for edges without replacing any fills", () => {
   const source = ts.createSourceFile(
     "sceneEnemies.ts",
     readFileSync(new URL("./sceneEnemies.ts", import.meta.url), "utf8"),
@@ -170,8 +170,9 @@ it("selects enemy beam boundary ink without replacing mine or signal fills", () 
     ringBolts: [],
     rings: [],
   });
-  expect(lance.mock.calls[0]![0].colours.ink).toBe(0xffffff);
-  expect(phaser.mock.calls[0]![0].colours.ink).toBe(0xffffff);
+  // The effects keep Art's own colours; only their edges take the selected boundary ink.
+  expect(lance.mock.calls[0]![0]).toBe(art);
+  expect(phaser.mock.calls[0]![0]).toBe(art);
   expect(mine.mock.calls[0]![0]).toBe(art);
   expect(art.colours.ink).toBe(LIGHT_FIELD.ink);
   expect(edges).toHaveBeenCalledWith(0xffffff, art.lightField.edge, effect.edged);

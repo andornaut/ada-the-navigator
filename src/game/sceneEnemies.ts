@@ -511,10 +511,6 @@ export function drawEnemyWeapons(
   if (art) {
     const light = scene.light;
     const motion = scene.reducedMotion;
-    const edgeArt =
-      scene.edgeInk === undefined
-        ? art
-        : { ...art, colours: { ...art.colours, ink: scene.edgeInk } };
     const draw = (effect: EnemyEffect, graphics?: Phaser.GameObjects.Graphics) =>
       drawEffect(
         scene,
@@ -542,10 +538,10 @@ export function drawEnemyWeapons(
       muzzle: scene.project(tell.muzzle),
     });
     for (const tell of view.lances) {
-      draw(lance(edgeArt, screen(tell), light, motion));
+      draw(lance(art, screen(tell), motion));
     }
     for (const tell of view.phasers) {
-      draw(enemyPhaser(edgeArt, screen(tell), light, motion));
+      draw(enemyPhaser(art, screen(tell), motion));
     }
     // Each mine's frame sorts with the play objects by its centre, under its own hint arc,
     // flecks or pop; on a light field the frame takes the ink keyline.

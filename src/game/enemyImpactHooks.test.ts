@@ -11,28 +11,28 @@ describe("shared enemy hit hooks", () => {
     const view = { ageMs, end: { x: 100, y: 60 }, muzzle: { x: 0, y: 60 }, stopped: true };
     // The white dart runs from 20 px behind the contact to 4 px past it.
     const dart = (effect: { edged: readonly { kind: string }[] }) => {
-      const shape = effect.edged[0];
+      const shape = effect.edged.at(-2);
       if (shape?.kind !== "polygon") {
         throw Error("Lance dart missing");
       }
       const { points } = shape as unknown as { points: { x: number; y: number }[] };
       return [points[0]!, points[2]!].map(({ x, y }) => [Math.round(x), Math.round(y)]);
     };
-    const hit = lance(art, view, false, false);
-    expect(hit.edged).toHaveLength(2);
+    const hit = lance(art, view, false);
+    // The beam's coral band and bloom disc, then the contact's dart and burst.
+    expect(hit.edged).toHaveLength(4);
     expect(dart(hit)).toEqual([
       [80, 60],
       [104, 60],
     ]);
-    const vertical = lance(art, { ...view, muzzle: { x: 100, y: 0 } }, false, false);
+    const vertical = lance(art, { ...view, muzzle: { x: 100, y: 0 } }, false);
     expect(dart(vertical)).toEqual([
       [100, 40],
       [100, 64],
     ]);
-    expect(lance(art, { ...view, stopped: false }, false, false).edged).toEqual([]);
-    expect(lance(art, { ...view, ageMs: ageMs + art.lance.spark.ms }, false, false).edged).toEqual(
-      [],
-    );
+    expect(lance(art, { ...view, stopped: false }, false).edged).toHaveLength(2);
+    // Once the contact ends only the beam's coral band and bloom disc take the edge.
+    expect(lance(art, { ...view, ageMs: ageMs + art.lance.spark.ms }, false).edged).toHaveLength(2);
   });
 
   it("uses a single bright compact Phaser contact without changing its firing boundary", () => {
@@ -42,14 +42,16 @@ describe("shared enemy hit hooks", () => {
       muzzle: { x: 0, y: 60 },
       stopped: true,
     };
-    const hit = enemyPhaser(art, view, false, false);
-    expect(hit.edged.filter((shape) => shape.kind === "disc")).toHaveLength(1);
-    expect(hit.edged.filter((shape) => shape.kind === "polygon")).toHaveLength(6);
-    expect(enemyPhaser(art, { ...view, stopped: false }, false, false).edged).toEqual([]);
+    const hit = enemyPhaser(art, view, false);
+    // The beam's coral band and bloom disc, then the spark's core and six rays.
+    expect(hit.edged.filter((shape) => shape.kind === "disc")).toHaveLength(2);
+    expect(hit.edged.filter((shape) => shape.kind === "polygon")).toHaveLength(7);
+    expect(enemyPhaser(art, { ...view, stopped: false }, false).edged).toHaveLength(2);
     expect(
-      enemyPhaser(art, { ...view, ageMs: view.ageMs + art.phaser.spark.ms }, false, false).edged,
+      enemyPhaser(art, { ...view, ageMs: view.ageMs + art.phaser.spark.ms }, false).edged,
     ).toEqual([]);
-    expect(enemyPhaser(art, view, false, true).edged).toHaveLength(1);
+    // Reduced motion: the coral band and the still contact ring.
+    expect(enemyPhaser(art, view, true).edged).toHaveLength(2);
   });
 
   it("draws a fired Phaser on its ship's current line and keeps the hit at the fire-time contact", () => {
@@ -60,7 +62,7 @@ describe("shared enemy hit hooks", () => {
       stopped: true,
     };
     const beam = { from: { x: 20, y: 90 }, to: { x: 110, y: 130 } };
-    const drawn = enemyPhaser(art, { ...fireTime, beam }, false, false);
+    const drawn = enemyPhaser(art, { ...fireTime, beam }, false);
     // Each band's butt end straddles the ship's current muzzle.
     const bands = drawn.shapes.slice(0, 3);
     expect(bands).toHaveLength(3);
@@ -73,8 +75,8 @@ describe("shared enemy hit hooks", () => {
       expect((first.y + last.y) / 2).toBeCloseTo(90, 9);
     }
     // The spark is the same as on the fire-time line: where the hit landed, along its direction.
-    const still = enemyPhaser(art, fireTime, false, false);
-    expect(drawn.edged).toEqual(still.edged);
+    const still = enemyPhaser(art, fireTime, false);
+    expect(drawn.edged.slice(2)).toEqual(still.edged.slice(2));
   });
 
   it("routes mine pops to one expanding shockwave and preserves normal and reduced end times", () => {

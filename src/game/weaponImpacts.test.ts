@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import file from "../../public/art/enemy-weapons.json";
 import { impactFamily, type WeaponImpact } from "../model/weaponImpacts.ts";
+import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { EFFECT_COLOURS, IMPACT_STYLE, impactEffect, SPARK_MS } from "./weaponEffects.ts";
 
-const context = { at: { x: 100, y: 60 }, reducedMotion: false };
+const { ripple } = readEnemyWeaponsArt(file)!;
+const context = { at: { x: 100, y: 60 }, reducedMotion: false, ripple };
 const contact: WeaponImpact = { age: 0, family: "compact", id: "contact", x: 0, y: 0 };
 
 const playerPhaser = (ms: number, reducedMotion = false) =>
@@ -97,7 +100,7 @@ describe("weapon impact families", () => {
 
   it("holds a single stationary player Phaser ring under reduced motion", () => {
     const ring = {
-      alpha: 0.95,
+      alpha: 1,
       at: context.at,
       colour: EFFECT_COLOURS.cream,
       halfHeight: 5.5,
@@ -107,7 +110,9 @@ describe("weapon impact families", () => {
     };
     expect(playerPhaser(0, true)).toEqual([ring]);
     expect(playerPhaser(48, true)).toEqual([ring]);
-    expect(playerPhaser(92, true)).toEqual([{ ...ring, alpha: 0.475 }]);
+    // From 48 ms it fades by the held fade: 0.6 at 92 ms, 0.3 at 120 ms.
+    expect(playerPhaser(92, true)).toEqual([{ ...ring, alpha: 0.6 }]);
+    expect(playerPhaser(120, true)).toEqual([{ ...ring, alpha: 0.3 }]);
     expect(playerPhaser(136, true)).toEqual([]);
   });
 
@@ -132,6 +137,36 @@ describe("weapon impact families", () => {
     // Halfway it has shrunk to half and dropped to its 0.6 step.
     expect(tail({ x: 1, y: -1 }, (SPARK_MS * 0.5) / 1000).x).toBeCloseTo(90, 9);
     expect(render({ x: 1, y: -1 }, (SPARK_MS * 0.5) / 1000)[0]).toHaveProperty("alpha", 0.6);
+  });
+
+  it("draws the ring burst's ripple from its art: amber, thinning, at the held fade", () => {
+    const render = (p: number, reducedMotion = false) =>
+      impactEffect(
+        { ...context, reducedMotion },
+        { ...contact, age: (p * SPARK_MS) / 1000, family: "ripple" },
+      );
+    const [start] = render(0);
+    expect(start).toMatchObject({
+      alpha: 1,
+      colour: EFFECT_COLOURS.amber,
+      kind: "ellipse",
+      part: "ring",
+      stroke: 2.2,
+    });
+    if (start?.kind !== "ellipse") {
+      throw Error("ripple missing");
+    }
+    // A ground ellipse of radius 12 x 0.2 at the start.
+    expect(start.halfWidth).toBeCloseTo(12 * 0.2 * Math.SQRT2, 9);
+    expect(render(0.5)[0]).toMatchObject({ alpha: 0.6 });
+    expect((render(0.5)[0] as { stroke: number }).stroke).toBeCloseTo(1.7, 9);
+    expect(render(0.8)[0]).toMatchObject({ alpha: 0.3 });
+    expect(render(0.5, true)[0]).toMatchObject({ alpha: 0.6, stroke: 2 });
+    expect(render(1)).toEqual([]);
+    // Without the enemy weapons' art a ripple draws nothing.
+    expect(
+      impactEffect({ at: context.at, reducedMotion: false }, { ...contact, family: "ripple" }),
+    ).toEqual([]);
   });
 
   it("expands ripples and shockwaves, holding their envelope under reduced motion", () => {

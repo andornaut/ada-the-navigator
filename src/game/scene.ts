@@ -77,7 +77,13 @@ import {
   readSidecars,
   type Sidecars,
 } from "./enemyArt.ts";
-import { type EnemyWeaponsArt } from "./enemyWeaponsArt.ts";
+import {
+  enemyBolt,
+  enemyFan,
+  enemyMissileFlame,
+  enemyPellet,
+  type EnemyWeaponsArt,
+} from "./enemyWeaponsArt.ts";
 import {
   FeedbackSound,
   HIT_FLASH_FILL,
@@ -166,10 +172,11 @@ import { preloadTouchChrome } from "./touchChrome.ts";
 import { type StrandedCraftArt, type TowLine } from "./towArt.ts";
 import { type UpgradePickupArt } from "./upgradePickup.ts";
 import {
-  AMBER_BEAM_GLOW,
+  ADA_MISSILES,
+  beam,
   type EffectShape,
   fanVolley,
-  glowingBeam,
+  heldFade,
   impactEffect,
   laserBolt,
   missileFlame,
@@ -891,6 +898,114 @@ export class GameScene extends Scene {
     }
   }
 
+  /**
+   * Ada's and the enemies' traveling shots (art/weapons.md "Bolt, pellet and fan", "Missiles"
+   * and "Enemy shots"): bolts, fans, pellets and missile frames over their flames, each past its
+   * fade point at the held fade. Ring burst bolts draw with the enemy weapons. Where a field edge
+   * exists the edged parts draw over it and the missile frames take its keyline.
+   */
+  private drawShots(flight: FlightState): void {
+    const art = this.enemyWeaponsArt;
+    const shotEdge = this.light ? LIGHT_FIELD.shotEdge : 0;
+    const draw = (effect: { edged: readonly EffectShape[]; shapes: readonly EffectShape[] }) =>
+      drawEffect(
+        this,
+        effect.shapes,
+        shotEdge ? inkEdges(this.edgeInk, shotEdge, effect.edged) : [],
+      );
+    const fans = new Map<
+      string,
+      { enemy: boolean; heads: { at: Vec; velocity: Vec }[]; nose: Vec }
+    >();
+    const missiles = new Set<string>();
+    for (const shot of flight.shots.filter((entry) => entry.enemyWeapon !== "ringBurst")) {
+      if (shot.enemy && !art) {
+        continue;
+      }
+      const point = this.project(shot);
+      const fade = shot.fade ? projectileOpacity(shot.fade, shot.life) : 1;
+      const alpha = shot.enemy && art ? heldFade(fade, art.fade) : heldFade(fade);
+      if (shot.projectile === "missile" && shot.blast !== undefined) {
+        const kind = missileKind(shot.blast);
+        const frame = missileFrame(kind, this.reducedMotion, this.time.now);
+        drawEffect(
+          this,
+          shot.enemy && art
+            ? enemyMissileFlame(art, kind, point, shot.velocity, frame)
+            : missileFlame(kind, point, shot.velocity, frame),
+        );
+        const model = shot.enemy && art ? art.missiles[kind] : ADA_MISSILES[kind];
+        if (this.drawMissileFrame(shot.id, model, point, shot.velocity)) {
+          missiles.add(shot.id);
+        }
+      } else if (shot.projectile === "dot") {
+        draw(
+          shot.enemy && art
+            ? enemyPellet(art, point, shot.velocity, alpha)
+            : { edged: pellet(point, alpha), shapes: pellet(point, alpha) },
+        );
+      } else if (shot.projectile !== "missile" && shot.fan) {
+        const { count, origin } = shot.fan;
+        const key = `${shot.enemy}:${count}:${origin.x}:${origin.y}`;
+        const fan = fans.get(key) ?? { enemy: shot.enemy, heads: [], nose: this.project(origin) };
+        fan.heads.push({ at: point, velocity: shot.velocity });
+        fans.set(key, fan);
+      } else if (shot.projectile !== "missile") {
+        if (shot.enemy && art) {
+          draw(enemyBolt(art, point, shot.velocity, alpha));
+        } else {
+          const shapes = laserBolt(point, screenAngle(shot.velocity), alpha);
+          draw({ edged: shapes, shapes });
+        }
+      }
+    }
+    for (const { enemy, heads, nose } of fans.values()) {
+      if (enemy && art) {
+        draw(enemyFan(art, nose, heads));
+      } else {
+        const shapes = fanVolley(nose, heads);
+        draw({ edged: shapes, shapes });
+      }
+    }
+    for (const [id, sprite] of this.missileSprites) {
+      if (!missiles.has(id)) {
+        sprite.destroy();
+        this.missileSprites.delete(id);
+      }
+    }
+  }
+
+  /**
+   * A missile's frame for its heading from Art's `model` over its flame, with the field keyline
+   * where an edge exists; false while the model or its texture is missing.
+   */
+  private drawMissileFrame(id: string, model: string, point: Vec, velocity: Vec): boolean {
+    const solid = this.weaponSolids && missileSolid(this.weaponSolids, model, velocity);
+    if (!solid || !this.textures.exists(solid.id)) {
+      return false;
+    }
+    let sprite = this.missileSprites.get(id);
+    if (!sprite) {
+      sprite = this.add.image(0, 0, solid.id).setDepth(this.overlay.depth);
+      this.missileSprites.set(id, sprite);
+    }
+    sprite
+      .setTexture(solid.id)
+      .setOrigin(solid.pivot.x, solid.pivot.y)
+      .setDisplaySize(solid.width, solid.height)
+      .setPosition(point.x, point.y)
+      .setVisible(true);
+    if (this.light && LIGHT_FIELD.effects.includes("missile")) {
+      this.keyed.push({
+        depth: undefined,
+        key: `missile:${id}`,
+        sprite,
+        width: LIGHT_FIELD.keyline,
+      });
+    }
+    return true;
+  }
+
   private draw(): void {
     // A storybook page over the flight, such as an ordinary ABOARD page, shows only the backdrop.
     const flight = this.model.storyView ? null : this.model.state.flight;
@@ -1039,149 +1154,53 @@ export class GameScene extends Scene {
     drawZips(this);
     startRockLoads(this);
     for (const impact of activeWeaponImpacts(flight)) {
+      const enemyArt = this.enemyWeaponsArt;
       const shapes = impactEffect(
-        { at: this.project(impact), reducedMotion: this.reducedMotion },
+        {
+          at: this.project(impact),
+          reducedMotion: this.reducedMotion,
+          ...(enemyArt ? { ripple: enemyArt.ripple } : {}),
+        },
         impact,
       );
+      // A fill inside an edged ring takes no edge: the shockwave edges only its listed parts.
+      const edgedShapes =
+        impact.family === "shockwave"
+          ? shapes.filter(
+              (shape) =>
+                "part" in shape &&
+                shape.part !== undefined &&
+                (enemyArt?.mine.popEdged ?? []).includes(shape.part),
+            )
+          : shapes;
       const edges =
         impact.family === "missile"
           ? this.light &&
             ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind))
             ? blastEdges(this.edgeInk, LIGHT_FIELD.keyline, shapes)
             : []
-          : keylineEdges(this, ["hitSpark"], shapes);
+          : keylineEdges(this, ["hitSpark"], edgedShapes);
       drawEffect(this, shapes, edges);
     }
     // The Phaser body stays on Ada's nose and aim; its contact uses the family dispatcher above.
+    // Where a field edge exists its amber band and outer bloom disc grow by it in the edge.
     for (const flash of activeBeamFlashes(flight)) {
       const drawn = drawnBeamFlash(flight, flash);
-      const from = this.project(drawn.from);
-      const to = this.project(drawn.to);
-      const glow = this.light ? { ...LIGHT_FIELD.phaser, colour: this.edgeInk } : AMBER_BEAM_GLOW;
+      const effect = beam(
+        this.project(drawn.from),
+        this.project(drawn.to),
+        flash.hit,
+        this.reducedMotion,
+        flash.age * 1000,
+      );
       drawEffect(
         this,
-        glowingBeam(glow, from, to, flash.hit, this.reducedMotion, flash.age * 1000),
+        effect.shapes,
+        this.light ? inkEdges(this.edgeInk, LIGHT_FIELD.phaser.edge, effect.edged) : [],
       );
     }
     drawEnemyWeapons(this, enemyWeaponsView(flight));
-    // Ring burst bolts draw as Art's darts with the enemy weapons. On a light field each of
-    // Ada's bolts, pellets and fan wedges draws over an ink edge.
-    const shotEdge = this.light ? LIGHT_FIELD.shotEdge : 0;
-    const edged = (shapes: readonly EffectShape[]) =>
-      shotEdge ? inkEdges(this.edgeInk, shotEdge, shapes) : [];
-    const fans = new Map<string, { heads: { at: Vec; velocity: Vec }[]; nose: Vec }>();
-    const missiles = new Set<string>();
-    for (const shot of flight.shots.filter((entry) => entry.enemyWeapon !== "ringBurst")) {
-      const point = this.project(shot);
-      const alpha = shot.fade ? projectileOpacity(shot.fade, shot.life) : 1;
-      if (!shot.enemy && shot.projectile === "dot") {
-        const shapes = pellet(point, alpha);
-        drawEffect(this, shapes, edged(shapes));
-      } else if (!shot.enemy && shot.projectile === "missile" && shot.blast !== undefined) {
-        // Art's Rapid or Heavy missile frame for its heading over its flat flame, which
-        // flickers unless motion is reduced. On a light field the frame takes an ink keyline.
-        const kind = missileKind(shot.blast);
-        drawEffect(
-          this,
-          missileFlame(
-            kind,
-            point,
-            shot.velocity,
-            missileFrame(kind, this.reducedMotion, this.time.now),
-          ),
-        );
-        const solids = this.weaponSolids;
-        const texture = solids && missileSolid(solids, kind, shot.velocity);
-        if (solids && texture && this.textures.exists(texture)) {
-          const { height, pivot, width } = solids[kind];
-          let sprite = this.missileSprites.get(shot.id);
-          if (!sprite) {
-            sprite = this.add.image(0, 0, texture).setDepth(this.overlay.depth);
-            this.missileSprites.set(shot.id, sprite);
-          }
-          sprite
-            .setTexture(texture)
-            .setOrigin(pivot.x, pivot.y)
-            .setDisplaySize(width, height)
-            .setPosition(point.x, point.y)
-            .setVisible(true);
-          missiles.add(shot.id);
-          if (this.light && LIGHT_FIELD.effects.includes("missile")) {
-            this.keyed.push({
-              depth: undefined,
-              key: `missile:${shot.id}`,
-              sprite,
-              width: LIGHT_FIELD.keyline,
-            });
-          }
-        }
-      } else if (!shot.enemy && shot.projectile !== "missile" && shot.fan) {
-        const { count, origin } = shot.fan;
-        const key = `${count}:${origin.x}:${origin.y}`;
-        const fan = fans.get(key) ?? { heads: [], nose: this.project(origin) };
-        fan.heads.push({ at: point, velocity: shot.velocity });
-        fans.set(key, fan);
-      } else if (!shot.enemy && shot.projectile !== "missile") {
-        const shapes = laserBolt(point, screenAngle(shot.velocity), alpha);
-        drawEffect(this, shapes, edged(shapes));
-      } else {
-        const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
-        const tail = this.project({
-          x: shot.x - shot.velocity.x * 0.035,
-          y: shot.y - shot.velocity.y * 0.035,
-        });
-        if (shot.projectile === "dot") {
-          if (shotEdge) {
-            this.overlay.fillStyle(this.edgeInk, alpha);
-            this.overlay.fillCircle(point.x, point.y, 1.5 + shotEdge);
-          }
-          this.overlay.fillStyle(color, alpha);
-          this.overlay.fillCircle(point.x, point.y, 1.5);
-        } else if (shot.projectile === "missile") {
-          const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-          this.overlay.lineStyle(3, shot.enemy ? color : 0xffffff, alpha);
-          this.overlay.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
-          this.overlay.lineStyle(1, color, alpha);
-          this.overlay.lineBetween(
-            point.x - dx * 17,
-            point.y - dy * 17,
-            point.x - dx * 11,
-            point.y - dy * 11,
-          );
-          this.overlay.lineBetween(
-            point.x - dx * 7 - dy * 4,
-            point.y - dy * 7 + dx * 4,
-            point.x,
-            point.y,
-          );
-          this.overlay.lineBetween(
-            point.x - dx * 7 + dy * 4,
-            point.y - dy * 7 - dx * 4,
-            point.x,
-            point.y,
-          );
-        } else {
-          if (shotEdge) {
-            this.overlay.lineStyle(1.5 + 2 * shotEdge, this.edgeInk, alpha);
-            this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
-          }
-          this.overlay.lineStyle(1.5, color, alpha);
-          this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
-        }
-      }
-    }
-    for (const { heads, nose } of fans.values()) {
-      const shapes = fanVolley(nose, heads);
-      drawEffect(this, shapes, edged(shapes));
-    }
-    for (const [id, sprite] of this.missileSprites) {
-      if (!missiles.has(id)) {
-        sprite.destroy();
-        this.missileSprites.delete(id);
-      }
-    }
+    this.drawShots(flight);
     drawIndicators(this);
     drawFeedback(this);
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);

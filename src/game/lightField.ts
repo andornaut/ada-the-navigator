@@ -3,7 +3,7 @@ import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetLayer, readJetLayers, readLevelLayers } from "./shipJets.ts";
-import type { BeamGlow, EffectShape } from "./weaponEffects.ts";
+import type { EffectShape } from "./weaponEffects.ts";
 
 // Art's light-field rule (art/galaxies.md "Light fields"): on a galaxy whose field is light,
 // play objects sit in ink keylines, effects draw over ink edges and the outermost glows turn to
@@ -31,7 +31,8 @@ export interface LightField {
   readonly keylined: readonly string[];
   /** The ink outline around each edge marker on a light field. */
   readonly markerOutline: number;
-  readonly phaser: BeamGlow;
+  /** Ada's Phaser: its amber band and outer bloom disc grow by `edge` px in the field edge. */
+  readonly phaser: { readonly edge: number };
   readonly shotEdge: number;
 }
 
@@ -41,7 +42,6 @@ const fields = (value: unknown): Fields | undefined =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Fields) : undefined;
 const positive = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value > 0;
-const unit = (value: unknown): value is number => positive(value) && value <= 1;
 const names = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((entry) => typeof entry === "string");
 const colour = (value: unknown): number | undefined =>
@@ -53,8 +53,6 @@ const colour = (value: unknown): number | undefined =>
 export function readLightField(value: unknown): LightField | undefined {
   const rule = fields(fields(value)?.lightField);
   const phaser = fields(rule?.phaser);
-  const glow = fields(phaser?.glow);
-  const bloom = fields(phaser?.bloom);
   const jets = fields(rule?.jets);
   const outline = fields(rule?.hudOutline);
   const destination = fields(rule?.destinationKeyline);
@@ -62,7 +60,6 @@ export function readLightField(value: unknown): LightField | undefined {
   const ink = colour(rule?.ink);
   const enemy = readJetLayers(jets?.enemy);
   const shipLevels = readLevelLayers(jets?.shipLevels);
-  const widths = glow?.width;
   if (
     !rule ||
     ink === undefined ||
@@ -80,12 +77,7 @@ export function readLightField(value: unknown): LightField | undefined {
     !names(rule.keylined) ||
     !names(rule.effects) ||
     typeof rule.holodiskBeacon !== "string" ||
-    !Array.isArray(widths) ||
-    widths.length !== 2 ||
-    !widths.every(positive) ||
-    !unit(glow?.alpha) ||
-    !positive(bloom?.radius) ||
-    !unit(bloom?.alpha)
+    !positive(phaser?.edge)
   ) {
     return undefined;
   }
@@ -101,13 +93,7 @@ export function readLightField(value: unknown): LightField | undefined {
     keyline: rule.keyline,
     keylined: rule.keylined,
     markerOutline: rule.markerOutline,
-    phaser: {
-      bloom: { alpha: bloom.alpha, radius: bloom.radius },
-      colour: ink,
-      // Reduced motion: the steady 4 px edge takes the glow's ink and alpha.
-      edgeAlpha: glow.alpha,
-      glow: { alpha: glow.alpha, width: [widths[0] as number, widths[1] as number] },
-    },
+    phaser: { edge: phaser.edge },
     shotEdge: rule.shotEdge,
   };
 }

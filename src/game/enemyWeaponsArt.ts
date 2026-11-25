@@ -1,29 +1,32 @@
-import { BEAM } from "../data/weaponCatalog.ts";
 import { fromScreen } from "../model/convex.ts";
 import type { Vec } from "../model/types.ts";
 import {
-  beamAlpha,
-  beamBand,
+  type BeamBands,
+  type EdgedShapes,
   type EffectShape,
+  type FanBand,
+  fanBands,
+  flatBeam,
   heldAlpha,
+  type HeldFade,
+  heldFade,
   IMPACT_STYLE,
   impactEffect,
   type LineShape,
+  missileFlame,
   type PolygonShape,
+  type RippleArt,
   screenAngle,
   SPARK_MS,
 } from "./weaponEffects.ts";
 
-// Art's enemy-only weapon effects and the enemy Phaser (art/weapons.md "Enemy Phaser" and
-// "Enemy-only weapons") in their flat look ("Flat look") from public/art/enemy-weapons.json, as
+// Art's enemy shots, enemy-only weapon effects and the enemy Phaser (art/weapons.md "Enemy
+// shots", "Enemy Phaser" and "Enemy-only weapons") from public/art/enemy-weapons.json, as
 // screen-space shapes in logical px for the scene to fill and stroke. Each builder returns the
-// shapes and the subset a light field edges in ink.
+// shapes and the subset that draws over the field edge on a light field or Phantom.
 
-/** What a weapon effect draws and which of those shapes take ink edges on a light field. */
-export interface EnemyEffect {
-  readonly edged: readonly EffectShape[];
-  readonly shapes: readonly EffectShape[];
-}
+/** What a weapon effect draws and which of those shapes take the field edge. */
+export type EnemyEffect = EdgedShapes;
 
 const NONE: EnemyEffect = { edged: [], shapes: [] };
 
@@ -36,31 +39,40 @@ type Points = readonly (readonly [number, number])[];
 
 /**
  * A beam's timing, its opaque bands (width at the nose and at the end, in px times `w`) and
- * bloom discs, its light-field outer band and the reduced-motion line.
+ * bloom discs, and its reduced-motion bands: at `widthFactor`, with or without bloom, alpha 1
+ * to `holdMs`, then the held fade.
  */
-interface BeamArt {
-  readonly bloom: readonly { readonly colour: number; readonly radius: number }[];
+interface BeamArt extends BeamBands {
   readonly keys: readonly (readonly [number, number, number])[];
-  readonly layers: readonly {
-    readonly colour: number;
-    readonly width: readonly [number, number];
-  }[];
-  readonly lightField: {
-    readonly bloomAlpha: number;
-    readonly glow: { readonly alpha: number; readonly width: readonly [number, number] };
-  };
   readonly ms: number;
   readonly reducedMotion: {
-    readonly edge: { alpha: number; colour: number; lightAlpha: number; width: number };
+    readonly bloom: boolean;
     readonly holdMs: number;
-    readonly line: { colour: number; width: number };
+    readonly widthFactor: number;
   };
   readonly spark: { readonly ms: number };
 }
 
+/** A shape of a body over an inner shape and, for darts and bolts, a tail behind it. */
+interface Dart {
+  readonly inner: Points;
+  readonly innerColour: number;
+  readonly outer: Points;
+  readonly outerColour: number;
+}
+
 /** Art's enemy-weapons.json, version 1, with colours as numbers. */
 export interface EnemyWeaponsArt {
+  /** The enemy bolt: body and core over a tail wedge, the head at the shot's point. */
+  readonly bolt: Dart & { readonly tail: { readonly colour: number; readonly points: Points } };
   readonly colours: Colours;
+  /** The held fade every enemy linear fade takes. */
+  readonly fade: HeldFade;
+  /** The enemy Multi-Laser: its near band and its far darts. */
+  readonly fan: {
+    readonly far: { readonly colour: number; readonly points: Points };
+    readonly near: FanBand & { readonly colour: number; readonly innerColour: number };
+  };
   readonly lance: BeamArt & {
     readonly charge: { radius: readonly [number, number]; core: readonly [number, number] };
     readonly locked: {
@@ -73,6 +85,12 @@ export interface EnemyWeaponsArt {
     readonly tracking: { dash: readonly [number, number]; march: number; width: number };
   };
   readonly lightField: { readonly dash: readonly [number, number]; readonly edge: number };
+  /** Enemy missiles: their frames' projectile names and their flame colours. */
+  readonly missiles: {
+    readonly flame: { readonly colour: number; readonly innerColour: number };
+    readonly heavy: string;
+    readonly rapid: string;
+  };
   readonly mine: {
     readonly blink: readonly { aboveRemainingMs: number; onMs: number; periodMs: number }[];
     readonly fizzleMs: number;
@@ -94,14 +112,10 @@ export interface EnemyWeaponsArt {
     readonly solidFromMs: number;
     readonly solidWidth: number;
   };
+  /** The enemy Scattershot pellet: a diamond over its core. */
+  readonly pellet: Dart;
   readonly ringBurst: {
-    readonly dart: {
-      readonly inner: Points;
-      readonly innerColour: number;
-      readonly outer: Points;
-      readonly outerColour: number;
-      readonly tail: { readonly colour: number; readonly points: Points };
-    };
+    readonly dart: Dart & { readonly tail: { readonly colour: number; readonly points: Points } };
     /** The emission ring: alpha held to each step's end in ms. */
     readonly emission: { alpha: Points; ms: number; stroke: number };
     readonly muzzle: {
@@ -110,6 +124,7 @@ export interface EnemyWeaponsArt {
       readonly radius: readonly [number, number];
     };
   };
+  readonly ripple: RippleArt;
 }
 
 type Fields = Record<string, unknown>;
@@ -151,6 +166,22 @@ function list<T>(value: unknown, path: string, read: (entry: unknown) => T): T[]
     throw new Malformed(path);
   }
   return found.map(read);
+}
+
+function bool(value: unknown, path: string): boolean {
+  const found = at(value, path);
+  if (typeof found !== "boolean") {
+    throw new Malformed(path);
+  }
+  return found;
+}
+
+function text(value: unknown, path: string): string {
+  const found = at(value, path);
+  if (typeof found !== "string" || found.length === 0) {
+    throw new Malformed(path);
+  }
+  return found;
 }
 
 function points(value: unknown, path: string): Points {
@@ -202,36 +233,51 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
           colour: colour(entry, "colour"),
           width: pair(entry, "width"),
         })),
-        lightField: {
-          bloomAlpha: num(art, "lightField.bloomAlpha"),
-          glow: {
-            alpha: num(art, "lightField.glow.alpha"),
-            width: pair(art, "lightField.glow.width"),
-          },
-        },
         ms: num(art, "flashMs"),
         reducedMotion: {
-          edge: {
-            alpha: num(art, "reducedMotion.edge.alpha"),
-            colour: colour(art, "reducedMotion.edge.colour"),
-            lightAlpha: num(art, "reducedMotion.edge.lightAlpha"),
-            width: num(art, "reducedMotion.edge.width"),
-          },
+          bloom: bool(art, "reducedMotion.bloom"),
           holdMs: num(art, "reducedMotion.holdMs"),
-          line: {
-            colour: colour(art, "reducedMotion.line.colour"),
-            width: num(art, "reducedMotion.line.width"),
-          },
+          widthFactor: num(art, "reducedMotion.widthFactor"),
         },
         spark: { ms: num(art, "spark.ms") },
       };
+    };
+    const dart = (root: unknown): Dart => ({
+      inner: points(root, "inner"),
+      innerColour: colour(root, "innerColour"),
+      outer: points(root, "outer"),
+      outerColour: colour(root, "outerColour"),
+    });
+    const tail = (root: unknown) => ({
+      colour: colour(root, "tail.colour"),
+      points: points(root, "tail.points"),
+    });
+    const near = at(value, "fan.near");
+    const fade = {
+      last: num(value, "fade.last"),
+      steps: points(value, "fade.steps"),
     };
     const mine = at(value, "mine");
     const ring = at(value, "ringBurst");
     const lance = at(value, "lance");
     const phaser = at(value, "phaser");
     return {
+      bolt: { ...dart(at(value, "bolt")), tail: tail(at(value, "bolt")) },
       colours,
+      fade,
+      fan: {
+        far: { colour: colour(value, "fan.far.colour"), points: points(value, "fan.far.points") },
+        near: {
+          colour: colour(near, "colour"),
+          depth: num(near, "depth"),
+          inner: { inset: num(near, "inner.inset"), offset: num(near, "inner.offset") },
+          innerColour: colour(near, "innerColour"),
+          minRadius: num(near, "minRadius"),
+          notch: num(near, "notch"),
+          spacing: num(near, "spacing"),
+          widen: num(near, "widen"),
+        },
+      },
       lance: {
         ...beam("lance"),
         charge: { core: pair(lance, "charge.core"), radius: pair(lance, "charge.radius") },
@@ -276,6 +322,15 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
         reducedPopMs: num(mine, "reducedMotion.pop.ms"),
         spin: { degPerSecond: num(mine, "spin.degPerSecond"), stepDeg: num(mine, "spin.stepDeg") },
       },
+      missiles: {
+        flame: {
+          colour: colour(value, "missiles.flame.colour"),
+          innerColour: colour(value, "missiles.flame.innerColour"),
+        },
+        heavy: text(value, "missiles.heavy"),
+        rapid: text(value, "missiles.rapid"),
+      },
+      pellet: dart(at(value, "pellet")),
       phaser: {
         ...beam("phaser"),
         aimMs: num(phaser, "aimMs"),
@@ -287,16 +342,7 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
         solidWidth: num(phaser, "solid.width"),
       },
       ringBurst: {
-        dart: {
-          inner: points(ring, "dart.inner"),
-          innerColour: colour(ring, "dart.innerColour"),
-          outer: points(ring, "dart.outer"),
-          outerColour: colour(ring, "dart.outerColour"),
-          tail: {
-            colour: colour(ring, "dart.tail.colour"),
-            points: points(ring, "dart.tail.points"),
-          },
-        },
+        dart: { ...dart(at(ring, "dart")), tail: tail(at(ring, "dart")) },
         emission: {
           alpha: points(ring, "emission.alpha"),
           ms: num(ring, "emission.ms"),
@@ -310,6 +356,12 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
           ms: num(ring, "muzzle.ms"),
           radius: pair(ring, "muzzle.radius"),
         },
+      },
+      ripple: {
+        colour: colour(value, "ripple.colour"),
+        fade,
+        reducedStroke: num(value, "ripple.reducedMotion.stroke"),
+        stroke: pair(value, "ripple.stroke"),
       },
     };
   } catch (error) {
@@ -377,7 +429,7 @@ export function enemyInkEdges(
   edge: number,
   shapes: readonly EffectShape[],
 ): EffectShape[] {
-  return shapes.map((shape): EffectShape => {
+  return shapes.flatMap((shape): EffectShape | EffectShape[] => {
     switch (shape.kind) {
       case "disc":
         return { ...shape, colour: ink, radius: shape.radius + edge };
@@ -402,26 +454,20 @@ export function enemyInkEdges(
           width: shape.width + 2 * edge,
         };
       }
-      case "polygon": {
-        // Grown about its centroid by `edge` px along each vertex's direction.
-        const centre = shape.points.reduce(
-          (sum, point) => ({
-            x: sum.x + point.x / shape.points.length,
-            y: sum.y + point.y / shape.points.length,
-          }),
-          { x: 0, y: 0 },
-        );
-        return {
-          ...shape,
-          colour: ink,
-          points: shape.points.map((point) => {
-            const dx = point.x - centre.x;
-            const dy = point.y - centre.y;
-            const distance = Math.hypot(dx, dy) || 1;
-            return { x: point.x + (dx / distance) * edge, y: point.y + (dy / distance) * edge };
-          }),
-        };
-      }
+      case "polygon":
+        // The silhouette grown by `edge`: the polygon under its sides stroked 2 `edge` wide.
+        return [
+          { ...shape, colour: ink },
+          ...shape.points.map((from, index): EffectShape => ({
+            alpha: shape.alpha,
+            colour: ink,
+            from,
+            kind: "line",
+            round: true,
+            to: shape.points[(index + 1) % shape.points.length]!,
+            width: 2 * edge,
+          })),
+        ];
       case "taper":
         return {
           ...shape,
@@ -439,9 +485,88 @@ export function enemyInkEdges(
 // Shapes
 
 /** A polygon of (u, v) `points` about `origin` turned to screen `angle`. */
-function turned(origin: Vec, angle: number, colour: number, points: Points): PolygonShape {
+function turned(
+  origin: Vec,
+  angle: number,
+  colour: number,
+  points: Points,
+  alpha = 1,
+): PolygonShape {
   const at = frame(origin, angle);
-  return { alpha: 1, colour, kind: "polygon", points: points.map(([u, v]) => at(u, v)) };
+  return { alpha, colour, kind: "polygon", points: points.map(([u, v]) => at(u, v)) };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Enemy shots
+
+/**
+ * An enemy bolt at screen point `head` flying along world `velocity` (art/weapons.md "Enemy
+ * shots"): its tail wedge, body and core turned to the projected heading, at `alpha`. The body
+ * and core take the field edge; the tail does not.
+ */
+export function enemyBolt(art: EnemyWeaponsArt, head: Vec, velocity: Vec, alpha = 1): EnemyEffect {
+  const { inner, innerColour, outer, outerColour, tail } = art.bolt;
+  const angle = screenAngle(velocity);
+  const body = turned(head, angle, outerColour, outer, alpha);
+  const core = turned(head, angle, innerColour, inner, alpha);
+  return {
+    edged: [body, core],
+    shapes: [turned(head, angle, tail.colour, tail.points, alpha), body, core],
+  };
+}
+
+/** An enemy Scattershot pellet: a diamond over its core, turned to its heading; both edged. */
+export function enemyPellet(
+  art: EnemyWeaponsArt,
+  head: Vec,
+  velocity: Vec,
+  alpha = 1,
+): EnemyEffect {
+  const { inner, innerColour, outer, outerColour } = art.pellet;
+  const angle = screenAngle(velocity);
+  const shapes = [
+    turned(head, angle, outerColour, outer, alpha),
+    turned(head, angle, innerColour, inner, alpha),
+  ];
+  return { edged: shapes, shapes };
+}
+
+/**
+ * An enemy Multi-Laser volley fired from screen point `nose` with its bolts at `heads`: Ada's
+ * band rule in the enemy's colours, with its trailing edges notched, while the heads are close,
+ * else each bolt as a far dart. Every part takes the field edge.
+ */
+export function enemyFan(
+  art: EnemyWeaponsArt,
+  nose: Vec,
+  heads: readonly { readonly at: Vec; readonly velocity: Vec }[],
+  alpha = 1,
+): EnemyEffect {
+  const { far, near } = art.fan;
+  const shapes =
+    fanBands(
+      near,
+      { inner: near.innerColour, outer: near.colour },
+      nose,
+      heads.map(({ at }) => at),
+      alpha,
+    ) ??
+    heads.map(({ at, velocity }) =>
+      turned(at, screenAngle(velocity), far.colour, far.points, alpha),
+    );
+  return { edged: shapes, shapes };
+}
+
+/** An enemy missile's flame in Ada's geometry and the enemy flame colours. */
+export function enemyMissileFlame(
+  art: EnemyWeaponsArt,
+  kind: "heavy" | "rapid",
+  head: Vec,
+  velocity: Vec,
+  frameIndex: 0 | 1,
+): PolygonShape[] {
+  const { colour, innerColour } = art.missiles.flame;
+  return missileFlame(kind, head, velocity, frameIndex, { inner: innerColour, outer: colour });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -629,9 +754,9 @@ export function mine(
     }
     const p = t / duration;
     if (reducedMotion) {
-      return { ...NONE, solid: { alpha: 1 - p, blink: false, scale: 1, step } };
+      return { ...NONE, solid: { alpha: heldFade(1 - p, art.fade), blink: false, scale: 1, step } };
     }
-    const sparks = flecks(centre, obstacle, 45, 1, 5 + 6 * p, 0.75, 1 - p);
+    const sparks = flecks(centre, obstacle, 45, 1, 5 + 6 * p, 0.75, heldFade(1 - p, art.fade));
     return {
       edged: sparks,
       shapes: sparks,
@@ -701,10 +826,10 @@ export function beamAt(beam: Pick<BeamArt, "keys">, t: number): { a: number; w: 
 }
 
 /**
- * A beam `t` ms after it fires from `from` to `to` on screen: Art's opaque bands at one held
- * alpha, its muzzle bloom, and a miss tapering every band to a point over the last `taper` px.
- * On a light field the outer band and the bloom's outer disc are ink. Reduced motion draws a
- * steady line over an edge.
+ * A beam `t` ms after it fires from `from` to `to` on screen: Art's opaque bands keyed by `w`
+ * with the held fade of `a`, its muzzle bloom, and a miss tapering every band to a point over the
+ * last `taper` px; under reduced motion its bands at `widthFactor`, with or without bloom, alpha
+ * 1 to `holdMs`, then the held fade. The outer band and bloom disc take the field edge.
  */
 function enemyBeam(
   art: EnemyWeaponsArt,
@@ -712,52 +837,19 @@ function enemyBeam(
   from: Vec,
   to: Vec,
   taper: number,
-  light: boolean,
   reducedMotion: boolean,
   t: number,
-): EffectShape[] {
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  if (t < 0 || t >= beam.ms || length === 0) {
-    return [];
+): EnemyEffect {
+  if (t < 0 || t >= beam.ms) {
+    return NONE;
   }
-  const angle = Math.atan2(to.y - from.y, to.x - from.x);
-  const band = (widths: readonly [number, number], colour: number, alpha: number) =>
-    beamBand(from, angle, length, widths, Math.min(taper, length), colour, alpha);
   if (reducedMotion) {
-    const { edge, holdMs, line } = beam.reducedMotion;
-    const alpha = beamAlpha(t <= holdMs ? 1 : 1 - (t - holdMs) / (beam.ms - holdMs));
-    return [
-      band(
-        [edge.width, edge.width],
-        light ? art.colours.ink : edge.colour,
-        (light ? edge.lightAlpha : edge.alpha) * alpha,
-      ),
-      band([line.width, line.width], line.colour, alpha),
-    ];
+    const { bloom, holdMs, widthFactor } = beam.reducedMotion;
+    const alpha = heldFade(t <= holdMs ? 1 : 1 - (t - holdMs) / (beam.ms - holdMs), art.fade);
+    return flatBeam(beam, from, to, taper, widthFactor, alpha, bloom);
   }
   const { a, w } = beamAt(beam, t);
-  const alpha = beamAlpha(a);
-  const { ink } = art.colours;
-  const shapes: EffectShape[] = beam.layers.map((layer, index) => {
-    const outer = index === 0 && light;
-    const [start, end] = outer ? beam.lightField.glow.width : layer.width;
-    return band(
-      [start * w, end * w],
-      outer ? ink : layer.colour,
-      (outer ? beam.lightField.glow.alpha : 1) * alpha,
-    );
-  });
-  beam.bloom.forEach((disc, index) => {
-    const outer = index === 0 && light;
-    shapes.push({
-      alpha: (outer ? beam.lightField.bloomAlpha : 1) * alpha,
-      at: from,
-      colour: outer ? ink : disc.colour,
-      kind: "disc",
-      radius: disc.radius * w,
-    });
-  });
-  return shapes;
+  return flatBeam(beam, from, to, taper, w, heldFade(a, art.fade), true);
 }
 
 /** A charge disc at the muzzle growing over `progress` 0 to 1, with its white core. */
@@ -807,12 +899,7 @@ export interface TellView {
  * the still pale-coral locked line with its white pulses for 300 ms, the growing charge at the
  * muzzle, then the beam for 300 ms, ending hard with the enemy spark where an obstacle stops it.
  */
-export function lance(
-  art: EnemyWeaponsArt,
-  view: TellView,
-  light: boolean,
-  reducedMotion: boolean,
-): EnemyEffect {
+export function lance(art: EnemyWeaponsArt, view: TellView, reducedMotion: boolean): EnemyEffect {
   const spec = art.lance;
   const { end, muzzle } = view;
   const { obstacle, white } = art.colours;
@@ -861,9 +948,9 @@ export function lance(
   const beamMs = t - tell;
   // A full-length beam tapers over its end as a Phaser miss does; a stopped one ends hard.
   const taper = view.stopped ? 0 : art.phaser.missFade;
-  const shapes = enemyBeam(art, spec, muzzle, end, taper, light, reducedMotion, beamMs);
+  const beam = enemyBeam(art, spec, muzzle, end, taper, reducedMotion, beamMs);
   if (!view.stopped) {
-    return { edged: [], shapes };
+    return beam;
   }
   const hitShapes =
     beamMs < 0 || beamMs >= spec.spark.ms
@@ -876,30 +963,20 @@ export function lance(
             family: "lance",
           },
         );
-  return { edged: hitShapes, shapes: [...shapes, ...hitShapes] };
+  return { edged: [...beam.edged, ...hitShapes], shapes: [...beam.shapes, ...hitShapes] };
 }
 
 /**
  * An enemy Phaser shot (art/weapons.md "Enemy Phaser"): the fixed aim line, coral dashes then
- * solid pale coral for its last 100 ms, an end tick and the muzzle charge for 400 ms, then the
- * coral beam for 150 ms with a miss fade, or the enemy spark where it hits.
+ * solid pale coral for its last 100 ms, its end chevron and the muzzle charge for 400 ms, then
+ * the coral beam for 150 ms with a miss taper, or the shared contact where it hits.
  */
 export function enemyPhaser(
   art: EnemyWeaponsArt,
   view: TellView,
-  light: boolean,
   reducedMotion: boolean,
 ): EnemyEffect {
-  const base = art.phaser;
-  // The reduced-motion line and edge take Ada's beam widths, from the collision half-width.
-  const spec = {
-    ...base,
-    reducedMotion: {
-      ...base.reducedMotion,
-      edge: { ...base.reducedMotion.edge, width: BEAM.halfWidth * 2 },
-      line: { ...base.reducedMotion.line, width: BEAM.halfWidth },
-    },
-  };
+  const spec = art.phaser;
   const { end, muzzle } = view;
   const t = view.ageMs;
   if (t < 0) {
@@ -930,18 +1007,17 @@ export function enemyPhaser(
   const beamMs = t - spec.aimMs;
   const taper = view.stopped ? 0 : spec.missFade;
   // The beam stays on the turret's muzzle and aim; its hit stays at the fire-time contact.
-  const shapes = enemyBeam(
+  const beam = enemyBeam(
     art,
     spec,
     view.beam?.from ?? muzzle,
     view.beam?.to ?? end,
     taper,
-    light,
     reducedMotion,
     beamMs,
   );
   if (!view.stopped) {
-    return { edged: [], shapes };
+    return beam;
   }
   const hitShapes =
     beamMs < 0 || beamMs >= spec.spark.ms
@@ -954,7 +1030,7 @@ export function enemyPhaser(
             family: "compactBright",
           },
         );
-  return { edged: hitShapes, shapes: [...shapes, ...hitShapes] };
+  return { edged: [...beam.edged, ...hitShapes], shapes: [...beam.shapes, ...hitShapes] };
 }
 
 // ---------------------------------------------------------------------------------------------

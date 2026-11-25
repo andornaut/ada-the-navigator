@@ -3775,6 +3775,15 @@ function enemies(
     bounceShips(content, flight, object);
     const coverage = { ...viewport, centre: before };
     const rings = new Map<number, Vec[]>();
+    // A Multi-Laser volley's bolts share their delay and muzzle, and draw as one fan.
+    const volley = (fire: (typeof intent.fire)[number]) =>
+      `${fire.delay}:${fire.origin.x}:${fire.origin.y}`;
+    const fans = new Map<string, number>();
+    for (const fire of intent.fire) {
+      if (fire.weapon === "multiLaser" && fire.projectile === "bolt") {
+        fans.set(volley(fire), (fans.get(volley(fire)) ?? 0) + 1);
+      }
+    }
     for (const fire of intent.fire) {
       const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
       const shared = enemyOnly(fire.weapon) ? null : weaponAt(fire.weapon, fire.level);
@@ -3816,6 +3825,9 @@ function enemies(
         effectFamily: impactFamily(fire.weapon),
         enemy: true,
         ...(fire.weapon === "ringBurst" ? { enemyWeapon: "ringBurst" as const } : {}),
+        ...(fire.weapon === "multiLaser" && (fans.get(volley(fire)) ?? 0) > 1
+          ? { fan: { count: fans.get(volley(fire))!, origin: { ...fire.origin } } }
+          : {}),
         hitIds: [],
         id,
         piercing: false,

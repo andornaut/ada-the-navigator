@@ -21,16 +21,7 @@ import {
   thresholdSilhouette,
 } from "./lightField.ts";
 import { layerColor } from "./shipJets.ts";
-import {
-  AMBER_BEAM_GLOW,
-  beam,
-  beamAlpha,
-  beamKeys,
-  blast,
-  EFFECT_COLOURS,
-  type EffectShape,
-  glowingBeam,
-} from "./weaponEffects.ts";
+import { beam, beamKeys, blast, EFFECT_COLOURS, type EffectShape } from "./weaponEffects.ts";
 import { blinkRow, readBeaconArt } from "./worldArt.ts";
 
 const galaxies: unknown = JSON.parse(
@@ -89,12 +80,7 @@ describe("light-field rule", () => {
     expect(LIGHT_FIELD.jets.enemy.map((layer) => layerColor(layer, 1))).toEqual([
       0x7f4b3d, 0xd68b72,
     ]);
-    expect(LIGHT_FIELD.phaser).toEqual({
-      bloom: { alpha: 0.6, radius: 5 },
-      colour: INK,
-      edgeAlpha: 0.9,
-      glow: { alpha: 0.9, width: [6.5, 4] },
-    });
+    expect(LIGHT_FIELD.phaser).toEqual({ edge: 1 });
   });
 
   it("keylines destinations 2 px, Ada 0.5 px and other keylined kinds 1 px", () => {
@@ -316,46 +302,25 @@ describe("light-field rule", () => {
     });
   });
 
-  it("turns the Phaser's amber band and outer bloom to ink, leaving cream and white", () => {
+  it("grows the Phaser's amber band and outer bloom disc by the field edge, at every motion", () => {
     const from = { x: 0, y: 0 };
     const to = { x: 100, y: 0 };
-    const t = 40;
-    const { a, w } = beamKeys(t);
-    const alpha = beamAlpha(a);
-    const dark = beam(from, to, true, false, t);
-    const light = glowingBeam(LIGHT_FIELD.phaser, from, to, true, false, t);
-    expect(dark).toEqual(glowingBeam(AMBER_BEAM_GLOW, from, to, true, false, t));
-    expect(light).toHaveLength(dark.length);
-    // The outer band: ink at the light field's widths and alpha share.
-    const band = light[0]!;
-    if (band.kind !== "polygon") {
-      throw Error("ink band missing");
-    }
-    expect(band).toMatchObject({ alpha: 0.9 * alpha, colour: INK });
-    expect(band.points[0]!.y).toBeCloseTo((-6.5 * w) / 2, 9);
-    expect(band.points[1]!.y).toBeCloseTo((-4 * w) / 2, 9);
-    const bloom = light.at(-3);
-    expect(bloom).toEqual({
-      alpha: 0.6 * alpha,
-      at: from,
+    const { w } = beamKeys(40);
+    const full = beam(from, to, true, false, 40);
+    // The amber band and the 5 w amber bloom disc take the edge; cream and white take none.
+    expect(full.edged).toEqual([full.shapes[0], full.shapes[3]]);
+    expect(full.edged.every((shape) => shape.colour === EFFECT_COLOURS.amber)).toBe(true);
+    const [band, side] = inkEdges(INK, LIGHT_FIELD.phaser.edge, full.edged);
+    expect(band).toMatchObject({ colour: INK, kind: "polygon" });
+    expect(inkEdges(INK, LIGHT_FIELD.phaser.edge, full.edged).at(-1)).toEqual({
+      ...full.shapes[3],
       colour: INK,
-      kind: "disc",
-      radius: 5 * w,
+      radius: 5 * w + 1,
     });
-    expect(light.slice(1, -3)).toEqual(dark.slice(1, -3));
-    expect(light.slice(-2)).toEqual(dark.slice(-2));
-    expect(dark[0]!.colour).toBe(EFFECT_COLOURS.amber);
-  });
-
-  it("draws the reduced-motion beam's 12 px edge in ink at 0.9", () => {
-    const from = { x: 0, y: 0 };
-    const to = { x: 100, y: 0 };
-    const [edge, ...rest] = glowingBeam(LIGHT_FIELD.phaser, from, to, true, true, 0);
-    if (edge?.kind !== "polygon") {
-      throw Error("ink edge missing");
-    }
-    expect(edge).toMatchObject({ alpha: 0.9, colour: INK });
-    expect(edge.points[3]!.y - edge.points[0]!.y).toBeCloseTo(12, 9);
-    expect(rest).toEqual(beam(from, to, true, true, 0).slice(1));
+    expect(side).toMatchObject({ colour: INK, kind: "line", width: 2 });
+    // Reduced motion keeps the edge on its amber band and draws no bloom.
+    const still = beam(from, to, true, true, 0);
+    expect(still.edged).toEqual([still.shapes[0]]);
+    expect(still.shapes.some((shape) => shape.kind === "disc")).toBe(false);
   });
 });

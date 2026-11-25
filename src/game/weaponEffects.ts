@@ -162,38 +162,52 @@ function radialWedge(
 // ---------------------------------------------------------------------------------------------
 // Bolt, pellet and fan
 
-/** The slug outlines in (u, v) logical px back from the head. */
+/** Ada's bolt slug in (u, v) logical px back from the head (art/weapons.md "Bolt, pellet and fan"). */
 const SLUG = [
   [0, 0],
-  [-2.7, -1.5],
-  [-14, -1.5],
-  [-15.5, 0],
-  [-14, 1.5],
-  [-2.7, 1.5],
+  [-1.62, -1.275],
+  [-8.4, -1.275],
+  [-9.3, 0],
+  [-8.4, 1.275],
+  [-1.62, 1.275],
 ] as const;
 const SLUG_CORE = [
-  [-1.5, 0],
-  [-3.3, -0.675],
-  [-8.68, -0.675],
-  [-8.68, 0.675],
-  [-3.3, 0.675],
+  [-0.9, 0],
+  [-1.98, -0.675],
+  [-5.208, -0.675],
+  [-5.208, 0.675],
+  [-1.98, 0.675],
 ] as const;
-/** The Laser bolt's tail step: 1.5 px wide from 14 to 27 px behind the head. */
-const SLUG_TAIL = { from: 14, to: 27, width: 1.5 } as const;
-/** A far Multi-Laser bolt: the slug scaled to 10 px long and 2.2 px wide. */
-const FAN_SLUG = { length: 10, width: 2.2 } as const;
+/** The Laser bolt's tail step: 1.275 px wide from 8.4 to 16.2 px behind the head. */
+const SLUG_TAIL = { from: 8.4, to: 16.2, width: 1.275 } as const;
+/** A far Multi-Laser bolt: the slug scaled to 1.87 px wide with its shoulder 6 px behind the head. */
+const FAN_SLUG = { shoulder: 6, width: 1.87 } as const;
 
 /**
- * The Multi-Laser fan's wedge (art/weapons.md "Bolt, pellet and fan"), a band through the bolts'
- * heads on screen while neighbouring heads are under 5.6 px apart there. For each head at
- * distance `h` from the nose, the amber band runs back to `max(4, h - 11)`, its two outer ends
- * widened 1.1 px sideways; the cream band runs from `h - 2.5` back to the amber's inner edge plus 4.
+ * A fan band (art/weapons.md "Bolt, pellet and fan"), drawn while neighbouring heads are under
+ * `spacing` px apart on screen. For each head at distance `h` from the nose, the outer band runs
+ * back to `max(minRadius, h - depth)`, its two end heads widened `widen` px sideways; the inner
+ * band runs from `h - inner.inset` back to the outer band's inner edge plus `inner.offset`. Both
+ * trailing edges move `notch` px forward at the middle head, falling to 0 at the end heads.
  */
-export const FAN = {
-  amber: { inset: 11, minInner: 4, widen: 1.1 },
-  cream: { inner: 4, outerInset: 2.5 },
-  nearSpacing: 5.6,
-} as const;
+export interface FanBand {
+  readonly depth: number;
+  readonly inner: { readonly inset: number; readonly offset: number };
+  readonly minRadius: number;
+  readonly notch: number;
+  readonly spacing: number;
+  readonly widen: number;
+}
+
+/** Ada's fan band: amber back 6.6 px, widened 0.935 px, over a cream band 1.5 and 2.4 px in. */
+export const ADA_FAN: FanBand = {
+  depth: 6.6,
+  inner: { inset: 1.5, offset: 2.4 },
+  minRadius: 4,
+  notch: 0,
+  spacing: 5.6,
+  widen: 0.935,
+};
 
 /** The Laser bolt with its head at `head`, along screen `angle`: tail step, slug and core. */
 export function laserBolt(head: Vec, angle: number, alpha = 1): PolygonShape[] {
@@ -212,9 +226,9 @@ export function laserBolt(head: Vec, angle: number, alpha = 1): PolygonShape[] {
   ];
 }
 
-/** A far Multi-Laser bolt: an amber slug 10 px long and 2.2 px wide, with no core or tail. */
+/** A far Multi-Laser bolt: the slug 1.87 px wide, its shoulder 6 px back, with no core or tail. */
 export function fanBolt(head: Vec, angle: number, alpha = 1): PolygonShape {
-  const u = FAN_SLUG.length / -SLUG[2][0];
+  const u = FAN_SLUG.shoulder / -SLUG[2][0];
   const v = FAN_SLUG.width / (2 * -SLUG[2][1]);
   return polygon(
     frame(head, angle),
@@ -225,17 +239,19 @@ export function fanBolt(head: Vec, angle: number, alpha = 1): PolygonShape {
 }
 
 /**
- * A Multi-Laser volley fired from screen point `nose`, with its bolts still in flight at `heads`
- * (screen points and world velocities): while neighbouring heads are under 5.6 px apart on
- * screen, one amber band through the heads with a cream inner band, else each bolt as a far slug.
+ * A fan volley's bands fired from screen point `nose` with its bolts at `heads` (screen
+ * points): the outer band in `colours.outer` over the inner band in `colours.inner` while
+ * neighbouring heads, ordered across the fan, are under `band.spacing` px apart on screen and
+ * every head is past `band.minRadius`. Undefined while the volley draws as single bolts.
  */
-export function fanVolley(
+export function fanBands(
+  band: FanBand,
+  colours: { readonly inner: Colour; readonly outer: Colour },
   nose: Vec,
-  heads: readonly { readonly at: Vec; readonly velocity: Vec }[],
+  heads: readonly Vec[],
   alpha = 1,
-): PolygonShape[] {
-  const slugs = () => heads.map(({ at, velocity }) => fanBolt(at, screenAngle(velocity), alpha));
-  const rays = heads.map(({ at }) => {
+): PolygonShape[] | undefined {
+  const rays = heads.map((at) => {
     const h = Math.hypot(at.x - nose.x, at.y - nose.y);
     return {
       at,
@@ -243,8 +259,8 @@ export function fanVolley(
       unit: h > 0 ? { x: (at.x - nose.x) / h, y: (at.y - nose.y) / h } : { x: 0, y: 0 },
     };
   });
-  if (rays.length < 2 || rays.some(({ h }) => h <= FAN.amber.minInner)) {
-    return slugs();
+  if (rays.length < 2 || rays.some(({ h }) => h <= band.minRadius)) {
+    return undefined;
   }
   // Order the heads across the fan, from the clockwise edge to the anticlockwise one.
   const mean = rays.reduce((sum, { unit }) => ({ x: sum.x + unit.x, y: sum.y + unit.y }), {
@@ -256,21 +272,22 @@ export function fanVolley(
   const near = rays.every(
     ({ at }, index) =>
       index === 0 ||
-      Math.hypot(at.x - rays[index - 1]!.at.x, at.y - rays[index - 1]!.at.y) < FAN.nearSpacing,
+      Math.hypot(at.x - rays[index - 1]!.at.x, at.y - rays[index - 1]!.at.y) < band.spacing,
   );
   if (!near) {
-    return slugs();
+    return undefined;
   }
   const along = ({ unit }: (typeof rays)[number], radius: number, sideways = 0): Vec => ({
     x: nose.x + unit.x * radius - unit.y * sideways,
     y: nose.y + unit.y * radius + unit.x * sideways,
   });
-  const inner = rays.map(({ h }) => Math.max(FAN.amber.minInner, h - FAN.amber.inset));
   const last = rays.length - 1;
+  const middle = last / 2;
+  const notch = (index: number) => band.notch * (1 - Math.abs(index - middle) / middle);
+  const inner = rays.map(({ h }) => Math.max(band.minRadius, h - band.depth));
   // The ends move outward: clockwise for the first head, anticlockwise for the last.
-  const widen = (index: number) =>
-    index === 0 ? -FAN.amber.widen : index === last ? FAN.amber.widen : 0;
-  const band = (
+  const widen = (index: number) => (index === 0 ? -band.widen : index === last ? band.widen : 0);
+  const outline = (
     outer: (index: number) => number,
     from: (index: number) => number,
     ends: boolean,
@@ -281,26 +298,47 @@ export function fanVolley(
   const shapes: PolygonShape[] = [
     {
       alpha,
-      colour: EFFECT_COLOURS.amber,
+      colour: colours.outer,
       kind: "polygon",
-      points: band(
+      points: outline(
         (index) => rays[index]!.h,
-        (index) => inner[index]!,
+        (index) => inner[index]! + notch(index),
         true,
       ),
     },
   ];
-  const creamOuter = (index: number) => rays[index]!.h - FAN.cream.outerInset;
-  const creamInner = (index: number) => inner[index]! + FAN.cream.inner;
-  if (rays.every((_, index) => creamOuter(index) > creamInner(index))) {
+  const innerOuter = (index: number) => rays[index]!.h - band.inner.inset;
+  const innerFrom = (index: number) => inner[index]! + band.inner.offset + notch(index);
+  if (rays.every((_, index) => innerOuter(index) > innerFrom(index))) {
     shapes.push({
       alpha,
-      colour: EFFECT_COLOURS.cream,
+      colour: colours.inner,
       kind: "polygon",
-      points: band(creamOuter, creamInner, false),
+      points: outline(innerOuter, innerFrom, false),
     });
   }
   return shapes;
+}
+
+/**
+ * Ada's Multi-Laser volley fired from screen point `nose`, with its bolts still in flight at
+ * `heads` (screen points and world velocities): one amber band through the heads over a cream
+ * band while they are close, else each bolt as a far slug.
+ */
+export function fanVolley(
+  nose: Vec,
+  heads: readonly { readonly at: Vec; readonly velocity: Vec }[],
+  alpha = 1,
+): PolygonShape[] {
+  return (
+    fanBands(
+      ADA_FAN,
+      { inner: EFFECT_COLOURS.cream, outer: EFFECT_COLOURS.amber },
+      nose,
+      heads.map(({ at }) => at),
+      alpha,
+    ) ?? heads.map(({ at, velocity }) => fanBolt(at, screenAngle(velocity), alpha))
+  );
 }
 
 /** The Scattershot pellet: an amber disc lit by a cream disc 0.45 px up and left of its centre. */
@@ -349,12 +387,19 @@ export const MISSILE_FLAMES = {
   rapid: { length: [12, 15], tail: 7, width: 2.6 },
 } as const;
 
-/** A missile's flame behind its tail, the nose at `head`, along world `velocity`. */
+/**
+ * A missile's flame behind its tail, the nose at `head`, along world `velocity`: the outer wedge
+ * in `colours.outer` and the inner one in `colours.inner`, amber and cream for Ada's.
+ */
 export function missileFlame(
   kind: "heavy" | "rapid",
   head: Vec,
   velocity: Vec,
   frameIndex: 0 | 1,
+  colours: { readonly inner: Colour; readonly outer: Colour } = {
+    inner: EFFECT_COLOURS.cream,
+    outer: EFFECT_COLOURS.amber,
+  },
 ): PolygonShape[] {
   const { length, tail, width } = MISSILE_FLAMES[kind];
   const at = frame(head, screenAngle(velocity));
@@ -365,10 +410,7 @@ export function missileFlame(
       [-(tail + long), 0],
       [-tail, across / 2],
     ]);
-  return [
-    wedge(EFFECT_COLOURS.amber, width, reach),
-    wedge(EFFECT_COLOURS.cream, width / 2, reach / 2),
-  ];
+  return [wedge(colours.outer, width, reach), wedge(colours.inner, width / 2, reach / 2)];
 }
 
 /** One model's frame ids by heading or spin step, shown `width` by `height` about `pivot`. */
@@ -379,11 +421,13 @@ export interface SolidFrames {
   readonly width: number;
 }
 
-/** The core manifest's missile and mine frames (art/weapons.md "Missile and mine frames"). */
+/**
+ * The core manifest's missile and mine frames (art/weapons.md "Missile and mine frames"): each
+ * missile model by its rows' `projectile`, Ada's `rapidMissile` and `heavyMissile` among them.
+ */
 export interface WeaponSolids {
-  readonly heavy: SolidFrames;
   readonly mine: SolidFrames & { readonly blink: readonly string[] };
-  readonly rapid: SolidFrames;
+  readonly missiles: ReadonlyMap<string, SolidFrames>;
 }
 
 type Row = Readonly<Record<string, unknown>>;
@@ -391,7 +435,8 @@ type Row = Readonly<Record<string, unknown>>;
 /**
  * Reads the missile and mine frames from the core manifest's assets: each model's frames by
  * heading or spin step, numbered from 0 without gaps, with one display size per model and as
- * many blinking mine frames as lit ones. Undefined when any frame is missing or malformed.
+ * many blinking mine frames as lit ones. Undefined when any model's frame is missing or
+ * malformed, or Ada's missiles or the mine are absent.
  */
 export function readWeaponSolids(assets: readonly object[]): WeaponSolids | undefined {
   const model = (
@@ -442,19 +487,44 @@ export function readWeaponSolids(assets: readonly object[]): WeaponSolids | unde
       (row) => row.projectile === "mine" && row.blink === blink,
       (row) => row.spinIndex,
     );
-  const rapid = missile("rapidMissile");
-  const heavy = missile("heavyMissile");
+  const names = new Set(
+    (assets as readonly Row[]).flatMap(({ projectile }) =>
+      typeof projectile === "string" && projectile !== "mine" ? [projectile] : [],
+    ),
+  );
+  const missiles = new Map<string, SolidFrames>();
+  for (const name of names) {
+    const frames = missile(name);
+    if (!frames) {
+      return undefined;
+    }
+    missiles.set(name, frames);
+  }
   const lit = mine(false);
   const blink = mine(true);
-  return rapid && heavy && lit && blink && blink.ids.length === lit.ids.length
-    ? { heavy, mine: { ...lit, blink: blink.ids }, rapid }
+  return missiles.has("rapidMissile") &&
+    missiles.has("heavyMissile") &&
+    lit &&
+    blink &&
+    blink.ids.length === lit.ids.length
+    ? { mine: { ...lit, blink: blink.ids }, missiles }
     : undefined;
 }
 
-/** A missile's frame id for its world `velocity`: the nearest of its headings. */
-export function missileSolid(solids: WeaponSolids, kind: "heavy" | "rapid", velocity: Vec): string {
-  const { ids } = solids[kind];
-  return ids[shipDirection(ids.length, velocity)]!;
+/** Ada's missile models by kind. */
+export const ADA_MISSILES = { heavy: "heavyMissile", rapid: "rapidMissile" } as const;
+
+/**
+ * A missile model's frame for its world `velocity`, the nearest of its headings, with the
+ * model's display size; undefined without that model.
+ */
+export function missileSolid(
+  solids: WeaponSolids,
+  projectile: string,
+  velocity: Vec,
+): (Omit<SolidFrames, "ids"> & { readonly id: string }) | undefined {
+  const frames = solids.missiles.get(projectile);
+  return frames && { ...frames, id: frames.ids[shipDirection(frames.ids.length, velocity)]! };
 }
 
 /** The mine's frame id for spin step `step`, which the frame count wraps. */
@@ -639,9 +709,27 @@ export function beamKeys(t: number): { a: number; w: number } {
   return { a: from.a + (to.a - from.a) * k, w: from.w + (to.w - from.w) * k };
 }
 
-/** One alpha for every beam band from keyed alpha `a`: 1 over 0.6, 0.6 over 0.3, else 0.3. */
-export function beamAlpha(a: number): number {
-  return a > 0.6 ? 1 : a > 0.3 ? 0.6 : 0.3;
+/**
+ * A held fade (art/weapons.md "Conventions"): while a linear fade's value is over a step's
+ * threshold it draws at that step's alpha, the first such step, and below them all at `last`.
+ */
+export interface HeldFade {
+  readonly last: number;
+  readonly steps: readonly (readonly [number, number])[];
+}
+
+/** The held fade of Ada's effects: alpha 1 over 0.6, 0.6 over 0.3, then 0.3. */
+export const HELD_FADE: HeldFade = {
+  last: 0.3,
+  steps: [
+    [0.6, 1],
+    [0.3, 0.6],
+  ],
+};
+
+/** The alpha of a linear fade at value `x`, from 1 down to 0, by the held fade. */
+export function heldFade(x: number, fade: HeldFade = HELD_FADE): number {
+  return fade.steps.find(([threshold]) => x > threshold)?.[1] ?? fade.last;
 }
 
 /**
@@ -671,35 +759,88 @@ export function beamBand(
   );
 }
 
-/**
- * The beam's outermost band and bloom disc, which a light field turns to ink (art/galaxies.md
- * "Light fields"): the band's start and end widths in `w` and alpha share, the bloom's outer
- * disc radius in `w` and alpha share, and the reduced-motion edge's alpha share.
- */
-export interface BeamGlow {
-  readonly bloom: { readonly alpha: number; readonly radius: number };
-  readonly colour: Colour;
-  readonly edgeAlpha: number;
-  readonly glow: { readonly alpha: number; readonly width: readonly [number, number] };
+/** A beam's opaque bands, nose and end widths in px times `w`, and its bloom discs, outermost first. */
+export interface BeamBands {
+  readonly bloom: readonly { readonly colour: Colour; readonly radius: number }[];
+  readonly layers: readonly {
+    readonly colour: Colour;
+    readonly width: readonly [number, number];
+  }[];
 }
 
-/** The beam's opaque amber band and bloom on a dark field (art/weapons.md "Beams"). */
-export const AMBER_BEAM_GLOW: BeamGlow = {
-  bloom: { alpha: 1, radius: 5 },
-  colour: EFFECT_COLOURS.amber,
-  edgeAlpha: 0.35,
-  glow: { alpha: 1, width: [8, 5] },
-};
-
-/** The Phaser beam's cream and white bands and bloom discs, in px times `w`. */
-const PHASER_BANDS = {
-  cream: { bloom: 3.1, width: [4.6, 2.8] },
-  white: { bloom: 1.6, width: [2.2, 1.3] },
-} as const;
+/** What an effect draws and the shapes a field edge grows beneath. */
+export interface EdgedShapes {
+  readonly edged: readonly EffectShape[];
+  readonly shapes: readonly EffectShape[];
+}
 
 /**
- * The Phaser beam `t` ms after firing, from the screen nose point to the contact (hit) or the
- * level's full range (miss), with its muzzle bloom; under reduced motion a steady line.
+ * A beam from `from` to `to` on screen: its bands at width factor `w` and one `alpha`, tapering
+ * over the last `taper` px, then its bloom discs when `bloom`. The outermost band and bloom disc
+ * take the field edge.
+ */
+export function flatBeam(
+  bands: BeamBands,
+  from: Vec,
+  to: Vec,
+  taper: number,
+  w: number,
+  alpha: number,
+  bloom: boolean,
+): EdgedShapes {
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  if (length === 0) {
+    return { edged: [], shapes: [] };
+  }
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const layers = bands.layers.map(({ colour, width }) =>
+    beamBand(
+      from,
+      angle,
+      length,
+      [width[0] * w, width[1] * w],
+      Math.min(taper, length),
+      colour,
+      alpha,
+    ),
+  );
+  const discs: DiscShape[] = bloom
+    ? bands.bloom.map(({ colour, radius }) => ({
+        alpha,
+        at: from,
+        colour,
+        kind: "disc",
+        radius: radius * w,
+      }))
+    : [];
+  return {
+    edged: [...layers.slice(0, 1), ...discs.slice(0, 1)],
+    shapes: [...layers, ...discs],
+  };
+}
+
+/** Ada's Phaser: amber 8 to 5, cream 4.6 to 2.8 and white 2.2 to 1.3, blooms 5, 3.1 and 1.6. */
+export const PHASER_BANDS: BeamBands = {
+  bloom: [
+    { colour: EFFECT_COLOURS.amber, radius: 5 },
+    { colour: EFFECT_COLOURS.cream, radius: 3.1 },
+    { colour: EFFECT_COLOURS.white, radius: 1.6 },
+  ],
+  layers: [
+    { colour: EFFECT_COLOURS.amber, width: [8, 5] },
+    { colour: EFFECT_COLOURS.cream, width: [4.6, 2.8] },
+    { colour: EFFECT_COLOURS.white, width: [2.2, 1.3] },
+  ],
+};
+
+/** Reduced motion holds a beam's alpha this long, then fades it by the held fade. */
+const BEAM_REDUCED_HOLD_MS = 90;
+
+/**
+ * Ada's Phaser beam `t` ms after firing, from the screen nose point to the contact (hit) or the
+ * level's full range (miss): its bands and bloom keyed by `w` and the held fade of `a`; under
+ * reduced motion its bands at `w` 1 without bloom, alpha 1 to 90 ms, then the held fade. The
+ * amber band and bloom disc take the field edge.
  */
 export function beam(
   from: Vec,
@@ -707,56 +848,18 @@ export function beam(
   hit: boolean,
   reducedMotion: boolean,
   t: number,
-): EffectShape[] {
-  return glowingBeam(AMBER_BEAM_GLOW, from, to, hit, reducedMotion, t);
-}
-
-/** The Phaser beam with the given outer band: amber on a dark field, ink on a light one. */
-export function glowingBeam(
-  glow: BeamGlow,
-  from: Vec,
-  to: Vec,
-  hit: boolean,
-  reducedMotion: boolean,
-  t: number,
-): EffectShape[] {
-  if (t >= BEAM_MS) {
-    return [];
+): EdgedShapes {
+  if (t < 0 || t >= BEAM_MS) {
+    return { edged: [], shapes: [] };
   }
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  if (length === 0) {
-    return [];
-  }
-  const angle = Math.atan2(to.y - from.y, to.x - from.x);
-  const taper = hit ? 0 : Math.min(BEAM_MISS_FADE, length);
-  const { cream, white } = EFFECT_COLOURS;
-  const band = (widths: readonly [number, number], colour: Colour, alpha: number) =>
-    beamBand(from, angle, length, widths, taper, colour, alpha);
+  const taper = hit ? 0 : BEAM_MISS_FADE;
   if (reducedMotion) {
-    const alpha = beamAlpha(t <= 90 ? 1 : 1 - (t - 90) / (BEAM_MS - 90));
-    const edge = BEAM.halfWidth * 2;
-    return [
-      band([edge, edge], glow.colour, glow.edgeAlpha * alpha),
-      band([BEAM.halfWidth, BEAM.halfWidth], cream, alpha),
-    ];
+    const hold = BEAM_REDUCED_HOLD_MS;
+    const alpha = heldFade(t <= hold ? 1 : 1 - (t - hold) / (BEAM_MS - hold));
+    return flatBeam(PHASER_BANDS, from, to, taper, 1, alpha, false);
   }
   const { a, w } = beamKeys(t);
-  const alpha = beamAlpha(a);
-  const scaled = ([start, end]: readonly [number, number]) => [start * w, end * w] as const;
-  return [
-    band(scaled(glow.glow.width), glow.colour, glow.glow.alpha * alpha),
-    band(scaled(PHASER_BANDS.cream.width), cream, alpha),
-    band(scaled(PHASER_BANDS.white.width), white, alpha),
-    {
-      alpha: glow.bloom.alpha * alpha,
-      at: from,
-      colour: glow.colour,
-      kind: "disc",
-      radius: glow.bloom.radius * w,
-    },
-    { alpha, at: from, colour: cream, kind: "disc", radius: PHASER_BANDS.cream.bloom * w },
-    { alpha, at: from, colour: white, kind: "disc", radius: PHASER_BANDS.white.bloom * w },
-  ];
+  return flatBeam(PHASER_BANDS, from, to, taper, w, heldFade(a), true);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -784,8 +887,8 @@ const FOUR_POINT_WAIST = 0.3;
 
 /**
  * The beam's hit spark `t` ms after a hit, centred on the contact and turned to the incoming
- * screen angle: ray wedges, core and fleck diamonds; under reduced motion an unrotated cream
- * ring.
+ * screen angle: ray wedges, core and fleck diamonds; under reduced motion a still cream ring of
+ * radius 3 and width 2 at the held fade.
  */
 export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number): EffectShape[] {
   if (t >= SPARK_MS) {
@@ -796,13 +899,13 @@ export function spark(at: Vec, angle: number, reducedMotion: boolean, t: number)
   if (reducedMotion) {
     return [
       {
-        alpha: 1 - p,
+        alpha: heldFade(1 - p),
         at,
         colour: cream,
         halfHeight: 3,
         halfWidth: 3,
         kind: "ellipse",
-        stroke: 1.5,
+        stroke: 2,
       },
     ];
   }
@@ -931,7 +1034,7 @@ function phaserContact(at: Vec, angle: number, reducedMotion: boolean, age: numb
       ? [
           {
             ...circle(at, 5.5),
-            alpha: 0.95 * Math.min(1, (136 - age) / 88),
+            alpha: heldFade(Math.min(1, (136 - age) / 88)),
             colour: EFFECT_COLOURS.cream,
             kind: "ellipse",
             stroke: 1.75,
@@ -964,12 +1067,26 @@ function phaserContact(at: Vec, angle: number, reducedMotion: boolean, age: numb
   return shapes;
 }
 
-/** The procedural shapes for a contact; projects direction once and never infers family. */
+/**
+ * The ring burst's contact ripple from enemy-weapons.json: its colour, its stroke from the start
+ * to the end of its life and its still reduced-motion stroke, at `fade`.
+ */
+export interface RippleArt {
+  readonly colour: Colour;
+  readonly fade: HeldFade;
+  readonly reducedStroke: number;
+  readonly stroke: readonly [number, number];
+}
+
+/**
+ * The procedural shapes for a contact; projects direction once and never infers family. A
+ * ripple draws only with the enemy weapons' `ripple` art.
+ */
 export function impactEffect(
-  context: { readonly at: Vec; readonly reducedMotion: boolean },
+  context: { readonly at: Vec; readonly reducedMotion: boolean; readonly ripple?: RippleArt },
   impact: Pick<WeaponImpact, "age" | "blastRadius" | "direction" | "family">,
 ): EffectShape[] {
-  const { at, reducedMotion } = context;
+  const { at, reducedMotion, ripple } = context;
   const t = impact.age * 1000;
   if (!Number.isFinite(t) || t < 0) {
     return [];
@@ -1017,18 +1134,19 @@ export function impactEffect(
   if (impact.family === "ripple") {
     const style = IMPACT_STYLE.ripple;
     const p = t / (SPARK_MS * style.duration);
-    if (p >= 1) {
+    if (!ripple || p >= 1) {
       return [];
     }
     const radius = (impact.blastRadius ?? style.radius) * (reducedMotion ? 1 : 0.2 + 0.8 * p);
+    const [from, to] = ripple.stroke;
     return [
       {
         ...ground(at, radius),
-        alpha: 1 - p,
-        colour: EFFECT_COLOURS.amber,
+        alpha: heldFade(1 - p, ripple.fade),
+        colour: ripple.colour,
         kind: "ellipse",
         part: "ring",
-        stroke: 1.5,
+        stroke: reducedMotion ? ripple.reducedStroke : from + (to - from) * p,
       },
     ];
   }

@@ -5,7 +5,6 @@ import {
   beam,
   BEAM_MISS_FADE,
   BEAM_MS,
-  beamAlpha,
   beamKeys,
   blast,
   BLAST_SECONDS,
@@ -16,6 +15,7 @@ import {
   fanVolley,
   headingFactor,
   heldAlpha,
+  heldFade,
   laserBolt,
   mineSolid,
   missileFlame,
@@ -95,15 +95,16 @@ describe("bolt, pellet and fan", () => {
       EFFECT_COLOURS.amber,
       EFFECT_COLOURS.cream,
     ]);
-    expect(Math.min(...xs(tail!))).toBeCloseTo(-27, 9);
-    expect(Math.max(...xs(tail!))).toBeCloseTo(-14, 9);
-    expect(Math.max(...tail!.points.map(({ y }) => y))).toBeCloseTo(0.75, 9);
+    expect(Math.min(...xs(tail!))).toBeCloseTo(-16.2, 9);
+    expect(Math.max(...xs(tail!))).toBeCloseTo(-8.4, 9);
+    expect(Math.max(...tail!.points.map(({ y }) => y))).toBeCloseTo(0.6375, 9);
     expect(slug!.points[0]).toEqual({ x: 0, y: 0 });
-    expect(Math.min(...xs(slug!))).toBeCloseTo(-15.5, 9);
-    expect(Math.max(...slug!.points.map(({ y }) => y))).toBeCloseTo(1.5, 9);
-    expect(Math.min(...xs(core!))).toBeCloseTo(-8.68, 9);
+    expect(Math.min(...xs(slug!))).toBeCloseTo(-9.3, 9);
+    expect(Math.max(...slug!.points.map(({ y }) => y))).toBeCloseTo(1.275, 9);
+    expect(Math.min(...xs(core!))).toBeCloseTo(-5.208, 9);
+    expect(Math.max(...core!.points.map(({ y }) => y))).toBeCloseTo(0.675, 9);
     // Turned to its heading: straight down points the slug's tail up.
-    expect(laserBolt(origin, Math.PI / 2)[1]!.points[3]!.y).toBeCloseTo(-15.5, 9);
+    expect(laserBolt(origin, Math.PI / 2)[1]!.points[3]!.y).toBeCloseTo(-9.3, 9);
     expect(laserBolt(origin, 0, 0.4).every(({ alpha }) => alpha === 0.4)).toBe(true);
   });
 
@@ -135,22 +136,22 @@ describe("bolt, pellet and fan", () => {
     ]);
     const [amber, cream] = shapes as [PolygonShape, PolygonShape];
     const angle = ({ x, y }: { x: number; y: number }) => (Math.atan2(y, x) * 180) / Math.PI;
-    // The outer edge lies on the heads; the end heads move 1.1 px outward.
+    // The outer edge lies on the heads; the end heads move 0.935 px outward.
     expect(amber.points).toHaveLength(6);
     expect(amber.points[1]!.x).toBeCloseTo(20, 9);
     expect(amber.points[1]!.y).toBeCloseTo(0, 9);
     const first = polar(-4, 20);
     expect(Math.hypot(amber.points[0]!.x - first.x, amber.points[0]!.y - first.y)).toBeCloseTo(
-      1.1,
+      0.935,
       9,
     );
     expect(angle(amber.points[0]!)).toBeLessThan(-4);
     expect(angle(amber.points[2]!)).toBeGreaterThan(4);
-    // It runs back to h - 11 along each head's ray.
-    expect(Math.hypot(amber.points[4]!.x, amber.points[4]!.y)).toBeCloseTo(9, 9);
-    // Cream from h - 2.5 back to the amber's inner edge plus 4, on the outer bolts' rays.
+    // It runs back to h - 6.6 along each head's ray.
+    expect(Math.hypot(amber.points[4]!.x, amber.points[4]!.y)).toBeCloseTo(13.4, 9);
+    // Cream from h - 1.5 back to the amber's inner edge plus 2.4, on the outer bolts' rays.
     const creamRadii = cream.points.map(({ x, y }) => Math.hypot(x, y));
-    [17.5, 17.5, 17.5, 13, 13, 13].forEach((radius, index) =>
+    [18.5, 18.5, 18.5, 15.8, 15.8, 15.8].forEach((radius, index) =>
       expect(creamRadii[index]).toBeCloseTo(radius, 9),
     );
     expect(angle(cream.points[0]!)).toBeCloseTo(-4, 9);
@@ -168,11 +169,11 @@ describe("bolt, pellet and fan", () => {
     expect(far[1]).toEqual(fanBolt({ x: 100, y: 0 }, screenAngle(heading(14))));
   });
 
-  it("draws slugs 10 px long and 2.2 px wide for a lone bolt or heads at the nose", () => {
+  it("draws slugs 1.87 px wide, shoulder 6 px back, for a lone bolt or heads at the nose", () => {
     const slug = fanBolt(origin, 0);
     expect(slug.colour).toBe(EFFECT_COLOURS.amber);
-    expect(slug.points[2]!.x).toBeCloseTo(-10, 9);
-    expect(Math.max(...slug.points.map(({ y }) => y))).toBeCloseTo(1.1, 9);
+    expect(slug.points[2]!.x).toBeCloseTo(-6, 9);
+    expect(Math.max(...slug.points.map(({ y }) => y))).toBeCloseTo(0.935, 9);
     const lone = [{ at: { x: 30, y: 0 }, velocity: heading(14) }];
     expect(fanVolley(origin, lone)).toEqual([fanBolt({ x: 30, y: 0 }, screenAngle(heading(14)))]);
     const start = [0, 1].map((index) => ({ at: { x: 3, y: index }, velocity: heading(14) }));
@@ -214,13 +215,19 @@ describe("missiles", () => {
 
   it("reads every heading and spin frame from the core manifest", () => {
     const solids = readWeaponSolids(CORE_MANIFEST.assets)!;
-    expect(solids.rapid).toMatchObject({ height: 24.5, pivot: { x: 0.5, y: 0.5 }, width: 24.5 });
-    expect(solids.heavy).toMatchObject({ height: 42, width: 42 });
+    expect([...solids.missiles.keys()].sort()).toEqual([
+      "enemyHeavyMissile",
+      "enemyRapidMissile",
+      "heavyMissile",
+      "rapidMissile",
+    ]);
+    const rapid = solids.missiles.get("rapidMissile")!;
+    expect(rapid).toMatchObject({ height: 24.5, pivot: { x: 0.5, y: 0.5 }, width: 24.5 });
+    expect(solids.missiles.get("heavyMissile")).toMatchObject({ height: 42, width: 42 });
+    expect(solids.missiles.get("enemyHeavyMissile")).toMatchObject({ height: 42, width: 42 });
     expect(solids.mine).toMatchObject({ height: 21, width: 21 });
-    expect(solids.rapid.ids).toEqual(
-      Array.from({ length: 32 }, (_, k) => `weapon-rapidMissile-${k}`),
-    );
-    expect(solids.heavy.ids[31]).toBe("weapon-heavyMissile-31");
+    expect(rapid.ids).toEqual(Array.from({ length: 32 }, (_, k) => `weapon-rapidMissile-${k}`));
+    expect(solids.missiles.get("enemyRapidMissile")!.ids[31]).toBe("weapon-enemyRapidMissile-31");
     expect(solids.mine.ids).toEqual(Array.from({ length: 8 }, (_, j) => `weapon-mine-${j}`));
     expect(solids.mine.blink[7]).toBe("weapon-mine-blink-7");
   });
@@ -230,6 +237,9 @@ describe("missiles", () => {
     expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-heavyMissile-9"))).toBe(
       undefined,
     );
+    expect(
+      readWeaponSolids(assets.filter(({ id }) => id !== "weapon-enemyHeavyMissile-0")),
+    ).toBeUndefined();
     expect(readWeaponSolids(assets.filter(({ id }) => id !== "weapon-mine-blink-3"))).toBe(
       undefined,
     );
@@ -241,6 +251,12 @@ describe("missiles", () => {
       asset.id === "weapon-rapidMissile-4" ? { ...asset, displayWidth: 30 } : asset,
     );
     expect(readWeaponSolids(resized)).toBeUndefined();
+    // Ada's missiles are required; the enemy ones are not.
+    const adaOnly = assets.filter(({ id }) => !id.startsWith("weapon-enemy"));
+    expect(readWeaponSolids(adaOnly)?.missiles.has("enemyRapidMissile")).toBe(false);
+    expect(readWeaponSolids(assets.filter(({ id }) => !id.startsWith("weapon-rapid")))).toBe(
+      undefined,
+    );
     expect(readWeaponSolids([])).toBeUndefined();
   });
 
@@ -250,10 +266,14 @@ describe("missiles", () => {
       x: Math.cos((k * Math.PI) / 16) * 400,
       y: Math.sin((k * Math.PI) / 16) * 400,
     });
-    expect(missileSolid(solids, "rapid", at(0))).toBe("weapon-rapidMissile-0");
-    expect(missileSolid(solids, "heavy", at(28))).toBe("weapon-heavyMissile-28");
-    expect(missileSolid(solids, "rapid", at(-1))).toBe("weapon-rapidMissile-31");
-    expect(missileSolid(solids, "rapid", at(4.4))).toBe("weapon-rapidMissile-4");
+    const id = (model: string, velocity: { x: number; y: number }) =>
+      missileSolid(solids, model, velocity)?.id;
+    expect(id("rapidMissile", at(0))).toBe("weapon-rapidMissile-0");
+    expect(id("heavyMissile", at(28))).toBe("weapon-heavyMissile-28");
+    expect(id("rapidMissile", at(-1))).toBe("weapon-rapidMissile-31");
+    expect(id("enemyRapidMissile", at(4.4))).toBe("weapon-enemyRapidMissile-4");
+    expect(missileSolid(solids, "enemyHeavyMissile", at(3))).toMatchObject({ width: 42 });
+    expect(missileSolid(solids, "plasma", at(3))).toBeUndefined();
   });
 
   it("wraps the mine's spin step by its frame count, from the blink set while it blinks", () => {
@@ -348,28 +368,34 @@ describe("missile blasts", () => {
 });
 
 describe("the Phaser beam", () => {
+  const shapesOf = (...args: Parameters<typeof beam>) => beam(...args).shapes;
+
   it("retains the 150 ms beam and 160 ms spark lifetimes", () => {
     expect(BEAM_MS).toBe(150);
     expect(SPARK_MS).toBe(160);
-    expect(beam(origin, { x: 100, y: 0 }, true, false, 149).length).toBeGreaterThan(0);
-    expect(beam(origin, { x: 100, y: 0 }, true, false, 150)).toEqual([]);
+    expect(shapesOf(origin, { x: 100, y: 0 }, true, false, 149).length).toBeGreaterThan(0);
+    expect(beam(origin, { x: 100, y: 0 }, true, false, 150)).toEqual({ edged: [], shapes: [] });
     expect(spark(origin, 0, false, 159).length).toBeGreaterThan(0);
     expect(spark(origin, 0, false, 160)).toEqual([]);
   });
 
-  it("keys its width and alpha over 150 ms and holds one band alpha in three steps", () => {
+  it("keys its width and alpha over 150 ms and holds one alpha by the held fade", () => {
     expect(beamKeys(0)).toEqual({ a: 0.85, w: 0.55 });
     expect(beamKeys(20)).toEqual({ a: 1, w: 1 });
     expect(beamKeys(70)).toEqual({ a: 1, w: 1 });
     const fading = beamKeys(110);
     expect(fading.a).toBeCloseTo(0.5, 9);
     expect(fading.w).toBeCloseTo(0.7, 9);
-    expect([1, 0.61, 0.6, 0.31, 0.3, 0.01].map(beamAlpha)).toEqual([1, 1, 0.6, 0.6, 0.3, 0.3]);
+    expect([1, 0.61, 0.6, 0.31, 0.3, 0.01].map((x) => heldFade(x))).toEqual([
+      1, 1, 0.6, 0.6, 0.3, 0.3,
+    ]);
+    const steps = { last: 0.1, steps: [[0.5, 0.8]] } as const;
+    expect([0.9, 0.5, 0.2].map((x) => heldFade(x, steps))).toEqual([0.8, 0.1, 0.1]);
   });
 
   it("draws opaque amber, cream and white bands with butt ends and an opaque bloom", () => {
     const hit = beam(origin, { x: 100, y: 0 }, true, false, 30);
-    const bands = ofKind(hit, "polygon");
+    const bands = ofKind(hit.shapes, "polygon");
     expect(bands.map(({ colour }) => colour)).toEqual([
       EFFECT_COLOURS.amber,
       EFFECT_COLOURS.cream,
@@ -390,20 +416,22 @@ describe("the Phaser beam", () => {
     });
     expect(bands[1]!.points[0]!.y).toBeCloseTo(-2.3, 9);
     expect(bands[2]!.points[1]!.y).toBeCloseTo(-0.65, 9);
-    expect(ofKind(hit, "disc").map(({ alpha, radius }) => [radius, alpha])).toEqual([
+    expect(ofKind(hit.shapes, "disc").map(({ alpha, radius }) => [radius, alpha])).toEqual([
       [5, 1],
       [3.1, 1],
       [1.6, 1],
     ]);
+    // The amber band and the amber bloom disc take the field edge.
+    expect(hit.edged).toEqual([bands[0], ofKind(hit.shapes, "disc")[0]]);
     // Late in the flash every band and disc drops to the same held alpha.
-    const late = beam(origin, { x: 100, y: 0 }, true, false, 140);
+    const late = shapesOf(origin, { x: 100, y: 0 }, true, false, 140);
     expect(new Set(late.map((shape) => (shape as { alpha: number }).alpha))).toEqual(
       new Set([0.3]),
     );
   });
 
   it("tapers every band of a miss to a point over its last 28 px", () => {
-    const miss = ofKind(beam(origin, { x: 453, y: 0 }, false, false, 30), "polygon");
+    const miss = ofKind(shapesOf(origin, { x: 453, y: 0 }, false, false, 30), "polygon");
     for (const band of miss) {
       expect(band.points).toHaveLength(5);
       expect(band.points[1]!.x).toBeCloseTo(453 - BEAM_MISS_FADE, 9);
@@ -412,16 +440,23 @@ describe("the Phaser beam", () => {
     }
   });
 
-  it("draws a steady 6 px cream line over a 12 px amber edge under reduced motion", () => {
-    const steady = ofKind(beam(origin, { x: 100, y: 0 }, true, true, 60), "polygon");
+  it("draws its own bands at w 1 without bloom under reduced motion, held to 90 ms", () => {
+    const steady = beam(origin, { x: 100, y: 0 }, true, true, 60);
+    const bands = ofKind(steady.shapes, "polygon");
     expect(
-      steady.map(({ alpha, colour, points }) => [colour, points[3]!.y - points[0]!.y, alpha]),
+      bands.map(({ alpha, colour, points }) => [colour, points[3]!.y - points[0]!.y, alpha]),
     ).toEqual([
-      [EFFECT_COLOURS.amber, 12, 0.35],
-      [EFFECT_COLOURS.cream, 6, 1],
+      [EFFECT_COLOURS.amber, 8, 1],
+      [EFFECT_COLOURS.cream, 4.6, 1],
+      [EFFECT_COLOURS.white, 2.2, 1],
     ]);
-    expect(ofKind(beam(origin, { x: 100, y: 0 }, true, true, 130), "polygon")[1]!.alpha).toBe(0.6);
-    const miss = ofKind(beam(origin, { x: 100, y: 0 }, false, true, 60), "polygon");
+    expect(ofKind(steady.shapes, "disc")).toEqual([]);
+    expect(steady.edged).toEqual([bands[0]]);
+    // From 90 ms the held fade of 1 - (t - 90) / 60: 0.6 at 120 ms, 0.3 at 140 ms.
+    const alpha = (t: number) =>
+      ofKind(shapesOf(origin, { x: 100, y: 0 }, true, true, t), "polygon")[0]!.alpha;
+    expect([90, 105, 120, 140].map(alpha)).toEqual([1, 1, 0.6, 0.3]);
+    const miss = ofKind(shapesOf(origin, { x: 100, y: 0 }, false, true, 60), "polygon");
     expect(miss[1]!.points).toHaveLength(5);
   });
 });
@@ -452,9 +487,19 @@ describe("the hit spark", () => {
     expect(spark(origin, 0, false, 160)).toEqual([]);
   });
 
-  it("becomes an unrotated cream ring under reduced motion", () => {
-    expect(spark(origin, 1, true, 80)).toEqual([
-      expect.objectContaining({ alpha: 0.5, halfWidth: 3, kind: "ellipse", stroke: 1.5 }),
+  it("becomes a still cream ring of radius 3 and width 2 at the held fade under reduced motion", () => {
+    expect(spark(origin, 1, true, 30)).toEqual([
+      {
+        alpha: 1,
+        at: origin,
+        colour: EFFECT_COLOURS.cream,
+        halfHeight: 3,
+        halfWidth: 3,
+        kind: "ellipse",
+        stroke: 2,
+      },
     ]);
+    expect(spark(origin, 1, true, 80)[0]).toMatchObject({ alpha: 0.6 });
+    expect(spark(origin, 1, true, 120)[0]).toMatchObject({ alpha: 0.3 });
   });
 });
