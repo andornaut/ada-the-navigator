@@ -1,0 +1,639 @@
+{
+  "core": {
+    "assets": [
+      {
+        "id": "stardust",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 40,
+        "displayWidth": 14,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "ore-nugget",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "ammo-pack",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "upgrade-chevron",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "fixed"
+      },
+      {
+        "id": "hunt-glint",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 24,
+        "height": 40,
+        "displayWidth": 10.5,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "holodisk",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "holodisk-beacon-a",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 72,
+        "height": 64,
+        "displayWidth": 31.5,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front",
+        "frameMs": 600
+      },
+      {
+        "id": "holodisk-beacon-b",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 72,
+        "height": 64,
+        "displayWidth": 31.5,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front",
+        "frameMs": 600
+      },
+      {
+        "id": "discovery-cache-lit-a",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 64,
+        "height": 80,
+        "displayWidth": 28,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front",
+        "frameMs": 500
+      },
+      {
+        "id": "discovery-cache-lit-b",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 64,
+        "height": 80,
+        "displayWidth": 28,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front",
+        "frameMs": 500
+      },
+      {
+        "id": "discovery-cache-hidden",
+        "path": "/art/pickups/pickups-sheet.svg",
+        "svgSheet": true,
+        "width": 64,
+        "height": 80,
+        "displayWidth": 28,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "front"
+      },
+      {
+        "id": "landmark-beacon-a",
+        "path": "/art/landmarks/landmarks-sheet.svg",
+        "svgSheet": true,
+        "width": 216,
+        "height": 160,
+        "displayWidth": 94.5,
+        "displayHeight": 70,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "fixed",
+        "frameMs": 700
+      },
+      {
+        "id": "landmark-beacon-b",
+        "path": "/art/landmarks/landmarks-sheet.svg",
+        "svgSheet": true,
+        "width": 216,
+        "height": 160,
+        "displayWidth": 94.5,
+        "displayHeight": 70,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "fixed",
+        "frameMs": 700
+      },
+      {
+        "id": "landmark-wreck",
+        "path": "/art/landmarks/landmarks-sheet.svg",
+        "svgSheet": true,
+        "width": 440,
+        "height": 240,
+        "displayWidth": 192.5,
+        "displayHeight": 105,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "facing": "fixed"
+      }
+    ],
+    "data": {
+      "pickups": "/art/pickups/pickups.json"
+    }
+  },
+  "sunflower": {
+    "assets": [
+      {
+        "id": "outpost-salvagers-beacon-a",
+        "path": "/art/sunflower/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 48,
+        "height": 80,
+        "displayWidth": 21,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.2125
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "outpost": "salvagers",
+        "project": "salvageBeacons"
+      },
+      {
+        "id": "outpost-salvagers-beacon-b",
+        "path": "/art/sunflower/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 48,
+        "height": 80,
+        "displayWidth": 21,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.2125
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "outpost": "salvagers",
+        "project": "salvageBeacons"
+      }
+    ]
+  },
+  "cartwheel": {
+    "assets": [
+      {
+        "id": "mooring-buoy-a",
+        "path": "/art/cartwheel/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 112,
+        "height": 80,
+        "displayWidth": 49,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5875
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "moorings": [
+          {
+            "x": 89.716,
+            "y": 58.679,
+            "outward": [0.866, 0.5]
+          },
+          {
+            "x": 9.944,
+            "y": 46.339,
+            "outward": [-0.988, 0.153]
+          },
+          {
+            "x": 68.341,
+            "y": 12.623,
+            "outward": [0.421, -0.907]
+          }
+        ]
+      },
+      {
+        "id": "mooring-buoy-b",
+        "path": "/art/cartwheel/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 112,
+        "height": 80,
+        "displayWidth": 49,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5875
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "moorings": [
+          {
+            "x": 89.716,
+            "y": 58.679,
+            "outward": [0.866, 0.5]
+          },
+          {
+            "x": 9.944,
+            "y": 46.339,
+            "outward": [-0.988, 0.153]
+          },
+          {
+            "x": 68.341,
+            "y": 12.623,
+            "outward": [0.421, -0.907]
+          }
+        ]
+      }
+    ]
+  },
+  "whirlpool": {
+    "assets": [
+      {
+        "id": "whirlpool-current-buoy-a",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 96,
+        "height": 80,
+        "displayWidth": 42,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.3625
+        },
+        "facing": "fixed",
+        "project": "currentBuoys"
+      },
+      {
+        "id": "whirlpool-current-buoy-b",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 96,
+        "height": 80,
+        "displayWidth": 42,
+        "displayHeight": 35,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.3625
+        },
+        "facing": "fixed",
+        "project": "currentBuoys"
+      },
+      {
+        "id": "whirlpool-nursery-beacon-a",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 120,
+        "height": 168,
+        "displayWidth": 52.5,
+        "displayHeight": 73.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5059523809523809
+        },
+        "facing": "fixed",
+        "frameMs": 1400,
+        "project": "nurseryBeacon"
+      },
+      {
+        "id": "whirlpool-nursery-beacon-b",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 120,
+        "height": 168,
+        "displayWidth": 52.5,
+        "displayHeight": 73.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5059523809523809
+        },
+        "facing": "fixed",
+        "frameMs": 1400,
+        "project": "nurseryBeacon"
+      },
+      {
+        "id": "whirlpool-quiet-crossing-a",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 152,
+        "height": 64,
+        "displayWidth": 66.5,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.53125
+        },
+        "facing": "fixed",
+        "frameMs": 1000,
+        "project": "quietCrossing"
+      },
+      {
+        "id": "whirlpool-quiet-crossing-b",
+        "path": "/art/whirlpool/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 152,
+        "height": 64,
+        "displayWidth": 66.5,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.53125
+        },
+        "facing": "fixed",
+        "frameMs": 1000,
+        "project": "quietCrossing"
+      }
+    ]
+  },
+  "andromeda": {
+    "assets": [
+      {
+        "id": "beacon-guide-lit-a",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 104,
+        "height": 152,
+        "displayWidth": 45.5,
+        "displayHeight": 66.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.7105263157894737
+        },
+        "facing": "fixed",
+        "beacon": "guide",
+        "frameMs": 700,
+        "state": "lit"
+      },
+      {
+        "id": "beacon-guide-lit-b",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 104,
+        "height": 152,
+        "displayWidth": 45.5,
+        "displayHeight": 66.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.7105263157894737
+        },
+        "facing": "fixed",
+        "beacon": "guide",
+        "frameMs": 700,
+        "state": "lit"
+      },
+      {
+        "id": "beacon-guide-relit-a",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 104,
+        "height": 152,
+        "displayWidth": 45.5,
+        "displayHeight": 66.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.7105263157894737
+        },
+        "facing": "fixed",
+        "beacon": "guide",
+        "frameMs": 700,
+        "state": "relit"
+      },
+      {
+        "id": "beacon-guide-relit-b",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 104,
+        "height": 152,
+        "displayWidth": 45.5,
+        "displayHeight": 66.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.7105263157894737
+        },
+        "facing": "fixed",
+        "beacon": "guide",
+        "frameMs": 700,
+        "state": "relit"
+      },
+      {
+        "id": "beacon-guide-dented",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 104,
+        "height": 152,
+        "displayWidth": 45.5,
+        "displayHeight": 66.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.7105263157894737
+        },
+        "facing": "fixed",
+        "beacon": "guide",
+        "state": "dented"
+      },
+      {
+        "id": "beacon-guide-spare-a",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 96,
+        "height": 112,
+        "displayWidth": 42,
+        "displayHeight": 49,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.6428571428571429
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "overlay": true,
+        "beacon": "guide",
+        "project": "spareBeacon"
+      },
+      {
+        "id": "beacon-guide-spare-b",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 96,
+        "height": 112,
+        "displayWidth": 42,
+        "displayHeight": 49,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.6428571428571429
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "overlay": true,
+        "beacon": "guide",
+        "project": "spareBeacon"
+      },
+      {
+        "id": "andromeda-route-exchange-a",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 80,
+        "height": 64,
+        "displayWidth": 35,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.53125
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "routeExchange"
+      },
+      {
+        "id": "andromeda-route-exchange-b",
+        "path": "/art/andromeda/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 80,
+        "height": 64,
+        "displayWidth": 35,
+        "displayHeight": 28,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.53125
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "routeExchange"
+      }
+    ]
+  },
+  "needle": {
+    "assets": [
+      {
+        "id": "needle-lamp-a",
+        "path": "/art/needle/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 56,
+        "height": 72,
+        "displayWidth": 24.5,
+        "displayHeight": 31.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4583333333333333
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "channelLights"
+      },
+      {
+        "id": "needle-lamp-b",
+        "path": "/art/needle/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 56,
+        "height": 72,
+        "displayWidth": 24.5,
+        "displayHeight": 31.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.4583333333333333
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "channelLights"
+      },
+      {
+        "id": "needle-practice-berth-a",
+        "path": "/art/needle/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 88,
+        "height": 56,
+        "displayWidth": 38.5,
+        "displayHeight": 24.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5178571428571429
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "practiceBerth"
+      },
+      {
+        "id": "needle-practice-berth-b",
+        "path": "/art/needle/beacons-sheet.svg",
+        "svgSheet": true,
+        "width": 88,
+        "height": 56,
+        "displayWidth": 38.5,
+        "displayHeight": 24.5,
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5178571428571429
+        },
+        "facing": "fixed",
+        "frameMs": 700,
+        "project": "practiceBerth"
+      }
+    ]
+  }
+}
