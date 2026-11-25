@@ -22,7 +22,8 @@ import {
   whirl,
 } from "./station-models.ts";
 import { svgText } from "./svg-text.ts";
-import { type Fragment, tonePaths, type V2, visibleFragments } from "./visible.ts";
+import { tonePaths } from "./fleet.ts";
+import { type Fragment, type V2, visibleFragments } from "./visible.ts";
 
 // Frame px to display px, as the shipped rows scale each kind of destination.
 const STATION = DISPLAY_SCALE * DESTINATION_SCALE;
