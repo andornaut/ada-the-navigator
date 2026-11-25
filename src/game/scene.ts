@@ -425,6 +425,8 @@ export class GameScene extends Scene {
   openGalaxies: () => void = () => {};
   startShown = false;
   enabled: boolean | undefined;
+  // The model's Use refusal count the Use disc has already cued.
+  useRefusals = 0;
   private durable = "";
   private savedAt = 0;
   feedback = new ModelFeedback();

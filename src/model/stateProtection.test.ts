@@ -259,15 +259,19 @@ describe("paused protection", () => {
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(model.inDanger).toBe(true);
     expect(model.contextAction).toBe("dock");
+    expect(model.useRefusals).toBe(0);
     model.interact();
     expect(model.state.docked).toBeNull();
     expect(model.state.notice).toBe("Unavailable while you are in danger.");
+    // The scene plays each new refusal as the Use disc's refusal cue.
+    expect(model.useRefusals).toBe(1);
     flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
     flight.shots = [];
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(model.inDanger).toBe(false);
     model.interact();
     expect(model.state.docked).toBe(site.id);
+    expect(model.useRefusals).toBe(1);
   });
 
   it("lands no shot while docked, and undocking starts the grace before combat resumes", () => {

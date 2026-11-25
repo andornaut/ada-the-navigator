@@ -525,6 +525,8 @@ export class GameModel {
   private heldStory: { position: StoryPosition; slept: number } | null = null;
   private readonly emergencyReferences = new WeakMap<Scene, StorySceneReference>();
   private queuedNeedleTalk = false;
+  // Use presses refused so far, which the scene plays as the Use disc's refusal cue; never saved.
+  private useRefusalCount = 0;
   private suspendedInteraction: {
     readonly dialogue: DialogueState;
     readonly galaxy: GalaxyNumber;
@@ -1271,6 +1273,10 @@ export class GameModel {
   }
   private label(id: string): string {
     return this.content.labels[id] ?? "";
+  }
+  /** How many Use presses have been refused, such as Dock in danger; the scene cues each new one. */
+  get useRefusals(): number {
+    return this.useRefusalCount;
   }
   get inDanger(): boolean {
     return (this.state.flight?.dangerFor ?? 0) > 0;
@@ -2071,6 +2077,7 @@ export class GameModel {
     // Danger blocks Dock as it blocks Travel: Ada must break contact first.
     if (this.inDanger) {
       this.notify(this.label("travelUnavailable"));
+      this.useRefusalCount++;
       return;
     }
     if (!dockFlight(this.content, id, f)) {

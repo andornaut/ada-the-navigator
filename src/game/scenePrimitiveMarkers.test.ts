@@ -314,7 +314,7 @@ describe("emitted primitive marker geometry", () => {
     code.drawDestination(f.scene, f.target, { x: -20.9, y: 100 }, 20);
     expect(f.displayed).not.toHaveBeenCalled();
   });
-  it("identifies a station from its two-pixel hull stroke only, never its safety halo", () => {
+  it("identifies a station from its two-pixel hull stroke only, never its approach ring", () => {
     const f = fixture();
     const code = production(
       "./sceneObjects.ts",
@@ -394,7 +394,7 @@ describe("emitted primitive marker geometry", () => {
       }),
     ).toBe(true);
   });
-  it("does not identify a station from its visible safety halo when the emitted hull is outside", () => {
+  it("does not identify a station from its visible approach ring when the emitted hull is outside", () => {
     const f = fixture();
     const code = production(
       "./sceneObjects.ts",

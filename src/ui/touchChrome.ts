@@ -9,6 +9,7 @@ import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import { TOUCH_CHROME_FRAME } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
+import { COLOURS } from "./layout/colours.ts";
 
 export { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../data/layout.ts";
 
@@ -29,6 +30,8 @@ export const TOUCH_CHROME_POSES: readonly TouchChromePose[] = [
 export interface TouchChromeColours {
   readonly cream: number;
   readonly ink: number;
+  /** The refusal cue's tint on the Use disc's band and symbol. */
+  readonly refusal: number;
   readonly white: number;
 }
 
@@ -36,6 +39,7 @@ export interface TouchChromeColours {
 export const TOUCH_CHROME_COLOURS: TouchChromeColours = {
   cream: 0xead4aa,
   ink: 0x181425,
+  refusal: Number.parseInt(COLOURS.refusalRed.slice(1), 16),
   white: 0xffffff,
 };
 
@@ -137,14 +141,18 @@ export function touchChromeLayers(
   return layers;
 }
 
-/** The Use disc's rest, focus, and held poses, with a 60 ms initial touch frame. */
-export type UseDiscPose = "focus" | "focus-held" | "held" | "press" | "rest";
+/**
+ * The Use disc's rest, focus, and held poses, with a 60 ms initial touch frame, and the refused
+ * pose the refusal cue shows on its beats.
+ */
+export type UseDiscPose = "focus" | "focus-held" | "held" | "press" | "refused" | "rest";
 export const USE_DISC_POSES: readonly UseDiscPose[] = [
   "rest",
   "focus",
   "press",
   "held",
   "focus-held",
+  "refused",
 ];
 /** The press frame's length before the disc shows held. */
 export const USE_PRESS_MS = 60;
@@ -291,7 +299,8 @@ const SALVAGE_GAPS = [
 
 /**
  * One Use disc frame: the open ring (its radii 1 larger in the press frame) and the action's
- * symbol, each part's ink before every core, cream at rest and white while pressed or held.
+ * symbol, each part's ink before every core, cream at rest, white while pressed or held and the
+ * refusal red while refused.
  */
 export function useDiscLayers(
   colours: TouchChromeColours,
@@ -299,7 +308,7 @@ export function useDiscLayers(
   pose: UseDiscPose,
 ): readonly TouchChromeLayer[] {
   const pressed = pose === "press" || pose === "held" || pose === "focus-held";
-  const core = pressed ? colours.white : colours.cream;
+  const core = pose === "refused" ? colours.refusal : pressed ? colours.white : colours.cream;
   const outer = 36.5 + (pose === "press" ? 1 : 0);
   const layers: TouchChromeLayer[] = [];
   if (pose === "focus" || pose === "focus-held") {

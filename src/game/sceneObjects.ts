@@ -744,11 +744,11 @@ export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec
   keylineSprite(scene, "discoveryCache", object.id, sprite);
 }
 
-/** Fallback without the station art: a ring hull and its exclusion zone's outline. */
+/** Fallback without the station art: a ring hull and its approach ring. */
 export function drawStationPlaceholder(scene: ObjectsContext, point: Vec, radius: number): void {
-  const zone = ECONOMY.station.exclusionRadius;
+  const ring = ECONOMY.station.exclusionRadius;
   scene.ink.lineStyle(1, scene.palette.pointOfInterest, 0.35);
-  scene.ink.strokeEllipse(point.x, point.y, zone * 2, zone);
+  scene.ink.strokeEllipse(point.x, point.y, ring * 2, ring);
   scene.ink.fillStyle(scene.palette.environment);
   scene.ink.lineStyle(2, scene.palette.pointOfInterest);
   scene.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);

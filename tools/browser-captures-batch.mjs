@@ -1083,6 +1083,22 @@ export function batchCaptures(ctx) {
     await flightPage.locator(".ada-item-notice").first().waitFor({ state: "visible" });
     await flightPage.waitForTimeout(500);
     await ctx.pageShot("controls-paint-notice.png");
+    // The use-refusal view (art/controls.md "Use disc", Refused): an engaged fighter beside the
+    // station puts Ada in danger, so a tap on Dock plays the Use disc's refusal cue with its
+    // notice, taken on the cue's first tinted beat.
+    const refusal = stationModel(1);
+    addEnemy(refusal, { archetype: "fighter", screen: { x: 160, y: 40 } });
+    refusal.state.flight.dangerFor = 1;
+    await ctx.openFixture(canonical(refusal, "controls-use-refusal"), { frozen: false });
+    const refusalPage = ctx.page();
+    await refusalPage.clock.resume();
+    const use = refusalPage.locator(".ada-use");
+    await use.waitFor({ state: "visible" });
+    const useBox = await use.boundingBox();
+    assert.ok(useBox, "The Use disc has a frame");
+    await refusalPage.touchscreen.tap(useBox.x + useBox.width / 2, useBox.y + useBox.height / 2);
+    await refusalPage.waitForTimeout(100);
+    await ctx.pageShot("controls-use-refusal.png");
   }
 
   // Art's retuned project placements: the salvage beacons on the salvagers' yard, Whirlpool's

@@ -253,6 +253,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "towLine"
     | "towSprite"
     | "upgradePickupArt"
+    | "useRefusals"
     | "warpCover"
     | "warpPaint"
     | "warpScheme"
@@ -1500,6 +1501,12 @@ export function refreshScene(scene: UiContext, covered = false): void {
           ? { action: "use", label: CONTENT.labels.quests ?? "", questIcon }
           : undefined,
     );
+    // Each Use press the model refused since the last frame plays the Use disc's refusal cue.
+    const refusals = scene.model.useRefusals;
+    if (refusals > scene.useRefusals) {
+      scene.controls.refuseUse();
+    }
+    scene.useRefusals = refusals;
     scene.controls.setWeapons(scene.model.weapons());
     noticeGains(scene);
     renderStatus(scene);

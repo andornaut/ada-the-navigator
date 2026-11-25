@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import type { UseAction } from "../model/types.ts";
+import { REFUSAL } from "./refusal.ts";
 import {
   isTouchChromePose,
   layerBounds,
@@ -31,11 +32,12 @@ const json = (path: string): unknown =>
 const hex = (colour: number) => `#${colour.toString(16).padStart(6, "0")}`;
 
 describe("joystick chrome", () => {
-  it("uses the UI palette's cream, ink and white", () => {
+  it("uses the UI palette's cream, ink and white, and the refusal cue's red", () => {
     const palette = json("palette.json") as { colours: Record<string, string> };
-    for (const [name, colour] of Object.entries(TOUCH_CHROME_COLOURS)) {
-      expect(hex(colour)).toBe(palette.colours[name]);
+    for (const name of ["cream", "ink", "white"] as const) {
+      expect(hex(TOUCH_CHROME_COLOURS[name])).toBe(palette.colours[name]);
     }
+    expect(hex(TOUCH_CHROME_COLOURS.refusal)).toBe(REFUSAL.color);
   });
 
   it("reads every joystick sheet from the UI manifest with only known poses", () => {
@@ -116,8 +118,22 @@ describe("Use disc chrome", () => {
     expect(touchChromePixel(4, focus, { x: 37.5, y: 17.5 })).toEqual([38, 43, 68, 255]);
   });
 
+  it("tints band and symbol the refusal red at the rest geometry while refused", () => {
+    const rest = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "rest");
+    const refused = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "refused");
+    expect(TOUCH_CHROME_COLOURS.refusal).toBe(0xe4574e);
+    const shapes = (layers: typeof rest) => layers.map((layer) => ({ ...layer, colour: 0 }));
+    expect(shapes(refused)).toEqual(shapes(rest));
+    expect(touchChromePixel(4, refused, { x: 37.5, y: 37.5 - 34 })).toEqual([228, 87, 78, 255]);
+    expect(touchChromePixel(4, refused, { x: 37.5, y: 37.5 - 36 })).toEqual([24, 20, 37, 255]);
+    const ink = TOUCH_CHROME_COLOURS.ink;
+    expect(refused.filter(({ colour }) => colour === ink)).toEqual(
+      rest.filter(({ colour }) => colour === ink),
+    );
+  });
+
   it("whitens band and symbol while pressed, the press frame's ring 1 larger for 60 ms", () => {
-    expect(USE_DISC_POSES).toEqual(["rest", "focus", "press", "held", "focus-held"]);
+    expect(USE_DISC_POSES).toEqual(["rest", "focus", "press", "held", "focus-held", "refused"]);
     expect(USE_PRESS_MS).toBe(60);
     const press = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "press");
     const held = useDiscLayers(TOUCH_CHROME_COLOURS, "talk", "held");

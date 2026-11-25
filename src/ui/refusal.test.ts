@@ -5,7 +5,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { REFUSAL, refuse } from "./refusal.ts";
+import { REFUSAL, refusalPose, refusalStart, refuse } from "./refusal.ts";
 
 function target() {
   const attributes = new Map<string, string>();
@@ -96,5 +96,44 @@ describe("published refusal cue adapter", () => {
     vi.advanceTimersByTime(280);
     expectRest(second);
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe("the canvas refusal cue", () => {
+  it("tints on the beats from 80 to 160 and 240 to 320 ms", () => {
+    const tinted = [0, 79, 80, 159, 160, 239, 240, 319].map(
+      (elapsed) => refusalPose(false, elapsed)!.tinted,
+    );
+    expect(tinted).toEqual([false, false, true, true, false, false, true, true]);
+    expect(REFUSAL.color).toBe("#e4574e");
+  });
+
+  it("shakes 3 px right and back four times, 40 ms each way", () => {
+    const shake = (elapsed: number) => refusalPose(false, elapsed)!.shake;
+    for (const start of [0, 80, 160, 240]) {
+      expect(shake(start)).toBe(0);
+      expect(shake(start + 20)).toBeCloseTo(1.5);
+      expect(shake(start + 40)).toBe(3);
+      expect(shake(start + 60)).toBeCloseTo(1.5);
+    }
+  });
+
+  it("holds the tint with no shake under reduced motion", () => {
+    for (const elapsed of [0, 40, 100, 200, 319]) {
+      expect(refusalPose(true, elapsed)).toEqual({ shake: 0, tinted: true });
+    }
+  });
+
+  it("ends after 320 ms and is absent before it starts", () => {
+    expect(refusalPose(false, 320)).toBeNull();
+    expect(refusalPose(true, 320)).toBeNull();
+    expect(refusalPose(false, -1)).toBeNull();
+  });
+
+  it("keeps a playing cue's start on a repeat and starts afresh once it has ended", () => {
+    expect(refusalStart(1000, undefined)).toBe(1000);
+    expect(refusalStart(1200, 1000)).toBe(1000);
+    expect(refusalStart(1319, 1000)).toBe(1000);
+    expect(refusalStart(1320, 1000)).toBe(1320);
   });
 });

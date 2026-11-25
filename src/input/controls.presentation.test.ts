@@ -4,6 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { refusalPose } from "../ui/refusal.ts";
 import { touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 
 const source = ts.createSourceFile(
@@ -32,7 +33,13 @@ function render(
   coarse = true,
   map = false,
   foreground = true,
-  { desktop = false, maxTouchPoints = 0 } = {},
+  {
+    desktop = false,
+    maxTouchPoints = 0,
+    now = 0,
+    reduced = false,
+    refusedAt = undefined as number | undefined,
+  } = {},
 ) {
   const target = { hidden: false, inert: false };
   const button = Object.assign({ hidden: false, inert: false }, { matches: () => false });
@@ -40,7 +47,7 @@ function render(
   const status = { setShown: vi.fn() };
   const notices = { update: vi.fn() };
   const weapons = { setShown: vi.fn(), updateFeedback: vi.fn() };
-  const useDisc = { setFrame: vi.fn(), setVisible: vi.fn() };
+  const useDisc = { setFrame: vi.fn(), setPosition: vi.fn(), setVisible: vi.fn() };
   const pauseButton = { hidden: true, inert: false };
   const context = createContext({
     USE_PRESS_MS: 100,
@@ -55,17 +62,21 @@ function render(
     navigation,
     noticePlaces: () => ({ x: 0, y: 0 }),
     notices,
-    now: () => 0,
+    now: () => now,
     pausable: !map,
     pause: { mapOpen: () => map },
     pauseButton,
+    reducedMotion: reduced,
+    refusalPose,
     settings: { joystickTargets: [target], useButton: button },
     status,
     touchControlsActive,
     useDisc,
-    useDiscFrame: () => 0,
+    useDiscFrame: (action: string, pose: string) => `${action}-${pose}`,
     useDiscShown,
+    useLayout: { frame: { x: 40, y: 300 } },
     usePress: undefined,
+    useRefused: refusedAt,
     useShown: false,
     weapons,
     window: { matchMedia: () => ({ matches: coarse }), navigator: { maxTouchPoints } },
@@ -139,4 +150,37 @@ it("does not exempt Map navigation when an actual child foreground covers it", (
 it("keeps navigation inactive behind direct modal scopes outside the controls modal flag", () => {
   const view = render(false, false, false, false, false);
   expect(view.pauseButton).toEqual({ hidden: false, inert: true });
+});
+
+describe("the Use disc's refusal cue", () => {
+  it.each([
+    [40, "dock-rest", 43],
+    [100, "dock-refused", 40 + 3 * (20 / 40)],
+    [200, "dock-rest", 40 + 3 * (40 / 40)],
+    [260, "dock-refused", 40 + 3 * (20 / 40)],
+    [320, "dock-rest", 40],
+  ])("at %i ms shows %s with the disc at x %d", (elapsed, frame, x) => {
+    const view = render(true, false, true, false, true, { now: 1000 + elapsed, refusedAt: 1000 });
+    expect(view.useDisc.setFrame).toHaveBeenLastCalledWith(frame);
+    expect(view.useDisc.setPosition.mock.lastCall![0]).toBeCloseTo(x);
+    expect(view.useDisc.setPosition.mock.lastCall![1]).toBe(300);
+  });
+
+  it("holds the tint without a shake under reduced motion", () => {
+    for (const elapsed of [0, 40, 200, 319]) {
+      const view = render(true, false, true, false, true, {
+        now: 1000 + elapsed,
+        reduced: true,
+        refusedAt: 1000,
+      });
+      expect(view.useDisc.setFrame).toHaveBeenLastCalledWith("dock-refused");
+      expect(view.useDisc.setPosition).toHaveBeenLastCalledWith(40, 300);
+    }
+  });
+
+  it("rests at its place with no cue played", () => {
+    const view = render(true, false);
+    expect(view.useDisc.setFrame).toHaveBeenLastCalledWith("dock-rest");
+    expect(view.useDisc.setPosition).toHaveBeenLastCalledWith(40, 300);
+  });
 });

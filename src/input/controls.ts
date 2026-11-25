@@ -68,6 +68,7 @@ import {
   type PauseState,
 } from "../ui/pauseCard.ts";
 import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
+import { refusalPose, refusalStart } from "../ui/refusal.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
   createSettings,
@@ -178,6 +179,8 @@ export interface Controls {
   setAchievements(entries: readonly AchievementEntry[]): void;
   // What Use does here and its name, or undefined with nothing in reach.
   setContext(context: UseContext | undefined): void;
+  // Plays the refusal cue on the Use disc; a repeat while it plays does not restart it.
+  refuseUse(): void;
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
@@ -232,6 +235,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let context: UseContext | undefined;
   // The shared dispatcher supplies the Use press timestamp for its visual frames.
   let usePress: { readonly since: number } | undefined;
+  // When the Use disc's refusal cue started, if one has played.
+  let useRefused: number | undefined;
   let useShown = false;
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
@@ -955,7 +960,15 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
             ? "focus-held"
             : "focus"
           : "rest";
-      useDisc.setFrame(useDiscFrame(context.questIcon ? "quest" : context.action, pose));
+      const refusal =
+        useRefused === undefined ? null : refusalPose(reducedMotion, now() - useRefused);
+      useDisc.setFrame(
+        useDiscFrame(
+          context.questIcon ? "quest" : context.action,
+          refusal?.tinted ? "refused" : pose,
+        ),
+      );
+      useDisc.setPosition(useLayout.frame.x + (refusal?.shake ?? 0), useLayout.frame.y);
     }
     const size = canvasSize(sceneFit(scene));
     const views = stickViews(
@@ -1065,6 +1078,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     overlay: settings.root,
     reducedMotion: () => reducedMotion,
+    refuseUse() {
+      useRefused = refusalStart(now(), useRefused);
+    },
     registerBack: (layer) => backStack.register(layer),
     reset,
     resetShieldOreSpent(total) {

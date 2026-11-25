@@ -130,12 +130,12 @@ describe("Use disc atlas", () => {
     expect(frames * grid.strideX).toBeGreaterThan(8192);
     expect(grid).toEqual({ height: 188, rows: 9, strideX: 190, strideY: 190, width: 188 });
     expect(grid.rows * columns).toBe(frames);
-    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([950, 1710]);
+    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([1140, 1710]);
   });
 
   it("keeps every frame within a lower renderer limit at the highest raster scale", () => {
     const grid = chromeAtlasGrid(frame, 4, frames, columns, 2048);
-    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([1135, 2043]);
+    expect([columns * grid.strideX, grid.rows * grid.strideY]).toEqual([1362, 2043]);
     expect(grid.width).toBe(grid.height);
   });
 });
