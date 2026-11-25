@@ -266,8 +266,9 @@ their damage, intervals, speeds, counts and lifetimes
   `enemyWeapons`. Reruns are byte-identical. The build fails if a galaxy's boundary
   edge (the ink on a light galaxy, `foregroundEdge` on Phantom) falls below 5:1
   on its background, or a carrying colour below 5:1 on a dark galaxy without
-  one, or if the mine's collision parts trace its drawing with an IoU
-  below 0.98 or stray more than 1 px from its edge.
+  one, or if the mine's collision parts leave any pixel of a frame uncovered,
+  trace the union of its frames with an IoU below 0.98 or stray more than
+  0.5 px from its edge.
 
 ### Enemy-only conventions
 
@@ -351,13 +352,16 @@ fill. The actual pop age is normalized over the existing pop duration. Ring
 burst contacts remain one clean ripple; they do not acquire the Mine's inner
 front or fill. This is presentation only, not a new blast or damage radius.
 
-Collision: contact is the drawn silhouette against Ada's drawn ship. `collision`
-holds it as convex `[x, y]` parts in logical px around the mine's centre at
-`th = 0`: a 32-sided polygon inscribed in the body disc (within 0.03 px of it)
-and the 8 spike triangles. The parts overlap; their union is the silhouette.
-Rotate them by `th` with the drawing. The light field's ink keyline is not part of
-it, and a fizzling mine has none. Against the drawing the parts have an IoU of
-0.9977 and lie within 0.023 px of its edge.
+Collision: contact is the drawn mine against Ada's drawn ship, and it covers
+the full stud sweep. `collision` holds the union of the eight
+[mine frames](#missile-and-mine-frames) as 36 convex `[x, y]` parts in
+logical px around the mine's centre: the screen outlines of the ball, the belt,
+the collar and the lamp, and of the four studs at each of the eight spin steps.
+The parts overlap; their union is the same at every spin, so it holds still
+while the frames turn. The light field's keyline is not part of it, and a
+fizzling mine has none. Every pixel a frame draws lies in the parts, and against
+the union of the frames they have an IoU of 0.9999 and lie within 0.004 px of
+its edge.
 
 Light field: the spikes and body draw over their silhouette grown by 1 px in
 ink; the hint arc, fizzle flecks and both pop front strokes take ink edges,
@@ -491,17 +495,21 @@ The envelope and timing are unchanged: radius `r = R (1 - (1 - g)^3)` for
 
 ### Ring burst and mine
 
-| Element       | Shipped                                   | Flat look                                                                                                                                                                                                                                         |
-| ------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Emission ring | 1.5 px coral at alpha `1 - t / 180`       | 2 px coral at alpha 1 to 90 ms, then 0.5 to 180 ms                                                                                                                                                                                                |
-| Dart tail     | A coral alpha taper `9 f` long            | A `coralSide` wedge `(-3.2, -1) (-10, 0) (-3.2, 1)`                                                                                                                                                                                               |
-| Dart body     | `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)` | Coral `(2.6, 0) (-0.6, -2.3) (-3.8, 0) (-0.6, 2.3)`, white core `(1, 0) (-0.6, -1) (-2.2, 0) (-0.6, 1)`                                                                                                                                           |
-| Mine          | Eight flat spikes round two offset discs  | One solid: a coral ball of radii 4.7 by 4.7 by 4.5, a dark belt of radius 5 and height 2.2, four coral studs from 4.6 to 7.4 out tapering from radius 1.9 to 1, a dark collar of radius 2.3 from 4.2 to 5 up and an amber lamp dome of radius 1.6 |
-| Mine blink    | A white disc of radius 1.8                | The lamp dome in white `#ffffff` with a `#e8e8f0` shade                                                                                                                                                                                           |
-| Shockwave     | A fading ellipse stroke                   | An amber ground-plane ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6                                                                   |
+| Element       | Shipped                                   | Flat look                                                                                                                                                                                                                                                                 |
+| ------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Emission ring | 1.5 px coral at alpha `1 - t / 180`       | 2 px coral at alpha 1 to 90 ms, then 0.5 to 180 ms                                                                                                                                                                                                                        |
+| Dart tail     | A coral alpha taper `9 f` long            | A `coralSide` wedge `(-3.2, -1) (-10, 0) (-3.2, 1)`                                                                                                                                                                                                                       |
+| Dart body     | `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)` | Coral `(2.6, 0) (-0.6, -2.3) (-3.8, 0) (-0.6, 2.3)`, white core `(1, 0) (-0.6, -1) (-2.2, 0) (-0.6, 1)`                                                                                                                                                                   |
+| Mine          | Eight flat spikes round two offset discs  | One solid: a coral ball of radii 4.7 by 4.7 by 4.5, a dark belt of radius 5 and height 2.2, four coral studs from 4.6 to 7.4 out tapering from radius 1.9 to 1, a dark collar of radius 2.3 from 4.2 to 5 up and an amber lamp dome of radius 1.6                         |
+| Mine blink    | A white disc of radius 1.8                | The lamp dome in white `#ffffff` with a `#e8e8f0` shade                                                                                                                                                                                                                   |
+| Shockwave     | A fading ellipse stroke                   | An amber ground-plane ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6; on a light field or Phantom the ring takes the field edge and the cream ellipse does not |
 
 The mine's coral tones are `#d68b72`, `#a8654f` and `#7f4b3d`; its spin and
-blink timings are unchanged.
+blink timings are unchanged. Its collision covers the full stud sweep
+([Mine](#mine)). The shockwave's cream ellipse sits inside the ring like a
+tint: an edge on it would merge with the ring's edge across its narrow axis
+while the pop is small and band the pop in stripes on Phantom, so only the
+ring is edged, as `mine.pop.edged` lists.
 
 ### Missile and mine frames
 

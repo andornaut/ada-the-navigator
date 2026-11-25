@@ -1,7 +1,7 @@
 // Enemy-only weapon effects (ring burst, mine, charged lance) and the enemy Phaser's aim line and
 // beam: the shapes, widths, alpha keys and timings Tech draws in code, written to
 // public/art/enemy-weapons.json and linked from the core manifest as `enemyWeapons`. The mine's
-// collision is its spiked outline as analytic convex parts, checked against that outline.
+// collision is the union of its weapon-solids frames as convex parts, checked against them.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -9,7 +9,10 @@ import { contrast } from "@andornaut/art-kit/build/colour";
 import { format, resolveConfig } from "prettier";
 
 import { linkData } from "./manifest.ts";
-import { json } from "./projection.ts";
+import { json, projectAt } from "./projection.ts";
+import { DISPLAY_SCALE, type Mesh, meshScale } from "./solid.ts";
+import { visibleFragments } from "./visible.ts";
+import { MINE_FRAME_DEGREES, MINE_FRAMES, mineSolids } from "./weapon-solids.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const MIN_CONTRAST = 5;
@@ -59,7 +62,7 @@ const round = (value: number) => Math.round(value * 1000) / 1000;
 const point = (x: number, y: number): V2 => [round(x), round(y)];
 
 // The aim grammar shared by the lance and the Phaser: dashed while aiming, solid when it will fire.
-const TELL = { width: 1, dash: [6, 4], colour: "obstacle" } as const;
+const TELL = { width: 1, dash: [6, 4] } as const;
 
 // A beam's flat look (art/weapons.md, Flat look): opaque bands in coral, plate and white, each
 // `width` px at the nose then the end times `w`, and opaque muzzle bloom discs in the same order.
@@ -78,13 +81,11 @@ const RING_BURST = {
       [90, 1],
       [180, 0.5],
     ],
-    colour: "obstacle",
   },
   muzzle: {
     ms: 120,
     radius: [3.6, 0.6],
-    colour: "obstacle",
-    core: { untilMs: 60, radius: [2, 0.4], colour: "white" },
+    core: { untilMs: 60, radius: [2, 0.4] },
   },
   dart: {
     outer: [point(2.6, 0), point(-0.6, -2.3), point(-3.8, 0), point(-0.6, 2.3)],
@@ -97,140 +98,130 @@ const RING_BURST = {
 
 // The mine turns clockwise on screen at `degPerSecond` and shows the weapon-solids frame of each
 // `stepDeg` step.
-const SPIN = { degPerSecond: 60, stepDeg: 11.25 } as const;
+const SPIN = { degPerSecond: 60, stepDeg: MINE_FRAME_DEGREES } as const;
 
-// The spiked collision outline at spin 0: spike i points along screen angle 45 i degrees (0 is
-// screen right, angles clockwise on screen).
-const MINE = {
-  spikes: { count: 8, tip: 7.5, base: 3.6, halfWidth: 1.5 },
-  body: { radius: 5 },
-} as const;
-
-function spike(i: number): V2[] {
-  const { count, tip, base, halfWidth } = MINE.spikes;
-  const angle = (2 * Math.PI * i) / count;
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-  return [
-    point(c * tip, s * tip),
-    point(c * base + s * halfWidth, s * base - c * halfWidth),
-    point(c * base - s * halfWidth, s * base + c * halfWidth),
-  ];
+// The convex hull of screen points, counter-clockwise in y-down screen space.
+function hull(points: readonly V2[]): V2[] {
+  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o: V2, a: V2, b: V2) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = (list: readonly V2[]) => {
+    const chain: V2[] = [];
+    for (const p of list) {
+      while (chain.length >= 2 && cross(chain.at(-2)!, chain.at(-1)!, p) <= 1e-9) chain.pop();
+      chain.push(p);
+    }
+    chain.pop();
+    return chain;
+  };
+  return [...half(sorted), ...half(sorted.toReversed())];
 }
 
-// The body disc as an inscribed regular polygon; its edges lie within 0.03 px of the circle.
-const BODY_SIDES = 32;
-const bodyPolygon = Array.from({ length: BODY_SIDES }, (_, i) => {
-  const angle = (2 * Math.PI * (i + 0.5)) / BODY_SIDES;
-  return point(Math.cos(angle) * MINE.body.radius, Math.sin(angle) * MINE.body.radius);
-});
-const collision = [bodyPolygon, ...Array.from({ length: MINE.spikes.count }, (_, i) => spike(i))];
+// The mine's collision covers its whole stud sweep: the union of its eight frames' silhouettes,
+// as the screen outline of each convex solid in logical px about the mine's centre. The ball,
+// belt, collar and lamp are the same in every frame; the four studs take each frame's step, so
+// 32 stud outlines ring the body.
+const outline = (solid: Mesh): V2[] =>
+  hull(solid.flatMap(({ points }) => points.map((p) => projectAt(0, 0, p)))).map(([x, y]) =>
+    point(x, y),
+  );
+const frames = Array.from({ length: MINE_FRAMES }, (_, j) => mineSolids(j * MINE_FRAME_DEGREES));
+const [first] = frames;
+const body = [first![0]!, first![1]!, ...first!.slice(-2)];
+const collision = [...body, ...frames.flatMap((solids) => solids.slice(2, -2))].map(outline);
 
-const inConvex = (part: readonly V2[], x: number, y: number) =>
-  part.every((a, i) => {
-    const b = part[(i + 1) % part.length]!;
-    return (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]) >= 0;
-  });
-const orient = (part: V2[]) => {
-  const area = part.reduce((sum, a, i) => {
-    const b = part[(i + 1) % part.length]!;
-    return sum + a[0] * b[1] - b[0] * a[1];
-  }, 0);
-  return area < 0 ? [...part].reverse() : part;
-};
-const segmentDistance = (a: V2, b: V2, x: number, y: number) => {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
-  return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy);
-};
-
-// Checks the parts against the outline (the body circle and the exact spike triangles)
-// on a 0.02 px grid: IoU at least 0.98 and every mismatch within 1 px of the drawn edge.
+// Checks the parts against the drawn frames on a 0.02 px grid: every pixel a frame draws lies in
+// the parts, and against the union of the frames the parts have an IoU of at least 0.98 with
+// every mismatch within 0.5 px of an edge.
 {
-  const parts = collision.map(orient);
-  const spikes = Array.from({ length: MINE.spikes.count }, (_, i) => orient(spike(i)));
-  const reach = MINE.spikes.tip + 0.5;
   const step = 0.02;
+  const all = collision.flat();
+  const [x0, x1] = [Math.min(...all.map(([x]) => x)) - 1, Math.max(...all.map(([x]) => x)) + 1];
+  const [y0, y1] = [Math.min(...all.map(([, y]) => y)) - 1, Math.max(...all.map(([, y]) => y)) + 1];
+  const columns = Math.ceil((x1 - x0) / step);
+  const rows = Math.ceil((y1 - y0) / step);
+  // Fill a polygon's even-odd interior, sampled at cell centres, into `grid`.
+  const fill = (grid: Uint8Array, polygon: readonly V2[]) => {
+    for (let row = 0; row < rows; row++) {
+      const y = y0 + (row + 0.5) * step;
+      const crossings: number[] = [];
+      polygon.forEach((a, i) => {
+        const b = polygon[(i + 1) % polygon.length]!;
+        if (a[1] <= y !== b[1] <= y)
+          crossings.push(a[0] + ((y - a[1]) * (b[0] - a[0])) / (b[1] - a[1]));
+      });
+      crossings.sort((a, b) => a - b);
+      for (let k = 0; k + 1 < crossings.length; k += 2) {
+        const from = Math.max(0, Math.ceil((crossings[k]! - x0) / step - 0.5));
+        const to = Math.min(columns - 1, Math.floor((crossings[k + 1]! - x0) / step - 0.5));
+        for (let column = from; column <= to; column++) grid[row * columns + column] = 1;
+      }
+    }
+  };
+  const traced = new Uint8Array(columns * rows);
+  for (const part of collision) fill(traced, part);
+  const drawn = new Uint8Array(columns * rows);
+  for (const solids of frames) {
+    const scale = 1 / DISPLAY_SCALE;
+    for (const { points } of visibleFragments(
+      meshScale(solids.flat(), [scale, scale, scale]),
+      (p) => p,
+    )) {
+      fill(
+        drawn,
+        points.map(([x, y]): V2 => [x * DISPLAY_SCALE, y * DISPLAY_SCALE]),
+      );
+    }
+  }
+  const edges = collision.flatMap((part) =>
+    part.map((a, i) => [a, part[(i + 1) % part.length]!] as const),
+  );
+  const segmentDistance = ([a, b]: readonly [V2, V2], x: number, y: number) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy);
+  };
   let both = 0;
   let either = 0;
+  let uncovered = 0;
   let worst = 0;
-  for (let y = -reach; y <= reach; y += step) {
-    for (let x = -reach; x <= reach; x += step) {
-      const drawn =
-        Math.hypot(x, y) <= MINE.body.radius || spikes.some((part) => inConvex(part, x, y));
-      const traced = parts.some((part) => inConvex(part, x, y));
-      if (drawn && traced) both++;
-      if (drawn || traced) either++;
-      if (drawn !== traced) {
-        const edge = Math.min(
-          Math.abs(Math.hypot(x, y) - MINE.body.radius),
-          ...spikes.flatMap((part) =>
-            part.map((a, i) => segmentDistance(a, part[(i + 1) % part.length]!, x, y)),
-          ),
-        );
-        worst = Math.max(worst, edge);
-      }
+  for (let cell = 0; cell < traced.length; cell++) {
+    const [d, t] = [drawn[cell]!, traced[cell]!];
+    if (d && t) both++;
+    if (d || t) either++;
+    if (d !== t) {
+      const x = x0 + ((cell % columns) + 0.5) * step;
+      const y = y0 + (Math.floor(cell / columns) + 0.5) * step;
+      const edge = Math.min(...edges.map((segment) => segmentDistance(segment, x, y)));
+      if (d && edge > step) uncovered++;
+      worst = Math.max(worst, edge);
     }
   }
   const iou = both / either;
-  if (iou < 0.98 || worst > 1) {
-    throw new Error(`mine collision IoU ${iou.toFixed(4)}, worst ${worst.toFixed(3)} px`);
+  if (uncovered > 0 || iou < 0.98 || worst > 0.5) {
+    throw new Error(
+      `mine collision IoU ${iou.toFixed(4)}, worst ${worst.toFixed(3)} px, ${uncovered} drawn cells uncovered`,
+    );
   }
-  console.log(`mine collision: IoU ${iou.toFixed(4)}, worst ${worst.toFixed(3)} px`);
+  console.log(
+    `mine collision: ${collision.length} parts, IoU ${iou.toFixed(4)}, worst ${worst.toFixed(3)} px`,
+  );
 }
 
 const MINE_DATA = {
   spin: SPIN,
-  // Blink: the core shows `flash` for `onMs` of each `periodMs`, phased from the drop, in the
-  // first band whose `aboveRemainingMs` the mine's remaining life exceeds.
+  // Blink: the lamp shows its blink frame for `onMs` of each `periodMs`, phased from the drop, in
+  // the first band whose `aboveRemainingMs` the mine's remaining life exceeds.
   blink: [
     { aboveRemainingMs: 4000, periodMs: 1000, onMs: 120 },
     { aboveRemainingMs: 1500, periodMs: 500, onMs: 100 },
     { aboveRemainingMs: 0, periodMs: 250, onMs: 80 },
   ],
-  hint: { ms: 4000, radius: 11, stroke: 1.2, startDeg: -90, colour: "obstacle" },
-  fizzle: {
-    ms: 200,
-    flecks: {
-      count: 4,
-      startDeg: 45,
-      radius: 1,
-      distance: [5, 11],
-      yScale: 0.75,
-      colour: "obstacle",
-    },
-  },
-  pop: {
-    ms: 220,
-    growMs: 110,
-    radius: [5, 16],
-    stroke: [2, 1],
-    tint: 0.14,
-    colour: "obstacle",
-    flecks: {
-      count: 4,
-      startDeg: 20,
-      radius: 1.1,
-      distance: [4, 13],
-      yScale: 0.6,
-      ms: 180,
-      colour: "obstacle",
-    },
-    flash: {
-      radius: 6,
-      steps: [
-        { fromMs: 0, toMs: 40, scale: 1, alpha: 0.95 },
-        { fromMs: 40, toMs: 80, scale: 0.55, alpha: 0.6 },
-      ],
-      layers: [
-        { scale: 1.25, colour: "obstacle", alpha: 0.3 },
-        { scale: 1, colour: "obstacle", alpha: 0.85 },
-        { scale: 0.66, colour: "plate", alpha: 1 },
-        { scale: 0.36, colour: "white", alpha: 1 },
-      ],
-    },
-  },
+  hint: { ms: 4000, radius: 11, stroke: 1.2, startDeg: -90 },
+  fizzle: { ms: 200 },
+  // The pop's shockwave shapes that take the field edge: the amber ring, not the cream ellipse.
+  pop: { edged: ["ring"] },
   collision,
   reducedMotion: {
     fizzleMs: 200,
@@ -238,8 +229,8 @@ const MINE_DATA = {
   },
 };
 
-// The Phaser hit spark (art/weapons.md), recoloured: rays white then coral, coral flecks.
-const SPARK = { ms: 160, rays: ["white", "obstacle"], core: "white", flecks: "obstacle" } as const;
+// The hit spark's length; its shapes are the shared contact families (art/weapons.md).
+const SPARK = { ms: 160 } as const;
 
 const LANCE = {
   trackMs: 700,
@@ -248,15 +239,13 @@ const LANCE = {
   tracking: { ...TELL, marchPxPerSecond: 60 },
   locked: {
     width: 1.5,
-    colour: "plate",
     pulses: [
       [0, 60],
       [200, 260],
     ],
-    pulseColour: "white",
     pulseHalo: { radius: 4.5, alpha: 0.5, colour: "plate" },
   },
-  charge: { radius: [1, 3.5], core: [0.5, 1.5], colour: "obstacle", coreColour: "white" },
+  charge: { radius: [1, 3.5], core: [0.5, 1.5] },
   keys: [
     [0, 0.5, 0.9],
     [30, 1.2, 1],
@@ -271,14 +260,12 @@ const LANCE = {
     ],
     [6.5, 4.2, 2.3],
   ),
-  spark: { ...SPARK, scale: 1.35 },
+  spark: SPARK,
   lightField: { glow: { width: [10, 7.5], alpha: 0.9 }, bloomAlpha: 0.6 },
   reducedMotion: {
     line: { width: 3, colour: "obstacle" },
     edge: { width: 6, alpha: 0.35, colour: "obstacle", lightAlpha: 0.9 },
     holdMs: 180,
-    ms: 300,
-    spark: { radius: 4, stroke: 1.5, colour: "obstacle" },
   },
 } as const;
 
@@ -287,10 +274,10 @@ const PHASER = {
   solidFromMs: 300,
   flashMs: 150,
   aiming: { ...TELL, width: 1.5 },
-  solid: { width: 1.5, colour: "plate" },
+  solid: { width: 1.5 },
   // The aim's end chevron, `u` from the aim's end.
   chevron: [point(3, 0), point(-1, -3), point(-1, 3)],
-  charge: { radius: [1, 2.5], core: [0.5, 1.1], colour: "obstacle", coreColour: "white" },
+  charge: { radius: [1, 2.5], core: [0.5, 1.1] },
   keys: [
     [0, 0.55, 0.85],
     [20, 1, 1],
@@ -306,14 +293,12 @@ const PHASER = {
     [5, 3.1, 1.6],
   ),
   missFade: 28,
-  spark: { ...SPARK, scale: 1 },
+  spark: SPARK,
   lightField: { glow: { width: [6.5, 4], alpha: 0.9 }, bloomAlpha: 0.6 },
   reducedMotion: {
     line: { width: 2, colour: "obstacle" },
     edge: { width: 4, alpha: 0.35, colour: "obstacle", lightAlpha: 0.9 },
     holdMs: 90,
-    ms: 150,
-    spark: { radius: 3, stroke: 1.5, colour: "obstacle" },
   },
 } as const;
 
