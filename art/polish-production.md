@@ -6,18 +6,18 @@ it is staged and what remains. Renderer changes are in the
 
 ## Groups
 
-| Group                         | Deliverable                                                                                       | State                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Weapon and hostile map glyphs | Produced files, replaced in place                                                                 | Produced                                           |
-| Traveling debris              | Produced files and collision data, replaced in place                                              | Produced                                           |
-| Giant decorations             | Produced files: four galaxies in place, Sunflower and Andromeda staged with six frames            | Produced                                           |
-| Backdrop field                | Staged data beside the shipped data, with its contrast check                                      | Produced                                           |
-| Quantum jump                  | Produced rasters, replaced in place; the iris rim is a specification                              | Produced                                           |
-| Weapon and destruction looks  | Specifications; staged shard data                                                                 | Specified                                          |
-| Runtime effects               | Staged data and specifications: current streaks, stitch, the Eye, the band                        | Specified                                          |
-| Missile and mine frames       | Produced frames of the solid models in [Weapons](weapons.md#missile-and-mine-frames), staged      | Produced                                           |
-| Galaxy preview cards          | Produced cards, staged beside the captured previews                                               | Produced from the station redesign's main stations |
-| Disabled frames               | Close X, switch, pause and menu discs, cargo and tow icons: frames added to their sheets in place | Produced                                           |
+| Group                         | Deliverable                                                                                                           | State                                              |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Weapon and hostile map glyphs | Produced files, replaced in place                                                                                     | Produced                                           |
+| Traveling debris              | Produced files and collision data, replaced in place                                                                  | Produced                                           |
+| Giant decorations             | Produced files: four galaxies in place, Sunflower and Andromeda staged with six frames                                | Produced                                           |
+| Backdrop field                | Staged data beside the shipped data, with its contrast check                                                          | Produced                                           |
+| Quantum jump                  | Produced rasters, replaced in place; the iris rim is a specification                                                  | Produced                                           |
+| Weapon and destruction looks  | Specifications; staged shard data                                                                                     | Specified                                          |
+| Runtime effects               | Staged data and specifications: current streaks, stitch, the Eye, the band                                            | Specified                                          |
+| Missile and mine frames       | Produced frames of the solid models in [Weapons](weapons.md#missile-and-mine-frames), staged                          | Produced                                           |
+| Galaxy preview cards          | Produced cards, staged beside the captured previews                                                                   | Produced from the station redesign's main stations |
+| Disabled frames               | Close X and switch frames added to their sheets in place; pause, menu, cargo and tow icons staged in their own sheets | Produced                                           |
 
 Unchanged by decision: play asteroids, backdrop rocks, portraits, pet sprites
 and story scenes. Resource rocks are retired separately.

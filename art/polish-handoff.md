@@ -47,15 +47,23 @@ Tests to rerun with the effect changes: `weaponEffects.test.ts`,
 
 ## Disabled frames
 
-Added in place; every existing frame and view is unchanged. Tech selects
-them in place of element opacity ([Controls](controls.md)).
+Tech selects these in place of element opacity ([Controls](controls.md)).
+The two sprite sheets gained frames in place, with every existing frame
+unchanged pixel for pixel. The four icons are staged in their own sheets as
+`disabled-icons`, because the live icon sheets' view positions and id list
+are pinned by tests.
 
-| Sprite                  | New frame or view                                         | Tech wiring                                                                       |
-| ----------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `ui-close` (72 by 24)   | Tag `disabled`, frame 2                                   | Show it for a disabled close                                                      |
-| `ui-switch` (128 by 16) | Tags `on-disabled` and `off-disabled`, frames 2 and 3     | Show them for a disabled switch row                                               |
-| `icons-35x35.svg`       | Views `pause-disabled` and `menu-disabled`                | Add both ids to `src/data/uiIconUrl.ts` and show them for a disabled disc         |
-| `icons-20x20.svg`       | Views `icon-cargo-20-disabled` and `icon-tow-20-disabled` | Add both ids to `src/data/uiIconUrl.ts` and show them on a disabled ship card row |
+| Sprite                             | New frame or view                                         | Tech wiring                                                                       |
+| ---------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `ui-close` (72 by 24), in place    | Tag `disabled`, frame 2                                   | Show it for a disabled close                                                      |
+| `ui-switch` (128 by 16), in place  | Tags `on-disabled` and `off-disabled`, frames 2 and 3     | Show them for a disabled switch row                                               |
+| `icons-35x35-disabled.svg`, staged | Views `pause-disabled` and `menu-disabled`                | Map both ids in `src/data/uiIconUrl.ts` and show them for a disabled disc         |
+| `icons-20x20-disabled.svg`, staged | Views `icon-cargo-20-disabled` and `icon-tow-20-disabled` | Map both ids in `src/data/uiIconUrl.ts` and show them on a disabled ship card row |
+
+To fold the four icons into the live sheets instead, move their ids from
+`stagedIcons` to `staticIcons` in `art/tools/ui-icon-sources.ts`, repack and
+update the view pins in `uiIconUrl.test.ts`, `statusPill.test.ts` and
+`navigationButton.test.ts`.
 
 ## For Gameplay
 

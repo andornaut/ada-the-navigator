@@ -5282,6 +5282,36 @@
       }
     }
   },
+  "disabled-icons": [
+    {
+      "id": "icon-cargo-20-disabled",
+      "sheet": "/art/ui/icons/icons-20x20-disabled.svg",
+      "fragment": "icon-cargo-20-disabled",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "id": "icon-tow-20-disabled",
+      "sheet": "/art/ui/icons/icons-20x20-disabled.svg",
+      "fragment": "icon-tow-20-disabled",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "id": "menu-disabled",
+      "sheet": "/art/ui/icons/icons-35x35-disabled.svg",
+      "fragment": "menu-disabled",
+      "width": 35,
+      "height": 35
+    },
+    {
+      "id": "pause-disabled",
+      "sheet": "/art/ui/icons/icons-35x35-disabled.svg",
+      "fragment": "pause-disabled",
+      "width": 35,
+      "height": 35
+    }
+  ],
   "effects-destruction": {
     "file": "/art/enemies/destruction.json",
     "shards": {

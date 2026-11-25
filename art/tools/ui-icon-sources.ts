@@ -12,7 +12,6 @@ export const staticIcons = [
   "icon-aim-controls",
   "icon-browser-menu",
   "icon-cargo-20",
-  "icon-cargo-20-disabled",
   "icon-fps-counter",
   "icon-holodisk",
   "icon-holodisk-20",
@@ -35,7 +34,6 @@ export const staticIcons = [
   "icon-sound",
   "icon-stardust-20",
   "icon-tow-20",
-  "icon-tow-20-disabled",
   "icon-use-control",
   "map-beacon",
   "map-close",
@@ -57,11 +55,9 @@ export const staticIcons = [
   "map-zoom-in",
   "map-zoom-out",
   "menu",
-  "menu-disabled",
   "menu-held",
   "menu-press",
   "pause",
-  "pause-disabled",
   "pause-held",
   "pause-press",
   "settings",
@@ -115,7 +111,16 @@ export const jobsAndProjects = [
   "icon-project-workshop-crane-disabled",
 ];
 
-const sheetIds = new Set([...staticIcons, ...jobsAndProjects]);
+// Icons packed into their own `icons-{size}-disabled.svg` sheets beside the live ones, until
+// the runtime maps their ids and they join `staticIcons`.
+export const stagedIcons = [
+  "icon-cargo-20-disabled",
+  "icon-tow-20-disabled",
+  "menu-disabled",
+  "pause-disabled",
+];
+
+const sheetIds = new Set([...staticIcons, ...jobsAndProjects, ...stagedIcons]);
 const marker = new URL("../../art/ui/icon-output.txt", import.meta.url);
 const mode = existsSync(marker) ? readFileSync(marker, "utf8").trim() : "loose";
 if (mode !== "loose" && mode !== "sheets") {

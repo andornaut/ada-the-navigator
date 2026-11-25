@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 74 37" aria-hidden="true"><view id="menu-disabled" viewBox="1 1 35 35"/><view id="pause-disabled" viewBox="38 1 35 35"/><svg x="1" y="1" width="35" height="35" viewBox="0 0 35 35" overflow="hidden">
+  <circle cx="17.5" cy="17.5" r="16.5" fill="#181425" />
+  <circle cx="17.5" cy="17.5" r="15.5" fill="#75748c" />
+  <circle cx="17.5" cy="17.5" r="13.5" fill="#262b44" />
+  <g fill="#75748c">
+    <rect x="12" y="11" width="11" height="3" />
+    <rect x="12" y="16" width="11" height="3" />
+    <rect x="12" y="21" width="11" height="3" />
+  </g>
+</svg><svg x="38" y="1" width="35" height="35" viewBox="0 0 35 35" overflow="hidden">
+  <circle cx="17.5" cy="17.5" r="16.5" fill="#181425" />
+  <circle cx="17.5" cy="17.5" r="15.5" fill="#75748c" />
+  <circle cx="17.5" cy="17.5" r="13.5" fill="#262b44" />
+  <path fill="#75748c" d="M12 11H16V24H12ZM19 11H23V24H19Z" />
+</svg></svg>

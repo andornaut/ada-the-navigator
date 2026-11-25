@@ -5,7 +5,14 @@ import { resolve } from "node:path";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
-import { hasUiIcon, jobsAndProjects, readUiIcon, staticIcons } from "./ui-icon-sources.ts";
+import { stageRows } from "./polish-rows.ts";
+import {
+  hasUiIcon,
+  jobsAndProjects,
+  readUiIcon,
+  stagedIcons,
+  staticIcons,
+} from "./ui-icon-sources.ts";
 
 const namespace = "http://www.w3.org/2000/svg";
 const maxEdge = 2048;
@@ -58,13 +65,15 @@ function exportSheets(output: string) {
     throw new Error("The Jobs and Projects SVG source set must be complete");
   }
   const groups = new Map<string, ReturnType<typeof icon>[]>();
-  for (const id of [...staticIcons, ...present]) {
+  const add = (id: string, suffix: string) => {
     const glyph = icon(id);
-    const key = `${glyph.width}x${glyph.height}`;
+    const key = `${glyph.width}x${glyph.height}${suffix}`;
     const members = groups.get(key) ?? [];
     members.push(glyph);
     groups.set(key, members);
-  }
+  };
+  for (const id of [...staticIcons, ...present]) add(id, "");
+  for (const id of stagedIcons) add(id, "-disabled");
 
   const mapping = [];
   const sheets = new Map<string, string>();
@@ -112,6 +121,18 @@ function exportSheets(output: string) {
     );
   }
 
+  stageRows(
+    "disabled-icons",
+    mapping
+      .filter(({ id }) => stagedIcons.includes(id))
+      .map(({ fragment, height, id, sheet, width }) => ({
+        id,
+        sheet: `/art/ui/icons/${sheet}`,
+        fragment,
+        width,
+        height,
+      })),
+  );
   mkdirSync(output, { recursive: true });
   for (const [file, svg] of sheets) writeFileSync(resolve(output, file), svg);
   console.log(JSON.stringify(mapping, null, 2));
