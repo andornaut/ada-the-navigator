@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import { readManifest } from "./manifest.ts";
 import { ORE_PICKUP, PICKUP_SIZE, STARDUST_REST } from "./resource-glyphs.ts";
 import { strictlyConvex } from "./silhouette.ts";
 
@@ -26,10 +27,12 @@ type Sheet = {
 };
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
-const rows = (JSON.parse(read("../resource-rows.json")) as { core: { assets: Row[] } }).core.assets;
+const rows = (readManifest("core").assets as unknown as Row[]).filter(
+  ({ id }) => id === "stardust" || id === "ore-nugget",
+);
 const data = (id: string) => JSON.parse(read(`../../public/art/${id}.json`)) as Sheet;
 
-test("Stardust and ore stage one 9 px row each, on sheets that exist", () => {
+test("Stardust and ore have one 9 px core row each, on sheets that exist", () => {
   assert.deepEqual(
     rows.map(({ id }) => id),
     ["stardust", "ore-nugget"],

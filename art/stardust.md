@@ -2,9 +2,8 @@
 
 - Rebuild with `node art/tools/resource-pickups.ts`. It writes the Stardust
   sheet `public/art/stardust.png` with its Aseprite data `stardust.json`, the
-  [ore nugget](cartwheel-props.md#ore-nugget) sheet beside it, and the core
-  manifest rows that switch to both in
-  [resource-rows.json](resource-rows.json). JSON goes through the project's
+  [ore nugget](cartwheel-props.md#ore-nugget) sheet beside it, and replaces
+  both rows of the core manifest in place. JSON goes through the project's
   Prettier settings. Reruns are byte-identical.
 - Pixel art from character grids, like the [settings icons](settings-icons.md).
   Every pixel is opaque or clear; draw with nearest-neighbour filtering, at

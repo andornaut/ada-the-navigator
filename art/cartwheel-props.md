@@ -101,8 +101,7 @@ lightness, in greyscale too.
 
 - Rebuild with `node art/tools/resource-pickups.ts`, with the
   [Stardust](stardust.md) sheet. It writes `public/art/ore-nugget.png` and its
-  Aseprite data `ore-nugget.json`; the core manifest row that switches to it
-  is in [resource-rows.json](resource-rows.json).
+  Aseprite data `ore-nugget.json` and replaces the core manifest row in place.
 - Manifest `ore-nugget`: a 9 by 9 sheet with one `rest` frame, displayed at
   9 by 9 logical px for one ore and 18 by 18 for five ore, with the pivot at
   the centre, nearest-neighbour filtered. The same 9 px size as Stardust.

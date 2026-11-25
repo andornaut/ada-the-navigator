@@ -1,20 +1,19 @@
-// The Stardust and ore images (art/stardust.md): one 9 px pixel-art sheet per resource that the
-// world pickup and every UI use. `node art/tools/resource-pickups.ts` writes
+// The Stardust and ore pickups (art/stardust.md): one 9 px pixel-art sheet per resource, the
+// design the UI's vector icons share (currency-svg.ts). `node art/tools/resource-pickups.ts` writes
 // `public/art/stardust.png` (rest and its glint frames) and `public/art/ore-nugget.png` (rest),
-// their Aseprite data with each frame's collision parts and Stardust's pull streak, and the core
-// manifest rows that switch to them in art/resource-rows.json.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+// their Aseprite data with each frame's collision parts and Stardust's pull streak, and replaces
+// their core manifest rows in place.
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
-import { json } from "./projection.ts";
+import { mergeEntries } from "./manifest.ts";
 import { ORE_PICKUP, PICKUP_SIZE, STARDUST_PALETTE, STARDUST_REST } from "./resource-glyphs.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-const ROWS = fileURLToPath(new URL("../resource-rows.json", import.meta.url));
 
 // Brighten the resting star without changing its silhouette.
 const { W, L, M, D } = STARDUST_PALETTE;
@@ -94,7 +93,7 @@ await sheet("stardust", glint, [["glint", glint, LOOP.map(([, ms]) => ms)]], {
 });
 await sheet("ore-nugget", [ORE_PICKUP], [["rest", [ORE_PICKUP], 100]]);
 
-// One row per resource; its rest frame (0) is the UI icon, drawn at whole multiples of 9 px.
+// One row per resource, drawn at whole multiples of 9 px.
 const row = (id: string, count: number) => ({
   id,
   path: `/art/${id}.png`,
@@ -107,17 +106,18 @@ const row = (id: string, count: number) => ({
   frameWidth: PICKUP_SIZE,
   frameHeight: PICKUP_SIZE,
 });
-const staged = {
-  core: {
-    assets: [
-      {
-        ...row("stardust", LOOP.length),
-        frames: { rest: 0, glint1: 1, glint2: 2 },
-        loop: LOOP.map(([name, ms], index) => ({ frame: index, name, ms })),
-      },
-      { ...row("ore-nugget", 1), frames: { rest: 0 } },
-    ],
+const rows = [
+  {
+    ...row("stardust", LOOP.length),
+    frames: { rest: 0, glint1: 1, glint2: 2 },
+    loop: LOOP.map(([name, ms], index) => ({ frame: index, name, ms })),
   },
-};
-const text = json(staged);
-if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
+  { ...row("ore-nugget", 1), frames: { rest: 0 } },
+];
+// Each row keeps its place in the core manifest.
+mergeEntries(
+  "core",
+  (id) => id === "stardust" || id === "ore-nugget",
+  rows,
+  (id) => id.startsWith("station-") || id.startsWith("enemy-"),
+);
