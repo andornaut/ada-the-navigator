@@ -733,28 +733,27 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         if (!target) {
           continue;
         }
-        // Chosen rocks: the density over the rocks one choice moves on average.
+        const sources = placements.filter(
+          (placement) =>
+            placement.chunk === chunk.key &&
+            !placement.moving &&
+            target.from.includes(placement.kind),
+        );
+        const blocked = sources.map((placement) => excludedBy(rules, region, "moving", placement));
+        const eligible = sources.filter((_, index) => !blocked[index]);
+        // Chosen rocks: the density over the rocks one choice here moves on average.
         const choices = chanceRound(
           stream(seeds.world, kind, chunk, "count"),
-          (target.density * open(chunk, "moving")) / rocksPerChoice(target),
+          (target.density * open(chunk, "moving")) / rocksPerChoice(target, eligible),
         );
         if (!choices) {
           continue;
         }
-        const eligible = placements.filter((placement) => {
-          if (
-            placement.chunk !== chunk.key ||
-            placement.moving ||
-            !target.from.includes(placement.kind)
-          ) {
-            return false;
-          }
-          const rule = excludedBy(rules, region, "moving", placement);
+        for (const rule of blocked) {
           if (rule) {
             tally.reject(kind, rule);
           }
-          return !rule;
-        });
+        }
         const free = new Set(shuffled(stream(seeds.world, kind, chunk, "choose"), eligible));
         // A velocity is kept when every rock it moves keeps its path clear; otherwise it is
         // redrawn, and after the tries those rocks stay still and are dropped as movers.
@@ -1158,10 +1157,35 @@ function admitted(
   );
 }
 
-/** Rocks one chosen rock moves on average: itself, plus its mean pull when it leads a cluster. */
-export function rocksPerChoice(target: MovingTarget): number {
+/**
+ * Rocks one chosen rock moves on average among `rocks`, the free source rocks of its chunk:
+ * itself, plus its mean pull when it leads a cluster, each size capped by the rocks within the
+ * cluster radius of the chosen one. With no rocks, a pull is never capped.
+ */
+export function rocksPerChoice(target: MovingTarget, rocks: readonly Vec[]): number {
   const cluster = target.cluster;
-  return 1 + (cluster ? (cluster.share * (cluster.size[0] + cluster.size[1])) / 2 : 0);
+  if (!cluster) {
+    return 1;
+  }
+  const [least, most] = cluster.size;
+  const pull = (near: number) => {
+    let total = 0;
+    for (let size = least; size <= most; size++) {
+      total += Math.min(size, near);
+    }
+    return total / (most - least + 1);
+  };
+  const near = rocks.map(
+    (rock) =>
+      rocks.filter(
+        (other) =>
+          other !== rock && Math.hypot(other.x - rock.x, other.y - rock.y) <= cluster.radius,
+      ).length,
+  );
+  const mean = near.length
+    ? near.reduce((sum, count) => sum + pull(count), 0) / near.length
+    : pull(Infinity);
+  return 1 + cluster.share * mean;
 }
 
 /** The rule of the first path zone a moving rock's footprint touches over `seconds` at `motion`. */

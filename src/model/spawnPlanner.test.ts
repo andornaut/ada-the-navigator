@@ -282,8 +282,19 @@ describe("planRegion", () => {
   });
 
   it("leads clusters with a seeded share of chosen rocks and counts every mover", () => {
-    expect(rocksPerChoice(band.moving[0]!)).toBe(2);
-    expect(rocksPerChoice({ density: 1, from: ["big"], kind: "solo", speed: [10, 80] })).toBe(1);
+    const target = band.moving[0]!;
+    expect(rocksPerChoice(target, [])).toBe(2);
+    // Two rocks 100 apart can pull one each, and a lone rock none: a mean pull of 2 / 3.
+    const rocks = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 1000, y: 0 },
+    ];
+    expect(rocksPerChoice(target, rocks)).toBeCloseTo(1 + 0.5 * (2 / 3));
+    expect(rocksPerChoice({ ...target, cluster: { ...CLUSTER, radius: 50 } }, rocks)).toBe(1);
+    expect(
+      rocksPerChoice({ density: 1, from: ["big"], kind: "solo", speed: [10, 80] }, rocks),
+    ).toBe(1);
     let chunks = 0;
     let moved = 0;
     let leaders = 0;
@@ -304,7 +315,7 @@ describe("planRegion", () => {
         }
       }
     }
-    // Half the chosen rocks lead, pulling 2 on average, so movers match the density.
+    // Half the chosen rocks lead, and pulled rocks count, so movers match the density.
     expect(leaders / (leaders + solos)).toBeGreaterThan(0.4);
     expect(leaders / (leaders + solos)).toBeLessThan(0.6);
     expect(moved / chunks).toBeGreaterThan(0.8 * band.moving[0]!.density);
