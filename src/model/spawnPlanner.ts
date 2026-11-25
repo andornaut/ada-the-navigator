@@ -48,7 +48,7 @@ export interface EscortTarget {
   readonly ring: number;
 }
 
-/** Enemy groups of one kind, as a mean member count per chunk (escorts excluded). */
+/** Enemy groups of one kind, as a mean group count per chunk. */
 export interface EnemyTarget {
   readonly density: number;
   readonly escorts?: EscortTarget;
@@ -79,11 +79,9 @@ export interface SpawnRules {
   readonly corridor?: number;
   /** Free space required between any two placed footprints. */
   readonly gap: number;
-  /** World units later tries of a group member may move from its formation slot. */
-  readonly jitter: number;
-  /** World units later tries of a group's first member may move from its seeded anchor. */
+  /** World units an enemy group's later anchor tries may move from its seeded anchor. */
   readonly search: number;
-  /** Candidate positions per spawn before it is dropped. */
+  /** Candidate positions per rock, or anchors per enemy group, before it is dropped. */
   readonly tries: number;
   readonly worldSide?: number;
 }
@@ -128,14 +126,18 @@ export interface SpawnPlacement extends Vec {
   readonly shape?: string;
 }
 
+/** Rocks count one per rock; enemies count one per whole group, members and escorts included. */
+export type SpawnUnit = "groups" | "rocks";
+
 export interface KindReport {
   readonly delivered: number;
   readonly dropped: number;
-  /** Dropped spawns by the rule that rejected their last try. */
+  /** Dropped units by the rule that rejected their last try. */
   readonly drops: Readonly<Record<string, number>>;
-  /** Rejected tries by rule, including tries of spawns later accepted. */
+  /** Rejected tries by rule, including tries of units later accepted. */
   readonly rejections: Readonly<Record<string, number>>;
   readonly requested: number;
+  readonly unit: SpawnUnit;
 }
 
 export interface SpawnReport {
@@ -150,7 +152,6 @@ export interface SpawnPlan {
 /** Report rule names the planner itself applies; exclusion zones add their own. */
 export const SPAWN_RULE = {
   corridor: "corridor",
-  leaderDropped: "leader-dropped",
   noSourceRock: "no-source-rock",
   overlap: "overlap",
 } as const;
@@ -211,20 +212,23 @@ class Tally {
       drops: Record<string, number>;
       rejections: Record<string, number>;
       requested: number;
+      unit: SpawnUnit;
     }
   >();
 
   private of(kind: string) {
     let entry = this.kinds.get(kind);
     if (!entry) {
-      entry = { delivered: 0, drops: {}, rejections: {}, requested: 0 };
+      entry = { delivered: 0, drops: {}, rejections: {}, requested: 0, unit: "rocks" };
       this.kinds.set(kind, entry);
     }
     return entry;
   }
 
-  request(kind: string, count = 1): void {
-    this.of(kind).requested += count;
+  request(kind: string, count: number, unit: SpawnUnit = "rocks"): void {
+    const entry = this.of(kind);
+    entry.requested += count;
+    entry.unit = unit;
   }
 
   deliver(kind: string): void {
@@ -269,7 +273,7 @@ function validate(rules: SpawnRules, region: SpawnRegion): void {
     rules.tries < 1 ||
     region.columns < 0 ||
     region.rows < 0 ||
-    ![rules.gap, rules.jitter, rules.search, rules.corridor ?? 0].every(
+    ![rules.gap, rules.search, rules.corridor ?? 0].every(
       (value) => Number.isFinite(value) && value >= 0,
     ) ||
     !rules.bands.length ||
@@ -366,9 +370,10 @@ function velocity(next: Random, speed: readonly [number, number]): Vec {
 
 /**
  * Plans one region's asteroids and enemies from a seed: static rocks, then moving rocks chosen
- * from them, then enemy group members, all sharing one spatial index. A spawn is accepted only
- * where its footprint plus `gap` is clear of every placed footprint and it touches no applicable
- * exclusion zone, within `tries` candidates; otherwise it is dropped and reported. Every count
+ * from them, then whole enemy groups, all sharing one spatial index. A rock, or every member and
+ * escort of a group, is accepted only where each footprint plus `gap` is clear of every placed
+ * footprint and of the others in its group and touches no applicable exclusion zone, within
+ * `tries` positions or group anchors; otherwise it is dropped whole and reported. Every count
  * and position comes from named streams per kind and chunk, so a kind's requests never shift
  * with another kind's draws. Stations and points of interest are not inputs and never block.
  */
@@ -497,94 +502,38 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       if (!target) {
         continue;
       }
-      const [least, most] = target.groupSize;
-      const groups = chanceRound(
-        stream(kind, chunk, "count"),
-        target.density / ((least + most) / 2),
-      );
+      const groups = chanceRound(stream(kind, chunk, "count"), target.density);
       const next = stream(kind, chunk, "place");
+      tally.request(kind, groups, "groups");
       for (let number = 0; number < groups; number++) {
         const group = `${kind}:${chunk.key}:${number}`;
-        const members = randomInt(next, least, most + 1);
+        const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
         const seeded = { x: chunk.origin.x + next() * size, y: chunk.origin.y + next() * size };
-        const slot = (member: number) => (member - (members - 1) / 2) * target.spacing;
-        let anchor: Vec | undefined;
-        const leaders: (SpawnPlacement | undefined)[] = [];
-        tally.request(kind, members);
-        for (let member = 0; member < members; member++) {
-          const from = anchor ?? seeded;
-          const placed = placeEnemy(
-            rules,
-            next,
-            { radius: target.radius, x: from.x + slot(member), y: from.y },
-            anchor ? rules.jitter : rules.search,
-            (at) => blocked("enemy", at),
-          );
-          placed.rejected.forEach((rule) => tally.reject(kind, rule));
-          if (!placed.at) {
-            tally.drop(kind, placed.rejected.at(-1)!);
-            leaders.push(undefined);
-            continue;
+        const rejected: string[] = [];
+        let formation: SpawnPlacement[] | undefined;
+        for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
+          const anchor =
+            attempt === 0
+              ? seeded
+              : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
+          const candidate = groupFormation(chunk, group, target, members, anchor, next());
+          const rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
+          if (rule) {
+            rejected.push(rule);
+          } else {
+            formation = candidate;
           }
-          anchor ??= { x: placed.at.x - slot(member), y: placed.at.y };
-          const placement: SpawnPlacement = {
-            category: "enemy",
-            chunk: chunk.key,
-            group,
-            id: `${group}:${member}`,
-            kind,
-            radius: target.radius,
-            ...placed.at,
-          };
-          index.add(placement);
-          placements.push(placement);
-          leaders.push(placement);
-          tally.deliver(kind);
         }
-        const escort = target.escorts;
-        if (!escort) {
+        rejected.forEach((rule) => tally.reject(kind, rule));
+        if (!formation) {
+          tally.drop(kind, rejected.at(-1)!);
           continue;
         }
-        for (const [member, leader] of leaders.entries()) {
-          tally.request(escort.kind, escort.perLeader);
-          if (!leader) {
-            tally.drop(escort.kind, SPAWN_RULE.leaderDropped, escort.perLeader);
-            continue;
-          }
-          const phase = next() * 2 * Math.PI;
-          for (let station = 0; station < escort.perLeader; station++) {
-            const angle = phase + (2 * Math.PI * station) / escort.perLeader;
-            const placed = placeEnemy(
-              rules,
-              next,
-              {
-                radius: escort.radius,
-                x: leader.x + Math.cos(angle) * escort.ring,
-                y: leader.y + Math.sin(angle) * escort.ring,
-              },
-              rules.jitter,
-              (at) => blocked("enemy", at),
-            );
-            placed.rejected.forEach((rule) => tally.reject(escort.kind, rule));
-            if (!placed.at) {
-              tally.drop(escort.kind, placed.rejected.at(-1)!);
-              continue;
-            }
-            const placement: SpawnPlacement = {
-              category: "enemy",
-              chunk: chunk.key,
-              group,
-              id: `${group}:${member}:escort:${station}`,
-              kind: escort.kind,
-              leader: leader.id,
-              radius: escort.radius,
-              ...placed.at,
-            };
-            index.add(placement);
-            placements.push(placement);
-            tally.deliver(escort.kind);
-          }
+        for (const placement of formation) {
+          index.add(placement);
+          placements.push(placement);
         }
+        tally.deliver(kind);
       }
     }
   }
@@ -625,25 +574,75 @@ function placeRock(
   return { rejected };
 }
 
-/** An enemy's position: its slot first, then seeded points up to `reach` from it. */
-function placeEnemy(
-  rules: SpawnRules,
-  next: Random,
-  slot: Footprint,
-  reach: number,
-  blocked: (at: Footprint) => string | undefined,
-): { at?: Vec; rejected: string[] } {
-  const rejected: string[] = [];
-  for (let attempt = 0; attempt < rules.tries; attempt++) {
-    const at =
-      attempt === 0
-        ? { x: slot.x, y: slot.y }
-        : disc(next, slot, (reach * attempt) / Math.max(1, rules.tries - 1));
-    const rule = blocked({ ...at, radius: slot.radius });
-    if (!rule) {
-      return { at, rejected };
+/**
+ * A whole group at an anchor: members on a line through it, `spacing` apart, and each leader's
+ * escorts evenly on its ring from `phase`.
+ */
+function groupFormation(
+  chunk: Chunk,
+  group: string,
+  target: EnemyTarget,
+  members: number,
+  anchor: Vec,
+  phase: number,
+): SpawnPlacement[] {
+  const formation: SpawnPlacement[] = [];
+  for (let member = 0; member < members; member++) {
+    const leader: SpawnPlacement = {
+      category: "enemy",
+      chunk: chunk.key,
+      group,
+      id: `${group}:${member}`,
+      kind: target.kind,
+      radius: target.radius,
+      x: anchor.x + (member - (members - 1) / 2) * target.spacing,
+      y: anchor.y,
+    };
+    formation.push(leader);
+    const escort = target.escorts;
+    if (!escort) {
+      continue;
     }
-    rejected.push(rule);
+    const stations = escort.perLeader;
+    for (let station = 0; station < stations; station++) {
+      const angle = 2 * Math.PI * (phase + station / stations);
+      formation.push({
+        category: "enemy",
+        chunk: chunk.key,
+        group,
+        id: `${group}:${member}:escort:${station}`,
+        kind: escort.kind,
+        leader: leader.id,
+        radius: escort.radius,
+        x: leader.x + Math.cos(angle) * escort.ring,
+        y: leader.y + Math.sin(angle) * escort.ring,
+      });
+    }
   }
-  return { rejected };
+  return formation;
+}
+
+/** The first rule any member breaks, against placed footprints and the group's own members. */
+function formationBlocked(
+  rules: SpawnRules,
+  formation: readonly SpawnPlacement[],
+  blocked: (at: Footprint) => string | undefined,
+): string | undefined {
+  for (const [index, member] of formation.entries()) {
+    const rule =
+      blocked(member) ??
+      (formation
+        .slice(0, index)
+        .some(
+          (other) =>
+            Math.hypot(other.x - member.x, other.y - member.y) <
+            other.radius + member.radius + rules.gap,
+        )
+        ? SPAWN_RULE.overlap
+        : undefined);
+    if (rule) {
+      return rule;
+    }
+  }
+  return undefined;
 }

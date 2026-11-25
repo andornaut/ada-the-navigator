@@ -19,22 +19,19 @@ const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `$
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // Overlap.
-  capital: ["2:0", "2:2", "4:0", "4:1", "4:2", "5:1", "5:2"],
-  // Escorts of dropped leaders, and overlap.
-  "capital-escort": EVERY_BAND.filter((band) => /^[2456]:/.test(band)),
+  // Overlap: no anchor in the tries leaves room for the hull and its escort ring.
+  capital: EVERY_BAND.filter((band) => /^[2456]:/.test(band)),
   // Overlap, and the arrival calm radius in band 0.
-  fighter: ["1:2", "2:0", "2:2", "3:2", "4:0", "4:1", "4:2", "5:0", "5:1", "6:0", "6:1", "6:2"],
-  // Overlap.
-  frigate: ["2:0", "5:1", "5:2", "6:0", "6:1", "6:2"],
-  // Escorts of dropped leaders, and overlap.
-  "frigate-escort": [
+  fighter: ["1:2", "3:2", "4:0", "5:1", "6:1", "6:2"],
+  // Overlap: no anchor in the tries leaves room for the hulls and their escort rings.
+  frigate: [
     "2:0",
     "2:1",
     "3:0",
     "3:2",
     "4:0",
     "4:1",
+    "4:2",
     "5:0",
     "5:1",
     "5:2",
@@ -50,8 +47,8 @@ const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
   rock: ["2:1", "2:2", "3:0", "3:1", "3:2"],
   // Corridor: huge rocks cannot fit a quadrant between the lanes.
   "rock-feature": EVERY_BAND,
-  // Overlap along long swarm lines.
-  swarm: ["2:2", "3:0", "3:1", "3:2", "4:0", "4:2", "5:0", "5:1", "5:2", "6:0", "6:1", "6:2"],
+  // Overlap along long swarm lines, and the arrival calm radius in band 0.
+  swarm: ["1:0", "2:0", "3:1", "3:2", "4:0", "4:2", "5:2", "6:0", "6:1", "6:2"],
 };
 
 describe("interim spawn targets", () => {
@@ -73,10 +70,7 @@ describe(ACCEPTANCE_NAME, () => {
       const kinds = new Set([
         ...band.rocks.map((target) => target.kind),
         ...band.moving.map((target) => target.kind),
-        ...band.enemies.flatMap((target) => [
-          target.kind,
-          ...(target.escorts ? [target.escorts.kind] : []),
-        ]),
+        ...band.enemies.map((target) => target.kind),
       ]);
       for (const kind of kinds) {
         const name = `${galaxy}:${index}:${kind}`;

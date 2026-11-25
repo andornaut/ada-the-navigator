@@ -14,14 +14,14 @@ import {
 const band: SpawnBand = {
   enemies: [
     {
-      density: 1.5,
+      density: 1,
       escorts: { kind: "escort", perLeader: 2, radius: 8, ring: 70 },
       groupSize: [1, 2],
       kind: "heavy",
       radius: 40,
       spacing: 120,
     },
-    { density: 2, groupSize: [2, 4], kind: "fighter", radius: 10, spacing: 100 },
+    { density: 0.7, groupSize: [2, 4], kind: "fighter", radius: 10, spacing: 100 },
   ],
   from: 0,
   moving: [
@@ -44,7 +44,6 @@ const rules: SpawnRules = {
   chunkSize: 512,
   corridor: 20,
   gap: 40,
-  jitter: 100,
   search: 256,
   tries: 12,
 };
@@ -57,10 +56,17 @@ function pairs(placements: readonly SpawnPlacement[]): [SpawnPlacement, SpawnPla
   );
 }
 
+/** Placed rocks of a kind, or whole groups of an enemy kind. */
 function deliveredOf(plan: SpawnPlan, kind: string): number {
-  return plan.placements.filter((placement) =>
-    placement.kind === kind ? true : placement.moving?.kind === kind,
-  ).length;
+  return plan.report.kinds[kind]!.unit === "groups"
+    ? new Set(
+        plan.placements
+          .filter((placement) => placement.kind === kind && !placement.leader)
+          .map((placement) => placement.group),
+      ).size
+    : plan.placements.filter(
+        (placement) => placement.kind === kind || placement.moving?.kind === kind,
+      ).length;
 }
 
 describe("planRegion", () => {
@@ -224,7 +230,7 @@ describe("planRegion", () => {
     expect(dropped).toBeGreaterThan(0);
   });
 
-  it("drops a spawn after its tries, and the escorts of a dropped leader", () => {
+  it("drops a rock or a whole group after its tries", () => {
     const everywhere: ExclusionZone = {
       applies: ["rock", "enemy"],
       rule: "closed",
@@ -238,11 +244,72 @@ describe("planRegion", () => {
       expect(report.drops).toEqual({ closed: report.requested });
       expect(report.rejections.closed).toBe(report.requested * rules.tries);
     }
-    const escort = plan.report.kinds.escort!;
-    expect(escort.drops).toEqual({ [SPAWN_RULE.leaderDropped]: escort.requested });
+    expect(plan.report.kinds.heavy!.unit).toBe("groups");
+    expect(plan.report.kinds.small!.unit).toBe("rocks");
+    // Escorts belong to their group and are not counted on their own.
+    expect(plan.report.kinds.escort).toBeUndefined();
     expect(plan.report.kinds.mover!.drops).toEqual({
       [SPAWN_RULE.noSourceRock]: plan.report.kinds.mover!.requested,
     });
+  });
+
+  it("places every member and escort of a group or none of it", () => {
+    let groups = 0;
+    for (const seed of SEEDS) {
+      const plan = planRegion(rules, seed, region);
+      for (const target of band.enemies) {
+        const members = plan.placements.filter(
+          (placement) => placement.kind === target.kind && !placement.leader,
+        );
+        for (const group of new Set(members.map((member) => member.group))) {
+          groups++;
+          const own = members.filter((member) => member.group === group);
+          expect(own.map((member) => member.id).sort()).toEqual(
+            own.map((_, index) => `${group}:${index}`).sort(),
+          );
+          expect(own.length).toBeGreaterThanOrEqual(target.groupSize[0]);
+          expect(own.length).toBeLessThanOrEqual(target.groupSize[1]);
+          // Members keep their formation line exactly.
+          for (const member of own) {
+            expect(member.y).toBe(own[0]!.y);
+          }
+          const escorts = plan.placements.filter(
+            (placement) => placement.group === group && placement.leader,
+          );
+          expect(escorts).toHaveLength(own.length * (target.escorts?.perLeader ?? 0));
+          for (const escort of escorts) {
+            const leader = own.find((member) => member.id === escort.leader)!;
+            expect(Math.hypot(escort.x - leader.x, escort.y - leader.y)).toBeCloseTo(
+              target.escorts!.ring,
+            );
+          }
+        }
+        const report = plan.report.kinds[target.kind]!;
+        expect(report.delivered).toBe(new Set(members.map((member) => member.group)).size);
+      }
+    }
+    expect(groups).toBeGreaterThan(40);
+  });
+
+  it("tries further anchors before dropping a group", () => {
+    const blocks: ExclusionZone[] = [-1, 0, 1].flatMap((x) =>
+      [-1, 0, 1].map((y) => ({
+        applies: ["enemy" as const],
+        rule: "block",
+        shape: { kind: "disc" as const, radius: 180, x: x * 512 + 256, y: y * 512 + 256 },
+      })),
+    );
+    const enemies = { ...rules, bands: [{ ...band, moving: [], rocks: [] }] };
+    let retried = 0;
+    for (const seed of SEEDS) {
+      const report = planRegion(enemies, seed, { ...region, exclusions: blocks }).report.kinds
+        .heavy!;
+      const drops = report.drops.block ?? 0;
+      // Rejected anchors beyond those of dropped groups belong to groups placed on a later try.
+      retried += (report.rejections.block ?? 0) - drops * rules.tries;
+      expect(report.delivered + report.dropped).toBe(report.requested);
+    }
+    expect(retried).toBeGreaterThan(0);
   });
 
   it("drops a rock that cannot fit a quadrant between the lanes", () => {

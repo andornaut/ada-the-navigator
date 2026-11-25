@@ -123,7 +123,7 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
     const least = counts[0]!;
     const most = counts.at(-1)!;
     return {
-      density: ((groups * entry.weight) / total) * ((least + most) / 2),
+      density: (groups * entry.weight) / total,
       ...(escorts
         ? {
             escorts: {
@@ -153,9 +153,8 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
  *   slot and feature rocks, with its group share and speeds.
  * - Enemies: the encounter lattice's groups per chunk, split by spawner stage roster weights.
  * - Lanes: the chunk templates' corridor half width (ship radius plus clearance).
- * Planner choices with no approved value yet: a gap of Ada's diameter between footprints, 24
- * tries per spawn, a group anchor search of half a chunk and member tries within the spawner's
- * member spacing.
+ * Interim planner values: a gap of Ada's diameter between footprints, 24 positions per rock or
+ * anchors per enemy group, and a group anchor search of half a chunk.
  */
 export function interimSpawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
@@ -203,7 +202,6 @@ export function interimSpawnRules(galaxy: GalaxyNumber, worldSide?: number): Spa
     chunkSize: tuning.chunkSize,
     corridor: flight.shipRadius + flight.shipRadius,
     gap: 2 * flight.shipRadius,
-    jitter: SPAWNER_POLICIES[galaxy].memberSpacing,
     search: tuning.chunkSize / 2,
     tries: 24,
     ...(worldSide === undefined ? {} : { worldSide }),
