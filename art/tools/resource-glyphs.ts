@@ -29,7 +29,8 @@ export const STARDUST_REST = frame(STARDUST_PALETTE, [
   "....D....",
 ]);
 
-// A matte ore nugget with the same palette and rim as loose ore in flight.
+// A matte ore nugget with the same palette and rim as loose ore in flight: a lit upper-left
+// facet, a crease down its crown and one shade facet to the lower right.
 export const ORE_PICKUP = frame(
   ORE_PALETTE,
   rimmed([
@@ -37,8 +38,8 @@ export const ORE_PICKUP = frame(
     ".LLMMS...",
     "LLLMSMS..",
     "LMMMSMMS.",
-    ".MSMMMSSD",
-    "LMMMSMSDD",
+    ".MMMMMSSD",
+    "LMMMSSSDD",
     ".MMMSSSDD",
     "..SDSSDD.",
     "....DD...",
