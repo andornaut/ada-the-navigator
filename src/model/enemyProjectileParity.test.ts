@@ -19,6 +19,8 @@ function fixture(archetype: "swarm" | "interceptor") {
     point,
   );
   enemy.velocity = { x: 37, y: -19 };
+  // The nose gun fires along the facing, so the nose starts on Ada at the origin.
+  enemy.facing = { x: -1, y: 0 };
   const object: SpaceObject = {
     ...point,
     enemy,
