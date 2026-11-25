@@ -87,16 +87,20 @@ only that initial roll, before ore quantity reduction.
 
 Each initial resource unit independently becomes ore with probability 0.75 or
 Stardust with probability 0.25. `ASTEROID_LOOT.oreChance` defines that split.
-Ore quantity is then reduced by 25% in expectation for every size class.
-`ASTEROID_LOOT.oreQuantityMultiplier` is 0.75, independent of the initial split.
-Expected units per resource outcome are:
+Ore quantity is then reduced by 25% in expectation for every size class, and
+rock ore and rock Stardust are each scaled by 0.8 in every galaxy to hold income
+at the asteroid densities in [Spawn targets](rules.md#spawn-targets). In
+expectation a rock keeps 0.6 of its initial ore units (0.75 times 0.8) and 0.8
+of its initial Stardust units. The size caps, the minimum of one resource for
+medium and larger rocks and the crystal rock ore floor are unchanged. Enemy,
+cache and guard income are unchanged. Expected units per resource outcome are:
 
-| Size   | Ore    | Stardust | Total  |
-| ------ | ------ | -------- | ------ |
-| Small  | 1.125  | 0.5      | 1.625  |
-| Medium | 1.6875 | 0.75     | 2.4375 |
-| Large  | 2.25   | 1        | 3.25   |
-| Huge   | 2.8125 | 1.25     | 4.0625 |
+| Size   | Ore  | Stardust | Total |
+| ------ | ---- | -------- | ----- |
+| Small  | 0.9  | 0.4      | 1.3   |
+| Medium | 1.35 | 0.6      | 1.95  |
+| Large  | 1.8  | 0.8      | 2.6   |
+| Huge   | 2.25 | 1        | 3.25  |
 
 A non-small raw ore-only-one payout stays one. For each size, let Y be the
 expected raw ore and p the probability of that protected payout. Derive the

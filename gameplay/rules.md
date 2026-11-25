@@ -478,8 +478,8 @@ the end of a flight replays with its line when Ada next reaches the hub. The hub
 
 Player text calls the pieces "ore". Every static rock is an ordinary asteroid,
 and its contents are decided when it is destroyed by the size-based asteroid
-yields, 75% initial ore split and 25% expected ore quantity reduction in
-[Economy](economy.md#earning-stardust), including the exclusive ammo outcome.
+yields, 75% initial ore split, 25% expected ore quantity reduction and 0.8
+rock ore and Stardust scaling in [Economy](economy.md#earning-stardust), including the exclusive ammo outcome.
 Cartwheel's ore fields are clusters of ordinary medium and large rocks with
 ordinary asteroid HP: 5 for medium and 10 for large. A destroyed ore-field rock
 skips the ammo roll and gives at least 1 ore; any further ore and Stardust roll
@@ -1493,8 +1493,9 @@ Asteroid resource-yield caps are 4, 6, 8 and 10 units for small, medium, large a
 huge rocks. Small rocks may yield zero; all larger sizes guarantee at least one
 reward, including an ammo-only outcome. An asteroid that drops ammo drops nothing
 else. Initial resource units split 75% ore and 25% Stardust. Expected ore quantity
-is then reduced by 25% for every size, with Stardust unchanged on each event and
-non-small rocks still giving at least one resource. Resulting ore groups into
+is then reduced by 25% for every size, and rock ore and Stardust are each scaled
+by 0.8, with non-small rocks still giving at least one resource
+([Economy](economy.md#earning-stardust)). Resulting ore groups into
 five-unit chunks and remainder singles within the size cap, with no forced bundle
 selection or bonus.
 Chunks use normal contact and tractor collection and count as ordinary fungible
@@ -1584,7 +1585,7 @@ apply to the planner's output.
 - A spawn is accepted only when its footprint is at least 20 world units (Ada's
   diameter) from every placed footprint. Required hulls and salvage wrecks are
   placed footprints of their spacing radius r, so rocks keep r + 20 from their
-  centres. Hostile stations are footprints of their r too. A rock gets 24 seeded positions; a rock
+  centres. Hostile stations are footprints of their r too. A slot or feature rock gets 48 seeded positions; a rock
   with no clear position is dropped.
 - An enemy group, with all its members and escorts, is placed whole or not at
   all. A blocked group retries only inside its own lattice cell, redrawing its
