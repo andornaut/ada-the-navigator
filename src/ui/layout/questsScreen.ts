@@ -142,14 +142,15 @@ export const QUESTS_SCREEN_STYLE = `
   width:${units(QUEST_ROUTE_ARROW.width)};
   height:${units(QUEST_ROUTE_ARROW.height)};
   margin:auto}
+/* The footer pattern: secondary actions and the page count from the left edge, the primary
+   dismissal on the right edge, neighbouring faces BUTTON_GAP apart. */
 .ada-controls .ada-quest-footer{display:flex;
   align-self:stretch;
   justify-content:flex-end;
-  gap:${units(SPACING.gap)};
+  gap:${units(BUTTON_GAP)};
   flex:none}
-.ada-controls .ada-quest-footer:has(>[data-action="quest-other"]){gap:${units(BUTTON_GAP)}}
-.ada-controls .ada-quest-footer .ada-button:first-child:not(:last-child):not([data-action="quest-other"]){
-  margin-right:auto
+.ada-controls .ada-quest-footer > .ada-button.ada-primary{
+  margin-left:auto
 }
 .ada-controls .ada-quest-list{align-self:stretch;
   flex:1;

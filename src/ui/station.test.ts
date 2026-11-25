@@ -21,7 +21,9 @@ import {
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { itemDetailName, itemDetailProse, renderItemDetailHeader } from "./itemDetailContent.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { units } from "./layout/css.ts";
 import { CONFIRM_ITEM } from "./layout/shopCard.ts";
+import { BUTTON_GAP } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { isTap } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
@@ -1680,4 +1682,19 @@ it("reopens the Station welcome card after a final contribution undocks from Job
 
   f.activate(f.action("open-jobs"));
   expect(jobs.getAttribute("aria-modal")).toBe("true");
+});
+
+// A ruleset's body by its whole selector.
+function footerRule(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return new RegExp(`(?:^|\\n)${escaped}\\{([^}]+)\\}`, "u").exec(css)?.[1] ?? "";
+}
+
+it("pins the station footer's services left and Undock right, BUTTON_GAP apart", () => {
+  // art/layout.md "Station" and art/shop.md: the footer pattern with 16 between faces.
+  const footer = footerRule(STATION_STYLE, ".ada-controls .ada-station-footer");
+  expect(footer).toContain(`gap:${units(BUTTON_GAP)}`);
+  expect(footerRule(STATION_STYLE, ".ada-controls .ada-station-footer [data-action=undock]")).toBe(
+    "\n  margin-left:auto\n",
+  );
 });

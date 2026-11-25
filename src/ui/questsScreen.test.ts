@@ -10,6 +10,7 @@ import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { slice, units } from "./layout/css.ts";
 import { MAP_SCREEN } from "./layout/mapScreen.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
+import { BUTTON_GAP } from "./layout/tokens.ts";
 import { mapScreenLabels } from "./mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
@@ -667,4 +668,27 @@ it("starts a quest line's label on the 42 text column, its disc centred in the 2
     visibleGap: 8,
   });
   expect(MAP_SCREEN.quests.textColumn).toBe(42);
+});
+
+// A ruleset's body by its whole selector.
+function footerRule(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return new RegExp(`(?:^|\\n)${escaped}\\{([^}]+)\\}`, "u").exec(css)?.[1] ?? "";
+}
+
+it("pins the Quests footer's secondary actions left and its dismissal right, BUTTON_GAP apart", () => {
+  // art/layout.md "Groups": the footer pattern, footers included in the 16 side-by-side gap.
+  const footer = footerRule(QUESTS_SCREEN_STYLE, ".ada-controls .ada-quest-footer");
+  expect(footer).toContain(`gap:${units(BUTTON_GAP)}`);
+  expect(footer).toContain("justify-content:flex-end");
+  expect(
+    footerRule(QUESTS_SCREEN_STYLE, ".ada-controls .ada-quest-footer > .ada-button.ada-primary"),
+  ).toContain("margin-left:auto");
+  // No other footer rule moves a face or changes the gap, with or without Other quests.
+  const uncommented = QUESTS_SCREEN_STYLE.replace(/\/\*[\s\S]*?\*\//gu, "");
+  const footerRules = [...uncommented.matchAll(/([^{}]*\.ada-quest-footer[^{}]*)\{([^}]*)\}/gu)];
+  expect(footerRules.map(([, selector]) => selector!.trim())).toEqual([
+    ".ada-controls .ada-quest-footer",
+    ".ada-controls .ada-quest-footer > .ada-button.ada-primary",
+  ]);
 });

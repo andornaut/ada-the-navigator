@@ -85,11 +85,13 @@ export const STATION_STYLE = `
 .ada-controls .ada-station-balances [data-balance=ore]::before{
   background-image:url('${uiIconUrl("icon-ore-20")}')
 }
+/* The footer pattern: service buttons from the left edge and primary Undock on the right edge,
+   neighbouring faces BUTTON_GAP apart. */
 .ada-controls .ada-station-footer{
   display:flex;
   flex:none;
   align-items:center;
-  gap:${units(SPACING.gap)};
+  gap:${units(BUTTON_GAP)};
   padding:${units(SPACING.gap)} 0;
   border-top:${units(FRAME_LINE)} solid ${COLOURS.cardRim};
   margin-top:auto
