@@ -81,7 +81,8 @@ Every class follows the same steps from model to shipped files.
    its diameter. `familyColors` carries the claim, garnet and needle ramps.
    The file adds `hull`, in frame px: the drawn `length` and `width`, and
    `radius`, the larger of half the length and half the width, which is the
-   spacing and footprint radius. A small craft's `headings[k].muzzles` is its
+   spacing and footprint radius. A frigate's or capital's length includes its
+   intact engines and command tower. A small craft's `headings[k].muzzles` is its
    shot origin in frame px: the flush port its weapon fires from, which aims
    independently of the hull. The fighter's fan of three leaves from its one
    nose origin. Ships with hardpoints carry `hull` and the hardpoint offsets in
@@ -158,8 +159,8 @@ state and the `pod` top, named `turret` in its rows and file:
 
 | Craft      | Key                | Frame | Display | Hull length | Hull width | Radius | Engine frame | Mount frame | `gun` frame | `rail` frame |
 | ---------- | ------------------ | ----: | ------: | ----------: | ---------: | -----: | -----------: | ----------: | ----------: | -----------: |
-| Slim delta | `fleetFrigate`     |   376 |   164.5 |      242.29 |      214.4 | 121.14 |          128 |          32 |          40 |           48 |
-| Twin hull  | `fleetFrigateTwin` |   400 |     175 |      221.71 |      214.4 | 110.86 |          256 |          32 |          40 |           48 |
+| Slim delta | `fleetFrigate`     |   376 |   164.5 |      285.71 |      214.4 | 142.86 |          128 |          32 |          40 |           48 |
+| Twin hull  | `fleetFrigateTwin` |   400 |     175 |      246.86 |      214.4 | 123.43 |          256 |          32 |          40 |           48 |
 
 | Hardpoint   | Slim delta offset | Twin hull offset   | States                    |
 | ----------- | ----------------- | ------------------ | ------------------------- |

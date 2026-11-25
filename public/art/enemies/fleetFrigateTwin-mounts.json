@@ -3,9 +3,9 @@
   "archetype": "frigate",
   "frame": 400,
   "hull": {
-    "length": 221.714,
+    "length": 246.857,
     "width": 214.4,
-    "radius": 110.857
+    "radius": 123.429
   },
   "hardpoints": [
     {

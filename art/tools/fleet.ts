@@ -18,8 +18,8 @@ import {
   type FleetFamily,
   capped,
   fleet,
-  FRIGATE_MOUNT_RADIUS,
-  FRIGATE_TOPS,
+  HEAVY_MOUNT_RADIUS,
+  HEAVY_TOPS,
   stump,
   type FleetTop,
   collar,
@@ -59,7 +59,8 @@ const local = ([l, w, z]: Point): Point => [w, -l, z];
 const view = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, local(point));
 
 // A craft scaled to its contract span, in frame units, with its frame size.
-// `length` and `width` are the drawn hull's extents fore and aft and across, in frame units.
+// `length` and `width` are the drawn ship's extents fore and aft and across, in frame units: the
+// hull, and a frigate's or capital's intact engines and command tower.
 // A craft with a mount has its collar (`base`) and aimed `top`, each with its own frame size.
 export type Scaled = FleetCraft & {
   frame: number;
@@ -72,11 +73,11 @@ export type Scaled = FleetCraft & {
   layers?: Layer[];
   tops?: Record<string, FleetTop & { frame: number }>;
 };
-// One hardpoint of a frigate: its base sprite's centre, its top's pivot when it is a weapon
-// mount, and its base solids by state.
+// One hardpoint of a frigate or capital: its base sprite's centre, its top's pivot when it is a
+// weapon mount, and its base solids by state.
 export type Layer = {
   id: string;
-  role: "engine" | "turret";
+  role: "engine" | "command" | "turret";
   anchor: Point;
   pivot?: Point;
   frame: number;
@@ -110,7 +111,11 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
   const result: Scaled = {
     ...rest,
     parts,
-    mouths: craft.mouths.map((mouth) => ({ at: at(k, mouth.at), radius: mouth.radius * k })),
+    mouths: craft.mouths.map((mouth) => ({
+      ...mouth,
+      at: at(k, mouth.at),
+      radius: mouth.radius * k,
+    })),
     ...(muzzle ? { muzzle: at(k, muzzle) } : {}),
     frame: fit(parts.flatMap(({ mesh }) => vertices(mesh))),
     halfSpan: target / 2,
@@ -147,13 +152,21 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
       frame: fit(Object.values(states).flatMap(vertices), anchor),
       states,
     });
-    result.layers = [
-      layer("engine", "engine", at(k, heavy.engine.at), {
-        intact: scale(heavy.engine.intact),
-        destroyed: scale(heavy.engine.destroyed),
+    const blocks = heavy.blocks.map((block) =>
+      layer(block.id, block.role, at(k, block.at), {
+        intact: scale(block.intact),
+        destroyed: scale(block.destroyed),
       }),
+    );
+    const stations = [
+      ...parts.flatMap(({ mesh }) => vertices(mesh)),
+      ...blocks.flatMap(({ states }) => vertices(states.intact!)),
+    ].map(([l]) => l);
+    result.length = Math.max(...stations) - Math.min(...stations);
+    result.layers = [
+      ...blocks,
       ...heavy.mounts.map((mount) => {
-        const seat = { at: mount.at, radius: FRIGATE_MOUNT_RADIUS };
+        const seat = { at: mount.at, radius: HEAVY_MOUNT_RADIUS };
         const pivot = at(k, mountPivot(seat));
         return layer(
           mount.id,
@@ -169,8 +182,8 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
       }),
     ];
     result.tops = Object.fromEntries(
-      Object.entries(FRIGATE_TOPS).map(([name, build]) => {
-        const top = build(paint, FRIGATE_MOUNT_RADIUS);
+      Object.entries(HEAVY_TOPS[craft.archetype as "frigate"]).map(([name, build]) => {
+        const top = build(paint, HEAVY_MOUNT_RADIUS);
         const mesh = scale(top.mesh);
         return [
           name,
@@ -463,8 +476,8 @@ function jets(craft: Scaled, frames: readonly Frame[]): string {
         anchor: anchor(ENEMY_HEADINGS, centre, yaw, local(mouth.at)),
         axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
         half: vector(ENEMY_HEADINGS, yaw, [-mouth.radius * MOUTH_SHARE, 0, 0]),
-        // A frigate's mouths draw only while its engine is intact.
-        ...(craft.layers ? { hardpoint: "engine" } : {}),
+        // A mouth of a ship with engine hardpoints draws only while its engine is intact.
+        ...(craft.layers ? { hardpoint: mouth.hardpoint ?? "engine" } : {}),
       })),
     coral,
     {

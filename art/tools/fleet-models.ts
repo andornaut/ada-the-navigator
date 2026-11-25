@@ -227,16 +227,25 @@ function pod(
 // One solid group of a craft. A `loose` part breaks off whole in the destruction effect; the
 // others break along the craft's wedge cuts.
 export type FleetPart = { name: string; loose?: true; mesh: Mesh };
-// A drive mouth: the centre of its aft disc and the disc's radius.
-export type FleetMouth = { at: Point; radius: number };
+// A drive mouth: the centre of its aft disc and the disc's radius. On a ship with several engine
+// hardpoints, `hardpoint` is the engine that drives it.
+export type FleetMouth = { at: Point; radius: number; hardpoint?: string };
 // An aimed weapon mount: the centre of its collar's foot on the deck, and the collar's radius.
 export type FleetMount = { at: Point; radius: number };
-// A frigate's hardpoints. The engine is one hardpoint about `at`, with its drive solids intact
-// and wrecked. Each weapon mount stands on the deck at `at`; `capped` mounts also have a capped
-// plate for the route positions that leave them unarmed. Ids follow the shipped layout: `port`
-// is the mount to port on screen, at negative breadth.
+// A frigate's or capital's hardpoints. A block is an engine or the command tower: one hardpoint
+// about `at`, with its solids intact and wrecked. Each weapon mount stands on the deck at `at`;
+// `capped` mounts also have a capped plate for the route positions that leave them unarmed. Ids
+// follow the shipped layout: `port` and every `-left` id are to port on screen, at negative
+// breadth.
+export type FleetBlock = {
+  id: string;
+  role: "engine" | "command";
+  at: Point;
+  intact: Mesh;
+  destroyed: Mesh;
+};
 export type FleetHeavy = {
-  engine: { at: Point; intact: Mesh; destroyed: Mesh };
+  blocks: FleetBlock[];
   mounts: { id: string; at: Point; capped: boolean }[];
 };
 export type FleetCraft = {
@@ -527,8 +536,13 @@ export function railTop(p: Paint, r: number): FleetTop {
   return { mesh, muzzles: [[1.6 * r, 0, 0.66 * r]] };
 }
 
-export const FRIGATE_TOPS = { gun: gunTop, rail: railTop } as const;
-export const FRIGATE_MOUNT_RADIUS = MOUNT_RADIUS;
+// The top designs a class's mounts carry.
+export const HEAVY_TOPS: Readonly<
+  Record<"frigate", Readonly<Record<string, (p: Paint, r: number) => FleetTop>>>
+> = {
+  frigate: { gun: gunTop, rail: railTop },
+};
+export const HEAVY_MOUNT_RADIUS = MOUNT_RADIUS;
 
 // ------------------------------------------------------------------ retaliators
 
@@ -857,7 +871,15 @@ function slimDelta(p: Paint): FleetCraft {
     parts: [body],
     mouths: [5.5, -5.5].map((w) => ({ at: [-59, w, 8.32] as Point, radius: 6.6 })),
     heavy: {
-      engine: { at: [-41, 0, 8.5], intact: engine(false), destroyed: engine(true) },
+      blocks: [
+        {
+          id: "engine",
+          role: "engine",
+          at: [-41, 0, 8.5],
+          intact: engine(false),
+          destroyed: engine(true),
+        },
+      ],
       mounts: [
         { id: "port", at: [wingMount.l, -wingMount.w, deck + 1], capped: false },
         { id: "starboard", at: [wingMount.l, wingMount.w, deck + 1], capped: false },
@@ -941,7 +963,15 @@ function twinHull(p: Paint): FleetCraft {
     parts: [body],
     mouths: [beam, -beam].map((w) => ({ at: [-54, w, 8.5] as Point, radius: 6.6 })),
     heavy: {
-      engine: { at: [-48, 0, 8.5], intact: engine(false), destroyed: engine(true) },
+      blocks: [
+        {
+          id: "engine",
+          role: "engine",
+          at: [-48, 0, 8.5],
+          intact: engine(false),
+          destroyed: engine(true),
+        },
+      ],
       mounts: [
         { id: "port", at: [10, -beam, 17], capped: false },
         { id: "starboard", at: [10, beam, 17], capped: false },
