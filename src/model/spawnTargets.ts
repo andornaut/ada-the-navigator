@@ -12,7 +12,6 @@ import {
 import { byPosition } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
-import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import {
   FIGHTER_GROUP_TARGET,
   HOSTILE_LOCAL_ALLOWANCE,
@@ -21,7 +20,6 @@ import {
 } from "../data/spawnerCatalog.ts";
 import {
   type EnemyGroupTargets,
-  MOVING_ROCKS_PER_ENCOUNTER_RATE,
   SLOT_ROCKS_PER_AREA,
   SPAWN_AREA_CHUNKS,
   SPAWN_BLEND_WIDTH,
@@ -29,7 +27,7 @@ import {
 } from "../data/spawnTargets.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
-import { BALLISTIC_REQUEST, originalEncounterRate } from "./ballisticAsteroids.ts";
+import { BALLISTIC_REQUEST } from "./ballisticAsteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
@@ -173,36 +171,32 @@ function enemyTargets(
 
 /**
  * The spawn target catalog as planner rules (gameplay/rules.md "Spawn targets"): enemy groups
- * first, then feature, slot and resource rocks, then moving rocks chosen from placed feature and
- * slot rocks. Slot rocks and moving rocks follow their rules in every region (moving rocks scale
- * with the original encounter rate); resources, Large-only features and enemy groups follow the
- * table by region. Enemy groups sit on the encounter lattice, one seeded anchor per occupied
+ * first, then feature and slot rocks, all ordinary asteroids, then moving rocks chosen from them.
+ * Slot rocks follow their rule in every region; Large-only features, moving rocks and enemy groups
+ * follow the table. Enemy groups sit on the encounter lattice, one seeded anchor per occupied
  * cell with the kind drawn by the table's densities, and keep the quiet distance over the root of
  * the encounter rate apart. Densities count per open area and blend across the region
  * boundaries; budgets and archetype limits switch at the boundaries.
  */
 export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
-  const large = 1 / RESOURCE_ROCKS.largeEvery;
   const policy = SPAWNER_POLICIES[galaxy];
-  const moving = [
-    {
-      density:
-        (MOVING_ROCKS_PER_ENCOUNTER_RATE * originalEncounterRate(galaxy)) / SPAWN_AREA_CHUNKS,
-      from: ["rock-feature", "rock"],
-      groupShare: BALLISTIC_REQUEST.groupShare,
-      kind: MOVING_KIND,
-      path: MOVING_PATH_SECONDS,
-      speed: BALLISTIC_REQUEST.speed,
-    },
-  ];
   const bands: SpawnBand[] = policy.stages.map((stage, index) => {
     const targets = SPAWN_TARGETS[galaxy][index]!;
     return {
       admission: { archetypes: stage.maxNearbyArchetypes, cap: stage.localCap },
       enemies: enemyTargets(galaxy, index, targets.enemies),
       from: stage.centerDistance,
-      moving,
+      moving: [
+        {
+          density: targets.moving / SPAWN_AREA_CHUNKS,
+          from: ["rock-feature", "rock"],
+          groupShare: BALLISTIC_REQUEST.groupShare,
+          kind: MOVING_KIND,
+          path: MOVING_PATH_SECONDS,
+          speed: BALLISTIC_REQUEST.speed,
+        },
+      ],
       rocks: [
         {
           density: targets.features / SPAWN_AREA_CHUNKS,
@@ -213,11 +207,6 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
           density: SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS,
           kind: "rock",
           shapes: sized(field.slotSizes),
-        },
-        {
-          density: targets.resources / SPAWN_AREA_CHUNKS,
-          kind: "resource",
-          shapes: sized({ large, medium: 1 - large }),
         },
       ],
     };

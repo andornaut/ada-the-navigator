@@ -47,7 +47,7 @@ export function hostsEncounterCell(spacing: number, index: number): boolean {
 }
 
 /** The galaxy's encounter rate in the original opportunity lattice. */
-export function originalEncounterRate(galaxy: GalaxyNumber): number {
+function originalEncounterRate(galaxy: GalaxyNumber): number {
   return byPosition(ORIGINAL_ENCOUNTERS.rates, galaxy);
 }
 

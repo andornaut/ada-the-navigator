@@ -14,16 +14,11 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { encounterSpacing } from "./flight.ts";
 import { encounterLatticeSpacing, spawnRules } from "./spawnTargets.ts";
 
-const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `${galaxy}:${band}`));
-
 /**
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
-const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // Overlap: at these requests, slot rocks and enemy groups leave room for about two thirds.
-  resource: EVERY_BAND,
-};
+const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {};
 
 describe("spawn target catalog", () => {
   it("measures gathering reach on flight's encounter lattice", () => {
@@ -44,7 +39,8 @@ describe("spawn target catalog", () => {
         }
         const rock = (kind: string) => band.rocks.find((target) => target.kind === kind)!;
         expect(rock("rock").density).toBeCloseTo(SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS);
-        expect(rock("resource").density).toBeCloseTo(table.resources / SPAWN_AREA_CHUNKS);
+        expect(band.rocks.map((target) => target.kind)).toEqual(["rock-feature", "rock"]);
+        expect(band.moving[0]!.density).toBeCloseTo(table.moving / SPAWN_AREA_CHUNKS);
         expect(rock("rock-feature").density).toBeCloseTo(table.features / SPAWN_AREA_CHUNKS);
         for (const shape of rock("rock-feature").shapes) {
           expect(ASTEROID_SHAPES.get(shape.id)!.size).toBe("large");
