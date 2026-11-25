@@ -20,17 +20,18 @@ const EVERY_BAND = GALAXY_NUMBERS.flatMap((galaxy) => [0, 1, 2].map((band) => `$
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
  * expected failure until its target or placement changes; the main dropping rule is noted.
  */
+const except = (...bands: string[]) => EVERY_BAND.filter((band) => !bands.includes(band));
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // Group spacing, then admission: anchors kept a lattice spacing apart at random positions
-  // jam below the table's group densities.
+  // Admission: the local budget counts the groups in neighbouring lattice cells, which lie
+  // inside twice the local radius.
   capital: EVERY_BAND,
-  fighter: EVERY_BAND,
+  fighter: except("2:1", "6:1", "6:2"),
   frigate: EVERY_BAND,
-  interceptor: EVERY_BAND,
+  interceptor: except("2:2", "6:2"),
   // Overlap: at these requests, slot rocks and enemy groups leave room for about two thirds.
   resource: EVERY_BAND,
-  retaliator: EVERY_BAND,
-  swarm: EVERY_BAND.filter((band) => band !== "6:1"),
+  retaliator: except("2:0", "5:1"),
+  swarm: except("5:2"),
 };
 
 describe("spawn target catalog", () => {

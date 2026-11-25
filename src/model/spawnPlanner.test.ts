@@ -598,44 +598,100 @@ describe("planRegion", () => {
     expect(movers).toBeGreaterThan(20);
   });
 
-  it("keeps enemy group anchors apart across chunk boundaries", () => {
+  describe("places enemy groups on a seeded lattice", () => {
+    const lattice = { cell: 600, occupancy: 0.75, spacing: 200 };
     const solo: EnemyTarget = {
-      density: 3,
+      density: 1,
       groupSize: [1, 1],
       kind: "fighter",
       radius: 10,
       spacing: 100,
     };
-    const pair = { ...region, columns: 2, rows: 1 };
-    const spaced = (seed: number, groupSpacing?: number) =>
-      planRegion(
-        {
-          ...rules,
-          bands: [{ ...band, enemies: [solo], moving: [], rocks: [] }],
-          gap: 20,
-          ...(groupSpacing === undefined ? {} : { groupSpacing }),
-        },
-        seed,
-        pair,
-      );
-    const crossing = (plan: SpawnPlan) =>
-      pairs(plan.placements).filter(
-        ([a, b]) => a.chunk !== b.chunk && Math.hypot(a.x - b.x, a.y - b.y) < 400,
-      ).length;
-    let crowded = 0;
-    let rejected = 0;
-    for (const seed of SEEDS) {
-      // Without spacing, single-ship groups in neighbouring chunks may sit closer than 400.
-      crowded += crossing(spaced(seed));
-      const plan = spaced(seed, 400);
-      for (const [a, b] of pairs(plan.placements)) {
-        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(400);
+    const latticed = (): SpawnRules => ({
+      ...rules,
+      bands: [
+        { ...band, enemies: [solo, { ...solo, density: 3, kind: "swarm" }], moving: [], rocks: [] },
+      ],
+      gap: 20,
+      lattice,
+    });
+    const cellOf = (placement: SpawnPlacement) =>
+      placement.group!.slice(placement.group!.indexOf(":lattice:") + ":lattice:".length);
+
+    it("keeps one group per cell, inside the cell's inset bounds", () => {
+      let groups = 0;
+      for (const seed of SEEDS) {
+        const plan = planRegion(latticed(), seed, region);
+        const cells = plan.placements.map(cellOf);
+        expect(new Set(cells).size).toBe(cells.length);
+        for (const placement of plan.placements) {
+          const [i, j] = cellOf(placement).split(",").map(Number);
+          for (const [value, index] of [
+            [placement.x, i!],
+            [placement.y, j!],
+          ] as const) {
+            expect(value).toBeGreaterThanOrEqual(index * 600 + 100);
+            expect(value).toBeLessThanOrEqual(index * 600 + 500);
+          }
+        }
+        groups += plan.placements.length;
+        const requested = Object.values(plan.report.kinds).reduce(
+          (sum, kind) => sum + kind.requested,
+          0,
+        );
+        expect(requested).toBe(plan.placements.length);
       }
-      expect(plan.placements.length).toBeGreaterThan(1);
-      rejected += plan.report.kinds.fighter!.rejections[SPAWN_RULE.groupSpacing] ?? 0;
-    }
-    expect(crowded).toBeGreaterThan(0);
-    expect(rejected).toBeGreaterThan(0);
+      // Up to sixteen cells hold anchors in the 3x3-chunk region; three in four are occupied.
+      expect(groups / SEEDS.length).toBeGreaterThan(6);
+      expect(groups / SEEDS.length).toBeLessThan(16);
+    });
+
+    it("plans a cell's group the same in every region that holds its anchor", () => {
+      for (const seed of SEEDS) {
+        const a = planRegion(latticed(), seed, region).placements;
+        const b = planRegion(latticed(), seed, { ...region, cell: { x: 0, y: 0 } }).placements;
+        const shared = a.filter((placement) => b.some((other) => other.id === placement.id));
+        expect(shared.length).toBeGreaterThan(0);
+        for (const placement of shared) {
+          expect(b.find((other) => other.id === placement.id)).toEqual(placement);
+        }
+        // A cell whose anchor lies in both regions is planned in both.
+        const inBoth = (placement: SpawnPlacement) =>
+          placement.x >= 0 && placement.x < 1024 && placement.y >= 0 && placement.y < 1024;
+        expect(
+          a
+            .filter(inBoth)
+            .map((placement) => placement.id)
+            .sort(),
+        ).toEqual(
+          b
+            .filter(inBoth)
+            .map((placement) => placement.id)
+            .sort(),
+        );
+      }
+    });
+
+    it("keeps every two group anchors at least the lattice spacing apart", () => {
+      // A zone over part of the region makes blocked groups retry inside their own cells.
+      const zone: ExclusionZone = {
+        applies: ["enemy"],
+        rule: "calm",
+        shape: { kind: "disc", radius: 350, x: 300, y: 300 },
+      };
+      let retried = 0;
+      for (const seed of SEEDS) {
+        const plan = planRegion(latticed(), seed, { ...region, exclusions: [zone] });
+        for (const [a, b] of pairs(plan.placements)) {
+          expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(200);
+        }
+        retried += Object.values(plan.report.kinds).reduce(
+          (sum, kind) => sum + (kind.rejections.calm ?? 0),
+          0,
+        );
+      }
+      expect(retried).toBeGreaterThan(0);
+    });
   });
 
   it("counts only the report's chunks while planning their neighbours", () => {

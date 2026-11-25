@@ -109,6 +109,13 @@ export interface SpawnBand {
 /** A planning pass: whole enemy groups, static rocks, or moving rocks chosen from placed rocks. */
 export type SpawnPass = "enemies" | "moving" | "rocks";
 
+/** Square lattice cells, the chance a cell holds a group and the least anchor distance. */
+export interface EnemyLattice {
+  readonly cell: number;
+  readonly occupancy: number;
+  readonly spacing: number;
+}
+
 /**
  * Local admission for whole enemy groups: placed members, escorts included, within twice
  * `localRadius` plus both reaches of a group's anchor count against the band's budget and
@@ -152,8 +159,14 @@ export interface SpawnRules {
    * of the chunk that zones applying to the kind cover.
    */
   readonly openArea?: boolean;
-  /** Least distance between the anchors of any two enemy groups. Absent, groups may crowd. */
-  readonly groupSpacing?: number;
+  /**
+   * Enemy groups on a square lattice of `cell` world units: each cell rolls once, seeded by its
+   * index, for a vacancy (occupied at `occupancy`), its group's kind (weighted by the band's
+   * densities) and an anchor offset. Anchors stay `spacing / 2` inside their cell, so any two
+   * keep `spacing` apart, and a blocked group retries only inside its own cell. Absent, each
+   * kind rolls its group count per chunk at its density, with anchors anywhere in the chunk.
+   */
+  readonly lattice?: EnemyLattice;
   /** Candidate positions per rock, or anchors per enemy group, before it is dropped. */
   readonly tries: number;
   readonly worldSide?: number;
@@ -241,7 +254,6 @@ export interface SpawnPlan {
 export const SPAWN_RULE = {
   admission: "admission",
   corridor: "corridor",
-  groupSpacing: "group-spacing",
   noSourceRock: "no-source-rock",
   overlap: "overlap",
 } as const;
@@ -358,6 +370,8 @@ class Tally {
 
 interface Chunk {
   readonly band: SpawnBand;
+  /** The chunk's cell before any wrap, which places it in the region. */
+  readonly cell: Vec;
   /** Whether the report counts this chunk's spawns. */
   readonly counted: boolean;
   readonly key: string;
@@ -371,13 +385,17 @@ function validate(rules: SpawnRules, region: SpawnRegion): void {
     rules.tries < 1 ||
     region.columns < 0 ||
     region.rows < 0 ||
-    ![
-      rules.gap,
-      rules.search,
-      rules.corridor ?? 0,
-      rules.blend ?? 0,
-      rules.groupSpacing ?? 0,
-    ].every((value) => Number.isFinite(value) && value >= 0) ||
+    ![rules.gap, rules.search, rules.corridor ?? 0, rules.blend ?? 0].every(
+      (value) => Number.isFinite(value) && value >= 0,
+    ) ||
+    (rules.lattice !== undefined &&
+      !(
+        rules.lattice.cell > 0 &&
+        rules.lattice.spacing >= 0 &&
+        rules.lattice.spacing <= rules.lattice.cell &&
+        rules.lattice.occupancy >= 0 &&
+        rules.lattice.occupancy <= 1
+      )) ||
     !rules.bands.length ||
     rules.bands[0]!.from !== 0 ||
     rules.bands.some((band, index) => index > 0 && band.from <= rules.bands[index - 1]!.from) ||
@@ -559,6 +577,7 @@ function chunks(rules: SpawnRules, grid: WorldGrid, region: SpawnRegion): Chunk[
           cell.y < report.cell.y + report.rows);
       list.push({
         band: spawnBandAt(rules, centre),
+        cell,
         counted,
         key: worldCellKey(grid, cell),
         origin,
@@ -607,7 +626,6 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
   const reported = new Tally();
   // Spawns in chunks the report leaves out are planned but not counted.
   const ignored = new Tally();
-  const anchors: Vec[] = [];
   const shares = new Map<string, number>();
   // The share of a chunk outside the zones that apply to a category, which scales its requests.
   const open = (chunk: Chunk, category: SpawnCategory): number => {
@@ -761,7 +779,52 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
       }
     }
   };
-  const enemies = (area: readonly Chunk[]) => {
+  // Places a whole group at the first anchor that admits and fits it, or drops it.
+  const placeGroup = (
+    tally: Tally,
+    chunk: Chunk,
+    target: EnemyTarget,
+    group: string,
+    next: Random,
+    anchorAt: (attempt: number) => Vec,
+  ) => {
+    const kind = target.kind;
+    const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
+    const rejected: string[] = [];
+    let formation: SpawnPlacement[] | undefined;
+    for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
+      const anchor = anchorAt(attempt);
+      const phase = next();
+      // The drawn size, or the largest smaller size down to `smallest` the budget admits.
+      let rule: string | undefined = SPAWN_RULE.admission;
+      for (let count = members; count >= (target.smallest ?? members); count--) {
+        const candidate = groupFormation(rules.gap, chunk, group, target, count, anchor, phase);
+        if (!admitted(rules, chunk.band, enemyPlacements, anchor, candidate)) {
+          continue;
+        }
+        rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
+        if (!rule) {
+          formation = candidate;
+        }
+        break;
+      }
+      if (rule) {
+        rejected.push(rule);
+      }
+    }
+    rejected.forEach((rule) => tally.reject(kind, rule));
+    if (!formation) {
+      tally.drop(kind, rejected.at(-1)!);
+      return;
+    }
+    for (const placement of formation) {
+      index.add(placement);
+      placements.push(placement);
+      enemyPlacements.push(placement);
+    }
+    tally.deliver(kind);
+  };
+  const enemiesByChunk = (area: readonly Chunk[]) => {
     for (const kind of kindsOf(rules, (band) => band.enemies)) {
       for (const chunk of area) {
         const tally = chunk.counted ? reported : ignored;
@@ -777,68 +840,85 @@ export function planRegion(rules: SpawnRules, seed: number, region: SpawnRegion)
         tally.request(kind, groups, "groups");
         for (let number = 0; number < groups; number++) {
           const group = `${kind}:${chunk.key}:${number}`;
-          const members = randomInt(next, target.groupSize[0], target.groupSize[1] + 1);
           const seeded = gathered(rules, region, target, next, {
             x: chunk.origin.x + next() * size,
             y: chunk.origin.y + next() * size,
           });
-          const rejected: string[] = [];
-          let formation: SpawnPlacement[] | undefined;
-          for (let attempt = 0; attempt < rules.tries && !formation; attempt++) {
-            const anchor =
-              attempt === 0
-                ? seeded
-                : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1));
-            const phase = next();
-            const spacing = rules.groupSpacing ?? 0;
-            if (
-              spacing > 0 &&
-              anchors.some((other) => Math.hypot(other.x - anchor.x, other.y - anchor.y) < spacing)
-            ) {
-              rejected.push(SPAWN_RULE.groupSpacing);
-              continue;
-            }
-            // The drawn size, or the largest smaller size down to `smallest` the budget admits.
-            let rule: string | undefined = SPAWN_RULE.admission;
-            for (let count = members; count >= (target.smallest ?? members); count--) {
-              const candidate = groupFormation(
-                rules.gap,
-                chunk,
-                group,
-                target,
-                count,
-                anchor,
-                phase,
-              );
-              if (!admitted(rules, chunk.band, enemyPlacements, anchor, candidate)) {
-                continue;
-              }
-              rule = formationBlocked(rules, candidate, (at) => blocked("enemy", at));
-              if (!rule) {
-                formation = candidate;
-                anchors.push(anchor);
-              }
-              break;
-            }
-            if (rule) {
-              rejected.push(rule);
-            }
-          }
-          rejected.forEach((rule) => tally.reject(kind, rule));
-          if (!formation) {
-            tally.drop(kind, rejected.at(-1)!);
-            continue;
-          }
-          for (const placement of formation) {
-            index.add(placement);
-            placements.push(placement);
-            enemyPlacements.push(placement);
-          }
-          tally.deliver(kind);
+          placeGroup(tally, chunk, target, group, next, (attempt) =>
+            attempt === 0
+              ? seeded
+              : disc(next, seeded, (rules.search * attempt) / Math.max(1, rules.tries - 1)),
+          );
         }
       }
     }
   };
+  // Lattice cells in index order; each cell's draws come from its own stream, so a cell plans
+  // the same group whichever region holds its anchor.
+  const enemiesByLattice = (lattice: EnemyLattice, area: readonly Chunk[]) => {
+    const byCell = new Map(area.map((chunk) => [`${chunk.cell.x},${chunk.cell.y}`, chunk]));
+    const xs = area.map((chunk) => chunk.origin.x);
+    const ys = area.map((chunk) => chunk.origin.y);
+    const inset = lattice.spacing / 2;
+    const span = lattice.cell - lattice.spacing;
+    const cells = {
+      x: [
+        Math.floor(Math.min(...xs) / lattice.cell),
+        Math.floor((Math.max(...xs) + size) / lattice.cell),
+      ],
+      y: [
+        Math.floor(Math.min(...ys) / lattice.cell),
+        Math.floor((Math.max(...ys) + size) / lattice.cell),
+      ],
+    };
+    for (let i = cells.x[0]!; i <= cells.x[1]!; i++) {
+      for (let j = cells.y[0]!; j <= cells.y[1]!; j++) {
+        const next = randomStream(seed, `spawn:lattice:${i},${j}`);
+        const within = () => ({
+          x: i * lattice.cell + inset + next() * span,
+          y: j * lattice.cell + inset + next() * span,
+        });
+        const seeded = within();
+        const occupied = next() < lattice.occupancy;
+        const roll = next();
+        const chunk = byCell.get(
+          `${Math.floor((seeded.x - grid.phase) / size)},${Math.floor((seeded.y - grid.phase) / size)}`,
+        );
+        if (!chunk || !occupied) {
+          continue;
+        }
+        const targets = chunk.band.enemies;
+        const total = targets.reduce((sum, target) => sum + target.density, 0);
+        if (!(total > 0)) {
+          continue;
+        }
+        const target = weightedPick(
+          () => roll,
+          targets,
+          targets.map((option) => option.density),
+        );
+        // Open-area requests leave out cells whose anchor lies in a zone that applies to enemies.
+        if (rules.openArea && excludedBy(rules, region, "enemy", { ...seeded, radius: 0 })) {
+          continue;
+        }
+        const tally = chunk.counted ? reported : ignored;
+        tally.request(target.kind, 1, "groups");
+        // A gathering group moves beside its site only where it stays inside its cell's bounds.
+        const moved = gathered(rules, region, target, next, seeded);
+        const inside = (at: Vec) =>
+          at.x >= i * lattice.cell + inset &&
+          at.x <= i * lattice.cell + inset + span &&
+          at.y >= j * lattice.cell + inset &&
+          at.y <= j * lattice.cell + inset + span;
+        const first = inside(moved) ? moved : seeded;
+        placeGroup(tally, chunk, target, `${target.kind}:lattice:${i},${j}`, next, (attempt) =>
+          attempt === 0 ? first : within(),
+        );
+      }
+    }
+  };
+  const enemies = (area: readonly Chunk[]) =>
+    rules.lattice ? enemiesByLattice(rules.lattice, area) : enemiesByChunk(area);
   const passes: Readonly<Record<SpawnPass, (chunks: readonly Chunk[]) => void>> = {
     enemies,
     moving,
