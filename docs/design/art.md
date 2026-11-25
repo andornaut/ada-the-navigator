@@ -43,7 +43,7 @@ Reference: [art](../../art/README.md).
 | ada-0151 | Draw the cockpit background and the holodisk                              | [ada-0151.md](../work/ada-0151.md) |
 | ada-0152 | Draw the quantum jump effect as a warp tunnel                             | [ada-0152.md](../work/ada-0152.md) |
 | ada-0153 | Specify the shared compact conversation box                               | [ada-0153.md](../work/ada-0153.md) |
-| ada-0154 | Draw Astra, General Gadget and Penny portraits                            | [ada-0154.md](../work/ada-0154.md) |
+| ada-0154 | Draw Astra, Admiral Archie and Penny portraits                            | [ada-0154.md](../work/ada-0154.md) |
 | ada-0155 | Paint the storybook Earth scenes and Ada's family                         | [ada-0155.md](../work/ada-0155.md) |
 | ada-0156 | Specify the story panel and anchor story backgrounds                      | [ada-0156.md](../work/ada-0156.md) |
 | ada-0157 | Draw the growers, workshop and salvagers outposts and the discovery cache | [ada-0157.md](../work/ada-0157.md) |
