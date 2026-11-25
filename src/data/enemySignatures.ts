@@ -29,6 +29,23 @@ export const ENEMY_FIRE_MULTIPLIERS = {
   swarm: 1,
 } as const;
 
+/** Per-weapon ship fire multipliers that replace the archetype's ENEMY_FIRE_MULTIPLIERS entry. */
+export const ENEMY_WEAPON_FIRE_MULTIPLIERS = {
+  frigate: { laser: 1 },
+} as const satisfies Partial<
+  Record<keyof typeof ENEMY_FIRE_MULTIPLIERS, Partial<Record<EnemyWeapon, number>>>
+>;
+
+/** The ship fire multiplier for one weapon on an archetype. */
+export function enemyShipFireMultiplier(
+  archetype: keyof typeof ENEMY_FIRE_MULTIPLIERS,
+  weapon: EnemyWeapon,
+): number {
+  const overrides: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, number>>>>> =
+    ENEMY_WEAPON_FIRE_MULTIPLIERS;
+  return overrides[archetype]?.[weapon] ?? ENEMY_FIRE_MULTIPLIERS[archetype];
+}
+
 export const CAPITAL_PROFILE_SELECTION = {
   lanceWeight: 1,
   mineFromPosition: 5,

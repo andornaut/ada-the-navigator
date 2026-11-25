@@ -430,13 +430,15 @@ describe("galaxy difficulty", () => {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
         const base = enemyCatalog[archetype];
         const scaled = enemyDefinition(galaxy, archetype);
-        const shipRate =
-          archetype === "frigate"
-            ? 2
-            : archetype === "capital" || archetype === "platform"
-              ? 1.5
-              : 1;
         const interval = (fire: FireProfile) => {
+          const shipRate =
+            archetype === "frigate"
+              ? fire.weapon === "laser"
+                ? 1
+                : 2
+              : archetype === "capital" || archetype === "platform"
+                ? 1.5
+                : 1;
           if (enemyOnly(fire.weapon)) {
             return ENEMY_FIRE[fire.weapon].interval / (enemyOnlyRate * shipRate);
           }

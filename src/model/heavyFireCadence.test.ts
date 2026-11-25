@@ -144,7 +144,7 @@ describe("heavy fire clocks", () => {
     const run = (dt: number) => {
       let state = fixture().state;
       const fired: { mount: string | null; time: number }[] = [];
-      for (let elapsed = 0; elapsed < 3 - 1e-9; elapsed += dt) {
+      for (let elapsed = 0; elapsed < 3.4 - 1e-9; elapsed += dt) {
         const result = stepEnemy(definition, context(state, dt), state);
         fired.push(
           ...result.fire.map((shot) => ({

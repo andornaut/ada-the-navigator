@@ -8,6 +8,7 @@ import {
 } from "./enemyIdentity.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
+  enemyShipFireMultiplier,
   HEAVY_SIGNATURES,
   HOSTILE_STATION_SIGNATURE,
   PLATFORM_SIGNATURE,
@@ -892,7 +893,7 @@ export function enemyFireRate(
   archetype: keyof typeof ENEMY_FIRE_MULTIPLIERS,
   weapon: EnemyWeapon,
 ): number {
-  const shipRate = ENEMY_FIRE_MULTIPLIERS[archetype];
+  const shipRate = enemyShipFireMultiplier(archetype, weapon);
   return enemyOnly(weapon)
     ? difficultyOf(galaxy).rates.fire * DIFFICULTY_SCALE * shipRate
     : ENEMY_SHARED_WEAPON_TUNING.fireRateShare[ROUTE_POSITION[galaxy]] *
