@@ -126,7 +126,7 @@ export const CONTENT: GameContent = {
           ].join(""),
           speaker: "Station",
           text: [
-            "Welcome. Shoot ore rocks and collect the ore they release. Bring it ",
+            "Welcome. Shoot asteroids and collect the ore they release. Bring it ",
             "here to deposit it. Partial loads count, and you can travel back ",
             "when you're out of danger.",
           ].join(""),
@@ -150,7 +150,7 @@ export const CONTENT: GameContent = {
       name: "The Mining Hub",
       objectives: [
         "Explore the galaxy.",
-        "Mine ore rocks and deposit the ore at the hub.",
+        "Mine asteroids and deposit the ore at the hub.",
         "Keep depositing ore and talk with the miner.",
         "Speak with regular visitors about approaching together.",
         "Join the miner's approach at the hub.",

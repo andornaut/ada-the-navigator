@@ -1063,7 +1063,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
       {
         speaker: "Quartz",
-        text: "Shoot ore rocks and collect the ore they release. Bring it here to deposit it.",
+        text: "Shoot asteroids and collect the ore they release. Bring it here to deposit it.",
       },
       {
         speaker: "Ada",
