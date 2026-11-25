@@ -1460,8 +1460,16 @@ Moving rocks are chosen from placed slot and feature rocks at the densities in
 The rest choose their own heading and speed. Each group or solo rock rolls a
 seeded speed from 10 to 80 world units per second and travels in a straight
 line at constant velocity. It may rotate. A chosen rock starts outside the
-exclusion zones that apply to moving rocks; once moving, it may overlap or hit
-any object. Authored current debris follows its current.
+exclusion zones that apply to moving rocks; once moving, it may hit any object.
+Authored current debris follows its current.
+
+A moving rock that touches another asteroid ricochets off it, and both rocks
+respond. Each rock's mass is its drawn area, so a small rock deflects more than
+a large one. The pair keeps 0.3 of its closing speed along the contact normal,
+a soft knock. No rock leaves a ricochet faster than 80 world units per second.
+A moving rock keeps its new velocity at constant speed; a rock in a moving
+group leaves the group's shared velocity. A struck static rock drifts, slows to
+rest within about 3 seconds and stays where it settles.
 
 Small enemy ships have independent movement, aiming and firing, with solo,
 erratic circling, swarming and pack behaviors. Aggression can begin on sight or
