@@ -7,6 +7,7 @@ import {
   type Mesh,
   meshBox,
   meshExtrude,
+  meshFace,
   meshLoft,
   meshScale,
   meshTube,
@@ -16,8 +17,22 @@ import {
 export const FLEET_FAMILIES = ["coral", "claim", "garnet", "needle"] as const;
 export type FleetFamily = (typeof FLEET_FAMILIES)[number];
 export type JetRamps = { outer: [string, string]; core: [string, string] };
-// Materials of the small craft, each in three flat tones.
-export type Paint = { hull: Tones; plate: Tones; gun: Tones; glow: Tones; dark: Tones };
+// A family's materials, each in three flat tones. The industrial stems' role paint (`cargo`,
+// `saddle`, `mining`, `scoop`, `metal`) is the same in every family.
+export type Paint = {
+  hull: Tones;
+  plate: Tones;
+  turret: Tones;
+  collar: Tones;
+  gun: Tones;
+  glow: Tones;
+  dark: Tones;
+  cargo: Tones;
+  saddle: Tones;
+  mining: Tones;
+  scoop: Tones;
+  metal: Tones;
+};
 
 const INK = [0x18, 0x14, 0x25] as const;
 const hex = (channels: readonly number[]) =>
@@ -36,24 +51,32 @@ const glow = (colour: string): Tones => [colour, colour, shade(colour, 0.85)];
 
 const AMBER: Tones = ["#f0bd68", "#b98a40", "#8a6630"];
 const VISOR: Tones = ["#2a2433", "#1e1a26", "#16131c"];
-const paint = (hull: Tones, plate: string, gun: Tones, dark: Tones): Paint => ({
+const paint = (hull: Tones, plate: string, turret: string, gun: Tones, dark: Tones): Paint => ({
   hull,
   plate: mat(plate),
+  turret: mat(turret),
+  collar: mat(shade(turret, 0.78)),
   gun,
   glow: glow(gun[0]),
   dark,
+  cargo: ["#8a9db2", "#516681", "#3b4c64"],
+  saddle: ["#6c6383", "#45435a", "#24263b"],
+  mining: ["#65a097", "#467971", "#355d58"],
+  scoop: ["#3a6864", "#294946", "#1f3836"],
+  metal: mat("#a1aaa0"),
 });
 
 export const FLEET_PAINT: Readonly<Record<FleetFamily, Paint>> = {
-  coral: paint(["#d68b72", "#a8654f", "#7f4b3d"], "#e6a890", AMBER, VISOR),
+  coral: paint(["#d68b72", "#a8654f", "#7f4b3d"], "#e6a890", "#c27a62", AMBER, VISOR),
   claim: paint(
     ["#bd7042", "#924e28", "#703921"],
     "#b5a998",
+    "#a95e30",
     ["#fa6d38", "#bc4524", "#8c331b"],
     ["#2b1d1c", "#1f1514", "#17100f"],
   ),
-  garnet: paint(["#e47485", "#b0495b", "#823643"], "#deb7b6", AMBER, VISOR),
-  needle: paint(["#d65b6c", "#a14350", "#75313a"], "#d7cfc9", AMBER, VISOR),
+  garnet: paint(["#e47485", "#b0495b", "#823643"], "#deb7b6", "#c65c6d", AMBER, VISOR),
+  needle: paint(["#d65b6c", "#a14350", "#75313a"], "#d7cfc9", "#b44858", AMBER, VISOR),
 };
 
 // Speed jet ramps, slow to fast, per family.
@@ -119,6 +142,43 @@ function wing(
   }
 }
 
+// A pair of thick tapering wings from a one-side planform of (l, w): underside at zb, top at
+// zr on the root and zt on the tip.
+function wedge(
+  mesh: Mesh,
+  plan: readonly (readonly [number, number])[],
+  zb: number,
+  zr: number,
+  zt: number,
+  tones: Tones,
+): void {
+  const breadths = plan.map(([, w]) => w);
+  const [w0, w1] = [Math.min(...breadths), Math.max(...breadths)];
+  const top = (w: number) => zr + ((zt - zr) * (Math.abs(w) - w0)) / (w1 - w0);
+  for (const side of [1, -1]) {
+    const points = plan.map(([l, w]) => [l, side * w] as const);
+    const area = points.reduce((sum, a, i) => {
+      const b = points[(i + 1) % points.length]!;
+      return sum + a[0] * b[1] - b[0] * a[1];
+    }, 0);
+    const sign = area > 0 ? 1 : -1;
+    const upper = points.map(([l, w]): Point => [l, w, top(w)]);
+    const lower = points.map(([l, w]): Point => [l, w, zb]);
+    meshFace(mesh, upper, [0, 0, 1], tones);
+    meshFace(mesh, lower, [0, 0, -1], tones);
+    for (const [i, a] of points.entries()) {
+      const j = (i + 1) % points.length;
+      const b = points[j]!;
+      meshFace(
+        mesh,
+        [lower[i]!, lower[j]!, upper[j]!, upper[i]!],
+        [sign * (b[1] - a[1]), sign * (a[0] - b[0]), 0],
+        tones,
+      );
+    }
+  }
+}
+
 // Fore-and-aft tube at breadth w and height z: radius r at its aft end l0 and r1 at l1.
 function pod(
   mesh: Mesh,
@@ -143,25 +203,37 @@ function pod(
 export type FleetPart = { name: string; loose?: true; mesh: Mesh };
 // A drive mouth: the centre of its aft disc and the disc's radius.
 export type FleetMouth = { at: Point; radius: number };
+// An aimed weapon mount: the centre of its collar's foot on the deck, and the collar's radius.
+export type FleetMount = { at: Point; radius: number };
 export type FleetCraft = {
-  archetype: "swarm" | "fighter" | "interceptor";
+  archetype: "swarm" | "fighter" | "interceptor" | "retaliator";
+  // The frame key of the shipped rows the craft replaces: `enemy-{stem}-{index}`.
+  stem: string;
   // The sidecar key and file stem.
   key: string;
   design: string;
   parts: FleetPart[];
   mouths: FleetMouth[];
-  // The shot origin: the centre of the flush port the craft's weapon fires from.
-  muzzle: Point;
+  // The shot origin of a craft whose weapon is a hull port: the centre of the flush port.
+  muzzle?: Point;
+  // The aimed launcher of a retaliator, which carries the `pod` top.
+  mount?: FleetMount;
+  // The material of the destruction flecks.
+  fleck: Tones;
   // Destruction wedge cut angles in degrees about the origin, forward at -90 and port at 0.
   cuts: number[];
 };
 
 // Small craft are drawn 1.35 times their authored height.
 const TALL = 1.35;
-const part = (name: string, build: (mesh: Mesh) => void, loose = false): FleetPart => {
+const solid = (name: string, build: (mesh: Mesh) => void, loose = false): FleetPart => {
   const mesh: Mesh = [];
   build(mesh);
-  return { name, mesh: meshScale(mesh, [1, 1, TALL]), ...(loose ? { loose: true as const } : {}) };
+  return { name, mesh, ...(loose ? { loose: true as const } : {}) };
+};
+const part = (name: string, build: (mesh: Mesh) => void, loose = false): FleetPart => {
+  const { mesh, ...rest } = solid(name, build, loose);
+  return { ...rest, mesh: meshScale(mesh, [1, 1, TALL]) };
 };
 const mouth = (l: number, w: number, z: number, radius: number): FleetMouth => ({
   at: [l, w, z * TALL],
@@ -173,6 +245,7 @@ const mouth = (l: number, w: number, z: number, radius: number): FleetMouth => (
 function pincer(p: Paint): FleetCraft {
   return {
     archetype: "swarm",
+    stem: "swarm",
     key: "fleetSwarm",
     design: "Pincer drone",
     parts: [
@@ -210,6 +283,7 @@ function pincer(p: Paint): FleetCraft {
     ],
     mouths: [mouth(-6.8, 0, 2.5, 2.7)],
     muzzle: [6.9, 0, 2.15 * TALL],
+    fleck: p.hull,
     cuts: [-90, -10, 80, 170],
   };
 }
@@ -219,6 +293,7 @@ function pincer(p: Paint): FleetCraft {
 function arrowhead(p: Paint): FleetCraft {
   return {
     archetype: "fighter",
+    stem: "fighter",
     key: "fleetFighter",
     design: "Arrowhead",
     parts: [
@@ -265,6 +340,7 @@ function arrowhead(p: Paint): FleetCraft {
     mouths: [mouth(-11.5, 5.6, 3.4, 1.7), mouth(-11.5, -5.6, 3.4, 1.7)],
     // The fan of three leaves from the nose port.
     muzzle: [12.4, 0, 2 * TALL],
+    fleck: p.hull,
     cuts: [-90, -25, 55, 125, 205],
   };
 }
@@ -274,6 +350,7 @@ function arrowhead(p: Paint): FleetCraft {
 function spear(p: Paint): FleetCraft {
   return {
     archetype: "interceptor",
+    stem: "interceptor",
     key: "fleetInterceptor",
     design: "Spear",
     parts: [
@@ -327,8 +404,232 @@ function spear(p: Paint): FleetCraft {
     ],
     mouths: [mouth(-20.2, 0, 3.2, 3.6)],
     muzzle: [22, 0, 2.3 * TALL],
+    fleck: p.hull,
     cuts: [-90, -20, 70, 110, 200],
   };
 }
 
-export const smallCraft = (p: Paint): FleetCraft[] => [pincer(p), arrowhead(p), spear(p)];
+// ------------------------------------------------------------------ weapon mounts
+
+// Mount radius of a weapon top, and of the launcher in the Cargo Hauler's spine well.
+const MOUNT_RADIUS = 4.6;
+const WELL_RADIUS = 3.8;
+const COLLAR_HEIGHT = 1.2;
+
+// The round collar of a mount, standing on the deck at `at`: the mount's base.
+export function collar(p: Paint, { at, radius }: FleetMount): Mesh {
+  const mesh: Mesh = [];
+  meshTube(mesh, at, [at[0], at[1], at[2] + COLLAR_HEIGHT], radius, radius, p.collar, 16);
+  return mesh;
+}
+// The pivot of the mount's top: the centre of the collar's upper face.
+export const mountPivot = ({ at }: FleetMount): Point => [at[0], at[1], at[2] + COLLAR_HEIGHT];
+
+// A weapon top about its pivot at the origin, muzzle toward +x, with its shot origins.
+export type FleetTop = { mesh: Mesh; muzzles: Point[] };
+
+// Rapid Missile `pod`: a low flat box launcher with two bright cells on its face and no barrel.
+// Each cell is a shot origin.
+export function podTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -0.85 * r, 0.95 * r, -0.85 * r, 0.85 * r, 0, 0.55 * r, p.turret);
+  for (const side of [1, -1]) {
+    bx(mesh, 0.95 * r, 1.1 * r, side * 0.12 * r, side * 0.7 * r, 0.1 * r, 0.46 * r, p.gun);
+  }
+  return {
+    mesh,
+    muzzles: [1, -1].map((side): Point => [1.1 * r, side * 0.41 * r, 0.28 * r]),
+  };
+}
+
+// ------------------------------------------------------------------ retaliators
+
+const nozzles = (m: Mesh, p: Paint, l0: number, l1: number, z: number, r: number, r1: number) => {
+  for (const w of [-5.5, 0, 5.5]) pod(m, l0, l1, w, z, r, p.dark, 12, { r1, aft: p.glow });
+};
+
+// Manta gunship: tall centre body, two thick wedge wings, two short dark intake lobes that end
+// behind the nose, three stern mouths and the launcher sunk into the deck.
+function manta(p: Paint): FleetCraft {
+  return {
+    archetype: "retaliator",
+    stem: "retaliator",
+    key: "fleetRetaliator",
+    design: "Manta gunship",
+    parts: [
+      solid("body", (m) => {
+        wedge(
+          m,
+          [
+            [12, 6],
+            [4, 12],
+            [-3, 28.15],
+            [-8, 27.2],
+            [-9.5, 14],
+            [-15, 6],
+          ],
+          1,
+          10,
+          3.5,
+          p.hull,
+        );
+        hull(
+          m,
+          [
+            [17, 2.5, 2, 7, 1, 1],
+            [8, 7, 0, 13, 3, 2],
+            [-10, 8, 0, 15, 3, 2],
+            [-16, 6, 1, 12, 2, 2],
+          ],
+          p.plate,
+        );
+        for (const side of [1, -1]) bx(m, -17, -16, side * 2.8, side * 6.2, 4, 9, p.glow);
+        bx(m, -17, -16, -1.7, 1.7, 4, 9, p.glow);
+      }),
+      ...[1, -1].map((side) =>
+        solid(
+          side === 1 ? "port intake" : "starboard intake",
+          (m) =>
+            hull(
+              m,
+              [
+                [16, 1.0, 3, 6],
+                [11, 2.2, 1, 9, 1, 1],
+                [2, 2.2, 1, 9, 1, 1],
+              ],
+              p.dark,
+              side * 10,
+            ),
+          true,
+        ),
+      ),
+      solid("visor", (m) => bx(m, 4.5, 8.5, -3, 3, 13, 15, p.dark), true),
+    ],
+    mouths: [-4.5, 0, 4.5].map((w) => ({ at: [-17, w, 6.5] as Point, radius: 1.7 })),
+    mount: { at: [-5, 0, 13.6], radius: MOUNT_RADIUS },
+    fleck: p.hull,
+    cuts: [-90, -30, 30, 90, 150, 210],
+  };
+}
+
+// Cargo Hauler: bow cab, slim spine, two plain cargo blocks a side of unequal length with a gap
+// between them, a stern engine house with three nozzles and the launcher in a well on the spine.
+function cargoHauler(p: Paint): FleetCraft {
+  const window: Tones = [p.saddle[2], p.saddle[2], p.saddle[2]];
+  const house: Tones = [p.saddle[1], p.saddle[2], p.saddle[2]];
+  return {
+    archetype: "retaliator",
+    stem: "retaliatorCargoHauler",
+    key: "fleetRetaliatorCargoHauler",
+    design: "Cargo Hauler",
+    parts: [
+      solid("body", (m) => {
+        hull(
+          m,
+          [
+            [30, 3.5, 2, 7, 1, 1],
+            [25, 7, 0, 11, 2.5, 2],
+            [19, 7, 0, 11, 2.5, 2],
+          ],
+          p.cargo,
+        );
+        bx(m, 21, 24, -4.6, 4.6, 10.8, 12, window);
+        hull(
+          m,
+          [
+            [20, 3.6, 2, 7, 1, 1],
+            [-22, 3.6, 2, 7, 1, 1],
+          ],
+          p.cargo,
+        );
+        for (const side of [1, -1]) {
+          bx(m, 0, 17, side * 4.4, side * 28.15, 1, 9, p.saddle);
+          bx(m, -18, -8, side * 4.4, side * 23, 1, 8, p.saddle);
+        }
+        bx(m, -27, -20, -9, 9, 1, 10, house);
+      }),
+      solid("nozzles", (m) => nozzles(m, p, -30, -26, 5.5, 2.8, 1.9), true),
+    ],
+    mouths: [-5.5, 0, 5.5].map((w) => ({ at: [-30, w, 5.5] as Point, radius: 2.8 })),
+    mount: { at: [-4, 0, 7], radius: WELL_RADIUS },
+    fleck: p.saddle,
+    cuts: [-90, -45, 0, 45, 90, 180],
+  };
+}
+
+// Mining Freighter: split bow with a cutter drum between the prongs, main hull, two side scoops,
+// a stern with three nozzles and the launcher sunk into the deck.
+function miningFreighter(p: Paint): FleetCraft {
+  return {
+    archetype: "retaliator",
+    stem: "retaliatorMiningFreighter",
+    key: "fleetRetaliatorMiningFreighter",
+    design: "Mining Freighter",
+    parts: [
+      solid("body", (m) => {
+        for (const side of [1, -1]) {
+          hull(
+            m,
+            [
+              [25, 2.0, 3, 7],
+              [15, 4.6, 0, 12, 2.5, 1.5],
+              [3, 4.6, 0, 12, 2.5, 1.5],
+            ],
+            p.mining,
+            side * 9.4,
+          );
+          hull(
+            m,
+            [
+              [11, 4.2, 2, 8, 1, 1],
+              [7, 6.15, 0, 12, 2.5, 1.5],
+              [-11, 6.15, 0, 12, 2.5, 1.5],
+            ],
+            p.scoop,
+            side * 22,
+          );
+          bx(m, 11, 11.6, side * 19.6, side * 24.4, 3, 7, p.dark);
+        }
+        hull(
+          m,
+          [
+            [7, 16, 0, 16, 3.5, 2],
+            [-12, 16, 0, 16, 3.5, 2],
+          ],
+          p.mining,
+        );
+        hull(
+          m,
+          [
+            [-11, 11, 1, 14, 3, 2],
+            [-21, 9, 2, 12, 2, 2],
+          ],
+          p.mining,
+        );
+      }),
+      solid(
+        "cutter",
+        (m) => {
+          meshTube(m, [16, -5.2, 5], [16, 5.2, 5], 3.6, 3.6, p.metal, 14);
+          bx(m, 15, 17, -0.8, 0.8, 1, 9, p.gun);
+        },
+        true,
+      ),
+      solid("visor", (m) => bx(m, 2.5, 5.5, -5, 5, 16, 18.4, p.dark), true),
+      solid("nozzles", (m) => nozzles(m, p, -25, -20.5, 7, 3.2, 2.1), true),
+    ],
+    mouths: [-5.5, 0, 5.5].map((w) => ({ at: [-25, w, 7] as Point, radius: 3.2 })),
+    mount: { at: [-5, 0, 15], radius: MOUNT_RADIUS },
+    fleck: p.mining,
+    cuts: [-90, -30, 30, 90, 150, 210],
+  };
+}
+
+export const fleet = (p: Paint): FleetCraft[] => [
+  pincer(p),
+  arrowhead(p),
+  spear(p),
+  manta(p),
+  cargoHauler(p),
+  miningFreighter(p),
+];

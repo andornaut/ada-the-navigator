@@ -16,7 +16,12 @@ import {
   FLEET_PAINT,
   type FleetCraft,
   type FleetFamily,
-  smallCraft,
+  fleet,
+  type FleetTop,
+  collar,
+  mountPivot,
+  podTop,
+  type Paint,
 } from "./fleet-models.ts";
 import { type ManifestFile, type Sidecars, writeOnce } from "./manifest.ts";
 import {
@@ -38,6 +43,8 @@ import { type Fragment, loopArea, outlines, tidy, type V2, visibleFragments } fr
 
 // Douglas-Peucker tolerance for the hull silhouettes, in frame px, as for the shipped craft.
 const SILHOUETTE_TOLERANCE = 0.4;
+// The small collar and top sprites take the first tolerance that passes the shared checker.
+const PART_TOLERANCES = [0.4, 0.3, 0.2, 0.1];
 // The jet triangle's base as a share of the drive mouth's diameter.
 const MOUTH_SHARE = 0.75;
 
@@ -48,57 +55,85 @@ const view = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, loca
 
 // A craft scaled to its contract span, in frame units, with its frame size.
 // `length` and `width` are the drawn hull's extents fore and aft and across, in frame units.
+// A craft with a mount has its collar (`base`) and aimed `top`, each with its own frame size.
 export type Scaled = FleetCraft & {
   frame: number;
   halfSpan: number;
   length: number;
   width: number;
+  base?: { mesh: Mesh; frame: number; anchor: Point; pivot: Point };
+  top?: FleetTop & { frame: number };
 };
 
-function scaled(craft: FleetCraft): Scaled {
-  const points = craft.parts.flatMap(({ mesh }) => mesh.flatMap((face) => face.points));
+const at = (k: number, [x, y, z]: Point): Point => [x * k, y * k, z * k];
+// The smallest multiple of 8 frame px that holds `points` about the pivot `origin` at every
+// heading, with a 1 px margin.
+function fit(points: readonly Point[], origin: Point = [0, 0, 0]): number {
+  const extent = Math.max(
+    ...Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
+      const [ox, oy] = projectAt(0, 0, view(yaw)(origin));
+      return points.flatMap((p) => {
+        const [x, y] = projectAt(0, 0, view(yaw)(p));
+        return [Math.abs(x - ox), Math.abs(y - oy)];
+      });
+    }).flat(),
+  );
+  return Math.ceil((2 * extent + 2) / 8) * 8;
+}
+const vertices = (mesh: Mesh) => mesh.flatMap((face) => face.points);
+
+function scaled(paint: Paint, craft: FleetCraft): Scaled {
+  const points = craft.parts.flatMap(({ mesh }) => vertices(mesh));
   const span = Math.max(...points.map(([, w]) => w)) - Math.min(...points.map(([, w]) => w));
   const target = enemySizeRatio(craft.archetype) * ADA_MODEL_SPAN;
   const k = target / span;
   const parts = craft.parts.map((part) => ({ ...part, mesh: meshScale(part.mesh, [k, k, k]) }));
-  const extent = Math.max(
-    ...Array.from({ length: ENEMY_HEADINGS }, (_, yaw) =>
-      parts.flatMap(({ mesh }) =>
-        mesh.flatMap((face) =>
-          face.points.flatMap((p) => projectAt(0, 0, view(yaw)(p)).map(Math.abs)),
-        ),
-      ),
-    ).flat(),
-  );
-  return {
-    ...craft,
+  const { mount, muzzle, ...rest } = craft;
+  const result: Scaled = {
+    ...rest,
     parts,
-    mouths: craft.mouths.map(({ at, radius }) => ({
-      at: [at[0] * k, at[1] * k, at[2] * k],
-      radius: radius * k,
-    })),
-    muzzle: [craft.muzzle[0] * k, craft.muzzle[1] * k, craft.muzzle[2] * k],
-    frame: Math.ceil((2 * extent + 2) / 8) * 8,
+    mouths: craft.mouths.map((mouth) => ({ at: at(k, mouth.at), radius: mouth.radius * k })),
+    ...(muzzle ? { muzzle: at(k, muzzle) } : {}),
+    frame: fit(parts.flatMap(({ mesh }) => vertices(mesh))),
     halfSpan: target / 2,
     length: (Math.max(...points.map(([l]) => l)) - Math.min(...points.map(([l]) => l))) * k,
     width: target,
   };
+  if (mount) {
+    const mesh = meshScale(collar(paint, mount), [k, k, k]);
+    const pivot = at(k, mountPivot(mount));
+    const anchor: Point = [pivot[0], pivot[1], (at(k, mount.at)[2] + pivot[2]) / 2];
+    const top = podTop(paint, mount.radius);
+    const topMesh = meshScale(top.mesh, [k, k, k]);
+    result.mount = { at: at(k, mount.at), radius: mount.radius * k };
+    result.base = { mesh, frame: fit(vertices(mesh), anchor), anchor, pivot };
+    result.top = {
+      mesh: topMesh,
+      muzzles: top.muzzles.map((point) => at(k, point)),
+      frame: fit(vertices(topMesh)),
+    };
+  }
+  return result;
 }
 
 export const fleetCrafts = (family: FleetFamily = "coral"): Scaled[] =>
-  smallCraft(FLEET_PAINT[family]).map(scaled);
+  fleet(FLEET_PAINT[family]).map((craft) => scaled(FLEET_PAINT[family], craft));
 
 const colour = ({ slot, tones }: Fragment) => tones[slot];
 const d = (loops: readonly V2[][]) =>
   loops.map((loop) => `M${loop.map(([x, y]) => `${x},${y}`).join("L")}Z`).join("");
 
+// Fragments moved by (dx, dy).
+const shift = (visible: readonly Fragment[], dx: number, dy: number): Fragment[] =>
+  visible.map((fragment) => ({
+    ...fragment,
+    points: fragment.points.map(([x, y]): V2 => [x + dx, y + dy]),
+  }));
+
 // The visible fragments of one heading, in frame px.
 function fragments(craft: Scaled, yaw: number, mesh: Mesh): Fragment[] {
   const centre = craft.frame / 2;
-  return visibleFragments(mesh, view(yaw)).map((fragment) => ({
-    ...fragment,
-    points: fragment.points.map(([x, y]): V2 => [x + centre, y + centre]),
-  }));
+  return shift(visibleFragments(mesh, view(yaw)), centre, centre);
 }
 
 // One path per tone, largest first. Each path also covers every later tone, so no seam between
@@ -129,24 +164,19 @@ const fills = (visible: readonly Fragment[]): Fill[] =>
 
 export type Frame = { svg: string; silhouette: string; collision: V2[][] };
 
-// One idle frame: notch tips first, then the tone paths, with the heading's collision parts.
-export function frame(craft: Scaled, yaw: number): Frame {
-  const visible = fragments(
-    craft,
-    yaw,
-    craft.parts.flatMap(({ mesh }) => mesh),
-  );
-  const traced = traceEnemyFills(
-    `${craft.key} ${yaw}`,
-    fills(visible),
-    [craft.frame, craft.frame],
-    [SILHOUETTE_TOLERANCE],
-  );
+// One frame of `size`: notch tips first, then the tone paths, with its collision parts.
+function draw(
+  id: string,
+  title: string,
+  size: number,
+  visible: readonly Fragment[],
+  tolerances: readonly number[] = [SILHOUETTE_TOLERANCE],
+): Frame {
+  const traced = traceEnemyFills(id, fills(visible), [size, size], tolerances);
   const paths = tonePaths(visible);
-  const size = craft.frame;
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
-    `<title>${craft.design} ${yaw} idle</title>`,
+    `<title>${title}</title>`,
     ...traced.tips.map(
       ({ color, points }) =>
         `<polygon fill="${color}" points="${points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ")}"/>`,
@@ -157,13 +187,70 @@ export function frame(craft: Scaled, yaw: number): Frame {
   return { svg: svgText(svg), silhouette: d(paths[0]!.loops), collision: traced.collision };
 }
 
-// The 16 headings as one sheet of nested roots, four to a row, with its manifest ids.
-function sheet(craft: Scaled, frames: readonly Frame[], prefix: string): string {
-  return packHullRoots(
+const hullMesh = (craft: Scaled) => craft.parts.flatMap(({ mesh }) => mesh);
+
+// One idle hull frame, without the mount's collar and top.
+export function frame(craft: Scaled, yaw: number): Frame {
+  return draw(
+    `${craft.key} ${yaw}`,
+    `${craft.design} ${yaw} idle`,
     craft.frame,
-    frames.map(({ svg }, yaw) => ({ id: `${prefix}${craft.archetype}-${yaw}`, svg })),
+    fragments(craft, yaw, hullMesh(craft)),
   );
 }
+
+// The mount's collar at one hull heading, centred on its anchor: the part of it the hull leaves
+// visible.
+export function baseFrame(craft: Scaled, yaw: number): Frame {
+  const { anchor, frame: size, mesh } = craft.base!;
+  const [ax, ay] = projectAt(0, 0, view(yaw)(anchor));
+  const visible = visibleFragments(
+    [...hullMesh(craft), ...mesh.map((face) => ({ ...face, group: 1 }))],
+    view(yaw),
+  ).filter(({ group }) => group === 1);
+  return draw(
+    `${craft.key} turret ${yaw}`,
+    `${craft.design} turret intact ${yaw}`,
+    size,
+    shift(visible, size / 2 - ax, size / 2 - ay),
+    PART_TOLERANCES,
+  );
+}
+
+// Where a hull heading places the collar sprite's centre and the top's pivot, in frame px.
+export function placement(craft: Scaled, yaw: number): { anchor: V2; pivot: V2 } {
+  const centre = craft.frame / 2;
+  return {
+    anchor: anchor(ENEMY_HEADINGS, centre, yaw, local(craft.base!.anchor)),
+    pivot: anchor(ENEMY_HEADINGS, centre, yaw, local(craft.base!.pivot)),
+  };
+}
+
+// The launcher top at one aim, centred on its pivot.
+export function topFrame(craft: Scaled, aim: number): Frame {
+  const { frame: size, mesh } = craft.top!;
+  return draw(
+    `${craft.key} top ${aim}`,
+    `${craft.design} turret top ${aim}`,
+    size,
+    shift(visibleFragments(mesh, view(aim)), size / 2, size / 2),
+    PART_TOLERANCES,
+  );
+}
+
+// Sixteen frames as one sheet of nested roots, four to a row, with their manifest ids.
+const sheet = (size: number, frames: readonly Frame[], ids: readonly string[]): string =>
+  packHullRoots(
+    size,
+    frames.map(({ svg }, index) => ({ id: ids[index]!, svg })),
+  );
+
+// The drawn hull in frame px; `radius` is the spacing and footprint radius.
+const hullSize = (craft: Scaled) => ({
+  length: round(craft.length),
+  width: round(craft.width),
+  radius: round(Math.max(craft.length, craft.width) / 2),
+});
 
 function jets(craft: Scaled, frames: readonly Frame[]): string {
   const centre = craft.frame / 2;
@@ -181,19 +268,73 @@ function jets(craft: Scaled, frames: readonly Frame[]): string {
       familyColors: Object.fromEntries(
         Object.entries(families).map(([family, { core, outer }]) => [family, [outer, core]]),
       ),
-      // The drawn hull in frame px; `radius` is the spacing and footprint radius.
-      hull: {
-        length: round(craft.length),
-        width: round(craft.width),
-        radius: round(Math.max(craft.length, craft.width) / 2),
-      },
+      hull: hullSize(craft),
     },
     (yaw) => ({
       collision: frames[yaw]!.collision,
-      muzzles: [anchor(ENEMY_HEADINGS, centre, yaw, local(craft.muzzle))],
+      ...(craft.muzzle
+        ? { muzzles: [anchor(ENEMY_HEADINGS, centre, yaw, local(craft.muzzle))] }
+        : {}),
     }),
   );
 }
+
+// The version 1 hardpoints file of a craft with one aimed, indestructible launcher: the collar's
+// anchor and the top's pivot per hull heading, and the top's shot origins and collision per aim,
+// relative to the pivot. `offset` is the mount from the hull pivot in frame px, x to port and y
+// aft.
+function hardpoints(craft: Scaled, bases: readonly Frame[], tops: readonly Frame[]): string {
+  const { frame: size, pivot } = craft.base!;
+  const top = craft.top!;
+  const [x, y] = local(pivot);
+  return json({
+    version: 1,
+    archetype: craft.archetype,
+    frame: craft.frame,
+    hull: hullSize(craft),
+    hardpoints: [
+      {
+        id: "turret",
+        role: "turret",
+        states: ["intact"],
+        top: "turret",
+        offset: [round(x), round(y)],
+      },
+    ],
+    headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
+      const placed = placement(craft, yaw);
+      return {
+        index: yaw,
+        order: ["hull", "turret"],
+        hardpoints: [
+          {
+            id: "turret",
+            anchor: placed.anchor,
+            pivot: placed.pivot,
+            collision: {
+              intact: bases[yaw]!.collision.map((part) =>
+                part.map(([px, py]) => [
+                  px2(px + placed.anchor[0] - size / 2),
+                  px2(py + placed.anchor[1] - size / 2),
+                ]),
+              ),
+            },
+          },
+        ],
+      };
+    }),
+    tops: {
+      turret: Array.from({ length: ENEMY_HEADINGS }, (_, aim) => ({
+        index: aim,
+        muzzles: top.muzzles.map((point) => anchor(ENEMY_HEADINGS, 0, aim, local(point))),
+        collision: tops[aim]!.collision.map((part) =>
+          part.map(([px, py]) => [px2(px - top.frame / 2), px2(py - top.frame / 2)]),
+        ),
+      })),
+    },
+  });
+}
+const px2 = (value: number) => Math.round(value * 100) / 100 + 0;
 
 // ------------------------------------------------------------------ shards
 
@@ -212,7 +353,7 @@ function groups(craft: Scaled): Group[] {
       mesh: meshClip(meshClip(body, [-f[0], -f[1], 0]), [t[0], t[1], 0]),
     };
   });
-  const { hull } = FLEET_PAINT.coral;
+  const [, side, rear] = craft.fleck;
   const flecks = FLECKS.map((angle): Group => {
     const [cx, cy] = [
       craft.halfSpan * 0.3 * Math.cos(angle),
@@ -230,13 +371,31 @@ function groups(craft: Scaled): Group[] {
       mesh,
       plan.map(([x, y]): Point => [-y, x, 1]),
       [0, 0, 1.5],
-      [hull[1], hull[2], hull[2]],
+      [side, rear, rear],
     );
     return { kind: "fleck", mesh };
   });
   return [
     ...wedges.filter(({ mesh }) => mesh.length > 0),
     ...craft.parts.filter(({ loose }) => loose).map(({ mesh }): Group => ({ kind: "part", mesh })),
+    ...(craft.base && craft.top
+      ? [
+          {
+            kind: "part" as const,
+            mesh: [
+              ...craft.base.mesh,
+              ...craft.top.mesh.map((face) => ({
+                ...face,
+                points: face.points.map(([x, y, z]): Point => [
+                  x + craft.base!.pivot[0],
+                  y + craft.base!.pivot[1],
+                  z + craft.base!.pivot[2],
+                ]),
+              })),
+            ],
+          },
+        ]
+      : []),
     ...flecks,
   ];
 }
@@ -295,7 +454,7 @@ export function shards(craft: Scaled): string {
   }));
   return json({
     version: 1,
-    archetype: craft.archetype,
+    archetype: craft.stem,
     frame: craft.frame,
     halfSpan: round(craft.halfSpan),
     shards: all.map(({ kind }, i) => {
@@ -340,25 +499,86 @@ const directory = (family: FleetFamily) =>
   family === "coral" ? "/art/enemies/" : `/art/${MANIFESTS[family]}/enemies/`;
 const prefix = (family: FleetFamily) => (family === "coral" ? "enemy-" : `enemy-${family}-`);
 
-// The manifest row that replaces `enemy-{archetype}-{yaw}` (or the family's) at the switch.
-function entries(craft: Scaled, family: FleetFamily, path: string) {
-  const display = craft.frame * DISPLAY_SCALE;
-  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-    const id = `${prefix(family)}${craft.archetype}-${yaw}`;
+// One sheet of sixteen frames as the producer stages it: its file, frame size, row ids and the
+// fields its rows add to the common ones.
+type Sheet = {
+  file: string;
+  size: number;
+  ids: string[];
+  frames: Frame[];
+  fields: (index: number) => Record<string, unknown>;
+};
+
+// The manifest rows that replace the shipped rows of the same ids at the switch. `member` names
+// the nested root of an identical sheet another row set already ships.
+function entries(
+  craft: Scaled,
+  family: FleetFamily,
+  { fields, ids, size }: Sheet,
+  path: string,
+  member?: readonly string[],
+) {
+  const display = size * DISPLAY_SCALE;
+  return ids.map((id, index) => {
     const row = {
-      width: craft.frame,
-      height: craft.frame,
+      width: size,
+      height: size,
       displayWidth: display,
       displayHeight: display,
-      facing: `world-${yaw}`,
-      directionIndex: yaw,
+      facing: `world-${index}`,
+      ...fields(index),
       pivot: { x: 0.5, y: 0.5 },
       archetype: craft.archetype,
     };
+    const alias = member ? { svgSheetMember: member[index]! } : {};
     return family === "coral"
-      ? { id, path, svgSheet: true, ...row }
-      : { id, path, ...row, family, svgSheet: true };
+      ? { id, path, svgSheet: true, ...row, ...alias }
+      : { id, path, ...row, family, svgSheet: true, ...alias };
   });
+}
+
+// A craft's sheets in one family: the hull, and for a craft with a mount its collar per hull
+// heading and its top per aim.
+function sheets(
+  craft: Scaled,
+  family: FleetFamily,
+  drawn: { hull: Frame[]; bases?: Frame[]; tops?: Frame[] },
+): Sheet[] {
+  const tint = (frames: Frame[]) => frames.map((f) => ({ ...f, svg: recolour(family, f.svg) }));
+  const stem = `${prefix(family)}${craft.stem}`;
+  const ids = (part: string) =>
+    Array.from({ length: ENEMY_HEADINGS }, (_, index) => `${stem}${part}-${index}`);
+  return [
+    {
+      file: `${craft.key}-sheet.svg`,
+      size: craft.frame,
+      ids: ids(""),
+      frames: tint(drawn.hull),
+      fields: (directionIndex) => ({ directionIndex }),
+    },
+    ...(drawn.bases && drawn.tops
+      ? [
+          {
+            file: `${craft.key}-turret-intact-sheet.svg`,
+            size: craft.base!.frame,
+            ids: ids("-turret-intact"),
+            frames: tint(drawn.bases),
+            fields: (directionIndex: number) => ({
+              directionIndex,
+              hardpoint: "turret",
+              state: "intact",
+            }),
+          },
+          {
+            file: `${craft.key}-turret-top-sheet.svg`,
+            size: craft.top!.frame,
+            ids: ids("-turret-top"),
+            frames: tint(drawn.tops),
+            fields: (aimIndex: number) => ({ aimIndex, top: "turret" }),
+          },
+        ]
+      : []),
+  ];
 }
 
 async function pretty(path: string, text: string): Promise<string> {
@@ -367,22 +587,48 @@ async function pretty(path: string, text: string): Promise<string> {
 
 async function main() {
   const crafts = fleetCrafts();
-  const frames = new Map(
+  const headings = Array.from({ length: ENEMY_HEADINGS }, (_, index) => index);
+  const drawn = new Map(
     crafts.map((craft) => [
       craft.key,
-      Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => frame(craft, yaw)),
+      {
+        hull: headings.map((yaw) => frame(craft, yaw)),
+        ...(craft.base
+          ? {
+              bases: headings.map((yaw) => baseFrame(craft, yaw)),
+              tops: headings.map((aim) => topFrame(craft, aim)),
+            }
+          : {}),
+      },
     ]),
   );
   const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
   const shared = new Map<string, string>();
+  // Each distinct sheet ships once: a later sheet with the same frames names the first one's
+  // file and nested roots.
+  const shipped = new Map<string, { path: string; ids: string[] }>();
   const rows: Record<string, { assets: unknown[]; sidecars: Sidecars }> = {};
   for (const family of FLEET_FAMILIES) {
     const files = new Map<string, string>();
+    const staged: { craft: Scaled; sheet: Sheet; first?: { path: string; ids: string[] } }[] = [];
     for (const craft of crafts) {
-      const tinted = frames.get(craft.key)!.map((f) => ({ ...f, svg: recolour(family, f.svg) }));
-      files.set(`${craft.key}-sheet.svg`, sheet(craft, tinted, prefix(family)));
+      const frames = drawn.get(craft.key)!;
+      for (const item of sheets(craft, family, frames)) {
+        const content = `${item.size}\n${item.frames.map(({ svg }) => svg.replace(/<title>.*?<\/title>/u, "")).join("\n")}`;
+        const first = shipped.get(content);
+        if (first) {
+          staged.push({ craft, sheet: item, first });
+        } else {
+          shipped.set(content, { path: `${directory(family)}${item.file}`, ids: item.ids });
+          files.set(item.file, sheet(item.size, item.frames, item.ids));
+          staged.push({ craft, sheet: item });
+        }
+      }
       if (family !== "coral") continue;
-      files.set(`${craft.key}-jets.json`, jets(craft, tinted));
+      files.set(`${craft.key}-jets.json`, jets(craft, frames.hull));
+      if (frames.bases && frames.tops) {
+        files.set(`${craft.key}-hardpoints.json`, hardpoints(craft, frames.bases, frames.tops));
+      }
       const core = shards(craft);
       const file = `${craft.key}-shards-packed.json`;
       const pack = shardPalettePack(core, {
@@ -396,27 +642,30 @@ async function main() {
     for (const [file, path] of paths) {
       if (family === "coral" && !file.endsWith("-sheet.svg")) shared.set(file, path);
     }
-    // Every family reads the coral folder's jets and shard pack, which carry its colours.
+    // Every family reads the coral folder's jets, hardpoints and shard pack: the jets and shards
+    // carry its colours and the hardpoints have none.
     rows[MANIFESTS[family]] = {
-      assets: crafts.flatMap((craft) =>
-        entries(craft, family, paths.get(`${craft.key}-sheet.svg`)!),
+      assets: staged.flatMap(({ craft, first, sheet: item }) =>
+        entries(craft, family, item, first?.path ?? paths.get(item.file)!, first?.ids),
       ),
       sidecars: Object.fromEntries(
-        crafts.map(({ archetype, key }) => [
-          archetype,
+        crafts.map(({ base, key, stem }) => [
+          stem,
           {
             jets: shared.get(`${key}-jets.json`)!,
+            ...(base ? { hardpoints: shared.get(`${key}-hardpoints.json`)! } : {}),
             shards: shared.get(`${key}-shards-packed.json`)!,
           },
         ]),
       ),
     };
   }
-  const staged = json(rows);
-  if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== staged) writeFileSync(ROWS, staged);
+  const text = json(rows);
+  if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   for (const craft of crafts) {
     console.log(
-      `${craft.key}: ${craft.design}, frame ${craft.frame}, display ${craft.frame * DISPLAY_SCALE}`,
+      `${craft.key}: ${craft.design}, frame ${craft.frame}, display ${craft.frame * DISPLAY_SCALE}` +
+        (craft.base ? `, base ${craft.base.frame}, top ${craft.top!.frame}` : ""),
     );
   }
 }
