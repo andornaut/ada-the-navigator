@@ -6,6 +6,8 @@ import {
   planRegion,
   SPAWN_RULE,
   type SpawnBand,
+  spawnBandAt,
+  type SpawnCategory,
   type SpawnPlacement,
   type SpawnPlan,
   type SpawnRegion,
@@ -16,7 +18,7 @@ const band: SpawnBand = {
   enemies: [
     {
       density: 1,
-      escorts: { kind: "escort", perLeader: 2, radius: 8, ring: 70 },
+      escorts: { archetype: "escort", kind: "escort", perLeader: 2, radius: 8, ring: 70 },
       groupSize: [1, 2],
       kind: "heavy",
       radius: 40,
@@ -143,7 +145,10 @@ describe("planRegion", () => {
     for (const seed of SEEDS) {
       const plan = planRegion(rules, seed, zoned);
       for (const placement of plan.placements) {
-        const categories = [placement.category, ...(placement.moving ? ["moving" as const] : [])];
+        const categories: SpawnCategory[] = [
+          placement.category,
+          ...(placement.moving ? ["moving" as const] : []),
+        ];
         for (const zone of exclusions) {
           if (!zone.applies.some((category) => categories.includes(category))) {
             continue;
@@ -308,7 +313,7 @@ describe("planRegion", () => {
     it("fits a two-frigate group exactly two hulls plus the gap apart", () => {
       const plan = pair({
         density: 1,
-        escorts: { kind: "escort", perLeader: 2, radius: 10, ring: 110 },
+        escorts: { archetype: "escort", kind: "escort", perLeader: 2, radius: 10, ring: 110 },
         groupSize: [2, 2],
         kind: "frigate",
         radius: 50,
@@ -343,7 +348,7 @@ describe("planRegion", () => {
     it("widens an escort ring so escorts clear each other", () => {
       const plan = pair({
         density: 1,
-        escorts: { kind: "escort", perLeader: 6, radius: 10, ring: 30 },
+        escorts: { archetype: "escort", kind: "escort", perLeader: 6, radius: 10, ring: 30 },
         groupSize: [1, 1],
         kind: "capital",
         radius: 10,
@@ -415,6 +420,182 @@ describe("planRegion", () => {
     ] as const) {
       expect(() => planRegion({ ...rules, order }, 1, region)).toThrow(RangeError);
     }
+  });
+
+  describe("blends target densities across band boundaries", () => {
+    const lower: SpawnBand = {
+      enemies: [],
+      from: 0,
+      moving: [],
+      rocks: [{ ...band.rocks[0]!, density: 1 }],
+    };
+    const upper: SpawnBand = {
+      enemies: [],
+      from: 1000,
+      moving: [],
+      rocks: [
+        { ...band.rocks[0]!, density: 3 },
+        { ...band.rocks[1]!, density: 2 },
+      ],
+    };
+    const blended = { ...rules, bands: [lower, upper], blend: 400 };
+    const densities = (distance: number) =>
+      Object.fromEntries(
+        spawnBandAt(blended, { x: distance, y: 0 }).rocks.map((rock) => [rock.kind, rock.density]),
+      );
+
+    it("switches outside the blend width and mixes linearly inside it", () => {
+      expect(densities(700)).toEqual({ big: 1 });
+      expect(densities(800)).toEqual({ big: 1 });
+      expect(densities(900)).toEqual({ big: 1.5, small: 0.5 });
+      expect(densities(1000)).toEqual({ big: 2, small: 1 });
+      expect(densities(1100)).toEqual({ big: 2.5, small: 1.5 });
+      expect(densities(1200)).toEqual({ big: 3, small: 2 });
+    });
+
+    it("keeps other values from the active band", () => {
+      const admission = { archetypes: 1, cap: 3 };
+      const banded = { ...blended, bands: [lower, { ...upper, admission }] };
+      expect(spawnBandAt(banded, { x: 950, y: 0 }).admission).toBeUndefined();
+      expect(spawnBandAt(banded, { x: 1050, y: 0 }).admission).toEqual(admission);
+    });
+  });
+
+  describe("admits groups within the local budget", () => {
+    const single = { ...region, columns: 1, rows: 1 };
+    const admitting = (
+      enemies: readonly EnemyTarget[],
+      admission: { archetypes: number; cap: number },
+      allowance = 2,
+    ): SpawnPlan =>
+      planRegion(
+        {
+          ...rules,
+          admission: { allowance, capital: "capital", localRadius: 900, maxNearbyCapitals: 1 },
+          bands: [{ admission, enemies, from: 0, moving: [], rocks: [] }],
+          gap: 20,
+        },
+        1,
+        single,
+      );
+    const fighters = (smallest?: number): EnemyTarget => ({
+      density: 4,
+      groupSize: [3, 3],
+      kind: "fighter",
+      radius: 10,
+      spacing: 100,
+      ...(smallest === undefined ? {} : { smallest }),
+    });
+
+    it("drops whole groups beyond the budget", () => {
+      const plan = admitting([fighters()], { archetypes: 2, cap: 5 });
+      expect(plan.placements).toHaveLength(3);
+      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 1, requested: 4 });
+      expect(plan.report.kinds.fighter!.drops).toEqual({ [SPAWN_RULE.admission]: 3 });
+    });
+
+    it("shrinks a group down to its smallest size to fit the budget", () => {
+      const plan = admitting([fighters(1)], { archetypes: 2, cap: 5 });
+      expect(plan.placements).toHaveLength(5);
+      expect(plan.report.kinds.fighter).toMatchObject({ delivered: 2, requested: 4 });
+    });
+
+    it("limits distinct archetypes", () => {
+      const swarm = { ...fighters(), density: 1, groupSize: [1, 1] as const, kind: "swarm" };
+      const plan = admitting([fighters(), swarm], { archetypes: 1, cap: 20 });
+      expect(new Set(plan.placements.map((placement) => placement.archetype))).toEqual(
+        new Set(["fighter"]),
+      );
+      expect(plan.report.kinds.swarm!.drops).toEqual({ [SPAWN_RULE.admission]: 1 });
+    });
+
+    const capital: EnemyTarget = {
+      density: 2,
+      escorts: {
+        archetype: "fighter",
+        kind: "capital-escort",
+        perLeader: 2,
+        radius: 10,
+        ring: 120,
+      },
+      groupSize: [1, 1],
+      kind: "capital",
+      radius: 60,
+      spacing: 100,
+    };
+
+    it("adds the allowance for a capital and limits capitals nearby", () => {
+      const plan = admitting([capital], { archetypes: 2, cap: 1 });
+      // A capital with two escorts fits a budget of 1 only with the allowance of 2.
+      expect(plan.report.kinds.capital).toMatchObject({ delivered: 1, requested: 2 });
+      expect(plan.report.kinds.capital!.drops).toEqual({ [SPAWN_RULE.admission]: 1 });
+      expect(
+        admitting([capital], { archetypes: 2, cap: 1 }, 0).report.kinds.capital!.delivered,
+      ).toBe(0);
+    });
+  });
+
+  it("gathers a share of groups beside the nearest site in reach", () => {
+    const site = { x: 300, y: 260 };
+    const target = (share: number): EnemyTarget => ({
+      density: 1,
+      gather: { distance: 150, reach: 5000, share, site: "ore-field" },
+      groupSize: [1, 1],
+      kind: "fighter",
+      radius: 10,
+      spacing: 100,
+    });
+    const plan = (share: number) =>
+      planRegion(
+        {
+          ...rules,
+          bands: [{ ...band, enemies: [target(share)], moving: [], rocks: [] }],
+          gap: 20,
+        },
+        1,
+        { ...region, sites: { "ore-field": [site, { x: 5000, y: 5000 }] } },
+      ).placements;
+    const distances = (share: number) =>
+      plan(share).map((placement) => Math.hypot(placement.x - site.x, placement.y - site.y));
+    // The first anchor beside the site is clear, so each placed group sits on its ring.
+    const gathered = distances(1);
+    expect(gathered.length).toBeGreaterThan(5);
+    expect(gathered.filter((distance) => Math.abs(distance - 150) < 1e-9).length).toBeGreaterThan(
+      gathered.length / 2,
+    );
+    expect(distances(0).filter((distance) => Math.abs(distance - 150) < 1e-9)).toEqual([]);
+  });
+
+  it("redraws a moving rock's velocity until its path keeps clear of path zones", () => {
+    const zone: ExclusionZone = {
+      applies: ["path"],
+      rule: "protected",
+      shape: { kind: "disc", radius: 300, x: 0, y: 0 },
+    };
+    const pathed = {
+      ...rules,
+      bands: [{ ...band, enemies: [], moving: [{ ...band.moving[0]!, path: 20 }] }],
+    };
+    let rejected = 0;
+    let movers = 0;
+    for (const seed of SEEDS) {
+      const plan = planRegion(pathed, seed, { ...region, exclusions: [zone] });
+      rejected += plan.report.kinds.mover!.rejections.protected ?? 0;
+      for (const rock of plan.placements.filter((placement) => placement.moving)) {
+        movers++;
+        const { velocity } = rock.moving!;
+        for (let step = 0; step <= 400; step++) {
+          const t = (20 * step) / 400;
+          expect(
+            Math.hypot(rock.x + velocity.x * t, rock.y + velocity.y * t),
+          ).toBeGreaterThanOrEqual(300 + rock.radius - 1e-6);
+        }
+      }
+      const report = plan.report.kinds.mover!;
+      expect(report.requested).toBe(report.delivered + report.dropped);
+    }
+    expect(rejected).toBeGreaterThan(0);
+    expect(movers).toBeGreaterThan(20);
   });
 
   it("drops a rock that cannot fit a quadrant between the lanes", () => {

@@ -127,6 +127,7 @@ function enemyTargets(galaxy: GalaxyNumber, stageIndex: number): EnemyTarget[] {
       ...(escorts
         ? {
             escorts: {
+              archetype: escorts.archetype,
               kind: `${entry.archetype}-escort`,
               perLeader: escorts.perLeader,
               radius: enemyCatalog[escorts.archetype].sizeRatio * flight.shipRadius,
