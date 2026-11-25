@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import paints from "../../public/art/ship-paint.json";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { tierColour, UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
+import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import {
   centredNoticeLeft,
   countedLabel,
@@ -20,7 +22,7 @@ import {
 import { chipLeft, flyPoint, ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
 
 const LABELS = CONTENT.labels;
-const notice = (gain: Parameters<typeof gainNotice>[1]) => gainNotice(LABELS, gain);
+const notice = (gain: Parameters<typeof gainNotice>[2]) => gainNotice(LABELS, undefined, gain);
 const ammo = notice({ added: 1, kind: "ammo", weapon: "rapidMissile" });
 const holodisk = notice({ kind: "holodisk" });
 const parts = notice({ aboard: { kind: "carrying", name: "Spare parts" }, kind: "aboard" });
@@ -126,6 +128,26 @@ describe("item notice wording", () => {
     for (const [scheme, { top }] of Object.entries(ECONOMY.paints)) {
       expect(notice({ kind: "paint", scheme: scheme as "cobalt" }).accent).toBe(top);
     }
+  });
+
+  it("shows a paint scheme's heading-48 shop swatch as its icon, rimmed in its top colour", () => {
+    const sources = SHIPPED_SHIP_SOURCES!;
+    const swatch = (scheme: string) => sources.ship(scheme, 48)?.url;
+    for (const scheme of ECONOMY.paintOrder) {
+      const paint = gainNotice(LABELS, swatch, { kind: "paint", scheme: scheme as "cobalt" });
+      expect(paint.icon).toEqual({ vector: swatch(scheme) });
+      expect(paint.icon).not.toEqual({ vector: uiIconUrl("icon-shop-ship-paint") });
+      // The swatch draws the scheme's top and its wing-tip accent.
+      const svg = sources.ship(scheme, 48)!.svg;
+      const colours = paints.schemes.find(({ id }) => id === scheme)!;
+      expect(svg).toContain(`fill="${colours.top}"`);
+      expect(svg).toContain(`fill="${colours.accent}"`);
+      expect(paint.accent).toBe(ECONOMY.paints[scheme]!.top);
+    }
+    // Until the materials load, the roller stands in.
+    expect(gainNotice(LABELS, () => undefined, { kind: "paint", scheme: "cobalt" }).icon).toEqual({
+      vector: uiIconUrl("icon-shop-ship-paint"),
+    });
   });
 
   it("gives each gain Art's icon, accent and landing place", () => {

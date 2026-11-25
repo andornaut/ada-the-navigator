@@ -90,9 +90,9 @@ import {
   materialClassicShipFrame,
   materialShipFrames,
   materialShipHeading,
-  materialShipSwatch,
   materialWarpPoses,
   paintInUse,
+  paintSwatch,
   publishCoreShards,
   readEnemyArt,
 } from "./sceneAssets.ts";
@@ -619,6 +619,7 @@ export function buildScene(scene: UiContext): void {
       }
       return refused;
     },
+    paintSwatch: (scheme) => paintSwatch(scene, scheme),
     // Navigation lives in the Paused card; the local map's Travel here and Galaxies refuse while
     // Ada is in danger, and Back to title never does.
     pause: {
@@ -663,9 +664,7 @@ export function buildScene(scene: UiContext): void {
               (id) => id === ECONOMY.defaultPaint || scene.model.state.economy.paints.includes(id),
             )
             .map((id) => {
-              const swatch =
-                materialShipSwatch(scene, id) ??
-                (id === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined);
+              const swatch = paintSwatch(scene, id);
               return {
                 id,
                 name: itemName(ECONOMY, CONTENT.labels, { kind: "paint", scheme: id }),
@@ -723,9 +722,7 @@ export function buildScene(scene: UiContext): void {
       scene.model.state.economy.stardust,
       row,
       (weapon) => fill(label("requiresWeapon"), { weapon: weaponName(labels, weapon) }),
-      (scheme) =>
-        materialShipSwatch(scene, scheme) ??
-        (scheme === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined),
+      (scheme) => paintSwatch(scene, scheme),
     );
   const shopGroup = ({
     category,

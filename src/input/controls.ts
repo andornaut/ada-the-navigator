@@ -43,7 +43,7 @@ import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import type { DeviceStorage } from "../ui/deviceSettings.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
-import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
+import { createItemNotices, type NoticePlaces, type PaintSwatch } from "../ui/itemNotice.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import {
@@ -141,6 +141,8 @@ export interface ControlsOptions {
   readonly onWeaponSelect: (weapon: Weapon) => boolean;
   // Player copy for the item notices (src/ui/itemNotice.ts).
   readonly noticeLabels: Readonly<Record<string, string>>;
+  // Each paint scheme's shop swatch, the paint notice's icon.
+  readonly paintSwatch?: PaintSwatch;
   readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;
 }
@@ -624,6 +626,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // The chip draws under the HUD controls: it goes first among them.
   const notices = createItemNotices(settings.root, {
     labels: options.noticeLabels,
+    ...(options.paintSwatch ? { paintSwatch: options.paintSwatch } : {}),
     onArrive: (target) => {
       if (reducedMotion) {
         return;

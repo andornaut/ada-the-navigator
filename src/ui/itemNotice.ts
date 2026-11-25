@@ -67,8 +67,15 @@ const TRACK_NOTICES: Readonly<Record<UpgradeTrack, { label: string; vector: stri
   tractor: { label: "itemTractorLevel", vector: uiIconUrl("icon-shop-tractor-beam") },
 };
 
+/** A paint scheme's shop swatch URL, its heading-48 ship, once the ship materials load. */
+export type PaintSwatch = (scheme: string) => string | undefined;
+
 /** A gain's notice: its label, icon, accent and landing place. */
-export function gainNotice(labels: Labels, gain: ItemGain): Notice {
+export function gainNotice(
+  labels: Labels,
+  paintSwatch: PaintSwatch | undefined,
+  gain: ItemGain,
+): Notice {
   const label = (item: string) => fill(labels.itemNotice ?? "", { item });
   if (gain.kind === "holodisk") {
     return {
@@ -108,7 +115,9 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     const name = labels[ECONOMY.paints[gain.scheme]?.label ?? ""] ?? gain.scheme;
     return {
       accent: ECONOMY.paints[gain.scheme]?.top ?? NOTICE_ACCENTS.weapon,
-      icon: { vector: uiIconUrl("icon-shop-ship-paint") },
+      // The scheme's shop swatch shows its main colour and wing-tip accent; the roller stands in
+      // only until the ship materials load.
+      icon: { vector: paintSwatch?.(gain.scheme) ?? uiIconUrl("icon-shop-ship-paint") },
       key: `paint:${gain.scheme}`,
       kind: "upgrade",
       label: label(fill(labels.itemPaint ?? "", { paint: name })),
@@ -426,6 +435,8 @@ export function createItemNotices(
   parent: HTMLElement,
   options: {
     readonly labels: Labels;
+    /** Each paint scheme's shop swatch, the paint notice's icon. */
+    readonly paintSwatch?: PaintSwatch;
     readonly reducedMotion: () => boolean;
     /** Retained for existing callers; in-place notices do not invoke it. */
     readonly onArrive: (target: NoticeTarget) => void;
@@ -507,7 +518,7 @@ export function createItemNotices(
     push(gains: readonly ItemGain[]): void {
       for (const gain of gains) {
         if (gain.kind !== "ammo") {
-          queue.push(gainNotice(options.labels, gain));
+          queue.push(gainNotice(options.labels, options.paintSwatch, gain));
         }
       }
     },

@@ -243,8 +243,16 @@ export function materialClassicShipFrame(scene: object, heading: number): string
 }
 
 /** A shop swatch uses the same cached material source as heading 48 of its paint. */
-export function materialShipSwatch(scene: object, paint: string): string | undefined {
+function materialShipSwatch(scene: object, paint: string): string | undefined {
   return materialCaches.get(scene)?.source.ship(paint, 48)?.url;
+}
+
+/** A paint's swatch in the shop, the Paint card and the paint notice, Classic's from its frame. */
+export function paintSwatch(scene: object, paint: string): string | undefined {
+  return (
+    materialShipSwatch(scene, paint) ??
+    (paint === ECONOMY.defaultPaint ? materialClassicShipFrame(scene, 48) : undefined)
+  );
 }
 
 /** Pose sources are assembled on paint selection, never during jump animation frames. */
