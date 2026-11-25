@@ -972,8 +972,9 @@ enemies and keep their own waiting behaviour.
   ring, 60 beyond the leader's spacing radius, whether engaged or idle. The
   stations of one leader's escorts turn together on the leader's seeded side, so
   the escorts keep their equal angles. The ring's rate moves each escort along
-  it at the minimum speed plus its leader's top patrol speed, so an escort keeps
-  the floor even when its leader moves against the ring. An escort on station
+  it at the minimum speed plus its leader's current top pace (its patrol speed,
+  or its combat advance while it sieges), so an escort keeps the floor even
+  when its leader moves against the ring. An escort on station
   keeps its nose on Ada and strafes while it sees her, even beyond its firing
   range, and faces its travel otherwise.
 - **Turret holds:** a frigate or capital that would hold a point instead circles
@@ -987,14 +988,17 @@ enemies and keep their own waiting behaviour.
   seeded from the pack ID, through the pack anchor, the mean of the live members'
   homes. Members fly it in ship ID order, each at least the pair spacing behind
   the one ahead along the route: the larger of the galaxy's member spacing and
-  rA + rB + 20, where rA and rB are the two ships' spacing radii. When the route
+  rA + rB + 20, where each of rA and rB is the larger of that ship's spacing
+  radius and its collision radius. When the route
   is shorter than the sum of the pair spacings around it, its radii grow until it
   fits. An engaged pack that loses sight of Ada searches on the same shared route
   through her last-seen position. Escorts with a live leader follow the escort
   rule instead.
 - **Peers and obstacles:** patrol, investigation and the holds above apply the
   existing peer separation, as engaged steering does. A ship that a peer still
-  blocks slides along the contact on its circling side instead of stopping. A
+  blocks never stops: two ships meeting head-on both turn the same way round
+  the contact and pass, and a ship wedged between peers leaves along the
+  average contact direction. A
   solo ship whose obstacle steering finds no clear course reverses its course,
   and a solo patroller flips its patrol direction, instead of stopping; pack
   members keep their pack's seeded direction. A position limit,
@@ -1003,17 +1007,17 @@ enemies and keep their own waiting behaviour.
 - **Stand-down:** when Phantom's drones stand down after the flagship is
   salvaged, they stop firing and patrol home.
 
-| Value              | Setting                                                |
-| ------------------ | ------------------------------------------------------ |
-| Minimum speed      | 0.25 of current top speed                              |
-| Turret hold circle | Radius 2r around the held point                        |
-| Siege circling     | Radius 2r around Ada once within 4r                    |
-| Pack pair spacing  | Larger of the galaxy's member spacing and rA + rB + 20 |
-| Miner edge offset  | r + 20 from the drawn outline to the miner's centre    |
-| Miner tracing pace | The minimum speed                                      |
-| Miner dwell        | Seeded 6 to 12 seconds per rock, from arrival          |
-| Miner recent picks | The last 3 rocks are excluded from the next pick       |
-| Miner leash        | The existing 2000 industrial home radius               |
+| Value              | Setting                                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Minimum speed      | 0.25 of current top speed                                                                                  |
+| Turret hold circle | Radius 2r around the held point                                                                            |
+| Siege circling     | Radius 2r around Ada once within 4r                                                                        |
+| Pack pair spacing  | Larger of the galaxy's member spacing and rA + rB + 20 (each r the larger of spacing and collision radius) |
+| Miner edge offset  | r + 20 from the drawn outline to the miner's centre                                                        |
+| Miner tracing pace | The minimum speed                                                                                          |
+| Miner dwell        | Seeded 6 to 12 seconds per rock, from arrival                                                              |
+| Miner recent picks | The last 3 rocks are excluded from the next pick                                                           |
+| Miner leash        | The existing 2000 industrial home radius                                                                   |
 
 These values are authored data.
 
