@@ -342,20 +342,24 @@ for medium, 3 to 8 for large and 4 to 8 for huge.
 
 ## Crystal rocks
 
-A crystal rock is a medium, large or huge asteroid with purple ore crystals set
-into its crown, the same ore as the [ore nugget](cartwheel-props.md#ore-nugget).
-Small rocks are never crystal rocks. One per-rock flag, `crystals`, drives both
-its look and its yield: a destroyed crystal rock skips the ammo roll and gives
-at least 1 ore, with any further ore and Stardust rolled as usual
+A crystal rock is a medium, large or huge asteroid with purple ore set into its
+crown, the same ore as the [ore nugget](cartwheel-props.md#ore-nugget). Small
+rocks are never crystal rocks. One per-rock flag, `crystals`, drives both its
+look and its yield: a destroyed crystal rock skips the ammo roll and gives at
+least 1 ore, with any further ore and Stardust rolled as usual
 ([Economy](../gameplay/economy.md#earning-stardust)).
 
-- `full`: every Cartwheel ore-field rock (medium and large). Three crystals on a
-  medium rock, five on a large one.
-- `small`: about 1 in 4 medium, large and huge placed rocks in every galaxy
-  except Cartwheel, whose rocks outside ore fields have no flag. One crystal on
-  a medium rock, two on a large or huge one.
-- Rule: a placed rock outside an ore field, of a size in `ordinary.sizes`, in a
-  galaxy not in `ordinary.except`, has `crystals: "small"` when
+| Size   | `small` (1 in 4 outside Cartwheel) | `full` (every ore-field rock)                        |
+| ------ | ---------------------------------- | ---------------------------------------------------- |
+| medium | Flush vein, about 12% of the crown | Flush vein, about 30% of the crown                   |
+| large  | Two standing crystals              | Five standing crystals (the resource rocks' cluster) |
+| huge   | Two standing crystals              | None: ore fields place no huge rocks                 |
+
+Selection:
+
+- `full`: every Cartwheel ore-field rock (medium and large).
+- `small`: a placed rock outside an ore field, of a size in `ordinary.sizes`
+  (medium, large, huge), in a galaxy not in `ordinary.except` (Cartwheel), when
   `unit(flight.seed, placement id, "crystals") < 0.25`. `unit` is the
   world-seeded hash in `src/model/asteroids.ts` that rock spin already uses:
   FNV-1a over `{id}:{salt}` from the seed, then a final mix, over 2^32. The
@@ -363,32 +367,41 @@ at least 1 ore, with any further ore and Stardust rolled as usual
   rock's id (its object id without the `moving:` prefix), so it keeps that
   rock's flag. The flight seed and placement ids are stable across Continue,
   so the flag is too.
-- A flagged rock draws `variants[asteroid][crystals]`. Unflagged rocks draw
-  their plain shape.
+- Any other rock has no flag and draws its plain shape. A flagged rock draws
+  `variants[asteroid][crystals]`.
 
-Each variant (`asteroid-{shape}-crystals-{full|small}`) uses its plain shape's
+Each variant (`asteroid-{shape}-crystals-{small|full}`) uses its plain shape's
 model, scale, frames, spin and drift, and its frame, pivot, `collision` and
-`footprint` are its plain shape's exactly: the build fails otherwise. The
-crystals sit inside the plain rock's drawn silhouette in every frame, with half
-a frame px to spare, so collision and the light-field keyline are unchanged.
-Checked per frame against the plain rock's shipped SVG at 4 px per frame px:
-no crystal pixel outside it.
+`footprint` are its plain shape's exactly: the build fails otherwise. Nothing
+crosses the plain rock's drawn outline in any frame, so collision and the
+light-field keyline are unchanged. Checked per frame against the plain rock's
+shipped SVG at 4 px per frame px: no ore pixel outside it.
 
-- Crystals grow from the crown facets nearest the rock's vertical axis, each
-  tilted along its facet's normal, from the resource rocks' cluster design. Each
-  takes the largest of 1 to 0.2 of its design size (length, with width held at
-  0.7 or more) that fits inside the silhouette in every frame and stays clear of
-  the crystals before it; one that fits at no size is left out, with its seat.
-- Static rocks keep crystals at 0.3 to 1 of the design size. Spinning medium
-  rocks fit only 0.2 to 0.35 (a short gem on an ore-toned seat facet), and the
-  full clusters of `asteroid-m2` to `m4` keep one crystal, so they draw the same
-  as their small clusters.
-- Crystal faces take the ore ramp (`ramp`, as `ore` in the resource rocks) and
-  seat facets its shadow tones, under the same world light.
+- Standing crystals (large and huge) grow from the crown facets nearest the
+  rock's vertical axis, each tilted along its facet's normal, from the resource
+  rocks' cluster design. Each takes the largest of 1 to 0.2 of its design size
+  (length, with width held at 0.7 or more) that keeps half a frame px inside the
+  silhouette in every frame and clear of the crystals before it; one that fits
+  at no size is left out, with its seat. Static rocks fit them at 0.3 to 1.
+- A spinning medium rock's crown meets its outline in some frames, so it takes
+  a flush vein instead: a connected patch of upward crown facets, grown from the
+  one nearest the vertical axis through neighbours that are not thin slivers,
+  until it covers 12% (small) or 30% (full) of the upward facet area. Each vein
+  facet carries a low crystal point inset by 22% of the facet, three facets
+  meeting at a point raised 0.07 to 0.35 of the facet's size, the highest that
+  keeps half a frame px inside the silhouette in every frame; a facet whose
+  point fits at none stays flat. Small veins cover 2 or 3 facets and full veins
+  6 to 9, so every medium shape shows a visible difference.
+- Colour: one ore ramp and the play stone's tone mapping under the world light.
+  Standing crystals take the ore ramp (`ramp`) and their seat facets its
+  shadow tones (`#A56490`, `#774667`, `#58324C`); vein facets and their points
+  take those shadow tones, so medium veins show the same darker purples as the
+  large rocks' crystals.
 - The SVGs declare frame size, as the plain rocks' do.
 
-Sheets in `public/art/asteroids/`: `asteroid-m{1..4}-crystals-{small,full}-sheet.svg`
-(24 frames each), `asteroid-crystals-full-static-sheet.svg` (`l1` to `l3`) and
+Sheets in `public/art/asteroids/`:
+`asteroid-m{1..4}-crystals-{small,full}-sheet.svg` (24 frames each),
+`asteroid-crystals-full-static-sheet.svg` (`l1` to `l3`) and
 `asteroid-crystals-small-static-sheet.svg` (`l1` to `l3`, `h1` to `h3`).
 
 `asteroid-crystal-rows.json` holds `crystals`, the key the runtime reads from
