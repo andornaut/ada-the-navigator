@@ -11,7 +11,6 @@ export const PHASER_BUILD: PhaserBuild = {
     "Class",
     "Curves",
     "DOM",
-    "Geom",
     "Physics",
     "Plugins",
     "Sound",

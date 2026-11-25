@@ -207,6 +207,14 @@ export class StoryShell {
     this.status.dataset.asteroids = ready ? "art" : "placeholder";
   }
 
+  /** Counts on the status line the motif triangles the backdrop filled in its last frame. */
+  setBackdropPlates(count: number): void {
+    const value = String(count);
+    if (this.status.dataset.plates !== value) {
+      this.status.dataset.plates = value;
+    }
+  }
+
   /** Marks the status line while every enemy in view draws Art's frames, not its placeholder. */
   setEnemyArt(ready: boolean): void {
     const value = ready ? "art" : "placeholder";

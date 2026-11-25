@@ -34,6 +34,7 @@ function fixture() {
     backdropRules: {},
     galaxyBackdrops: new Map(),
     model: { galaxyMapShownInFlight: false },
+    shell: { setBackdropPlates: vi.fn() },
     starImages: [],
     textures: { exists: vi.fn((key: string) => key === "d"), remove: vi.fn() },
   };

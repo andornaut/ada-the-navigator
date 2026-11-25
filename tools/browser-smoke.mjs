@@ -5686,10 +5686,14 @@ try {
     const name = `backdrop-${GALAXY_ID[galaxy]}-${width}x${height}.png`;
     const pixels = await sampleBackdrop(name, ramps, 20);
     assert.ok(pixels.near > 20, `${name} must draw its muted near backdrop rocks`);
+    // The built bundle's Phaser cuts the motif into triangles (Geom), and the field fills them.
+    const plateTriangles = Number(await page.locator("#game-status").getAttribute("data-plates"));
+    assert.ok(plateTriangles > 0, `${name} must draw its motif field`);
     backdropProofs[galaxy][`${width}x${height}`] = {
       drawCalls: await drawCallsPerFrame(),
       image: name,
       nearRockPixels: pixels.near,
+      plateTriangles,
     };
   }
   async function proveBackdrops([galaxy, ...rest]) {
@@ -5717,7 +5721,7 @@ try {
     proofs: backdropProofs,
   });
   events.checks.push(
-    "Every galaxy's flight draws its muted near backdrop rocks at 1280x720 and 720x360",
+    "Every galaxy's flight draws its motif field and muted near backdrop rocks at 1280x720 and 720x360",
   );
 
   // Phaser proof (gameplay/rules.md, Phaser): Ada fires at a held retaliator while thrusting and

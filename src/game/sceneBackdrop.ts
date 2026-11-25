@@ -138,15 +138,17 @@ export function drawBackdropLayers(
     image.setVisible(false);
   }
   const used = new Set<string>();
+  let plateTriangles = 0;
   if (galaxy !== null && rules && backdrop) {
     const camera = flight ? ([flight.player.x, flight.player.y] as const) : ([0, 0] as const);
     drawSky(scene, galaxy, backdrop, !flight && presentationGalaxy !== null);
     drawFarItems(scene, rules, galaxy, backdrop, camera, used);
     drawDecorations(scene, galaxy, backdrop, camera, used);
-    drawPlates(scene, rules, backdrop, camera);
+    plateTriangles = drawPlates(scene, rules, backdrop, camera);
     drawStars(scene, rules, backdrop, camera);
     drawStreaks(scene, rules, backdrop, camera);
   }
+  scene.shell.setBackdropPlates(plateTriangles);
   for (const [key, image] of scene.backdropItems) {
     if (!used.has(key)) {
       image.destroy();
@@ -292,14 +294,14 @@ function trianglesOf(motif: GalaxyBackdrop["plates"]["motif"]): readonly number[
 
 /**
  * L1: the motif plates in view, darker steps multiplied by their grey, lighter ones screened,
- * each drawn as its motif's triangles so hole rings stay clear.
+ * each drawn as its motif's triangles so hole rings stay clear. Returns the triangles filled.
  */
 export function drawPlates(
   scene: BackdropContext,
   rules: BackdropRules,
   backdrop: GalaxyBackdrop,
   camera: readonly [number, number],
-): void {
+): number {
   scene.plateInk ??= {
     multiply: scene.add
       .graphics()
@@ -313,6 +315,7 @@ export function drawPlates(
       .setVertexRoundMode("off"),
   };
   const triangles = trianglesOf(backdrop.plates.motif);
+  let filled = 0;
   for (const plate of viewPlates(rules, backdrop, camera)) {
     const grey = plate.multiply === undefined ? 0 : Math.round(plate.multiply * 255);
     const ink =
@@ -325,8 +328,10 @@ export function drawPlates(
       const b = points[triangles[k + 1]!]!;
       const c = points[triangles[k + 2]!]!;
       ink.fillTriangle(a[0], a[1], b[0], b[1], c[0], c[1]);
+      filled++;
     }
   }
+  return filled;
 }
 
 /** L3: both star depths as tinted antialiased discs, unsnapped, with their twinkle. */
