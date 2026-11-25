@@ -87,9 +87,10 @@ export function readShipMaterials(
     contract.version !== 2 ||
     !Array.isArray(root.paths) ||
     !root.paths.length ||
+    // Path data only; an empty path is a fragment the producer clipped away, and draws nothing.
     !root.paths.every(
       (path: unknown) =>
-        typeof path === "string" && /^[Mm][MmLlHhVvCcSsQqTtAaZzEe0-9,.\s+-]*$/.test(path),
+        typeof path === "string" && /^(?:[Mm][MmLlHhVvCcSsQqTtAaZzEe0-9,.\s+-]*)?$/.test(path),
     ) ||
     !Array.isArray(root.slots) ||
     root.slots.length !== SHIP_MATERIAL_SLOTS.length ||

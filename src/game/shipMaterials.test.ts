@@ -133,6 +133,13 @@ describe("semantic ship material sources", () => {
     const foreignXml = fixture();
     foreignXml.paths[0] = "<script>alert(1)</script>";
     expect(readShipMaterials(expected, foreignXml)).toBeUndefined();
+    // An empty path draws nothing and is retained; a path that is not path data is refused.
+    const empty = fixture();
+    empty.paths[0] = "";
+    expect(readShipMaterials(expected, empty)?.paths[0]).toBe("");
+    const text = fixture();
+    text.paths[0] = "hello";
+    expect(readShipMaterials(expected, text)).toBeUndefined();
     const changedAlpha = fixture();
     changedAlpha.ship.headings[0]!.draws[0]!.alpha = 0.5;
     expect(readShipMaterials(expected, changedAlpha)).toBeUndefined();
