@@ -5,6 +5,7 @@
 import type { Point } from "./projection.ts";
 import {
   type Mesh,
+  meshBall,
   meshBox,
   meshExtrude,
   meshFace,
@@ -35,6 +36,9 @@ export type Paint = {
   // Cold armour of the frigates, and its shaded underside.
   armour: Tones;
   under: Tones;
+  // Cold armour of the capitals, and its shaded keel.
+  capital: Tones;
+  keel: Tones;
 };
 
 const INK = [0x18, 0x14, 0x25] as const;
@@ -61,6 +65,7 @@ const paint = (
   gun: Tones,
   dark: Tones,
   armour: Tones,
+  capital: Tones,
 ): Paint => ({
   hull,
   plate: mat(plate),
@@ -76,14 +81,20 @@ const paint = (
   metal: mat("#a1aaa0"),
   armour,
   under: [armour[1], armour[2], shade(armour[2], 0.8)],
+  capital,
+  keel: [capital[1], capital[2], shade(capital[2], 0.8)],
 });
 
 export const FLEET_PAINT: Readonly<Record<FleetFamily, Paint>> = {
-  coral: paint(["#d68b72", "#a8654f", "#7f4b3d"], "#e6a890", "#c27a62", AMBER, VISOR, [
-    "#809caa",
-    "#58717f",
-    "#405563",
-  ]),
+  coral: paint(
+    ["#d68b72", "#a8654f", "#7f4b3d"],
+    "#e6a890",
+    "#c27a62",
+    AMBER,
+    VISOR,
+    ["#809caa", "#58717f", "#405563"],
+    ["#777f9c", "#555c77", "#394159"],
+  ),
   claim: paint(
     ["#bd7042", "#924e28", "#703921"],
     "#b5a998",
@@ -91,17 +102,26 @@ export const FLEET_PAINT: Readonly<Record<FleetFamily, Paint>> = {
     ["#fa6d38", "#bc4524", "#8c331b"],
     ["#2b1d1c", "#1f1514", "#17100f"],
     ["#8d9f89", "#627967", "#43594b"],
+    ["#788e85", "#536d65", "#38524d"],
   ),
-  garnet: paint(["#e47485", "#b0495b", "#823643"], "#deb7b6", "#c65c6d", AMBER, VISOR, [
-    "#9b91af",
-    "#706985",
-    "#514c68",
-  ]),
-  needle: paint(["#d65b6c", "#a14350", "#75313a"], "#d7cfc9", "#b44858", AMBER, VISOR, [
-    "#879eaf",
-    "#607889",
-    "#40586a",
-  ]),
+  garnet: paint(
+    ["#e47485", "#b0495b", "#823643"],
+    "#deb7b6",
+    "#c65c6d",
+    AMBER,
+    VISOR,
+    ["#9b91af", "#706985", "#514c68"],
+    ["#8584aa", "#5c5e83", "#3e4165"],
+  ),
+  needle: paint(
+    ["#d65b6c", "#a14350", "#75313a"],
+    "#d7cfc9",
+    "#b44858",
+    AMBER,
+    VISOR,
+    ["#879eaf", "#607889", "#40586a"],
+    ["#887b9c", "#605573", "#443952"],
+  ),
 };
 
 // Speed jet ramps, slow to fast, per family.
@@ -249,7 +269,7 @@ export type FleetHeavy = {
   mounts: { id: string; at: Point; capped: boolean }[];
 };
 export type FleetCraft = {
-  archetype: "swarm" | "fighter" | "interceptor" | "retaliator" | "frigate";
+  archetype: "swarm" | "fighter" | "interceptor" | "retaliator" | "frigate" | "capital";
   // The frame key of the shipped rows the craft replaces: `enemy-{stem}-{index}`.
   stem: string;
   // The sidecar key and file stem.
@@ -263,12 +283,12 @@ export type FleetCraft = {
   muzzle?: Point;
   // The aimed launcher of a retaliator, which carries the `pod` top.
   mount?: FleetMount;
-  // The engine and weapon mounts of a frigate.
+  // The engines, command tower and weapon mounts of a frigate or capital.
   heavy?: FleetHeavy;
   // The families that fly the craft, when not all of them.
   families?: readonly FleetFamily[];
   // Where a family's rows go when not under `stem` in the family's own manifest.
-  rows?: Partial<Record<FleetFamily, { stem: string; manifest?: "whirlpool" }>>;
+  rows?: Partial<Record<FleetFamily, { stem: string; manifest?: "whirlpool" | "phantom" }>>;
   // The material of the destruction flecks.
   fleck: Tones;
   // Destruction wedge cut angles in degrees about the origin, forward at -90 and port at 0.
@@ -536,11 +556,58 @@ export function railTop(p: Paint, r: number): FleetTop {
   return { mesh, muzzles: [[1.6 * r, 0, 0.66 * r]] };
 }
 
+// Scattershot `spread`: a flared fan body with a wide bright mouth. Five shot origins span the
+// mouth.
+export function spreadTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  meshExtrude(
+    mesh,
+    [
+      [-0.6 * r, -0.4 * r, 0],
+      [1.4 * r, -1.2 * r, 0],
+      [1.4 * r, 1.2 * r, 0],
+      [-0.6 * r, 0.4 * r, 0],
+    ],
+    [0, 0, 0.6 * r],
+    p.turret,
+  );
+  bx(mesh, 1.4 * r, 1.58 * r, -1.1 * r, 1.1 * r, 0.1 * r, 0.5 * r, p.gun);
+  return {
+    mesh,
+    muzzles: [-0.88, -0.44, 0, 0.44, 0.88].map((w): Point => [1.58 * r, w * r, 0.3 * r]),
+  };
+}
+
+// Charged Lance `lance`: a capacitor block and two short broad rails round a dark slot.
+export function lanceTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -1.0 * r, 0.1 * r, -0.75 * r, 0.75 * r, 0, 0.75 * r, p.turret);
+  bx(mesh, 0, 1.5 * r, -0.3 * r, 0.3 * r, 0.1 * r, 0.36 * r, p.dark);
+  for (const side of [1, -1]) {
+    bx(mesh, 0, 1.7 * r, side * 0.3 * r, side * 0.72 * r, 0.1 * r, 0.6 * r, p.gun);
+  }
+  return { mesh, muzzles: [[1.7 * r, 0, 0.35 * r]] };
+}
+
+// Mine Layer `hopper`: a square tray holding two round mines, each with a bright cap. It holds
+// its aim aft, and its shot origin is the tray's leading edge.
+export function hopperTop(p: Paint, r: number): FleetTop {
+  const mesh: Mesh = [];
+  bx(mesh, -0.9 * r, 0.9 * r, -0.95 * r, 0.95 * r, 0, 0.4 * r, p.turret);
+  for (const side of [1, -1]) {
+    const [l, w] = [0.15 * r, side * 0.47 * r];
+    meshBall(mesh, [l, w, 0.55 * r], [0.4 * r, 0.4 * r, 0.4 * r], p.dark, 12, 6);
+    meshTube(mesh, [l, w, 0.9 * r], [l, w, 1.02 * r], 0.16 * r, 0.16 * r, p.gun, 8);
+  }
+  return { mesh, muzzles: [[0.9 * r, 0, 0.2 * r]] };
+}
+
 // The top designs a class's mounts carry.
 export const HEAVY_TOPS: Readonly<
-  Record<"frigate", Readonly<Record<string, (p: Paint, r: number) => FleetTop>>>
+  Record<"frigate" | "capital", Readonly<Record<string, (p: Paint, r: number) => FleetTop>>>
 > = {
   frigate: { gun: gunTop, rail: railTop },
+  capital: { spread: spreadTop, lance: lanceTop, hopper: hopperTop },
 };
 export const HEAVY_MOUNT_RADIUS = MOUNT_RADIUS;
 
@@ -760,11 +827,19 @@ function miningFreighter(p: Paint): FleetCraft {
 // ------------------------------------------------------------------ frigates
 
 // A short pedestal in armour under a mount on a sloped deck.
-const pedestal = (m: Mesh, p: Paint, l: number, w: number, z0: number, z1: number) =>
-  meshTube(m, [l, w, z0], [l, w, z1], MOUNT_RADIUS * 1.15, MOUNT_RADIUS * 1.15, p.armour, 16);
+const pedestal = (
+  m: Mesh,
+  p: Paint,
+  l: number,
+  w: number,
+  z0: number,
+  z1: number,
+  tones: Tones = p.armour,
+) => meshTube(m, [l, w, z0], [l, w, z1], MOUNT_RADIUS * 1.15, MOUNT_RADIUS * 1.15, tones, 16);
 
 // A drive cone: its dark nozzle flaring aft from l1 to l0, with the glow in its mouth while the
 // engine runs. A wrecked cone loses its flared lip and its mouth is dark, the first with one ember.
+// `r` and `r1` are the mouth and throat radii, and `rd` the wrecked mouth's.
 function driveCone(
   m: Mesh,
   p: Paint,
@@ -773,15 +848,17 @@ function driveCone(
   l0: number,
   l1: number,
   state: "intact" | "destroyed" | "ember",
+  { r, r1, rd }: { r: number; r1: number; rd: number } = { r: 6.6, r1: 4.4, rd: 5.4 },
 ): void {
   if (state === "intact") {
-    pod(m, l0, l1, w, z, 6.6, p.dark, 18, { r1: 4.4, aft: p.glow });
+    pod(m, l0, l1, w, z, r, p.dark, 18, { r1, aft: p.glow });
     return;
   }
   const cut = l0 + (l1 - l0) * 0.25;
   const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
-  pod(m, cut, l1, w, z, 5.4, p.dark, 18, { r1: 4.4, aft: breach });
-  if (state === "ember") bx(m, cut - 0.4, cut, w - 1.2, w + 1.2, z - 1.2, z + 1.2, p.gun);
+  const ember = (1.2 * r) / 6.6;
+  pod(m, cut, l1, w, z, rd, p.dark, 18, { r1, aft: breach });
+  if (state === "ember") bx(m, cut - 0.4, cut, w - ember, w + ember, z - ember, z + ember, p.gun);
 }
 
 // Slim delta: fine prow, narrow hull, low ridge citadel, thick wedge wings set aft and twin
@@ -984,6 +1061,628 @@ function twinHull(p: Paint): FleetCraft {
   };
 }
 
+// ------------------------------------------------------------------ capitals
+
+const CAPITAL_PAIRS = ["weapon", "weapon-rear", "claw", "stern"] as const;
+// A mount pair: its station and half-breadth, and its pedestal's foot and top heights.
+type Pair = readonly [l: number, w: number, z0: number, z1: number];
+type Pairs = Readonly<Record<(typeof CAPITAL_PAIRS)[number], Pair>>;
+
+// The pedestals of a capital's eight mounts, in its armour.
+function pedestals(m: Mesh, p: Paint, pairs: Pairs): void {
+  for (const [l, w, z0, z1] of Object.values(pairs)) {
+    for (const side of [1, -1]) pedestal(m, p, l, side * w, z0, z1, p.capital);
+  }
+}
+
+// A capital's eight mounts in fill order. The `claw` and `stern` pairs have capped plates.
+const capitalMounts = (pairs: Pairs): FleetHeavy["mounts"] =>
+  CAPITAL_PAIRS.flatMap((name) => {
+    const [l, w, , z1] = pairs[name];
+    const plated = name === "claw" || name === "stern";
+    return [
+      { id: `${name}-left`, at: [l, -w, z1] as Point, capped: plated },
+      { id: `${name}-right`, at: [l, w, z1] as Point, capped: plated },
+    ];
+  });
+
+// The command tower: a dark block from l0 to l1 with one bright window on its forward face.
+// Wrecked, it is a low scorched stump with a breach and one ember.
+function tower(p: Paint, l0: number, l1: number, z0: number, z1: number, hw = 5.5): FleetBlock {
+  const intact: Mesh = [];
+  bx(intact, l0, l1, -hw, hw, z0, z1, p.dark);
+  bx(intact, l1, l1 + 0.8, 1.3 - hw, hw - 1.3, z1 - 4, z1 - 1.8, p.gun);
+  const destroyed: Mesh = [];
+  const top = z0 + (z1 - z0) * 0.4;
+  const middle = (l0 + l1) / 2;
+  const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
+  bx(destroyed, l0, l1, -hw, hw, z0, top, p.dark);
+  meshTube(destroyed, [middle, 0, top], [middle, 0, top + 0.1], 0.6 * hw, 0.6 * hw, breach, 12);
+  bx(destroyed, l1, l1 + 0.4, -1.2, 1.2, top - 2.4, top, p.gun);
+  return { id: "command", role: "command", at: [middle, 0, (z0 + z1) / 2], intact, destroyed };
+}
+
+// A capital's two engines, one drive cone each at half-breadth w: the cone flares aft from l1 to
+// l0, with mouth radius r and throat radius r1. `engine-left` is at negative breadth.
+function engines(
+  p: Paint,
+  w: number,
+  z: number,
+  l0: number,
+  l1: number,
+  r: number,
+  r1: number,
+): { blocks: FleetBlock[]; mouths: FleetMouth[] } {
+  const size = { r, r1, rd: r1 + (r - r1) / 2.2 };
+  const sides = [
+    ["engine-left", -w],
+    ["engine-right", w],
+  ] as const;
+  return {
+    blocks: sides.map(([id, at]) => {
+      const cone = (state: "intact" | "ember"): Mesh => {
+        const m: Mesh = [];
+        driveCone(m, p, at, z, l0, l1, state, size);
+        return m;
+      };
+      return {
+        id,
+        role: "engine" as const,
+        at: [(l0 + l1) / 2, at, z] as Point,
+        intact: cone("intact"),
+        destroyed: cone("ember"),
+      };
+    }),
+    mouths: sides.map(([id, at]) => ({ at: [l0, at, z] as Point, radius: r, hardpoint: id })),
+  };
+}
+
+// The one band of a capital, in the family's hull colour, wrapped round the hull's section
+// between two stations.
+const band = (m: Mesh, p: Paint, fore: Station, aft: Station) => hull(m, [fore, aft], p.hull);
+
+type CapitalSpec = Pick<FleetCraft, "stem" | "key" | "design" | "families"> & {
+  rows?: FleetCraft["rows"];
+  body: (m: Mesh) => void;
+  command: FleetBlock;
+  drive: { blocks: FleetBlock[]; mouths: FleetMouth[] };
+  pairs: Pairs;
+};
+const capital = (p: Paint, { body, command, drive, pairs, ...craft }: CapitalSpec): FleetCraft => ({
+  archetype: "capital",
+  ...craft,
+  parts: [
+    solid("body", (m) => {
+      body(m);
+      pedestals(m, p, pairs);
+    }),
+  ],
+  mouths: drive.mouths,
+  heavy: { blocks: [command, ...drive.blocks], mounts: capitalMounts(pairs) },
+  fleck: p.capital,
+  cuts: [],
+});
+
+// Hammer: a deep full-width bow bar with a raised centre block, a narrow neck, a body rising to
+// the stern and two proud engine housings. `weapon` stands on the bow bar's ends, `claw` inboard
+// of it, `weapon-rear` on the engine housings and `stern` on the body aft of the tower.
+function hammer(p: Paint): FleetCraft {
+  return capital(p, {
+    stem: "capital",
+    key: "fleetCapital",
+    design: "Hammer",
+    families: ["coral"],
+    body: (m) => {
+      hull(
+        m,
+        [
+          [20, 5, -4, 3],
+          [8, 9, -7, 3],
+          [-50, 9, -7, 3],
+        ],
+        p.keel,
+      );
+      hull(
+        m,
+        [
+          [84, 34, 5, 12, 2, 2],
+          [76, 56.3, 0, 20, 4, 3],
+          [58, 56.3, 0, 20, 4, 3],
+          [52, 42, 2, 16, 3, 2],
+        ],
+        p.capital,
+      );
+      hull(
+        m,
+        [
+          [80, 9, 20, 25, 2, 2],
+          [58, 11, 20, 28, 2, 2],
+        ],
+        p.capital,
+      );
+      hull(
+        m,
+        [
+          [58, 9, 2, 18, 3, 2],
+          [8, 9, 2, 18, 3, 2],
+        ],
+        p.capital,
+      );
+      hull(
+        m,
+        [
+          [14, 17, 0, 26, 5, 3],
+          [-52, 17, 0, 31, 5, 3],
+          [-60, 14, 2, 27, 4, 3],
+        ],
+        p.capital,
+      );
+      band(m, p, [6, 17.3, -0.1, 26.9, 5.1, 3.1], [-1, 17.3, -0.1, 27.45, 5.1, 3.1]);
+      for (const side of [1, -1]) {
+        hull(
+          m,
+          [
+            [-18, 7.5, 2, 21, 3, 3],
+            [-56, 7.5, 2, 21, 3, 3],
+          ],
+          p.dark,
+          side * 24.5,
+        );
+      }
+    },
+    command: tower(p, -34, -20, 28, 37),
+    drive: engines(p, 24.5, 11, -75, -55, 8.2, 5.5),
+    pairs: {
+      weapon: [67, 43, 19, 20],
+      "weapon-rear": [-36, 24.5, 20, 21],
+      claw: [67, 22, 19, 20],
+      stern: [-47, 8, 28, 31],
+    },
+  });
+}
+
+// Manta dreadnought: a tall spine body rising aft, thick swept wedge wings and two thick tapered
+// tail housings carrying the engines. `weapon` stands forward on the wings, `weapon-rear`
+// outboard, `claw` on the wing roots at the bow and `stern` on the body's stern.
+function mantaDreadnought(p: Paint): FleetCraft {
+  // The wing deck height by breadth, set as the body is built.
+  let top: (w: number) => number = () => 0;
+  const body = (m: Mesh) => {
+    hull(
+      m,
+      [
+        [52, 4, -5, 3],
+        [38, 8, -10, 3],
+        [-40, 10, -10, 3],
+      ],
+      p.keel,
+    );
+    hull(
+      m,
+      [
+        [72, 3, 4, 12, 1, 1],
+        [44, 12, 0, 28, 6, 3],
+        [-38, 15, 0, 36, 6, 3],
+        [-46, 12, 2, 31, 5, 3],
+      ],
+      p.capital,
+    );
+    band(m, p, [-21, 14.7, -0.1, 34.65, 6.1, 3.1], [-27, 14.9, -0.1, 35.2, 6.1, 3.1]);
+    top = wedge(
+      m,
+      [
+        [50, 9],
+        [34, 26],
+        [2, 56.3],
+        [-12, 54],
+        [-18, 32],
+        [-40, 20],
+        [-40, 10],
+      ],
+      1,
+      24,
+      9,
+      p.capital,
+    );
+    for (const side of [1, -1]) {
+      hull(
+        m,
+        [
+          [-34, 8.5, 2, 25, 3, 3],
+          [-70, 6, 4, 16, 2, 2],
+        ],
+        p.dark,
+        side * 15,
+      );
+    }
+  };
+  body([]);
+  return capital(p, {
+    stem: "capitalManta",
+    key: "fleetCapitalManta",
+    design: "Manta dreadnought",
+    families: ["coral"],
+    // Whirlpool alone flies the Manta dreadnought, so its rows are Whirlpool's.
+    rows: { coral: { stem: "capitalManta", manifest: "whirlpool" } },
+    body,
+    command: tower(p, 0, 14, 30, 41),
+    drive: engines(p, 15, 10, -81, -69, 6.6, 4.6),
+    pairs: {
+      weapon: [14, 30, top(30) - 2, top(30) + 1],
+      "weapon-rear": [-7, 45, top(45) - 2, top(45) + 1],
+      claw: [36, 19, top(19) - 2, top(19) + 1],
+      stern: [-36, 6.6, 33, 36.8],
+    },
+  });
+}
+
+// Outrigger carrier: a tall box bow, a single-band hull, wedge wings to two short outrigger
+// hulls and a tall stern block. `weapon` stands on the wings, `weapon-rear` on the outrigger
+// hulls, `claw` on the box bow and `stern` on the stern block.
+function outriggerCarrier(p: Paint): FleetCraft {
+  const beam = 47.3;
+  // The wing deck height by breadth, set as the body is built.
+  let top: (w: number) => number = () => 0;
+  const body = (m: Mesh) => {
+    hull(
+      m,
+      [
+        [56, 5, -4, 3],
+        [44, 7, -7, 3],
+        [-50, 7, -7, 3],
+      ],
+      p.keel,
+    );
+    hull(
+      m,
+      [
+        [86, 9, 4, 16, 2, 2],
+        [72, 16, 0, 26, 5, 3],
+        [52, 16, 0, 26, 5, 3],
+      ],
+      p.capital,
+    );
+    hull(
+      m,
+      [
+        [56, 12, 0, 22, 5, 3],
+        [-50, 12, 0, 22, 5, 3],
+      ],
+      p.capital,
+    );
+    band(m, p, [38, 12.3, -0.1, 22.3, 5.1, 3.1], [30, 12.3, -0.1, 22.3, 5.1, 3.1]);
+    top = wedge(
+      m,
+      [
+        [10, 11],
+        [0, 40],
+        [-40, 40],
+        [-46, 11],
+      ],
+      2,
+      16,
+      9,
+      p.capital,
+    );
+    for (const side of [1, -1]) {
+      hull(
+        m,
+        [
+          [10, 4, 4, 12, 1, 1],
+          [-2, 9, 0, 20, 4, 3],
+          [-48, 9, 0, 20, 4, 3],
+        ],
+        p.capital,
+        side * beam,
+      );
+    }
+    hull(
+      m,
+      [
+        [-46, 15, 0, 29, 5, 3],
+        [-66, 15, 0, 29, 5, 3],
+      ],
+      p.dark,
+    );
+  };
+  body([]);
+  return capital(p, {
+    stem: "capital",
+    key: "fleetCapitalOutrigger",
+    design: "Outrigger carrier",
+    families: ["claim"],
+    body,
+    command: tower(p, -30, -16, 21, 31),
+    drive: engines(p, beam, 10, -66, -47, 8.2, 5.5),
+    pairs: {
+      weapon: [-24, 28, top(28) - 2, top(28) + 1],
+      "weapon-rear": [-28, beam, 19, 20],
+      claw: [63, 8.5, 25, 26],
+      stern: [-56, 8, 28, 29],
+    },
+  });
+}
+
+// Broad wing: a wedge prow rising to a tall stern, a deep keel, thick short-chord wedge wings
+// and a nacelle riding each wing. Each nacelle is an engine. `weapon` stands forward on the
+// wings, `weapon-rear` outboard, `claw` on the prow and `stern` on the hull's stern.
+function broadWing(p: Paint): FleetCraft {
+  const nacelle = { w: 31, z: 24, r: 6.8, aft: -60, shoulder: -14, nose: -6 };
+  // The wing deck height by breadth, set as the body is built.
+  let top: (w: number) => number = () => 0;
+  const body = (m: Mesh) => {
+    hull(
+      m,
+      [
+        [50, 4, -5, 3],
+        [36, 8, -10, 3],
+        [-40, 10, -10, 3],
+      ],
+      p.keel,
+    );
+    hull(
+      m,
+      [
+        [80, 3, 4, 12, 1, 1],
+        [60, 10, 0, 22, 5, 3],
+        [30, 14, 0, 30, 6, 3],
+        [-40, 16, 0, 36, 6, 3],
+        [-52, 13, 2, 31, 5, 3],
+      ],
+      p.capital,
+    );
+    band(m, p, [23, 14.5, -0.1, 30.9, 6.1, 3.1], [17, 14.67, -0.1, 31.4, 6.1, 3.1]);
+    top = wedge(
+      m,
+      [
+        [24, 13],
+        [-14, 56.3],
+        [-38, 56.3],
+        [-44, 15],
+      ],
+      1,
+      24,
+      9,
+      p.capital,
+    );
+  };
+  body([]);
+  const sides = [
+    ["engine-left", -nacelle.w],
+    ["engine-right", nacelle.w],
+  ] as const;
+  // Wrecked, a nacelle loses its aft end and glow, and its mouth holds one ember.
+  const build = (w: number, wrecked: boolean): Mesh => {
+    const m: Mesh = [];
+    const { aft, nose, r, shoulder, z } = nacelle;
+    const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
+    const cut = wrecked ? aft + 8 : aft;
+    pod(m, cut, shoulder, w, z, r, p.dark, 18, { aft: wrecked ? breach : p.glow });
+    pod(m, shoulder, nose, w, z, r, p.dark, 18, { r1: 2.6 });
+    if (wrecked) bx(m, cut - 0.4, cut, w - 1.2, w + 1.2, z - 1.2, z + 1.2, p.gun);
+    return m;
+  };
+  return capital(p, {
+    stem: "capital",
+    key: "fleetCapitalBroad",
+    design: "Broad wing",
+    families: ["garnet"],
+    body,
+    command: tower(p, -14, 0, 32, 43),
+    drive: {
+      blocks: sides.map(([id, w]) => ({
+        id,
+        role: "engine" as const,
+        at: [(nacelle.aft + nacelle.nose) / 2, w, nacelle.z] as Point,
+        intact: build(w, false),
+        destroyed: build(w, true),
+      })),
+      mouths: sides.map(([id, w]) => ({
+        at: [nacelle.aft, w, nacelle.z] as Point,
+        radius: nacelle.r,
+        hardpoint: id,
+      })),
+    },
+    pairs: {
+      weapon: [2, 24, top(24) - 2, top(24) + 1],
+      "weapon-rear": [-28, 46.5, top(46.5) - 2, top(46.5) + 1],
+      claw: [44, 6, 24, 27],
+      stern: [-45, 7.5, 31, 34.6],
+    },
+  });
+}
+
+// Crossbow: a long spire rising aft in tiers, short thick shoulders carrying a gun pod each,
+// stern stub wings and twin drive cones in one stern block. `weapon` stands on the gun pods,
+// `weapon-rear` on the stub wings, `claw` on the prow and `stern` on the hull aft of the upper
+// tier.
+function crossbow(p: Paint): FleetCraft {
+  const beam = 47.3;
+  // The wing deck height by breadth, set as the body is built.
+  let top: (w: number) => number = () => 0;
+  const body = (m: Mesh) => {
+    hull(
+      m,
+      [
+        [60, 4, -4, 3],
+        [46, 7, -7, 3],
+        [-52, 9, -7, 3],
+      ],
+      p.keel,
+    );
+    hull(
+      m,
+      [
+        [84, 3, 5, 11, 1, 1],
+        [62, 10, 0, 18, 4, 3],
+        [16, 12, 0, 24, 5, 3],
+        [-54, 14, 0, 27, 5, 3],
+        [-62, 11, 2, 23, 4, 3],
+      ],
+      p.capital,
+    );
+    band(m, p, [16, 12.3, -0.1, 24.3, 5.1, 3.1], [9, 12.5, -0.1, 24.6, 5.1, 3.1]);
+    hull(
+      m,
+      [
+        [2, 6.5, 24, 30, 2, 2],
+        [-40, 7.5, 26, 34, 2, 2],
+      ],
+      p.capital,
+    );
+    wedge(
+      m,
+      [
+        [34, 11],
+        [34, 40],
+        [6, 40],
+        [2, 11],
+      ],
+      1,
+      20,
+      14,
+      p.capital,
+    );
+    top = wedge(
+      m,
+      [
+        [-32, 12],
+        [-40, 31],
+        [-54, 31],
+        [-54, 12],
+      ],
+      2,
+      16,
+      8,
+      p.capital,
+    );
+    for (const side of [1, -1]) {
+      hull(
+        m,
+        [
+          [44, 3, 5, 11, 1, 1],
+          [34, 9, 0, 19, 4, 3],
+          [4, 9, 0, 19, 4, 3],
+          [-4, 5, 3, 14, 2, 2],
+        ],
+        p.capital,
+        side * beam,
+      );
+    }
+    bx(m, -68, -54, -16, 16, 1, 24, p.dark);
+  };
+  body([]);
+  return capital(p, {
+    stem: "capital",
+    key: "fleetCapitalCrossbow",
+    design: "Crossbow",
+    families: ["needle"],
+    body,
+    command: tower(p, -28, -15, 32, 39, 4.8),
+    // The two cones stand clear of each other, so each wrecks on its own.
+    drive: engines(p, 8, 12, -82, -64, 7.9, 5.4),
+    pairs: {
+      weapon: [20, beam, 18, 19],
+      "weapon-rear": [-46, 22.5, top(22.5) - 2, top(22.5) + 1],
+      claw: [44, 5.6, 18, 21],
+      stern: [-48, 7.6, 24, 27.4],
+    },
+  });
+}
+
+// Forked fortress: a twin-prong bow, a deep keel, a tall hull, short thick wedge wings, two proud
+// nacelle housings and a stern citadel. `weapon` stands forward on the wings, `weapon-rear`
+// outboard, `claw` on the prongs and `stern` on the nacelle housings.
+function forkedFortress(p: Paint): FleetCraft {
+  // The wing deck height by breadth, set as the body is built.
+  let top: (w: number) => number = () => 0;
+  const body = (m: Mesh) => {
+    hull(
+      m,
+      [
+        [66, 4, -5, 3],
+        [50, 9, -10, 3],
+        [-58, 11, -10, 3],
+        [-66, 7, -6, 3],
+      ],
+      p.keel,
+    );
+    for (const side of [1, -1]) {
+      hull(
+        m,
+        [
+          [90, 2.5, 7, 14, 1, 1],
+          [74, 8, 0, 24, 5, 3],
+          [40, 8, 0, 24, 5, 3],
+        ],
+        p.capital,
+        side * 15.5,
+      );
+      hull(
+        m,
+        [
+          [-22, 8.5, 2, 28, 4, 3],
+          [-62, 8.5, 2, 28, 4, 3],
+        ],
+        p.dark,
+        side * 33,
+      );
+    }
+    hull(
+      m,
+      [
+        [58, 13, 0, 30, 6, 3],
+        [-22, 13, 0, 30, 6, 3],
+        [-26, 18, 0, 33, 6, 3],
+        [-62, 18, 0, 33, 6, 3],
+      ],
+      p.capital,
+    );
+    band(m, p, [35, 13.3, -0.1, 30.3, 6.1, 3.1], [28, 13.3, -0.1, 30.3, 6.1, 3.1]);
+    top = wedge(
+      m,
+      [
+        [30, 12],
+        [24, 44],
+        [12, 56.3],
+        [-18, 56.3],
+        [-36, 40],
+        [-46, 17],
+      ],
+      1,
+      22,
+      10,
+      p.capital,
+    );
+    hull(
+      m,
+      [
+        [18, 8, 30, 36, 3, 2],
+        [-40, 8, 33, 42, 3, 2],
+      ],
+      p.capital,
+    );
+  };
+  body([]);
+  return capital(p, {
+    stem: "capitalForked",
+    key: "fleetCapitalForked",
+    design: "Forked fortress",
+    families: ["coral"],
+    // Phantom alone flies the Forked fortress, so its rows are Phantom's.
+    rows: { coral: { stem: "capitalForked", manifest: "phantom" } },
+    body,
+    command: tower(p, -26, -12, 39, 48),
+    drive: engines(p, 33, 15, -80, -61, 10, 6.4),
+    pairs: {
+      weapon: [15, 40, top(40) - 2, top(40) + 1],
+      "weapon-rear": [-9, 47, top(47) - 2, top(47) + 1],
+      claw: [56, 15.5, 23, 24],
+      stern: [-44, 33, 27, 28],
+    },
+  });
+}
+
 export const fleet = (p: Paint): FleetCraft[] => [
   pincer(p),
   arrowhead(p),
@@ -993,4 +1692,10 @@ export const fleet = (p: Paint): FleetCraft[] => [
   miningFreighter(p),
   slimDelta(p),
   twinHull(p),
+  hammer(p),
+  mantaDreadnought(p),
+  outriggerCarrier(p),
+  broadWing(p),
+  crossbow(p),
+  forkedFortress(p),
 ];

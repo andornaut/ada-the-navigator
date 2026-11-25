@@ -41,7 +41,7 @@ import {
 } from "./projection.ts";
 import { FLECK_DISTANCE, FLECKS, SEEDS } from "./shard-geometry.ts";
 import { shardPalettePack } from "./shard-palette-pack.ts";
-import type { Fill } from "./silhouette.ts";
+import { check, type Fill, rasterize } from "./silhouette.ts";
 import { type Mesh, meshClip, meshExtrude, meshScale } from "./solid.ts";
 import { svgText } from "./svg-text.ts";
 import { type Fragment, loopArea, outlines, tidy, type V2, visibleFragments } from "./visible.ts";
@@ -50,6 +50,8 @@ import { type Fragment, loopArea, outlines, tidy, type V2, visibleFragments } fr
 const SILHOUETTE_TOLERANCE = 0.4;
 // The small collar and top sprites take the first tolerance that passes the shared checker.
 const PART_TOLERANCES = [0.4, 0.3, 0.2, 0.1];
+// The smallest fragment, in square frame px, that a body's fragment parts keep.
+const SLIVER = 0.25;
 // The jet triangle's base as a share of the drive mouth's diameter.
 const MOUTH_SHARE = 0.75;
 
@@ -88,15 +90,14 @@ const at = (k: number, [x, y, z]: Point): Point => [x * k, y * k, z * k];
 // The smallest multiple of 8 frame px that holds `points` about the pivot `origin` at every
 // heading, with a 1 px margin.
 function fit(points: readonly Point[], origin: Point = [0, 0, 0]): number {
-  const extent = Math.max(
-    ...Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-      const [ox, oy] = projectAt(0, 0, view(yaw)(origin));
-      return points.flatMap((p) => {
-        const [x, y] = projectAt(0, 0, view(yaw)(p));
-        return [Math.abs(x - ox), Math.abs(y - oy)];
-      });
-    }).flat(),
-  );
+  let extent = 0;
+  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
+    const [ox, oy] = projectAt(0, 0, view(yaw)(origin));
+    for (const point of points) {
+      const [x, y] = projectAt(0, 0, view(yaw)(point));
+      extent = Math.max(extent, Math.abs(x - ox), Math.abs(y - oy));
+    }
+  }
   return Math.ceil((2 * extent + 2) / 8) * 8;
 }
 const vertices = (mesh: Mesh) => mesh.flatMap((face) => face.points);
@@ -182,14 +183,16 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
       }),
     ];
     result.tops = Object.fromEntries(
-      Object.entries(HEAVY_TOPS[craft.archetype as "frigate"]).map(([name, build]) => {
-        const top = build(paint, HEAVY_MOUNT_RADIUS);
-        const mesh = scale(top.mesh);
-        return [
-          name,
-          { mesh, muzzles: top.muzzles.map((point) => at(k, point)), frame: fit(vertices(mesh)) },
-        ];
-      }),
+      Object.entries(HEAVY_TOPS[craft.archetype as keyof typeof HEAVY_TOPS]).map(
+        ([name, build]) => {
+          const top = build(paint, HEAVY_MOUNT_RADIUS);
+          const mesh = scale(top.mesh);
+          return [
+            name,
+            { mesh, muzzles: top.muzzles.map((point) => at(k, point)), frame: fit(vertices(mesh)) },
+          ];
+        },
+      ),
     );
     // The hull frame holds every hardpoint state, and every top at every aim on every mount.
     const reach = Math.max(
@@ -300,7 +303,25 @@ function separate(visible: readonly Fragment[]): Fragment[][] {
   return [...groups.values()];
 }
 
-export type Frame = { svg: string; silhouette: string; collision: V2[][] };
+// The strictly convex hull of a fragment, whose rounded points can leave a vertex a hair inside
+// an edge.
+function convexHull(points: readonly V2[]): V2[] {
+  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const turn = (o: V2, a: V2, b: V2) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const chain = (from: readonly V2[]) => {
+    const out: V2[] = [];
+    for (const point of from) {
+      while (out.length >= 2 && turn(out.at(-2)!, out.at(-1)!, point) <= 1e-9) out.pop();
+      out.push(point);
+    }
+    return out.slice(0, -1);
+  };
+  return [...chain(sorted), ...chain(sorted.toReversed())];
+}
+
+// `share` is the part of a hardpoint's base that the hull leaves visible, from 0 to 1.
+export type Frame = { svg: string; silhouette: string; collision: V2[][]; share?: number };
 
 // One frame of `size`: notch tips first, then the tone paths, with its collision parts.
 function draw(
@@ -309,16 +330,40 @@ function draw(
   size: number,
   visible: readonly Fragment[],
   tolerances: readonly number[] = [SILHOUETTE_TOLERANCE],
+  hideable = false,
 ): Frame {
+  // A hardpoint's base that the hull hides whole at this heading is an empty frame.
+  if (hideable && visible.length === 0) {
+    const empty = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><title>${title}</title></svg>`;
+    return { svg: svgText(empty), silhouette: "", collision: [] };
+  }
   // The tracer follows one outline, so each separate body traces on its own.
-  const bodies = separate(visible).map((body, index) =>
-    traceEnemyFills(
-      index === 0 ? id : `${id} body ${index}`,
-      fills(body),
-      [size, size],
-      tolerances,
-    ),
-  );
+  const bodies = separate(visible).map((body, index) => {
+    const name = index === 0 ? id : `${id} body ${index}`;
+    try {
+      return traceEnemyFills(name, fills(body), [size, size], tolerances);
+    } catch (error) {
+      // A body the tracer cannot follow, such as a crescent with a hairline tip, takes its own
+      // convex fragments as its parts, under the same checks.
+      const collision = body
+        .map(({ points }) => convexHull(points.map(([x, y]): V2 => [px2(x), px2(y)])))
+        .filter((loop) => Math.abs(loopArea(loop)) >= SLIVER);
+      try {
+        check(
+          name,
+          collision,
+          rasterize(
+            body.map(({ points }) => points),
+            size,
+            size,
+          ),
+        );
+      } catch {
+        throw error;
+      }
+      return { collision, tips: [] };
+    }
+  });
   const traced = {
     collision: bodies.flatMap(({ collision }) => collision),
     tips: bodies.flatMap(({ tips }) => tips),
@@ -366,13 +411,19 @@ function partFrame(
     view(yaw),
     1,
   );
-  return draw(
-    `${craft.key} ${label} ${yaw}`,
-    `${craft.design} ${label} ${yaw}`,
-    size,
-    shift(visible, size / 2 - ax, size / 2 - ay),
-    PART_TOLERANCES,
-  );
+  const area = (shown: readonly Fragment[]) =>
+    shown.reduce((sum, { points }) => sum + Math.abs(loopArea(points)), 0);
+  return {
+    ...draw(
+      `${craft.key} ${label} ${yaw}`,
+      `${craft.design} ${label} ${yaw}`,
+      size,
+      shift(visible, size / 2 - ax, size / 2 - ay),
+      PART_TOLERANCES,
+      true,
+    ),
+    share: area(visible) / area(visibleFragments(mesh, view(yaw))),
+  };
 }
 
 // The retaliator mount's collar at one hull heading.
@@ -579,30 +630,72 @@ export function heavyFrames(craft: Scaled): HeavyFrames {
   };
 }
 
-// The shipped frigate layout (art/heavies.md): the fill order, the weapon each top draws and the
-// mounts each pair of route positions arms.
-const FRIGATE_FILL = ["port", "starboard", "spine", "bow"];
-const FRIGATE_WEAPON_TOPS = {
-  heavyMissile: { top: "rail", aim: "target" },
-  laser: { top: "gun", aim: "target" },
+// The shipped frigate and capital layouts (art/heavies.md): the fill order, the weapon each top
+// draws and the mounts each pair of route positions arms.
+type HeavyLayout = {
+  fill: readonly string[];
+  weaponTops: Readonly<Record<string, { top: string; aim: "target" | "aft" }>>;
+  tiers: readonly (readonly [readonly [number, number], number])[];
 };
-const FRIGATE_TIERS: readonly (readonly [readonly [number, number], number])[] = [
-  [[1, 2], 2],
-  [[3, 4], 3],
-  [[5, 6], 4],
-];
+export const HEAVY_LAYOUTS: Readonly<Record<keyof typeof HEAVY_TOPS, HeavyLayout>> = {
+  frigate: {
+    fill: ["port", "starboard", "spine", "bow"],
+    weaponTops: {
+      heavyMissile: { top: "rail", aim: "target" },
+      laser: { top: "gun", aim: "target" },
+    },
+    tiers: [
+      [[1, 2], 2],
+      [[3, 4], 3],
+      [[5, 6], 4],
+    ],
+  },
+  capital: {
+    fill: [
+      "weapon-left",
+      "weapon-right",
+      "weapon-rear-left",
+      "weapon-rear-right",
+      "claw-left",
+      "claw-right",
+      "stern-left",
+      "stern-right",
+    ],
+    weaponTops: {
+      chargedLance: { top: "lance", aim: "target" },
+      mineLayer: { top: "hopper", aim: "aft" },
+      scattershot: { top: "spread", aim: "target" },
+    },
+    tiers: [
+      [[1, 2], 4],
+      [[3, 4], 6],
+      [[5, 6], 8],
+    ],
+  },
+};
+
+// Whether the hull hides a weapon mount at one heading: less than half of its intact collar
+// shows. A hidden mount's top is not drawn.
+export const hidden = (drawn: HeavyFrames, layer: Layer, yaw: number): boolean =>
+  layer.pivot !== undefined && drawn.bases.get(baseKey(layer.id, "intact"))![yaw]!.share! < 0.5;
 
 // One frame's collision parts moved by (dx, dy).
 const moved = (frames: readonly Frame[], index: number, dx: number, dy: number) =>
   frames[index]!.collision.map((part) => part.map(([x, y]) => [px2(x + dx), px2(y + dy)]));
 
-// The version 1 hardpoints file of a frigate, in the shipped frigate's schema, with `hull` and
-// each hardpoint's `offset` from the hull pivot in frame px, x to starboard and y aft.
+// The version 1 hardpoints file of a frigate or capital, in the shipped class's schema, with
+// `hull` and each hardpoint's `offset` from the hull pivot in frame px, x to starboard and y aft.
 function heavyHardpoints(craft: Scaled, hull: readonly Frame[], drawn: HeavyFrames): string {
   const layers = craft.layers!;
+  const { fill, tiers, weaponTops } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_TOPS];
+  const mounts = layers.filter(({ role }) => role === "turret").map(({ id }) => id);
+  if (mounts.join() !== fill.join()) throw new Error(`${craft.key}: mounts are not in fill order`);
+  for (const { top } of Object.values(weaponTops)) {
+    if (!craft.tops![top]) throw new Error(`${craft.key}: no ${top} top`);
+  }
   const cappable = (id: string) => "capped" in layers.find((layer) => layer.id === id)!.states;
-  for (const [, armed] of FRIGATE_TIERS) {
-    const unarmed = FRIGATE_FILL.slice(armed).filter((id) => !cappable(id));
+  for (const [, armed] of tiers) {
+    const unarmed = fill.slice(armed).filter((id) => !cappable(id));
     if (unarmed.length > 0) throw new Error(`${craft.key}: ${unarmed.join(", ")} has no cap`);
   }
   return json({
@@ -621,12 +714,12 @@ function heavyHardpoints(craft: Scaled, hull: readonly Frame[], drawn: HeavyFram
         offset: [round(x), round(y)],
       };
     }),
-    fill: FRIGATE_FILL,
-    weaponTops: FRIGATE_WEAPON_TOPS,
-    tiers: FRIGATE_TIERS.map(([positions, armed]) => ({
+    fill,
+    weaponTops,
+    tiers: tiers.map(([positions, armed]) => ({
       positions,
       mounts: Object.fromEntries(
-        FRIGATE_FILL.map((id, index) => [id, index < armed ? { armed: true } : null]),
+        fill.map((id, index) => [id, index < armed ? { armed: true } : null]),
       ),
     })),
     headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
@@ -640,6 +733,7 @@ function heavyHardpoints(craft: Scaled, hull: readonly Frame[], drawn: HeavyFram
             id: layer.id,
             anchor: placed.anchor,
             ...(placed.pivot ? { pivot: placed.pivot } : {}),
+            ...(hidden(drawn, layer, yaw) ? { hidden: true } : {}),
             collision: Object.fromEntries(
               Object.keys(layer.states).map((state) => [
                 state,
@@ -1031,7 +1125,10 @@ async function main() {
           group.length === 1 ? sheet(size, group[0]!.frames, group[0]!.ids) : packRows(size, group),
         );
       }
-      if (family !== "coral") continue;
+      // A craft's data is written once, with the first family that flies it.
+      if (family !== FLEET_FAMILIES.find((each) => craft.families?.includes(each) ?? true)) {
+        continue;
+      }
       put("/art/enemies/", `${craft.key}-jets.json`, jets(craft, frames.hull));
       if (frames.bases && frames.tops) {
         put(
@@ -1062,7 +1159,7 @@ async function main() {
       mkdirSync(`${art}${directory.slice("/art/".length)}`, { recursive: true });
       for (const [file, path] of writeOnce(directory, new Map(), group)) {
         paths.set(`${directory}${file}`, path);
-        if (family === "coral" && !file.endsWith("-sheet.svg")) shared.set(file, path);
+        if (!file.endsWith("-sheet.svg")) shared.set(file, path);
       }
     }
     for (const { craft, first, sheet: set } of staged) {
@@ -1078,8 +1175,8 @@ async function main() {
         ),
       );
     }
-    // Every family reads the coral folder's jets, hardpoints and shard pack: the jets and shards
-    // carry its colours and the hardpoints have none.
+    // Every family reads the core folder's jets, hardpoints and shard pack: the jets and shards
+    // carry every family's colours and the hardpoints have none.
     for (const craft of flown) {
       const { manifest, stem } = home(craft, family);
       const hardpointFile = craft.layers ? "mounts" : "turret";
