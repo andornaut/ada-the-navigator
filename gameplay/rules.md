@@ -1508,7 +1508,12 @@ apply to the planner's output.
 - An enemy group tries up to 24 anchors within 256 world units (half a chunk).
   The group, with all its members and escorts, is placed whole or not at all: the
   planner tries other anchors, then drops the group. Group sizes follow each
-  galaxy's roster in [Ships](ships.md).
+  galaxy's roster in [Ships](ships.md); only fighter and swarm groups shrink to
+  fit an admission budget, and a group is placed whole at its admitted size.
+- Ambient enemy groups keep at least one
+  [encounter spacing](ships.md#ambient-admission) from each other, checked
+  against groups in neighbouring chunks. Budgets and densities do not change
+  with it.
 - Adjacent group members are spaced, centre to centre, by the sum of their hull
   radii plus the 20-world-unit gap: two frigates sit 120 world units apart.
 - Stations and points of interest never block a spawn. The existing exclusion
@@ -1518,29 +1523,33 @@ apply to the planner's output.
   units (the corridor half width) clear of the quadrant boundaries. Feature
   rocks use only shapes that fit a quadrant between lanes, which leaves Large
   shapes; Huge shapes do not fit.
-- Two planner rules have no table entry: half of Cartwheel's claim-jumper groups
-  are placed at ore fields ([Ships](ships.md#cartwheel-roster)), and each moving
-  rock's path is checked against launch points, arrivals and protected areas.
+- Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
+  fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
+  path over the next 30 seconds is checked against station protected areas and
+  launch and arrival safe radii; the Needle channel is not checked.
 - Once moving, a moving rock may overlap or hit any object.
 
-Densities are mean counts per 3x3-chunk area, one ninth per chunk. Enemy columns
-count groups; `frigate` and `capital` groups include their escorts. Regions are
-the [geographic regions](ships.md#ambient-admission) by distance from the galactic
+Densities are mean counts per open 3x3-chunk area, one ninth per chunk: each
+kind's request shrinks by the fraction of the area covered by the exclusion zones
+that apply to that kind. Enemy columns count groups; `frigate` and `capital`
+groups include their escorts. Regions are the
+[geographic regions](ships.md#ambient-admission) by distance from the galactic
 center: inner below 10000 world units, middle from 10000 to below 25000 and
-outer from 25000 (planner bands 0, 1 and 2). Rock targets are interim until they
-are re-measured with enemy groups placed first. Within the blend bands at
-9000–11000 and 24000–26000, planner requests blend linearly between the two
-regions' values, as [composition weights](ships.md#ambient-admission) do, and
-acceptance areas there are judged against the blended request.
+outer from 25000 (planner bands 0, 1 and 2). Resource and feature targets are
+interim until they are re-measured with enemy groups placed first. Every density
+blends linearly between the two regions' values across 9000–11000 and
+24000–26000, and acceptance areas there are judged against the blended request.
+Group sizes switch at 10000 and 25000, as budgets and archetype limits do in
+[Ships](ships.md#ambient-admission).
 
 | Galaxy    | Region | Slot rocks | Resources | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
 | --------- | ------ | ---------: | --------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
 | Sunflower | inner  |      29.84 |      12.2 |      1.5 |         3.64 |   0.363 |     0.306 |             0 |            0 |         0 |         0 |
 |           | middle |      29.84 |      12.3 |      1.6 |         3.64 |   0.244 |     0.288 |             0 |        0.150 |         0 |         0 |
 |           | outer  |      29.84 |      12.1 |      1.5 |         3.64 |   0.356 |     0.231 |         0.100 |        0.050 |         0 |         0 |
-| Whirlpool | inner  |       28.0 |       9.9 |      1.3 |         4.00 |   0.181 |     0.231 |         0.094 |        0.131 |     0.113 |         0 |
-|           | middle |       28.0 |      10.4 |      1.2 |         4.00 |   0.231 |     0.175 |         0.144 |        0.081 |     0.169 |         0 |
-|           | outer  |       27.7 |       9.9 |      1.1 |         4.00 |   0.231 |     0.275 |         0.138 |        0.063 |     0.138 |         0 |
+| Whirlpool | inner  |      29.84 |       9.9 |      1.3 |         4.00 |   0.181 |     0.231 |         0.094 |        0.131 |     0.113 |         0 |
+|           | middle |      29.84 |      10.4 |      1.2 |         4.00 |   0.231 |     0.175 |         0.144 |        0.081 |     0.169 |         0 |
+|           | outer  |      29.84 |       9.9 |      1.1 |         4.00 |   0.231 |     0.275 |         0.138 |        0.063 |     0.138 |         0 |
 | Needle    | inner  |      29.84 |      12.4 |      1.3 |         4.37 |   0.206 |     0.238 |         0.194 |        0.075 |     0.138 |     0.063 |
 |           | middle |      29.84 |      12.7 |      1.4 |         4.37 |   0.163 |     0.244 |         0.188 |        0.075 |     0.169 |     0.069 |
 |           | outer  |      29.84 |      12.6 |      1.4 |         4.37 |   0.144 |     0.238 |         0.213 |        0.069 |     0.131 |     0.100 |
@@ -1548,8 +1557,8 @@ acceptance areas there are judged against the blended request.
 |           | middle |      29.84 |      12.2 |      1.5 |         4.73 |   0.150 |     0.244 |         0.138 |        0.056 |     0.213 |     0.088 |
 |           | outer  |      29.84 |      12.3 |      1.4 |         4.73 |   0.169 |     0.275 |         0.094 |        0.094 |     0.256 |     0.094 |
 | Cartwheel | inner  |      29.84 |      12.1 |      1.4 |         5.09 |   0.238 |     0.419 |         0.125 |        0.119 |     0.131 |     0.050 |
-|           | middle |       28.7 |      11.7 |      1.4 |         5.09 |   0.275 |     0.356 |         0.081 |        0.100 |     0.175 |     0.044 |
-|           | outer  |       28.8 |      12.0 |      1.3 |         5.09 |   0.225 |     0.369 |         0.119 |        0.113 |     0.125 |     0.038 |
+|           | middle |      29.84 |      11.7 |      1.4 |         5.09 |   0.275 |     0.356 |         0.081 |        0.100 |     0.175 |     0.044 |
+|           | outer  |      29.84 |      12.0 |      1.3 |         5.09 |   0.225 |     0.369 |         0.119 |        0.113 |     0.125 |     0.038 |
 | Phantom   | inner  |      29.84 |      12.3 |      1.4 |         5.46 |   0.156 |     0.219 |         0.194 |        0.094 |     0.356 |     0.119 |
 |           | middle |      29.84 |      12.2 |      1.4 |         5.46 |   0.156 |     0.238 |         0.131 |        0.075 |     0.350 |     0.144 |
 |           | outer  |      29.84 |      12.3 |      1.3 |         5.46 |   0.150 |     0.231 |         0.131 |        0.069 |     0.400 |     0.106 |

@@ -126,7 +126,7 @@ target is that a fully upgraded Ada at position 6 meets about the same pressure 
 a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
-enemy-only weapon fire rate and the enemy group densities in [Spawn targets](rules.md#spawn-targets) at every position, so the whole curve can be
+enemy-only weapon fire rate and the encounter rate at every position, so the whole curve can be
 tuned at once. Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
 independently of hull HP, part HP and mount counts, so tuning them leaves
 the economy unchanged. It is not a player setting: there is one forgiving difficulty.
@@ -373,7 +373,9 @@ existing escort fallback. Capital formations and legacy compatibility remain
 unchanged. Existing required-guard assertions remain required.
 
 Ambient enemy group densities by galaxy and region are in
-[Spawn targets](rules.md#spawn-targets).
+[Spawn targets](rules.md#spawn-targets). Each galaxy's encounter rate below sets
+its encounter spacing: the quiet distance of 1800 world units, rounded up to whole
+512-unit chunks (at least three), divided by the square root of the rate.
 
 Every galaxy uses three geographic regions measured from the galactic center at
 the encounter location: inner below 10000 world units, middle from 10000 to below
@@ -386,14 +388,14 @@ boundary (9000–11000 and 24000–26000). Numeric budgets and archetype limits 
 discretely at 10000 and 25000; they do not interpolate. The fresh-chunk ledger
 continues to exclude standing, teleports and revisits for quest pacing.
 
-| Position | Galaxy    | Inner / middle / outer budget | Archetype limit |
-| -------: | --------- | ----------------------------- | --------------- |
-|        1 | Sunflower | 3 / 4 / 5                     | 1 / 2 / 2       |
-|        2 | Whirlpool | 4 / 5 / 6                     | 2               |
-|        3 | Needle    | 4 / 5 / 6                     | 3               |
-|        4 | Andromeda | 5 / 6 / 7                     | 4               |
-|        5 | Cartwheel | 5 / 6 / 7                     | 4               |
-|        6 | Phantom   | 6 / 7 / 8                     | 4               |
+| Position | Galaxy    | Encounter rate | Encounter spacing (world units) | Inner / middle / outer budget | Archetype limit |
+| -------: | --------- | -------------: | ------------------------------: | ----------------------------- | --------------- |
+|        1 | Sunflower |          1.725 |                            1559 | 3 / 4 / 5                     | 1 / 2 / 2       |
+|        2 | Whirlpool |         1.8975 |                            1487 | 4 / 5 / 6                     | 2               |
+|        3 | Needle    |           2.07 |                            1423 | 4 / 5 / 6                     | 3               |
+|        4 | Andromeda |         2.2425 |                            1368 | 5 / 6 / 7                     | 4               |
+|        5 | Cartwheel |          2.415 |                            1318 | 5 / 6 / 7                     | 4               |
+|        6 | Phantom   |         2.5875 |                            1273 | 6 / 7 / 8                     | 4               |
 
 Sunflower retains its stage-specific roster and type gates below. Later
 galaxies retain their other encounter groups, heavy weights and archetype limits.
@@ -501,8 +503,9 @@ An ore field is a seeded cluster of 6 to 10 resource-bearing rocks about 900
 world units across, placed like stations: at least 3000 world units apart and
 1500 from the hub, stations and quantum jump arrivals. A field holds only its
 resource rocks: chunk generation keeps ordinary asteroids out of a 600 world
-unit radius around its centre, its 450 radius plus a 150 margin. Half of claim-jumper
-groups are placed at ore fields.
+unit radius around its centre, its 450 radius plus a 150 margin. A claim-jumper
+group whose seeded anchor lies within half the
+[encounter spacing](#ambient-admission) of an ore field gathers there half the time.
 
 The `platform` is Cartwheel's one new archetype: fixed guards need a ship that
 holds its position, and every existing archetype moves. It reuses `siege`, whose
