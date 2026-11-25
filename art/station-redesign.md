@@ -2,8 +2,8 @@
 
 Production plan for the stations, outposts, project solids and hostile
 stations: each structure is one model of connected solids, drawn with
-depth-resolved occlusion in flat tones. Stages 1 and 2 (the model solids, the stations, the
-outposts and the project solids) are built; stage 3 is planned.
+depth-resolved occlusion in flat tones. All three stages are built: the model solids and the stations, the outposts
+and project solids, and the hostile stations with the Claim platform.
 
 ## Rules
 
@@ -162,6 +162,60 @@ pivot, berth and dock.
 The producer leaves the manifests and `projects.json` alone, so the shipped
 rows and sheets are unchanged and nothing reads the new files until the switch.
 
+## Hostile stations
+
+`node art/tools/hostile-stations.ts` writes each family's hostile station and
+the Claim turret platform at 16 headings, and
+[hostile-station-rows.json](hostile-station-rows.json). Reruns are
+byte-identical. Each design has no engine or command part.
+
+| Design                 | Key                    | Row prefix                    | Folder                    | Frame | Display | Mounts                                                                            |
+| ---------------------- | ---------------------- | ----------------------------- | ------------------------- | ----: | ------: | --------------------------------------------------------------------------------- |
+| Coral hostile station  | `hostileStationCoral`  | `enemy-hostileStation`        | `/art/enemies/`           |   376 |   164.5 | `weapon-0` to `-3` on the upper arm tips, `-4` to `-7` on the lower               |
+| Claim hostile station  | `hostileStationClaim`  | `enemy-claim-hostileStation`  | `/art/cartwheel/enemies/` |   376 |   164.5 | `weapon-0` to `-7` on the wheel's corners                                         |
+| Garnet hostile station | `hostileStationGarnet` | `enemy-garnet-hostileStation` | `/art/andromeda/enemies/` |   376 |   164.5 | `weapon-0` to `-5` on the upper deck's corners, `-6` and `-7` on the lower deck's |
+| Claim turret platform  | `platformWheel`        | `enemy-claim-platform`        | `/art/cartwheel/enemies/` |   216 |    94.5 | `port`, `starboard`, `aft` on the wheel's corners                                 |
+
+- Forms: coral is four arms over four, turned 45 degrees, with lamps on the
+  hub only. Claim is one open eight-sided wheel over a solid eight-sided deck
+  with four broad blades on its flats. Garnet is two six-sided decks, the lower
+  one larger and turned 30 degrees. The platform is one open eight-sided wheel
+  on a heavy hub.
+- Size: each hull is scaled so its widest breadth as it turns is its contract
+  span, 7 Ada widths for a station and 4 for the platform
+  (`src/data/enemyDimensions.ts`), as the fleet producer sizes its craft. The
+  frame is the smallest multiple of 8 frame px that holds the hull and every
+  base at every heading; display size is `frame * 0.4375`.
+- Files per design: `{key}-sheet.svg` (16 hull roots, four to a row),
+  `{key}-bases-sheet.svg` and `{key}-hardpoints.json`.
+- Hull rows are `{prefix}-{k}`. The platform's 16 hull rows are new: its
+  shipped hull is the one fixed frame `enemy-claim-platform`.
+- Bases are `{prefix}-{mount}-{state}-{k}` in a 32 frame px frame (display 14)
+  centred on the mount's anchor, in three states: `intact` (the collar),
+  `capped` (the collar closed by a low plate) and `destroyed` (a scorched
+  stump with a breach). A base is drawn with its hull and keeps only the part
+  the hull leaves visible. Bases that draw alike share one root through
+  `svgSheetMember`.
+- Mounts fit the enemy fleet's tops: collar radius 4.6 display px and height
+  1.2, in the fleet's collar, plate and breach tones per family. A top's pivot
+  is the centre of the collar's upper face.
+- `{key}-hardpoints.json` is the shipped version 1 schema. `hardpoints`,
+  `fill`, `weaponTops` and `tiers` are the shipped file's. `headings[k]` holds
+  `order` (the hull, then the mounts far to near), each mount's `anchor`,
+  `pivot` and per-state `collision`, the hull's `collision` and `banner`. A
+  mount whose intact collar shows less than half at a heading is `hidden`
+  there, and its top is not drawn: 28 mount headings of the coral station's
+  lower arms and 10 of the Garnet station's lower deck.
+- `tops` (shot origins and collision per aim) comes from the fleet's
+  `fleet-tops.json`: `pod` and `dome` for the stations and `gun` as the
+  platform's `turret`. The producer writes `tops` when that file is present.
+- The dome on the coral hub is cut on the light turned into mesh space at
+  each heading.
+
+`node art/tools/hostile-station-contact-sheet.ts <dir>` writes every heading
+of each design at 1x with intact bases and at 2x with capped and destroyed
+bases, with a dot on each top's pivot.
+
 ## Replaced producers
 
 | Shipped producer                         | Replaced by                                                    | Stage |
@@ -205,6 +259,14 @@ Runtime values that follow the shipped frames:
   stations and on the `-cracked-b` rows must reach the sheet loader.
 - The courier school's anchor changes `layer` from `behind` to `front`.
 
+Hostile stations switch from `hostile-station-rows.json`: the hull and base
+rows of the same ids, the platform's 16 new hull rows in place of
+`enemy-claim-platform`, and `sidecars.hostileStation.hardpoints` and
+`sidecars.platform.hardpoints` per manifest. The top rows are the fleet's
+(`fleet-top-rows.json`). `src/ui/hostileStationMapGlyph.test.ts`,
+`src/model/hostileStations.test.ts`, `src/game/enemyArt.test.ts` and
+`art/tools/hostile-station.test.ts` assert the replaced station and platform.
+
 Tests that assert the replaced art and need Tech's changes at the switch:
 
 - `src/game/stationArt.test.ts`: station frame sizes, pivots, docks and loops.
@@ -229,11 +291,9 @@ in [projects](projects.md) and the Use callout tops in
 
 1. Model solids and the six main stations. Built.
 2. Outposts, the second Sunflower station, states and project solids. Built.
-3. Hostile stations: the Garnet, Claim and coral stations and the Claim
-   platform at 16 headings, with eight mount bases, capped states and one
-   hardpoints file per family. Weapon tops (`pod`, `dome`, `gun`) come from
-   the [enemy fleet producer](enemy-redesign.md). A dome is cut on the light
-   turned into mesh space at each heading (`meshDome`'s `light`).
+3. Hostile stations and the Claim platform at 16 headings, their weapon bases
+   and one hardpoints file per family. Built. Weapon tops (`pod`, `dome`,
+   `gun`) are the [enemy fleet producer](enemy-redesign.md)'s.
 
 ## Open points
 
@@ -242,7 +302,25 @@ in [projects](projects.md) and the Use callout tops in
 - The hub's silhouette is 142 display px high against the shipped 175.
 - Hostile stations need per-family geometry (hardpoints, collision and hit
   areas) where `src/data/hostileStations.ts` keys one geometry per route
-  position.
+  position. Each manifest's `sidecars.hostileStation.hardpoints` names its
+  family's file.
+- The hostile stations and the platform are sized to the contract span in
+  model space, so they draw larger than the reference sheet: 160, 160 and 160
+  display px across the screen at their widest against the sheet's 137, 121
+  and 141, and the platform 92 against 76.
+- The platform's hull turns with its heading, where the game draws one fixed
+  hull and moves the mounts round it. The 16 `enemy-claim-platform-{k}` rows
+  need the heading frame selection the stations use.
+- Mount collars are 9.2 display px across to fit the fleet's tops, against the
+  reference's 12 (9.6 on the platform), and take the fleet's family tones in
+  place of the reference's dark grey.
+- The Garnet station's mounts stand on its decks' corners, as the reference
+  lists them; the reference model placed them over the middle of each flat's
+  edge. The Claim station's blades sit on the lower deck's flats.
+- Hostile stations have no dim frame: enemy rows carry no blink.
+- `hidden` on a hardpoint heading is the fleet producer's field; the shipped
+  station files do not carry it.
+- The stations' `jets` sidecar is unchanged; the designs have no drive.
 - The second Sunflower station needs a manifest id, a placement and a Map
   entry from Tech, and Gameplay's decision on whether it is a destination,
   where it sits, and its name and services. Its rows are staged as

@@ -7,6 +7,7 @@ import {
   type Mesh,
   meshDome,
   meshExtrude,
+  meshLoft,
   meshRing,
   meshScale,
   meshSpiral,
@@ -507,6 +508,12 @@ export type Twin = {
   // The arm of the top slab that ends short, or carries the lamp collar over its old break.
   cracked?: number;
   mended?: number;
+  // Degrees each tier turns from the one below, and whether arm tips carry lamp blocks.
+  twist?: number;
+  tips?: boolean;
+  // The slab tones and the lamp colour, and the light in mesh space for a model drawn turned.
+  paint?: { pale: Tones; violet: Tones; lamp: string };
+  light?: Point;
 };
 
 // Thick tapered arm slab with a raised ridge tier and a lamp block at the tip.
@@ -520,7 +527,7 @@ function arm(
   z0: number,
   z1: number,
   tones: Tones,
-  light: Tones,
+  light: Tones | undefined,
   cut: number,
   collar: boolean,
 ): void {
@@ -548,7 +555,7 @@ function arm(
   );
   const mid = (z0 + z1) / 2;
   const tall = (z1 - z0) / 2;
-  if (cut === 1) {
+  if (cut === 1 && light) {
     const hw = reach * Math.sin(tip * RADIAN);
     block(
       mesh,
@@ -561,7 +568,7 @@ function arm(
       light,
     );
   }
-  if (collar) {
+  if (collar && light) {
     const hw = reach * 0.5 * Math.sin((tip + ((spread * notch) / reach) * 0.45) * RADIAN);
     block(
       mesh,
@@ -589,39 +596,195 @@ export function twin(lit: boolean, options: Twin = {}): Mesh {
     notch = 20,
     tip = 4,
     keel = 0,
+    twist = 0,
+    tips = true,
+    paint = { pale: PALE, violet: VIOLET, lamp: "#62f0c4" },
   } = options;
-  const mint = lamp("#62f0c4", lit);
+  const mint = lamp(paint.lamp, lit);
+  const stem = paint.violet;
   const mesh: Mesh = [];
   const levels = tiers.map(([z]) => z);
   const [low, high] = [Math.min(...levels), Math.max(...levels)];
-  for (const [z0, tones] of tiers) {
+  for (const [tier, [z0, tones]] of tiers.entries()) {
     for (let k = 0; k < arms; k++) {
       const top = z0 === high;
       arm(
         mesh,
-        turn + (k * 360) / arms,
+        turn + twist * tier + (k * 360) / arms,
         180 / arms,
         reach,
         notch,
         tip,
         z0,
         z0 + 12,
-        tones === "pale" ? PALE : VIOLET,
-        mint,
+        tones === "pale" ? paint.pale : stem,
+        tips ? mint : undefined,
         top && options.cracked === k ? 0.52 : 1,
         top && options.mended === k,
       );
     }
   }
-  cyl(mesh, ORIGIN, low + 12, high, 10, VIOLET);
-  for (const z of levels.slice(1)) cyl(mesh, ORIGIN, z - 5, z, 15, VIOLET);
-  for (const z of levels.slice(0, -1)) cyl(mesh, ORIGIN, z + 12, z + 20, 15, VIOLET);
+  cyl(mesh, ORIGIN, low + 12, high, 10, stem);
+  for (const z of levels.slice(1)) cyl(mesh, ORIGIN, z - 5, z, 15, stem);
+  for (const z of levels.slice(0, -1)) cyl(mesh, ORIGIN, z + 12, z + 20, 15, stem);
   if (levels.length > 1) {
     const mid = (low + 12 + high) / 2 + 4;
     band(mesh, ORIGIN, mid - 2.2, mid + 2.2, 10, mint, 32);
   }
-  cyl(mesh, ORIGIN, high + 12, high + 17.5, 13, VIOLET);
-  meshDome(mesh, [0, 0, high + 17.5], 10, mint);
-  if (keel) drum(mesh, ORIGIN, low, low - keel, 11, 4.5, VIOLET, 20);
+  cyl(mesh, ORIGIN, high + 12, high + 17.5, 13, stem);
+  meshDome(mesh, [0, 0, high + 17.5], 10, mint, { ...(options.light && { light: options.light }) });
+  if (keel) drum(mesh, ORIGIN, low, low - keel, 11, 4.5, stem, 20);
   return mesh;
+}
+
+// ------------------------------------------------------------------ hostile stations
+
+// A hostile structure at heading 0: forward +x, port +y. `mounts` are the deck points its weapon
+// bases stand on, in `fill` order.
+export type Hostile = { hull: Mesh; mounts: { id: string; at: Point }[] };
+
+const CLAIM_RIM = mat("#b4532a", "#8a3b1c", "#632a15");
+const CLAIM_HUB = mat("#3a2f33", "#2a2125", "#1d171a");
+const GARNET = mat("#8e2437", "#6b1a29", "#4a121d");
+const GARNET_DARK = mat("#2b2230", "#1f1823", "#151019");
+const CORAL = mat("#e8705f", "#b9503f", "#8c3a2e");
+const MAROON = mat("#6e3a45", "#522a33", "#3a1d24");
+
+// A regular plan of `sides` corners, the first at `corner` degrees.
+const ngon = (sides: number, r: number, corner: number, z?: number) =>
+  Array.from({ length: sides }, (_, i) => {
+    const [x, y] = pol(r, corner + (i * 360) / sides);
+    return z === undefined ? ([x, y] as const) : ([x, y, z] as const);
+  });
+// A deck of `sides` flat walls, and a keel tapering between two such sections.
+const deck = (
+  mesh: Mesh,
+  sides: number,
+  r: number,
+  corner: number,
+  z0: number,
+  z1: number,
+  tones: Tones,
+) => prism(mesh, ngon(sides, r, corner) as Plan, z0, z1, tones);
+function keel(
+  mesh: Mesh,
+  sides: number,
+  corner: number,
+  z0: number,
+  r0: number,
+  z1: number,
+  r1: number,
+  tones: Tones,
+): void {
+  meshLoft(
+    mesh,
+    [ngon(sides, r0, corner, z0) as Point[], ngon(sides, r1, corner, z1) as Point[]],
+    tones,
+    "curved",
+  );
+}
+const weapons = (at: (i: number) => Point) =>
+  Array.from({ length: 8 }, (_, i) => ({ id: `weapon-${i}`, at: at(i) }));
+
+// Claim: one open eight-sided wheel over a solid eight-sided deck with four broad blades on its
+// flats. The eight mounts stand on the wheel's corners.
+export function hostileClaim(): Hostile {
+  const amber = lamp("#ffb02e", true);
+  const hull: Mesh = [];
+  deck(hull, 8, 62, 22.5, -30, -16, CLAIM_HUB);
+  deck(hull, 8, 44, 22.5, -16, -12, CLAIM_RIM);
+  const flat = 62 * Math.cos(Math.PI / 8);
+  for (let j = 0; j < 4; j++) {
+    const a = j * 90;
+    prism(
+      hull,
+      [pol(flat - 6, a - 20), pol(flat + 17, a - 7), pol(flat + 17, a + 7), pol(flat - 6, a + 20)],
+      -28,
+      -18,
+      CLAIM_RIM,
+    );
+  }
+  cyl(hull, ORIGIN, -12, 30, 17, CLAIM_HUB, 32);
+  meshRing(hull, ORIGIN, 8, 20, 72, 54, CLAIM_RIM, 8);
+  for (let j = 0; j < 4; j++) {
+    bar(hull, ORIGIN, j * 90, 16, 54 * Math.cos(Math.PI / 8) + 1, 9, 10, 18, CLAIM_HUB);
+  }
+  cyl(hull, ORIGIN, 30, 34, 12, amber, 28);
+  finial(hull, ORIGIN, 34, CLAIM_HUB, amber, 7, 6);
+  keel(hull, 8, 22.5, -30, 30, -44, 12, CLAIM_HUB);
+  return { hull, mounts: weapons((i) => [...pol(63.5, 22.5 + i * 45), 20]) };
+}
+
+// Garnet: two six-sided decks, the lower one larger and turned 30 degrees. Six mounts stand on
+// the upper deck's corners and two on opposite corners of the lower deck.
+export function hostileGarnet(): Hostile {
+  const amber = lamp("#ffb02e", true);
+  const hull: Mesh = [];
+  deck(hull, 6, 96, 0, -18, -7, GARNET);
+  cyl(hull, ORIGIN, -7, 3, 46, GARNET_DARK, 40);
+  deck(hull, 6, 80, 30, 3, 14, GARNET);
+  deck(hull, 6, 80.5, 30, 6.5, 10.5, GARNET_DARK);
+  deck(hull, 6, 56, 30, 14, 19, GARNET);
+  drum(hull, ORIGIN, 19, 32, 40, 26, GARNET, 40);
+  cyl(hull, ORIGIN, 32, 42, 16, GARNET_DARK);
+  band(hull, ORIGIN, 35, 39, 16, amber, 32);
+  cyl(hull, ORIGIN, 42, 45, 10, amber, 24);
+  drum(hull, ORIGIN, -18, -36, 60, 20, GARNET, 40);
+  drum(hull, ORIGIN, -36, -78, 16, 7, GARNET_DARK, 32);
+  return {
+    hull,
+    mounts: weapons((i) =>
+      i < 6 ? [...pol(69, 30 + i * 60), 14] : [...pol(86, i === 6 ? 0 : 180), -7],
+    ),
+  };
+}
+
+// Coral: four arms over four, turned 45 degrees, with lamps on the hub only. Four mounts stand on
+// the upper arm tips and four on the lower. `light` is the light in mesh space.
+export function hostileCoral(light?: Point): Hostile {
+  const hull = twin(true, {
+    arms: 4,
+    tiers: [
+      [-40, "violet"],
+      [16, "pale"],
+    ],
+    turn: 0,
+    twist: 45,
+    reach: 96,
+    notch: 20,
+    tip: 7.5,
+    keel: 24,
+    tips: false,
+    paint: { pale: CORAL, violet: MAROON, lamp: "#ffd27a" },
+    ...(light && { light }),
+  });
+  return {
+    hull,
+    mounts: weapons((i) =>
+      i < 4 ? [...pol(86, 45 + i * 90), 28] : [...pol(86, (i - 4) * 90), -28],
+    ),
+  };
+}
+
+// Claim turret platform: one open eight-sided wheel on a heavy hub, with port, starboard and aft
+// mounts on its corners.
+export function hostilePlatform(): Hostile {
+  const amber = lamp("#ffb02e", true);
+  const hull: Mesh = [];
+  meshRing(hull, ORIGIN, 0, 10, 64, 46, CLAIM_RIM, 8);
+  cyl(hull, ORIGIN, -6, 14, 18, CLAIM_HUB, 28);
+  for (let j = 0; j < 4; j++) {
+    bar(hull, ORIGIN, j * 90, 17, 46 * Math.cos(Math.PI / 8) + 1, 9, 2, 8, CLAIM_HUB);
+  }
+  cyl(hull, ORIGIN, 14, 17, 11, amber, 24);
+  drum(hull, ORIGIN, -6, -22, 15, 6, CLAIM_HUB, 20);
+  const at = (degrees: number): Point => [...pol(55, degrees), 10];
+  return {
+    hull,
+    mounts: [
+      { id: "port", at: at(112.5) },
+      { id: "starboard", at: at(-67.5) },
+      { id: "aft", at: at(202.5) },
+    ],
+  };
 }
