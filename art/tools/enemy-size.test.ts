@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { ENEMY_SIZE_RATIOS } from "../../src/data/enemyDimensions.ts";
+import { ENEMY_SIZE_RATIOS, hullSizeRatio } from "../../src/data/enemyDimensions.ts";
 import { platform } from "./claim-jumpers.ts";
 import {
   box,
@@ -22,6 +22,7 @@ import {
   projectedBounds,
 } from "./enemy-size.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
+import { fleetCrafts } from "./fleet.ts";
 import {
   checkMounts,
   PLATFORM_FILL,
@@ -53,6 +54,14 @@ test("each intact physical assembly meets the canonical ratio from existing Ada 
       ENEMY_SIZE_RATIOS[enemySizeKey(model.name)],
     );
   }
+});
+
+test("each fleet hull draws its approved span, the Cargo Hauler's own 2.5 Ada widths among them", () => {
+  for (const craft of fleetCrafts()) {
+    const span = hullSizeRatio(enemySizeKey(craft.archetype), craft.stem);
+    assert.ok(Math.abs(craft.width / ADA_MODEL_SPAN - span) <= 1e-9, `${craft.stem} spans ${span}`);
+  }
+  assert.equal(hullSizeRatio("retaliator", "retaliatorCargoHauler"), 2.5);
 });
 
 test("every heading, broken/capped part and independently aimed top fits the retained or grown frame", () => {
