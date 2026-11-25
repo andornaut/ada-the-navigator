@@ -88,6 +88,12 @@ ellipsoid in two tones split on the light).
 The nebula landmark, the search area, the tow line, map marks, job row icons
 and Projects tab icons are unchanged.
 
+Stardust and ore leave the redesign: they are the 9 px pixel sheets of
+[Stardust](stardust.md) and the [ore nugget](cartwheel-props.md#ore-nugget),
+staged in [resource-rows.json](resource-rows.json). The `stardust` and
+`ore-nugget` roots of the pickups sheet and their `pickups.json` frames ship
+until the core rows switch to those sheets, then leave this producer.
+
 ## Stage 1 output
 
 | Object                   | Row ids                                                                       |     Frame | Drawn, display px | Pivot   |

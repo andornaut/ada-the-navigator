@@ -1,7 +1,8 @@
 # Cartwheel props
 
-Cartwheel's traveling debris, ore nugget cargo piece, the two stranded craft a
-tow job brings home, the tow line and the [ore field](#ore-field) layouts. The
+Cartwheel's traveling debris, the ore nugget cargo piece, the two stranded
+craft a tow job brings home, the tow line and the [ore field](#ore-field)
+layouts. The
 resource rocks are in [Asteroids](asteroids.md#resource-rocks). Cartwheel has
 no damaging hazards.
 
@@ -10,12 +11,13 @@ no damaging hazards.
   `public/art/cartwheel/` and the debris entries and `cartwheelDebris` link in
   [Cartwheel's manifest](../public/art/cartwheel/manifest.json), each row in
   its place. Reruns are byte-identical. The debris models, tumble and frame
-  export are shared with Whirlpool's river debris and Needle's channel debris in [art/tools/debris.ts](tools/debris.ts).
-- `node art/tools/friendly.ts` draws the ore nugget, the stranded craft and the
-  tow line ([Friendly object redesign](friendly-redesign.md)): the nugget row
-  and the `tow` link are in the core manifest, since every galaxy's resource
-  rocks drop cargo and any rescue draws the tow line; the stranded craft and a
+  export are shared with Whirlpool's river debris and Needle's channel debris
+  in [art/tools/debris.ts](tools/debris.ts).
+- `node art/tools/friendly.ts` draws the stranded craft and the tow line
+  ([Friendly object redesign](friendly-redesign.md)): the `tow` link is in the
+  core manifest, since any rescue draws the tow line; the stranded craft and a
   `tow` link to the same `friendly-tow.json` are in Cartwheel's.
+- `node art/tools/resource-pickups.ts` draws the [ore nugget](#ore-nugget).
 - Every SVG keeps its `viewBox` in frame px and declares its display size
   (frame times 0.4375) as `width` and `height`, so it rasterizes at the size it
   is drawn. Manifest `width` and `height` are frame px; `displayWidth` and
@@ -97,12 +99,19 @@ irregular, matte rock nugget, never animated, so it reads apart from the small
 twinkling [Stardust](stardust.md) star by silhouette, colour, surface, size and
 lightness, in greyscale too.
 
-- Manifest `ore-nugget`: an 11 by 11 sheet with one `rest` frame, displayed at
-  11 by 11 logical px for one ore and 18 by 18 for five ore, with the pivot at
-  the centre, nearest-neighbour filtered.
-  Its Aseprite data is `ore-nugget.json`.
+- Rebuild with `node art/tools/resource-pickups.ts`, with the
+  [Stardust](stardust.md) sheet. It writes `public/art/ore-nugget.png` and its
+  Aseprite data `ore-nugget.json`; the core manifest row that switches to it
+  is in [resource-rows.json](resource-rows.json).
+- Manifest `ore-nugget`: a 9 by 9 sheet with one `rest` frame, displayed at
+  9 by 9 logical px for one ore and 18 by 18 for five ore, with the pivot at
+  the centre, nearest-neighbour filtered. The same 9 px size as Stardust.
+- One image: the ore icon in every UI draws this frame at 18 by 18 px
+  ([Shared image](stardust.md#shared-image)).
 - Pixel art from a character grid; every pixel is opaque or clear. Lit from
-  the upper left and pitted, with no white or glint pixel.
+  the upper left, with no white or glint pixel: a lit facet at the upper left,
+  a two-pixel crease down the crown, the body, and one shade facet with a deep
+  edge to the lower right.
 - Ore's palette is shared with the resource rocks' crystals and the ore HUD
   icon (`art/tools/ore.ts`): a burgundy-purple body inside a light mauve rim. Every
   outline pixel (one with a clear neighbour) is rim, the lit rim where the
@@ -112,8 +121,8 @@ lightness, in greyscale too.
   frame (one frame px is one display px), the schema of the ship's
   `collision[k]`. Traced by the
   [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
-  ladder that passes: 15 parts, intersection over union 0.998. The five-ore
-  pickup scales the centred parts by `18 / 11`; the source frame stays unchanged.
+  ladder that passes: 15 parts. The five-ore pickup scales the centred parts
+  by `18 / 9`; the source frame stays unchanged.
 
 | Role       | Colour    |
 | ---------- | --------- |

@@ -1,72 +1,99 @@
 # Stardust
 
-- `node art/tools/friendly.ts` draws the pickup from the model layer
-  ([Friendly object redesign](friendly-redesign.md)): the core manifest's
-  `stardust` strip row on `/art/pickups/pickups-sheet.svg`, with its collision
-  in `/art/pickups/pickups.json`. Reruns are byte-identical.
-- `node art/tools/currency-svg.ts` writes the HUD icon `icon-stardust-20`.
+- Rebuild with `node art/tools/resource-pickups.ts`. It writes the Stardust
+  sheet `public/art/stardust.png` with its Aseprite data `stardust.json`, the
+  [ore nugget](cartwheel-props.md#ore-nugget) sheet beside it, and the core
+  manifest rows that switch to both in
+  [resource-rows.json](resource-rows.json). JSON goes through the project's
+  Prettier settings. Reruns are byte-identical.
+- Pixel art from character grids, like the [settings icons](settings-icons.md).
+  Every pixel is opaque or clear; draw with nearest-neighbour filtering, at
+  whole multiples of 9 px.
+- One image: the world pickup and every UI icon draw this sheet, the UI its
+  `rest` frame ([Shared image](#shared-image)).
+
+## Colour
+
+Pale gold-white: a light glinting star, apart from ore's matte burgundy-purple
+nugget ([ore nugget](cartwheel-props.md#ore-nugget)) of the same 9 px size by
+silhouette, colour, surface and lightness, so the two read apart in greyscale
+too.
+
+| Role       | Colour    |
+| ---------- | --------- |
+| Glint core | `#ffffff` |
+| Light      | `#fff2cc` |
+| Body       | `#f4d98a` |
+| Shade      | `#c8a24e` |
+
+| Field     | Body    | Shade  |
+| --------- | ------- | ------ |
+| Base      | 10.56:1 | 6.09:1 |
+| Cartwheel | 10.65:1 | 6.14:1 |
+| Whirlpool | 10.43:1 | 6.02:1 |
+| Needle    | 11.37:1 | 6.56:1 |
+| Andromeda | 10.62:1 | 6.13:1 |
+| Phantom   | 12.51:1 | 7.21:1 |
+
+On Sunflower's light field the pickup draws over the ink keyline
+([Light fields](galaxies.md#light-fields)), 10.90:1. The body is 0.07 from the
+weapon pickup's amber `#F0BD68` in Oklab: the weapon pickup is a square with a
+glyph and darker, the Stardust a small star.
 
 ## Pickup
 
-Every pickup looks the same regardless of the Stardust it carries: one
-eight-faced crystal, two square pyramids on a girdle, lit from the upper left
-in flat tones. Ore's [nugget](cartwheel-props.md#ore-nugget) is a squat
-six-sided rust crystal, so the two read apart by shape, colour and lightness.
+Every pickup looks the same regardless of the Stardust it carries.
 
-| Tone       | Rest      | Glint 1   | Glint 2   |
-| ---------- | --------- | --------- | --------- |
-| Top        | `#fff2cc` | `#ffffff` | `#ffffff` |
-| Left wall  | `#f4d98a` | `#fff2cc` | `#fffbe9` |
-| Right wall | `#c8a24e` | `#f4d98a` | `#fff2cc` |
-
-- Row `stardust`: a strip of four 32 by 40 frame px frames (`frameWidth`,
-  `frameHeight`), each displayed at 14 by 17.5 logical px with the pivot at
-  the centre. The crystal draws 13 by 14 display px. `frames` names `rest` (0),
-  `glint1` (1) and `glint2` (2); frame 3 repeats glint 1.
-- Twinkle: the crystal turns an eighth, then a quarter of a facet, as its tones
-  catch the light, and turns back. `loop`: rest 420 ms, glint1 60 ms, glint2
-  80 ms, glint1 60 ms; 620 ms in all. Each pickup starts at a random phase so a
-  cluster twinkles out of step.
+- Root manifest id `stardust`: a 36 by 9 sheet of 9 by 9 frames, displayed at
+  9 by 9 logical px for one Stardust and 18 by 18 for five, with the pivot at
+  the centre. `frames` names `rest` (0), `glint1` (1) and `glint2` (2).
+- A small four-point star lit from the upper left, 9 px tip to tip: a white
+  core in a light ring, the top and left rays and shoulders in the body tone,
+  the right and bottom ones in shade. `glint1` steps each tone one lighter and
+  `glint2` whitens the ring and lights the rays, on the same silhouette.
+- Glint loop (`loop`, and the sheet's `glint` tag): rest 420 ms, glint1 60 ms,
+  glint2 80 ms, glint1 60 ms; 620 ms in all. Each pickup starts at a random phase
+  so a cluster twinkles out of step.
 - Reduced motion: the rest frame only.
-- Collision: `pickups.json` `frames.stardust` holds one strictly convex part in
-  frame px from the frame's top left, the rest frame's outline, for every
-  frame of the strip, so the body holds still through the twinkle.
-- On a light field the pickup draws over the 1 px ink keyline
-  ([Light fields](galaxies.md#light-fields)), 10.90:1 on Sunflower's
-  `#D8C994`; on Phantom's `#514955` over the white edge, where the left wall is
-  6.22:1 on the field.
+- Collision: each frame of `stardust.json` carries `collision`, its drawn
+  silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
+  frame (one frame px is one display px), the schema of the ship's
+  `collision[k]`. Traced by the
+  [shared tracer](ship.md#shared-tracer), 12 parts per frame on the shared
+  silhouette. The five-Stardust pickup scales the centred parts by `18 / 9`.
 - The tractor beam has no visual. A pulled pickup's drift toward Ada is the only
   feedback.
 
-### Optional pull streak
+### Pull streak
 
-While a pickup is pulled, a 1 px fading streak may trail it, 6 px past the
-crystal's edge. Plot single pixels behind the centre, opposite the pull
-direction, at distances 2.5 to 8.5 px in 0.5 px steps. For
-`f = (distance - 2.5) / 6`, the colour is the left wall tone for `f < 0.5` and
-the right wall tone after, with alpha `(210 (1 - f) + 40) / 255`. Reduced
-motion draws no streak.
+`pullStreak` in `stardust.json`: two opaque wedges drawn in order behind a
+pickup while it is inside Ada's tractor radius. Each point is `[u, v]` in
+display px, `u` along the pull direction from the pickup's centre and `v`
+across it. The first wedge is `#c9a86a` over `(-2.5, -1.2) (-9, 0)
+(-2.5, 1.2)` and takes the ink keyline on a light field (`keyline`); the
+second is `#f6e4b8` over `(-2.5, -0.6) (-6, 0) (-2.5, 0.6)`. The wedges start
+inside the 9 px star and reach 4.5 px past its tips. `reducedMotion` is
+`false`: reduced motion draws no streak ([handoff](polish-handoff.md)).
 
-The accepted flat look replaces the fading pixels with two flat wedges
-behind the pickup, opposite the pull direction, with `u` along that
-direction from the centre: a body-tone wedge `(-2.5, -1.2) (-9, 0)
-(-2.5, 1.2)` in `#c9a86a` and a lit wedge `(-2.5, -0.6) (-6, 0) (-2.5, 0.6)`
-in `#f6e4b8` over it, both opaque. The shipped streak spans 2.5 to 8.5 px at
-1 px wide with alpha from 0.98 to 0.16; the wedges span 2.5 to 9 px and are
-2.4 px wide at the pickup. On a light field the body wedge takes the ink
-keyline. Reduced motion draws none ([handoff](polish-handoff.md)).
+## Shared image
 
-## HUD icon
+The Stardust and ore icons in the HUD status pill, the station balances, the
+Shop's price pills and confirm price, the Exchange, the ship card and the
+Penny markers are the pickups' own images: the `rest` frame of
+`/art/stardust.png` and the frame of `/art/ore-nugget.png`, drawn at 18 by 18
+px (2x) with nearest-neighbour filtering, centred in the 20 px icon slot. A
+light-field outline, where one applies, is drawn around the image; no outline
+is baked into it.
 
-`icon-stardust-20`, 20 by 20, in the UI icon sheet `icons-20x20.svg`: one
-four-point star with concave shoulders in the Stardust tones under a 2 px ink
-outline. It marks the HUD status pill, balances and the confirm price.
+The shipped UI still draws `icon-stardust-20` and `icon-ore-20` from
+`public/art/ui/icons/icons-20x20.svg` until it switches to the shared image;
+the two vector icons then leave the sheet.
 
 ## HUD count
 
 The count leads the HUD status pill beside the pause button:
-`icon-stardust-20` and the count in bold cream `#ead4aa`, as wide as it renders,
+the Stardust icon and the count in bold cream `#ead4aa`, as wide as it renders,
 in at most five characters ("9999", "44.4k", "100k" to "9999k", "10m"), with a gold
-`+N` tick (`#f4d98a`, the crystal's left wall) on pickup. Geometry and timing are `STATUS_PILL` in
+`+N` tick (`#f4d98a`, the body) on pickup. Geometry and timing are `STATUS_PILL` in
 [Layout](layout.md#status-pill); colours are in
 [Controls](controls.md#status-pill).
