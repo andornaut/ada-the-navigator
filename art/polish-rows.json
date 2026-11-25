@@ -5373,34 +5373,6 @@
       }
     }
   },
-  "effects-tow": {
-    "file": "/art/cartwheel/tow.json",
-    "line": {
-      "layers": [
-        {
-          "name": "outer",
-          "color": "#4F5462",
-          "width": 3
-        },
-        {
-          "name": "core",
-          "color": "#B8BFC9",
-          "width": 1.4
-        }
-      ],
-      "lightInk": 4.2,
-      "clamp": {
-        "color": "#4F5462",
-        "before": 3.2,
-        "after": 2.6,
-        "across": 5.2,
-        "face": {
-          "color": "#B8BFC9",
-          "depth": 2.2
-        }
-      }
-    }
-  },
   "field": {
     "manifest": "core",
     "links": {

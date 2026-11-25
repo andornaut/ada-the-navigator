@@ -197,29 +197,20 @@ in `lightField.keylined`). The other galaxies' craft:
 
 Ada attaches with Use (labelled Tow) within 120 world units, and the craft
 trails on an 80 world unit line; range, length and handling are Gameplay values,
-listed here for reference. The line is a vector Tech draws (`tow.json` `line`,
-logical px):
+listed here for reference. The line is a vector Tech draws (`line` in
+`friendly-tow.json`, logical px), written from `TOW_LINE` in
+`art/tools/friendly-craft.ts`:
 
-- A steel cable from Ada's pivot to the craft's tow point: an outer stroke
-  `#4F5462` 2.5 px wide and a core `#B8BFC9` 1.2 px wide, round caps and
-  joins.
-- Beads: `#4F5462` discs of radius 0.9, every 12 px along the line starting
-  6 px from the craft end.
-- Cap at the tow point: a `#4F5462` disc of radius 1.8 with a `#B8BFC9` centre
-  of radius 0.8.
-- Accepted flat look ([handoff](polish-handoff.md)), staged whole as
-  `effects-tow` in [polish-rows.json](polish-rows.json) to replace `line`:
-  - `layers`: the outer stroke `#4F5462` 3 px wide and the core `#B8BFC9`
-    1.4 px wide.
-  - `lightInk` 4.2: the ink stroke under the cable on a light field.
-  - `clamp`: one `#4F5462` block at the tow point in place of the bead row
-    and the round cap, from `before` 3.2 px along the line toward Ada to
-    `after` 2.6 px past the point and `across` 5.2 px wide, with a
-    `face` band `#B8BFC9` `depth` 2.2 px on its screen-upper edge. On a
-    light field it takes the ink keyline as the effect kind `towClamp`
-    ([light fields](galaxies.md#light-fields)).
-  - No `beads` and no `cap`. `tow.json` keeps the shipped line until the
-    reader accepts a line without them.
+- `layers`: a steel cable from Ada's pivot to the craft's tow point, an outer
+  stroke `#4F5462` 3 px wide and a core `#B8BFC9` 1.4 px wide, round caps
+  and joins.
+- `lightInk` 4.2: the ink stroke under the cable on a light field.
+- `clamp`: one `#4F5462` block at the tow point, from `before` 3.2 px along
+  the line toward Ada to `after` 2.6 px past the point and `across` 5.2 px
+  wide, with a `face` band `#B8BFC9` `depth` 2.2 px on its screen-upper edge.
+  On a light field it takes the ink keyline as the effect kind `towClamp`
+  ([light fields](galaxies.md#light-fields)).
+- No beads and no end cap.
 - `craft[i].headings[k].tow` is the tow point for heading `k` in frame px of
   that craft's frame (the pod's lug, the hauler's nose).
 - Draw the line under both Ada and the craft, so it leaves from under Ada's

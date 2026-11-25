@@ -13,6 +13,7 @@ the test pins listed.
 | Traveling debris              | The five debris sheets, `cartwheel/debris.json`, `whirlpool/debris.json`, `needle/channels.json` | `src/game/sceneNeedle.test.ts` pins the Needle plate's frame 0 bounds, now `[7.12, 18.745, 61.487, 59.542]` |
 | Decorations, four galaxies    | `decoration-sheet.svg` and `backdrop.json` sprites for Cartwheel, Whirlpool, Needle, Phantom     | `src/game/textures.test.ts` pins each sprite's `width` and `height`; read them from each `backdrop.json`    |
 | Quantum jump                  | `quantum-jump-tunnel.webp`, `-field.webp`, `-glow.png`, `-star.png`                              | None: ids, sizes and frame names are unchanged                                                              |
+| Tow line                      | `cartwheel/friendly-tow.json` `line` ([Cartwheel props](cartwheel-props.md#tow-line))            | None                                                                                                        |
 
 ## Staged: switch with a reader or renderer change
 
@@ -37,14 +38,13 @@ the test pins listed.
 | Missiles and mine              | [Weapons, frames](weapons.md#missile-and-mine-frames), rows `weapon-solids`                | `src/game/weaponEffects.ts`, `src/game/enemyWeaponsArt.ts`: add the staged rows to the core manifest, draw the frame for the heading or spin step in place of the polygons, and draw the flat flame in code                                                                                                                                                                                         |
 | Enemy shots                    | [Weapons, enemy shots](weapons.md#enemy-shots), `enemy-weapons.json`, rows `weapon-solids` | `src/game/scene.ts` enemy shots: the bolt dart, the fan band and far darts, the pellet diamond and the enemy missile frames and flame from `bolt`, `fan`, `pellet` and `missiles`; `src/game/weaponEffects.ts`: the amber ripple from `ripple`, the reduced contact ring and the held fade on every linear fade; `src/game/enemyWeaponsArt.ts`: the beams' 1 px field edge and reduced-motion bands |
 | Pull streak                    | [Stardust](stardust.md#optional-pull-streak)                                               | `src/game/stardustArt.ts`: draw the two wedges behind a pulled pickup; nothing draws a streak today                                                                                                                                                                                                                                                                                                 |
-| Tow line                       | [Cartwheel props](cartwheel-props.md#tow-line), rows `effects-tow`                         | `src/game/towArt.ts` `readTowLine` (the `beads` and `cap` checks) and `TowLine`: accept a line with `clamp` and `lightInk` and without `beads` and `cap`; `src/game/sceneWorld.ts` tow line drawing: no beads or cap, one clamp block; then write the staged `line` into `tow.json`                                                                                                                 |
 | Lost item ping                 | [Jobs](jobs.md), rows `effects-ping`                                                       | `src/game/jobArt.ts` `readGlint` (the `width`, `lightInk` and `alpha` checks) and `glintPing`: width and ink ring as `[from, to]`, alpha as steps; `src/game/sceneWorld.ts` ping strokes; then write the staged `ping` into `jobs.json`                                                                                                                                                             |
 | Quantum jump iris rim          | [Quantum jump](quantum-jump.md#rendering)                                                  | A 5 px `#dcc3f2` rim from r to r + 5 and a 3 px ink `#181425` ring from r + 5 to r + 8, in place of the 3 px rim and 1 px cyan line                                                                                                                                                                                                                                                                 |
 
 Tests to rerun with the effect changes: `weaponEffects.test.ts`,
 `weaponImpacts.test.ts`, `enemyWeaponsArt.test.ts`, `destructionArt.test.ts`,
-`shardPalettePack.test.ts`, `stardustArt.test.ts`, `towArt.test.ts`,
-`lightField.test.ts` and `quantumJump.test.ts`.
+`shardPalettePack.test.ts`, `stardustArt.test.ts`, `lightField.test.ts` and
+`quantumJump.test.ts`.
 
 ## Disabled frames
 
