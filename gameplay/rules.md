@@ -310,7 +310,7 @@ Ada loves her dog but resents walking it and overlooks its dependence on her for
 movement and exploration. Her space experience changes her understanding of care.
 
 Ada encounters an intelligent space whale trapped by debris: 3 medium stone
-rocks of 3 HP, evenly spaced on a ring 86 world units from the whale's centre,
+rocks of 3 HP, evenly spaced on a ring 92 world units from the whale's centre,
 clear of its drawn outline. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.

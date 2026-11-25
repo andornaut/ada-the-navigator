@@ -778,13 +778,13 @@ export const CONTENT: GameContent = {
     storySpacing: 1200,
     // Talk range, centre to centre (gameplay/rules.md); safeRadius keeps the clearances.
     talkRange: 160,
-    // Medium stone rocks from the asteroid set; a ring 86 from the whale's centre clears
-    // Art's 48 footprint plus the largest of their footprints (33).
+    // Medium stone rocks from the asteroid set; a ring 92 from the whale's centre clears
+    // Marlo's 58.5 footprint plus the largest of their footprints (33).
     whaleDebris: {
       asteroids: ["asteroid-m1", "asteroid-m2", "asteroid-m3"],
       count: 3,
       hp: 3,
-      spacing: 86,
+      spacing: 92,
     },
   },
   update: { accept: "Update now", cancel: "Cancel", title: "Update available" },

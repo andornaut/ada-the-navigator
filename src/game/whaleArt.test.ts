@@ -57,7 +57,7 @@ describe("whale art", () => {
     expect(Math.max(...footprints)).toBeCloseTo(58.484, 2);
     const { asteroids, spacing } = CONTENT.tuning.whaleDebris;
     const radius = Math.max(...asteroids.map((id) => ASTEROID_SHAPES.get(id)!.radius));
-    expect(spacing).toBe(86);
+    expect(spacing).toBe(92);
     expect(asteroids.map((id) => ASTEROID_SHAPES.get(id)!.size)).toEqual([
       "medium",
       "medium",
