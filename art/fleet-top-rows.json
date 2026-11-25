@@ -1,0 +1,1998 @@
+{
+  "cartwheel": {
+    "assets": [
+      {
+        "id": "enemy-claim-platform-turret-top-0",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-1",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-2",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-3",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-4",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-5",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-6",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-7",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-8",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-9",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-10",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-11",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-12",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-13",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-14",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-platform-turret-top-15",
+        "path": "/art/cartwheel/enemies/fleetTop-gun-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "turret",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "platform",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-0",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-1",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-2",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-3",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-4",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-5",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-6",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-7",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-8",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-9",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-10",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-11",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-12",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-13",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-14",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-pod-top-15",
+        "path": "/art/cartwheel/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-0",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-1",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-2",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-3",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-4",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-5",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-6",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-7",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-8",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-9",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-10",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-11",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-12",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-13",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-14",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-hostileStation-dome-top-15",
+        "path": "/art/cartwheel/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "claim",
+        "svgSheet": true
+      }
+    ]
+  },
+  "core": {
+    "assets": [
+      {
+        "id": "enemy-hostileStation-pod-top-0",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-1",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-2",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-3",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-4",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-5",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-6",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-7",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-8",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-9",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-10",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-11",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-12",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-13",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-14",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-pod-top-15",
+        "path": "/art/enemies/fleetTop-pod-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-0",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-1",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-2",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-3",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-4",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-5",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-6",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-7",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-8",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-9",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-10",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-11",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-12",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-13",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-14",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      },
+      {
+        "id": "enemy-hostileStation-dome-top-15",
+        "path": "/art/enemies/fleetTop-dome-sheet.svg",
+        "svgSheet": true,
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation"
+      }
+    ]
+  },
+  "andromeda": {
+    "assets": [
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-0",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-1",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-2",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-3",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-4",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-5",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-6",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-7",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-8",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-9",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-10",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-11",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-12",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-13",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-14",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-pod-top-15",
+        "path": "/art/andromeda/enemies/fleetTop-pod-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-0",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-1",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-2",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-3",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-4",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-5",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-6",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-7",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-8",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-9",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-10",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-11",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-12",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-13",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-14",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-hostileStation-dome-top-15",
+        "path": "/art/andromeda/enemies/fleetTop-dome-sheet.svg",
+        "width": 32,
+        "height": 32,
+        "displayWidth": 14,
+        "displayHeight": 14,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "dome",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "hostileStation",
+        "family": "garnet",
+        "svgSheet": true
+      }
+    ]
+  }
+}
