@@ -77,6 +77,8 @@ export interface SpaceObject extends Vec {
   persistent?: boolean;
   enemy?: EnemyState;
   velocity?: Vec;
+  /** Seconds until a struck static rock, slowing evenly, comes to rest. */
+  settle?: number;
   routeId?: string;
   behavior?: "pursue" | "shoot" | "guard";
   /** An upgrade pickup; its gift is chosen when Ada collects it. */

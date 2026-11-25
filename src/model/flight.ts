@@ -158,6 +158,7 @@ import {
 } from "./requiredWorldReservations.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
 import { INDUSTRIAL_HOME_RADIUS } from "./retaliatorNavigation.ts";
+import { MOVING_ROCK_PREFIX, ricochetRocks } from "./rockRicochet.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import {
   discoveryStardustId,
@@ -453,8 +454,6 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
   );
 }
 const SCENERY = ["rock", "debris"];
-/** Flight ids of planned moving rocks, which arrival disks also absorb. */
-const MOVING_ROCK_PREFIX = "moving:";
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 /**
  * Push a circle out of overlapping scenery along each contact normal and report every contact
@@ -4027,7 +4026,10 @@ function debrisTouchesAda(
   return false;
 }
 
-/** Ballistic debris keeps constant velocity; ordinary asteroids hold their centres. */
+/**
+ * Ballistic debris keeps constant velocity, struck static rocks settle and other asteroids hold
+ * their centres; then moving rocks ricochet off the asteroids they touch.
+ */
 function moveDebris(
   content: GameContent,
   dt: number,
@@ -4053,11 +4055,15 @@ function moveDebris(
       delete object.velocity;
       continue;
     }
-    if (object.kind !== "debris" || !object.velocity) {
+    const settling = object.kind === "rock" && object.settle !== undefined;
+    if (!object.velocity || (object.kind !== "debris" && !settling)) {
       continue;
     }
-    const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
-    // Existing protected objects absorb all moving debris; moving rocks also end at arrival disks.
+    const next = settling
+      ? settleRock(dt, object)
+      : stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
+    // Existing protected objects absorb all moving debris; moving rocks, struck static rocks
+    // among them, also end at arrival disks.
     if (!protectedAreas) {
       protectedAreas = [];
       for (const area of flight.objects) {
@@ -4072,7 +4078,7 @@ function moveDebris(
       segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach;
     if (
       protectedAreas.some(crosses) ||
-      (object.id.startsWith(MOVING_ROCK_PREFIX) &&
+      ((settling || object.id.startsWith(MOVING_ROCK_PREFIX)) &&
         (arrivalDisks ??= arrivalPoints(flight).map((area) => ({
           area,
           radius: content.tuning.safeRadius,
@@ -4089,6 +4095,36 @@ function moveDebris(
     object.y = next.position.y;
     canonicalPosition(flight, object);
   }
+  ricochetRocks(
+    { chunkSize: content.tuning.chunkSize, frameOf: (rock) => frameOf(flight, rock), world },
+    content.tuning.flight.rockRicochet,
+    flight.objects,
+  );
+}
+
+/**
+ * A struck static rock's move over `dt`: its speed falls evenly to rest at the end of its
+ * settle time, where it stays as a static rock again.
+ */
+function settleRock(dt: number, object: SpaceObject): { position: Vec } {
+  const velocity = object.velocity!;
+  const left = object.settle!;
+  const step = Math.min(dt, left);
+  const after = (left - step) / left;
+  // The mean of the speeds at the start and the end of the step, which fall linearly.
+  const mean = (1 + after) / 2;
+  const position = {
+    x: object.x + velocity.x * mean * step,
+    y: object.y + velocity.y * mean * step,
+  };
+  if (left - step <= 1e-9) {
+    delete object.velocity;
+    delete object.settle;
+  } else {
+    object.velocity = { x: velocity.x * after, y: velocity.y * after };
+    object.settle = left - step;
+  }
+  return { position };
 }
 
 function shots(

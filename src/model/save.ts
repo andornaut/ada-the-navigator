@@ -337,6 +337,11 @@ function spaceObject(
     (value.routeId === undefined ||
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
+    (value.settle === undefined ||
+      (value.kind === "rock" &&
+        vector(value.velocity) &&
+        finite(value.settle) &&
+        (value.settle as number) > 0)) &&
     (value.asteroid === undefined ||
       ((value.kind === "rock" || value.kind === "debris") &&
         typeof value.asteroid === "string" &&

@@ -12,6 +12,19 @@ export type EnemyWeapon = Weapon | EnemyOnlyWeapon;
 /** A weapon level; level 1 is the base and levels 2 and 3 are bought or reached by position. */
 export type WeaponLevel = 1 | 2 | 3;
 
+/**
+ * Asteroid ricochet values. Two touching rocks share an impulse along the contact normal of
+ * their drawn outlines, each changing velocity by the impulse over its mass, its drawn area.
+ */
+export interface RockRicochet {
+  /** Share of the closing speed along the contact normal that the rocks separate with. */
+  readonly restitution: number;
+  /** The fastest a rock leaves a ricochet, in world units per second. */
+  readonly maxSpeed: number;
+  /** Seconds a struck static rock drifts, slowing evenly, before it rests where it settles. */
+  readonly settleSeconds: number;
+}
+
 export interface ChapterContent {
   name: string;
   opening: string;
@@ -182,6 +195,8 @@ export interface GameContent {
       sceneryRestitution: number;
       /** Minimum speed away from scenery after a bounce, in world units per second. */
       sceneryRecoil: number;
+      /** Asteroid ricochet (gameplay/rules.md "Space encounters and feedback"). */
+      rockRicochet: RockRicochet;
       /** No encounter ship is placed this close to a flight's start or a jump arrival. */
       arrivalCalm: number;
       pickupRadius: number;

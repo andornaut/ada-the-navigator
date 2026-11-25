@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave, SAVE_VERSION } from "./save.ts";
@@ -215,6 +216,28 @@ describe("combat save boundary", () => {
         velocity: debris.velocity!,
       }),
     );
+  });
+
+  it("preserves a struck static rock's drift, and refuses a settle time on anything else", () => {
+    const snapshot = combatSnapshot();
+    const asteroid = [...ASTEROID_SHAPES.keys()][0]!;
+    const drifting = {
+      asteroid,
+      hp: 3,
+      id: "rock:drifting",
+      kind: "rock" as const,
+      radius: ASTEROID_SHAPES.get(asteroid)!.radius,
+      settle: 1.5,
+      velocity: { x: 12, y: -3 },
+      x: 400,
+      y: 0,
+    };
+    (snapshot.flight.objects as SpaceObject[]).push(drifting);
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+    for (const change of [{ settle: 0 }, { velocity: undefined }, { kind: "debris" as const }]) {
+      Object.assign(drifting, { settle: 1.5, velocity: { x: 12, y: -3 } }, change);
+      expect(restoreSave(JSON.stringify(snapshot))).toBeNull();
+    }
   });
 
   it.each(["fleeing", "returning"] as const)("preserves latched %s state", (flag) => {

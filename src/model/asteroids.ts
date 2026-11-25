@@ -152,6 +152,31 @@ export function silhouetteWorldReach(drawn: Silhouette): number {
   return reach;
 }
 
+const AREA = new WeakMap<Silhouette, number>();
+/**
+ * A silhouette's drawn area in screen px, averaged over its frames: each frame's convex parts'
+ * areas summed, counting the slivers where parts meet at a seam twice.
+ */
+export function silhouetteArea(drawn: Silhouette): number {
+  let area = AREA.get(drawn);
+  if (area === undefined) {
+    let total = 0;
+    for (const parts of drawn.frames) {
+      for (const part of parts) {
+        let twice = 0;
+        part.forEach((at, index) => {
+          const next = part[(index + 1) % part.length]!;
+          twice += at.x * next.y - next.x * at.y;
+        });
+        total += Math.abs(twice) / 2;
+      }
+    }
+    area = total / drawn.frames.length;
+    AREA.set(drawn, area);
+  }
+  return area;
+}
+
 /**
  * The radius a clearance stated as radius plus a margin measures (gameplay/rules.md): a drawn
  * rock's silhouette radius on the world plane, over all its frames; else the object's radius.
