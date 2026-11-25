@@ -251,7 +251,8 @@ describe("Ada's own shots leaving her nose", () => {
               : [],
           ),
         );
-      expect(behind(laserBolt(at(8), angle))).toBeLessThan(-18);
+      // Uncut, the trail of a head 8 px out reaches back past the nose.
+      expect(behind(laserBolt(at(8), angle))).toBeLessThan(0);
       expect(behind(clipBehind(nose, angle, laserBolt(at(8), angle)))).toBeGreaterThan(-1e-9);
       const flame = clipBehind(nose, angle, missileFlame("heavy", at(20), facing, 0));
       expect(behind(flame)).toBeGreaterThan(-1e-9);

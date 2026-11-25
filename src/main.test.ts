@@ -71,6 +71,7 @@ vi.mock("./game/scene.ts", () => ({
             return boot.requiredBodies.get(key);
           }
           const files: Record<string, string> = {
+            "enemy-weapons": "enemy-weapons.json",
             "quantum-jump": "quantum-jump.json",
             "ship-material-palettes": "ship-paint.json",
             "ship-materials": "ship-materials.json",
