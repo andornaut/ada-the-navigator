@@ -202,8 +202,7 @@ them after a [ship model](ship.md) change.
 
 ### Preview cards
 
-The accepted previews are authored cards, staged as `previews` in
-[polish-rows.json](polish-rows.json): `card-{galaxy}.png` and
+The accepted previews are authored cards: `card-{galaxy}.png` and
 `card-{galaxy}-locked.png` for all six galaxies in `public/art/previews/`,
 180 by 90, opaque. The selector draws them in place of the captures
 ([handoff](polish-handoff.md)). Rebuild with

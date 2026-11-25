@@ -5422,41 +5422,6 @@
     },
     "replaces": "/art/whirlpool/backdrop.json"
   },
-  "previews": {
-    "sunflower": {
-      "card": "/art/previews/card-sunflower.png",
-      "locked": "/art/previews/card-sunflower-locked.png",
-      "replaces": ["/previews/galaxy-sunflower.png", "/previews/galaxy-sunflower-locked.png"]
-    },
-    "cartwheel": {
-      "card": "/art/previews/card-cartwheel.png",
-      "locked": "/art/previews/card-cartwheel-locked.png",
-      "replaces": ["/previews/galaxy-cartwheel.png", "/previews/galaxy-cartwheel-locked.png"]
-    },
-    "whirlpool": {
-      "card": "/art/previews/card-whirlpool.png",
-      "locked": "/art/previews/card-whirlpool-locked.png",
-      "replaces": ["/previews/galaxy-whirlpool.png", "/previews/galaxy-whirlpool-locked.png"]
-    },
-    "andromeda": {
-      "card": "/art/previews/card-andromeda.png",
-      "locked": "/art/previews/card-andromeda-locked.png",
-      "replaces": [
-        "/art/previews/galaxy-andromeda.png",
-        "/art/previews/galaxy-andromeda-locked.png"
-      ]
-    },
-    "needle": {
-      "card": "/art/previews/card-needle.png",
-      "locked": "/art/previews/card-needle-locked.png",
-      "replaces": ["/art/previews/galaxy-needle.png", "/art/previews/galaxy-needle-locked.png"]
-    },
-    "phantom": {
-      "card": "/art/previews/card-phantom.png",
-      "locked": "/art/previews/card-phantom-locked.png",
-      "replaces": ["/previews/galaxy-phantom.png", "/previews/galaxy-phantom-locked.png"]
-    }
-  },
   "runtime-band": {
     "file": "/art/needle/band.json",
     "profile": [

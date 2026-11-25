@@ -1,8 +1,7 @@
 // The galaxy selector's authored preview cards (art/galaxies.md, Preview cards): each galaxy's
 // field with two calm plates, its main station fitted to the card and Ada beside it, with the
 // greyed locked card. `node art/tools/galaxy-previews.ts` reads the main station sheets of the
-// station redesign, writes the cards beside the captured previews and stages the rows that
-// switch to them.
+// station redesign and writes the cards the selector draws.
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -10,7 +9,6 @@ import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { GALAXIES } from "./manifest.ts";
 import { grey, rgba, type RgbaImage, writePng } from "./paint.ts";
-import { stageRows } from "./polish-rows.ts";
 import { classic, drawn } from "./ship-model.ts";
 
 type GalaxyId = (typeof GALAXIES)[number];
@@ -241,26 +239,8 @@ function locked(image: RgbaImage): RgbaImage {
 
 const directory = `${art}previews/`;
 mkdirSync(directory, { recursive: true });
-const shipped = (galaxy: GalaxyId) =>
-  existsSync(`${art}previews/galaxy-${galaxy}.png`) ? "/art/previews/" : "/previews/";
-stageRows(
-  "previews",
-  Object.fromEntries(
-    GALAXIES.map((galaxy) => {
-      const image = card(galaxy);
-      writePng(`${directory}card-${galaxy}.png`, image, true);
-      writePng(`${directory}card-${galaxy}-locked.png`, locked(image), true);
-      return [
-        galaxy,
-        {
-          card: `/art/previews/card-${galaxy}.png`,
-          locked: `/art/previews/card-${galaxy}-locked.png`,
-          replaces: [
-            `${shipped(galaxy)}galaxy-${galaxy}.png`,
-            `${shipped(galaxy)}galaxy-${galaxy}-locked.png`,
-          ],
-        },
-      ];
-    }),
-  ),
-);
+for (const galaxy of GALAXIES) {
+  const image = card(galaxy);
+  writePng(`${directory}card-${galaxy}.png`, image, true);
+  writePng(`${directory}card-${galaxy}-locked.png`, locked(image), true);
+}
