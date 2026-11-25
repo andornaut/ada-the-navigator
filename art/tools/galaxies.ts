@@ -149,7 +149,9 @@ const LIGHT_FIELD = {
   // The status pill's 1 px ink outlines, as on the +N tick.
   hudOutline: { width: 1, parts: ["shieldIcon", "shieldBar"] },
   shotEdge: 1,
-  phaser: { glow: { width: [6.5, 4], alpha: 0.9 }, bloom: { radius: 5, alpha: 0.6 } },
+  // Ada's Phaser beam: its amber band and amber bloom disc draw over their silhouettes grown by
+  // `edge` px in the field's edge colour (art/weapons.md, Phaser beam).
+  phaser: { edge: 1 },
   indicatorStroke: 4,
   // Edge markers' ink outline, as the Scattershot dot's (space-palette.md, Edge markers).
   markerOutline: 1,

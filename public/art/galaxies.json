@@ -74,14 +74,7 @@
     },
     "shotEdge": 1,
     "phaser": {
-      "glow": {
-        "width": [6.5, 4],
-        "alpha": 0.9
-      },
-      "bloom": {
-        "radius": 5,
-        "alpha": 0.6
-      }
+      "edge": 1
     },
     "indicatorStroke": 4,
     "markerOutline": 1,

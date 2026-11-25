@@ -214,12 +214,13 @@ The flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
   the contact.
 - Muzzle bloom: opaque discs of radius `5 w`, `3.1 w` and `1.6 w` in the three
   band colours.
-- Light field: the amber band and the outer bloom disc are ink, width 6.5 to 4
-  times `w` at alpha 0.9 and radius `5 w` at 0.6 (`phaser` in
-  [Light fields](galaxies.md#light-fields)).
-- Reduced motion: a 6 px cream band over a 12 px amber band at 0.35 (ink on a
-  light field), without width change or bloom; alpha 1 to 90 ms, then the held
-  fade of `1 - (t - 90) / 60`. A miss keeps the 28 px end taper.
+- Light field and Phantom: the amber band and the amber bloom disc draw over
+  their silhouettes grown by 1 px in the field edge (ink, or white on Phantom;
+  `phaser.edge` in [Light fields](galaxies.md#light-fields)); the inner bands
+  and discs take none.
+- Reduced motion: the beam's own bands at `w` 1 without bloom, alpha 1 to 90 ms,
+  then the held fade of `1 - (t - 90) / 60`, with the same 1 px field edge. A
+  miss keeps the 28 px end taper.
 
 ### Hit spark
 
@@ -305,8 +306,8 @@ for Ada's beam) or to the first obstacle on it. It stays where it started.
 - Charge: a coral disc at the muzzle, radius 1 to 2.5 over the 400 ms, with a
   white core of radius 0.5 to 1.1.
 
-Beam: Ada's [Phaser beam](#phaser-beam) geometry, keys (150 ms), held alpha
-and miss taper. The beam stays attached to the turret's muzzle and turns with
+Beam: Ada's [Phaser beam](#phaser-beam) geometry, keys (150 ms), held alpha,
+miss taper, field edge and reduced-motion rule. The beam stays attached to the turret's muzzle and turns with
 its aim for the flash, at its fire-time length; the aim line before it stays
 where it started.
 
@@ -567,16 +568,15 @@ markers.
 
 ## Reduced motion summary
 
-| Effect      | Full                            | Reduced                                       |
-| ----------- | ------------------------------- | --------------------------------------------- |
-| Missiles    | Two-frame flame flicker         | Frame 0 held, no flicker                      |
-| Blasts      | Flash, growing ring, debris     | Still 3 px ring at `R`, held fade             |
-| Ada's beam  | Width keys, taper, bloom        | 6 px cream over a 12 px amber band, held fade |
-| Enemy beams | Width keys, taper, bloom        | Their own bands at `w` 1, no bloom, held fade |
-| Spark       | Rays, core, flecks              | Still cream ring of radius 3, held fade       |
-| Ripple      | Growing amber ripple, thinning  | Still 2 px ripple at `R`, held fade           |
-| Tells       | Lance dashes march, lock pulses | Still dashes, no pulses                       |
-| Ring        | Emission ring and muzzle discs  | Emission ring only                            |
-| Mine        | Spin, blink, fizzle, pop        | Still frame, no blink, held fade, still pop   |
-| Pickup      | Chevron climb                   | Still frame, both chevrons amber              |
-| Ammo        | Glint across the crate          | `rest` frame                                  |
+| Effect   | Full                            | Reduced                                       |
+| -------- | ------------------------------- | --------------------------------------------- |
+| Missiles | Two-frame flame flicker         | Frame 0 held, no flicker                      |
+| Blasts   | Flash, growing ring, debris     | Still 3 px ring at `R`, held fade             |
+| Beams    | Width keys, taper, bloom        | Their own bands at `w` 1, no bloom, held fade |
+| Spark    | Rays, core, flecks              | Still cream ring of radius 3, held fade       |
+| Ripple   | Growing amber ripple, thinning  | Still 2 px ripple at `R`, held fade           |
+| Tells    | Lance dashes march, lock pulses | Still dashes, no pulses                       |
+| Ring     | Emission ring and muzzle discs  | Emission ring only                            |
+| Mine     | Spin, blink, fizzle, pop        | Still frame, no blink, held fade, still pop   |
+| Pickup   | Chevron climb                   | Still frame, both chevrons amber              |
+| Ammo     | Glint across the crate          | `rest` frame                                  |
