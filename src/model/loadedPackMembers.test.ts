@@ -36,8 +36,15 @@ it("counts loaded disabled survivors without adding them to active steering peer
   );
   expect(full).toEqual(retained);
   expect(full.state.fleeing).toBe(false);
-  expect(full.fire).toHaveLength(1);
-  const losses = stepEnemy(definition, { ...context, loadedPackMembers: { pack: 2 } }, state);
+  // ada-0394 D1: a forward gun fires only within 20 degrees of the facing, so the craft, spawned
+  // nose up with Ada abeam, turns toward her before it fires.
+  expect(full.fire).toEqual([]);
+  expect(full.state.facing.x).toBeGreaterThan(state.facing.x);
+  const aimed = { ...state, facing: { x: 1, y: 0 } };
+  expect(
+    stepEnemy(definition, { ...context, loadedPackMembers: { pack: 4 } }, aimed).fire,
+  ).toHaveLength(1);
+  const losses = stepEnemy(definition, { ...context, loadedPackMembers: { pack: 2 } }, aimed);
   expect(losses.state.fleeing).toBe(true);
   expect(losses.fire).toEqual([]);
 });
