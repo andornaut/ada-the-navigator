@@ -478,8 +478,10 @@ describe("emitted primitive marker geometry", () => {
       ...f.scene,
       stardustArt: { asset: { id: "stardust", pivot: { x: 0.5, y: 0.5 } }, loopMs: 100 },
     };
+    const drawPullStreak = vi.fn();
     const code = production("./sceneObjects.ts", ["drawStardust"], {
       ...f.globals,
+      drawPullStreak,
       keylineSprite,
       objectSprite,
       stardustDrawn: () => point,
@@ -497,6 +499,12 @@ describe("emitted primitive marker geometry", () => {
     ]);
     expect(stardustPickupFrameSize(5).width).toBeGreaterThan(stardustPickupFrameSize(1).width);
     expect(objectSprite).toHaveBeenCalledTimes(2);
+    expect(drawPullStreak).toHaveBeenLastCalledWith(
+      scene,
+      scene.model.state.flight,
+      { ...f.target, amount: 5 },
+      point,
+    );
     expect(objectSprite).toHaveBeenLastCalledWith(scene, "target", "stardust", 2);
     expect(sprite.setOrigin).toHaveBeenLastCalledWith(0.5, 0.5);
     expect(sprite.setPosition).toHaveBeenLastCalledWith(10, 12);

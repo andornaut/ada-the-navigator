@@ -12,13 +12,17 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { wreckEnemyId } from "../data/enemyIdentity.ts";
 import { SCREEN } from "../data/screen.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
+import { toScreen } from "../model/convex.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemyHull } from "../model/enemyBody.ts";
+import { flightWorldContext } from "../model/flightTopology.ts";
 import { orePickupFrameSize, stardustPickupFrameSize } from "../model/pickupBody.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
-import type { SpaceObject, Vec } from "../model/types.ts";
+import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
+import { shipTuning } from "../model/upgrades.ts";
+import { worldDelta } from "../model/worldContacts.ts";
 import {
   type AsteroidOutline,
   driftChips,
@@ -31,7 +35,7 @@ import { hubLayers } from "./cartwheelArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece } from "./debrisArt.ts";
 import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
-import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
+import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import {
   boundsOnScreen,
   type OutpostPart,
@@ -62,7 +66,14 @@ import {
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
 import { BEACON_SUFFIX, FLASH_SUFFIX, hubBayKey, partKey } from "./spriteKeys.ts";
-import { stardustDrawn, stardustFrame, stardustPhase, stardustShown } from "./stardustArt.ts";
+import {
+  PULL_STREAK,
+  pullStreakWedges,
+  stardustDrawn,
+  stardustFrame,
+  stardustPhase,
+  stardustShown,
+} from "./stardustArt.ts";
 import {
   type StationArt,
   stationFrame,
@@ -791,6 +802,7 @@ export function drawStardust(
     stardustPhase(object.id, art.loopMs),
     scene.time.now,
   );
+  drawPullStreak(scene, flight, object, at);
   const { height, width } = stardustPickupFrameSize(object.amount);
   const sprite = objectSprite(scene, object.id, art.asset.id, frame)
     .setDisplaySize(width, height)
@@ -800,6 +812,42 @@ export function drawStardust(
   if (cache) {
     acknowledgeCacheSprite(scene, sprite, cache);
   }
+}
+
+/**
+ * Art's pull streak behind a Stardust pickup whose centre lies within Ada's tractor radius, the
+ * model's pull condition: flat wedges trailing opposite the pull, the keylined ones over ink on
+ * a light field; none under reduced motion unless Art's streak allows it.
+ */
+function drawPullStreak(
+  scene: ObjectsContext,
+  flight: FlightState,
+  object: SpaceObject,
+  at: Vec,
+): void {
+  const streak = PULL_STREAK;
+  if (!streak || (scene.reducedMotion && !streak.reducedMotion)) {
+    return;
+  }
+  const delta = worldDelta(flightWorldContext(flight), object, flight.player);
+  const gap = Math.hypot(delta.x, delta.y);
+  if (gap === 0 || gap > shipTuning(ECONOMY, CONTENT, flight.levels).tractorRadius) {
+    return;
+  }
+  const wedges = pullStreakWedges(streak, toScreen(delta), at);
+  const shapes = wedges.map(
+    ({ color, points }) =>
+      ({ alpha: 1, colour: hexNumber(color), kind: "polygon", points }) as const,
+  );
+  const edges =
+    scene.light && LIGHT_FIELD.keylined.includes("stardust")
+      ? inkEdges(
+          scene.edgeInk ?? LIGHT_FIELD.ink,
+          LIGHT_FIELD.keyline,
+          shapes.filter((_, index) => wedges[index]!.keyline),
+        )
+      : [];
+  drawEffect(scene, shapes, edges, scene.ink);
 }
 
 /**

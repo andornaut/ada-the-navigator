@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  PULL_STREAK,
+  pullStreakWedges,
+  readPullStreak,
   readStardustArt,
   releaseSettle,
   type StardustAsset,
@@ -70,5 +73,49 @@ describe("Stardust pickup art", () => {
     for (const time of [0, 420, 480, 560]) {
       expect(stardustFrame(art, true, 0, time)).toBe(art.rest);
     }
+  });
+
+  it("reads Art's pull streak: a keylined body wedge under a lit wedge, none reduced", () => {
+    expect(PULL_STREAK).toEqual({
+      reducedMotion: false,
+      wedges: [
+        {
+          color: "#c9a86a",
+          keyline: true,
+          points: [
+            [-2.5, -1.2],
+            [-9, 0],
+            [-2.5, 1.2],
+          ],
+        },
+        {
+          color: "#f6e4b8",
+          keyline: false,
+          points: [
+            [-2.5, -0.6],
+            [-6, 0],
+            [-2.5, 0.6],
+          ],
+        },
+      ],
+    });
+    expect(readPullStreak({ pullStreak: { reducedMotion: false, wedges: [] } })).toBeUndefined();
+    expect(readPullStreak({})).toBeUndefined();
+  });
+
+  it("trails the wedges opposite the pull direction", () => {
+    // Pulled toward screen-right from (100, 50): the wedges reach back to x 91.
+    const [body, lit] = pullStreakWedges(PULL_STREAK!, { x: 4, y: 0 }, { x: 100, y: 50 });
+    expect(body!.points).toEqual([
+      { x: 97.5, y: expect.closeTo(48.8, 12) },
+      { x: 91, y: 50 },
+      { x: 97.5, y: expect.closeTo(51.2, 12) },
+    ]);
+    expect(lit!.points.map(({ x }) => x)).toEqual([97.5, 94, 97.5]);
+    // Pulled toward screen-down, they trail upward.
+    const [down] = pullStreakWedges(PULL_STREAK!, { x: 0, y: 1 }, { x: 0, y: 0 });
+    expect(down!.points[1]!.x).toBeCloseTo(0, 12);
+    expect(down!.points[1]!.y).toBeCloseTo(-9, 12);
+    expect(pullStreakWedges(PULL_STREAK!, { x: 0, y: 0 }, { x: 0, y: 0 })).toEqual([]);
   });
 });
