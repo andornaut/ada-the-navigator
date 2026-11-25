@@ -1,0 +1,462 @@
+{
+  "core": {
+    "assets": [
+      {
+        "id": "station-a",
+        "path": "/art/station-bloom-sheet.svg",
+        "width": 272,
+        "height": 256,
+        "displayWidth": 178.5,
+        "displayHeight": 168,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.3125
+        },
+        "frameMs": 700,
+        "svgSheet": true
+      },
+      {
+        "id": "station-b",
+        "path": "/art/station-bloom-sheet.svg",
+        "width": 272,
+        "height": 256,
+        "displayWidth": 178.5,
+        "displayHeight": 168,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.3125
+        },
+        "frameMs": 700,
+        "svgSheet": true
+      }
+    ]
+  },
+  "cartwheel": {
+    "assets": [
+      {
+        "id": "outpost-hub-repaired-a",
+        "path": "/art/cartwheel/wheel-hub-repaired-sheet.svg",
+        "width": 320,
+        "height": 272,
+        "displayWidth": 175,
+        "displayHeight": 148.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.61765
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 51.524,
+            "y": 230.629,
+            "outward": [-0.866, 0.5],
+            "width": 28.169
+          },
+          {
+            "x": 268.476,
+            "y": 230.629,
+            "outward": [0.866, 0.5],
+            "width": 28.169
+          }
+        ],
+        "destination": "hub",
+        "variant": "repaired",
+        "project": "hub-repairs",
+        "svgSheet": true,
+        "intrinsicWidth": 175,
+        "intrinsicHeight": 148.75
+      },
+      {
+        "id": "outpost-hub-repaired-b",
+        "path": "/art/cartwheel/wheel-hub-repaired-sheet.svg",
+        "width": 320,
+        "height": 272,
+        "displayWidth": 175,
+        "displayHeight": 148.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.61765
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 51.524,
+            "y": 230.629,
+            "outward": [-0.866, 0.5],
+            "width": 28.169
+          },
+          {
+            "x": 268.476,
+            "y": 230.629,
+            "outward": [0.866, 0.5],
+            "width": 28.169
+          }
+        ],
+        "destination": "hub",
+        "variant": "repaired",
+        "project": "hub-repairs",
+        "svgSheet": true,
+        "intrinsicWidth": 175,
+        "intrinsicHeight": 148.75
+      }
+    ]
+  },
+  "whirlpool": {
+    "assets": [
+      {
+        "id": "whirlpool-station-0",
+        "path": "/art/whirlpool/ramp-station-sheet.svg",
+        "width": 328,
+        "height": 224,
+        "displayWidth": 215.25,
+        "displayHeight": 147,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42411
+        },
+        "frameMs": 350,
+        "destination": "station",
+        "frameIndex": 0,
+        "svgSheet": true,
+        "intrinsicWidth": 215.25,
+        "intrinsicHeight": 147
+      },
+      {
+        "id": "whirlpool-station-1",
+        "path": "/art/whirlpool/ramp-station-sheet.svg",
+        "width": 328,
+        "height": 224,
+        "displayWidth": 215.25,
+        "displayHeight": 147,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42411
+        },
+        "frameMs": 350,
+        "destination": "station",
+        "frameIndex": 1,
+        "svgSheet": true,
+        "intrinsicWidth": 215.25,
+        "intrinsicHeight": 147,
+        "svgSheetMember": "whirlpool-station-0"
+      },
+      {
+        "id": "whirlpool-station-2",
+        "path": "/art/whirlpool/ramp-station-sheet.svg",
+        "width": 328,
+        "height": 224,
+        "displayWidth": 215.25,
+        "displayHeight": 147,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42411
+        },
+        "frameMs": 350,
+        "destination": "station",
+        "frameIndex": 2,
+        "svgSheet": true,
+        "intrinsicWidth": 215.25,
+        "intrinsicHeight": 147
+      },
+      {
+        "id": "whirlpool-station-3",
+        "path": "/art/whirlpool/ramp-station-sheet.svg",
+        "width": 328,
+        "height": 224,
+        "displayWidth": 215.25,
+        "displayHeight": 147,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42411
+        },
+        "frameMs": 350,
+        "destination": "station",
+        "frameIndex": 3,
+        "svgSheet": true,
+        "intrinsicWidth": 215.25,
+        "intrinsicHeight": 147,
+        "svgSheetMember": "whirlpool-station-2"
+      }
+    ]
+  },
+  "needle": {
+    "assets": [
+      {
+        "id": "needle-station-a",
+        "path": "/art/needle/eye-station-sheet.svg",
+        "width": 496,
+        "height": 120,
+        "displayWidth": 325.5,
+        "displayHeight": 78.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 7.25,
+            "y": 60,
+            "outward": [-1, 0],
+            "width": 24.495
+          },
+          {
+            "x": 488.75,
+            "y": 60,
+            "outward": [1, 0],
+            "width": 24.495
+          }
+        ],
+        "destination": "station",
+        "variant": "base",
+        "svgSheet": true,
+        "intrinsicWidth": 325.5,
+        "intrinsicHeight": 78.75
+      },
+      {
+        "id": "needle-station-b",
+        "path": "/art/needle/eye-station-sheet.svg",
+        "width": 496,
+        "height": 120,
+        "displayWidth": 325.5,
+        "displayHeight": 78.75,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "frameMs": 700,
+        "berths": [
+          {
+            "x": 7.25,
+            "y": 60,
+            "outward": [-1, 0],
+            "width": 24.495
+          },
+          {
+            "x": 488.75,
+            "y": 60,
+            "outward": [1, 0],
+            "width": 24.495
+          }
+        ],
+        "destination": "station",
+        "variant": "base",
+        "svgSheet": true,
+        "intrinsicWidth": 325.5,
+        "intrinsicHeight": 78.75
+      }
+    ]
+  },
+  "andromeda": {
+    "assets": [
+      {
+        "id": "station-settlers-a",
+        "path": "/art/andromeda/saucer-station-sheet.svg",
+        "width": 312,
+        "height": 232,
+        "displayWidth": 204.75,
+        "displayHeight": 152.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42241
+        },
+        "frameMs": 700,
+        "station": "settlers",
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 152.25
+      },
+      {
+        "id": "station-settlers-b",
+        "path": "/art/andromeda/saucer-station-sheet.svg",
+        "width": 312,
+        "height": 232,
+        "displayWidth": 204.75,
+        "displayHeight": 152.25,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.42241
+        },
+        "frameMs": 700,
+        "station": "settlers",
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 152.25
+      }
+    ]
+  },
+  "phantom": {
+    "assets": [
+      {
+        "id": "phantom-station-0",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 0,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5
+      },
+      {
+        "id": "phantom-station-1",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 1,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-0"
+      },
+      {
+        "id": "phantom-station-2",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 2,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-0"
+      },
+      {
+        "id": "phantom-station-3",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 3,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-0"
+      },
+      {
+        "id": "phantom-station-4",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 4,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5
+      },
+      {
+        "id": "phantom-station-5",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 5,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-4"
+      },
+      {
+        "id": "phantom-station-6",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 6,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-4"
+      },
+      {
+        "id": "phantom-station-7",
+        "path": "/art/phantom/triarm-station-sheet.svg",
+        "width": 312,
+        "height": 272,
+        "displayWidth": 204.75,
+        "displayHeight": 178.5,
+        "facing": "fixed",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.38603
+        },
+        "frameMs": 150,
+        "destination": "station",
+        "frameIndex": 7,
+        "svgSheet": true,
+        "intrinsicWidth": 204.75,
+        "intrinsicHeight": 178.5,
+        "svgSheetMember": "phantom-station-4"
+      }
+    ]
+  }
+}
