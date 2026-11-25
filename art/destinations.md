@@ -36,7 +36,7 @@ Use performs there, with the [Use disc](controls.md#use-disc)'s symbol. Tech
 draws it in code at runtime, at screen resolution, like the Use disc.
 
 - **Shown** only while Ada is in that destination's Use range (Gameplay's 160
-  world units from its centre, `safeRadius`) and Use acts on it; hidden
+  world units from its centre, `talkRange`) and Use acts on it; hidden
   otherwise. With two destinations in range, only the one Use acts on shows a
   callout.
 - **Show and hide**: alpha from 0 to 1 over 150 ms with `cubicOut` on

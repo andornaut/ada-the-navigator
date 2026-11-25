@@ -802,13 +802,14 @@ model: each disc, ring or stroke draws over an ink layer 1 px wider each side
 (a stroke's ink is 2 wider than its core), all ink before the cores where
 shapes touch, and coverage changes only within a texel of each edge.
 
-| Part        | Geometry                                                                                                    |
-| ----------- | ----------------------------------------------------------------------------------------------------------- |
-| Ring        | Ink from radius 36.5 to 31.5, the band from 35.5 to 32.5                                                    |
-| Symbol      | The action's layers below, cream `#ead4aa` cores at rest and on keyboard focus                              |
-| Focus       | Navy `#262b44` centre fill to radius 32.5, with cream band and symbol                                       |
-| Press frame | The band and symbol white `#ffffff` and the ring's radii 1 larger, for 60 ms                                |
-| Held        | The band and symbol white at the rest radii until release, then return to the applicable rest or focus pose |
+| Part        | Geometry                                                                                                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ring        | Ink from radius 36.5 to 31.5, the band from 35.5 to 32.5                                                                                                                                                   |
+| Symbol      | The action's layers below, cream `#ead4aa` cores at rest and on keyboard focus                                                                                                                             |
+| Focus       | Navy `#262b44` centre fill to radius 32.5, with cream band and symbol                                                                                                                                      |
+| Press frame | The band and symbol white `#ffffff` and the ring's radii 1 larger, for 60 ms                                                                                                                               |
+| Held        | The band and symbol white at the rest radii until release, then return to the applicable rest or focus pose                                                                                                |
+| Refused     | The shared [refusal cue](#refusal-cue): band and symbol tint `#e4574e` on its beats and the whole disc shakes 3 px; reduced motion holds the tint for 320 ms with no shake. The refusal notice still shows |
 
 Every symbol's drawn bounds, ink included, are centred on the ring centre: each
 is authored, measured, and moved by a whole-px shift, leaving at most 0.5 px.
