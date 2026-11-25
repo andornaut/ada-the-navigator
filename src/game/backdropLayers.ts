@@ -1,21 +1,22 @@
 import { SCREEN } from "../data/screen.ts";
 import { type BackdropRockRule, unit } from "./asteroidArt.ts";
 import {
+  checkerItems,
   chunkItems,
+  evenCell,
   layerOrigin,
-  type Pattern,
-  type PlateRules,
-  plates,
-  type Step,
+  type MotifLattice,
+  motifPlates,
   viewRect,
   type Xy,
 } from "./backdropField.ts";
 import { type DecorationLayer, readDecorations } from "./rareDecorations.ts";
 
-// The layered backdrop (art/backdrop.md): Art's shared rules (backdrop.json) and each galaxy's
-// tones and recipes ({galaxy}/backdrop.json), placed in the play view for a camera, and the
-// rasters the scene bakes into textures. A layer point (u, v) draws at (u, v) - origin plus the
-// view's centre, the origin being the camera's projected world position times the parallax.
+// The layered backdrop (art/backdrop.md): Art's shared rules (backdrop-lattice.json) and each
+// galaxy's tones and recipes ({galaxy}/backdrop-lattice.json), placed in the play view for a
+// camera, and the rasters the scene bakes into textures. A layer point (u, v) draws at
+// (u, v) - origin plus the view's centre, the origin being the camera's projected world position
+// times the parallax.
 
 const VIEW: Xy = [SCREEN.width, SCREEN.height];
 const CENTRE: Xy = [SCREEN.width / 2, SCREEN.height / 2];
@@ -32,7 +33,7 @@ interface ChunkLayer {
   readonly salt: string;
 }
 
-/** backdrop.json, version 1: the rules every galaxy shares. */
+/** backdrop-lattice.json, version 2: the rules every galaxy shares. */
 export interface BackdropRules {
   readonly cluster: {
     readonly glow: { readonly alpha: number; readonly sigma: Xy };
@@ -46,25 +47,28 @@ export interface BackdropRules {
   readonly far: ChunkLayer;
   readonly nebula: { readonly display: Xy };
   readonly planets: ChunkLayer & {
-    readonly facets: number;
+    /** A planet draws only in the chunks whose i + j is even. */
+    readonly checker: boolean;
     readonly light: Xy;
-    readonly lit: { readonly inset: number; readonly push: number };
-    readonly moonLitAlpha: number;
-    readonly push: { readonly crescent: number; readonly gibbous: number };
+    /**
+     * The lit disc: `radius` times the planet's, its centre `push` radii toward the light by
+     * look, clipped to the planet.
+     */
+    readonly lit: {
+      readonly push: { readonly crescent: number; readonly gibbous: number };
+      readonly radius: number;
+    };
     readonly radius: Xy;
+    /** One opaque band from `band.from` to `band.to` of the ellipse `radii`, tilted `tilt`. */
     readonly ring: {
-      readonly bands: readonly {
-        readonly alpha: number;
-        readonly from: number;
-        readonly to: number;
-      }[];
+      readonly band: { readonly from: number; readonly to: number };
       readonly radii: Xy;
-      readonly tilt: Xy;
+      readonly tilt: number;
     };
   };
   /** The far backdrop rock depth, under the specks and rocks. */
   readonly farRocks: BackdropRockRule;
-  readonly plates: PlateRules & { readonly parallax: number };
+  readonly plates: MotifLattice & { readonly parallax: number };
   readonly rocks: BackdropRockRule;
   /** Dust specks: one per `cell` layer px at `alpha`. */
   readonly specks: { readonly alpha: number; readonly cell: number; readonly parallax: number };
@@ -81,9 +85,11 @@ export interface BackdropRules {
     readonly salt: string;
     readonly twinkle: { readonly period: Xy; readonly range: Xy; readonly reducedMotion: number };
   };
-  readonly streaks: ChunkLayer & {
-    readonly length: Xy;
-    readonly spread: number;
+  /** One streak at the centre of every `cell` layer px cell whose i + j is even. */
+  readonly streaks: {
+    readonly cell: number;
+    readonly length: number;
+    readonly parallax: number;
     readonly width: number;
   };
 }
@@ -92,7 +98,6 @@ export type PlanetLook = "crescent" | "gibbous" | "moon" | "ringed";
 
 export interface PlanetRecipe {
   readonly colors: {
-    readonly body: string;
     readonly lit: string;
     readonly night: string;
     readonly ring: string;
@@ -109,13 +114,15 @@ export type FarRecipe =
       readonly look: "cluster";
     };
 
+export type Step = -2 | -1 | 1 | 2;
+
 export interface PlateStep {
   readonly multiply?: number;
   readonly screen?: string;
   readonly step: Step;
 }
 
-/** {galaxy}/backdrop.json, version 1: one galaxy's tones and recipes. */
+/** {galaxy}/backdrop-lattice.json, version 2: one galaxy's tones and recipes. */
 export interface GalaxyBackdrop {
   /** The field background the tones derive from and muted rocks move toward. */
   readonly background: string;
@@ -126,12 +133,10 @@ export interface GalaxyBackdrop {
   readonly galaxy: string;
   readonly planets: readonly PlanetRecipe[];
   readonly plates: {
-    readonly jitter: number;
-    readonly lattice: readonly [Xy, Xy];
-    readonly lighter: boolean;
-    readonly pattern: Pattern;
-    readonly split: boolean;
-    readonly steps: readonly PlateStep[];
+    /** The galaxy's motif about its node, in layer px: an edge ring, then any hole rings. */
+    readonly motif: { readonly name: string; readonly rings: readonly (readonly Xy[])[] };
+    /** The paints of the nodes whose i + j is even, then odd. */
+    readonly steps: readonly [PlateStep, PlateStep];
   };
   readonly seed: number;
   readonly sky: {
@@ -170,11 +175,15 @@ function must<T>(valid: (value: unknown) => value is T, value: unknown): T {
   return value;
 }
 
+const flag = (value: unknown): value is boolean => typeof value === "boolean";
+const integer = (value: unknown): value is number => Number.isInteger(value);
+
 function readRockRule(value: unknown): BackdropRockRule {
   const data = fields(value);
   return {
     cell: must(positive, data.cell),
     chance: must(fraction, data.chance),
+    checker: must(flag, data.checker),
     parallax: must(fraction, data.parallax),
     salt: must((entry) => typeof entry === "string", data.salt),
     scale: must((entry) => pair(entry, positive), data.scale),
@@ -192,10 +201,10 @@ function readChunkLayer(value: unknown): ChunkLayer {
   };
 }
 
-/** Art's shared backdrop rules, version 1; undefined if any part is missing or malformed. */
+/** Art's shared backdrop rules, version 2; undefined if any part is missing or malformed. */
 export function readBackdropRules(value: unknown): BackdropRules | undefined {
   const data = fields(value);
-  if (data.version !== 1) {
+  if (data.version !== 2) {
     return undefined;
   }
   try {
@@ -209,11 +218,8 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
     const debris = fields(data.debris);
     const streaks = fields(debris.streaks);
     const specks = fields(debris.specks);
-    const edges = must(
-      (entry): entry is [number, number, number, number] =>
-        Array.isArray(entry) && entry.length === 4 && entry.every(finite),
-      plateData.edges,
-    );
+    const lit = fields(planets.lit);
+    const empty = fields(plateData.empty);
     const layers = must((entry): entry is unknown[] => Array.isArray(entry), starData.layers).map(
       (entry) => {
         const layer = fields(entry);
@@ -246,38 +252,37 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
       nebula: { display: must((entry) => pair(entry, positive), fields(phenomena.nebula).display) },
       planets: {
         ...readChunkLayer(planets),
-        facets: must(positive, planets.facets),
+        checker: must(flag, planets.checker),
         light: must(pair, planets.light),
         lit: {
-          inset: must(positive, fields(planets.lit).inset),
-          push: must(finite, fields(planets.lit).push),
-        },
-        moonLitAlpha: must(fraction, planets.moonLitAlpha),
-        push: {
-          crescent: must(finite, fields(planets.push).crescent),
-          gibbous: must(finite, fields(planets.push).gibbous),
+          push: {
+            crescent: must(finite, fields(lit.push).crescent),
+            gibbous: must(finite, fields(lit.push).gibbous),
+          },
+          radius: must(positive, lit.radius),
         },
         radius: must((entry) => pair(entry, positive), planets.radius),
         ring: {
-          bands: must((entry): entry is unknown[] => Array.isArray(entry), ring.bands).map(
-            (entry) => {
-              const band = fields(entry);
-              return {
-                alpha: must(fraction, band.alpha),
-                from: must(positive, band.from),
-                to: must(positive, band.to),
-              };
-            },
-          ),
+          band: {
+            from: must(positive, fields(ring.band).from),
+            to: must(positive, fields(ring.band).to),
+          },
           radii: must((entry) => pair(entry, positive), ring.radii),
-          tilt: must(pair, ring.tilt),
+          tilt: must(finite, ring.tilt),
         },
       },
       plates: {
-        edges,
-        jitterWeight: must(finite, plateData.jitterWeight),
+        empty: {
+          i: must(integer, empty.i),
+          j: must(integer, empty.j),
+          modulus: must((entry): entry is number => integer(entry) && entry > 0, empty.modulus),
+        },
+        lattice: must(
+          (entry): entry is [Xy, Xy] =>
+            Array.isArray(entry) && entry.length === 2 && entry.every((node) => pair(node)),
+          plateData.lattice,
+        ),
         parallax: must(fraction, plateData.parallax),
-        patternWeight: must(finite, plateData.patternWeight),
       },
       rocks: readRockRule(debris.rocks),
       specks: {
@@ -301,9 +306,9 @@ export function readBackdropRules(value: unknown): BackdropRules | undefined {
         },
       },
       streaks: {
-        ...readChunkLayer(streaks),
-        length: must((entry) => pair(entry, positive), streaks.length),
-        spread: must(finite, streaks.spread),
+        cell: must(positive, streaks.cell),
+        length: must(positive, streaks.length),
+        parallax: must(fraction, streaks.parallax),
         width: must(positive, streaks.width),
       },
     };
@@ -322,7 +327,6 @@ function readPlanet(value: unknown): PlanetRecipe {
   const colors = fields(data.colors);
   return {
     colors: {
-      body: must(hex, colors.body),
       lit: must(hex, colors.lit),
       night: must(hex, colors.night),
       ring: must(hex, colors.ring),
@@ -367,15 +371,20 @@ function readStep(value: unknown): PlateStep {
   return { screen: must(hex, data.screen), step };
 }
 
-/** A galaxy's backdrop, version 1; undefined if any part is missing or malformed. */
+/** A closed ring of at least three layer px points. */
+const closedRing = (entry: unknown): entry is Xy[] =>
+  Array.isArray(entry) && entry.length >= 3 && entry.every((point) => pair(point));
+
+/** A galaxy's backdrop, version 2; undefined if any part is missing or malformed. */
 export function readGalaxyBackdrop(value: unknown): GalaxyBackdrop | undefined {
   const data = fields(value);
-  if (data.version !== 1) {
+  if (data.version !== 2) {
     return undefined;
   }
   try {
     const sky = fields(data.sky);
     const plateData = fields(data.plates);
+    const motif = fields(plateData.motif);
     const stars = fields(data.stars);
     const streaks = fields(data.streaks);
     const list = (entry: unknown): entry is unknown[] => Array.isArray(entry);
@@ -390,23 +399,22 @@ export function readGalaxyBackdrop(value: unknown): GalaxyBackdrop | undefined {
       galaxy: must((id): id is string => typeof id === "string", data.galaxy),
       planets: must(list, data.planets).map(readPlanet),
       plates: {
-        jitter: must(finite, plateData.jitter),
-        lattice: must(
-          (entry): entry is [Xy, Xy] =>
-            Array.isArray(entry) && entry.length === 2 && entry.every((node) => pair(node)),
-          plateData.lattice,
-        ),
-        lighter: must((flag): flag is boolean => typeof flag === "boolean", plateData.lighter),
-        pattern: must(
-          (entry): entry is Pattern => Object.keys(fields(entry)).length > 0,
-          plateData.pattern,
-        ),
-        split: must((flag): flag is boolean => typeof flag === "boolean", plateData.split),
-        steps: must(list, plateData.steps).map(readStep),
+        motif: {
+          name: must((name): name is string => typeof name === "string", motif.name),
+          rings: must(
+            (entry): entry is Xy[][] =>
+              Array.isArray(entry) && entry.length > 0 && entry.every(closedRing),
+            motif.rings,
+          ),
+        },
+        steps: must(
+          (entry): entry is [unknown, unknown] => list(entry) && entry.length === 2,
+          plateData.steps,
+        ).map(readStep) as unknown as readonly [PlateStep, PlateStep],
       },
       seed: must(finite, data.seed),
       sky: {
-        flip: must((flag): flag is boolean => typeof flag === "boolean", sky.flip),
+        flip: must(flag, sky.flip),
         from: must(hex, sky.from),
         offset: must(finite, sky.offset),
         to: must(hex, sky.to),
@@ -457,33 +465,48 @@ const toView = (origin: Xy, [u, v]: Xy): Xy => [
   v - origin[1] + CENTRE[1],
 ];
 
-/** A view plate: its corners in the play view and the step's grey multiply or screen colour. */
+/**
+ * A view plate: its motif's rings in the play view, filled even-odd, and its step's grey
+ * multiply or screen colour.
+ */
 export interface ViewPlate {
   readonly multiply?: number;
-  readonly points: readonly Xy[];
+  readonly rings: readonly (readonly Xy[])[];
   readonly screen?: string;
 }
 
-/** The plates over the view (and its margin) for a camera at world `camera`. */
+/** How far each motif reaches from its node along either axis, in layer px. */
+const motifReach = new WeakMap<GalaxyBackdrop["plates"]["motif"], number>();
+
+/**
+ * The motif plates over the view (and its margin) for a camera at world `camera`: the even
+ * nodes in the galaxy's first step and the odd ones in its second.
+ */
 export function viewPlates(rules: BackdropRules, galaxy: GalaxyBackdrop, camera: Xy): ViewPlate[] {
   const origin = layerOrigin(camera, rules.plates.parallax);
-  const steps = new Map(galaxy.plates.steps.map((step) => [step.step, step]));
-  return plates(galaxy.seed, rules.plates, galaxy.plates, viewRect(origin, VIEW, EDGE)).flatMap(
-    (plate) => {
-      const paint = steps.get(plate.step);
-      return paint
-        ? [{ ...paint, points: plate.points.map((point) => toView(origin, point)) }]
-        : [];
+  const { motif, steps } = galaxy.plates;
+  let reach = motifReach.get(motif);
+  if (reach === undefined) {
+    reach = Math.max(...motif.rings.flat().map(([u, v]) => Math.max(Math.abs(u), Math.abs(v))));
+    motifReach.set(motif, reach);
+  }
+  return motifPlates(rules.plates, motif.rings, viewRect(origin, VIEW, EDGE), reach).map(
+    ({ even, rings }) => {
+      const { multiply, screen } = steps[even ? 0 : 1];
+      return {
+        ...(multiply === undefined ? {} : { multiply }),
+        rings: rings.map((points) => points.map((point) => toView(origin, point))),
+        ...(screen === undefined ? {} : { screen }),
+      };
     },
   );
 }
 
-/** A planet in the play view: its chunk's id, recipe, radius, ring tilt and centre. */
+/** A planet in the play view: its chunk's id, recipe, radius and centre. */
 export interface ViewPlanet {
   readonly id: string;
   readonly recipe: PlanetRecipe;
   readonly r: number;
-  readonly tilt: number;
   readonly x: number;
   readonly y: number;
 }
@@ -498,7 +521,7 @@ const meetsView = (x: number, y: number, rx: number, ry: number): boolean =>
   y + ry > -VIEW_MARGIN &&
   y - ry < VIEW[1] + VIEW_MARGIN;
 
-/** The planets that meet the view for a camera at world `camera`. */
+/** The planets that meet the view for a camera at world `camera`, on the chunk checker. */
 export function viewPlanets(
   rules: BackdropRules,
   galaxy: GalaxyBackdrop,
@@ -519,6 +542,9 @@ export function viewPlanets(
     rule,
     viewRect(origin, VIEW, [largest, largest]),
   ).flatMap((item) => {
+    if (rule.checker && !evenCell(item.i, item.j)) {
+      return [];
+    }
     const recipe = planets[Math.floor(unit(galaxy.seed, item.id, "planet-look") * planets.length)]!;
     const [x, y] = toView(origin, [item.x, item.y]);
     const r =
@@ -530,18 +556,7 @@ export function viewPlanets(
     if (!meetsView(x, y, reach, reach)) {
       return [];
     }
-    return [
-      {
-        id: item.id,
-        r,
-        recipe,
-        tilt:
-          rule.ring.tilt[0] +
-          (rule.ring.tilt[1] - rule.ring.tilt[0]) * unit(galaxy.seed, item.id, "planet-tilt"),
-        x,
-        y,
-      },
-    ];
+    return [{ id: item.id, r, recipe, x, y }];
   });
 }
 
@@ -723,7 +738,10 @@ export interface ViewStreak {
   readonly y: number;
 }
 
-/** The dust streaks that meet the view for a camera at world `camera`. */
+/**
+ * The dust streaks that meet the view for a camera at world `camera`: one at the centre of each
+ * even checker cell, all one length at the galaxy's angle.
+ */
 export function viewStreaks(
   rules: BackdropRules,
   galaxy: GalaxyBackdrop,
@@ -731,41 +749,22 @@ export function viewStreaks(
 ): ViewStreak[] {
   const rule = rules.streaks;
   const origin = layerOrigin(camera, rule.parallax);
-  const reach = rule.length[1] / 2 + VIEW_MARGIN;
-  return chunkItems(galaxy.seed, rule.salt, rule, viewRect(origin, VIEW, [reach, reach])).map(
-    (item) => {
-      const [x, y] = toView(origin, [item.x, item.y]);
-      return {
-        angle:
-          ((galaxy.streaks.angle +
-            (unit(galaxy.seed, item.id, "streak-angle") - 0.5) * rule.spread) *
-            Math.PI) /
-          180,
-        length:
-          rule.length[0] +
-          (rule.length[1] - rule.length[0]) * unit(galaxy.seed, item.id, "streak-length"),
-        x,
-        y,
-      };
-    },
-  );
+  const reach = rule.length / 2 + VIEW_MARGIN;
+  const angle = (galaxy.streaks.angle * Math.PI) / 180;
+  return checkerItems(rule.cell, viewRect(origin, VIEW, [reach, reach])).map((item) => {
+    const [x, y] = toView(origin, [item.x, item.y]);
+    return { angle, length: rule.length, x, y };
+  });
 }
 
-/** A streak's run in `count` pieces, each with its share of the half-sine fade at its middle. */
-export function streakPieces(
-  streak: ViewStreak,
-  count: number,
-): { readonly fade: number; readonly from: Xy; readonly to: Xy }[] {
-  const [dx, dy] = [Math.cos(streak.angle), Math.sin(streak.angle)];
-  const at = (t: number): Xy => [
-    streak.x + dx * (t - 0.5) * streak.length,
-    streak.y + dy * (t - 0.5) * streak.length,
+/** A streak's two ends in the play view. */
+export function streakEnds(streak: ViewStreak): readonly [Xy, Xy] {
+  const dx = (Math.cos(streak.angle) * streak.length) / 2;
+  const dy = (Math.sin(streak.angle) * streak.length) / 2;
+  return [
+    [streak.x - dx, streak.y - dy],
+    [streak.x + dx, streak.y + dy],
   ];
-  return Array.from({ length: count }, (_, k) => ({
-    fade: Math.sin((Math.PI * (k + 0.5)) / count),
-    from: at(k / count),
-    to: at((k + 1) / count),
-  }));
 }
 
 /** A straight-alpha RGBA raster, `width` by `height` texels, for a canvas texture. */
@@ -838,72 +837,54 @@ export function paintSky(sky: GalaxyBackdrop["sky"], scale: number): Raster {
   return paint.raster();
 }
 
-// One facet of an n-sided shadow edge: the polygon's radius at `angle` over its circumradius.
-const facet = (angle: number, n: number) => {
-  const wedge = (2 * Math.PI) / n;
-  return Math.cos(Math.PI / n) / Math.cos((((angle % wedge) + wedge) % wedge) - Math.PI / n);
-};
-
 /** The logical px a planet's raster spans from its centre: its ring's reach. */
 export const planetReach = (r: number): number => r * PLANET_EXTENT;
 
 /**
  * A planet centred in a raster planetReach(r) logical px from its centre on each side, at
- * `scale` texels per logical px: the night disc, the body and lit sides outside their faceted
- * shadow discs, and a ringed planet's ring behind and in front (art/backdrop.md, Planets).
+ * `scale` texels per logical px: a ringed planet's far ring half, the night disc with its lit
+ * disc toward the light clipped to it, then the ring's near half (art/backdrop.md, Motif field).
  */
 export function paintPlanet(rules: BackdropRules, planet: ViewPlanet, scale: number): Raster {
-  const rule = rules.planets;
+  const { light, lit, ring } = rules.planets;
   const { r, recipe } = planet;
-  const reach = planetReach(r);
-  const size = Math.ceil(2 * reach * scale);
+  const size = Math.ceil(2 * planetReach(r) * scale);
   const paint = new Paint(size, size);
   const colors = {
-    body: rgb(recipe.colors.body),
     lit: rgb(recipe.colors.lit),
     night: rgb(recipe.colors.night),
     ring: rgb(recipe.colors.ring),
   };
-  const [lx, ly] = rule.light;
-  const push = recipe.look === "crescent" ? rule.push.crescent : rule.push.gibbous;
+  const push = (recipe.look === "crescent" ? lit.push.crescent : lit.push.gibbous) * r;
+  const [litX, litY] = [light[0] * push, light[1] * push];
   const ringed = recipe.look === "ringed";
-  const litAlpha = recipe.look === "moon" ? rule.moonLitAlpha : 1;
-  const tilt = (planet.tilt * Math.PI) / 180;
+  const tilt = (ring.tilt * Math.PI) / 180;
   const [ca, sa] = [Math.cos(tilt), Math.sin(tilt)];
   const centre = size / 2 / scale;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const [dx, dy] = [(x + 0.5) / scale - centre, (y + 0.5) / scale - centre];
       const p = y * size + x;
-      let ringAlpha = 0;
+      let onRing = false;
       let front = false;
       if (ringed) {
         const ru = dx * ca + dy * sa;
         const rv = -dx * sa + dy * ca;
-        const e = Math.hypot(ru / (r * rule.ring.radii[0]), rv / (r * rule.ring.radii[1]));
-        for (const band of rule.ring.bands) {
-          if (e > band.from && e < band.to) {
-            ringAlpha = band.alpha;
-          }
-        }
+        const e = Math.hypot(ru / (r * ring.radii[0]), rv / (r * ring.radii[1]));
+        onRing = e > ring.band.from && e < ring.band.to;
         front = rv >= 0;
-        if (!front && ringAlpha > 0) {
-          paint.over(p, colors.ring, ringAlpha);
-        }
+      }
+      if (onRing && !front) {
+        paint.over(p, colors.ring, 1);
       }
       if (Math.hypot(dx, dy) <= r) {
         paint.over(p, colors.night, 1);
-        const [s1x, s1y] = [dx + lx * r * push, dy + ly * r * push];
-        if (Math.hypot(s1x, s1y) / facet(Math.atan2(s1y, s1x), rule.facets) > r) {
-          paint.over(p, colors.body, 1);
-        }
-        const [s2x, s2y] = [dx + lx * r * push * rule.lit.push, dy + ly * r * push * rule.lit.push];
-        if (Math.hypot(s2x, s2y) / facet(Math.atan2(s2y, s2x), rule.facets) > r * rule.lit.inset) {
-          paint.over(p, colors.lit, litAlpha);
+        if (Math.hypot(dx - litX, dy - litY) <= r * lit.radius) {
+          paint.over(p, colors.lit, 1);
         }
       }
-      if (ringed && front && ringAlpha > 0) {
-        paint.over(p, colors.ring, ringAlpha);
+      if (onRing && front) {
+        paint.over(p, colors.ring, 1);
       }
     }
   }

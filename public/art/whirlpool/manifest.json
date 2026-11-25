@@ -18757,7 +18757,7 @@
   "whirlpoolCurrents": "/art/whirlpool/currents.json",
   "whirlpoolDebris": "/art/whirlpool/debris.json",
   "whirlpoolProjects": "/art/whirlpool/projects.json",
-  "backdrop": "/art/whirlpool/backdrop.json",
+  "backdrop": "/art/whirlpool/backdrop-lattice.json",
   "tow": "/art/whirlpool/friendly-tow.json",
   "sidecars": {
     "frigateTwin": {

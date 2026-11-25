@@ -97,7 +97,7 @@ describe("Art's asteroid sprites", () => {
     expect(driftChips(rock, 3, 0, "drifter", { x: 0, y: 0 })).toEqual([]);
   });
 
-  it("seeds each rock depth by its own salt, the near depth on the backdrop hashes", () => {
+  it("seeds each rock depth by its own salt on the checker, the near depth on the backdrop hashes", () => {
     for (const rule of [RULES.rocks, RULES.farRocks]) {
       const { cell, salt } = rule;
       const [low, high] = rule.scale;
@@ -106,7 +106,8 @@ describe("Art's asteroid sprites", () => {
         for (let y = -30; y < 30; y++) {
           const id = `${x},${y}`;
           const rock = backdropRock(ART, rule, 9, x, y);
-          expect(rock !== null, `${salt} ${id}`).toBe(unit(9, id, salt) < rule.chance);
+          const even = (x + y) % 2 === 0;
+          expect(rock !== null, `${salt} ${id}`).toBe(even && unit(9, id, salt) < rule.chance);
           if (!rock) {
             continue;
           }
@@ -118,9 +119,11 @@ describe("Art's asteroid sprites", () => {
           expect(rock.scale).toBeLessThanOrEqual(high);
         }
       }
-      expect(filled / 3600, salt).toBeGreaterThan(rule.chance - 0.05);
-      expect(filled / 3600, salt).toBeLessThan(rule.chance + 0.05);
+      // Every even cell holds a rock, so no two rocks share a cell edge.
+      expect(rule).toMatchObject({ chance: 1, checker: true });
+      expect(filled, salt).toBe(1800);
     }
+    expect(backdropRock(ART, { ...RULES.rocks, checker: false }, 9, 4, 5)).not.toBeNull();
     // The near depth keeps the backdrop salt, so its rocks keep their places.
     expect(RULES.rocks.salt).toBe("backdrop");
     expect(backdropRock(ART, RULES.rocks, 9, 4, 4)).toEqual(

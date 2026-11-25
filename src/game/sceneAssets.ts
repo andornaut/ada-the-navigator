@@ -681,8 +681,9 @@ function queueGalaxyAssets(
 }
 
 /**
- * A galaxy's backdrop layers: its backdrop.json, then the fixed layers it names and its nebula
- * textures, which draw with linear filtering since at parallax 0.05 nearest texels would crawl.
+ * A galaxy's backdrop layers: its backdrop-lattice.json, then the fixed layers it names and its
+ * nebula textures, which draw with linear filtering since at parallax 0.05 nearest texels would
+ * crawl.
  */
 export function queueBackdrop(
   scene: AssetsContext,

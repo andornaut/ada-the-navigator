@@ -43,23 +43,25 @@ describe("split art manifest", () => {
 
   it("reads a version 1 galaxy manifest's assets and string data links", () => {
     expect(GALAXY_MANIFESTS.get(2)!.links).toEqual({
-      backdrop: "/art/cartwheel/backdrop.json",
+      backdrop: "/art/cartwheel/backdrop-lattice.json",
       cartwheelDebris: "/art/cartwheel/debris.json",
       oreField: "/art/cartwheel/ore-field.json",
     });
     expect(GALAXY_MANIFESTS.get(3)!.links).toEqual({
-      backdrop: "/art/whirlpool/backdrop.json",
+      backdrop: "/art/whirlpool/backdrop-lattice.json",
       whales: "/art/friendly-whales.json",
       whirlpoolCurrents: "/art/whirlpool/currents.json",
       whirlpoolDebris: "/art/whirlpool/debris.json",
       whirlpoolProjects: "/art/whirlpool/projects.json",
     });
-    expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({ backdrop: "/art/sunflower/backdrop.json" });
+    expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({
+      backdrop: "/art/sunflower/backdrop-lattice.json",
+    });
     // Phantom also links the finale ally data and the shared whale metadata.
     const phantom = GALAXY_MANIFESTS.get(6)!;
     expect(phantom.links).toEqual({
       allies: "/art/phantom/allies.json",
-      backdrop: "/art/phantom/backdrop.json",
+      backdrop: "/art/phantom/backdrop-lattice.json",
       whales: "/art/friendly-whales.json",
     });
     expect(phantom.assets.map(({ id }) => id)).toEqual(

@@ -13592,7 +13592,7 @@
       "svgSheetMember": "enemy-capital-hopper-top-15"
     }
   ],
-  "backdrop": "/art/phantom/backdrop.json",
+  "backdrop": "/art/phantom/backdrop-lattice.json",
   "tow": "/art/phantom/friendly-tow.json",
   "sidecars": {
     "avipracticeglider": {

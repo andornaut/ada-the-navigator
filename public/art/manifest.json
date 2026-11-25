@@ -45025,7 +45025,7 @@
   "tow": "/art/cartwheel/friendly-tow.json",
   "titleScreen": "/art/title-screen.json",
   "jobs": "/art/jobs.json",
-  "backdropLayers": "/art/backdrop.json",
+  "backdropLayers": "/art/backdrop-lattice.json",
   "enemyWeapons": "/art/enemy-weapons.json",
   "aboardHolodisk": "/art/aboard-holodisk.json",
   "shipHeadings": {

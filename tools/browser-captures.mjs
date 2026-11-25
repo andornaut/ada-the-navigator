@@ -324,7 +324,7 @@ async function captureRocks() {
   assert.equal(response.status(), 200, "Art's asteroid catalog must be served");
   const rockArt = readAsteroidCatalog(await response.json());
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
-  const backdrop = await page.request.get(`${previewOrigin}/art/backdrop.json`);
+  const backdrop = await page.request.get(`${previewOrigin}/art/backdrop-lattice.json`);
   const { debris } = await backdrop.json();
   // Galaxy one's rocks turning: small and medium rocks turn 4 to 18 degrees a second, so 15
   // degree frames change within two seconds of clock time.

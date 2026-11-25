@@ -123,9 +123,9 @@ export const toScreen = (world) => ({
 });
 export const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
 
-// The drawn screen rectangles of the backdrop rocks of one depth (backdrop.json `debris.rocks` or
-// `debris.farRocks`) for a flight seed, Ada at `player`. Backdrop rocks lie in their layer, about
-// the camera's world position times the depth's `parallax` (art/backdrop.md).
+// The drawn screen rectangles of the backdrop rocks of one depth (backdrop-lattice.json
+// `debris.rocks` or `debris.farRocks`) for a flight seed, Ada at `player`. Backdrop rocks lie in
+// their layer, about the camera's world position times the depth's `parallax` (art/backdrop.md).
 function backdropRockBoxes(rockArt, rule, seed, player) {
   const camera = { x: player.x * rule.parallax, y: player.y * rule.parallax };
   const cx = Math.floor(camera.x / rule.cell);
@@ -157,8 +157,8 @@ const meets = (a, b) =>
 
 // The first flight seed whose near backdrop rocks (`debris.rocks`) put one in the asteroid
 // fixture's open top-centre area, clear of its play rocks; or, with `clear` screen rectangles,
-// whose rocks of both depths (`debris`, backdrop.json) meet none of them. `rockArt` is Art's
-// served asteroid catalog.
+// whose rocks of both depths (`debris`, backdrop-lattice.json) meet none of them. `rockArt` is
+// Art's served asteroid catalog.
 export function backdropSeed(rockArt, debris, player, clear = null) {
   for (let seed = 1; seed < 2000; seed++) {
     if (clear) {

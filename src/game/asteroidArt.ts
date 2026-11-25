@@ -218,12 +218,14 @@ export function backdropTint(
 }
 
 /**
- * One backdrop rock depth (backdrop.json `debris.rocks`, `debris.farRocks`): its parallax, hash
- * salt, world cell size, fill chance, display scale range and value toward the field background.
+ * One backdrop rock depth (backdrop-lattice.json `debris.rocks`, `debris.farRocks`): its
+ * parallax, hash salt, world cell size, fill chance, whether only the cells whose x + y is even
+ * hold rocks, display scale range and value toward the field background.
  */
 export interface BackdropRockRule {
   readonly cell: number;
   readonly chance: number;
+  readonly checker: boolean;
   readonly parallax: number;
   readonly salt: string;
   readonly scale: readonly [number, number];
@@ -235,19 +237,21 @@ export interface BackdropRock extends Vec {
   readonly sprite: BackdropSprite;
 }
 /**
- * The backdrop rock seeded in cell (x, y) of its depth, or null for an empty cell. At parallax
- * 0.8 a rock slides past an ore field under its crystals, so it keeps no ore-field clearance.
+ * The backdrop rock seeded in cell (x, y) of its depth, or null for an empty cell: a checker
+ * rule leaves every cell whose x + y is odd empty, so no two rocks share a cell edge. At
+ * parallax 0.8 a rock slides past an ore field under its crystals, so it keeps no ore-field
+ * clearance.
  */
 export function backdropRock(
   catalog: AsteroidArtCatalog,
-  rule: Pick<BackdropRockRule, "cell" | "chance" | "salt" | "scale">,
+  rule: Pick<BackdropRockRule, "cell" | "chance" | "checker" | "salt" | "scale">,
   seed: number,
   x: number,
   y: number,
 ): BackdropRock | null {
   const id = `${x},${y}`;
   const { cell, salt } = rule;
-  if (unit(seed, id, salt) >= rule.chance) {
+  if ((rule.checker && Math.abs(x + y) % 2 === 1) || unit(seed, id, salt) >= rule.chance) {
     return null;
   }
   const sprites = catalog.backdrop.sprites;

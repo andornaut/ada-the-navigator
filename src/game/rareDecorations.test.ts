@@ -33,7 +33,7 @@ const body = { id: "formation", polygons: [{ holes: [], outer: square }] };
 describe("optional rare decoration data", () => {
   it("accepts the agreed recipe without requiring it in existing galaxy data", () => {
     expect(readDecorations(recipe)).toEqual(recipe);
-    const data = publicJson("/art/sunflower/backdrop.json") as Record<string, unknown>;
+    const data = publicJson("/art/sunflower/backdrop-lattice.json") as Record<string, unknown>;
     const legacy = { ...data };
     delete legacy.decorations;
     const before = readGalaxyBackdrop(legacy)!;

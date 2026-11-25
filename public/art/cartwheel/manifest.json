@@ -31127,7 +31127,7 @@
   ],
   "cartwheelDebris": "/art/cartwheel/debris.json",
   "oreField": "/art/cartwheel/ore-field.json",
-  "backdrop": "/art/cartwheel/backdrop.json",
+  "backdrop": "/art/cartwheel/backdrop-lattice.json",
   "tow": "/art/cartwheel/friendly-tow.json",
   "sidecars": {
     "blocker": {

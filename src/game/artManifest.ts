@@ -14,7 +14,7 @@ export interface CoreManifest<T> {
   /** Shared ship geometry and material slots for every declared paint. */
   readonly shipMaterials?: string;
   readonly assets: T[];
-  /** The backdrop layers' shared rules (public/art/backdrop.json). */
+  /** The backdrop layers' shared rules (public/art/backdrop-lattice.json). */
   readonly backdropLayers?: string;
   /** Each galaxy's manifest path, by stable galaxy id. */
   readonly galaxies?: unknown;
@@ -37,7 +37,7 @@ export interface CoreManifest<T> {
 export interface GalaxyLinks {
   /** Phantom ally presentation metadata. */
   readonly allies?: string;
-  /** The galaxy's backdrop layers: its tones and recipes (backdrop.json). */
+  /** The galaxy's backdrop layers: its tones and recipes (backdrop-lattice.json). */
   readonly backdrop?: string;
   /** The galaxy's backdrop haze placement (haze.json). */
   readonly backdropHaze?: string;

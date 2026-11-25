@@ -1410,6 +1410,6 @@
       "svgSheet": true
     }
   ],
-  "backdrop": "/art/sunflower/backdrop.json",
+  "backdrop": "/art/sunflower/backdrop-lattice.json",
   "tow": "/art/sunflower/friendly-tow.json"
 }

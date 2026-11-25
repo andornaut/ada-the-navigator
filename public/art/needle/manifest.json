@@ -19183,7 +19183,7 @@
   "needleChannels": "/art/needle/channels.json",
   "needleEye": "/art/needle/eye.json",
   "needleBand": "/art/needle/band.json",
-  "backdrop": "/art/needle/backdrop.json",
+  "backdrop": "/art/needle/backdrop-lattice.json",
   "tow": "/art/needle/friendly-tow.json",
   "sidecars": {
     "capital": {

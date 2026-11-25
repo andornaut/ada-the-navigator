@@ -1,7 +1,7 @@
 // The space backdrop: sky, far items, plates, stars and streaks.
 // Functions over the scene's BackdropContext.
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { BlendModes, Math as PhaserMath, TintModes } from "phaser";
+import { BlendModes, Geom, TintModes } from "phaser";
 
 import type { AsteroidArtCatalog } from "../data/asteroidCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -25,7 +25,7 @@ import {
   paintSky,
   planetReach,
   SKY_AREA,
-  streakPieces,
+  streakEnds,
   viewFar,
   viewPlanets,
   viewPlates,
@@ -37,7 +37,6 @@ import { canvasSize, sceneFit } from "./playCamera.ts";
 import { viewDecorations } from "./rareDecorations.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";
-import { STREAK_PIECES } from "./sceneShared.ts";
 
 /** The scene state and methods this module's functions use. */
 export type BackdropContext = Pick<
@@ -270,7 +269,31 @@ export function drawDecorations(
   }
 }
 
-/** L1: the plates in view, darker steps multiplied by their grey, lighter ones screened. */
+// A motif's triangles as vertex indices into its rings laid end to end, edge ring first: the
+// rings filled even-odd, each hole ring cut from the edge.
+const motifTriangles = new WeakMap<GalaxyBackdrop["plates"]["motif"], readonly number[]>();
+
+function trianglesOf(motif: GalaxyBackdrop["plates"]["motif"]): readonly number[] {
+  let triangles = motifTriangles.get(motif);
+  if (!triangles) {
+    const holes: number[] = [];
+    let count = 0;
+    for (const ring of motif.rings) {
+      if (count > 0) {
+        holes.push(count);
+      }
+      count += ring.length;
+    }
+    triangles = Geom.Polygon.Earcut(motif.rings.flat(2), holes);
+    motifTriangles.set(motif, triangles);
+  }
+  return triangles;
+}
+
+/**
+ * L1: the motif plates in view, darker steps multiplied by their grey, lighter ones screened,
+ * each drawn as its motif's triangles so hole rings stay clear.
+ */
 export function drawPlates(
   scene: BackdropContext,
   rules: BackdropRules,
@@ -289,15 +312,19 @@ export function drawPlates(
       .setBlendMode(BlendModes.SCREEN)
       .setVertexRoundMode("off"),
   };
+  const triangles = trianglesOf(backdrop.plates.motif);
   for (const plate of viewPlates(rules, backdrop, camera)) {
-    const points = plate.points.map(([x, y]) => new PhaserMath.Vector2(x, y));
-    if (plate.multiply !== undefined) {
-      const grey = Math.round(plate.multiply * 255);
-      scene.plateInk.multiply.fillStyle((grey << 16) | (grey << 8) | grey, 1);
-      scene.plateInk.multiply.fillPoints(points, true);
-    } else if (plate.screen) {
-      scene.plateInk.screen.fillStyle(hexNumber(plate.screen), 1);
-      scene.plateInk.screen.fillPoints(points, true);
+    const grey = plate.multiply === undefined ? 0 : Math.round(plate.multiply * 255);
+    const ink =
+      plate.multiply === undefined
+        ? scene.plateInk.screen.fillStyle(hexNumber(plate.screen!), 1)
+        : scene.plateInk.multiply.fillStyle((grey << 16) | (grey << 8) | grey, 1);
+    const points = plate.rings.flat();
+    for (let k = 0; k < triangles.length; k += 3) {
+      const a = points[triangles[k]!]!;
+      const b = points[triangles[k + 1]!]!;
+      const c = points[triangles[k + 2]!]!;
+      ink.fillTriangle(a[0], a[1], b[0], b[1], c[0], c[1]);
     }
   }
 }
@@ -330,7 +357,7 @@ export function drawStars(
   }
 }
 
-/** L4: the dust streaks, 1 px lines fading to clear at both ends along a half sine. */
+/** L4: the dust streaks, 1 px lines of one length at the galaxy's angle and alpha. */
 export function drawStreaks(
   scene: BackdropContext,
   rules: BackdropRules,
@@ -341,12 +368,14 @@ export function drawStreaks(
     .graphics()
     .setDepth(BACKDROP_DEPTH.streaks)
     .setVertexRoundMode("off");
-  const color = hexNumber(backdrop.streaks.color);
+  scene.streakInk.lineStyle(
+    rules.streaks.width,
+    hexNumber(backdrop.streaks.color),
+    backdrop.streaks.alpha,
+  );
   for (const streak of viewStreaks(rules, backdrop, camera)) {
-    for (const piece of streakPieces(streak, STREAK_PIECES)) {
-      scene.streakInk.lineStyle(rules.streaks.width, color, backdrop.streaks.alpha * piece.fade);
-      scene.streakInk.lineBetween(piece.from[0], piece.from[1], piece.to[0], piece.to[1]);
-    }
+    const [from, to] = streakEnds(streak);
+    scene.streakInk.lineBetween(from[0], from[1], to[0], to[1]);
   }
 }
 

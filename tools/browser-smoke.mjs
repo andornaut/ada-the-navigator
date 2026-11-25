@@ -5022,7 +5022,7 @@ try {
   // Both backdrop rock depths, each in its layer about the camera's world position times its
   // parallax (art/backdrop.md).
   const rockDebris = (
-    await (await page.request.get("http://ada-preview:4173/art/backdrop.json")).json()
+    await (await page.request.get("http://ada-preview:4173/art/backdrop-lattice.json")).json()
   ).debris;
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
@@ -5095,7 +5095,7 @@ try {
   // Empty space shows galaxy one's backdrop layers (art/backdrop.md): each channel within its sky
   // ends and plate steps, give or take a darker plate over the darker sky.
   const backdropResponse = await page.request.get(
-    "http://ada-preview:4173/art/sunflower/backdrop.json",
+    "http://ada-preview:4173/art/sunflower/backdrop-lattice.json",
   );
   assert.equal(backdropResponse.status(), 200, "Galaxy one's backdrop must be served");
   const sunflowerBackdrop = await backdropResponse.json();
@@ -5367,7 +5367,7 @@ try {
       .join("")}`;
   async function galaxyBackdrop(galaxy) {
     const response = await page.request.get(
-      `http://ada-preview:4173/art/${GALAXY_ID[galaxy]}/backdrop.json`,
+      `http://ada-preview:4173/art/${GALAXY_ID[galaxy]}/backdrop-lattice.json`,
     );
     assert.equal(response.status(), 200, `Galaxy ${galaxy}'s backdrop must be served`);
     return response.json();

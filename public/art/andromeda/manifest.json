@@ -26996,7 +26996,7 @@
     }
   ],
   "backdropHaze": "/art/andromeda/haze.json",
-  "backdrop": "/art/andromeda/backdrop.json",
+  "backdrop": "/art/andromeda/backdrop-lattice.json",
   "tow": "/art/andromeda/friendly-tow.json",
   "sidecars": {
     "capital": {

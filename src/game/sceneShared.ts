@@ -59,5 +59,3 @@ export function projectId(key: string): string | null {
 // The landmarks' ground layer (art/jobs.md): above the backdrop rocks (-1), under the field ink
 // (0), which draws the specks, streaks and the search rim over them, and under every play object.
 export const LANDMARK_DEPTH = -0.5;
-// A dust streak draws in this many pieces, each at its share of the half-sine fade.
-export const STREAK_PIECES = 8;
