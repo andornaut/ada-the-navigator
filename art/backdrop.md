@@ -134,6 +134,62 @@ writes a review sheet of every frame on its field.
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
   on the plates' Graphics, one object per mode.
 
+## Motif field
+
+The motif field is the staged replacement of the plate, planet, streak and
+rock placement rules: calm, ordered and themed, with every tone kept. The
+producer writes it beside the shipped data as `/art/backdrop-lattice.json`
+(shared rules, `version` 2) and `/art/{galaxy}/backdrop-lattice.json`, and
+stages the manifest links `backdropLayers` and `backdrop` that select them
+under `field` and `field-{galaxy}` in [polish-rows.json](polish-rows.json).
+The shipped `backdrop.json` files and their links stay as they are until the
+runtime reads the new files. Sky, far items, fixed layers, stars, specks,
+nebula textures and the rare decorations are the same in both; each staged
+galaxy file carries its `decorations` recipe as the shipped file does, so a
+change to the decoration sprites is written to both.
+
+- Plates. Node `(i, j)` of the lattice `e1 = (250, 125)`, `e2 = (-250, 125)`
+  sits at `i e1 + j e2` in layer px at parallax 0.15, with no jitter. A node
+  is empty when `(i + 2 j) mod 3` is 0 (`plates.empty`), so two nodes of
+  every three hold a plate. A plate is the galaxy's motif about its node
+  (`plates.motif.rings`, layer px: the first ring is the edge and a further
+  ring a hole, filled even-odd). Nodes whose `i + j` is even take the first
+  paint of `plates.steps` and odd nodes the second: the galaxy's first
+  lighter and first darker step, or Andromeda's two darker steps. Blend
+  modes are unchanged.
+- Planets. A planet draws only in the chunks whose `i + j` is even
+  (`planets.checker`). It is a round disc in `night` with one lit disc in
+  `lit`, 1.04 radii wide, its centre 0.55 radii (crescent) or 0.9 radii
+  (gibbous, moon, ringed) toward the light `(-0.62, -0.78)`, clipped to the
+  planet: two flat tones on a round terminator, with no facets and no
+  `body` tone. A ringed planet has one opaque `ring` band from 0.78 to 0.98
+  of the radii `(2, 0.42)`, tilted -14 degrees, its far half under the
+  planet and its near half over it.
+- Streaks. One streak at the centre of every 240 px cell whose `i + j` is
+  even, 44 px long and 1 px wide at the galaxy's `streaks.angle` and
+  `streaks.alpha`, with no spread and no fade.
+- Backdrop rocks. The six sprites, tints, scale ranges, cells and parallax
+  are unchanged. A rock or far rock sits in every cell whose `i + j` is even
+  (`chance` 1, `checker`), so half the cells hold one, against 70 percent,
+  and no two share an edge. Its sprite, position and scale keep their salts.
+
+| Galaxy    | Motif (`plates.motif.name`)                  | Even nodes | Odd nodes | Extreme, shipped and motif |
+| --------- | -------------------------------------------- | ---------- | --------- | -------------------------- |
+| Sunflower | `petal`: a diamond 236 by 71                 | `#DFCA99`  | `#D2C490` | 1.19:1, 1.12:1             |
+| Cartwheel | `rim`: a ring 224 by 112, opening 165 by 83  | `#BCA190`  | `#B7988C` | 1.25:1, 1.18:1             |
+| Whirlpool | `arm`: 250 degrees of a tapering spiral      | `#BDD0C4`  | `#B3C8BF` | 1.25:1, 1.17:1             |
+| Andromeda | `disc`: an ellipse 224 by 112                | `#898EA9`  | `#8E94B0` | 1.52:1, 1.52:1             |
+| Needle    | `lens`: 401 by 24 along the band, -6 degrees | `#C6BFA9`  | `#C0B6A1` | 1.19:1, 1.11:1             |
+| Phantom   | `slab`: three arms 118 long and 47 wide      | `#544D5A`  | `#4E4652` | 1.41:1, 1.32:1             |
+
+Round motifs lie on the world plane and draw as 2:1 ellipses. The producer
+runs the [area check](#contrast-caps) on the motif field over the same
+random cameras and one centred on each planet look and far look it draws,
+and fails under the same rule: no recognition signal's sampled minimum may
+fall under today's. Each staged galaxy file records the result in `check`.
+`node art/tools/backdrop.ts --preview <dir>` also writes each motif camera
+as `{galaxy}-lattice-{k}.png`.
+
 ## Coordinates
 
 A layer's origin is the camera's world position projected with the scene's

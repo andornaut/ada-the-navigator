@@ -112,6 +112,9 @@ at their own depth behind the play plane:
   times the camera's world position and projected as the scene projects, so
   its layout stays isometric. The specks' positions
   are in layer coordinates, not world coordinates.
+- The staged [motif field](backdrop.md#motif-field) keeps the sprites, tints,
+  scales, cells and parallax and places a rock in every cell whose `i + j` is
+  even, half the cells, in place of 70 percent of them at random.
 - Backdrop rocks keep no ore-field clearance: at parallax 0.8 they slide past
   an ore field, under its crystals, so a world-space clearance would not hold.
 - A placeholder galaxy's rocks and specks take the base field's tints.

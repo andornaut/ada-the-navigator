@@ -19,17 +19,22 @@ import {
   writeDecorations,
 } from "./backdrop-decorations.ts";
 import {
+  checkerItems,
   chunkItems,
-  inside,
+  insideRings,
   layerOrigin,
+  type MotifRules,
+  motifPlates,
   type Pattern,
   type PlateRules,
   plates,
   type Rect,
+  type Ring,
   unit,
   type Xy,
 } from "./backdrop-field.ts";
 import { editManifest, GALAXIES, linkData, manifestUrl, replaceEntries } from "./manifest.ts";
+import { stageRows } from "./polish-rows.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json, round } from "./projection.ts";
@@ -488,6 +493,153 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
 
 const roundXy = (xy: Xy): Xy => [round(xy[0]), round(xy[1])];
 
+// ---------------------------------------------------------------- the motif field
+// The staged field (art/backdrop.md, Motif field): one themed motif per galaxy on a regular
+// isometric lattice in two flat plate steps, round two-tone planets in every second chunk,
+// streaks of one length at one angle on a checker, and the backdrop rocks in every second cell.
+// It is written beside the shipped backdrop data, which the runtime reads until the switch.
+
+const MOTIF_RULES: MotifRules = {
+  lattice: [
+    [250, 125],
+    [-250, 125],
+  ],
+  empty: { i: 1, j: 2, modulus: 3 },
+};
+// The motif's unit length in layer px.
+const MOTIF_SIZE = 118;
+
+const FIELD_RULES = {
+  ...RULES,
+  version: 2,
+  phenomena: {
+    ...RULES.phenomena,
+    planets: {
+      parallax: RULES.phenomena.planets.parallax,
+      chunk: RULES.phenomena.planets.chunk,
+      chance: RULES.phenomena.planets.chance,
+      salt: RULES.phenomena.planets.salt,
+      // A planet draws only in the chunks whose i + j is even.
+      checker: true,
+      radius: RULES.phenomena.planets.radius,
+      light: RULES.phenomena.planets.light,
+      // The lit disc: `radius` times the planet's, its centre `push` radii toward the light,
+      // clipped to the planet.
+      lit: { radius: 1.04, push: { crescent: 0.55, gibbous: 0.9 } },
+      ring: { radii: [2, 0.42], tilt: -14, band: { from: 0.78, to: 0.98 } },
+    },
+  },
+  plates: {
+    parallax: RULES.plates.parallax,
+    ...MOTIF_RULES,
+    size: MOTIF_SIZE,
+    blend: RULES.plates.blend,
+  },
+  debris: {
+    ...RULES.debris,
+    // One streak at the centre of every `cell` layer px cell whose i + j is even.
+    streaks: { parallax: RULES.debris.streaks.parallax, cell: 240, length: 44, width: 1 },
+    // One rock in every cell whose i + j is even.
+    rocks: { ...RULES.debris.rocks, chance: 1, checker: true },
+    farRocks: { ...RULES.debris.farRocks, chance: 1, checker: true },
+  },
+};
+
+const ellipse = (radius: number, count = 72): Xy[] =>
+  Array.from({ length: count }, (_, k): Xy => {
+    const a = (2 * Math.PI * k) / count;
+    return [radius * Math.cos(a), (radius / 2) * Math.sin(a)];
+  });
+
+// Each galaxy's motif about its node, in units of MOTIF_SIZE: shapes on the world plane, so
+// round ones draw as 2:1 ellipses.
+const MOTIFS: Record<GalaxyId, { name: string; rings: Xy[][] }> = {
+  // A petal: a long diamond on an isometric axis.
+  sunflower: {
+    name: "petal",
+    rings: [
+      [
+        [-1, 0],
+        [-0.1, -0.3],
+        [1, 0],
+        [0.1, 0.3],
+      ],
+    ],
+  },
+  // A wheel rim.
+  cartwheel: { name: "rim", rings: [ellipse(0.95), ellipse(0.7).toReversed()] },
+  // An arm: 250 degrees of a tapering spiral band.
+  whirlpool: {
+    name: "arm",
+    rings: [
+      (() => {
+        const side = (sign: number) =>
+          Array.from({ length: 41 }, (_, k): Xy => {
+            const t = k / 40;
+            const a = ((200 + 250 * t) * Math.PI) / 180;
+            const r = 0.5 + 0.5 * t + sign * (0.17 * Math.sin(Math.PI * Math.min(1, 0.12 + t)));
+            return [r * Math.cos(a), (r / 2) * Math.sin(a)];
+          });
+        return [...side(1), ...side(-1).toReversed()];
+      })(),
+    ],
+  },
+  // A saucer: a disc.
+  andromeda: { name: "disc", rings: [ellipse(0.95)] },
+  // A needle: a long lens along the band.
+  needle: {
+    name: "lens",
+    rings: [
+      (
+        [
+          [-1.7, 0],
+          [-0.5, 0.1],
+          [0.5, 0.1],
+          [1.7, 0],
+          [0.5, -0.1],
+          [-0.5, -0.1],
+        ] as const
+      ).map(([along, across]): Xy => [
+        along * Math.cos(-RAD6) - across * Math.sin(-RAD6),
+        along * Math.sin(-RAD6) + across * Math.cos(-RAD6),
+      ]),
+    ],
+  },
+  // A three-armed slab, arms 120 degrees apart.
+  phantom: {
+    name: "slab",
+    rings: [
+      [0, 1, 2].flatMap((k): Xy[] => {
+        const a = ((90 + 120 * k) * Math.PI) / 180;
+        const b = a + Math.PI / 3;
+        const half = 0.2;
+        const [tx, ty] = [Math.cos(a), Math.sin(a)];
+        const [nx, ny] = [-Math.sin(a) * half, Math.cos(a) * half];
+        const inner = half / Math.sin(Math.PI / 3);
+        return [
+          [tx - nx, (ty - ny) / 2],
+          [tx + nx, (ty + ny) / 2],
+          [Math.cos(b) * inner, (Math.sin(b) * inner) / 2],
+        ];
+      }),
+    ],
+  },
+};
+
+const motifRings = (galaxy: GalaxyId): Xy[][] =>
+  MOTIFS[galaxy].rings.map((ring) =>
+    ring.map(([x, y]): Xy => [
+      Math.round(x * MOTIF_SIZE * 10) / 10 + 0,
+      Math.round(y * MOTIF_SIZE * 10) / 10 + 0,
+    ]),
+  );
+
+type FieldPlates = {
+  motif: { name: string; rings: Ring[] };
+  // The paints of the nodes whose i + j is even, then odd.
+  steps: [StepPaint, StepPaint];
+};
+
 function roundPattern(pattern: Pattern): Pattern {
   return JSON.parse(JSON.stringify(pattern), (_, value: unknown) =>
     typeof value === "number" ? round(value) : value,
@@ -901,7 +1053,7 @@ type Raster = { rgb: Float32Array };
 const [W, H] = VIEW;
 
 /** The view-space planet for a chunk item in the planets layer. */
-function planetsInView(data: GalaxyBackdrop, camera: Xy) {
+function planetsInView(data: GalaxyBackdrop, camera: Xy, checker = false) {
   const rule = RULES.phenomena.planets;
   const origin = layerOrigin(camera, rule.parallax);
   const rect: Rect = [
@@ -910,22 +1062,20 @@ function planetsInView(data: GalaxyBackdrop, camera: Xy) {
     origin[0] + W / 2 + 220,
     origin[1] + H / 2 + 120,
   ];
-  return chunkItems(
-    data.seed,
-    rule.salt,
-    rule as unknown as { chunk: Xy; chance: number },
-    rect,
-  ).map((item) => {
-    const planet =
-      data.planets[Math.floor(unit(data.seed, item.id, "planet-look") * data.planets.length)]!;
-    const r =
-      (rule.radius[0] + (rule.radius[1] - rule.radius[0]) * unit(data.seed, item.id, "planet-r")) *
-      planet.size;
-    const tilt =
-      rule.ring.tilt[0] +
-      (rule.ring.tilt[1] - rule.ring.tilt[0]) * unit(data.seed, item.id, "planet-tilt");
-    return { planet, r, tilt, x: item.x - origin[0] + W / 2, y: item.y - origin[1] + H / 2 };
-  });
+  return chunkItems(data.seed, rule.salt, rule as unknown as { chunk: Xy; chance: number }, rect)
+    .filter((item) => !checker || (item.i + item.j) % 2 === 0)
+    .map((item) => {
+      const planet =
+        data.planets[Math.floor(unit(data.seed, item.id, "planet-look") * data.planets.length)]!;
+      const r =
+        (rule.radius[0] +
+          (rule.radius[1] - rule.radius[0]) * unit(data.seed, item.id, "planet-r")) *
+        planet.size;
+      const tilt =
+        rule.ring.tilt[0] +
+        (rule.ring.tilt[1] - rule.ring.tilt[0]) * unit(data.seed, item.id, "planet-tilt");
+      return { planet, r, tilt, x: item.x - origin[0] + W / 2, y: item.y - origin[1] + H / 2 };
+    });
 }
 
 function farInView(data: GalaxyBackdrop, camera: Xy) {
@@ -959,7 +1109,12 @@ const facet = (angle: number, n: number) =>
     (((angle % ((2 * Math.PI) / n)) + (2 * Math.PI) / n) % ((2 * Math.PI) / n)) - Math.PI / n,
   );
 
-function renderArea(data: GalaxyBackdrop, camera: Xy, nebulae: Texture[]): Raster {
+function renderArea(
+  data: GalaxyBackdrop,
+  camera: Xy,
+  nebulae: Texture[],
+  field?: FieldPlates,
+): Raster {
   const rgbOut = new Float32Array(W * H * 3);
   const sky = data.sky;
   const [from, to] = [float(sky.from), float(sky.to)];
@@ -1055,7 +1210,36 @@ function renderArea(data: GalaxyBackdrop, camera: Xy, nebulae: Texture[]): Raste
   // L2 planets.
   const rule = RULES.phenomena.planets;
   const [lx, ly] = rule.light;
-  for (const { planet, r, tilt, x: cx, y: cy } of planetsInView(data, camera)) {
+  const fieldPlanets = FIELD_RULES.phenomena.planets;
+  for (const { planet, r, x: cx, y: cy } of field ? planetsInView(data, camera, true) : []) {
+    const c = Object.fromEntries(Object.entries(planet.colors).map(([k, v]) => [k, float(v)]));
+    const push = fieldPlanets.lit.push[planet.look === "crescent" ? "crescent" : "gibbous"];
+    const ringed = planet.look === "ringed";
+    const tilt = (fieldPlanets.ring.tilt * Math.PI) / 180;
+    const ext = r * 2.15;
+    for (let y = Math.max(0, Math.floor(cy - ext)); y < Math.min(H, cy + ext); y++) {
+      for (let x = Math.max(0, Math.floor(cx - ext)); x < Math.min(W, cx + ext); x++) {
+        const [dx, dy] = [x + 0.5 - cx, y + 0.5 - cy];
+        const p = y * W + x;
+        const ru = dx * Math.cos(tilt) + dy * Math.sin(tilt);
+        const rv = -dx * Math.sin(tilt) + dy * Math.cos(tilt);
+        const e = Math.hypot(
+          ru / (r * fieldPlanets.ring.radii[0]!),
+          rv / (r * fieldPlanets.ring.radii[1]!),
+        );
+        const onRing = ringed && e > fieldPlanets.ring.band.from && e < fieldPlanets.ring.band.to;
+        if (onRing && rv < 0) put(p, c.ring!, 1);
+        if (Math.hypot(dx, dy) <= r) {
+          put(p, c.night!, 1);
+          if (Math.hypot(dx - lx * push * r, dy - ly * push * r) <= r * fieldPlanets.lit.radius) {
+            put(p, c.lit!, 1);
+          }
+        }
+        if (onRing && rv >= 0) put(p, c.ring!, 1);
+      }
+    }
+  }
+  for (const { planet, r, tilt, x: cx, y: cy } of field ? [] : planetsInView(data, camera)) {
     const c = Object.fromEntries(Object.entries(planet.colors).map(([k, v]) => [k, float(v)]));
     const push = planet.look === "crescent" ? rule.push.crescent : rule.push.gibbous;
     const ringed = planet.look === "ringed";
@@ -1107,9 +1291,18 @@ function renderArea(data: GalaxyBackdrop, camera: Xy, nebulae: Texture[]): Raste
   // L1 plates: grey multiply for darker steps, screen for lighter ones.
   const origin = layerOrigin(camera, RULES.plates.parallax);
   const rect: Rect = [origin[0] - W / 2, origin[1] - H / 2, origin[0] + W / 2, origin[1] + H / 2];
-  for (const plate of plates(data.seed, PLATE_RULES, data.plates, rect)) {
-    const paint = data.plates.steps.find((s) => s.step === plate.step)!;
-    const pts = plate.points.map(([u, v]): Xy => [u - rect[0], v - rect[1]]);
+  const drawn = field
+    ? motifPlates(MOTIF_RULES, field.motif.rings, rect, 2 * MOTIF_SIZE).map(({ even, rings }) => ({
+        paint: field.steps[even ? 0 : 1],
+        rings,
+      }))
+    : plates(data.seed, PLATE_RULES, data.plates, rect).map((plate) => ({
+        paint: data.plates.steps.find((s) => s.step === plate.step)!,
+        rings: [plate.points],
+      }));
+  for (const { paint, rings } of drawn) {
+    const shape = rings.map((ring) => ring.map(([u, v]): Xy => [u - rect[0], v - rect[1]]));
+    const pts = shape[0]!;
     const xs = pts.map(([u]) => u);
     const ys = pts.map(([, v]) => v);
     const s = paint.screen ? float(paint.screen) : undefined;
@@ -1123,7 +1316,7 @@ function renderArea(data: GalaxyBackdrop, camera: Xy, nebulae: Texture[]): Raste
         x < Math.min(W, Math.ceil(Math.max(...xs)));
         x++
       ) {
-        if (!inside(pts, x + 0.5, y + 0.5)) {
+        if (!insideRings(shape, x + 0.5, y + 0.5)) {
           continue;
         }
         const p = y * W + x;
@@ -1172,7 +1365,7 @@ function opening(values: Float64Array, size: number, light: boolean): Float64Arr
  * Preview only: the stars (twinkle at rest, 0.85) and dust streaks over an area raster, by the
  * rules in art/backdrop.md, with 4 by 4 supersampled coverage.
  */
-function drawPoints(data: GalaxyBackdrop, camera: Xy, raster: Raster) {
+function drawPoints(data: GalaxyBackdrop, camera: Xy, raster: Raster, field = false) {
   const put = (x: number, y: number, c: readonly number[], a: number) => {
     const [px, py] = [Math.floor(x), Math.floor(y)];
     if (px < 0 || py < 0 || px >= W || py >= H) {
@@ -1231,6 +1424,28 @@ function drawPoints(data: GalaxyBackdrop, camera: Xy, raster: Raster) {
     origin[1] + H / 2 + 80,
   ];
   const streakColour = float(data.streaks.color);
+  if (field) {
+    const { cell, length, parallax } = FIELD_RULES.debris.streaks;
+    const base = layerOrigin(camera, parallax);
+    const angle = (data.streaks.angle * Math.PI) / 180;
+    for (const item of checkerItems(cell, [
+      base[0] - W / 2 - 80,
+      base[1] - H / 2 - 80,
+      base[0] + W / 2 + 80,
+      base[1] + H / 2 + 80,
+    ])) {
+      const [cx, cy] = [item.x - base[0] + W / 2, item.y - base[1] + H / 2];
+      for (let t = 0; t <= length; t += 0.5) {
+        put(
+          cx + Math.cos(angle) * (t - length / 2),
+          cy + Math.sin(angle) * (t - length / 2),
+          streakColour,
+          data.streaks.alpha * 0.5,
+        );
+      }
+    }
+    return;
+  }
   for (const item of chunkItems(
     data.seed,
     rule.salt,
@@ -1397,113 +1612,119 @@ for (const galaxy of GALAXIES) {
       cameras.push(camera);
     }
   }
-  type ContrastSample = {
-    color: string;
-    minimum: number;
-    location?: {
-      camera: number;
-      x: number;
-      y: number;
-      luminance: number;
-      sourceColor?: string;
-      sourceX?: number;
-      sourceY?: number;
+  // The area check of one field over its cameras: each signal's sampled minimum against today's,
+  // and the extreme tone. `tag` names the field in previews and failures.
+  const measure = (
+    tag: string,
+    views: readonly Xy[],
+    render: (camera: Xy) => Raster,
+    points: (camera: Xy, raster: Raster) => void,
+  ) => {
+    type ContrastSample = {
+      color: string;
+      minimum: number;
+      location?: {
+        camera: number;
+        x: number;
+        y: number;
+        luminance: number;
+        sourceColor?: string;
+        sourceX?: number;
+        sourceY?: number;
+      };
     };
-  };
-  const explicitEdge = fields.galaxies[galaxy]?.foregroundEdge;
-  const signals: Record<string, string> = explicitEdge
-    ? { foregroundEdge: explicitEdge }
-    : light
-      ? { ink: fields.lightField.ink }
-      : { obstacle: palette.obstacle!, shipWhite: SHIP_WHITE, shipHullDark: SHIP_HULL_DARK };
-  const recognition = Object.entries(signals).map(([name, color]) => ({
-    name,
-    sample: { color, minimum: Infinity } as ContrastSample,
-    luminance: luminance(float(color)),
-  }));
-  const shipContrast: Record<string, ContrastSample> = {
-    white: { color: SHIP_WHITE, minimum: Infinity },
-    hullDark: { color: SHIP_HULL_DARK, minimum: Infinity },
-  };
-  const samples = [
-    ...recognition,
-    ...Object.entries(shipContrast).map(([name, sample]) => ({
+    const explicitEdge = fields.galaxies[galaxy]?.foregroundEdge;
+    const signals: Record<string, string> = explicitEdge
+      ? { foregroundEdge: explicitEdge }
+      : light
+        ? { ink: fields.lightField.ink }
+        : { obstacle: palette.obstacle!, shipWhite: SHIP_WHITE, shipHullDark: SHIP_HULL_DARK };
+    const recognition = Object.entries(signals).map(([name, color]) => ({
       name,
-      sample,
-      luminance: luminance(float(sample.color)),
-    })),
-  ];
-  let extreme = light ? Infinity : -Infinity;
-  let extremeColour: Float3 = float(bg);
-  cameras.forEach((camera, k) => {
-    const raster = renderArea(data, camera, nebulae);
-    const lum = new Float64Array(W * H);
-    for (let p = 0; p < W * H; p++) {
-      lum[p] = luminance([raster.rgb[p * 3]!, raster.rgb[p * 3 + 1]!, raster.rgb[p * 3 + 2]!]);
-    }
-    const opened = opening(lum, RULES.check.opening, light);
-    for (let p = 0; p < W * H; p++) {
-      const v = opened[p]!;
-      for (const target of samples) {
-        const measured = ratio(target.luminance, v);
-        if (measured < target.sample.minimum) {
-          target.sample.minimum = measured;
-          target.sample.location = { camera: k, x: p % W, y: Math.floor(p / W), luminance: v };
+      sample: { color, minimum: Infinity } as ContrastSample,
+      luminance: luminance(float(color)),
+    }));
+    const shipContrast: Record<string, ContrastSample> = {
+      white: { color: SHIP_WHITE, minimum: Infinity },
+      hullDark: { color: SHIP_HULL_DARK, minimum: Infinity },
+    };
+    const samples = [
+      ...recognition,
+      ...Object.entries(shipContrast).map(([name, sample]) => ({
+        name,
+        sample,
+        luminance: luminance(float(sample.color)),
+      })),
+    ];
+    let extreme = light ? Infinity : -Infinity;
+    let extremeColour: Float3 = float(bg);
+    views.forEach((camera, k) => {
+      const raster = render(camera);
+      const lum = new Float64Array(W * H);
+      for (let p = 0; p < W * H; p++) {
+        lum[p] = luminance([raster.rgb[p * 3]!, raster.rgb[p * 3 + 1]!, raster.rgb[p * 3 + 2]!]);
+      }
+      const opened = opening(lum, RULES.check.opening, light);
+      for (let p = 0; p < W * H; p++) {
+        const v = opened[p]!;
+        for (const target of samples) {
+          const measured = ratio(target.luminance, v);
+          if (measured < target.sample.minimum) {
+            target.sample.minimum = measured;
+            target.sample.location = { camera: k, x: p % W, y: Math.floor(p / W), luminance: v };
+          }
+        }
+        if (light ? v < extreme : v > extreme) {
+          extreme = v;
+          extremeColour = [raster.rgb[p * 3]!, raster.rgb[p * 3 + 1]!, raster.rgb[p * 3 + 2]!];
         }
       }
-      if (light ? v < extreme : v > extreme) {
-        extreme = v;
-        extremeColour = [raster.rgb[p * 3]!, raster.rgb[p * 3 + 1]!, raster.rgb[p * 3 + 2]!];
+      for (const target of samples) {
+        const location = target.sample.location;
+        if (location?.camera !== k) continue;
+        const source = lum.indexOf(location.luminance);
+        if (source < 0) throw new Error("Opened sample has no source tone");
+        location.sourceColor = hexOf([
+          raster.rgb[source * 3]!,
+          raster.rgb[source * 3 + 1]!,
+          raster.rgb[source * 3 + 2]!,
+        ]);
+        location.sourceX = source % W;
+        location.sourceY = Math.floor(source / W);
       }
-    }
-    for (const target of samples) {
-      const location = target.sample.location;
-      if (location?.camera !== k) continue;
-      const source = lum.indexOf(location.luminance);
-      if (source < 0) throw new Error("Opened sample has no source tone");
-      location.sourceColor = hexOf([
-        raster.rgb[source * 3]!,
-        raster.rgb[source * 3 + 1]!,
-        raster.rgb[source * 3 + 2]!,
-      ]);
-      location.sourceX = source % W;
-      location.sourceY = Math.floor(source / W);
-    }
-    if (previewDir) {
-      drawPoints(data, camera, raster);
-      const image = blankImage(W, H);
-      for (let p = 0; p < W * H; p++) {
-        image.data.set(
-          [...[0, 1, 2].map((c) => Math.round(raster.rgb[p * 3 + c]! * 255)), 255],
-          p * 4,
+      if (previewDir) {
+        points(camera, raster);
+        const image = blankImage(W, H);
+        for (let p = 0; p < W * H; p++) {
+          image.data.set(
+            [...[0, 1, 2].map((c) => Math.round(raster.rgb[p * 3 + c]! * 255)), 255],
+            p * 4,
+          );
+        }
+        writePng(`${previewDir}/${galaxy}${tag}-${k}.png`, image);
+      }
+    });
+    const checked: Record<string, unknown> = {};
+    for (const target of recognition) {
+      const before = ratio(target.luminance, yToday);
+      const after = target.sample.minimum;
+      checked[target.name] = {
+        color: target.sample.color,
+        today: round(before),
+        after: round(after),
+        location: target.sample.location,
+      };
+      if (after < before - 0.005) {
+        fail(
+          `${galaxy}${tag}: ${target.name} sampled minimum ${after.toFixed(2)}:1 is under today's ${before.toFixed(2)}:1`,
         );
       }
-      writePng(`${previewDir}/${galaxy}-${k}.png`, image);
     }
-  });
-  const checked: Record<string, unknown> = {};
-  for (const target of recognition) {
-    const before = ratio(target.luminance, yToday);
-    const after = target.sample.minimum;
-    checked[target.name] = {
-      color: target.sample.color,
-      today: round(before),
-      after: round(after),
-      location: target.sample.location,
-    };
-    if (after < before - 0.005) {
-      fail(
-        `${galaxy}: ${target.name} sampled minimum ${after.toFixed(2)}:1 is under today's ${before.toFixed(2)}:1`,
-      );
-    }
-  }
-  const { galaxy: id, ...rest } = data;
-  const text = json({
-    version: 1,
-    galaxy: id,
-    ...rest,
-    check: {
-      cameras: cameras.length,
+    console.log(
+      `${galaxy}${tag}: extreme ${hexOf(extremeColour)} ${ratio(extreme, yb).toFixed(2)}:1, today ${hexOf(today)} ${ratio(yToday, yb).toFixed(2)}:1, ${views.length} cameras`,
+    );
+    return {
+      cameras: views.length,
       today: hexOf(today),
       todayContrast: round(ratio(yToday, yb)),
       extreme: hexOf(extremeColour),
@@ -1515,15 +1736,79 @@ for (const galaxy of GALAXIES) {
           { color: sample.color, minimum: round(sample.minimum), location: sample.location },
         ]),
       ),
-    },
-  });
+    };
+  };
+  const check = measure(
+    "",
+    cameras,
+    (camera) => renderArea(data, camera, nebulae),
+    (camera, raster) => drawPoints(data, camera, raster),
+  );
+  const { galaxy: id, ...rest } = data;
+  const text = json({ version: 1, galaxy: id, ...rest, check });
   writes.push(() => {
     writeFileSync(`${art}${galaxy}/backdrop.json`, text);
     linkData(galaxy, { backdrop: `/art/${galaxy}/backdrop.json` });
   });
-  console.log(
-    `${galaxy}: extreme ${hexOf(extremeColour)} ${ratio(extreme, yb).toFixed(2)}:1, today ${hexOf(today)} ${ratio(yToday, yb).toFixed(2)}:1, ${cameras.length} cameras`,
+
+  // The staged motif field: the same tones, with the galaxy's first lighter and first darker
+  // plate steps (its two darker steps where it has no lighter one), checked over the random
+  // cameras and one centred on each planet look and far look it draws.
+  const paint = (step: number) => data.plates.steps.find((s) => s.step === step)!;
+  const field: FieldPlates = {
+    motif: { name: MOTIFS[galaxy].name, rings: motifRings(galaxy) },
+    steps: data.plates.lighter ? [paint(1), paint(-1)] : [paint(-2), paint(-1)],
+  };
+  const drawn = (item: string) => {
+    const [i, j] = item.split(",").map(Number) as [number, number];
+    return (i + j) % 2 === 0;
+  };
+  const fieldCameras = [
+    ...cameras.slice(0, RULES.check.cameras),
+    ...[...new Set(data.planets.map((p) => p.look))].flatMap((look) => {
+      const camera = centring(
+        data,
+        "planets",
+        (item) =>
+          drawn(item) &&
+          data.planets[Math.floor(unit(data.seed, item, "planet-look") * data.planets.length)]!
+            .look === look,
+      );
+      return camera ? [camera] : [];
+    }),
+    ...[...new Set(data.far.map((f) => f.look))].flatMap((look) => {
+      const camera = centring(
+        data,
+        "far",
+        (item) =>
+          data.far[Math.floor(unit(data.seed, item, "far-look") * data.far.length)]!.look === look,
+      );
+      return camera ? [camera] : [];
+    }),
+  ];
+  const fieldCheck = measure(
+    "-lattice",
+    fieldCameras,
+    (camera) => renderArea(data, camera, nebulae, field),
+    (camera, raster) => drawPoints(data, camera, raster, true),
   );
+  const { plates: shipped, ...kept } = rest;
+  const fieldText = json({
+    version: 2,
+    galaxy: id,
+    ...kept,
+    plates: { lighter: shipped.lighter, ...field },
+    check: fieldCheck,
+  });
+  const fieldPath = `/art/${galaxy}/backdrop-lattice.json`;
+  writes.push(() => {
+    writeFileSync(`${art}${galaxy}/backdrop-lattice.json`, fieldText);
+    stageRows(`field-${galaxy}`, {
+      manifest: galaxy,
+      links: { backdrop: fieldPath },
+      replaces: `/art/${galaxy}/backdrop.json`,
+    });
+  });
 }
 
 // Nothing is written unless every galaxy passes.
@@ -1547,3 +1832,9 @@ for (const write of writes) {
 }
 writeFileSync(`${art}backdrop.json`, json(RULES));
 linkData("core", { backdropLayers: "/art/backdrop.json" });
+writeFileSync(`${art}backdrop-lattice.json`, json(FIELD_RULES));
+stageRows("field", {
+  manifest: "core",
+  links: { backdropLayers: "/art/backdrop-lattice.json" },
+  replaces: "/art/backdrop.json",
+});

@@ -5272,5 +5272,54 @@
         ]
       }
     }
+  },
+  "field": {
+    "manifest": "core",
+    "links": {
+      "backdropLayers": "/art/backdrop-lattice.json"
+    },
+    "replaces": "/art/backdrop.json"
+  },
+  "field-andromeda": {
+    "manifest": "andromeda",
+    "links": {
+      "backdrop": "/art/andromeda/backdrop-lattice.json"
+    },
+    "replaces": "/art/andromeda/backdrop.json"
+  },
+  "field-cartwheel": {
+    "manifest": "cartwheel",
+    "links": {
+      "backdrop": "/art/cartwheel/backdrop-lattice.json"
+    },
+    "replaces": "/art/cartwheel/backdrop.json"
+  },
+  "field-needle": {
+    "manifest": "needle",
+    "links": {
+      "backdrop": "/art/needle/backdrop-lattice.json"
+    },
+    "replaces": "/art/needle/backdrop.json"
+  },
+  "field-phantom": {
+    "manifest": "phantom",
+    "links": {
+      "backdrop": "/art/phantom/backdrop-lattice.json"
+    },
+    "replaces": "/art/phantom/backdrop.json"
+  },
+  "field-sunflower": {
+    "manifest": "sunflower",
+    "links": {
+      "backdrop": "/art/sunflower/backdrop-lattice.json"
+    },
+    "replaces": "/art/sunflower/backdrop.json"
+  },
+  "field-whirlpool": {
+    "manifest": "whirlpool",
+    "links": {
+      "backdrop": "/art/whirlpool/backdrop-lattice.json"
+    },
+    "replaces": "/art/whirlpool/backdrop.json"
   }
 }

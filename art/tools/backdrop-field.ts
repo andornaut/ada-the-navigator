@@ -207,6 +207,91 @@ export function plates(seed: number, rules: PlateRules, spec: PlateSpec, rect: R
   return out;
 }
 
+// ---------------------------------------------------------------- motif lattice
+
+/** A closed outline in layer px; a shape's first ring is its edge and any further ring a hole. */
+export type Ring = readonly Xy[];
+export type MotifRules = {
+  // Node (i, j) sits at i e1 + j e2.
+  lattice: readonly [Xy, Xy];
+  // Node (i, j) is empty when (i * empty.i + j * empty.j) mod empty.modulus is 0.
+  empty: { i: number; j: number; modulus: number };
+};
+export type MotifPlate = { rings: Xy[][]; even: boolean };
+
+const mod = (value: number, modulus: number) => ((value % modulus) + modulus) % modulus;
+
+/**
+ * The motif plates whose nodes lie within `reach` of `rect` (layer px): one copy of `motif`,
+ * given about its node, on every filled node. `even` is whether i + j is even, which picks the
+ * first or the second of the galaxy's two plate steps.
+ */
+export function motifPlates(
+  rules: MotifRules,
+  motif: readonly Ring[],
+  rect: Rect,
+  reach: number,
+): MotifPlate[] {
+  const [[e1x, e1y], [e2x, e2y]] = rules.lattice;
+  const det = e1x * e2y - e2x * e1y;
+  const corners: Xy[] = [
+    [rect[0] - reach, rect[1] - reach],
+    [rect[2] + reach, rect[1] - reach],
+    [rect[0] - reach, rect[3] + reach],
+    [rect[2] + reach, rect[3] + reach],
+  ];
+  const ij = corners.map(([x, y]) => [(x * e2y - y * e2x) / det, (y * e1x - x * e1y) / det]);
+  const i0 = Math.floor(Math.min(...ij.map(([a]) => a!)));
+  const i1 = Math.ceil(Math.max(...ij.map(([a]) => a!)));
+  const j0 = Math.floor(Math.min(...ij.map(([, b]) => b!)));
+  const j1 = Math.ceil(Math.max(...ij.map(([, b]) => b!)));
+  const out: MotifPlate[] = [];
+  for (let i = i0; i <= i1; i++) {
+    for (let j = j0; j <= j1; j++) {
+      const { empty } = rules;
+      if (mod(i * empty.i + j * empty.j, empty.modulus) === 0) continue;
+      const [x, y] = [i * e1x + j * e2x, i * e1y + j * e2y];
+      if (
+        x < rect[0] - reach ||
+        x > rect[2] + reach ||
+        y < rect[1] - reach ||
+        y > rect[3] + reach
+      ) {
+        continue;
+      }
+      out.push({
+        rings: motif.map((ring) => ring.map(([u, v]): Xy => [x + u, y + v])),
+        even: mod(i + j, 2) === 0,
+      });
+    }
+  }
+  return out;
+}
+
+/** Whether a shape of rings covers a point, by the even-odd rule. */
+export function insideRings(rings: readonly Ring[], x: number, y: number): boolean {
+  let hit = false;
+  for (const ring of rings) {
+    if (inside(ring, x, y)) hit = !hit;
+  }
+  return hit;
+}
+
+/**
+ * Checker placement: the centre of every cell of `step` layer px whose i + j is even, within
+ * `rect`.
+ */
+export function checkerItems(step: number, rect: Rect): ChunkItem[] {
+  const out: ChunkItem[] = [];
+  for (let i = Math.floor(rect[0] / step); i <= Math.floor(rect[2] / step); i++) {
+    for (let j = Math.floor(rect[1] / step); j <= Math.floor(rect[3] / step); j++) {
+      if (mod(i + j, 2) !== 0) continue;
+      out.push({ i, j, id: `${i},${j}`, x: (i + 0.5) * step, y: (j + 0.5) * step });
+    }
+  }
+  return out;
+}
+
 export type ChunkRule = { chunk: Xy; chance: number };
 export type ChunkItem = { i: number; j: number; id: string; x: number; y: number };
 
