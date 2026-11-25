@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
 import capitalHardpoints from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import capitalJets from "../../public/art/enemies/fleetCapital-jets.json";
 import fighterJets from "../../public/art/enemies/fleetFighter-jets.json";
+import frigateHardpoints from "../../public/art/enemies/fleetFrigate-hardpoints.json";
+import frigateJets from "../../public/art/enemies/fleetFrigate-jets.json";
 import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/fleetRetaliator-jets.json";
 import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
-import frigateHardpoints from "../../public/art/enemies/frigate-hardpoints.json";
-import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import gadgetHardpoints from "../../public/art/enemies/gadget-hardpoints.json";
 import gadgetJets from "../../public/art/enemies/gadget-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
@@ -134,7 +134,7 @@ describe("enemy frame sets", () => {
     expect(sizes).toEqual({
       capital: 231,
       fighter: 35,
-      frigate: 189,
+      frigate: 150.5,
       gadget: 245,
       hostileStation: 360.5,
       interceptor: 56,
@@ -279,7 +279,7 @@ describe("enemy jets", () => {
     ["fighter", 2, 80],
     ["interceptor", 1, 128],
     ["retaliator", 3, 160],
-    ["frigate", 2, 432],
+    ["frigate", 2, 344],
     ["capital", 2, 528],
   ] as const)("draws %s with %i mouths of two haloless layers", (name, mouths, frame) => {
     const set = galaxy(name);

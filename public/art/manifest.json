@@ -8406,267 +8406,268 @@
     },
     {
       "id": "enemy-frigate-0",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-1",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-2",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-3",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-4",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-5",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-6",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-7",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-8",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-9",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-10",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-11",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-12",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-13",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-14",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-15",
-      "path": "/art/enemies/frigate-sheet.svg",
-      "width": 432,
-      "height": 432,
-      "displayWidth": 189,
-      "displayHeight": 189,
+      "path": "/art/enemies/fleetFrigate-sheet.svg",
+      "svgSheet": true,
+      "width": 344,
+      "height": 344,
+      "displayWidth": 150.5,
+      "displayHeight": 150.5,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-0",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "engine",
@@ -8675,16 +8676,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-1",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "engine",
@@ -8693,16 +8694,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-2",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "engine",
@@ -8711,16 +8712,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-3",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "engine",
@@ -8729,16 +8730,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-4",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "engine",
@@ -8747,16 +8748,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-5",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "engine",
@@ -8765,16 +8766,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-6",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "engine",
@@ -8783,16 +8784,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-7",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "engine",
@@ -8801,16 +8802,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-8",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "engine",
@@ -8819,16 +8820,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-9",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "engine",
@@ -8837,16 +8838,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-10",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "engine",
@@ -8855,16 +8856,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-11",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "engine",
@@ -8873,16 +8874,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-12",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "engine",
@@ -8891,16 +8892,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-13",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "engine",
@@ -8909,16 +8910,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-14",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "engine",
@@ -8927,16 +8928,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-intact-15",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "engine",
@@ -8945,16 +8946,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-0",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "engine",
@@ -8963,16 +8964,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-1",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "engine",
@@ -8981,16 +8982,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-2",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "engine",
@@ -8999,16 +9000,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-3",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "engine",
@@ -9017,16 +9018,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-4",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "engine",
@@ -9035,16 +9036,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-5",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "engine",
@@ -9053,16 +9054,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-6",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "engine",
@@ -9071,16 +9072,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-7",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "engine",
@@ -9089,16 +9090,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-8",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "engine",
@@ -9107,16 +9108,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-9",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "engine",
@@ -9125,16 +9126,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-10",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "engine",
@@ -9143,16 +9144,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-11",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "engine",
@@ -9161,16 +9162,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-12",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "engine",
@@ -9179,16 +9180,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-13",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "engine",
@@ -9197,16 +9198,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-14",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "engine",
@@ -9215,16 +9216,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-engine-destroyed-15",
-      "path": "/art/enemies/frigate-parts-batch-112-1.svg",
-      "width": 112,
-      "height": 112,
-      "displayWidth": 49,
-      "displayHeight": 49,
+      "path": "/art/enemies/fleetFrigate-parts-128-sheet.svg",
+      "svgSheet": true,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "engine",
@@ -9233,16 +9234,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "port",
@@ -9251,16 +9252,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "port",
@@ -9269,16 +9270,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "port",
@@ -9287,16 +9288,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "port",
@@ -9305,16 +9306,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "port",
@@ -9323,16 +9324,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "port",
@@ -9341,16 +9342,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "port",
@@ -9359,16 +9360,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "port",
@@ -9377,16 +9378,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "port",
@@ -9395,16 +9396,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "port",
@@ -9413,16 +9414,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "port",
@@ -9431,16 +9432,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "port",
@@ -9449,16 +9450,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "port",
@@ -9467,16 +9468,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "port",
@@ -9485,16 +9486,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "port",
@@ -9503,16 +9504,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-intact-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "port",
@@ -9521,16 +9522,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "port",
@@ -9539,16 +9540,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "port",
@@ -9557,16 +9558,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "port",
@@ -9575,16 +9576,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "port",
@@ -9593,16 +9594,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "port",
@@ -9611,16 +9612,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "port",
@@ -9629,16 +9630,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "port",
@@ -9647,16 +9648,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "port",
@@ -9665,16 +9666,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "port",
@@ -9683,16 +9684,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "port",
@@ -9701,16 +9702,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "port",
@@ -9719,16 +9720,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "port",
@@ -9737,16 +9738,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "port",
@@ -9755,16 +9756,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "port",
@@ -9773,16 +9774,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "port",
@@ -9791,16 +9792,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-port-destroyed-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "port",
@@ -9809,16 +9810,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "starboard",
@@ -9827,16 +9828,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "starboard",
@@ -9845,16 +9846,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "starboard",
@@ -9863,16 +9864,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "starboard",
@@ -9881,16 +9882,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "starboard",
@@ -9899,16 +9900,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "starboard",
@@ -9917,16 +9918,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "starboard",
@@ -9935,16 +9936,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "starboard",
@@ -9953,16 +9954,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "starboard",
@@ -9971,16 +9972,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "starboard",
@@ -9989,16 +9990,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "starboard",
@@ -10007,16 +10008,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "starboard",
@@ -10025,16 +10026,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "starboard",
@@ -10043,16 +10044,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "starboard",
@@ -10061,16 +10062,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "starboard",
@@ -10079,16 +10080,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-intact-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "starboard",
@@ -10097,16 +10098,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "starboard",
@@ -10115,16 +10116,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "starboard",
@@ -10133,16 +10134,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "starboard",
@@ -10151,16 +10152,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "starboard",
@@ -10169,16 +10170,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "starboard",
@@ -10187,16 +10188,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "starboard",
@@ -10205,16 +10206,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "starboard",
@@ -10223,16 +10224,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "starboard",
@@ -10241,16 +10242,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "starboard",
@@ -10259,16 +10260,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "starboard",
@@ -10277,16 +10278,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "starboard",
@@ -10295,16 +10296,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "starboard",
@@ -10313,16 +10314,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "starboard",
@@ -10331,16 +10332,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "starboard",
@@ -10349,16 +10350,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "starboard",
@@ -10367,16 +10368,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-starboard-destroyed-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "starboard",
@@ -10385,16 +10386,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "spine",
@@ -10403,16 +10404,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "spine",
@@ -10421,16 +10422,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "spine",
@@ -10439,16 +10440,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "spine",
@@ -10457,16 +10458,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "spine",
@@ -10475,16 +10476,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "spine",
@@ -10493,16 +10494,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "spine",
@@ -10511,16 +10512,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "spine",
@@ -10529,16 +10530,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "spine",
@@ -10547,16 +10548,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "spine",
@@ -10565,16 +10566,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "spine",
@@ -10583,16 +10584,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "spine",
@@ -10601,16 +10602,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "spine",
@@ -10619,16 +10620,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "spine",
@@ -10637,16 +10638,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "spine",
@@ -10655,16 +10656,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-intact-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "spine",
@@ -10673,16 +10674,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "spine",
@@ -10691,16 +10692,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "spine",
@@ -10709,16 +10710,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "spine",
@@ -10727,16 +10728,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "spine",
@@ -10745,16 +10746,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "spine",
@@ -10763,16 +10764,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "spine",
@@ -10781,16 +10782,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "spine",
@@ -10799,16 +10800,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "spine",
@@ -10817,16 +10818,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "spine",
@@ -10835,16 +10836,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "spine",
@@ -10853,16 +10854,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "spine",
@@ -10871,16 +10872,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "spine",
@@ -10889,16 +10890,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "spine",
@@ -10907,16 +10908,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "spine",
@@ -10925,16 +10926,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "spine",
@@ -10943,16 +10944,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-destroyed-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "spine",
@@ -10961,16 +10962,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "spine",
@@ -10979,16 +10980,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "spine",
@@ -10997,16 +10998,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "spine",
@@ -11015,16 +11016,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "spine",
@@ -11033,16 +11034,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "spine",
@@ -11051,16 +11052,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "spine",
@@ -11069,16 +11070,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "spine",
@@ -11087,16 +11088,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "spine",
@@ -11105,16 +11106,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "spine",
@@ -11123,16 +11124,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "spine",
@@ -11141,16 +11142,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "spine",
@@ -11159,16 +11160,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "spine",
@@ -11177,16 +11178,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "spine",
@@ -11195,16 +11196,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "spine",
@@ -11213,16 +11214,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "spine",
@@ -11231,16 +11232,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-spine-capped-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "spine",
@@ -11249,16 +11250,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "bow",
@@ -11267,16 +11268,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "bow",
@@ -11285,16 +11286,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "bow",
@@ -11303,16 +11304,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "bow",
@@ -11321,16 +11322,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "bow",
@@ -11339,16 +11340,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "bow",
@@ -11357,16 +11358,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "bow",
@@ -11375,16 +11376,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "bow",
@@ -11393,16 +11394,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "bow",
@@ -11411,16 +11412,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "bow",
@@ -11429,16 +11430,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "bow",
@@ -11447,16 +11448,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "bow",
@@ -11465,16 +11466,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "bow",
@@ -11483,16 +11484,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "bow",
@@ -11501,16 +11502,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "bow",
@@ -11519,16 +11520,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-intact-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "bow",
@@ -11537,16 +11538,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "bow",
@@ -11555,16 +11556,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "bow",
@@ -11573,16 +11574,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "bow",
@@ -11591,16 +11592,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "bow",
@@ -11609,16 +11610,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "bow",
@@ -11627,16 +11628,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "bow",
@@ -11645,16 +11646,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "bow",
@@ -11663,16 +11664,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "bow",
@@ -11681,16 +11682,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "bow",
@@ -11699,16 +11700,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "bow",
@@ -11717,16 +11718,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "bow",
@@ -11735,16 +11736,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "bow",
@@ -11753,16 +11754,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "bow",
@@ -11771,16 +11772,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "bow",
@@ -11789,16 +11790,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "bow",
@@ -11807,16 +11808,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-destroyed-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "bow",
@@ -11825,16 +11826,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-0",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-0",
       "directionIndex": 0,
       "hardpoint": "bow",
@@ -11843,16 +11844,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-1",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-1",
       "directionIndex": 1,
       "hardpoint": "bow",
@@ -11861,16 +11862,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-2",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-2",
       "directionIndex": 2,
       "hardpoint": "bow",
@@ -11879,16 +11880,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-3",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-3",
       "directionIndex": 3,
       "hardpoint": "bow",
@@ -11897,16 +11898,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-4",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-4",
       "directionIndex": 4,
       "hardpoint": "bow",
@@ -11915,16 +11916,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-5",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-5",
       "directionIndex": 5,
       "hardpoint": "bow",
@@ -11933,16 +11934,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-6",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-6",
       "directionIndex": 6,
       "hardpoint": "bow",
@@ -11951,16 +11952,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-7",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-7",
       "directionIndex": 7,
       "hardpoint": "bow",
@@ -11969,16 +11970,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-8",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-8",
       "directionIndex": 8,
       "hardpoint": "bow",
@@ -11987,16 +11988,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-9",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-9",
       "directionIndex": 9,
       "hardpoint": "bow",
@@ -12005,16 +12006,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-10",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-10",
       "directionIndex": 10,
       "hardpoint": "bow",
@@ -12023,16 +12024,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-11",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-11",
       "directionIndex": 11,
       "hardpoint": "bow",
@@ -12041,16 +12042,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-12",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-12",
       "directionIndex": 12,
       "hardpoint": "bow",
@@ -12059,16 +12060,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-13",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-13",
       "directionIndex": 13,
       "hardpoint": "bow",
@@ -12077,16 +12078,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-14",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-14",
       "directionIndex": 14,
       "hardpoint": "bow",
@@ -12095,16 +12096,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-bow-capped-15",
-      "path": "/art/enemies/frigate-parts-batch-72-1.svg",
-      "width": 72,
-      "height": 72,
-      "displayWidth": 31.5,
-      "displayHeight": 31.5,
+      "path": "/art/enemies/fleetFrigate-parts-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
       "facing": "world-15",
       "directionIndex": 15,
       "hardpoint": "bow",
@@ -12113,16 +12114,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-0",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-0",
       "aimIndex": 0,
       "top": "gun",
@@ -12130,16 +12131,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-1",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-1",
       "aimIndex": 1,
       "top": "gun",
@@ -12147,16 +12148,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-2",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-2",
       "aimIndex": 2,
       "top": "gun",
@@ -12164,16 +12165,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-3",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-3",
       "aimIndex": 3,
       "top": "gun",
@@ -12181,16 +12182,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-4",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-4",
       "aimIndex": 4,
       "top": "gun",
@@ -12198,16 +12199,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-5",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-5",
       "aimIndex": 5,
       "top": "gun",
@@ -12215,16 +12216,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-6",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-6",
       "aimIndex": 6,
       "top": "gun",
@@ -12232,16 +12233,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-7",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-7",
       "aimIndex": 7,
       "top": "gun",
@@ -12249,16 +12250,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-8",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-8",
       "aimIndex": 8,
       "top": "gun",
@@ -12266,16 +12267,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-9",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-9",
       "aimIndex": 9,
       "top": "gun",
@@ -12283,16 +12284,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-10",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-10",
       "aimIndex": 10,
       "top": "gun",
@@ -12300,16 +12301,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-11",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-11",
       "aimIndex": 11,
       "top": "gun",
@@ -12317,16 +12318,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-12",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-12",
       "aimIndex": 12,
       "top": "gun",
@@ -12334,16 +12335,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-13",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-13",
       "aimIndex": 13,
       "top": "gun",
@@ -12351,16 +12352,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-14",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-14",
       "aimIndex": 14,
       "top": "gun",
@@ -12368,16 +12369,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-gun-top-15",
-      "path": "/art/enemies/frigate-parts-batch-136-1.svg",
-      "width": 136,
-      "height": 136,
-      "displayWidth": 59.5,
-      "displayHeight": 59.5,
+      "path": "/art/enemies/fleetFrigate-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
       "facing": "world-15",
       "aimIndex": 15,
       "top": "gun",
@@ -12385,16 +12386,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-0",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-0",
       "aimIndex": 0,
       "top": "rail",
@@ -12402,16 +12403,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-1",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-1",
       "aimIndex": 1,
       "top": "rail",
@@ -12419,16 +12420,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-2",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-2",
       "aimIndex": 2,
       "top": "rail",
@@ -12436,16 +12437,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-3",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-3",
       "aimIndex": 3,
       "top": "rail",
@@ -12453,16 +12454,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-4",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-4",
       "aimIndex": 4,
       "top": "rail",
@@ -12470,16 +12471,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-5",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-5",
       "aimIndex": 5,
       "top": "rail",
@@ -12487,16 +12488,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-6",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-6",
       "aimIndex": 6,
       "top": "rail",
@@ -12504,16 +12505,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-7",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-7",
       "aimIndex": 7,
       "top": "rail",
@@ -12521,16 +12522,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-8",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-8",
       "aimIndex": 8,
       "top": "rail",
@@ -12538,16 +12539,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-9",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-9",
       "aimIndex": 9,
       "top": "rail",
@@ -12555,16 +12556,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-10",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-10",
       "aimIndex": 10,
       "top": "rail",
@@ -12572,16 +12573,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-11",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-11",
       "aimIndex": 11,
       "top": "rail",
@@ -12589,16 +12590,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-12",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-12",
       "aimIndex": 12,
       "top": "rail",
@@ -12606,16 +12607,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-13",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-13",
       "aimIndex": 13,
       "top": "rail",
@@ -12623,16 +12624,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-14",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-14",
       "aimIndex": 14,
       "top": "rail",
@@ -12640,16 +12641,16 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-frigate-rail-top-15",
-      "path": "/art/enemies/frigate-parts-batch-120-1.svg",
-      "width": 120,
-      "height": 120,
-      "displayWidth": 52.5,
-      "displayHeight": 52.5,
+      "path": "/art/enemies/fleetFrigate-parts-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-15",
       "aimIndex": 15,
       "top": "rail",
@@ -12657,8 +12658,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "archetype": "frigate",
-      "svgSheet": true
+      "archetype": "frigate"
     },
     {
       "id": "enemy-capital-0",
@@ -44788,8 +44788,8 @@
       "shards": "/art/enemies/fleetFighter-shards-packed.json"
     },
     "frigate": {
-      "jets": "/art/enemies/frigate-jets.json",
-      "hardpoints": "/art/enemies/frigate-hardpoints.json"
+      "jets": "/art/enemies/fleetFrigate-jets.json",
+      "hardpoints": "/art/enemies/fleetFrigate-hardpoints.json"
     },
     "gadget": {
       "jets": "/art/enemies/gadget-jets.json",

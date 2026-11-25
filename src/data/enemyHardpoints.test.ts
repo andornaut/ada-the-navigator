@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
-import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
+import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import exported from "../../tools/enemy-hardpoints.json";
 import { enemyCatalog, type EnemyDefinition } from "./enemyCatalog.ts";

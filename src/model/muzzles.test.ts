@@ -3,8 +3,8 @@ import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
+import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import cargoFile from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json";
-import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import {
   enemyCatalog,
   type EnemyDefinition,

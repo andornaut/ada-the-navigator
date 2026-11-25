@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import platformFile from "../../public/art/cartwheel/enemies/platform-hardpoints.json";
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
-import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
+import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";

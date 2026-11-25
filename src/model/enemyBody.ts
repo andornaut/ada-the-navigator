@@ -7,6 +7,7 @@ import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoint
 import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
 import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
 import fighter from "../../public/art/enemies/fleetFighter-jets.json" with { type: "json" };
+import frigate from "../../public/art/enemies/fleetFrigate-hardpoints.json" with { type: "json" };
 import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
 import interceptor from "../../public/art/enemies/fleetInterceptor-jets.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/fleetRetaliator-jets.json" with { type: "json" };
@@ -15,7 +16,6 @@ import cargoJets from "../../public/art/enemies/fleetRetaliatorCargoHauler-jets.
 import miningParts from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import miningJets from "../../public/art/enemies/fleetRetaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/fleetSwarm-jets.json" with { type: "json" };
-import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import station from "../../public/art/enemies/hostileStation-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStation-phantom-hardpoints.json" with { type: "json" };

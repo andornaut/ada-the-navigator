@@ -67,7 +67,7 @@ describe("Art's collision data", () => {
 
   // Every frigate and capital design ships its own hardpoints file in the core folder.
   it.each([
-    ["frigate", ["enemies"]],
+    ["fleetFrigate", ["enemies"]],
     ["fleetFrigateTwin", ["enemies"]],
     ["fleetCapital", ["enemies"]],
     ["fleetCapitalBroad", ["enemies"]],

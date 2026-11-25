@@ -63,7 +63,7 @@ describe("claim jumper art loading", () => {
         // carrier, and the Mining Freighter draws the Manta gunship's top.
         const fleet: Readonly<Record<string, string>> = {
           capital: "fleetCapitalOutrigger",
-          frigate: "frigate",
+          frigate: "fleetFrigate",
           retaliator: "fleetRetaliator",
           retaliatorCargoHauler: "fleetRetaliatorCargoHauler",
           retaliatorMiningFreighter: part.id.includes("-turret-top-")

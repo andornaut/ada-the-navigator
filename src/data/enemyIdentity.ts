@@ -22,7 +22,7 @@ export type HullDesignKey = (typeof HULL_DESIGN_KEYS)[number];
 /**
  * The galaxies whose frigates and capitals fly a design other than the class's own, by stable
  * galaxy id (art/enemy-redesign.md "Frigates" and "Capitals"). The others fly the class's own:
- * the Slim delta frigate and the Hammer capital.
+ * the Shoulder frigate and the Hammer capital.
  */
 export const HULL_DESIGNS: Readonly<
   Record<OrdinaryHeavy, Readonly<Record<string, HullDesignKey>>>

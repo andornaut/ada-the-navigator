@@ -128,12 +128,7 @@ const fleetJets = (
 );
 
 test("every fleet craft ships its producer's jets file, with each mouth's anchor", () => {
-  // The Slim delta is held while Art reworks it; its galaxies keep the shipped frigate.
-  const held = new Set(["fleetFrigate"]);
-  assert.deepEqual(
-    new Set(fleetJets.map(({ stem }) => stem)),
-    new Set([...crafts.keys()].filter((key) => !held.has(key))),
-  );
+  assert.deepEqual(new Set(fleetJets.map(({ stem }) => stem)), new Set(crafts.keys()));
   for (const { key, manifest, path, stem } of fleetJets) {
     const craft = crafts.get(stem)!;
     assert.ok(craft, `${manifest} ${key}: ${path}`);

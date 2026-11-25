@@ -946,7 +946,7 @@ describe("deferred core capital sheets", () => {
     f.scene.rasters.loaded(top.id);
     f.events.emit("filecomplete", top.id, "svg");
 
-    const newImage = { height: 105, width: 105 };
+    const newImage = { height: 49, width: 49 };
     const source = {
       filter: fileFilter("svg"),
       height: newImage.height,
@@ -964,11 +964,11 @@ describe("deferred core capital sheets", () => {
     const due = f.scene.rasters.due((key) => key === top.id);
     f.rasterAgain(f.scene, due);
     const replacement = `${top.id}@2`;
-    expect(f.loadRaster).toHaveBeenLastCalledWith(replacement, uri, { height: 105, width: 105 });
+    expect(f.loadRaster).toHaveBeenLastCalledWith(replacement, uri, { height: 49, width: 49 });
     f.events.emit(`filecomplete-svg-${replacement}`);
     expect(get.mock.calls).toEqual([[top.id], [replacement]]);
     expect(source.updateSource).toHaveBeenCalledExactlyOnceWith(newImage);
-    expect(resizeBase).toHaveBeenCalledExactlyOnceWith(105, 105);
+    expect(resizeBase).toHaveBeenCalledExactlyOnceWith(49, 49);
     expect(original.source[0]).toBe(source);
     expect(source.filter).toBe("linear");
     expect(remove).toHaveBeenCalledExactlyOnceWith(replacement);
