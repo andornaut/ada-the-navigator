@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
 import { retaliatorVariant } from "../data/enemyIdentity.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
@@ -14,8 +15,20 @@ import {
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
-import type { ExclusionZone, SpawnCategory } from "./spawnPlanner.ts";
-import { spawnRules, worldSpawnExclusions } from "./spawnTargets.ts";
+import { type ExclusionZone, planRegion, type SpawnCategory } from "./spawnPlanner.ts";
+import {
+  chunkSpawnReach,
+  chunkSpawnRegion,
+  MOVING_PATH_SECONDS,
+  spawnGatherReach,
+  spawnRules,
+  worldSpawnExclusions,
+  worldSpawnSites,
+} from "./spawnTargets.ts";
+import { worldStationsNear } from "./stations.ts";
+import type { Vec } from "./types.ts";
+import { periodicWorldGrid, worldCellAt, worldCellCenter, worldCellKey } from "./worldCells.ts";
+import { wrappedDelta } from "./worldGeometry.ts";
 
 /**
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
@@ -126,6 +139,97 @@ describe("spawn target catalog", () => {
         }
       });
     }
+  });
+});
+
+describe("moving rock paths", () => {
+  const context = { worldSide: GALAXY_SIDE };
+
+  it("query every zone a moving rock's checked path can reach from its chunk", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      const rules = spawnRules(galaxy, GALAXY_SIDE);
+      const largest = Math.max(
+        ...rules.bands.flatMap((band) =>
+          band.rocks.flatMap((target) => target.shapes.map((shape) => shape.radius)),
+        ),
+      );
+      for (const target of rules.bands.flatMap((band) => band.moving)) {
+        expect(target.path).toBe(MOVING_PATH_SECONDS);
+        // A placed rock's centre lies within half a chunk diagonal of its chunk's centre.
+        expect(chunkSpawnReach(rules)).toBeGreaterThanOrEqual(
+          (rules.chunkSize * Math.SQRT2) / 2 + target.speed[1] * MOVING_PATH_SECONDS + largest,
+        );
+      }
+    }
+  });
+
+  it("keep planned movers' paths clear of launch, arrival and station protected areas", () => {
+    const galaxy = 2;
+    const seed = 4471;
+    const rules = spawnRules(galaxy, GALAXY_SIDE);
+    const grid = periodicWorldGrid(context, rules.chunkSize);
+    const reach = chunkSpawnReach(rules);
+    const launch = { x: 0, y: 0 };
+    const arrival = { x: 9000, y: -4000 };
+    const arrivals = [launch, arrival];
+    const stations = worldStationsNear(context, ECONOMY, galaxy, 20_000, launch).slice(0, 2);
+    expect(stations.length).toBe(2);
+    // A zone wider than any path from the chunk: every disc a path could meet.
+    const wide = (centre: Vec) =>
+      worldSpawnExclusions(context, galaxy, seed, arrivals, 2 * reach, centre).filter((zone) =>
+        zone.applies.includes("path"),
+      );
+    const met = new Set<string>();
+    let reachable = 0;
+    for (const site of [launch, arrival, ...stations]) {
+      const home = worldCellAt(grid, site);
+      for (let dx = -4; dx <= 4; dx++) {
+        for (let dy = -4; dy <= 4; dy++) {
+          const cell = { x: home.x + dx, y: home.y + dy };
+          const centre = worldCellCenter(grid, cell);
+          const region = chunkSpawnRegion(
+            rules,
+            worldSpawnExclusions(context, galaxy, seed, arrivals, reach, centre),
+            worldSpawnSites(context, galaxy, reach + spawnGatherReach(rules), centre),
+            cell,
+          );
+          const key = worldCellKey(grid, cell);
+          const movers = planRegion(
+            rules,
+            { encounter: seed, world: seed },
+            region,
+          ).placements.filter((placement) => placement.moving && placement.chunk === key);
+          for (const zone of wide(centre)) {
+            if (zone.shape.kind !== "disc") {
+              continue;
+            }
+            for (const rock of movers) {
+              const at = wrappedDelta(GALAXY_SIDE, rock, zone.shape);
+              const travel = {
+                x: rock.moving!.velocity.x * MOVING_PATH_SECONDS,
+                y: rock.moving!.velocity.y * MOVING_PATH_SECONDS,
+              };
+              const along = Math.max(
+                0,
+                Math.min(1, (at.x * travel.x + at.y * travel.y) / (travel.x ** 2 + travel.y ** 2)),
+              );
+              const clear = zone.shape.radius + rock.radius;
+              if (Math.hypot(at.x, at.y) < clear + Math.hypot(travel.x, travel.y)) {
+                reachable++;
+                met.add(zone.rule);
+              }
+              expect(
+                Math.hypot(at.x - travel.x * along, at.y - travel.y * along),
+                `${rock.id} toward ${zone.rule}`,
+              ).toBeGreaterThanOrEqual(clear - 1e-6);
+            }
+          }
+        }
+      }
+    }
+    // Movers within a path's length of launch, arrival and station areas were checked.
+    expect(reachable).toBeGreaterThan(20);
+    expect([...met].sort()).toEqual(["arrival-safe", "protected"]);
   });
 });
 

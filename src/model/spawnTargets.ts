@@ -388,9 +388,27 @@ export function chunkSpawnRegion(
   };
 }
 
-/** World units from a chunk's centre that its planning region and every group in it reach. */
+/**
+ * World units from a chunk's centre that its planning region, every group in it and every
+ * moving rock's checked path reach, so a chunk's zones include every one a path can meet.
+ */
 export function chunkSpawnReach(rules: SpawnRules): number {
-  return (spawnMargin(rules) + 0.5) * rules.chunkSize * Math.SQRT2 + enemyGroupReach(rules);
+  const rock = Math.max(
+    0,
+    ...rules.bands.flatMap((band) =>
+      band.rocks.flatMap((target) => target.shapes.map((shape) => shape.radius)),
+    ),
+  );
+  const path = Math.max(
+    0,
+    ...rules.bands.flatMap((band) =>
+      band.moving.map((target) => (target.path ?? 0) * target.speed[1]),
+    ),
+  );
+  return Math.max(
+    (spawnMargin(rules) + 0.5) * rules.chunkSize * Math.SQRT2 + enemyGroupReach(rules),
+    (rules.chunkSize * Math.SQRT2) / 2 + path + rock,
+  );
 }
 
 /** The farthest any gathering group looks for a site from its seeded anchor. */

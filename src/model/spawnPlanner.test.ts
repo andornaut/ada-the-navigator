@@ -241,6 +241,33 @@ describe("planRegion", () => {
     expect(moved).toBeGreaterThan(40);
   });
 
+  it("moves a group of a chunk's rocks nearest one of them", () => {
+    let groups = 0;
+    for (const seed of SEEDS) {
+      const plan = planRegion({ ...rules, bands: [{ ...band, enemies: [] }] }, seeds(seed), region);
+      const chunks = new Set(
+        plan.placements.filter((placement) => placement.moving?.grouped).map(({ chunk }) => chunk),
+      );
+      for (const chunk of chunks) {
+        const rocks = plan.placements.filter((placement) => placement.chunk === chunk);
+        const group = rocks.filter((rock) => rock.moving?.grouped);
+        const others = rocks.filter((rock) => !rock.moving?.grouped);
+        const apart = (a: SpawnPlacement, b: SpawnPlacement) => Math.hypot(a.x - b.x, a.y - b.y);
+        // The anchor's farthest group member is nearer than every rock left out of the group.
+        expect(
+          group.some(
+            (anchor) =>
+              Math.max(...group.map((rock) => apart(anchor, rock))) <
+              Math.min(...others.map((rock) => apart(anchor, rock))),
+          ),
+          chunk,
+        ).toBe(true);
+        groups++;
+      }
+    }
+    expect(groups).toBeGreaterThan(20);
+  });
+
   it("accounts for every request as delivered or dropped, by rule", () => {
     const crowded: SpawnRules = {
       ...rules,
