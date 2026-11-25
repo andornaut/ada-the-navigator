@@ -48,7 +48,7 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | `swarm`       |               0.8 |        175 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`     |                 1 |        160 |                  0.40 |             0.50 |          0.30 |             0.15 |
 | `interceptor` |                 1 |        240 |                  0.90 |             1.20 |          0.60 |             0.12 |
-| `retaliator`  |                 3 |        120 |                  1.20 |             1.50 |          0.90 |             0.35 |
+| `retaliator`  |    3 (Hauler 2.5) |        120 |                  1.20 |             1.50 |          0.90 |             0.35 |
 | `frigate`     |                 5 |        100 |                   1.5 |              2.0 |           1.2 |             0.40 |
 | `capital`     |                 6 |         50 |                   2.5 |              3.0 |           2.0 |             0.50 |
 | `platform`    |                 4 |          0 |                     – |                – |             – |             0.30 |
@@ -72,10 +72,13 @@ The `platform` is fixed in place and only turns its turrets.
 
 ## Hulls
 
-The span column is each class's drawn width, set by `src/data/enemyDimensions.ts`.
-Every hull keeps its class width; its drawn length follows its design. Sizes are
-display px at 1x. World units are display px times 20 / 18.76, since Ada's 18.76
-px span is her 20-unit diameter.
+The span column in [Values](#values) is each class's drawn width, set by
+`src/data/enemyDimensions.ts`. Every hull keeps its class width except the
+retaliator bodies, which have per-hull spans: the Manta gunship and Mining
+Freighter keep the class's 3 Ada widths, and the Cargo Hauler spans 2.5. Each
+hull's drawn length follows its design. Sizes are display px at 1x. World units
+are display px times 20 / 18.76, since Ada's 18.76 px span is her 20-unit
+diameter.
 
 | Class         | Hull                          | Length x width | Spacing radius (world units) |
 | ------------- | ----------------------------- | -------------: | ---------------------------: |
@@ -83,10 +86,10 @@ px span is her 20-unit diameter.
 | `fighter`     | Arrowhead                     |        24 x 19 |                           13 |
 | `interceptor` | Spear                         |        42 x 19 |                           22 |
 | `retaliator`  | Manta gunship                 |        34 x 56 |                           30 |
-| `retaliator`  | Cargo Hauler                  |        60 x 56 |                           32 |
+| `retaliator`  | Cargo Hauler                  |      84 x 46.9 |                           45 |
 | `retaliator`  | Mining Freighter              |        50 x 56 |                           30 |
-| `frigate`     | Slim delta                    |       125 x 94 |                           67 |
-| `frigate`     | Twin hull                     |       108 x 94 |                           58 |
+| `frigate`     | Slim delta                    |     106 x 93.8 |                           57 |
+| `frigate`     | Twin hull                     |      97 x 93.8 |                           52 |
 | `capital`     | Hammer (Sunflower)            |      159 x 113 |                           85 |
 | `capital`     | Manta dreadnought (Whirlpool) |      153 x 113 |                           82 |
 | `capital`     | Crossbow (Needle)             |      166 x 113 |                           89 |
