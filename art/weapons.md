@@ -1,9 +1,11 @@
 # Weapons
 
-Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam, the enemy
-Phaser, the [enemy-only weapons](#enemy-only-weapons) and the upgrade pickup. Tech
-draws every effect in code (Phaser Graphics); none uses a sprite or sheet, and the
-pickup's only image is its chevron mask. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
+Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam, the
+[enemy shots](#enemy-shots), the enemy Phaser, the
+[enemy-only weapons](#enemy-only-weapons) and the upgrade pickup. Tech draws
+every effect in code (Phaser Graphics) except the missiles and the mine, which
+are [solid-model frames](#missile-and-mine-frames); the pickup's only image is
+its chevron mask. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
 
 ## Gameplay values
 
@@ -45,9 +47,13 @@ coverage). The effects' strokes and timings do not change by level.
 | ------- | ----- | ------------ | ----------- | ----------- | ----- |
 | `f`     | 1.000 | 0.943        | 0.791       | 0.600       | 0.500 |
 
-- A taper is a quad along `u` from a tail to a head, centred on `v = 0`, with
-  full widths `w_tail` and `w_head` and alpha interpolated linearly from tail to
-  head (per-vertex alpha).
+- Every effect is solid shapes in opaque flat tones with hard edges: tapers are
+  geometry and fades hold steps, with no alpha ramps, hairlines or blurred
+  discs.
+- Held fade: a fade whose linear value `x` runs from 1 to 0 draws at alpha 1
+  while `x` is over 0.6, 0.6 while it is over 0.3, then 0.3. Every linear fade,
+  Ada's and the enemies', uses it: beams, ripples, contact rings, the mine
+  fizzle and the Scattershot range fade.
 - Colours: amber `#f0bd68` (space palette `weapon`), cream `#ead4aa`, white
   `#ffffff`, ink `#181425`.
 - Every player shot, bolt, missile and beam starts at the same origin, the
@@ -60,113 +66,127 @@ elapsed age. Directional contacts retain the incoming world vector; missile effe
 that event's actual world blast radius. The current loadout, damage and radius do not
 select a family. Rendering projects the contact and direction once.
 
-| Source weapon                | Family          | Contact appearance                                            |
-| ---------------------------- | --------------- | ------------------------------------------------------------- |
-| Rapid Missile, Heavy Missile | `missile`       | One explosion recipe, scaled to the actual blast radius       |
-| Laser, Multi-Laser           | `compact`       | The same compact flash, rays and flecks                       |
-| Phaser                       | `compactBright` | The compact grammar, brighter and longer                      |
-| Scattershot                  | `pellet`        | A tiny, short-lived spark per actual pellet contact           |
-| Charged lance                | `lance`         | Concentrated flash and streak along the incoming direction    |
-| Ring burst                   | `ripple`        | One clean projected circular ripple                           |
-| Mine                         | `shockwave`     | An expanding outer front, distinct inner front and faint fill |
+| Source weapon                | Family          | Contact appearance                                         |
+| ---------------------------- | --------------- | ---------------------------------------------------------- |
+| Rapid Missile, Heavy Missile | `missile`       | One explosion recipe, scaled to the actual blast radius    |
+| Laser, Multi-Laser           | `compact`       | The same compact flash, rays and flecks                    |
+| Phaser                       | `compactBright` | The compact grammar, brighter and longer                   |
+| Scattershot                  | `pellet`        | A tiny, short-lived spark per actual pellet contact        |
+| Charged lance                | `lance`         | Concentrated flash and streak along the incoming direction |
+| Ring burst                   | `ripple`        | One amber ground-plane ripple                              |
+| Mine                         | `shockwave`     | An amber ground-plane ring over a cream ellipse            |
 
 `impactEffect`, `IMPACT_STYLE` and the shared spark/blast constants in
 [`weaponEffects.ts`](../src/game/weaponEffects.ts) are the canonical presentation
 coefficients. The existing renderer consumes their `EffectShape` records and light-field
-edges. There is no second effect-data file or duplicated weapon tuning.
+edges. The ripple and every enemy fade take their values from
+[enemy-weapons.json](../public/art/enemy-weapons.json); there is no duplicated weapon
+tuning.
 
 Enemy Lance hooks use the actual drawn beam endpoint and its incoming vector;
 enemy Phaser hooks use the fire-time contact point and incoming vector. Their existing hit-window age is normalized into the shared effect phase; the
 mine pop uses its existing normal or reduced-motion duration. Firing tells, damage,
 collision, arming, radius and expiry remain unchanged. Reduced motion removes expansion
-and moving sparks while retaining the family silhouette and fade; the Mine keeps both
-fronts and its fill, and the fill receives no ink outline.
+and moving sparks while retaining the family silhouette and fade; the Mine keeps its ring
+and cream ellipse, and the ellipse takes no field edge.
 
 An impact is separate from [ship destruction](destruction.md). The destruction flash,
 shards and pickup release use the same recipe regardless of the killing weapon; a
 missile does not suppress the wreck's own flash.
 
-## Bolt and dot
+## Bolt, pellet and fan
 
-Unchanged. The Laser and Multi-Laser bolt is a 1.5 px amber line from the head
-back by `screen velocity x 0.035 s` (29.7 px at heading 14), butt caps. The
-Scattershot dot is an amber disc, radius 1.5.
+- Laser bolt: a 3 px amber slug 14 px long with a pointed head, a cream core
+  and one amber tail step 1.5 px wide from 14 to 27 px behind the head. Slug
+  `(0, 0) (-2.7, -1.5) (-14, -1.5) (-15.5, 0) (-14, 1.5) (-2.7, 1.5)`; core
+  `(-1.5, 0) (-3.3, -0.675) (-8.68, -0.675) (-8.68, 0.675) (-3.3, 0.675)`.
+- Scattershot pellet: an amber disc of radius 1.7 with a cream disc of radius
+  0.7 centred 0.45 px up and left of it. Past its fade point it fades by the
+  [held fade](#conventions).
+- Multi-Laser: 3, 4 and 5 bolts at levels 1 to 3, across 16 degrees at
+  `-8 + 16 i / (n - 1)` degrees. Offsets apply in the projected aim plane, then
+  each bolt's screen direction unprojects to its world velocity, so screen
+  length and speed vary per bolt. All bolts leave the nose together.
+- Multi-Laser near: while any two neighbouring heads are under 5.6 px apart on
+  screen, one amber wedge through the heads with a cream inner wedge.
+- Multi-Laser far: each bolt a 2.2 px amber slug 10 px long with no core and no
+  tail, so bolts never overlap.
 
-## Rapid Missile
+The fan wedge is a band through the bolts' heads on screen. For each head at
+distance `h` from the nose (its travel), the amber band runs from the head back
+toward the nose to `max(4, h - 11)`, its two outer ends widened 1.1 px sideways
+(half a far slug); the cream band runs from `h - 2.5` back to the amber's inner
+edge plus 4, its ends on the outer bolts' centrelines. Its outer edge lies on
+the heads, so the far slugs replace it in place. The fan's 16 degree world
+spread projects to 8 to 31 degrees on screen and puts its heads at screen
+distances up to 13 px apart, so a sector of one angle and one radius cannot
+match them. The wedge covers 20 to 80 px of travel with 3 bolts and 41 to
+160 px with 5, by heading.
 
-A small white dart with amber fins and a long thin amber streak. Draw in order:
+## Missiles
 
-1. Streak: amber taper from tail `u = -(6 + 20 f)` (width 0.5, alpha 0) to head
-   `u = -6` (width 1.6, alpha 0.85).
-2. Core: cream taper from `u = -(6 + 6 f)` (width 0.4, alpha 0) to `u = -6`
-   (width 1.0, alpha 0.9).
-3. Fins: two amber triangles `(-4.6, -1.2) (-7.6, -2.8) (-7.6, -1.2)` and the
-   mirror in `v`.
-4. Body: white polygon `(0, 0) (-2.2, -1.2) (-7, -1.2) (-7, 1.2) (-2.2, 1.2)`.
+Both missiles are small [solid models](#missile-and-mine-frames) with tops
+lightest, walls facing left mid and walls facing right darkest, drawn at their
+projected heading over a flat two-tone flame. Lengths are logical px along the
+heading from the nose.
 
-Flicker: two frames, 50 ms each, looping. Frame 1 moves the streak tail to
-`u = -(6 + 23 f)`; nothing else changes. Reduced motion holds frame 0.
+| Part          | Model                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Rapid body    | A round body of radius 1.5 from 7 to 2.2 behind the nose, a cone to a 0.2 tip 0.6 ahead, a dark rear cap                              |
+| Rapid fins    | Three fin blocks 1 px thick, two level and one upright: roots 7.4 to 4.4 behind the nose, swept to 7.8 to 7, reaching 3.2 (3 upright) |
+| Rapid flame   | A wedge 2.6 px wide at the tail, 12 `f` px long (15 `f` in frame 1), with an inner wedge half as wide and half as long                |
+| Heavy body    | A round body of radius 2.9 from 13.2 to 4.2 behind the nose, a dark rear cap                                                          |
+| Heavy warhead | A cone from radius 2.9 at 4.2 behind the nose to a 0.3 tip 1 ahead                                                                    |
+| Heavy fins    | Three fin blocks 1.4 px thick: roots 13.2 to 8.6 behind the nose, swept to 14.4 to 12.6, reaching 6 (5.4 upright)                     |
+| Heavy flame   | A wedge 5.6 px wide, 16.8 `f` px long (11.8 `f` in frame 1), with an inner wedge half as wide and half as long                        |
 
-## Heavy Missile
+| Part             | Ada's | Enemy's          |
+| ---------------- | ----- | ---------------- |
+| Bodies and cones | White | Coral            |
+| Rapid fins       | Amber | White            |
+| Heavy warhead    | Amber | White            |
+| Heavy fins       | Cream | Plate            |
+| Flame            | Amber | Coral `obstacle` |
+| Inner flame      | Cream | `plate`          |
 
-A fat white body with an amber warhead, a cream band and cream fins, an ink
-keyline and a thick two-tone plume. Let `tail = 13.2 + 16.8 f` in frame 0 and
-`13.2 + 11.8 f` in frame 1. Draw in order:
+Material tones, top, left and right: white `#ffffff`, `#cfd3e0`, `#9da2b8`;
+cream `#ead4aa`, `#c2ad86`, `#978565`; amber `#f0bd68`, `#b98a40`,
+`#8a6630`; coral `#d68b72`, `#a8654f`, `#7f4b3d`; plate `#e6a890`,
+`#b98774`, `#8f6859`; dark `#2a2433`, `#1e1a26`, `#16131c`.
 
-1. Plume: amber taper from `u = -tail` (width 0, alpha 0) to `u = -13.2` (width
-   6.4, alpha 0.95).
-2. Plume core: cream taper from `u = -(13.2 + (tail - 13.2) / 2)` (width 0,
-   alpha 0) to `u = -13.2` (width 3.2, alpha 1).
-3. Throat: white disc at `(-13.6, 0)`, radius 1.6.
-4. Keyline: ink polygons, each the body or fin pushed 1 px out from its vertex
-   centroid:
-   - body `(1, 0) (-0.65, -2.01) (-3.52, -3.63) (-12.87, -3.39) (-14.14, -2.64)
-(-14.14, 2.64) (-12.87, 3.39) (-3.52, 3.63) (-0.65, 2.01)`;
-   - fin `(-7.67, -2.53) (-14.18, -6.82) (-15.4, -6.59) (-13.61, -1.99)` and the
-     mirror in `v`.
-5. Fins: cream `(-8.6, -2.9) (-13.6, -6) (-14.6, -6) (-13.2, -2.9)` and the
-   mirror.
-6. Body: white `(0, 0) (-1.6, -1.7) (-4.2, -2.9) (-12, -2.9) (-13.2, -2.3)
-(-13.2, 2.3) (-12, 2.9) (-4.2, 2.9) (-1.6, 1.7)`.
-7. Warhead: amber `(0, 0) (-1.6, -1.7) (-3.6, -2.75) (-3.6, 2.75) (-1.6, 1.7)`.
-8. Band: cream rectangle `u` -7.6 to -6.4, `v` -2.9 to 2.9.
-
-Flicker: two frames, 90 ms each, looping (plume 30 then 25 px long at heading 14).
-Reduced motion holds frame 0.
+Flicker: two frames looping, 50 ms each for the Rapid and 90 ms for the Heavy.
+Reduced motion holds frame 0. On a light field or Phantom the frame takes the
+field keyline; the flame does not.
 
 ## Missile blasts
 
-Rapid and Heavy contacts, Ada's and enemies', both use the shared
-`BLASTS.heavy` recipe through `impactEffect`; only the actual event radius
-changes their spatial envelope. Every blast draws as an on-screen circle of
-radius `R` (30 Rapid, 60 Heavy), centred on the actual
-contact or the projectile position at range expiry. It covers the same area as
-the ground-plane ellipse it replaces. Hits test the drawn ship shapes against
-that same circle. Screen-space strokes do not scale with `R`.
+Rapid and Heavy contacts, Ada's and enemies', use one recipe through
+`impactEffect`; only the actual event radius changes it. Every blast draws as
+an on-screen circle of radius `R` (30 Rapid, 60 Heavy), centred on the actual
+contact or the projectile position at range expiry. Hits test the drawn ship
+shapes against that same circle. Screen-space strokes do not scale with `R`.
+Its radius is `r = R (1 - (1 - g)^3)` for `g = min(1, t / 180)`, ending at
+340 ms.
 
-The recipe draws a tint, expanding ring, inner line, debris and a brief layered
-flash, all circular: the tint fills the circle, the ring and inner line are
-circles, debris spreads evenly in every screen direction within it, and the
-flash is round. Its growth, fade, stroke, alpha and flash coefficients remain in
-[`weaponEffects.ts`](../src/game/weaponEffects.ts). Each actual detonation has
-one impact effect. A destroyed ship still plays its own independent destruction.
+- Ring: an amber ring `4 - 2 t / 340` px wide at alpha 1 to 180 ms, 0.66 to
+  260 ms, then 0.33, with a 1.2 px cream line inside it once `r` passes 6.
+- Debris: eight cream wedges at 22.5 degrees and every 45 after, from `r + 3.5`
+  to `r + 10`, 3.2 px wide at the base, at alpha 1 to 108 ms, 0.6 to 220 ms,
+  then none.
+- Flash: an eight-point amber burst of radius `0.425 R` with a 0.62 waist, a
+  cream one 0.66 of it turned 22.5 degrees and a white core 0.3 of it, to
+  30 ms; 0.55 of that size to 60 ms.
+- Light field: the ring and the flash's amber burst take the field edge.
+- Reduced motion: a 3 px amber ring at `R` with the ring's alpha steps, to
+  300 ms, without flash, growth or debris.
 
-Reduced motion keeps a fading ring and tint at the actual radius, without
-flash, growth or debris, using the same shared recipe for both missiles.
-
-## Multi-Laser fan
-
-The existing bolt, fired as a fan evenly spaced across 16 degrees: 3, 4 and 5
-bolts at levels 1 to 3, at `-8 + 16 i / (n - 1)` degrees. Offsets apply in the projected aim plane,
-then each bolt's screen direction unprojects to its world velocity, so screen
-length and speed vary per bolt. All bolts leave the nose together. The level
-reads from the bolt count only; colour and width stay the bolt's.
+Each detonation has one impact effect. A destroyed ship still plays its own
+independent destruction.
 
 ## Phaser beam
 
-The full collision width is 12 world units (half-width 6). Beam layers derive
-their width from the canonical collision half-width. Impact sparks use the
-contact edge; whole-object destruction effects remain at the object pivot.
+The full collision width is 12 world units (half-width 6). Impact sparks use
+the contact edge; whole-object destruction effects remain at the object pivot.
 
 A hitscan flash runs from the nose to the first drawn contact edge. A miss
 reaches Ada's fire-time rounded coverage boundary: half-width 380 and
@@ -179,38 +199,87 @@ for the whole flash, at the length `L` fixed when firing. Coverage and the hit
 are fire-time: turning after firing never extends, shortens or retargets the
 beam.
 
-Keyframes for width factor `w` and alpha `a`, linear between keys: 0 ms `w`
-0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0. The
-flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
+Keyframes for width factor `w` and keyed alpha `a`, linear between keys: 0 ms
+`w` 0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0.
+The flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
 
-Three layers along `u` from 0 (nose) to `L` (beam length), each a taper with
-round caps whose width runs linearly from the nose value to the end value over
-the whole beam, whatever its length:
-
-| Layer | Colour | Width at nose to end (px, times `w`) | Alpha    |
-| ----- | ------ | ------------------------------------ | -------- |
-| Glow  | amber  | 12 to 7.5                            | `0.38 a` |
-| Body  | cream  | 6 to 3.6                             | `0.95 a` |
-| Core  | white  | 2.7 to 1.5                           | `a`      |
-
-A miss fades every layer linearly to alpha 0 over its last 28 px; a hit ends
-hard at the contact. Over the beam, a muzzle bloom at `u = 0`: discs of radius
-`5 w` amber `0.3 a`, `2.9 w` cream `0.9 a` and `1.6 w` white `a`.
+- Bands: three opaque bands along `u` from 0 (nose) to `L`, butt ends, each
+  width running linearly from the nose value to the end value over the whole
+  beam: amber 8 to 5, cream 4.6 to 2.8, white 2.2 to 1.3, each times `w`.
+- Alpha: one alpha for all bands and bloom, `a` by the
+  [held fade](#conventions).
+- Miss end: each band tapers to a point over the last 28 px; a hit ends hard at
+  the contact.
+- Muzzle bloom: opaque discs of radius `5 w`, `3.1 w` and `1.6 w` in the three
+  band colours.
+- Light field: the amber band and the outer bloom disc are ink, width 6.5 to 4
+  times `w` at alpha 0.9 and radius `5 w` at 0.6 (`phaser` in
+  [Light fields](galaxies.md#light-fields)).
+- Reduced motion: a 6 px cream band over a 12 px amber band at 0.35 (ink on a
+  light field), without width change or bloom; alpha 1 to 90 ms, then the held
+  fade of `1 - (t - 90) / 60`. A miss keeps the 28 px end taper.
 
 ### Hit spark
 
-A successful Phaser contact uses `compactBright`: the same rays, central core
-and flecks as Laser and Multi-Laser, at greater brightness and a longer visual
-lifetime. A miss has no contact effect. The spark stays at the fire-time
-contact point, aligned with the beam's fire-time direction, while the beam turns
-with the nose: it marks where the hit landed; source coefficients live in
-`IMPACT_STYLE` and `spark`, rather than a separate Phaser spark recipe.
+A Phaser contact uses `compactBright`, the Laser and Multi-Laser contact
+`compact`: the same shapes, brighter and longer for the Phaser. A miss has no
+contact effect. The spark stays at the fire-time contact point, aligned with
+the beam's fire-time direction, while the beam turns with the nose. With
+`p` its age over its life:
 
-### Reduced motion
+- Rays: six wedges at 30 degrees and every 60 after about the incoming axis,
+  from `1.5 + 5 k` to `8.5 + 3 k` times the scale for `k = p / 0.6`, 2.6 wide
+  at the base, white to `p` 0.25 then cream, at alpha 1 to `k` 0.5 then 0.6,
+  to `p` 0.6.
+- Core: a white disc of radius `3 (1 - p / 0.35) + 0.5` times the scale, to
+  `p` 0.35.
+- Flecks: three amber diamonds 3 px across at 60, 180 and 300 degrees,
+  `6 + 5 (1 - (1 - m)^2)` out for `m = (p - 0.2) / 0.8`, at alpha 1 to `m` 0.5
+  then 0.5, from `p` 0.2.
+- Reduced motion: one still cream ring of radius 3 and width 2 as drawn, at the
+  held fade of `1 - p`; the lance contact uses the same ring.
 
-A steady 6 px cream line (alpha `a`) over a 12 px amber edge (alpha `0.35 a`),
-without taper, width change or bloom, alpha 1 to 90 ms then linear to 0 at
-150 ms. A miss keeps the 28 px end fade. The contact becomes the shared family's still cream ring and fades over its visual lifetime.
+The Phaser's own contact ring (`phaserRings`): one cream ring of radius
+`3 + 13 (1 - (1 - k)^2)` and width `3 - 1.6 k` for `k = age / 160`, at alpha 1
+to `k` 0.5, 0.6 to 0.78, then 0.3, with a four-point amber burst `5.5 (1 - k)`
+with a 0.3 waist and a white core `2.2 (1 - k)` while `k` is under 0.45. A
+four-point burst has its notches at 0.3 of its point radius, as the
+[quantum jump](quantum-jump.md) star does.
+
+## Enemy shots
+
+Every enemy shot is coral, the palette's `obstacle`, in every galaxy, so an
+enemy's shot never takes its fleet family's colour. The shapes and colours are
+in [enemy-weapons.json](../public/art/enemy-weapons.json); the
+[enemy-only conventions](#enemy-only-conventions) apply, and each shape turns
+to its projected heading as Ada's shots do.
+
+- Bolt (`bolt`): the ring dart's construction stretched to a bolt, its head at
+  the shot's point. Body `(0, 0) (-3.6, -2.1) (-12, 0) (-3.6, 2.1)` in
+  `obstacle`, core `(-1.2, 0) (-3.6, -0.95) (-7, 0) (-3.6, 0.95)` in white, over
+  a `coralSide` tail wedge `(-8, -1.1) (-20, 0) (-8, 1.1)`. The body and core
+  take the field edge; the tail does not.
+- Multi-Laser (`fan`): the volley follows Ada's [fan](#bolt-pellet-and-fan)
+  rules. Near the nose it draws her band through the heads in `obstacle` with a
+  white inner band, its ends widened 1.3 px (half a far dart), and both bands'
+  trailing edges brought 3 px forward at the middle head, falling to 0 at the
+  outer heads, so the wedge reads as a chevron while its leading edge stays on
+  the heads. Far, each bolt is a coral dart `(0, 0) (-3, -1.3) (-10, 0)
+(-3, 1.3)`. Every part takes the field edge.
+- Scattershot pellet (`pellet`): a coral diamond
+  `(2.4, 0) (0, -1.9) (-2.4, 0) (0, 1.9)` with a white core
+  `(1.2, 0) (0.2, -0.8) (-0.8, 0) (0.2, 0.8)`, turned to its heading. Both take
+  the field edge. Past its fade point it fades by the held fade.
+- Missiles (`missiles`): the enemy Rapid and Heavy frames (`enemyRapidMissile`,
+  `enemyHeavyMissile`) over a coral flame with a `plate` inner wedge, in
+  [Ada's missiles'](#missiles) geometry, flicker and keyline.
+- Ripple (`ripple`), the ring-burst contact: an amber (`weapon`) ground-plane
+  ellipse of radius `R (0.2 + 0.8 p)` over its 160 ms for the contact's radius
+  `R` (12 unless the event gives one), stroke `2.2 - p` px, at the held fade of
+  `1 - p`, with the field edge. Reduced motion holds it at `R` with a 2 px
+  stroke.
+- Fades (`fade`): the [held fade](#conventions) as data, `steps` of threshold
+  and alpha with `last` below the last threshold.
 
 ## Enemy Phaser
 
@@ -222,37 +291,35 @@ along it. The values are in `phaser` in
 Aim line, from the turret's muzzle to the beam's reach (`|P(d x range)|` px, as
 for Ada's beam) or to the first obstacle on it. It stays where it started.
 
-| Time       | Line                                              |
-| ---------- | ------------------------------------------------- |
-| 0-300 ms   | 1 px coral (`obstacle`), dashes 6 on 4 off, still |
-| 300-400 ms | 1 px solid pale coral (`plate`)                   |
+| Time       | Line                                                |
+| ---------- | --------------------------------------------------- |
+| 0-300 ms   | 1.5 px coral (`obstacle`), dashes 6 on 4 off, still |
+| 300-400 ms | 1.5 px solid pale coral (`plate`)                   |
 
-- End tick: a 5 px line across the end of the aim, 1 px, in the line's colour.
+- Chevron: `(L + 3, 0) (L - 1, -3) (L - 1, 3)` at the aim's end `L`, in the
+  line's colour (`chevron`, `u` from the end).
 - Charge: a coral disc at the muzzle, radius 1 to 2.5 over the 400 ms, with a
   white core of radius 0.5 to 1.1.
 
-Beam: Ada's [Phaser beam](#phaser-beam) geometry, width and alpha keys (150 ms),
-miss fade over the last 28 px. The beam stays attached to the turret's muzzle
-and turns with its aim for the flash, at its fire-time length; the aim line
-before it stays where it started. Its beam layers are coral:
+Beam: Ada's [Phaser beam](#phaser-beam) geometry, keys (150 ms), held alpha
+and miss taper. The beam stays attached to the turret's muzzle and turns with
+its aim for the flash, at its fire-time length; the aim line before it stays
+where it started.
 
-| Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
-| ----- | ---------- | ------------------------------------ | -------- |
-| Glow  | `obstacle` | 12 to 7.5                            | `0.38 a` |
-| Body  | `obstacle` | 6 to 3.6                             | `a`      |
-| Core  | white      | 2.7 to 1.5                           | `a`      |
-
-Muzzle bloom: discs of radius `5 w` coral `0.3 a`, `2.9 w` coral `0.9 a` and
-`1.6 w` white `a`. A hit uses the shared `compactBright` contact family at
-the fire-time contact point, independently of the coral beam body.
-
-Light field: the glow is ink, width 6.5 to 4 times `w`, alpha `0.9 a`; the
-bloom's outer disc is ink at `0.6 a`. The aim line follows the
-[edged line](#enemy-only-conventions) rule.
-
-Reduced motion: the aim line is unchanged. The beam is a steady 6 px coral line
-over a 12 px coral edge at `0.35 a` (ink at `0.9 a` on a light field), alpha 1 to
-90 ms then linear to 0 at 150 ms. The contact uses the shared reduced-motion `compactBright` ring.
+- Bands (`layers`): coral 8 to 5, plate 4.6 to 2.8, white 2.2 to 1.3, each
+  times `w`.
+- Muzzle bloom (`bloom`): opaque discs of radius `5 w` coral, `3.1 w` plate and
+  `1.6 w` white.
+- A hit uses the shared `compactBright` contact at the fire-time contact
+  point.
+- Light field and Phantom: the coral band and the coral bloom disc draw over
+  their silhouettes grown by 1 px in the field edge (ink, or white on Phantom);
+  the inner bands and discs take none. The aim line follows the
+  [edged line](#enemy-only-conventions) rule.
+- Reduced motion (`reducedMotion`): the aim line is unchanged. The beam is its
+  own bands at `w` 1 without bloom, alpha 1 to 90 ms (`holdMs`), then the held
+  fade of `1 - (t - 90) / 60`, with the same 1 px field edge. A miss keeps the
+  28 px end taper. The contact uses the shared reduced-motion ring.
 
 ## Enemy-only weapons
 
@@ -278,56 +345,54 @@ their damage, intervals, speeds, counts and lifetimes
   `#181425`. Coral marks every enemy shot, so the enemy beams are coral where
   Ada's are amber and cream.
 - Every shape that has to be seen draws at alpha 1 in `obstacle`, `plate`,
-  `weapon` or white, over the galaxy's boundary edge. Glows, fades and tints
-  carry nothing.
+  `weapon` or white, over the galaxy's boundary edge. Fades hold steps, and a
+  fill inside an edged stroke, such as the shockwave's cream ellipse, carries
+  nothing.
 - Widths and radii are logical px scaled by `s`; the `u`, `v` heading frame and
   `f` are those of [Conventions](#conventions).
 - Tells, lines and beams draw in the effect layer with the Phaser beam. They
   start at the firing turret's muzzle and stop at the first obstacle, like the
   beams.
 - Contact effects use the shared [hit families](#hit-animation-families):
-  `compactBright` for Phaser and a directional streak for Lance. Their warm
-  contact colours do not recolour the coral beam body or its tell.
-- Light field: a stroke draws over an ink stroke 2 px wider on the same path. A
-  solid line's ink runs 1 px past each end. A dashed line's ink dashes are 8 on
-  2 off, offset 1 px earlier, so each coral dash has 1 px of ink at both ends. A
-  filled shape draws over its silhouette grown by 1 px. Tints are never edged.
-  Every edge takes its shape's alpha.
+  `compactBright` for Phaser and `lance` for the lance. Their warm contact
+  colours do not recolour the coral beam body or its tell.
+- Light field and Phantom (`lightField.edge` px): a stroke draws over an edge
+  stroke 2 px wider on the same path. A solid line's edge runs 1 px past each
+  end. A dashed line's edge dashes are 8 on 2 off, offset 1 px earlier, so each
+  coral dash has 1 px of edge at both ends. A filled shape draws over its
+  silhouette grown by 1 px. Every edge takes its shape's alpha.
 
 ### Ring burst
 
 `ringBurst`. At firing, for 180 ms, the bolts' spawn circle (Gameplay's spawn
 radius around the hull centre) draws as a ground-plane ellipse, half-width
-`r x 1.414` and half-height `r x 0.707`, stroked coral 1.5 px at alpha
-`1 - t / 180`. For 120 ms a coral disc at each bolt's origin shrinks from radius
-3.6 to 0.6, with a white core from 2.0 toward 0.4 drawn to 60 ms.
+`r x 1.414` and half-height `r x 0.707`, stroked coral 2 px at alpha 1 to
+90 ms, then 0.5 to 180 ms (`emission.alpha`, each alpha held to its step's end).
+For 120 ms a coral disc at each bolt's origin shrinks from radius 3.6 to 0.6,
+with a white core from 2.0 toward 0.4 drawn to 60 ms.
 
-Each bolt is a ring dart of fixed size, rotated to its projected heading. Draw in
-order:
+Each bolt is a ring dart of fixed size, rotated to its projected heading: a
+`coralSide` tail wedge `(-3.2, -1) (-10, 0) (-3.2, 1)`, a coral body
+`(2.6, 0) (-0.6, -2.3) (-3.8, 0) (-0.6, 2.3)` and a white core
+`(1, 0) (-0.6, -1) (-2.2, 0) (-0.6, 1)`.
 
-1. Tail: coral taper from `u = -(3 + 9 f)` (width 0.5, alpha 0) to `u = -3`
-   (width 2, alpha 0.9).
-2. Body: coral `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)`.
-3. Core: white `(0.8, 0) (-0.6, -0.9) (-2, 0) (-0.6, 0.9)`.
-
-Light field: the body draws over its silhouette grown by 1 px in ink; the tail
-stays as it is, like the missile streak. The emission ring and muzzle discs take
-ink edges. Reduced motion: no muzzle discs; the emission ring is unchanged.
+Light field: the body takes the field edge; the tail does not. The emission
+ring and muzzle discs take edges. Reduced motion: no muzzle discs; the emission
+ring is unchanged.
 
 ### Mine
 
-`mine`. A spiked coral mine with an amber light, drawn at its projected centre and
-sorted with the play objects by that centre's screen y. Angles are screen angles,
-0 at screen right and clockwise on screen. At spin angle `th`:
+`mine`. One solid model, drawn at its projected centre from the
+[mine frames](#missile-and-mine-frames) and sorted with the play objects by
+that centre's screen y: a coral ball of radii 4.7 by 4.7 by 4.5, a dark belt
+of radius 5 and height 2.2, four coral studs from 4.6 to 7.4 out tapering from
+radius 1.9 to 1, a dark collar of radius 2.3 from 4.2 to 5 up and an amber lamp
+dome of radius 1.6. Its coral tones are `#d68b72`, `#a8654f` and `#7f4b3d`.
 
-1. Spikes: 8 coral triangles, spike `i` along `th + 45 i` degrees, tip at radius
-   7.5 and base corners 1.5 either side of the point at radius 3.6.
-2. Body: a `coralSide` disc of radius 5, then an `obstacle` disc of radius 4.3
-   centred at `(-0.6, -0.7)`, which leaves a darker rim on the lower right.
-3. Core: an ink disc of radius 2.5 and an amber disc of radius 1.5; on a blink, a
-   white disc of radius 1.8 instead of the amber.
-
-`th` is `60 x age` degrees for the mine's age in seconds since the drop.
+The mine spins at 60 degrees a second (`spin.degPerSecond`), so its spin angle
+is `th = 60 x age` for its age in seconds since the drop, and it shows frame
+`floor(th / 11.25) mod 8` (`spin.stepDeg`). A blink shows the same step from
+the blink set, its lamp white `#ffffff` with a `#e8e8f0` shade.
 
 | Remaining life | Blink period | White for |
 | -------------- | ------------ | --------- |
@@ -341,16 +406,17 @@ Vanish hint: over the last 4 s a 1.2 px coral arc of radius 11 runs clockwise
 from 12 o'clock through `360 x remaining / 4 s` degrees, so it shortens to
 nothing as the mine vanishes.
 
-Vanish: a 200 ms fizzle that deals no damage. With `p = t / 200` the mine
-scales by `1 - p^2` about its centre with its core white, and four coral flecks of
-radius 1 at 45, 135, 225 and 315 degrees sit at distance `5 + 6 p`, their y
-times 0.75, at alpha `1 - p`.
+Vanish: a 200 ms fizzle that deals no damage. With `p = t / 200` the mine's
+frame scales by `1 - p^2` about its centre on its blink lamp, and four coral
+flecks of radius 1 at 45, 135, 225 and 315 degrees sit at distance `5 + 6 p`,
+their y times 0.75, at the held fade of `1 - p`.
 
 Pop, when a shot destroys the mine or it touches Ada, uses the shared
-`shockwave` family: an expanding outer ring, a separate inner front and faint
-fill. The actual pop age is normalized over the existing pop duration. Ring
-burst contacts remain one clean ripple; they do not acquire the Mine's inner
-front or fill. This is presentation only, not a new blast or damage radius.
+`shockwave` family, normalised over the pop's 220 ms: an amber ground-plane
+ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with
+a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6.
+This is presentation only, not a new blast or damage radius. Ring burst
+contacts remain one clean ripple.
 
 Collision: contact is the drawn mine against Ada's drawn ship, and it covers
 the full stud sweep. `collision` holds the union of the eight
@@ -363,14 +429,15 @@ fizzling mine has none. Every pixel a frame draws lies in the parts, and against
 the union of the frames they have an IoU of 0.9999 and lie within 0.004 px of
 its edge.
 
-Light field: the spikes and body draw over their silhouette grown by 1 px in
-ink; the hint arc, fizzle flecks and both pop front strokes take ink edges,
-never the pop's faint fill.
+Light field and Phantom: the frame takes the field keyline; the hint arc,
+fizzle flecks and the pop's ring take edges. The pop's cream ellipse takes
+none (`pop.edged`): an edge on it would merge with the ring's edge across its
+narrow axis while the pop is small and band the pop in stripes on Phantom.
 
-Reduced motion: `th` stays 0 and the core stays amber with no blink; the hint arc
-is unchanged. The fizzle is the still mine fading to alpha 0 over 200 ms. The pop
-holds both shockwave fronts and its fill at the shared radius while fading,
-without expansion. It retains the existing reduced pop expiry.
+Reduced motion: `th` stays 0 with no blink; the hint arc is unchanged. The
+fizzle is the still frame at the held fade of `1 - p` over 200 ms. The pop
+holds the ring and ellipse at the shared radius while fading, without
+expansion, over its 200 ms (`reducedMotion.pop.ms`).
 
 ### Charged lance
 
@@ -389,155 +456,43 @@ first obstacle on it.
   radius 4.5 at alpha 0.5 sits under it.
 - Beam, 300 ms from the end of the lock. Keys for `w` and `a`, linear between
   keys: 0 ms `w` 0.5 `a` 0.9; 30 ms `w` 1.2 `a` 1; 120 ms `w` 1 `a` 1; 300 ms
-  `w` 0.35 `a` 0. Layers as for the Phaser beam:
+  `w` 0.35 `a` 0. Bands as for the enemy Phaser: coral 9 to 6.8, plate 5.4 to
+  4, white 2.4 to 1.6, each times `w`, at the held alpha of `a`.
+- Muzzle bloom: opaque discs of radius `6.5 w` coral, `4.2 w` plate and
+  `2.3 w` white. A beam at full length tapers every band to a point over its
+  last 28 px, as a Phaser miss does; one stopped by an obstacle ends hard there
+  with the shared `lance` contact: a white dart `(-20 a, 0) (0, -2.2 a)
+(4 a, 0) (0, 2.2 a)` and a cream four-point burst `4.5 a` with a 0.3 waist
+  for `a = 1 - p`, at alpha 1 to `p` 0.5, then 0.6.
 
-| Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
-| ----- | ---------- | ------------------------------------ | -------- |
-| Glow  | `obstacle` | 12 to 9                              | `0.45 a` |
-| Body  | `obstacle` | 6 to 4.5                             | `a`      |
-| Core  | white      | 2.4 to 1.6                           | `a`      |
-
-- Muzzle bloom: discs of radius `7 w` coral `0.3 a`, `4.5 w` coral `0.9 a` and
-  `2.5 w` white `a`. A beam at full length fades every layer linearly to
-  alpha 0 over its last 28 px, as a Phaser miss does; one stopped by an
-  obstacle ends hard there with the shared directional `lance` contact flash.
-
-Light field: the glow is ink, width 10 to 7.5 times `w`, alpha `0.9 a`; the
-bloom's outer disc is ink at `0.6 a`. The lines and the charge disc follow the
+Light field and Phantom: as for the enemy Phaser, the coral band and the coral
+bloom disc take a 1 px field edge. The lines and the charge disc follow the
 edge rule.
 
 Reduced motion: the dashes do not march and the lock has no white pulses. The
-beam is a steady 3 px coral line over a 6 px coral edge at `0.35 a` (ink at
-`0.9 a` on a light field), alpha 1 to 180 ms then linear to 0 at 300 ms. The contact uses the shared still-ring
-reduced-motion fallback over the existing Lance hit window.
+beam is its own bands at `w` 1 without bloom, alpha 1 to 180 ms (`holdMs`),
+then the held fade of `1 - (t - 180) / 120`, with the 1 px field edge. The
+contact uses the shared reduced-motion ring over the existing lance hit window.
 
-## Flat look
+## Missile and mine frames
 
-The accepted look for every effect on this page: solid shapes in opaque flat
-tones with hard edges, tapers made by geometry and fades in held steps, with
-no alpha ramps, hairlines or blurred discs. Sizes, timings, colour roles,
-light-field keylines, hit tests and reduced-motion rules are unchanged. The
-sections above record what the renderer draws; the values below replace
-their drawing rules when Tech switches the renderer
-([handoff](polish-handoff.md)). Coordinates are `u` along the heading and
-`v` across it, in logical px, as above.
-
-### Bolt, pellet and fan
-
-| Element          | Shipped                              | Flat look                                                                                                                                                     |
-| ---------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Laser bolt       | A 1.5 px amber line 29.7 px long     | A 3 px amber slug 14 px long with a pointed head, a cream core and one amber tail step 1.5 px wide from 14 to 27 px behind the head                           |
-| Slug outline     | None                                 | Amber `(0, 0) (-2.7, -1.5) (-14, -1.5) (-15.5, 0) (-14, 1.5) (-2.7, 1.5)`; cream core `(-1.5, 0) (-3.3, -0.675) (-8.68, -0.675) (-8.68, 0.675) (-3.3, 0.675)` |
-| Scattershot dot  | An amber disc of radius 1.5          | An amber disc of radius 1.7 with a cream disc of radius 0.7 centred 0.45 px up and left of it; positions unchanged                                            |
-| Multi-Laser near | 3 to 5 bolts overlapping at the nose | While neighbouring bolt heads are under 5.6 px apart on screen, one amber wedge through the heads with a cream inner wedge                                    |
-| Multi-Laser far  | 3 to 5 bolts, 1.5 px lines           | Each bolt a 2.2 px amber slug 10 px long with no core and no tail, so bolts never overlap                                                                     |
-
-The fan wedge is a band through the bolts' heads on screen. For each head at
-distance `h` from the nose (its travel), the amber band runs from the head back
-toward the nose to `max(4, h - 11)`, its two outer ends widened 1.1 px sideways
-(half a far slug); the cream band runs from `h - 2.5` back to the amber's inner
-edge plus 4, its ends on the outer bolts' centrelines. Its outer edge lies on
-the heads, so the far slugs replace it in place. The fan's 16 degree world
-spread projects to 8 to 31 degrees on screen and puts its heads at screen
-distances up to 13 px apart, so a sector of one angle and one radius cannot
-match them. The wedge covers 20 to 80 px of travel with 3 bolts and 41 to
-160 px with 5, by heading.
-
-### Missiles
-
-Both missiles are small solid models with tops lightest, walls facing left
-mid and walls facing right darkest, drawn at their projected heading, with a
-flat two-tone flame. Lengths are logical px along the heading from the nose.
-
-| Element       | Shipped                                              | Flat look                                                                                                                                   |
-| ------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rapid body    | A flat white dart polygon 7 px long, amber fin flats | A round white body of radius 1.5 from 7 to 2.2 behind the nose, a white cone to a 0.2 tip 0.6 ahead, a dark rear cap                        |
-| Rapid fins    | Two flat triangles                                   | Three amber fin blocks 1 px thick, two level and one upright: roots 7.4 to 4.4 behind the nose, swept to 7.8 to 7, reaching 3.2 (3 upright) |
-| Rapid flame   | Two alpha tapers, 0.5 to 1.6 px                      | An amber wedge 2.6 px wide at the tail, 12 `f` px long (15 `f` in frame 1), with a cream wedge half as wide and half as long                |
-| Heavy body    | A flat white polygon with an ink keyline             | A round white body of radius 2.9 from 13.2 to 4.2 behind the nose, a dark rear cap                                                          |
-| Heavy warhead | A flat amber polygon                                 | An amber cone from radius 2.9 at 4.2 behind the nose to a 0.3 tip 1 ahead                                                                   |
-| Heavy fins    | Two flat cream polygons                              | Three cream fin blocks 1.4 px thick: roots 13.2 to 8.6 behind the nose, swept to 14.4 to 12.6, reaching 6 (5.4 upright)                     |
-| Heavy flame   | Two alpha tapers and a throat disc                   | An amber wedge 5.6 px wide, 16.8 `f` px long (11.8 `f` in frame 1), with a cream wedge half as wide and half as long                        |
-
-Material tones, top, left and right: white `#ffffff`, `#cfd3e0`, `#9da2b8`;
-cream `#ead4aa`, `#c2ad86`, `#978565`; amber `#f0bd68`, `#b98a40`,
-`#8a6630`; dark `#2a2433`, `#1e1a26`, `#16131c`. Flicker frames and periods
-are unchanged.
-
-### Blast
-
-The envelope and timing are unchanged: radius `r = R (1 - (1 - g)^3)` for
-`g = min(1, t / 180)`, ending at 340 ms.
-
-| Element | Shipped                               | Flat look                                                                                                                                                                     |
-| ------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tint    | A fading fill of the circle           | None                                                                                                                                                                          |
-| Ring    | An expanding ring with a fading alpha | An amber ring `4 - 2 t / 340` px wide at alpha 1 to 180 ms, 0.66 to 260 ms, then 0.33, with a 1.2 px cream line inside it once `r` passes 6                                   |
-| Debris  | Random specks                         | Eight cream wedges at 22.5 degrees and every 45 after, from `r + 3.5` to `r + 10`, 3.2 px wide at the base, at alpha 1 to 108 ms, 0.6 to 220 ms, then none                    |
-| Flash   | Layered soft discs                    | An eight-point amber burst of radius `0.425 R` with a 0.62 waist, a cream one 0.66 of it turned 22.5 degrees and a white core 0.3 of it, to 30 ms; 0.55 of that size to 60 ms |
-
-### Beams
-
-| Element        | Shipped                                                                   | Flat look                                                                                                                                                                                                                                                      |
-| -------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phaser layers  | Amber 12 to 7.5 at `0.38 a`, cream 6 to 3.6, white 2.7 to 1.5, round caps | Opaque bands, butt ends: amber 8 to 5, cream 4.6 to 2.8, white 2.2 to 1.3, each times `w`                                                                                                                                                                      |
-| Enemy Phaser   | The same in coral and plate                                               | Coral 8 to 5, plate 4.6 to 2.8, white 2.2 to 1.3                                                                                                                                                                                                               |
-| Charged lance  | Its three alpha layers                                                    | Coral 9 to 6.8, plate 5.4 to 4, white 2.4 to 1.6                                                                                                                                                                                                               |
-| Alpha          | The keyframed `a`, linear                                                 | One alpha for all bands: 1 while `a` is over 0.6, 0.6 while over 0.3, then 0.3                                                                                                                                                                                 |
-| Miss end       | A linear fade over the last 28 px                                         | Each band tapers to a point over the last 28 px                                                                                                                                                                                                                |
-| Muzzle bloom   | Discs `5 w` at `0.3 a`, `2.9 w`, `1.6 w`                                  | Opaque discs `5 w`, `3.1 w` and `1.6 w` in the three band colours (lance `6.5 w`, `4.2 w`, `2.3 w`)                                                                                                                                                            |
-| Aim line       | 1 px dashed                                                               | 1.5 px, dashes 6 on and 4 off, with a chevron `(L + 3, 0) (L - 1, -3) (L - 1, 3)` in place of the end tick                                                                                                                                                     |
-| Phaser contact | Three hairline rings                                                      | One cream ring of radius `3 + 13 (1 - (1 - k)^2)` and width `3 - 1.6 k` for `k = age / 160`, at alpha 1 to `k` 0.5, 0.6 to 0.78, then 0.3, with a four-point amber burst `5.5 (1 - k)` with a 0.3 waist and a white core `2.2 (1 - k)` while `k` is under 0.45 |
-| Lance contact  | A soft streak                                                             | A white dart `(-20 a, 0) (0, -2.2 a) (4 a, 0) (0, 2.2 a)` and a cream four-point burst `4.5 a` with a 0.3 waist for `a = 1 - p`, at alpha 1 to `p` 0.5, then 0.6                                                                                               |
-
-A four-point burst has its notches at 0.3 of its point radius, as the
-[quantum jump](quantum-jump.md) star does.
-
-### Hit spark
-
-| Element | Shipped                    | Flat look                                                                                                                                                                                                                              |
-| ------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rays    | Thin rays at random angles | Six wedges at 30 degrees and every 60 after about the incoming axis, from `1.5 + 5 k` to `8.5 + 3 k` times the scale for `k = p / 0.6`, 2.6 wide at the base, white to `p` 0.25 then cream, at alpha 1 to `k` 0.5 then 0.6, to `p` 0.6 |
-| Core    | A fading disc              | A white disc of radius `3 (1 - p / 0.35) + 0.5` times the scale, to `p` 0.35                                                                                                                                                           |
-| Flecks  | Random flecks              | Three amber diamonds 3 px across at 60, 180 and 300 degrees, `6 + 5 (1 - (1 - m)^2)` out for `m = (p - 0.2) / 0.8`, at alpha 1 to `m` 0.5 then 0.5, from `p` 0.2                                                                       |
-
-### Ring burst and mine
-
-| Element       | Shipped                                   | Flat look                                                                                                                                                                                                                                                                 |
-| ------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Emission ring | 1.5 px coral at alpha `1 - t / 180`       | 2 px coral at alpha 1 to 90 ms, then 0.5 to 180 ms                                                                                                                                                                                                                        |
-| Dart tail     | A coral alpha taper `9 f` long            | A `coralSide` wedge `(-3.2, -1) (-10, 0) (-3.2, 1)`                                                                                                                                                                                                                       |
-| Dart body     | `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)` | Coral `(2.6, 0) (-0.6, -2.3) (-3.8, 0) (-0.6, 2.3)`, white core `(1, 0) (-0.6, -1) (-2.2, 0) (-0.6, 1)`                                                                                                                                                                   |
-| Mine          | Eight flat spikes round two offset discs  | One solid: a coral ball of radii 4.7 by 4.7 by 4.5, a dark belt of radius 5 and height 2.2, four coral studs from 4.6 to 7.4 out tapering from radius 1.9 to 1, a dark collar of radius 2.3 from 4.2 to 5 up and an amber lamp dome of radius 1.6                         |
-| Mine blink    | A white disc of radius 1.8                | The lamp dome in white `#ffffff` with a `#e8e8f0` shade                                                                                                                                                                                                                   |
-| Shockwave     | A fading ellipse stroke                   | An amber ground-plane ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6; on a light field or Phantom the ring takes the field edge and the cream ellipse does not |
-
-The mine's coral tones are `#d68b72`, `#a8654f` and `#7f4b3d`; its spin and
-blink timings are unchanged. Its collision covers the full stud sweep
-([Mine](#mine)). The shockwave's cream ellipse sits inside the ring like a
-tint: an edge on it would merge with the ring's edge across its narrow axis
-while the pop is small and band the pop in stripes on Phantom, so only the
-ring is edged, as `mine.pop.edged` lists.
-
-### Missile and mine frames
-
-`node art/tools/weapon-solids.ts` builds the three models and writes their
-frames beside the shipped art, with their manifest rows staged as
+`node art/tools/weapon-solids.ts` builds the five models and writes their
+frames, with their manifest rows and each missile's flame geometry staged as
 `weapon-solids` in [polish-rows.json](polish-rows.json). Frame px times
 0.4375 is logical px; every pivot is the frame's centre.
 
-| Sheet                                  | Ids                                                    | Frame | Frames                                                                                  |
-| -------------------------------------- | ------------------------------------------------------ | ----: | --------------------------------------------------------------------------------------- |
-| `/art/weapons/rapid-missile-sheet.svg` | `weapon-rapidMissile-{k}`, `k` 0 to 31                 |    56 | Heading `k` of 32, `facing` `world-{k}`; the nose at the pivot                          |
-| `/art/weapons/heavy-missile-sheet.svg` | `weapon-heavyMissile-{k}`, `k` 0 to 31                 |    96 | The same                                                                                |
-| `/art/weapons/mine-sheet.svg`          | `weapon-mine-{j}`, `weapon-mine-blink-{j}`, `j` 0 to 7 |    48 | Spin step `j` of 11.25 degrees, a quarter turn in eight; the mine's centre at the pivot |
+| Sheet                                        | Ids                                                    | Frame | Frames                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------ | ----: | --------------------------------------------------------------------------------------- |
+| `/art/weapons/rapid-missile-sheet.svg`       | `weapon-rapidMissile-{k}`, `k` 0 to 31                 |    56 | Heading `k` of 32, `facing` `world-{k}`; the nose at the pivot                          |
+| `/art/weapons/heavy-missile-sheet.svg`       | `weapon-heavyMissile-{k}`, `k` 0 to 31                 |    96 | The same                                                                                |
+| `/art/weapons/enemy-rapid-missile-sheet.svg` | `weapon-enemyRapidMissile-{k}`, `k` 0 to 31            |    56 | The same, `projectile` `enemyRapidMissile`                                              |
+| `/art/weapons/enemy-heavy-missile-sheet.svg` | `weapon-enemyHeavyMissile-{k}`, `k` 0 to 31            |    96 | The same, `projectile` `enemyHeavyMissile`                                              |
+| `/art/weapons/mine-sheet.svg`                | `weapon-mine-{j}`, `weapon-mine-blink-{j}`, `j` 0 to 7 |    48 | Spin step `j` of 11.25 degrees, a quarter turn in eight; the mine's centre at the pivot |
 
 The missile frames hold the body and fins; the game draws the flat flame
 behind the tail, 7 px (Rapid) or 13.2 px (Heavy) behind the nose along the
-projected heading. Show the mine's frame `floor(th / 11.25) mod 8` for its
-spin angle `th`, from the blink set while it blinks. On a light field each
-frame takes the ink keyline. `node art/tools/polish-contact-sheet.ts <dir>
-weapons` writes the review sheet.
+projected heading. On a light field each frame takes the ink keyline.
+`node art/tools/polish-contact-sheet.ts <dir> weapons` writes the review sheet.
 
 ## Pickups
 
@@ -608,14 +563,16 @@ markers.
 
 ## Reduced motion summary
 
-| Effect   | Full                              | Reduced                             |
-| -------- | --------------------------------- | ----------------------------------- |
-| Missiles | Two-frame exhaust flicker         | Frame 0 held, no flicker            |
-| Blasts   | Flash, growing ring, debris, tint | Static ring and tint at `R`, fading |
-| Beam     | Width keys, taper, bloom          | Steady 2 px line, fading            |
-| Spark    | Rays, core, flecks                | Static ring, fading                 |
-| Tells    | Lance dashes march, lock pulses   | Still dashes, no pulses             |
-| Ring     | Emission ring and muzzle discs    | Emission ring only                  |
-| Mine     | Spin, blink, fizzle, pop flash    | Still, amber, fade, static ring     |
-| Pickup   | Chevron climb                     | Still frame, both chevrons amber    |
-| Ammo     | Glint across the crate            | `rest` frame                        |
+| Effect      | Full                            | Reduced                                       |
+| ----------- | ------------------------------- | --------------------------------------------- |
+| Missiles    | Two-frame flame flicker         | Frame 0 held, no flicker                      |
+| Blasts      | Flash, growing ring, debris     | Still 3 px ring at `R`, held fade             |
+| Ada's beam  | Width keys, taper, bloom        | 6 px cream over a 12 px amber band, held fade |
+| Enemy beams | Width keys, taper, bloom        | Their own bands at `w` 1, no bloom, held fade |
+| Spark       | Rays, core, flecks              | Still cream ring of radius 3, held fade       |
+| Ripple      | Growing amber ripple, thinning  | Still 2 px ripple at `R`, held fade           |
+| Tells       | Lance dashes march, lock pulses | Still dashes, no pulses                       |
+| Ring        | Emission ring and muzzle discs  | Emission ring only                            |
+| Mine        | Spin, blink, fizzle, pop        | Still frame, no blink, held fade, still pop   |
+| Pickup      | Chevron climb                   | Still frame, both chevrons amber              |
+| Ammo        | Glint across the crate          | `rest` frame                                  |
