@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { contrast } from "@andornaut/art-kit/build/colour";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -37,6 +38,7 @@ import {
   MOORING_CLEAT,
   NEEDLE_GATE_TONES,
   ringGate,
+  WHIRLPOOL_FLOOR,
   WORLD_UNIT,
 } from "./friendly-models.ts";
 import {
@@ -60,7 +62,7 @@ import {
   writeOnce,
 } from "./manifest.ts";
 import { writeProjects } from "./projects.ts";
-import { INK } from "./palette.ts";
+import { floorColour, INK } from "./palette.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
 import type { Mesh } from "./solid.ts";
@@ -637,6 +639,37 @@ async function writeHolodiskIcon() {
   }
 }
 
+// The nursery beacon's and current-map buoys' lit lamp and cream arm meet Whirlpool's contrast
+// floor (art/galaxies.md "Light fields"). On a light field the ink keyline under a keylined
+// object carries the floor and the fills stay as drawn, so both objects must be keylined there.
+const MIN_ON_FIELD = 5;
+const FLOOR_OBJECTS = ["nurseryBeacon", "currentBuoy"] as const;
+type GalaxyFields = {
+  lightField: { keylined: readonly string[] };
+  galaxies: Record<string, { tint: { light?: boolean }; colors: Record<string, string> }>;
+};
+export function checkWhirlpoolFloor(): void {
+  const fields = JSON.parse(
+    readFileSync(fileURLToPath(new URL("../../public/art/galaxies.json", import.meta.url)), "utf8"),
+  ) as GalaxyFields;
+  const { tint, colors } = fields.galaxies.whirlpool!;
+  const light = Boolean(tint.light);
+  for (const key of FLOOR_OBJECTS) {
+    if (light && !fields.lightField.keylined.includes(key)) {
+      throw new Error(`${key} takes no ink keyline on Whirlpool's light field`);
+    }
+    for (const [part, fill] of WHIRLPOOL_FLOOR) {
+      const colour = floorColour(light, fill);
+      const value = contrast(colour.slice(1), colors.background!.slice(1));
+      if (value < MIN_ON_FIELD) {
+        throw new Error(
+          `${key} ${part} ${colour} on Whirlpool's field is ${value.toFixed(2)}:1, below ${MIN_ON_FIELD}:1`,
+        );
+      }
+    }
+  }
+}
+
 const ROWS = fileURLToPath(new URL("../friendly-rows.json", import.meta.url));
 const PICKUPS = "pickups.json";
 const GATE_SHEET = "ring-gates-sheet.svg";
@@ -656,6 +689,7 @@ function writeManifests(live: Readonly<Record<string, Rows>>) {
 }
 
 async function main() {
+  checkWhirlpoolFloor();
   const objects = drawnObjects();
   const live: Record<string, Rows> = {};
   const staged: Record<string, Rows> = {};

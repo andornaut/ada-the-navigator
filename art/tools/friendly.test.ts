@@ -14,7 +14,13 @@ import {
   whaleFrame,
   whaleLayout,
 } from "./friendly-whales.ts";
-import { drawGates, drawnObjects, HOLODISK_ICON, holodiskIcon } from "./friendly.ts";
+import {
+  checkWhirlpoolFloor,
+  drawGates,
+  drawnObjects,
+  HOLODISK_ICON,
+  holodiskIcon,
+} from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { GALAXIES, type ManifestFile, readManifest } from "./manifest.ts";
 import { strictlyConvex } from "./silhouette.ts";
@@ -140,6 +146,10 @@ test("every pickup frame ships strictly convex collision parts inside its frame"
       }
     }
   }
+});
+
+test("Whirlpool's nursery beacon and current-map buoys meet the field's contrast floor", () => {
+  assert.doesNotThrow(checkWhirlpoolFloor);
 });
 
 test("the mooring buoy's three arm tips lie on its frame and point away from its hub", () => {

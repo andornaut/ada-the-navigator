@@ -236,6 +236,9 @@ in the galaxy's station family palette. The pivot is the float's centre on the
 world plane: place it at the world position and sort by its screen y. On
 Whirlpool's light field both draw over the 1 px ink keyline of the
 [light-field rule](galaxies.md#light-fields) (`nurseryBeacon`, `currentBuoy`).
+`node art/tools/friendly.ts` fails unless their lit lamp and cream arm meet
+5:1 on the field: on a light field through that keyline, which both must
+take, and on a dark field by their fills.
 
 | Change            | Ids                                                        | Frame px | Display      | Pivot           |
 | ----------------- | ---------------------------------------------------------- | -------- | ------------ | --------------- |

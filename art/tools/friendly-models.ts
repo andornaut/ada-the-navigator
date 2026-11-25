@@ -95,6 +95,12 @@ const WHIRLPOOL = {
   dim: glow("#b0624e"),
   rib: mat("#b5ae9a"),
 };
+// The Whirlpool tones held to the field's contrast floor: the lit lamp reads as a signal and the
+// cream arm stays clear.
+export const WHIRLPOOL_FLOOR = [
+  ["lit lamp", WHIRLPOOL.lamp[0]],
+  ["cream arm", WHIRLPOOL.arm[0]],
+] as const;
 const ANDROMEDA = {
   body: mat("#f4ead3", "#cfc2a4", "#a99c80"),
   trim: mat("#34376f", "#25275a", "#1a1b3c"),
