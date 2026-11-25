@@ -58,7 +58,11 @@ it("uses each industrial primary turret while emitting one canonical Rapid shot"
       { ...identity, packId: null, phase: 0 },
       { x: 40, y: -20 },
     );
-    const state = damageEnemy(definition, { amount: 1, hardpointId: null }, initial);
+    const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, initial);
+    // The launcher fires forward only, so the nose starts on Ada.
+    const range = Math.hypot(250 - hit.position.x, 40 - hit.position.y);
+    const facing = { x: (250 - hit.position.x) / range, y: (40 - hit.position.y) / range };
+    const state = { ...hit, facing };
     const result = stepEnemy(
       definition,
       {
