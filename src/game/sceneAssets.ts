@@ -753,7 +753,7 @@ export function queueHaze(
 
 /**
  * Needle's edge-on band: its band.json, painted once into a canvas texture over the haze's area
- * at the maximum render scale, so its 1.2 px core and point stars stay sharp.
+ * at the maximum render scale, so its strip edges and point stars stay sharp.
  */
 export function queueBand(
   scene: AssetsContext,
