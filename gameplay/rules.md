@@ -1524,11 +1524,13 @@ apply to the planner's output.
   cell, as wide as the encounter spacing minus the
   [minimum group distance](ships.md#ambient-admission), so any two anchors keep
   that distance. Budgets and densities do not change with it.
-- Adjacent group members are spaced, centre to centre, by the sum of their hull
-  radii plus the 20-world-unit gap: two frigates sit 120 world units apart.
-  Escorts sit on a ring that starts 60 world units beyond their leader's hull
-  (the escort station) and widens as needed so each escort keeps the 20-unit gap
-  from its leader and its neighbours.
+- An enemy's footprint is a circle of its spacing radius r
+  ([Ships](ships.md#hulls)). Adjacent group members are spaced, centre to
+  centre, by the larger of the galaxy's member spacing and 2r + 20: a Twin hull
+  pair in Andromeda sits about 135 world units apart and a Slim delta pair in
+  Phantom about 153. Escorts sit on a ring the largest of the leader's r + 60
+  (the escort station), the leader's r + the escort's r + 20, and the radius
+  that keeps neighbouring escorts 20 apart.
 - Stations and points of interest never block a spawn. The existing exclusion
   zones still apply, including the arrival calm radius, protected areas, the
   Needle channel, currents and ore fields.
@@ -1563,6 +1565,8 @@ between the two regions' values across 9000–11000 and 24000–26000, and
 acceptance areas there are judged against the blended request.
 Group sizes switch at 10000 and 25000, as budgets and archetype limits do in
 [Ships](ships.md#ambient-admission).
+Enemy group targets are interim until they are re-measured with the spacing
+radii.
 
 | Galaxy    | Region | Slot rocks | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
 | --------- | ------ | ---------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |

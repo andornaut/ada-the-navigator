@@ -42,16 +42,16 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 
 ## Values
 
-| Ship          | Size (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
+| Ship          | Span (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------- | ----------------: | ---------: | --------------------: | ---------------: | ------------: | ---------------: |
 | Ada           |                 1 |        175 |                 0.413 |            0.693 |          0.16 |             0.08 |
-| `swarm`       |              0.65 |        175 |                  0.20 |             0.25 |          0.12 |             0.10 |
+| `swarm`       |               0.8 |        175 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`     |                 1 |        160 |                  0.40 |             0.50 |          0.30 |             0.15 |
-| `interceptor` |              0.75 |        240 |                  0.90 |             1.20 |          0.60 |             0.12 |
-| `retaliator`  |                 2 |        120 |                  1.20 |             1.50 |          0.90 |             0.35 |
-| `frigate`     |                 4 |        100 |                   1.5 |              2.0 |           1.2 |             0.40 |
-| `capital`     |                 5 |         50 |                   2.5 |              3.0 |           2.0 |             0.50 |
-| `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
+| `interceptor` |                 1 |        240 |                  0.90 |             1.20 |          0.60 |             0.12 |
+| `retaliator`  |                 3 |        120 |                  1.20 |             1.50 |          0.90 |             0.35 |
+| `frigate`     |                 5 |        100 |                   1.5 |              2.0 |           1.2 |             0.40 |
+| `capital`     |                 6 |         50 |                   2.5 |              3.0 |           2.0 |             0.50 |
+| `platform`    |                 4 |          0 |                     – |                – |             – |             0.30 |
 
 Ada's top speeds are 175, 200 and 225 world units per second. From rest with
 full throttle in a straight line, she reaches 90% speed in 0.95, 0.80 and
@@ -69,6 +69,49 @@ its existing siege fraction. Ada swings wide on sharp turns. Small enemies are
 nimble, interceptors carry momentum through passes, and larger ships are
 progressively heavier.
 The `platform` is fixed in place and only turns its turrets.
+
+## Hulls
+
+The span column is each class's drawn width, set by `src/data/enemyDimensions.ts`.
+Every hull keeps its class width; its drawn length follows its design. Sizes are
+display px at 1x. World units are display px times 20 / 18.76, since Ada's 18.76
+px span is her 20-unit diameter.
+
+| Class         | Hull                          | Length x width | Spacing radius (world units) |
+| ------------- | ----------------------------- | -------------: | ---------------------------: |
+| `swarm`       | Pincer drone                  |        14 x 15 |                            8 |
+| `fighter`     | Arrowhead                     |        24 x 19 |                           13 |
+| `interceptor` | Spear                         |        42 x 19 |                           22 |
+| `retaliator`  | Manta gunship                 |        34 x 56 |                           30 |
+| `retaliator`  | Cargo Hauler                  |        60 x 56 |                           32 |
+| `retaliator`  | Mining Freighter              |        50 x 56 |                           30 |
+| `frigate`     | Slim delta                    |       125 x 94 |                           67 |
+| `frigate`     | Twin hull                     |       108 x 94 |                           58 |
+| `capital`     | Hammer (Sunflower)            |      159 x 113 |                           85 |
+| `capital`     | Manta dreadnought (Whirlpool) |      153 x 113 |                           82 |
+| `capital`     | Crossbow (Needle)             |      166 x 113 |                           89 |
+| `capital`     | Broad wing (Andromeda)        |      140 x 113 |                           75 |
+| `capital`     | Outrigger carrier (Cartwheel) |      152 x 113 |                           81 |
+| `capital`     | Forked fortress (Phantom)     |      170 x 113 |                           91 |
+| Flagship      | Admiral Archie's own design   |  122.5 x 112.6 |                           65 |
+| `platform`    | Ore-field platform            |        75 x 75 |                           40 |
+
+- **Hits:** shots, beams, blasts, mines and contacts test the drawn convex
+  outline of the hull's current heading frame, plus a heavy's hardpoint bases
+  and tops. Hit area follows the drawn outline; HP and speeds are unchanged.
+- **Spacing radius:** the larger of half the drawn length and half the drawn
+  width, in world units. It sets spawn footprints, group member spacing, escort
+  rings and capital spacing, never hits.
+- **Frigates:** the Slim delta in Sunflower, Cartwheel and Phantom; the Twin hull
+  in Whirlpool, Andromeda and Needle. Each galaxy has one capital, listed above.
+  Every frigate and capital in a galaxy uses that galaxy's hull.
+- **Retaliators:** each rolls the Manta gunship, Cargo Hauler or Mining Freighter
+  with equal weight in every galaxy, from its ship ID. All three keep the
+  `retaliator` values, Rapid Missile and one aimed launcher.
+- **Small craft weapons:** the swarm, fighter and interceptor fire from flush
+  hull ports and aim independently of the hull. The fighter's Multi-Laser fan
+  leaves from one origin.
+- **Flagship:** Admiral Archie's flagship keeps its own design.
 
 ## Behaviours
 
@@ -104,7 +147,8 @@ Recovery requires actual line of sight, perception, engagement admission and the
 home leash; otherwise fixed last-seen investigation gives way to home patrol
 ([Retreat policy](#bounded-retreat-follow-up)). `strafe` passes no closer
 than 150 world units and loops back beyond 420; `siege`
-advances at half top speed; `escort` holds station 60 beyond its leader's hull,
+advances at half top speed; `escort` holds station 60 beyond its leader's
+spacing radius ([Hulls](#hulls)),
 intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
 A ship that touches Ada still bounces off without damage. Finite pursuit and
 return home still apply.
@@ -296,7 +340,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 - **Engines and command:** each engine still provides an equal share of thrust.
   A heavy that loses all its engines coasts to rest like a disabled heavy,
   keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
-- **Mounts:** Art draws each heavy class once, with every weapon mount it can
+- **Mounts:** Art draws each heavy hull once, with every weapon mount it can
   carry, and a turret for each weapon a mount can hold. A mount the position
   leaves unused is drawn as a capped plate with no hardpoint. Admiral Archie's flagship has its own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states persist within the
@@ -447,7 +491,7 @@ holodisk drifted. They chase rather than hit and run.
 | `fighter`     | Hunting pack |     4 |   0.30 | `chase`; a group shares pack morale          |
 | `interceptor` | Solo or pair |   1–2 |   0.15 | `chase`                                      |
 | `retaliator`  | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`     | Solo         |     1 |   0.15 | `siege`; size 4 Ada widths                   |
+| `frigate`     | Solo         |     1 |   0.15 | `siege`; size 5 Ada widths                   |
 
 The whale and family sites each keep their authored capital guard. Whirlpool's
 ambient roster has no capitals. Hunting packs are placed near whale destinations
@@ -467,7 +511,7 @@ Needle's drones gather at the mouths of its narrow channels and fly fast passes.
 | `fighter`      | Patrol    |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair      |     2 |   0.25 | `strafe`                                     |
 | `retaliator`   | Solo      |     1 |   0.08 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo      |     1 |   0.15 | `siege`; size 4 Ada widths                   |
+| `frigate`      | Solo      |     1 |   0.15 | `siege`; size 5 Ada widths                   |
 | Capital battle | Group     |     1 |   0.07 | A `capital` with 5 `escort` fighters         |
 
 No encounter is placed
@@ -483,7 +527,7 @@ Andromeda's drones hunt in the open, in larger patrols with more frigates.
 | `fighter`      | Patrol       |     4 |   0.30 | `hitAndRun`; a group shares pack morale      |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo or pair |   1–2 |   0.18 | `siege`; size 4 Ada widths                   |
+| `frigate`      | Solo or pair |   1–2 |   0.18 | `siege`; size 5 Ada widths                   |
 | Capital battle | Group        |     1 |   0.07 | A `capital` with 4 `escort` fighters         |
 
 Drones never target
@@ -500,7 +544,7 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 | `fighter`      | Claim jumpers   |     4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
 | `interceptor`  | Solo or pair    |   1–2 |   0.12 | `hitAndRun`                                                    |
 | `retaliator`   | Solo            |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                   |
-| `frigate`      | Solo            |     1 |   0.10 | `siege`; size 4 Ada widths                                     |
+| `frigate`      | Solo            |     1 |   0.10 | `siege`; size 5 Ada widths                                     |
 | Capital battle | Group           |     1 |   0.03 | A `capital` with 4 `escort` fighters                           |
 | `platform`     | Ore-field guard |     1 |      – | `siege` at speed 0: two required turrets; placed, not weighted |
 
@@ -525,7 +569,7 @@ turrets fire while it advances, with no speed to advance.
 - **Parts:** two turrets, each with the position's hardpoint HP, and a hull with
   half the frigate hull ([Heavy hull and disabling](#heavy-hull-and-disabling)).
   Hit areas, turret mounts and muzzles come from Art's drawn hardpoints, as for
-  the frigate and capital, and the hull's hit circle follows the size column.
+  the frigate and capital, and hull hits test its drawn outline ([Hulls](#hulls)).
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
   a two-shot burst of the position's Laser, 0.15 seconds between shots, every 1.4
   seconds before the position's fire rate while Ada is within 520 world units.
@@ -546,7 +590,7 @@ Phantom's drones are Archie's home guard: heavier, and they chase.
 | `fighter`      | Home guard   |     4 |   0.25 | `chase`; a group shares pack morale          |
 | `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
 | `retaliator`   | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo or pair |   1–2 |   0.25 | `siege`; size 4 Ada widths                   |
+| `frigate`      | Solo or pair |   1–2 |   0.25 | `siege`; size 5 Ada widths                   |
 | Capital battle | Group        |     1 |   0.10 | A `capital` with 6 `escort` fighters         |
 
 Blockades and the finale's waves draw from this roster (see
@@ -622,21 +666,25 @@ All art is one shared asset bank. Each galaxy's data references shared asset ids
 rather than owning its art, so an asset can move between galaxies where it suits
 that galaxy's field; story-bound content such as Sunflower's three outposts stays
 with its galaxy. Each galaxy still gives its enemy ships one coherent visual
-family. Placement: Sunflower keeps the coral drones and its three
-outposts; the current trading station, discovery cache, frigate and capital art is
-tuned for Cartwheel. Sunflower's gameplay still has stations, caches, frigates and
-its capital battle, drawn with pastel-tuned versions that read on its yellow field,
-and reusing the shared Cartwheel-tuned assets until those exist. Asteroid sprites
+family: coral in Sunflower, Whirlpool and Phantom, claim in Cartwheel, garnet in
+Andromeda and crimson in Needle. The small craft and the three retaliator bodies
+each have one model in every galaxy, recoloured per family; frigate and capital
+hulls follow [Hulls](#hulls). Sunflower keeps its three outposts. The current
+trading station and discovery cache art is tuned for Cartwheel; Sunflower draws
+its stations and caches with pastel-tuned versions that read on its yellow
+field, reusing the shared Cartwheel-tuned assets until those exist. Asteroid sprites
 match the collision radii: small 12 to 18, medium 24 to 34, large 52 to 70 and huge
 84 to 104 world units; large and huge rocks keep their silhouette radius plus 160 clear
 of stations, destinations and launch points. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
-blue ship. Sunflower craft are drawn with 16 heading frames: the model facing
+blue ship. Enemy craft are drawn with 16 heading frames: the model facing
 stays continuous and the nearest frame is drawn. A ship drawn with frames and
-hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles. The size column sets the hit circle's diameter: the mean of the drawn sprite's
-length and width, so hits match what is drawn. Sprites keep their drawn sizes.
+hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles.
+Hits test the drawn convex outline at the current heading, so they match what is
+drawn; the spacing radius ([Hulls](#hulls)) serves only spacing and placement.
+Sprites keep their drawn sizes.
 
 ## Enemy rule interface
 
@@ -769,6 +817,13 @@ For `siege`, both ratios apply to its existing combat speed, which already
 includes its behaviour speed fraction. Navigation uses
 `max(existing turnSeconds, 0.8)` seconds for smooth turns. These ratios do not
 change archetype maximum speeds.
+
+Unengaged retaliators keep their body's idle patrol within 2000 world units of
+home. The Manta gunship flies the standard patrol. The Cargo Hauler patrols
+around home with its patrol radii widened by the 180 approach radius. The Mining
+Freighter anchors its patrol beside the nearest live asteroid it can reach,
+standing off the asteroid's reach, its own reach, the avoidance clearance and
+its patrol extent, and patrols home when no asteroid qualifies.
 
 Platforms have no navigation and remain stationary. Disabled or salvaged ships
 do not patrol or investigate. A ship with every engine destroyed has no thrust
