@@ -148,3 +148,131 @@ it("bounds tiny-step prediction while checking the exact first runtime pose", ()
   ).toEqual({ x: 0, y: 0 });
   expect(blockedQueries).toBeLessThan(100);
 });
+
+interface Pass {
+  readonly closest: number;
+  readonly hit: boolean;
+  readonly swerved: boolean;
+  readonly track: readonly { readonly x: number; readonly y: number }[];
+}
+
+/**
+ * A frigate flies east from (-800, 0) for 16 s while a large moving rock travels at its velocity.
+ * Without prediction the query sees the rock as stationary wherever it is each step.
+ */
+function passMovingRock(
+  prediction: boolean,
+  speed: number,
+  rock: { readonly velocity: { x: number; y: number }; readonly x: number; readonly y: number },
+): Pass {
+  const shape = [...ASTEROID_SHAPES.values()].find((s) => s.size === "large")!;
+  const definition = enemyCatalog.frigate;
+  const radius = CONTENT.tuning.flight.shipRadius * definition.sizeRatio;
+  let state = createEnemy(
+    definition,
+    { archetype: "frigate", id: "moving-rock-pass", packId: null, phase: 0.4 },
+    { x: -800, y: 0 },
+  );
+  state = {
+    ...state,
+    facing: { x: 1, y: 0 },
+    heading: { x: 1, y: 0 },
+    velocity: { x: speed, y: 0 },
+  };
+  const dt = 1 / 60;
+  let closest = Infinity;
+  let hit = false;
+  let swerved = false;
+  const track = [];
+  for (let step = 0; step < 960; step++) {
+    const time = step * dt;
+    const at = { x: rock.x + rock.velocity.x * time, y: rock.y + rock.velocity.y * time };
+    const object: SpaceObject = {
+      asteroid: shape.id,
+      hp: 10,
+      id: "moving:pass",
+      kind: "debris",
+      radius: shape.radius,
+      ...at,
+      ...(prediction ? { velocity: rock.velocity } : {}),
+    };
+    const query = worldNavigationQuery(
+      { drawnOf: scenerySilhouette, frameOf: () => 0 },
+      [object],
+      definition,
+      { ...state, radius },
+    );
+    const direct = direction({ x: 4000 - state.position.x, y: -state.position.y });
+    const request = query
+      ? avoidObstacles(definition.physics, query, dt, speed, state, direct)
+      : direct;
+    swerved ||= Math.abs(request.x - direct.x) > 1e-9 || Math.abs(request.y - direct.y) > 1e-9;
+    const motion = stepShipMotion(
+      definition.physics,
+      dt,
+      { maxSpeed: definition.physics.maxSpeed, restHeading: state.facing },
+      { direction: request, speed: speed * Math.hypot(request.x, request.y) },
+      { heading: state.heading, velocity: state.velocity },
+    );
+    state = {
+      ...state,
+      facing: turnToward(dt, SHARED_SHIP_PHYSICS.hullTurnSeconds, motion.velocity, state.facing),
+      heading: motion.heading,
+      position: {
+        x: state.position.x + motion.velocity.x * dt,
+        y: state.position.y + motion.velocity.y * dt,
+      },
+      velocity: motion.velocity,
+    };
+    const moved = { ...object, x: at.x + rock.velocity.x * dt, y: at.y + rock.velocity.y * dt };
+    hit ||= worldSceneryBodyContact({}, moved, state.position, enemyHull(state)!, 0) !== null;
+    closest = Math.min(closest, actualGap(moved, state.position, state.facing));
+    track.push(state.position);
+  }
+  return { closest, hit, swerved, track };
+}
+
+it("clears a rock crossing its path only when it predicts the rock's motion", () => {
+  const speed = enemyCatalog.frigate.physics.maxSpeed;
+  // Timed to reach the frigate's line as the frigate reaches x = 0.
+  const rock = { velocity: { x: 0, y: 60 }, x: 0, y: -480 };
+  const stationary = passMovingRock(false, speed, rock);
+  const predicted = passMovingRock(true, speed, rock);
+  expect(stationary.hit).toBe(true);
+  expect(predicted.hit).toBe(false);
+  expect(predicted.closest).toBeGreaterThanOrEqual(ENEMY_AVOIDANCE.passageClearance);
+  expect(predicted.track.at(-1)!.x).toBeGreaterThan(500);
+});
+
+it("clears a rock flying head-on down its path", () => {
+  const speed = enemyCatalog.frigate.physics.maxSpeed;
+  const rock = { velocity: { x: -70, y: 0 }, x: 600, y: 0 };
+  const stationary = passMovingRock(false, speed, rock);
+  const predicted = passMovingRock(true, speed, rock);
+  expect(stationary.closest).toBeLessThan(ENEMY_AVOIDANCE.passageClearance);
+  expect(predicted.hit).toBe(false);
+  expect(predicted.closest).toBeGreaterThanOrEqual(ENEMY_AVOIDANCE.passageClearance);
+  expect(predicted.track.at(-1)!.x).toBeGreaterThan(500);
+});
+
+it.each([
+  ["leaving its path", { velocity: { x: 0, y: 80 }, x: -450, y: 0 }],
+  ["receding ahead of it", { velocity: { x: 60, y: 0 }, x: -450, y: 0 }],
+])("holds course past a rock %s, where a stationary reading swerves", (_, rock) => {
+  const speed = enemyCatalog.frigate.physics.maxSpeed * 0.5;
+  const stationary = passMovingRock(false, speed, rock);
+  const predicted = passMovingRock(true, speed, rock);
+  expect(stationary.swerved).toBe(true);
+  expect(predicted.swerved).toBe(false);
+  expect(predicted.hit).toBe(false);
+});
+
+it("predicts the same detour for the same state", () => {
+  const speed = enemyCatalog.frigate.physics.maxSpeed;
+  const rock = { velocity: { x: 0, y: 60 }, x: 0, y: -480 };
+  const first = passMovingRock(true, speed, rock);
+  expect(passMovingRock(true, speed, JSON.parse(JSON.stringify(rock)) as typeof rock)).toEqual(
+    first,
+  );
+  expect(first.swerved).toBe(true);
+});

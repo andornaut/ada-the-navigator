@@ -10,18 +10,12 @@ export function navigationHorizon(physics: ShipPhysics): number {
   );
 }
 
-/** A broad-phase reach that covers both ordinary and noncombat steering responses. */
-export function navigationReach(
+/** Broad-phase look-ahead seconds, covering both ordinary and noncombat steering responses. */
+export function navigationLookAhead(
   definition: Pick<EnemyDefinition, "navigation" | "physics">,
 ): number {
-  return (
-    definition.physics.maxSpeed *
-    navigationHorizon({
-      ...definition.physics,
-      turnSeconds: Math.max(
-        definition.physics.turnSeconds,
-        definition.navigation?.turnSeconds ?? 0,
-      ),
-    })
-  );
+  return navigationHorizon({
+    ...definition.physics,
+    turnSeconds: Math.max(definition.physics.turnSeconds, definition.navigation?.turnSeconds ?? 0),
+  });
 }

@@ -4,6 +4,8 @@ import type { Point } from "../../data/enemyCatalog.ts";
 export interface NavigationPose {
   readonly facing: Point;
   readonly position: Point;
+  /** Seconds after the query's snapshot; a moving obstacle is tested where its velocity puts it. */
+  readonly time: number;
 }
 
 /** World-space navigation clearance only. Physical collision always retains its own zero margin. */

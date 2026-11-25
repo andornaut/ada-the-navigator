@@ -21,7 +21,7 @@ export function avoidObstacles(
     return request;
   }
   const horizon = navigationHorizon(physics);
-  const pose = { facing: state.facing, position: state.position };
+  const pose = { facing: state.facing, position: state.position, time: 0 };
   if (!query.clear(pose, ENEMY_AVOIDANCE.passageClearance)) {
     const escape = query.escape(pose, ENEMY_AVOIDANCE.passageClearance);
     if (escape) {
@@ -36,7 +36,8 @@ export function avoidObstacles(
     let position = { ...state.position };
     let facing = { ...state.facing };
     let motion = { heading: state.heading, velocity: { ...state.velocity } };
-    let cleared = query.clear({ facing, position }, clearance);
+    let time = 0;
+    let cleared = query.clear({ facing, position, time }, clearance);
     // Check the exact next runtime step before sampling the remaining prediction horizon.
     for (let step = 0; step < samples; step++) {
       const dt = step === 0 ? firstStep : predictionStep;
@@ -51,10 +52,12 @@ export function avoidObstacles(
         motion,
       );
       position = { x: position.x + motion.velocity.x * dt, y: position.y + motion.velocity.y * dt };
+      time += dt;
       if (magnitude(motion.velocity)) {
         facing = turnToward(dt, SHARED_SHIP_PHYSICS.hullTurnSeconds, motion.velocity, facing);
       }
-      const pose = { facing, position };
+      // Each sample meets moving obstacles at the same elapsed time, so relative motion counts.
+      const pose = { facing, position, time };
       if (!query.clear(pose, 0)) {
         return false;
       }
