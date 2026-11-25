@@ -693,7 +693,7 @@ Deposit uses Astra's short brief below.
 
 - Quartz: "Welcome. Independent miners bring ore here for transport."
 - Ada: "Where do I find ore?"
-- Quartz: "Shoot ore rocks and collect the ore they release. Bring it here to deposit it."
+- Quartz: "Shoot asteroids and collect the ore they release. Bring it here to deposit it."
 - Ada: "Can I bring a little at a time?"
 - Quartz: "Partial loads count, and you can travel back when you're out of danger."
 
@@ -766,7 +766,7 @@ and her friends stay right beside Sam."
 Objectives, in order:
 
 1. Explore the galaxy.
-2. Mine ore rocks and deposit the ore at the hub.
+2. Mine asteroids and deposit the ore at the hub.
 3. Keep depositing ore and talk with the miner.
 4. Speak with regular visitors about approaching together.
 5. Join the miner's approach at the hub.

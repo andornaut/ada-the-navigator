@@ -504,10 +504,13 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 | Capital battle | Group           |     1 |   0.03 | A `capital` with 4 `escort` fighters                           |
 | `platform`     | Ore-field guard |     1 |      – | `siege` at speed 0: two required turrets; placed, not weighted |
 
-An ore field is a seeded cluster of 6 to 10 resource-bearing rocks about 900
-world units across, placed like stations: at least 3000 world units apart and
-1500 from the hub, stations and quantum jump arrivals. A field holds only its
-resource rocks: chunk generation keeps ordinary asteroids out of a 600 world
+An ore field is a seeded cluster of 6 to 10 ordinary rocks about 900 world units
+across, placed like stations: at least 3000 world units apart and 1500 from the
+hub, stations and quantum jump arrivals. Its rocks are ordinary medium and large
+asteroids with ordinary asteroid HP, 5 for medium and 10 for large. A destroyed
+ore-field rock skips the ammo roll and gives at least 1 ore; any further ore and
+Stardust roll as usual ([Economy](economy.md#earning-stardust)). A field holds
+only its own rocks: chunk generation keeps other asteroids out of a 600 world
 unit radius around its centre, its 450 radius plus a 150 margin. A claim-jumper
 group whose seeded anchor lies within half the
 [encounter spacing](#ambient-admission) of an ore field gathers there half the time.

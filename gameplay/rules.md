@@ -446,8 +446,8 @@ why that child is targeted. Ada and other children choose inclusion, visible
 support and refusal to normalize bullying. Do not resolve this by a duel.
 
 The space station is a busy mining collection hub with adequate docking capacity.
-Ada shoots resource-bearing rocks, collects pieces on contact into the
-cargo hold, returns and deposits them. Three story milestones fall at cumulative
+Ada shoots asteroids for ore, collects pieces on contact into the cargo hold,
+returns and deposits them. Three story milestones fall at cumulative
 deposits of 10, 20 and 30 ore (provisional); partial loads count.
 
 During returns, Ada observes a pilot deliberately blocking another miner's docking
@@ -476,12 +476,14 @@ route guards, since Cartwheel's danger is at the ore fields. Each scene plays
 first, and its dialogue line follows when the scene ends. A scene cut short by
 the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
 
-Player text calls resource rocks "ore rocks" and their pieces "ore". Resource
-rocks come in medium and large classes, colliding and taking hits
-like asteroids. A medium rock has 3 HP and a large rock 5 HP; two of every three
-are medium. Ore rocks use the same size-based asteroid yields, 75% initial ore
-split and 25% expected ore quantity reduction in
+Player text calls the pieces "ore". Every static rock is an ordinary asteroid,
+and its contents are decided when it is destroyed by the size-based asteroid
+yields, 75% initial ore split and 25% expected ore quantity reduction in
 [Economy](economy.md#earning-stardust), including the exclusive ammo outcome.
+Cartwheel's ore fields are clusters of ordinary medium and large rocks with
+ordinary asteroid HP: 5 for medium and 10 for large. A destroyed ore-field rock
+skips the ammo roll and gives at least 1 ore; any further ore and Stardust roll
+as usual.
 Cartwheel has no damaging hazards.
 
 Cartwheel's space is an industrial ring of mining platforms in rust and ember
@@ -962,7 +964,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   (radius 6). Phaser also has a full hit width of 12 world units (radius 6),
   with its visible beam scaled from that same canonical width.
 - A missile, Ada's or an enemy's, explodes once when it touches a ship it can hit,
-  a rock, resource rock, debris or an armed mine, or at the end of its reach.
+  a rock, debris or an armed mine, or at the end of its reach.
   Stations and landmarks do not consume projectiles. The primary target takes
   direct damage once; the blast does not apply the same damage to it again.
 - Projectile impact feedback and missile blast origins use the drawn contact
@@ -971,8 +973,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Missile and 60 for Heavy Missile in the same units as the drawn ships. Every
   eligible target whose drawn shape overlaps the circle, including at the edge,
   takes the missile's full damage once. For friendly blasts this includes
-  destructible asteroids and ore rocks, even when the missile misses the rock
-  itself. When a ship's turret is in reach, the nearest turret takes the
+  destructible asteroids, even when the missile misses the rock itself.
+  When a ship's turret is in reach, the nearest turret takes the
   damage. Mines inside the circle are destroyed. Friendly blasts spare Ada.
   Enemy missile blasts damage Ada and spare other enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
@@ -1045,7 +1047,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Recharge burns carried ore: 1 ore per 1% of shield capacity restored, so 10
   ore per 10% and 100 for a full refill at every Shield level. With no ore
   aboard, the shield recharges free only up to 10% of capacity; above that it
-  stops until Ada has ore. Ore rocks occur in every galaxy, Cartwheel richest,
+  stops until Ada has ore. Asteroids yield ore in every galaxy, and Cartwheel's
+  ore fields make it richest,
   and Cartwheel's hub deposits remain for the story and the Mining contract.
   Stardust is never at risk. See [Economy](economy.md#earning-stardust).
 - Ada is in battle while an enemy that is chasing or attacking her is inside the
@@ -1118,9 +1121,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   [Ships](ships.md#difficulty)); no overall exploration timer.
 - Objects in flight meet where they are drawn, on each one's current frame's
   silhouette: every hit, bounce, pickup and tow contact between Ada's
-  ship, enemies and their heavy parts, stations, outposts, asteroids
-  and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
-  and shots. These objects are passable to Ada:
+  ship, enemies and their heavy parts, stations, outposts, asteroids, debris,
+  hazards, wrecks, story ships, towed craft, pickups and shots.
+  These objects are passable to Ada:
   stations, outposts and destinations, story ships and buoys, towed
   craft, whales and the calf, wrecks, the holodisk and landmarks; Ada is drawn in
   front of any of them while she overlaps it, so she is never hidden. Nothing
@@ -1137,8 +1140,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   same way (see [Economy](economy.md#earning-stardust)).
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Every bump against scenery (asteroids,
-  resource rocks, debris and traveling debris) deals 1 damage, at most once per
-  0.5 seconds, and restarts the shield's recharge delay. A gate rim in
+  debris and traveling debris) deals 1 damage, at most once per 0.5 seconds,
+  and restarts the shield's recharge delay. A gate rim in
   Needle is the one bump without damage. Attacks and marked hazards also damage
   the shield.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
@@ -1402,13 +1405,15 @@ about 2 logical pixels for about 100 ms; Art and Tech pin the final values.
 Reduced motion disables both the shake and the red line.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety. Ambient slot, resource and feature rock densities are in
-[Spawn targets](#spawn-targets). Preserve the slot and resource rock size
-distributions, HP, loot and safe corridors. Caches and other points of interest
-are independent of the rock targets, and the rock targets do not change cache
-placement.
+and variety. Ambient slot and feature rock densities are in
+[Spawn targets](#spawn-targets). Preserve the slot rock size distributions, HP,
+loot and safe corridors. Caches and other points of interest are independent
+of the rock targets, and the rock targets do not change cache placement.
 Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
-interest, guards and platforms. Their approved variety catalog has eight total
+interest, guards and platforms. Their rocks are ordinary medium and large
+asteroids with ordinary asteroid HP, 5 for medium and 10 for large. A destroyed
+ore-field rock skips the ammo roll and gives at least 1 ore; any further ore and
+Stardust roll as usual. Their approved variety catalog has eight total
 pattern families, each with realizations for counts 6 through 10: 40 count-specific
 records, not 40 distinct patterns. The families are loose cluster, crescent, two
 pockets, broken ring, scattered trail, three pockets, forked trail and open spiral.
@@ -1495,9 +1500,9 @@ production lifecycle checks and acceptance are not established by this rule.
 
 One seeded planner places ambient enemy groups, static rocks and moving rocks,
 after the required sites and guards above. It plans enemy groups first, then
-static rocks in the order features, slot rocks, resources (resources take any
-shortfall), then moving rocks, which it chooses only from placed slot and feature
-rocks. All placements share one spatial index. The planner reads its densities
+static rocks (features, then slot rocks), then moving rocks, which it chooses
+only from placed slot and feature rocks.
+All placements share one spatial index. The planner reads its densities
 from one catalog that mirrors the table below. The ambient admission budgets,
 archetype limits and capital allowance in [Ships](ships.md#ambient-admission)
 apply to the planner's output.
@@ -1546,10 +1551,9 @@ Densities are mean counts per open 3x3-chunk area, one ninth per chunk. Each
 kind's request in a chunk shrinks by the share of the chunk covered by the
 exclusion zones that apply to that kind, measured on an 8x8 grid of sample
 points, and an area's request is the sum of its nine chunks. Flight lanes are not
-exclusion zones and do not count as covered. Resource targets are 90% of the
-delivered mean measured with enemy groups placed first, rounded down to one
-decimal. Enemy columns count groups; `frigate` and `capital` groups include their
-escorts. Each galaxy's enemy densities derive from its encounter lattice: 0.75
+exclusion zones and do not count as covered. Enemy columns count groups;
+`frigate` and `capital` groups include their escorts.
+Each galaxy's enemy densities derive from its encounter lattice: 0.75
 groups per lattice cell, split by roster composition weight after the heavy share
 multiplies the `frigate` and `capital` weights ([Ships](ships.md#difficulty)). Regions are the
 [geographic regions](ships.md#ambient-admission) by distance from the galactic
@@ -1560,26 +1564,26 @@ acceptance areas there are judged against the blended request.
 Group sizes switch at 10000 and 25000, as budgets and archetype limits do in
 [Ships](ships.md#ambient-admission).
 
-| Galaxy    | Region | Slot rocks | Resources | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
-| --------- | ------ | ---------: | --------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
-| Sunflower | inner  |      29.84 |       7.2 |      1.5 |         3.64 |   0.400 |     0.327 |             0 |            0 |         0 |         0 |
-|           | middle |      29.84 |       7.0 |      1.6 |         3.64 |   0.327 |     0.291 |             0 |        0.109 |         0 |         0 |
-|           | outer  |      29.84 |       7.3 |      1.5 |         3.64 |   0.291 |     0.255 |         0.073 |        0.109 |         0 |         0 |
-| Whirlpool | inner  |      29.84 |       5.5 |      1.3 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
-|           | middle |      29.84 |       5.8 |      1.2 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
-|           | outer  |      29.84 |       5.5 |      1.1 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
-| Needle    | inner  |      29.84 |       7.5 |      1.3 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
-|           | middle |      29.84 |       7.6 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
-|           | outer  |      29.84 |       7.6 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
-| Andromeda | inner  |      29.84 |       7.2 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
-|           | middle |      29.84 |       7.3 |      1.5 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
-|           | outer  |      29.84 |       7.3 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
-| Cartwheel | inner  |      29.84 |       6.9 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
-|           | middle |      29.84 |       6.6 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
-|           | outer  |      29.84 |       7.0 |      1.3 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
-| Phantom   | inner  |      29.84 |       7.2 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
-|           | middle |      29.84 |       7.2 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
-|           | outer  |      29.84 |       7.3 |      1.3 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
+| Galaxy    | Region | Slot rocks | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
+| --------- | ------ | ---------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
+| Sunflower | inner  |      29.84 |      1.5 |         3.64 |   0.400 |     0.327 |             0 |            0 |         0 |         0 |
+|           | middle |      29.84 |      1.6 |         3.64 |   0.327 |     0.291 |             0 |        0.109 |         0 |         0 |
+|           | outer  |      29.84 |      1.5 |         3.64 |   0.291 |     0.255 |         0.073 |        0.109 |         0 |         0 |
+| Whirlpool | inner  |      29.84 |      1.3 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+|           | middle |      29.84 |      1.2 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+|           | outer  |      29.84 |      1.1 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+| Needle    | inner  |      29.84 |      1.3 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+|           | middle |      29.84 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+|           | outer  |      29.84 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+| Andromeda | inner  |      29.84 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+|           | middle |      29.84 |      1.5 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+|           | outer  |      29.84 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+| Cartwheel | inner  |      29.84 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+|           | middle |      29.84 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+|           | outer  |      29.84 |      1.3 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+| Phantom   | inner  |      29.84 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
+|           | middle |      29.84 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
+|           | outer  |      29.84 |      1.3 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
 
 A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
 in every galaxy and region, deliver at least 90% of their requested count. A

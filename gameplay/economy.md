@@ -158,24 +158,29 @@ moment. Its notice names what it gave:
 
 Each destroyed fighter, fighter escort, swarm ship, interceptor and retaliator
 rolls a 10% chance to drop an ammo pack in addition to its Stardust.
-Destroyed asteroids and ore rocks roll by size: 0.5% for small, 1% for medium,
-2% for large and 4% for huge. Ammo drops require owning a weapon other than
-Laser. The pack's contents are chosen when Ada collects it, using the weights
-Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and Phaser 5
-among eligible weapons. A world pickup gives exactly one third of its shop
-pack: 100 Multi-Laser bolts, 60 Rapid Missiles, 25 Heavy Missiles, 40
-Scattershot volleys or 25 Phaser shots.
-The HUD shows +N by the weapon icon using the actual ammunition added.
+Destroyed asteroids other than ore-field rocks roll by size: 0.5% for small, 1%
+for medium, 2% for large and 4% for huge. Ammo drops require owning a weapon
+other than Laser. The pack's contents are chosen when Ada collects it, using the
+weights Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and
+Phaser 5 among eligible weapons. A world pickup gives exactly one third of its
+shop pack: 100 Multi-Laser bolts, 60 Rapid Missiles, 25 Heavy Missiles, 40
+Scattershot volleys or 25 Phaser shots. The HUD shows +N by the weapon icon
+using the actual ammunition added.
 
-Every destroyed asteroid, including an ore rock, uses the size-based yields
-above when it does not release ammunition. An asteroid that drops an ammo pack
-drops nothing else: no ore, Stardust or other loot. The ammo outcome satisfies
+Every destroyed asteroid uses the size-based yields above when it does not
+release ammunition. An asteroid that drops an ammo pack drops nothing else:
+no ore, Stardust or other loot. The ammo outcome satisfies
 the medium, large and huge asteroid minimum-reward guarantee. Without ammo,
 small asteroids may yield zero resources; the other sizes yield at least one
 combined resource unit, but neither ore nor Stardust is individually guaranteed.
 Loot is released once on destruction, never for an intact or indestructible rock.
 
-Ore rocks occur in every galaxy; Cartwheel is richest in ore. Ore aboard fuels
+Every static rock is an ordinary asteroid. Its contents are decided by this
+roll when it is destroyed: ore and Stardust, an ammo pack or nothing. Ore comes
+from destroyed asteroids in every galaxy. Cartwheel's ore fields are clusters of
+ordinary rocks, which makes Cartwheel richest in ore. A destroyed ore-field rock
+skips the ammo roll and gives at least 1 ore; any further ore and Stardust roll
+as usual. Ore aboard fuels
 shield recharge starting 25 seconds after the last hit, at 4% of maximum
 shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
 so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge
