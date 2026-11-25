@@ -8,6 +8,7 @@ import {
   hideOverCanvas,
   hubFixture,
   keylineFixture,
+  launchBrowser,
   logicalSize,
   observe,
   output,
@@ -19,6 +20,7 @@ import {
   storageKey,
   toScreen,
   toWorld,
+  unexpectedFailures,
 } from "./browser-support.mjs";
 
 // Art review captures (art/heavies.md, art/weapons.md, art/asteroids.md): screenshots of
@@ -492,14 +494,18 @@ async function captureHub() {
 try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
-  browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
+  browser = await launchBrowser(chromium);
   await captureHeavies();
   await captureRocks();
   await captureKeylines();
   await captureHub();
   await closeFixture();
   assert.deepEqual(events.errors, [], "Captured pages must report no errors");
-  assert.deepEqual(events.failedRequests, [], "Captured pages must load every request");
+  assert.deepEqual(
+    unexpectedFailures(events.failedRequests),
+    [],
+    "Captured pages must load every request",
+  );
   assert.deepEqual(events.badResponses, [], "Captured pages must get no error responses");
   save("events.json", events);
   save("result.json", {

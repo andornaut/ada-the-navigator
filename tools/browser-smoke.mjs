@@ -9,6 +9,7 @@ import {
   backdropFixture,
   backdropSeed,
   hideOverCanvas,
+  launchBrowser,
   logicalSize,
   observe as observeEvents,
   output,
@@ -18,6 +19,7 @@ import {
   reseedFlight,
   save,
   storageKey,
+  unexpectedFailures,
 } from "./browser-support.mjs";
 import { SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
 
@@ -161,7 +163,7 @@ function assertInlineIcons(icons, controls, scale, lineHeight, where) {
 try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
-  browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
+  browser = await launchBrowser(chromium);
   let context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     hasTouch: true,
@@ -6603,12 +6605,12 @@ try {
   await page.screenshot({ path: `${output}/crash-screen.png` });
   events.checks.push("A crash shows the kit's crash screen and keeps the last save");
   assert.deepEqual(events.errors, [], "No browser runtime or console errors");
-  assert.deepEqual(events.failedRequests, [], "No failed asset requests");
+  assert.deepEqual(unexpectedFailures(events.failedRequests), [], "No failed asset requests");
   assert.deepEqual(events.badResponses, [], "No failed HTTP responses");
   // The resize probe runs last, in a browser of its own: the long run's memory stays out of the
   // container memory it records.
   await browser.close();
-  browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
+  browser = await launchBrowser(chromium);
   // Render one paused flight through ten resizes between 1280x720 and 720x360, then ten more
   // with collection. With the flight clock paused, drifting scenery cannot pull in new spin
   // sets during sampling. The visible canvas still draws and updates its SVG rasters.

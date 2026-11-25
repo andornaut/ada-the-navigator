@@ -61,6 +61,25 @@ export function reportViolations() {
   });
 }
 
+// Launches the run's headless Chromium. The production launch installs a service worker, which
+// needs a secure origin, and the preview serves plain HTTP on the run's internal network.
+export function launchBrowser(chromium) {
+  return chromium.launch({
+    args: ["--no-sandbox", `--unsafely-treat-insecure-origin-as-secure=${previewOrigin}`],
+    channel: "chromium",
+    headless: true,
+  });
+}
+
+// The failed requests a run fails on: all but the build's update group archives that a page
+// closing mid-download aborts.
+const GROUP_ARCHIVE = /^\/\.game-kit\/group-[0-9a-f]{64}\.bin$/u;
+export function unexpectedFailures(failedRequests) {
+  return failedRequests.filter(
+    ({ error, url }) => error !== "net::ERR_ABORTED" || !GROUP_ARCHIVE.test(new URL(url).pathname),
+  );
+}
+
 // No outside requests are needed to render the built game.
 export function previewOnly(route) {
   if (new URL(route.request().url()).origin === previewOrigin) {

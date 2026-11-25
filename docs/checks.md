@@ -250,6 +250,11 @@ CPUs per container and read-only source/artifact mounts. Fetch
 `mcr.microsoft.com/playwright/mcp:v0.0.83` before starting. Browser starts obey the
 same local load restriction as the source gates.
 
+The production launch requires a service worker, so Chromium treats the plain
+HTTP preview origin as secure (`launchBrowser` in `tools/browser-support.mjs`).
+A run fails on every failed request except an update group archive
+(`/.game-kit/group-<sha256>.bin`) aborted by a page closing mid-download.
+
 The smoke has a 600 second limit.
 
 ### Art review captures
