@@ -1,7 +1,7 @@
 // Enemy-only weapon effects (ring burst, mine, charged lance) and the enemy Phaser's aim line and
 // beam: the shapes, widths, alpha keys and timings Tech draws in code, written to
 // public/art/enemy-weapons.json and linked from the core manifest as `enemyWeapons`. The mine's
-// collision is its drawn silhouette as analytic convex parts, checked against the drawing.
+// collision is its spiked outline as analytic convex parts, checked against that outline.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -61,8 +61,25 @@ const point = (x: number, y: number): V2 => [round(x), round(y)];
 // The aim grammar shared by the lance and the Phaser: dashed while aiming, solid when it will fire.
 const TELL = { width: 1, dash: [6, 4], colour: "obstacle" } as const;
 
+// A beam's flat look (art/weapons.md, Flat look): opaque bands in coral, plate and white, each
+// `width` px at the nose then the end times `w`, and opaque muzzle bloom discs in the same order.
+const BAND_COLOURS = ["obstacle", "plate", "white"] as const;
+const flatBeam = (widths: readonly V2[], radii: readonly number[]) => ({
+  layers: widths.map((width, i) => ({ colour: BAND_COLOURS[i]!, width })),
+  bloom: radii.map((radius, i) => ({ colour: BAND_COLOURS[i]!, radius })),
+});
+
 const RING_BURST = {
-  emission: { ms: 180, stroke: 1.5, colour: "obstacle" },
+  // The emission ring's alpha holds to each step's end in ms.
+  emission: {
+    ms: 180,
+    stroke: 2,
+    alpha: [
+      [90, 1],
+      [180, 0.5],
+    ],
+    colour: "obstacle",
+  },
   muzzle: {
     ms: 120,
     radius: [3.6, 0.6],
@@ -70,26 +87,23 @@ const RING_BURST = {
     core: { untilMs: 60, radius: [2, 0.4], colour: "white" },
   },
   dart: {
-    outer: [point(2.2, 0), point(-0.6, -2), point(-3.6, 0), point(-0.6, 2)],
+    outer: [point(2.6, 0), point(-0.6, -2.3), point(-3.8, 0), point(-0.6, 2.3)],
     outerColour: "obstacle",
-    inner: [point(0.8, 0), point(-0.6, -0.9), point(-2, 0), point(-0.6, 0.9)],
+    inner: [point(1, 0), point(-0.6, -1), point(-2.2, 0), point(-0.6, 1)],
     innerColour: "white",
-    tail: { head: -3, length: 9, width: [2, 0.5], alpha: [0.9, 0], colour: "obstacle" },
+    tail: { colour: "coralSide", points: [point(-3.2, -1), point(-10, 0), point(-3.2, 1)] },
   },
 } as const;
 
-// The spiked mine, at spin 0: spike i points along screen angle 45 i degrees (0 is screen right,
-// angles clockwise on screen), and the whole mine turns clockwise at `spin.degPerSecond`.
+// The mine turns clockwise on screen at `degPerSecond` and shows the weapon-solids frame of each
+// `stepDeg` step.
+const SPIN = { degPerSecond: 60, stepDeg: 11.25 } as const;
+
+// The spiked collision outline at spin 0: spike i points along screen angle 45 i degrees (0 is
+// screen right, angles clockwise on screen).
 const MINE = {
-  spin: { degPerSecond: 60 },
-  spikes: { count: 8, tip: 7.5, base: 3.6, halfWidth: 1.5, colour: "obstacle" },
-  body: { radius: 5, colour: "coralSide" },
-  top: { radius: 4.3, offset: point(-0.6, -0.7), colour: "obstacle" },
-  core: {
-    ring: { radius: 2.5, colour: "ink" },
-    light: { radius: 1.5, colour: "weapon" },
-    flash: { radius: 1.8, colour: "white" },
-  },
+  spikes: { count: 8, tip: 7.5, base: 3.6, halfWidth: 1.5 },
+  body: { radius: 5 },
 } as const;
 
 function spike(i: number): V2[] {
@@ -131,7 +145,7 @@ const segmentDistance = (a: V2, b: V2, x: number, y: number) => {
   return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy);
 };
 
-// Checks the parts against the drawn silhouette (the body circle and the exact spike triangles)
+// Checks the parts against the outline (the body circle and the exact spike triangles)
 // on a 0.02 px grid: IoU at least 0.98 and every mismatch within 1 px of the drawn edge.
 {
   const parts = collision.map(orient);
@@ -167,7 +181,7 @@ const segmentDistance = (a: V2, b: V2, x: number, y: number) => {
 }
 
 const MINE_DATA = {
-  ...MINE,
+  spin: SPIN,
   // Blink: the core shows `flash` for `onMs` of each `periodMs`, phased from the drop, in the
   // first band whose `aboveRemainingMs` the mine's remaining life exceeds.
   blink: [
@@ -249,16 +263,14 @@ const LANCE = {
     [120, 1, 1],
     [300, 0.35, 0],
   ],
-  layers: [
-    { part: "glow", colour: "obstacle", width: [12, 9], alpha: 0.45 },
-    { part: "body", colour: "obstacle", width: [6, 4.5], alpha: 1 },
-    { part: "core", colour: "white", width: [2.4, 1.6], alpha: 1 },
-  ],
-  bloom: [
-    { colour: "obstacle", radius: 7, alpha: 0.3 },
-    { colour: "obstacle", radius: 4.5, alpha: 0.9 },
-    { colour: "white", radius: 2.5, alpha: 1 },
-  ],
+  ...flatBeam(
+    [
+      [9, 6.8],
+      [5.4, 4],
+      [2.4, 1.6],
+    ],
+    [6.5, 4.2, 2.3],
+  ),
   spark: { ...SPARK, scale: 1.35 },
   lightField: { glow: { width: [10, 7.5], alpha: 0.9 }, bloomAlpha: 0.6 },
   reducedMotion: {
@@ -274,9 +286,10 @@ const PHASER = {
   aimMs: 400,
   solidFromMs: 300,
   flashMs: 150,
-  aiming: TELL,
-  solid: { width: 1, colour: "plate" },
-  endTick: { length: 5 },
+  aiming: { ...TELL, width: 1.5 },
+  solid: { width: 1.5, colour: "plate" },
+  // The aim's end chevron, `u` from the aim's end.
+  chevron: [point(3, 0), point(-1, -3), point(-1, 3)],
   charge: { radius: [1, 2.5], core: [0.5, 1.1], colour: "obstacle", coreColour: "white" },
   keys: [
     [0, 0.55, 0.85],
@@ -284,16 +297,14 @@ const PHASER = {
     [70, 1, 1],
     [150, 0.4, 0],
   ],
-  layers: [
-    { part: "glow", colour: "obstacle", width: [8, 5], alpha: 0.38 },
-    { part: "body", colour: "obstacle", width: [4, 2.4], alpha: 1 },
-    { part: "core", colour: "white", width: [1.8, 1], alpha: 1 },
-  ],
-  bloom: [
-    { colour: "obstacle", radius: 5, alpha: 0.3 },
-    { colour: "obstacle", radius: 2.9, alpha: 0.9 },
-    { colour: "white", radius: 1.6, alpha: 1 },
-  ],
+  ...flatBeam(
+    [
+      [8, 5],
+      [4.6, 2.8],
+      [2.2, 1.3],
+    ],
+    [5, 3.1, 1.6],
+  ),
   missFade: 28,
   spark: { ...SPARK, scale: 1 },
   lightField: { glow: { width: [6.5, 4], alpha: 0.9 }, bloomAlpha: 0.6 },
