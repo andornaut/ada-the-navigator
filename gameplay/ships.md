@@ -664,8 +664,8 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
   hardpoints. With no heavy present, it takes an escort slot and fights as an
   escort.
 - **Whale:** a whale never fires and follows 150 world units behind Ada, moving
-  like the calf. Two whales fly side by side, their centres 80 world units
-  apart.
+  like the calf. Two whales fly side by side, their drawn whales at least 16
+  world units apart.
 - **Song:** drones within 300 world units of Marlo move at three quarters of
   their top speed; while the nursery whale flies, the reach is half again as
   far, 450. A faint rim marks the song's reach, and a slowed drone shows a ring
