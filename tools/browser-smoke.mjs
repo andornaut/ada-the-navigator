@@ -2852,7 +2852,12 @@ try {
         (button) => {
           const face = button.getBoundingClientRect();
           const icon = button.querySelector(".ada-quest-icon")?.getBoundingClientRect();
-          const text = [...button.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+          // The standard text action holds its label in a nested text node.
+          const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT);
+          let text = walker.nextNode();
+          while (text && !text.textContent.trim()) {
+            text = walker.nextNode();
+          }
           const range = document.createRange();
           range.selectNodeContents(text);
           return {
