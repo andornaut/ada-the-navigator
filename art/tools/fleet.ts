@@ -47,7 +47,13 @@ const local = ([l, w, z]: Point): Point => [w, -l, z];
 const view = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, local(point));
 
 // A craft scaled to its contract span, in frame units, with its frame size.
-export type Scaled = FleetCraft & { frame: number; halfSpan: number };
+// `length` and `width` are the drawn hull's extents fore and aft and across, in frame units.
+export type Scaled = FleetCraft & {
+  frame: number;
+  halfSpan: number;
+  length: number;
+  width: number;
+};
 
 function scaled(craft: FleetCraft): Scaled {
   const points = craft.parts.flatMap(({ mesh }) => mesh.flatMap((face) => face.points));
@@ -71,8 +77,11 @@ function scaled(craft: FleetCraft): Scaled {
       at: [at[0] * k, at[1] * k, at[2] * k],
       radius: radius * k,
     })),
+    muzzle: [craft.muzzle[0] * k, craft.muzzle[1] * k, craft.muzzle[2] * k],
     frame: Math.ceil((2 * extent + 2) / 8) * 8,
     halfSpan: target / 2,
+    length: (Math.max(...points.map(([l]) => l)) - Math.min(...points.map(([l]) => l))) * k,
+    width: target,
   };
 }
 
@@ -172,8 +181,17 @@ function jets(craft: Scaled, frames: readonly Frame[]): string {
       familyColors: Object.fromEntries(
         Object.entries(families).map(([family, { core, outer }]) => [family, [outer, core]]),
       ),
+      // The drawn hull in frame px; `radius` is the spacing and footprint radius.
+      hull: {
+        length: round(craft.length),
+        width: round(craft.width),
+        radius: round(Math.max(craft.length, craft.width) / 2),
+      },
     },
-    (yaw) => ({ collision: frames[yaw]!.collision }),
+    (yaw) => ({
+      collision: frames[yaw]!.collision,
+      muzzles: [anchor(ENEMY_HEADINGS, centre, yaw, local(craft.muzzle))],
+    }),
   );
 }
 

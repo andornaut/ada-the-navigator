@@ -150,6 +150,8 @@ export type FleetCraft = {
   design: string;
   parts: FleetPart[];
   mouths: FleetMouth[];
+  // The shot origin: the centre of the flush port the craft's weapon fires from.
+  muzzle: Point;
   // Destruction wedge cut angles in degrees about the origin, forward at -90 and port at 0.
   cuts: number[];
 };
@@ -207,6 +209,7 @@ function pincer(p: Paint): FleetCraft {
       part("visor", (m) => bx(m, 2.3, 4.1, -1.4, 1.4, 3.6, 4.5, p.dark), true),
     ],
     mouths: [mouth(-6.8, 0, 2.5, 2.7)],
+    muzzle: [6.9, 0, 2.15 * TALL],
     cuts: [-90, -10, 80, 170],
   };
 }
@@ -260,6 +263,8 @@ function arrowhead(p: Paint): FleetCraft {
       part("visor", (m) => bx(m, 1, 5, -1.3, 1.3, 3.8, 4.9, p.dark), true),
     ],
     mouths: [mouth(-11.5, 5.6, 3.4, 1.7), mouth(-11.5, -5.6, 3.4, 1.7)],
+    // The fan of three leaves from the nose port.
+    muzzle: [12.4, 0, 2 * TALL],
     cuts: [-90, -25, 55, 125, 205],
   };
 }
@@ -321,6 +326,7 @@ function spear(p: Paint): FleetCraft {
       part("visor", (m) => bx(m, 3.5, 7, -1.4, 1.4, 4.4, 5.3, p.dark), true),
     ],
     mouths: [mouth(-20.2, 0, 3.2, 3.6)],
+    muzzle: [22, 0, 2.3 * TALL],
     cuts: [-90, -20, 70, 110, 200],
   };
 }

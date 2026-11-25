@@ -19,16 +19,20 @@ const LIGHT = (() => {
 const FACING = 0.05;
 const DEPTH = 1e-5;
 const AREA = 1e-7;
+// A normal within this of a tone boundary takes one fixed side of it, so rounding in the heading
+// rotation never splits coplanar or mirrored faces between two tones. A wall facing straight
+// down the screen takes the left tone.
+const EDGE = 1e-9;
 
 // The tone slot of a face from its unit view normal: tops lightest, walls facing screen left mid,
 // walls facing right darkest; round faces take two tones on the light terminator.
 export function toneSlot(kind: FaceKind, [nx, ny, nz]: Point): 0 | 1 | 2 {
   if (kind === "round") {
-    return nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2] > 0.42 ? 0 : 1;
+    return nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2] > 0.42 - EDGE ? 0 : 1;
   }
-  if (nz > (kind === "curved" ? 0.95 : 0.6)) return 0;
-  if (nz < -0.6) return 2;
-  return ny >= nx ? 1 : 2;
+  if (nz > (kind === "curved" ? 0.95 : 0.6) + EDGE) return 0;
+  if (nz < -0.6 - EDGE) return 2;
+  return ny - nx >= -EDGE ? 1 : 2;
 }
 
 const area = (poly: readonly V2[]) => {
