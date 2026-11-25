@@ -1508,7 +1508,9 @@ archetype limits and capital allowance in [Ships](ships.md#ambient-admission)
 apply to the planner's output.
 
 - A spawn is accepted only when its footprint is at least 20 world units (Ada's
-  diameter) from every placed footprint. A rock gets 24 seeded positions; a rock
+  diameter) from every placed footprint. Required hulls and salvage wrecks are
+  placed footprints of their spacing radius r, so rocks keep r + 20 from their
+  centres. Hostile stations keep their physical reach until they have an r. A rock gets 24 seeded positions; a rock
   with no clear position is dropped.
 - An enemy group, with all its members and escorts, is placed whole or not at
   all. A blocked group retries only inside its own lattice cell, redrawing its
