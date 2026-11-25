@@ -532,69 +532,63 @@ leave its amber signal unchanged.
 - Square: a 1.5 px amber `#f0bd68` (`weapon`) outline, no fill, centred on the
   pickup's projected point and aligned with the screen, half-size
   `pickupRadius` (10, so 20 px across).
-- Chevrons: two copies of the generic upgrade chevron in each frame of the
-  core manifest strip `upgrade-chevron`, drawn by `node art/tools/friendly.ts`
-  ([Friendly object redesign](friendly-redesign.md)), amber and centred at `(0, 2.4)` (lower) and `(0, -2.4)` (upper) from the pickup's
-  point, 4.8 px apart. Each is a 2.2 px
-  stroke with butt caps and a mitred apex along a centreline from
-  `(-5.2, 2.1)` up to `(0, -2.1)` and down to `(5.2, 2.1)` about its own centre.
-  Its outline, in frame px: `(0.109, 5.244) (6, 0.486) (11.891, 5.244)
-(10.509, 6.956) (6, 3.314) (1.491, 6.956)`.
-- Climb, looping from the still frame when the pickup appears: still 900 ms
-  (both amber), lower chevron white `#ffffff` 120 ms, upper chevron white
-  120 ms; 1140 ms in all. The manifest entry carries the offsets (`chevrons`)
-  and the keys (`climb`, each `ms` with the lit chevron's name, or none).
+- Chevrons: the core manifest strip `upgrade-chevron` on
+  `/art/pickups/pickups-sheet.svg`, drawn by `node art/tools/friendly.ts`
+  ([Friendly object redesign](friendly-redesign.md)), centred on the pickup's
+  point. Each frame holds two flat chevrons facing the viewer, one above the
+  other with a clear gap, each in one tone: `#f0bd68`, or `#fff2cc` while lit.
+  Three 40 by 40 frame px frames, each displayed at 17.5 by 17.5 logical px with
+  the pivot at the centre; the pair draws 14 by 16 display px. `frames` names
+  `rest` (0, both amber), `lower` (1) and `upper` (2), and `facing` is `fixed`.
+- Climb, looping from the still frame when the pickup appears: `climb` steps
+  rest 900 ms, `lower` 120 ms and `upper` 120 ms; 1140 ms in all. A step's
+  `lit` names the frame it shows; a step without one shows `rest`.
 - Light field: the square's stroke draws over an ink stroke 2 px wider on the
-  same path, and each chevron over its silhouette grown by 1 px in ink, at the
+  same path, and the chevrons over the ink keyline of their silhouette, at the
   pickup's alpha (`upgradePickup` in [Light fields](galaxies.md#light-fields)).
-- Reduced motion: the still frame only, both chevrons amber.
+- Reduced motion: the `rest` frame only, both chevrons amber.
 
-The pickup's drawn silhouette is the outline's outer edge, which encloses the
-chevrons: one square part, half-size `pickupRadius` plus half the 1.5 px outline
-(10.75 display px), centred on the projected point and aligned with the
-screen. The chevrons and the climb do not change it, and the square has no frame
-data.
+The pickup's collision is the outline's outer edge: one square part, half-size
+`pickupRadius` plus half the 1.5 px outline (10.75 display px), centred on the
+projected point and aligned with the screen. The chevrons and the climb do not
+change it.
 
 ## Ammo pack
 
 The ammo pack is one shared pickup for every ammunition drop: what it gives is
-chosen when Ada collects it (Gameplay), so it shows no weapon. It is a cartridge
-clip in ammo green (`ammo`), apart from the amber upgrade pickup, gold Stardust,
-the rust ore nugget, the lavender hunt glint and the red edge markers.
+chosen when Ada collects it (Gameplay), so it shows no weapon. It is a
+chamfered crate in ammo green, apart from the amber upgrade pickup, gold
+Stardust, the rust ore nugget, the lavender hunt glint and the red edge
+markers.
 
-- `node art/tools/friendly.ts` draws the pack: the core manifest strip row
-  `ammo-pack`, with its collision in `pickups.json`
-  ([Friendly object redesign](friendly-redesign.md)).
-- Drawing: three rounds 4 px wide at columns 1, 6 and 11, rows 1 to 14: a
-  cream tip (rows 1 to 3, shaded on the right), a casing lit on its left and
-  shaded on its right, and a shade base row; a 2-row ink clip across the full
-  16 px at rows 10 and 11. Every pixel is opaque or clear.
+- `node art/tools/friendly.ts` draws the pack from the model layer
+  ([Friendly object redesign](friendly-redesign.md)): the core manifest strip
+  row `ammo-pack` on `/art/pickups/pickups-sheet.svg`, with its collision in
+  `/art/pickups/pickups.json`.
+- Model: one chamfered crate lying across the screen, with one ink band round
+  its middle, lit from the upper left in flat tones.
 
-| Part  | Colour    | Contrast                                                    |
-| ----- | --------- | ----------------------------------------------------------- |
-| Body  | `#8fd14f` | 7.86:1 (Whirlpool) to 9.23:1 (Phantom) on the dark galaxies |
-| Light | `#d2f3a6` | 11.79:1 or more on the dark galaxies                        |
-| Shade | `#5e8f2a` | 2.10:1 against the body                                     |
-| Tip   | `#f2edd5` | Tip shade `#b9b095`                                         |
-| Clip  | `#181425` | 9.78:1 against the body                                     |
-| Glint | `#ffffff` |                                                             |
+| Part       | Top       | Left wall | Right wall |
+| ---------- | --------- | --------- | ---------- |
+| Crate      | `#b4e67e` | `#8fd14f` | `#5e9a2e`  |
+| Band (ink) | `#3a3448` | `#2a2536` | `#181425`  |
 
-In Oklab the body is 0.142 from Stardust's shade `#c8a24e`, 0.144 from
-`active`, 0.146 from the amber `weapon`, 0.155 from Stardust's body, 0.188
-from the ore rim, 0.221 from `obstacle`, 0.222 from `pointOfInterest`, 0.252
-from `shipHardpoint` and 0.301 from `threat`.
-
-- Glint (`loop`, the sheet's `glint` tag): rest 1100 ms, then `glint1`,
-  `glint2` and `glint3` for 70 ms each, 1310 ms in all; glint `k` whitens round
-  `k`'s tip and lit edge, left to right.
+- Row `ammo-pack`: a strip of four 40 by 40 frame px frames, each displayed at
+  17.5 by 17.5 logical px with the pivot at the centre; the crate draws 16 by
+  15 display px. `frames` names `rest` (0), `glint1` (1), `glint2` (2) and
+  `glint3` (3).
+- Glint (`loop`): rest 1100 ms, then `glint1`, `glint2` and `glint3` for 70 ms
+  each, 1310 ms in all. The glint crosses the crate: glint 1 whitens the top,
+  glint 2 the top and the lit left wall, and glint 3 lights the left wall alone.
 - Reduced motion: the `rest` frame only.
 - Light field: keylined, kind `ammoPickup`: the frame's silhouette grown by
-  1 px in ink. The bare body is 1.11:1 on Sunflower; the keyline is 10.90:1.
-- Collision: one convex part, the 16 by 14 hull of the rounds and clip,
-  `[0, 1] [16, 1] [16, 15] [0, 15]` in frame px (one frame px is one display px),
-  the same on every frame. Its farthest point is 9.90 from the centre, inside
-  the upgrade pickup's 10.75 square, so `pickupRadius`, the pickup reach and
-  the tractor rules are unchanged.
+  1 px in ink, 10.90:1 on Sunflower. On Phantom's `#514955` it draws over the
+  white edge, where the crate's left wall is 4.68:1 on the field.
+- Collision: `pickups.json` `frames["ammo-pack"]` holds four strictly convex
+  parts in frame px from the frame's top left, the rest frame's outline, for
+  every frame of the strip. Their farthest point is 8.76 display px from the
+  centre, inside the upgrade pickup's 10.75 square, so `pickupRadius`, the
+  pickup reach and the tractor rules are unchanged.
 
 ## Reduced motion summary
 
@@ -608,4 +602,4 @@ from `shipHardpoint` and 0.301 from `threat`.
 | Ring     | Emission ring and muzzle discs    | Emission ring only                  |
 | Mine     | Spin, blink, fizzle, pop flash    | Still, amber, fade, static ring     |
 | Pickup   | Chevron climb                     | Still frame, both chevrons amber    |
-| Ammo     | Glint across the rounds           | `rest` frame                        |
+| Ammo     | Glint across the crate            | `rest` frame                        |

@@ -4,109 +4,106 @@
   [community project](projects.md) frames into
   [Sunflower's manifest](../public/art/sunflower/manifest.json) and writes
   their `projects.json` entries ([Station redesign](station-redesign.md)).
-- `node art/tools/friendly.ts` draws the discovery cache: the core manifest's
-  `discovery-cache-lit-a`, `-lit-b` and `-hidden` rows, with its collision in
-  `pickups.json` ([Friendly object redesign](friendly-redesign.md)).
+  Reruns are byte-identical.
+- `node art/tools/friendly.ts` draws the discovery cache, the salvage beacon
+  and Sunflower's stranded craft
+  ([Friendly object redesign](friendly-redesign.md)).
 
 ## Outposts
 
-The three sector one cooperating outposts: growers, a workshop and salvagers.
+The three sector one cooperating outposts: growers, a workshop and salvagers,
+each a member of Sunflower's flower station family. Ada visits each with Use.
 
-- Solid models in the [station](station.md) projection, culling and family:
-  cream structure `#efe4cf` (sides `#bfae94`), warm lit windows `#ffe9b8`, and
-  fixed orientations. The Growers' navigation strip sits in the habitat rim.
-  The Salvagers use a steel-blue orbital frame with teal tools and one spine light.
-  The Workshop's articulated arms surround an open repair area. Ada visits each
-  outpost with Use.
+- Connected solids from [station-models.ts](tools/station-models.ts), lit from
+  the upper left in flat tones, in fixed orientations: no headings and no
+  screen rotation.
 - Each outpost is identified by its silhouette and colours alone. No labels,
   signs or text are drawn on or beside it.
 
-### Palette
+| Outpost   | Form                                                                                                                                                | Colours                                                                                           |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Growers   | Eight leaf petals, each a lens with a raised inner pad, round a peg with a cream lamp cap and band, on a long foot                                  | Leaf `#f2b31c` (walls `#c48a10`, `#a8700c`), peg `#5a3f2e` (`#3f2b20`, `#2d1e16`), lamp `#fff2d0` |
+| Workshop  | Five petal slabs with raised pads round the far half of a seed disc, screen lower left to upper right, a cream band and dome lamp, on a short stalk | Petal `#f2a51f` (`#c98212`, `#a66a0c`), seed `#6a4630` (`#4b3020`, `#35211a`), lamp `#fff4d6`     |
+| Salvagers | Four long leaf petals at the screen's four diagonals round a tall peg with a cream lamp cap and band, on a foot                                     | As the growers                                                                                    |
 
-| Outpost   | Shapes                                                                   | Colours                                                                                                                  |
-| --------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Growers   | Seven hydroponic modules around a round deck and three habitat domes     | Steel `#637985`, leaf `#9ccc5a`, glass `#c9ecb4` (sides `#8fbf78`, cap `#eefbe2`), bloom lamps `#f6d76b` (dim `#8a7a3e`) |
-| Workshop  | Open repair rig with a triangular truss and two articulated manipulators | Blue steel `#899fbd`, slate `#43546f`, mint `#9fcbc1` and blue-green `#527c83`                                           |
-| Salvagers | Tapered spine, two open trusses and twin mounted salvage claws           | Steel-blue keel `#526c89` and trusses `#7c96ae`, teal claws `#75a8af`, spine light `#a4ddd4` (dim `#487882`)             |
-
-Growers' leaf green stays clearly yellower and darker than the
-[Stardust](stardust.md) mint.
+The leaves are slabs 6 display px thick with their walls drawn.
 
 ### Frames and manifest
 
-Every entry has the station schema plus `outpost`, the outpost role
-(`growers`, `workshop` or `salvagers`).
+Every row has the station schema plus `outpost`, the outpost role (`growers`,
+`workshop` or `salvagers`). Each outpost's frames are nested roots of one
+sheet in `/art/sunflower/`.
 
-| Outpost   | Ids                                          | Frame px | Display           | Pivot          | Dock `(x, y)`  | Dock width |
-| --------- | -------------------------------------------- | -------- | ----------------- | -------------- | -------------- | ---------- |
-| Growers   | `outpost-growers-a`, `outpost-growers-b`     | 144, 120 | 132.3 by 110.25   | `(0.5, 0.4)`   | `(72, 91.841)` | 31.843     |
-| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | 170, 120 | 156.188 by 110.25 | `(0.5, 0.675)` | `(85, 97.971)` | 29.394     |
-| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | 168, 110 | 154.35 by 101.063 | `(0.5, 0.4)`   | `(84, 82.184)` | 31.843     |
+| Outpost   | Ids                                          | Sheet                      | Frame px | Display         | Pivot            | Dock `(x, y)`   | Dock width |
+| --------- | -------------------------------------------- | -------------------------- | -------- | --------------- | ---------------- | --------------- | ---------- |
+| Growers   | `outpost-growers-a`, `outpost-growers-b`     | `growers-leaf-sheet.svg`   | 192, 144 | 176.4 by 132.3  | `(0.5, 0.45139)` | `(96, 83.471)`  | 31.843     |
+| Workshop  | `outpost-workshop-a`, `outpost-workshop-b`   | `workshop-bloom-sheet.svg` | 200, 144 | 183.75 by 132.3 | `(0.5, 0.41667)` | `(100, 83.089)` | 29.394     |
+| Salvagers | `outpost-salvagers-a`, `outpost-salvagers-b` | `salvagers-leaf-sheet.svg` | 176, 120 | 161.7 by 110.25 | `(0.5, 0.48333)` | `(88, 78.203)`  | 31.843     |
 
-- Display size is `frame * 0.4375 * 1.5 * 1.4`, the [destination scale](destinations.md#scale) with
-  Sunflower outpost growth. `facing` is `fixed`; `dock.outward` is `[0, 1]`.
-- Pivots lie on the world plane: the growers' deck centre, the workshop's central bus and the model origin on the salvagers' spine.
-- The legacy approach point lies on the world plane, below the pivot by 43.841
-  frame px (growers), 16.971 (workshop) and 38.184 (salvagers). Dock values are
-  frame px.
+- Display size is `frame * 0.4375 * 1.5 * 1.4`, the
+  [destination scale](destinations.md#scale) with Sunflower outpost growth.
+  `facing` is `fixed`; `dock.outward` is `[0, 1]`.
+- Pivots lie on the world plane on the peg's or the seed disc's axis. The dock
+  is the peg collar's or the disc's wall straight down the screen from the
+  pivot, on the world plane. Dock values are frame px.
+- The growers' `greenhouseRing` frames share the growers' frame, pivot and
+  dock; the workshop crane and the salvage beacons are overlays
+  ([Community projects](projects.md#world-changes)).
 
 ### Blink
 
 - `frameMs` 700: frames A and B alternate, 700 ms each.
-- A lights the growers' module tips and dome beacon, the workshop's
-  manipulator tips, and the salvagers' teal spine light. B dims them. Funded
-  salvage beacons retain their own periwinkle lights and staggered phases.
+- Frame A lights each lamp; frame B swaps every lamp tone for a dull dark tone.
+  The lit and dim frames share one silhouette.
 - Reduced motion shows frame A only.
+- On Sunflower's light field each outpost and its overlays draw over the 2 px
+  ink destination keyline as one silhouette
+  ([Destinations](destinations.md)).
 
 ## Discovery cache
 
-A sealed data satellite with swept solar wings, a central bus and a mast
-receiver. Draw the opaque and clear pixel art with nearest-neighbour filtering.
+One six-sided vault, tapered at its foot and crown, with a single band round
+its middle that is dark while the cache is hidden and lights when it is found.
+Its rows are in the core manifest on `/art/pickups/pickups-sheet.svg`.
 
-- Root manifest id `discovery-cache`: a 63 by 21 sheet of 21 by 21 frames,
-  displayed at 31 by 31 logical px with the pivot at the centre. `frames` names
-  `hidden` (0), `litA` (1) and `litB` (2).
-- `hidden` is the satellite before Ada approaches: desaturated and unlit, close to
-  the environment tones.
-- On approach the cache switches straight to the lit loop, with no reveal
-  frame. `loop` (and the sheet's `lit` tag) alternates `litA` and `litB`,
-  500 ms each.
-- Lit frames reveal navy solar wings, a bronze bus and a warm beacon.
-  A broad pale cluster on the bus separates the lit frames from the hidden
-  state. Frame A uses a white beacon core. Frame B uses a warm core and eight
-  warm halo pixels around the satellite.
-- Reduced motion: `hidden` before approach, then `litA` without the loop.
-- Collision: each frame of `discovery-cache.json` carries `collision`, its
-  drawn silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
-  frame (one frame px is one display px), the schema of the ship's
-  `collision[k]`. Traced by the
-  [shared tracer](ship.md#shared-tracer) from the 21 px sprite. All three
-  frames use the same physical silhouette and the trace excludes the beacon halo.
+| Tone         | Top       | Left wall | Right wall |
+| ------------ | --------- | --------- | ---------- |
+| Vault        | `#a99dba` | `#7a6f8c` | `#544a66`  |
+| Band, lit A  | `#f0ddf8` |           |            |
+| Band, lit B  | `#c4afcc` |           |            |
+| Band, hidden | `#3a3448` | `#2a2536` | `#181425`  |
+
+- Rows `discovery-cache-lit-a`, `discovery-cache-lit-b` and
+  `discovery-cache-hidden`: 64 by 80 frame px, displayed at 28 by 35 logical
+  px with the pivot at the centre. The vault draws 24 by 31 display px. The lit
+  rows carry `frameMs` 500.
+- `hidden` is the cache before Ada approaches. On approach it switches to the
+  lit pair, which alternates A and B, 500 ms each.
+- Reduced motion: `hidden` before approach, then `lit-a` without the blink.
+- Collision: `pickups.json` holds each row's strictly convex parts in frame px
+  from the frame's top left; the three rows share one outline.
+- On a light field the cache draws over the 1 px ink keyline
+  ([Light fields](galaxies.md#light-fields)).
 
 ## Stranded craft
 
-Two craft for Sunflower's rescue tows, in the outposts' leaf, bloom, cream and workshop yellow. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
-Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
-sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
-4 px padding round a centred pivot, no jets and no collision parts. Files are
-`/art/sunflower/{craft}-{k}[-{a,b}].svg`;
-[sunflower/tow.json](../public/art/sunflower/tow.json), linked from
-[Sunflower's manifest](../public/art/sunflower/manifest.json) as `tow`, gives each craft's
-`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
-in frame px.
+Two craft for Sunflower's rescue tows, in the flower family's cream, seed brown
+and petal gold. Each follows the [stranded craft](cartwheel-props.md#stranded-craft)
+schema: 16 headings in a square frame with a centred pivot, no jets and no
+collision parts. Their rows are in
+[Sunflower's manifest](../public/art/sunflower/manifest.json);
+`/art/sunflower/friendly-tow.json`, linked as `tow`, gives each craft's
+`frame`, `blink` and `frameMs`, and per heading the `tow` point and
+`collision` in frame px.
 
-| Craft                  | Job subject   | Manifest ids                        | Frame | Display | Frames per heading       |          Hull top on field |
-| ---------------------- | ------------- | ----------------------------------- | ----: | ------: | ------------------------ | -------------------------: |
-| `stranded-seed-pod`    | a seed pod    | `craft-stranded-seed-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms | `#efe4cf` 1.31:1, keylined |
-| `stranded-scrap-barge` | a scrap barge | `craft-stranded-scrap-barge-{k}`    |    96 |      42 | one                      | `#aaa883` 1.47:1, keylined |
+| Craft                  | Job subject   | Manifest ids                        | Frame | Display | Frames per heading       |
+| ---------------------- | ------------- | ----------------------------------- | ----: | ------: | ------------------------ |
+| `stranded-seed-pod`    | a seed pod    | `craft-stranded-seed-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |
+| `stranded-scrap-barge` | a scrap barge | `craft-stranded-scrap-barge-{k}`    |   112 |      49 | one                      |
 
-- Seed pod: a cream pressure capsule with folded green solar vanes, a dark
-  viewport, a blinking bloom lamp and a forward tow lug.
-- Scrap barge: an olive steel tray with a raised workshop-yellow hazard rim,
-  heaped with scrap (rust and olive plates, a steel tank, a wheel, a bent pipe),
-  a cream cab on the stern quarter with dark glass and a dim lamp, and a dark
-  engine block; power off, listing 10 degrees to starboard and 4 nose down.
-- Each tow point is the bow lug's face.
+- Seed pod: a lifeboat capsule in cream with a window band, a stern port, a
+  distress lamp that blinks while it waits and a petal cup at the stern.
+- Scrap barge: a short freighter with one scrap hold in rust brown `#9a7b5c`,
+  a cab at the bow and an engine block at the stern.
 - Sunflower is a light field: both craft draw over the 1 px ink keyline
-  (`strandedCraft` in `lightField.keylined`, ink `#181425` at 10.90:1 on the
-  sand), as the outposts do.
+  (`strandedCraft` in `lightField.keylined`).
