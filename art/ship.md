@@ -470,7 +470,7 @@ The ship collides, makes contact and is placed by its drawn silhouette,
 px. The [sector one enemies](enemies.md#collision), the
 [heavies](heavies.md#collision), the traveling debris
 ([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision))
-and the asteroids and resource rocks
+and the asteroids and crystal rocks
 ([asteroid collision](asteroids.md#collision)) use it too.
 
 1. Rasterize at 4 cells per frame px: vector polygons by cell centre with

@@ -1,5 +1,5 @@
-// Ore's look, shared by the ore nugget (art/tools/cartwheel-props.ts), the resource rocks'
-// crystals (art/tools/asteroids.ts) and the ore HUD icon (art/tools/cargo-icons.ts): a matte
+// Ore's look, shared by the ore nugget (art/tools/cartwheel-props.ts), the crystal rocks' ore
+// (art/tools/asteroids.ts) and the ore HUD icon (art/tools/cargo-icons.ts): a matte
 // burgundy-purple body inside a light mauve rim, which carries its contrast on the dark galaxies.
 
 // "R" rim facing up or left, "r" rim facing down or right, "L" light, "M" body, "S" shade,

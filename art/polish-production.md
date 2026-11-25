@@ -20,7 +20,7 @@ it is staged and what remains. Renderer changes are in the
 | Disabled frames               | Close X and switch frames added to their sheets in place; pause, menu, cargo and tow icons staged in their own sheets | Produced                                           |
 
 Unchanged by decision: play asteroids, backdrop rocks, portraits, pet sprites
-and story scenes. Resource rocks are retired separately.
+and story scenes.
 
 ## Staging
 

@@ -151,4 +151,4 @@ of one people differ in silhouette, colour and accessory. Tab colours are in
 - Whales: the hull, throat and glow of the [Whirlpool whales](whales.md); the
   family is `#c9c4f2` with a pale throat `#eeeafb`.
 - Cobbles: speckled warm stone with pebble hands, the right one waving, set
-  apart from the grey resource rocks by their faces, hands and warm tint.
+  apart from the grey asteroids by their faces, hands and warm tint.

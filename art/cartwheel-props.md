@@ -3,7 +3,7 @@
 Cartwheel's traveling debris, the ore nugget cargo piece, the two stranded
 craft a tow job brings home, the tow line and the [ore field](#ore-field)
 layouts. The
-resource rocks are in [Asteroids](asteroids.md#resource-rocks). Cartwheel has
+crystal rocks are in [Asteroids](asteroids.md#crystal-rocks). Cartwheel has
 no damaging hazards.
 
 - Rebuild the debris with `node art/tools/cartwheel-props.ts`. It writes the
@@ -94,7 +94,7 @@ difference is the coral that means damage. Reduced motion keeps them, static.
 
 ## Ore nugget
 
-The ore piece a resource rock releases, collected on contact: a chunky,
+The ore piece a destroyed asteroid releases, collected on contact: a chunky,
 irregular, matte rock nugget, never animated, so it reads apart from the small
 twinkling [Stardust](stardust.md) star by silhouette, colour, surface, size and
 lightness, in greyscale too.
@@ -116,7 +116,7 @@ lightness, in greyscale too.
   the upper left, with no white or glint pixel: a lit facet at the upper left,
   a two-pixel crease down the crown, the body, and one shade facet with a deep
   edge to the lower right.
-- Ore's palette is shared with the resource rocks' crystals and the ore HUD
+- Ore's palette is shared with the crystal rocks' ore and the ore HUD
   icon (`art/tools/ore.ts`): a burgundy-purple body inside a light mauve rim. Every
   outline pixel (one with a clear neighbour) is rim, the lit rim where the
   clear side is up or left and the rim shade where it is down or right.
@@ -223,13 +223,14 @@ listed here for reference. The line is a vector Tech draws (`line` in
 
 ## Ore field
 
-An ore field is a cluster of crystal resource rocks and nothing else: no ore
-dust or other field marks, so the ore crystals alone set it apart from plain
-rock clusters, and no field speck can read as a nugget or Stardust.
+An ore field is a cluster of medium and large asteroids and nothing else, each
+drawn as a full [crystal rock](asteroids.md#crystal-rocks): no ore dust or
+other field marks, so the ore alone sets it apart from plain rock clusters, and
+no field speck can read as a nugget or Stardust.
 
 - Rebuild with `node art/tools/ore-field.ts` after `node art/tools/asteroids.ts`.
   It reads the footprints from
-  [resource-rocks.json](../public/art/resource-rocks.json), writes
+  [asteroids.json](../public/art/asteroids.json), writes
   [ore-field.json](../public/art/cartwheel/ore-field.json) and links it from
   Cartwheel's manifest as `oreField`. Reruns are byte-identical.
 - Eight pattern families: `loose-cluster`, `crescent`, `two-pockets`,
@@ -243,7 +244,7 @@ rock clusters, and no field speck can read as a nugget or Stardust.
   differ. Large counts remain 2, 2, 3, 3 and 3 for totals 6 through 10.
 - Every footprint stays inside the 450 world unit radius and at least 55 world
   units clear of every other footprint. Rounded positions are checked using
-  the resource catalog's footprint radii. The open gaps provide ship routes;
+  the asteroid catalog's footprint radii. The open gaps provide ship routes;
   rigid rotation preserves those clearances. Each family's anchors place the
   large rocks where the full set has the most clearance.
 - Medium rocks start on a seeded spin frame; large rocks show their one frame.
@@ -259,7 +260,8 @@ rocks' class data.
 
 `ore-field.json`, version 2, world units:
 
-- `rocks`: the resource rock catalog the ids name.
+- `rocks`: the asteroid catalog the ids name; each rock `id` is an
+  `asteroid-{shape}`, drawn as its `full` crystal variant.
 - `radius` (450), `gap` (55) and `count` (`[6, 10]`).
 - `variants[i]`: the family `id` and its five `layouts`.
 - Each layout: `count`, `large` (its large rocks), `seed` (the retained rock

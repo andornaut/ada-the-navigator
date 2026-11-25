@@ -25,7 +25,7 @@ Gameplay supplies semantic requirements.
   callouts. See the [station](station.md), [outposts and discovery cache](outposts.md),
   and space-facing [job art](jobs.md) for landmarks, the search area and lost
   item glint. Jobs also have board row icons and Map marks.
-- [Asteroids, resource rocks and backdrop rocks](asteroids.md), [the rock](rock.md)
+- [Asteroids, crystal rocks and backdrop rocks](asteroids.md), [the rock](rock.md)
   and the [aboard backdrop](aboard.md) cover scenery and the ship interior.
 - [Cartwheel](cartwheel.md) covers the hub, mooring buoy and story craft.
   [Cartwheel props](cartwheel-props.md) covers traveling debris, the ore nugget,
