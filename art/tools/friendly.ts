@@ -532,7 +532,10 @@ function stageWhales(staged: Record<string, Rows>) {
     }
   }
   const shipped = JSON.parse(
-    readFileSync(fileURLToPath(new URL("../../public/art/whales.json", import.meta.url)), "utf8"),
+    readFileSync(
+      fileURLToPath(new URL(`../../public/art/${WHALE_DATA_FILE}`, import.meta.url)),
+      "utf8",
+    ),
   ) as ShippedWhales;
   const data = writeOnce(
     "/art/",
