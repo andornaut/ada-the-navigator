@@ -761,7 +761,7 @@ describe("Stardust drops", () => {
     expect(amount).toBeLessThanOrEqual(10);
   });
 
-  it("makes an asteroid's Stardust collectable at once, drawn in separated positions at Art's reduced release", () => {
+  it("makes an asteroid's Stardust collectable at once, drawn in separated positions from 240 ms", () => {
     const value = flight();
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
     const rock: SpaceObject = {
@@ -783,9 +783,9 @@ describe("Stardust drops", () => {
     expect(released.length).toBeGreaterThan(0);
     expect(released.length).toBeLessThanOrEqual(10);
     for (const pickup of released) {
-      // Art's generic reduced destruction (the fighter's reduced timing) at every motion setting.
+      // The asteroid drop timing at every motion setting.
       expect(pickup.release?.at).toBeCloseTo(
-        destroyedAt + 1 / 60 + ECONOMY.destruction.fighter.reduced.releaseSeconds,
+        destroyedAt + 1 / 60 + ECONOMY.rockRelease.releaseSeconds,
         9,
       );
       expect(pickup.release?.from).toBeUndefined();

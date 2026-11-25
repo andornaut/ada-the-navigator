@@ -106,6 +106,8 @@ export interface EconomyCatalog {
    * at `releaseSeconds`, spread up to `spread` world units, and is gone at `durationSeconds`.
    */
   destruction: Readonly<Record<EnemyArchetype, Destruction>>;
+  /** Destroyed asteroid drops: release delay in seconds and spread in world units. */
+  rockRelease: { releaseSeconds: number; spread: number };
   stardustPickupGap: number;
   stardustPickupRadius: number;
   station: {
@@ -283,6 +285,7 @@ export const ECONOMY: EconomyCatalog = {
     iris: { label: "paintIris", top: "#d9ccff" },
     seafoam: { label: "paintSeafoam", top: "#d4f6ea" },
   },
+  rockRelease: { releaseSeconds: 0.24, spread: 7.68 },
   // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
   // Every level waits 30 s after damage (gameplay/economy.md).
   shieldLevels: { capacity: [15, 20] },

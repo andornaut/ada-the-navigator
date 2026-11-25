@@ -5464,7 +5464,7 @@ function destroyEnemy(object: SpaceObject, flight: FlightState): void {
  * (art/asteroids.md "Destruction"), so the fighter's reduced timing stands in: its Stardust
  * appears in place at 240 ms, spread over 7.68 * U(0.6, 1) world units.
  */
-const ROCK_RELEASE = ECONOMY.destruction.fighter.reduced;
+const ROCK_RELEASE = ECONOMY.rockRelease;
 
 /**
  * Releases a drop's Stardust pickups around a destroyed object (art/destruction.md): pickup
