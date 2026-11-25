@@ -6079,20 +6079,25 @@ try {
     ["sound", CONTENT.labels.soundNote],
     "Sound keeps its note in the same element",
   );
-  // The Move and Aim controls rows show Art's smooth control icons.
-  const stickIcons = await page.locator(".ada-row[data-setting]").evaluateAll((rows) =>
-    rows
-      .filter((row) => ["move", "aim"].includes(row.dataset.setting))
-      .map((row) => {
-        const icon = row.querySelector(".ada-icon");
-        const style = getComputedStyle(icon);
-        return [
-          row.dataset.setting,
-          icon.dataset.icon,
-          /\/art\/ui\/icons\/icon-(?:move|aim)-controls\.svg/u.test(style.backgroundImage),
-          style.imageRendering,
-        ];
-      }),
+  // The Move and Aim controls rows show Art's smooth control icons, each its view in the static
+  // UI sheet.
+  const stickIcons = await page.locator(".ada-row[data-setting]").evaluateAll(
+    (rows, urls) =>
+      rows
+        .filter((row) => ["move", "aim"].includes(row.dataset.setting))
+        .map((row) => {
+          const icon = row.querySelector(".ada-icon");
+          const style = getComputedStyle(icon);
+          return [
+            row.dataset.setting,
+            icon.dataset.icon,
+            style.backgroundImage.includes(urls[icon.dataset.icon]),
+            style.imageRendering,
+          ];
+        }),
+    Object.fromEntries(
+      ["icon-move-controls", "icon-aim-controls"].map((key) => [key, uiIconUrl(key)]),
+    ),
   );
   assert.deepEqual(stickIcons, [
     ["move", "icon-move-controls", true, "auto"],
