@@ -23,7 +23,7 @@ import {
 import { LIGHT_FIELD } from "./lightField.ts";
 import { boundsOnScreen, revealAlpha } from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";
-import { drawCraftJets, keylineSprite } from "./sceneHud.ts";
+import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
@@ -33,11 +33,12 @@ import {
   craftFrame,
   craftHeading,
   strandedCraftId,
-  towBeads,
+  towClamp,
   towCurve,
   type TowLine,
   towOffset,
 } from "./towArt.ts";
+import type { EffectShape } from "./weaponEffects.ts";
 import {
   buoyFrame,
   buoyPlaces,
@@ -701,7 +702,8 @@ export function drawTow(
 
 /**
  * The cable from Ada's pivot to the craft's tow point, `offset` display px from its pivot:
- * Art's layered stroke with round joins and caps, its beads and the tow point's cap.
+ * Art's layered stroke with round joins and caps, over an ink stroke on a light field, and the
+ * clamp block at the craft end with its lit face, taking the ink keyline on a light field.
  */
 export function drawTowLine(
   scene: WorldContext,
@@ -717,25 +719,40 @@ export function drawTowLine(
     const t = index / (curve.length - 1);
     return { x: at.x + offset.x * t, y: at.y + offset.y * t };
   });
-  for (const layer of line.layers) {
-    const color = hexNumber(layer.color);
-    scene.towInk.lineStyle(layer.width, color, 1);
+  const strokes = [
+    ...(scene.light ? [{ color: scene.edgeInk ?? LIGHT_FIELD.ink, width: line.lightInk }] : []),
+    ...line.layers.map(({ color, width }) => ({ color: hexNumber(color), width })),
+  ];
+  for (const { color, width } of strokes) {
+    scene.towInk.lineStyle(width, color, 1);
     scene.towInk.strokePoints(
       points.map((point) => new PhaserMath.Vector2(point.x, point.y)),
       false,
     );
     scene.towInk.fillStyle(color, 1);
     for (const point of points) {
-      scene.towInk.fillCircle(point.x, point.y, layer.width / 2);
+      scene.towInk.fillCircle(point.x, point.y, width / 2);
     }
   }
-  scene.towInk.fillStyle(hexNumber(line.beads.color), 1);
-  for (const bead of towBeads(line.beads, points)) {
-    scene.towInk.fillCircle(bead.x, bead.y, line.beads.radius);
-  }
-  const end = points[points.length - 1]!;
-  for (const disc of line.cap) {
-    scene.towInk.fillStyle(hexNumber(disc.color), 1);
-    scene.towInk.fillCircle(end.x, end.y, disc.radius);
+  const { block, face } = towClamp(line.clamp, points);
+  const shapes: EffectShape[] = [
+    { alpha: 1, colour: hexNumber(line.clamp.color), kind: "polygon", points: block },
+    { alpha: 1, colour: hexNumber(line.clamp.face.color), kind: "polygon", points: face },
+  ];
+  // The block's keyline: its ink silhouette and round ink strokes along its edges.
+  for (const shape of [...keylineEdges(scene, ["towClamp"], shapes.slice(0, 1)), ...shapes]) {
+    if (shape.kind === "polygon") {
+      scene.towInk.fillStyle(shape.colour, shape.alpha);
+      scene.towInk.fillPoints(
+        shape.points.map((point) => new PhaserMath.Vector2(point.x, point.y)),
+        true,
+      );
+    } else if (shape.kind === "line") {
+      scene.towInk.lineStyle(shape.width, shape.colour, shape.alpha);
+      scene.towInk.lineBetween(shape.from.x, shape.from.y, shape.to.x, shape.to.y);
+      scene.towInk.fillStyle(shape.colour, shape.alpha);
+      scene.towInk.fillCircle(shape.from.x, shape.from.y, shape.width / 2);
+      scene.towInk.fillCircle(shape.to.x, shape.to.y, shape.width / 2);
+    }
   }
 }

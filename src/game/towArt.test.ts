@@ -14,7 +14,7 @@ import {
   STRANDED_CRAFT,
   type StrandedCraftArt,
   strandedCraftId,
-  towBeads,
+  towClamp,
   towCurve,
   type TowFrame,
   towOffset,
@@ -123,15 +123,25 @@ describe("tow art", () => {
     expect(own).toEqual(readStrandedCraft(tow, manifest.assets));
   });
 
-  it("reads the cable's layers, beads and cap", () => {
+  it("reads the cable's layers, light-field ink and clamp block", () => {
     const line = readTowLine(tow)!;
     expect(line.layers).toEqual([
-      { color: "#4F5462", width: 2.5 },
-      { color: "#B8BFC9", width: 1.2 },
+      { color: "#4F5462", width: 3 },
+      { color: "#B8BFC9", width: 1.4 },
     ]);
-    expect(line.beads).toEqual({ color: "#4F5462", radius: 0.9, spacing: 12, start: 6 });
-    expect(line.cap.map(({ radius }) => radius)).toEqual([1.8, 0.8]);
+    expect(line.lightInk).toBe(4.2);
+    expect(line.clamp).toEqual({
+      across: 5.2,
+      after: 2.6,
+      before: 3.2,
+      color: "#4F5462",
+      face: { color: "#B8BFC9", depth: 2.2 },
+    });
     expect(readTowLine({ ...(tow as object), version: 2 })).toBeUndefined();
+    // The shipped shape, beads and a cap without the clamp block, is rejected.
+    const shipped = { ...(tow as { line: object }).line, beads: {}, cap: [], clamp: undefined };
+    expect(readTowLine({ ...(tow as object), line: shipped })).toBeUndefined();
+    expect(LIGHT_FIELD.effects).toContain("towClamp");
   });
 
   it("reads both craft at 16 headings: the pod's blink pair and the hauler's one frame", () => {
@@ -178,12 +188,29 @@ describe("tow art", () => {
     expect(moving[(moving.length - 1) / 2]!.y).toBeLessThan(0);
   });
 
-  it("spaces beads every 12 px from 6 px off the craft end", () => {
-    const beads = readTowLine(tow)!.beads;
-    const points = [
+  it("places the clamp block from 3.2 px before the tow point to 2.6 past it, face uppermost", () => {
+    const clamp = readTowLine(tow)!.clamp;
+    // A line running screen-right to the tow point at (40, 0).
+    const { block, face } = towClamp(clamp, [
       { x: 0, y: 0 },
+      { x: 20, y: 0 },
       { x: 40, y: 0 },
-    ];
-    expect(towBeads(beads, points).map(({ x }) => x)).toEqual([34, 22, 10]);
+    ]);
+    const xs = block.map(({ x }) => x);
+    const ys = block.map(({ y }) => y);
+    expect([Math.min(...xs), Math.max(...xs)]).toEqual([40 - 3.2, 40 + 2.6]);
+    expect(Math.min(...ys)).toBeCloseTo(-2.6, 12);
+    expect(Math.max(...ys)).toBeCloseTo(2.6, 12);
+    // The face spans the block's length along its screen-upper 2.2 px.
+    expect(face.map(({ x }) => x)).toEqual(xs);
+    expect(Math.min(...face.map(({ y }) => y))).toBeCloseTo(-2.6, 12);
+    expect(Math.max(...face.map(({ y }) => y))).toBeCloseTo(-0.4, 12);
+    // Reversed, toward screen-left, the face stays on the upper edge.
+    const back = towClamp(clamp, [
+      { x: 40, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+    expect(Math.min(...back.block.map(({ x }) => x))).toBeCloseTo(-2.6, 12);
+    expect(Math.max(...back.face.map(({ y }) => y))).toBeCloseTo(-0.4, 12);
   });
 });

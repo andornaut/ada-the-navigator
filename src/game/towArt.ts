@@ -6,7 +6,7 @@ import type { StationFrame } from "./stationArt.ts";
 
 // Art's stranded craft and tow line (art/cartwheel-props.md "Stranded craft", "Tow line"): each
 // galaxy's craft drawn at the 16 enemy headings, facing Ada, from that galaxy's tow.json, and a
-// steel cable Tech draws from core's tow.json.
+// steel cable with a clamp block at the craft end that Tech draws from core's tow.json.
 
 /**
  * Each galaxy's rescue pool items (gameplay/quests.md "Job pool") to Art's stranded craft ids,
@@ -36,15 +36,21 @@ export interface TowFrame extends StationFrame {
 }
 
 export interface TowLine {
-  readonly beads: {
+  /**
+   * The block at the craft end: `before` px toward Ada and `after` px past the tow point along
+   * the line, `across` px wide, with a lit `face` band `depth` px deep along its upper edge.
+   */
+  readonly clamp: {
+    readonly across: number;
+    readonly after: number;
+    readonly before: number;
     readonly color: string;
-    readonly radius: number;
-    readonly spacing: number;
-    readonly start: number;
+    readonly face: { readonly color: string; readonly depth: number };
   };
-  readonly cap: readonly { readonly color: string; readonly radius: number }[];
   /** Outer stroke first, then the core. */
   readonly layers: readonly { readonly color: string; readonly width: number }[];
+  /** The ink stroke width under the cable on a light field. */
+  readonly lightInk: number;
 }
 
 export interface StrandedCraftArt<T extends TowFrame = TowFrame> {
@@ -65,40 +71,47 @@ const fields = (value: unknown): Fields | undefined =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Fields) : undefined;
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
-const disc = (value: unknown): value is { color: string; radius: number } =>
-  typeof fields(value)?.color === "string" && finite(fields(value)?.radius);
+const positive = (value: unknown): value is number => finite(value) && value > 0;
 
 /** The tow line from `tow.json` (version 1), or undefined to keep the placeholder line. */
 export function readTowLine(value: unknown): TowLine | undefined {
   const root = fields(value);
   const line = fields(root?.line);
-  const beads = fields(line?.beads);
+  const clamp = fields(line?.clamp);
+  const face = fields(clamp?.face);
   const layers = line?.layers;
-  const cap = line?.cap;
   if (
     root?.version !== 1 ||
     !Array.isArray(layers) ||
     layers.length === 0 ||
     !layers.every(
-      (layer) => typeof fields(layer)?.color === "string" && finite(fields(layer)?.width),
+      (layer) => typeof fields(layer)?.color === "string" && positive(fields(layer)?.width),
     ) ||
-    !Array.isArray(cap) ||
-    !cap.every(disc) ||
-    typeof beads?.color !== "string" ||
-    !finite(beads.radius) ||
-    !finite(beads.spacing) ||
-    !(beads.spacing > 0) ||
-    !finite(beads.start)
+    !positive(line?.lightInk) ||
+    typeof clamp?.color !== "string" ||
+    !finite(clamp.before) ||
+    !finite(clamp.after) ||
+    !(clamp.before + clamp.after > 0) ||
+    !positive(clamp.across) ||
+    typeof face?.color !== "string" ||
+    !positive(face.depth) ||
+    face.depth > clamp.across
   ) {
     return undefined;
   }
   return {
-    beads: { color: beads.color, radius: beads.radius, spacing: beads.spacing, start: beads.start },
-    cap: cap.map(({ color, radius }) => ({ color, radius })),
+    clamp: {
+      across: clamp.across,
+      after: clamp.after,
+      before: clamp.before,
+      color: clamp.color,
+      face: { color: face.color, depth: face.depth },
+    },
     layers: (layers as { color: string; width: number }[]).map(({ color, width }) => ({
       color,
       width,
     })),
+    lightInk: line.lightInk,
   };
 }
 
@@ -215,26 +228,36 @@ export function towCurve(
   });
 }
 
-/** Bead centres along a screen polyline from Ada to the craft: every spacing from the craft end. */
-export function towBeads(beads: TowLine["beads"], points: readonly Vec[]): Vec[] {
-  const from = [...points].reverse();
-  const result: Vec[] = [];
-  let next = beads.start;
-  let travelled = 0;
-  for (let index = 1; index < from.length; index++) {
-    const a = from[index - 1]!;
-    const b = from[index]!;
-    const segment = Math.hypot(b.x - a.x, b.y - a.y);
-    const end = travelled + segment;
-    if (segment === 0) {
-      continue;
-    }
-    while (next <= end) {
-      const t = (next - travelled) / segment;
-      result.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-      next += beads.spacing;
-    }
-    travelled += segment;
+/**
+ * The clamp block at the craft end of a screen polyline from Ada to the craft, and its lit face
+ * along the block's screen-upper edge, each as four screen points.
+ */
+export function towClamp(
+  clamp: TowLine["clamp"],
+  points: readonly Vec[],
+): { block: Vec[]; face: Vec[] } {
+  const end = points[points.length - 1] ?? { x: 0, y: 0 };
+  const from = [...points].reverse().find((point) => point.x !== end.x || point.y !== end.y);
+  const length = from ? Math.hypot(end.x - from.x, end.y - from.y) : 0;
+  const along =
+    from && length > 0
+      ? { x: (end.x - from.x) / length, y: (end.y - from.y) / length }
+      : { x: 1, y: 0 };
+  // The across direction that points screen-up (or left, for a vertical line).
+  let up = { x: along.y, y: -along.x };
+  if (up.y > 0 || (up.y === 0 && up.x > 0)) {
+    up = { x: -up.x, y: -up.y };
   }
-  return result;
+  const at = (u: number, v: number): Vec => ({
+    x: end.x + along.x * u + up.x * v,
+    y: end.y + along.y * u + up.y * v,
+  });
+  const half = clamp.across / 2;
+  const rect = (low: number, high: number) => [
+    at(-clamp.before, low),
+    at(clamp.after, low),
+    at(clamp.after, high),
+    at(-clamp.before, high),
+  ];
+  return { block: rect(-half, half), face: rect(half - clamp.face.depth, half) };
 }

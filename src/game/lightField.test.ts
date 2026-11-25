@@ -38,7 +38,7 @@ const INK = 0x181425;
 describe("light-field rule", () => {
   it("reads Art's lightField: ink keylines, edges, strokes and dark jets", () => {
     expect(LIGHT_FIELD).toMatchObject({
-      effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+      effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards", "towClamp"],
       holodiskBeacon: "base",
       hudOutline: 1,
       indicatorStroke: 4,

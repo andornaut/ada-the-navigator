@@ -6,30 +6,25 @@
       {
         "name": "outer",
         "color": "#4F5462",
-        "width": 2.5
+        "width": 3
       },
       {
         "name": "core",
         "color": "#B8BFC9",
-        "width": 1.2
+        "width": 1.4
       }
     ],
-    "beads": {
+    "lightInk": 4.2,
+    "clamp": {
       "color": "#4F5462",
-      "radius": 0.9,
-      "spacing": 12,
-      "start": 6
-    },
-    "cap": [
-      {
-        "color": "#4F5462",
-        "radius": 1.8
-      },
-      {
+      "before": 3.2,
+      "after": 2.6,
+      "across": 5.2,
+      "face": {
         "color": "#B8BFC9",
-        "radius": 0.8
+        "depth": 2.2
       }
-    ]
+    }
   },
   "craft": [
     {
