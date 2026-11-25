@@ -94,7 +94,7 @@ export interface EnemyArt<T extends EnemyFrame = EnemyFrame> {
 /** Art exports every turning enemy in sixteen headings, as Gameplay requires. */
 export const ENEMY_HEADINGS = 16;
 
-/** The id prefix of Gadget's coral family; Cartwheel's claim jumpers use `enemy-claim-`. */
+/** The id prefix of Archie's coral family; Cartwheel's claim jumpers use `enemy-claim-`. */
 export const CORAL = "enemy-";
 export const CLAIM = "enemy-claim-";
 
@@ -112,7 +112,7 @@ export const CLAIM_WIRED: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Andromeda's garnet and Needle's crimson families (art/heavies.md): Gadget's drones and heavies
+ * Andromeda's garnet and Needle's crimson families (art/heavies.md): Archie's drones and heavies
  * recoloured, with no platform.
  */
 export const GARNET = "enemy-garnet-";
@@ -133,11 +133,11 @@ export interface EnemyFamily {
   /** The galaxy that flies it, by stable galaxy id. */
   readonly galaxy: string;
   readonly prefix: string;
-  /** The archetypes it draws; the rest keep Gadget's coral family. */
+  /** The archetypes it draws; the rest keep Archie's coral family. */
   readonly wired: ReadonlySet<string>;
 }
 
-/** Each galaxy's own enemy family; every other galaxy flies Gadget's coral family. */
+/** Each galaxy's own enemy family; every other galaxy flies Archie's coral family. */
 const GARNET_WIRED: ReadonlySet<string> = new Set([...RECOLOURED, "hostileStation"]);
 
 export const GALAXY_FAMILIES: readonly EnemyFamily[] = [
@@ -146,7 +146,7 @@ export const GALAXY_FAMILIES: readonly EnemyFamily[] = [
   { family: "needle", galaxy: "needle", prefix: NEEDLE, wired: RECOLOURED },
 ];
 
-/** The family a galaxy draws an archetype in, or undefined for Gadget's coral family. */
+/** The family a galaxy draws an archetype in, or undefined for Archie's coral family. */
 export function galaxyFamily(
   galaxy: string | undefined,
   archetype: string,

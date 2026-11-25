@@ -192,7 +192,7 @@ describe("light-field rule", () => {
 
   it("joins every keylined craft's jets to its keyline but Ada's", () => {
     expect(LIGHT_FIELD.jetKeyline).toEqual({ exempt: ["ship"], join: true });
-    for (const kind of ["fighter", "frigate", "capital", "gadget", "platform", "storyCraft"]) {
+    for (const kind of ["fighter", "frigate", "capital", "archie", "platform", "storyCraft"]) {
       expect(joinsJets(LIGHT_FIELD, kind), kind).toBe(true);
     }
     expect(joinsJets(LIGHT_FIELD, "ship")).toBe(false);

@@ -5,6 +5,8 @@
 export const COLOURS = {
   /** Ada's ship blue: the shield fill and icon, her name tab and the map's ship canopy. */
   adaBlue: "#70ace8",
+  /** Admiral Archie's name tab once he is named. */
+  archieTab: "#d68b72",
   /** Astra's name tab. */
   astraTab: "#8fe0f2",
   /** The base space field, and the Rapid Missile disc face. */
@@ -25,8 +27,6 @@ export const COLOURS = {
   divider: "#57536e",
   /** An empty weapon's glyph and a level 1 weapon's ring. */
   emptyGlyph: "#75748c",
-  /** General Gadget's name tab once he is named. */
-  generalTab: "#d68b72",
   /** The Heavy Missile disc face. */
   heavyMissileFace: "#332712",
   /** The holodisk notice and map chip. */

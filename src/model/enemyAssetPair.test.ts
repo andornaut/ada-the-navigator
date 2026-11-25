@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
 import platformFile from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json";
+import archieFile from "../../public/art/enemies/archie-hardpoints.json";
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import crossbowFile from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
-import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
@@ -21,7 +21,7 @@ it("projects every raw hardpoint anchor once for each drawn hull heading", () =>
   const cases = [
     { definition: enemyDefinition(1, "frigate", "raw-frigate"), file: frigateFile },
     { definition: enemyDefinition(1, "capital", "raw-capital"), file: capitalFile },
-    { definition: enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID), file: gadgetFile },
+    { definition: enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID), file: archieFile },
     { definition: enemyDefinition(6, "platform", "raw-platform"), file: platformFile },
   ];
   for (const { definition, file } of cases) {

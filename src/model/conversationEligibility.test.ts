@@ -201,7 +201,7 @@ describe("live eligibility at every director boundary", () => {
   it.each(["held", "galaxy"] as const)(
     "invalidates a queued broadcast when its exact %s changes",
     (change) => {
-      const f = fixture(6, ["general:held:5", "warning:shieldLow"]);
+      const f = fixture(6, ["archie:held:5", "warning:shieldLow"]);
       f.live.holodisks = 5;
       f.step(0.01, { inDanger: true, shieldFraction: 0.1 });
       f.step(0.01, { dronesNear: true, inDanger: true, shieldFraction: 0.1 });
@@ -211,13 +211,13 @@ describe("live eligibility at every director boundary", () => {
       } else {
         f.live.galaxy = 5;
       }
-      expect(f.talk.pending("general:held:5")).toBe(false);
-      expect(f.heard).not.toContain("general:6");
+      expect(f.talk.pending("archie:held:5")).toBe(false);
+      expect(f.heard).not.toContain("archie:6");
     },
   );
 
   it("rejects an active broadcast using live count even when the last step's facts are stale", () => {
-    const f = fixture(6, ["general:held:5"]);
+    const f = fixture(6, ["archie:held:5"]);
     f.live.holodisks = 5;
     f.step(0.01, { dronesNear: true, inDanger: true });
     f.live.holodisks = 6;

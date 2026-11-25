@@ -32,7 +32,7 @@ import {
 } from "./storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
-const PORTRAITS = new Set(["Ada", "Astra", "Penny", "Unknown voice", "General Gadget"]);
+const PORTRAITS = new Set(["Ada", "Astra", "Penny", "Unknown voice", "Admiral Archie"]);
 const { frame } = STORY_PANEL.portrait;
 // The portrait floats with a row gap below it: the lines beside it are shorter.
 const FLOAT_BOTTOM = frame + SPACING.rowGap;

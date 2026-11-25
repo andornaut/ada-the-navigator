@@ -103,8 +103,8 @@ export function drawPhantomFlagship(scene: ObjectsContext, object: SpaceObject):
   if (object.id !== PHANTOM_FLAGSHIP || !object.enemy) {
     return false;
   }
-  loadEnemyParts(scene, "gadget");
-  const art = familyArt(scene, "gadget");
+  loadEnemyParts(scene, "archie");
+  const art = familyArt(scene, "archie");
   if (!art?.parts) {
     return false;
   }

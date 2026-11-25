@@ -7,11 +7,11 @@ import { SHIELD_PILL } from "../ui/layout/playView.ts";
 import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
 import { CONTROL_WORDS } from "./controlWords.ts";
 import {
+  ARCHIE_NAMED,
   BOX_PRIORITIES,
   CONVERSATION_PRIORITIES,
   CONVERSATION_TUNING,
   CONVERSATIONS,
-  GENERAL_NAMED,
   INTERACTION_COPY,
   SPEAKERS,
 } from "./conversations.ts";
@@ -59,13 +59,13 @@ const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handi
 
 type Conversation = (typeof CONVERSATIONS)[number];
 
-// A speaker's tab as the documents name it: the General's broadcasts from the third holodisk on
+// A speaker's tab as the documents name it: Archie's broadcasts from the third holodisk on
 // play under his name.
 const nameOf = ({ trigger }: Conversation, speaker: keyof typeof SPEAKERS) =>
-  speaker === "general" &&
-  ((trigger.kind === "general" && trigger.held >= GENERAL_NAMED.holodisks) ||
+  speaker === "archie" &&
+  ((trigger.kind === "archie" && trigger.held >= ARCHIE_NAMED.holodisks) ||
     trigger.kind === "chapter")
-    ? GENERAL_NAMED.name
+    ? ARCHIE_NAMED.name
     : SPEAKERS[speaker].name;
 
 // A line as the documents write it: each control token as the control's name.
@@ -114,10 +114,10 @@ describe("in-flight conversations", () => {
         }
       }
     }
-    expect(COPY).toContain(`then "${GENERAL_NAMED.name}"`);
+    expect(COPY).toContain(`then "${ARCHIE_NAMED.name}"`);
   });
 
-  it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
+  it("speak every line of the copy's in-flight section and Archie's broadcasts", () => {
     const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
     expect(copied.length).toBeGreaterThan(30);
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
@@ -218,12 +218,12 @@ describe("in-flight conversations", () => {
   it("seat Ada on the left and every other speaker on the right", () => {
     expect(Object.entries(SPEAKERS).map(([speaker, { side }]) => [speaker, side])).toEqual([
       ["ada", "left"],
+      ["archie", "right"],
       ["astra", "right"],
       ["avi", "right"],
       ["blurbs", "right"],
       ["dollop", "right"],
       ["elderLoom", "right"],
-      ["general", "right"],
       ["grower", "right"],
       ["miner", "right"],
       ["penny", "right"],
@@ -242,7 +242,7 @@ describe("in-flight conversations", () => {
       BOX_PRIORITIES.filter((priority) => priority !== "notice"),
     );
     expect(
-      CONVERSATIONS.filter(({ id }) => id.startsWith("general:")).map((c) => c.priority),
+      CONVERSATIONS.filter(({ id }) => id.startsWith("archie:")).map((c) => c.priority),
     ).toEqual(Array(5).fill("warning"));
   });
 

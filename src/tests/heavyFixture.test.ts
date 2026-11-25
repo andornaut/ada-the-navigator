@@ -112,7 +112,7 @@ it("keeps default capture IDs, legacy level one and canonical restore/pickup cor
   );
 });
 
-it("resolves Gadget from its final saved identity and level before creating state", () => {
+it("resolves Archie's flagship from its final saved identity and level before creating state", () => {
   const { definitions, fixture } = fixtureFactory();
   const restored = restoreSave(
     fixture(6, [
@@ -121,7 +121,7 @@ it("resolves Gadget from its final saved identity and level before creating stat
   )!;
   const actor = restored.flight!.objects.find((object) => object.enemy)!;
   const canonical = enemyEquipmentDefinition(6, actor.enemy!);
-  expect(enemyAssetKey(actor.enemy!)).toBe("gadget");
+  expect(enemyAssetKey(actor.enemy!)).toBe("archie");
   expect(actor.id).toBe(PHANTOM_FLAGSHIP_ID);
   expect(actor.enemy!.id).toBe(actor.id);
   expect(actor.enemy!.weaponLevel).toBe(3);

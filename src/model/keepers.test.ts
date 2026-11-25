@@ -89,7 +89,7 @@ describe("station keepers", () => {
       expect(worldStationKeeper({ phantomComplete: false }, ECONOMY, 6, station.id)).toBeNull();
       expect(worldStationKeeper({ phantomComplete: true }, ECONOMY, 6, station.id)).toEqual({
         greetings: PHANTOM_KEEPER_GREETINGS,
-        key: "general",
+        key: "archie",
       });
     }
   });

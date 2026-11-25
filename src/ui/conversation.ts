@@ -55,7 +55,7 @@ export interface ConversationLineView {
   readonly key: string;
   readonly mood: Mood;
   readonly name: string;
-  /** Whether the General's tab reads his name. */
+  /** Whether Archie's tab reads his name. */
   readonly named: boolean;
   readonly side: "left" | "right";
   readonly speaker: Speaker;
@@ -65,8 +65,8 @@ export interface ConversationLineView {
 
 const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATION_BOX;
 
-// Each speaker's compact portrait sheet (art/conversation.md) and its frames. Astra and the
-// General loop their speaking frames while their line shows, the General's unknown set until his
+// Each speaker's compact portrait sheet (art/conversation.md) and its frames. Astra and
+// Archie loop their speaking frames while their line shows, Archie's unknown set until his
 // tab reads his name, then his named set; Ada and Penny have no loop and show the line's mood.
 // Idle frames are for a silent speaker on screen; the box and the storybook panel show only the
 // one speaking, so neither shows them.
@@ -87,9 +87,9 @@ const PORTRAIT_RULES = Object.entries({ ...COMPACT_PORTRAITS, ...CAST_COMPACT })
 
 const TAB_RULES = Object.entries(TAB_COLOURS)
   .map(([speaker, colour]) =>
-    speaker === "generalNamed"
+    speaker === "archieNamed"
       ? `
-.ada-conversation[data-speaker="general"][data-named] .ada-conversation-name{
+.ada-conversation[data-speaker="archie"][data-named] .ada-conversation-name{
   background:${colour}
 }`
       : `

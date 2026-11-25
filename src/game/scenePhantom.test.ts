@@ -111,7 +111,7 @@ describe("Phantom authored rendering", () => {
       expect(mended.frames[0].pivot).toEqual(cracked.frames[0].pivot);
     }
   });
-  it("requests Gadget's own heavy art and lights the salvaged hulk without changing its gameplay state", () => {
+  it("requests Archie's own heavy art and lights the salvaged hulk without changing its gameplay state", () => {
     const definition = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP);
     const enemy = createEnemy(
       definition,
@@ -134,7 +134,7 @@ describe("Phantom authored rendering", () => {
     calls.family.mockReturnValue(art);
     const before = structuredClone(object);
     expect(drawPhantomFlagship(scene(true), object)).toBe(true);
-    expect(calls.parts).toHaveBeenCalledWith(expect.anything(), "gadget");
+    expect(calls.parts).toHaveBeenCalledWith(expect.anything(), "archie");
     expect(calls.enemy.mock.lastCall![1]).toBe(art);
     expect(calls.enemy.mock.lastCall![4]).toMatchObject({ disabled: false, salvaged: false });
     expect(object).toEqual(before);

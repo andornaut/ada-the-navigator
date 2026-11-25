@@ -130,15 +130,15 @@ describe("conversation box style", () => {
     expect(TAB_COLOURS.astra).toBe("#8fe0f2");
     expect({
       ada: fill("Ada"),
+      archie: fill("Unknown voice"),
+      archieNamed: fill("Admiral Archie"),
       astra: fill("Astra"),
-      general: fill("Unknown voice"),
-      generalNamed: fill("General Gadget"),
       penny: fill("Penny"),
     }).toEqual({
       ada: TAB_COLOURS.ada,
+      archie: TAB_COLOURS.archie,
+      archieNamed: TAB_COLOURS.archieNamed,
       astra: TAB_COLOURS.astra,
-      general: TAB_COLOURS.general,
-      generalNamed: TAB_COLOURS.generalNamed,
       penny: TAB_COLOURS.penny,
     });
   });
@@ -219,12 +219,12 @@ function frames(id: string): Record<string, number> {
 }
 
 const speaking = (prefix: string): number[] =>
-  [1, 2, 3, 4].map((n) => frames(prefix === "" ? "astra" : "gadget")[`${prefix}speaking-${n}`]!);
+  [1, 2, 3, 4].map((n) => frames(prefix === "" ? "astra" : "archie")[`${prefix}speaking-${n}`]!);
 
 describe("conversation portraits", () => {
   const line = { elapsed: 0, mood: "neutral", named: false } as const;
 
-  it("name the manifest's frames: Ada's and Penny's moods, Astra's and the General's loops", () => {
+  it("name the manifest's frames: Ada's and Penny's moods, Astra's and Archie's loops", () => {
     expect(COMPACT_PORTRAITS.ada.moods).toEqual({
       happy: frames("ada").happy,
       neutral: frames("ada").neutral,
@@ -235,7 +235,7 @@ describe("conversation portraits", () => {
       upset: frames("penny").upset,
     });
     expect(COMPACT_PORTRAITS.astra.speaking).toEqual(speaking(""));
-    expect(COMPACT_PORTRAITS.general.speaking).toEqual({
+    expect(COMPACT_PORTRAITS.archie.speaking).toEqual({
       named: speaking("named-"),
       unknown: speaking("unknown-"),
     });
@@ -250,7 +250,7 @@ describe("conversation portraits", () => {
     ).toEqual([1, 1, 1]);
   });
 
-  it("show a cast speaker's neutral frame, by its manifest name, never the General's loop", () => {
+  it("show a cast speaker's neutral frame, by its manifest name, never Archie's loop", () => {
     for (const [speaker, key] of Object.entries(SPEAKER_CAST)) {
       const home = CAST[key].home;
       const manifest =
@@ -269,14 +269,14 @@ describe("conversation portraits", () => {
     }
   });
 
-  it("loop the General's unknown frames, then his named ones once his tab reads his name", () => {
-    const general = { ...line, elapsed: 0.25, speaker: "general" } as const;
-    expect(portraitFrame(false, general)).toBe(frames("gadget")["unknown-speaking-3"]);
-    expect(portraitFrame(false, { ...general, named: true })).toBe(
-      frames("gadget")["named-speaking-3"],
+  it("loop Archie's unknown frames, then his named ones once his tab reads his name", () => {
+    const archie = { ...line, elapsed: 0.25, speaker: "archie" } as const;
+    expect(portraitFrame(false, archie)).toBe(frames("archie")["unknown-speaking-3"]);
+    expect(portraitFrame(false, { ...archie, named: true })).toBe(
+      frames("archie")["named-speaking-3"],
     );
-    expect(portraitFrame(true, { ...general, named: true })).toBe(
-      frames("gadget")["named-speaking-1"],
+    expect(portraitFrame(true, { ...archie, named: true })).toBe(
+      frames("archie")["named-speaking-1"],
     );
   });
 
@@ -294,11 +294,11 @@ describe("conversation portraits", () => {
   it("never show an idle frame in the box", () => {
     const idle = [
       frames("astra").idle,
-      frames("gadget")["unknown-idle"],
-      frames("gadget")["named-idle"],
+      frames("archie")["unknown-idle"],
+      frames("archie")["named-idle"],
     ];
     for (let ms = 0; ms < 1000; ms += 10) {
-      for (const speaker of ["astra", "general"] as const) {
+      for (const speaker of ["astra", "archie"] as const) {
         for (const named of [false, true]) {
           const frame = portraitFrame(false, { ...line, elapsed: ms / 1000, named, speaker });
           expect(idle).not.toContain(frame);

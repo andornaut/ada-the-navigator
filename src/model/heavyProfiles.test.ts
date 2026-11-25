@@ -122,9 +122,9 @@ it.each([
     expect(enemyGeometryKey({ archetype, id }, position)).toBe(key);
     expect(HULL_DESIGNS[archetype][GALAXY_ID[galaxy as GalaxyNumber]] ?? archetype).toBe(key);
   }
-  // General Gadget's flagship keeps its own design in Phantom.
+  // Admiral Archie's flagship keeps its own design in Phantom.
   expect(enemyGeometryKey({ archetype: "capital", id: PHANTOM_FLAGSHIP_ID }, position)).toBe(
-    "gadget",
+    "archie",
   );
 });
 

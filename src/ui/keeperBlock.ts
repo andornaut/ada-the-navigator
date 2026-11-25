@@ -1,7 +1,7 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { CAST, castPortrait } from "../data/cast.ts";
-import { GENERAL_NAMED } from "../data/conversations.ts";
+import { ARCHIE_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
 import {
@@ -34,9 +34,9 @@ import { PANEL_BACKGROUND } from "./notice.ts";
 const { name: label, padding, panel, portrait, tab, text } = CONVERSATION_BOX;
 const { pips } = KEEPER_BLOCK;
 
-/** A keeper's existing display name, including the identified General. */
+/** A keeper's existing display name, including the named Archie. */
 export function keeperName(key: KeeperKey): string {
-  return key === "general" ? GENERAL_NAMED.name : CAST[key].name;
+  return key === "archie" ? ARCHIE_NAMED.name : CAST[key].name;
 }
 
 // Each keeper's portrait sheet and tab fill; data-keeper names the keeper on the block.
@@ -57,20 +57,20 @@ const KEEPER_RULES = [...KEEPER_PORTRAITS]
   )
   .join("");
 
-const GENERAL_FRAME = portraitFrame(true, {
+const ARCHIE_FRAME = portraitFrame(true, {
   elapsed: 0,
   mood: "neutral",
   named: true,
-  speaker: "general",
+  speaker: "archie",
 });
-const GENERAL_RULES = `
-.ada-controls .ada-keeper[data-keeper="general"] .ada-keeper-portrait{
-  background:url('${COMPACT_PORTRAITS.general.url}') ${units(-GENERAL_FRAME * portrait.art)} 0 / ${units(
-    COMPACT_PORTRAITS.general.frames * portrait.art,
+const ARCHIE_RULES = `
+.ada-controls .ada-keeper[data-keeper="archie"] .ada-keeper-portrait{
+  background:url('${COMPACT_PORTRAITS.archie.url}') ${units(-ARCHIE_FRAME * portrait.art)} 0 / ${units(
+    COMPACT_PORTRAITS.archie.frames * portrait.art,
   )} ${units(portrait.art)} no-repeat
 }
-.ada-controls .ada-keeper[data-keeper="general"] .ada-keeper-name{
-  background:${TAB_COLOURS.generalNamed}
+.ada-controls .ada-keeper[data-keeper="archie"] .ada-keeper-name{
+  background:${TAB_COLOURS.archieNamed}
 }`;
 
 export const KEEPER_STYLE = `
@@ -199,7 +199,7 @@ export const KEEPER_STYLE = `
   width:auto
 }
 ${KEEPER_RULES}
-${GENERAL_RULES}
+${ARCHIE_RULES}
 `;
 
 export interface KeeperBlock {
@@ -307,7 +307,7 @@ export function createKeeperBlock(options: {
       const keeper = greeting?.keeper;
       selectPortraitCrop(
         face,
-        keeper && keeper !== "general" ? KEEPER_PORTRAITS.get(keeper) : undefined,
+        keeper && keeper !== "archie" ? KEEPER_PORTRAITS.get(keeper) : undefined,
       );
       if (greeting) {
         next.dataset.keeper = greeting.keeper;

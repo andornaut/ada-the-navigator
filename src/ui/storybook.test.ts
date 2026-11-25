@@ -4,7 +4,7 @@ import { compileFunction } from "node:vm";
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { GENERAL_NAMED } from "../data/conversations.ts";
+import { ARCHIE_NAMED } from "../data/conversations.ts";
 import { openingScene } from "../model/storybook.ts";
 import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
@@ -221,7 +221,7 @@ describe("storybook page", () => {
   it("fills the speaker's tab with their conversation colour, or the neutral one", () => {
     expect(storyTabColour("Astra")).toBe(TAB_COLOURS.astra);
     expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
-    expect(storyTabColour(GENERAL_NAMED.name)).toBe(TAB_COLOURS.generalNamed);
+    expect(storyTabColour(ARCHIE_NAMED.name)).toBe(TAB_COLOURS.archieNamed);
     expect(storyTabColour("Elder Loom")).toBe("#e9e3da");
     expect(storyTabColour("No portrait")).toBe(AWAITING_TAB);
     // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
@@ -278,7 +278,7 @@ describe("story page portraits", () => {
   });
 
   it("give every drawn speaker a 32 sheet with its compact sheet's frames", () => {
-    const ids = { ada: "ada", astra: "astra", general: "gadget", penny: "penny" } as const;
+    const ids = { ada: "ada", archie: "archie", astra: "astra", penny: "penny" } as const;
     for (const [speaker, id] of Object.entries(ids)) {
       const sheet = asset(`${id}-portrait`)!;
       expect(STORY_PORTRAITS[speaker as keyof typeof ids]!.url).toBe(sheet.path);
@@ -317,10 +317,10 @@ describe("story page portraits", () => {
 
   it("put Ada at the left and every other speaker at the right, never mirrored", () => {
     expect(storyPortrait("Ada")?.side).toBe("left");
-    for (const name of ["Astra", "Penny", "Unknown voice", GENERAL_NAMED.name]) {
+    for (const name of ["Astra", "Penny", "Unknown voice", ARCHIE_NAMED.name]) {
       expect(storyPortrait(name)?.side, name).toBe("right");
     }
-    expect(storyPortrait(GENERAL_NAMED.name)?.named).toBe(true);
+    expect(storyPortrait(ARCHIE_NAMED.name)?.named).toBe(true);
     expect(rule(".ada-controls .ada-story-frame")).toContain("float:right");
     expect(rule('.ada-controls .ada-story-text[data-side="left"] .ada-story-frame')).toContain(
       "float:left",

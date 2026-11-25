@@ -75,7 +75,7 @@ describe("Art's collision data", () => {
     ["fleetCapitalForked", ["enemies/fleetCapitalForked"]],
     ["fleetCapitalManta", ["enemies/fleetCapitalManta"]],
     ["fleetCapitalOutrigger", ["enemies/fleetCapitalOutrigger"]],
-    ["gadget", ["enemies/gadget"]],
+    ["archie", ["enemies/archie"]],
     ["platform", ["cartwheel/enemies/platformWheel"]],
   ] as const)("gives the %s its hull, hardpoint and top silhouettes", (_, files) => {
     for (const stem of files) {

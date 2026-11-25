@@ -37,7 +37,7 @@ export const HULL_DESIGNS: Readonly<
   frigate: { andromeda: "frigateTwin", needle: "frigateTwin", whirlpool: "frigateTwin" },
 };
 export type EnemyAssetKey =
-  Exclude<keyof typeof SHIP_PHYSICS, "ada"> | "gadget" | "hostileStation" | IndustrialBodyKey;
+  Exclude<keyof typeof SHIP_PHYSICS, "ada"> | "archie" | "hostileStation" | IndustrialBodyKey;
 export type EnemyGeometryKey =
   EnemyAssetKey | HullDesignKey | "hostileStationAndromeda" | "hostileStationPhantom";
 
@@ -54,7 +54,7 @@ export function ordinaryHeavy(kind: EnemyActorKind): kind is OrdinaryHeavy {
 
 /**
  * The design an ordinary heavy flies in the galaxy `galaxyId`, where it is not the class's own.
- * General Gadget's flagship keeps its own design.
+ * Admiral Archie's flagship keeps its own design.
  */
 export function hullDesign(
   { archetype, id }: Pick<EnemyIdentity, "archetype" | "id">,
@@ -93,7 +93,7 @@ export function isHeavyHullProfile(
 /** Visual identity uses its own stream and never changes the gameplay archetype or world rolls. */
 export function enemyAssetKey(identity: EnemyIdentity): EnemyAssetKey {
   if (identity.archetype === "capital" && identity.id === PHANTOM_FLAGSHIP_ID) {
-    return "gadget";
+    return "archie";
   }
   return retaliatorVariant(identity) ?? identity.archetype;
 }

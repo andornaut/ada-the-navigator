@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import archieHardpoints from "../../public/art/enemies/archie-hardpoints.json";
+import archieJets from "../../public/art/enemies/archie-jets.json";
 import capitalHardpoints from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import capitalJets from "../../public/art/enemies/fleetCapital-jets.json";
 import fighterJets from "../../public/art/enemies/fleetFighter-jets.json";
@@ -10,8 +12,6 @@ import frigateJets from "../../public/art/enemies/fleetFrigate-jets.json";
 import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/fleetRetaliator-jets.json";
 import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
-import gadgetHardpoints from "../../public/art/enemies/gadget-hardpoints.json";
-import gadgetJets from "../../public/art/enemies/gadget-jets.json";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
@@ -80,18 +80,18 @@ function nativePartFrames(owner: string, archetype: string): number {
   return (bases + tops.size) * 16;
 }
 const files: Record<string, unknown> = {
+  archie: archieJets,
   capital: capitalJets,
   fighter: fighterJets,
   frigate: frigateJets,
-  gadget: gadgetJets,
   interceptor: interceptorJets,
   retaliator: retaliatorJets,
   swarm: swarmJets,
 };
 const layouts: Record<string, unknown> = {
+  archie: archieHardpoints,
   capital: capitalHardpoints,
   frigate: frigateHardpoints,
-  gadget: gadgetHardpoints,
 };
 const build = (
   frames: readonly EnemyFrame[],
@@ -114,10 +114,10 @@ const at = (degrees: number) => ({
 describe("enemy frame sets", () => {
   it("reads sixteen sized headings for each coral archetype from Art's manifest", () => {
     expect([...art.keys()].sort()).toEqual([
+      "archie",
       "capital",
       "fighter",
       "frigate",
-      "gadget",
       "hostileStation",
       "interceptor",
       "retaliator",
@@ -133,10 +133,10 @@ describe("enemy frame sets", () => {
       }),
     );
     expect(sizes).toEqual({
+      archie: 245,
       capital: 231,
       fighter: 35,
       frigate: 150.5,
-      gadget: 245,
       hostileStation: 164.5,
       interceptor: 56,
       retaliator: 70,
@@ -155,9 +155,9 @@ describe("enemy frame sets", () => {
         .map(([name]) => name)
         .sort(),
     ).toEqual([
+      "archie",
       "capital",
       "frigate",
-      "gadget",
       "hostileStation",
       "retaliator",
       "retaliatorCargoHauler",
@@ -165,13 +165,13 @@ describe("enemy frame sets", () => {
     ]);
   });
 
-  it("keeps Gadget as flagship art without introducing a separate gameplay archetype", () => {
-    const gadget = art.get("gadget")!;
-    expect(gadget.jets?.headings).toHaveLength(16);
-    expect(gadget.parts!.layout.frame).toBe(560);
-    expect(gadget.parts!.layout.fill).toEqual(capitalHardpoints.fill);
-    expect(gadget.parts!.layout.tiers).toEqual(art.get("capital")!.parts!.layout.tiers);
-    expect(Object.keys(enemyCatalog)).not.toContain("gadget");
+  it("keeps Archie's flagship art without introducing a separate gameplay archetype", () => {
+    const archie = art.get("archie")!;
+    expect(archie.jets?.headings).toHaveLength(16);
+    expect(archie.parts!.layout.frame).toBe(560);
+    expect(archie.parts!.layout.fill).toEqual(capitalHardpoints.fill);
+    expect(archie.parts!.layout.tiers).toEqual(art.get("capital")!.parts!.layout.tiers);
+    expect(Object.keys(enemyCatalog)).not.toContain("archie");
   });
 
   it("tells the heavies' part frames, which load after the scene starts, from hull headings", () => {
@@ -729,10 +729,10 @@ describe("composed heavies", () => {
 describe("enemy SVGs", () => {
   it("reads composed SVG dimensions and the fleet sheets' frame-px roots with exact raw viewBoxes", () => {
     const composed = new Set([
+      "archie",
       "capital",
       "frigate",
       "frigateTwin",
-      "gadget",
       "hostileStation",
       "platform",
       "retaliator",
@@ -910,7 +910,7 @@ describe("claim jumper art", () => {
 });
 
 describe("galaxy enemy families", () => {
-  it("draws Cartwheel's claim jumpers and Andromeda's garnet drones, else Gadget's coral", () => {
+  it("draws Cartwheel's claim jumpers and Andromeda's garnet drones, else Archie's coral", () => {
     expect(galaxyFamily("cartwheel", "platform")?.family).toBe("claim");
     expect(galaxyFamily("andromeda", "swarm")?.family).toBe("garnet");
     expect(galaxyFamily("needle", "capital")?.family).toBe("needle");

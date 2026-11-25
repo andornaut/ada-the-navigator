@@ -660,7 +660,7 @@ describe("a galaxy manifest's coral enemy rows", () => {
       f.scene.model.state.flight.galaxy = galaxy;
       expect(f.artKey(f.scene, "frigate", "ordinary:frigate:0")).toBe(frigate);
       expect(f.artKey(f.scene, "capital", "ordinary:capital:0")).toBe(capital);
-      expect(f.artKey(f.scene, "capital", "phantomFlagship")).toBe("gadget");
+      expect(f.artKey(f.scene, "capital", "phantomFlagship")).toBe("archie");
     },
   );
 });
@@ -763,7 +763,7 @@ describe("deferred core capital sheets", () => {
     );
   });
 
-  it.each(["enemy-frigate-0", "enemy-capital-0", "enemy-gadget-0"])(
+  it.each(["enemy-frigate-0", "enemy-capital-0", "enemy-archie-0"])(
     "passes the intrinsic size of the eager hull %s without rescaling its raw frame",
     (id) => {
       const f = fixture(undefined);

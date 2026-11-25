@@ -10,7 +10,7 @@ import {
   type CastPortraitSheet,
   STORY_CAST,
 } from "../data/cast.ts";
-import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
+import { ARCHIE_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
@@ -154,14 +154,14 @@ const STORY_CAST_KEYS = Object.keys(CAST) as CastKey[];
 // frames as the compact sheet, drawn at 2x in the 68 frame.
 export const STORY_PORTRAITS: Readonly<Partial<Record<StoryPortraitId, CastPortraitSheet>>> = {
   ada: { frames: 2, url: "/art/portraits/ada.png" },
+  archie: { frames: 10, url: "/art/portraits/archie.png" },
   astra: { frames: 5, url: "/art/portraits/astra.png" },
-  general: { frames: 10, url: "/art/portraits/gadget.png" },
   penny: { frames: 3, url: "/art/portraits/penny.png" },
   ...FAMILY_PORTRAITS,
   ...Object.fromEntries(STORY_CAST_KEYS.map((key) => [key, castPortrait(key, false)])),
 };
 
-/** A story page speaker with a portrait, on its side, with whether the General is named. */
+/** A story page speaker with a portrait, on its side, with whether Archie is named. */
 export interface StoryPortrait {
   readonly named: boolean;
   readonly side: "left" | "right";
@@ -174,8 +174,8 @@ export function storyPortrait(name: string | undefined): StoryPortrait | null {
   if (family) {
     return { named: false, side: "right", speaker: family };
   }
-  if (name === GENERAL_NAMED.name) {
-    return { named: true, side: SPEAKERS.general.side, speaker: "general" };
+  if (name === ARCHIE_NAMED.name) {
+    return { named: true, side: SPEAKERS.archie.side, speaker: "archie" };
   }
   const cast =
     name === undefined
@@ -243,8 +243,8 @@ export function storyTabColour(name: string): string {
   if (cast) {
     return CAST[cast].tab;
   }
-  if (name === GENERAL_NAMED.name) {
-    return TAB_COLOURS.generalNamed ?? AWAITING_TAB;
+  if (name === ARCHIE_NAMED.name) {
+    return TAB_COLOURS.archieNamed ?? AWAITING_TAB;
   }
   const speaker = (Object.keys(SPEAKERS) as Speaker[]).find((id) => SPEAKERS[id].name === name);
   return (speaker && TAB_COLOURS[speaker]) ?? AWAITING_TAB;
@@ -252,7 +252,7 @@ export function storyTabColour(name: string): string {
 
 /**
  * The sheet frame a page's portrait shows elapsed seconds after the page appears: a cast
- * member's one neutral frame, Ada's and Penny's neutral face, or Astra's or the General's
+ * member's one neutral frame, Ada's and Penny's neutral face, or Astra's or Archie's
  * speaking loop at 120 ms a frame, held on its first frame under reduced motion.
  */
 export function storyPortraitFrame(

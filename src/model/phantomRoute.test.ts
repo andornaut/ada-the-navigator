@@ -192,7 +192,7 @@ describe("Phantom full route under test-only chapter admission, not production r
       travel(model, station);
       model.interact();
       expect(model.state.docked).toBe(site.id);
-      expect(model.stationGreeting).toMatchObject({ count: 3, index: 0, keeper: "general" });
+      expect(model.stationGreeting).toMatchObject({ count: 3, index: 0, keeper: "archie" });
       model.advanceGreeting();
       model.advanceGreeting();
       expect(model.stationGreeting?.index).toBe(2);

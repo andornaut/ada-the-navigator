@@ -97,9 +97,9 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
         "astra",
         "Six disks, every coordinate. There are galaxies past galaxies, Admiral. They never end.",
       ),
-      line("general", "No end... No one could hold all of that."),
+      line("archie", "No end... No one could hold all of that."),
       line("ada", "No one has to. But you could help fix what you broke here."),
-      line("general", "The Blurbs' docks. My blockades cracked them. I'll start there."),
+      line("archie", "The Blurbs' docks. My blockades cracked them. I'll start there."),
     ],
     topics: [
       {
@@ -107,7 +107,7 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
         question: "What is on the map?",
       },
       {
-        lines: [line("general", "The Blurbs' docks. My blockades cracked them.")],
+        lines: [line("archie", "The Blurbs' docks. My blockades cracked them.")],
         question: "Where will you start?",
       },
     ],
@@ -123,11 +123,11 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   },
   flagshipAttack: {
     lines: [
-      line("general", "Astra. Come home, and bring my disks. No one needs to get hurt."),
+      line("archie", "Astra. Come home, and bring my disks. No one needs to get hurt."),
       line("astra", "No one will. But I'm not yours."),
     ],
   },
-  flagshipDisabled: { lines: [line("general", "Enough! Take it. Take the last disk.")] },
+  flagshipDisabled: { lines: [line("archie", "Enough! Take it. Take the last disk.")] },
   flagshipSalvage: {
     lines: [
       line("astra", "The last holodisk is here. I can bring it aboard."),

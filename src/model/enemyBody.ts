@@ -1,6 +1,7 @@
 import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
 import station from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json" with { type: "json" };
+import archie from "../../public/art/enemies/archie-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
 import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
 import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
@@ -17,7 +18,6 @@ import cargoJets from "../../public/art/enemies/fleetRetaliatorCargoHauler-jets.
 import miningParts from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import miningJets from "../../public/art/enemies/fleetRetaliatorMiningFreighter-jets.json" with { type: "json" };
 import swarm from "../../public/art/enemies/fleetSwarm-jets.json" with { type: "json" };
-import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { type EnemyGeometryKey, enemyGeometryKey } from "../data/enemyIdentity.ts";
@@ -287,7 +287,7 @@ for (const [archetype, outline] of [
   ["capitalOutrigger", heavyOutline(capitalOutrigger as HardpointsFile)],
   ["frigate", heavyOutline(frigate as HardpointsFile)],
   ["frigateTwin", heavyOutline(frigateTwin as HardpointsFile)],
-  ["gadget", heavyOutline(gadget as HardpointsFile)],
+  ["archie", heavyOutline(archie as HardpointsFile)],
   ["hostileStation", heavyOutline(station as HardpointsFile)],
   ["hostileStationAndromeda", heavyOutline(ring as HardpointsFile)],
   ["hostileStationPhantom", heavyOutline(phantomStation as HardpointsFile)],

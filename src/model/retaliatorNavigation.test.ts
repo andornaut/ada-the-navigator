@@ -40,7 +40,7 @@ describe("industrial idle navigation", () => {
       expect(retaliatorVariant(identity)).toBe(body);
     }
     expect(enemyAssetKey({ archetype: "retaliator" })).toBe("retaliator");
-    expect(enemyAssetKey({ archetype: "capital", id: "phantomFlagship" })).toBe("gadget");
+    expect(enemyAssetKey({ archetype: "capital", id: "phantomFlagship" })).toBe("archie");
     expect(retaliatorNavigation(context, { ...miner, id: "" })).toBeUndefined();
     expect(retaliatorNavigation(context, { ...miner, archetype: "fighter" })).toBeUndefined();
   });

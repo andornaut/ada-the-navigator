@@ -413,22 +413,22 @@ describe("conversation triggers", () => {
     expect(showing(talk)).toBe("warning:drones:0");
   });
 
-  it("broadcast the General once per built galaxy, the line after the holodisks Ada holds", () => {
+  it("broadcast Archie once per built galaxy, the line after the holodisks Ada holds", () => {
     // Holding none, no broadcast plays: the drones' own warning does.
     const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
     run(sunflower.talk, 0.05, drones);
     expect(showing(sunflower.talk)).toBe("warning:drones:0");
     for (const [galaxy, holodisks, line] of [
-      [3, 1, "general:held:1"],
-      [2, 2, "general:held:2"],
-      [4, 2, "general:held:2"],
-      [5, 3, "general:held:3"],
+      [3, 1, "archie:held:1"],
+      [2, 2, "archie:held:2"],
+      [4, 2, "archie:held:2"],
+      [5, 3, "archie:held:3"],
     ] as const) {
       const { heard, talk } = director(galaxy, lessonsHeard);
       run(talk, 0.05, { ...drones, holodisks });
       expect(talk.showing?.conversation.id).toBe(line);
-      expect(tapThrough(talk)).toEqual([`general:${galaxy}:0`, `general:${galaxy}:1`]);
-      expect(heard).toContain(`general:${galaxy}`);
+      expect(tapThrough(talk)).toEqual([`archie:${galaxy}:0`, `archie:${galaxy}:1`]);
+      expect(heard).toContain(`archie:${galaxy}`);
       // Once per galaxy: later engagements there call out the drones.
       run(talk, 0.05);
       run(talk, 0.05, { ...drones, holodisks: holodisks + 1 });
@@ -441,7 +441,7 @@ describe("conversation triggers", () => {
       const { heard, talk } = director(galaxy, [...lessonsHeard, `arrival:${galaxy}`]);
       run(talk, 0.05, { ...drones, holodisks: 5 });
       expect(showing(talk)).toBe("warning:drones:0");
-      expect(heard).not.toContain(`general:${galaxy}`);
+      expect(heard).not.toContain(`archie:${galaxy}`);
     }
   });
 
@@ -485,7 +485,7 @@ describe("conversation triggers", () => {
   ] as const)(
     "greet galaxy %i with Astra's arrival line, then draw quiet lines from its own pool",
     (galaxy, quiet) => {
-      const { talk } = director(galaxy, [...lessonsHeard, `general:${galaxy}`]);
+      const { talk } = director(galaxy, [...lessonsHeard, `archie:${galaxy}`]);
       run(talk, 0.05);
       expect(tapThrough(talk)).toEqual([`arrival:${galaxy}:0`, `arrival:${galaxy}:1`]);
       const drawn: string[] = [];
@@ -685,7 +685,7 @@ describe("drone engagements in flight", () => {
   it("broadcast the second line in Whirlpool with Sunflower's holodisk held", () => {
     const whirlpool = engaged(3, "fighter", 4, [1]).conversation;
     expect(whirlpool).toMatchObject({
-      key: "general:3:0",
+      key: "archie:3:0",
       name: "Unknown voice",
       named: false,
       text: "All drones: find the holodisks. Bring them to me.",
@@ -695,34 +695,34 @@ describe("drone engagements in flight", () => {
   it("broadcast the third line in Cartwheel with two holodisks held, still unnamed", () => {
     const cartwheel = engaged(2, "swarm", 6, [1, 3]).conversation;
     expect(cartwheel).toMatchObject({
-      key: "general:2:0",
+      key: "archie:2:0",
       name: "Unknown voice",
       named: false,
       text: "Someone is collecting my holodisks. Stop them.",
     });
   });
 
-  it("drops a stale broadcast and names the General on a fresh three-disk broadcast", () => {
+  it("drops a stale broadcast and names Archie on a fresh three-disk broadcast", () => {
     const model = engaged(2, "swarm", 6, [1, 3]);
     expect(model.conversation).toMatchObject({ name: "Unknown voice", named: false });
     model.state.progress[2].holodisk = true;
     expect(model.conversation).toBeNull();
-    expect(speakerName(model.state.progress, "general")).toBe("Admiral Archie");
+    expect(speakerName(model.state.progress, "archie")).toBe("Admiral Archie");
     const fresh = engaged(2, "swarm", 6, [1, 2, 3]);
     expect(fresh.conversation).toMatchObject({
-      key: "general:2:0",
+      key: "archie:2:0",
       name: "Admiral Archie",
       named: true,
     });
   });
 });
 
-describe("the General's name tab", () => {
+describe("Archie's name tab", () => {
   it("reads Unknown voice until the third holodisk is inserted, from whichever galaxy", () => {
     const progress = { 1: { holodisk: true }, 2: { holodisk: false }, 3: { holodisk: true } };
-    expect(speakerName(progress, "general")).toBe("Unknown voice");
-    expect(speakerName({ ...progress, 2: { holodisk: true } }, "general")).toBe("Admiral Archie");
-    expect(speakerName({ ...progress, 5: { holodisk: true } }, "general")).toBe("Admiral Archie");
+    expect(speakerName(progress, "archie")).toBe("Unknown voice");
+    expect(speakerName({ ...progress, 2: { holodisk: true } }, "archie")).toBe("Admiral Archie");
+    expect(speakerName({ ...progress, 5: { holodisk: true } }, "archie")).toBe("Admiral Archie");
     expect(speakerName(progress, "astra")).toBe("Astra");
   });
 });

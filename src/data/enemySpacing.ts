@@ -13,6 +13,7 @@ import type { RoutePosition } from "./galaxies.ts";
  * rings and capital spacing, never hits.
  */
 export const SPACING_RADII: Readonly<Record<EnemyGeometryKey, number>> = {
+  archie: 65,
   capital: 85,
   capitalBroad: 75,
   capitalCrossbow: 88,
@@ -22,7 +23,6 @@ export const SPACING_RADII: Readonly<Record<EnemyGeometryKey, number>> = {
   fighter: 13,
   frigate: 63,
   frigateTwin: 58,
-  gadget: 65,
   hostileStation: 70,
   hostileStationAndromeda: 70,
   hostileStationPhantom: 70,

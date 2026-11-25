@@ -254,10 +254,10 @@ describe("tab clearance on every view", () => {
     { bottom: 0, left: 43.4, right: 12.6, top: 0 },
     { bottom: 34, left: 0, right: 0, top: 47 },
   ];
-  // Art's widest tabs (art/layout.md "Tab clearance"): Ada's "Ada" and "General Gadget", each its
+  // Art's widest tabs (art/layout.md "Tab clearance"): Ada's "Ada" and "Unknown voice", each its
   // label plus a mark gap each side.
   const ADA_TAB = 42.23;
-  const WIDEST_TAB = 131.15;
+  const WIDEST_TAB = 129.35;
   type Span = {
     readonly bottom: number;
     readonly left: number;

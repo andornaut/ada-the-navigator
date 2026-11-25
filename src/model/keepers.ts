@@ -11,7 +11,7 @@ import { HUB_STATION, stationById, worldLegacyStationsNear } from "./stations.ts
 // stations take Slate and Garnet in turn. Ranks come from the station generator alone, never from
 // saved state.
 
-export type KeeperKey = CastKey | "general";
+export type KeeperKey = CastKey | "archie";
 
 /** The model supplies completion only after the approved Phantom aftermath is complete. */
 export interface StationKeeperContext {
@@ -78,7 +78,7 @@ export function worldStationKeeper(
 ): StationKeeper | null {
   if (galaxy === 6) {
     return context.phantomComplete === true && stationById(catalog, galaxy, id) !== null
-      ? { greetings: PHANTOM_KEEPER_GREETINGS, key: "general" }
+      ? { greetings: PHANTOM_KEEPER_GREETINGS, key: "archie" }
       : null;
   }
   const keepers = KEEPERS[galaxy];

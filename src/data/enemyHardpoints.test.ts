@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import archieFile from "../../public/art/enemies/archie-hardpoints.json";
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
-import gadgetFile from "../../public/art/enemies/gadget-hardpoints.json";
 import exported from "../../tools/enemy-hardpoints.json";
 import { enemyCatalog, type EnemyDefinition } from "./enemyCatalog.ts";
 import { exportHardpoints } from "./enemyHardpoints.ts";
@@ -103,10 +103,10 @@ describe("hardpoint export for Art", () => {
     },
   );
 
-  it("gives Gadget's capital the capital's mounts and tiers", () => {
-    const gadget = gadgetFile as ArtFile;
-    expect(gadget.fill).toEqual(art.capital.fill);
-    expect(gadget.tiers).toEqual(art.capital.tiers);
-    expect(gadget.weaponTops).toEqual(art.capital.weaponTops);
+  it("gives Archie's capital the capital's mounts and tiers", () => {
+    const archie = archieFile as ArtFile;
+    expect(archie.fill).toEqual(art.capital.fill);
+    expect(archie.tiers).toEqual(art.capital.tiers);
+    expect(archie.weaponTops).toEqual(art.capital.weaponTops);
   });
 });

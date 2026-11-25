@@ -7,7 +7,7 @@ import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { GalaxyNumber } from "./types.ts";
 
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
-// gameplay/player-copy.md "In-flight conversations" and the General's broadcasts, and job lines
+// gameplay/player-copy.md "In-flight conversations" and Archie's broadcasts, and job lines
 // from gameplay/quests.md).
 
 export type Speaker =
@@ -17,7 +17,7 @@ export type Speaker =
   | "dollop"
   | "elderLoom"
   | "astra"
-  | "general"
+  | "archie"
   | "grower"
   | "miner"
   | "penny"
@@ -29,7 +29,7 @@ export type Speaker =
   | "workshop";
 
 /**
- * Highest first: a warning (the General's broadcasts among them), then a first-flight lesson,
+ * Highest first: a warning (Archie's broadcasts among them), then a first-flight lesson,
  * then Penny, then lore. Notices rank between warnings and lessons (BOX_PRIORITIES).
  */
 export const CONVERSATION_PRIORITIES = ["warning", "lesson", "penny", "lore"] as const;
@@ -62,8 +62,8 @@ export type ConversationTrigger =
   | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
-  /** The General's broadcast while Ada holds `held` holodisks, only in `galaxy` when set. */
-  | { readonly kind: "general"; readonly galaxy?: GalaxyNumber; readonly held: number }
+  /** Archie's broadcast while Ada holds `held` holodisks, only in `galaxy` when set. */
+  | { readonly kind: "archie"; readonly galaxy?: GalaxyNumber; readonly held: number }
   | { readonly kind: "quiet"; readonly galaxy: GalaxyNumber }
   | { readonly kind: "funded"; readonly project: string }
   | { readonly kind: "penny" }
@@ -123,13 +123,13 @@ export const SPEAKERS: Readonly<
   Record<Speaker, { readonly name: string; readonly side: "left" | "right" }>
 > = {
   ada: { name: "Ada", side: "left" },
+  // Until the third holodisk is inserted; see ARCHIE_NAMED.
+  archie: { name: "Unknown voice", side: "right" },
   astra: { name: "Astra", side: "right" },
   avi: { name: "Avi", side: "right" },
   blurbs: { name: "Blurbs", side: "right" },
   dollop: { name: "Dollop", side: "right" },
   elderLoom: { name: "Elder Loom", side: "right" },
-  // Until the third holodisk is inserted; see GENERAL_NAMED.
-  general: { name: "Unknown voice", side: "right" },
   // The community projects' thank-you speakers (gameplay/economy.md "Donations").
   grower: { name: "Grower", side: "right" },
   miner: { name: "Miner", side: "right" },
@@ -142,8 +142,8 @@ export const SPEAKERS: Readonly<
   workshop: { name: "Workshop", side: "right" },
 };
 
-/** The General's name tab once the third holodisk is inserted, from whichever galaxy. */
-export const GENERAL_NAMED = { holodisks: 3, name: "Admiral Archie" } as const;
+/** Archie's name tab once the third holodisk is inserted, from whichever galaxy. */
+export const ARCHIE_NAMED = { holodisks: 3, name: "Admiral Archie" } as const;
 
 /** Seconds an ordinary in-flight speech line shows unless dismissed. */
 export function lineDuration(text: string): number {
@@ -695,61 +695,61 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { galaxy: 6, kind: "quiet" },
   },
-  // The General's broadcasts, one after the number of holodisks Ada holds. Each built galaxy
-  // plays its one, seen as general:<galaxy> (the director's instance), so none replays there.
+  // Archie's broadcasts, one after the number of holodisks Ada holds. Each built galaxy
+  // plays its one, seen as archie:<galaxy> (the director's instance), so none replays there.
   {
-    id: "general:held:1",
+    id: "archie:held:1",
     lines: [
-      line("general", "All drones: find the holodisks. Bring them to me."),
+      line("archie", "All drones: find the holodisks. Bring them to me."),
       line("astra", "That voice... I don't know why it scares me."),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { held: 1, kind: "general" },
+    trigger: { held: 1, kind: "archie" },
   },
   {
-    id: "general:held:2",
+    id: "archie:held:2",
     lines: [
-      line("general", "Someone is collecting my holodisks. Stop them."),
+      line("archie", "Someone is collecting my holodisks. Stop them."),
       line("ada", "Your holodisks? They're Astra's!"),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { held: 2, kind: "general" },
+    trigger: { held: 2, kind: "archie" },
   },
   {
-    id: "general:held:3",
+    id: "archie:held:3",
     lines: [
       line(
-        "general",
+        "archie",
         "Little navigator, you can't hide from me. My drones will wait at every exit.",
       ),
       line("ada", "Then we'll take our time."),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { held: 3, kind: "general" },
+    trigger: { held: 3, kind: "archie" },
   },
   {
-    id: "general:held:4",
+    id: "archie:held:4",
     lines: [
-      line("general", "Astra. I know you can hear me. Come back, and bring my disks."),
+      line("archie", "Astra. I know you can hear me. Come back, and bring my disks."),
       line("astra", "I'm not yours, Admiral. I never was."),
     ],
     priority: "warning",
     repeat: "never",
-    trigger: { held: 4, kind: "general" },
+    trigger: { held: 4, kind: "archie" },
   },
   {
-    id: "general:held:5",
+    id: "archie:held:5",
     lines: [
-      line("general", "So you came to Phantom. I have the last disk, little navigator."),
+      line("archie", "So you came to Phantom. I have the last disk, little navigator."),
       line("ada", "Then we'll come and get it."),
     ],
     priority: "warning",
     repeat: "never",
     // It names Phantom, so it plays only there.
-    trigger: { galaxy: 6, held: 5, kind: "general" },
+    trigger: { galaxy: 6, held: 5, kind: "archie" },
   },
   {
     id: "job:towAttached",
@@ -781,8 +781,8 @@ export const CONVERSATIONS: readonly Conversation[] = [
 
 /** Approved chapter copy uses internal speaker keys; panels use their existing display names. */
 function displayChapterSpeaker(speaker: string): string {
-  return speaker === "general"
-    ? GENERAL_NAMED.name
+  return speaker === "archie"
+    ? ARCHIE_NAMED.name
     : (SPEAKERS[(speaker === "loom" ? "elderLoom" : speaker) as Speaker]?.name ?? speaker);
 }
 
@@ -835,7 +835,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
               ? "Blurbs"
               : key === "flagshipSalvage"
                 ? "Astra"
-                : GENERAL_NAMED.name,
+                : ARCHIE_NAMED.name,
         topics: (copy.topics ?? []).map((topic) => ({
           label: topic.question,
           lines: topic.lines.map((line) => ({

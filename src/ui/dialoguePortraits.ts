@@ -6,12 +6,12 @@ import { units } from "./layout/css.ts";
 
 export const COMPACT_PORTRAITS = {
   ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },
-  astra: { frames: 5, speaking: [1, 2, 3, 4], url: "/art/portraits/astra-compact.png" },
-  general: {
+  archie: {
     frames: 10,
     speaking: { named: [6, 7, 8, 9], unknown: [1, 2, 3, 4] },
-    url: "/art/portraits/gadget-compact.png",
+    url: "/art/portraits/archie-compact.png",
   },
+  astra: { frames: 5, speaking: [1, 2, 3, 4], url: "/art/portraits/astra-compact.png" },
   penny: {
     frames: 3,
     moods: { happy: 0, neutral: 1, upset: 2 },
@@ -19,7 +19,7 @@ export const COMPACT_PORTRAITS = {
   },
 } as const;
 
-/** The tab fill of a story speaker with no tab of their own, the unnamed General's. */
+/** The tab fill of a story speaker with no tab of their own, unnamed Archie's. */
 export const AWAITING_TAB = COLOURS.supporting;
 
 /** Each speaking frame's time. */
@@ -94,7 +94,7 @@ export function portraitBackground(sheet: CastPortraitSheet, image: number, fram
 
 /**
  * The sheet frame the box shows for line: Ada's or Penny's mood (neutral where the sheet has no
- * such mood), or Astra's or the General's speaking loop timed from the line's start, held on its
+ * such mood), or Astra's or Archie's speaking loop timed from the line's start, held on its
  * first frame under reduced motion.
  */
 export function portraitFrame(
@@ -117,15 +117,15 @@ export function portraitFrame(
   if (line.speaker === "astra") {
     return loop(COMPACT_PORTRAITS.astra.speaking);
   }
-  return loop(COMPACT_PORTRAITS.general.speaking[line.named ? "named" : "unknown"]);
+  return loop(COMPACT_PORTRAITS.archie.speaking[line.named ? "named" : "unknown"]);
 }
 
 // Each speaker's name tab fill (art/controls.md "Conversation box").
 export const TAB_COLOURS = {
   ada: COLOURS.adaBlue,
+  archie: COLOURS.supporting,
+  archieNamed: COLOURS.archieTab,
   astra: COLOURS.astraTab,
-  general: COLOURS.supporting,
-  generalNamed: COLOURS.generalTab,
   penny: COLOURS.jobOrange,
   ...Object.fromEntries(
     Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, CAST[key].tab]),

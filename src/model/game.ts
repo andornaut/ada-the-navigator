@@ -5,10 +5,10 @@ import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
+  ARCHIE_NAMED,
   CONVERSATION_TUNING,
   CONVERSATIONS,
   type EncounterCue,
-  GENERAL_NAMED,
   INTERACTION_COPY,
   type JobMoment,
   type Mood,
@@ -459,7 +459,7 @@ export interface ConversationView {
   /** Ada's or Penny's portrait mood; neutral when the line names none. */
   readonly mood: Mood;
   readonly name: string;
-  /** Whether the General's tab reads his name, which switches his portrait's frame set. */
+  /** Whether Archie's tab reads his name, which switches his portrait's frame set. */
   readonly named: boolean;
   readonly side: "left" | "right";
   readonly speaker: keyof typeof SPEAKERS;
@@ -670,7 +670,7 @@ export class GameModel {
       key: `${showing.instance}:${showing.lineIndex}`,
       mood,
       name,
-      named: speaker === "general" && name === GENERAL_NAMED.name,
+      named: speaker === "archie" && name === ARCHIE_NAMED.name,
       side: SPEAKERS[speaker].side,
       speaker,
       text,

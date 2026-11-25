@@ -157,7 +157,7 @@ describe("light-field keyline kinds", () => {
       "debris",
       "nurseryBeacon",
       "currentBuoy",
-      "gadget",
+      "archie",
       "hostileStation",
       "platform",
       "storyCraft",
@@ -203,7 +203,7 @@ describe("light-field keyline kinds", () => {
       ["orePickup", "./sceneObjects.ts", /"orePickup",/u],
       ["whale", "./sceneObjects.ts", /keylineSprite\(scene, "whale"/u],
       ["needleGate", "./sceneNeedle.ts", /keyline\?\.\("needleGate"/u],
-      // Enemy archetypes (gadget, hostileStation, platform) keyline by their archetype.
+      // Enemy archetypes (archie, hostileStation, platform) keyline by their archetype.
       ["enemy", "./sceneEnemies.ts", /keylineSprite\(scene, enemy\.archetype, key, sprite, depth/u],
     ];
     for (const [kind, file, pattern] of paths) {

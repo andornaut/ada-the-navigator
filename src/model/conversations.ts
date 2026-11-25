@@ -7,13 +7,13 @@ import {
 } from "../data/andromeda.ts";
 import { CAST, SPEAKER_CAST } from "../data/cast.ts";
 import {
+  ARCHIE_NAMED,
   BOX_PRIORITIES,
   type Conversation,
   CONVERSATION_TUNING,
   type ConversationLine,
   CONVERSATIONS,
   type EncounterCue,
-  GENERAL_NAMED,
   INTERACTION_COPY,
   type JobMoment,
   type Lesson,
@@ -175,7 +175,7 @@ const rank = (request: Pick<Request, "conversation" | "notice" | "optional">) =>
 
 /** An event's trigger, such as an arrival or a newly mapped place, which keeps holding. */
 const always: Holds = () => true;
-/** Drones pressing Ada in danger: the drone warning's and the General's broadcast's trigger. */
+/** Drones pressing Ada in danger: the drone warning's and Archie's broadcast's trigger. */
 const dronesPress: Holds = (facts) => facts.inDanger && facts.dronesNear;
 
 // Timers sum many frame slices, so a deadline counts as reached within float error.
@@ -195,7 +195,7 @@ export function holodisksHeld(
 
 /**
  * The name on a speaker's tab: a cast member's own name in place of the copy's role label, and the
- * General's unknown until the third holodisk is in.
+ * Archie's unknown until the third holodisk is in.
  */
 export function speakerName(
   progress: Readonly<Partial<Record<GalaxyNumber, Pick<GalaxyProgress, "holodisk">>>>,
@@ -205,8 +205,8 @@ export function speakerName(
   if (cast) {
     return CAST[cast].name;
   }
-  return speaker === "general" && holodisksHeld(progress) >= GENERAL_NAMED.holodisks
-    ? GENERAL_NAMED.name
+  return speaker === "archie" && holodisksHeld(progress) >= ARCHIE_NAMED.holodisks
+    ? ARCHIE_NAMED.name
     : SPEAKERS[speaker].name;
 }
 
@@ -368,7 +368,7 @@ export class ConversationDirector {
       return !this.done.scan && this.scanLessonValid();
     }
     return (
-      trigger.kind !== "general" ||
+      trigger.kind !== "archie" ||
       (trigger.held === facts.holodisks &&
         (trigger.galaxy === undefined || trigger.galaxy === facts.galaxy))
     );
@@ -824,19 +824,19 @@ export class ConversationDirector {
       // A built galaxy's one broadcast, the line after the holodisks Ada holds (none while she
       // holds none), speaks for its first engagement's drones; a placeholder plays none, and a
       // broadcast bound to a galaxy plays only there.
-      const instance = `general:${galaxy}`;
-      const general =
+      const instance = `archie:${galaxy}`;
+      const archie =
         BUILT.has(galaxy) && !this.seen.includes(instance)
           ? this.conversations.find(
               ({ trigger }) =>
-                trigger.kind === "general" &&
+                trigger.kind === "archie" &&
                 trigger.held === facts.holodisks &&
                 (trigger.galaxy === undefined || trigger.galaxy === galaxy),
             )
           : undefined;
-      if (general) {
+      if (archie) {
         this.enqueue({
-          conversation: general,
+          conversation: archie,
           holds: (now) =>
             dronesPress(now) && now.holodisks === facts.holodisks && this.galaxy === galaxy,
           instance,

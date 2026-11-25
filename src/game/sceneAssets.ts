@@ -184,7 +184,7 @@ function queueEagerSvgSheets(
             asset.debris ||
             asset.archetype === "frigate" ||
             asset.archetype === "capital" ||
-            asset.archetype === "gadget";
+            asset.archetype === "archie";
           const size = displaySized
             ? {
                 ...asset,
@@ -1066,7 +1066,7 @@ export function readEnemyArt(scene: AssetsContext): void {
 
 /**
  * The family the flight's galaxy draws a craft in: its own (Cartwheel's claim jumpers,
- * Andromeda's garnet drones), else Gadget's coral.
+ * Andromeda's garnet drones), else Archie's coral.
  */
 export function familyOf(scene: AssetsContext, archetype: string): EnemyFamily | undefined {
   const galaxy = scene.model.state.flight?.galaxy;

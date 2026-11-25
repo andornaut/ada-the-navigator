@@ -1,6 +1,7 @@
 import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
 import station from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json" with { type: "json" };
+import archie from "../../public/art/enemies/archie-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
 import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
 import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
@@ -12,7 +13,6 @@ import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.js
 import retaliator from "../../public/art/enemies/fleetRetaliator-hardpoints.json" with { type: "json" };
 import cargo from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json" with { type: "json" };
 import mining from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
-import gadget from "../../public/art/enemies/gadget-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
 import { type EnemyGeometryKey } from "./enemyIdentity.ts";
@@ -117,8 +117,9 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
   return { anchors, frame: file.frame, own, pivots, tops, weaponTops };
 }
 
-/** Art's drawn mounts for every archetype with a hardpoints file, Gadget's capital included. */
+/** Art's drawn mounts for every archetype with a hardpoints file, Archie's capital included. */
 export const MUZZLE_ART: Partial<Record<EnemyGeometryKey, MuzzleArt>> = {
+  archie: readMuzzleArt(archie),
   capital: readMuzzleArt(capital),
   capitalBroad: readMuzzleArt(capitalBroad),
   capitalCrossbow: readMuzzleArt(capitalCrossbow),
@@ -127,7 +128,6 @@ export const MUZZLE_ART: Partial<Record<EnemyGeometryKey, MuzzleArt>> = {
   capitalOutrigger: readMuzzleArt(capitalOutrigger),
   frigate: readMuzzleArt(frigate),
   frigateTwin: readMuzzleArt(frigateTwin),
-  gadget: readMuzzleArt(gadget),
   hostileStation: readMuzzleArt(station),
   hostileStationAndromeda: readMuzzleArt(ring),
   hostileStationPhantom: readMuzzleArt(phantomStation),

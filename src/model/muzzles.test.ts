@@ -201,7 +201,7 @@ describe("drawn muzzles", () => {
     expect(Object.keys(MUZZLE_ART).sort()).toEqual(
       [...new Set(files.map((name) => variants.get(name) ?? key(name)))].sort(),
     );
-    expect(Object.keys(MUZZLE_ART)).toContain("gadget");
+    expect(Object.keys(MUZZLE_ART)).toContain("archie");
     const manifest = ART_MANIFEST as unknown as {
       assets: { displayWidth?: number; id: string; width: number }[];
     };
