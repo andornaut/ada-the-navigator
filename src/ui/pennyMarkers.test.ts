@@ -22,12 +22,14 @@ import {
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { units } from "./layout/css.ts";
+import { MAP_COLORS, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";
 import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
 import { playLayout } from "./layout/viewScale.ts";
 import {
   createPennyMarkerLayer,
+  markerEdge,
   PENNY_MARKERS_STYLE,
   pennyGlyph,
   pennyMarkerInkExtent,
@@ -371,16 +373,26 @@ describe("enemy marker colour and outline in every galaxy", () => {
     },
   );
   it.each(styles)(
-    "outlines each enemy marker in the field's edge colour in galaxy $galaxy",
+    "edges every disc and badge in the field's foreground edge in galaxy $galaxy",
     ({ galaxy, style }) => {
+      const edge = galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink);
+      expect(markerEdge(style)).toBe(edge);
       const { root, ui } = layer();
+      // The 24 badges: a seen station, a known place and the unidentified `?`.
+      for (const badge of [
+        { ...marker, identified: true, symbol: "station" as const },
+        { ...marker, identified: true, symbol: "destination" as const },
+        marker,
+        { ...marker, symbol: "enemy" as const },
+      ]) {
+        ui.place({ x: 0, y: 0 }, area, style, [badge]);
+        expect(root.children[0]!.children[0]!.properties.get("--marker-edge")).toBe(edge);
+      }
       for (const symbol of threats) {
         ui.place({ x: 0, y: 0 }, area, style, [{ ...marker, identified: true, symbol }]);
         const node = root.children[0]!.children[0]!;
         expect(node.dataset.light).toBe(String(style.light));
-        expect(node.properties.get("--marker-outline")).toBe(
-          galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink),
-        );
+        expect(node.properties.get("--marker-edge")).toBe(edge);
         // The outline adds its width on every side, as the light field's ink outline does.
         const disc = symbol === "enemy" ? 6 : 12;
         const ring = style.light ? 2 * LIGHT_FIELD.markerOutline : 0;
@@ -392,13 +404,18 @@ describe("enemy marker colour and outline in every galaxy", () => {
       ui.destroy();
     },
   );
-  it("draws the outline as a 1 px ring in the edge colour around each enemy disc", () => {
+  it("draws the edge as each badge's 1 border and a 1 ring around each enemy disc", () => {
     expect(LIGHT_FIELD.markerOutline).toBe(1);
+    expect(MAP_SYMBOL.edge).toBe(1);
+    const edge = `var(--marker-edge,${MAP_COLORS.ink})`;
+    expect(PENNY_MARKERS_STYLE).toContain(`border:${units(1)} solid ${edge};`);
     for (const symbol of threats) {
       expect(PENNY_MARKERS_STYLE).toContain(
-        `[data-symbol="${symbol}"][data-light="true"]{\nbox-shadow:0 0 0 ${units(1)} var(--marker-outline)}`,
+        `[data-symbol="${symbol}"][data-light="true"]{\nbox-shadow:0 0 0 ${units(1)} ${edge}}`,
       );
     }
+    // Without a foreground edge, the badges keep their ink border.
+    expect(markerEdge({})).toBe(MAP_COLORS.ink);
   });
   it.each(styles)(
     "keeps an unidentified marker the generic colour unless a story or job targets it, galaxy $galaxy",

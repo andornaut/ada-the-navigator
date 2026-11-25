@@ -22,7 +22,7 @@ type ThreatSymbol = (typeof THREAT_SYMBOLS)[number];
 export const PENNY_MARKERS_STYLE = `
 .ada-penny-markers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
 .ada-penny-marker{position:absolute;box-sizing:border-box;width:${units(SIZE)};
-height:${units(SIZE)};border:${units(MAP_SYMBOL.edge)} solid ${MAP_COLORS.ink};
+height:${units(SIZE)};border:${units(MAP_SYMBOL.edge)} solid var(--marker-edge,${MAP_COLORS.ink});
 border-radius:50%;display:grid;place-items:center}
 .ada-penny-glyph{width:${units(MAP_SYMBOL.glyph)};height:${units(MAP_SYMBOL.glyph)};
 background:${MAP_COLORS.ink};mask:var(--glyph) center / contain no-repeat;
@@ -33,7 +33,7 @@ ${THREAT_SYMBOLS.map(
 width:${units(EDGE_MARKER_GLYPHS[kind].disc)};height:${units(EDGE_MARKER_GLYPHS[kind].disc)};
 border:0;background:var(--marker-threat)}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"][data-light="true"]{
-box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} var(--marker-outline)}
+box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} var(--marker-edge,${MAP_COLORS.ink})}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"] .ada-penny-glyph{display:none}
 `,
 ).join("")}
@@ -125,10 +125,18 @@ function maskInk(doc: Pick<Document, "createElement">, redraw: () => void) {
     },
   };
 }
+/**
+ * Every edge marker's edge colour (art/space-palette.md "Edge markers"): the field's foreground
+ * edge, ink on a light field and white on Phantom, else ink. A badge draws it as its 1 border and
+ * an enemy disc, on a field with foreground edges, as its outline ring.
+ */
+export function markerEdge(style: Pick<DirectionStyle, "edge">): string {
+  return style.edge ?? MAP_COLORS.ink;
+}
 interface DirectionStyle {
   readonly blocked?: readonly Rect[];
   readonly color: string;
-  /** The field's foreground edge, the enemy markers' outline: ink on a light field, white on Phantom. */
+  /** The field's foreground edge, each marker's edge (markerEdge). */
   readonly edge?: string | undefined;
   /** Whether the field draws foreground edges, so each enemy marker draws over its outline. */
   readonly light: boolean;
@@ -200,8 +208,7 @@ export function createPennyMarkerLayer(
         // An identified enemy or hostile station is threat red even as a task target.
         const threat = style.threat ?? style.color;
         node.style.setProperty("--marker-threat", threat);
-        // The field's foreground edge: ink on a light field, white on Phantom.
-        node.style.setProperty("--marker-outline", style.edge ?? MAP_COLORS.ink);
+        node.style.setProperty("--marker-edge", markerEdge(style));
         node.style.background =
           marker.identified && threatSymbol(marker.symbol) ? threat : (tint ?? TASK_COLORS.generic);
         const glyph = pennyGlyph(marker);
