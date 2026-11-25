@@ -119,3 +119,8 @@ Reference: [art](../../art/README.md).
 | ada-0347 | Distinguish combat, industrial, and rescue craft                          | [ada-0347.md](../work/ada-0347.md) |
 | ada-0354 | Improve and reuse Earth Storybook backgrounds                             | [ada-0354.md](../work/ada-0354.md) |
 | ada-0367 | Increase the Swarm hull and hit silhouette                                | [ada-0367.md](../work/ada-0367.md) |
+| ada-0384 | Redesign every station from scratch                                       | [ada-0384.md](../work/ada-0384.md) |
+| ada-0385 | Redesign the enemy ships from scratch                                     | [ada-0385.md](../work/ada-0385.md) |
+| ada-0386 | Redesign the points of interest and friendly space objects from scratch   | [ada-0386.md](../work/ada-0386.md) |
+| ada-0387 | Polish Ada's ship and jets                                                | [ada-0387.md](../work/ada-0387.md) |
+| ada-0388 | Review every art asset and polish or redesign the weak ones               | [ada-0388.md](../work/ada-0388.md) |
