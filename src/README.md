@@ -107,10 +107,16 @@ every file with its SHA-256 and size: the game page at `/play/`, the build outpu
 it loads, the web app manifest and its icons, every file under `public/art/`
 except `app-icon/`, and the galaxy selector previews under `public/previews/`.
 `/.game-kit/build.json` is served `no-store` and each manifest as immutable
-([`src/headers/securityPolicy.ts`](headers/securityPolicy.ts)).
+([`src/headers/securityPolicy.ts`](headers/securityPolicy.ts)). Each update group
+([`src/pwa/precachePlugin.ts`](pwa/precachePlugin.ts)) ships as a gzip archive at
+`/.game-kit/group-<sha256>.bin`, served as emitted without HTTP coding, and as a
+decoded copy at `/.game-kit/archive-<sha256>-0.bin` for installed builds on
+GameKit 0.72.0 or earlier.
 
 The page's launch ([`src/pwa/index.ts`](pwa/index.ts)) runs from the boot shell
-before the game module downloads. A first visit installs the complete build
+before the game module downloads. A production launch requires Service Worker,
+Cache Storage and `DecompressionStream`; without one of them the page shows the
+kit's unsupported error with no Retry. A first visit installs the complete build
 under the one loading bar, verifying each file, then plays from the cache; a
 failed download shows Loading failed, and Retry resumes from the files already
 stored. Where the browser refuses the router or storage is full, the game plays
