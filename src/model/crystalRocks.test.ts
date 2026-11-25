@@ -18,6 +18,12 @@ import { stationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const SELECTION = ASTEROID_ART.crystals.selection;
+/**
+ * Four binomial standard deviations of a share `p` measured over `n` independent rocks: a seeded
+ * hash that is uniform and an eligibility that is right land inside it, except about once in
+ * 16,000 samples.
+ */
+const bound = (p: number, n: number) => 4 * Math.sqrt((p * (1 - p)) / n);
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const sizeOf = (shape: string) => ASTEROID_SHAPES.get(shape)!.size;
 const placedId = (id: string) =>
@@ -81,21 +87,47 @@ describe("crystal rock selection", () => {
     }
   });
 
-  it.each([1, 3, 4, 5, 6] as const)(
-    "flags about 1 in 4 medium-or-larger planned rocks in galaxy %i and never a small one",
-    (galaxy) => {
+  it("flags the share of medium-or-larger planned rocks outside Cartwheel and never a small one", () => {
+    const share = SELECTION.ordinary.share;
+    let eligible = 0;
+    let flagged = 0;
+    for (const galaxy of [1, 3, 4, 5, 6] as const) {
       const rocks = plannedRocks(galaxy, 4242, 12);
       const small = rocks.filter((rock) => sizeOf(rock.shape!) === "small");
-      const eligible = rocks.filter((rock) => sizeOf(rock.shape!) !== "small");
-      const flagged = eligible.filter((rock) => rock.crystals);
-      expect(small.length).toBeGreaterThan(200);
-      expect(eligible.length).toBeGreaterThan(600);
+      const large = rocks.filter((rock) => sizeOf(rock.shape!) !== "small");
+      const crystal = large.filter((rock) => rock.crystals);
+      expect(small.length, `galaxy ${galaxy}`).toBeGreaterThan(200);
       expect(small.filter((rock) => rock.crystals)).toEqual([]);
-      expect(flagged.every((rock) => rock.crystals === "small")).toBe(true);
-      expect(flagged.length / eligible.length).toBeGreaterThan(0.2);
-      expect(flagged.length / eligible.length).toBeLessThan(0.3);
-    },
-  );
+      expect(crystal.every((rock) => rock.crystals === "small")).toBe(true);
+      // Each galaxy alone, at its own sample's bound.
+      expect(
+        Math.abs(crystal.length / large.length - share),
+        `galaxy ${galaxy}: ${crystal.length} of ${large.length}`,
+      ).toBeLessThan(bound(share, large.length));
+      eligible += large.length;
+      flagged += crystal.length;
+    }
+    expect(eligible).toBeGreaterThan(3000);
+    expect(Math.abs(flagged / eligible - share)).toBeLessThan(bound(share, eligible));
+  });
+
+  it("flags the share of placement ids to within 0.01 over 40,000 rocks", () => {
+    const rule = galaxyCrystals(SELECTION, 1)!;
+    const n = 40_000;
+    let flagged = 0;
+    for (let index = 0; index < n; index++) {
+      const id = `rock:${(index % 200) - 100},${Math.floor(index / 200) - 100}:${index % 7}`;
+      flagged += placedRockCrystals(rule, 4242, {
+        id,
+        shape: rule.shapes[index % rule.shapes.length]!,
+      })
+        ? 1
+        : 0;
+    }
+    // Four standard deviations at n = 40,000 and p = 0.25 is 0.0087.
+    expect(bound(rule.share, n)).toBeLessThan(0.01);
+    expect(Math.abs(flagged / n - rule.share)).toBeLessThan(bound(rule.share, n));
+  });
 
   it("flags no ordinary rock in Cartwheel", () => {
     const rocks = plannedRocks(2, 4242, 12);

@@ -42,6 +42,7 @@ describe("ore field family catalog", () => {
   });
 
   it("preserves the five original loose-cluster layouts without changing authored rock identity or position", () => {
+    // The digest was taken over the layouts' former resource-{shape} ids, so it maps back to them.
     const rows = [6, 7, 8, 9, 10].map((count) => ({
       count,
       rocks: oreFieldLayout("loose-cluster", count).map(({ asteroid, frame, position }) => ({
@@ -95,10 +96,20 @@ describe("ore field family catalog", () => {
     expect(() =>
       readOreFieldLayouts(
         altered((copy) => {
-          copy.variants[0]!.layouts[0]!.rocks[0]!.id = "resource-m99";
+          copy.variants[0]!.layouts[0]!.rocks[0]!.id = "asteroid-m99";
         }),
       ),
     ).toThrow("does not read");
+    // Ore fields place medium and large rocks only.
+    for (const id of ["asteroid-s1", "asteroid-h1", "resource-m1"]) {
+      expect(() =>
+        readOreFieldLayouts(
+          altered((copy) => {
+            copy.variants[0]!.layouts[0]!.rocks[0]!.id = id;
+          }),
+        ),
+      ).toThrow("does not read");
+    }
     expect(() =>
       readOreFieldLayouts(
         altered((copy) => {

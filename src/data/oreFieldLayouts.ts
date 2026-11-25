@@ -3,7 +3,7 @@ import { ASTEROID_ART } from "./asteroidCatalog.ts";
 
 /** One rock of an ore field layout: Art's rock, its rest position and its start spin frame. */
 export interface OreFieldRock {
-  /** The asteroid shape, `asteroid-{shape}` for the layout's `resource-{shape}` id. */
+  /** The layout's rock id: a medium or large plain asteroid in asteroids.json. */
   readonly asteroid: string;
   readonly frame: number;
   readonly position: { readonly x: number; readonly y: number };
@@ -28,7 +28,12 @@ const fields = (value: unknown): Fields | undefined =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Fields) : undefined;
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
-const shapes = new Map(ASTEROID_ART.asteroids.map((shape) => [shape.id, shape]));
+/** The plain rocks an ore field places: Art's medium and large asteroids. */
+const shapes = new Map(
+  ASTEROID_ART.asteroids
+    .filter((shape) => shape.size === "medium" || shape.size === "large")
+    .map((shape) => [shape.id, shape]),
+);
 
 /** Art's version 2 families, each with a complete set of supported count realizations. */
 export function readOreFieldLayouts(value: unknown): OreFieldLayouts {
@@ -80,12 +85,10 @@ export function readOreFieldLayouts(value: unknown): OreFieldLayouts {
         throw new Error("ore-field.json: a layout's rocks do not match its count");
       }
       const decoded = rocks.map((rock): OreFieldRock => {
-        const match = /^resource-([ml])(\d+)$/.exec(String(rock?.id));
-        const asteroid = match ? `asteroid-${match[1]}${match[2]}` : "";
+        const asteroid = String(rock?.id);
         const shape = shapes.get(asteroid);
         const position = rock?.position;
         if (
-          !match ||
           !shape ||
           !Array.isArray(position) ||
           position.length !== 2 ||
