@@ -202,9 +202,9 @@ encounter composition, ship identity/profile selection and loot.
 | Phantom   |      0% |     50% |     50% |                    35% |
 
 Shared weapon intervals are the player's interval at the equipped level divided
-by the galaxy's fire-rate share and existing ship rate modifiers. Frigates use
-2, capitals including the flagship use 1.5, and platforms use 1.5; other ships and
-hostile stations use 1. Swarm Laser retains its 7/9 relative rate and industrial
+by the galaxy's fire-rate share and existing ship rate modifiers. A frigate's
+Heavy Missile uses 2 and its Laser mounts use 1, capitals including the flagship
+use 1.5, and platforms use 1.5; other ships and hostile stations use 1. Swarm Laser retains its 7/9 relative rate and industrial
 Rapid Missile its 5/4 relative rate. These shares replace the shared weapons'
 absolute enemy intervals and position fire curve; the old values do not stack.
 Platform bursts retain two shots 0.15 seconds apart. Warning times are unchanged.
