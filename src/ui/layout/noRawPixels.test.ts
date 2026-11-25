@@ -1,12 +1,15 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 // Every DOM UI size reads src/ui/layout (art/layout.md "Verification"): outside it, src/ui writes
-// no raw CSS px and assigns no numeric literal to a geometry property.
+// no raw CSS px and assigns no numeric literal to a geometry property. The style modules inside
+// it (those exporting a *_STYLE stylesheet, and its .css files) and src/style.css follow the same
+// rules, so every size in a stylesheet is a named token.
 
 const UI = new URL("../", import.meta.url).pathname;
+const PAGE_STYLE = new URL("../../style.css", import.meta.url).pathname;
 
 interface Allowed {
   readonly file: string;
@@ -16,11 +19,19 @@ interface Allowed {
 }
 
 const ALLOWED: readonly Allowed[] = [
-  { file: "touch-chrome.ts", reason: "Procedural stick chrome draws in its frames' own px" },
   {
     file: "settings.ts",
     reason: "The base button under the weapon buttons",
     selectors: /^\.ada-controls button(:focus-visible)?$/u,
+  },
+  {
+    file: "../style.css",
+    reason: "The global button base and the legacy story panel",
+    selectors: /^(button(:hover|:focus-visible|:disabled)?|\.story-panel\b.*)$/u,
+  },
+  {
+    file: "layout/bootSplash.css",
+    reason: "Loads before the interface script, so it cannot read the layout module",
   },
 ];
 
@@ -88,15 +99,26 @@ function selectorAt(blanked: string, offset: number): string {
   return blanked.slice(start, open).trim().replace(/\s+/gu, " ");
 }
 
+// A module in src/ui/layout that exports a stylesheet.
+const STYLE_MODULE = /^export const [A-Z][A-Z_]*_STYLE = `/mu;
+
+function isStyleModule(path: string): boolean {
+  return path.endsWith(".css") || STYLE_MODULE.test(readFileSync(path, "utf8"));
+}
+
 function sources(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      return entry.name === "layout" ? [] : sources(path);
+      return entry.name === "layout"
+        ? sources(path).filter((file) => isStyleModule(file))
+        : sources(path);
     }
-    return entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts") ? [path] : [];
+    return /\.(?:css|ts)$/u.test(entry.name) && !entry.name.endsWith(".test.ts") ? [path] : [];
   });
 }
+
+const UI_SOURCES = [...sources(UI), PAGE_STYLE];
 
 export function rawPixelFindings(file: string, text: string): string[] {
   const code = withoutComments(text);
@@ -124,7 +146,7 @@ export function rawPixelFindings(file: string, text: string): string[] {
 
 describe("DOM UI sizes", () => {
   it("come from src/ui/layout, never raw px or numeric geometry", () => {
-    const findings = sources(UI).flatMap((path) =>
+    const findings = UI_SOURCES.flatMap((path) =>
       rawPixelFindings(relative(UI, path), readFileSync(path, "utf8")),
     );
     expect(findings).toEqual([]);
@@ -157,5 +179,21 @@ describe("DOM UI sizes", () => {
     );
     expect(rawPixelFindings("weapons.ts", "`.ada-controls .ada-weapon{gap:4px}`")).toHaveLength(1);
     expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
+  });
+
+  it("cover the layout style modules and the page stylesheet, and allow only existing files", () => {
+    const checked = UI_SOURCES.map((path) => relative(UI, path));
+    expect(checked).toEqual(
+      expect.arrayContaining([
+        "../style.css",
+        "layout/bootSplash.css",
+        "layout/questsScreen.ts",
+        "layout/stationStyle.ts",
+      ]),
+    );
+    expect(checked).not.toContain("layout/css.ts");
+    expect(
+      ALLOWED.filter((entry) => !existsSync(join(UI, entry.file)) || !checked.includes(entry.file)),
+    ).toEqual([]);
   });
 });

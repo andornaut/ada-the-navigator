@@ -12,6 +12,8 @@ export const EXIT_ART: Readonly<Record<PausePose, string>> = {
 };
 
 export const NAVIGATION_DISCS = ":is(.ada-pause,.ada-exit-open)";
+// The navigation art's inner face radius at rest and in the held pose (art/controls.md "Pause").
+const NAVIGATION_FACE_RADIUS = { held: 12.5, rest: 13.5 } as const;
 const FOCUSED_NAVIGATION = `${UI_SCOPE} ${NAVIGATION_DISCS}:focus-visible`;
 
 // The pause button carries the three-bar Menu glyph outside pausable play: the same frame, press
@@ -64,7 +66,7 @@ ${FOCUSED_NAVIGATION}{
 }
 /* Tint only the 35-unit artwork's inner face. Lighten keeps its lighter glyph intact. */
 ${FOCUSED_NAVIGATION}::before{
-  --ada-nav-face-radius:${units(13.5)};
+  --ada-nav-face-radius:${units(NAVIGATION_FACE_RADIUS.rest)};
   --ada-nav-focus-tone:#6b6685;
   --ada-nav-focus-blend:lighten;
   background-image:radial-gradient(circle,
@@ -73,7 +75,7 @@ ${FOCUSED_NAVIGATION}::before{
   background-blend-mode:var(--ada-nav-focus-blend),normal
 }
 ${FOCUSED_NAVIGATION}[data-pose=held]::before{
-  --ada-nav-face-radius:${units(12.5)}
+  --ada-nav-face-radius:${units(NAVIGATION_FACE_RADIUS.held)}
 }
 @media (forced-colors: active){
   /* Invert the face and glyph for a clear contrast change while keeping the authored edge. */

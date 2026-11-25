@@ -3,7 +3,7 @@ import controlsCss from "@andornaut/game-kit/runtime/web/ui/dom/controls.css?raw
 
 import { STORY_PANEL } from "../../data/layout.ts";
 import { TEXT_TOKENS } from "../modal.ts";
-import { font, units } from "./css.ts";
+import { font, kitUnits, units } from "./css.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 export const PAGE_DIVIDER_STYLE = {
@@ -31,7 +31,7 @@ export const ADA_CONTROL_PRESENTATION_STYLE = `${controlsCss}\n${controlPresenta
   overflow-wrap:anywhere
 }
 .ada-page-divider[data-axis="vertical"]{
-  width:calc(var(--ui-page-divider-thickness) * var(--ui-unit,1) * 1px);
+  width:${kitUnits("--ui-page-divider-thickness")};
   height:auto;
   align-self:stretch
 }

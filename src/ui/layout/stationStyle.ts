@@ -22,6 +22,8 @@ const TILE_ROW = ".ada-controls .ada-shop-row";
 const TILE_FACE = `${TILE_ROW}:is([data-state=inUse],:focus-visible):where(
   :not(:active),[data-state=unaffordable]
 )`;
+// The station footer's current page stripe along its bottom edge, at rest and with keyboard focus.
+const CURRENT_PAGE_STRIPE = { focused: 8, rest: 6 } as const;
 // A glyph size at the well's scale: 1 in rows, CONFIRM_ITEM.glyphScale in the confirm.
 const scaled = (size: number) => `calc(${units(size)} * var(--glyph-scale,1))`;
 
@@ -88,7 +90,7 @@ export const STATION_STYLE = `
   align-items:center;
   gap:${units(SPACING.gap)};
   padding:${units(SPACING.gap)} 0;
-  border-top:${units(1)} solid #6b6685;
+  border-top:${units(FRAME_LINE)} solid #6b6685;
   margin-top:auto
 }
 .ada-controls .ada-station-footer [data-action=undock]{
@@ -121,7 +123,7 @@ export const STATION_STYLE = `
   --ada-station-footer-face:${BUTTON_FACE.disabled};
   --ada-station-footer-ink:${TEXT_TOKENS.label};
   --ada-station-footer-underline:${BUTTON_FACE.primary};
-  --ada-station-footer-underline-height:${units(6)};
+  --ada-station-footer-underline-height:${units(CURRENT_PAGE_STRIPE.rest)};
   color:var(--ada-station-footer-ink);
   border-color:transparent;
   border-image-source:none;
@@ -131,7 +133,7 @@ export const STATION_STYLE = `
 }
 .ada-controls .ada-station-footer .ada-button[aria-current=page]:focus-visible{
   --ada-station-footer-underline:${TEXT_TOKENS.label};
-  --ada-station-footer-underline-height:${units(8)}
+  --ada-station-footer-underline-height:${units(CURRENT_PAGE_STRIPE.focused)}
 }
 @media (forced-colors:active){
   .ada-controls .ada-station-footer .ada-button:is(
@@ -196,7 +198,7 @@ export const STATION_STYLE = `
   min-width:0
 }
 .ada-controls .ada-station-panes > section + section{
-  border-left:${units(1)} solid #6b6685;
+  border-left:${units(FRAME_LINE)} solid #6b6685;
   padding-left:${units(SPACING.gap)}
 }
 .ada-controls .ada-station-panes .ada-shop-row{

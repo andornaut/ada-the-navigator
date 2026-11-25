@@ -9,6 +9,8 @@ export const VIEW_HOST_ID = "app";
 
 export const COMPACT_VIEWPORT = `(max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px)`;
 export const EXPANDED_VIEWPORT = `(width > ${SCREEN.width}px) and (height > ${SCREEN.height}px)`;
+// A viewport narrower than the play view is tall.
+export const NARROW_VIEWPORT = `(width < ${SCREEN.height}px)`;
 
 // The HUD rect's edges the controls anchor to: the top controls to its top and sides, the shield
 // pill to its bottom.
@@ -35,6 +37,11 @@ const scaled = (value: number) => `var(${VIEW_PROPERTIES.unit}) * ${value}px`;
 export function units(value: number): string {
   // Zero stays a length, so it is valid inside max() and calc().
   return value === 0 ? "0px" : `calc(${scaled(value)})`;
+}
+
+// A Game Kit unitless logical length custom property as a length: its value times --ui-unit.
+export function kitUnits(property: string): string {
+  return `calc(var(${property}) * var(--ui-unit,1) * 1px)`;
 }
 
 /** A CSS length already snapped to physical pixels by layout geometry. */

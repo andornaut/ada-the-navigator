@@ -1,8 +1,10 @@
-import { SCREEN } from "../../data/screen.ts";
 import { UI_SCOPE } from "../modal.ts";
 import { CARD_CONTENT, SCROLL } from "./contentCard.ts";
-import { slice, units } from "./css.ts";
+import { COMPACT_VIEWPORT, slice, units } from "./css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./tokens.ts";
+
+// On a compact viewport the Pause grid's capped labels sit this far lower.
+const CAP_LABEL_DROP = 1;
 
 /** Two stable, equal-width action columns, with native reading order down each column. */
 export const PAUSE_GRID_STYLE = `
@@ -22,8 +24,8 @@ ${UI_SCOPE} .ada-pause-column > .ada-button{width:100%}
 ${UI_SCOPE} .ada-pause-grid:has([data-action="pause-map"][hidden]) [data-action="pause-resume"]{
   translate:calc(-50% - ${units(BUTTON_GAP / 2)})
 }
-@media (max-width: ${SCREEN.width}px), (max-height: ${SCREEN.height}px){
-  ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(1)})}
+@media ${COMPACT_VIEWPORT}{
+  ${UI_SCOPE} .ada-pause-grid .ada-pause-cap-label{transform:translateY(${units(CAP_LABEL_DROP)})}
 }
 ${UI_SCOPE} .ada-ship-back{
   display:flex;
